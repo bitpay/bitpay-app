@@ -1,4 +1,5 @@
 import {t} from 'i18next';
+import cloneDeep from 'lodash.clonedeep';
 import {
   RampQuoteRequestData,
   RampQuoteResultForPaymentMethod,
@@ -102,7 +103,6 @@ export const rampSupportedMaticTokens = [
 ];
 
 export const rampSupportedArbitrumTokens = [
-  'eth',
   'usda',
   'usdc',
   'usdce', // Bridged USD Coin (0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8) USDC.e
@@ -110,14 +110,12 @@ export const rampSupportedArbitrumTokens = [
 ];
 
 export const rampSupportedBaseTokens = [
-  'eth',
   'usdc',
   'usdce', // Bridged USD Coin (0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA) USDC.e
 ];
 
 export const rampSupportedOptimismTokens = [
   'dai',
-  'eth',
   'usda',
   'usdc',
   'usdce', // Bridged USD Coin (0x7F5c764cBc14f9669B88837ca1490cCa17c31607) USDC.e
@@ -148,9 +146,49 @@ export const getRampSupportedCurrencies = (): string[] => {
   return rampSupportedCurrencies;
 };
 
-export const getRampCoinFormat = (coin: string, chain: string): string => {
-  let formattedCoin: string = `${chain.toUpperCase()}_${coin.toUpperCase()}`;
+export const getRampCoinFormat = (
+  coin: string | undefined,
+  chain: string | undefined,
+): string => {
+  const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
+  const _chain = chain ? cloneDeep(chain).toUpperCase() : undefined;
+
+  let formattedCoin: string = `${_chain}_${_coin}`;
   return formattedCoin;
+};
+
+export const getChainFromRampChainFormat = (
+  chain: string | undefined,
+): string | undefined => {
+  if (!chain) {
+    return undefined;
+  }
+
+  const chainMap: {[key: string]: string} = {
+    arbitrum: 'arb',
+    base: 'base',
+    optimism: 'op',
+  };
+
+  return chainMap[chain.toLowerCase()] ?? chain;
+};
+
+export const getRampChainFormat = (chain: string): string | undefined => {
+  const _chain = chain ? cloneDeep(chain).toLowerCase() : undefined;
+
+  let formattedChain: string | undefined;
+  switch (_chain) {
+    case 'arb':
+      formattedChain = 'arbitrum';
+      break;
+    case 'op':
+      formattedChain = 'optimism';
+      break;
+    default:
+      formattedChain = _chain;
+      break;
+  }
+  return formattedChain;
 };
 
 export const getRampFiatAmountLimits = () => {

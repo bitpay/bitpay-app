@@ -107,6 +107,8 @@ import {
   getRampDefaultOfferData,
   getRampCoinFormat,
   rampEnv,
+  getChainFromRampChainFormat,
+  getRampChainFormat,
 } from '../utils/ramp-utils';
 import BanxaTerms from '../components/terms/banxaTerms';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
@@ -943,8 +945,10 @@ const BuyCryptoOffers: React.FC = () => {
       if (assetsData && assetsData.assets?.length > 0) {
         const selectedAssetData = assetsData.assets.filter(asset => {
           return (
-            getRampCoinFormat(asset.symbol, asset.chain) ===
-            getRampCoinFormat(coin, chain)
+            getRampCoinFormat(
+              asset.symbol,
+              getChainFromRampChainFormat(asset.chain),
+            ) === getRampCoinFormat(coin, chain)
           );
         });
 
@@ -1900,14 +1904,14 @@ const BuyCryptoOffers: React.FC = () => {
       env: rampEnv,
       hostLogoUrl: 'https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg',
       hostAppName: APP_NAME_UPPERCASE,
-      swapAsset: getRampCoinFormat(coin, chain),
+      swapAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
       swapAmount: offers.ramp.amountReceivingUnit!,
       fiatCurrency: offers.ramp.fiatCurrency,
       enabledFlows: 'ONRAMP',
       defaultFlow: 'ONRAMP',
       userAddress: address,
       selectedCountryCode: country,
-      defaultAsset: getRampCoinFormat(coin, chain),
+      defaultAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
       finalUrl: redirectUrl,
     };
 
@@ -2221,7 +2225,7 @@ const BuyCryptoOffers: React.FC = () => {
       exchangeScreenTitle: 'Bitpay - Buy crypto',
       fiatAmount: offers.transak.fiatAmount,
       fiatCurrency: offers.transak.fiatCurrency.toUpperCase(),
-      network: getTransakChainFormat(chain),
+      network: getTransakChainFormat(chain) ?? 'mainnet',
       cryptoCurrencyCode: getTransakCoinFormat(coin),
       cryptoCurrencyList: getTransakCoinFormat(coin),
       hideExchangeScreen: true,

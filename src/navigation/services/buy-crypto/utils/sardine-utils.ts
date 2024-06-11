@@ -91,7 +91,7 @@ export const sardineSupportedErc20Tokens = [
 
 export const sardineSupportedMaticTokens = ['usdc'];
 
-export const sardineSupportedArbitrumTokens = ['eth', 'usdc'];
+export const sardineSupportedArbitrumTokens = ['usdc'];
 
 export const getSardineSupportedCurrencies = (): string[] => {
   const sardineSupportedCurrencies = [

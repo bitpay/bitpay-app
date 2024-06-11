@@ -687,11 +687,8 @@ export const IsInvalid = (action: string): boolean => {
   return action === 'invalid';
 };
 
-export const NotZeroAmountEVM = (
-  amount: number,
-  currencyAbbreviation: string,
-): boolean => {
-  return !(amount === 0 && SUPPORTED_EVM_COINS.includes(currencyAbbreviation));
+export const NotZeroAmountEVM = (amount: number, chain: string): boolean => {
+  return !(amount === 0 && SUPPORTED_EVM_COINS.includes(chain));
 };
 
 export const IsShared = (wallet: Wallet): boolean => {
@@ -737,7 +734,7 @@ export const BuildUiFriendlyList = (
     } = customData || {};
     const {body: noteBody} = note || {};
 
-    const notZeroAmountEVM = NotZeroAmountEVM(amount, currencyAbbreviation);
+    const notZeroAmountEVM = NotZeroAmountEVM(amount, chain);
     const isSent = IsSent(action);
     const isMoved = IsMoved(action);
     const isReceived = IsReceived(action);
@@ -919,10 +916,10 @@ export const getDetailsTitle = (transaction: any, wallet: Wallet) => {
     return;
   }
   const {action, error} = transaction;
-  const {coin} = wallet.credentials;
+  const {chain} = wallet;
 
   if (!IsInvalid(action)) {
-    if (SUPPORTED_EVM_COINS.includes(coin) && error) {
+    if (SUPPORTED_EVM_COINS.includes(chain) && error) {
       return t('Failed');
     } else if (IsSent(action)) {
       return t('Sent');

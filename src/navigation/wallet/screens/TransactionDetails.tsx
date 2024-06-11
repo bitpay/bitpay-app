@@ -411,7 +411,7 @@ const TransactionDetails = () => {
           keyboardShouldPersistTaps={'handled'}
           extraScrollHeight={80}>
           <>
-            {NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
+            {NotZeroAmountEVM(txs.amount, chain) ? (
               <H2 medium={true}>{txs.amountStr}</H2>
             ) : null}
 
@@ -425,7 +425,7 @@ const TransactionDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEVM(txs.amount, currencyAbbreviation) ? (
+            {!NotZeroAmountEVM(txs.amount, chain) ? (
               <SubTitle>{t('Interaction with contract')}</SubTitle>
             ) : null}
           </>

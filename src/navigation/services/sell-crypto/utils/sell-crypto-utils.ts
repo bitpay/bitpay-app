@@ -9,7 +9,7 @@ import {
 } from './moonpay-sell-utils';
 import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
-import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 
 export type SellCryptoExchangeKey = 'moonpay';
 
@@ -158,7 +158,7 @@ const isCoinSupportedBy = (
   switch (exchange) {
     case 'moonpay':
       return getMoonpaySellSupportedCurrencies(country).includes(
-        getCurrencyAbbreviation(coin.toLowerCase(), chain.toLowerCase()),
+        getExternalServiceSymbol(coin, chain),
       );
     default:
       return false;

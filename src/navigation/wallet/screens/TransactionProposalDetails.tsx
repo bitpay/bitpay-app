@@ -494,7 +494,7 @@ const TransactionProposalDetails = () => {
       ) : txp ? (
         <ScrollView>
           <>
-            {NotZeroAmountEVM(txp.amount, currencyAbbreviation) ? (
+            {NotZeroAmountEVM(txp.amount, chain) ? (
               <H2 medium={true}>{txp.amountStr}</H2>
             ) : null}
 
@@ -508,7 +508,7 @@ const TransactionProposalDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEVM(txp.amount, currencyAbbreviation) ? (
+            {!NotZeroAmountEVM(txp.amount, chain) ? (
               <SubTitle>{t('Interaction with contract')}</SubTitle>
             ) : null}
           </>
