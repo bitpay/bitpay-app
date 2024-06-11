@@ -31,7 +31,13 @@ import {
 } from '../../../../store/app/app.actions';
 import {getBuyCryptoFiatLimits} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {Action, White, Slate, SlateDark} from '../../../../styles/colors';
+import {
+  Action,
+  White,
+  Black,
+  Slate,
+  SlateDark,
+} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {
@@ -79,6 +85,8 @@ import {banxaGetPaymentMethods} from '../../../../store/buy-crypto/effects/banxa
 import {banxaEnv, getBanxaCoinFormat} from '../utils/banxa-utils';
 import {BanxaPaymentMethodsData} from '../../../../store/buy-crypto/buy-crypto.models';
 import cloneDeep from 'lodash.clonedeep';
+import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
+import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -89,6 +97,11 @@ export type BuyCryptoRootScreenParams =
       partner?: BuyCryptoExchangeKey | undefined; // used from deeplinks.
     }
   | undefined;
+
+const GlobalSelectContainer = styled.View`
+  flex: 1;
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+`;
 
 const BuyCryptoRootContainer = styled.SafeAreaView`
   flex: 1;
@@ -749,6 +762,7 @@ const BuyCryptoRoot = ({
             name: (BitpaySupportedCoins[symbol]?.name || foundToken?.name)!,
             chain,
             logoUri: getLogoUri(coin, chain),
+            badgeUri: getBadgeImg(coin, chain),
             tokenAddress: foundToken?.address,
           };
         })
@@ -757,6 +771,54 @@ const BuyCryptoRoot = ({
     setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
 
     selectFirstAvailableWallet();
+  };
+
+  const onDismiss = async (
+    newWallet?: Wallet,
+    createNewWalletData?: AddWalletData | undefined,
+  ) => {
+    hideModal('walletSelector');
+    if (newWallet?.currencyAbbreviation) {
+      setWallet(newWallet);
+    } else if (createNewWalletData) {
+      try {
+        if (createNewWalletData.key.isPrivKeyEncrypted) {
+          logger.debug('Key is Encrypted. Trying to decrypt...');
+          await sleep(500);
+          const password = await dispatch(
+            getDecryptPassword(createNewWalletData.key),
+          );
+          createNewWalletData.options.password = password;
+        }
+
+        await sleep(500);
+        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+
+        const createdToWallet = await dispatch(addWallet(createNewWalletData));
+        logger.debug(
+          `Added ${createdToWallet?.currencyAbbreviation} wallet from Buy Crypto`,
+        );
+        dispatch(
+          Analytics.track('Created Basic Wallet', {
+            coin: createNewWalletData.currency.currencyAbbreviation,
+            chain: createNewWalletData.currency.chain,
+            isErc20Token: createNewWalletData.currency.isToken,
+            context: 'buyCrypto',
+          }),
+        );
+        setWallet(createdToWallet);
+        await sleep(300);
+        dispatch(dismissOnGoingProcessModal());
+      } catch (err: any) {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        if (err.message === 'invalid password') {
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        } else {
+          walletError(err.message);
+        }
+      }
+    }
   };
 
   useMount(() => {
@@ -935,63 +997,22 @@ const BuyCryptoRoot = ({
         onClose={() => hideModal('amount')}
       />
 
-      <ToWalletSelectorModal
+      <SheetModal
         isVisible={walletSelectorModalVisible}
-        modalContext={'buyCrypto'}
-        disabledChain={undefined}
-        customSupportedCurrencies={buyCryptoSupportedCoinsFullObj}
-        livenetOnly={!__DEV__}
-        modalTitle={t('Select Destination')}
-        onDismiss={async (
-          newWallet?: Wallet,
-          createNewWalletData?: AddWalletData,
-        ) => {
-          hideModal('walletSelector');
-          if (newWallet?.currencyAbbreviation) {
-            setWallet(newWallet);
-          } else if (createNewWalletData) {
-            try {
-              if (createNewWalletData.key.isPrivKeyEncrypted) {
-                logger.debug('Key is Encrypted. Trying to decrypt...');
-                await sleep(500);
-                const password = await dispatch(
-                  getDecryptPassword(createNewWalletData.key),
-                );
-                createNewWalletData.options.password = password;
-              }
-
-              await sleep(500);
-              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
-
-              const createdToWallet = await dispatch(
-                addWallet(createNewWalletData),
-              );
-              logger.debug(
-                `Added ${createdToWallet?.currencyAbbreviation} wallet from Buy Crypto`,
-              );
-              dispatch(
-                Analytics.track('Created Basic Wallet', {
-                  coin: createNewWalletData.currency.currencyAbbreviation,
-                  chain: createNewWalletData.currency.chain,
-                  isErc20Token: createNewWalletData.currency.isToken,
-                  context: 'buyCrypto',
-                }),
-              );
-              setWallet(createdToWallet);
-              await sleep(300);
-              dispatch(dismissOnGoingProcessModal());
-            } catch (err: any) {
-              dispatch(dismissOnGoingProcessModal());
-              await sleep(500);
-              if (err.message === 'invalid password') {
-                dispatch(showBottomNotificationModal(WrongPasswordError()));
-              } else {
-                walletError(err.message);
-              }
-            }
-          }
-        }}
-      />
+        onBackdropPress={() => onDismiss()}>
+        <GlobalSelectContainer>
+          <GlobalSelect
+            modalContext={'buy'}
+            livenetOnly={!__DEV__}
+            useAsModal={true}
+            modalTitle={t('Select Destination')}
+            customToSelectCurrencies={buyCryptoSupportedCoinsFullObj}
+            disabledChain={undefined}
+            globalSelectOnDismiss={onDismiss}
+            selectingNetworkForDeposit={true}
+          />
+        </GlobalSelectContainer>
+      </SheetModal>
 
       <PaymentMethodsModal
         context={'buyCrypto'}

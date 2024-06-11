@@ -76,6 +76,7 @@ export enum AppActionTypes {
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
   SET_DEFAULT_CHAIN_FILTER_OPTION = 'APP/SET_DEFAULT_CHAIN_FILTER_OPTION',
   SET_LOCAL_CHAIN_FILTER_OPTION = 'APP/SET_LOCAL_CHAIN_FILTER_OPTION',
+  SET_SELECTED_NETWORK_FOR_DEPOSIT = 'APP/SET_SELECTED_NETWORK_FOR_DEPOSIT',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_MIGRATION_MMKV_STORAGE_COMPLETE = 'APP/SET_MIGRATION_MMKV_STORAGE_COMPLETE',
@@ -352,6 +353,11 @@ interface SetLocalDefaultChainFilterOption {
   type: typeof AppActionTypes.SET_LOCAL_CHAIN_FILTER_OPTION;
   selectedLocalChainFilterOption: SupportedChains | undefined;
 }
+
+interface SetSelectedNetworkForDeposit {
+  type: typeof AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT;
+  selectedNetworkForDeposit: SupportedChains | undefined;
+}
 interface SetMigrationComplete {
   type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
 }
@@ -472,5 +478,6 @@ export type AppActionType =
   | ImportLedgerModalToggled
   | SetDefaultChainFilterOption
   | SetLocalDefaultChainFilterOption
+  | SetSelectedNetworkForDeposit
   | ShowChainSelectorModal
   | DismissChainSelectorModal;

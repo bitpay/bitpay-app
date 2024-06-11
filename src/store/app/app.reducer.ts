@@ -48,6 +48,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showInAppNotification',
   'showOnGoingProcessModal',
   'showPinModal',
+  'selectedNetworkForDeposit',
 ];
 
 export type ModalId =
@@ -143,6 +144,7 @@ export interface AppState {
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   selectedChainFilterOption: SupportedChains | undefined;
   selectedLocalChainFilterOption: SupportedChains | undefined;
+  selectedNetworkForDeposit: SupportedChains | undefined;
   recentSelectedChainFilterOption: string[];
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
@@ -199,6 +201,8 @@ const initialState: AppState = {
   inAppNotificationData: undefined,
   showBottomNotificationModal: false,
   bottomNotificationModalConfig: undefined,
+  showChainSelectorModal: false,
+  chainSelectorModalConfig: undefined,
   notificationsAccepted: false,
   confirmedTxAccepted: false,
   announcementsAccepted: false,
@@ -234,6 +238,7 @@ const initialState: AppState = {
   recentDefaultAltCurrency: [],
   selectedChainFilterOption: undefined,
   selectedLocalChainFilterOption: undefined,
+  selectedNetworkForDeposit: undefined,
   recentSelectedChainFilterOption: [],
   migrationComplete: false,
   keyMigrationFailure: false,
@@ -386,6 +391,7 @@ export const appReducer = (
       return {
         ...state,
         showChainSelectorModal: false,
+        chainSelectorModalConfig: undefined,
       };
 
     case AppActionTypes.SET_COLOR_SCHEME:
@@ -660,6 +666,12 @@ export const appReducer = (
         ...state,
         selectedLocalChainFilterOption: action.selectedLocalChainFilterOption,
         recentSelectedChainFilterOption: recentSelectedLocalChainFilterOption,
+      };
+
+    case AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT:
+      return {
+        ...state,
+        selectedNetworkForDeposit: action.selectedNetworkForDeposit,
       };
 
     case AppActionTypes.SET_MIGRATION_COMPLETE:

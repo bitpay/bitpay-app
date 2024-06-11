@@ -5,19 +5,20 @@ import {
   ActiveOpacity,
 } from '../styled/Containers';
 import {RowContainer} from '../styled/Containers';
-import {H5, H7} from '../styled/Text';
+import {H5, H7, ListItemSubText} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {GlobalSelectObj} from '../../navigation/wallet/screens/GlobalSelect';
 import styled from 'styled-components/native';
 import {Slate, Slate30, SlateDark} from '../../styles/colors';
 import AngleRightSvg from '../../../assets/img/angle-right.svg';
 import {Img} from '../../navigation/tabs/home/components/Wallet';
-import {Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
+import _ from 'lodash';
 
 interface Props {
   item: GlobalSelectObj;
   hasSelectedChainFilterOption: boolean;
+  context: string;
   emit: (item: GlobalSelectObj) => void;
 }
 
@@ -35,35 +36,35 @@ export const AvailableWalletsPill = styled.View`
 export const AvailableChainContainer = styled.View`
   align-items: center;
   justify-content: center;
+  flex-direction: row;
   padding: 4px;
   margin-right: 10px;
 `;
 
-interface WalletBadgeListProps {
-  walletsByChain: {[key: string]: Wallet[]};
+interface CurrencyBadgeListProps {
+  chainsImg: {
+    [key: string]: {
+      badgeUri?: string | ((props?: any) => React.ReactElement) | undefined;
+      badgeImg?: string | ((props?: any) => React.ReactElement) | undefined;
+      priority: number | undefined;
+    };
+  };
 }
 
-const WalletBadgeList: React.FC<WalletBadgeListProps> = ({walletsByChain}) => {
-  const walletValues = Object.values(walletsByChain);
+const CurrencyBadgeList: React.FC<CurrencyBadgeListProps> = ({chainsImg}) => {
+  const chainValues = _.orderBy(Object.values(chainsImg), 'priority', 'asc');
+  let _index = 0;
   return (
     <>
-      {walletValues.map((wallets, index) => {
-        const [firstWallet] = wallets;
-        if (!firstWallet) {
-          return null;
-        }
-
-        const img =
-          firstWallet.badgeImg ||
-          (walletValues.length > 1 ? firstWallet.img : null);
+      {chainValues.map(({badgeUri, badgeImg}) => {
+        const img = badgeUri || badgeImg;
         if (!img) {
           return null;
         }
-
-        const marginLeft = index === 0 ? 1 : -6;
-
+        _index = _index + 1;
+        const marginLeft = _index === 1 ? 1 : -6;
         return (
-          <Img key={firstWallet.id} isFirst={false} style={{marginLeft}}>
+          <Img key={_.uniqueId()} isFirst={_index === 1} style={{marginLeft}}>
             <CurrencyImage img={img} size={25} />
           </Img>
         );
@@ -72,22 +73,34 @@ const WalletBadgeList: React.FC<WalletBadgeListProps> = ({walletsByChain}) => {
   );
 };
 
-const GlobalSelectRow = ({item, hasSelectedChainFilterOption, emit}: Props) => {
+const GlobalSelectRow = ({
+  item,
+  hasSelectedChainFilterOption,
+  emit,
+  context,
+}: Props) => {
   const theme = useTheme();
-  const {currencyName, total, img, availableWalletsByChain} = item;
-  const shouldShowPill = total > 1;
+  const {currencyName, currencyAbbreviation, total, img, chainsImg} = item;
+  const shouldShowPill =
+    context === 'buy' || context === 'swap' ? false : total > 1;
   return (
-    <RowContainer activeOpacity={ActiveOpacity} onPress={() => emit(item)}>
+    <RowContainer
+      noBorder={true}
+      activeOpacity={ActiveOpacity}
+      onPress={() => emit(item)}>
       <CurrencyImageContainer>
         <CurrencyImage img={img} />
       </CurrencyImageContainer>
       <CurrencyColumn>
         <H5>{currencyName.includes('Ethereum') ? 'Ethereum' : currencyName}</H5>
+        <ListItemSubText ellipsizeMode="tail" numberOfLines={1}>
+          {currencyAbbreviation.toUpperCase()}
+        </ListItemSubText>
       </CurrencyColumn>
       {shouldShowPill ? (
         <AvailableWalletsPill>
           {!hasSelectedChainFilterOption ? (
-            <WalletBadgeList walletsByChain={availableWalletsByChain} />
+            <CurrencyBadgeList chainsImg={chainsImg} />
           ) : null}
           <H7
             style={{
@@ -101,7 +114,7 @@ const GlobalSelectRow = ({item, hasSelectedChainFilterOption, emit}: Props) => {
         </AvailableWalletsPill>
       ) : !hasSelectedChainFilterOption ? (
         <AvailableChainContainer>
-          <WalletBadgeList walletsByChain={availableWalletsByChain} />
+          <CurrencyBadgeList chainsImg={chainsImg} />
         </AvailableChainContainer>
       ) : null}
       <AngleRightSvg />

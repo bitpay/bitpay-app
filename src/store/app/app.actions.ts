@@ -326,6 +326,13 @@ export const setLocalDefaultChainFilterOption = (
   selectedLocalChainFilterOption,
 });
 
+export const setSelectedNetworkForDeposit = (
+  selectedNetworkForDeposit: SupportedChains | undefined,
+): AppActionType => ({
+  type: AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT,
+  selectedNetworkForDeposit,
+});
+
 export const setMigrationComplete = (): AppActionType => ({
   type: AppActionTypes.SET_MIGRATION_COMPLETE,
 });

@@ -98,6 +98,7 @@ export const ListContainer = styled.View`
 
 interface RowContainerProps {
   isLast?: boolean;
+  noBorder?: boolean;
 }
 
 export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
@@ -106,7 +107,8 @@ export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
   padding: 10px 4px;
   margin: 0 6px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
-  border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
+  border-bottom-width: ${({isLast, noBorder}) =>
+    isLast || noBorder ? 0 : 1}px;
 `;
 
 export const RowContainerWithoutBorders = styled.TouchableOpacity<RowContainerProps>`
@@ -358,7 +360,6 @@ export const SearchRoundContainer = styled.View`
   border-radius: 100px;
   align-items: center;
   height: 50px;
-  margin: 16px 0px;
 `;
 
 export const SearchRoundInput = styled.TextInput`

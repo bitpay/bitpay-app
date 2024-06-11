@@ -14,6 +14,7 @@ import {
   SlateDark,
   White,
   ProgressBlue,
+  Black,
 } from '../../../../styles/colors';
 import {
   CtaContainer,
@@ -102,6 +103,8 @@ import {getExternalServicesConfig} from '../../../../store/external-services/ext
 import {StackActions} from '@react-navigation/native';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import styled from 'styled-components/native';
+import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
+import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 
 export interface RateData {
   fixedRateId: string;
@@ -121,11 +124,17 @@ export interface SwapCryptoCoin {
   name: string;
   protocol?: string;
   logoUri?: any;
+  badgeUri?: any;
   tokenAddress?: string;
 }
 
 const SwapCryptoContainer = styled.SafeAreaView`
   flex: 1;
+`;
+
+const GlobalSelectContainer = styled.View`
+  flex: 1;
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
 `;
 
 let swapCryptoConfig: SwapCryptoConfig | undefined;
@@ -873,6 +882,7 @@ const SwapCryptoRoot: React.FC = () => {
                 protocol,
                 blockchain: blockchain?.toLowerCase(),
                 logoUri: getLogoUri(name.toLowerCase(), chain),
+                badgeUri: getBadgeImg(name.toLowerCase(), chain),
                 tokenAddress: contractAddress,
               };
             },
@@ -1059,6 +1069,54 @@ const SwapCryptoRoot: React.FC = () => {
       dispatch(dismissOnGoingProcessModal());
       await sleep(200);
       showError(msg);
+    }
+  };
+
+  const onDismiss = async (
+    toWallet?: Wallet,
+    createToWalletData?: AddWalletData,
+  ) => {
+    hideModal('toWalletSelector');
+    if (toWallet?.currencyAbbreviation) {
+      setToWallet(toWallet);
+    } else if (createToWalletData) {
+      try {
+        if (createToWalletData.key.isPrivKeyEncrypted) {
+          logger.debug('Key is Encrypted. Trying to decrypt...');
+          await sleep(500);
+          const password = await dispatch(
+            getDecryptPassword(createToWalletData.key),
+          );
+          createToWalletData.options.password = password;
+        }
+
+        await sleep(500);
+        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+
+        const createdToWallet = await dispatch(addWallet(createToWalletData));
+        logger.debug(
+          `Added ${createdToWallet?.currencyAbbreviation} wallet from Swap Crypto`,
+        );
+        dispatch(
+          Analytics.track('Created Basic Wallet', {
+            coin: createToWalletData.currency.currencyAbbreviation,
+            chain: createToWalletData.currency.chain,
+            isErc20Token: createToWalletData.currency.isToken,
+            context: 'swapCrypto',
+          }),
+        );
+        setToWallet(createdToWallet);
+        await sleep(300);
+        dispatch(dismissOnGoingProcessModal());
+      } catch (err: any) {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        if (err.message === 'invalid password') {
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        } else {
+          showError(err.message);
+        }
+      }
     }
   };
 
@@ -1370,71 +1428,29 @@ const SwapCryptoRoot: React.FC = () => {
         }}
       />
 
-      <ToWalletSelectorModal
+      <SheetModal
         isVisible={toWalletSelectorModalVisible}
-        modalContext={'swapCrypto'}
-        // disabledChain to prevent show chain selected as source, but show the available tokens
-        disabledChain={
-          fromWalletSelected
-            ? getCurrencyAbbreviation(
-                fromWalletSelected.currencyAbbreviation,
-                fromWalletSelected.chain,
-              )
-            : undefined
-        }
-        customSupportedCurrencies={swapCryptoSupportedCoinsTo}
-        livenetOnly={true}
-        modalTitle={t('Swap To')}
-        onDismiss={async (
-          toWallet?: Wallet,
-          createToWalletData?: AddWalletData,
-        ) => {
-          hideModal('toWalletSelector');
-          if (toWallet?.currencyAbbreviation) {
-            setToWallet(toWallet);
-          } else if (createToWalletData) {
-            try {
-              if (createToWalletData.key.isPrivKeyEncrypted) {
-                logger.debug('Key is Encrypted. Trying to decrypt...');
-                await sleep(500);
-                const password = await dispatch(
-                  getDecryptPassword(createToWalletData.key),
-                );
-                createToWalletData.options.password = password;
-              }
-
-              await sleep(500);
-              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
-
-              const createdToWallet = await dispatch(
-                addWallet(createToWalletData),
-              );
-              logger.debug(
-                `Added ${createdToWallet?.currencyAbbreviation} wallet from Swap Crypto`,
-              );
-              dispatch(
-                Analytics.track('Created Basic Wallet', {
-                  coin: createToWalletData.currency.currencyAbbreviation,
-                  chain: createToWalletData.currency.chain,
-                  isErc20Token: createToWalletData.currency.isToken,
-                  context: 'swapCrypto',
-                }),
-              );
-              setToWallet(createdToWallet);
-              await sleep(300);
-              dispatch(dismissOnGoingProcessModal());
-            } catch (err: any) {
-              dispatch(dismissOnGoingProcessModal());
-              await sleep(500);
-              if (err.message === 'invalid password') {
-                dispatch(showBottomNotificationModal(WrongPasswordError()));
-              } else {
-                showError(err.message);
-              }
+        onBackdropPress={() => onDismiss()}>
+        <GlobalSelectContainer>
+          <GlobalSelect
+            modalContext={'swap'}
+            livenetOnly={true}
+            useAsModal={true}
+            modalTitle={t('Swap To')}
+            customToSelectCurrencies={swapCryptoSupportedCoinsTo}
+            disabledChain={
+              fromWalletSelected
+                ? getCurrencyAbbreviation(
+                    fromWalletSelected.currencyAbbreviation,
+                    fromWalletSelected.chain,
+                  )
+                : undefined
             }
-          }
-        }}
-      />
+            globalSelectOnDismiss={onDismiss}
+            selectingNetworkForDeposit={true}
+          />
+        </GlobalSelectContainer>
+      </SheetModal>
 
       <AmountModal
         isVisible={amountModalVisible}

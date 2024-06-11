@@ -172,6 +172,7 @@ const HeaderRightContainer = styled(_HeaderRightContainer)`
 const SearchComponentContainer = styled.View`
   padding-right: 15px;
   padding-left: 15px;
+  margin-top: 16px;
 `;
 
 export const buildUIFormattedWallet: (
