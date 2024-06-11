@@ -105,6 +105,7 @@ import {Analytics} from '../../../../store/analytics/analytics.effects';
 import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
+import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 
 export interface RateData {
   fixedRateId: string;
@@ -296,10 +297,10 @@ const SwapCryptoRoot: React.FC = () => {
 
     const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
       coin =>
-        SUPPORTED_EVM_COINS.includes(coin.currencyAbbreviation) ||
-        (!SUPPORTED_EVM_COINS.includes(coin.currencyAbbreviation) &&
+        SUPPORTED_EVM_COINS.includes(coin.chain) ||
+        (!SUPPORTED_EVM_COINS.includes(coin.chain) &&
           coin.symbol !==
-            getCurrencyAbbreviation(
+            getExternalServiceSymbol(
               fromWallet.currencyAbbreviation,
               fromWallet.chain,
             )),

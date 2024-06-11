@@ -87,6 +87,7 @@ import {BanxaPaymentMethodsData} from '../../../../store/buy-crypto/buy-crypto.m
 import cloneDeep from 'lodash.clonedeep';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
+import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -251,7 +252,7 @@ const BuyCryptoRoot = ({
           fromCurrencyAbbreviation &&
           buyCryptoSupportedCoins.includes(
             fromChain
-              ? getCurrencyAbbreviation(fromCurrencyAbbreviation, fromChain)
+              ? getExternalServiceSymbol(fromCurrencyAbbreviation, fromChain)
               : fromCurrencyAbbreviation,
           )
         ) {
@@ -286,7 +287,7 @@ const BuyCryptoRoot = ({
       wallet.credentials &&
       wallet.network === 'livenet' &&
       buyCryptoSupportedCoins.includes(
-        getCurrencyAbbreviation(
+        getExternalServiceSymbol(
           wallet.currencyAbbreviation.toLowerCase(),
           wallet.chain,
         ),
@@ -304,7 +305,7 @@ const BuyCryptoRoot = ({
       wallet.credentials &&
       wallet.network === 'livenet' &&
       buyCryptoSupportedCoins.includes(
-        getCurrencyAbbreviation(
+        getExternalServiceSymbol(
           wallet.currencyAbbreviation.toLowerCase(),
           wallet.chain,
         ),
@@ -585,7 +586,10 @@ const BuyCryptoRoot = ({
       !selectedWallet ||
       buyCryptoConfig?.banxa?.disabled ||
       !getBuyCryptoSupportedCoins(undefined, 'banxa').includes(
-        selectedWallet.currencyAbbreviation.toLowerCase(),
+        getExternalServiceSymbol(
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.chain,
+        ),
       )
     ) {
       return;

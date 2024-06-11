@@ -56,9 +56,7 @@ export const moonpaySellSupportedMaticTokens = [
   'weth', // eth_polygon in MoonpaySell
 ];
 
-export const moonpaySellSupportedArbitrumTokens = [
-  'eth', // eth_arbitrum in MoonpaySell
-];
+export const moonpaySellSupportedArbitrumTokens = [];
 
 // Currently unsupported
 // export const moonpaySellSupportedBaseTokens = [];
@@ -95,7 +93,7 @@ export const getMoonpaySellFixedCurrencyAbbreviation = (
       eth: 'eth_polygon',
       usdc: 'usdc_polygon',
     },
-    arbitrum: {
+    arb: {
       eth: 'eth_arbitrum',
     },
   };

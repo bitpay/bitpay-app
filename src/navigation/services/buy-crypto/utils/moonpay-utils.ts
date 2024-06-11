@@ -114,18 +114,15 @@ export const moonpaySupportedMaticTokens = [
 ];
 
 export const moonpaySupportedArbitrumTokens = [
-  'eth', // eth_arbitrum in Moonpay
   'magic', // magic_arbitrum in Moonpay
   'usdc', // usdc_arbitrum in Moonpay
 ];
 
 export const moonpaySupportedBaseTokens = [
-  'eth', // eth_base in Moonpay
   'usdc', // usdc_base in Moonpay
 ];
 
 export const moonpaySupportedOptimismTokens = [
-  'eth', // eth_optimism in Moonpay
   'usdc', // usdc_optimism in Moonpay
   'wld', // wld_optimism in Moonpay
 ];
@@ -172,11 +169,11 @@ export const getMoonpayFixedCurrencyAbbreviation = (
   switch (chain) {
     case 'matic':
       return coin + '_polygon';
-    case 'arbitrum':
+    case 'arb':
       return coin + '_arbitrum';
     case 'base':
       return coin + '_base';
-    case 'optimism':
+    case 'op':
       return coin + '_optimism';
     default:
       return coin;

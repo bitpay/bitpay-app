@@ -165,18 +165,15 @@ export const simplexSupportedMaticTokens = [
 
 export const simplexSupportedArbitrumTokens = [
   'arb',
-  'eth', // ETH-ARBITRUM
   'gmx',
   'usdt', // USDT-ARBITRUM
 ];
 
 export const simplexSupportedBaseTokens = [
-  'eth', // ETH-BASE
   'usdc', // USDT-BASE
 ];
 
 export const simplexSupportedOptimismTokens = [
-  'eth', // ETH-OPTIMISM
   'op',
   'usdt', // USDT-OPTIMISM
 ];
@@ -262,7 +259,7 @@ export const getSimplexCoinFormat = (coin: string, chain: string): string => {
         }
       }
       break;
-    case 'arbitrum':
+    case 'arb':
       if (simplexArbitrumTokensWithSuffix.includes(coin.toLowerCase())) {
         formattedCoin = `${coin.toUpperCase()}-ARBITRUM`;
       }
@@ -272,7 +269,7 @@ export const getSimplexCoinFormat = (coin: string, chain: string): string => {
         formattedCoin = `${coin.toUpperCase()}-BASE`;
       }
       break;
-    case 'optimism':
+    case 'op':
       if (simplexOptimismTokensWithSuffix.includes(coin.toLowerCase())) {
         formattedCoin = `${coin.toUpperCase()}-OPTIMISM`;
       }

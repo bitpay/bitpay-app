@@ -240,17 +240,11 @@ export const transakSupportedMaticTokens = [
   'zed',
 ];
 
-export const transakSupportedArbitrumTokens = [
-  'eth',
-  'gmx',
-  'spa',
-  'usdc',
-  'usds',
-];
+export const transakSupportedArbitrumTokens = ['gmx', 'spa', 'usdc', 'usds'];
 
-export const transakSupportedBaseTokens = ['eth', 'tower', 'usdc'];
+export const transakSupportedBaseTokens = ['tower', 'usdc'];
 
-export const transakSupportedOptimismTokens = ['eth', 'usdc'];
+export const transakSupportedOptimismTokens = ['usdc'];
 
 export const getTransakSupportedCurrencies = (): string[] => {
   const transakSupportedCurrencies = [
