@@ -213,10 +213,7 @@ const NetworkFeePolicy = () => {
     let feeOptions: any[] = [];
     const {feeUnit, feeUnitAmount, blockTime} = GetFeeUnits(chain);
     try {
-      const _feeLevels = await getFeeLevelsUsingBwcClient(
-        currencyAbbreviation,
-        network,
-      );
+      const _feeLevels = await getFeeLevelsUsingBwcClient(chain, network);
       if (_.isEmpty(_feeLevels)) {
         return;
       }

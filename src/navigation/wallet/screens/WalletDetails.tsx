@@ -811,7 +811,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ? `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrls}account/${address}`
             : `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrlsTestnet}account/${address}`;
       }
-      if (SUPPORTED_EVM_COINS.includes(coin)) {
+      if (SUPPORTED_EVM_COINS.includes(chain)) {
         url =
           fullWalletObj.network === 'livenet'
             ? `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrls}address/${address}`

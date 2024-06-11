@@ -85,7 +85,7 @@ export const getFeeLevels = ({
           }
 
           if (
-            SUPPORTED_EVM_COINS.includes(wallet.credentials.coin) ||
+            SUPPORTED_EVM_COINS.includes(wallet.chain) ||
             !!wallet.credentials.token
           ) {
             feeLevels = removeLowFeeLevels(feeLevels);
@@ -133,20 +133,20 @@ export const GetBitcoinSpeedUpTxFee = async (
 };
 
 export const getFeeLevelsUsingBwcClient = (
-  currencyAbbreviation: string,
+  chain: string,
   network: string,
 ): Promise<Fee[]> => {
   return new Promise((resolve, reject) => {
     const bwcClient = BWC.getClient();
     bwcClient.getFeeLevels(
-      currencyAbbreviation.toLowerCase(),
+      chain.toLowerCase(),
       network,
       (errLivenet: Error, feeLevels: Fee[]) => {
         if (errLivenet) {
           return reject(t('Could not get dynamic fee'));
         }
 
-        if (SUPPORTED_EVM_COINS.includes(currencyAbbreviation.toLowerCase())) {
+        if (SUPPORTED_EVM_COINS.includes(chain.toLowerCase())) {
           feeLevels = removeLowFeeLevels(feeLevels);
         }
 
