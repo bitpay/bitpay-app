@@ -982,7 +982,7 @@ const BuyCryptoOffers: React.FC = () => {
 
     try {
       const requestData = {
-        cryptoAssetSymbol: getRampCoinFormat(coin, chain),
+        cryptoAssetSymbol: getRampCoinFormat(coin, getRampChainFormat(chain)),
         fiatValue: offers.ramp.fiatAmount,
         fiatCurrency: offers.ramp.fiatCurrency.toUpperCase(),
         env: rampEnv,
