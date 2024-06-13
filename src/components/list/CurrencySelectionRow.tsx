@@ -133,12 +133,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
       selected,
       disabled,
       chain,
-      chainName,
     } = currency;
-
-    const subtitle = chain
-      ? chain.toUpperCase()
-      : formatCurrencyAbbreviation(currencyAbbreviation);
 
     return (
       <FlexRow
@@ -153,9 +148,11 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
         </CurrencyColumn>
 
         <CurrencyTitleColumn style={{flexGrow: 1}}>
-          <CurrencyTitle>{chainName ? chainName : currencyName}</CurrencyTitle>
+          <CurrencyTitle>{currencyName}</CurrencyTitle>
 
-          <CurrencySubTitle>{subtitle}</CurrencySubTitle>
+          <CurrencySubTitle>
+            {formatCurrencyAbbreviation(currencyAbbreviation)}
+          </CurrencySubTitle>
         </CurrencyTitleColumn>
 
         {!hideCheckbox && !disableCheckbox && (
@@ -304,9 +301,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
         <>
           <TokensHeading>
             {t('Popular {{currency}} Tokens', {
-              currency: t(
-                currencyName.includes('Ethereum') ? 'Ethereum' : currencyName,
-              ),
+              currency: chainName ? chainName : currencyName,
             })}
           </TokensHeading>
 
