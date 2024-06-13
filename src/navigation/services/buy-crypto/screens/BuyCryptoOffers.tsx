@@ -497,7 +497,7 @@ const BuyCryptoOffers: React.FC = () => {
   const [finishedSardine, setFinishedSardine] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [finishedTransak, setFinishedTransak] = useState(false);
-  const [updateView, setUpdateView] = useState(false);
+  const [updateView, setUpdateView] = useState<number>(0);
 
   const getBanxaQuote = async (): Promise<void> => {
     logger.debug('Banxa getting quote');
@@ -682,13 +682,19 @@ const BuyCryptoOffers: React.FC = () => {
       } else {
         if (err.error && err.error.error) {
           msg = err.error.error;
+        } else if (err.error && !err.message) {
+          if (typeof err.error === 'string') {
+            msg = err.error;
+          } else if (err.error.message) {
+            msg = err.error.message;
+          }
         } else if (err.message) {
           msg = err.message;
         }
       }
     }
 
-    logger.error('Banxa error: ' + msg);
+    logger.error('Banxa error: ' + msg + ' | Reason: ' + reason);
 
     dispatch(
       Analytics.track('Failed Buy Crypto', {
@@ -706,7 +712,7 @@ const BuyCryptoOffers: React.FC = () => {
     offers.banxa.errorMsg = msg;
     offers.banxa.fiatMoney = undefined;
     offers.banxa.expanded = false;
-    setUpdateView(!updateView);
+    setUpdateView(Math.random());
   };
 
   const getMoonpayQuote = async (): Promise<void> => {
@@ -886,13 +892,19 @@ const BuyCryptoOffers: React.FC = () => {
       } else {
         if (err.error && err.error.error) {
           msg = err.error.error;
+        } else if (err.error && !err.message) {
+          if (typeof err.error === 'string') {
+            msg = err.error;
+          } else if (err.error.message) {
+            msg = err.error.message;
+          }
         } else if (err.message) {
           msg = err.message;
         }
       }
     }
 
-    logger.error('Moonpay error: ' + msg);
+    logger.error('Moonpay error: ' + msg + ' | Reason: ' + reason);
 
     dispatch(
       Analytics.track('Failed Buy Crypto', {
@@ -910,7 +922,7 @@ const BuyCryptoOffers: React.FC = () => {
     offers.moonpay.errorMsg = msg;
     offers.moonpay.fiatMoney = undefined;
     offers.moonpay.expanded = false;
-    setUpdateView(!updateView);
+    setUpdateView(Math.random());
   };
 
   const getRampQuote = async (): Promise<void> => {
@@ -1114,13 +1126,19 @@ const BuyCryptoOffers: React.FC = () => {
       } else {
         if (err.error && err.error.error) {
           msg = err.error.error;
+        } else if (err.error && !err.message) {
+          if (typeof err.error === 'string') {
+            msg = err.error;
+          } else if (err.error.message) {
+            msg = err.error.message;
+          }
         } else if (err.message) {
           msg = err.message;
         }
       }
     }
 
-    logger.error('Ramp error: ' + msg);
+    logger.error('Ramp error: ' + msg + ' | Reason: ' + reason);
 
     dispatch(
       Analytics.track('Failed Buy Crypto', {
@@ -1138,7 +1156,7 @@ const BuyCryptoOffers: React.FC = () => {
     offers.ramp.errorMsg = msg;
     offers.ramp.fiatMoney = undefined;
     offers.ramp.expanded = false;
-    setUpdateView(!updateView);
+    setUpdateView(Math.random());
   };
 
   const getSardineQuote = async (): Promise<void> => {
@@ -1261,13 +1279,19 @@ const BuyCryptoOffers: React.FC = () => {
       } else {
         if (err.error && err.error.error) {
           msg = err.error.error;
+        } else if (err.error && !err.message) {
+          if (typeof err.error === 'string') {
+            msg = err.error;
+          } else if (err.error.message) {
+            msg = err.error.message;
+          }
         } else if (err.message) {
           msg = err.message;
         }
       }
     }
 
-    logger.error('Sardine error: ' + msg);
+    logger.error('Sardine error: ' + msg + ' | Reason: ' + reason);
 
     dispatch(
       Analytics.track('Failed Buy Crypto', {
@@ -1285,7 +1309,7 @@ const BuyCryptoOffers: React.FC = () => {
     offers.sardine.errorMsg = msg;
     offers.sardine.fiatMoney = undefined;
     offers.sardine.expanded = false;
-    setUpdateView(!updateView);
+    setUpdateView(Math.random());
   };
 
   const getSimplexQuote = (): void => {
@@ -1410,13 +1434,19 @@ const BuyCryptoOffers: React.FC = () => {
       } else {
         if (err.error && err.error.error) {
           msg = err.error.error;
+        } else if (err.error && !err.message) {
+          if (typeof err.error === 'string') {
+            msg = err.error;
+          } else if (err.error.message) {
+            msg = err.error.message;
+          }
         } else if (err.message) {
           msg = err.message;
         }
       }
     }
 
-    logger.error('Simplex error: ' + msg);
+    logger.error('Simplex error: ' + msg + ' | Reason: ' + reason);
 
     dispatch(
       Analytics.track('Failed Buy Crypto', {
@@ -1434,7 +1464,7 @@ const BuyCryptoOffers: React.FC = () => {
     offers.simplex.errorMsg = msg;
     offers.simplex.fiatMoney = undefined;
     offers.simplex.expanded = false;
-    setUpdateView(!updateView);
+    setUpdateView(Math.random());
   };
 
   const getTransakQuote = async (): Promise<void> => {
@@ -1603,13 +1633,19 @@ const BuyCryptoOffers: React.FC = () => {
       } else {
         if (err.error && err.error.error) {
           msg = err.error.error;
+        } else if (err.error && !err.message) {
+          if (typeof err.error === 'string') {
+            msg = err.error;
+          } else if (err.error.message) {
+            msg = err.error.message;
+          }
         } else if (err.message) {
           msg = err.message;
         }
       }
     }
 
-    logger.error('Transak error: ' + msg);
+    logger.error('Transak error: ' + msg + ' | Reason: ' + reason);
 
     dispatch(
       Analytics.track('Failed Buy Crypto', {
@@ -1627,7 +1663,7 @@ const BuyCryptoOffers: React.FC = () => {
     offers.transak.errorMsg = msg;
     offers.transak.fiatMoney = undefined;
     offers.transak.expanded = false;
-    setUpdateView(!updateView);
+    setUpdateView(Math.random());
   };
 
   const goTo = (key: string): void => {
@@ -2278,7 +2314,7 @@ const BuyCryptoOffers: React.FC = () => {
     if (offers[key]) {
       offers[key].expanded = offers[key].expanded ? false : true;
     }
-    setUpdateView(!updateView);
+    setUpdateView(Math.random());
   };
 
   const showError = (title: string, msg: string) => {
