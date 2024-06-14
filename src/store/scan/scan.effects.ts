@@ -1414,7 +1414,8 @@ const handleMoonpayUri =
             type: 'warning',
             title: t('Something went wrong'),
             message: t(
-              `It seems that the order id: ${transactionId} was not created from this wallet or has been deleted. Please try creating a new order from our Sell Crypto feature.`,
+              'It seems that the order id: {{transactionId}} was not created from this wallet or has been deleted. Please try creating a new order from our Sell Crypto feature.',
+              {transactionId},
             ),
             enableBackdropDismiss: true,
             actions: [
@@ -1444,20 +1445,23 @@ const handleMoonpayUri =
           case 'pending':
             title = t('Crypto funds already sent');
             message = t(
-              `The crypto funds from this order id: ${order.transaction_id} have already been sent to MoonPay.`,
+              'The crypto funds from this order id: {{transactionId}} have already been sent to MoonPay.',
+              {transactionId: order.transaction_id},
             );
             break;
           case 'completed':
             title = t('Order already completed');
             message = t(
-              `The sell order for the id: ${order.transaction_id} has already been completed.`,
+              'The sell order for the id: {{transactionId}} has already been completed.',
+              {transactionId: order.transaction_id},
             );
             break;
           case 'failed':
           case 'bitpayCanceled':
             title = t('Failed Order');
             message = t(
-              `Cannot continue because sell order with id: ${order.transaction_id} has failed for some reason or has been canceled. Please try creating a new order from our Sell Crypto feature.`,
+              'Cannot continue because sell order with id: {{transactionId}} has failed for some reason or has been canceled. Please try creating a new order from our Sell Crypto feature.',
+              {transactionId: order.transaction_id},
             );
             break;
         }
@@ -1504,10 +1508,16 @@ const handleMoonpayUri =
             type: 'warning',
             title: t('Something went wrong'),
             message: t(
-              `Crypto currency mismatch: ${baseCurrencyCode} / ${getMoonpaySellFixedCurrencyAbbreviation(
-                order.coin,
-                order.chain,
-              )} from the order id: ${externalId}. Can\'t continue.`,
+              "Crypto currency mismatch: {{baseCurrencyCode}} / {{moonpaySellFixedCurrency}} from the order id: {{externalId}}. Can't continue.",
+              {
+                baseCurrencyCode,
+                moonpaySellFixedCurrency:
+                  getMoonpaySellFixedCurrencyAbbreviation(
+                    order.coin,
+                    order.chain,
+                  ),
+                externalId,
+              },
             ),
             enableBackdropDismiss: true,
             actions: [
@@ -1539,9 +1549,12 @@ const handleMoonpayUri =
             type: 'warning',
             title: t('Something went wrong'),
             message: t(
-              `Crypto amount mismatch: ${Number(baseCurrencyAmount)} / ${Number(
-                order?.crypto_amount,
-              )} from the order id: ${transactionId}. Can\'t continue.`,
+              "Crypto amount mismatch: {{baseCurrencyAmount}} / {{cryptoAmount}} from the order id: {{transactionId}}. Can't continue.",
+              {
+                baseCurrencyAmount,
+                cryptoAmount: order?.crypto_amount,
+                transactionId,
+              },
             ),
             enableBackdropDismiss: true,
             actions: [
