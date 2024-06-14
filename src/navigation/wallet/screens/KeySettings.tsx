@@ -108,6 +108,10 @@ const AddWalletText = styled(Link)`
   margin: 10px 0;
 `;
 
+const SearchComponentContainer = styled.View`
+  margin: 20px 0;
+`;
+
 const KeySettings = () => {
   const {t} = useTranslation();
   const {
@@ -351,15 +355,6 @@ const KeySettings = () => {
         </WalletNameContainer>
         <Hr />
 
-        <SearchComponent<WalletRowProps>
-          searchVal={searchVal}
-          setSearchVal={setSearchVal}
-          searchResults={searchResults}
-          setSearchResults={setSearchResults}
-          searchFullList={wallets}
-          context={'keysettings'}
-        />
-
         <WalletHeaderContainer>
           <Title>{t('Wallets')}</Title>
           <InfoImageContainer infoMargin={'0 0 0 8px'}>
@@ -372,6 +367,17 @@ const KeySettings = () => {
             </TouchableOpacity>
           </InfoImageContainer>
         </WalletHeaderContainer>
+
+        <SearchComponentContainer>
+          <SearchComponent<WalletRowProps>
+            searchVal={searchVal}
+            setSearchVal={setSearchVal}
+            searchResults={searchResults}
+            setSearchResults={setSearchResults}
+            searchFullList={wallets}
+            context={'keysettings'}
+          />
+        </SearchComponentContainer>
 
         <WalletList
           wallets={
