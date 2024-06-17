@@ -39,6 +39,7 @@ import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v
 import PlusIcon from '../../../components/plus/Plus';
 import {AddButton} from '../../wallet/screens/CreateMultisig';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
+import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
 
 const WalletConnectConnectionsContainer = styled.SafeAreaView`
   flex: 1;
@@ -73,8 +74,10 @@ const WalletConnectConnections = () => {
 
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as WCV2SessionType[]);
-  const selectedChainFilterOption = useAppSelector(
-    ({APP}) => APP.selectedChainFilterOption,
+  const selectedChainFilterOption = useAppSelector(({APP}) =>
+    ignoreGlobalListContextList.includes('walletconnect')
+      ? APP.selectedLocalChainFilterOption
+      : APP.selectedChainFilterOption,
   );
 
   const [dappProposal, setDappProposal] = useState<any>();
@@ -260,7 +263,6 @@ const WalletConnectConnections = () => {
               }
             />
           ) : null}
-
           {!sessions.length ? (
             <EmptyListContainer>
               <H5>{t("It's a ghost town in here")}</H5>
