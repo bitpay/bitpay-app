@@ -176,6 +176,7 @@ export interface ToWalletSelectorCustomCurrency {
 interface ToWalletSelectorCoinObj {
   id: string;
   chain: string;
+  chainName?: string;
   currencyAbbreviation: string;
   currencyName: string;
   tokenAddress?: string;
@@ -282,6 +283,9 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
   const DESCRIPTIONS: Record<string, string> = {
     eth: t('TokensOnEthereumNetworkDescription'),
     matic: t('TokensOnPolygonNetworkDescription'),
+    arb: t('TokensOnArbNetworkDescription'),
+    base: t('TokensOnBaseNetworkDescription'),
+    op: t('TokensOnOpNetworkDescription'),
   };
   // object to pass to select modal
   const [keyWallets, setKeysWallets] =
@@ -582,7 +586,8 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
   };
 
   const renderItem = ({item}: {item: ToWalletSelectorChainObj}) => {
-    const {currencyName, currencyAbbreviation, total, img, tokens} = item;
+    const {currencyName, chainName, currencyAbbreviation, total, img, tokens} =
+      item;
     return (
       <ChainCointainer key={item.id}>
         <RowContainer
@@ -619,7 +624,9 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
             ) : null}
             {DESCRIPTIONS[currencyAbbreviation] ? (
               <TokensHeading>
-                {t('Popular {{currency}} Tokens', {currency: currencyName})}
+                {t('Popular {{currency}} Tokens', {
+                  currency: chainName ? chainName : currencyName,
+                })}
               </TokensHeading>
             ) : null}
           </>

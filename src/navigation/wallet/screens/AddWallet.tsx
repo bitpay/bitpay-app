@@ -255,6 +255,9 @@ const AddWallet = ({
   const DESCRIPTIONS: Record<string, string> = {
     eth: t('TokensOnEthereumNetworkDescription'),
     matic: t('TokensOnPolygonNetworkDescription'),
+    arb: t('TokensOnArbNetworkDescription'),
+    base: t('TokensOnBaseNetworkDescription'),
+    op: t('TokensOnOpNetworkDescription'),
   };
 
   const [
