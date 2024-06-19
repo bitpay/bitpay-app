@@ -36,6 +36,7 @@ import {IsSegwitCoin} from '../../utils/currency';
 export interface CreateOptions {
   network?: Network;
   account?: number;
+  customAccount?: boolean;
   useNativeSegwit?: boolean;
   singleAddress?: boolean;
   walletName?: string;
@@ -366,7 +367,14 @@ const createWallet =
       const {key, coin, chain, options, context} = params;
 
       // set defaults
-      const {account, network, password, singleAddress, useNativeSegwit} = {
+      const {
+        account,
+        customAccount,
+        network,
+        password,
+        singleAddress,
+        useNativeSegwit,
+      } = {
         ...DEFAULT_CREATION_OPTIONS,
         ...options,
       };
@@ -400,6 +408,9 @@ const createWallet =
             switch (err.name) {
               case 'bwc.ErrorCOPAYER_REGISTERED': {
                 if (context === 'WalletConnect') {
+                  return reject(err);
+                }
+                if (customAccount) {
                   return reject(err);
                 }
 

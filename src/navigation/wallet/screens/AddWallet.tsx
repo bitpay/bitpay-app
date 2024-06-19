@@ -497,7 +497,7 @@ const AddWallet = ({
               useNativeSegwit,
               singleAddress,
               walletName: walletName === currencyName ? undefined : walletName,
-              ...(account && {account}),
+              ...(account && {account, customAccount: customAccount}),
             },
           }),
         );
