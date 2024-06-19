@@ -1,6 +1,6 @@
 {
   "name": "bitpay",
-  "version": "14.21.1",
+  "version": "14.21.2",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -75,7 +75,7 @@
     "babel-plugin-module-resolver": "4.1.0",
     "big-integer": "1.6.51",
     "bitauth": "0.4.1",
-    "bitcore-wallet-client": "10.0.37",
+    "bitcore-wallet-client": "10.0.42",
     "buffer": "4.9.2",
     "countries-list": "2.6.1",
     "eth-sig-util": "3.0.1",
