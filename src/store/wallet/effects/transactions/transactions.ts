@@ -85,6 +85,10 @@ export const ProcessPendingTxps =
     const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
+      // Filter received txs with no effects for ERC20 tokens only
+      if (IsERCToken(currencyAbbreviation, chain) && !tx.effects?.[0]) {
+        return;
+      }
       tx = dispatch(ProcessTx(tx, wallet));
 
       // no future transactions...
@@ -204,7 +208,7 @@ const ProcessTx =
     }
 
     // New data structure for ERC20 token transactions
-    if (tx.effects && tx.effects.length > 0 && IsERCToken(tx.coin, tx.chain)) {
+    if (tx.effects?.[0] && IsERCToken(tx.coin, tx.chain)) {
       tx.amount = tx.effects.reduce(
         (total, {amount}) => total + Number(amount),
         0,
@@ -265,6 +269,11 @@ const ProcessNewTxs =
       // workaround for BWS bug / coin is missing and chain is in uppercase
       tx.coin = wallet.currencyAbbreviation;
       tx.chain = wallet.chain;
+
+      // Filter received txs with no effects for ERC20 tokens only
+      if (IsERCToken(tx.coin, tx.chain) && !tx.effects?.[0]) {
+        continue;
+      }
 
       tx = dispatch(ProcessTx(tx, wallet));
 
