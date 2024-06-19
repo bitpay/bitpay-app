@@ -1265,21 +1265,21 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       <GlobalSelectContainer>
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) && (
-            <SearchComponentContainer>
-              <SearchComponent<GlobalSelectObj>
-                searchVal={searchVal}
-                setSearchVal={setSearchVal}
-                searchResults={searchResults}
-                setSearchResults={setSearchResults}
-                searchFullList={
-                  customCurrenciesSupportedList.length > 0
-                    ? customCurrenciesSupportedList
-                    : currenciesSupportedList
-                }
-                context={context}
-                onModalHide={onChainSelectorModalHide}
-              />
-            </SearchComponentContainer>
+          <SearchComponentContainer>
+            <SearchComponent<GlobalSelectObj>
+              searchVal={searchVal}
+              setSearchVal={setSearchVal}
+              searchResults={searchResults}
+              setSearchResults={setSearchResults}
+              searchFullList={
+                customCurrenciesSupportedList.length > 0
+                  ? customCurrenciesSupportedList
+                  : currenciesSupportedList
+              }
+              context={context}
+              onModalHide={onChainSelectorModalHide}
+            />
+          </SearchComponentContainer>
         )}
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) && (

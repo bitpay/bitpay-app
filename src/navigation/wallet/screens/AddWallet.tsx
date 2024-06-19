@@ -351,15 +351,27 @@ const AddWallet = ({
     }
 
     // Extract rootPaths from wallets
-    const rootPaths = key.wallets.map(wallet => wallet.credentials.rootPath);
+    const rootPaths = key.wallets.map(
+      wallet => `${wallet.credentials.rootPath}:${wallet.chain}`,
+    );
+
+    const extractAccountIndex = (rootPath: string) => {
+      const match = rootPath.match(/m\/44'\/60'\/(\d+)'/);
+      return match ? parseInt(match[1], 10) : null;
+    };
+
+    const doesAccountIndexExist = (index: number, chain: string) => {
+      return rootPaths.some(path => {
+        const [pathRoot, pathChain] = path.split(':');
+        const accountIndex = extractAccountIndex(pathRoot);
+        return accountIndex === index && pathChain === chain;
+      });
+    };
+
     // Display associated wallets under the following conditions:
     // 1. The wallet is part of a Layer 2 chain and no other wallet from the specified Layer 2 chain exists for the account.
     // 2. The wallet is an ERC20 token.
-    const IS_ETH_CREATION = currencyAbbreviation === 'eth';
     const IS_TOKEN_CREATION = isToken;
-    if (IS_ETH_CREATION) {
-      return; // Stop execution if creating an ETH wallet since no associated wallets are needed
-    }
     const isWalletSupported = (wallet: Wallet): boolean => {
       // Check if the wallet is an ERC token, tokens are not associated wallets
       const _isToken = IsERCToken(wallet.currencyAbbreviation, wallet.chain);
@@ -380,12 +392,23 @@ const AddWallet = ({
       } else if (IS_TOKEN_CREATION) {
         return false;
       }
-      // Ensure only one wallet from the specified Layer 2 chain exists for the account.
-      const isNotAlreadyIncluded =
-        rootPaths.filter(item => item === wallet.credentials.rootPath)
-          .length === 1;
 
-      return isNotAlreadyIncluded && !isSameChain;
+      const accountIndex = extractAccountIndex(wallet.credentials.rootPath);
+
+      // Check if the account index exists for the same chain or other chains
+      if (accountIndex !== null) {
+        const accountExistsForOtherChains = SUPPORTED_EVM_COINS.some(
+          supportedChain =>
+            supportedChain !== wallet.chain &&
+            doesAccountIndexExist(accountIndex, supportedChain),
+        );
+
+        if (accountExistsForOtherChains) {
+          return false;
+        }
+      }
+
+      return !isSameChain;
     };
 
     const _evmWallets = key.wallets.filter(isWalletSupported);
@@ -477,7 +500,7 @@ const AddWallet = ({
               useNativeSegwit,
               singleAddress,
               walletName: walletName === currencyName ? undefined : walletName,
-              ...(account && {account}),
+              ...(account && {account, customAccount: customAccount}),
             },
           }),
         );

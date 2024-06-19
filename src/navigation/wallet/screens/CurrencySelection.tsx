@@ -126,8 +126,7 @@ export const SearchContainer = styled.View`
 `;
 
 const SearchComponentContainer = styled.View`
-  padding-right: 15px;
-  padding-left: 15px;
+  margin: 15px;
 `;
 
 const SupportedMultisigCurrencyOptions: SupportedCurrencyOption[] =
@@ -841,16 +840,18 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
 
   return (
     <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
-      <SearchComponentContainer>
-        <SearchComponent<CurrencySelectionListItem>
-          searchVal={searchVal}
-          setSearchVal={setSearchVal}
-          searchResults={searchResults}
-          setSearchResults={setSearchResults}
-          searchFullList={filteredListItems}
-          context={context}
-        />
-      </SearchComponentContainer>
+      {context !== 'addWalletMultisig' ? (
+        <SearchComponentContainer>
+          <SearchComponent<CurrencySelectionListItem>
+            searchVal={searchVal}
+            setSearchVal={setSearchVal}
+            searchResults={searchResults}
+            setSearchResults={setSearchResults}
+            searchFullList={filteredListItems}
+            context={context}
+          />
+        </SearchComponentContainer>
+      ) : null}
 
       {filteredListItems.length ? (
         <ListContainer>
