@@ -92,7 +92,7 @@ import {
 import {Network} from '../../../constants';
 import {SwapCryptoCoin} from '../../services/swap-crypto/screens/SwapCryptoRoot';
 import Icons from '../../wallet/components/WalletIcons';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {FadeIn} from 'react-native-reanimated';
 
 const ModalHeader = styled.View`
   height: 50px;

@@ -81,8 +81,6 @@ const GlobalSelectRow = ({
 }: Props) => {
   const theme = useTheme();
   const {currencyName, currencyAbbreviation, total, img, chainsImg} = item;
-  const shouldShowPill =
-    context === 'buy' || context === 'swap' ? false : total > 1;
   return (
     <RowContainer
       noBorder={true}
@@ -97,22 +95,7 @@ const GlobalSelectRow = ({
           {currencyAbbreviation.toUpperCase()}
         </ListItemSubText>
       </CurrencyColumn>
-      {shouldShowPill ? (
-        <AvailableWalletsPill>
-          {!hasSelectedChainFilterOption ? (
-            <CurrencyBadgeList chainsImg={chainsImg} />
-          ) : null}
-          <H7
-            style={{
-              marginLeft: 5,
-              marginRight: 5,
-              color: theme.dark ? Slate : SlateDark,
-            }}
-            medium={true}>
-            +{total}
-          </H7>
-        </AvailableWalletsPill>
-      ) : !hasSelectedChainFilterOption ? (
+      {!hasSelectedChainFilterOption ? (
         <AvailableChainContainer>
           <CurrencyBadgeList chainsImg={chainsImg} />
         </AvailableChainContainer>
