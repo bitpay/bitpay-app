@@ -67,14 +67,12 @@ const SwapHistorySelector = () => {
     },
   };
 
-  console.log('========== allSwapExchangesData: ', allSwapExchangesData);
-
   return (
     <SettingsContainer>
       <SettingsHomeContainer>
         <SettingsComponent>
           {Object.values(allSwapExchangesData).map((exchange: ExchangeData) => {
-            return (
+            return exchange.showExchange ? (
               <View>
                 <>
                   <Setting
@@ -87,14 +85,18 @@ const SwapHistorySelector = () => {
                       <ExternalServicesIconContainer>
                         {exchange.logo}
                       </ExternalServicesIconContainer>
-                      <SettingTitle>{`${exchange.exchangeName} (${exchange.txCount})`}</SettingTitle>
+                      <SettingTitle>{`${exchange.exchangeName}${
+                        exchange.txCount > 0
+                          ? ' (' + exchange.txCount + ')'
+                          : ''
+                      }`}</SettingTitle>
                     </ExternalServicesItemContainer>
                     <AngleRight />
                   </Setting>
                   <Hr />
                 </>
               </View>
-            );
+            ) : null;
           })}
         </SettingsComponent>
       </SettingsHomeContainer>
