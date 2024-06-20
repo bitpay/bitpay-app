@@ -880,7 +880,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>{t('Selling')}</RowLabel>
+          <RowLabel>{t('Swapping')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
               <CoinIconContainer>

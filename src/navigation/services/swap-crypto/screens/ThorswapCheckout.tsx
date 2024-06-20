@@ -43,6 +43,7 @@ import {
   GetName,
   GetPrecision,
   IsERCToken,
+  IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
 import {
   FormatAmountStr,
@@ -128,6 +129,7 @@ import {
   ThorswapGetSwapTxRequestData,
   ThorswapProvider,
   ThorswapQuoteRoute,
+  ThorswapRouteCalldata,
   ThorswapTrackingStatus,
   ThorswapTransaction,
 } from '../../../../store/swap-crypto/models/thorswap.models';
@@ -135,6 +137,7 @@ import {
   THORSWAP_DEFAULT_GAS_LIMIT,
   THORSWAP_DEFAULT_SLIPPAGE,
 } from '../constants/ThorswapConstants';
+import {ExchangeConfig} from '../../../../store/external-services/external-services.types';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -148,6 +151,7 @@ export interface ThorswapCheckoutProps {
   amountFrom: number;
   spenderKey?: ThorswapProvider | undefined;
   slippage?: number;
+  thorswapConfig?: ExchangeConfig;
   useSendMax?: boolean;
   sendMaxInfo?: SendMaxInfo;
 }
@@ -162,6 +166,7 @@ const ThorswapCheckout: React.FC = () => {
       amountFrom,
       spenderKey,
       slippage,
+      thorswapConfig,
       useSendMax,
       sendMaxInfo,
     },
@@ -306,6 +311,20 @@ const ThorswapCheckout: React.FC = () => {
       slippage: slippage ?? THORSWAP_DEFAULT_SLIPPAGE,
     };
 
+    if (thorswapConfig?.config) {
+      if (thorswapConfig.config.affiliateAddress) {
+        requestData.affiliateAddress = thorswapConfig.config.affiliateAddress;
+        if (thorswapConfig.config.affiliateBasisPoints) {
+          requestData.affiliateBasisPoints =
+            thorswapConfig.config.affiliateBasisPoints ?? 100; // 100 = 1%
+          requestData.isAffiliateFeeFlat =
+            thorswapConfig.config.isAffiliateFeeFlat !== undefined
+              ? thorswapConfig.config.isAffiliateFeeFlat
+              : true;
+        }
+      }
+    }
+
     let thorswapQuoteData: ThorswapGetSwapQuoteData | undefined;
     try {
       thorswapQuoteData = await thorswapGetSwapQuote(requestData);
@@ -353,42 +372,83 @@ const ThorswapCheckout: React.FC = () => {
     setRouteToUse(bestRouteData);
 
     let thorswapFee = 0;
-    let apiExtraFee = 0;
+    let bitpayFee = 0;
     let totalFee = 0;
 
-    if (
-      bestRouteData.fees &&
-      bestRouteData.fees[fromWalletSelected.chain.toUpperCase()]
-    ) {
-      // TODO: review this fees handling
-      const feeData =
-        bestRouteData.fees[fromWalletSelected.chain.toUpperCase()][0];
-      thorswapFee = Number(feeData.networkFee);
-      apiExtraFee = Number(feeData.affiliateFee);
-      totalFee = Number(feeData.totalFee);
+    if (bestRouteData.fees) {
+      const thorswapFeeData = bestRouteData.fees;
+      const _chain = cloneDeep(fromWalletSelected.chain).toUpperCase();
+
+      if (thorswapFeeData[_chain]) {
+        if (Array.isArray(thorswapFeeData[_chain])) {
+          thorswapFeeData[_chain].forEach(e => {
+            if (e.affiliateFeeUSD) {
+              thorswapFee += Number(e.affiliateFeeUSD);
+            }
+            if (e.type === 'outbound' && e.networkFeeUSD) {
+              thorswapFee += Number(e.networkFeeUSD);
+            }
+          });
+        }
+      }
+
+      if (thorswapFeeData.THOR) {
+        if (Array.isArray(thorswapFeeData.THOR)) {
+          thorswapFeeData.THOR.forEach(e => {
+            if (e.affiliateFeeUSD) {
+              thorswapFee += Number(e.affiliateFeeUSD);
+            }
+            if (e.type === 'outbound' && e.networkFeeUSD) {
+              thorswapFee += Number(e.networkFeeUSD);
+            }
+          });
+        }
+      }
+
+      if (requestData.affiliateBasisPoints && bestRouteData.expectedOutputUSD) {
+        const affiliatePrcnt = Number(requestData.affiliateBasisPoints) / 100;
+        bitpayFee =
+          Number(bestRouteData.expectedOutputUSD) * (affiliatePrcnt / 100);
+      }
+
+      totalFee = thorswapFee + bitpayFee;
       setTotalExchangeFee(totalFee);
       logger.debug(
-        `Thorswap fee: ${thorswapFee} - BitPay fee: ${apiExtraFee} - Total fee: ${totalFee}`,
+        `Thorswap fee: ${thorswapFee} USD - BitPay fee: ${bitpayFee} USD - Total Exchange fee: ${totalFee} USD`,
       );
     }
 
-    if (bestRouteData.transaction?.to && bestRouteData.transaction?.to !== '') {
-      payinAddress = bestRouteData.transaction?.to;
-    } else if (
-      bestRouteData.targetAddress &&
-      bestRouteData.targetAddress !== ''
-    ) {
-      payinAddress = bestRouteData.targetAddress;
+    if (IsUtxoChain(fromWalletSelected.chain)) {
+      // UTXO Chains
+      if (
+        bestRouteData.calldata?.vault &&
+        bestRouteData.calldata?.vault !== ''
+      ) {
+        payinAddress = bestRouteData.calldata.vault;
+      }
     } else {
-      logger.error(
-        'Thorswap createThorswapTransaction Error: Destination address not present',
-      );
-      const msg = t(
-        'Thorswap is not available at this moment. Please try again later.',
-      );
-      const reason = 'thorswapGetQuote Error. Necessary data not included.';
-      showError(msg, reason);
-      return;
+      // EVM Chains
+      if (
+        bestRouteData.transaction?.to &&
+        bestRouteData.transaction?.to !== ''
+      ) {
+        payinAddress = bestRouteData.transaction?.to;
+      } else if (
+        bestRouteData.targetAddress &&
+        bestRouteData.targetAddress !== ''
+      ) {
+        payinAddress = bestRouteData.targetAddress;
+      } else {
+        logger.error(
+          'Thorswap createThorswapTransaction Error: Destination address not present',
+        );
+        const msg = t(
+          'Thorswap is not available at this moment. Please try again later.',
+        );
+        const reason = 'thorswapGetQuote Error. Necessary data not included.';
+        showError(msg, reason);
+        return;
+      }
     }
 
     if (
@@ -472,14 +532,17 @@ const ThorswapCheckout: React.FC = () => {
       (amountExpectedFrom * precision!.unitToSatoshi).toFixed(0),
     );
 
-    createTx(
-      fromWalletSelected,
-      payinAddress,
-      depositSat,
-      bestRouteData.transaction,
-      payinExtraId,
-    )
-      .then(async ctxp => {
+    try {
+      const ctxp = await createTx(
+        fromWalletSelected,
+        payinAddress,
+        depositSat,
+        bestRouteData.transaction,
+        bestRouteData.calldata,
+        payinExtraId,
+      );
+
+      if (ctxp) {
         setCtxp(ctxp);
         setFee(ctxp.fee);
 
@@ -503,17 +566,16 @@ const ThorswapCheckout: React.FC = () => {
             fromWalletSelected.tokenAddress,
           );
         }
-        return;
-      })
-      .catch(err => {
-        let msg = t('Error creating transaction');
-        if (typeof err?.message === 'string') {
-          msg = msg + `: ${err.message}`;
-        }
-        const reason = 'createTx Error';
-        showError(msg, reason);
-        return;
-      });
+      }
+    } catch (err: any) {
+      let msg = t('Error creating transaction');
+      if (err?.message && typeof err.message === 'string') {
+        msg = msg + `: ${err.message}`;
+      }
+      const reason = 'createTx Error';
+      showError(msg, reason);
+      return;
+    }
   };
 
   const paymentTimeControl = (expires: string | number): void => {
@@ -563,6 +625,7 @@ const ThorswapCheckout: React.FC = () => {
     payinAddress: string,
     depositSat: number,
     thorswapTransaction?: ThorswapTransaction,
+    thorswapCalldata?: ThorswapRouteCalldata,
     destTag?: string,
   ) => {
     try {
@@ -573,8 +636,10 @@ const ThorswapCheckout: React.FC = () => {
         ' ' +
         toWalletSelected.currencyAbbreviation.toUpperCase();
 
+      let outputs: TransactionProposalOutputs[] = [];
       let calldata: string | undefined;
       let gasLimit: number | undefined;
+
       if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
         logger.debug('WalletFrom is ERC20 Token: building ERC20 txp');
 
@@ -624,22 +689,69 @@ const ThorswapCheckout: React.FC = () => {
             gasLimit = THORSWAP_DEFAULT_GAS_LIMIT;
           }
         }
-      }
 
-      let outputs: TransactionProposalOutputs[] = [];
-      outputs.push({
-        toAddress: payinAddress,
-        amount: depositSat,
-        message: message,
-        data: calldata,
-        gasLimit,
-      });
+        outputs.push({
+          toAddress: payinAddress,
+          amount: depositSat,
+          message: message,
+          data: calldata,
+          gasLimit,
+        });
+      } else {
+        if (IsUtxoChain(fromWalletSelected.chain)) {
+          // UTXO Chains
+          if (thorswapCalldata?.memo && thorswapCalldata?.memo !== '') {
+            // Convert memo string to bytes
+            const bytes = new TextEncoder().encode(thorswapCalldata.memo);
+            // Convert bytes to hexa
+            const hexMemo = bytes.reduce(
+              (str, byte) => str + byte.toString(16).padStart(2, '0'),
+              '',
+            );
+            // Calculate bytes
+            const hexLength = hexMemo.length / 2;
+            const byteCount = Math.ceil(hexLength);
+            // Check if byteCount is valid for OP_PUSHBYTES_<byteCount>. Max: 75
+            if (byteCount > 75) {
+              throw new Error(
+                `Memo is too big for OP_PUSHBYTES_<byteCount>. Size: ${byteCount}`,
+              );
+            }
+            // Generarte OP_PUSHBYTES_<byteCount> in hex
+            const opPushBytes = byteCount.toString(16).padStart(2, '0');
+            const op_return_hex = '6a';
+
+            const _script = `${op_return_hex}${opPushBytes}${hexMemo}`;
+            logger.debug(
+              `Result script to include in ${fromWalletSelected.chain} tx: ${_script}`,
+            );
+
+            outputs.push({
+              toAddress: payinAddress,
+              amount: depositSat,
+              message: message,
+            });
+
+            outputs.push({
+              script: _script,
+              amount: 0,
+            });
+          }
+        } else {
+          // EVM Chains (No tokens)
+          outputs.push({
+            toAddress: payinAddress,
+            amount: depositSat,
+            message: message,
+          });
+        }
+      }
 
       let txp: Partial<TransactionProposal> = {
         toAddress: payinAddress,
-        amount: 0,
-        coin: wallet.currencyAbbreviation,
-        chain: wallet.chain,
+        amount: depositSat,
+        coin: wallet.currencyAbbreviation.toLowerCase(),
+        chain: wallet.chain.toLowerCase(),
         outputs,
         message: message,
         excludeUnconfirmedUtxos: true, // Do not use unconfirmed UTXOs
@@ -672,6 +784,7 @@ const ThorswapCheckout: React.FC = () => {
           }
         }
       }
+
       if (useSendMax && sendMaxInfo) {
         txp.inputs = sendMaxInfo.inputs;
         txp.fee = sendMaxInfo.fee;
@@ -984,7 +1097,7 @@ const ThorswapCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>{t('Selling')}</RowLabel>
+          <RowLabel>{t('Swapping')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
               <CoinIconContainer>
@@ -1072,8 +1185,7 @@ const ThorswapCheckout: React.FC = () => {
                 <RowDataContainer>
                   <RowLabel>{t('Exchange Fee')}</RowLabel>
                   <RowData>
-                    {Number(totalExchangeFee).toFixed(6)}{' '}
-                    {toWalletSelected.chain.toUpperCase()}
+                    {Number(totalExchangeFee).toFixed(6)} {'USD'}
                   </RowData>
                 </RowDataContainer>
                 <ItemDivisor />

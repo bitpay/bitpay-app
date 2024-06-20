@@ -1,8 +1,6 @@
 import {t} from 'i18next';
 import cloneDeep from 'lodash.clonedeep';
 import {
-  ThorswapCurrency,
-  ThorswapGetSwapQuoteData,
   ThorswapProvider,
   ThorswapQuoteRoute,
   ThorswapRouteTimeEstimates,
@@ -810,6 +808,12 @@ export const thorswapGetStatusDetails = (
     case ThorswapTrackingStatus.not_started:
       statusTitle = t('Processing transaction');
       statusDescription = t('The transaction process has not yet begun.');
+      break;
+    case ThorswapTrackingStatus.pending:
+      statusTitle = t('Pending transaction');
+      statusDescription = t(
+        'The transaction process has been initiated. Pending confirmation to start the swap.',
+      );
       break;
     case ThorswapTrackingStatus.outbound:
       statusTitle = t('Processing transaction');

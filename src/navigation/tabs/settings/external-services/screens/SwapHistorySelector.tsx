@@ -67,6 +67,8 @@ const SwapHistorySelector = () => {
     },
   };
 
+  console.log('========== allSwapExchangesData: ', allSwapExchangesData);
+
   return (
     <SettingsContainer>
       <SettingsHomeContainer>
@@ -74,21 +76,23 @@ const SwapHistorySelector = () => {
           {Object.values(allSwapExchangesData).map((exchange: ExchangeData) => {
             return (
               <View>
-                <Setting
-                  key={exchange.key}
-                  onPress={() => {
-                    haptic('impactLight');
-                    navigation.navigate(exchange.screenHistory);
-                  }}>
-                  <ExternalServicesItemContainer>
-                    <ExternalServicesIconContainer>
-                      {exchange.logo}
-                    </ExternalServicesIconContainer>
-                    <SettingTitle>{`${exchange.exchangeName} (${exchange.txCount})`}</SettingTitle>
-                  </ExternalServicesItemContainer>
-                  <AngleRight />
-                </Setting>
-                <Hr />
+                <>
+                  <Setting
+                    key={exchange.key}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate(exchange.screenHistory);
+                    }}>
+                    <ExternalServicesItemContainer>
+                      <ExternalServicesIconContainer>
+                        {exchange.logo}
+                      </ExternalServicesIconContainer>
+                      <SettingTitle>{`${exchange.exchangeName} (${exchange.txCount})`}</SettingTitle>
+                    </ExternalServicesItemContainer>
+                    <AngleRight />
+                  </Setting>
+                  <Hr />
+                </>
               </View>
             );
           })}
