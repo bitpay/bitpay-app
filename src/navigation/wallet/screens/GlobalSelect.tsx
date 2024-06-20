@@ -92,6 +92,7 @@ import {
 import {Network} from '../../../constants';
 import {SwapCryptoCoin} from '../../services/swap-crypto/screens/SwapCryptoRoot';
 import Icons from '../../wallet/components/WalletIcons';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -633,6 +634,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [dataToDisplay, setDataToDisplay] = useState<GlobalSelectObj[]>([]);
+  const [revealCurrenciesSupportedList, setRevealCurrenciesSupportedList] =
+    useState(false);
   const [chainSelectorModalIsVisible, setChainSelectorModalIsVisible] =
     useState(false);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
@@ -664,6 +667,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   // object to pass to select modal
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
+
+  useState(() => {
+    setTimeout(() => setRevealCurrenciesSupportedList(true), 400);
+  }, []);
 
   const NON_BITPAY_SUPPORTED_TOKENS = Array.from(
     new Set(
@@ -1341,47 +1348,49 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           </SearchComponentContainer>
         )}
         {(currenciesSupportedList?.length > 0 ||
-          customCurrenciesSupportedList.length > 0) && (
-          <FlatList
-            contentContainerStyle={{paddingBottom: 150}}
-            data={
-              !searchVal && !selectedChainFilterOption
-                ? dataToDisplay
-                : searchResults
-            }
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            getItemLayout={(data, index) => ({
-              length: 75,
-              offset: 75 * index,
-              index,
-            })}
-            initialNumToRender={20}
-            maxToRenderPerBatch={20}
-            windowSize={21}
-            onEndReached={onEndReached}
-            onEndReachedThreshold={0.3}
-            ListFooterComponent={() =>
-              !searchVal && !selectedChainFilterOption ? (
-                isLoading ? (
-                  <View style={{flex: 1}}>
-                    <ActivityIndicator
-                      style={{
-                        paddingVertical: 20,
-                        alignItems: 'center',
-                        height: 60,
-                      }}
-                      size="large"
-                      color={SlateDark}
-                    />
-                  </View>
-                ) : (
-                  <View style={{flex: 1, height: 60}} />
-                )
-              ) : null
-            }
-          />
-        )}
+          customCurrenciesSupportedList.length > 0) &&
+          revealCurrenciesSupportedList && (
+            <Animated.FlatList
+              entering={FadeIn.duration(300)}
+              contentContainerStyle={{paddingBottom: 150}}
+              data={
+                !searchVal && !selectedChainFilterOption
+                  ? dataToDisplay
+                  : searchResults
+              }
+              keyExtractor={keyExtractor}
+              renderItem={renderItem}
+              getItemLayout={(data, index) => ({
+                length: 75,
+                offset: 75 * index,
+                index,
+              })}
+              initialNumToRender={20}
+              maxToRenderPerBatch={20}
+              windowSize={21}
+              onEndReached={onEndReached}
+              onEndReachedThreshold={0.3}
+              ListFooterComponent={() =>
+                !searchVal && !selectedChainFilterOption ? (
+                  isLoading ? (
+                    <View style={{flex: 1}}>
+                      <ActivityIndicator
+                        style={{
+                          paddingVertical: 20,
+                          alignItems: 'center',
+                          height: 60,
+                        }}
+                        size="large"
+                        color={SlateDark}
+                      />
+                    </View>
+                  ) : (
+                    <View style={{flex: 1, height: 60}} />
+                  )
+                ) : null
+              }
+            />
+          )}
         {currenciesSupportedList.length === 0 &&
         customCurrenciesSupportedList.length === 0 ? (
           <>
