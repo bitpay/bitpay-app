@@ -92,7 +92,7 @@ import {Analytics} from '../analytics/analytics.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
 import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
-import {IsUtxoCoin} from '../wallet/utils/currency';
+import {IsUtxoChain} from '../wallet/utils/currency';
 import {BWCErrorMessage} from '../../constants/BWCError';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {MoonpaySellIncomingData} from '../sell-crypto/sell-crypto.models';
@@ -1154,7 +1154,7 @@ const handleBuyCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoCoin(coin)) {
+      if (IsUtxoChain(coin)) {
         chain = coin;
       } else {
         coin = undefined;
@@ -1215,7 +1215,7 @@ const handleSellCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoCoin(coin)) {
+      if (IsUtxoChain(coin)) {
         chain = coin;
       } else {
         coin = undefined;

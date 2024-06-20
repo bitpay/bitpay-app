@@ -41,7 +41,7 @@ import {
   XrpAccountParams,
   currencyConfigs,
 } from './SelectLedgerCurrency';
-import {IsUtxoCoin} from '../../../../store/wallet/utils/currency';
+import {IsUtxoChain} from '../../../../store/wallet/utils/currency';
 import {
   successCreateKey,
   updatePortfolioBalance,
@@ -400,7 +400,7 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       return;
     }
     const params = configFn(network);
-    if (IsUtxoCoin(chain)) {
+    if (IsUtxoChain(chain)) {
       return importUtxoAccount(params as UtxoAccountParams);
     }
     if (['eth', 'matic', 'arb', 'op', 'base'].includes(chain)) {

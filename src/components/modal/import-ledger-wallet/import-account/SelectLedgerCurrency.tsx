@@ -37,7 +37,7 @@ import {
   getLedgerErrorMessage,
   prepareLedgerApp,
 } from '../utils';
-import {IsUtxoCoin} from '../../../../store/wallet/utils/currency';
+import {IsUtxoChain} from '../../../../store/wallet/utils/currency';
 import axios from 'axios';
 import {buildKeyObj} from '../../../../store/wallet/utils/wallet';
 import {
@@ -921,7 +921,7 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
       return;
     }
     const params = configFn(network);
-    if (IsUtxoCoin(chain)) {
+    if (IsUtxoChain(chain)) {
       return importUtxoAccount(params as UtxoAccountParams);
     }
     if (['eth', 'matic', 'op', 'arb', 'base'].includes(chain)) {
