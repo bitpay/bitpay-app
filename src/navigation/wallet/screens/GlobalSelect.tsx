@@ -634,7 +634,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [dataToDisplay, setDataToDisplay] = useState<GlobalSelectObj[]>([]);
-  const [revealCurrenciesSupportedList, setRevealCurrenciesSupportedList] =
+  const [showInitiallyHiddenComponents, setShowInitiallyHiddenComponents] =
     useState(false);
   const [chainSelectorModalIsVisible, setChainSelectorModalIsVisible] =
     useState(false);
@@ -668,8 +668,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
 
-  useState(() => {
-    setTimeout(() => setRevealCurrenciesSupportedList(true), 400);
+  useState(async () => {
+    await sleep(400);
+    setShowInitiallyHiddenComponents(true);
   }, []);
 
   const NON_BITPAY_SUPPORTED_TOKENS = Array.from(
@@ -1349,7 +1350,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         )}
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) &&
-          revealCurrenciesSupportedList && (
+          showInitiallyHiddenComponents && (
             <Animated.FlatList
               entering={FadeIn.duration(300)}
               contentContainerStyle={{paddingBottom: 150}}
@@ -1429,59 +1430,61 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           </>
         ) : null}
 
-        <SheetModal
-          isVisible={walletSelectModalVisible}
-          onBackdropPress={() => {
-            dispatch(setSelectedNetworkForDeposit(undefined));
-            setAddTokenToLinkedWallet(undefined);
-            setWalletSelectModalVisible(false);
-          }}>
-          <WalletSelectMenuContainer>
-            <WalletSelectMenuHeaderContainer>
-              <TextAlign align={'center'}>
-                <H4>{t('Select a wallet')}</H4>
-              </TextAlign>
-            </WalletSelectMenuHeaderContainer>
-            <WalletSelectMenuBodyContainer>
-              <KeyWalletsRow
-                keyWallets={keyWallets!}
-                hideBalance={hideAllBalances}
-                onPress={
-                  addTokenToLinkedWallet?.currencyAbbreviation
-                    ? onLinkedWalletSelect
-                    : onWalletSelect
-                }
-              />
-            </WalletSelectMenuBodyContainer>
-            {selectedToAddToNewWallet && selectingNetworkForDeposit ? (
-              <RowContainer
-                noBorder={true}
-                style={{marginTop: 20, marginLeft: 10}}
-                onPress={() => {
-                  setAddTokenToLinkedWallet(undefined);
-                  setWalletSelectModalVisible(false);
-                  openKeySelector(selectedToAddToNewWallet);
-                }}>
-                <PlusIconContainer>
-                  <Icons.Add />
-                </PlusIconContainer>
-                <H5 style={{fontWeight: '400'}}>
-                  {IsEVMCoin(selectedToAddToNewWallet.chains[0])
-                    ? t('Add as New Account')
-                    : t('Add as New Wallet')}
-                </H5>
-              </RowContainer>
-            ) : null}
-            {/*Nested receive modal*/}
-            {receiveWallet && (
-              <ReceiveAddress
-                isVisible={showReceiveAddressBottomModal}
-                closeModal={closeModal}
-                wallet={receiveWallet}
-              />
-            )}
-          </WalletSelectMenuContainer>
-        </SheetModal>
+        {showInitiallyHiddenComponents && (
+          <SheetModal
+            isVisible={walletSelectModalVisible}
+            onBackdropPress={() => {
+              dispatch(setSelectedNetworkForDeposit(undefined));
+              setAddTokenToLinkedWallet(undefined);
+              setWalletSelectModalVisible(false);
+            }}>
+            <WalletSelectMenuContainer>
+              <WalletSelectMenuHeaderContainer>
+                <TextAlign align={'center'}>
+                  <H4>{t('Select a wallet')}</H4>
+                </TextAlign>
+              </WalletSelectMenuHeaderContainer>
+              <WalletSelectMenuBodyContainer>
+                <KeyWalletsRow
+                  keyWallets={keyWallets!}
+                  hideBalance={hideAllBalances}
+                  onPress={
+                    addTokenToLinkedWallet?.currencyAbbreviation
+                      ? onLinkedWalletSelect
+                      : onWalletSelect
+                  }
+                />
+              </WalletSelectMenuBodyContainer>
+              {selectedToAddToNewWallet && selectingNetworkForDeposit ? (
+                <RowContainer
+                  noBorder={true}
+                  style={{marginTop: 20, marginLeft: 10}}
+                  onPress={() => {
+                    setAddTokenToLinkedWallet(undefined);
+                    setWalletSelectModalVisible(false);
+                    openKeySelector(selectedToAddToNewWallet);
+                  }}>
+                  <PlusIconContainer>
+                    <Icons.Add />
+                  </PlusIconContainer>
+                  <H5 style={{fontWeight: '400'}}>
+                    {IsEVMCoin(selectedToAddToNewWallet.chains[0])
+                      ? t('Add as New Account')
+                      : t('Add as New Wallet')}
+                  </H5>
+                </RowContainer>
+              ) : null}
+              {/*Nested receive modal*/}
+              {receiveWallet && (
+                <ReceiveAddress
+                  isVisible={showReceiveAddressBottomModal}
+                  closeModal={closeModal}
+                  wallet={receiveWallet}
+                />
+              )}
+            </WalletSelectMenuContainer>
+          </SheetModal>
+        )}
         {/*Receive modal if one wallet*/}
         {receiveWallet && !walletSelectModalVisible && (
           <ReceiveAddress
@@ -1490,29 +1493,33 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             wallet={receiveWallet}
           />
         )}
-        <SheetModal
-          isVisible={keySelectorModalVisible}
-          onBackdropPress={() => setKeySelectorModalVisible(false)}>
-          <WalletSelectMenuContainer>
-            <WalletSelectMenuHeaderContainer>
-              <TextAlign align={'center'}>
-                <H4>
-                  {context === 'swap' ? t('Swap to') : t('Select Destination')}
-                </H4>
-              </TextAlign>
-              <NoWalletsMsg>
-                {context === 'swap'
-                  ? t('Choose a key you would like to swap the funds to')
-                  : t('Choose a key you would like to deposit the funds to')}
-              </NoWalletsMsg>
-            </WalletSelectMenuHeaderContainer>
-            <WalletSelectMenuBodyContainer>
-              {cardsList?.list.map((data: any) => {
-                return <View key={data.id}>{data.component}</View>;
-              })}
-            </WalletSelectMenuBodyContainer>
-          </WalletSelectMenuContainer>
-        </SheetModal>
+        {showInitiallyHiddenComponents && (
+          <SheetModal
+            isVisible={keySelectorModalVisible}
+            onBackdropPress={() => setKeySelectorModalVisible(false)}>
+            <WalletSelectMenuContainer>
+              <WalletSelectMenuHeaderContainer>
+                <TextAlign align={'center'}>
+                  <H4>
+                    {context === 'swap'
+                      ? t('Swap to')
+                      : t('Select Destination')}
+                  </H4>
+                </TextAlign>
+                <NoWalletsMsg>
+                  {context === 'swap'
+                    ? t('Choose a key you would like to swap the funds to')
+                    : t('Choose a key you would like to deposit the funds to')}
+                </NoWalletsMsg>
+              </WalletSelectMenuHeaderContainer>
+              <WalletSelectMenuBodyContainer>
+                {cardsList?.list.map((data: any) => {
+                  return <View key={data.id}>{data.component}</View>;
+                })}
+              </WalletSelectMenuBodyContainer>
+            </WalletSelectMenuContainer>
+          </SheetModal>
+        )}
       </GlobalSelectContainer>
     </SafeAreaView>
   );
