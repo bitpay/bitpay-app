@@ -45,12 +45,7 @@ import KeyWalletsRow, {
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
-import {
-  LightBlack,
-  ProgressBlue,
-  SlateDark,
-  White,
-} from '../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {H4, TextAlign, BaseText, H5} from '../../../components/styled/Text';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {RouteProp, useRoute} from '@react-navigation/core';
@@ -64,7 +59,6 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {
   dismissOnGoingProcessModal,
-  setHomeCarouselConfig,
   setSelectedNetworkForDeposit,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
@@ -626,7 +620,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [dataToDisplay, setDataToDisplay] = useState<GlobalSelectObj[]>([]);
-  const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const [chainSelectorModalIsVisible, setChainSelectorModalIsVisible] =
     useState(false);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
@@ -1241,12 +1234,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   ]);
 
   const onEndReached = async () => {
-    setIsLoading(true);
-    await sleep(1000);
     if (isLoading) {
       return;
     }
-
     const remainingCustomCurrencies =
       customCurrenciesSupportedList.length - dataToDisplay.length;
     const remainingCurrencies =
@@ -1256,38 +1246,27 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       setIsLoading(false);
       return;
     }
+    setIsLoading(true);
+    await sleep(1000);
+    const startIndex = currentPage + 20;
+    const endIndex = startIndex + 20;
     if (!searchVal && !selectedChainFilterOption) {
       if (
         selectingNetworkForDeposit &&
         customCurrenciesSupportedList.length > 0
       ) {
-        const startIndex = dataToDisplay.length;
-        const endIndex = startIndex + 20;
         const itemsToAdd = customCurrenciesSupportedList.slice(
           startIndex,
           endIndex,
         );
 
         setDataToDisplay(prevData => [...prevData, ...itemsToAdd]);
-        setCurrentPage(prevPage => prevPage + 20);
-        setIsLoading(false);
-
-        return;
+      } else {
+        const itemsToAdd = currenciesSupportedList.slice(startIndex, endIndex);
+        setDataToDisplay(prevData => [...prevData, ...itemsToAdd]);
       }
-
-      const startIndex = currentPage + 20;
-      const itemsToAdd = currenciesSupportedList.slice(
-        startIndex,
-        startIndex + 20,
-      );
-
-      setDataToDisplay(prevData => [...prevData, ...itemsToAdd]);
-      setCurrentPage(prevPage => prevPage + 20);
-      setIsLoading(false);
-      return;
     }
-
-    setDataToDisplay(searchResults);
+    setCurrentPage(prevPage => prevPage + 20);
     setIsLoading(false);
   };
 
@@ -1352,7 +1331,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           customCurrenciesSupportedList.length > 0) && (
           <FlatList
             contentContainerStyle={{paddingBottom: 150}}
-            data={dataToDisplay}
+            data={
+              !searchVal && !selectedChainFilterOption
+                ? dataToDisplay
+                : searchResults
+            }
             keyExtractor={keyExtractor}
             renderItem={renderItem}
             getItemLayout={(data, index) => ({
@@ -1366,21 +1349,23 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             onEndReached={onEndReached}
             onEndReachedThreshold={0.3}
             ListFooterComponent={() =>
-              isLoading ? (
-                <View style={{flex: 1}}>
-                  <ActivityIndicator
-                    style={{
-                      paddingVertical: 20,
-                      alignItems: 'center',
-                      height: 60,
-                    }}
-                    size="large"
-                    color={SlateDark}
-                  />
-                </View>
-              ) : (
-                <View style={{flex: 1, height: 60}} />
-              )
+              !searchVal && !selectedChainFilterOption ? (
+                isLoading ? (
+                  <View style={{flex: 1}}>
+                    <ActivityIndicator
+                      style={{
+                        paddingVertical: 20,
+                        alignItems: 'center',
+                        height: 60,
+                      }}
+                      size="large"
+                      color={SlateDark}
+                    />
+                  </View>
+                ) : (
+                  <View style={{flex: 1, height: 60}} />
+                )
+              ) : null
             }
           />
         )}
