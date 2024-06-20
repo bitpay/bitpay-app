@@ -345,7 +345,7 @@ const buildSelectableWalletList = (
         category,
     );
     if (filteredWallets.length > 0) {
-      const {currencyAbbreviation, chain, currencyName, img, badgeImg} =
+      const {currencyAbbreviation, chain, currencyName, img} =
         filteredWallets[0];
 
       const coinEntry = coins[currencyAbbreviation] || {
@@ -353,7 +353,7 @@ const buildSelectableWalletList = (
         currencyName,
         currencyAbbreviation,
         chainsImg: {},
-        chains: Array.from(new Set(filteredWallets.map(w => w.chain))),
+        chains: [],
         tokenAddresses: createTokenAddresses(filteredWallets),
         img,
         availableWallets: [],
@@ -363,6 +363,10 @@ const buildSelectableWalletList = (
       coinEntry.availableWallets = [
         ...coinEntry.availableWallets,
         ...filteredWallets,
+      ];
+      coinEntry.chains = [
+        ...coinEntry.chains,
+        ...Array.from(new Set(filteredWallets.map(w => w.chain))),
       ];
       coinEntry.total = coinEntry.availableWallets.length;
       coinEntry.availableWalletsByKey = _.groupBy(
@@ -374,10 +378,19 @@ const buildSelectableWalletList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
 
-      coinEntry.chainsImg[chain] = {
-        badgeUri: IsEVMCoin(currencyAbbreviation) && !badgeImg ? img : badgeImg,
-        priority,
-      };
+      coinEntry.chains.forEach(chain => {
+        const wallet = filteredWallets.find(w => w.chain === chain);
+        if (!wallet || coinEntry.chainsImg[chain]?.priority) {
+          return;
+        }
+        coinEntry.chainsImg[chain] = {
+          badgeUri:
+            IsEVMCoin(currencyAbbreviation) && !wallet.badgeImg
+              ? wallet.img
+              : wallet.badgeImg,
+          priority,
+        };
+      });
       coins[currencyAbbreviation] = coinEntry;
     }
   });
