@@ -10,6 +10,7 @@ import {
   getCurrencyAbbreviation,
   isL2NoSideChainNetwork,
 } from '../../../utils/helper-methods';
+import cloneDeep from 'lodash.clonedeep';
 
 export const GetProtocolPrefix = (
   network: string = 'livenet',
@@ -58,10 +59,10 @@ export const IsSegwitCoin = (currencyAbbreviation: string = ''): boolean => {
   return ['btc', 'ltc'].includes(currencyAbbreviation.toLowerCase());
 };
 
-export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
-  return Object.keys(BitpaySupportedUtxoCoins).includes(
-    currencyAbbreviation.toLowerCase(),
-  );
+export const IsUtxoChain = (chain: string): boolean => {
+  const _chain = cloneDeep(chain).toLowerCase();
+
+  return Object.keys(BitpaySupportedUtxoCoins).includes(_chain);
 };
 
 export const IsEVMCoin = (currencyAbbreviation: string): boolean => {
