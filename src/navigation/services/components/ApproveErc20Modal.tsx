@@ -270,7 +270,7 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
     logger.debug(`Approve calldata: ${approveData}`);
 
     try {
-      const ctxp = await createTx();
+      const ctxp = await createTx(approveData);
       setCtxp(ctxp);
       setIsLoading(false);
     } catch (err) {
@@ -285,7 +285,7 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
     }
   };
 
-  const createTx = async () => {
+  const createTx = async (approveData: string) => {
     try {
       const message =
         wallet.currencyAbbreviation.toUpperCase() + ' ' + t('Approve');
@@ -295,7 +295,7 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
         toAddress: wallet.tokenAddress,
         amount: 0,
         message: message,
-        data: encodedData,
+        data: approveData,
       });
 
       let txp: Partial<TransactionProposal> = {
@@ -312,8 +312,8 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
         },
       };
 
-      const ctxp = await createTxProposal(wallet, txp);
-      return Promise.resolve(ctxp);
+      const _ctxp = await createTxProposal(wallet, txp);
+      return Promise.resolve(_ctxp);
     } catch (err: any) {
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
       const log = `createTxProposal error: ${errStr}`;
