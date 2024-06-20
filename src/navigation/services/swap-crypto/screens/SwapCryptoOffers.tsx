@@ -40,7 +40,6 @@ import {
   Slate30,
   Slate,
 } from '../../../../styles/colors';
-import {RootState} from '../../../../store';
 import {
   GetPrecision,
   IsERCToken,
@@ -67,7 +66,6 @@ import {
 import {SwapCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {AppActions} from '../../../../store/app';
-// import {thorswapGetCurrencyLimits} from '../../../../store/buy-crypto/effects/thorswap/thorswap';
 import {
   BuyCryptoExpandibleCard,
   ItemDivisor,
@@ -78,7 +76,6 @@ import {
   TermsContainer,
   TermsText,
 } from '../../buy-crypto/styled/BuyCryptoTerms';
-import {SatToUnit} from '../../../../store/wallet/effects/amount/amount';
 import {
   ChangellyGetRateData,
   ChangellyGetRateRequestData,
@@ -104,6 +101,7 @@ import InfoIcon from '../../../../components/icons/info/Info';
 import {PreLoadPartnersData, SwapCryptoCoin} from './SwapCryptoRoot';
 import {THORSWAP_DEFAULT_SLIPPAGE} from '../constants/ThorswapConstants';
 import throttle from 'lodash.throttle';
+import {SwapCryptoScreens} from '../SwapCryptoGroup';
 
 export type SwapCryptoOffersScreenParams = {
   amountFrom: number;
@@ -131,12 +129,11 @@ export type SwapCryptoOffer = {
   rate: string | undefined;
   rateFiat: string | undefined;
   amountReceiving?: string;
-
+  fee?: number;
   showApprove?: boolean;
   approveConfirming?: boolean;
   amountLimits?: SwapCryptoLimits;
   quoteData?: any; // Changelly | Thorswap
-
   hasExtraOpts?: boolean;
   selectedSpenderKey?: ThorswapProvider;
   spenderSelectorExpanded?: boolean;
@@ -150,16 +147,11 @@ export type SwapCryptoOffer = {
   };
   estimatedTime?: string;
   estimatedMinAmountReceiving?: string;
-
   errorMsg?: string;
   outOfLimitMsg?: string;
-
-  amountCost?: number;
-  buyAmount?: number;
-  fee?: number;
-  fiatMoney?: string; // Rate without fees
-  amountReceivingUnit?: string; // Ramp
 };
+
+let unmountView = false;
 
 const SwapCryptoOffersContainer = styled.SafeAreaView`
   flex: 1;
@@ -225,7 +217,6 @@ const OfferColumn = styled.View`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* align-items: center; */
 `;
 
 const OfferRow = styled.View`
@@ -300,17 +291,6 @@ const OfferExtraOptsProvidersContainer = styled.TouchableOpacity`
   width: ${WIDTH - 32}px;
 `;
 
-const OfferDataWarningContainer = styled.View`
-  max-width: 85%;
-  margin-top: 20px;
-`;
-
-const OfferDataWarningMsg = styled(BaseText)`
-  color: #df5264;
-  margin-right: 10px;
-  font-size: 12px;
-`;
-
 const OfferDataInfoText = styled(BaseText)`
   font-size: 14px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
@@ -318,11 +298,6 @@ const OfferDataInfoText = styled(BaseText)`
 
 const OfferDataInfoTextSub = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-`;
-
-const OfferDataInfoTotal = styled(H5)`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-weight: bold;
 `;
 
 const OfferDataSlidesOpts = styled.View`
@@ -374,7 +349,6 @@ const offersDefault: {
     approveConfirming: false,
     rate: undefined,
     rateFiat: undefined,
-    fiatMoney: undefined,
     hasExtraOpts: false,
     slippage: undefined,
     estimatedTime: undefined,
@@ -401,7 +375,6 @@ const offersDefault: {
     approveConfirming: false,
     rate: undefined,
     rateFiat: undefined,
-    fiatMoney: undefined,
     hasExtraOpts: true,
     slippage: THORSWAP_DEFAULT_SLIPPAGE,
     slippageOpts: {
@@ -487,6 +460,14 @@ const SwapCryptoOffers: React.FC = () => {
           (!swapCryptoConfig?.[exchange] ||
             !swapCryptoConfig?.[exchange]?.removed);
       }
+    }
+    if (exchange === 'thorswap') {
+      offersDefault.thorswap.showApprove = IsERCToken(
+        selectedWalletFrom.currencyAbbreviation,
+        selectedWalletFrom.chain,
+      )
+        ? true
+        : false;
     }
   });
 
@@ -697,6 +678,21 @@ const SwapCryptoOffers: React.FC = () => {
       ),
       sellAmount: amountFrom,
     };
+
+    if (swapCryptoConfig?.thorswap?.config) {
+      if (swapCryptoConfig.thorswap.config.affiliateAddress) {
+        requestData.affiliateAddress =
+          swapCryptoConfig.thorswap.config.affiliateAddress;
+        if (swapCryptoConfig.thorswap.config.affiliateBasisPoints) {
+          requestData.affiliateBasisPoints =
+            swapCryptoConfig.thorswap.config.affiliateBasisPoints ?? 100; // 100 = 1%
+          requestData.isAffiliateFeeFlat =
+            swapCryptoConfig.thorswap.config.isAffiliateFeeFlat !== undefined
+              ? swapCryptoConfig.thorswap.config.isAffiliateFeeFlat
+              : true;
+        }
+      }
+    }
 
     try {
       const thorswapQuoteData: ThorswapGetSwapQuoteData =
@@ -919,7 +915,7 @@ const SwapCryptoOffers: React.FC = () => {
 
     const fixedRateId = (offers.changelly.quoteData as ChangellyRateResult)?.id;
 
-    navigation.navigate('ChangellyCheckout', {
+    navigation.navigate(SwapCryptoScreens.CHANGELLY_CHECKOUT, {
       fromWalletSelected: selectedWalletFrom!,
       toWalletSelected: selectedWalletTo!,
       fixedRateId: fixedRateId,
@@ -952,7 +948,7 @@ const SwapCryptoOffers: React.FC = () => {
     //   }),
     // );
 
-    navigation.navigate('ThorswapCheckout', {
+    navigation.navigate(SwapCryptoScreens.THORSWAP_CHECKOUT, {
       fromWalletSelected: selectedWalletFrom!,
       toWalletSelected: selectedWalletTo!,
       amountFrom: amountFrom,
@@ -960,6 +956,7 @@ const SwapCryptoOffers: React.FC = () => {
         approveErc20ModalData?.approveErc20ModalOpts?.spenderKey ??
         offers.thorswap.selectedSpenderKey,
       slippage: offers.thorswap.slippage,
+      thorswapConfig: swapCryptoConfig?.thorswap,
       useSendMax: IsERCToken(
         selectedWalletFrom!.currencyAbbreviation,
         selectedWalletFrom!.chain,
@@ -1141,6 +1138,10 @@ const SwapCryptoOffers: React.FC = () => {
       );
       if (allowance < depositSat) {
         if (waitingApproveTxConfirm) {
+          if (unmountView) {
+            logger.debug('Unmount view. Stop checking allowances.');
+            return;
+          }
           logger.debug(
             `The wallet does not have enough Allowance to cover the Swap. Waiting approve Tx confirmation. Checking again in ${
               ms || 10000
@@ -1235,6 +1236,13 @@ const SwapCryptoOffers: React.FC = () => {
       }
     }
   };
+
+  useEffect(() => {
+    return () => {
+      logger.debug('Cleanup on unmount...');
+      unmountView = true;
+    };
+  }, []);
 
   useEffect(() => {
     const initThrottle = throttle(
@@ -1407,15 +1415,20 @@ const SwapCryptoOffers: React.FC = () => {
                           <Button
                             action={true}
                             buttonType={'pill'}
-                            disabled={
-                              openingBrowser ||
-                              offer.showApprove ||
-                              offer.approveConfirming
-                            }
+                            disabled={openingBrowser || offer.approveConfirming}
                             onPress={() => {
-                              offer.swapClicked = true;
-                              setOpeningBrowser(true);
-                              goTo(offer.key);
+                              if (offer.showApprove) {
+                                if (offer.expanded) {
+                                  haptic('impactLight');
+                                  showApproveErc20Modal(offer);
+                                } else {
+                                  expandCard(offer);
+                                }
+                              } else {
+                                offer.swapClicked = true;
+                                setOpeningBrowser(true);
+                                goTo(offer.key);
+                              }
                             }}
                             onPressDisabled={() => {
                               expandCard(offer);
@@ -1425,6 +1438,9 @@ const SwapCryptoOffers: React.FC = () => {
                                 style={{marginBottom: -5}}
                                 color={White}
                               />
+                            ) : offer.showApprove &&
+                              !offer.approveConfirming ? (
+                              t('Approve')
                             ) : (
                               t('Swap')
                             )}
@@ -1458,7 +1474,7 @@ const SwapCryptoOffers: React.FC = () => {
                         <ItemDivisor style={{marginTop: 20}} />
                       )}
 
-                      {offer.hasExtraOpts ? (
+                      {offer.hasExtraOpts && !offer.approveConfirming ? (
                         <>
                           <OfferExtraOptsProvidersContainer
                             onPress={() => {
@@ -1554,16 +1570,16 @@ const SwapCryptoOffers: React.FC = () => {
 
                       {offer.showApprove ? (
                         offer.approveConfirming ? (
-                          <>
+                          <ExchangeTermsContainer style={{marginTop: 16}}>
                             <TermsText>
                               {
-                                'Waiting for confirmation of Approve transaction'
+                                'Your Approve transaction is pending confirmation, please wait.'
                               }
                             </TermsText>
                             <SpinnerContainer>
                               <ActivityIndicator color={ProgressBlue} />
                             </SpinnerContainer>
-                          </>
+                          </ExchangeTermsContainer>
                         ) : (
                           <>
                             <ExchangeTermsContainer style={{marginTop: 16}}>
@@ -1605,23 +1621,6 @@ const SwapCryptoOffers: React.FC = () => {
                         )
                       ) : (
                         <>
-                          {/* <OfferExpandibleItem>
-                        <OfferDataInfoLabel>{t('Buy Amount')}</OfferDataInfoLabel>
-                        <OfferDataRightContainer>
-                          <OfferDataInfoText>
-                            {formatFiatAmount(
-                              Number(offer.buyAmount),
-                              offer.fiatCurrency,
-                            )}
-                          </OfferDataInfoText>
-                          <OfferDataInfoTextSec>
-                            {Number(offer.amountReceiving).toFixed(6)}{' '}
-                            {coinTo.toUpperCase()}
-                          </OfferDataInfoTextSec>
-                        </OfferDataRightContainer>
-                      </OfferExpandibleItem>
-                      <ItemDivisor /> */}
-
                           {offer.hasExtraOpts && offer.slippageOpts ? (
                             <OfferDataSlidesOpts>
                               <OfferRow>
@@ -1656,8 +1655,6 @@ const SwapCryptoOffers: React.FC = () => {
                                   step={offer.slippageOpts.steps}
                                   value={offer.slippage}
                                   minimumTrackTintColor={'#6B71D6'}
-                                  // maximumTrackTintColor={'#6B71D6'}
-                                  // ;
                                   onValueChange={(value: number) =>
                                     onSlippageChange(offer.key, value)
                                   }
@@ -1752,21 +1749,10 @@ const SwapCryptoOffers: React.FC = () => {
                 'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
               )}
             </TermsText>
-            {/* <TermsText>{t('Additional third-party fees may apply.')}</TermsText> */}
           </TermsContainer>
         </ScrollView>
       </SwapCryptoOffersContainer>
 
-      {/* isVisible: boolean;
-  modalTitle?: string;
-  onDismiss: () => void;
-  modalContext?: string;
-  wallet: Wallet;
-  spenderData: {
-    name: string;
-    address: string;
-  }
-  onHelpPress?: () => void; */}
       <ApproveErc20Modal
         isVisible={approveErc20ModalData.visible}
         modalContext={'swapCrypto'}
@@ -1787,7 +1773,7 @@ const SwapCryptoOffers: React.FC = () => {
             offers[
               approveErc20ModalData.approveErc20ModalOpts.offerKey
             ].expanded = true;
-            // Handle this: hide approveButon ? ask for allowances in loop ?
+            setUpdateView(Math.random());
             checkTokenAllowance(true, 3000);
           }
         }}

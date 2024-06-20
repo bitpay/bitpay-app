@@ -21,7 +21,10 @@ import {
   FooterSupport,
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
-import {thorswapGetStatusColor} from '../../../../services/swap-crypto/utils/thorswap-utils';
+import {
+  thorswapGetStatusColor,
+  thorswapGetStatusDetails,
+} from '../../../../services/swap-crypto/utils/thorswap-utils';
 import {useTranslation} from 'react-i18next';
 
 const ThorswapSettings: React.FC = () => {
@@ -67,7 +70,8 @@ const ThorswapSettings: React.FC = () => {
                           color: thorswapGetStatusColor(swapTx.status),
                           textTransform: 'capitalize',
                         }}>
-                        {swapTx.status}
+                        {thorswapGetStatusDetails(swapTx.status)?.statusTitle ??
+                          t('Processing transaction')}
                       </PrTxtStatus>
                     )}
                   </PrRowLeft>
@@ -82,23 +86,24 @@ const ThorswapSettings: React.FC = () => {
             })}
           {!swapTxs?.length && (
             <NoPrMsg>
-              {t('There are currently no transactions with Thorswap')}
+              {t('There are currently no transactions with THORSwap')}
             </NoPrMsg>
           )}
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>{t('Having problems with Thorswap?')}</SupportTxt>
+        <SupportTxt>{t('Having problems with THORSwap?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
+            // TODO: update support website
             dispatch(
               openUrlWithInAppBrowser(
                 'https://support.thorswap.com/en/support/home',
               ),
             );
           }}>
-          <Link>{t('Contact the Thorswap support team.')}</Link>
+          <Link>{t('Contact the THORSwap support team.')}</Link>
         </TouchableOpacity>
       </FooterSupport>
     </>

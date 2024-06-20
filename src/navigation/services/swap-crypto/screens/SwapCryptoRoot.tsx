@@ -114,9 +114,7 @@ import {
   ChangellyCurrency,
   ChangellyCurrencyBlockchain,
 } from '../../../../store/swap-crypto/models/changelly.models';
-import {
-  thorswapGetCurrencies,
-} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
+import {thorswapGetCurrencies} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
 import {
   getNameFromThorswapFullName,
   thorswapEnv,

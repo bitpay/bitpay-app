@@ -105,7 +105,7 @@ export interface ThorswapQuoteRoute {
   expectedOutputMaxSlippage: string;
   expectedOutputMaxSlippageUSD: string;
   expectedOutputUSD: string;
-  fees: {[key in string]: thorswapRouteFee[]}; // E.g {ETH: [...]}
+  fees: {[key in string]: ThorswapRouteFee[]}; // E.g {ETH: [...]}
   index: number;
   meta: ThorswapRouteMeta;
   optimal: boolean;
@@ -132,7 +132,7 @@ export interface ThorswapTransaction {
   gasPrice?: string | number;
 }
 
-interface ThorswapRouteCalldata {
+export interface ThorswapRouteCalldata {
   amount?: string;
   minReturn?: string;
   pools?: string;
@@ -172,7 +172,7 @@ interface ThorswapRouteEvmTransactionDetails {
   contractParamsStreaming: any[];
 }
 
-interface thorswapRouteFee {
+export interface ThorswapRouteFee {
   affiliateFee: number;
   affiliateFeeUSD: number;
   asset: string;
@@ -232,6 +232,7 @@ interface ThorswapRouteWrapperSwapCalldata {
 export enum ThorswapTrackingStatus {
   not_started = 'not_started',
   starting = 'starting', // first status once we receive, old or new transaction
+  pending = 'pending',
   broadcasted = 'broadcasted',
   mempool = 'mempool', // or indexing
   inbound = 'inbound',
