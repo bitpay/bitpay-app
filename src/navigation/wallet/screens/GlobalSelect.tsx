@@ -636,6 +636,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [dataToDisplay, setDataToDisplay] = useState<GlobalSelectObj[]>([]);
   const [showInitiallyHiddenComponents, setShowInitiallyHiddenComponents] =
     useState(false);
+  const [mountSheetModals, setMountSheetModals] = useState(false);
   const [chainSelectorModalIsVisible, setChainSelectorModalIsVisible] =
     useState(false);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
@@ -671,6 +672,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useState(async () => {
     await sleep(400);
     setShowInitiallyHiddenComponents(true);
+    await sleep(1000);
+    setMountSheetModals(true);
   }, []);
 
   const NON_BITPAY_SUPPORTED_TOKENS = Array.from(
@@ -1430,7 +1433,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           </>
         ) : null}
 
-        {showInitiallyHiddenComponents && (
+        {mountSheetModals && (
           <SheetModal
             isVisible={walletSelectModalVisible}
             onBackdropPress={() => {
@@ -1493,7 +1496,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             wallet={receiveWallet}
           />
         )}
-        {showInitiallyHiddenComponents && (
+        {mountSheetModals && (
           <SheetModal
             isVisible={keySelectorModalVisible}
             onBackdropPress={() => setKeySelectorModalVisible(false)}>
