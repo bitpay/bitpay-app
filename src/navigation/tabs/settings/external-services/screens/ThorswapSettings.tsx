@@ -96,14 +96,13 @@ const ThorswapSettings: React.FC = () => {
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
-            // TODO: update support website
             dispatch(
               openUrlWithInAppBrowser(
-                'https://support.thorswap.com/en/support/home',
+                'https://docs.thorswap.finance/thorswap/how-tos/frequently-asked-questions/community-and-support',
               ),
             );
           }}>
-          <Link>{t('Contact the THORSwap support team.')}</Link>
+          <Link>{t('Contact the THORSwap community and support.')}</Link>
         </TouchableOpacity>
       </FooterSupport>
     </>

@@ -327,7 +327,9 @@ const ThorswapCheckout: React.FC = () => {
 
     let thorswapQuoteData: ThorswapGetSwapQuoteData | undefined;
     try {
-      thorswapQuoteData = await thorswapGetSwapQuote(requestData);
+      thorswapQuoteData = await fromWalletSelected.thorswapGetSwapQuote(
+        requestData,
+      );
     } catch (err) {
       logger.error(
         'Thorswap createThorswapTransaction > thorswapGetSwapQuote Error: ' +
@@ -460,16 +462,7 @@ const ThorswapCheckout: React.FC = () => {
         .toString(true);
     }
 
-    // TODO: review if destinationTag is present in Routes for XRP
-    // payinExtraId = bestRouteData.payinExtraId
-    //   ? bestRouteData.payinExtraId
-    //   : undefined; // (destinationTag) Used for coins like: XRP, XLM, EOS, IGNIS, BNB, XMR, ARDOR, DCT, XEM
-
-    // ???? setTxHash(bestRouteData.id);
-    // setAmountExpectedFrom(Number(thorswapQuoteData.sellAssetAmount));
-
     setAmountTo(Number(bestRouteData.expectedOutput));
-    // status = bestRouteData.status;
 
     try {
       const rates = await dispatch(startGetRates({}));
