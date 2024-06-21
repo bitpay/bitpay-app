@@ -54,16 +54,20 @@ const SwapHistorySelector = () => {
       exchangeName: 'Changelly',
       logo: <ChangellyLogo iconOnly={true} width={30} height={30} />,
       screenHistory: ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
-      showExchange: !!(Object.values(changellyHistory ?? '').length > 0),
-      txCount: Object.values(changellyHistory ?? '').length,
+      showExchange: !!(
+        changellyHistory && Object.values(changellyHistory).length > 0
+      ),
+      txCount: changellyHistory ? Object.values(changellyHistory).length : 0,
     },
     thorswap: {
       key: 'thorswap',
       exchangeName: 'THORSwap',
       logo: <ThorswapLogo iconOnly={true} widthIcon={30} heightIcon={22} />,
       screenHistory: ExternalServicesSettingsScreens.THORSWAP_SETTINGS,
-      showExchange: !!(Object.values(thorswapHistory ?? '').length > 0),
-      txCount: Object.values(thorswapHistory ?? '').length,
+      showExchange: !!(
+        thorswapHistory && Object.values(thorswapHistory).length > 0
+      ),
+      txCount: thorswapHistory ? Object.values(thorswapHistory).length : 0,
     },
   };
 
@@ -71,33 +75,35 @@ const SwapHistorySelector = () => {
     <SettingsContainer>
       <SettingsHomeContainer>
         <SettingsComponent>
-          {Object.values(allSwapExchangesData).map((exchange: ExchangeData) => {
-            return exchange.showExchange ? (
-              <View>
-                <>
-                  <Setting
-                    key={exchange.key}
-                    onPress={() => {
-                      haptic('impactLight');
-                      navigation.navigate(exchange.screenHistory);
-                    }}>
-                    <ExternalServicesItemContainer>
-                      <ExternalServicesIconContainer>
-                        {exchange.logo}
-                      </ExternalServicesIconContainer>
-                      <SettingTitle>{`${exchange.exchangeName}${
-                        exchange.txCount > 0
-                          ? ' (' + exchange.txCount + ')'
-                          : ''
-                      }`}</SettingTitle>
-                    </ExternalServicesItemContainer>
-                    <AngleRight />
-                  </Setting>
-                  <Hr />
-                </>
-              </View>
-            ) : null;
-          })}
+          {allSwapExchangesData
+            ? Object.values(allSwapExchangesData).map(
+                (exchange: ExchangeData) => {
+                  return exchange?.showExchange ? (
+                    <View>
+                      <Setting
+                        key={exchange.key}
+                        onPress={() => {
+                          haptic('impactLight');
+                          navigation.navigate(exchange.screenHistory);
+                        }}>
+                        <ExternalServicesItemContainer>
+                          <ExternalServicesIconContainer>
+                            {exchange.logo}
+                          </ExternalServicesIconContainer>
+                          <SettingTitle>{`${exchange.exchangeName}${
+                            exchange.txCount > 0
+                              ? ' (' + exchange.txCount + ')'
+                              : ''
+                          }`}</SettingTitle>
+                        </ExternalServicesItemContainer>
+                        <AngleRight />
+                      </Setting>
+                      <Hr />
+                    </View>
+                  ) : null;
+                },
+              )
+            : null}
         </SettingsComponent>
       </SettingsHomeContainer>
     </SettingsContainer>

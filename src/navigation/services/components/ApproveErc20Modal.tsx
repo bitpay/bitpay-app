@@ -125,7 +125,10 @@ interface SpenderDataWhitelist {
 interface ApproveErc20ModalProps {
   isVisible: boolean;
   modalTitle?: string;
-  onDismiss: (broadcastedTx?: Partial<TransactionProposal>) => void;
+  onDismiss: (
+    broadcastedTx?: Partial<TransactionProposal>,
+    err?: string,
+  ) => void;
   modalContext?: string;
   wallet: Wallet;
   spenderData: {
@@ -278,9 +281,10 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
       const log = `Error creating transaction: ${errStr}`;
       logger.error(log);
-      let msg = t('Error creating transaction');
-      const reason = 'createTx Error';
-      // showError(msg, reason); // TODO: handle how to show errors here
+      const errMsg = t(
+        'Uh oh, something went wrong. Error creating transaction',
+      );
+      onDismiss(undefined, errMsg);
       return;
     }
   };
@@ -327,19 +331,11 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
 
   const makePayment = async () => {
     try {
-      // dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-      // await sleep(400);
       const broadcastedTx = (await dispatch(
         publishAndSign({txp: ctxp! as TransactionProposal, key, wallet}),
       )) as TransactionProposal;
       onDismiss(broadcastedTx);
-      // saveChangellyTx();
-      // dispatch(dismissOnGoingProcessModal());
-      // await sleep(400);
-      // setShowPaymentSentModal(true);
     } catch (err) {
-      // dispatch(dismissOnGoingProcessModal());
-      // await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
         case 'invalid password':
@@ -351,10 +347,15 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
           setResetSwipeButton(true);
           break;
         default:
-          logger.error(JSON.stringify(err));
-          const msg = t('Uh oh, something went wrong. Please try again later');
-          const reason = 'publishAndSign Error';
-        // showError(msg, reason);
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          const log = `Error making payment in publishAndSign: ${errStr}`;
+          logger.error(log);
+          const errMsg = t(
+            'Uh oh, something went wrong. Error: publishAndSign',
+          );
+          onDismiss(undefined, errMsg);
+          return;
       }
     }
   };

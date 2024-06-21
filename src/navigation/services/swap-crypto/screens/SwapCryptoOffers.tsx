@@ -612,19 +612,17 @@ const SwapCryptoOffers: React.FC = () => {
 
     logger.error('Changelly error: ' + msg);
 
-    // TODO: review analytics
     dispatch(
       Analytics.track('Failed Swap Crypto', {
         exchange: 'changelly',
         context: 'SwapCryptoOffers',
         reason: reason || 'unknown',
         amountFrom: amountFrom,
-        // amountTo: offers.changelly.amountTo,
+        amountTo: offers.changelly.amountReceiving || '',
         coinFrom: coinFrom?.toLowerCase() || '',
         chainFrom: chainFrom?.toLowerCase() || '',
         coinTo: coinTo?.toLowerCase() || '',
         chainTo: chainTo?.toLowerCase() || '',
-        // fiatCurrency: offers.changelly.fiatCurrency || '',
       }),
     );
 
@@ -696,7 +694,7 @@ const SwapCryptoOffers: React.FC = () => {
 
     try {
       const thorswapQuoteData: ThorswapGetSwapQuoteData =
-        await thorswapGetSwapQuote(requestData);
+        await selectedWalletFrom.thorswapGetSwapQuote(requestData);
 
       if (thorswapQuoteData?.routes && thorswapQuoteData?.routes[0]) {
         const bestRoute: ThorswapQuoteRoute = thorswapQuoteData.routes[0];
@@ -861,19 +859,17 @@ const SwapCryptoOffers: React.FC = () => {
 
     logger.error('Thorswap error: ' + msg);
 
-    // TODO: review analytics
     dispatch(
       Analytics.track('Failed Swap Crypto', {
         exchange: 'thorswap',
         context: 'SwapCryptoOffers',
         reason: reason || 'unknown',
         amountFrom: amountFrom,
-        // amountTo: offers.changelly.amountTo,
+        amountTo: offers.thorswap.amountReceiving || '',
         coinFrom: coinFrom?.toLowerCase() || '',
         chainFrom: chainFrom?.toLowerCase() || '',
         coinTo: coinTo?.toLowerCase() || '',
         chainTo: chainTo?.toLowerCase() || '',
-        // fiatCurrency: offers.changelly.fiatCurrency || '',
       }),
     );
 
@@ -903,15 +899,17 @@ const SwapCryptoOffers: React.FC = () => {
   };
 
   const continueToChangelly = async () => {
-    // TODO: review analytics
-    // dispatch(
-    //   Analytics.track('Requested Swap Crypto', {
-    //     exchange: 'changelly',
-    //     fiatAmount: offers.changelly.fiatAmount,
-    //     coin: selectedWalletFrom.currencyAbbreviation.toLowerCase(),
-    //     chain:  selectedWalletFrom.chain?.toLowerCase(),
-    //   }),
-    // );
+    dispatch(
+      Analytics.track('Requested Swap Crypto', {
+        exchange: 'changelly',
+        amountFrom: amountFrom,
+        amountTo: offers.changelly.amountReceiving || '',
+        coinFrom: coinFrom?.toLowerCase() || '',
+        chainFrom: chainFrom?.toLowerCase() || '',
+        coinTo: coinTo?.toLowerCase() || '',
+        chainTo: chainTo?.toLowerCase() || '',
+      }),
+    );
 
     const fixedRateId = (offers.changelly.quoteData as ChangellyRateResult)?.id;
 
@@ -938,15 +936,17 @@ const SwapCryptoOffers: React.FC = () => {
   };
 
   const continueToThorswap = async () => {
-    // TODO: review analytics
-    // dispatch(
-    //   Analytics.track('Requested Swap Crypto', {
-    //     exchange: 'thorswap',
-    //     fiatAmount: offers.thorswap.fiatAmount,
-    //     coin: selectedWalletFrom.currencyAbbreviation.toLowerCase(),
-    //     chain:  selectedWalletFrom.chain?.toLowerCase(),
-    //   }),
-    // );
+    dispatch(
+      Analytics.track('Requested Swap Crypto', {
+        exchange: 'thorswap',
+        amountFrom: amountFrom,
+        amountTo: offers.thorswap.amountReceiving || '',
+        coinFrom: coinFrom?.toLowerCase() || '',
+        chainFrom: chainFrom?.toLowerCase() || '',
+        coinTo: coinTo?.toLowerCase() || '',
+        chainTo: chainTo?.toLowerCase() || '',
+      }),
+    );
 
     navigation.navigate(SwapCryptoScreens.THORSWAP_CHECKOUT, {
       fromWalletSelected: selectedWalletFrom!,
@@ -989,7 +989,7 @@ const SwapCryptoOffers: React.FC = () => {
     setUpdateView(Math.random());
   };
 
-  const showError = (title: string, msg: string) => {
+  const showError = (title: string, msg: string, goBack?: boolean) => {
     dispatch(
       AppActions.showBottomNotificationModal({
         title: title ?? t('Error'),
@@ -999,13 +999,17 @@ const SwapCryptoOffers: React.FC = () => {
           {
             text: t('OK'),
             action: () => {
-              navigation.dispatch(StackActions.popToTop());
+              if (goBack) {
+                navigation.dispatch(StackActions.popToTop());
+              }
             },
           },
         ],
         enableBackdropDismiss: true,
         onBackdropDismiss: () => {
-          navigation.dispatch(StackActions.popToTop());
+          if (goBack) {
+            navigation.dispatch(StackActions.popToTop());
+          }
         },
       }),
     );
@@ -1165,7 +1169,17 @@ const SwapCryptoOffers: React.FC = () => {
 
       setUpdateView(Math.random());
     } catch (err) {
-      console.log('===============getTokenAllowance ERR: ', err); // TODO: handle this
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      const log = `checkTokenAllowance Error: ${errStr}`;
+      logger.error(log);
+
+      const _err = t(
+        "Can't get allowances at this moment. Please try again later",
+      );
+      const reason =
+        'checkTokenAllowance Error. Exception during verification.';
+      showThorswapError(_err, reason);
+      return;
     }
   };
 
@@ -1223,7 +1237,7 @@ const SwapCryptoOffers: React.FC = () => {
       );
 
       logger.error(msg);
-      showError(title, msg);
+      showError(title, msg, true);
     } else {
       setOpeningBrowser(false);
       if (offers.changelly.showOffer) {
@@ -1757,11 +1771,17 @@ const SwapCryptoOffers: React.FC = () => {
         isVisible={approveErc20ModalData.visible}
         modalContext={'swapCrypto'}
         modalTitle={t('Approve Swap')}
-        onDismiss={approveTxSent => {
+        onDismiss={async (approveTxSent, err) => {
           setApproveErc20ModalData({
             visible: false,
             approveErc20ModalOpts: approveErc20ModalData.approveErc20ModalOpts,
           });
+          if (err) {
+            await sleep(1000);
+            const title = t('Approve method Error');
+            showError(title, err, true);
+            return;
+          }
           if (
             approveTxSent?.txid &&
             approveErc20ModalData?.approveErc20ModalOpts?.offerKey

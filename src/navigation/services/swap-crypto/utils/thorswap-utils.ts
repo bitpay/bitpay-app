@@ -660,7 +660,7 @@ export const getGasLimitFromThorswapTransaction = (
       gasLimit = parseInt(gas, 10) > 0 ? parseInt(gas, 10) : undefined;
     }
   } else {
-    // unknow
+    // unknown
     gasLimit = undefined;
   }
   return gasLimit;
@@ -680,13 +680,13 @@ export const estimateThorswapTxGasLimit = (
       break;
     case 'UNISWAPV3':
       if (abiFnName === 'multicall') {
-        gasLimit = 210000;
+        gasLimit = 250000;
       }
       break;
     case 'THORCHAIN':
       if (abiFnName === 'depositWithExpiry') {
         // Max: 75000
-        gasLimit = 150000;
+        gasLimit = 250000;
       }
       break;
     case 'ZEROX':
@@ -699,7 +699,6 @@ export const estimateThorswapTxGasLimit = (
       break;
     case 'SUSHISWAP':
       if (abiFnName === 'swapExactTokensForTokens') {
-        // TODO: review this one
         // Max: 217000
         gasLimit = 400000;
       }
