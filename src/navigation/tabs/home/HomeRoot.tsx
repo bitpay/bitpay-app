@@ -70,6 +70,7 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import Icons from '../../wallet/components/WalletIcons';
+import {withErrorFallback} from '../TabScreenErrorFallback';
 
 const HomeRootContainerFactory = (insetsTop: number) => {
   const platformSpecificContainer = Platform.select({
@@ -343,4 +344,4 @@ const HomeRoot = () => {
   );
 };
 
-export default HomeRoot;
+export default withErrorFallback(HomeRoot);

@@ -1,12 +1,12 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React from 'react';
-import {SafeAreaView} from 'react-native';
 import {selectCardGroups} from '../../../store/card/card.selectors';
 import {useAppSelector} from '../../../utils/hooks';
 import {CardScreens, CardStackParamList} from '../CardStack';
 import CardDashboard from '../components/CardDashboard';
 import CardIntro from '../components/CardIntro';
 import styled from 'styled-components/native';
+import {withErrorFallback} from '../../../navigation/tabs/TabScreenErrorFallback';
 
 export type CardHomeScreenParamList =
   | {
@@ -37,4 +37,4 @@ const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
   return <CardIntro />;
 };
 
-export default CardHome;
+export default withErrorFallback(CardHome);

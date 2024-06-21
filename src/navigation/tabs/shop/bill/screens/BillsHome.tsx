@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {BillGroupParamList} from '../BillGroup';
+import {BillGroupParamList, BillScreens} from '../BillGroup';
 import {RefreshControl, ScrollView} from 'react-native';
 import {ScreenContainer} from '../../components/styled/ShopTabComponents';
 import {Bills} from '../../components/Bills';
@@ -9,10 +9,11 @@ import {SlateDark, White} from '../../../../../styles/colors';
 import {ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {sleep} from '../../../../../utils/helper-methods';
+import {withErrorFallback} from '../../../../../navigation/tabs/TabScreenErrorFallback';
 
 const BillsHome = ({}: NativeStackScreenProps<
   BillGroupParamList,
-  'BillsHome'
+  BillScreens.BILLS_HOME
 >) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -47,4 +48,4 @@ const BillsHome = ({}: NativeStackScreenProps<
   );
 };
 
-export default BillsHome;
+export default withErrorFallback(BillsHome);

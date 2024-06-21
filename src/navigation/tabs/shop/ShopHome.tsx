@@ -40,6 +40,7 @@ import {useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {withErrorFallback} from '../TabScreenErrorFallback';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -335,4 +336,4 @@ const ShopHome: React.FC<
   );
 };
 
-export default ShopHome;
+export default withErrorFallback(ShopHome);
