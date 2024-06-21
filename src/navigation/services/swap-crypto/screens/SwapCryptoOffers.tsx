@@ -1429,10 +1429,13 @@ const SwapCryptoOffers: React.FC = () => {
                           <Button
                             action={true}
                             buttonType={'pill'}
-                            disabled={openingBrowser || offer.approveConfirming}
+                            disabled={openingBrowser}
                             onPress={() => {
                               if (offer.showApprove) {
-                                if (offer.expanded) {
+                                if (
+                                  offer.expanded &&
+                                  !offer.approveConfirming
+                                ) {
                                   haptic('impactLight');
                                   showApproveErc20Modal(offer);
                                 } else {
@@ -1447,7 +1450,7 @@ const SwapCryptoOffers: React.FC = () => {
                             onPressDisabled={() => {
                               expandCard(offer);
                             }}>
-                            {offer.swapClicked ? (
+                            {offer.swapClicked || offer.approveConfirming ? (
                               <ActivityIndicator
                                 style={{marginBottom: -5}}
                                 color={White}
