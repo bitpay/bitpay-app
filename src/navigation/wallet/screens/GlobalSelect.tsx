@@ -28,7 +28,7 @@ import {
 } from '../../../utils/helper-methods';
 import {
   ActivityIndicator,
-  FlatList,
+  Platform,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -636,6 +636,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [dataToDisplay, setDataToDisplay] = useState<GlobalSelectObj[]>([]);
   const [showInitiallyHiddenComponents, setShowInitiallyHiddenComponents] =
     useState(false);
+  const [showModalContent, setShowModalContent] = useState(false);
   const [mountSheetModals, setMountSheetModals] = useState(false);
   const [chainSelectorModalIsVisible, setChainSelectorModalIsVisible] =
     useState(false);
@@ -671,6 +672,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   useState(async () => {
     await sleep(400);
+    setShowModalContent(true);
     setShowInitiallyHiddenComponents(true);
     await sleep(1000);
     setMountSheetModals(true);
@@ -1294,6 +1296,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     setIsLoading(false);
   };
 
+  if (!showModalContent && useAsModal) {
+    return <></>;
+  }
   return (
     <SafeAreaView>
       {useAsModal && (
@@ -1355,7 +1360,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           customCurrenciesSupportedList.length > 0) &&
           showInitiallyHiddenComponents && (
             <Animated.FlatList
-              entering={FadeIn.duration(300)}
+              entering={FadeIn.duration(Platform.OS === 'android' ? 800 : 300)}
               contentContainerStyle={{paddingBottom: 150}}
               data={
                 !searchVal && !selectedChainFilterOption
