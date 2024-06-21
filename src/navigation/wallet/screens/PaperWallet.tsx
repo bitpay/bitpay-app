@@ -607,7 +607,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
         </PaperWalletItemCard>
         <SheetModal
           isVisible={walletSelectorVisible}
-          onBackdropPress={() => onDismiss(undefined, true)}>
+          onBackdropPress={() => onDismiss(undefined)}>
           <GlobalSelectContainer>
             <GlobalSelect
               modalContext={'paperwallet'}
@@ -616,7 +616,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
               customSupportedCurrencies={[
                 ...new Set(walletsAvailable.map(w => w.credentials.coin)),
               ]}
-              onDismiss={onDismiss}
+              globalSelectOnDismiss={onDismiss}
             />
           </GlobalSelectContainer>
         </SheetModal>
