@@ -1,12 +1,8 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../constants/NavigationOptions';
+import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import ShopHome, {ShopHomeParamList} from './ShopHome';
 import {NavigatorScreenParams} from '@react-navigation/native';
-import {HeaderBackButton} from '@react-navigation/elements';
 import {useTheme} from 'styled-components/native';
 
 export type ShopStackParamList = {
@@ -25,19 +21,11 @@ const ShopStack = () => {
   return (
     <Shop.Navigator
       initialRouteName={ShopScreens.HOME}
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
         headerStyle: {
           backgroundColor: theme.colors.background,
         },
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
       })}>
       <Shop.Screen name={ShopScreens.HOME} component={ShopHome} />
     </Shop.Navigator>
