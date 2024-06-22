@@ -198,11 +198,6 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
                 )}
               </ImageContainer>
               <NetworkName selected={selected}>{badgeLabel}</NetworkName>
-              {supportedChain ? (
-                <NetworkChainLabelContainer selected={selected}>
-                  <NetworkChainLabel>{item.toUpperCase()}</NetworkChainLabel>
-                </NetworkChainLabelContainer>
-              ) : null}
             </RowContainer>
           </NetworkChainContainer>
           {!selected && !isLastItem ? <Hr /> : null}
