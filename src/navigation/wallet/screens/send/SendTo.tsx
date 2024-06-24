@@ -78,7 +78,7 @@ import {
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
-import {IsUtxoCoin} from '../../../../store/wallet/utils/currency';
+import {IsUtxoChain} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
 import {toFiat} from '../../../../store/wallet/utils/wallet';
@@ -177,8 +177,8 @@ export const BuildKeyWalletRow = (
           currencyAbbreviation.toLowerCase() ===
             currentCurrencyAbbreviation.toLowerCase() &&
           chain.toLowerCase() === currentChain.toLowerCase() &&
-          (IsUtxoCoin(currencyAbbreviation) ||
-            (!IsUtxoCoin(currencyAbbreviation) && id !== currentWalletId)) &&
+          (IsUtxoChain(chain) ||
+            (!IsUtxoChain(chain) && id !== currentWalletId)) &&
           network === currentNetwork &&
           credentials?.walletName
             ?.toLowerCase()
@@ -257,7 +257,7 @@ const SendTo = () => {
   const {wallet} = route.params;
   const {currencyAbbreviation, id, chain, network} = wallet;
 
-  const isUtxo = IsUtxoCoin(wallet?.currencyAbbreviation);
+  const isUtxo = IsUtxoChain(chain);
 
   const selectInputOption: Option = {
     img: <Icons.SelectInputs />,

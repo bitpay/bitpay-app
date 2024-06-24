@@ -36,7 +36,27 @@ export const getExternalServicesConfig =
         ),
       );
       const {data} = await axios.get(bwsUri + '/v1/services', config);
+      return Promise.resolve(data);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  };
 
+export const getSpenderApprovalWhitelist =
+  (): Effect<Promise<any>> =>
+  async (dispatch): Promise<any> => {
+    try {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+
+      dispatch(LogActions.debug('Getting spender approval white list'));
+      const {data} = await axios.get(
+        bwsUri + '/v1/services/dex/getSpenderApprovalWhitelist',
+        config,
+      );
       return Promise.resolve(data);
     } catch (err) {
       return Promise.reject(err);

@@ -54,7 +54,7 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
     } as PathConfig<TabsStackParamList>,
     [GiftCardScreens.GIFT_CARD_DEEPLINK]: 'giftcard',
     [BuyCryptoScreens.ROOT]: {path: 'buy/:amount?'},
-    [SwapCryptoScreens.SWAPCRYPTO_ROOT]: 'swap',
+    [SwapCryptoScreens.SWAP_CRYPTO_ROOT]: 'swap',
     [SellCryptoScreens.ROOT]: 'sell',
     [CoinbaseScreens.ROOT]: 'coinbase',
   },

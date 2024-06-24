@@ -548,6 +548,49 @@ export const getERC20TokenMetadataBySymbol =
     }
   };
 
+export const getERC20TokenAllowance =
+  ({
+    address,
+    chain,
+    ownerAddress,
+    spenderAddress,
+  }: {
+    address: string;
+    chain: string;
+    ownerAddress: string;
+    spenderAddress: string;
+  }): Effect<Promise<any>> =>
+  async dispatch => {
+    try {
+      const {raw} = await Moralis.EvmApi.token.getTokenAllowance({
+        address,
+        chain: MORALIS_EVM_CHAIN[chain],
+        ownerAddress,
+        spenderAddress,
+      });
+
+      dispatch(
+        LogActions.info(
+          '[moralis/getERC20TokenAllowance]: get ERC20 token allowance successfully',
+        ),
+      );
+      return raw;
+    } catch (e) {
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(
+        LogActions.error(
+          `[moralis/getERC20TokenAllowance]: an error occurred while getting ERC20 token allowance: ${errorStr}`,
+        ),
+      );
+      throw e;
+    }
+  };
+
 // ------- RESOLVE API ------- //
 
 export const getAddressByENSDomain =

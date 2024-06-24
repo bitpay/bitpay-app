@@ -1,8 +1,9 @@
-type ExchangeConfig = {
+export type ExchangeConfig = {
   disabled?: boolean;
   removed?: boolean;
   disabledTitle?: string;
   disabledMessage?: string;
+  config?: any;
 };
 
 export type BuyCryptoConfig = {
@@ -30,6 +31,7 @@ export type SwapCryptoConfig = {
   disabledTitle?: string;
   disabledMessage?: string;
   changelly?: ExchangeConfig;
+  thorswap?: ExchangeConfig;
 };
 
 export type ExternalServicesConfig = {
