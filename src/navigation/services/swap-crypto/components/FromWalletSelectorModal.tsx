@@ -6,7 +6,7 @@ import GlobalSelect, {
 import {Black, LightBlack, White} from '../../../../styles/colors';
 import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
-import {ScrollView} from 'react-native';
+import {Platform, ScrollView} from 'react-native';
 import {
   Column,
   CurrencyImageContainer,
@@ -16,6 +16,7 @@ import {H4, H5, SubText, TextAlign} from '../../../../components/styled/Text';
 import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
 import {getBadgeImg} from '../../../../utils/helper-methods';
 import {SellCryptoCoin} from '../../sell-crypto/screens/SellCryptoRoot';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -58,6 +59,7 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
   modalTitle,
 }) => {
   const {t} = useTranslation();
+  const insets = useSafeAreaInsets();
   const [swapCryptoHelpVisible, setSwapCryptoHelpVisible] = useState(false);
 
   const _customSupportedCurrencies = customSupportedCurrencies?.map(
@@ -72,7 +74,8 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
     <SheetModal
       isVisible={isVisible}
       onBackdropPress={() => onDismiss(undefined)}>
-      <GlobalSelectContainer>
+      <GlobalSelectContainer
+        style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
         <GlobalSelect
           useAsModal={true}
           modalTitle={modalTitle}

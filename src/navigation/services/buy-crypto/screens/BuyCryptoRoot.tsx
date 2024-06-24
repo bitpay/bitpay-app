@@ -88,6 +88,7 @@ import cloneDeep from 'lodash.clonedeep';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -124,6 +125,7 @@ const BuyCryptoRoot = ({
 }: NativeStackScreenProps<BuyCryptoGroupParamList, BuyCryptoScreens.ROOT>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
@@ -1000,11 +1002,11 @@ const BuyCryptoRoot = ({
         }}
         onClose={() => hideModal('amount')}
       />
-
       <SheetModal
         isVisible={walletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}>
-        <GlobalSelectContainer>
+        <GlobalSelectContainer
+          style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
           <GlobalSelect
             modalContext={'buy'}
             livenetOnly={!__DEV__}

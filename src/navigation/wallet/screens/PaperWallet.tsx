@@ -43,6 +43,8 @@ import GlobalSelect from './GlobalSelect';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {StackActions} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {Platform} from 'react-native';
 
 const PAPER_WALLET_SUPPORTED_COINS = ['btc', 'bch'];
 
@@ -136,6 +138,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
+  const insets = useSafeAreaInsets();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [buttonState, setButtonState] = useState<ButtonState>();
   const [balances, setBalances] = useState<
@@ -608,7 +611,8 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
         <SheetModal
           isVisible={walletSelectorVisible}
           onBackdropPress={() => onDismiss(undefined)}>
-          <GlobalSelectContainer>
+          <GlobalSelectContainer
+            style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
             <GlobalSelect
               modalContext={'paperwallet'}
               useAsModal={true}

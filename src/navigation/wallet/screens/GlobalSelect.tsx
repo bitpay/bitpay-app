@@ -636,7 +636,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [dataToDisplay, setDataToDisplay] = useState<GlobalSelectObj[]>([]);
   const [showInitiallyHiddenComponents, setShowInitiallyHiddenComponents] =
     useState(false);
-  const [showModalContent, setShowModalContent] = useState(false);
   const [mountSheetModals, setMountSheetModals] = useState(false);
   const [chainSelectorModalIsVisible, setChainSelectorModalIsVisible] =
     useState(false);
@@ -672,11 +671,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   useState(async () => {
     await sleep(400);
-    setShowModalContent(true);
     setShowInitiallyHiddenComponents(true);
     await sleep(1000);
     setMountSheetModals(true);
-  }, []);
+  });
 
   const NON_BITPAY_SUPPORTED_TOKENS = Array.from(
     new Set(
@@ -1296,9 +1294,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     setIsLoading(false);
   };
 
-  if (!showModalContent && useAsModal) {
-    return <></>;
-  }
   return (
     <SafeAreaView>
       {useAsModal && (
