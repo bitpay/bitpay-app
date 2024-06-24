@@ -1,5 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, ScrollView, TouchableOpacity} from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import cloneDeep from 'lodash.clonedeep';
@@ -106,6 +111,7 @@ import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export interface RateData {
   fixedRateId: string;
@@ -146,6 +152,7 @@ const SwapCryptoRoot: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
+  const insets = useSafeAreaInsets();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
@@ -1432,7 +1439,8 @@ const SwapCryptoRoot: React.FC = () => {
       <SheetModal
         isVisible={toWalletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}>
-        <GlobalSelectContainer>
+        <GlobalSelectContainer
+          style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
           <GlobalSelect
             modalContext={'swap'}
             livenetOnly={true}
