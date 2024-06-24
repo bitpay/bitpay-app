@@ -560,7 +560,7 @@ const MoonpaySellCheckout: React.FC = () => {
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
       setShowPaymentSentModal(true);
-    } catch (err) {
+    } catch (err: any) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -581,8 +581,11 @@ const MoonpaySellCheckout: React.FC = () => {
           break;
         default:
           logger.error(JSON.stringify(err));
-          const msg = t('Uh oh, something went wrong. Please try again later');
+          let msg = t('Uh oh, something went wrong. Please try again later');
           const reason = 'publishAndSign Error';
+          if (typeof err?.message === 'string') {
+            msg = `${msg}.\n${BWCErrorMessage(err)}`;
+          }
           showError(msg, reason);
       }
     }
