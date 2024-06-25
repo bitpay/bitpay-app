@@ -69,7 +69,13 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
     givenName: yup.string().required().trim(),
     familyName: yup.string().required().trim(),
     email: yup.string().email().required().trim(),
-    password: yup.string().required(),
+    password: yup
+      .string()
+      .required()
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/,
+        'Must Contain 8 Characters, One Uppercase, One Lowercase, One Number and One Special Case Character',
+      ),
     agreedToTOSandPP: yup.boolean().oneOf([true], t('Required')),
     agreedToMarketingCommunications: yup.boolean(),
   });
