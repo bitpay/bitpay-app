@@ -669,12 +669,15 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [keyWallets, setKeysWallets] =
     useState<KeyWalletsRowProps<KeyWallet>[]>();
 
-  useState(async () => {
-    await sleep(400);
-    setShowInitiallyHiddenComponents(true);
-    await sleep(1000);
-    setMountSheetModals(true);
-  });
+  useEffect(() => {
+    const mountComponents = async () => {
+      await sleep(400);
+      setShowInitiallyHiddenComponents(true);
+      await sleep(1000);
+      setMountSheetModals(true);
+    };
+    mountComponents();
+  }, []);
 
   const NON_BITPAY_SUPPORTED_TOKENS = Array.from(
     new Set(
