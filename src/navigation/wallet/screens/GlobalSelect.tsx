@@ -424,7 +424,7 @@ const filterByChain = (
   selectObj: GlobalSelectObj,
   selectedNetworkForDeposit: string,
 ) => {
-  const newSelectObj = {...selectObj};
+  const newSelectObj = _.cloneDeep({...selectObj});
 
   Object.entries(newSelectObj.availableWalletsByKey).forEach(
     ([key, wallets]) => {
