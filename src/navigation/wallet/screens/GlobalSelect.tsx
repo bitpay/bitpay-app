@@ -663,7 +663,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
   const [addTokenToLinkedWallet, setAddTokenToLinkedWallet] =
     useState<GlobalSelectObj>();
-  const [selectedToAddToNewWallet, setSelectedToAddToNewWallet] =
+  const [filteredSelectedObj, setFilteredSelectedObj] =
     useState<GlobalSelectObj>();
   // object to pass to select modal
   const [keyWallets, setKeysWallets] =
@@ -1059,7 +1059,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           context={context}
           hasSelectedChainFilterOption={!!selectedChainFilterOption}
           emit={(selectObj: GlobalSelectObj) => {
-            setSelectedToAddToNewWallet(selectObj);
             // if only one chain available for the token - skip chain selector
             const hasMultipleChainAvailable = selectObj.chains.length > 1;
             if (
@@ -1079,6 +1078,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               );
               return;
             }
+            setFilteredSelectedObj(selectObj);
             // if only one wallet - skip wallet selector
             const wallets = Object.values(
               selectObj.availableWalletsByKey,
@@ -1237,6 +1237,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         selectedObj,
         selectedNetworkForDeposit,
       );
+      setFilteredSelectedObj(filteredSelectedObj);
       handleWalletSelection(
         filteredSelectedObj,
         selectedNetworkForDeposit,
@@ -1458,20 +1459,20 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   }
                 />
               </WalletSelectMenuBodyContainer>
-              {selectedToAddToNewWallet && selectingNetworkForDeposit ? (
+              {filteredSelectedObj && selectingNetworkForDeposit ? (
                 <RowContainer
                   noBorder={true}
                   style={{marginTop: 20, marginLeft: 10}}
                   onPress={() => {
                     setAddTokenToLinkedWallet(undefined);
                     setWalletSelectModalVisible(false);
-                    openKeySelector(selectedToAddToNewWallet);
+                    openKeySelector(filteredSelectedObj);
                   }}>
                   <PlusIconContainer>
                     <Icons.Add />
                   </PlusIconContainer>
                   <H5 style={{fontWeight: '400'}}>
-                    {IsEVMCoin(selectedToAddToNewWallet.chains[0])
+                    {IsEVMCoin(filteredSelectedObj.chains[0])
                       ? t('Add as New Account')
                       : t('Add as New Wallet')}
                   </H5>
