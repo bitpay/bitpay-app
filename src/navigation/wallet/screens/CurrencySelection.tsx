@@ -201,13 +201,13 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       'Tokens on the Polygon network need a Polygon wallet to pay for fees.',
     ),
     base: t(
-      'Tokens on the Base network need a Ethereum wallet to pay for fees.',
+      'Tokens on the Base network need an Ethereum wallet to pay for fees.',
     ),
     op: t(
-      'Tokens on the Optimism network need a Ethereum wallet to pay for fees.',
+      'Tokens on the Optimism network need an Ethereum wallet to pay for fees.',
     ),
     arb: t(
-      'Tokens on the Arbitrum network need a Ethereum wallet to pay for fees.',
+      'Tokens on the Arbitrum network need an Ethereum wallet to pay for fees.',
     ),
   };
   /**
