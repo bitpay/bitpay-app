@@ -1,12 +1,5 @@
 import debounce from 'lodash.debounce';
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {Keyboard, RefreshControl, ScrollView} from 'react-native';
 import GiftCardCatalog from './components/GiftCardCatalog';
@@ -30,17 +23,15 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
 import {useTranslation} from 'react-i18next';
-import {
-  useFocusEffect,
-  useNavigation,
-  useScrollToTop,
-} from '@react-navigation/native';
+import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
+import {HeaderContainer} from '../../tabs/home/components/Styled';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {withErrorFallback} from '../TabScreenErrorFallback';
+import TabContainer from '../TabContainer';
 
 export enum ShopTabs {
   GIFT_CARDS = 'Gift Cards',
@@ -53,10 +44,6 @@ export type ShopHomeParamList = {
 };
 
 const Tab = createMaterialTopTabNavigator();
-
-const ShopContainer = styled.SafeAreaView`
-  flex: 1;
-`;
 
 const ShopInnerContainer = styled.View`
   margin-top: 15px;
@@ -141,7 +128,6 @@ const ShopHome: React.FC<
     () => getGiftCardConfigList(supportedCardMap || availableCardMap),
     [supportedCardMap, availableCardMap],
   );
-  const navigation = useNavigation();
 
   const curations = useMemo(
     () =>
@@ -153,12 +139,6 @@ const ShopHome: React.FC<
     [availableGiftCards, categoriesAndCurations, purchasedGiftCards],
   );
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => null,
-      headerTitle: () => <HeaderTitle>{t('Pay with Crypto')}</HeaderTitle>,
-    });
-  }, [navigation, t]);
   const integrations = useAppSelector(selectIntegrations);
   const categories = useAppSelector(selectCategories);
   const categoriesWitIntegrations = useAppSelector(
@@ -275,7 +255,10 @@ const ShopHome: React.FC<
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
-      <ShopContainer>
+      <TabContainer>
+        <HeaderContainer>
+          <HeaderTitle>{t('Pay with Crypto')}</HeaderTitle>
+        </HeaderContainer>
         <ScrollView
           ref={scrollViewRef}
           keyboardDismissMode="on-drag"
@@ -331,7 +314,7 @@ const ShopHome: React.FC<
             </Tab.Navigator>
           </ShopInnerContainer>
         </ScrollView>
-      </ShopContainer>
+      </TabContainer>
     </GestureHandlerRootView>
   );
 };
