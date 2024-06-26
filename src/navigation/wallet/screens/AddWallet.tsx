@@ -102,6 +102,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {RootStacks, getNavigationTabName} from '../../../Root';
+import {BWCErrorMessage} from '../../../constants/BWCError';
 
 export type AddWalletParamList = {
   key: Key;
@@ -361,7 +362,7 @@ const AddWallet = ({
     };
 
     const doesAccountIndexExist = (index: number, chain: string) => {
-      return rootPaths.some(path => {
+      return rootPaths.every(path => {
         const [pathRoot, pathChain] = path.split(':');
         const accountIndex = extractAccountIndex(pathRoot);
         return accountIndex === index && pathChain === chain;
@@ -397,13 +398,13 @@ const AddWallet = ({
 
       // Check if the account index exists for the same chain or other chains
       if (accountIndex !== null) {
-        const accountExistsForOtherChains = SUPPORTED_EVM_COINS.some(
+        const accountExistsForAllOtherChains = SUPPORTED_EVM_COINS.every(
           supportedChain =>
             supportedChain !== wallet.chain &&
             doesAccountIndexExist(accountIndex, supportedChain),
         );
 
-        if (accountExistsForOtherChains) {
+        if (accountExistsForAllOtherChains) {
           return false;
         }
       }
@@ -457,12 +458,8 @@ const AddWallet = ({
 
         if (_associatedWallet) {
           _currencyAbbreviation = currencyAbbreviation!;
-          if (!account) {
+          if (account === undefined) {
             account = getAccount(_associatedWallet.credentials.rootPath);
-          }
-          navigation.popToTop();
-          if (withinReceiveSettings) {
-            navigation.pop();
           }
         } else {
           _currencyAbbreviation = SupportedCurrencyOptions.find(
@@ -500,7 +497,10 @@ const AddWallet = ({
               useNativeSegwit,
               singleAddress,
               walletName: walletName === currencyName ? undefined : walletName,
-              ...(account && {account, customAccount: customAccount}),
+              ...(account !== undefined && {
+                account,
+                customAccount,
+              }),
             },
           }),
         );
@@ -530,7 +530,7 @@ const AddWallet = ({
         } else {
           dispatch(dismissOnGoingProcessModal());
           await sleep(500);
-          showErrorModal(err.message);
+          showErrorModal(BWCErrorMessage(err));
           reject(err);
         }
       }

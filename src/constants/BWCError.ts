@@ -82,6 +82,10 @@ const _getErrorMessage = (err: Error) => {
       return t('The request could not be understood by the server');
     case 'WALLET_ALREADY_EXISTS':
       return t('Wallet already exists');
+    case 'COPAYER_REGISTERED':
+      return t(
+        'Copayer ID already registered on server. Try reimporting using your 12-word recovery phrase.',
+      );
     case 'COPAYER_IN_WALLET':
       return t('Copayer already in this wallet');
     case 'WALLET_FULL':
