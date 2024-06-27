@@ -433,7 +433,12 @@ const AddWallet = ({
             doesAccountIndexExistForChain(accountIndex, supportedChain),
         );
 
-        if (accountExistsForAllOtherChains) {
+        const accountIsAlreadyCreated = doesAccountIndexExistForChain(
+          accountIndex,
+          chain,
+        );
+
+        if (accountExistsForAllOtherChains || accountIsAlreadyCreated) {
           return false;
         }
       }
