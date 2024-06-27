@@ -1,8 +1,6 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {useTranslation} from 'react-i18next';
 import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
-import {HeaderTitle} from '../../../../components/styled/Text';
 import BillsHome from './screens/BillsHome';
 import {useTheme} from 'styled-components/native';
 
@@ -17,7 +15,6 @@ export enum BillScreens {
 const Bill = createNativeStackNavigator<BillStackParamList>();
 
 const BillStack = () => {
-  const {t} = useTranslation();
   const theme = useTheme();
   return (
     <Bill.Navigator
@@ -32,7 +29,7 @@ const BillStack = () => {
         name={BillScreens.BILLS_HOME}
         component={BillsHome}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Pay Bills')}</HeaderTitle>,
+          headerShown: false,
         }}
       />
     </Bill.Navigator>

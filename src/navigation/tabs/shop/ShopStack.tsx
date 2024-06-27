@@ -27,7 +27,11 @@ const ShopStack = () => {
           backgroundColor: theme.colors.background,
         },
       })}>
-      <Shop.Screen name={ShopScreens.HOME} component={ShopHome} />
+      <Shop.Screen
+        name={ShopScreens.HOME}
+        component={ShopHome}
+        options={{headerShown: false}}
+      />
     </Shop.Navigator>
   );
 };

@@ -117,10 +117,7 @@ const TabsStack = () => {
         name={TabsScreens.HOME}
         component={HomeRoot}
         options={{
-          headerTitleAlign: 'center',
-          headerShown: true,
-          headerShadowVisible: false,
-          header: () => <ZeroHeightHeader />,
+          headerShown: false,
         }}
       />
       <Tab.Screen

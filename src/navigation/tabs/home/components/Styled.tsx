@@ -5,7 +5,7 @@ import {Black, Slate, White} from '../../../../styles/colors';
 
 export const HeaderContainer = styled.View`
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   margin: 10px ${ScreenGutter};
 `;
