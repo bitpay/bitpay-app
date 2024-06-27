@@ -74,6 +74,8 @@ export interface WalletRowProps extends SearchableItem {
   coinbaseAccount?: CoinbaseAccountProps;
   multisig?: string;
   isComplete?: boolean;
+  receiveAddress?: string;
+  account?: number;
 }
 
 interface Props {

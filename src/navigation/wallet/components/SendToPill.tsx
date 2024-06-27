@@ -1,6 +1,6 @@
 import React, {ReactElement, useState} from 'react';
 import styled from 'styled-components/native';
-import {BitPay, LightBlack, NeutralSlate} from '../../../styles/colors';
+import {BitPay, NeutralSlate, SlateDark} from '../../../styles/colors';
 import {H7} from '../../../components/styled/Text';
 import ArrowDownSvg from '../../../../assets/img/chevron-down.svg';
 import ArrowUpSvg from '../../../../assets/img/chevron-up.svg';
@@ -21,7 +21,7 @@ interface StyleProps {
 
 export const PillContainer = styled.Pressable<StyleProps>`
   background-color: ${({theme: {dark}, accent}) =>
-    dark ? LightBlack : accent === 'action' ? '#ECEFFD' : NeutralSlate};
+    dark ? SlateDark : accent === 'action' ? '#ECEFFD' : NeutralSlate};
   flex-direction: row;
   border-radius: 40px;
   align-items: center;

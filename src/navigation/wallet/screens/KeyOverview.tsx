@@ -200,6 +200,7 @@ export const buildUIFormattedWallet: (
     hideWallet,
     hideBalance,
     pendingTxps,
+    receiveAddress,
   },
   defaultAltCurrencyIsoCode,
   rates,
@@ -330,6 +331,8 @@ export const buildUIFormattedWallet: (
       ? `- Multisig ${credentials.m}/${credentials.n}`
       : undefined,
   isComplete: credentials.isComplete(),
+  receiveAddress,
+  account: credentials.account,
 });
 
 // Key overview list builder

@@ -48,7 +48,9 @@ import yup from '../../../lib/yup';
 import {buildUIFormattedWallet} from './KeyOverview';
 import {
   LightBlack,
+  LuckySevens,
   NeutralSlate,
+  Slate,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -59,9 +61,10 @@ import {
   SupportedEvmCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
+import {WalletRowProps} from '../../../components/list/WalletRow';
 import {FlatList, Keyboard, View, TouchableOpacity} from 'react-native';
 import {
+  formatCryptoAddress,
   getAccount,
   getProtocolName,
   keyExtractor,
@@ -103,6 +106,9 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {RootStacks, getNavigationTabName} from '../../../Root';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import AccountRow from '../../../components/list/AccountRow';
+import {SendToPillContainer} from './send/confirm/Shared';
+import {PillContainer, PillText} from '../components/SendToPill';
 
 export type AddWalletParamList = {
   key: Key;
@@ -127,7 +133,7 @@ const ButtonContainer = styled.View`
   margin-top: 40px;
 `;
 
-const AssociatedWalletContainer = styled.View`
+const AssociatedAccountContainer = styled.View`
   margin-top: 20px;
   position: relative;
 `;
@@ -141,12 +147,20 @@ const AssociatedWallet = styled.TouchableOpacity`
   border-top-right-radius: 4px;
 `;
 
+const AssociatedAccount = styled.TouchableOpacity`
+  padding: 0 10px;
+  height: 64px;
+  border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+`;
+
 const Label = styled(BaseText)`
+  color: ${({theme}) => (theme.dark ? White : LightBlack)};
   font-size: 13px;
-  padding: 2px 0;
   font-weight: 500;
-  line-height: 18px;
-  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : '#434d5a')};
+  opacity: 0.75;
+  margin-bottom: 6px;
 `;
 
 const AssociateWalletName = styled(BaseText)`
@@ -157,7 +171,18 @@ const AssociateWalletName = styled(BaseText)`
   color: #9ba3ae;
 `;
 
-const AssociatedWalletSelectionModalContainer = styled(SheetContainer)`
+const AddressRow = styled(Row)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 10px;
+`;
+
+const AssociateAccount = styled(BaseText)`
+  font-size: 16px;
+`;
+
+const AssociatedAccountSelectionModalContainer = styled(SheetContainer)`
   padding: 15px;
   min-height: 200px;
 `;
@@ -180,12 +205,6 @@ const RowContainer = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   padding: 18px;
-`;
-
-const RowChooseAccountContainer = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  padding-top: 20px;
 `;
 
 const WalletAdvancedOptionsContainer = styled(AdvancedOptionsContainer)`
@@ -225,7 +244,6 @@ const AddWallet = ({
   const [isRegtest, setIsRegtest] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
   const network = useAppSelector(({APP}) => APP.network);
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const [tokenAddress, setTokenAddress] = useState<string | undefined>(
@@ -243,9 +261,10 @@ const AddWallet = ({
       ?.properties?.singleAddress;
   const nativeSegwitCurrency = IsSegwitCoin(_currencyAbbreviation);
   const [useNativeSegwit, setUseNativeSegwit] = useState(nativeSegwitCurrency);
-  const [customAccount, setCustomAccount] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<number | undefined>();
   const [evmWallets, setEvmWallets] = useState<Wallet[] | undefined>();
+  const [accountsInfo, setAccountsInfo] = useState<
+    {receiveAddress: string; accountNumber: number}[]
+  >([]);
   const [UIFormattedEvmWallets, setUIFormattedEvmWallets] = useState<
     WalletRowProps[] | undefined
   >();
@@ -262,11 +281,11 @@ const AddWallet = ({
   };
 
   const [
-    showAssociatedWalletSelectionDropdown,
-    setShowAssociatedWalletSelectionDropdown,
+    showAssociatedAccountSelectionDropdown,
+    setShowAssociatedAccountSelectionDropdown,
   ] = useState<boolean | undefined>(false);
 
-  const [associatedWalletModalVisible, setAssociatedWalletModalVisible] =
+  const [associatedAccountModalVisible, setAssociatedAccountModalVisible] =
     useState(false);
 
   const [showChainSelectionDropdown] = useState<boolean | undefined>(!!_chain);
@@ -361,8 +380,8 @@ const AddWallet = ({
       return match ? parseInt(match[1], 10) : null;
     };
 
-    const doesAccountIndexExist = (index: number, chain: string) => {
-      return rootPaths.every(path => {
+    const doesAccountIndexExistForChain = (index: number, chain: string) => {
+      return rootPaths.some(path => {
         const [pathRoot, pathChain] = path.split(':');
         const accountIndex = extractAccountIndex(pathRoot);
         return accountIndex === index && pathChain === chain;
@@ -398,10 +417,13 @@ const AddWallet = ({
 
       // Check if the account index exists for the same chain or other chains
       if (accountIndex !== null) {
-        const accountExistsForAllOtherChains = SUPPORTED_EVM_COINS.every(
+        // add the chain that is being created to the array
+        const alreadyCreatedEVMCoins = [
+          ...new Set([chain].concat(key.wallets.map(w => w.chain))),
+        ];
+        const accountExistsForAllOtherChains = alreadyCreatedEVMCoins.every(
           supportedChain =>
-            supportedChain !== wallet.chain &&
-            doesAccountIndexExist(accountIndex, supportedChain),
+            doesAccountIndexExistForChain(accountIndex, supportedChain),
         );
 
         if (accountExistsForAllOtherChains) {
@@ -413,8 +435,20 @@ const AddWallet = ({
     };
 
     const _evmWallets = key.wallets.filter(isWalletSupported);
+    const _accountsInfo = _evmWallets.map(wallet => {
+      return {
+        receiveAddress: wallet.receiveAddress,
+        accountNumber: wallet.credentials.account,
+      };
+    }) as {receiveAddress: string; accountNumber: number}[];
+    const uniqueAccountsInfo = _accountsInfo
+      .filter(account => account.receiveAddress !== undefined)
+      .filter(
+        (account, index, self) =>
+          index ===
+          self.findIndex(a => a.receiveAddress === account.receiveAddress),
+      );
     setEvmWallets(_evmWallets);
-
     // formatting for the bottom modal
     const _UIFormattedEvmWallets = _evmWallets?.map(wallet =>
       buildUIFormattedWallet(
@@ -425,12 +459,13 @@ const AddWallet = ({
       ),
     );
     setUIFormattedEvmWallets(_UIFormattedEvmWallets);
+    setAccountsInfo(uniqueAccountsInfo);
     setAssociatedWallet(_UIFormattedEvmWallets[0]);
 
     if (!_evmWallets?.length && isToken) {
       showMissingWalletMsg();
     }
-    setShowAssociatedWalletSelectionDropdown(_evmWallets.length > 1);
+    setShowAssociatedAccountSelectionDropdown(uniqueAccountsInfo.length > 0);
   };
 
   useEffect(() => {
@@ -450,7 +485,8 @@ const AddWallet = ({
     return new Promise(async (resolve, reject) => {
       try {
         let password, _currencyAbbreviation: string | undefined;
-        let account: number | undefined = selectedAccount;
+        let account: number | undefined;
+        let customAccount = false;
 
         if (key.isPrivKeyEncrypted) {
           password = await dispatch(getDecryptPassword(key));
@@ -458,9 +494,8 @@ const AddWallet = ({
 
         if (_associatedWallet) {
           _currencyAbbreviation = currencyAbbreviation!;
-          if (account === undefined) {
-            account = getAccount(_associatedWallet.credentials.rootPath);
-          }
+          account = getAccount(_associatedWallet.credentials.rootPath);
+          customAccount = true;
         } else {
           _currencyAbbreviation = SupportedCurrencyOptions.find(
             currencyOpts =>
@@ -631,23 +666,24 @@ const AddWallet = ({
     );
   };
 
-  const renderItem = useCallback(
+  const renderAccounts = useCallback(
     ({item}) => (
-      <WalletRow
-        id={item.id}
-        hideBalance={hideAllBalances}
+      <AccountRow
+        account={item}
         onPress={() => {
           haptic('soft');
-          setAssociatedWallet(item);
+          const _associatedWallet = UIFormattedEvmWallets!.find(
+            wallet => wallet.receiveAddress === item.receiveAddress,
+          );
+          setAssociatedWallet(_associatedWallet);
           if (isCustomToken && !!tokenAddress) {
             setTokenAddress(undefined);
           }
-          setAssociatedWalletModalVisible(false);
+          setAssociatedAccountModalVisible(false);
         }}
-        wallet={item}
       />
     ),
-    [],
+    [UIFormattedEvmWallets],
   );
 
   const renderChain = useCallback(
@@ -738,7 +774,7 @@ const AddWallet = ({
         ) : null}
 
         {!showChainSelectionDropdown && (
-          <AssociatedWalletContainer>
+          <AssociatedAccountContainer>
             <Label>{t('CHAIN')}</Label>
             <AssociatedWallet
               activeOpacity={ActiveOpacity}
@@ -760,74 +796,46 @@ const AddWallet = ({
                 <Icons.DownToggle />
               </Row>
             </AssociatedWallet>
-          </AssociatedWalletContainer>
+          </AssociatedAccountContainer>
         )}
 
-        {showAssociatedWalletSelectionDropdown && associatedWallet && (
+        {showAssociatedAccountSelectionDropdown && associatedWallet && (
           <>
-            {!isToken ? (
-              <RowChooseAccountContainer
+            <AssociatedAccountContainer>
+              <Label>{t('CHOOSE ACCOUNT')}</Label>
+              <AssociatedAccount
+                activeOpacity={ActiveOpacity}
                 onPress={() => {
-                  setCustomAccount(!customAccount);
+                  setAssociatedAccountModalVisible(true);
                 }}>
-                <Column>
-                  <Label>{t('CHOOSE ACCOUNT MANUALLY')}</Label>
-                </Column>
-                <CheckBoxContainer>
-                  <Checkbox
-                    checked={customAccount}
-                    onPress={() => {
-                      setCustomAccount(!customAccount);
-                      setSelectedAccount(undefined);
-                    }}
-                  />
-                </CheckBoxContainer>
-              </RowChooseAccountContainer>
-            ) : null}
-            {!customAccount ? (
-              <AssociatedWalletContainer>
-                <Label>
-                  {isToken
-                    ? t('ASSOCIATED WALLET')
-                    : t('USE THE SAME ADDRESS AS')}
-                </Label>
-                <AssociatedWallet
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    setAssociatedWalletModalVisible(true);
+                <Row
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}>
-                  <Row
-                    style={{
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}>
-                    <Row style={{alignItems: 'center'}}>
-                      <CurrencyImage
-                        img={CurrencyListIcons[associatedWallet.chain]}
-                        size={30}
-                      />
-                      <AssociateWalletName>
-                        {associatedWallet?.walletName ||
-                          `${associatedWallet.currencyAbbreviation} Wallet`}
-                      </AssociateWalletName>
-                    </Row>
-                    <Icons.DownToggle />
-                  </Row>
-                </AssociatedWallet>
-              </AssociatedWalletContainer>
-            ) : (
-              <View style={{marginTop: 20}}>
-                <BoxInput
-                  placeholder={'0'}
-                  label={t('ACCOUNT')}
-                  onChangeText={(account: string) => {
-                    setSelectedAccount(Number(account));
-                  }}
-                  value={tokenAddress}
-                  keyboardType={'numeric'}
-                />
-              </View>
-            )}
+                  <View>
+                    <AssociateAccount>
+                      Account {associatedWallet.account}
+                    </AssociateAccount>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setAssociatedAccountModalVisible(true)}>
+                    <AddressRow>
+                      <SendToPillContainer style={{marginRight: 10}}>
+                        <PillContainer>
+                          <PillText accent={'action'}>
+                            {formatCryptoAddress(
+                              associatedWallet.receiveAddress!,
+                            )}
+                          </PillText>
+                        </PillContainer>
+                      </SendToPillContainer>
+                      <Icons.DownToggle />
+                    </AddressRow>
+                  </TouchableOpacity>
+                </Row>
+              </AssociatedAccount>
+            </AssociatedAccountContainer>
           </>
         )}
 
@@ -981,25 +989,25 @@ const AddWallet = ({
         )}
 
         <SheetModal
-          isVisible={associatedWalletModalVisible}
-          onBackdropPress={() => setAssociatedWalletModalVisible(false)}>
-          <AssociatedWalletSelectionModalContainer>
+          isVisible={associatedAccountModalVisible}
+          onBackdropPress={() => setAssociatedAccountModalVisible(false)}>
+          <AssociatedAccountSelectionModalContainer>
             <TextAlign align={'center'}>
-              <H4>{t('Select a Wallet')}</H4>
+              <H4>{t('Select an Account')}</H4>
             </TextAlign>
             <FlatList
               contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-              data={UIFormattedEvmWallets}
-              keyExtractor={keyExtractor}
-              renderItem={renderItem}
+              data={accountsInfo}
+              keyExtractor={item => item.receiveAddress}
+              renderItem={renderAccounts}
             />
-          </AssociatedWalletSelectionModalContainer>
+          </AssociatedAccountSelectionModalContainer>
         </SheetModal>
 
         <SheetModal
           isVisible={chainModalVisible}
           onBackdropPress={() => setChainModalVisible(false)}>
-          <AssociatedWalletSelectionModalContainer>
+          <AssociatedAccountSelectionModalContainer>
             <TextAlign align={'center'}>
               <H4>{t('Select a Chain')}</H4>
             </TextAlign>
@@ -1009,7 +1017,7 @@ const AddWallet = ({
               keyExtractor={keyExtractor}
               renderItem={renderChain}
             />
-          </AssociatedWalletSelectionModalContainer>
+          </AssociatedAccountSelectionModalContainer>
         </SheetModal>
 
         <ButtonContainer>
