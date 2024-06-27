@@ -7,6 +7,7 @@ import {
   Image,
   DeviceEventEmitter,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import RNPrint from 'react-native-print';
 import RenderHtml from 'react-native-render-html';
@@ -343,11 +344,11 @@ const GiftCardDetails = ({
       description: t('Share Claim Code'),
       onPress: async () => {
         await sleep(500);
-        Share.share(
-          giftCard.claimLink
+        const dataToShare =
+          Platform.OS === 'ios' && giftCard.claimLink
             ? {url: giftCard.claimLink}
-            : {message: giftCard.claimCode},
-        );
+            : {message: giftCard.claimLink || giftCard.claimCode};
+        Share.share(dataToShare);
       },
     },
     ...(defaultClaimCodeType !== 'link'
