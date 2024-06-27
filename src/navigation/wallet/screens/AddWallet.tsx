@@ -57,6 +57,7 @@ import {
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {
   CurrencyListIcons,
+  SupportedCoinsOptions,
   SupportedCurrencyOptions,
   SupportedEvmCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
@@ -316,7 +317,13 @@ const AddWallet = ({
 
   const addAssociatedWallet = async () => {
     try {
-      const _associatedWallet = await _addWallet();
+      const evmCoinOption = SupportedCoinsOptions.find(
+        ({chain: _chain}) => _chain === chain,
+      );
+      const _associatedWallet = await _addWallet({
+        _currencyAbbreviation: evmCoinOption?.currencyAbbreviation,
+        walletName: evmCoinOption?.currencyName,
+      });
       const UIFormattedWallet = buildUIFormattedWallet(
         _associatedWallet,
         defaultAltCurrency.isoCode,
@@ -478,13 +485,22 @@ const AddWallet = ({
     formState: {errors},
   } = useForm<{walletName: string}>({resolver: yupResolver(schema)});
 
-  const _addWallet = async (
-    _associatedWallet?: Wallet,
-    walletName?: string,
-  ): Promise<Wallet> => {
+  const _addWallet = async ({
+    _associatedWallet,
+    walletName,
+    _isToken,
+    _currencyAbbreviation,
+    _tokenAddress,
+  }: {
+    _associatedWallet?: Wallet;
+    walletName?: string;
+    _isToken?: boolean;
+    _currencyAbbreviation?: string;
+    _tokenAddress?: string;
+  }): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {
-        let password, _currencyAbbreviation: string | undefined;
+        let password: string | undefined;
         let account: number | undefined;
         let customAccount = false;
 
@@ -496,17 +512,10 @@ const AddWallet = ({
           _currencyAbbreviation = currencyAbbreviation!;
           account = getAccount(_associatedWallet.credentials.rootPath);
           customAccount = true;
-        } else {
-          _currencyAbbreviation = SupportedCurrencyOptions.find(
-            currencyOpts =>
-              currencyOpts.chain === chain &&
-              currencyOpts.currencyAbbreviation === currencyAbbreviation,
-          )?.currencyAbbreviation!;
         }
-
         dispatch(
           Analytics.track('Created Basic Wallet', {
-            coin: _currencyAbbreviation.toLowerCase(),
+            coin: _currencyAbbreviation!.toLowerCase(),
             isErc20Token: !!isToken,
           }),
         );
@@ -518,9 +527,9 @@ const AddWallet = ({
             associatedWallet: _associatedWallet,
             currency: {
               chain,
-              currencyAbbreviation: _currencyAbbreviation,
-              isToken: isToken,
-              tokenAddress: tokenAddress,
+              currencyAbbreviation: _currencyAbbreviation!,
+              isToken: _isToken,
+              tokenAddress: _tokenAddress,
             },
             options: {
               password,
@@ -531,7 +540,7 @@ const AddWallet = ({
                 : network,
               useNativeSegwit,
               singleAddress,
-              walletName: walletName === currencyName ? undefined : walletName,
+              walletName,
               ...(account !== undefined && {
                 account,
                 customAccount,
@@ -574,7 +583,7 @@ const AddWallet = ({
 
   const add = handleSubmit(async ({walletName}) => {
     try {
-      const currency = currencyAbbreviation!.toLowerCase();
+      let _currencyAbbreviation: string | undefined;
       let _associatedWallet: Wallet | undefined;
       if (associatedWallet) {
         _associatedWallet = evmWallets?.find(
@@ -612,9 +621,21 @@ const AddWallet = ({
             }
           }
         }
+      } else {
+        _currencyAbbreviation = SupportedCurrencyOptions.find(
+          currencyOpts =>
+            currencyOpts.chain === chain &&
+            currencyOpts.currencyAbbreviation === currencyAbbreviation,
+        )?.currencyAbbreviation!;
       }
 
-      const wallet = await _addWallet(_associatedWallet, walletName);
+      const wallet = await _addWallet({
+        _associatedWallet,
+        _isToken: isToken,
+        _tokenAddress: tokenAddress,
+        walletName,
+        _currencyAbbreviation,
+      });
 
       if (!withinReceiveSettings) {
         navigation.dispatch(
