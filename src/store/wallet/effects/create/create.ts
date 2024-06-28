@@ -390,7 +390,7 @@ const createWallet =
         }),
       );
 
-      const name = BitpaySupportedCoins[coin.toLowerCase()].name;
+      const name = BitpaySupportedCoins[chain.toLowerCase()].name;
       bwcClient.createWallet(
         name,
         'me',
