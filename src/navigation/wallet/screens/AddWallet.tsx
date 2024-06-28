@@ -859,7 +859,7 @@ const AddWallet = ({
         associatedWallet &&
         associatedWallet.receiveAddress ? (
           <AssociatedAccountContainer>
-            <Label>{t('SELECT AN ACCOUNT')}</Label>
+            <Label>{t('CHOOSE ACCOUNT')}</Label>
             <AssociatedAccount
               activeOpacity={ActiveOpacity}
               onPress={() => {
@@ -1051,7 +1051,7 @@ const AddWallet = ({
           onBackdropPress={() => setAssociatedAccountModalVisible(false)}>
           <AssociatedAccountSelectionModalContainer>
             <TextAlign align={'center'}>
-              <H4>{t('Select an Account')}</H4>
+              <H4>{t('Choose Account')}</H4>
             </TextAlign>
             <FlatList
               contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
