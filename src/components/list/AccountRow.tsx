@@ -1,41 +1,53 @@
 import React, {memo} from 'react';
-import {
-  CurrencyColumn,
-  ActiveOpacity,
-  RowContainer,
-} from '../styled/Containers';
+import {CurrencyColumn, ActiveOpacity} from '../styled/Containers';
 import {H5} from '../styled/Text';
 import styled from 'styled-components/native';
 import {formatCryptoAddress} from '../../utils/helper-methods';
 import {SendToPillContainer} from '../../navigation/wallet/screens/send/confirm/Shared';
 import {
-  PillContainer,
   PillText,
 } from '../../navigation/wallet/components/SendToPill';
-import {useTheme} from 'styled-components/native';
 import {View} from 'react-native';
-import {SlateDark} from '../../styles/colors';
+import {Action} from '../../styles/colors';
+import {css} from 'styled-components/native';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
+import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
+import { AddPillContainer } from '../../navigation/wallet/screens/AddWallet';
 
 const AddressView = styled(View)`
   align-items: flex-end;
   margin: 10px;
 `;
+
+const RowContainer = styled.TouchableOpacity<{selected: boolean}>`
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 4px;
+  margin: 0 6px;
+  justify-content: space-around;
+  ${({selected}) =>
+    selected &&
+    css`
+      background: ${({theme: {dark}}) => (dark ? '#2240C440' : '#ECEFFD')};
+      border-color: ${({theme: {dark}}) => (dark ? '#2240C4' : Action)};
+      border-width: 1px;
+      border-radius: 12px;
+    `};
+`;
+
 interface Props {
   account: {receiveAddress: string; accountNumber: number};
+  chain: string;
+  selected: boolean;
   onPress: () => void;
 }
 
-const AccountRow = ({account, onPress}: Props) => {
-  const theme = useTheme();
+const AccountRow = ({account, chain, selected, onPress}: Props) => {
   return (
     <RowContainer
       activeOpacity={ActiveOpacity}
       onPress={onPress}
-      style={{
-        borderBottomWidth: 1,
-        borderBottomColor: theme.dark ? SlateDark : '#ECEFFD',
-        justifyContent: 'space-around',
-      }}>
+      selected={selected}>
       <CurrencyColumn>
         <H5 ellipsizeMode="tail" numberOfLines={1}>
           Account {account.accountNumber}
@@ -44,11 +56,12 @@ const AccountRow = ({account, onPress}: Props) => {
       <CurrencyColumn>
         <AddressView>
           <SendToPillContainer>
-            <PillContainer>
+            <AddPillContainer>
+              <CurrencyImage img={CurrencyListIcons[chain]} size={20} />
               <PillText accent={'action'}>
                 {formatCryptoAddress(account.receiveAddress)}
               </PillText>
-            </PillContainer>
+            </AddPillContainer>
           </SendToPillContainer>
         </AddressView>
       </CurrencyColumn>

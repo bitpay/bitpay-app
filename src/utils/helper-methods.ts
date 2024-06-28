@@ -1,5 +1,4 @@
-import {SUPPORTED_COINS} from '../constants/currencies';
-import {Key} from '../store/wallet/wallet.models';
+import {Key, Wallet} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
@@ -9,6 +8,8 @@ import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
 import {NavigationProp, StackActions} from '@react-navigation/native';
+import {AppDispatch} from './hooks';
+import {createWalletAddress} from '../store/wallet/effects/address/address';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -272,6 +273,9 @@ export const shouldScale = (
 };
 
 export const formatCryptoAddress = (address: string) => {
+  if (!address) {
+    return '--';
+  }
   return (
     address.substring(0, 4) + '....' + address.substring(address.length - 4)
   );
@@ -537,4 +541,23 @@ export const popToScreen = (
       // Already at the target screen "${targetScreenName}". No need to pop.
     }
   });
+};
+
+export const fixWalletAddresses = async ({
+  appDispatch,
+  wallets,
+}: {
+  appDispatch: AppDispatch;
+  wallets: Wallet[];
+}) => {
+  await Promise.all(
+    wallets.map(async wallet => {
+      if (!wallet.receiveAddress) {
+        const walletAddress = (await appDispatch<any>(
+          createWalletAddress({wallet, newAddress: false}),
+        )) as string;
+        wallet.receiveAddress = walletAddress;
+      }
+    }),
+  );
 };

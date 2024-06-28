@@ -61,6 +61,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {
+  fixWalletAddresses,
   getAccount,
   getDerivationStrategy,
   getNetworkName,
@@ -422,6 +423,11 @@ const RecoveryPhrase = () => {
         await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: key.wallets,
+        });
       } catch (error) {
         // ignore error
       }
