@@ -1,4 +1,10 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   BaseText,
   H4,
@@ -45,7 +51,6 @@ import {
 import {Controller, useForm} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
-import {buildUIFormattedWallet} from './KeyOverview';
 import {
   LightBlack,
   LuckySevens,
@@ -62,9 +67,9 @@ import {
   SupportedEvmCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {WalletRowProps} from '../../../components/list/WalletRow';
 import {FlatList, Keyboard, View, TouchableOpacity} from 'react-native';
 import {
+  fixWalletAddresses,
   formatCryptoAddress,
   getAccount,
   getProtocolName,
@@ -109,7 +114,8 @@ import {RootStacks, getNavigationTabName} from '../../../Root';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import AccountRow from '../../../components/list/AccountRow';
 import {SendToPillContainer} from './send/confirm/Shared';
-import {PillContainer, PillText} from '../components/SendToPill';
+import {PillText} from '../components/SendToPill';
+import debounce from 'lodash.debounce';
 
 export type AddWalletParamList = {
   key: Key;
@@ -179,7 +185,7 @@ const AddressRow = styled(Row)`
   margin: 10px;
 `;
 
-const AssociateAccount = styled(BaseText)`
+const AccountLabel = styled(BaseText)`
   font-size: 16px;
 `;
 
@@ -216,6 +222,17 @@ const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
 `;
 
+export const AddPillContainer = styled(View)`
+  background-color: ${({theme: {dark}}) => (dark ? SlateDark : NeutralSlate)};
+  flex-direction: row;
+  border-radius: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 11px;
+  height: 100%;
+  max-width: 200px;
+`;
+
 const isWithinReceiveSettings = (parent: any): boolean => {
   return parent
     ?.getState()
@@ -235,10 +252,12 @@ const AddWallet = ({
     currencyName: _currencyName,
     chain: _chain,
     tokenAddress: _tokenAddress,
-    key,
+    key: _key,
     isToken,
     isCustomToken,
   } = route.params;
+  const key = useAppSelector(({WALLET}) => WALLET.keys[_key.id]);
+  const isSettingWalletsRunningRef = useRef(false);
   // temporary until advanced settings is finished
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
@@ -266,11 +285,8 @@ const AddWallet = ({
   const [accountsInfo, setAccountsInfo] = useState<
     {receiveAddress: string; accountNumber: number}[]
   >([]);
-  const [UIFormattedEvmWallets, setUIFormattedEvmWallets] = useState<
-    WalletRowProps[] | undefined
-  >();
   const [associatedWallet, setAssociatedWallet] = useState<
-    WalletRowProps | undefined
+    Wallet | undefined
   >();
 
   const DESCRIPTIONS: Record<string, string> = {
@@ -324,13 +340,7 @@ const AddWallet = ({
         _currencyAbbreviation: evmCoinOption?.currencyAbbreviation,
         walletName: evmCoinOption?.currencyName,
       });
-      const UIFormattedWallet = buildUIFormattedWallet(
-        _associatedWallet,
-        defaultAltCurrency.isoCode,
-        rates,
-        dispatch,
-      );
-      setAssociatedWallet(UIFormattedWallet);
+      setAssociatedWallet(_associatedWallet);
       _setEvmWallets(chain);
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
@@ -368,121 +378,137 @@ const AddWallet = ({
     );
   };
 
-  const _setEvmWallets = (chain: string) => {
-    if (!SUPPORTED_EVM_COINS.includes(chain)) {
-      return;
-    }
-    if (isCustomToken) {
-      setTokenAddress(undefined);
-      setCurrencyName(undefined);
-    }
-
-    // Extract rootPaths from wallets
-    const rootPaths = key.wallets.map(
-      wallet => `${wallet.credentials.rootPath}:${wallet.chain}`,
-    );
-
-    const extractAccountIndex = (rootPath: string) => {
-      const match = rootPath.match(/m\/44'\/60'\/(\d+)'/);
-      return match ? parseInt(match[1], 10) : null;
-    };
-
-    const doesAccountIndexExistForChain = (index: number, chain: string) => {
-      return rootPaths.some(path => {
-        const [pathRoot, pathChain] = path.split(':');
-        const accountIndex = extractAccountIndex(pathRoot);
-        return accountIndex === index && pathChain === chain;
-      });
-    };
-
-    // Display associated wallets under the following conditions:
-    // 1. The wallet is part of a Layer 2 chain and no other wallet from the specified Layer 2 chain exists for the account.
-    // 2. The wallet is an ERC20 token.
-    const IS_TOKEN_CREATION = isToken;
-    const isWalletSupported = (wallet: Wallet): boolean => {
-      // Check if the wallet is an ERC token, tokens are not associated wallets
-      const _isToken = IsERCToken(wallet.currencyAbbreviation, wallet.chain);
-      if (_isToken) {
-        return false;
-      }
-
-      // Ensure the wallet is on a supported EVM chain
-      const isSupportedChain = SUPPORTED_EVM_COINS.includes(wallet.chain);
-      if (!isSupportedChain) {
-        return false;
-      }
-
-      // For token creation, wallet must be on the same chain
-      const isSameChain = wallet.chain === chain;
-      if (isSameChain && IS_TOKEN_CREATION) {
-        return true;
-      } else if (IS_TOKEN_CREATION) {
-        return false;
-      }
-
-      const accountIndex = extractAccountIndex(wallet.credentials.rootPath);
-
-      // Check if the account index exists for the same chain or other chains
-      if (accountIndex !== null) {
-        // add the chain that is being created to the array
-        const alreadyCreatedEVMCoins = [
-          ...new Set([chain].concat(key.wallets.map(w => w.chain))),
-        ];
-        const accountExistsForAllOtherChains = alreadyCreatedEVMCoins.every(
-          supportedChain =>
-            doesAccountIndexExistForChain(accountIndex, supportedChain),
-        );
-
-        const accountIsAlreadyCreated = doesAccountIndexExistForChain(
-          accountIndex,
-          chain,
-        );
-
-        if (accountExistsForAllOtherChains || accountIsAlreadyCreated) {
-          return false;
+  const _setEvmWallets = useCallback(
+    debounce(
+      async (chain: string) => {
+        if (isSettingWalletsRunningRef.current) {
+          return;
         }
-      }
+        isSettingWalletsRunningRef.current = true;
+        dispatch(startOnGoingProcessModal('LOADING'));
+        if (!SUPPORTED_EVM_COINS.includes(chain)) {
+          return;
+        }
+        if (isCustomToken) {
+          setTokenAddress(undefined);
+          setCurrencyName(undefined);
+        }
 
-      return !isSameChain;
-    };
+        // Extract rootPaths from wallets
+        const rootPaths = key.wallets.map(
+          wallet => `${wallet.credentials.rootPath}:${wallet.chain}`,
+        );
 
-    const _evmWallets = key.wallets.filter(isWalletSupported);
-    const _accountsInfo = _evmWallets.map(wallet => {
-      return {
-        receiveAddress: wallet.receiveAddress,
-        accountNumber: wallet.credentials.account,
-      };
-    }) as {receiveAddress: string; accountNumber: number}[];
-    const uniqueAccountsInfo = _accountsInfo
-      .filter(account => account.receiveAddress !== undefined)
-      .filter(
-        (account, index, self) =>
-          index ===
-          self.findIndex(a => a.receiveAddress === account.receiveAddress),
-      );
-    setEvmWallets(_evmWallets);
-    // formatting for the bottom modal
-    const _UIFormattedEvmWallets = _evmWallets?.map(wallet =>
-      buildUIFormattedWallet(
-        wallet,
-        defaultAltCurrency.isoCode,
-        rates,
-        dispatch,
-      ),
-    );
-    setUIFormattedEvmWallets(_UIFormattedEvmWallets);
-    setAccountsInfo(uniqueAccountsInfo);
-    setAssociatedWallet(_UIFormattedEvmWallets[0]);
+        const extractAccountIndex = (rootPath: string) => {
+          const match = rootPath.match(/m\/44'\/60'\/(\d+)'/);
+          return match ? parseInt(match[1], 10) : null;
+        };
 
-    if (!_evmWallets?.length && isToken) {
-      showMissingWalletMsg();
-    }
-    setShowAssociatedAccountSelectionDropdown(uniqueAccountsInfo.length > 0);
-  };
+        const doesAccountIndexExistForChain = (
+          index: number,
+          chain: string,
+        ) => {
+          return rootPaths.some(path => {
+            const [pathRoot, pathChain] = path.split(':');
+            const accountIndex = extractAccountIndex(pathRoot);
+            return accountIndex === index && pathChain === chain;
+          });
+        };
+
+        // Display associated wallets under the following conditions:
+        // 1. The wallet is part of a Layer 2 chain and no other wallet from the specified Layer 2 chain exists for the account.
+        // 2. The wallet is an ERC20 token.
+        const IS_TOKEN_CREATION = isToken;
+        const isWalletSupported = (wallet: Wallet): boolean => {
+          // Check if the wallet is an ERC token, tokens are not associated wallets
+          const _isToken = IsERCToken(
+            wallet.currencyAbbreviation,
+            wallet.chain,
+          );
+          if (_isToken) {
+            return false;
+          }
+
+          // Ensure the wallet is on a supported EVM chain
+          const isSupportedChain = SUPPORTED_EVM_COINS.includes(wallet.chain);
+          if (!isSupportedChain) {
+            return false;
+          }
+
+          // For token creation, wallet must be on the same chain
+          const isSameChain = wallet.chain === chain;
+          if (isSameChain && IS_TOKEN_CREATION) {
+            return true;
+          } else if (IS_TOKEN_CREATION) {
+            return false;
+          }
+
+          const accountIndex = extractAccountIndex(wallet.credentials.rootPath);
+
+          // Check if the account index exists for the same chain or other chains
+          if (accountIndex !== null) {
+            // add the chain that is being created to the array
+            const alreadyCreatedEVMCoins = [
+              ...new Set([chain].concat(key.wallets.map(w => w.chain))),
+            ];
+            const accountExistsForAllOtherChains = alreadyCreatedEVMCoins.every(
+              supportedChain =>
+                doesAccountIndexExistForChain(accountIndex, supportedChain),
+            );
+
+            const accountIsAlreadyCreated = doesAccountIndexExistForChain(
+              accountIndex,
+              chain,
+            );
+
+            if (accountExistsForAllOtherChains || accountIsAlreadyCreated) {
+              return false;
+            }
+          }
+
+          return !isSameChain;
+        };
+
+        const _evmWallets = key.wallets.filter(isWalletSupported);
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: _evmWallets,
+        });
+        const _accountsInfo = _evmWallets.map(wallet => {
+          return {
+            receiveAddress: wallet.receiveAddress,
+            accountNumber: wallet.credentials.account,
+          };
+        }) as {receiveAddress: string; accountNumber: number}[];
+        const uniqueAccountsInfo = _accountsInfo
+          .filter(account => account.receiveAddress !== undefined)
+          .filter(
+            (account, index, self) =>
+              index ===
+              self.findIndex(a => a.receiveAddress === account.receiveAddress),
+          );
+        setEvmWallets(_evmWallets);
+        setAccountsInfo(uniqueAccountsInfo);
+        setAssociatedWallet(_evmWallets[0]);
+        if (!_evmWallets?.length && isToken) {
+          showMissingWalletMsg();
+        }
+        setShowAssociatedAccountSelectionDropdown(
+          uniqueAccountsInfo.length > 0,
+        );
+        dispatch(dismissOnGoingProcessModal());
+        isSettingWalletsRunningRef.current = false;
+      },
+      500,
+      {leading: true, trailing: true},
+    ),
+    [key],
+  );
 
   useEffect(() => {
     _setEvmWallets(chain);
-  }, [chain]);
+  }, [key]);
 
   const {
     control,
@@ -695,13 +721,17 @@ const AddWallet = ({
   const renderAccounts = useCallback(
     ({item}) => (
       <AccountRow
+        chain={chain}
+        selected={item.receiveAddress === associatedWallet?.receiveAddress}
         account={item}
         onPress={() => {
           haptic('soft');
-          const _associatedWallet = UIFormattedEvmWallets!.find(
+          const _associatedWallet = evmWallets?.find(
             wallet => wallet.receiveAddress === item.receiveAddress,
           );
-          setAssociatedWallet(_associatedWallet);
+          if (_associatedWallet) {
+            setAssociatedWallet(_associatedWallet);
+          }
           if (isCustomToken && !!tokenAddress) {
             setTokenAddress(undefined);
           }
@@ -709,7 +739,7 @@ const AddWallet = ({
         }}
       />
     ),
-    [UIFormattedEvmWallets],
+    [evmWallets, associatedWallet],
   );
 
   const renderChain = useCallback(
@@ -825,45 +855,47 @@ const AddWallet = ({
           </AssociatedAccountContainer>
         )}
 
-        {showAssociatedAccountSelectionDropdown && associatedWallet && (
-          <>
-            <AssociatedAccountContainer>
-              <Label>{t('CHOOSE ACCOUNT')}</Label>
-              <AssociatedAccount
-                activeOpacity={ActiveOpacity}
-                onPress={() => {
-                  setAssociatedAccountModalVisible(true);
+        {showAssociatedAccountSelectionDropdown &&
+        associatedWallet &&
+        associatedWallet.receiveAddress ? (
+          <AssociatedAccountContainer>
+            <Label>{t('SELECT AN ACCOUNT')}</Label>
+            <AssociatedAccount
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                setAssociatedAccountModalVisible(true);
+              }}>
+              <Row
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                 }}>
-                <Row
-                  style={{
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                  <View>
-                    <AssociateAccount>
-                      Account {associatedWallet.account}
-                    </AssociateAccount>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => setAssociatedAccountModalVisible(true)}>
-                    <AddressRow>
-                      <SendToPillContainer style={{marginRight: 10}}>
-                        <PillContainer>
-                          <PillText accent={'action'}>
-                            {formatCryptoAddress(
-                              associatedWallet.receiveAddress!,
-                            )}
-                          </PillText>
-                        </PillContainer>
-                      </SendToPillContainer>
-                      <Icons.DownToggle />
-                    </AddressRow>
-                  </TouchableOpacity>
-                </Row>
-              </AssociatedAccount>
-            </AssociatedAccountContainer>
-          </>
-        )}
+                <View>
+                  <AccountLabel>
+                    {t('Account')} {associatedWallet.credentials.account}
+                  </AccountLabel>
+                </View>
+
+                <View>
+                  <AddressRow>
+                    <SendToPillContainer style={{marginRight: 10}}>
+                      <AddPillContainer>
+                        <CurrencyImage
+                          img={CurrencyListIcons[chain]}
+                          size={20}
+                        />
+                        <PillText accent={'action'}>
+                          {formatCryptoAddress(associatedWallet.receiveAddress)}
+                        </PillText>
+                      </AddPillContainer>
+                    </SendToPillContainer>
+                    <Icons.DownToggle />
+                  </AddressRow>
+                </View>
+              </Row>
+            </AssociatedAccount>
+          </AssociatedAccountContainer>
+        ) : null}
 
         {isCustomToken ? (
           <View style={{marginTop: 20}}>
@@ -880,7 +912,7 @@ const AddWallet = ({
           </View>
         ) : null}
 
-        {!isToken && (
+        {!isToken && !['arb', 'op', 'base'].includes(chain) && (
           <WalletAdvancedOptionsContainer>
             <AdvancedOptionsButton
               onPress={() => {
