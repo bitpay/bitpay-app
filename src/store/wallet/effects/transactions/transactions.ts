@@ -213,6 +213,7 @@ const ProcessTx =
         (total, {amount}) => total + Number(amount),
         0,
       );
+      tokenAddress = tx.effects[0].contractAddress;
     }
 
     tx.amountStr = dispatch(
@@ -271,7 +272,11 @@ const ProcessNewTxs =
       tx.chain = wallet.chain;
 
       // Filter received txs with no effects for ERC20 tokens only
-      if (IsERCToken(tx.coin, tx.chain) && !tx.effects?.[0]) {
+      if (
+        IsERCToken(tx.coin, tx.chain) &&
+        Array.isArray(tx.effects) &&
+        tx.effects.length === 0
+      ) {
         continue;
       }
 
