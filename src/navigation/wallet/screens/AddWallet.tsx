@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
   BaseText,
   H4,
@@ -106,7 +100,7 @@ import {IsERCToken, IsSegwitCoin} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
-import {CommonActions} from '@react-navigation/native';
+import {CommonActions, useTheme} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
@@ -115,7 +109,7 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import AccountRow from '../../../components/list/AccountRow';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
-import debounce from 'lodash.debounce';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
 export type AddWalletParamList = {
   key: Key;
@@ -246,26 +240,24 @@ const AddWallet = ({
   navigation,
 }: NativeStackScreenProps<WalletGroupParamList, WalletScreens.ADD_WALLET>) => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
   const {
     currencyAbbreviation: _currencyAbbreviation,
     currencyName: _currencyName,
     chain: _chain,
     tokenAddress: _tokenAddress,
-    key: _key,
+    key,
     isToken,
     isCustomToken,
   } = route.params;
-  const key = useAppSelector(({WALLET}) => WALLET.keys[_key.id]);
-  const isSettingWalletsRunningRef = useRef(false);
   // temporary until advanced settings is finished
   const [showOptions, setShowOptions] = useState(false);
+  const [loadingEVMWallets, setLoadingEVMWallets] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
   const [isRegtest, setIsRegtest] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const network = useAppSelector(({APP}) => APP.network);
-  const rates = useAppSelector(({RATE}) => RATE.rates);
   const [tokenAddress, setTokenAddress] = useState<string | undefined>(
     _tokenAddress,
   );
@@ -378,137 +370,118 @@ const AddWallet = ({
     );
   };
 
-  const _setEvmWallets = useCallback(
-    debounce(
-      async (chain: string) => {
-        if (isSettingWalletsRunningRef.current) {
-          return;
-        }
-        isSettingWalletsRunningRef.current = true;
-        dispatch(startOnGoingProcessModal('LOADING'));
-        if (!SUPPORTED_EVM_COINS.includes(chain)) {
-          return;
-        }
-        if (isCustomToken) {
-          setTokenAddress(undefined);
-          setCurrencyName(undefined);
-        }
+  const _setEvmWallets = async (chain: string) => {
+    if (!SUPPORTED_EVM_COINS.includes(chain)) {
+      return;
+    }
+    if (isCustomToken) {
+      setTokenAddress(undefined);
+      setCurrencyName(undefined);
+    }
 
-        // Extract rootPaths from wallets
-        const rootPaths = key.wallets.map(
-          wallet => `${wallet.credentials.rootPath}:${wallet.chain}`,
+    // Extract rootPaths from wallets
+    const rootPaths = key.wallets.map(
+      wallet => `${wallet.credentials.rootPath}:${wallet.chain}`,
+    );
+
+    const extractAccountIndex = (rootPath: string) => {
+      const match = rootPath.match(/m\/44'\/60'\/(\d+)'/);
+      return match ? parseInt(match[1], 10) : null;
+    };
+
+    const doesAccountIndexExistForChain = (index: number, chain: string) => {
+      return rootPaths.some(path => {
+        const [pathRoot, pathChain] = path.split(':');
+        const accountIndex = extractAccountIndex(pathRoot);
+        return accountIndex === index && pathChain === chain;
+      });
+    };
+
+    // Display associated wallets under the following conditions:
+    // 1. The wallet is part of a Layer 2 chain and no other wallet from the specified Layer 2 chain exists for the account.
+    // 2. The wallet is an ERC20 token.
+    const IS_TOKEN_CREATION = isToken;
+    const isWalletSupported = (wallet: Wallet): boolean => {
+      // Check if the wallet is an ERC token, tokens are not associated wallets
+      const _isToken = IsERCToken(wallet.currencyAbbreviation, wallet.chain);
+      if (_isToken) {
+        return false;
+      }
+
+      // Ensure the wallet is on a supported EVM chain
+      const isSupportedChain = SUPPORTED_EVM_COINS.includes(wallet.chain);
+      if (!isSupportedChain) {
+        return false;
+      }
+
+      // For token creation, wallet must be on the same chain
+      const isSameChain = wallet.chain === chain;
+      if (isSameChain && IS_TOKEN_CREATION) {
+        return true;
+      } else if (IS_TOKEN_CREATION) {
+        return false;
+      }
+
+      const accountIndex = extractAccountIndex(wallet.credentials.rootPath);
+
+      // Check if the account index exists for the same chain or other chains
+      if (accountIndex !== null) {
+        // add the chain that is being created to the array
+        const alreadyCreatedEVMCoins = [
+          ...new Set([chain].concat(key.wallets.map(w => w.chain))),
+        ];
+        const accountExistsForAllOtherChains = alreadyCreatedEVMCoins.every(
+          supportedChain =>
+            doesAccountIndexExistForChain(accountIndex, supportedChain),
         );
 
-        const extractAccountIndex = (rootPath: string) => {
-          const match = rootPath.match(/m\/44'\/60'\/(\d+)'/);
-          return match ? parseInt(match[1], 10) : null;
-        };
-
-        const doesAccountIndexExistForChain = (
-          index: number,
-          chain: string,
-        ) => {
-          return rootPaths.some(path => {
-            const [pathRoot, pathChain] = path.split(':');
-            const accountIndex = extractAccountIndex(pathRoot);
-            return accountIndex === index && pathChain === chain;
-          });
-        };
-
-        // Display associated wallets under the following conditions:
-        // 1. The wallet is part of a Layer 2 chain and no other wallet from the specified Layer 2 chain exists for the account.
-        // 2. The wallet is an ERC20 token.
-        const IS_TOKEN_CREATION = isToken;
-        const isWalletSupported = (wallet: Wallet): boolean => {
-          // Check if the wallet is an ERC token, tokens are not associated wallets
-          const _isToken = IsERCToken(
-            wallet.currencyAbbreviation,
-            wallet.chain,
-          );
-          if (_isToken) {
-            return false;
-          }
-
-          // Ensure the wallet is on a supported EVM chain
-          const isSupportedChain = SUPPORTED_EVM_COINS.includes(wallet.chain);
-          if (!isSupportedChain) {
-            return false;
-          }
-
-          // For token creation, wallet must be on the same chain
-          const isSameChain = wallet.chain === chain;
-          if (isSameChain && IS_TOKEN_CREATION) {
-            return true;
-          } else if (IS_TOKEN_CREATION) {
-            return false;
-          }
-
-          const accountIndex = extractAccountIndex(wallet.credentials.rootPath);
-
-          // Check if the account index exists for the same chain or other chains
-          if (accountIndex !== null) {
-            // add the chain that is being created to the array
-            const alreadyCreatedEVMCoins = [
-              ...new Set([chain].concat(key.wallets.map(w => w.chain))),
-            ];
-            const accountExistsForAllOtherChains = alreadyCreatedEVMCoins.every(
-              supportedChain =>
-                doesAccountIndexExistForChain(accountIndex, supportedChain),
-            );
-
-            const accountIsAlreadyCreated = doesAccountIndexExistForChain(
-              accountIndex,
-              chain,
-            );
-
-            if (accountExistsForAllOtherChains || accountIsAlreadyCreated) {
-              return false;
-            }
-          }
-
-          return !isSameChain;
-        };
-
-        const _evmWallets = key.wallets.filter(isWalletSupported);
-        // workaround for fixing wallets without receive address
-        await fixWalletAddresses({
-          appDispatch: dispatch,
-          wallets: _evmWallets,
-        });
-        const _accountsInfo = _evmWallets.map(wallet => {
-          return {
-            receiveAddress: wallet.receiveAddress,
-            accountNumber: wallet.credentials.account,
-          };
-        }) as {receiveAddress: string; accountNumber: number}[];
-        const uniqueAccountsInfo = _accountsInfo
-          .filter(account => account.receiveAddress !== undefined)
-          .filter(
-            (account, index, self) =>
-              index ===
-              self.findIndex(a => a.receiveAddress === account.receiveAddress),
-          );
-        setEvmWallets(_evmWallets);
-        setAccountsInfo(uniqueAccountsInfo);
-        setAssociatedWallet(_evmWallets[0]);
-        if (!_evmWallets?.length && isToken) {
-          showMissingWalletMsg();
-        }
-        setShowAssociatedAccountSelectionDropdown(
-          uniqueAccountsInfo.length > 0,
+        const accountIsAlreadyCreated = doesAccountIndexExistForChain(
+          accountIndex,
+          chain,
         );
-        dispatch(dismissOnGoingProcessModal());
-        isSettingWalletsRunningRef.current = false;
-      },
-      500,
-      {leading: true, trailing: true},
-    ),
-    [key],
-  );
+
+        if (accountExistsForAllOtherChains || accountIsAlreadyCreated) {
+          return false;
+        }
+      }
+
+      return !isSameChain;
+    };
+
+    const _evmWallets = key.wallets.filter(isWalletSupported);
+    if (!_evmWallets?.length && isToken) {
+      showMissingWalletMsg();
+      return;
+    }
+    setLoadingEVMWallets(true);
+    // workaround for fixing wallets without receive address
+    await fixWalletAddresses({
+      appDispatch: dispatch,
+      wallets: _evmWallets,
+    });
+    const _accountsInfo = _evmWallets.map(wallet => {
+      return {
+        receiveAddress: wallet.receiveAddress,
+        accountNumber: wallet.credentials.account,
+      };
+    }) as {receiveAddress: string; accountNumber: number}[];
+    const uniqueAccountsInfo = _accountsInfo
+      .filter(account => account.receiveAddress !== undefined)
+      .filter(
+        (account, index, self) =>
+          index ===
+          self.findIndex(a => a.receiveAddress === account.receiveAddress),
+      );
+    setEvmWallets(_evmWallets);
+    setAccountsInfo(uniqueAccountsInfo);
+    setAssociatedWallet(_evmWallets[0]);
+    setShowAssociatedAccountSelectionDropdown(uniqueAccountsInfo.length > 0);
+    setLoadingEVMWallets(false);
+  };
 
   useEffect(() => {
     _setEvmWallets(chain);
-  }, [key]);
+  }, []);
 
   const {
     control,
@@ -855,9 +828,29 @@ const AddWallet = ({
           </AssociatedAccountContainer>
         )}
 
+        {loadingEVMWallets && (
+          <SkeletonPlaceholder
+            backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}
+            highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
+            <SkeletonPlaceholder.Item
+              flexDirection={'row'}
+              alignItems={'center'}
+              justifyContent={'space-between'}
+              height={110}>
+              <SkeletonPlaceholder.Item
+                width="100%"
+                height={30}
+                borderRadius={4}
+                marginRight={10}
+              />
+            </SkeletonPlaceholder.Item>
+          </SkeletonPlaceholder>
+        )}
+
         {showAssociatedAccountSelectionDropdown &&
         associatedWallet &&
-        associatedWallet.receiveAddress ? (
+        associatedWallet.receiveAddress &&
+        !loadingEVMWallets ? (
           <AssociatedAccountContainer>
             <Label>{t('CHOOSE ACCOUNT')}</Label>
             <AssociatedAccount
@@ -1083,7 +1076,8 @@ const AddWallet = ({
             disabled={
               !currencyAbbreviation ||
               !currencyName ||
-              (!associatedWallet && isToken)
+              (!associatedWallet && isToken) ||
+              loadingEVMWallets
             }
             onPress={add}
             buttonStyle={'primary'}>

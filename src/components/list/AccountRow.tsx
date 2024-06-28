@@ -4,15 +4,13 @@ import {H5} from '../styled/Text';
 import styled from 'styled-components/native';
 import {formatCryptoAddress} from '../../utils/helper-methods';
 import {SendToPillContainer} from '../../navigation/wallet/screens/send/confirm/Shared';
-import {
-  PillText,
-} from '../../navigation/wallet/components/SendToPill';
+import {PillText} from '../../navigation/wallet/components/SendToPill';
 import {View} from 'react-native';
 import {Action} from '../../styles/colors';
 import {css} from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
-import { AddPillContainer } from '../../navigation/wallet/screens/AddWallet';
+import {AddPillContainer} from '../../navigation/wallet/screens/AddWallet';
 
 const AddressView = styled(View)`
   align-items: flex-end;
