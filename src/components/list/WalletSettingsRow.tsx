@@ -37,11 +37,22 @@ const CurrencyName = styled(BaseText)`
 const NestedArrowContainer = styled.View`
   align-items: center;
   justify-content: center;
+  margin-left: 10px;
   margin-right: 15px;
 `;
 
 const HiddenColumn = styled(Column)`
   align-items: flex-end;
+`;
+
+const CurrencyContainer = styled.View`
+  flex-direction: column;
+  width: 55%;
+`;
+
+const BadgeContainer = styled.View`
+  flex-direction: row;
+  margin-left: 10px;
 `;
 
 const WalletSettingsRow = ({
@@ -66,12 +77,15 @@ const WalletSettingsRow = ({
         </NestedArrowContainer>
       )}
       <CurrencyImage img={img} badgeUri={badgeImg} size={40} />
-      <CurrencyName style={textStyle}>
-        {walletName || currencyName} {isToken}
-      </CurrencyName>
-      {buildTestBadge(network, chain, isToken)}
-
-      {buildUncompleteBadge(isComplete)}
+      <CurrencyContainer>
+        <CurrencyName style={textStyle} numberOfLines={1} ellipsizeMode="tail">
+          {walletName || currencyName} {isToken}
+        </CurrencyName>
+        <BadgeContainer>
+          {buildTestBadge(network, chain, isToken)}
+          {buildUncompleteBadge(isComplete)}
+        </BadgeContainer>
+      </CurrencyContainer>
 
       {hideWallet ? (
         <HiddenColumn>
