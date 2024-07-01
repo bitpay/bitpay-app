@@ -32,7 +32,6 @@ const SpinnerContainer = styled.View`
 
 const BadgeContainer = styled.View`
   margin-left: 3px;
-  margin-bottom: -2px;
 `;
 
 const BalanceColumn = styled(Column)`
