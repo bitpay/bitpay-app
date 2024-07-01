@@ -269,12 +269,13 @@ const shouldFilterTx = (tx: any, wallet: Wallet) => {
   }
 
   // Filter if contract doesn't match the wallet token address
-  if (
-    isERCToken &&
-    hasEffects &&
-    tx.effects[0].contractAddress !== wallet.tokenAddress
-  ) {
-    return true;
+  if (isERCToken && hasEffects) {
+    tx.effects = tx.effects.filter(
+      (effect: any) => effect.contractAddress === wallet.tokenAddress
+    );
+    if (tx.effects.length === 0) {
+      return true;
+    }
   }
 
   // Filter received txs with effects for non ERC20 wallets

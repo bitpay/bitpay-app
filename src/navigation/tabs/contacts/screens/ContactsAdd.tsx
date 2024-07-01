@@ -294,9 +294,9 @@ const ContactsAdd = ({
   const [allTokenOptions, setAllTokenOptions] = useState(ALL_TOKENS);
   const [selectedToken, setSelectedToken] = useState(ALL_TOKENS[0]);
   const [selectedChain, setSelectedChain] = useState(SupportedChainsOptions[0]);
-  const [selectedCurrency, setSelectedCurrency] = useState(
-    SupportedCoinsOptions[0],
-  );
+  const [selectedCurrency, setSelectedCurrency] = useState<
+    SupportedCurrencyOption | CurrencySelectionItem
+  >(SupportedCoinsOptions[0]);
 
   const networkOptions = [
     {id: 'livenet', name: 'Livenet'},
@@ -345,11 +345,7 @@ const ContactsAdd = ({
     setTokenAddressValue(tokenAddress);
 
     _setSelectedChain(chain);
-    _setSelectedCurrency(
-      currencyAbbreviation,
-      chain,
-      tokenAddress ? true : false,
-    );
+    _setSelectedCurrency(currencyAbbreviation, chain, tokenAddress);
 
     switch (chain) {
       case 'eth':
@@ -494,21 +490,22 @@ const ContactsAdd = ({
   const _setSelectedCurrency = (
     _currencyAbbreviation: string,
     _chain: string,
-    isTokenAddress: boolean,
+    tokenAddress: string | undefined,
   ) => {
     let _selectedCurrency;
-    if (!isTokenAddress) {
+    if (!tokenAddress) {
       _selectedCurrency = SupportedCoinsOptions.filter(
         ({currencyAbbreviation, chain}) =>
           currencyAbbreviation === _currencyAbbreviation && chain === _chain,
       );
+      setSelectedCurrency(_selectedCurrency[0]);
     } else {
-      _selectedCurrency = SupportedTokenOptions.filter(
-        ({currencyAbbreviation, chain}) =>
-          currencyAbbreviation === _currencyAbbreviation && chain === _chain,
+      _selectedCurrency = ALL_TOKENS.find(
+        ({tokenAddress: _tokenAddress}) =>
+          _tokenAddress?.toLowerCase() === tokenAddress.toLowerCase(),
       );
+      setSelectedCurrency(_selectedCurrency!);
     }
-    setSelectedCurrency(_selectedCurrency[0]);
   };
 
   const _setSelectedToken = (
@@ -526,7 +523,7 @@ const ContactsAdd = ({
     _setSelectedCurrency(
       token?.currencyAbbreviation || currencyAbbreviation,
       chain,
-      true,
+      tokenAddress,
     );
     setTokenModalVisible(false);
   };
@@ -545,7 +542,7 @@ const ContactsAdd = ({
       );
     } else {
       _setSelectedChain(chain);
-      _setSelectedCurrency(currencyAbbreviation, chain, false);
+      _setSelectedCurrency(currencyAbbreviation, chain, undefined);
     }
     setCurrencyModalVisible(false);
   };
