@@ -21,6 +21,9 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
+# Disable Location APIs so we compile out any privacy sensitive APIs
+$VCEnableLocation=false
+
 target 'BitPayApp' do
   permissions_path = '../node_modules/react-native-permissions/ios'
   pod 'Permission-Notifications', :path => "#{permissions_path}/Notifications/Permission-Notifications.podspec"
