@@ -411,6 +411,7 @@ export interface SardineGetAuthTokenRequestData {
 
 export type SardinePaymentType =
   | 'ach'
+  | 'apple_pay'
   | 'debit'
   | 'credit'
   | 'card'
