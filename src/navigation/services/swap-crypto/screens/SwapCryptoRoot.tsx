@@ -60,7 +60,7 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
   getBadgeImg,
-  getChainUsingSuffix,
+  getChainFromTokenByAddressKey,
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -165,7 +165,7 @@ const SwapCryptoRoot: React.FC = () => {
   );
   const tokenOptions = Object.entries(tokenOptionsByAddress).map(
     ([k, {symbol}]) => {
-      const chain = getChainUsingSuffix(k);
+      const chain = getChainFromTokenByAddressKey(k);
       return getCurrencyAbbreviation(symbol.toLowerCase(), chain);
     },
   );

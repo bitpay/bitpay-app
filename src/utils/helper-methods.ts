@@ -422,8 +422,7 @@ export const getCWCChain = (chain: string): string => {
 };
 
 export const getChainUsingSuffix = (symbol: string) => {
-  const suffix = symbol.charAt(symbol.length - 1);
-  switch (suffix) {
+  switch (symbol) {
     case 'e':
       return 'eth';
     case 'm':

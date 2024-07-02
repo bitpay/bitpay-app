@@ -50,7 +50,7 @@ import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.s
 import {
   formatFiatAmount,
   getBadgeImg,
-  getChainUsingSuffix,
+  getChainFromTokenByAddressKey,
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -201,7 +201,7 @@ const SellCryptoRoot = ({
   const {rates} = useAppSelector(({RATE}) => RATE);
   const tokenOptions = Object.entries(tokenOptionsByAddress).map(
     ([k, {symbol}]) => {
-      const chain = getChainUsingSuffix(k);
+      const chain = getChainFromTokenByAddressKey(k);
       return getCurrencyAbbreviation(symbol.toLowerCase(), chain);
     },
   );
