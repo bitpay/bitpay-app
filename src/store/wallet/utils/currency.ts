@@ -85,10 +85,11 @@ export const IsERCToken = (
   currencyAbbreviation: string,
   chain: string,
 ): boolean => {
+  const _currencyAbbreviation = currencyAbbreviation.toLowerCase();
+  const _chain = chain.toLowerCase();
   return (
-    currencyAbbreviation.toLowerCase() !== chain.toLowerCase() &&
-    (currencyAbbreviation.toLowerCase() !== 'eth' ||
-      !isL2NoSideChainNetwork(chain)) // workaround for L2 eth
+    (_currencyAbbreviation !== _chain && _currencyAbbreviation !== 'eth') ||
+    (isL2NoSideChainNetwork(_chain) && _currencyAbbreviation === _chain)
   );
 };
 
