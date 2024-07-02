@@ -29,6 +29,7 @@ export enum AppActionTypes {
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
   SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
+  SET_APP_INSTALLED = 'APP/SET_INSTALLED_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
   SHOW_IN_APP_MESSAGE = 'APP/SHOW_IN_APP_MESSAGE',
@@ -134,6 +135,10 @@ interface SetIntroCompleted {
 
 interface SetOnboardingCompleted {
   type: typeof AppActionTypes.SET_ONBOARDING_COMPLETED;
+}
+
+interface setAppInstalled {
+  type: typeof AppActionTypes.SET_APP_INSTALLED;
 }
 
 interface ShowOnGoingProcessModal {
@@ -422,6 +427,7 @@ export type AppActionType =
   | setUserFeedback
   | SetIntroCompleted
   | SetOnboardingCompleted
+  | setAppInstalled
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal
   | ShowInAppMessage

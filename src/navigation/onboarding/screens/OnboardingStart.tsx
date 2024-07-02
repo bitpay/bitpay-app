@@ -1,4 +1,3 @@
-import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
@@ -17,7 +16,6 @@ import {
 } from '../../../components/styled/Containers';
 import {Link} from '../../../components/styled/Text';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
-import {Action, LuckySevens} from '../../../styles/colors';
 import {
   useAppDispatch,
   useAppSelector,
@@ -33,7 +31,7 @@ import {useSharedValue} from 'react-native-reanimated';
 
 type OnboardingStartScreenProps = NativeStackScreenProps<
   OnboardingGroupParamList,
-  OnboardingScreens.START
+  OnboardingScreens.ONBOARDING_START
 >;
 
 // IMAGES
@@ -180,7 +178,6 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   }, [navigation, isPaired, t]);
 
   const carouselRef = useRef<ICarouselInstance>(null);
-  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [scrollHintHeight, setScrollHintHeight] = useState(0);
   const progressValue = useSharedValue<number>(0);
 
@@ -233,9 +230,6 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           ref={carouselRef}
           scrollAnimationDuration={1000}
           onProgressChange={(_, index) => {
-            if (Number.isInteger(index)) {
-              setActiveSlideIndex(index);
-            }
             progressValue.value = index;
           }}
           renderItem={({item}) => <OnboardingSlide item={item} />}
