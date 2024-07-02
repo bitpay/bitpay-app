@@ -142,7 +142,7 @@ const SearchComponent = <T extends SearchableItem>({
       const normalizedText = normalizeText(text);
       let results = cloneDeep(searchFullList);
       // Ignore error when there is no results
-      if (results?.[0]?.accounts) {
+      if (['walletconnect'].includes(context) && results?.[0]?.accounts) {
         results.forEach(
           data =>
             (data.accounts = filterAccounts(
@@ -151,7 +151,17 @@ const SearchComponent = <T extends SearchableItem>({
               selectedChainFilterOption,
             )),
         );
-      } else {
+      } else if (
+        [
+          'keysettings',
+          'keyoverview',
+          'send',
+          'receive',
+          'swap',
+          'buy',
+          'sell',
+        ].includes(context)
+      ) {
         results = results.reduce((acc: T[], data) => {
           if (data.chain) {
             data.chains = [data.chain]; // Workaround for Key Overview view

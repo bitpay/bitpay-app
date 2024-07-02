@@ -57,6 +57,7 @@ import SearchComponent, {
   SearchableItem,
 } from '../../../components/chain-search/ChainSearch';
 import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
+import cloneDeep from 'lodash.clonedeep';
 
 type CurrencySelectionScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -87,6 +88,7 @@ type CurrencySelectionListItem = SearchableItem &
      * Using a separate property instead of deriving due to performance reasons.
      */
     popularTokens: CurrencySelectionItem[];
+    filteredTokens?: CurrencySelectionItem[];
   };
 
 export type CurrencySelectionMode = 'single' | 'multi';
@@ -218,52 +220,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   );
   const allListItemsRef = useRef(allListItems);
   allListItemsRef.current = allListItems;
-
-  /**
-   * Derived from allListItems, but with search filter applied.
-   */
-  const filteredListItems = useMemo(() => {
-    // If no filter, return reference to allListItems.
-    if (!searchVal && !selectedChainFilterOption) {
-      return allListItems;
-    }
-
-    if (selectedChainFilterOption && !searchVal) {
-      return allListItems.filter(
-        item => item.currency.chain === selectedChainFilterOption,
-      );
-    }
-
-    // Else return a new array to trigger a rerender.
-    return allListItems.reduce<CurrencySelectionListItem[]>((accum, item) => {
-      if (
-        selectedChainFilterOption &&
-        item.currency.chain !== selectedChainFilterOption
-      ) {
-        return accum;
-      }
-
-      const isCurrencyMatch =
-        item.currency.currencyAbbreviation.toLowerCase().includes(searchVal) ||
-        item.currency.currencyName.toLowerCase().includes(searchVal);
-
-      const matchingTokens = item.popularTokens.filter(
-        token =>
-          token.currencyAbbreviation.toLowerCase().includes(searchVal) ||
-          token.currencyName.toLowerCase().includes(searchVal),
-      );
-
-      // Display the item if the currency itself matches the filter or one of its tokens matches
-      if (isCurrencyMatch || matchingTokens.length) {
-        accum.push({
-          ...item,
-          popularTokens: matchingTokens,
-        });
-      }
-
-      return accum;
-    }, []);
-  }, [searchVal, selectedChainFilterOption, allListItems]);
 
   // Initialize supported currencies and tokens into row item format.
   // Resets if tokenOptions or tokenData updates.
@@ -826,7 +782,12 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
         <CurrencySelectionRow
           key={item.currency.id}
           currency={item.currency}
-          tokens={item.popularTokens}
+          tokens={
+            !searchVal && !selectedChainFilterOption
+              ? item.popularTokens
+              : item.tokens
+          }
+          filterSelected={!!searchVal || !!selectedChainFilterOption}
           description={item.description}
           selectionMode={selectionMode}
           onToggle={memoizedOnToggle}
@@ -835,8 +796,88 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
         />
       );
     },
-    [memoizedOnToggle, memoizedOnViewAllPressed, selectionMode],
+    [
+      memoizedOnToggle,
+      memoizedOnViewAllPressed,
+      selectionMode,
+      searchVal,
+      selectedChainFilterOption,
+    ],
   );
+
+  const filterAndSortTokens = (
+    tokens: CurrencySelectionItem[],
+    searchVal: string,
+  ): CurrencySelectionItem[] => {
+    const filteredTokens = tokens.filter(
+      item =>
+        item.currencyAbbreviation.toLowerCase().includes(searchVal) ||
+        item.currencyName.toLowerCase().includes(searchVal) ||
+        item.tokenAddress?.toLowerCase().includes(searchVal),
+    );
+    return filteredTokens.sort((a, b) => {
+      const aStarts = a.currencyAbbreviation
+        .toLowerCase()
+        .startsWith(searchVal);
+      const bStarts = b.currencyAbbreviation
+        .toLowerCase()
+        .startsWith(searchVal);
+      if (aStarts && bStarts) {
+        return a.currencyAbbreviation.localeCompare(b.currencyAbbreviation);
+      }
+      if (aStarts && !bStarts) {
+        return -1;
+      }
+      if (!aStarts && bStarts) {
+        return 1;
+      }
+      return a.currencyAbbreviation.localeCompare(b.currencyAbbreviation);
+    });
+  };
+
+  const filteredItems = useMemo(() => {
+    const _allListItems = cloneDeep(allListItems);
+    if (!selectedChainFilterOption && !searchVal) {
+      return _allListItems;
+    }
+    if (selectedChainFilterOption && !searchVal) {
+      return _allListItems.filter(
+        item => item.currency.chain === selectedChainFilterOption,
+      );
+    }
+
+    return _allListItems
+      .map(allListItem => {
+        if (
+          selectedChainFilterOption &&
+          selectedChainFilterOption !== allListItem.currency.chain
+        ) {
+          return null;
+        }
+        const searchValLowerCase = searchVal.toLowerCase();
+        const currency = allListItem.currency;
+        const matchesSearch = [
+          currency.currencyAbbreviation,
+          currency.chain,
+          currency.chainName,
+          currency.currencyName,
+        ].some((property: string | undefined) =>
+          property?.toLowerCase()?.includes(searchValLowerCase),
+        );
+        if (allListItem.tokens.length > 0) {
+          allListItem.tokens = filterAndSortTokens(
+            allListItem.tokens,
+            searchValLowerCase,
+          );
+          return allListItem.tokens.length > 0 || matchesSearch
+            ? allListItem
+            : null;
+        } else {
+          return matchesSearch ? allListItem : null;
+        }
+      })
+      .filter(Boolean) as CurrencySelectionListItem[];
+  }, [searchVal, selectedChainFilterOption, allListItems]);
 
   return (
     <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
@@ -847,16 +888,20 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
             setSearchVal={setSearchVal}
             searchResults={searchResults}
             setSearchResults={setSearchResults}
-            searchFullList={filteredListItems}
+            searchFullList={allListItems}
             context={context}
           />
         </SearchComponentContainer>
       ) : null}
 
-      {filteredListItems.length ? (
+      {allListItems.length > 0 || filteredItems.length > 0 ? (
         <ListContainer>
           <FlatList<CurrencySelectionListItem>
-            data={filteredListItems}
+            data={
+              !searchVal && !selectedChainFilterOption
+                ? allListItems
+                : filteredItems
+            }
             keyExtractor={keyExtractor}
             renderItem={renderItem}
             ListFooterComponent={() => {

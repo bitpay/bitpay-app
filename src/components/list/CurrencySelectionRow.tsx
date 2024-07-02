@@ -43,6 +43,7 @@ export type CurrencySelectionItem = Pick<
 export type CurrencySelectionRowProps = {
   currency: CurrencySelectionItem;
   tokens?: CurrencySelectionItem[];
+  filterSelected?: boolean;
   description?: string;
   hideCheckbox?: boolean;
   disableCheckbox?: boolean;
@@ -265,6 +266,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
   currency,
   description,
   tokens,
+  filterSelected,
   hideCheckbox,
   disableCheckbox,
   selectionMode,
@@ -299,11 +301,19 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
 
       {tokens?.length ? (
         <>
-          <TokensHeading>
-            {t('Popular {{currency}} Tokens', {
-              currency: chainName ? chainName : currencyName,
-            })}
-          </TokensHeading>
+          {!filterSelected ? (
+            <TokensHeading>
+              {t('Popular {{currency}} Tokens', {
+                currency: chainName ? chainName : currencyName,
+              })}
+            </TokensHeading>
+          ) : (
+            <TokensHeading>
+              {t('{{currency}} Tokens', {
+                currency: chainName ? chainName : currencyName,
+              })}
+            </TokensHeading>
+          )}
 
           {tokens.map(token => (
             <TokenSelectionRow
@@ -321,15 +331,17 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
             />
           ))}
 
-          <TokensFooter>
-            <ViewAllLink
-              accessibilityLabel="view-all-tokens-button"
-              onPress={() => {
-                onViewAllTokensPressed?.(currency, tokens);
-              }}>
-              {t('View all {{currency}} tokens', {currency: t(chainName)})}
-            </ViewAllLink>
-          </TokensFooter>
+          {!filterSelected ? (
+            <TokensFooter>
+              <ViewAllLink
+                accessibilityLabel="view-all-tokens-button"
+                onPress={() => {
+                  onViewAllTokensPressed?.(currency, tokens);
+                }}>
+                {t('View all {{currency}} tokens', {currency: t(chainName)})}
+              </ViewAllLink>
+            </TokensFooter>
+          ) : null}
         </>
       ) : null}
     </CurrencySelectionRowContainer>
