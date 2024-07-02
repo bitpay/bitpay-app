@@ -11,10 +11,12 @@ import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {Network} from '../../constants';
+import {BitpaySupportedEvmCoins} from '../../constants/currencies';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
 import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {
+  formatCryptoAddress,
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
@@ -86,6 +88,25 @@ interface Props {
   hideBalance: boolean;
 }
 
+export const buildPreviewAddress = (
+  chain: string,
+  isComplete: boolean | undefined,
+  multisig: string | undefined,
+  receiveAddress: string | undefined,
+  isToken: boolean | undefined,
+): ReactElement | undefined => {
+  const canHaveTokens = !!BitpaySupportedEvmCoins[chain];
+  if (!isComplete || multisig || !receiveAddress || isToken || !canHaveTokens) {
+    return;
+  }
+
+  return (
+    <BadgeContainer>
+      <Badge>{formatCryptoAddress(receiveAddress)}</Badge>
+    </BadgeContainer>
+  );
+};
+
 export const buildTestBadge = (
   network: string,
   chain: string,
@@ -135,6 +156,7 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
     multisig,
     isScanning,
     isComplete,
+    receiveAddress,
   } = wallet;
 
   // @ts-ignore
@@ -170,6 +192,13 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
             {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
           </ListItemSubText>
+          {buildPreviewAddress(
+            chain,
+            isComplete,
+            multisig,
+            receiveAddress,
+            isToken,
+          )}
           {buildTestBadge(network, chain, isToken)}
           {buildUncompleteBadge(isComplete)}
         </Row>
