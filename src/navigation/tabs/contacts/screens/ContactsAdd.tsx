@@ -44,8 +44,8 @@ import {
   keyExtractor,
   findContact,
   getBadgeImg,
-  getChainUsingSuffix,
   formatCurrencyAbbreviation,
+  getChainFromTokenByAddressKey,
 } from '../../../../utils/helper-methods';
 import CurrencySelectionRow, {
   CurrencySelectionItem,
@@ -242,7 +242,7 @@ const ContactsAdd = ({
     return Object.entries(tokenOptionsByAddress)
       .filter(([k]) => !BitpaySupportedTokens[k])
       .map(([k, {symbol, name, logoURI, address}]) => {
-        const chain = getChainUsingSuffix(k);
+        const chain = getChainFromTokenByAddressKey(k);
         return {
           id: Math.random().toString(),
           coin: symbol.toLowerCase(),
