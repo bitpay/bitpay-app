@@ -337,7 +337,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
         ) : null}
 
         <CurrencySelectionSearchInput
-          onSearch={setSearchFilter}
+          onSearch={(text: string) => setSearchFilter(text?.toLowerCase())}
           debounceWait={300}
         />
       </SearchContainer>
