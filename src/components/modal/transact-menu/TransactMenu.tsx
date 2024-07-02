@@ -10,7 +10,7 @@ import {
   Disabled,
   DisabledDark,
 } from '../../../styles/colors';
-import {ActiveOpacity, SheetContainer} from '../../styled/Containers';
+import {ActiveOpacity, HEIGHT, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
@@ -253,7 +253,7 @@ const TransactModal = () => {
         <ModalContainer>
           <FlatList
             data={TransactMenuList}
-            scrollEnabled={false}
+            scrollEnabled={HEIGHT < 700}
             renderItem={renderItem}
           />
 
