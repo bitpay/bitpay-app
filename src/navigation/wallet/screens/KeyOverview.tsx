@@ -12,13 +12,7 @@ import {
   useRoute,
   useTheme,
 } from '@react-navigation/native';
-import {
-  FlatList,
-  LogBox,
-  RefreshControl,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
@@ -119,9 +113,12 @@ const WalletListHeader = styled.View`
   margin-top: 10px;
 `;
 
-const WalletListFooter = styled.TouchableOpacity`
+const WalletListFooterContainer = styled.View`
   padding: 10px 10px 100px 10px;
   margin-top: 15px;
+`;
+
+const WalletListFooter = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
 `;
@@ -685,17 +682,19 @@ const KeyOverview = () => {
         }}
         ListFooterComponent={() => {
           return (
-            <WalletListFooter
-              activeOpacity={ActiveOpacity}
-              onPress={async () => {
-                haptic('impactLight');
-                navigation.navigate('AddingOptions', {
-                  key,
-                });
-              }}>
-              <Icons.Add />
-              <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
-            </WalletListFooter>
+            <WalletListFooterContainer>
+              <WalletListFooter
+                activeOpacity={ActiveOpacity}
+                onPress={async () => {
+                  haptic('impactLight');
+                  navigation.navigate('AddingOptions', {
+                    key,
+                  });
+                }}>
+                <Icons.Add />
+                <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
+              </WalletListFooter>
+            </WalletListFooterContainer>
           );
         }}
         data={
