@@ -1454,7 +1454,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
   },
   arb: {
-    name: 'Ethereum',
+    name: 'Arbitrum',
     chain: 'arb',
     coin: 'eth',
     feeCurrency: 'eth',
@@ -1493,7 +1493,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
   },
   base: {
-    name: 'Ethereum',
+    name: 'Base',
     chain: 'base',
     coin: 'eth',
     feeCurrency: 'eth',
@@ -1532,7 +1532,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
   },
   op: {
-    name: 'Ethereum',
+    name: 'Optimism',
     chain: 'op',
     coin: 'eth',
     feeCurrency: 'eth',
