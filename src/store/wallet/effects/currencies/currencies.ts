@@ -21,6 +21,7 @@ import {
   getCurrencyAbbreviation,
   getEVMFeeCurrency,
 } from '../../../../utils/helper-methods';
+import {GetProtocolPrefix} from '../../utils/currency';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
@@ -131,7 +132,11 @@ const populateTokenInfo = ({
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: chain, testnet: chain, regtest: chain},
+      protocolPrefix: {
+        livenet: GetProtocolPrefix(chain, 'livenet'),
+        testnet: GetProtocolPrefix(chain, 'testnet'),
+        regtest: GetProtocolPrefix(chain, 'regtest'),
+      },
       ratesApi: '',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS[chain].livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS[chain].testnet,
