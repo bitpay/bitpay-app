@@ -921,7 +921,7 @@ const handleArbUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Arb URI'));
-    const coin = 'arb';
+    const coin = 'eth';
     const chain = 'arb';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -960,7 +960,7 @@ const handleBaseUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Base URI'));
-    const coin = 'base';
+    const coin = 'eth';
     const chain = 'base';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -999,7 +999,7 @@ const handleOpUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Op URI'));
-    const coin = 'op';
+    const coin = 'eth';
     const chain = 'op';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
