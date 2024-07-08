@@ -340,7 +340,7 @@ const AddWallet = ({
     }
   };
 
-  const showMissingWalletMsg = async () => {
+  const showMissingWalletMsg = async (chain: string) => {
     await sleep(500);
     dispatch(
       showBottomNotificationModal({
@@ -450,7 +450,7 @@ const AddWallet = ({
 
     const _evmWallets = key.wallets.filter(isWalletSupported);
     if (!_evmWallets?.length && isToken) {
-      showMissingWalletMsg();
+      showMissingWalletMsg(chain);
       return;
     }
     setLoadingEVMWallets(true);
@@ -712,19 +712,18 @@ const AddWallet = ({
         }}
       />
     ),
-    [evmWallets, associatedWallet],
+    [evmWallets, associatedWallet, chain],
   );
 
   const renderChain = useCallback(
     ({item}) => (
       <CurrencySelectionRow
         currency={item}
-        onToggle={chain => {
+        onToggle={(currencyAbbreviation, chain) => {
           haptic('soft');
           setChain(
-            SupportedEvmCurrencyOptions.find(
-              evmOpts => evmOpts.currencyAbbreviation === chain,
-            )?.currencyAbbreviation!,
+            SupportedEvmCurrencyOptions.find(evmOpts => evmOpts.chain === chain)
+              ?.chain!,
           );
           _setEvmWallets(chain);
           setChainModalVisible(false);
@@ -817,8 +816,8 @@ const AddWallet = ({
                   <AssociateWalletName>
                     {
                       SupportedEvmCurrencyOptions.find(
-                        evmOpts => evmOpts.currencyAbbreviation === chain,
-                      )?.currencyName
+                        evmOpts => evmOpts.chain === chain,
+                      )?.chainName
                     }
                   </AssociateWalletName>
                 </Row>
