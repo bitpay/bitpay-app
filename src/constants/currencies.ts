@@ -827,7 +827,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_arb`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -861,7 +865,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/wbtc_m`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -895,7 +903,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdt_arb`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -929,7 +941,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/weth_m`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -1037,7 +1053,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_op`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
@@ -1071,7 +1091,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/wbtc_m`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
@@ -1105,7 +1129,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdt_op`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
@@ -1139,7 +1167,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/weth_m`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
@@ -1475,7 +1507,11 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/arb`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -1553,7 +1589,11 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/op`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,

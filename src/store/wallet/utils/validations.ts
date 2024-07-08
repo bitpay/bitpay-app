@@ -466,6 +466,11 @@ export const ValidateCoinAddress = (
   coin: string,
   network: string,
 ) => {
+  const extractAddress = (data: string) => {
+    const prefix = /^[a-z]+:/i;
+    const params = /([\?\&](value|gas|gasPrice|gasLimit)=(\d+([\,\.]\d+)?))+/i;
+    return data.replace(prefix, '').replace(params, '');
+  };
   switch (coin) {
     case 'btc':
       const address = BWC.getBitcore().Address;
@@ -486,7 +491,8 @@ export const ValidateCoinAddress = (
     case 'base':
     case 'op':
       const {Validation} = BWC.getCore();
-      return !!Validation.validateAddress(coin.toUpperCase(), network, str);
+      const addr = extractAddress(str);
+      return !!Validation.validateAddress(coin.toUpperCase(), network, addr);
     default:
       return false;
   }
