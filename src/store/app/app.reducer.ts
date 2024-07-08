@@ -49,6 +49,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showOnGoingProcessModal',
   'showPinModal',
   'selectedNetworkForDeposit',
+  'selectedLocalChainFilterOption',
 ];
 
 export type ModalId =
