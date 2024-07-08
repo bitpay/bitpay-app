@@ -903,7 +903,7 @@ const AddWallet = ({
           </View>
         ) : null}
 
-        {!isToken && !['arb', 'op', 'base'].includes(chain) && (
+        {!isToken && (
           <WalletAdvancedOptionsContainer>
             <AdvancedOptionsButton
               onPress={() => {
