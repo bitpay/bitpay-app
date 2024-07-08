@@ -13,7 +13,7 @@ import styled, {useTheme} from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
-  ChainSelectionRow,
+  FeeCurrencySelectionRow,
   CurrencySelectionItem,
   DescriptionRow,
   TokenSelectionRow,
@@ -252,7 +252,7 @@ const CurrencyTokenSelectionScreen: React.VFC<
   const listHeaderComponent = useMemo(() => {
     return () => (
       <>
-        <ChainSelectionRow
+        <FeeCurrencySelectionRow
           currency={chain}
           hideCheckbox={params.hideCheckbox}
           selectionMode={params.selectionMode}

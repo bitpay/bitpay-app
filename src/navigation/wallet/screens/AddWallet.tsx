@@ -99,7 +99,6 @@ import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {IsERCToken, IsSegwitCoin} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
-import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {CommonActions, useTheme} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -110,6 +109,7 @@ import AccountRow from '../../../components/list/AccountRow';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
 
 export type AddWalletParamList = {
   key: Key;
@@ -340,7 +340,7 @@ const AddWallet = ({
     }
   };
 
-  const showMissingWalletMsg = async () => {
+  const showMissingWalletMsg = async (chain: string) => {
     await sleep(500);
     dispatch(
       showBottomNotificationModal({
@@ -450,7 +450,7 @@ const AddWallet = ({
 
     const _evmWallets = key.wallets.filter(isWalletSupported);
     if (!_evmWallets?.length && isToken) {
-      showMissingWalletMsg();
+      showMissingWalletMsg(chain);
       return;
     }
     setLoadingEVMWallets(true);
@@ -712,25 +712,23 @@ const AddWallet = ({
         }}
       />
     ),
-    [evmWallets, associatedWallet],
+    [evmWallets, associatedWallet, chain],
   );
 
   const renderChain = useCallback(
     ({item}) => (
-      <CurrencySelectionRow
-        currency={item}
-        onToggle={chain => {
+      <ChainSelectionRow
+        chainObj={BitpaySupportedCoins[item.chain]}
+        onToggle={(currencyAbbreviation, chain) => {
           haptic('soft');
           setChain(
-            SupportedEvmCurrencyOptions.find(
-              evmOpts => evmOpts.currencyAbbreviation === chain,
-            )?.currencyAbbreviation!,
+            SupportedEvmCurrencyOptions.find(evmOpts => evmOpts.chain === chain)
+              ?.chain!,
           );
           _setEvmWallets(chain);
           setChainModalVisible(false);
         }}
         key={item.id}
-        hideCheckbox={true}
       />
     ),
     [],
@@ -817,8 +815,8 @@ const AddWallet = ({
                   <AssociateWalletName>
                     {
                       SupportedEvmCurrencyOptions.find(
-                        evmOpts => evmOpts.currencyAbbreviation === chain,
-                      )?.currencyName
+                        evmOpts => evmOpts.chain === chain,
+                      )?.chainName
                     }
                   </AssociateWalletName>
                 </Row>

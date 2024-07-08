@@ -113,7 +113,7 @@ const ViewAllLink = styled(H6)`
   text-align: center;
 `;
 
-interface ChainSelectionRowProps {
+interface FeeCurrencySelectionRowProps {
   currency: CurrencySelectionItem;
   hideCheckbox?: boolean;
   disableCheckbox?: boolean;
@@ -121,8 +121,8 @@ interface ChainSelectionRowProps {
   onToggle?: (currencyAbbreviation: string, chain: string) => any;
 }
 
-export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
-  props => {
+export const FeeCurrencySelectionRow: React.VFC<FeeCurrencySelectionRowProps> =
+  memo(props => {
     const {onToggle, currency, hideCheckbox, selectionMode, disableCheckbox} =
       props;
     const {
@@ -168,8 +168,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
         )}
       </FlexRow>
     );
-  },
-);
+  });
 
 interface TokenSelectionRowProps {
   token: CurrencySelectionItem;
@@ -289,7 +288,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
 
   return (
     <CurrencySelectionRowContainer accessibilityLabel="currency-selection-container">
-      <ChainSelectionRow
+      <FeeCurrencySelectionRow
         currency={currency}
         onToggle={() => onPress(currency.currencyAbbreviation, currency.chain)}
         hideCheckbox={hideCheckbox}
