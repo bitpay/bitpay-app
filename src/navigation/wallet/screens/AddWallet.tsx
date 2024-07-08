@@ -99,7 +99,6 @@ import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {IsERCToken, IsSegwitCoin} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
-import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {CommonActions, useTheme} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -110,6 +109,7 @@ import AccountRow from '../../../components/list/AccountRow';
 import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
 
 export type AddWalletParamList = {
   key: Key;
@@ -717,8 +717,8 @@ const AddWallet = ({
 
   const renderChain = useCallback(
     ({item}) => (
-      <CurrencySelectionRow
-        currency={item}
+      <ChainSelectionRow
+        chainObj={BitpaySupportedCoins[item.chain]}
         onToggle={(currencyAbbreviation, chain) => {
           haptic('soft');
           setChain(
@@ -729,7 +729,6 @@ const AddWallet = ({
           setChainModalVisible(false);
         }}
         key={item.id}
-        hideCheckbox={true}
       />
     ),
     [],
