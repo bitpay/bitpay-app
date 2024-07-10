@@ -318,4 +318,4 @@ const HomeRoot = () => {
   );
 };
 
-export default withErrorFallback(HomeRoot);
+export default withErrorFallback(HomeRoot, {includeHeader: true});
