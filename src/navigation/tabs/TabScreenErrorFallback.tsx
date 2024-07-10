@@ -89,7 +89,7 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
                 <Paragraph>{error?.message || ''}</Paragraph>
               </ErrorMessageContainer>
               <StackTraceContainer>
-                <StackTrace>{stackTrace || ''}</StackTrace>
+                <StackTrace>{error?.stack || stackTrace || ''}</StackTrace>
               </StackTraceContainer>
             </ErrorBox>
           </TabScreenErrorBody>
