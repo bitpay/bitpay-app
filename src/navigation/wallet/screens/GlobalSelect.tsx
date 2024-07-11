@@ -805,7 +805,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   tokenAddress,
                   network,
                   chain,
-                  credentials: {walletName: fallbackName},
+                  credentials: {walletName: fallbackName, account},
                   walletName,
                 } = wallet;
                 return merge(cloneDeep(wallet), {
@@ -848,6 +848,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   currencyAbbreviation: currencyAbbreviation.toUpperCase(),
                   network,
                   walletName: walletName || fallbackName,
+                  account,
                 });
               }),
           };
@@ -887,6 +888,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
           if (!amount) {
             navigation.navigate(WalletScreens.AMOUNT, {
+              wallet,
+              sendTo,
               sendMaxEnabled: ['contact', 'scanner'].includes(context),
               cryptoCurrencyAbbreviation:
                 wallet.currencyAbbreviation.toUpperCase(),
