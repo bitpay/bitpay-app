@@ -36,6 +36,12 @@ export type SendToOptionsParamList = {
   title: string;
   wallet: Wallet;
   context: string;
+  sendTo?: {
+    name: string | undefined;
+    type: string;
+    address: string;
+    destinationTag: number | undefined;
+  };
 };
 
 export const RecipientRowContainer = styled.View`
@@ -149,6 +155,12 @@ interface SendToOptionsContextProps {
   ) => void;
   goToConfirmView: () => void;
   goToSelectInputsView: (recipient: Recipient) => void;
+  sendTo?: {
+    name: string | undefined;
+    type: string;
+    address: string;
+    destinationTag: number | undefined;
+  };
 }
 
 export const SendToOptionsContext =
@@ -162,7 +174,7 @@ const SendToOptions = () => {
   const Tab = createMaterialTopTabNavigator();
   const navigation = useNavigation();
   const {params} = useRoute<RouteProp<WalletGroupParamList, 'SendToOptions'>>();
-  const {wallet} = params;
+  const {wallet, sendTo} = params;
   const [recipientList, setRecipientList] = useState<Recipient[]>([]);
   const [recipientAmount, setRecipientAmount] = useState<{
     showModal: boolean;
@@ -266,6 +278,7 @@ const SendToOptions = () => {
   return (
     <SendToOptionsContext.Provider
       value={{
+        sendTo,
         recipientList,
         setRecipientListContext,
         setRecipientAmountContext,

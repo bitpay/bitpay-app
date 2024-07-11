@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {
   ActiveOpacity,
   CtaContainer as _CtaContainer,
@@ -89,6 +89,7 @@ const SendToAddress = () => {
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {
+    sendTo,
     recipientList,
     setRecipientListContext,
     setRecipientAmountContext,
@@ -237,6 +238,16 @@ const SendToAddress = () => {
     },
     [wallet, setRecipientListContext, setRecipientAmountContext],
   );
+
+  useEffect(() => {
+    const checkAddressForSelectInputOption = async () => {
+      if (sendTo?.address) {
+        await sleep(1000);
+        validateData(sendTo.address);
+      }
+    };
+    checkAddressForSelectInputOption();
+  }, []);
 
   return (
     <>
