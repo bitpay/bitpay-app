@@ -78,6 +78,7 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
+import { IsEVMCoin } from '../../../store/wallet/utils/currency';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -365,7 +366,13 @@ export const buildNestedWalletList = (
     }
   });
 
-  return walletList;
+  return walletList.sort((a: WalletRowProps, b: WalletRowProps) => {
+    if (IsEVMCoin(a.chain) && IsEVMCoin(b.chain)) {
+      return a.account - b.account;
+    } else {
+      return 0;
+    }
+  });
 };
 
 const KeyOverview = () => {

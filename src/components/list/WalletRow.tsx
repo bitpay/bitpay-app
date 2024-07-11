@@ -76,7 +76,7 @@ export interface WalletRowProps extends SearchableItem {
   multisig?: string;
   isComplete?: boolean;
   receiveAddress?: string;
-  account?: number;
+  account: number;
 }
 
 interface Props {
