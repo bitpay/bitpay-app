@@ -2,23 +2,32 @@ import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Linking, ScrollView} from 'react-native';
 import ErrorBoundary from 'react-native-error-boundary';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import styled from 'styled-components/native';
 import {
   ScreenContainer,
   ScreenGutter,
   WIDTH,
 } from '../../components/styled/Containers';
-import styled from 'styled-components/native';
-import {H3, Link, Paragraph, TextAlign} from '../../components/styled/Text';
+import TabContainer from './TabContainer';
 import {ShopScreens, ShopStackParamList} from './shop/ShopStack';
 import {BillGroupParamList, BillScreens} from './shop/bill/BillGroup';
 import {CardHomeScreenProps} from '../card/screens/CardHome';
+import {HeaderContainer, HeaderLeftContainer} from './home/components/Styled';
+import {H3, Link, Paragraph, TextAlign} from '../../components/styled/Text';
 import WarningSvg from '../../../assets/img/warning.svg';
+import Icons from '../wallet/components/WalletIcons';
 import {Grey, LightBlack, Slate10} from '../../styles/colors';
 
+interface TabsScreenErrorFallbackOptions {
+  includeHeader?: boolean;
+}
 interface TabsScreenErrorFallbackProps {
   error?: Error;
   stackTrace?: string;
+  options?: TabsScreenErrorFallbackOptions;
 }
 
 const TabScreenContainer = styled(ScreenContainer)`
@@ -63,10 +72,22 @@ const ErrorMessageContainer = styled.View`
 const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
   error,
   stackTrace,
+  options,
 }) => {
   const {t} = useTranslation();
+  const navigation = useNavigation();
   return (
-    <ScreenContainer>
+    <TabContainer>
+      {options?.includeHeader ? (
+        <HeaderContainer>
+          <HeaderLeftContainer>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('SettingsHome')}>
+              <Icons.HomeSettings />
+            </TouchableOpacity>
+          </HeaderLeftContainer>
+        </HeaderContainer>
+      ) : null}
       <ScrollView contentContainerStyle={{flex: 1}}>
         <TabScreenContainer>
           <TabScreenErrorBody>
@@ -80,8 +101,8 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
                     Linking.openURL('https://bitpay.com/request-help/wizard')
                   }>
                   {t('contact BitPay Support')}
-                </Link>{' '}
-                and provide the error message below.
+                </Link>
+                , and provide the error message below.
               </Paragraph>
             </TextAlign>
             <ErrorBox>
@@ -89,13 +110,13 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
                 <Paragraph>{error?.message || ''}</Paragraph>
               </ErrorMessageContainer>
               <StackTraceContainer>
-                <StackTrace>{stackTrace || ''}</StackTrace>
+                <StackTrace>{error?.stack || stackTrace || ''}</StackTrace>
               </StackTraceContainer>
             </ErrorBox>
           </TabScreenErrorBody>
         </TabScreenContainer>
       </ScrollView>
-    </ScreenContainer>
+    </TabContainer>
   );
 };
 
@@ -106,12 +127,17 @@ type TabScreenProps =
 
 export const withErrorFallback = <T extends TabScreenProps>(
   TabScreen: React.FC<T>,
+  options: TabsScreenErrorFallbackOptions = {},
 ) => {
   return function TabScreenWithFallback(props: T) {
     const [error, setError] = useState<Error>();
     const [stackTrace, setStackTrace] = useState<string>();
     const fallbackComponent = () => (
-      <TabScreenErrorFallback error={error} stackTrace={stackTrace} />
+      <TabScreenErrorFallback
+        error={error}
+        stackTrace={stackTrace}
+        options={options}
+      />
     );
     return (
       <ErrorBoundary
