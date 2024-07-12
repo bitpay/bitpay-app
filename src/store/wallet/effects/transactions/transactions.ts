@@ -213,7 +213,7 @@ const ProcessTx =
         (total, {amount}) => total + Number(amount),
         0,
       );
-      tokenAddress = tx.effects[0].contractAddress.toLowerCase();
+      tokenAddress = tx.effects[0].contractAddress?.toLowerCase();
     }
 
     tx.amountStr = dispatch(
