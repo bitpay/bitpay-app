@@ -48,7 +48,7 @@ export interface AmountScreenParamList {
     | string
     | ((props: HeaderTitleProps) => React.ReactNode)
     | undefined;
-  wallet: Wallet;
+  wallet?: Wallet;
   sendTo?: {
     name: string | undefined;
     type: string;
