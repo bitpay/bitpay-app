@@ -213,7 +213,7 @@ const ProcessTx =
         (total, {amount}) => total + Number(amount),
         0,
       );
-      tokenAddress = tx.effects[0].contractAddress;
+      tokenAddress = tx.effects[0].contractAddress.toLowerCase();
     }
 
     tx.amountStr = dispatch(
@@ -271,7 +271,9 @@ const shouldFilterTx = (tx: any, wallet: Wallet) => {
   // Filter if contract doesn't match the wallet token address
   if (isERCToken && hasEffects) {
     tx.effects = tx.effects.filter(
-      (effect: any) => effect.contractAddress === wallet.tokenAddress,
+      (effect: any) =>
+        effect.contractAddress?.toLowerCase() ===
+        wallet.tokenAddress?.toLowerCase(),
     );
     if (tx.effects.length === 0) {
       return true;
