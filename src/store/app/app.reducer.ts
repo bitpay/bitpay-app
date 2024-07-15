@@ -50,6 +50,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showPinModal',
   'selectedNetworkForDeposit',
   'selectedLocalChainFilterOption',
+  'isImportLedgerModalVisible',
 ];
 
 export type ModalId =
