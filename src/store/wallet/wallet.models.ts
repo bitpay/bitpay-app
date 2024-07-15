@@ -405,6 +405,7 @@ export interface TxDetailsSendingTo {
   recipientAddress?: string;
   recipientEmail?: string;
   img?: string | ((props?: any) => ReactElement);
+  badgeImg?: string | ((props?: any) => ReactElement);
   recipientFullAddress?: string;
   recipientAmountStr?: string;
   currencyAbbreviation?: string;
