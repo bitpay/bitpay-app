@@ -581,6 +581,8 @@ export const buildTxDetails =
           img: wallet.img,
           recipientFullAddress: address,
           recipientChain: chain,
+          recipientCoin: coin,
+          badgeImg: wallet.badgeImg,
         },
         ...(fee !== 0 && {
           fee: {
