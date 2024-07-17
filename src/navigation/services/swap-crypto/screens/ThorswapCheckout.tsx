@@ -65,7 +65,6 @@ import {
   getCWCChain,
   sleep,
 } from '../../../../utils/helper-methods';
-import ThorswapPoliciesModal from '../components/ThorswapPoliciesModal';
 import {
   ItemDivisor,
   RowDataContainer,
@@ -195,8 +194,6 @@ const ThorswapCheckout: React.FC = () => {
     sellAssetAmount: string;
   }>();
   const [routeToUse, setRouteToUse] = useState<ThorswapQuoteRoute>();
-  const [thorswapPoliciesModalVisible, setThorswapPoliciesModalVisible] =
-    useState(false);
   const [paymentExpired, setPaymentExpired] = useState(false);
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[fromWalletSelected.keyId],
@@ -1288,13 +1285,6 @@ const ThorswapCheckout: React.FC = () => {
           />
         </TouchableOpacity>
       ) : null}
-
-      <ThorswapPoliciesModal
-        isVisible={thorswapPoliciesModalVisible}
-        onDismiss={() => {
-          setThorswapPoliciesModalVisible(false);
-        }}
-      />
 
       <PaymentSent
         isVisible={showPaymentSentModal}
