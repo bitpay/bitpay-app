@@ -285,11 +285,9 @@ const Amount: React.VFC<AmountProps> = ({
     logger.debug(
       `Handling swapCryptoSendMax with: ${JSON.stringify(limitsOpts)}`,
     );
-    if (!limitsOpts?.limits || !limitsOpts?.maxWalletAmount) {
-      return;
-    }
-    if (limitsOpts.limits.maxAmount) {
-      let sendMaxAmount: string;
+
+    let sendMaxAmount: string;
+    if (limitsOpts?.limits?.maxAmount && limitsOpts?.maxWalletAmount) {
       if (limitsOpts.limits.maxAmount >= Number(limitsOpts.maxWalletAmount)) {
         sendMaxAmount = limitsOpts.maxWalletAmount;
         if (primaryIsFiat && rate) {
@@ -305,6 +303,14 @@ const Amount: React.VFC<AmountProps> = ({
         updateAmountRef.current(sendMaxAmount);
         setUseSendMax(false);
       }
+      curValRef.current = sendMaxAmount;
+      updateAmountRef.current(sendMaxAmount);
+    } else if (limitsOpts?.maxWalletAmount) {
+      sendMaxAmount = limitsOpts.maxWalletAmount;
+      if (primaryIsFiat && rate) {
+        sendMaxAmount = (+limitsOpts.maxWalletAmount * rate).toFixed(2);
+      }
+      setUseSendMax(true);
       curValRef.current = sendMaxAmount;
       updateAmountRef.current(sendMaxAmount);
     } else {
@@ -352,10 +358,9 @@ const Amount: React.VFC<AmountProps> = ({
           });
         }
       } else if (
-        limits.min &&
+        (!limits?.min || (limits.min && +amount >= limits.min)) &&
         limitsOpts?.maxWalletAmount &&
-        +amount > Number(limitsOpts.maxWalletAmount) &&
-        +amount >= limits.min
+        +amount > Number(limitsOpts.maxWalletAmount)
       ) {
         msg = t('Not enough funds');
       } else if (limits.max && +amount > limits.max) {
@@ -462,7 +467,9 @@ const Amount: React.VFC<AmountProps> = ({
           ) : null}
           <Row>{getWarnMsg}</Row>
           <CtaContainer>
-            {limitsOpts?.limits.maxAmount && limitsOpts?.maxWalletAmount ? (
+            {context &&
+            ['sellCrypto', 'swapCrypto'].includes(context) &&
+            limitsOpts?.maxWalletAmount ? (
               <SwapButtonContainer onPress={() => swapCryptoSendMax()}>
                 <CurrencySymbol />
                 <ButtonText>MAX</ButtonText>

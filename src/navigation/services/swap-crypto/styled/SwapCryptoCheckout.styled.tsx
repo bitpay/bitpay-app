@@ -2,6 +2,7 @@ import styled from 'styled-components/native';
 import {BaseText, H7} from '../../../../components/styled/Text';
 import {
   SlateDark,
+  Slate30,
   White,
   LightBlack,
   NeutralSlate,
@@ -10,7 +11,7 @@ import {
 } from '../../../../styles/colors';
 
 export const ItemDivisor = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ebecee')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   border-bottom-width: 1px;
 `;
 

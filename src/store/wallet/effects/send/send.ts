@@ -75,7 +75,7 @@ import {
   GetPrecision,
   IsERCToken,
   IsSegwitCoin,
-  IsUtxoCoin,
+  IsUtxoChain,
 } from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -1735,7 +1735,7 @@ const getSignaturesFromLedger = (
   txp: TransactionProposal,
 ) => {
   const {chain: currency, network, chain} = wallet.credentials;
-  if (IsUtxoCoin(currency)) {
+  if (IsUtxoChain(chain)) {
     const configFn = currencyConfigs[chain];
     const params = configFn(network);
     return getUtxoSignaturesFromLedger(

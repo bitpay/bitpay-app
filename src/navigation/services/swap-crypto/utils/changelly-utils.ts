@@ -1,4 +1,11 @@
 import {t} from 'i18next';
+import {
+  ChangellyCurrency,
+  ChangellyCurrencyBlockchain,
+  ChangellyFixRateDataType,
+  ChangellyFixTransactionDataType,
+  ChangellyPairParamsDataType,
+} from '../../../../store/swap-crypto/models/changelly.models';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 
 export const changellySupportedUtxoChains = [
@@ -233,60 +240,6 @@ export const generateMessageId = (walletId?: string) => {
   return `${randomInt}-${now}`;
 };
 
-export type ChangellyCurrencyBlockchain =
-  | 'bitcoin'
-  | 'bitcoin_cash'
-  | 'ethereum'
-  | 'doge'
-  | 'litecoin'
-  | 'polygon'
-  | 'arbitrum'
-  | 'base'
-  | 'optimism'
-  | 'ripple';
-
-export interface ChangellyCurrency {
-  name: string; // currencyAbbreviation
-  fullName: string;
-  enabled: boolean;
-  fixRateEnabled: boolean;
-  protocol?: string;
-  ticker?: string;
-  enabledFrom?: boolean;
-  enabledTo?: boolean;
-  payinConfirmations?: number;
-  extraIdName?: string;
-  addressUrl?: string;
-  transactionUrl?: string;
-  image?: string;
-  fixedTime?: number;
-  blockchain?: ChangellyCurrencyBlockchain;
-  notifications?: {
-    payin?: string;
-  };
-  contractAddress?: string;
-}
-
-export interface ChangellyFixRateDataType {
-  amountFrom: number;
-  coinFrom: string;
-  coinTo: string;
-}
-
-export interface ChangellyPairParamsDataType {
-  coinFrom: string;
-  coinTo: string;
-}
-
-export interface ChangellyFixTransactionDataType {
-  coinFrom: string;
-  coinTo: string;
-  addressTo: string;
-  amountFrom: number;
-  fixedRateId: string;
-  refundAddress: string;
-}
-
 export const getChangellySupportedChains = (
   chainType?: 'utxo' | 'evm' | 'other',
 ) => {
@@ -410,9 +363,9 @@ export const getChainFromChangellyBlockchain = (
   );
 };
 
-export const isCoinSupportedToSwap = (
+export const isCoinSupportedByChangelly = (
   coin: string,
-  chain?: string,
+  chain: string,
 ): boolean => {
   const lowerCoin = coin.toLowerCase();
 

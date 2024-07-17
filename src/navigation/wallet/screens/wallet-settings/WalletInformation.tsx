@@ -15,7 +15,7 @@ import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {Key, Wallet, Status} from '../../../../store/wallet/wallet.models';
 import {
   GetPrecision,
-  IsUtxoCoin,
+  IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
 import {View} from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
@@ -275,7 +275,7 @@ const WalletInformation = () => {
             </InfoSettingsRow>
             <Hr />
 
-            {IsUtxoCoin(currencyAbbreviation) ? (
+            {IsUtxoChain(chain) ? (
               <>
                 <InfoSettingsRow>
                   <SettingTitle>{t('Address Type')}</SettingTitle>
