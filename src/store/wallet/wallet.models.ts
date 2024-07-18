@@ -99,6 +99,7 @@ export interface WalletObj {
   id: string;
   keyId: string;
   chain: string;
+  chainName: string;
   currencyName: string;
   currencyAbbreviation: string;
   m: number;

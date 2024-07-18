@@ -10,19 +10,16 @@ import {
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {Network} from '../../constants';
 import {BitpaySupportedEvmCoins} from '../../constants/currencies';
-import {TransactionProposal} from '../../store/wallet/wallet.models';
-import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
-import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {
   formatCryptoAddress,
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
-import {ActivityIndicator, Platform} from 'react-native';
+import {ActivityIndicator, Platform, View} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
-import {SearchableItem} from '../chain-search/ChainSearch';
+import Blockie from '../blockie/Blockie';
+import {WalletRowProps} from './WalletRow';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -40,26 +37,15 @@ const BalanceColumn = styled(Column)`
   align-items: flex-end;
 `;
 
-const NestedArrowContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-`;
 
-export interface WalletRowProps extends SearchableItem {
+export interface AccountRowProps {
   id: string;
-  img: string | ((props: any) => ReactElement);
-  badgeImg?: string | ((props?: any) => ReactElement);
-  currencyName: string;
-  currencyAbbreviation: string;
-  tokenAddress?: string;
   chain: string;
-  walletName?: string;
-  cryptoBalance: string;
-  cryptoLockedBalance?: string;
-  cryptoConfirmedLockedBalance?: string;
-  cryptoSpendableBalance?: string;
-  cryptoPendingBalance?: string;
+  wallets: WalletRowProps[];
+  accountName: string;
+  accountNumber: number;
+  receiveAddress: string;
+  isMultiNetworkSupported: boolean;
   fiatBalance: number;
   fiatLockedBalance: number;
   fiatConfirmedLockedBalance: number;
@@ -70,23 +56,11 @@ export interface WalletRowProps extends SearchableItem {
   fiatConfirmedLockedBalanceFormat: string;
   fiatSpendableBalanceFormat: string;
   fiatPendingBalanceFormat: string;
-  isToken?: boolean;
-  network: Network;
-  isRefreshing?: boolean;
-  isScanning?: boolean;
-  hideWallet?: boolean;
-  hideBalance?: boolean;
-  pendingTxps: TransactionProposal[];
-  coinbaseAccount?: CoinbaseAccountProps;
-  multisig?: string;
-  isComplete?: boolean;
-  receiveAddress?: string;
-  account?: number;
 }
 
 interface Props {
   id: string;
-  wallet: WalletRowProps;
+  accountItem: AccountRowProps;
   hideIcon?: boolean;
   isLast?: boolean;
   onPress: () => void;
@@ -146,48 +120,61 @@ export const buildUncompleteBadge = (
   );
 };
 
-const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
+const AccountListRow = ({
+  accountItem,
+  hideIcon,
+  onPress,
+  isLast,
+  hideBalance,
+}: Props) => {
   const {
-    currencyName,
-    currencyAbbreviation,
+    accountName,
     chain,
-    walletName,
-    img,
-    badgeImg,
-    cryptoBalance,
-    fiatBalance,
+    fiatBalanceFormat,
+    receiveAddress,
+    wallets,
+    isMultiNetworkSupported,
+  } = accountItem;
+
+  const {
+    currencyAbbreviation,
     isToken,
     network,
     multisig,
-    isScanning,
     isComplete,
-    receiveAddress,
-  } = wallet;
+    isScanning,
+    cryptoBalance,
+    fiatBalance,
+  } = wallets[0];
+
+  const _currencyAbbreviation =
+    formatCurrencyAbbreviation(currencyAbbreviation);
 
   // @ts-ignore
   const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
-  const _currencyAbbreviation =
-    formatCurrencyAbbreviation(currencyAbbreviation);
 
   return (
     <RowContainer
       activeOpacity={ActiveOpacity}
       onPress={onPress}
       style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}>
-      {isToken && (
-        <NestedArrowContainer>
-          <NestedArrowIcon />
-        </NestedArrowContainer>
-      )}
       {!hideIcon ? (
         <CurrencyImageContainer>
-          <CurrencyImage img={img} badgeUri={badgeImg} size={45} />
+          {isMultiNetworkSupported ? (
+            <Blockie size={40} seed={receiveAddress} />
+          ) : (
+            <CurrencyImage
+              img={wallets[0].img}
+              badgeUri={wallets[0].badgeImg}
+              size={40}
+            />
+          )}
         </CurrencyImageContainer>
       ) : null}
       <CurrencyColumn>
         <Row>
           <H5 ellipsizeMode="tail" numberOfLines={1}>
-            {walletName || currencyName}
+            {accountName}
           </H5>
         </Row>
         <Row style={{alignItems: 'center'}}>
@@ -195,7 +182,9 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             ellipsizeMode="tail"
             numberOfLines={1}
             style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-            {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
+            {isMultiNetworkSupported
+              ? null
+              : `${_currencyAbbreviation} ${multisig ? multisig : ''}`}
           </ListItemSubText>
           {buildPreviewAddress(
             chain,
@@ -208,7 +197,17 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
           {buildUncompleteBadge(isComplete)}
         </Row>
       </CurrencyColumn>
-      {!isScanning ? (
+      {isMultiNetworkSupported ? (
+        <BalanceColumn>
+          {!hideBalance ? (
+            <H5 numberOfLines={1} ellipsizeMode="tail">
+              {fiatBalanceFormat}
+            </H5>
+          ) : (
+            <H5>****</H5>
+          )}
+        </BalanceColumn>
+      ) : !isScanning ? (
         <BalanceColumn>
           {!hideBalance ? (
             <>
@@ -217,7 +216,9 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
               </H5>
               {showFiatBalance && (
                 <ListItemSubText textAlign={'right'}>
-                  {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+                  {network === 'testnet'
+                    ? 'Test - No Value'
+                    : fiatBalanceFormat}
                 </ListItemSubText>
               )}
             </>
@@ -234,4 +235,4 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
   );
 };
 
-export default memo(WalletRow);
+export default memo(AccountListRow);

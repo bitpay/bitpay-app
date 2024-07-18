@@ -78,6 +78,12 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
+import {IsEVMCoin} from '../../../store/wallet/utils/currency';
+import {Network} from '../../../constants';
+import AccountListRow, {
+  AccountRowProps,
+} from '../../../components/list/AccountListRow';
+import _ from 'lodash';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -172,6 +178,173 @@ const SearchComponentContainer = styled.View`
   margin-top: 16px;
 `;
 
+type getFiatOptions = {
+  dispatch: AppDispatch;
+  satAmount: number;
+  defaultAltCurrencyIsoCode: string;
+  currencyAbbreviation: string;
+  chain: string;
+  rates: Rates;
+  tokenAddress: string | undefined;
+  hideWallet: boolean | undefined;
+  network: Network;
+  currencyDisplay?: 'symbol' | 'code';
+};
+
+type FormatFiatOptions = {
+  fiatAmount: number;
+  defaultAltCurrencyIsoCode: string;
+  currencyDisplay?: 'symbol' | 'code';
+};
+
+const getFiat = ({
+  dispatch,
+  satAmount,
+  defaultAltCurrencyIsoCode,
+  currencyAbbreviation,
+  chain,
+  rates,
+  tokenAddress,
+  hideWallet,
+  network,
+}: getFiatOptions) =>
+  convertToFiat(
+    dispatch(
+      toFiat(
+        satAmount,
+        defaultAltCurrencyIsoCode,
+        currencyAbbreviation,
+        chain,
+        rates,
+        tokenAddress,
+      ),
+    ),
+    hideWallet,
+    network,
+  );
+
+const formatFiat = ({
+  fiatAmount,
+  defaultAltCurrencyIsoCode,
+  currencyDisplay,
+}: FormatFiatOptions) =>
+  formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode, {currencyDisplay});
+
+const buildAccountBalance = (
+  defaultAltCurrencyIsoCode: string,
+  accountList: Partial<AccountRowProps>[],
+  currencyDisplay?: 'symbol',
+) => {
+  accountList.forEach(account => {
+    const accumulatedBalances = account?.wallets?.reduce(
+      (acc: Partial<AccountRowProps>, wallet: WalletRowProps) => {
+        const {
+          fiatBalance,
+          fiatLockedBalance,
+          fiatConfirmedLockedBalance,
+          fiatSpendableBalance,
+          fiatPendingBalance,
+        } = wallet;
+        const formattedBalances = {
+          fiatBalance: (acc?.fiatBalance ?? 0) + fiatBalance,
+          fiatLockedBalance: (acc?.fiatLockedBalance ?? 0) + fiatLockedBalance,
+          fiatConfirmedLockedBalance:
+            (acc?.fiatConfirmedLockedBalance ?? 0) + fiatConfirmedLockedBalance,
+          fiatSpendableBalance:
+            (acc?.fiatSpendableBalance ?? 0) + fiatSpendableBalance,
+          fiatPendingBalance:
+            (acc?.fiatPendingBalance ?? 0) + fiatPendingBalance,
+        };
+        return formattedBalances;
+      },
+      {},
+    );
+    Object.assign(account, accumulatedBalances);
+    account.fiatBalanceFormat = formatFiat({
+      fiatAmount: account?.fiatBalance ?? 0,
+      defaultAltCurrencyIsoCode,
+      currencyDisplay,
+    });
+    account.fiatLockedBalanceFormat = formatFiat({
+      fiatAmount: account?.fiatLockedBalance ?? 0,
+      defaultAltCurrencyIsoCode,
+      currencyDisplay,
+    });
+    account.fiatConfirmedLockedBalanceFormat = formatFiat({
+      fiatAmount: account?.fiatConfirmedLockedBalance ?? 0,
+      defaultAltCurrencyIsoCode,
+      currencyDisplay,
+    });
+    account.fiatSpendableBalanceFormat = formatFiat({
+      fiatAmount: account?.fiatSpendableBalance ?? 0,
+      defaultAltCurrencyIsoCode,
+      currencyDisplay,
+    });
+    account.fiatPendingBalanceFormat = formatFiat({
+      fiatAmount: account?.fiatPendingBalance ?? 0,
+      defaultAltCurrencyIsoCode,
+      currencyDisplay,
+    });
+  });
+  return accountList as AccountRowProps[];
+};
+
+export const buildUIFormattedAccount: (
+  accountList: Partial<AccountRowProps>[],
+  wallet: Wallet,
+  defaultAltCurrencyIsoCode: string,
+  rates: Rates,
+  dispatch: AppDispatch,
+  currencyDisplay?: 'symbol',
+) => void = (
+  accountList,
+  wallet,
+  defaultAltCurrencyIsoCode,
+  rates,
+  dispatch,
+  currencyDisplay,
+) => {
+  const uiFormattedWallet = buildUIFormattedWallet(
+    wallet,
+    defaultAltCurrencyIsoCode,
+    rates,
+    dispatch,
+    currencyDisplay,
+  ) as WalletRowProps;
+
+  let walletsAccount = accountList.find(
+    ({receiveAddress}) => receiveAddress === wallet.receiveAddress,
+  ) as AccountRowProps | undefined;
+
+  const newAccount: Partial<AccountRowProps> = {
+    id: _.uniqueId('account_'),
+    chain: uiFormattedWallet.chain,
+    accountName: IsEVMCoin(wallet.chain)
+      ? `EVM Account ${wallet.credentials.account}`
+      : wallet.walletName || wallet.credentials.walletName,
+    wallets: walletsAccount
+      ? [...walletsAccount.wallets, uiFormattedWallet]
+      : [uiFormattedWallet],
+    accountNumber: wallet.credentials.account,
+    receiveAddress: wallet.receiveAddress,
+    isMultiNetworkSupported: IsEVMCoin(wallet.chain) ? true : false,
+    fiatBalance: uiFormattedWallet.fiatBalance,
+    fiatLockedBalance: uiFormattedWallet.fiatLockedBalance,
+    fiatConfirmedLockedBalance: uiFormattedWallet.fiatConfirmedLockedBalance,
+    fiatSpendableBalance: uiFormattedWallet.fiatSpendableBalance,
+    fiatPendingBalance: uiFormattedWallet.fiatPendingBalance,
+  };
+
+  if (walletsAccount) {
+    const index = accountList.findIndex(
+      ({receiveAddress}) => receiveAddress === wallet.receiveAddress,
+    );
+    accountList[index] = newAccount;
+  } else {
+    accountList.push(newAccount);
+  }
+};
+
 export const buildUIFormattedWallet: (
   wallet: Wallet,
   defaultAltCurrencyIsoCode: string,
@@ -179,11 +352,18 @@ export const buildUIFormattedWallet: (
   dispatch: AppDispatch,
   currencyDisplay?: 'symbol',
 ) => WalletRowProps = (
-  {
+  wallet,
+  defaultAltCurrencyIsoCode,
+  rates,
+  dispatch,
+  currencyDisplay,
+) => {
+  const {
     id,
     img,
     badgeImg,
     currencyName,
+    chainName,
     currencyAbbreviation,
     chain,
     tokenAddress,
@@ -198,174 +378,116 @@ export const buildUIFormattedWallet: (
     hideBalance,
     pendingTxps,
     receiveAddress,
-  },
-  defaultAltCurrencyIsoCode,
-  rates,
-  dispatch,
-  currencyDisplay,
-) => ({
-  id,
-  keyId,
-  img,
-  badgeImg,
-  currencyName,
-  currencyAbbreviation: formatCurrencyAbbreviation(currencyAbbreviation),
-  chain,
-  walletName: walletName || credentials.walletName,
-  cryptoBalance: balance.crypto,
-  cryptoLockedBalance: balance.cryptoLocked,
-  cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
-  cryptoSpendableBalance: balance.cryptoSpendable,
-  cryptoPendingBalance: balance.cryptoPending,
-  fiatBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.sat,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
+  } = wallet;
+
+  const opts: Omit<getFiatOptions, 'satAmount'> = {
+    dispatch,
     defaultAltCurrencyIsoCode,
-    {
+    currencyAbbreviation,
+    chain,
+    rates,
+    tokenAddress,
+    hideWallet,
+    network,
+    currencyDisplay,
+  };
+
+  const fiatBalance = getFiat({...opts, satAmount: balance.sat});
+  const fiatLockedBalance = getFiat({...opts, satAmount: balance.satLocked});
+  const fiatConfirmedLockedBalance = getFiat({
+    ...opts,
+    satAmount: balance.satConfirmedLocked,
+  });
+  const fiatSpendableBalance = getFiat({
+    ...opts,
+    satAmount: balance.satSpendable,
+  });
+  const fiatPendingBalance = getFiat({...opts, satAmount: balance.satPending});
+
+  return {
+    id,
+    keyId,
+    img,
+    badgeImg,
+    currencyName,
+    chainName,
+    currencyAbbreviation: formatCurrencyAbbreviation(currencyAbbreviation),
+    chain,
+    walletName: walletName || credentials.walletName,
+    cryptoBalance: balance.crypto,
+    cryptoLockedBalance: balance.cryptoLocked,
+    cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
+    cryptoSpendableBalance: balance.cryptoSpendable,
+    cryptoPendingBalance: balance.cryptoPending,
+    fiatBalance,
+    fiatLockedBalance,
+    fiatConfirmedLockedBalance,
+    fiatSpendableBalance,
+    fiatPendingBalance,
+    fiatBalanceFormat: formatFiat({
+      fiatAmount: fiatBalance,
+      defaultAltCurrencyIsoCode,
       currencyDisplay,
-    },
-  ),
-  fiatLockedBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.satLocked,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
-    defaultAltCurrencyIsoCode,
-    {
+    }),
+    fiatLockedBalanceFormat: formatFiat({
+      fiatAmount: fiatLockedBalance,
+      defaultAltCurrencyIsoCode,
       currencyDisplay,
-    },
-  ),
-  fiatConfirmedLockedBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.satConfirmedLocked,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
-    defaultAltCurrencyIsoCode,
-    {
+    }),
+    fiatConfirmedLockedBalanceFormat: formatFiat({
+      fiatAmount: fiatConfirmedLockedBalance,
+      defaultAltCurrencyIsoCode,
       currencyDisplay,
-    },
-  ),
-  fiatSpendableBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.satSpendable,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
-    defaultAltCurrencyIsoCode,
-    {
+    }),
+    fiatSpendableBalanceFormat: formatFiat({
+      fiatAmount: fiatSpendableBalance,
+      defaultAltCurrencyIsoCode,
       currencyDisplay,
-    },
-  ),
-  fiatPendingBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.satPending,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
-    defaultAltCurrencyIsoCode,
-    {
+    }),
+    fiatPendingBalanceFormat: formatFiat({
+      fiatAmount: fiatPendingBalance,
+      defaultAltCurrencyIsoCode,
       currencyDisplay,
-    },
-  ),
-  network: network,
-  isRefreshing,
-  isScanning,
-  hideWallet,
-  hideBalance,
-  pendingTxps,
-  multisig:
-    credentials.n > 1
-      ? `- Multisig ${credentials.m}/${credentials.n}`
-      : undefined,
-  isComplete: credentials.isComplete(),
-  receiveAddress,
-  account: credentials.account,
-});
+    }),
+    network: network,
+    isRefreshing,
+    isScanning,
+    hideWallet,
+    hideBalance,
+    pendingTxps,
+    multisig:
+      credentials.n > 1
+        ? `- Multisig ${credentials.m}/${credentials.n}`
+        : undefined,
+    isComplete: credentials.isComplete(),
+    receiveAddress,
+    account: credentials.account,
+  };
+};
 
 // Key overview list builder
-export const buildNestedWalletList = (
+export const buildAccountList = (
   coins: Wallet[],
-  tokens: Wallet[],
   defaultAltCurrencyIso: string,
   rates: Rates,
   dispatch: AppDispatch,
 ) => {
-  const walletList = [] as Array<WalletRowProps>;
-
+  const accountList: Array<Partial<AccountRowProps>> = [];
   coins.forEach(coin => {
-    walletList.push({
-      ...buildUIFormattedWallet(coin, defaultAltCurrencyIso, rates, dispatch),
-    });
-    // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
-    if (coin.tokens) {
-      coin.tokens.forEach(id => {
-        const tokenWallet = tokens.find(token => token.id === id);
-        if (tokenWallet) {
-          walletList.push({
-            ...buildUIFormattedWallet(
-              tokenWallet,
-              defaultAltCurrencyIso,
-              rates,
-              dispatch,
-            ),
-            isToken: true,
-          });
-        }
-      });
-    }
+    buildUIFormattedAccount(
+      accountList,
+      coin,
+      defaultAltCurrencyIso,
+      rates,
+      dispatch,
+    );
   });
-
-  return walletList;
+  const accountListWithBalances = buildAccountBalance(
+    defaultAltCurrencyIso,
+    accountList,
+    'symbol',
+  );
+  return accountListWithBalances;
 };
 
 const KeyOverview = () => {
@@ -396,7 +518,7 @@ const KeyOverview = () => {
     }
   });
   const [searchVal, setSearchVal] = useState('');
-  const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
+  const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
@@ -495,21 +617,11 @@ const KeyOverview = () => {
   const {wallets = [], totalBalance} =
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
-  const memorizedWalletList = useMemo(() => {
+  const memorizedAccountList = useMemo(() => {
     const coins = wallets.filter(
       wallet => !wallet.credentials.token && !wallet.hideWallet,
     );
-    const tokens = wallets.filter(
-      wallet => wallet.credentials.token && !wallet.hideWallet,
-    );
-
-    return buildNestedWalletList(
-      coins,
-      tokens,
-      defaultAltCurrency.isoCode,
-      rates,
-      dispatch,
-    );
+    return buildAccountList(coins, defaultAltCurrency.isoCode, rates, dispatch);
   }, [dispatch, wallets, defaultAltCurrency.isoCode, rates]);
 
   const keyOptions: Array<Option> = [];
@@ -584,14 +696,22 @@ const KeyOverview = () => {
   };
 
   const memoizedRenderItem = useCallback(
-    ({item}: {item: WalletRowProps}) => {
+    ({item}: {item: AccountRowProps}) => {
       return (
-        <WalletRow
+        <AccountListRow
           id={item.id}
-          wallet={item}
+          accountItem={item}
           hideBalance={hideAllBalances}
           onPress={() => {
             haptic('impactLight');
+
+            if (item.wallets.length > 0) {
+              // navigation.navigate('AccountDetails', {
+              //   key,
+              //   walletId: item.id,
+              // });
+              return;
+            }
             const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
             if (!fullWalletObj.isComplete()) {
               fullWalletObj.getStatus(
@@ -628,7 +748,7 @@ const KeyOverview = () => {
         />
       );
     },
-    [key, navigation, hideAllBalances],
+    [key, hideAllBalances],
   );
 
   return (
@@ -655,17 +775,17 @@ const KeyOverview = () => {
       <Hr />
 
       <SearchComponentContainer>
-        <SearchComponent<WalletRowProps>
+        <SearchComponent<AccountRowProps>
           searchVal={searchVal}
           setSearchVal={setSearchVal}
           searchResults={searchResults}
           setSearchResults={setSearchResults}
-          searchFullList={memorizedWalletList}
+          searchFullList={memorizedAccountList}
           context={'keyoverview'}
         />
       </SearchComponentContainer>
 
-      <FlatList<WalletRowProps>
+      <FlatList<AccountRowProps>
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -699,7 +819,7 @@ const KeyOverview = () => {
         }}
         data={
           !searchVal && !selectedChainFilterOption
-            ? memorizedWalletList
+            ? memorizedAccountList
             : searchResults
         }
         renderItem={memoizedRenderItem}
