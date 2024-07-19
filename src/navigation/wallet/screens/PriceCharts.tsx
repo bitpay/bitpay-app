@@ -1,23 +1,17 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React, {
-  ComponentType,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from 'react';
-import {Platform} from 'react-native';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import {ActivityIndicator, Platform} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {CtaContainer, WIDTH} from '../../../components/styled/Containers';
+import {Badge, H2, H5, HeaderTitle} from '../../../components/styled/Text';
 import {
-  Badge,
-  fontFamily,
-  H2,
-  H5,
-  HeaderTitle,
-} from '../../../components/styled/Text';
-import {SlateDark, White, Black, LuckySevens} from '../../../styles/colors';
+  SlateDark,
+  White,
+  Black,
+  LuckySevens,
+  ProgressBlue,
+} from '../../../styles/colors';
 import {
   calculatePercentageDifference,
   formatFiatAmount,
@@ -36,63 +30,51 @@ import {
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
-import {
-  createContainer,
-  LineSegment,
-  VictoryArea,
-  VictoryGroup,
-  VictoryTooltip,
-} from 'victory-native';
-import {DateRanges} from '../../../store/rate/rate.models';
-import {Defs, Stop, LinearGradient} from 'react-native-svg';
-import _ from 'lodash';
+import {DateRanges, Rate} from '../../../store/rate/rate.models';
 import GainArrow from '../../../../assets/img/home/exchange-rates/increment-arrow.svg';
 import LossArrow from '../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
 import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {GraphPoint, LineGraph} from 'react-native-graph';
+import haptic from '../../../components/haptic-feedback/haptic';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
 };
 
 interface ChartDisplayDataType {
-  x: number;
-  y: number;
+  date: Date;
+  value: number;
 }
-
-interface ChartDomainType {
-  x: [number, number];
-  y?: [number, number];
-}
-
 interface ChartDataType {
   data: ChartDisplayDataType[];
-  domain?: ChartDomainType;
   percentChange: number;
+  priceChange: number;
 }
 
-const MAX_POINTS = 200;
-
 const defaultDisplayData: ChartDataType = {
-  data: [
-    {
-      x: 0,
-      y: 0,
-    },
-  ],
+  data: [],
   percentChange: 0,
+  priceChange: 0,
 };
 
 const defaultCachedRates: {
   [key in DateRanges]: ChartDataType;
 } = {
-  [DateRanges.Day]: {data: [], percentChange: 0},
-  [DateRanges.Week]: {data: [], percentChange: 0},
-  [DateRanges.Month]: {data: [], percentChange: 0},
+  [DateRanges.Day]: {data: [], percentChange: 0, priceChange: 0},
+  [DateRanges.Week]: {data: [], percentChange: 0, priceChange: 0},
+  [DateRanges.Month]: {data: [], percentChange: 0, priceChange: 0},
+};
+
+const rateFetchPromises: {
+  [key in DateRanges]: Promise<Rate[]> | undefined;
+} = {
+  [DateRanges.Day]: undefined,
+  [DateRanges.Week]: undefined,
+  [DateRanges.Month]: undefined,
 };
 
 const SafeAreaView = styled.SafeAreaView`
@@ -123,6 +105,28 @@ const RowContainer = styled.View`
   flex-direction: row;
 `;
 
+const LoadingContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+`;
+
+const scaleDownArray = (
+  array: ChartDisplayDataType[],
+  targetLength: number,
+): ChartDisplayDataType[] => {
+  if (array.length === targetLength || !array.length) {
+    return array;
+  }
+  const desiredLength = targetLength || 1;
+  const result = [];
+  const step = array.length / desiredLength;
+  for (let i = 0; i < desiredLength; i++) {
+    result.push(array[Math.floor(step * i)]);
+  }
+  return result;
+};
+
 const showLossGainOrNeutralArrow = (percentChange: number | undefined) => {
   if (percentChange === undefined) {
     return;
@@ -137,34 +141,39 @@ const showLossGainOrNeutralArrow = (percentChange: number | undefined) => {
   }
 };
 
-const getFormattedData = (rates: Array<number>): ChartDataType => {
+const getFormattedData = (
+  rates: Array<Rate>,
+  targetLength: number,
+): ChartDataType => {
   let data = rates;
-
-  // reduce number of points to improve performance
-  if (data.length > MAX_POINTS) {
-    const k = Math.pow(2, Math.ceil(Math.log2(data.length / MAX_POINTS)));
-    data = data.filter((_d, i) => i % k === 0);
-  }
-
-  const min = _.minBy(data);
-  const max = _.maxBy(data);
-
   const percentChange = calculatePercentageDifference(
-    rates[rates.length - 1],
-    rates[0],
+    rates[rates.length - 1].rate,
+    rates[0].rate,
   );
-
-  return {
-    data: data.map((value, key) => ({
-      x: key,
-      y: value,
+  const scaledData = scaleDownArray(
+    data.map(value => ({
+      date: new Date(value.ts),
+      value: value.rate,
     })),
-    domain: {
-      x: [0, data.length - 1],
-      y: [min!, max! + max! / 100],
-    },
+    targetLength,
+  );
+  return {
+    data: scaledData,
     percentChange,
+    priceChange: data[data.length - 1].rate - data[0].rate,
   };
+};
+
+const PriceChartHeader = ({currencyName, currencyAbbreviation, img}: any) => {
+  return (
+    <RowContainer>
+      <CurrencyImage img={img} size={20} />
+      <HeaderTitle style={{paddingLeft: 4, paddingRight: 8}}>
+        {currencyName}
+      </HeaderTitle>
+      <Badge>{currencyAbbreviation.toUpperCase()}</Badge>
+    </RowContainer>
+  );
 };
 
 const PriceCharts = () => {
@@ -177,19 +186,17 @@ const PriceCharts = () => {
   } = useRoute<RouteProp<WalletGroupParamList, 'PriceCharts'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
-  const {currencyName, chain, currentPrice, currencyAbbreviation, img} = item;
+  const {
+    currencyName,
+    chain,
+    currentPrice,
+    average: percentChange,
+    currencyAbbreviation,
+    img,
+  } = item;
 
   const {coinColor, gradientBackgroundColor} =
-    BitpaySupportedCoins[chain.toLowerCase()].theme;
-
-  const chartStyle = {
-    data: {
-      fill: 'url(#backgroundGradient)',
-      fillOpacity: 0.7,
-      stroke: theme.dark && coinColor === Black ? White : coinColor,
-      strokeWidth: 2,
-    },
-  };
+    BitpaySupportedCoins[chain.toLowerCase()].theme!;
 
   const buttonLabel =
     t('Buy ') +
@@ -198,35 +205,30 @@ const PriceCharts = () => {
         currencyAbbreviation.slice(1)
       : currencyName);
 
-  const VictoryCursorVoronoiContainer: ComponentType<any> = createContainer(
-    'cursor',
-    'voronoi',
-  );
-
-  const PriceChartHeader = () => {
-    return (
-      <RowContainer>
-        <CurrencyImage img={img} size={20} />
-        <HeaderTitle style={{paddingLeft: 4, paddingRight: 8}}>
-          {currencyName}
-        </HeaderTitle>
-        <Badge>{currencyAbbreviation.toUpperCase()}</Badge>
-      </RowContainer>
-    );
-  };
-
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerTitle: () => <PriceChartHeader />,
+      // eslint-disable-next-line react/no-unstable-nested-components
+      headerTitle: () => (
+        <PriceChartHeader
+          currencyName={currencyName}
+          currencyAbbreviation={currencyAbbreviation}
+          img={img}
+        />
+      ),
     });
-  }, [navigation, currencyName]);
+  }, [navigation, currencyName, currencyAbbreviation, img]);
 
   const [loading, setLoading] = useState(true);
   const [showRageDateSelector, setShowRageDateSelector] = useState(true);
   const [displayData, setDisplayData] = useState(defaultDisplayData);
   const [cachedRates, setCachedRates] = useState(defaultCachedRates);
   const [chartRowHeight, setChartRowHeight] = useState(-1);
+  const [selectedPoint, setSelectedPoint] = useState(
+    undefined as
+      | {price: number; priceChange: number; percentChange: number}
+      | undefined,
+  );
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
@@ -236,39 +238,55 @@ const PriceCharts = () => {
     [dispatch],
   );
 
-  const getHistoricalFiatRates = async (dateRange: DateRanges) => {
+  const getHistoricalFiatRates = async (
+    dateRange: DateRanges,
+    targetLength?: number,
+  ) => {
+    const maxPoints = 45; // If this is too large, animations stop working.
     try {
-      const historicFiatRates = await dispatch(
-        fetchHistoricalRates(dateRange, currencyAbbreviation),
+      const historicFiatRates = await rateFetchPromises[dateRange]!;
+      const formattedRates = getFormattedData(
+        historicFiatRates.sort((a, b) => a.ts - b.ts),
+        maxPoints || targetLength || historicFiatRates.length,
       );
-
-      return getFormattedData(historicFiatRates.reverse());
+      setCachedRates(previous => ({
+        ...previous,
+        [dateRange]: formattedRates,
+      }));
+      return formattedRates;
     } catch (e) {
       throw e;
     }
   };
 
+  const fillRateCache = async () => {
+    [DateRanges.Day, DateRanges.Month, DateRanges.Week].forEach(dateRange =>
+      fetchRates(dateRange),
+    );
+    const dayRates = await rateFetchPromises[DateRanges.Day]!;
+    const targetLength = dayRates?.length;
+    [DateRanges.Day, DateRanges.Month, DateRanges.Week].forEach(
+      async dateRange => {
+        getHistoricalFiatRates(dateRange, targetLength);
+      },
+    );
+  };
+
+  const fetchRates = async (dateRange: DateRanges) => {
+    rateFetchPromises[dateRange] = dispatch(
+      fetchHistoricalRates(dateRange, currencyAbbreviation),
+    );
+    const rates = await rateFetchPromises[dateRange];
+    return rates;
+  };
+
   const redrawChart = async (dateRange: DateRanges) => {
-    if (cachedRates[dateRange].domain) {
-      dispatch(startOnGoingProcessModal('LOADING'));
-      await sleep(500);
+    if (cachedRates[dateRange].data.length) {
       setDisplayData(cachedRates[dateRange]);
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
-      setLoading(false);
     } else {
       try {
-        dispatch(startOnGoingProcessModal('LOADING'));
-        await sleep(500);
-        let {data, domain, percentChange}: ChartDataType =
-          await getHistoricalFiatRates(dateRange);
-        setCachedRates({
-          ...cachedRates,
-          ...{[dateRange]: {data, domain, percentChange}},
-        });
-        setDisplayData({data, domain, percentChange});
-        dispatch(dismissOnGoingProcessModal());
-        await sleep(500);
+        const rates = await getHistoricalFiatRates(dateRange);
+        setDisplayData(rates);
         setLoading(false);
       } catch (e) {
         dispatch(dismissOnGoingProcessModal());
@@ -305,25 +323,78 @@ const PriceCharts = () => {
   });
 
   useEffect(() => {
+    fillRateCache();
     const defaultDateRange = DateRanges.Day;
     redrawChart(defaultDateRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const onPointSelected = useCallback(
+    (p: GraphPoint) => {
+      const percentChangeAtPoint = calculatePercentageDifference(
+        p.value,
+        displayData.data[0].value,
+      );
+      setSelectedPoint({
+        price: p.value,
+        priceChange: p.value - displayData.data[0].value,
+        percentChange: percentChangeAtPoint,
+      });
+      haptic('impactLight');
+    },
+    [displayData.data],
+  );
+
+  const onGestureEnd = useCallback(async () => {
+    await sleep(10);
+    setSelectedPoint(undefined);
+    haptic('impactLight');
+  }, []);
+
+  const onGestureStarted = useCallback(() => {
+    haptic('impactLight');
+  }, []);
+
+  const getPercentChange = () => {
+    if (loading) {
+      return percentChange!;
+    }
+    return selectedPoint?.percentChange ?? displayData.percentChange;
+  };
 
   return (
     <SafeAreaView>
       <HeaderContainer>
         {currentPrice ? (
           <H2>
-            {formatFiatAmount(currentPrice, defaultAltCurrency.isoCode, {
-              customPrecision: 'minimal',
-              currencyAbbreviation,
-            })}
+            {formatFiatAmount(
+              selectedPoint?.price ?? currentPrice,
+              defaultAltCurrency.isoCode,
+              {
+                customPrecision: 'minimal',
+                currencyAbbreviation,
+              },
+            )}
           </H2>
         ) : null}
         <RowContainer>
-          {showLossGainOrNeutralArrow(displayData.percentChange)}
+          {showLossGainOrNeutralArrow(getPercentChange())}
           <CurrencyAverageText>
-            {Math.abs(displayData.percentChange || 0)}%
+            {selectedPoint?.priceChange ?? displayData.priceChange
+              ? formatFiatAmount(
+                  selectedPoint?.priceChange ?? displayData.priceChange ?? 0,
+                  defaultAltCurrency.isoCode,
+                  {customPrecision: 'minimal', currencyAbbreviation},
+                )
+              : ''}
+            <>
+              {percentChange ? (
+                <>
+                  {!loading ? ' (' : ''}
+                  {Math.abs(getPercentChange())}%{!loading ? ')' : ''}
+                </>
+              ) : null}
+            </>
           </CurrencyAverageText>
         </RowContainer>
       </HeaderContainer>
@@ -333,72 +404,26 @@ const PriceCharts = () => {
           setChartRowHeight(e.nativeEvent.layout.height);
         }}>
         {!loading && chartRowHeight > 0 ? (
-          <VictoryGroup
-            containerComponent={
-              <VictoryCursorVoronoiContainer
-                voronoiDimension="x"
-                cursorDimension="x"
-                cursorComponent={
-                  <LineSegment
-                    style={{
-                      stroke:
-                        theme.dark && coinColor === Black ? White : coinColor,
-                      strokeDasharray: '4, 8',
-                      strokeWidth: 2,
-                    }}
-                  />
-                }
-                labels={({datum}: any) =>
-                  formatFiatAmount(datum.y, 'USD', {
-                    customPrecision: 'minimal',
-                    currencyAbbreviation,
-                  })
-                }
-                labelComponent={
-                  <VictoryTooltip
-                    cornerRadius={5}
-                    pointerLength={0}
-                    renderInPortal={false}
-                    flyoutStyle={{
-                      stroke:
-                        theme.dark && coinColor === Black ? White : coinColor,
-                      fill: theme.dark ? Black : White,
-                    }}
-                    style={{
-                      fill:
-                        theme.dark && coinColor === Black ? White : coinColor,
-                      fontFamily,
-                    }}
-                  />
-                }
-              />
-            }
-            width={WIDTH}
-            padding={0}
-            height={chartRowHeight}
-            domain={displayData?.domain}
-            domainPadding={{y: 20}}>
-            <VictoryArea
-              interpolation={'monotoneX'}
-              style={chartStyle}
-              data={displayData?.data}
-            />
-            <Defs>
-              <LinearGradient
-                id="backgroundGradient"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1">
-                <Stop offset="0%" stopColor={gradientBackgroundColor} />
-                <Stop
-                  offset="100%"
-                  stopColor={theme.dark ? 'transparent' : White}
-                />
-              </LinearGradient>
-            </Defs>
-          </VictoryGroup>
-        ) : null}
+          <LineGraph
+            points={displayData.data}
+            animated={true}
+            gradientFillColors={[
+              gradientBackgroundColor,
+              theme.dark ? 'transparent' : White,
+            ]}
+            enablePanGesture={true}
+            panGestureDelay={100}
+            onGestureStart={onGestureStarted}
+            onPointSelected={onPointSelected}
+            onGestureEnd={onGestureEnd}
+            color={theme.dark && coinColor === Black ? White : coinColor}
+            style={{width: WIDTH, height: chartRowHeight, marginTop: 20}}
+          />
+        ) : (
+          <LoadingContainer>
+            <ActivityIndicator color={ProgressBlue} />
+          </LoadingContainer>
+        )}
       </PriceChartContainer>
 
       <CtaContainer
