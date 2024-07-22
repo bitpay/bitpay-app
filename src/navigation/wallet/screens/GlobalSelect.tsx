@@ -954,6 +954,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     const associatedWallet = findWalletById(
       keys[linkedWallet.keyId].wallets,
       linkedWallet.id,
+      linkedWallet.credentials?.copayerId,
     ) as Wallet;
 
     const addWalletData: AddWalletData = {

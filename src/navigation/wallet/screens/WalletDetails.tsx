@@ -138,6 +138,7 @@ export type WalletDetailsScreenParamList = {
   walletId: string;
   key?: Key;
   skipInitializeHistory?: boolean;
+  copayerId?: string;
 };
 
 type WalletDetailsScreenProps = NativeStackScreenProps<
@@ -291,7 +292,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {walletId, skipInitializeHistory} = route.params;
+  const {walletId, skipInitializeHistory, copayerId} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
@@ -302,7 +303,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
-  const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
+  const fullWalletObj = findWalletById(wallets, walletId, copayerId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
