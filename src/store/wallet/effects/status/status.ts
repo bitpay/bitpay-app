@@ -31,7 +31,7 @@ import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {ProcessPendingTxps} from '../transactions/transactions';
 import {FormatAmount} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
-import {IsUtxoCoin} from '../../utils/currency';
+import {IsUtxoChain} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
 import {LogActions} from '../../../log';
@@ -778,7 +778,7 @@ const buildBalance =
     let satTotalAmount = totalAmount;
     let satLockedAmount = lockedAmount;
 
-    if (['xrp'].includes(currencyAbbreviation)) {
+    if (['xrp'].includes(chain)) {
       satLockedAmount = lockedAmount - lockedConfirmedAmount;
       satTotalAmount = totalAmount - lockedConfirmedAmount;
     }
@@ -788,7 +788,7 @@ const buildBalance =
       : totalConfirmedAmount - lockedAmount;
 
     const pendingAmount =
-      useUnconfirmedFunds && IsUtxoCoin(currencyAbbreviation)
+      useUnconfirmedFunds && IsUtxoChain(chain)
         ? 0
         : totalAmount - totalConfirmedAmount;
 

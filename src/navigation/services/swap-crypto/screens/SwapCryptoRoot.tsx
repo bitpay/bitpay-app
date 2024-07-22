@@ -7,10 +7,13 @@ import {
 } from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
+import _ from 'lodash';
 import cloneDeep from 'lodash.clonedeep';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {
   BitpaySupportedCoins,
+  BitpaySupportedTokens,
+  SUPPORTED_COINS,
   SUPPORTED_EVM_COINS,
   SUPPORTED_TOKENS,
 } from '../../../../constants/currencies';
@@ -34,27 +37,20 @@ import {
   CoinIconContainer,
   DataText,
   BottomDataText,
-  ProviderContainer,
-  ProviderLabel,
   SpinnerContainer,
   BalanceContainer,
 } from '../styled/SwapCryptoRoot.styled';
-import {SwapCryptoGroupParamList} from '../SwapCryptoGroup';
+import {SwapCryptoGroupParamList, SwapCryptoScreens} from '../SwapCryptoGroup';
 import Button from '../../../../components/button/Button';
-import ChangellyLogo from '../../../../components/icons/external-services/changelly/changelly-logo';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import FromWalletSelectorModal from '../components/FromWalletSelectorModal';
-import ToWalletSelectorModal from '../../components/ToWalletSelectorModal';
 import AmountModal from '../../../../components/amount/AmountModal';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {
   changellyGetPairsParams,
-  changellyGetFixRateForAmount,
-  ChangellyCurrency,
   getChangellyCurrenciesFixedProps,
   getChangellyFixedCurrencyAbbreviation,
   getChangellySupportedChains,
-  ChangellyCurrencyBlockchain,
   getChainFromChangellyBlockchain,
 } from '../utils/changelly-utils';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
@@ -62,6 +58,7 @@ import {
   getBadgeImg,
   getChainFromTokenByAddressKey,
   getCurrencyAbbreviation,
+  addTokenChainSuffix,
   sleep,
 } from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
@@ -69,10 +66,7 @@ import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
 import {Wallet, SendMaxInfo} from '../../../../store/wallet/wallet.models';
 import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/changelly/changelly';
-import {
-  startOnGoingProcessModal,
-  openUrlWithInAppBrowser,
-} from '../../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -83,10 +77,7 @@ import InfoSvg from '../../../../../assets/img/info.svg';
 import {AppActions} from '../../../../store/app';
 import {useTranslation} from 'react-i18next';
 import {getSendMaxInfo} from '../../../../store/wallet/effects/send/send';
-import {
-  GetExcludedUtxosMessage,
-  SatToUnit,
-} from '../../../../store/wallet/effects/amount/amount';
+import {SatToUnit} from '../../../../store/wallet/effects/amount/amount';
 import {orderBy} from 'lodash';
 import {
   addWallet,
@@ -112,12 +103,29 @@ import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  ChangellyCurrency,
+  ChangellyCurrencyBlockchain,
+} from '../../../../store/swap-crypto/models/changelly.models';
+import {thorswapGetCurrencies} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
+import {
+  getNameFromThorswapFullName,
+  thorswapEnv,
+} from '../utils/thorswap-utils';
+import {ChangellyRateData} from '../../../../store/swap-crypto/models/changelly.models';
+import {
+  ThorswapCurrency,
+  ThorswapGetCurrenciesRequestData,
+} from '../../../../store/swap-crypto/models/thorswap.models';
+import {SwapCryptoExchangeKey} from '../utils/swap-crypto-utils';
+import {SwapCryptoLimits} from '../../../../store/swap-crypto/swap-crypto.models';
 
-export interface RateData {
-  fixedRateId: string;
-  amountTo: number;
-  rate: number;
-}
+export type SwapCryptoRootScreenParams =
+  | {
+      selectedWallet?: Wallet;
+      partner?: SwapCryptoExchangeKey;
+    }
+  | undefined;
 
 export interface SwapLimits {
   minAmount?: number;
@@ -133,7 +141,46 @@ export interface SwapCryptoCoin {
   logoUri?: any;
   badgeUri?: any;
   tokenAddress?: string;
+  supportedBy?: {
+    changelly?: boolean;
+    thorswap?: boolean;
+  };
 }
+
+export interface SwapCryptoExchange {
+  key: SwapCryptoExchangeKey;
+  showOffer: boolean;
+  supportedCoins: SwapCryptoCoin[] | undefined;
+  disabled: boolean; // The offer card is shown but with an error message
+  offerError: string | undefined;
+  limits?: SwapCryptoLimits;
+}
+
+export type PreLoadPartnersData = {
+  [key in SwapCryptoExchangeKey]: SwapCryptoExchange;
+};
+
+const swapCryptoExchangesDefault: PreLoadPartnersData = {
+  changelly: {
+    key: 'changelly',
+    showOffer: true,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: {
+      min: undefined,
+      max: undefined,
+    },
+  },
+  thorswap: {
+    key: 'thorswap',
+    showOffer: true,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: undefined,
+  },
+};
 
 const SwapCryptoContainer = styled.SafeAreaView`
   flex: 1;
@@ -190,7 +237,7 @@ const SwapCryptoRoot: React.FC = () => {
   const [swapCryptoSupportedCoinsTo, setSwapCryptoSupportedCoinsTo] = useState<
     SwapCryptoCoin[]
   >([]);
-  const [rateData, setRateData] = useState<RateData>();
+  const [rateData, setRateData] = useState<ChangellyRateData>();
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingEnterAmountBtn, setLoadingEnterAmountBtn] =
     useState<boolean>(false);
@@ -201,11 +248,14 @@ const SwapCryptoRoot: React.FC = () => {
 
   let selectedWallet = route.params?.selectedWallet;
   const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
+  const preSetPartner = route.params?.partner?.toLowerCase() as
+    | SwapCryptoExchangeKey
+    | undefined;
+  const SupportedChains: string[] = SUPPORTED_COINS;
   const [swapLimits, setSwapLimits] = useState<SwapLimits>({
     minAmount: undefined,
     maxAmount: undefined,
   });
-  let minAmount: number, maxAmount: number;
 
   const showModal = (id: string) => {
     switch (id) {
@@ -240,13 +290,7 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const canContinue = (): boolean => {
-    return (
-      !!toWalletSelected &&
-      !!fromWalletSelected &&
-      amountFrom > 0 &&
-      !!rateData &&
-      !!rateData.fixedRateId
-    );
+    return !!toWalletSelected && !!fromWalletSelected && amountFrom > 0;
   };
 
   const setSelectedWallet = async () => {
@@ -302,7 +346,34 @@ const SwapCryptoRoot: React.FC = () => {
     setLoadingEnterAmountBtn(false);
     setRateData(undefined);
 
-    const coinsTo = cloneDeep(swapCryptoSupportedCoinsFrom).filter(
+    let possibleCoinsTo: SwapCryptoCoin[] = [];
+
+    // Only include possible pairs in coinsTo.
+    // Do not show exchange offer if coinFrom is not supported.
+    Object.values(swapCryptoExchangesDefault).forEach(exchange => {
+      if (exchange.supportedCoins && exchange.supportedCoins.length > 0) {
+        const isCoinPresentedInExchange = exchange.supportedCoins.find(
+          coin =>
+            coin.symbol ===
+            getCurrencyAbbreviation(
+              fromWallet.currencyAbbreviation,
+              fromWallet.chain,
+            ),
+        );
+
+        if (exchange.showOffer && isCoinPresentedInExchange) {
+          possibleCoinsTo = possibleCoinsTo.concat(exchange.supportedCoins);
+          swapCryptoExchangesDefault[exchange.key].showOffer = true;
+        } else {
+          swapCryptoExchangesDefault[exchange.key].showOffer = false;
+        }
+      }
+    });
+
+    possibleCoinsTo = _.uniqBy(possibleCoinsTo, 'symbol');
+
+    // Remove coinsFrom from possible coinsTo
+    const coinsTo = cloneDeep(possibleCoinsTo).filter(
       coin =>
         SUPPORTED_EVM_COINS.includes(coin.chain) ||
         (!SUPPORTED_EVM_COINS.includes(coin.chain) &&
@@ -327,96 +398,7 @@ const SwapCryptoRoot: React.FC = () => {
     return !!fromWalletSelected;
   };
 
-  const updateReceivingAmount = () => {
-    if (!fromWalletSelected || !toWalletSelected || !amountFrom) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-
-    if (fromWalletSelected.balance?.satSpendable) {
-      const spendableAmount = dispatch(
-        SatToUnit(
-          fromWalletSelected.balance.satSpendable,
-          fromWalletSelected.currencyAbbreviation,
-          fromWalletSelected.chain,
-          fromWalletSelected.tokenAddress,
-        ),
-      );
-
-      if (!!spendableAmount && spendableAmount < amountFrom) {
-        const msg = t(
-          'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
-        );
-        showError(msg);
-        setLoading(false);
-        setAmountFrom(0);
-        setUseSendMax(false);
-        setSendMaxInfo(undefined);
-        setRateData(undefined);
-        return;
-      }
-    }
-
-    const pair =
-      getCurrencyAbbreviation(
-        fromWalletSelected.currencyAbbreviation,
-        fromWalletSelected.chain,
-      ) +
-      '_' +
-      getCurrencyAbbreviation(
-        toWalletSelected.currencyAbbreviation,
-        toWalletSelected.chain,
-      );
-    logger.debug('Updating receiving amount with pair: ' + pair);
-
-    const data = {
-      amountFrom: amountFrom,
-      coinFrom: getChangellyFixedCurrencyAbbreviation(
-        fromWalletSelected.currencyAbbreviation.toLowerCase(),
-        fromWalletSelected.chain,
-      ),
-      coinTo: getChangellyFixedCurrencyAbbreviation(
-        toWalletSelected.currencyAbbreviation.toLowerCase(),
-        toWalletSelected.chain,
-      ),
-    };
-    changellyGetFixRateForAmount(fromWalletSelected, data)
-      .then((data: any) => {
-        if (data.error) {
-          const msg =
-            t('Changelly getFixRateForAmount Error: ') + data.error.message;
-          showError(msg);
-          return;
-        }
-
-        if (data.result?.length === 0) {
-          showChangellyPairDisabledError(fromWalletSelected, toWalletSelected);
-          return;
-        }
-
-        const newRateData: RateData = {
-          fixedRateId: data.result[0].id,
-          amountTo: Number(data.result[0].amountTo),
-          rate: Number(data.result[0].result), // result == rate
-        };
-        setRateData(newRateData);
-        setLoading(false);
-      })
-      .catch(err => {
-        logger.error(
-          'Changelly getFixRateForAmount Error: ' + JSON.stringify(err),
-        );
-        const title = t('Changelly Error');
-        const msg = t(
-          'Changelly is not available at this moment. Please try again later.',
-        );
-        showError(msg, title);
-      });
-  };
-
-  const changellyGetPairParams = () => {
+  const swapGetLimits = async () => {
     setLoadingEnterAmountBtn(true);
     setRateData(undefined);
     if (!fromWalletSelected || !toWalletSelected) {
@@ -435,213 +417,173 @@ const SwapCryptoRoot: React.FC = () => {
       );
     logger.debug('Updating max and min with pair: ' + pair);
 
-    const data = {
-      coinFrom: getChangellyFixedCurrencyAbbreviation(
-        fromWalletSelected.currencyAbbreviation.toLowerCase(),
-        fromWalletSelected.chain,
-      ),
-      coinTo: getChangellyFixedCurrencyAbbreviation(
-        toWalletSelected.currencyAbbreviation.toLowerCase(),
-        toWalletSelected.chain,
-      ),
+    const enabledExchanges = Object.values(swapCryptoExchangesDefault)
+      .filter(
+        exchange =>
+          exchange.showOffer &&
+          !exchange.disabled &&
+          exchange.supportedCoins &&
+          exchange.supportedCoins.length > 0,
+      )
+      .map(exchange => exchange.key);
+
+    const getLimitsPromiseByExchange = (exchange: SwapCryptoExchangeKey) => {
+      switch (exchange) {
+        case 'changelly':
+          return changellyGetLimits(fromWalletSelected, toWalletSelected);
+        case 'thorswap':
+          return thorswapGetLimits();
+        default:
+          return Promise.reject('No getLimits function for this partner');
+      }
     };
-    changellyGetPairsParams(fromWalletSelected, data)
-      .then(async (data: any) => {
-        if (data.error) {
-          let msg: string;
-          const title = t('Changelly Error');
-          if (
-            Math.abs(data.error.code) == 32602 &&
-            data.error.message.indexOf('Invalid currency:') != -1
-          ) {
-            const actions = [
-              {
-                text: t('OK'),
-                action: () => {},
-                primary: true,
-              },
-              {
-                text: t('Submit a ticket'),
-                action: async () => {
-                  await sleep(1000);
-                  dispatch(
-                    openUrlWithInAppBrowser(
-                      'https://support.changelly.com/en/support/tickets/new',
-                    ),
-                  );
-                },
-                primary: true,
-              },
-            ];
-            msg =
-              data.error.message +
-              '.' +
-              t(
-                'This is a temporary Changelly decision. If you have further questions please reach out to them.',
-              );
-            showError(msg, title, actions);
-          } else {
-            msg = t('Changelly getPairsParams Error: ') + data.error.message;
-            showError(msg);
-          }
-          return;
-        }
 
-        if (
-          data.result &&
-          (data.result.length === 0 ||
-            (data.result[0] &&
-              (!data.result[0].maxAmountFixed ||
-                Number(data.result[0].maxAmountFixed) <= 0)))
-        ) {
-          showChangellyPairDisabledError(fromWalletSelected, toWalletSelected);
-          setLoadingEnterAmountBtn(false);
-          return;
-        }
+    const getLimitsPromises = enabledExchanges.map(exchange =>
+      getLimitsPromiseByExchange(exchange),
+    );
 
-        minAmount = Number(data.result[0].minAmountFixed);
-        maxAmount = Number(data.result[0].maxAmountFixed);
-        setSwapLimits({
-          minAmount,
-          maxAmount,
-        });
-        logger.debug(
-          `Min amount: ${Number(
-            data.result[0].minAmountFixed,
-          )} - Max amount: ${Number(data.result[0].maxAmountFixed)}`,
-        );
+    try {
+      const responseByExchange = await Promise.allSettled([
+        ...getLimitsPromises,
+        sleep(400),
+      ]);
+      const responseByExchangeKey = responseByExchange.map((res, index) => {
+        const exchangeKey: SwapCryptoExchangeKey | undefined =
+          enabledExchanges[index] ?? undefined;
+        return {exchangeKey, promiseRes: res};
+      });
 
-        setLoadingEnterAmountBtn(false);
+      let allLimits: SwapLimits[] = [];
 
-        if (amountFrom) {
-          if (amountFrom > maxAmount) {
-            const msg =
-              t('The amount entered is greater than the maximum allowed: ') +
-              maxAmount +
-              ' ' +
-              fromWalletSelected.currencyAbbreviation.toUpperCase();
-            const actions = [
-              {
-                text: t('OK'),
-                action: () => {},
-                primary: true,
-              },
-              {
-                text: t('Use Max Amount'),
-                action: async () => {
-                  setAmountFrom(maxAmount);
-                  await sleep(400);
-                  // updateReceivingAmount();
-                },
-                primary: true,
-              },
-            ];
-
-            showError(msg, undefined, actions);
-            return;
-          }
-          if (amountFrom < minAmount) {
-            if (useSendMax && sendMaxInfo) {
-              let msg = '';
-              if (sendMaxInfo) {
-                const warningMsg = dispatch(
-                  GetExcludedUtxosMessage(
-                    fromWalletSelected.currencyAbbreviation,
-                    fromWalletSelected.chain,
-                    fromWalletSelected.tokenAddress,
-                    sendMaxInfo,
-                  ),
-                );
-                msg = warningMsg;
-              }
-
-              const estimatedFee = dispatch(
-                SatToUnit(
-                  sendMaxInfo.fee,
-                  fromWalletSelected.currencyAbbreviation,
-                  fromWalletSelected.chain,
-                  fromWalletSelected.tokenAddress,
-                ),
-              );
-              const coin =
-                fromWalletSelected.currencyAbbreviation.toUpperCase();
-
-              const ErrMsg =
-                `As the estimated miner fee to complete the transaction is ${estimatedFee} ${coin}, the maximum spendable amount of your wallet is ${amountFrom} ${coin} which is lower than the minimum allowed by the exchange: ${minAmount} ${coin}.` +
-                `\n${msg}`;
-              showError(ErrMsg);
-              return;
-            } else {
-              const msg =
-                t('The amount entered is lower than the minimum allowed: ') +
-                minAmount +
-                ' ' +
-                fromWalletSelected.currencyAbbreviation.toUpperCase();
-              const actions = [
-                {
-                  text: t('OK'),
-                  action: () => {},
-                  primary: true,
-                },
-                {
-                  text: t('Use Min Amount'),
-                  action: async () => {
-                    setAmountFrom(minAmount);
-                    await sleep(400);
-                  },
-                  primary: true,
-                },
-              ];
-
-              showError(msg, undefined, actions);
-              return;
+      if (responseByExchangeKey instanceof Array) {
+        responseByExchangeKey.forEach((e, index) => {
+          if (e.promiseRes.status === 'rejected') {
+            logger.debug(
+              `Swap crypto getLimits[${
+                e.exchangeKey
+              }] Rejected: + ${JSON.stringify(e.promiseRes.reason)}`,
+            );
+          } else if (e.promiseRes.status === 'fulfilled') {
+            switch (e.exchangeKey) {
+              case 'changelly':
+                swapCryptoExchangesDefault.changelly.limits = {
+                  min: e.promiseRes.value?.minAmount
+                    ? Number(e.promiseRes.value.minAmount)
+                    : undefined,
+                  max: e.promiseRes.value?.maxAmount
+                    ? Number(e.promiseRes.value.maxAmount)
+                    : undefined,
+                };
+                allLimits.push(e.promiseRes.value as SwapLimits);
+                break;
+              case 'thorswap':
+                swapCryptoExchangesDefault.thorswap.limits = {
+                  min: e.promiseRes.value?.minAmount
+                    ? Number(e.promiseRes.value.minAmount)
+                    : undefined,
+                  max: e.promiseRes.value?.maxAmount
+                    ? Number(e.promiseRes.value.maxAmount)
+                    : undefined,
+                };
+                allLimits.push(e.promiseRes.value as SwapLimits);
+                break;
             }
           }
+        });
+
+        if (allLimits.length > 0) {
+          // If at least one enabled exchange does not have limits, then I set the limits to undefined,
+          // this way the user can put any value in Amount modal
+          const minMinAmount = allLimits.find(
+            limit => limit.minAmount === undefined,
+          )
+            ? undefined
+            : _.minBy(allLimits, 'minAmount')?.minAmount;
+          const maxMaxAmount = allLimits.find(
+            limit => limit.maxAmount === undefined,
+          )
+            ? undefined
+            : _.maxBy(allLimits, 'maxAmount')?.maxAmount;
+
+          setSwapLimits({
+            minAmount: minMinAmount,
+            maxAmount: maxMaxAmount,
+          });
         }
-        updateReceivingAmount();
-      })
-      .catch(err => {
-        logger.error('Changelly getPairsParams Error: ' + JSON.stringify(err));
-        const msg = t(
-          'Changelly is not available at this moment. Please try again later.',
-        );
-        setLoadingEnterAmountBtn(false);
-        showError(msg);
-      });
+      }
+      setLoadingEnterAmountBtn(false);
+    } catch (err) {
+      logger.error('Swap crypto getLimits Error: ' + JSON.stringify(err));
+      setLoadingEnterAmountBtn(false);
+      const msg = t(
+        'Swap Crypto feature is not available at this moment. Please try again later.',
+      );
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(200);
+      showError(msg);
+    }
   };
 
-  const showChangellyPairDisabledError = (
+  const changellyGetLimits = async (
     fromWallet: Wallet,
     toWallet: Wallet,
-  ) => {
-    const title = t('Changelly Error');
-    const actions = [
-      {
-        text: t('OK'),
-        action: () => {},
-        primary: true,
-      },
-      {
-        text: t('Submit a ticket'),
-        action: async () => {
-          await sleep(1000);
-          dispatch(
-            openUrlWithInAppBrowser(
-              'https://support.changelly.com/en/support/tickets/new',
-            ),
-          );
-        },
-        primary: true,
-      },
-    ];
-    const msg = t(
-      'Changelly has temporarily disabled - pair. If you have further questions please reach out to them.',
-      {
-        fromWalletSelected: `${fromWallet.currencyAbbreviation.toUpperCase()}(${fromWallet.chain.toUpperCase()})`,
-        toWalletSelected: `${toWallet.currencyAbbreviation.toUpperCase()}(${toWallet.chain.toUpperCase()})`,
-      },
-    );
-    showError(msg, title, actions);
+  ): Promise<SwapLimits | undefined> => {
+    const data = {
+      coinFrom: getChangellyFixedCurrencyAbbreviation(
+        fromWallet.currencyAbbreviation.toLowerCase(),
+        fromWallet.chain,
+      ),
+      coinTo: getChangellyFixedCurrencyAbbreviation(
+        toWallet.currencyAbbreviation.toLowerCase(),
+        toWallet.chain,
+      ),
+    };
+    try {
+      const pairParamsData = await changellyGetPairsParams(fromWallet, data);
+      if (pairParamsData.error) {
+        logger.debug(
+          'Changelly getPairsParams Error: ' +
+            JSON.stringify(pairParamsData.error),
+        );
+        return;
+      }
+
+      if (
+        pairParamsData.result &&
+        (pairParamsData.result.length === 0 ||
+          (pairParamsData.result[0] &&
+            (!pairParamsData.result[0].maxAmountFixed ||
+              Number(pairParamsData.result[0].maxAmountFixed) <= 0)))
+      ) {
+        const errMsg = `Changelly has temporarily disabled ${fromWallet.currencyAbbreviation}(${fromWallet.chain})-${toWallet.currencyAbbreviation}(${toWallet.chain}) pair. If you have further questions please reach out to them.`;
+        logger.debug('Changelly getPairsParams Error: ' + errMsg);
+        return;
+      }
+
+      const changellySwapLimits: SwapLimits = {
+        minAmount: Number(pairParamsData.result[0].minAmountFixed),
+        maxAmount: Number(pairParamsData.result[0].maxAmountFixed),
+      };
+
+      logger.debug(
+        `[Changelly] Min amount: ${changellySwapLimits.minAmount} - Max amount: ${changellySwapLimits.maxAmount}`,
+      );
+      return changellySwapLimits;
+    } catch (err) {
+      logger.error('Changelly getPairsParams Error: ' + JSON.stringify(err));
+    }
+  };
+
+  const thorswapGetLimits = (): Promise<SwapLimits | undefined> => {
+    // By supporting multiple providers with different dust theresholds and limits considerations, Thorswap no longer maintains an endpoint to obtain the limits for a swap.
+    // It was replaced by messages inside the getQuote function
+    const thorswapSwapLimits: SwapLimits = {
+      minAmount: undefined,
+      maxAmount: undefined,
+    };
+
+    logger.debug('[Thorswap] Min amount: No limit - Max amount: No limit');
+    return Promise.resolve(thorswapSwapLimits);
   };
 
   const getSendMaxData = (): Promise<any> => {
@@ -758,6 +700,37 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
+  const checkAmount = () => {
+    if (!fromWalletSelected || !amountFrom) {
+      setLoading(false);
+      return;
+    }
+
+    if (fromWalletSelected?.balance?.satSpendable) {
+      const spendableAmount = dispatch(
+        SatToUnit(
+          fromWalletSelected.balance.satSpendable,
+          fromWalletSelected.currencyAbbreviation,
+          fromWalletSelected.chain,
+          fromWalletSelected.tokenAddress,
+        ),
+      );
+
+      if (!!spendableAmount && spendableAmount < amountFrom) {
+        const msg = t(
+          'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
+        );
+        showError(msg);
+        setLoading(false);
+        setAmountFrom(0);
+        setUseSendMax(false);
+        setSendMaxInfo(undefined);
+        setRateData(undefined);
+        return;
+      }
+    }
+  };
+
   const checkIfErc20Token = () => {
     const tokensWarn = async () => {
       await sleep(300);
@@ -775,20 +748,27 @@ const SwapCryptoRoot: React.FC = () => {
 
   const continueToCheckout = () => {
     dispatch(
-      Analytics.track('Requested Swap Crypto', {
+      Analytics.track('Swap Crypto Offers', {
         fromCoin: fromWalletSelected!.currencyAbbreviation,
         fromChain: fromWalletSelected!.chain,
         toCoin: toWalletSelected!.currencyAbbreviation,
         toChain: toWalletSelected!.chain,
         amountFrom: amountFrom,
-        exchange: 'changelly',
       }),
     );
-    navigation.navigate('ChangellyCheckout', {
-      fromWalletSelected: fromWalletSelected!,
-      toWalletSelected: toWalletSelected!,
-      fixedRateId: rateData!.fixedRateId,
+
+    navigation.navigate(SwapCryptoScreens.SWAP_CRYPTO_OFFERS, {
+      selectedWalletFrom: fromWalletSelected!,
+      coinFrom: fromWalletSelected!.currencyAbbreviation,
+      chainFrom: fromWalletSelected!.chain,
       amountFrom: amountFrom,
+      selectedWalletTo: toWalletSelected!,
+      coinTo: toWalletSelected!.currencyAbbreviation,
+      chainTo: toWalletSelected!.chain,
+      country: locationData?.countryShortCode,
+      swapCryptoConfig: swapCryptoConfig,
+      preSetPartner: preSetPartner,
+      preLoadPartnersData: swapCryptoExchangesDefault,
       useSendMax: IsERCToken(
         fromWalletSelected!.currencyAbbreviation,
         fromWalletSelected!.chain,
@@ -829,34 +809,33 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
+  const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
+    const foundToken = Object.values(tokenDataByAddress).find(
+      token => token.coin === _currencyAbbreviation && token.chain === _chain,
+    );
+    if (
+      SupportedCurrencyOptions.find(
+        ({currencyAbbreviation, chain}) =>
+          currencyAbbreviation === _currencyAbbreviation &&
+          (!chain || chain === _chain),
+      )
+    ) {
+      return SupportedCurrencyOptions.find(
+        ({currencyAbbreviation, chain}) =>
+          currencyAbbreviation === _currencyAbbreviation &&
+          (!chain || chain === _chain),
+      )!.img;
+    } else if (foundToken?.logoURI) {
+      return foundToken?.logoURI;
+    } else {
+      return undefined;
+    }
+  };
+
   const getChangellyCurrencies = async () => {
     const changellyCurrenciesData = await changellyGetCurrencies(true);
 
     if (changellyCurrenciesData?.result?.length) {
-      const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
-        const foundToken = Object.values(tokenDataByAddress).find(
-          token =>
-            token.coin === _currencyAbbreviation && token.chain === _chain,
-        );
-        if (
-          SupportedCurrencyOptions.find(
-            ({currencyAbbreviation, chain}) =>
-              currencyAbbreviation === _currencyAbbreviation &&
-              (!chain || chain === _chain),
-          )
-        ) {
-          return SupportedCurrencyOptions.find(
-            ({currencyAbbreviation, chain}) =>
-              currencyAbbreviation === _currencyAbbreviation &&
-              (!chain || chain === _chain),
-          )!.img;
-        } else if (foundToken?.logoURI) {
-          return foundToken?.logoURI;
-        } else {
-          return undefined;
-        }
-      };
-
       const changellyCurrenciesDataFixedNames: ChangellyCurrency[] =
         getChangellyCurrenciesFixedProps(
           changellyCurrenciesData.result as ChangellyCurrency[],
@@ -892,6 +871,7 @@ const SwapCryptoRoot: React.FC = () => {
                 logoUri: getLogoUri(name.toLowerCase(), chain),
                 badgeUri: getBadgeImg(name.toLowerCase(), chain),
                 tokenAddress: contractAddress,
+                supportedBy: {changelly: true},
               };
             },
           );
@@ -920,65 +900,6 @@ const SwapCryptoRoot: React.FC = () => {
         ['asc', 'asc'],
       );
 
-      if (supportedCoins.length === 0) {
-        const msg = t(
-          'Our partner Changelly is not currently available. Please try again later.',
-        );
-        showError(msg, undefined, undefined, true);
-      }
-
-      if (selectedWallet?.chain && selectedWallet?.currencyAbbreviation) {
-        const selectedWalletSymbol = getCurrencyAbbreviation(
-          selectedWallet!.currencyAbbreviation,
-          selectedWallet!.chain,
-        );
-        const isSelectedWalletSymbolEnabled = supportedCoins.find(
-          supportedCoin => supportedCoin.symbol === selectedWalletSymbol,
-        );
-        if (!isSelectedWalletSymbolEnabled) {
-          logger.error(
-            `Changelly has temporarily disabled fixed-rates swaps for ${selectedWalletSymbol}`,
-          );
-          const actions = [
-            {
-              text: t('OK'),
-              action: () => {
-                navigation.goBack();
-              },
-              primary: true,
-            },
-            {
-              text: t('Submit a ticket'),
-              action: async () => {
-                await sleep(1000);
-                dispatch(
-                  openUrlWithInAppBrowser(
-                    'https://support.changelly.com/en/support/tickets/new',
-                  ),
-                );
-                navigation.goBack();
-              },
-              primary: true,
-            },
-          ];
-          const selectedCoin = cloneDeep(
-            selectedWallet.currencyAbbreviation,
-          ).toUpperCase();
-          const selectedChain = cloneDeep(selectedWallet.chain).toUpperCase();
-          const title = t('Changelly Error');
-          const msg = t(
-            'Changelly has temporarily disabled fixed-rate swaps for the selected wallet (selectedCoin-selectedChain). If you have further questions please reach out to them.',
-            {
-              selectedCoin,
-              selectedChain,
-            },
-          );
-          selectedWallet = undefined;
-          showError(msg, title, actions, true);
-          return;
-        }
-      }
-
       const coinsToRemove =
         !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
       coinsToRemove.push('busd');
@@ -997,7 +918,135 @@ const SwapCryptoRoot: React.FC = () => {
         );
       }
 
-      setSwapCryptoSupportedCoinsFrom(supportedCoins);
+      return supportedCoins;
+    }
+  };
+
+  const filterThorswapCurrenciesConditions = (
+    currency: ThorswapCurrency,
+  ): boolean => {
+    // TODO: accept all Thorswap supported tokens => If no wallets: create a custom token wallet
+
+    return (
+      currency.enabled &&
+      !!currency.protocol &&
+      !!currency.ticker &&
+      [...SupportedChains].includes(currency.protocol.toLowerCase()) &&
+      (currency.ticker === 'eth' ||
+        (['eth', 'matic', 'polygon', 'arb', 'base', 'op'].includes(
+          currency.protocol.toLowerCase(),
+        )
+          ? allSupportedTokens.includes(
+              getCurrencyAbbreviation(
+                currency.ticker.toLowerCase(),
+                currency.protocol.toLowerCase(),
+              ),
+            )
+          : true))
+    );
+  };
+
+  const getThorswapCurrencies = async () => {
+    const reqData: ThorswapGetCurrenciesRequestData = {
+      env: thorswapEnv,
+      categories: 'all',
+      includeDetails: true,
+    };
+    const thorswapCurrenciesData: ThorswapCurrency[] =
+      await thorswapGetCurrencies(reqData);
+
+    if (thorswapCurrenciesData?.length) {
+      let supportedCoinsWithFixRateEnabled: SwapCryptoCoin[] =
+        thorswapCurrenciesData
+          .filter((thorswapCurrency: ThorswapCurrency) =>
+            filterThorswapCurrenciesConditions(thorswapCurrency),
+          )
+          .map(
+            ({
+              name,
+              fullName,
+              ticker,
+              protocol,
+              address,
+            }: {
+              name: string;
+              fullName: string;
+              ticker: string;
+              protocol: string;
+              address?: string;
+            }) => {
+              const getName = (
+                ticker: string,
+                protocol: string,
+                address: string | undefined,
+              ): string | undefined => {
+                let _name: string | undefined;
+                if (address && address !== '') {
+                  const tokenAddressSuffix = addTokenChainSuffix(
+                    address.toLowerCase(),
+                    protocol.toLowerCase(),
+                  );
+                  _name = BitpaySupportedTokens[tokenAddressSuffix]
+                    ? BitpaySupportedTokens[tokenAddressSuffix].name
+                    : undefined;
+                } else {
+                  _name = BitpaySupportedCoins[ticker.toLowerCase()]
+                    ? BitpaySupportedCoins[ticker.toLowerCase()].name
+                    : undefined;
+                }
+
+                return _name;
+              };
+              return {
+                currencyAbbreviation: ticker.toLowerCase(),
+                symbol: getCurrencyAbbreviation(
+                  ticker.toLowerCase(),
+                  protocol.toLowerCase(),
+                ),
+                name:
+                  getName(ticker, protocol, address) ??
+                  getNameFromThorswapFullName(fullName) ??
+                  name,
+                chain: protocol.toLowerCase(),
+                protocol,
+                logoUri: getLogoUri(
+                  ticker.toLowerCase(),
+                  protocol.toLowerCase(),
+                ),
+                tokenAddress: address && address !== '' ? address : undefined,
+                supportedBy: {thorswap: true},
+              };
+            },
+          );
+
+      supportedCoinsWithFixRateEnabled = _.uniqBy(
+        supportedCoinsWithFixRateEnabled,
+        'symbol',
+      );
+
+      // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+      const orderedArray = SupportedCurrencyOptions.map(currency =>
+        currency.chain
+          ? getCurrencyAbbreviation(
+              currency.currencyAbbreviation,
+              currency.chain,
+            )
+          : currency.currencyAbbreviation,
+      );
+      let supportedCoins = orderBy(
+        supportedCoinsWithFixRateEnabled,
+        [
+          coin => {
+            return orderedArray.includes(coin.symbol)
+              ? orderedArray.indexOf(coin.symbol)
+              : orderedArray.length;
+          },
+          'name',
+        ],
+        ['asc', 'asc'],
+      );
+
+      return supportedCoins;
     }
   };
 
@@ -1067,12 +1116,112 @@ const SwapCryptoRoot: React.FC = () => {
       return;
     }
 
+    const supportedExchanges: SwapCryptoExchangeKey[] = Object.keys(
+      swapCryptoExchangesDefault,
+    ) as SwapCryptoExchangeKey[];
+
+    // prevent "getCurrencies" from deleted or disabled exchanges
+    supportedExchanges.forEach(exchange => {
+      if (swapCryptoConfig && swapCryptoConfig[exchange]) {
+        swapCryptoExchangesDefault[exchange].showOffer =
+          !swapCryptoConfig[exchange]?.removed;
+        swapCryptoExchangesDefault[exchange].disabled =
+          !!swapCryptoConfig[exchange]?.disabled;
+      }
+    });
+
+    const enabledExchanges = Object.values(swapCryptoExchangesDefault)
+      .filter(exchange => exchange.showOffer && !exchange.disabled)
+      .map(exchange => exchange.key);
+
+    const getCurrenciesPromiseByExchange = (
+      exchange: SwapCryptoExchangeKey,
+    ) => {
+      switch (exchange) {
+        case 'changelly':
+          return getChangellyCurrencies();
+        case 'thorswap':
+          return getThorswapCurrencies();
+        default:
+          return Promise.resolve([]);
+      }
+    };
+
+    const getCurrenciesPromises = enabledExchanges.map(exchange =>
+      getCurrenciesPromiseByExchange(exchange),
+    );
+
     try {
-      await Promise.all([getChangellyCurrencies(), sleep(400)]);
+      const responseByExchange = await Promise.allSettled([
+        ...getCurrenciesPromises,
+        sleep(400),
+      ]);
+      const responseByExchangeKey = responseByExchange.map((res, index) => {
+        const exchangeKey: SwapCryptoExchangeKey | undefined =
+          enabledExchanges[index] ?? undefined;
+        return {exchangeKey, promiseRes: res};
+      });
+
+      let allSupportedCoins: SwapCryptoCoin[] = [];
+
+      if (responseByExchangeKey instanceof Array) {
+        responseByExchangeKey.forEach((e, index) => {
+          if (e.promiseRes.status === 'rejected') {
+            logger.error(
+              `Swap crypto getCurrencies[${index}] Rejected: + ${JSON.stringify(
+                e.promiseRes.reason,
+              )}`,
+            );
+            if (e.promiseRes.reason instanceof Error) {
+              switch (e.exchangeKey) {
+                case 'changelly':
+                  logger.debug(
+                    'getChangellyCurrencies Error: ' +
+                      e.promiseRes.reason.message,
+                  );
+                  swapCryptoExchangesDefault.changelly.showOffer = false;
+                  break;
+                case 'thorswap':
+                  logger.debug(
+                    'getThorswapCurrencies Error: ' +
+                      e.promiseRes.reason.message,
+                  );
+                  swapCryptoExchangesDefault.thorswap.showOffer = false;
+                  break;
+                default:
+                  logger.debug('Error: ' + e.promiseRes.reason.message);
+                  break;
+              }
+            }
+          } else if (e.promiseRes.status === 'fulfilled') {
+            switch (e.exchangeKey) {
+              case 'changelly':
+                swapCryptoExchangesDefault.changelly.supportedCoins = e
+                  .promiseRes.value as SwapCryptoCoin[];
+                break;
+              case 'thorswap':
+                swapCryptoExchangesDefault.thorswap.supportedCoins = e
+                  .promiseRes.value as SwapCryptoCoin[];
+                break;
+              default:
+                break;
+            }
+
+            allSupportedCoins = [
+              ...allSupportedCoins,
+              ...((e.promiseRes.value as SwapCryptoCoin[]) || []),
+            ];
+          }
+        });
+        if (allSupportedCoins.length > 0) {
+          allSupportedCoins = _.uniqBy(allSupportedCoins, 'symbol');
+        }
+        setSwapCryptoSupportedCoinsFrom(allSupportedCoins);
+      }
     } catch (err) {
-      logger.error('Changelly getCurrencies Error: ' + JSON.stringify(err));
+      logger.error('Swap crypto getCurrencies Error: ' + JSON.stringify(err));
       const msg = t(
-        'Changelly is not available at this moment. Please try again later.',
+        'Swap Crypto feature is not available at this moment. Please try again later.',
       );
       dispatch(dismissOnGoingProcessModal());
       await sleep(200);
@@ -1139,11 +1288,11 @@ const SwapCryptoRoot: React.FC = () => {
   }, [swapCryptoSupportedCoinsFrom]);
 
   useEffect(() => {
-    changellyGetPairParams();
+    swapGetLimits();
   }, [fromWalletSelected, toWalletSelected]);
 
   useEffect(() => {
-    updateReceivingAmount();
+    checkAmount();
   }, [amountFrom]);
 
   return (
@@ -1373,26 +1522,12 @@ const SwapCryptoRoot: React.FC = () => {
                       </ArrowContainer>
                     )}
                   </SelectedOptionContainer>
-                  {rateData?.amountTo && !loading && (
-                    <SelectedOptionCol>
-                      <DataText>{rateData?.amountTo}</DataText>
-                    </SelectedOptionCol>
-                  )}
                   {!rateData?.amountTo && loading && (
                     <SpinnerContainer>
                       <ActivityIndicator color={ProgressBlue} />
                     </SpinnerContainer>
                   )}
                 </ActionsContainer>
-                {rateData?.rate && (
-                  <ActionsContainer style={{marginTop: 14}} alignEnd={true}>
-                    <BottomDataText>
-                      1 {fromWalletSelected?.currencyAbbreviation.toUpperCase()}{' '}
-                      ~ {rateData?.rate}{' '}
-                      {toWalletSelected?.currencyAbbreviation.toUpperCase()}
-                    </BottomDataText>
-                  </ActionsContainer>
-                )}
               </>
             )}
           </SwapCryptoCard>
@@ -1404,13 +1539,9 @@ const SwapCryptoRoot: React.FC = () => {
               onPress={() => {
                 checkIfErc20Token();
               }}>
-              {t('Continue')}
+              {t('View Offers')}
             </Button>
           </CtaContainer>
-          <ProviderContainer>
-            <ProviderLabel>{t('Provided By')}</ProviderLabel>
-            <ChangellyLogo width={100} height={30} />
-          </ProviderContainer>
         </ScrollView>
       </SwapCryptoContainer>
 
@@ -1464,6 +1595,7 @@ const SwapCryptoRoot: React.FC = () => {
       <AmountModal
         isVisible={amountModalVisible}
         modalTitle={t('Swap Amount')}
+        context={'swapCrypto'}
         limitsOpts={{
           maxWalletAmount:
             // @ts-ignore

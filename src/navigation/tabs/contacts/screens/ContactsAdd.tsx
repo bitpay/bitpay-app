@@ -57,7 +57,10 @@ import NetworkSelectionRow, {
 import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import WalletIcons from '../../../wallet/components/WalletIcons';
-import {BitpaySupportedTokens} from '../../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedTokens,
+} from '../../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import debounce from 'lodash.debounce';
@@ -75,6 +78,7 @@ import {
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import {IsERCToken} from '../../../../store/wallet/utils/currency';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {ChainSelectionRow} from '../../../../components/list/ChainSelectionRow';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -591,7 +595,20 @@ const ContactsAdd = ({
     [],
   );
 
-  const renderItem = useCallback(
+  const renderChainSelectionItem = useCallback(
+    ({item}: {item: SupportedCurrencyOption | SupportedChainOption}) => (
+      <ChainSelectionRow
+        chainObj={BitpaySupportedCoins[item.chain]}
+        onToggle={(currencyAbbreviaton, chain) =>
+          currencyChainSelected(currencyAbbreviaton, chain, isTokenAddress)
+        }
+        key={item.id}
+      />
+    ),
+    [isTokenAddress],
+  );
+
+  const renderCurrencySelectionItem = useCallback(
     ({item}: {item: SupportedCurrencyOption | SupportedChainOption}) => (
       <CurrencySelectionRow
         currency={item as CurrencySelectionItem}
@@ -898,7 +915,11 @@ const ContactsAdd = ({
             contentContainerStyle={{minHeight: '100%'}}
             data={SupportedEvmCurrencyOptions}
             keyExtractor={keyExtractor}
-            renderItem={renderItem}
+            renderItem={
+              isTokenAddress
+                ? renderChainSelectionItem
+                : renderCurrencySelectionItem
+            }
           />
         </CurrencySelectionModalContainer>
       </SheetModal>

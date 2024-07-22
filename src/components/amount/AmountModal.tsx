@@ -88,7 +88,9 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
             />
           </CloseModalButton>
           {modalTitle ? <ModalHeaderText>{modalTitle}</ModalHeaderText> : null}
-          {onSendMaxPressed && !limitsOpts?.limits.maxAmount ? (
+          {onSendMaxPressed &&
+          (!props.context ||
+            !['sellCrypto', 'swapCrypto'].includes(props.context)) ? (
             <ModalHeaderRight>
               <Button
                 buttonType="pill"

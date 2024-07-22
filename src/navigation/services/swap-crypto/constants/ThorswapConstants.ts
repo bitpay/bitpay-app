@@ -1,0 +1,3 @@
+export const THORSWAP_DEFAULT_GAS_LIMIT = 500000;
+
+export const THORSWAP_DEFAULT_SLIPPAGE = 3; // 3%

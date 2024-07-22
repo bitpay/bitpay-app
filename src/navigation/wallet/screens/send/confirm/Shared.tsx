@@ -174,7 +174,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
     recipientType,
   } = recipient;
 
-  let badgeImg;
+  let {badgeImg} = recipient;
 
   if (
     recipientCoin &&
