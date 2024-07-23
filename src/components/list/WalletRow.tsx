@@ -54,6 +54,7 @@ export interface WalletRowProps extends SearchableItem {
   currencyAbbreviation: string;
   tokenAddress?: string;
   chain: string;
+  chainName: string;
   walletName?: string;
   cryptoBalance: string;
   cryptoLockedBalance?: string;
