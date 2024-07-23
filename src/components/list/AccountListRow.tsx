@@ -20,6 +20,7 @@ import {ActivityIndicator, Platform, View} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import Blockie from '../blockie/Blockie';
 import {WalletRowProps} from './WalletRow';
+import {SearchableItem} from '../chain-search/ChainSearch';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -37,10 +38,9 @@ const BalanceColumn = styled(Column)`
   align-items: flex-end;
 `;
 
-
-export interface AccountRowProps {
+export interface AccountRowProps extends SearchableItem {
   id: string;
-  chain: string;
+  keyId: string;
   wallets: WalletRowProps[];
   accountName: string;
   accountNumber: number;
@@ -129,13 +129,11 @@ const AccountListRow = ({
 }: Props) => {
   const {
     accountName,
-    chain,
     fiatBalanceFormat,
     receiveAddress,
     wallets,
     isMultiNetworkSupported,
   } = accountItem;
-
   const {
     currencyAbbreviation,
     isToken,
@@ -144,7 +142,7 @@ const AccountListRow = ({
     isComplete,
     isScanning,
     cryptoBalance,
-    fiatBalance,
+    chain,
   } = wallets[0];
 
   const _currencyAbbreviation =

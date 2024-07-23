@@ -11,6 +11,7 @@ import {
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {
+  BitpaySupportedCoins,
   BitpaySupportedMaticTokens,
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
@@ -112,6 +113,7 @@ export const buildWalletObj = (
     pendingTxps = [],
     isHardwareWallet = false,
     hardwareData = {},
+    singleAddress,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -132,6 +134,7 @@ export const buildWalletObj = (
     hardwareData?: {
       accountPath?: string;
     };
+    singleAddress: boolean;
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
@@ -165,6 +168,7 @@ export const buildWalletObj = (
     currencyAbbreviation: updatedCurrencyAbbreviation,
     tokenAddress: token?.address?.toLowerCase(),
     chain,
+    chainName: BitpaySupportedCoins[chain].name,
     walletName,
     balance,
     tokens,
@@ -185,6 +189,7 @@ export const buildWalletObj = (
     pendingTxps,
     isHardwareWallet,
     hardwareData,
+    singleAddress,
   };
 };
 

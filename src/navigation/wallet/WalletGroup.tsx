@@ -10,6 +10,9 @@ import CurrencySelection, {
 import KeyOverview from './screens/KeyOverview';
 import KeyExplanation from './screens/KeyExplanation';
 import KeySettings from './screens/KeySettings';
+import AccountDetails, {
+  AccountDetailsScreenParamList,
+} from './screens/AccountDetails';
 import WalletDetails, {
   WalletDetailsScreenParamList,
 } from './screens/WalletDetails';
@@ -108,6 +111,7 @@ export type WalletGroupParamList = {
     wallet?: {walletId: string; walletName: string | undefined};
     context: 'key' | 'wallet';
   };
+  AccountDetails: AccountDetailsScreenParamList;
   WalletDetails: WalletDetailsScreenParamList;
   WalletSettings: {walletId: string; key: Key};
   CreationOptions: undefined;
@@ -176,6 +180,7 @@ export enum WalletScreens {
   KEY_EXPLANATION = 'KeyExplanation',
   KEY_SETTINGS = 'KeySettings',
   UPDATE_KEY_OR_WALLET_NAME = 'UpdateKeyOrWalletName',
+  ACCOUNT_DETAILS = 'AccountDetails',
   WALLET_DETAILS = 'WalletDetails',
   WALLET_SETTINGS = 'WalletSettings',
   CREATION_OPTIONS = 'CreationOptions',
@@ -279,6 +284,10 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
       <Wallet.Screen
         name={WalletScreens.UPDATE_KEY_OR_WALLET_NAME}
         component={UpdateKeyOrWalletName}
+      />
+      <Wallet.Screen
+        name={WalletScreens.ACCOUNT_DETAILS}
+        component={AccountDetails}
       />
       <Wallet.Screen
         name={WalletScreens.WALLET_DETAILS}

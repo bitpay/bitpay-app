@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import Svg, { Rect, Defs, ClipPath, Circle, G } from 'react-native-svg';
+import React, {Component} from 'react';
+import Svg, {Rect, Defs, ClipPath, Circle, G} from 'react-native-svg';
 
 const randseed: number[] = new Array(4);
 
@@ -121,9 +121,7 @@ class Blockie extends Component<BlockieProps> {
             <Circle cx={radius} cy={radius} r={radius} />
           </ClipPath>
         </Defs>
-        <G clipPath="url(#clip)">
-          {this.renderIcon(size)}
-        </G>
+        <G clipPath="url(#clip)">{this.renderIcon(size)}</G>
       </Svg>
     );
   }

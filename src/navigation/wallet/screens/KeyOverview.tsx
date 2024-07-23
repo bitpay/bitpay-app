@@ -99,13 +99,13 @@ const OverviewContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const BalanceContainer = styled.View`
+export const BalanceContainer = styled.View`
   height: 15%;
   margin-top: 20px;
   padding: 10px 15px;
 `;
 
-const Balance = styled(BaseText)<{scale: boolean}>`
+export const Balance = styled(BaseText)<{scale: boolean}>`
   font-size: ${({scale}) => (scale ? 25 : 35)}px;
   font-style: normal;
   font-weight: 700;
@@ -197,7 +197,7 @@ type FormatFiatOptions = {
   currencyDisplay?: 'symbol' | 'code';
 };
 
-const getFiat = ({
+export const getFiat = ({
   dispatch,
   satAmount,
   defaultAltCurrencyIsoCode,
@@ -223,7 +223,7 @@ const getFiat = ({
     network,
   );
 
-const formatFiat = ({
+export const formatFiat = ({
   fiatAmount,
   defaultAltCurrencyIsoCode,
   currencyDisplay,
@@ -295,21 +295,18 @@ export const buildUIFormattedAccount: (
   defaultAltCurrencyIsoCode: string,
   rates: Rates,
   dispatch: AppDispatch,
-  currencyDisplay?: 'symbol',
 ) => void = (
   accountList,
   wallet,
   defaultAltCurrencyIsoCode,
   rates,
   dispatch,
-  currencyDisplay,
 ) => {
   const uiFormattedWallet = buildUIFormattedWallet(
     wallet,
     defaultAltCurrencyIsoCode,
     rates,
     dispatch,
-    currencyDisplay,
   ) as WalletRowProps;
 
   let walletsAccount = accountList.find(
@@ -318,7 +315,7 @@ export const buildUIFormattedAccount: (
 
   const newAccount: Partial<AccountRowProps> = {
     id: _.uniqueId('account_'),
-    chain: uiFormattedWallet.chain,
+    keyId: wallet.keyId,
     accountName: IsEVMCoin(wallet.chain)
       ? `EVM Account ${wallet.credentials.account}`
       : wallet.walletName || wallet.credentials.walletName,
@@ -706,10 +703,10 @@ const KeyOverview = () => {
             haptic('impactLight');
 
             if (item.wallets.length > 0) {
-              // navigation.navigate('AccountDetails', {
-              //   key,
-              //   walletId: item.id,
-              // });
+              navigation.navigate('AccountDetails', {
+                key,
+                accountItem: item,
+              });
               return;
             }
             const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
