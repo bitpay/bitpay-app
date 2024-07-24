@@ -387,6 +387,14 @@ export const isSegwit = (addressType: string): boolean => {
   return addressType === 'P2WPKH' || addressType === 'P2WSH';
 };
 
+export const isTaproot = (addressType: string): boolean => {
+  if (!addressType) {
+    return false;
+  }
+
+  return addressType === 'P2TR';
+};
+
 export const GetProtocolPrefixAddress =
   (
     currencyAbbreviation: string,

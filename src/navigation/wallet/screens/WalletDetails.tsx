@@ -41,7 +41,11 @@ import {
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
-import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
+import {
+  findWalletById,
+  isSegwit,
+  isTaproot,
+} from '../../../store/wallet/utils/wallet';
 import {
   setWalletScanning,
   updatePortfolioBalance,
@@ -280,6 +284,10 @@ const getWalletType = (
 
   if (isSegwit(addressType)) {
     return {title: 'Segwit'};
+  }
+
+  if (isTaproot(addressType)) {
+    return {title: 'Taproot'};
   }
   return;
 };
