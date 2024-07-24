@@ -39,8 +39,7 @@ import {
 } from '../../../store/wallet/effects/address/address';
 import {
   GetProtocolPrefix,
-  IsERCToken,
-  IsUtxoCoin,
+  IsUtxoChain,
 } from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
 import WarningSvg from '../../../../assets/img/warning.svg';
@@ -304,7 +303,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
     };
   }
 
-  const isUtxo = IsUtxoCoin(wallet?.currencyAbbreviation);
+  const isUtxo = IsUtxoChain(wallet?.chain);
 
   const _closeModal = () => {
     closeModal();

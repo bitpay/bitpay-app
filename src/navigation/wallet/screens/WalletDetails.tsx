@@ -113,7 +113,7 @@ import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
 import {isCoinSupportedToSell} from '../../services/sell-crypto/utils/sell-crypto-utils';
-import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/changelly-utils';
+import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/swap-crypto-utils';
 import {
   buildBtcSpeedupTx,
   buildEthERCTokenSpeedupTx,

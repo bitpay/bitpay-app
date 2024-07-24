@@ -4,7 +4,7 @@ import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
 import {SAFE_CONFIRMATIONS} from '../../../../constants/wallet';
-import {IsCustomERCToken, IsERCToken, IsUtxoCoin} from '../../utils/currency';
+import {IsCustomERCToken, IsERCToken, IsUtxoChain} from '../../utils/currency';
 import {ToAddress, ToLtcAddress} from '../address/address';
 import {
   IsDateInCurrentMonth,
@@ -1030,7 +1030,7 @@ export const buildTransactionDetails =
           }
         }
 
-        if (IsUtxoCoin(coin)) {
+        if (IsUtxoChain(chain)) {
           _transaction.feeRateStr =
             ((_fee / (amount + _fee)) * 100).toFixed(2) + '%';
           try {

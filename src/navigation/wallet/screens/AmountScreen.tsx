@@ -9,7 +9,7 @@ import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import type {HeaderTitleProps} from '@react-navigation/elements';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {IsUtxoCoin} from '../../../store/wallet/utils/currency';
+import {IsUtxoChain} from '../../../store/wallet/utils/currency';
 import OptionsSheet, {
   Option,
 } from '../../../navigation/wallet/components/OptionsSheet';
@@ -94,10 +94,10 @@ const AmountScreen: React.VFC<
         buttonType="pill"
         buttonStyle="cancel"
         onPress={() => onSendMaxPressedRef.current()}
-        style={{marginRight: chain && IsUtxoCoin(chain) && wallet ? 10 : 0}}>
+        style={{marginRight: chain && IsUtxoChain(chain) && wallet ? 10 : 0}}>
         {t('Send Max')}
       </Button>
-      {chain && IsUtxoCoin(chain) && wallet && sendTo?.address && (
+      {chain && IsUtxoChain(chain) && wallet && sendTo?.address && (
         <Settings
           onPress={() => {
             setShowWalletOptions(true);
@@ -108,7 +108,7 @@ const AmountScreen: React.VFC<
   );
 
   const assetOptions: Array<Option> =
-    chain && IsUtxoCoin(chain) && wallet && sendTo?.address
+    chain && IsUtxoChain(chain) && wallet && sendTo?.address
       ? [
           {
             img: <WalletIcons.SelectInputs />,
