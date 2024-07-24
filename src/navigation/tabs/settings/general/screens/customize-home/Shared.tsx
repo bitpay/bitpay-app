@@ -23,7 +23,7 @@ import {NeedBackupText} from '../../../../../../components/home-card/HomeCard';
 import {useTranslation} from 'react-i18next';
 import ObfuscationShow from '../../../../../../../assets/img/obfuscation-show.svg';
 import ObfuscationHide from '../../../../../../../assets/img/obfuscation-hide.svg';
-import {KeyName} from '../../../../../wallet/components/KeyDropdownOption';
+import {OptionName} from '../../../../../wallet/components/DropdownOption';
 
 export const CarouselSvg = ({
   focused,
@@ -235,7 +235,7 @@ export const CustomizeCard = ({
           ) : null}
           {wallets ? <Row>{header()}</Row> : null}
 
-          <KeyName>{name}</KeyName>
+          <OptionName>{name}</OptionName>
         </Column>
       </Row>
       <Toggle onPress={toggle}>

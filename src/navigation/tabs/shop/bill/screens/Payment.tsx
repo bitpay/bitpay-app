@@ -2,9 +2,13 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {BillGroupParamList} from '../BillGroup';
-import {H5, H7, Paragraph} from '../../../../../components/styled/Text';
+import {
+  BaseText,
+  H5,
+  H7,
+  Paragraph,
+} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
-import {BaseText} from '../../../../wallet/components/KeyDropdownOption';
 import {Linking, ScrollView} from 'react-native';
 import {
   BillOption,

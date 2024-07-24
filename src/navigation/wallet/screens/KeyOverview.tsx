@@ -64,7 +64,6 @@ import {
   useLogger,
 } from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import KeyDropdownOption from '../components/KeyDropdownOption';
 import {startGetRates} from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
@@ -84,6 +83,7 @@ import AccountListRow, {
   AccountRowProps,
 } from '../../../components/list/AccountListRow';
 import _ from 'lodash';
+import DropdownOption from '../components/DropdownOption';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -153,7 +153,7 @@ export const KeyDropdownOptionsContainer = styled.ScrollView`
   padding: 0 ${ScreenGutter};
 `;
 
-const CogIconContainer = styled.TouchableOpacity`
+export const CogIconContainer = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 50px;
   justify-content: center;
@@ -615,9 +615,7 @@ const KeyOverview = () => {
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
   const memorizedAccountList = useMemo(() => {
-    const coins = wallets.filter(
-      wallet => !wallet.credentials.token && !wallet.hideWallet,
-    );
+    const coins = wallets.filter(wallet => !wallet.hideWallet);
     return buildAccountList(coins, defaultAltCurrency.isoCode, rates, dispatch);
   }, [dispatch, wallets, defaultAltCurrency.isoCode, rates]);
 
@@ -706,6 +704,7 @@ const KeyOverview = () => {
               navigation.navigate('AccountDetails', {
                 key,
                 accountItem: item,
+                accountList: memorizedAccountList,
               });
               return;
             }
@@ -841,10 +840,10 @@ const KeyOverview = () => {
             {Object.values(keys)
               .filter(_key => _key.backupComplete && _key.id !== id)
               .map(_key => (
-                <KeyDropdownOption
+                <DropdownOption
                   key={_key.id}
-                  keyId={_key.id}
-                  keyName={_key.keyName}
+                  optionId={_key.id}
+                  optionName={_key.keyName}
                   wallets={_key.wallets}
                   totalBalance={_key.totalBalance}
                   onPress={keyId => {

@@ -36,8 +36,6 @@ export const bootstrapWallets = (
         if (logHandler) {
           logHandler(LogActions.info(successLog));
         }
-        console.log("$$$$$$$$$$$$$$walletClient", walletClient);
-
         // build wallet obj with bwc client credentials
         return merge(
           walletClient,

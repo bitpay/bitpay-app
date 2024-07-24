@@ -407,7 +407,7 @@ export const GetProtocolPrefixAddress =
   };
 
 export const getRemainingWalletCount = (
-  wallets?: Wallet[],
+  wallets?: Wallet[] | WalletRowProps[],
 ): undefined | number => {
   if (!wallets || wallets.length < WALLET_DISPLAY_LIMIT) {
     return;
