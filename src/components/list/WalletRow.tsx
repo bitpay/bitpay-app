@@ -156,13 +156,12 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
     img,
     badgeImg,
     cryptoBalance,
-    fiatBalance,
+    fiatBalanceFormat,
     isToken,
     network,
     multisig,
     isScanning,
     isComplete,
-    receiveAddress,
   } = wallet;
 
   // @ts-ignore
@@ -198,13 +197,6 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
             {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
           </ListItemSubText>
-          {buildPreviewAddress(
-            chain,
-            isComplete,
-            multisig,
-            receiveAddress,
-            isToken,
-          )}
           {buildTestBadge(network, chain, isToken)}
           {buildUncompleteBadge(isComplete)}
         </Row>
@@ -218,7 +210,9 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
               </H5>
               {showFiatBalance && (
                 <ListItemSubText textAlign={'right'}>
-                  {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+                  {network === 'testnet'
+                    ? 'Test - No Value'
+                    : fiatBalanceFormat}
                 </ListItemSubText>
               )}
             </>

@@ -1,11 +1,10 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import {ActiveOpacity, Br} from '../../../components/styled/Containers';
-import {H3, Paragraph} from '../../../components/styled/Text';
+import {BaseText, H3, Paragraph} from '../../../components/styled/Text';
 import {t} from 'i18next';
 import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {BaseText} from '../../wallet/components/KeyDropdownOption';
 import {Action, SlateDark, White} from '../../../styles/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Button from '../../../components/button/Button';

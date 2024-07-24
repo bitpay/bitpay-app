@@ -52,7 +52,7 @@ const AssetsByChainRow = ({
       <RowContainer
         activeOpacity={ActiveOpacity}
         onPress={() => {}}
-        style={{borderBottomWidth: 0}}>
+        style={{borderBottomWidth: 0, paddingBottom: 0}}>
         <CurrencyImageContainer>
           <CurrencyImage img={chainImg} size={20} />
         </CurrencyImageContainer>
