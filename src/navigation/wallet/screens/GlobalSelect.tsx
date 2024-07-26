@@ -206,7 +206,8 @@ export type GlobalSelectModalContext =
   | 'scanner'
   | 'sell'
   | 'buy'
-  | 'swap'
+  | 'swapFrom'
+  | 'swapTo'
   | 'paperwallet';
 
 export type GlobalSelectParamList = {
@@ -577,7 +578,7 @@ const handleWalletSelection = (
 
 interface GlobalSelectProps {
   useAsModal?: boolean;
-  modalTitle?: any;
+  modalTitle?: string;
   customSupportedCurrencies?: any[];
   customToSelectCurrencies?:
     | ToWalletSelectorCustomCurrency[]
@@ -586,8 +587,8 @@ interface GlobalSelectProps {
     newWallet?: any,
     createNewWalletData?: AddWalletData,
   ) => void;
-  modalContext?: any;
-  livenetOnly?: any;
+  modalContext?: GlobalSelectModalContext;
+  livenetOnly?: boolean;
   disabledChain?: string | undefined;
   onHelpPress?: () => void;
   selectingNetworkForDeposit?: boolean;
@@ -701,7 +702,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   // only show wallets with funds
   if (
-    ['send', 'sell', 'swap', 'coinbase', 'contact', 'scanner'].includes(context)
+    ['send', 'sell', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
+      context,
+    )
   ) {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
   }
@@ -1062,14 +1065,13 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       return (
         <GlobalSelectRow
           item={item}
-          context={context}
           hasSelectedChainFilterOption={!!selectedChainFilterOption}
           emit={(selectObj: GlobalSelectObj) => {
             // if only one chain available for the token - skip chain selector
             const hasMultipleChainAvailable = selectObj.chains.length > 1;
             if (
-              ['buy', 'swap'].includes(context) &&
-              IsEVMCoin(selectObj.chains[0]) &&
+              ['buy', 'swapFrom', 'swapTo'].includes(context) &&
+              IsEVMChain(selectObj.chains[0]) &&
               selectingNetworkForDeposit &&
               !selectedChainFilterOption &&
               hasMultipleChainAvailable
@@ -1421,7 +1423,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               </NoWalletsMsg>
             ) : null}
 
-            {context === 'swap' ? (
+            {context === 'swapFrom' ? (
               <NoWalletsMsg>
                 {t(
                   'Your wallet balance is too low to swap crypto. Add funds now and start swapping.',
@@ -1429,7 +1431,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               </NoWalletsMsg>
             ) : null}
 
-            {['sell', 'swap'].includes(context) ? (
+            {['sell', 'swapFrom'].includes(context) ? (
               <Button
                 style={{marginTop: 20}}
                 onPress={goToBuyCrypto}
@@ -1511,13 +1513,13 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               <WalletSelectMenuHeaderContainer>
                 <TextAlign align={'center'}>
                   <H4>
-                    {context === 'swap'
+                    {context === 'swapTo'
                       ? t('Swap to')
                       : t('Select Destination')}
                   </H4>
                 </TextAlign>
                 <NoWalletsMsg>
-                  {context === 'swap'
+                  {context === 'swapTo'
                     ? t('Choose a key you would like to swap the funds to')
                     : t('Choose a key you would like to deposit the funds to')}
                 </NoWalletsMsg>

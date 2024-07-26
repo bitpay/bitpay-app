@@ -106,13 +106,13 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   ChangellyCurrency,
   ChangellyCurrencyBlockchain,
+  ChangellyRateData,
 } from '../../../../store/swap-crypto/models/changelly.models';
 import {thorswapGetCurrencies} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
 import {
   getNameFromThorswapFullName,
   thorswapEnv,
 } from '../utils/thorswap-utils';
-import {ChangellyRateData} from '../../../../store/swap-crypto/models/changelly.models';
 import {
   ThorswapCurrency,
   ThorswapGetCurrenciesRequestData,
@@ -1557,7 +1557,7 @@ const SwapCryptoRoot: React.FC = () => {
         isVisible={fromWalletSelectorModalVisible}
         customSupportedCurrencies={swapCryptoSupportedCoinsFrom}
         livenetOnly={true}
-        modalContext={'swap'}
+        modalContext={'swapFrom'}
         modalTitle={t('Swap From')}
         onDismiss={(fromWallet: Wallet) => {
           hideModal('fromWalletSelector');
@@ -1573,7 +1573,7 @@ const SwapCryptoRoot: React.FC = () => {
         <GlobalSelectContainer
           style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
           <GlobalSelect
-            modalContext={'swap'}
+            modalContext={'swapTo'}
             livenetOnly={true}
             useAsModal={true}
             modalTitle={t('Swap To')}

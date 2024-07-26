@@ -18,7 +18,6 @@ import _ from 'lodash';
 interface Props {
   item: GlobalSelectObj;
   hasSelectedChainFilterOption: boolean;
-  context: string;
   emit: (item: GlobalSelectObj) => void;
 }
 
@@ -73,12 +72,7 @@ const CurrencyBadgeList: React.FC<CurrencyBadgeListProps> = ({chainsImg}) => {
   );
 };
 
-const GlobalSelectRow = ({
-  item,
-  hasSelectedChainFilterOption,
-  emit,
-  context,
-}: Props) => {
+const GlobalSelectRow = ({item, hasSelectedChainFilterOption, emit}: Props) => {
   const theme = useTheme();
   const {currencyName, currencyAbbreviation, total, img, chainsImg} = item;
   return (

@@ -79,7 +79,7 @@ export const backupRedirect = ({
     navigation.dispatch(
       StackActions.push('KeyOverview', {id: key.id, context}),
     );
-  } else if (context === 'swapCrypto') {
+  } else if (context === 'swapCrypto' || context === 'swapTo') {
     navigation.navigate('SwapCryptoRoot');
   } else if (context === 'buyCrypto') {
     navigation.navigate('BuyCryptoRoot');
