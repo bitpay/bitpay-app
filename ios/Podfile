@@ -1,6 +1,15 @@
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
+#######
+# Read min iOS version from Xcode project and set as min iOS version for Podfile
+require 'xcodeproj'
+
+project_path = './BitPayApp.xcodeproj'
+project = Xcodeproj::Project.open(project_path)
+min_ios_version_supported = project.build_configurations.first.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+######
+
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 

@@ -413,6 +413,11 @@ PODS:
     - React-Core
   - react-native-safe-area-context (4.7.4):
     - React-Core
+  - react-native-skia (1.3.7):
+    - RCT-Folly (= 2021.07.22.00)
+    - React
+    - React-callinvoker
+    - React-Core
   - react-native-slider (4.5.2):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
@@ -544,33 +549,10 @@ PODS:
     - React-Core
   - RNReactNativeHapticFeedback (1.14.0):
     - React-Core
-  - RNReanimated (3.0.2):
-    - DoubleConversion
-    - FBLazyVector
-    - FBReactNativeSpec
-    - glog
-    - RCT-Folly
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
+  - RNReanimated (3.14.0):
+    - RCT-Folly (= 2021.07.22.00)
     - React-Core
-    - React-Core/DevSupport
-    - React-Core/RCTWebSocket
-    - React-CoreModules
-    - React-cxxreact
-    - React-jsi
-    - React-jsiexecutor
-    - React-jsinspector
-    - React-RCTActionSheet
-    - React-RCTAnimation
-    - React-RCTBlob
-    - React-RCTImage
-    - React-RCTLinking
-    - React-RCTNetwork
-    - React-RCTSettings
-    - React-RCTText
     - ReactCommon/turbomodule/core
-    - Yoga
   - RNScreens (3.27.0):
     - RCT-Folly (= 2021.07.22.00)
     - React-Core
@@ -661,6 +643,7 @@ DEPENDENCIES:
   - react-native-render-html (from `../node_modules/react-native-render-html`)
   - react-native-restart (from `../node_modules/react-native-restart`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-text-input-mask (from `../node_modules/react-native-text-input-mask`)
   - react-native-tracking-transparency (from `../node_modules/react-native-tracking-transparency`)
@@ -812,6 +795,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-restart"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-skia:
+    :path: "../node_modules/@shopify/react-native-skia"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
   react-native-text-input-mask:
@@ -957,6 +942,7 @@ SPEC CHECKSUMS:
   react-native-render-html: 984dfe2294163d04bf5fe25d7c9f122e60e05ebe
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
   react-native-safe-area-context: 2cd91d532de12acdb0a9cbc8d43ac72a8e4c897c
+  react-native-skia: af64956ca982d4a05e1df0f56f6f8943533e51b4
   react-native-slider: 593253eb5fbc6ea519290e812bd477fc6abafd5a
   react-native-text-input-mask: 36a546b378fadd2efe1b7484a859d34bc2c80395
   react-native-tracking-transparency: 25ff1ff866e338c137c818bdec20526bb05ffcc1
@@ -991,7 +977,7 @@ SPEC CHECKSUMS:
   RNQuickAction: 6d404a869dc872cde841ad3147416a670d13fa93
   RNRate: ef3bcff84f39bb1d1e41c5593d3eea4aab2bd73a
   RNReactNativeHapticFeedback: 1e3efeca9628ff9876ee7cdd9edec1b336913f8c
-  RNReanimated: f0dd6b881808e635ef0673f89642937d6c141314
+  RNReanimated: 271f958e94385e59e0660b872ce866407e36bb45
   RNScreens: 3c2d122f5e08c192e254c510b212306da97d2581
   RNShare: 32e97adc8d8c97d4a26bcdd3c45516882184f8b6
   RNSharedElement: 504fa28a235b12505b6daedbb452a9ec96809bd0
@@ -1003,6 +989,6 @@ SPEC CHECKSUMS:
   Yoga: e71803b4c1fff832ccf9b92541e00f9b873119b9
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: 6b527a8bfa0c12514fa45f60e836775b8938f991
+PODFILE CHECKSUM: eb48bc440faa4d2f6710382db8b2ca465df31455
 
-COCOAPODS: 1.13.0
+COCOAPODS: 1.15.2
