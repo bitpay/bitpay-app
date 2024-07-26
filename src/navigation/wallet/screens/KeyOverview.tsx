@@ -206,6 +206,7 @@ export const buildUIFormattedWallet: (
 ) => ({
   id,
   keyId,
+  copayerId: credentials.copayerId,
   img,
   badgeImg,
   currencyName,
@@ -592,7 +593,12 @@ const KeyOverview = () => {
           hideBalance={hideAllBalances}
           onPress={() => {
             haptic('impactLight');
-            const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
+            const fullWalletObj = key.wallets.find(
+              k =>
+                k.id === item.id &&
+                (!item.copayerId ||
+                  k.credentials?.copayerId === item.copayerId),
+            )!;
             if (!fullWalletObj.isComplete()) {
               fullWalletObj.getStatus(
                 {network: fullWalletObj.network},
@@ -607,6 +613,7 @@ const KeyOverview = () => {
                         navigation.navigate('WalletDetails', {
                           walletId: item.id,
                           key,
+                          copayerId: item.copayerId,
                         });
                       });
                       return;
@@ -622,6 +629,7 @@ const KeyOverview = () => {
               navigation.navigate('WalletDetails', {
                 key,
                 walletId: item.id,
+                copayerId: item.copayerId,
               });
             }
           }}

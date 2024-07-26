@@ -466,6 +466,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
     const associatedWallet = findWalletById(
       keys[linkedWallet.keyId].wallets,
       linkedWallet.id,
+      linkedWallet.credentials?.copayerId,
     ) as Wallet;
 
     const addWalletData: AddWalletData = {

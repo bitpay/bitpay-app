@@ -109,7 +109,7 @@ export type WalletGroupParamList = {
     context: 'key' | 'wallet';
   };
   WalletDetails: WalletDetailsScreenParamList;
-  WalletSettings: {walletId: string; key: Key};
+  WalletSettings: {walletId: string; key: Key; copayerId: string};
   CreationOptions: undefined;
   Import: ImportParamList;
   CreateEncryptPassword: {key: Key};
@@ -138,8 +138,13 @@ export type WalletGroupParamList = {
     walletId: string;
     transactionId: string;
     keyId: string;
+    copayerId?: string;
   };
-  TransactionProposalNotifications: {walletId?: string; keyId?: string};
+  TransactionProposalNotifications: {
+    walletId?: string;
+    keyId?: string;
+    copayerId?: string;
+  };
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
   WalletInformation: {wallet: WalletModel};
