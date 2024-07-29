@@ -195,34 +195,31 @@ export default ({
                 : t('Which accounts would you like to use for WalletConnect?')}
             </DescriptionText>
 
-            <View>
-              <WCV2KeyWalletsRow
-                keys={allKeys}
-                onPress={(keyId: string, wallet: WCV2Wallet) => {
-                  haptic('impactLight');
-                  setAllkeys((prev: any) => {
-                    prev &&
-                      prev.forEach((k: any) => {
-                        const accountChoosed =
-                          wallet.wallet.credentials.account;
-                        if (k?.keyId === keyId) {
-                          const {wallets} = k;
-                          wallets.forEach((walletNestedArray: WCV2Wallet[]) => {
-                            walletNestedArray.forEach((w: WCV2Wallet) => {
-                              if (
-                                w.wallet.credentials.account === accountChoosed
-                              ) {
-                                w.checked = !w.checked;
-                              }
-                            });
+            <WCV2KeyWalletsRow
+              keys={allKeys}
+              onPress={(keyId: string, wallet: WCV2Wallet) => {
+                haptic('impactLight');
+                setAllkeys((prev: any) => {
+                  prev &&
+                    prev.forEach((k: any) => {
+                      const accountChoosed = wallet.wallet.credentials.account;
+                      if (k?.keyId === keyId) {
+                        const {wallets} = k;
+                        wallets.forEach((walletNestedArray: WCV2Wallet[]) => {
+                          walletNestedArray.forEach((w: WCV2Wallet) => {
+                            if (
+                              w.wallet.credentials.account === accountChoosed
+                            ) {
+                              w.checked = !w.checked;
+                            }
                           });
-                        }
-                      });
-                    return [...prev];
-                  });
-                }}
-              />
-            </View>
+                        });
+                      }
+                    });
+                  return [...prev];
+                });
+              }}
+            />
             <CtaContainerAbsolute
               background={true}
               style={{
@@ -241,14 +238,13 @@ export default ({
                     const selectedWallets = getSelectedWallets();
                     if (proposal) {
                       onBackdropPress();
-                      await sleep(500);
+                      await sleep(1000);
                       navigation.navigate('WalletConnectStart', {
                         proposal,
                         selectedWallets: selectedWallets,
                       });
                     } else if (session) {
                       onBackdropPress(selectedWallets, session);
-                      await sleep(500);
                     }
                   }}>
                   {t('Continue')}
@@ -277,7 +273,7 @@ export default ({
                 onPress={async () => {
                   haptic('impactLight');
                   onBackdropPress();
-                  await sleep(500);
+                  await sleep(1000);
                   navigation.dispatch(StackActions.replace('CreationOptions'));
                 }}>
                 {t('IMPORT WALLET')}
@@ -289,7 +285,6 @@ export default ({
                 onPress={async () => {
                   haptic('impactLight');
                   onBackdropPress();
-                  await sleep(500);
                 }}>
                 {t('MAYBE LATER')}
               </BottomNotificationCta>

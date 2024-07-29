@@ -12,13 +12,11 @@ import {
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {NoGutter} from '../styled/WalletConnectContainers';
 import {SendToPillContainer} from '../../../navigation/wallet/screens/send/confirm/Shared';
-import {
-  PillContainer,
-  PillText,
-} from '../../../navigation/wallet/components/SendToPill';
+import {PillText} from '../../../navigation/wallet/components/SendToPill';
 import {formatCryptoAddress} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Checkbox from '../../../components/checkbox/Checkbox';
+import {AddPillContainer} from '../../wallet/screens/AddWallet';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -61,6 +59,7 @@ const AddressRow = styled(Row)`
   flex-direction: row;
   align-items: center;
   margin: 10px;
+  height: 30px;
 `;
 interface WCV2KeyWalletProps {
   keys: WCV2Key[];
@@ -149,19 +148,19 @@ export const WCV2KeyWalletsRow = ({
                   onPress={onPress}
                 />
                 <SendToPillContainer style={{marginLeft: 10}}>
-                  <PillContainer>
+                  <AddPillContainer>
                     <PillText accent={'action'}>
                       {nestedWallets[0].wallet.receiveAddress &&
                         formatCryptoAddress(
                           nestedWallets[0].wallet.receiveAddress,
                         )}
                     </PillText>
-                  </PillContainer>
+                  </AddPillContainer>
                 </SendToPillContainer>
               </AddressRow>
             </>
           ) : null}
-          <View style={{marginTop: -15}}>
+          <View>
             <FlatList
               contentContainerStyle={{paddingBottom: 20}}
               data={nestedWallets}
@@ -194,7 +193,10 @@ export const WCV2KeyWalletsRow = ({
       const {wallets, keyName, keyId} = item;
 
       return wallets.length ? (
-        <KeyWalletsRowContainer key={keyId} isLast={isLast}>
+        <KeyWalletsRowContainer
+          key={keyId}
+          isLast={isLast}
+          style={isLast ? {marginBottom: 210} : {}}>
           <>
             <Hr style={{marginHorizontal: -12}} />
             <KeyContainer>
@@ -244,7 +246,7 @@ export const WCV2KeyWalletsRow = ({
   );
 
   return (
-    <View style={{marginBottom: 210}}>
+    <View>
       {keys ? (
         <FlatList
           data={keys}
