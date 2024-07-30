@@ -14,8 +14,9 @@ import {WCV2Wallet} from '../../../store/wallet-connect-v2/wallet-connect-v2.mod
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {formatCryptoAddress} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {PillContainer, PillText} from '../../wallet/components/SendToPill';
+import {PillText} from '../../wallet/components/SendToPill';
 import {SendToPillContainer} from '../../wallet/screens/send/confirm/Shared';
+import {AddPillContainer} from '../../wallet/screens/AddWallet';
 
 const BalanceColumn = styled(Column)`
   align-items: flex-end;
@@ -110,11 +111,11 @@ const WCV2WalletRowInfo = ({walletObj, showAddress, topic}: Props) => {
       {receiveAddress && showAddress ? (
         <BalanceColumn>
           <SendToPillContainer>
-            <PillContainer>
+            <AddPillContainer>
               <PillText accent={'action'}>
                 {receiveAddress && formatCryptoAddress(receiveAddress)}
               </PillText>
-            </PillContainer>
+            </AddPillContainer>
           </SendToPillContainer>
         </BalanceColumn>
       ) : null}
