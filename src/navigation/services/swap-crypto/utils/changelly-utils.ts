@@ -335,14 +335,14 @@ export const getChangellyFixedCurrencyAbbreviation = (
     usdt: {eth: 'usdt20'},
     matic: {matic: 'maticpolygon'},
     eth: {
-      arbitrum: 'etharb',
-      optimism: 'ethop',
+      arb: 'etharb',
+      op: 'ethop',
     },
     usdc: {
       matic: 'usdcmatic',
-      arbitrum: 'usdcarb',
+      arb: 'usdcarb',
       base: 'usdcbase',
-      optimism: 'usdcop',
+      op: 'usdcop',
     },
   };
 

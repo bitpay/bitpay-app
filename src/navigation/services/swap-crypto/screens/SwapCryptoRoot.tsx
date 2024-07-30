@@ -213,7 +213,7 @@ const SwapCryptoRoot: React.FC = () => {
   const tokenOptions = Object.entries(tokenOptionsByAddress).map(
     ([k, {symbol}]) => {
       const chain = getChainFromTokenByAddressKey(k);
-      return getCurrencyAbbreviation(symbol.toLowerCase(), chain);
+      return getExternalServiceSymbol(symbol.toLowerCase(), chain);
     },
   );
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -355,7 +355,7 @@ const SwapCryptoRoot: React.FC = () => {
         const isCoinPresentedInExchange = exchange.supportedCoins.find(
           coin =>
             coin.symbol ===
-            getCurrencyAbbreviation(
+            getExternalServiceSymbol(
               fromWallet.currencyAbbreviation,
               fromWallet.chain,
             ),
@@ -406,12 +406,12 @@ const SwapCryptoRoot: React.FC = () => {
     }
 
     const pair =
-      getCurrencyAbbreviation(
+      getExternalServiceSymbol(
         fromWalletSelected.currencyAbbreviation,
         fromWalletSelected.chain,
       ) +
       '_' +
-      getCurrencyAbbreviation(
+      getExternalServiceSymbol(
         toWalletSelected.currencyAbbreviation,
         toWalletSelected.chain,
       );
@@ -799,9 +799,8 @@ const SwapCryptoRoot: React.FC = () => {
       // If currency is not EVM => return true
       // If currency is EVM => check tokens
       (!changellySupportedEvmChains.includes(currencyBlockchain) ||
-        currency.name === 'eth' ||
         allSupportedTokens.includes(
-          getCurrencyAbbreviation(
+          getExternalServiceSymbol(
             currency.name,
             getChainFromChangellyBlockchain(currency.name, currency.blockchain),
           ),
@@ -863,7 +862,7 @@ const SwapCryptoRoot: React.FC = () => {
               const chain = getChainFromChangellyBlockchain(name, blockchain);
               return {
                 currencyAbbreviation: name.toLowerCase(),
-                symbol: getCurrencyAbbreviation(name, chain),
+                symbol: getExternalServiceSymbol(name, chain),
                 name: fullName,
                 chain,
                 protocol,
@@ -937,7 +936,7 @@ const SwapCryptoRoot: React.FC = () => {
           currency.protocol.toLowerCase(),
         )
           ? allSupportedTokens.includes(
-              getCurrencyAbbreviation(
+              getExternalServiceSymbol(
                 currency.ticker.toLowerCase(),
                 currency.protocol.toLowerCase(),
               ),
@@ -999,7 +998,7 @@ const SwapCryptoRoot: React.FC = () => {
               };
               return {
                 currencyAbbreviation: ticker.toLowerCase(),
-                symbol: getCurrencyAbbreviation(
+                symbol: getExternalServiceSymbol(
                   ticker.toLowerCase(),
                   protocol.toLowerCase(),
                 ),
@@ -1580,7 +1579,7 @@ const SwapCryptoRoot: React.FC = () => {
             customToSelectCurrencies={swapCryptoSupportedCoinsTo}
             disabledChain={
               fromWalletSelected
-                ? getCurrencyAbbreviation(
+                ? getExternalServiceSymbol(
                     fromWalletSelected.currencyAbbreviation,
                     fromWalletSelected.chain,
                   )

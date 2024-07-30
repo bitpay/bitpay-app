@@ -128,7 +128,10 @@ import SellCryptoLoadingQuoteSkeleton from './SellCryptoQuoteSkeleton';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
 import {SatToUnit} from '../../../../store/wallet/effects/amount/amount';
-import {getSendMaxData} from '../../utils/external-services-utils';
+import {
+  getExternalServiceSymbol,
+  getSendMaxData,
+} from '../../utils/external-services-utils';
 
 export type SellCryptoRootScreenParams =
   | {
@@ -323,7 +326,7 @@ const SellCryptoRoot = ({
           fromCurrencyAbbreviation &&
           sellCryptoSupportedCoins.some(coin => {
             const symbol = fromChain
-              ? getCurrencyAbbreviation(fromCurrencyAbbreviation, fromChain)
+              ? getExternalServiceSymbol(fromCurrencyAbbreviation, fromChain)
               : fromCurrencyAbbreviation;
             return coin.symbol === symbol;
           })
@@ -364,14 +367,14 @@ const SellCryptoRoot = ({
       (wallet.network === 'livenet' ||
         (__DEV__ &&
           wallet.network === 'testnet' &&
-          getCurrencyAbbreviation(
+          getExternalServiceSymbol(
             wallet.currencyAbbreviation.toLowerCase(),
             wallet.chain,
           ) === 'eth')) &&
       wallet.balance?.satSpendable > 0 &&
       sellCryptoSupportedCoins &&
       sellCryptoSupportedCoins.some(coin => {
-        const symbol = getCurrencyAbbreviation(
+        const symbol = getExternalServiceSymbol(
           wallet.currencyAbbreviation.toLowerCase(),
           wallet.chain,
         );
@@ -391,13 +394,13 @@ const SellCryptoRoot = ({
       (wallet.network === 'livenet' ||
         (__DEV__ &&
           wallet.network === 'testnet' &&
-          getCurrencyAbbreviation(
+          getExternalServiceSymbol(
             wallet.currencyAbbreviation.toLowerCase(),
             wallet.chain,
           ) === 'eth')) &&
       sellCryptoSupportedCoins &&
       sellCryptoSupportedCoins.some(coin => {
-        const symbol = getCurrencyAbbreviation(
+        const symbol = getExternalServiceSymbol(
           wallet.currencyAbbreviation.toLowerCase(),
           wallet.chain,
         );
@@ -823,7 +826,7 @@ const SellCryptoRoot = ({
             );
             return {
               currencyAbbreviation: code.toLowerCase(),
-              symbol: getCurrencyAbbreviation(code, chain),
+              symbol: getExternalServiceSymbol(code, chain),
               name,
               chain,
               protocol: metadata?.networkCode,
@@ -871,7 +874,7 @@ const SellCryptoRoot = ({
       }
 
       if (fromWallet?.chain && fromWallet?.currencyAbbreviation) {
-        const fromWalletSymbol = getCurrencyAbbreviation(
+        const fromWalletSymbol = getExternalServiceSymbol(
           fromWallet!.currencyAbbreviation,
           fromWallet!.chain,
         );
@@ -1022,7 +1025,7 @@ const SellCryptoRoot = ({
       const selectedCoin = sellCryptoSupportedCoins.find(
         coin =>
           coin.symbol ===
-          getCurrencyAbbreviation(
+          getExternalServiceSymbol(
             selectedWallet.currencyAbbreviation,
             selectedWallet.chain,
           ),
