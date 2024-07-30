@@ -6,6 +6,7 @@ declare module '*.svg' {
 
 declare module '@env' {
   export const BRAZE_EXPORT_API_KEY: string;
+  export const BRAZE_MERGE_AND_DELETE_API_KEY: string;
   export const BRAZE_REST_API_ENDPOINT: string;
   export const COINBASE_CLIENT_ID: string;
   export const COINBASE_CLIENT_SECRET: string;

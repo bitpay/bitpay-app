@@ -92,6 +92,7 @@ export interface AppState {
    */
   appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
+  appInstalled: boolean;
   introCompleted: boolean;
   userFeedback: FeedbackType;
   onboardingCompleted: boolean;
@@ -187,6 +188,7 @@ const initialState: AppState = {
   appWasInit: false,
   appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
+  appInstalled: false,
   introCompleted: false,
   userFeedback: {
     time: moment().unix(),
@@ -320,6 +322,12 @@ export const appReducer = (
       return {
         ...state,
         introCompleted: true,
+      };
+
+    case AppActionTypes.SET_APP_INSTALLED:
+      return {
+        ...state,
+        appInstalled: true,
       };
 
     case AppActionTypes.SHOW_ONGOING_PROCESS_MODAL:
