@@ -1071,7 +1071,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             const hasMultipleChainAvailable = selectObj.chains.length > 1;
             if (
               ['buy', 'swapFrom', 'swapTo'].includes(context) &&
-              IsEVMChain(selectObj.chains[0]) &&
+              IsEVMCoin(selectObj.chains[0]) &&
               selectingNetworkForDeposit &&
               !selectedChainFilterOption &&
               hasMultipleChainAvailable
