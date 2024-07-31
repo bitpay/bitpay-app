@@ -278,7 +278,7 @@ const AddWallet = ({
   const nativeSegwitCurrency = IsSegwitCoin(_currencyAbbreviation);
   const taprootCurrency = IsTaprootCoin(_currencyAbbreviation);
   const [useNativeSegwit, setUseNativeSegwit] = useState(nativeSegwitCurrency);
-  const [useTaproot, setUseTaproot] = useState(false);
+  const [segwitVersion, setSegwitVersion] = useState(0);
   const [evmWallets, setEvmWallets] = useState<Wallet[] | undefined>();
   const [accountsInfo, setAccountsInfo] = useState<
     {receiveAddress: string; accountNumber: number}[]
@@ -330,13 +330,13 @@ const AddWallet = ({
   }, [navigation, t]);
 
   const toggleUseNativeSegwit = () => {
-    setUseNativeSegwit(!useNativeSegwit);
-    setUseTaproot(false);
+    setUseNativeSegwit(!(useNativeSegwit && segwitVersion === 0));
+    setSegwitVersion(0);
   };
 
   const toggleUseTaproot = () => {
-    setUseTaproot(!useTaproot);
-    setUseNativeSegwit(false);
+    setUseNativeSegwit(!(useNativeSegwit && segwitVersion === 1));
+    setSegwitVersion(1);
   };
 
   const addAssociatedWallet = async () => {
@@ -559,7 +559,7 @@ const AddWallet = ({
                 ? Network.regtest
                 : network,
               useNativeSegwit,
-              useTaproot,
+              segwitVersion,
               singleAddress,
               walletName,
               ...(account !== undefined && {
@@ -952,7 +952,7 @@ const AddWallet = ({
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
-                      checked={useNativeSegwit}
+                      checked={useNativeSegwit && segwitVersion === 0}
                       onPress={() => toggleUseNativeSegwit()}
                     />
                   </CheckBoxContainer>
@@ -968,7 +968,7 @@ const AddWallet = ({
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
-                      checked={useTaproot}
+                      checked={useNativeSegwit && segwitVersion === 1}
                       onPress={() => toggleUseTaproot()}
                     />
                   </CheckBoxContainer>
