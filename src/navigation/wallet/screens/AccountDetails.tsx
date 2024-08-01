@@ -7,35 +7,36 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {useTranslation} from 'react-i18next';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
-  AppDispatch,
-  useAppDispatch,
-  useAppSelector,
-} from '../../../utils/hooks';
-import {Key, Wallet} from '../../../store/wallet/wallet.models';
+  Key,
+  Wallet,
+  TransactionProposal,
+  Status,
+} from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import {
-  Balance,
-  BalanceContainer,
-  formatFiat,
   KeyToggle as AccountToggle,
   CogIconContainer,
   KeyDropdown as AccountDropdown,
   KeyDropdownOptionsContainer as AccountDropdownOptionsContainer,
 } from './KeyOverview';
 import {
+  DeviceEventEmitter,
   FlatList,
-  LogBox,
   RefreshControl,
+  SectionList,
   TouchableOpacity,
   View,
 } from 'react-native';
 import {
+  Balance,
   BaseText,
   H2,
   H5,
@@ -48,19 +49,37 @@ import {
 } from '../../../store/app/app.actions';
 import {
   formatCryptoAddress,
-  formatFiatAmount,
+  formatCurrencyAbbreviation,
+  formatFiat,
   shouldScale,
   sleep,
 } from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
-import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {LuckySevens, Slate30, SlateDark, White} from '../../../styles/colors';
+import {
+  Air,
+  LightBlack,
+  LuckySevens,
+  Slate30,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
 import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {BalanceUpdateError} from '../components/ErrorMessages';
-import {Rates} from '../../../store/rate/rate.models';
+import {
+  setWalletScanning,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
+import {
+  BalanceUpdateError,
+  CustomErrorMessage,
+  RbfTransaction,
+  SpeedupEthTransaction,
+  SpeedupInsufficientFunds,
+  SpeedupInvalidTx,
+  SpeedupTransaction,
+  UnconfirmedInputs,
+} from '../components/ErrorMessages';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
 import {
@@ -69,9 +88,13 @@ import {
   HeaderTitleContainer,
   Hr,
   ProposalBadgeContainer,
+  ScreenGutter,
 } from '../../../components/styled/Containers';
-import SearchComponent from '../../../components/chain-search/ChainSearch';
+import SearchComponent, {
+  SearchableItem,
+} from '../../../components/chain-search/ChainSearch';
 import CopySvg from '../../../../assets/img/copy.svg';
+import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import Icons from '../components/WalletIcons';
@@ -88,6 +111,38 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {CoinbaseScreens} from '../../coinbase/CoinbaseGroup';
 import DropdownOption from '../components/DropdownOption';
+import TransactionRow, {
+  TRANSACTION_ROW_HEIGHT,
+} from '../../../components/list/TransactionRow';
+import ContactIcon from '../../tabs/contacts/components/ContactIcon';
+import {
+  TRANSACTION_ICON_SIZE,
+  TransactionIcons,
+} from '../../../constants/TransactionIcons';
+import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
+import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
+import {BillPayAccount} from '../../../store/shop/shop.models';
+import {
+  BuildUiFriendlyList,
+  CanSpeedupTx,
+  GetAccountTransactionHistory,
+  GroupTransactionHistory,
+  IsMoved,
+  IsReceived,
+  TX_HISTORY_LIMIT,
+} from '../../../store/wallet/effects/transactions/transactions';
+import {
+  buildBtcSpeedupTx,
+  buildEthERCTokenSpeedupTx,
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+} from '../../../store/wallet/effects/send/send';
+import debounce from 'lodash.debounce';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
+import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
+import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
+import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 
 export type AccountDetailsScreenParamList = {
   accountItem: AccountRowProps;
@@ -101,7 +156,7 @@ type AccountDetailsScreenProps = NativeStackScreenProps<
   'AccountDetails'
 >;
 
-export interface AssetsByChainListProps {
+export interface AssetsByChainData {
   id: string;
   chain: string;
   chainName: string;
@@ -118,6 +173,27 @@ export interface AssetsByChainListProps {
   fiatSpendableBalanceFormat: string;
   fiatPendingBalanceFormat: string;
 }
+
+export interface AssetsByChainListProps extends SearchableItem {
+  title: string;
+  chains: string[]; // only used for filter
+  data: AssetsByChainData[];
+}
+
+export interface GroupedHistoryProps extends SearchableItem {
+  title: string;
+  data: any[];
+  time: number;
+}
+
+interface AccountProposalsProps {
+  [key: string]: TransactionProposal[];
+}
+
+const BorderBottom = styled.View`
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
+`;
 
 const AccountDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -157,9 +233,11 @@ const Badge = styled(BaseText)`
   text-align: center;
 `;
 
-const WalletListHeader = styled.View`
+const WalletListHeader = styled.TouchableOpacity<{
+  isActive: boolean;
+}>`
   padding: 10px;
-  margin-top: 10px;
+  opacity: ${({isActive}) => (isActive ? 1 : 0.4)};
 `;
 
 const CopyToClipboardContainer = styled.TouchableOpacity`
@@ -169,6 +247,66 @@ const CopyToClipboardContainer = styled.TouchableOpacity`
   height: 20px;
 `;
 
+const HeaderContainer = styled.View`
+  margin: 32px 0 24px;
+`;
+
+const TransactionSectionHeaderContainer = styled.View`
+  padding: ${ScreenGutter};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
+  height: 55px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const SkeletonContainer = styled.View`
+  margin-bottom: 20px;
+`;
+
+const EmptyListContainer = styled.View`
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 50px;
+`;
+
+const LockedBalanceContainer = styled.TouchableOpacity`
+  flex-direction: row;
+  padding: ${ScreenGutter};
+  justify-content: center;
+  align-items: center;
+  height: 75px;
+`;
+
+const Description = styled(BaseText)`
+  overflow: hidden;
+  margin-right: 175px;
+  font-size: 16px;
+`;
+
+const TailContainer = styled.View`
+  margin-left: auto;
+`;
+
+const Value = styled(BaseText)`
+  text-align: right;
+  font-weight: 700;
+  font-size: 16px;
+`;
+
+const Fiat = styled(BaseText)`
+  font-size: 14px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  text-align: right;
+`;
+
+const BalanceContainer = styled.View`
+  padding: 0 15px 40px;
+  flex-direction: column;
+`;
+
 const buildUIFormattedAssetsList = (
   assetsByChainList: Array<AssetsByChainListProps>,
   wallet: WalletRowProps,
@@ -176,78 +314,89 @@ const buildUIFormattedAssetsList = (
   currencyDisplay?: 'symbol',
 ) => {
   let assetsByChain = assetsByChainList.find(
-    ({chain}) => chain === wallet.chain,
+    ({title}) => title === wallet.chain,
   ) as AssetsByChainListProps | undefined;
   if (assetsByChain) {
-    (assetsByChain.fiatBalance += wallet.fiatBalance),
-      (assetsByChain.fiatLockedBalance += wallet.fiatLockedBalance),
-      (assetsByChain.fiatConfirmedLockedBalance +=
-        wallet.fiatConfirmedLockedBalance),
-      (assetsByChain.fiatSpendableBalance += wallet.fiatSpendableBalance),
-      (assetsByChain.fiatPendingBalance += wallet.fiatPendingBalance),
-      assetsByChain.chainAssetsList.push(wallet);
-    assetsByChain.fiatBalanceFormat = formatFiat({
-      fiatAmount: assetsByChain.fiatBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
-    assetsByChain.fiatLockedBalanceFormat = formatFiat({
-      fiatAmount: assetsByChain.fiatLockedBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
-    assetsByChain.fiatConfirmedLockedBalanceFormat = formatFiat({
-      fiatAmount: assetsByChain.fiatConfirmedLockedBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
-    assetsByChain.fiatSpendableBalanceFormat = formatFiat({
-      fiatAmount: assetsByChain.fiatSpendableBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
-    assetsByChain.fiatPendingBalanceFormat = formatFiat({
-      fiatAmount: assetsByChain.fiatPendingBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
+    let chainData = assetsByChain.data.find(
+      ({chain}) => chain === wallet.chain,
+    );
+    if (chainData) {
+      chainData.fiatBalance += wallet.fiatBalance;
+      chainData.fiatLockedBalance += wallet.fiatLockedBalance;
+      chainData.fiatConfirmedLockedBalance += wallet.fiatConfirmedLockedBalance;
+      chainData.fiatSpendableBalance += wallet.fiatSpendableBalance;
+      chainData.fiatPendingBalance += wallet.fiatPendingBalance;
+      chainData.chainAssetsList.push(wallet);
+
+      chainData.fiatBalanceFormat = formatFiat({
+        fiatAmount: chainData.fiatBalance ?? 0,
+        defaultAltCurrencyIsoCode,
+        currencyDisplay,
+      });
+      chainData.fiatLockedBalanceFormat = formatFiat({
+        fiatAmount: chainData.fiatLockedBalance ?? 0,
+        defaultAltCurrencyIsoCode,
+        currencyDisplay,
+      });
+      chainData.fiatConfirmedLockedBalanceFormat = formatFiat({
+        fiatAmount: chainData.fiatConfirmedLockedBalance ?? 0,
+        defaultAltCurrencyIsoCode,
+        currencyDisplay,
+      });
+      chainData.fiatSpendableBalanceFormat = formatFiat({
+        fiatAmount: chainData.fiatSpendableBalance ?? 0,
+        defaultAltCurrencyIsoCode,
+        currencyDisplay,
+      });
+      chainData.fiatPendingBalanceFormat = formatFiat({
+        fiatAmount: chainData.fiatPendingBalance ?? 0,
+        defaultAltCurrencyIsoCode,
+        currencyDisplay,
+      });
+    }
   } else {
     assetsByChainList.push({
-      id: _.uniqueId('chain_'),
-      chain: wallet.chain,
-      chainImg: wallet.badgeImg || wallet.img,
-      chainName: wallet.chainName,
-      fiatBalance: wallet.fiatBalance,
-      fiatLockedBalance: wallet.fiatLockedBalance,
-      fiatConfirmedLockedBalance: wallet.fiatConfirmedLockedBalance,
-      fiatSpendableBalance: wallet.fiatSpendableBalance,
-      fiatPendingBalance: wallet.fiatPendingBalance,
-      fiatBalanceFormat: formatFiat({
-        fiatAmount: wallet.fiatBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      }),
-      fiatLockedBalanceFormat: formatFiat({
-        fiatAmount: wallet.fiatLockedBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      }),
-      fiatConfirmedLockedBalanceFormat: formatFiat({
-        fiatAmount: wallet.fiatConfirmedLockedBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      }),
-      fiatSpendableBalanceFormat: formatFiat({
-        fiatAmount: wallet.fiatSpendableBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      }),
-      fiatPendingBalanceFormat: formatFiat({
-        fiatAmount: wallet.fiatPendingBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      }),
-      chainAssetsList: [wallet],
+      title: wallet.chain,
+      chains: [wallet.chain], // usefull only for chain selector
+      data: [
+        {
+          id: _.uniqueId('chain_'),
+          chain: wallet.chain,
+          chainImg: wallet.badgeImg || wallet.img,
+          chainName: wallet.chainName,
+          fiatBalance: wallet.fiatBalance,
+          fiatLockedBalance: wallet.fiatLockedBalance,
+          fiatConfirmedLockedBalance: wallet.fiatConfirmedLockedBalance,
+          fiatSpendableBalance: wallet.fiatSpendableBalance,
+          fiatPendingBalance: wallet.fiatPendingBalance,
+          fiatBalanceFormat: formatFiat({
+            fiatAmount: wallet.fiatBalance ?? 0,
+            defaultAltCurrencyIsoCode,
+            currencyDisplay,
+          }),
+          fiatLockedBalanceFormat: formatFiat({
+            fiatAmount: wallet.fiatLockedBalance ?? 0,
+            defaultAltCurrencyIsoCode,
+            currencyDisplay,
+          }),
+          fiatConfirmedLockedBalanceFormat: formatFiat({
+            fiatAmount: wallet.fiatConfirmedLockedBalance ?? 0,
+            defaultAltCurrencyIsoCode,
+            currencyDisplay,
+          }),
+          fiatSpendableBalanceFormat: formatFiat({
+            fiatAmount: wallet.fiatSpendableBalance ?? 0,
+            defaultAltCurrencyIsoCode,
+            currencyDisplay,
+          }),
+          fiatPendingBalanceFormat: formatFiat({
+            fiatAmount: wallet.fiatPendingBalance ?? 0,
+            defaultAltCurrencyIsoCode,
+            currencyDisplay,
+          }),
+          chainAssetsList: [wallet],
+        },
+      ],
     });
   }
 };
@@ -273,6 +422,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {t} = useTranslation();
   const {accountItem, accountList, skipInitializeHistory} = route.params;
   const [refreshing, setRefreshing] = useState(false);
@@ -282,10 +432,33 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const totalBalance = accountItem.fiatBalanceFormat;
   const hasMultipleAccounts = accountList.length > 1;
   const [searchVal, setSearchVal] = useState('');
+  const [showActivityTab, setShowActivityTab] = useState(false);
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
-  const [searchResults, setSearchResults] = useState(
+  const [history, setHistory] = useState<any[]>([]);
+  const [accountTransactionsHistory, setAccountTransactionsHistory] = useState<{
+    [key: string]: {
+      transactions: any[];
+      loadMore: boolean;
+    };
+  }>({});
+  const [groupedHistory, setGroupedHistory] = useState<GroupedHistoryProps[]>(
+    [],
+  );
+  const [loadMore, setLoadMore] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>();
+  const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
+  const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
+  const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
+  const [isScrolling, setIsScrolling] = useState<boolean>(false);
+  const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
+  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
+
+  const [searchResultsHistory, setSearchResultsHistory] = useState(
+    [] as GroupedHistoryProps[],
+  );
+  const [searchResultsAssets, setSearchResultsAssets] = useState(
     [] as AssetsByChainListProps[],
   );
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
@@ -293,13 +466,178 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
   const [showKeyOptions, setShowKeyOptions] = useState(false);
-  let pendingTxps: any = [];
-  // TODO
-  accountItem?.wallets.forEach(x => {
-    if (x.pendingTxps) {
-      pendingTxps = pendingTxps.concat(x.pendingTxps);
+  const keyFullWalletObjs = key.wallets.filter(
+    w => w.receiveAddress === accountItem.receiveAddress,
+  );
+  let pendingTxps: AccountProposalsProps = {};
+  keyFullWalletObjs.forEach(x => {
+    if (x.pendingTxps.length > 0) {
+      pendingTxps[x.id] = Array.isArray(pendingTxps[x.id])
+        ? pendingTxps[x.id].concat(x.pendingTxps)
+        : x.pendingTxps;
     }
   });
+  const pendingProposalsCount = Object.values(pendingTxps).length;
+
+  const accounts = useAppSelector(
+    ({SHOP}) => SHOP.billPayAccounts[accountItem.wallets[0].network],
+  );
+
+  const setNeedActionTxps = (accountProposals: AccountProposalsProps) => {
+    Object.entries(accountProposals).forEach(([walletId, pendingTxps]) => {
+      const txpsPending: TransactionProposal[] = [];
+      const txpsUnsent: TransactionProposal[] = [];
+      const {
+        currencyAbbreviation,
+        chain,
+        tokenAddress,
+        credentials: {copayerId, n},
+      } = keyFullWalletObjs.find(w => w.id === walletId) as Wallet;
+      const formattedPendingTxps = BuildUiFriendlyList(
+        pendingTxps,
+        currencyAbbreviation,
+        chain,
+        [],
+        tokenAddress,
+        walletId,
+      );
+      formattedPendingTxps.forEach((txp: any) => {
+        const action: any = _.find(txp.actions, {
+          copayerId: copayerId,
+        });
+
+        const setPendingTx = (_txp: TransactionProposal) => {
+          n > 1 ? txpsPending.push(_txp) : txpsUnsent.push(_txp);
+          setNeedActionPendingTxps(txpsPending);
+          setNeedActionUnsentTxps(txpsUnsent);
+        };
+        if ((!action || action.type === 'failed') && txp.status === 'pending') {
+          setPendingTx(txp);
+        }
+        // unsent transactions
+        if (action && txp.status === 'accepted') {
+          setPendingTx(txp);
+        }
+      });
+    });
+  };
+
+  const loadHistory = useCallback(
+    async (refresh?: boolean) => {
+      if (!loadMore && !refresh) {
+        return;
+      }
+      try {
+        setIsLoading(!refresh);
+        setErrorLoadingTxs(false);
+
+        const [transactionHistory] = await Promise.all([
+          dispatch(
+            GetAccountTransactionHistory({
+              wallets: keyFullWalletObjs,
+              accountTransactionsHistory,
+              limit: TX_HISTORY_LIMIT,
+              contactList,
+              refresh,
+            }),
+          ),
+        ]);
+
+        if (transactionHistory) {
+          let {accountTransactionsHistory, sortedCompleteHistory: _history} =
+            transactionHistory;
+
+          setAccountTransactionsHistory(accountTransactionsHistory);
+
+          if (_history?.length) {
+            setHistory(_history);
+            const grouped = GroupTransactionHistory(_history);
+            setGroupedHistory(grouped);
+          }
+
+          const hasLoadMore = Object.values(accountTransactionsHistory).some(
+            ({loadMore}) => loadMore,
+          );
+          setLoadMore(hasLoadMore);
+        }
+
+        setIsLoading(false);
+      } catch (e) {
+        setLoadMore(false);
+        setIsLoading(false);
+        setErrorLoadingTxs(true);
+
+        console.log('Transaction Update: ', e);
+      }
+    },
+    [history],
+  );
+
+  const debouncedLoadHistory = useMemo(
+    () => debounce(loadHistory, 300, {leading: true}),
+    [loadHistory],
+  );
+
+  const loadHistoryRef = useRef(debouncedLoadHistory);
+
+  const updateWalletStatusAndProfileBalance = async () => {
+    await startUpdateAllWalletStatusForKey({
+      key,
+      accountAddress: accountItem.receiveAddress,
+      force: true,
+    });
+    dispatch(updatePortfolioBalance);
+  };
+
+  useEffect(() => {
+    dispatch(Analytics.track('View Account'));
+    updateWalletStatusAndProfileBalance();
+    if (!skipInitializeHistory) {
+      debouncedLoadHistory();
+    }
+  }, []);
+
+  useEffect(() => {
+    setNeedActionTxps(pendingTxps);
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.WALLET_LOAD_HISTORY,
+      () => {
+        loadHistoryRef.current(true);
+        setNeedActionTxps(pendingTxps);
+      },
+    );
+    return () => subscription.remove();
+  }, [keys]);
+
+  const keyExtractorAssets = useCallback(item => item.id, []);
+  const keyExtractorTransaction = useCallback(item => item.txid, []);
+  const pendingTxpsKeyExtractor = useCallback(item => item.id, []);
+
+  const getItemLayout = useCallback(
+    (data: any, index: number) => ({
+      length: TRANSACTION_ROW_HEIGHT,
+      offset: TRANSACTION_ROW_HEIGHT * index,
+      index,
+    }),
+    [],
+  );
+
+  const listFooterComponent = () => {
+    return (
+      <>
+        {!groupedHistory?.length ? null : (
+          <View style={{marginBottom: 20}}>
+            <BorderBottom />
+          </View>
+        )}
+        {isLoading ? (
+          <SkeletonContainer>
+            <WalletTransactionSkeletonRow />
+          </SkeletonContainer>
+        ) : null}
+      </>
+    );
+  };
 
   useLayoutEffect(() => {
     if (!key) {
@@ -335,11 +673,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         return (
           <>
             <HeaderRightContainer>
-              {pendingTxps.length ? (
+              {pendingProposalsCount ? (
                 <ProposalBadgeContainer
                   style={{marginRight: 10}}
                   onPress={onPressTxpBadge}>
-                  <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                  <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
               {key?.methods?.isPrivKeyEncrypted() ? (
@@ -369,18 +707,316 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     });
   }, [navigation, key, accountItem, theme.dark]);
 
-  const memoizedRenderItem = useCallback(
-    ({item}: {item: AssetsByChainListProps}) => {
+  const getBillPayIcon = (
+    billPayAccounts: BillPayAccount[],
+    merchantId: string,
+  ): string => {
+    const account = (billPayAccounts || []).find(
+      acct => acct[acct.type].merchantId === merchantId,
+    );
+    return account ? account[account.type].merchantIcon : '';
+  };
+
+  const getTxDescriptionDetails = (key: string | undefined) => {
+    if (!key) {
+      return undefined;
+    }
+    switch (key) {
+      case 'moonpay':
+        return 'MoonPay';
+      default:
+        return undefined;
+    }
+  };
+
+  const goToTransactionDetails = (transaction: any) => {
+    const onMemoChange = () => debouncedLoadHistory(true);
+    const fullWalletObj = findWalletById(
+      keyFullWalletObjs,
+      transaction.walletId,
+    ) as Wallet;
+    navigation.navigate('TransactionDetails', {
+      wallet: fullWalletObj,
+      transaction,
+      onMemoChange,
+    });
+  };
+
+  const onPressTransaction = useMemo(
+    () => (transaction: any) => {
+      const {hasUnconfirmedInputs, action, isRBF, coin, chain} = transaction;
+      const isReceived = IsReceived(action);
+      const isMoved = IsMoved(action);
+      const currency = coin.toLowerCase();
+
+      if (
+        hasUnconfirmedInputs &&
+        (isReceived || isMoved) &&
+        currency === 'btc'
+      ) {
+        dispatch(
+          showBottomNotificationModal(
+            UnconfirmedInputs(() => goToTransactionDetails(transaction)),
+          ),
+        );
+      } else if (isRBF && isReceived && currency === 'btc') {
+        dispatch(
+          showBottomNotificationModal(
+            RbfTransaction(
+              () => speedupTransaction(transaction),
+              () => goToTransactionDetails(transaction),
+            ),
+          ),
+        );
+      } else if (CanSpeedupTx(transaction, currency, chain)) {
+        if (chain === 'eth') {
+          dispatch(
+            showBottomNotificationModal(
+              SpeedupEthTransaction(
+                () => speedupTransaction(transaction),
+                () => goToTransactionDetails(transaction),
+              ),
+            ),
+          );
+        } else {
+          dispatch(
+            showBottomNotificationModal(
+              SpeedupTransaction(
+                () => speedupTransaction(transaction),
+                () => goToTransactionDetails(transaction),
+              ),
+            ),
+          );
+        }
+      } else {
+        goToTransactionDetails(transaction);
+      }
+    },
+    [],
+  );
+
+  const speedupTransaction = async (transaction: any) => {
+    try {
+      let tx: any;
+      const {currencyAbbreviation, chain} = transaction;
+      const fullWalletObj = findWalletById(
+        keyFullWalletObjs,
+        transaction.walletId,
+      ) as Wallet;
+      if (chain.toLowerCase() === 'eth') {
+        tx = await dispatch(
+          buildEthERCTokenSpeedupTx(fullWalletObj, transaction),
+        );
+        goToConfirm(tx);
+      }
+
+      if (currencyAbbreviation.toLowerCase() === 'btc') {
+        const address = await dispatch<Promise<string>>(
+          createWalletAddress({wallet: fullWalletObj, newAddress: false}),
+        );
+
+        tx = await dispatch(
+          buildBtcSpeedupTx(fullWalletObj, transaction, address),
+        );
+
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Miner fee notice'),
+            message: t(
+              'Because you are speeding up this transaction, the Bitcoin miner fee () will be deducted from the total.',
+              {speedupFee: tx.speedupFee, currencyAbbreviation},
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('Got It'),
+                action: () => {
+                  goToConfirm(tx);
+                },
+                primary: true,
+              },
+            ],
+          }),
+        );
+      }
+    } catch (e) {
+      switch (e) {
+        case 'InsufficientFunds':
+          dispatch(showBottomNotificationModal(SpeedupInsufficientFunds()));
+          break;
+        case 'NoInput':
+          dispatch(showBottomNotificationModal(SpeedupInvalidTx()));
+          break;
+        default:
+          dispatch(
+            showBottomNotificationModal(
+              CustomErrorMessage({
+                errMsg: t(
+                  'Error getting "Speed Up" information. Please try again later.',
+                ),
+              }),
+            ),
+          );
+      }
+    }
+  };
+
+  const goToConfirm = async (tx: any) => {
+    try {
+      const {recipient, amount} = tx;
+      const {txDetails, txp: newTxp} = await dispatch(
+        createProposalAndBuildTxDetails(tx),
+      );
+      const fullWalletObj = findWalletById(
+        keyFullWalletObjs,
+        tx.walletId,
+      ) as Wallet;
+      navigation.navigate('Confirm', {
+        wallet: fullWalletObj,
+        recipient,
+        txp: newTxp,
+        txDetails,
+        amount,
+        speedup: true,
+      });
+    } catch (err: any) {
+      const [errorMessageConfig] = await Promise.all([
+        dispatch(handleCreateTxProposalError(err)),
+        sleep(400),
+      ]);
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {},
+            },
+          ],
+        }),
+      );
+    }
+  };
+
+  const renderTransaction = useCallback(({item}) => {
+    return (
+      <TransactionRow
+        key={item.txid}
+        icon={
+          item.customData?.recipientEmail ? (
+            <ContactIcon
+              name={item.customData?.recipientEmail}
+              size={TRANSACTION_ICON_SIZE}
+              badge={<SentBadgeSvg />}
+            />
+          ) : (
+            TransactionIcons[item.uiIcon]
+          )
+        }
+        iconURI={
+          getBillPayIcon(accounts, item.uiIconURI) ||
+          getGiftCardIcons(supportedCardMap)[item.uiIconURI]
+        }
+        description={item.uiDescription}
+        details={getTxDescriptionDetails(item.customData?.service)}
+        time={item.uiTime}
+        value={item.uiValue}
+        chain={item.chain}
+        onPressTransaction={() => onPressTransaction(item)}
+      />
+    );
+  }, []);
+
+  const renderSectionHeader = useCallback(
+    ({section: {title, time}}: {section: {title: string; time?: string}}) => {
+      if (!time) {
+        return <></>;
+      }
+      return (
+        <TransactionSectionHeaderContainer key={time}>
+          <H5>{title}</H5>
+        </TransactionSectionHeaderContainer>
+      );
+    },
+    [],
+  );
+
+  const onPressTxp = useMemo(
+    () => (transaction: any) => {
+      navigation.navigate('TransactionProposalDetails', {
+        walletId: transaction.walletId,
+        transactionId: transaction.id,
+        keyId: key.id,
+      });
+    },
+    [],
+  );
+
+  const renderTxp = useCallback(({item}) => {
+    return (
+      <TransactionProposalRow
+        key={item.id}
+        icon={TransactionIcons[item.uiIcon]}
+        creator={item.uiCreator}
+        time={item.uiTime}
+        value={item.uiValue}
+        message={item.message}
+        onPressTransaction={() => onPressTxp(item)}
+        recipientCount={item.recipientCount}
+        toAddress={item.toAddress}
+        tokenAddress={item.tokenAddress}
+        chain={item.chain}
+        contactList={contactList}
+      />
+    );
+  }, []);
+
+  const onPressItem = (walletId: string) => {
+    haptic('impactLight');
+    const fullWalletObj = findWalletById(keyFullWalletObjs, walletId) as Wallet;
+    if (!fullWalletObj.isComplete()) {
+      fullWalletObj.getStatus(
+        {network: fullWalletObj.network},
+        (err: any, status: Status) => {
+          if (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            // logger.error(`error [getStatus]: ${errStr}`);
+          } else {
+            if (status?.wallet?.status === 'complete') {
+              fullWalletObj.openWallet({}, () => {
+                navigation.navigate('WalletDetails', {
+                  walletId,
+                  key,
+                });
+              });
+              return;
+            }
+            navigation.navigate('Copayers', {
+              wallet: fullWalletObj,
+              status: status?.wallet,
+            });
+          }
+        },
+      );
+    } else {
+      navigation.navigate('WalletDetails', {
+        key,
+        walletId,
+      });
+    }
+  };
+
+  const memoizedRenderAssetsItem = useCallback(
+    ({item}: {item: AssetsByChainData}) => {
       return (
         <AssetsByChainRow
           id={item.id}
           accountItem={item}
           hideBalance={hideAllBalances}
-          onPress={(walletId: string) => {
-            navigation.navigate(WalletScreens.WALLET_DETAILS, {
-              walletId,
-            });
-          }}
+          onPress={walletId => onPressItem(walletId)}
         />
       );
     },
@@ -445,17 +1081,46 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    await sleep(1000);
     try {
       await dispatch(startGetRates({}));
       await Promise.all([
-        dispatch(startUpdateAllWalletStatusForKey({key, force: true})),
+        await startUpdateAllWalletStatusForKey({
+          key,
+          accountAddress: accountItem.receiveAddress,
+          force: true,
+        }),
+        await debouncedLoadHistory(true),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
+      setNeedActionTxps(pendingTxps);
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
     setRefreshing(false);
+  };
+
+  const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
+
+  const listEmptyComponent = () => {
+    return (
+      <>
+        {!isLoading && !errorLoadingTxs && (
+          <EmptyListContainer>
+            <H5>{t("It's a ghost town in here")}</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
+
+        {!isLoading && errorLoadingTxs && (
+          <EmptyListContainer>
+            <H5>{t('Could not update transaction history')}</H5>
+            <GhostSvg style={{marginTop: 20}} />
+          </EmptyListContainer>
+        )}
+      </>
+    );
   };
 
   const memorizedAssetsByChainList = useMemo(() => {
@@ -481,137 +1146,233 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return () => clearTimeout(timer);
   }, [copied]);
 
+  const renderListHeaderComponent = useCallback(() => {
+    return (
+      <>
+        <HeaderContainer>
+          <BalanceContainer>
+            <TouchableOpacity
+              onLongPress={() => {
+                dispatch(toggleHideAllBalances());
+              }}>
+              <Row>
+                {!hideAllBalances ? (
+                  <Balance scale={shouldScale(totalBalance)}>
+                    {totalBalance}
+                  </Balance>
+                ) : (
+                  <H2>****</H2>
+                )}
+              </Row>
+            </TouchableOpacity>
+            <BadgeContainer>
+              <Border>
+                <Badge>{formatCryptoAddress(accountItem.receiveAddress)}</Badge>
+                <CopyToClipboardContainer
+                  onPress={copyToClipboard}
+                  activeOpacity={ActiveOpacity}>
+                  {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
+                </CopyToClipboardContainer>
+              </Border>
+            </BadgeContainer>
+          </BalanceContainer>
+          <LinkingButtons
+            buy={{
+              cta: () => {
+                dispatch(
+                  Analytics.track('Clicked Buy Crypto', {
+                    context: 'AccountDetails',
+                  }),
+                );
+                navigation.navigate(WalletScreens.AMOUNT, {
+                  onAmountSelected: async (
+                    amount: string,
+                    setButtonState: any,
+                  ) => {
+                    navigation.navigate('BuyCryptoRoot', {
+                      amount: Number(amount),
+                    });
+                  },
+                  context: 'buyCrypto',
+                });
+              },
+            }}
+            sell={{
+              cta: () => {
+                dispatch(
+                  Analytics.track('Clicked Sell Crypto', {
+                    context: 'AccountDetails',
+                  }),
+                );
+                navigation.navigate('SellCryptoRoot');
+              },
+            }}
+            swap={{
+              cta: () => {
+                dispatch(
+                  Analytics.track('Clicked Swap Crypto', {
+                    context: 'AccountDetails',
+                  }),
+                );
+                navigation.navigate('SwapCryptoRoot');
+              },
+            }}
+            receive={{
+              cta: () => {
+                navigation.navigate('GlobalSelect', {context: 'receive'});
+              },
+            }}
+            send={{
+              cta: () => {
+                navigation.navigate('GlobalSelect', {context: 'send'});
+              },
+            }}
+          />
+          {Number(accountItem.fiatLockedBalanceFormat) > 0 ? (
+            <LockedBalanceContainer onPress={() => {}}>
+              <View>
+                <Description numberOfLines={1} ellipsizeMode={'tail'}>
+                  {t('Total Locked Balance')}
+                </Description>
+              </View>
+
+              <TailContainer>
+                <Value>
+                  {accountItem.fiatLockedBalanceFormat}{' '}
+                  {formatCurrencyAbbreviation(
+                    key.wallets[1].currencyAbbreviation,
+                  )}
+                </Value>
+              </TailContainer>
+            </LockedBalanceContainer>
+          ) : null}
+        </HeaderContainer>
+        {pendingProposalsCount > 0 ? (
+          <>
+            <TransactionSectionHeaderContainer>
+              <H5>{t('Unsent Transactions')}</H5>
+              <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
+              </ProposalBadgeContainer>
+            </TransactionSectionHeaderContainer>
+            <FlatList
+              contentContainerStyle={{
+                paddingTop: 20,
+                paddingBottom: 20,
+              }}
+              data={needActionUnsentTxps}
+              keyExtractor={pendingTxpsKeyExtractor}
+              renderItem={renderTxp}
+            />
+          </>
+        ) : null}
+        <Row
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <WalletListHeader
+              isActive={!showActivityTab}
+              onPress={() => {
+                setShowActivityTab(false);
+              }}>
+              <H5>{t('Assets')}</H5>
+            </WalletListHeader>
+            <WalletListHeader
+              isActive={showActivityTab}
+              onPress={() => {
+                setShowActivityTab(true);
+              }}>
+              <H5>{t('Activity')}</H5>
+            </WalletListHeader>
+          </View>
+          <SearchComponent<GroupedHistoryProps | AssetsByChainListProps>
+            searchVal={searchVal}
+            setSearchVal={setSearchVal}
+            searchResults={
+              !showActivityTab ? searchResultsAssets : searchResultsHistory
+            }
+            //@ts-ignore
+            setSearchResults={
+              !showActivityTab
+                ? setSearchResultsAssets
+                : setSearchResultsHistory
+            }
+            searchFullList={
+              !showActivityTab ? memorizedAssetsByChainList : groupedHistory
+            }
+            context={
+              !showActivityTab ? 'accountassetsview' : 'accounthistoryview'
+            }
+          />
+        </Row>
+      </>
+    );
+  }, [showActivityTab, memorizedAssetsByChainList, groupedHistory]);
+
+  const renderDataSectionComponent = useMemo(() => {
+    return !searchVal && !selectedChainFilterOption
+      ? !showActivityTab
+        ? memorizedAssetsByChainList
+        : groupedHistory
+      : !showActivityTab
+      ? searchResultsAssets
+      : searchResultsHistory;
+  }, [
+    showActivityTab,
+    searchResultsAssets,
+    searchResultsHistory,
+    selectedChainFilterOption,
+    groupedHistory,
+    memorizedAssetsByChainList,
+  ]);
+
   return (
     <AccountDetailsContainer>
-      <BalanceContainer>
-        <TouchableOpacity
-          onLongPress={() => {
-            dispatch(toggleHideAllBalances());
-          }}>
-          <Row>
-            {!hideAllBalances ? (
-              <Balance scale={shouldScale(totalBalance)}>
-                {totalBalance}
-              </Balance>
-            ) : (
-              <H2>****</H2>
-            )}
-          </Row>
-        </TouchableOpacity>
-        <BadgeContainer>
-          <Border>
-            <Badge>{formatCryptoAddress(accountItem.receiveAddress)}</Badge>
-            <CopyToClipboardContainer
-              onPress={copyToClipboard}
-              activeOpacity={ActiveOpacity}>
-              {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
-            </CopyToClipboardContainer>
-          </Border>
-        </BadgeContainer>
-      </BalanceContainer>
-      <View style={{marginBottom: 30, marginTop: 30}}>
-        <LinkingButtons
-          buy={{
-            cta: () => {
-              dispatch(
-                Analytics.track('Clicked Buy Crypto', {
-                  context: 'AccountDetails',
-                }),
-              );
-              navigation.navigate(WalletScreens.AMOUNT, {
-                onAmountSelected: async (amount: string) => {
-                  // navigation.navigate('BuyCryptoRoot', {
-                  //   amount: Number(amount),
-                  //   fromWallet: fullWalletObj,
-                  // });
-                },
-                context: 'buyCrypto',
-              });
-            },
-          }}
-          sell={{
-            cta: () => {
-              dispatch(
-                Analytics.track('Clicked Sell Crypto', {
-                  context: 'AccountDetails',
-                }),
-              );
-              // navigation.navigate('SellCryptoRoot', {
-              //   fromWallet: fullWalletObj,
-              // });
-            },
-          }}
-          swap={{
-            cta: () => {
-              dispatch(
-                Analytics.track('Clicked Swap Crypto', {
-                  context: 'AccountDetails',
-                }),
-              );
-              // navigation.navigate('SwapCryptoRoot', {
-              //   selectedWallet: fullWalletObj,
-              // });
-            },
-          }}
-          receive={{
-            cta: () => {
-              dispatch(
-                Analytics.track('Clicked Receive', {
-                  context: 'AccountDetails',
-                }),
-              );
-              // setShowReceiveAddressBottomModal(true);
-            },
-          }}
-          send={{
-            cta: () => {
-              dispatch(
-                Analytics.track('Clicked Send', {
-                  context: 'AccountDetails',
-                }),
-              );
-              // navigation.navigate('SendTo', {wallet: fullWalletObj});
-            },
-          }}
-        />
-      </View>
-
-      <Hr />
-
-      <SearchComponentContainer>
-        <SearchComponent<AssetsByChainListProps>
-          searchVal={searchVal}
-          setSearchVal={setSearchVal}
-          searchResults={searchResults}
-          setSearchResults={setSearchResults}
-          searchFullList={memorizedAssetsByChainList}
-          context={'keyoverview'}
-        />
-      </SearchComponentContainer>
-
-      <FlatList<AssetsByChainListProps>
+      <SectionList
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
             refreshing={refreshing}
-            onRefresh={() => onRefresh()}
+            onRefresh={onRefresh}
           />
         }
-        ListHeaderComponent={() => {
-          return (
-            <WalletListHeader>
-              <H5>{t('Assets')}</H5>
-            </WalletListHeader>
-          );
-        }}
-        data={
-          !searchVal && !selectedChainFilterOption
-            ? memorizedAssetsByChainList
-            : searchResults
+        ListHeaderComponent={renderListHeaderComponent}
+        keyExtractor={
+          !showActivityTab ? keyExtractorAssets : keyExtractorTransaction
         }
-        renderItem={memoizedRenderItem}
+        //@ts-ignore
+        sections={renderDataSectionComponent}
+        renderItem={
+          !showActivityTab ? memoizedRenderAssetsItem : renderTransaction
+        }
+        {...(showActivityTab && {
+          renderSectionHeader,
+          stickyHeaderIndices: [groupedHistory?.length],
+          stickySectionHeadersEnabled: true,
+          ItemSeparatorComponent: itemSeparatorComponent,
+          ListFooterComponent: listFooterComponent,
+          onMomentumScrollBegin: () => setIsScrolling(true),
+          onMomentumScrollEnd: () => setIsScrolling(false),
+          onEndReached: () => {
+            if (isScrolling) {
+              debouncedLoadHistory();
+            }
+          },
+          onEndReachedThreshold: 0.3,
+          maxToRenderPerBatch: 15,
+        })}
+        ListEmptyComponent={listEmptyComponent}
+        getItemLayout={getItemLayout}
       />
-
       {keyOptions.length > 0 ? (
         <OptionsSheet
           isVisible={showKeyOptions}
