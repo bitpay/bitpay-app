@@ -45,6 +45,7 @@ import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
+import {IsEVMCoin} from '../../../store/wallet/utils/currency';
 
 export const ignoreGlobalListContextList = [
   'sell',
@@ -210,14 +211,24 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
 
   const chainList = useMemo(() => {
     // Function to filter and sort chains based on recent selection
+    let _SUPPORTED_CURRENCIES_CHAINS = SUPPORTED_CURRENCIES_CHAINS;
     const getFilteredChains = () => {
+      if (
+        context &&
+        ['accountassetsview', 'accounthistoryview'].includes(context)
+      ) {
+        _SUPPORTED_CURRENCIES_CHAINS = SUPPORTED_CURRENCIES_CHAINS.filter(
+          chain => IsEVMCoin(chain),
+        );
+      }
+
       if (recentSelectedChainFilterOption.length) {
-        return SUPPORTED_CURRENCIES_CHAINS.filter(
+        return _SUPPORTED_CURRENCIES_CHAINS.filter(
           chain => !recentSelectedChainFilterOption.includes(chain),
         );
       }
       // Exclude currently selected chain and move it to the front if it exists
-      const filteredChains = SUPPORTED_CURRENCIES_CHAINS.filter(
+      const filteredChains = _SUPPORTED_CURRENCIES_CHAINS.filter(
         chain => chain !== selectedChainFilterOption,
       );
       if (selectedChainFilterOption) {
@@ -234,10 +245,18 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
         data: [allNetworkTitle, ...chains].filter(Boolean),
       },
     ];
-    if (recentSelectedChainFilterOption.length && !hasCustomChains) {
+    let _recentSelectedChainFilterOption = recentSelectedChainFilterOption;
+    if (
+      context &&
+      ['accountassetsview', 'accounthistoryview'].includes(context)
+    ) {
+      _recentSelectedChainFilterOption =
+        _recentSelectedChainFilterOption.filter(chain => IsEVMCoin(chain));
+    }
+    if (_recentSelectedChainFilterOption.length && !hasCustomChains) {
       list.unshift({
         title: t('Recently Selected'),
-        data: recentSelectedChainFilterOption,
+        data: _recentSelectedChainFilterOption,
       });
     }
     return list;

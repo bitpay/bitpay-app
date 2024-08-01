@@ -15,8 +15,9 @@ import {
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
-import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
+import {WalletRowProps} from '../../../components/list/WalletRow';
 import {
+  Balance,
   BaseText,
   H2,
   H5,
@@ -25,11 +26,11 @@ import {
 } from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
 import {
-  Hr,
   ActiveOpacity,
   ScreenGutter,
   HeaderRightContainer as _HeaderRightContainer,
   ProposalBadgeContainer,
+  Row,
 } from '../../../components/styled/Containers';
 import {
   showBottomNotificationModal,
@@ -46,8 +47,7 @@ import {
   White,
 } from '../../../styles/colors';
 import {
-  convertToFiat,
-  formatCurrencyAbbreviation,
+  formatFiat,
   formatFiatAmount,
   shouldScale,
   sleep,
@@ -68,7 +68,7 @@ import {startGetRates} from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import {useTranslation} from 'react-i18next';
-import {toFiat} from '../../../store/wallet/utils/wallet';
+import {buildUIFormattedWallet} from '../../../store/wallet/utils/wallet';
 import {each} from 'lodash';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
@@ -78,7 +78,6 @@ import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {IsEVMCoin} from '../../../store/wallet/utils/currency';
-import {Network} from '../../../constants';
 import AccountListRow, {
   AccountRowProps,
 } from '../../../components/list/AccountListRow';
@@ -88,54 +87,6 @@ import DropdownOption from '../components/DropdownOption';
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
-
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-end;
-`;
-
-const OverviewContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-export const BalanceContainer = styled.View`
-  height: 15%;
-  margin-top: 20px;
-  padding: 10px 15px;
-`;
-
-export const Balance = styled(BaseText)<{scale: boolean}>`
-  font-size: ${({scale}) => (scale ? 25 : 35)}px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 53px;
-  letter-spacing: 0;
-  text-align: center;
-`;
-
-const WalletListHeader = styled.View`
-  padding: 10px;
-  margin-top: 10px;
-`;
-
-const WalletListFooterContainer = styled.View`
-  padding: 10px 10px 100px 10px;
-  margin-top: 15px;
-`;
-
-const WalletListFooter = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-`;
-
-const WalletListFooterText = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  margin-left: 10px;
-`;
 
 export const KeyToggle = styled(TouchableOpacity)`
   align-items: center;
@@ -162,6 +113,44 @@ export const CogIconContainer = styled.TouchableOpacity`
   width: 40px;
 `;
 
+const OverviewContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
+const BalanceContainer = styled.View`
+  height: 15%;
+  margin-top: 20px;
+  padding: 10px 15px;
+  align-items: center;
+`;
+
+const WalletListHeader = styled.View`
+  padding: 10px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const WalletListFooterContainer = styled.View`
+  padding: 10px 10px 100px 10px;
+  margin-top: 15px;
+`;
+
+const WalletListFooter = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const WalletListFooterText = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  margin-left: 10px;
+`;
+
 const HeaderTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
@@ -172,124 +161,56 @@ const HeaderRightContainer = styled(_HeaderRightContainer)`
   align-items: center;
 `;
 
-const SearchComponentContainer = styled.View`
-  padding-right: 15px;
-  padding-left: 15px;
-  margin-top: 16px;
-`;
-
-type getFiatOptions = {
-  dispatch: AppDispatch;
-  satAmount: number;
-  defaultAltCurrencyIsoCode: string;
-  currencyAbbreviation: string;
-  chain: string;
-  rates: Rates;
-  tokenAddress: string | undefined;
-  hideWallet: boolean | undefined;
-  network: Network;
-  currencyDisplay?: 'symbol' | 'code';
-};
-
-type FormatFiatOptions = {
-  fiatAmount: number;
-  defaultAltCurrencyIsoCode: string;
-  currencyDisplay?: 'symbol' | 'code';
-};
-
-export const getFiat = ({
-  dispatch,
-  satAmount,
-  defaultAltCurrencyIsoCode,
-  currencyAbbreviation,
-  chain,
-  rates,
-  tokenAddress,
-  hideWallet,
-  network,
-}: getFiatOptions) =>
-  convertToFiat(
-    dispatch(
-      toFiat(
-        satAmount,
-        defaultAltCurrencyIsoCode,
-        currencyAbbreviation,
-        chain,
-        rates,
-        tokenAddress,
-      ),
-    ),
-    hideWallet,
-    network,
-  );
-
-export const formatFiat = ({
-  fiatAmount,
-  defaultAltCurrencyIsoCode,
-  currencyDisplay,
-}: FormatFiatOptions) =>
-  formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode, {currencyDisplay});
-
 const buildAccountBalance = (
   defaultAltCurrencyIsoCode: string,
   accountList: Partial<AccountRowProps>[],
   currencyDisplay?: 'symbol',
 ) => {
   accountList.forEach(account => {
-    const accumulatedBalances = account?.wallets?.reduce(
-      (acc: Partial<AccountRowProps>, wallet: WalletRowProps) => {
-        const {
-          fiatBalance,
-          fiatLockedBalance,
-          fiatConfirmedLockedBalance,
-          fiatSpendableBalance,
-          fiatPendingBalance,
-        } = wallet;
-        const formattedBalances = {
-          fiatBalance: (acc?.fiatBalance ?? 0) + fiatBalance,
-          fiatLockedBalance: (acc?.fiatLockedBalance ?? 0) + fiatLockedBalance,
-          fiatConfirmedLockedBalance:
-            (acc?.fiatConfirmedLockedBalance ?? 0) + fiatConfirmedLockedBalance,
-          fiatSpendableBalance:
-            (acc?.fiatSpendableBalance ?? 0) + fiatSpendableBalance,
-          fiatPendingBalance:
-            (acc?.fiatPendingBalance ?? 0) + fiatPendingBalance,
-        };
-        return formattedBalances;
-      },
-      {},
-    );
+    const initialBalances = {
+      fiatBalance: 0,
+      fiatLockedBalance: 0,
+      fiatConfirmedLockedBalance: 0,
+      fiatSpendableBalance: 0,
+      fiatPendingBalance: 0,
+    };
+    const accumulatedBalances =
+      account.wallets?.reduce((acc, wallet) => {
+        acc.fiatBalance += wallet.fiatBalance;
+        acc.fiatLockedBalance += wallet.fiatLockedBalance;
+        acc.fiatConfirmedLockedBalance += wallet.fiatConfirmedLockedBalance;
+        acc.fiatSpendableBalance += wallet.fiatSpendableBalance;
+        acc.fiatPendingBalance += wallet.fiatPendingBalance;
+        return acc;
+      }, initialBalances) ?? initialBalances;
+
     Object.assign(account, accumulatedBalances);
-    account.fiatBalanceFormat = formatFiat({
-      fiatAmount: account?.fiatBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
-    account.fiatLockedBalanceFormat = formatFiat({
-      fiatAmount: account?.fiatLockedBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
-    account.fiatConfirmedLockedBalanceFormat = formatFiat({
-      fiatAmount: account?.fiatConfirmedLockedBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
-    account.fiatSpendableBalanceFormat = formatFiat({
-      fiatAmount: account?.fiatSpendableBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
-    account.fiatPendingBalanceFormat = formatFiat({
-      fiatAmount: account?.fiatPendingBalance ?? 0,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
+
+    const formatBalance = (fiatAmount: number) =>
+      formatFiat({
+        fiatAmount,
+        defaultAltCurrencyIsoCode,
+        currencyDisplay,
+      });
+
+    account.fiatBalanceFormat = formatBalance(account.fiatBalance ?? 0);
+    account.fiatLockedBalanceFormat = formatBalance(
+      account.fiatLockedBalance ?? 0,
+    );
+    account.fiatConfirmedLockedBalanceFormat = formatBalance(
+      account.fiatConfirmedLockedBalance ?? 0,
+    );
+    account.fiatSpendableBalanceFormat = formatBalance(
+      account.fiatSpendableBalance ?? 0,
+    );
+    account.fiatPendingBalanceFormat = formatBalance(
+      account.fiatPendingBalance ?? 0,
+    );
   });
   return accountList as AccountRowProps[];
 };
 
-export const buildUIFormattedAccount: (
+const buildUIFormattedAccount: (
   accountList: Partial<AccountRowProps>[],
   wallet: Wallet,
   defaultAltCurrencyIsoCode: string,
@@ -309,22 +230,32 @@ export const buildUIFormattedAccount: (
     dispatch,
   ) as WalletRowProps;
 
-  let walletsAccount = accountList.find(
+  let existingAccount = accountList.find(
     ({receiveAddress}) => receiveAddress === wallet.receiveAddress,
   ) as AccountRowProps | undefined;
 
+  const {
+    keyId,
+    chain,
+    credentials: {account, walletName},
+    receiveAddress,
+  } = wallet;
+
+  const isEVMCoin = IsEVMCoin(chain);
+
   const newAccount: Partial<AccountRowProps> = {
     id: _.uniqueId('account_'),
-    keyId: wallet.keyId,
-    accountName: IsEVMCoin(wallet.chain)
-      ? `EVM Account ${wallet.credentials.account}`
-      : wallet.walletName || wallet.credentials.walletName,
-    wallets: walletsAccount
-      ? [...walletsAccount.wallets, uiFormattedWallet]
+    keyId,
+    chains: existingAccount ? [...existingAccount.chains, chain] : [chain],
+    accountName: isEVMCoin
+      ? `EVM Account ${account}`
+      : wallet.walletName || walletName,
+    wallets: existingAccount
+      ? [...existingAccount.wallets, uiFormattedWallet]
       : [uiFormattedWallet],
-    accountNumber: wallet.credentials.account,
-    receiveAddress: wallet.receiveAddress,
-    isMultiNetworkSupported: IsEVMCoin(wallet.chain) ? true : false,
+    accountNumber: account,
+    receiveAddress,
+    isMultiNetworkSupported: isEVMCoin ? true : false,
     fiatBalance: uiFormattedWallet.fiatBalance,
     fiatLockedBalance: uiFormattedWallet.fiatLockedBalance,
     fiatConfirmedLockedBalance: uiFormattedWallet.fiatConfirmedLockedBalance,
@@ -332,7 +263,7 @@ export const buildUIFormattedAccount: (
     fiatPendingBalance: uiFormattedWallet.fiatPendingBalance,
   };
 
-  if (walletsAccount) {
+  if (existingAccount) {
     const index = accountList.findIndex(
       ({receiveAddress}) => receiveAddress === wallet.receiveAddress,
     );
@@ -342,128 +273,7 @@ export const buildUIFormattedAccount: (
   }
 };
 
-export const buildUIFormattedWallet: (
-  wallet: Wallet,
-  defaultAltCurrencyIsoCode: string,
-  rates: Rates,
-  dispatch: AppDispatch,
-  currencyDisplay?: 'symbol',
-) => WalletRowProps = (
-  wallet,
-  defaultAltCurrencyIsoCode,
-  rates,
-  dispatch,
-  currencyDisplay,
-) => {
-  const {
-    id,
-    img,
-    badgeImg,
-    currencyName,
-    chainName,
-    currencyAbbreviation,
-    chain,
-    tokenAddress,
-    network,
-    walletName,
-    balance,
-    credentials,
-    keyId,
-    isRefreshing,
-    isScanning,
-    hideWallet,
-    hideBalance,
-    pendingTxps,
-    receiveAddress,
-  } = wallet;
-
-  const opts: Omit<getFiatOptions, 'satAmount'> = {
-    dispatch,
-    defaultAltCurrencyIsoCode,
-    currencyAbbreviation,
-    chain,
-    rates,
-    tokenAddress,
-    hideWallet,
-    network,
-    currencyDisplay,
-  };
-
-  const fiatBalance = getFiat({...opts, satAmount: balance.sat});
-  const fiatLockedBalance = getFiat({...opts, satAmount: balance.satLocked});
-  const fiatConfirmedLockedBalance = getFiat({
-    ...opts,
-    satAmount: balance.satConfirmedLocked,
-  });
-  const fiatSpendableBalance = getFiat({
-    ...opts,
-    satAmount: balance.satSpendable,
-  });
-  const fiatPendingBalance = getFiat({...opts, satAmount: balance.satPending});
-
-  return {
-    id,
-    keyId,
-    img,
-    badgeImg,
-    currencyName,
-    chainName,
-    currencyAbbreviation: formatCurrencyAbbreviation(currencyAbbreviation),
-    chain,
-    walletName: walletName || credentials.walletName,
-    cryptoBalance: balance.crypto,
-    cryptoLockedBalance: balance.cryptoLocked,
-    cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
-    cryptoSpendableBalance: balance.cryptoSpendable,
-    cryptoPendingBalance: balance.cryptoPending,
-    fiatBalance,
-    fiatLockedBalance,
-    fiatConfirmedLockedBalance,
-    fiatSpendableBalance,
-    fiatPendingBalance,
-    fiatBalanceFormat: formatFiat({
-      fiatAmount: fiatBalance,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    }),
-    fiatLockedBalanceFormat: formatFiat({
-      fiatAmount: fiatLockedBalance,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    }),
-    fiatConfirmedLockedBalanceFormat: formatFiat({
-      fiatAmount: fiatConfirmedLockedBalance,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    }),
-    fiatSpendableBalanceFormat: formatFiat({
-      fiatAmount: fiatSpendableBalance,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    }),
-    fiatPendingBalanceFormat: formatFiat({
-      fiatAmount: fiatPendingBalance,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    }),
-    network: network,
-    isRefreshing,
-    isScanning,
-    hideWallet,
-    hideBalance,
-    pendingTxps,
-    multisig:
-      credentials.n > 1
-        ? `- Multisig ${credentials.m}/${credentials.n}`
-        : undefined,
-    isComplete: credentials.isComplete(),
-    receiveAddress,
-    account: credentials.account,
-  };
-};
-
-// Key overview list builder
-export const buildAccountList = (
+const buildAccountList = (
   coins: Wallet[],
   defaultAltCurrencyIso: string,
   rates: Rates,
@@ -523,7 +333,6 @@ const KeyOverview = () => {
     if (!key) {
       return;
     }
-
     navigation.setOptions({
       headerTitle: () => {
         return (
@@ -690,6 +499,51 @@ const KeyOverview = () => {
     setRefreshing(false);
   };
 
+  const onPressItem = (item: AccountRowProps) => {
+    haptic('impactLight');
+
+    if (item.wallets.length > 0) {
+      navigation.navigate('AccountDetails', {
+        key,
+        accountItem: item,
+        accountList: memorizedAccountList,
+      });
+      return;
+    }
+    const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
+    if (!fullWalletObj.isComplete()) {
+      fullWalletObj.getStatus(
+        {network: fullWalletObj.network},
+        (err: any, status: Status) => {
+          if (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error(`error [getStatus]: ${errStr}`);
+          } else {
+            if (status?.wallet?.status === 'complete') {
+              fullWalletObj.openWallet({}, () => {
+                navigation.navigate('WalletDetails', {
+                  walletId: item.id,
+                  key,
+                });
+              });
+              return;
+            }
+            navigation.navigate('Copayers', {
+              wallet: fullWalletObj,
+              status: status?.wallet,
+            });
+          }
+        },
+      );
+    } else {
+      navigation.navigate('WalletDetails', {
+        key,
+        walletId: item.id,
+      });
+    }
+  };
+
   const memoizedRenderItem = useCallback(
     ({item}: {item: AccountRowProps}) => {
       return (
@@ -697,80 +551,17 @@ const KeyOverview = () => {
           id={item.id}
           accountItem={item}
           hideBalance={hideAllBalances}
-          onPress={() => {
-            haptic('impactLight');
-
-            if (item.wallets.length > 0) {
-              navigation.navigate('AccountDetails', {
-                key,
-                accountItem: item,
-                accountList: memorizedAccountList,
-              });
-              return;
-            }
-            const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
-            if (!fullWalletObj.isComplete()) {
-              fullWalletObj.getStatus(
-                {network: fullWalletObj.network},
-                (err: any, status: Status) => {
-                  if (err) {
-                    const errStr =
-                      err instanceof Error ? err.message : JSON.stringify(err);
-                    logger.error(`error [getStatus]: ${errStr}`);
-                  } else {
-                    if (status?.wallet?.status === 'complete') {
-                      fullWalletObj.openWallet({}, () => {
-                        navigation.navigate('WalletDetails', {
-                          walletId: item.id,
-                          key,
-                        });
-                      });
-                      return;
-                    }
-                    navigation.navigate('Copayers', {
-                      wallet: fullWalletObj,
-                      status: status?.wallet,
-                    });
-                  }
-                },
-              );
-            } else {
-              navigation.navigate('WalletDetails', {
-                key,
-                walletId: item.id,
-              });
-            }
-          }}
+          onPress={() => onPressItem(item)}
         />
       );
     },
     [key, hideAllBalances],
   );
 
-  return (
-    <OverviewContainer>
-      <BalanceContainer>
-        <TouchableOpacity
-          onLongPress={() => {
-            dispatch(toggleHideAllBalances());
-          }}>
-          <Row>
-            {!hideAllBalances ? (
-              <Balance scale={shouldScale(totalBalance)}>
-                {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
-                  currencyDisplay: 'symbol',
-                })}
-              </Balance>
-            ) : (
-              <H2>****</H2>
-            )}
-          </Row>
-        </TouchableOpacity>
-      </BalanceContainer>
-
-      <Hr />
-
-      <SearchComponentContainer>
+  const renderListHeaderComponent = useCallback(() => {
+    return (
+      <WalletListHeader>
+        <H5>{t('My Wallets')}</H5>
         <SearchComponent<AccountRowProps>
           searchVal={searchVal}
           setSearchVal={setSearchVal}
@@ -779,7 +570,52 @@ const KeyOverview = () => {
           searchFullList={memorizedAccountList}
           context={'keyoverview'}
         />
-      </SearchComponentContainer>
+      </WalletListHeader>
+    );
+  }, []);
+
+  const renderListFooterComponent = useCallback(() => {
+    return (
+      <WalletListFooterContainer>
+        <WalletListFooter
+          activeOpacity={ActiveOpacity}
+          onPress={async () => {
+            haptic('impactLight');
+            navigation.navigate('AddingOptions', {
+              key,
+            });
+          }}>
+          <Icons.Add />
+          <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
+        </WalletListFooter>
+      </WalletListFooterContainer>
+    );
+  }, []);
+
+  const renderDataComponent = useMemo(() => {
+    return !searchVal && !selectedChainFilterOption
+      ? memorizedAccountList
+      : searchResults;
+  }, [searchResults, selectedChainFilterOption]);
+
+  return (
+    <OverviewContainer>
+      <BalanceContainer>
+        <TouchableOpacity
+          onLongPress={() => {
+            dispatch(toggleHideAllBalances());
+          }}>
+          {!hideAllBalances ? (
+            <Balance scale={shouldScale(totalBalance)}>
+              {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+                currencyDisplay: 'symbol',
+              })}
+            </Balance>
+          ) : (
+            <H2>****</H2>
+          )}
+        </TouchableOpacity>
+      </BalanceContainer>
 
       <FlatList<AccountRowProps>
         refreshControl={
@@ -789,35 +625,9 @@ const KeyOverview = () => {
             onRefresh={() => onRefresh()}
           />
         }
-        ListHeaderComponent={() => {
-          return (
-            <WalletListHeader>
-              <H5>{t('My Wallets')}</H5>
-            </WalletListHeader>
-          );
-        }}
-        ListFooterComponent={() => {
-          return (
-            <WalletListFooterContainer>
-              <WalletListFooter
-                activeOpacity={ActiveOpacity}
-                onPress={async () => {
-                  haptic('impactLight');
-                  navigation.navigate('AddingOptions', {
-                    key,
-                  });
-                }}>
-                <Icons.Add />
-                <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
-              </WalletListFooter>
-            </WalletListFooterContainer>
-          );
-        }}
-        data={
-          !searchVal && !selectedChainFilterOption
-            ? memorizedAccountList
-            : searchResults
-        }
+        ListHeaderComponent={renderListHeaderComponent}
+        ListFooterComponent={renderListFooterComponent}
+        data={renderDataComponent}
         renderItem={memoizedRenderItem}
       />
 

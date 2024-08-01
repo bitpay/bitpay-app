@@ -1,6 +1,9 @@
 import React, {memo, useCallback} from 'react';
 import {ActiveOpacity, Column, Row, RowContainer} from '../styled/Containers';
-import {AssetsByChainListProps} from '../../navigation/wallet/screens/AccountDetails';
+import {
+  AssetsByChainData,
+  AssetsByChainListProps,
+} from '../../navigation/wallet/screens/AccountDetails';
 import {FlatList, View} from 'react-native';
 import {BaseText, H5} from '../styled/Text';
 import WalletRow, {WalletRowProps} from './WalletRow';
@@ -18,7 +21,7 @@ const CurrencyImageContainer = styled.View`
 
 interface Props {
   id: string;
-  accountItem: AssetsByChainListProps;
+  accountItem: AssetsByChainData;
   hideIcon?: boolean;
   isLast?: boolean;
   onPress: (walletId: string) => void;

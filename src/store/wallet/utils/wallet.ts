@@ -25,6 +25,8 @@ import cloneDeep from 'lodash.clonedeep';
 import {
   addTokenChainSuffix,
   convertToFiat,
+  formatCurrencyAbbreviation,
+  formatFiat,
   formatFiatAmount,
   getBadgeImg,
   getCurrencyAbbreviation,
@@ -336,9 +338,10 @@ export const toFiat =
   };
 
 export const findWalletById = (
-  wallets: Wallet[],
+  wallets: Wallet[] | WalletRowProps[],
   id: string,
-): Wallet | undefined => wallets.find(wallet => wallet.id === id);
+): Wallet | WalletRowProps | undefined =>
+  wallets.find(wallet => wallet.id === id);
 
 export const findWalletByAddress = (
   address: string,
@@ -842,4 +845,149 @@ export const findWalletByIdHashed = (
       return resolve({wallet, keyId: wallet?.keyId});
     });
   });
+};
+
+type getFiatOptions = {
+  dispatch: AppDispatch;
+  satAmount: number;
+  defaultAltCurrencyIsoCode: string;
+  currencyAbbreviation: string;
+  chain: string;
+  rates: Rates;
+  tokenAddress: string | undefined;
+  hideWallet: boolean | undefined;
+  network: Network;
+  currencyDisplay?: 'symbol' | 'code';
+};
+
+const getFiat = ({
+  dispatch,
+  satAmount,
+  defaultAltCurrencyIsoCode,
+  currencyAbbreviation,
+  chain,
+  rates,
+  tokenAddress,
+  hideWallet,
+  network,
+}: getFiatOptions) =>
+  convertToFiat(
+    dispatch(
+      toFiat(
+        satAmount,
+        defaultAltCurrencyIsoCode,
+        currencyAbbreviation,
+        chain,
+        rates,
+        tokenAddress,
+      ),
+    ),
+    hideWallet,
+    network,
+  );
+
+export const buildUIFormattedWallet: (
+  wallet: Wallet,
+  defaultAltCurrencyIsoCode: string,
+  rates: Rates,
+  dispatch: AppDispatch,
+  currencyDisplay?: 'symbol',
+) => WalletRowProps = (
+  wallet,
+  defaultAltCurrencyIsoCode,
+  rates,
+  dispatch,
+  currencyDisplay,
+) => {
+  const {
+    id,
+    img,
+    badgeImg,
+    currencyName,
+    chainName,
+    currencyAbbreviation,
+    chain,
+    tokenAddress,
+    network,
+    walletName,
+    balance,
+    credentials,
+    keyId,
+    isRefreshing,
+    isScanning,
+    hideWallet,
+    hideBalance,
+    pendingTxps,
+    receiveAddress,
+  } = wallet;
+
+  const opts: Omit<getFiatOptions, 'satAmount'> = {
+    dispatch,
+    defaultAltCurrencyIsoCode,
+    currencyAbbreviation,
+    chain,
+    rates,
+    tokenAddress,
+    hideWallet,
+    network,
+    currencyDisplay,
+  };
+
+  const computeFiatBalance = (satAmount: number) =>
+    getFiat({...opts, satAmount});
+
+  const fiatBalance = computeFiatBalance(balance.sat);
+  const fiatLockedBalance = computeFiatBalance(balance.satLocked);
+  const fiatConfirmedLockedBalance = computeFiatBalance(
+    balance.satConfirmedLocked,
+  );
+  const fiatSpendableBalance = computeFiatBalance(balance.satSpendable);
+  const fiatPendingBalance = computeFiatBalance(balance.satPending);
+
+  const formatBalance = (fiatAmount: number) =>
+    formatFiat({
+      fiatAmount,
+      defaultAltCurrencyIsoCode,
+      currencyDisplay,
+    });
+
+  return {
+    id,
+    keyId,
+    img,
+    badgeImg,
+    currencyName,
+    chainName,
+    currencyAbbreviation: formatCurrencyAbbreviation(currencyAbbreviation),
+    chain,
+    walletName: walletName || credentials.walletName,
+    cryptoBalance: balance.crypto,
+    cryptoLockedBalance: balance.cryptoLocked,
+    cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
+    cryptoSpendableBalance: balance.cryptoSpendable,
+    cryptoPendingBalance: balance.cryptoPending,
+    fiatBalance,
+    fiatLockedBalance,
+    fiatConfirmedLockedBalance,
+    fiatSpendableBalance,
+    fiatPendingBalance,
+    fiatBalanceFormat: formatBalance(fiatBalance),
+    fiatLockedBalanceFormat: formatBalance(fiatLockedBalance),
+    fiatConfirmedLockedBalanceFormat: formatBalance(fiatConfirmedLockedBalance),
+    fiatSpendableBalanceFormat: formatBalance(fiatSpendableBalance),
+    fiatPendingBalanceFormat: formatBalance(fiatPendingBalance),
+    network,
+    isRefreshing,
+    isScanning,
+    hideWallet,
+    hideBalance,
+    pendingTxps,
+    multisig:
+      credentials.n > 1
+        ? `- Multisig ${credentials.m}/${credentials.n}`
+        : undefined,
+    isComplete: credentials.isComplete(),
+    receiveAddress,
+    account: credentials.account,
+  };
 };

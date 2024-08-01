@@ -87,7 +87,12 @@ export const ProcessPendingTxps =
   (txps: TransactionProposal[], wallet: any): Effect<any> =>
   dispatch => {
     const now = Math.floor(Date.now() / 1000);
-    const {currencyAbbreviation, chain, tokenAddress} = wallet;
+    const {
+      currencyAbbreviation,
+      chain,
+      tokenAddress,
+      credentials: {walletId, copayerId},
+    } = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
       // Filter out txps used for pay fees in other wallets
@@ -101,11 +106,11 @@ export const ProcessPendingTxps =
         tx.createdOn = now;
       }
 
-      tx.copayerId = wallet.credentials.copayerId;
-      tx.walletId = wallet.credentials.walletId;
+      tx.copayerId = copayerId;
+      tx.walletId = walletId;
 
       const action: any = tx.actions.find(
-        (a: any) => a.copayerId === wallet.credentials.copayerId,
+        (a: any) => a.copayerId === copayerId,
       );
 
       if ((!action || action.type === 'failed') && tx.status === 'pending') {
@@ -130,6 +135,7 @@ export const ProcessPendingTxps =
       chain,
       [],
       tokenAddress,
+      walletId,
     );
   };
 
@@ -547,6 +553,78 @@ export const GroupTransactionHistory = (history: any[]) => {
   return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
 };
 
+export const GetAccountTransactionHistory =
+  ({
+    wallets,
+    accountTransactionsHistory = {},
+    limit = TX_HISTORY_LIMIT,
+    refresh = false,
+    contactList = [],
+  }: {
+    wallets: Wallet[];
+    accountTransactionsHistory: {
+      [key: string]: {transactions: any[]; loadMore: boolean};
+    };
+    limit: number;
+    refresh?: boolean;
+    contactList?: any[];
+  }): Effect<
+    Promise<{
+      accountTransactionsHistory: {
+        [key: string]: {transactions: any[]; loadMore: boolean};
+      };
+      sortedCompleteHistory: any[];
+    }>
+  > =>
+  async (
+    dispatch,
+    getState,
+  ): Promise<{
+    accountTransactionsHistory: {
+      [key: string]: {transactions: any[]; loadMore: boolean};
+    };
+    sortedCompleteHistory: any[];
+  }> => {
+    return new Promise(async (resolve, reject) => {
+      let allTransactions = [] as any[];
+      for await (let wallet of wallets) {
+        try {
+          const [transactionHistory] = await Promise.all([
+            dispatch(
+              GetTransactionHistory({
+                wallet,
+                transactionsHistory:
+                  accountTransactionsHistory[wallet.id]?.transactions ?? [],
+                limit,
+                contactList,
+                refresh,
+              }),
+            ),
+          ]);
+          accountTransactionsHistory[wallet.id] = transactionHistory;
+          allTransactions = allTransactions.concat(
+            transactionHistory.transactions,
+          );
+        } catch (error) {
+          dispatch(
+            LogActions.error(
+              `!! Could not update transaction history for ${wallet.id}: ${error}`,
+            ),
+          );
+        }
+      }
+      allTransactions.sort(
+        (a, b) =>
+          new Date(a.time || a.createdOn).getTime() -
+          new Date(b.time || b.createdOn).getTime(),
+      );
+      return resolve({
+        accountTransactionsHistory,
+        sortedCompleteHistory: allTransactions.slice(0, limit),
+      });
+    });
+  };
+
 export const GetTransactionHistory =
   ({
     wallet,
@@ -568,10 +646,16 @@ export const GetTransactionHistory =
     return new Promise(async (resolve, reject) => {
       let requestLimit = limit;
 
-      let {walletId, keyId} = wallet.credentials;
+      let {
+        currencyAbbreviation,
+        chain,
+        tokenAddress,
+        credentials: {walletId, keyId},
+        transactionHistory,
+      } = wallet;
 
       if (!keyId) {
-        keyId = wallet.keyId;
+        keyId = keyId;
       }
       if (!walletId || !wallet.isComplete()) {
         return resolve({transactions: [], loadMore: false});
@@ -584,12 +668,8 @@ export const GetTransactionHistory =
         : null;
       const skip = refresh ? 0 : transactionsHistory.length;
 
-      if (
-        wallet.transactionHistory?.transactions?.length &&
-        !refresh &&
-        !skip
-      ) {
-        return resolve(wallet.transactionHistory);
+      if (transactionHistory?.transactions?.length && !refresh && !skip) {
+        return resolve(transactionHistory);
       }
 
       try {
@@ -600,10 +680,11 @@ export const GetTransactionHistory =
         // To get transaction list details: icon, description, amount and date
         transactions = BuildUiFriendlyList(
           transactions,
-          wallet.currencyAbbreviation,
-          wallet.chain,
+          currencyAbbreviation,
+          chain,
           contactList,
-          wallet.tokenAddress,
+          tokenAddress,
+          walletId,
         );
 
         const array = transactions
@@ -619,7 +700,7 @@ export const GetTransactionHistory =
           let transactionHistory;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
-          if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+          if (IsERCToken(currencyAbbreviation, chain)) {
             const {WALLET} = getState();
             const key = WALLET.keys[keyId];
             const linkedWallet = key.wallets.find(({tokens}) =>
@@ -642,17 +723,17 @@ export const GetTransactionHistory =
               }
             }
           }
-          dispatch(
-            updateWalletTxHistory({
-              walletId: walletId,
-              keyId: keyId,
-              transactionHistory: {
-                transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
-                loadMore,
-                hasConfirmingTxs,
-              },
-            }),
-          );
+          // dispatch(
+          //   updateWalletTxHistory({
+          //     walletId: walletId,
+          //     keyId: keyId,
+          //     transactionHistory: {
+          //       transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
+          //       loadMore,
+          //       hasConfirmingTxs,
+          //     },
+          //   }),
+          // );
         }
         return resolve({transactions: newHistory, loadMore});
       } catch (err) {
@@ -763,6 +844,7 @@ export const BuildUiFriendlyList = (
   chain: string,
   contactList: any[] = [],
   tokenAddress: string | undefined,
+  walletId: string,
 ): any[] => {
   return transactionList.map(transaction => {
     const {
@@ -930,6 +1012,7 @@ export const BuildUiFriendlyList = (
 
     transaction.uiTime = getFormattedDate((time || createdOn) * 1000);
     transaction.uiCreator = creatorName;
+    transaction.walletId = walletId;
 
     return transaction;
   });

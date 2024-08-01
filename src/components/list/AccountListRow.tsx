@@ -41,6 +41,7 @@ const BalanceColumn = styled(Column)`
 export interface AccountRowProps extends SearchableItem {
   id: string;
   keyId: string;
+  chains: string[];
   wallets: WalletRowProps[];
   accountName: string;
   accountNumber: number;
