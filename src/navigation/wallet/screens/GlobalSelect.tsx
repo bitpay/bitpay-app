@@ -337,15 +337,38 @@ const buildSelectableCurrenciesList = (
 const buildSelectableWalletList = (
   categories: string[],
   wallets: Wallet[],
+  context?: GlobalSelectModalContext,
 ): GlobalSelectObjByKey => {
   const coins: GlobalSelectObjByKey = {};
 
   categories.forEach(category => {
-    const filteredWallets = wallets.filter(
-      wallet =>
-        getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
-        category,
-    );
+    const filteredWallets = wallets.filter(wallet => {
+      if (
+        context &&
+        ['sell', 'swapFrom', 'swapTo'].includes(context) &&
+        ['eth', 'eth_arb', 'eth_base', 'eth_op'].includes(category)
+      ) {
+        // Workaround to differentiate eth in evm chains from external services
+        const conditions: {[key: string]: {currency: string; chain: string}} = {
+          eth: {currency: 'eth', chain: 'eth'},
+          eth_arb: {currency: 'eth', chain: 'arb'},
+          eth_base: {currency: 'eth', chain: 'base'},
+          eth_op: {currency: 'eth', chain: 'op'},
+        };
+
+        const condition = conditions[category];
+        return (
+          condition &&
+          wallet.currencyAbbreviation === condition.currency &&
+          wallet.chain === condition.chain
+        );
+      } else {
+        return (
+          getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
+          category
+        );
+      }
+    });
     if (filteredWallets.length > 0) {
       const {currencyAbbreviation, chain, currencyName, img} =
         filteredWallets[0];
@@ -740,7 +763,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       [...coins, ...tokens, ...nonBitpayTokens],
       c => c,
     );
-    const allCurrencyData = buildSelectableWalletList(allCurrencies, wallets);
+    const allCurrencyData = buildSelectableWalletList(
+      allCurrencies,
+      wallets,
+      context,
+    );
     setDataToDisplay(Object.values(allCurrencyData).splice(0, 20));
     return Object.values(allCurrencyData);
   }, []);
