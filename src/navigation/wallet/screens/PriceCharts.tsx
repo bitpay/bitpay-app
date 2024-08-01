@@ -42,10 +42,6 @@ import {GraphPoint, LineGraph} from 'react-native-graph';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 
-const GestureContainerHOC: any = gestureHandlerRootHOC(props => {
-  return <>{props.children}</>;
-});
-
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
 };
@@ -369,88 +365,86 @@ const PriceCharts = () => {
 
   return (
     <SafeAreaView>
-      <GestureContainerHOC>
-        <HeaderContainer>
-          {currentPrice ? (
-            <H2>
-              {formatFiatAmount(
-                selectedPoint?.price ?? currentPrice,
-                defaultAltCurrency.isoCode,
-                {
-                  customPrecision: 'minimal',
-                  currencyAbbreviation,
-                },
-              )}
-            </H2>
-          ) : null}
-          <RowContainer>
-            {showLossGainOrNeutralArrow(getPercentChange())}
-            <CurrencyAverageText>
-              {selectedPoint?.priceChange ?? displayData.priceChange
-                ? formatFiatAmount(
-                    selectedPoint?.priceChange ?? displayData.priceChange ?? 0,
-                    defaultAltCurrency.isoCode,
-                    {customPrecision: 'minimal', currencyAbbreviation},
-                  )
-                : ''}
-              <>
-                {percentChange ? (
-                  <>
-                    {!loading ? ' (' : ''}
-                    {Math.abs(getPercentChange())}%{!loading ? ')' : ''}
-                  </>
-                ) : null}
-              </>
-            </CurrencyAverageText>
-          </RowContainer>
-        </HeaderContainer>
+      <HeaderContainer>
+        {currentPrice ? (
+          <H2>
+            {formatFiatAmount(
+              selectedPoint?.price ?? currentPrice,
+              defaultAltCurrency.isoCode,
+              {
+                customPrecision: 'minimal',
+                currencyAbbreviation,
+              },
+            )}
+          </H2>
+        ) : null}
+        <RowContainer>
+          {showLossGainOrNeutralArrow(getPercentChange())}
+          <CurrencyAverageText>
+            {selectedPoint?.priceChange ?? displayData.priceChange
+              ? formatFiatAmount(
+                  selectedPoint?.priceChange ?? displayData.priceChange ?? 0,
+                  defaultAltCurrency.isoCode,
+                  {customPrecision: 'minimal', currencyAbbreviation},
+                )
+              : ''}
+            <>
+              {percentChange ? (
+                <>
+                  {!loading ? ' (' : ''}
+                  {Math.abs(getPercentChange())}%{!loading ? ')' : ''}
+                </>
+              ) : null}
+            </>
+          </CurrencyAverageText>
+        </RowContainer>
+      </HeaderContainer>
 
-        <PriceChartContainer
-          onLayout={e => {
-            setChartRowHeight(e.nativeEvent.layout.height);
-          }}>
-          {!loading && chartRowHeight > 0 ? (
-            <LineGraph
-              points={displayData.data}
-              animated={true}
-              gradientFillColors={[
-                gradientBackgroundColor,
-                theme.dark ? 'transparent' : White,
-              ]}
-              enablePanGesture={true}
-              panGestureDelay={100}
-              onGestureStart={onGestureStarted}
-              onPointSelected={onPointSelected}
-              onGestureEnd={onGestureEnd}
-              color={theme.dark && coinColor === Black ? White : coinColor}
-              style={{width: WIDTH, height: chartRowHeight, marginTop: 20}}
-            />
-          ) : (
-            <LoadingContainer>
-              <ActivityIndicator color={ProgressBlue} />
-            </LoadingContainer>
-          )}
-        </PriceChartContainer>
+      <PriceChartContainer
+        onLayout={e => {
+          setChartRowHeight(e.nativeEvent.layout.height);
+        }}>
+        {!loading && chartRowHeight > 0 ? (
+          <LineGraph
+            points={displayData.data}
+            animated={true}
+            gradientFillColors={[
+              gradientBackgroundColor,
+              theme.dark ? 'transparent' : White,
+            ]}
+            enablePanGesture={true}
+            panGestureDelay={100}
+            onGestureStart={onGestureStarted}
+            onPointSelected={onPointSelected}
+            onGestureEnd={onGestureEnd}
+            color={theme.dark && coinColor === Black ? White : coinColor}
+            style={{width: WIDTH, height: chartRowHeight, marginTop: 20}}
+          />
+        ) : (
+          <LoadingContainer>
+            <ActivityIndicator color={ProgressBlue} />
+          </LoadingContainer>
+        )}
+      </PriceChartContainer>
 
-        <CtaContainer
-          style={{
-            flexGrow: 0,
-            flexShrink: 0,
-            flexBasis: 'auto',
-            marginBottom: Platform.OS === 'ios' ? 40 : 5,
-          }}>
-          {showRageDateSelector ? (
-            <RangeDateSelectorContainer>
-              <RangeDateSelector onPress={redrawChart} />
-            </RangeDateSelectorContainer>
-          ) : null}
-          <Button onPress={goToBuyCrypto} buttonStyle={'primary'}>
-            {buttonLabel}
-          </Button>
-        </CtaContainer>
-      </GestureContainerHOC>
+      <CtaContainer
+        style={{
+          flexGrow: 0,
+          flexShrink: 0,
+          flexBasis: 'auto',
+          marginBottom: Platform.OS === 'ios' ? 40 : 5,
+        }}>
+        {showRageDateSelector ? (
+          <RangeDateSelectorContainer>
+            <RangeDateSelector onPress={redrawChart} />
+          </RangeDateSelectorContainer>
+        ) : null}
+        <Button onPress={goToBuyCrypto} buttonStyle={'primary'}>
+          {buttonLabel}
+        </Button>
+      </CtaContainer>
     </SafeAreaView>
   );
 };
 
-export default PriceCharts;
+export default gestureHandlerRootHOC(PriceCharts);
