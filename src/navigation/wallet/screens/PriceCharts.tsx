@@ -40,6 +40,7 @@ import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {GraphPoint, LineGraph} from 'react-native-graph';
 import haptic from '../../../components/haptic-feedback/haptic';
+import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -446,4 +447,4 @@ const PriceCharts = () => {
   );
 };
 
-export default PriceCharts;
+export default gestureHandlerRootHOC(PriceCharts);
