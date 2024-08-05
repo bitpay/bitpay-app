@@ -5,7 +5,6 @@ import {StyleProp, TextStyle} from 'react-native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {buildTestBadge, buildUncompleteBadge} from './WalletRow';
 import {Column, HiddenContainer} from '../styled/Containers';
-import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {useTranslation} from 'react-i18next';
 
 export interface AccountSettingsRowProps {

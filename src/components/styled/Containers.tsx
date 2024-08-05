@@ -10,6 +10,8 @@ import {
   Slate,
   NotificationPrimary,
   Action,
+  LuckySevens,
+  Slate30,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -423,6 +425,18 @@ export const ProposalBadgeContainer = styled.TouchableOpacity`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+export const BadgeContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  padding: 1px 2px;
+  margin: 2px;
+  border-radius: 2.4px;
+  gap: 2px;
 `;
 
 interface SellTxIconProps {

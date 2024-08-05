@@ -6,6 +6,7 @@ import {
   Row,
   ActiveOpacity,
   RowContainer,
+  BadgeContainer,
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
@@ -23,6 +24,8 @@ import {
 import {ActivityIndicator, Platform} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {SearchableItem} from '../chain-search/ChainSearch';
+import {IsEVMCoin} from '../../store/wallet/utils/currency';
+import GasTokenSvg from '../../../assets/img/gas-token.svg';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -30,10 +33,6 @@ const SpinnerContainer = styled.View`
   justify-content: center;
   align-items: center;
   padding-right: 10px;
-`;
-
-const BadgeContainer = styled.View`
-  margin-left: 3px;
 `;
 
 const BalanceColumn = styled(Column)`
@@ -121,7 +120,6 @@ export const buildTestBadge = (
   if (isToken || ['livenet', 'mainnet'].includes(network)) {
     return;
   }
-  console.log('$$$$$$$$$$$$1');
   // logic for mapping test networks to chain
   const badgeLabel = getProtocolName(chain, network);
 
@@ -143,6 +141,22 @@ export const buildUncompleteBadge = (
 
   return (
     <BadgeContainer>
+      <Badge>{badgeLabel}</Badge>
+    </BadgeContainer>
+  );
+};
+
+export const buildGasTokenBadge = (
+  isEVMCoin: boolean | undefined,
+): ReactElement | undefined => {
+  if (!isEVMCoin) {
+    return;
+  }
+  const badgeLabel = 'Gas Token';
+
+  return (
+    <BadgeContainer>
+      <GasTokenSvg />
       <Badge>{badgeLabel}</Badge>
     </BadgeContainer>
   );
@@ -198,6 +212,7 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
             {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
           </ListItemSubText>
+          {buildGasTokenBadge(IsEVMCoin(currencyAbbreviation))}
           {buildTestBadge(network, chain, isToken)}
           {buildUncompleteBadge(isComplete)}
         </Row>

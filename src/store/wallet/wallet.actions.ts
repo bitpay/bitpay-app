@@ -208,6 +208,20 @@ export const updateWalletTxHistory = (payload: {
   payload,
 });
 
+export const updateAccountTxHistory = (payload: {
+  keyId: string;
+  accountTransactionsHistory: {
+    [key: string]: {
+      transactions: any[];
+      loadMore: boolean;
+      hasConfirmingTxs: boolean;
+    };
+  };
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_ACCOUNT_TX_HISTORY,
+  payload,
+});
+
 export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS,
   payload,
