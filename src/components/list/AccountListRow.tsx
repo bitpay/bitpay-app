@@ -6,6 +6,7 @@ import {
   Row,
   ActiveOpacity,
   RowContainer,
+  BadgeContainer,
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
@@ -28,10 +29,6 @@ const SpinnerContainer = styled.View`
   justify-content: center;
   align-items: center;
   padding-right: 10px;
-`;
-
-const BadgeContainer = styled.View`
-  margin-left: 3px;
 `;
 
 const BalanceColumn = styled(Column)`

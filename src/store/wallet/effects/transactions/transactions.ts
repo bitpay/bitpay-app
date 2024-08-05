@@ -20,7 +20,10 @@ import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
-import {updateWalletTxHistory} from '../../wallet.actions';
+import {
+  updateAccountTxHistory,
+  updateWalletTxHistory,
+} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
@@ -550,21 +553,31 @@ export const GetAccountTransactionHistory =
   ({
     wallets,
     accountTransactionsHistory = {},
+    keyId,
     limit = TX_HISTORY_LIMIT,
     refresh = false,
     contactList = [],
   }: {
     wallets: Wallet[];
     accountTransactionsHistory: {
-      [key: string]: {transactions: any[]; loadMore: boolean};
+      [key: string]: {
+        transactions: any[];
+        loadMore: boolean;
+        hasConfirmingTxs: boolean;
+      };
     };
+    keyId: string;
     limit: number;
     refresh?: boolean;
     contactList?: any[];
   }): Effect<
     Promise<{
       accountTransactionsHistory: {
-        [key: string]: {transactions: any[]; loadMore: boolean};
+        [key: string]: {
+          transactions: any[];
+          loadMore: boolean;
+          hasConfirmingTxs: boolean;
+        };
       };
       sortedCompleteHistory: any[];
     }>
@@ -574,13 +587,17 @@ export const GetAccountTransactionHistory =
     getState,
   ): Promise<{
     accountTransactionsHistory: {
-      [key: string]: {transactions: any[]; loadMore: boolean};
+      [key: string]: {
+        transactions: any[];
+        loadMore: boolean;
+        hasConfirmingTxs: boolean;
+      };
     };
     sortedCompleteHistory: any[];
   }> => {
     return new Promise(async (resolve, reject) => {
       let allTransactions = [] as any[];
-      for await (let wallet of wallets) {
+      const transactionPromises = wallets.map(async wallet => {
         try {
           const [transactionHistory] = await Promise.all([
             dispatch(
@@ -591,29 +608,41 @@ export const GetAccountTransactionHistory =
                 limit,
                 contactList,
                 refresh,
+                skipReduxUpdate: true,
               }),
             ),
           ]);
           accountTransactionsHistory[wallet.id] = transactionHistory;
-          allTransactions = allTransactions.concat(
-            transactionHistory.transactions,
-          );
+          return transactionHistory.transactions;
         } catch (error) {
           dispatch(
             LogActions.error(
               `!! Could not update transaction history for ${wallet.id}: ${error}`,
             ),
           );
+          return [];
         }
-      }
-      allTransactions.sort(
-        (a, b) =>
-          new Date(a.time || a.createdOn).getTime() -
-          new Date(b.time || b.createdOn).getTime(),
+      });
+      const results = await Promise.all(transactionPromises);
+      allTransactions = results
+        .flat()
+        .sort(
+          (a, b) =>
+            new Date(b.time || b.createdOn).getTime() -
+            new Date(a.time || a.createdOn).getTime(),
+        );
+
+      const sortedCompleteHistory = allTransactions.slice(0, limit);
+
+      dispatch(
+        updateAccountTxHistory({
+          keyId: keyId,
+          accountTransactionsHistory,
+        }),
       );
       return resolve({
         accountTransactionsHistory,
-        sortedCompleteHistory: allTransactions.slice(0, limit),
+        sortedCompleteHistory,
       });
     });
   };
@@ -625,17 +654,25 @@ export const GetTransactionHistory =
     limit = TX_HISTORY_LIMIT,
     refresh = false,
     contactList = [],
+    skipReduxUpdate = false,
   }: {
     wallet: Wallet;
     transactionsHistory: any[];
     limit: number;
     refresh?: boolean;
     contactList?: any[];
-  }): Effect<Promise<{transactions: any[]; loadMore: boolean}>> =>
+    skipReduxUpdate?: boolean;
+  }): Effect<
+    Promise<{transactions: any[]; loadMore: boolean; hasConfirmingTxs: boolean}>
+  > =>
   async (
     dispatch,
     getState,
-  ): Promise<{transactions: any[]; loadMore: boolean}> => {
+  ): Promise<{
+    transactions: any[];
+    loadMore: boolean;
+    hasConfirmingTxs: boolean;
+  }> => {
     return new Promise(async (resolve, reject) => {
       let requestLimit = limit;
 
@@ -651,7 +688,11 @@ export const GetTransactionHistory =
         keyId = keyId;
       }
       if (!walletId || !wallet.isComplete()) {
-        return resolve({transactions: [], loadMore: false});
+        return resolve({
+          transactions: [],
+          loadMore: false,
+          hasConfirmingTxs: false,
+        });
       }
 
       const lastTransactionId = refresh
@@ -688,8 +729,8 @@ export const GetTransactionHistory =
           return (x as any).txid;
         });
 
+        let hasConfirmingTxs: boolean = false;
         if (!skip) {
-          let hasConfirmingTxs: boolean = false;
           let transactionHistory;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
@@ -716,19 +757,21 @@ export const GetTransactionHistory =
               }
             }
           }
-          // dispatch(
-          //   updateWalletTxHistory({
-          //     walletId: walletId,
-          //     keyId: keyId,
-          //     transactionHistory: {
-          //       transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
-          //       loadMore,
-          //       hasConfirmingTxs,
-          //     },
-          //   }),
-          // );
+          if (!skipReduxUpdate) {
+            dispatch(
+              updateWalletTxHistory({
+                walletId: walletId,
+                keyId: keyId,
+                transactionHistory: {
+                  transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
+                  loadMore,
+                  hasConfirmingTxs,
+                },
+              }),
+            );
+          }
         }
-        return resolve({transactions: newHistory, loadMore});
+        return resolve({transactions: newHistory, loadMore, hasConfirmingTxs});
       } catch (err) {
         const errString =
           err instanceof Error ? err.message : JSON.stringify(err);

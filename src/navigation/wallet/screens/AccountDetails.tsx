@@ -36,6 +36,7 @@ import {
   View,
 } from 'react-native';
 import {
+  Badge,
   Balance,
   BaseText,
   H2,
@@ -66,10 +67,7 @@ import {
 } from '../../../styles/colors';
 import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
-import {
-  setWalletScanning,
-  updatePortfolioBalance,
-} from '../../../store/wallet/wallet.actions';
+import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {
   BalanceUpdateError,
   CustomErrorMessage,
@@ -84,9 +82,9 @@ import {WalletRowProps} from '../../../components/list/WalletRow';
 import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
 import {
   ActiveOpacity,
+  BadgeContainer,
   HeaderRightContainer,
   HeaderTitleContainer,
-  Hr,
   ProposalBadgeContainer,
   ScreenGutter,
 } from '../../../components/styled/Containers';
@@ -211,28 +209,6 @@ const SearchComponentContainer = styled.View`
   margin-top: 16px;
 `;
 
-const BadgeContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-`;
-
-const Border = styled.View`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  padding: 0px 5px;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-`;
-
-const Badge = styled(BaseText)`
-  font-size: 10px;
-  font-weight: 400;
-  text-align: center;
-`;
-
 const WalletListHeader = styled.TouchableOpacity<{
   isActive: boolean;
 }>`
@@ -241,8 +217,6 @@ const WalletListHeader = styled.TouchableOpacity<{
 `;
 
 const CopyToClipboardContainer = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
   justify-content: center;
   height: 20px;
 `;
@@ -305,6 +279,19 @@ const Fiat = styled(BaseText)`
 const BalanceContainer = styled.View`
   padding: 0 15px 40px;
   flex-direction: column;
+`;
+
+const AssetsDataContainer = styled(Row)`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const HeaderListContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 `;
 
 const buildUIFormattedAssetsList = (
@@ -441,6 +428,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [key: string]: {
       transactions: any[];
       loadMore: boolean;
+      hasConfirmingTxs: boolean;
     };
   }>({});
   const [groupedHistory, setGroupedHistory] = useState<GroupedHistoryProps[]>(
@@ -536,6 +524,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             GetAccountTransactionHistory({
               wallets: keyFullWalletObjs,
               accountTransactionsHistory,
+              keyId: key.id,
               limit: TX_HISTORY_LIMIT,
               contactList,
               refresh,
@@ -610,7 +599,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   }, [keys]);
 
   const keyExtractorAssets = useCallback(item => item.id, []);
-  const keyExtractorTransaction = useCallback(item => item.txid, []);
+  const keyExtractorTransaction = useCallback(
+    item => `${item.txid}+${item.walletId}`,
+    [],
+  );
   const pendingTxpsKeyExtractor = useCallback(item => item.id, []);
 
   const getItemLayout = useCallback(
@@ -1165,15 +1157,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 )}
               </Row>
             </TouchableOpacity>
-            <BadgeContainer>
-              <Border>
-                <Badge>{formatCryptoAddress(accountItem.receiveAddress)}</Badge>
-                <CopyToClipboardContainer
-                  onPress={copyToClipboard}
-                  activeOpacity={ActiveOpacity}>
-                  {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
-                </CopyToClipboardContainer>
-              </Border>
+            <BadgeContainer style={{alignSelf: 'center', width: 'auto'}}>
+              <Badge>{formatCryptoAddress(accountItem.receiveAddress)}</Badge>
+              <CopyToClipboardContainer
+                onPress={copyToClipboard}
+                activeOpacity={ActiveOpacity}>
+                {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
+              </CopyToClipboardContainer>
             </BadgeContainer>
           </BalanceContainer>
           <LinkingButtons
@@ -1266,19 +1256,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             />
           </>
         ) : null}
-        <Row
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
-          <View
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}>
+        <AssetsDataContainer>
+          <HeaderListContainer>
             <WalletListHeader
               isActive={!showActivityTab}
               onPress={() => {
@@ -1293,7 +1272,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               }}>
               <H5>{t('Activity')}</H5>
             </WalletListHeader>
-          </View>
+          </HeaderListContainer>
           <SearchComponent<GroupedHistoryProps | AssetsByChainListProps>
             searchVal={searchVal}
             setSearchVal={setSearchVal}
@@ -1313,24 +1292,23 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               !showActivityTab ? 'accountassetsview' : 'accounthistoryview'
             }
           />
-        </Row>
+        </AssetsDataContainer>
       </>
     );
   }, [showActivityTab, memorizedAssetsByChainList, groupedHistory]);
 
   const renderDataSectionComponent = useMemo(() => {
-    return !searchVal && !selectedChainFilterOption
-      ? !showActivityTab
-        ? memorizedAssetsByChainList
-        : groupedHistory
-      : !showActivityTab
-      ? searchResultsAssets
-      : searchResultsHistory;
+    if (!searchVal && !selectedChainFilterOption) {
+      return showActivityTab ? groupedHistory : memorizedAssetsByChainList;
+    } else {
+      return showActivityTab ? searchResultsHistory : searchResultsAssets;
+    }
   }, [
+    searchVal,
+    selectedChainFilterOption,
     showActivityTab,
     searchResultsAssets,
     searchResultsHistory,
-    selectedChainFilterOption,
     groupedHistory,
     memorizedAssetsByChainList,
   ]);

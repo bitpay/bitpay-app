@@ -45,6 +45,7 @@ export enum WalletActionTypes {
   SET_QUEUED_TRANSACTIONS = 'WALLET/SET_QUEUED_TRANSACTIONS',
   SET_ENABLE_REPLACE_BY_FEE = 'WALLET/SET_ENABLE_REPLACE_BY_FEE',
   UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
+  UPDATE_ACCOUNT_TX_HISTORY = 'WALLET/UPDATE_ACCOUNT_TX_HISTORY',
   SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
   TOGGLE_HIDE_WALLET = 'WALLET/TOGGLE_HIDE_WALLET',
   TOGGLE_HIDE_ACCOUNT = 'WALLET/TOGGLE_HIDE_ACCOUNT',
@@ -278,6 +279,20 @@ interface updateWalletTxHistory {
   };
 }
 
+interface updateAccountTxHistory {
+  type: typeof WalletActionTypes.UPDATE_ACCOUNT_TX_HISTORY;
+  payload: {
+    keyId: string;
+    accountTransactionsHistory: {
+      [key: string]: {
+        transactions: any[];
+        loadMore: boolean;
+        hasConfirmingTxs: boolean;
+      };
+    };
+  };
+}
+
 interface syncWallets {
   type: typeof WalletActionTypes.SYNC_WALLETS;
   payload: {
@@ -346,6 +361,7 @@ export type WalletActionType =
   | setQueuedTransactions
   | setEnableReplaceByFee
   | updateWalletTxHistory
+  | updateAccountTxHistory
   | syncWallets
   | toggleHideWallet
   | toggleHideAccount

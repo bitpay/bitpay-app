@@ -455,6 +455,30 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.UPDATE_ACCOUNT_TX_HISTORY: {
+      const {keyId, accountTransactionsHistory} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (accountTransactionsHistory[wallet.id]) {
+          wallet.transactionHistory = accountTransactionsHistory[wallet.id];
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     case WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS: {
       return {
         ...state,
