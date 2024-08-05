@@ -142,6 +142,8 @@ const revokeToken = async (
   const url = CREDENTIALS.host + '/oauth/revoke';
   const body = {
     token: token.access_token,
+    client_id: CREDENTIALS.client_id,
+    client_secret: CREDENTIALS.client_secret,
   };
   const headers = {
     'Content-Type': 'application/json',
