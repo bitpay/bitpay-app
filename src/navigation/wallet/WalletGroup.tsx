@@ -17,6 +17,7 @@ import WalletDetails, {
   WalletDetailsScreenParamList,
 } from './screens/WalletDetails';
 import WalletSettings from './screens/WalletSettings';
+import AccountSettings from './screens/AccountSettings';
 import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
@@ -89,6 +90,7 @@ import {
   baseNavigatorOptions,
 } from '../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
+import {AccountRowProps} from '../../components/list/AccountListRow';
 
 interface WalletProps {
   Wallet: typeof Root;
@@ -109,11 +111,13 @@ export type WalletGroupParamList = {
   UpdateKeyOrWalletName: {
     key: Key;
     wallet?: {walletId: string; walletName: string | undefined};
-    context: 'key' | 'wallet';
+    accountItem?: AccountRowProps;
+    context: 'key' | 'wallet' | 'account';
   };
   AccountDetails: AccountDetailsScreenParamList;
   WalletDetails: WalletDetailsScreenParamList;
   WalletSettings: {walletId: string; key: Key};
+  AccountSettings: {accountItem: AccountRowProps; key: Key};
   CreationOptions: undefined;
   Import: ImportParamList;
   CreateEncryptPassword: {key: Key};
@@ -146,7 +150,7 @@ export type WalletGroupParamList = {
   TransactionProposalNotifications: {walletId?: string; keyId?: string};
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
-  WalletInformation: {wallet: WalletModel};
+  WalletInformation: {wallet?: WalletModel; accountItem?: AccountRowProps};
   ExportWallet: {
     wallet: WalletModel;
     keyObj: {
@@ -181,6 +185,7 @@ export enum WalletScreens {
   KEY_SETTINGS = 'KeySettings',
   UPDATE_KEY_OR_WALLET_NAME = 'UpdateKeyOrWalletName',
   ACCOUNT_DETAILS = 'AccountDetails',
+  ACCOUNT_SETTINGS = 'AccountSettings',
   WALLET_DETAILS = 'WalletDetails',
   WALLET_SETTINGS = 'WalletSettings',
   CREATION_OPTIONS = 'CreationOptions',
@@ -288,6 +293,10 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
       <Wallet.Screen
         name={WalletScreens.ACCOUNT_DETAILS}
         component={AccountDetails}
+      />
+      <Wallet.Screen
+        name={WalletScreens.ACCOUNT_SETTINGS}
+        component={AccountSettings}
       />
       <Wallet.Screen
         name={WalletScreens.WALLET_DETAILS}

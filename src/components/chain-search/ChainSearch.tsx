@@ -28,6 +28,7 @@ import ChainSelectorModal, {
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {View} from 'react-native';
 import {BitpaySupportedCoins, CurrencyOpts} from '../../constants/currencies';
+import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
@@ -83,7 +84,7 @@ export interface SearchableItem {
   };
   total?: number;
   accounts?: string[]; // Additional properties specific to WCV2SessionType
-  data: any;
+  data?: TransactionProposal[] | AssetsByChainData[]; // Additional properties specific to TransactionHistory or AssetList
 }
 
 interface SearchComponentProps<T extends SearchableItem> {
@@ -153,11 +154,7 @@ const SearchComponent = <T extends SearchableItem>({
               selectedChainFilterOption,
             )),
         );
-      } else if (
-        ['keysettings', 'send', 'receive', 'swap', 'buy', 'sell'].includes(
-          context,
-        )
-      ) {
+      } else if (['send', 'receive', 'swap', 'buy', 'sell'].includes(context)) {
         results = results.reduce((acc: T[], data) => {
           const normalizedCurrencyAbbreviation = normalizeText(
             data?.currencyAbbreviation,
@@ -200,7 +197,7 @@ const SearchComponent = <T extends SearchableItem>({
           return acc;
         }, []);
       } else if (
-        ['keyoverview', 'accountassetsview'].includes(context) &&
+        ['keysettings', 'keyoverview', 'accountassetsview'].includes(context) &&
         selectedChainFilterOption
       ) {
         results = results.reduce((acc: T[], data) => {
@@ -217,7 +214,7 @@ const SearchComponent = <T extends SearchableItem>({
         selectedChainFilterOption
       ) {
         results = results.map(result => {
-          const filteredData = result.data.filter(
+          const filteredData = result?.data?.filter(
             (tx: TransactionProposal) => tx.chain === selectedChainFilterOption,
           );
           return {...result, data: filteredData};

@@ -20,7 +20,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {AppActions} from '../../../store/app';
@@ -30,7 +30,6 @@ import {
   showDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {WrongPasswordError} from '../components/ErrorMessages';
-import {useDispatch} from 'react-redux';
 import {
   toggleHideWallet,
   updatePortfolioBalance,
@@ -89,7 +88,7 @@ const WalletSettings = () => {
     hideWallet,
   } = wallet;
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const buildEncryptModalConfig = (
     cta: (decryptedKey: {

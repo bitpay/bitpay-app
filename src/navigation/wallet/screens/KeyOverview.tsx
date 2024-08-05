@@ -273,7 +273,7 @@ const buildUIFormattedAccount: (
   }
 };
 
-const buildAccountList = (
+export const buildAccountList = (
   coins: Wallet[],
   defaultAltCurrencyIso: string,
   rates: Rates,

@@ -182,7 +182,7 @@ export interface AssetsByChainListProps extends SearchableItem {
 
 export interface GroupedHistoryProps extends SearchableItem {
   title: string;
-  data: any[];
+  data: TransactionProposal[];
   time: number;
 }
 
