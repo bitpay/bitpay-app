@@ -1,4 +1,10 @@
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   BaseText,
   HeaderTitle,
@@ -25,7 +31,6 @@ import {
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
 import {SlateDark, White} from '../../../styles/colors';
 import {
   openUrlWithInAppBrowser,
@@ -33,7 +38,7 @@ import {
 } from '../../../store/app/app.effects';
 import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
-import {buildNestedWalletList} from './KeyOverview';
+import {buildAccountList} from './KeyOverview';
 import {URL} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
@@ -63,7 +68,9 @@ import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
-import {WalletRowProps} from '../../../components/list/WalletRow';
+import AccountListRow, {
+  AccountRowProps,
+} from '../../../components/list/AccountListRow';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -120,23 +127,18 @@ const KeySettings = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const [searchVal, setSearchVal] = useState('');
-  const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
+  const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const coins = _key.wallets.filter(wallet => !wallet.credentials.token);
-  const tokens = _key.wallets.filter(wallet => wallet.credentials.token);
-  const wallets = buildNestedWalletList(
-    coins,
-    tokens,
-    defaultAltCurrency.isoCode,
-    rates,
-    dispatch,
-  );
+  const memorizedAccountList = useMemo(() => {
+    const coins = key.wallets.filter(wallet => !wallet.hideWallet);
+    return buildAccountList(coins, defaultAltCurrency.isoCode, rates, dispatch);
+  }, [dispatch, key.wallets, defaultAltCurrency.isoCode, rates]);
 
   const {keyName} = _key || {};
 
@@ -284,52 +286,42 @@ const KeySettings = () => {
     }
   };
 
-  const WalletList = ({wallets}: {wallets: WalletRowProps[]}) => {
+  const onPressItem = (item: AccountRowProps) => {
+    haptic('impactLight');
+    if (item.wallets.length > 0) {
+      navigation.navigate('AccountSettings', {
+        key: _key,
+        accountItem: item,
+      });
+    } else {
+      const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
+      const {
+        credentials: {walletId},
+      } = fullWalletObj;
+      if (!fullWalletObj.isComplete()) {
+        return;
+      }
+      navigation.navigate('WalletSettings', {
+        key: _key,
+        walletId,
+      });
+    }
+  };
+
+  const WalletList = ({accounts}: {accounts: AccountRowProps[]}) => {
     return (
       <>
-        {wallets.map(
-          ({
-            id,
-            currencyName,
-            chain,
-            img,
-            badgeImg,
-            isToken,
-            network,
-            hideWallet,
-            walletName,
-            isComplete,
-          }) => (
-            <TouchableOpacity
-              onPress={() => {
-                // Ignore if wallet is not complete
-                if (!isComplete) {
-                  return;
-                }
-                haptic('impactLight');
-                navigation.navigate('WalletSettings', {
-                  key: _key,
-                  walletId: id,
-                });
-              }}
-              key={id}
-              activeOpacity={ActiveOpacity}>
-              <WalletSettingsRow
-                id={id}
-                img={img}
-                badgeImg={badgeImg}
-                currencyName={currencyName}
-                chain={chain}
-                key={id}
-                isToken={isToken}
-                network={network}
-                hideWallet={hideWallet}
-                walletName={walletName}
-                isComplete={isComplete}
-              />
-            </TouchableOpacity>
-          ),
-        )}
+        {accounts.map((item, index) => {
+          return (
+            <AccountListRow
+              key={index}
+              id={item.id}
+              accountItem={item}
+              hideBalance={hideAllBalances}
+              onPress={() => onPressItem(item)}
+            />
+          );
+        })}
       </>
     );
   };
@@ -369,19 +361,21 @@ const KeySettings = () => {
         </WalletHeaderContainer>
 
         <SearchComponentContainer>
-          <SearchComponent<WalletRowProps>
+          <SearchComponent<AccountRowProps>
             searchVal={searchVal}
             setSearchVal={setSearchVal}
             searchResults={searchResults}
             setSearchResults={setSearchResults}
-            searchFullList={wallets}
+            searchFullList={memorizedAccountList}
             context={'keysettings'}
           />
         </SearchComponentContainer>
 
         <WalletList
-          wallets={
-            !searchVal && !selectedChainFilterOption ? wallets : searchResults
+          accounts={
+            !searchVal && !selectedChainFilterOption
+              ? memorizedAccountList
+              : searchResults
           }
         />
 

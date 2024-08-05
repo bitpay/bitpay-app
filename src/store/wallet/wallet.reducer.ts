@@ -361,6 +361,28 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.UPDATE_ACCOUNT_NAME: {
+      const {keyId, name, accountAddress} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      keyToUpdate.evmAccountsInfo ??= {};
+      keyToUpdate.evmAccountsInfo[accountAddress] = {
+        ...keyToUpdate.evmAccountsInfo[accountAddress],
+        name,
+      };
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     case WalletActionTypes.SET_WALLET_REFRESHING: {
       const {keyId, walletId, isRefreshing} = action.payload;
       const keyToUpdate = state.keys[keyId];
@@ -495,6 +517,28 @@ export const walletReducer = (
         return wallet;
       });
 
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.TOGGLE_HIDE_ACCOUNT: {
+      const {keyId, accountAddress} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      keyToUpdate.evmAccountsInfo ??= {};
+      keyToUpdate.evmAccountsInfo[accountAddress] = {
+        ...keyToUpdate.evmAccountsInfo[accountAddress],
+        hideAccount: !keyToUpdate.evmAccountsInfo[accountAddress]?.hideAccount,
+      };
       return {
         ...state,
         keys: {

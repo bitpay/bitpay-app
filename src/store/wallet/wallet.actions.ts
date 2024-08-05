@@ -159,6 +159,15 @@ export const updateWalletName = (payload: {
   payload,
 });
 
+export const updateAccountName = (payload: {
+  keyId: string;
+  name: string;
+  accountAddress: string;
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_ACCOUNT_NAME,
+  payload,
+});
+
 export const setWalletRefreshing = (payload: {
   keyId: string;
   walletId: string;
@@ -231,6 +240,14 @@ export const toggleHideWallet = (payload: {
   wallet: Wallet;
 }): WalletActionType => ({
   type: WalletActionTypes.TOGGLE_HIDE_WALLET,
+  payload,
+});
+
+export const toggleHideAccount = (payload: {
+  accountAddress: string;
+  keyId: string;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HIDE_ACCOUNT,
   payload,
 });
 

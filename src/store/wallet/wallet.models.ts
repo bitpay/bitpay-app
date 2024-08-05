@@ -58,8 +58,7 @@ export interface Key {
   keyName?: string;
   hideKeyBalance: boolean;
   isReadOnly: boolean;
-
-  // CLIENT ONLY
+  evmAccountsInfo?: {[key: string]: {name: string; hideAccount: boolean}};
   hardwareSource?: SupportedHardwareSource;
 }
 

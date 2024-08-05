@@ -121,6 +121,7 @@ export const buildTestBadge = (
   if (isToken || ['livenet', 'mainnet'].includes(network)) {
     return;
   }
+  console.log('$$$$$$$$$$$$1');
   // logic for mapping test networks to chain
   const badgeLabel = getProtocolName(chain, network);
 

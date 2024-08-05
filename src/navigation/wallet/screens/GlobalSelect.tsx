@@ -816,8 +816,69 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   const openWalletSelector = useCallback(
     async (selectObj: GlobalSelectObj) => {
-      setKeysWallets(
-        Object.keys(selectObj.availableWalletsByKey).map(keyId => {
+      const formatWallet = (wallet: Wallet) => {
+        const {
+          balance,
+          hideWallet,
+          currencyAbbreviation,
+          tokenAddress,
+          network,
+          chain,
+          credentials: {walletName: fallbackName, account},
+          walletName,
+        } = wallet;
+
+        const cryptoBalance = balance.crypto;
+        const cryptoLockedBalance = balance.cryptoLocked;
+        const fiatBalance = formatFiatAmount(
+          convertToFiat(
+            dispatch(
+              toFiat(
+                balance.sat,
+                defaultAltCurrency.isoCode,
+                currencyAbbreviation,
+                chain,
+                rates,
+                tokenAddress,
+              ),
+            ),
+            hideWallet,
+            network,
+          ),
+          defaultAltCurrency.isoCode,
+        );
+        const fiatLockedBalance = formatFiatAmount(
+          convertToFiat(
+            dispatch(
+              toFiat(
+                balance.satLocked,
+                defaultAltCurrency.isoCode,
+                currencyAbbreviation,
+                chain,
+                rates,
+                tokenAddress,
+              ),
+            ),
+            hideWallet,
+            network,
+          ),
+          defaultAltCurrency.isoCode,
+        );
+
+        return merge(cloneDeep(wallet), {
+          cryptoBalance,
+          cryptoLockedBalance,
+          fiatBalance,
+          fiatLockedBalance,
+          currencyAbbreviation: currencyAbbreviation.toUpperCase(),
+          network,
+          walletName: walletName || fallbackName,
+          account,
+        });
+      };
+
+      const keysWallets = Object.keys(selectObj.availableWalletsByKey).map(
+        keyId => {
           const key = keys[keyId];
           return {
             key: keyId,
@@ -825,68 +886,16 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             backupComplete: key.backupComplete,
             wallets: selectObj.availableWalletsByKey[keyId]
               .filter(wallet => !wallet.hideWallet)
-              .map(wallet => {
-                const {
-                  balance,
-                  hideWallet,
-                  currencyAbbreviation,
-                  tokenAddress,
-                  network,
-                  chain,
-                  credentials: {walletName: fallbackName, account},
-                  walletName,
-                } = wallet;
-                return merge(cloneDeep(wallet), {
-                  cryptoBalance: balance.crypto,
-                  cryptoLockedBalance: balance.cryptoLocked,
-                  fiatBalance: formatFiatAmount(
-                    convertToFiat(
-                      dispatch(
-                        toFiat(
-                          balance.sat,
-                          defaultAltCurrency.isoCode,
-                          currencyAbbreviation,
-                          chain,
-                          rates,
-                          tokenAddress,
-                        ),
-                      ),
-                      hideWallet,
-                      network,
-                    ),
-                    defaultAltCurrency.isoCode,
-                  ),
-                  fiatLockedBalance: formatFiatAmount(
-                    convertToFiat(
-                      dispatch(
-                        toFiat(
-                          balance.satLocked,
-                          defaultAltCurrency.isoCode,
-                          currencyAbbreviation,
-                          chain,
-                          rates,
-                          tokenAddress,
-                        ),
-                      ),
-                      hideWallet,
-                      network,
-                    ),
-                    defaultAltCurrency.isoCode,
-                  ),
-                  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-                  network,
-                  walletName: walletName || fallbackName,
-                  account,
-                });
-              }),
+              .map(formatWallet),
           };
-        }),
+        },
       );
+
+      setKeysWallets(keysWallets);
       setWalletSelectModalVisible(true);
     },
     [keys],
   );
-
   const onWalletSelect = useCallback(
     async (wallet: Wallet | undefined, addWalletData?: AddWalletData) => {
       if (useAsModal && globalSelectOnDismiss) {
