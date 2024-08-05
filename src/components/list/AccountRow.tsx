@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {CurrencyColumn, ActiveOpacity} from '../styled/Containers';
-import {H5} from '../styled/Text';
+import {H5, Badge} from '../styled/Text';
 import styled from 'styled-components/native';
 import {formatCryptoAddress} from '../../utils/helper-methods';
 import {SendToPillContainer} from '../../navigation/wallet/screens/send/confirm/Shared';
@@ -33,8 +33,19 @@ const RowContainer = styled.TouchableOpacity<{selected: boolean}>`
     `};
 `;
 
+const BadgeContainer = styled.View`
+  align-items: flex-start;
+`;
+
+export interface AccountSelectorProps {
+  id: string;
+  network: string;
+  receiveAddress: string;
+  accountNumber: number;
+}
+
 interface Props {
-  account: {receiveAddress: string; accountNumber: number};
+  account: AccountSelectorProps;
   chain: string;
   selected: boolean;
   onPress: () => void;
@@ -50,6 +61,11 @@ const AccountRow = ({account, chain, selected, onPress}: Props) => {
         <H5 ellipsizeMode="tail" numberOfLines={1}>
           Account {account.accountNumber}
         </H5>
+        {account.network !== 'livenet' && (
+          <BadgeContainer>
+            <Badge>{account.network}</Badge>
+          </BadgeContainer>
+        )}
       </CurrencyColumn>
       <CurrencyColumn>
         <AddressView>
