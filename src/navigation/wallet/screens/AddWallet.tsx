@@ -8,6 +8,7 @@ import {
   InfoTitle,
   Link,
   TextAlign,
+  Badge,
 } from '../../../components/styled/Text';
 import styled from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -110,6 +111,7 @@ import {SendToPillContainer} from './send/confirm/Shared';
 import {PillText} from '../components/SendToPill';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
+import {AccountSelectorProps} from '../../../components/list/AccountRow';
 
 export type AddWalletParamList = {
   key: Key;
@@ -227,6 +229,10 @@ export const AddPillContainer = styled(View)`
   max-width: 200px;
 `;
 
+const BadgeContainer = styled.View`
+  align-items: flex-start;
+`;
+
 const isWithinReceiveSettings = (parent: any): boolean => {
   return parent
     ?.getState()
@@ -274,9 +280,7 @@ const AddWallet = ({
   const nativeSegwitCurrency = IsSegwitCoin(_currencyAbbreviation);
   const [useNativeSegwit, setUseNativeSegwit] = useState(nativeSegwitCurrency);
   const [evmWallets, setEvmWallets] = useState<Wallet[] | undefined>();
-  const [accountsInfo, setAccountsInfo] = useState<
-    {receiveAddress: string; accountNumber: number}[]
-  >([]);
+  const [accountsInfo, setAccountsInfo] = useState<AccountSelectorProps[]>([]);
   const [associatedWallet, setAssociatedWallet] = useState<
     Wallet | undefined
   >();
@@ -448,7 +452,12 @@ const AddWallet = ({
       return !isSameChain;
     };
 
-    const _evmWallets = key.wallets.filter(isWalletSupported);
+    let _evmWallets = key.wallets.filter(isWalletSupported);
+    if (!isCustomToken) {
+      _evmWallets = _evmWallets.filter(
+        account => account.network === 'livenet',
+      );
+    }
     if (!_evmWallets?.length && isToken) {
       showMissingWalletMsg(chain);
       return;
@@ -459,18 +468,29 @@ const AddWallet = ({
       appDispatch: dispatch,
       wallets: _evmWallets,
     });
-    const _accountsInfo = _evmWallets.map(wallet => {
+    let _accountsInfo = _evmWallets.map(wallet => {
       return {
         receiveAddress: wallet.receiveAddress,
         accountNumber: wallet.credentials.account,
+        id: wallet.id,
+        network: wallet.network,
       };
-    }) as {receiveAddress: string; accountNumber: number}[];
+    }) as AccountSelectorProps[];
+    if (!isCustomToken) {
+      _accountsInfo = _accountsInfo.filter(
+        account => account.network === 'livenet',
+      );
+    }
     const uniqueAccountsInfo = _accountsInfo
       .filter(account => account.receiveAddress !== undefined)
       .filter(
         (account, index, self) =>
           index ===
-          self.findIndex(a => a.receiveAddress === account.receiveAddress),
+          self.findIndex(
+            a =>
+              a.receiveAddress === account.receiveAddress &&
+              a.network === account.network,
+          ),
       );
     setEvmWallets(_evmWallets);
     setAccountsInfo(uniqueAccountsInfo);
@@ -695,12 +715,12 @@ const AddWallet = ({
     ({item}) => (
       <AccountRow
         chain={chain}
-        selected={item.receiveAddress === associatedWallet?.receiveAddress}
+        selected={item.id === associatedWallet?.id}
         account={item}
         onPress={() => {
           haptic('soft');
           const _associatedWallet = evmWallets?.find(
-            wallet => wallet.receiveAddress === item.receiveAddress,
+            wallet => wallet.id === item.id,
           );
           if (_associatedWallet) {
             setAssociatedWallet(_associatedWallet);
@@ -865,6 +885,11 @@ const AddWallet = ({
                   <AccountLabel>
                     {t('Account')} {associatedWallet.credentials.account}
                   </AccountLabel>
+                  {associatedWallet.network !== 'livenet' && (
+                    <BadgeContainer>
+                      <Badge>{associatedWallet.network}</Badge>
+                    </BadgeContainer>
+                  )}
                 </View>
 
                 <View>
@@ -1047,7 +1072,7 @@ const AddWallet = ({
             <FlatList
               contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
               data={accountsInfo}
-              keyExtractor={item => item.receiveAddress}
+              keyExtractor={item => item.id}
               renderItem={renderAccounts}
             />
           </AssociatedAccountSelectionModalContainer>
