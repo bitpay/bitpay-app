@@ -615,7 +615,7 @@ export const GetAccountTransactionHistory =
                 limit,
                 contactList,
                 refresh,
-                skipReduxUpdate: true,
+                isAccountDetailsView: true,
               }),
             ),
           ]);
@@ -661,14 +661,14 @@ export const GetTransactionHistory =
     limit = TX_HISTORY_LIMIT,
     refresh = false,
     contactList = [],
-    skipReduxUpdate = false,
+    isAccountDetailsView = false,
   }: {
     wallet: Wallet;
     transactionsHistory: any[];
     limit: number;
     refresh?: boolean;
     contactList?: any[];
-    skipReduxUpdate?: boolean;
+    isAccountDetailsView?: boolean;
   }): Effect<
     Promise<{transactions: any[]; loadMore: boolean; hasConfirmingTxs: boolean}>
   > =>
@@ -726,6 +726,7 @@ export const GetTransactionHistory =
           contactList,
           tokenAddress,
           walletId,
+          isAccountDetailsView,
         );
 
         const array = transactions
@@ -764,7 +765,7 @@ export const GetTransactionHistory =
               }
             }
           }
-          if (!skipReduxUpdate) {
+          if (!isAccountDetailsView) {
             dispatch(
               updateWalletTxHistory({
                 walletId: walletId,
@@ -888,6 +889,7 @@ export const BuildUiFriendlyList = (
   contactList: any[] = [],
   tokenAddress: string | undefined,
   walletId: string,
+  isAccountDetailsView?: boolean,
 ): any[] => {
   return transactionList.map(transaction => {
     const {
@@ -950,16 +952,28 @@ export const BuildUiFriendlyList = (
           }
         } else {
           if (isSent) {
-            transaction.uiDescription = t('Sending');
+            transaction.uiDescription =
+              t('Sending') +
+              (isAccountDetailsView
+                ? ` ${currencyAbbreviation?.toUpperCase()}`
+                : '');
           }
 
           if (isMoved) {
-            transaction.uiDescription = t('Moving');
+            transaction.uiDescription =
+              t('Moving') +
+              (isAccountDetailsView
+                ? ` ${currencyAbbreviation?.toUpperCase()}`
+                : '');
           }
         }
 
         if (isReceived) {
-          transaction.uiDescription = t('Receiving');
+          transaction.uiDescription =
+            t('Receiving') +
+            (isAccountDetailsView
+              ? ` ${currencyAbbreviation?.toUpperCase()}`
+              : '');
         }
       }
     }
@@ -998,7 +1012,11 @@ export const BuildUiFriendlyList = (
               walletName: toWalletName,
             });
           } else {
-            transaction.uiDescription = t('Sent');
+            transaction.uiDescription =
+              t('Sent') +
+              (isAccountDetailsView
+                ? ` ${currencyAbbreviation?.toUpperCase()}`
+                : '');
           }
         }
       }
@@ -1011,7 +1029,11 @@ export const BuildUiFriendlyList = (
         } else if (contactName) {
           transaction.uiDescription = contactName;
         } else {
-          transaction.uiDescription = t('Received');
+          transaction.uiDescription =
+            t('Received') +
+            (isAccountDetailsView
+              ? ` ${currencyAbbreviation?.toUpperCase()}`
+              : '');
         }
       }
 
@@ -1024,7 +1046,11 @@ export const BuildUiFriendlyList = (
           transaction.uiDescription = message;
         } else {
           transaction.uiDescription =
-            transaction.customData?.recipientEmail || t('Sent to self');
+            transaction.customData?.recipientEmail ||
+            t('Sent to self') +
+              (isAccountDetailsView
+                ? ` ${currencyAbbreviation?.toUpperCase()}`
+                : '');
         }
       }
 

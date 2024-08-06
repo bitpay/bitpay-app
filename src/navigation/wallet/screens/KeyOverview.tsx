@@ -68,7 +68,7 @@ import {startGetRates} from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import {useTranslation} from 'react-i18next';
-import {buildUIFormattedWallet} from '../../../store/wallet/utils/wallet';
+import {buildAccountList} from '../../../store/wallet/utils/wallet';
 import {each} from 'lodash';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
@@ -89,8 +89,10 @@ LogBox.ignoreLogs([
 ]);
 
 export const KeyToggle = styled(TouchableOpacity)`
+  display: flex;
   align-items: center;
-  flex-direction: column;
+  justify-content: center;
+  flex-direction: row;
 `;
 
 export const KeyDropdown = styled.SafeAreaView`
@@ -160,142 +162,6 @@ const HeaderRightContainer = styled(_HeaderRightContainer)`
   flex-direction: row;
   align-items: center;
 `;
-
-const buildAccountBalance = (
-  defaultAltCurrencyIsoCode: string,
-  accountList: Partial<AccountRowProps>[],
-  currencyDisplay?: 'symbol',
-) => {
-  accountList.forEach(account => {
-    const initialBalances = {
-      fiatBalance: 0,
-      fiatLockedBalance: 0,
-      fiatConfirmedLockedBalance: 0,
-      fiatSpendableBalance: 0,
-      fiatPendingBalance: 0,
-    };
-    const accumulatedBalances =
-      account.wallets?.reduce((acc, wallet) => {
-        acc.fiatBalance += wallet.fiatBalance;
-        acc.fiatLockedBalance += wallet.fiatLockedBalance;
-        acc.fiatConfirmedLockedBalance += wallet.fiatConfirmedLockedBalance;
-        acc.fiatSpendableBalance += wallet.fiatSpendableBalance;
-        acc.fiatPendingBalance += wallet.fiatPendingBalance;
-        return acc;
-      }, initialBalances) ?? initialBalances;
-
-    Object.assign(account, accumulatedBalances);
-
-    const formatBalance = (fiatAmount: number) =>
-      formatFiat({
-        fiatAmount,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      });
-
-    account.fiatBalanceFormat = formatBalance(account.fiatBalance ?? 0);
-    account.fiatLockedBalanceFormat = formatBalance(
-      account.fiatLockedBalance ?? 0,
-    );
-    account.fiatConfirmedLockedBalanceFormat = formatBalance(
-      account.fiatConfirmedLockedBalance ?? 0,
-    );
-    account.fiatSpendableBalanceFormat = formatBalance(
-      account.fiatSpendableBalance ?? 0,
-    );
-    account.fiatPendingBalanceFormat = formatBalance(
-      account.fiatPendingBalance ?? 0,
-    );
-  });
-  return accountList as AccountRowProps[];
-};
-
-const buildUIFormattedAccount: (
-  accountList: Partial<AccountRowProps>[],
-  wallet: Wallet,
-  defaultAltCurrencyIsoCode: string,
-  rates: Rates,
-  dispatch: AppDispatch,
-) => void = (
-  accountList,
-  wallet,
-  defaultAltCurrencyIsoCode,
-  rates,
-  dispatch,
-) => {
-  const uiFormattedWallet = buildUIFormattedWallet(
-    wallet,
-    defaultAltCurrencyIsoCode,
-    rates,
-    dispatch,
-  ) as WalletRowProps;
-
-  let existingAccount = accountList.find(
-    ({receiveAddress}) => receiveAddress === wallet.receiveAddress,
-  ) as AccountRowProps | undefined;
-
-  const {
-    keyId,
-    chain,
-    credentials: {account, walletName},
-    receiveAddress,
-  } = wallet;
-
-  const isEVMCoin = IsEVMCoin(chain);
-
-  const newAccount: Partial<AccountRowProps> = {
-    id: _.uniqueId('account_'),
-    keyId,
-    chains: existingAccount ? [...existingAccount.chains, chain] : [chain],
-    accountName: isEVMCoin
-      ? `EVM Account ${account}`
-      : wallet.walletName || walletName,
-    wallets: existingAccount
-      ? [...existingAccount.wallets, uiFormattedWallet]
-      : [uiFormattedWallet],
-    accountNumber: account,
-    receiveAddress,
-    isMultiNetworkSupported: isEVMCoin ? true : false,
-    fiatBalance: uiFormattedWallet.fiatBalance,
-    fiatLockedBalance: uiFormattedWallet.fiatLockedBalance,
-    fiatConfirmedLockedBalance: uiFormattedWallet.fiatConfirmedLockedBalance,
-    fiatSpendableBalance: uiFormattedWallet.fiatSpendableBalance,
-    fiatPendingBalance: uiFormattedWallet.fiatPendingBalance,
-  };
-
-  if (existingAccount) {
-    const index = accountList.findIndex(
-      ({receiveAddress}) => receiveAddress === wallet.receiveAddress,
-    );
-    accountList[index] = newAccount;
-  } else {
-    accountList.push(newAccount);
-  }
-};
-
-export const buildAccountList = (
-  coins: Wallet[],
-  defaultAltCurrencyIso: string,
-  rates: Rates,
-  dispatch: AppDispatch,
-) => {
-  const accountList: Array<Partial<AccountRowProps>> = [];
-  coins.forEach(coin => {
-    buildUIFormattedAccount(
-      accountList,
-      coin,
-      defaultAltCurrencyIso,
-      rates,
-      dispatch,
-    );
-  });
-  const accountListWithBalances = buildAccountBalance(
-    defaultAltCurrencyIso,
-    accountList,
-    'symbol',
-  );
-  return accountListWithBalances;
-};
 
 const KeyOverview = () => {
   const {t} = useTranslation();
@@ -424,8 +290,13 @@ const KeyOverview = () => {
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
   const memorizedAccountList = useMemo(() => {
-    const coins = wallets.filter(wallet => !wallet.hideWallet);
-    return buildAccountList(coins, defaultAltCurrency.isoCode, rates, dispatch);
+    const _wallets = wallets.filter(wallet => !wallet.hideWallet);
+    return buildAccountList(
+      _wallets,
+      defaultAltCurrency.isoCode,
+      rates,
+      dispatch,
+    );
   }, [dispatch, wallets, defaultAltCurrency.isoCode, rates]);
 
   const keyOptions: Array<Option> = [];

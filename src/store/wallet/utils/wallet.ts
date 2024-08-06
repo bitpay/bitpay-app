@@ -19,7 +19,7 @@ import {
 } from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
+import {GetName, GetPrecision, GetProtocolPrefix, IsEVMCoin} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
@@ -49,9 +49,10 @@ import {
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
-import {find, isEqual} from 'lodash';
+import _, {find, isEqual} from 'lodash';
 import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {Invoice} from '../../../store/shop/shop.models';
+import {AccountRowProps} from '../../../components/list/AccountListRow';
 
 export const mapAbbreviationAndName =
   (
@@ -990,4 +991,93 @@ export const buildUIFormattedWallet: (
     receiveAddress,
     account: credentials.account,
   };
+};
+
+export const buildAccountList = (
+  wallets: Wallet[],
+  defaultAltCurrencyIsoCode: string,
+  rates: Rates,
+  dispatch: AppDispatch,
+) => {
+  const accountMap: {[key: string]: Partial<AccountRowProps>} = {};
+
+  const formatBalance = (fiatAmount: number) =>
+    formatFiat({
+      fiatAmount,
+      defaultAltCurrencyIsoCode,
+      currencyDisplay: 'symbol',
+    });
+
+  wallets.forEach(w => {
+    const uiFormattedWallet = buildUIFormattedWallet(
+      w,
+      defaultAltCurrencyIsoCode,
+      rates,
+      dispatch,
+    ) as WalletRowProps;
+
+    const {
+      keyId,
+      chain,
+      credentials: {account, walletName},
+      receiveAddress,
+    } = w;
+
+    if (!receiveAddress) {
+      // this should never happen
+      return;
+    }
+
+    const isEVMCoin = IsEVMCoin(chain);
+
+    const existingAccount = accountMap[receiveAddress];
+
+    if (!existingAccount) {
+      accountMap[receiveAddress] = {
+        id: _.uniqueId('account_'),
+        keyId,
+        chains: [chain],
+        accountName: isEVMCoin
+          ? `EVM Account ${account}`
+          : uiFormattedWallet.walletName,
+        wallets: [uiFormattedWallet],
+        accountNumber: account,
+        receiveAddress,
+        isMultiNetworkSupported: isEVMCoin,
+        fiatBalance: uiFormattedWallet.fiatBalance,
+        fiatLockedBalance: uiFormattedWallet.fiatLockedBalance,
+        fiatConfirmedLockedBalance:
+          uiFormattedWallet.fiatConfirmedLockedBalance,
+        fiatSpendableBalance: uiFormattedWallet.fiatSpendableBalance,
+        fiatPendingBalance: uiFormattedWallet.fiatPendingBalance,
+      };
+    } else {
+      existingAccount.chains!.push(chain);
+      existingAccount.wallets!.push(uiFormattedWallet);
+      existingAccount.fiatBalance! += uiFormattedWallet.fiatBalance;
+      existingAccount.fiatLockedBalance! += uiFormattedWallet.fiatLockedBalance;
+      existingAccount.fiatConfirmedLockedBalance! +=
+        uiFormattedWallet.fiatConfirmedLockedBalance;
+      existingAccount.fiatSpendableBalance! +=
+        uiFormattedWallet.fiatSpendableBalance;
+      existingAccount.fiatPendingBalance! +=
+        uiFormattedWallet.fiatPendingBalance;
+    }
+  });
+
+  Object.values(accountMap).forEach(account => {
+    account.fiatBalanceFormat = formatBalance(account.fiatBalance!);
+    account.fiatLockedBalanceFormat = formatBalance(account.fiatLockedBalance!);
+    account.fiatConfirmedLockedBalanceFormat = formatBalance(
+      account.fiatConfirmedLockedBalance!,
+    );
+    account.fiatSpendableBalanceFormat = formatBalance(
+      account.fiatSpendableBalance!,
+    );
+    account.fiatPendingBalanceFormat = formatBalance(
+      account.fiatPendingBalance!,
+    );
+  });
+
+  return Object.values(accountMap) as AccountRowProps[];
 };

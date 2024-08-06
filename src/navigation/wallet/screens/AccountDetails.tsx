@@ -22,7 +22,7 @@ import {
 import styled from 'styled-components/native';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import {
-  KeyToggle as AccountToggle,
+  KeyToggle as AccountToogle,
   CogIconContainer,
   KeyDropdown as AccountDropdown,
   KeyDropdownOptionsContainer as AccountDropdownOptionsContainer,
@@ -57,14 +57,7 @@ import {
 } from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {
-  Air,
-  LightBlack,
-  LuckySevens,
-  Slate30,
-  SlateDark,
-  White,
-} from '../../../styles/colors';
+import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
 import {startGetRates} from '../../../store/wallet/effects';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
@@ -84,7 +77,6 @@ import {
   ActiveOpacity,
   BadgeContainer,
   HeaderRightContainer,
-  HeaderTitleContainer,
   ProposalBadgeContainer,
   ScreenGutter,
 } from '../../../components/styled/Containers';
@@ -639,7 +631,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     navigation.setOptions({
       headerTitle: () => {
         return (
-          <AccountToggle
+          <AccountToogle
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleAccounts && !linkedCoinbase}
             onPress={() => setShowAccountDropdown(true)}>
@@ -650,15 +642,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 <EncryptPasswordImg />
               )
             ) : null}
-            <HeaderTitleContainer>
-              <HeaderTitle style={{textAlign: 'center'}}>
-                {accountItem?.accountName}
-              </HeaderTitle>
-              {(hasMultipleAccounts || linkedCoinbase) && (
-                <ChevronDownSvg style={{marginLeft: 10}} />
-              )}
-            </HeaderTitleContainer>
-          </AccountToggle>
+            <HeaderTitle>{accountItem?.accountName}</HeaderTitle>
+            {(hasMultipleAccounts || linkedCoinbase) && (
+              <ChevronDownSvg style={{marginLeft: 10}} />
+            )}
+          </AccountToogle>
         );
       },
       headerRight: () => {
