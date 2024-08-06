@@ -38,7 +38,6 @@ import {
 } from '../../../store/app/app.effects';
 import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
-import {buildAccountList} from './KeyOverview';
 import {URL} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
@@ -52,6 +51,7 @@ import {
   WrongPasswordError,
 } from '../components/ErrorMessages';
 import {
+  buildAccountList,
   buildWalletObj,
   generateKeyExportCode,
   mapAbbreviationAndName,
@@ -136,8 +136,13 @@ const KeySettings = () => {
   );
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const memorizedAccountList = useMemo(() => {
-    const coins = key.wallets.filter(wallet => !wallet.hideWallet);
-    return buildAccountList(coins, defaultAltCurrency.isoCode, rates, dispatch);
+    const _wallets = key.wallets.filter(wallet => !wallet.hideWallet);
+    return buildAccountList(
+      _wallets,
+      defaultAltCurrency.isoCode,
+      rates,
+      dispatch,
+    );
   }, [dispatch, key.wallets, defaultAltCurrency.isoCode, rates]);
 
   const {keyName} = _key || {};
