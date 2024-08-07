@@ -59,6 +59,7 @@ import {
 } from '../utils/changelly-utils';
 import {
   getEstimatedTimeStrFromRoute,
+  getProvidersPathFromRoute,
   getThorswapFixedCoin,
   getThorswapSpenderDataFromRoute,
   thorswapEnv,
@@ -101,6 +102,7 @@ import {PreLoadPartnersData, SwapCryptoCoin} from './SwapCryptoRoot';
 import {THORSWAP_DEFAULT_SLIPPAGE} from '../constants/ThorswapConstants';
 import throttle from 'lodash.throttle';
 import {SwapCryptoScreens} from '../SwapCryptoGroup';
+import Checkbox from '../../../../components/checkbox/Checkbox';
 
 export type SwapCryptoOffersScreenParams = {
   amountFrom: number;
@@ -135,6 +137,7 @@ export type SwapCryptoOffer = {
   quoteData?: any; // Changelly | Thorswap
   hasExtraOpts?: boolean;
   selectedSpenderKey?: ThorswapProvider;
+  selectedProvidersPath?: string;
   spenderSelectorExpanded?: boolean;
   slippage?: number;
   slippageOpts?: {
@@ -701,6 +704,8 @@ const SwapCryptoOffers: React.FC = () => {
         offers.thorswap.outOfLimitMsg = undefined;
         offers.thorswap.errorMsg = undefined;
         offers.thorswap.selectedSpenderKey = bestRoute.providers[0];
+        offers.thorswap.selectedProvidersPath =
+          getProvidersPathFromRoute(bestRoute);
         offers.thorswap.quoteData = thorswapQuoteData.routes;
 
         offers.thorswap.amountReceiving = bestRoute.expectedOutput;
@@ -815,6 +820,8 @@ const SwapCryptoOffers: React.FC = () => {
 
   const setSelectedThorswapRoute = (selectedRoute: ThorswapQuoteRoute) => {
     offers.thorswap.selectedSpenderKey = selectedRoute.providers[0];
+    offers.thorswap.selectedProvidersPath =
+      getProvidersPathFromRoute(selectedRoute);
     offers.thorswap.spenderSelectorExpanded = false;
     if (selectedRoute.timeEstimates) {
       offers.thorswap.estimatedTime = getEstimatedTimeStrFromRoute(
@@ -1494,31 +1501,42 @@ const SwapCryptoOffers: React.FC = () => {
                         <>
                           <OfferExtraOptsProvidersContainer
                             onPress={() => {
-                              expandProviderSelector(offer);
+                              if (
+                                (offer.quoteData as ThorswapQuoteRoute[]) &&
+                                Array.isArray(offer.quoteData) &&
+                                offer.quoteData.length > 1
+                              ) {
+                                expandProviderSelector(offer);
+                              }
                             }}>
                             <OfferExpandibleItem>
                               <OfferDataInfoTitle>
                                 {t('Provider')}
                               </OfferDataInfoTitle>
                               <OfferRow>
-                                {offer.selectedSpenderKey ? (
-                                  <OfferDataInfoText>
-                                    {
-                                      ThorswapProviderNames[
-                                        offer.selectedSpenderKey
-                                      ]
-                                    }
+                                {offer.selectedProvidersPath ? (
+                                  <OfferDataInfoText
+                                    style={{maxWidth: 220}}
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail">
+                                    {offer.selectedProvidersPath}
                                   </OfferDataInfoText>
                                 ) : null}
-                                <SelectorArrowContainer>
-                                  {offer.spenderSelectorExpanded ? (
-                                    <ArrowUpSvg {...{width: 13, height: 13}} />
-                                  ) : (
-                                    <ArrowDownSvg
-                                      {...{width: 13, height: 13}}
-                                    />
-                                  )}
-                                </SelectorArrowContainer>
+                                {(offer.quoteData as ThorswapQuoteRoute[]) &&
+                                Array.isArray(offer.quoteData) &&
+                                offer.quoteData.length > 1 ? (
+                                  <SelectorArrowContainer>
+                                    {offer.spenderSelectorExpanded ? (
+                                      <ArrowUpSvg
+                                        {...{width: 13, height: 13}}
+                                      />
+                                    ) : (
+                                      <ArrowDownSvg
+                                        {...{width: 13, height: 13}}
+                                      />
+                                    )}
+                                  </SelectorArrowContainer>
+                                ) : null}
                               </OfferRow>
                             </OfferExpandibleItem>
 
@@ -1534,43 +1552,68 @@ const SwapCryptoOffers: React.FC = () => {
                                       ) => {
                                         return (
                                           <TouchableOpacity
-                                            key={route.providers[0]}
+                                            key={getProvidersPathFromRoute(
+                                              route,
+                                            )}
                                             style={{marginBottom: 10}}
                                             onPress={() => {
                                               setSelectedThorswapRoute(route);
                                             }}>
                                             <OfferRow>
-                                              <OfferDataInfoText>
-                                                {
-                                                  ThorswapProviderNames[
-                                                    route.providers[0]
-                                                  ]
-                                                }
-                                              </OfferDataInfoText>
+                                              <OfferColumn
+                                                style={{
+                                                  alignItems: 'flex-start',
+                                                }}>
+                                                <>
+                                                  <OfferDataInfoText
+                                                    style={{maxWidth: 270}}
+                                                    numberOfLines={1}
+                                                    ellipsizeMode="tail">
+                                                    {getProvidersPathFromRoute(
+                                                      route,
+                                                    )}
+                                                  </OfferDataInfoText>
+                                                  {route.expectedOutput ? (
+                                                    <OfferDataEstimatedValues>
+                                                      {Number(
+                                                        route.expectedOutput,
+                                                      )
+                                                        .toFixed(8)
+                                                        .replace(
+                                                          /\.?0+$/,
+                                                          '',
+                                                        )}{' '}
+                                                      {coinTo.toUpperCase()}
+                                                    </OfferDataEstimatedValues>
+                                                  ) : null}
+                                                  {route.timeEstimates ? (
+                                                    <OfferDataEstimatedValues>
+                                                      {getEstimatedTimeStrFromRoute(
+                                                        route.timeEstimates,
+                                                      )}
+                                                    </OfferDataEstimatedValues>
+                                                  ) : null}
+                                                </>
+                                              </OfferColumn>
                                               <OfferColumn
                                                 style={{
                                                   alignItems: 'flex-end',
                                                 }}>
-                                                {route.expectedOutput ? (
-                                                  <OfferDataInfoText>
-                                                    {Number(
-                                                      route.expectedOutput,
+                                                <Checkbox
+                                                  radio={true}
+                                                  onPress={() =>
+                                                    setSelectedThorswapRoute(
+                                                      route,
                                                     )
-                                                      .toFixed(8)
-                                                      .replace(
-                                                        /\.?0+$/,
-                                                        '',
-                                                      )}{' '}
-                                                    {coinTo.toUpperCase()}
-                                                  </OfferDataInfoText>
-                                                ) : null}
-                                                {route.timeEstimates ? (
-                                                  <OfferDataEstimatedValues>
-                                                    {getEstimatedTimeStrFromRoute(
-                                                      route.timeEstimates,
-                                                    )}
-                                                  </OfferDataEstimatedValues>
-                                                ) : null}
+                                                  }
+                                                  checked={
+                                                    !!offer.selectedProvidersPath &&
+                                                    offer.selectedProvidersPath ===
+                                                      getProvidersPathFromRoute(
+                                                        route,
+                                                      )
+                                                  }
+                                                />
                                               </OfferColumn>
                                             </OfferRow>
                                           </TouchableOpacity>

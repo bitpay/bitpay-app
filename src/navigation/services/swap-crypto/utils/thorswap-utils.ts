@@ -2,6 +2,7 @@ import {t} from 'i18next';
 import cloneDeep from 'lodash.clonedeep';
 import {
   ThorswapProvider,
+  ThorswapProviderNames,
   ThorswapQuoteRoute,
   ThorswapRouteTimeEstimates,
   ThorswapTrackingStatus,
@@ -559,6 +560,29 @@ export const isCoinSupportedByThorswap = (
     default:
       return thorswapSupportedCoins.includes(coin.toLowerCase());
   }
+};
+
+export const getProvidersPathFromRoute = (
+  route: ThorswapQuoteRoute,
+): string | undefined => {
+  let path: string | undefined;
+
+  if (typeof route.providers === 'string') {
+    path = ThorswapProviderNames[route.providers[0]] || 'Unknown';
+  } else if (Array.isArray(route.providers)) {
+    route.providers.forEach((p, index) => {
+      const provider = ThorswapProviderNames[p] || 'Unknown';
+      if (index === 0) {
+        path = provider;
+      } else {
+        path = path + ' > ' + provider;
+      }
+    });
+  } else {
+    path = 'Unknown';
+  }
+
+  return path;
 };
 
 export const getNameFromThorswapFullName = (
