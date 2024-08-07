@@ -24,7 +24,7 @@ import {
 import {ActivityIndicator, Platform} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {SearchableItem} from '../chain-search/ChainSearch';
-import {IsEVMCoin} from '../../store/wallet/utils/currency';
+import {IsERCToken} from '../../store/wallet/utils/currency';
 import GasTokenSvg from '../../../assets/img/gas-token.svg';
 
 const SpinnerContainer = styled.View`
@@ -56,20 +56,20 @@ export interface WalletRowProps extends SearchableItem {
   chainName: string;
   walletName?: string;
   cryptoBalance: string;
-  cryptoLockedBalance?: string;
-  cryptoConfirmedLockedBalance?: string;
-  cryptoSpendableBalance?: string;
-  cryptoPendingBalance?: string;
-  fiatBalance: number;
-  fiatLockedBalance: number;
-  fiatConfirmedLockedBalance: number;
-  fiatSpendableBalance: number;
-  fiatPendingBalance: number;
-  fiatBalanceFormat: string;
-  fiatLockedBalanceFormat: string;
-  fiatConfirmedLockedBalanceFormat: string;
-  fiatSpendableBalanceFormat: string;
-  fiatPendingBalanceFormat: string;
+  cryptoLockedBalance: string;
+  cryptoConfirmedLockedBalance: string;
+  cryptoSpendableBalance: string;
+  cryptoPendingBalance: string;
+  fiatBalance?: number;
+  fiatLockedBalance?: number;
+  fiatConfirmedLockedBalance?: number;
+  fiatSpendableBalance?: number;
+  fiatPendingBalance?: number;
+  fiatBalanceFormat?: string;
+  fiatLockedBalanceFormat?: string;
+  fiatConfirmedLockedBalanceFormat?: string;
+  fiatSpendableBalanceFormat?: string;
+  fiatPendingBalanceFormat?: string;
   isToken?: boolean;
   network: Network;
   isRefreshing?: boolean;
@@ -212,7 +212,7 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
             {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
           </ListItemSubText>
-          {buildGasTokenBadge(IsEVMCoin(currencyAbbreviation))}
+          {buildGasTokenBadge(!IsERCToken(currencyAbbreviation, chain))}
           {buildTestBadge(network, chain, isToken)}
           {buildUncompleteBadge(isComplete)}
         </Row>

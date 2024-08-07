@@ -439,6 +439,12 @@ export const BadgeContainer = styled.View`
   gap: 2px;
 `;
 
+export const EmptyListContainer = styled.View`
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 50px;
+`;
+
 interface SellTxIconProps {
   height?: number;
   width?: number;

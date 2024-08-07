@@ -15,7 +15,6 @@ import {
 import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {WalletRowProps} from '../../../components/list/WalletRow';
 import {
   Balance,
   BaseText,
@@ -30,7 +29,7 @@ import {
   ScreenGutter,
   HeaderRightContainer as _HeaderRightContainer,
   ProposalBadgeContainer,
-  Row,
+  EmptyListContainer,
 } from '../../../components/styled/Containers';
 import {
   showBottomNotificationModal,
@@ -47,7 +46,6 @@ import {
   White,
 } from '../../../styles/colors';
 import {
-  formatFiat,
   formatFiatAmount,
   shouldScale,
   sleep,
@@ -57,12 +55,7 @@ import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletGroupParamList} from '../WalletGroup';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
-import {
-  AppDispatch,
-  useAppDispatch,
-  useAppSelector,
-  useLogger,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {startGetRates} from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
@@ -83,6 +76,7 @@ import AccountListRow, {
 } from '../../../components/list/AccountListRow';
 import _ from 'lodash';
 import DropdownOption from '../components/DropdownOption';
+import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -290,14 +284,17 @@ const KeyOverview = () => {
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
   const memorizedAccountList = useMemo(() => {
-    const _wallets = wallets.filter(wallet => !wallet.hideWallet);
+    const updatedKey = {
+      ...key,
+      wallets: key.wallets.filter(wallet => !wallet.hideWallet),
+    };
     return buildAccountList(
-      _wallets,
+      updatedKey,
       defaultAltCurrency.isoCode,
       rates,
       dispatch,
     );
-  }, [dispatch, wallets, defaultAltCurrency.isoCode, rates]);
+  }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
 
   const keyOptions: Array<Option> = [];
 
@@ -373,15 +370,18 @@ const KeyOverview = () => {
   const onPressItem = (item: AccountRowProps) => {
     haptic('impactLight');
 
-    if (item.wallets.length > 0) {
+    if (IsEVMCoin(item.chains[0])) {
+      const accountList = memorizedAccountList.filter(({chains}) =>
+        IsEVMCoin(chains[0]),
+      ); // pass only evm accounts
       navigation.navigate('AccountDetails', {
         key,
         accountItem: item,
-        accountList: memorizedAccountList,
+        accountList,
       });
       return;
     }
-    const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
+    const fullWalletObj = key.wallets.find(k => k.id === item.wallets[0].id)!;
     if (!fullWalletObj.isComplete()) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
@@ -394,7 +394,7 @@ const KeyOverview = () => {
             if (status?.wallet?.status === 'complete') {
               fullWalletObj.openWallet({}, () => {
                 navigation.navigate('WalletDetails', {
-                  walletId: item.id,
+                  walletId: fullWalletObj.credentials.walletId,
                   key,
                 });
               });
@@ -410,7 +410,7 @@ const KeyOverview = () => {
     } else {
       navigation.navigate('WalletDetails', {
         key,
-        walletId: item.id,
+        walletId: fullWalletObj.credentials.walletId,
       });
     }
   };
@@ -463,6 +463,15 @@ const KeyOverview = () => {
     );
   }, []);
 
+  const listEmptyComponent = useCallback(() => {
+    return (
+      <EmptyListContainer>
+        <H5>{t("It's a ghost town in here")}</H5>
+        <GhostSvg style={{marginTop: 20}} />
+      </EmptyListContainer>
+    );
+  }, []);
+
   const renderDataComponent = useMemo(() => {
     return !searchVal && !selectedChainFilterOption
       ? memorizedAccountList
@@ -500,6 +509,7 @@ const KeyOverview = () => {
         ListFooterComponent={renderListFooterComponent}
         data={renderDataComponent}
         renderItem={memoizedRenderItem}
+        ListEmptyComponent={listEmptyComponent}
       />
 
       {keyOptions.length > 0 ? (

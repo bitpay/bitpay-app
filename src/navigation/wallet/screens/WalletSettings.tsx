@@ -81,7 +81,13 @@ const WalletSettings = () => {
   const navigation = useNavigation();
 
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const evmAccountsInfo = useAppSelector(
+    ({WALLET}) => WALLET.keys[key.id].evmAccountsInfo,
+  );
   const wallet = findWalletById(wallets, walletId) as Wallet;
+  const hideAccount = wallet.receiveAddress
+    ? evmAccountsInfo?.[wallet.receiveAddress]?.hideAccount
+    : false;
   const {
     walletName,
     credentials: {walletName: credentialsWalletName},
@@ -149,29 +155,32 @@ const WalletSettings = () => {
 
         <Hr />
 
-        <SettingView>
-          <WalletSettingsTitle>{t('Hide Wallet')}</WalletSettingsTitle>
+        {!hideAccount ? (
+          <>
+            <SettingView>
+              <WalletSettingsTitle>{t('Hide Wallet')}</WalletSettingsTitle>
 
-          <ToggleSwitch
-            onChange={async () => {
-              dispatch(toggleHideWallet({wallet}));
-              dispatch(startUpdateWalletStatus({key, wallet, force: true}));
-              await sleep(1000);
-              dispatch(updatePortfolioBalance());
-            }}
-            isEnabled={!!hideWallet}
-          />
-        </SettingView>
-        {!hideWallet ? (
-          <Info>
-            <InfoTriangle />
-            <InfoDescription>
-              {t('This wallet will not be removed from the device.')}
-            </InfoDescription>
-          </Info>
+              <ToggleSwitch
+                onChange={async () => {
+                  dispatch(toggleHideWallet({wallet}));
+                  dispatch(startUpdateWalletStatus({key, wallet, force: true}));
+                  await sleep(1000);
+                  dispatch(updatePortfolioBalance());
+                }}
+                isEnabled={!!hideWallet}
+              />
+            </SettingView>
+            {!hideWallet ? (
+              <Info>
+                <InfoTriangle />
+                <InfoDescription>
+                  {t('This wallet will not be removed from the device.')}
+                </InfoDescription>
+              </Info>
+            ) : null}
+            <Hr />
+          </>
         ) : null}
-
-        <Hr />
 
         <VerticalPadding>
           <Title>{t('Advanced')}</Title>

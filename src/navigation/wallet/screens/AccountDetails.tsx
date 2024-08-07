@@ -42,6 +42,7 @@ import {
   H2,
   H5,
   HeaderTitle,
+  Link,
   ProposalBadge,
 } from '../../../components/styled/Text';
 import {
@@ -76,6 +77,7 @@ import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
 import {
   ActiveOpacity,
   BadgeContainer,
+  EmptyListContainer,
   HeaderRightContainer,
   ProposalBadgeContainer,
   ScreenGutter,
@@ -232,12 +234,6 @@ const SkeletonContainer = styled.View`
   margin-bottom: 20px;
 `;
 
-const EmptyListContainer = styled.View`
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 50px;
-`;
-
 const LockedBalanceContainer = styled.TouchableOpacity`
   flex-direction: row;
   padding: ${ScreenGutter};
@@ -286,6 +282,13 @@ const HeaderListContainer = styled.View`
   align-items: center;
 `;
 
+const AddCustomTokenContainer = styled.View`
+  margin: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const buildUIFormattedAssetsList = (
   assetsByChainList: Array<AssetsByChainListProps>,
   wallet: WalletRowProps,
@@ -300,11 +303,12 @@ const buildUIFormattedAssetsList = (
       ({chain}) => chain === wallet.chain,
     );
     if (chainData) {
-      chainData.fiatBalance += wallet.fiatBalance;
-      chainData.fiatLockedBalance += wallet.fiatLockedBalance;
-      chainData.fiatConfirmedLockedBalance += wallet.fiatConfirmedLockedBalance;
-      chainData.fiatSpendableBalance += wallet.fiatSpendableBalance;
-      chainData.fiatPendingBalance += wallet.fiatPendingBalance;
+      chainData.fiatBalance += wallet.fiatBalance ?? 0;
+      chainData.fiatLockedBalance += wallet.fiatLockedBalance ?? 0;
+      chainData.fiatConfirmedLockedBalance +=
+        wallet.fiatConfirmedLockedBalance ?? 0;
+      chainData.fiatSpendableBalance += wallet.fiatSpendableBalance ?? 0;
+      chainData.fiatPendingBalance += wallet.fiatPendingBalance ?? 0;
       chainData.chainAssetsList.push(wallet);
 
       chainData.fiatBalanceFormat = formatFiat({
@@ -343,11 +347,11 @@ const buildUIFormattedAssetsList = (
           chain: wallet.chain,
           chainImg: wallet.badgeImg || wallet.img,
           chainName: wallet.chainName,
-          fiatBalance: wallet.fiatBalance,
-          fiatLockedBalance: wallet.fiatLockedBalance,
-          fiatConfirmedLockedBalance: wallet.fiatConfirmedLockedBalance,
-          fiatSpendableBalance: wallet.fiatSpendableBalance,
-          fiatPendingBalance: wallet.fiatPendingBalance,
+          fiatBalance: wallet.fiatBalance ?? 0,
+          fiatLockedBalance: wallet.fiatLockedBalance ?? 0,
+          fiatConfirmedLockedBalance: wallet.fiatConfirmedLockedBalance ?? 0,
+          fiatSpendableBalance: wallet.fiatSpendableBalance ?? 0,
+          fiatPendingBalance: wallet.fiatPendingBalance ?? 0,
           fiatBalanceFormat: formatFiat({
             fiatAmount: wallet.fiatBalance ?? 0,
             defaultAltCurrencyIsoCode,
@@ -606,7 +610,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [],
   );
 
-  const listFooterComponent = () => {
+  const listFooterComponentTxsTab = () => {
     return (
       <>
         {!groupedHistory?.length ? null : (
@@ -620,6 +624,25 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           </SkeletonContainer>
         ) : null}
       </>
+    );
+  };
+
+  const listFooterComponentAssetsTab = () => {
+    return (
+      <AddCustomTokenContainer>
+        <BaseText>{t("Don't see your token?")}</BaseText>
+        <Link
+          onPress={() => {
+            haptic('soft');
+            navigation.navigate('AddWallet', {
+              key,
+              isCustomToken: true,
+              isToken: true,
+            });
+          }}>
+          {t('Add Custom Token')}
+        </Link>
+      </AddCustomTokenContainer>
     );
   };
 
@@ -1007,46 +1030,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   if (!key?.methods?.isPrivKeyEncrypted()) {
     keyOptions.push({
-      img: <Icons.Wallet width="15" height="15" />,
-      title: t('Add Wallet'),
-      description: t(
-        'Choose another currency you would like to add to your key.',
-      ),
-      onPress: async () => {
-        haptic('impactLight');
-        await sleep(500);
-        navigation.navigate('AddingOptions', {
-          key,
-        });
-      },
-    });
-
-    if (!key?.isReadOnly) {
-      keyOptions.push({
-        img: <Icons.Encrypt />,
-        title: t('Encrypt your Key'),
-        description: t(
-          'Prevent an unauthorized user from sending funds out of your wallet.',
-        ),
-        onPress: async () => {
-          haptic('impactLight');
-          await sleep(500);
-          navigation.navigate('CreateEncryptPassword', {
-            key,
-          });
-        },
-      });
-    }
-
-    keyOptions.push({
       img: <Icons.Settings />,
-      title: t('Key Settings'),
-      description: t('View all the ways to manage and configure your key.'),
+      title: t('Account Settings'),
+      description: t('View all the ways to manage and configure your account.'),
       onPress: async () => {
         haptic('impactLight');
         await sleep(500);
-        navigation.navigate('KeySettings', {
+        navigation.navigate('AccountSettings', {
           key,
+          selectedAccountAddress: accountItem.receiveAddress,
         });
       },
     });
@@ -1197,12 +1189,18 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             }}
             receive={{
               cta: () => {
-                navigation.navigate('GlobalSelect', {context: 'receive'});
+                navigation.navigate('GlobalSelect', {
+                  context: 'receive',
+                  selectedAccountAddress: accountItem.receiveAddress,
+                });
               },
             }}
             send={{
               cta: () => {
-                navigation.navigate('GlobalSelect', {context: 'send'});
+                navigation.navigate('GlobalSelect', {
+                  context: 'send',
+                  selectedAccountAddress: accountItem.receiveAddress,
+                });
               },
             }}
           />
@@ -1312,6 +1310,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           />
         }
         ListHeaderComponent={renderListHeaderComponent}
+        ListFooterComponent={
+          !showActivityTab
+            ? listFooterComponentAssetsTab
+            : listFooterComponentTxsTab
+        }
         keyExtractor={
           !showActivityTab ? keyExtractorAssets : keyExtractorTransaction
         }
@@ -1325,7 +1328,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           stickyHeaderIndices: [groupedHistory?.length],
           stickySectionHeadersEnabled: true,
           ItemSeparatorComponent: itemSeparatorComponent,
-          ListFooterComponent: listFooterComponent,
           onMomentumScrollBegin: () => setIsScrolling(true),
           onMomentumScrollEnd: () => setIsScrolling(false),
           onEndReached: () => {

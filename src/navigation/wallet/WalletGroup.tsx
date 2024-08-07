@@ -117,7 +117,7 @@ export type WalletGroupParamList = {
   AccountDetails: AccountDetailsScreenParamList;
   WalletDetails: WalletDetailsScreenParamList;
   WalletSettings: {walletId: string; key: Key};
-  AccountSettings: {accountItem: AccountRowProps; key: Key};
+  AccountSettings: {key: Key; selectedAccountAddress: string};
   CreationOptions: undefined;
   Import: ImportParamList;
   CreateEncryptPassword: {key: Key};

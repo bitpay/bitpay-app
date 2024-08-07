@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -16,7 +17,7 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {View, TouchableOpacity, ScrollView} from 'react-native';
+import {View, TouchableOpacity, ScrollView, FlatList} from 'react-native';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -68,17 +69,16 @@ import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
-import AccountListRow, {
-  AccountRowProps,
-} from '../../../components/list/AccountListRow';
+import {AccountRowProps} from '../../../components/list/AccountListRow';
+import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
+import {IsEVMCoin} from '../../../store/wallet/utils/currency';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const ScrollContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
+const WalletSettingsListContainer = styled.View`
+  padding: ${ScreenGutter};
 `;
 
 const Title = styled(BaseText)`
@@ -89,7 +89,7 @@ const Title = styled(BaseText)`
 `;
 
 const WalletHeaderContainer = styled.View`
-  padding-top: ${ScreenGutter};
+  padding-top: 15px;
   flex-direction: row;
   align-items: center;
 `;
@@ -127,7 +127,7 @@ const KeySettings = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
@@ -136,15 +136,18 @@ const KeySettings = () => {
   );
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const memorizedAccountList = useMemo(() => {
-    const _wallets = key.wallets.filter(wallet => !wallet.hideWallet);
     return buildAccountList(
-      _wallets,
+      _key,
       defaultAltCurrency.isoCode,
       rates,
       dispatch,
+      true,
     );
-  }, [dispatch, key.wallets, defaultAltCurrency.isoCode, rates]);
+  }, [dispatch, _key, defaultAltCurrency.isoCode, rates]);
 
+  const accountInfo = useAppSelector(
+    ({WALLET}) => WALLET.keys[_key.id].evmAccountsInfo,
+  );
   const {keyName} = _key || {};
 
   useEffect(() => {
@@ -293,13 +296,13 @@ const KeySettings = () => {
 
   const onPressItem = (item: AccountRowProps) => {
     haptic('impactLight');
-    if (item.wallets.length > 0) {
+    if (IsEVMCoin(item.chains[0])) {
       navigation.navigate('AccountSettings', {
         key: _key,
-        accountItem: item,
+        selectedAccountAddress: item.receiveAddress,
       });
     } else {
-      const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
+      const fullWalletObj = key.wallets.find(k => k.id === item.wallets[0].id)!;
       const {
         credentials: {walletId},
       } = fullWalletObj;
@@ -313,27 +316,9 @@ const KeySettings = () => {
     }
   };
 
-  const WalletList = ({accounts}: {accounts: AccountRowProps[]}) => {
+  const renderListHeaderComponent = useCallback(() => {
     return (
       <>
-        {accounts.map((item, index) => {
-          return (
-            <AccountListRow
-              key={index}
-              id={item.id}
-              accountItem={item}
-              hideBalance={hideAllBalances}
-              onPress={() => onPressItem(item)}
-            />
-          );
-        })}
-      </>
-    );
-  };
-
-  return (
-    <WalletSettingsContainer>
-      <ScrollContainer ref={scrollViewRef}>
         <WalletNameContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
@@ -375,15 +360,13 @@ const KeySettings = () => {
             context={'keysettings'}
           />
         </SearchComponentContainer>
+      </>
+    );
+  }, []);
 
-        <WalletList
-          accounts={
-            !searchVal && !selectedChainFilterOption
-              ? memorizedAccountList
-              : searchResults
-          }
-        />
-
+  const renderListFooterComponent = useCallback(() => {
+    return (
+      <>
         {_key && !_key.isReadOnly ? (
           <VerticalPadding style={{alignItems: 'center'}}>
             <AddWalletText
@@ -571,7 +554,39 @@ const KeySettings = () => {
             <WalletSettingsTitle>{t('Delete')}</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
-      </ScrollContainer>
+      </>
+    );
+  }, []);
+
+  const memoizedRenderItem = useCallback(
+    ({item, index}: {item: AccountRowProps; index: number}) => {
+      return (
+        <AccountSettingsRow
+          key={index.toString()}
+          id={item.id}
+          accountItem={item}
+          accountInfo={accountInfo}
+          onPress={() => onPressItem(item)}
+        />
+      );
+    },
+    [_key],
+  );
+
+  return (
+    <WalletSettingsContainer>
+      <WalletSettingsListContainer>
+        <FlatList<AccountRowProps>
+          ListHeaderComponent={renderListHeaderComponent}
+          ListFooterComponent={renderListFooterComponent}
+          data={
+            !searchVal && !selectedChainFilterOption
+              ? memorizedAccountList
+              : searchResults
+          }
+          renderItem={memoizedRenderItem}
+        />
+      </WalletSettingsListContainer>
     </WalletSettingsContainer>
   );
 };
