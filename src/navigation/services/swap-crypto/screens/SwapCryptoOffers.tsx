@@ -82,7 +82,6 @@ import {
   ChangellyRateResult,
 } from '../../../../store/swap-crypto/models/changelly.models';
 import {SwapCryptoLimits} from '../../../../store/swap-crypto/swap-crypto.models';
-import {thorswapGetSwapQuote} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
 import {
   ThorswapGetSwapQuoteData,
   ThorswapGetSwapQuoteRequestData,

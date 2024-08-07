@@ -102,7 +102,6 @@ import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../../store';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {
-  thorswapGetSwapQuote,
   thorswapGetSwapTx,
 } from '../../../../store/swap-crypto/effects/thorswap/thorswap';
 import {RootStacks} from '../../../../Root';
