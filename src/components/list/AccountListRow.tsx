@@ -65,25 +65,6 @@ interface Props {
   hideBalance: boolean;
 }
 
-export const buildPreviewAddress = (
-  chain: string,
-  isComplete: boolean | undefined,
-  multisig: string | undefined,
-  receiveAddress: string | undefined,
-  isToken: boolean | undefined,
-): ReactElement | undefined => {
-  const canHaveTokens = !!BitpaySupportedEvmCoins[chain];
-  if (!isComplete || multisig || !receiveAddress || isToken || !canHaveTokens) {
-    return;
-  }
-
-  return (
-    <BadgeContainer>
-      <Badge>{formatCryptoAddress(receiveAddress)}</Badge>
-    </BadgeContainer>
-  );
-};
-
 export const buildTestBadge = (
   network: string,
   chain: string,
@@ -167,32 +148,29 @@ const AccountListRow = ({
           )}
         </CurrencyImageContainer>
       ) : null}
-      <CurrencyColumn>
-        <Row>
-          <H5 ellipsizeMode="tail" numberOfLines={1}>
-            {accountName}
-          </H5>
-        </Row>
-        <Row style={{alignItems: 'center'}}>
-          <ListItemSubText
-            ellipsizeMode="tail"
-            numberOfLines={1}
-            style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-            {isMultiNetworkSupported
-              ? null
-              : `${_currencyAbbreviation} ${multisig ? multisig : ''}`}
-          </ListItemSubText>
-          {buildPreviewAddress(
-            chain,
-            isComplete,
-            multisig,
-            receiveAddress,
-            isToken,
-          )}
-          {buildTestBadge(network, chain, isToken)}
-          {buildUncompleteBadge(isComplete)}
-        </Row>
-      </CurrencyColumn>
+      {isMultiNetworkSupported ? (
+        <H5 ellipsizeMode="tail" numberOfLines={1}>
+          {accountName}
+        </H5>
+      ) : (
+        <CurrencyColumn>
+          <Row>
+            <H5 ellipsizeMode="tail" numberOfLines={1}>
+              {accountName}
+            </H5>
+          </Row>
+          <Row style={{alignItems: 'center'}}>
+            <ListItemSubText
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+              {`${_currencyAbbreviation} ${multisig ? multisig : ''}`}
+            </ListItemSubText>
+            {buildTestBadge(network, chain, isToken)}
+            {buildUncompleteBadge(isComplete)}
+          </Row>
+        </CurrencyColumn>
+      )}
       {isMultiNetworkSupported ? (
         <BalanceColumn>
           {!hideBalance ? (

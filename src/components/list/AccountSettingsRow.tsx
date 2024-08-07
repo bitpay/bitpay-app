@@ -1,94 +1,72 @@
-import React, {memo, ReactElement} from 'react';
-import styled, {useTheme} from 'styled-components/native';
-import {BaseText, H7} from '../styled/Text';
-import {StyleProp, TextStyle} from 'react-native';
+import React, {memo} from 'react';
+import {
+  CurrencyImageContainer,
+  ActiveOpacity,
+  Column,
+  HiddenContainer,
+} from '../styled/Containers';
+import {H5, H7} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {buildTestBadge, buildUncompleteBadge} from './WalletRow';
-import {Column, HiddenContainer} from '../styled/Containers';
+import Blockie from '../blockie/Blockie';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
+import {AccountRowProps} from './AccountListRow';
+import {useAppSelector} from '../../utils/hooks';
 
-export interface AccountSettingsRowProps {
+interface Props {
   id: string;
-  key: string;
-  img: string | ((props: any) => ReactElement);
-  badgeImg: string | ((props: any) => ReactElement) | undefined;
-  currencyName: string;
-  chain: string;
-  isToken?: boolean;
-  network: string;
-  hideWallet?: boolean;
-  walletName?: string;
-  isComplete?: boolean;
+  accountItem: AccountRowProps;
+  onPress: () => void;
+  accountInfo?: {[key: string]: {hideAccount: boolean; name: string}};
 }
-
-const Row = styled.View`
-  flex-direction: row;
-  padding: 8px 0;
-  align-items: center;
-`;
-
-const CurrencyName = styled(BaseText)`
-  font-weight: 500;
-  font-size: 18px;
-  margin-left: 15px;
-`;
-
-const NestedArrowContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-  margin-left: 10px;
-  margin-right: 15px;
-`;
 
 const HiddenColumn = styled(Column)`
   align-items: flex-end;
 `;
 
-const CurrencyContainer = styled.View`
-  flex-direction: column;
-  width: 55%;
-`;
-
-const BadgeContainer = styled.View`
+const AccountSettingsContainer = styled.TouchableOpacity`
   flex-direction: row;
-  margin-left: 10px;
+  align-items: center;
+  display: flex;
+  padding: 8px 0px;
+  gap: 8px;
 `;
 
-const AccountSettingsRow = ({
-  img,
-  badgeImg,
-  currencyName,
-  chain,
-  isToken,
-  network,
-  hideWallet,
-  walletName,
-  isComplete,
-}: AccountSettingsRowProps) => {
+const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
+  const {accountName, receiveAddress, wallets, isMultiNetworkSupported} =
+    accountItem;
   const {t} = useTranslation();
-  const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
-  return (
-    <Row>
-      <CurrencyImage img={img} badgeUri={badgeImg} size={40} />
-      <CurrencyContainer>
-        <CurrencyName style={textStyle} numberOfLines={1} ellipsizeMode="tail">
-          {walletName || currencyName} {isToken}
-        </CurrencyName>
-        <BadgeContainer>
-          {buildTestBadge(network, chain, isToken)}
-          {buildUncompleteBadge(isComplete)}
-        </BadgeContainer>
-      </CurrencyContainer>
 
-      {hideWallet ? (
+  const hideAccount = accountInfo?.[accountItem.receiveAddress]?.hideAccount;
+
+  return (
+    <AccountSettingsContainer
+      activeOpacity={ActiveOpacity}
+      onPress={() => onPress()}>
+      <CurrencyImageContainer style={{height: 40, width: 40}}>
+        {isMultiNetworkSupported ? (
+          <Blockie size={40} seed={receiveAddress} />
+        ) : (
+          <CurrencyImage
+            img={wallets[0].img}
+            badgeUri={wallets[0].badgeImg}
+            size={40}
+          />
+        )}
+      </CurrencyImageContainer>
+      <H5 ellipsizeMode="tail" numberOfLines={1}>
+        {accountName}
+      </H5>
+
+      {hideAccount ? (
         <HiddenColumn>
           <HiddenContainer>
             <H7>{t('Hidden')}</H7>
           </HiddenContainer>
         </HiddenColumn>
       ) : null}
-    </Row>
+    </AccountSettingsContainer>
   );
 };
 

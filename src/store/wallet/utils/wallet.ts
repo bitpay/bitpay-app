@@ -893,12 +893,14 @@ export const buildUIFormattedWallet: (
   rates: Rates,
   dispatch: AppDispatch,
   currencyDisplay?: 'symbol',
+  skipFiatCalculations?: boolean,
 ) => WalletRowProps = (
   wallet,
   defaultAltCurrencyIsoCode,
   rates,
   dispatch,
   currencyDisplay,
+  skipFiatCalculations,
 ) => {
   const {
     id,
@@ -934,25 +936,7 @@ export const buildUIFormattedWallet: (
     currencyDisplay,
   };
 
-  const computeFiatBalance = (satAmount: number) =>
-    getFiat({...opts, satAmount});
-
-  const fiatBalance = computeFiatBalance(balance.sat);
-  const fiatLockedBalance = computeFiatBalance(balance.satLocked);
-  const fiatConfirmedLockedBalance = computeFiatBalance(
-    balance.satConfirmedLocked,
-  );
-  const fiatSpendableBalance = computeFiatBalance(balance.satSpendable);
-  const fiatPendingBalance = computeFiatBalance(balance.satPending);
-
-  const formatBalance = (fiatAmount: number) =>
-    formatFiat({
-      fiatAmount,
-      defaultAltCurrencyIsoCode,
-      currencyDisplay,
-    });
-
-  return {
+  const buildUIFormattedWallet = {
     id,
     keyId,
     img,
@@ -967,16 +951,6 @@ export const buildUIFormattedWallet: (
     cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
     cryptoSpendableBalance: balance.cryptoSpendable,
     cryptoPendingBalance: balance.cryptoPending,
-    fiatBalance,
-    fiatLockedBalance,
-    fiatConfirmedLockedBalance,
-    fiatSpendableBalance,
-    fiatPendingBalance,
-    fiatBalanceFormat: formatBalance(fiatBalance),
-    fiatLockedBalanceFormat: formatBalance(fiatLockedBalance),
-    fiatConfirmedLockedBalanceFormat: formatBalance(fiatConfirmedLockedBalance),
-    fiatSpendableBalanceFormat: formatBalance(fiatSpendableBalance),
-    fiatPendingBalanceFormat: formatBalance(fiatPendingBalance),
     network,
     isRefreshing,
     isScanning,
@@ -990,14 +964,53 @@ export const buildUIFormattedWallet: (
     isComplete: credentials.isComplete(),
     receiveAddress,
     account: credentials.account,
-  };
+  } as WalletRowProps;
+
+  if (!skipFiatCalculations) {
+    const computeFiatBalance = (satAmount: number) =>
+      getFiat({...opts, satAmount});
+
+    const fiatBalance = computeFiatBalance(balance.sat);
+    const fiatLockedBalance = computeFiatBalance(balance.satLocked);
+    const fiatConfirmedLockedBalance = computeFiatBalance(
+      balance.satConfirmedLocked,
+    );
+    const fiatSpendableBalance = computeFiatBalance(balance.satSpendable);
+    const fiatPendingBalance = computeFiatBalance(balance.satPending);
+
+    const formatBalance = (fiatAmount: number) =>
+      formatFiat({
+        fiatAmount,
+        defaultAltCurrencyIsoCode,
+        currencyDisplay,
+      });
+    buildUIFormattedWallet.fiatBalance = fiatBalance;
+    buildUIFormattedWallet.fiatLockedBalance = fiatLockedBalance;
+    buildUIFormattedWallet.fiatConfirmedLockedBalance =
+      fiatConfirmedLockedBalance;
+    buildUIFormattedWallet.fiatSpendableBalance = fiatSpendableBalance;
+    buildUIFormattedWallet.fiatPendingBalance = fiatPendingBalance;
+    buildUIFormattedWallet.fiatBalanceFormat = formatBalance(fiatBalance);
+    buildUIFormattedWallet.fiatLockedBalanceFormat =
+      formatBalance(fiatLockedBalance);
+    buildUIFormattedWallet.fiatConfirmedLockedBalanceFormat = formatBalance(
+      fiatConfirmedLockedBalance,
+    );
+    buildUIFormattedWallet.fiatSpendableBalanceFormat =
+      formatBalance(fiatSpendableBalance);
+    buildUIFormattedWallet.fiatPendingBalanceFormat =
+      formatBalance(fiatPendingBalance);
+  }
+
+  return buildUIFormattedWallet;
 };
 
 export const buildAccountList = (
-  wallets: Wallet[],
+  key: Key,
   defaultAltCurrencyIsoCode: string,
   rates: Rates,
   dispatch: AppDispatch,
+  skipFiatCalculations?: boolean,
 ) => {
   const accountMap: {[key: string]: Partial<AccountRowProps>} = {};
 
@@ -1008,12 +1021,14 @@ export const buildAccountList = (
       currencyDisplay: 'symbol',
     });
 
-  wallets.forEach(w => {
+  key.wallets.forEach(wallet => {
     const uiFormattedWallet = buildUIFormattedWallet(
-      w,
+      wallet,
       defaultAltCurrencyIsoCode,
       rates,
       dispatch,
+      'symbol',
+      skipFiatCalculations,
     ) as WalletRowProps;
 
     const {
@@ -1021,7 +1036,7 @@ export const buildAccountList = (
       chain,
       credentials: {account, walletName},
       receiveAddress,
-    } = w;
+    } = wallet;
 
     if (!receiveAddress) {
       // this should never happen
@@ -1029,7 +1044,7 @@ export const buildAccountList = (
     }
 
     const isEVMCoin = IsEVMCoin(chain);
-
+    const name = key.evmAccountsInfo?.[receiveAddress]?.name; // EVM Account Name
     const existingAccount = accountMap[receiveAddress];
 
     if (!existingAccount) {
@@ -1038,46 +1053,51 @@ export const buildAccountList = (
         keyId,
         chains: [chain],
         accountName: isEVMCoin
-          ? `EVM Account ${account}`
+          ? name || `EVM Account ${account}`
           : uiFormattedWallet.walletName,
         wallets: [uiFormattedWallet],
         accountNumber: account,
         receiveAddress,
         isMultiNetworkSupported: isEVMCoin,
-        fiatBalance: uiFormattedWallet.fiatBalance,
-        fiatLockedBalance: uiFormattedWallet.fiatLockedBalance,
+        fiatBalance: uiFormattedWallet.fiatBalance ?? 0,
+        fiatLockedBalance: uiFormattedWallet.fiatLockedBalance ?? 0,
         fiatConfirmedLockedBalance:
-          uiFormattedWallet.fiatConfirmedLockedBalance,
-        fiatSpendableBalance: uiFormattedWallet.fiatSpendableBalance,
-        fiatPendingBalance: uiFormattedWallet.fiatPendingBalance,
+          uiFormattedWallet.fiatConfirmedLockedBalance ?? 0,
+        fiatSpendableBalance: uiFormattedWallet.fiatSpendableBalance ?? 0,
+        fiatPendingBalance: uiFormattedWallet.fiatPendingBalance ?? 0,
       };
     } else {
       existingAccount.chains!.push(chain);
       existingAccount.wallets!.push(uiFormattedWallet);
-      existingAccount.fiatBalance! += uiFormattedWallet.fiatBalance;
-      existingAccount.fiatLockedBalance! += uiFormattedWallet.fiatLockedBalance;
+      existingAccount.fiatBalance! += uiFormattedWallet.fiatBalance ?? 0;
+      existingAccount.fiatLockedBalance! +=
+        uiFormattedWallet.fiatLockedBalance ?? 0;
       existingAccount.fiatConfirmedLockedBalance! +=
-        uiFormattedWallet.fiatConfirmedLockedBalance;
+        uiFormattedWallet.fiatConfirmedLockedBalance ?? 0;
       existingAccount.fiatSpendableBalance! +=
-        uiFormattedWallet.fiatSpendableBalance;
+        uiFormattedWallet.fiatSpendableBalance ?? 0;
       existingAccount.fiatPendingBalance! +=
-        uiFormattedWallet.fiatPendingBalance;
+        uiFormattedWallet.fiatPendingBalance ?? 0;
     }
   });
 
-  Object.values(accountMap).forEach(account => {
-    account.fiatBalanceFormat = formatBalance(account.fiatBalance!);
-    account.fiatLockedBalanceFormat = formatBalance(account.fiatLockedBalance!);
-    account.fiatConfirmedLockedBalanceFormat = formatBalance(
-      account.fiatConfirmedLockedBalance!,
-    );
-    account.fiatSpendableBalanceFormat = formatBalance(
-      account.fiatSpendableBalance!,
-    );
-    account.fiatPendingBalanceFormat = formatBalance(
-      account.fiatPendingBalance!,
-    );
-  });
+  if (!skipFiatCalculations) {
+    Object.values(accountMap).forEach(account => {
+      account.fiatBalanceFormat = formatBalance(account.fiatBalance!);
+      account.fiatLockedBalanceFormat = formatBalance(
+        account.fiatLockedBalance!,
+      );
+      account.fiatConfirmedLockedBalanceFormat = formatBalance(
+        account.fiatConfirmedLockedBalance!,
+      );
+      account.fiatSpendableBalanceFormat = formatBalance(
+        account.fiatSpendableBalance!,
+      );
+      account.fiatPendingBalanceFormat = formatBalance(
+        account.fiatPendingBalance!,
+      );
+    });
+  }
 
   return Object.values(accountMap) as AccountRowProps[];
 };

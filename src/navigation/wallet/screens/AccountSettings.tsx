@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useLayoutEffect, useMemo, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -21,18 +21,20 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {sleep} from '../../../utils/helper-methods';
 import {
   toggleHideAccount,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
-import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
 import InfoSvg from '../../../../assets/img/info.svg';
+import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
+import {sleep} from '../../../utils/helper-methods';
+import {buildAccountList} from '../../../store/wallet/utils/wallet';
+import {Key} from '../../../store/wallet/wallet.models';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -79,22 +81,42 @@ const AssetsHeaderContainer = styled.View`
 const AccountSettings = () => {
   const {t} = useTranslation();
   const {
-    params: {accountItem, key},
+    params: {key, selectedAccountAddress},
   } = useRoute<RouteProp<WalletGroupParamList, 'AccountSettings'>>();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const accountInfo = useAppSelector(
     ({WALLET}) => WALLET.keys[key.id].evmAccountsInfo,
   );
-  const hideAccount = accountInfo?.[accountItem.receiveAddress]?.hideAccount;
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
+  const {rates} = useAppSelector(({RATE}) => RATE);
+  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
+  const accountItem = useMemo(() => {
+    const updatedKey = {
+      ...key,
+      wallets: _key.wallets.filter(
+        wallet => wallet.receiveAddress === selectedAccountAddress,
+      ),
+    };
+    return buildAccountList(
+      updatedKey,
+      defaultAltCurrency.isoCode,
+      rates,
+      dispatch,
+      true,
+    )[0];
+  }, [_key, defaultAltCurrency.isoCode, rates]);
 
   const {accountName} = accountItem;
 
-  const dispatch = useAppDispatch();
+  const [hideAccount, setHideAccount] = useState(
+    accountInfo?.[accountItem.receiveAddress]?.hideAccount,
+  );
 
   const onPressItem = (isComplete: boolean | undefined, walletId: string) => {
     // Ignore if wallet is not complete
@@ -112,36 +134,29 @@ const AccountSettings = () => {
     return (
       <>
         {wallets.map(
-          ({
-            id,
-            currencyName,
-            chain,
-            img,
-            badgeImg,
-            isToken,
-            network,
-            hideWallet,
-            walletName,
-            isComplete,
-          }) => (
-            <TouchableOpacity
+          (
+            {
+              id,
+              currencyName,
+              img,
+              badgeImg,
+              isToken,
+              hideWallet,
+              walletName,
+              isComplete,
+            },
+            index,
+          ) => (
+            <WalletSettingsRow
+              key={index.toString()}
+              img={img}
+              badgeImg={badgeImg}
+              currencyName={currencyName}
+              isToken={isToken}
+              hideWallet={hideWallet}
+              walletName={walletName}
               onPress={() => onPressItem(isComplete, id)}
-              key={id}
-              activeOpacity={ActiveOpacity}>
-              <WalletSettingsRow
-                id={id}
-                img={img}
-                badgeImg={badgeImg}
-                currencyName={currencyName}
-                chain={chain}
-                key={id}
-                isToken={isToken}
-                network={network}
-                hideWallet={hideWallet}
-                walletName={walletName}
-                isComplete={isComplete}
-              />
-            </TouchableOpacity>
+            />
           ),
         )}
       </>
@@ -174,26 +189,25 @@ const AccountSettings = () => {
           <ChevronRightSvg height={16} />
         </WalletNameContainer>
 
+        <Hr />
+
         <SettingView>
           <AccountSettingsTitle>{t('Hide Account')}</AccountSettingsTitle>
 
           <ToggleSwitch
             onChange={async () => {
+              setHideAccount(!hideAccount);
               dispatch(
                 toggleHideAccount({
                   keyId: key.id,
                   accountAddress: accountItem.receiveAddress,
                 }),
               );
-              await startUpdateAllWalletStatusForKey({
-                key,
-                accountAddress: accountItem.receiveAddress,
-                force: true,
-              }),
-                await sleep(1000);
+              dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+              await sleep(1000);
               dispatch(updatePortfolioBalance());
             }}
-            isEnabled={!!accountInfo}
+            isEnabled={!!hideAccount}
           />
         </SettingView>
         {!hideAccount ? (

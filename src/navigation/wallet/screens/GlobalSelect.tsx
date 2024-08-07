@@ -227,6 +227,7 @@ export type GlobalSelectParamList = {
     };
   };
   amount?: number;
+  selectedAccountAddress?: string;
 };
 
 export interface GlobalSelectObj extends SearchableItem {
@@ -635,7 +636,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 }) => {
   const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletGroupParamList, 'GlobalSelect'>>();
-  let {context, recipient, amount} = route.params || {};
+  let {context, recipient, amount, selectedAccountAddress} = route.params || {};
   if (useAsModal && modalContext) {
     context = modalContext;
   }
@@ -722,12 +723,26 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   wallets = wallets.filter(wallet => !wallet.hideWallet);
 
   // only show wallets with funds
+  // only show selected account address wallets if selectedAccountAddress is provided
   if (
     ['send', 'sell', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
       context,
     )
   ) {
-    wallets = wallets.filter(wallet => wallet.balance.sat > 0);
+    wallets = wallets.filter(wallet =>
+      wallet.balance.sat > 0 && selectedAccountAddress
+        ? wallet.receiveAddress === selectedAccountAddress
+        : false,
+    );
+  }
+
+  // only show selected account address wallets if selectedAccountAddress is provided
+  if (['receive'].includes(context)) {
+    wallets = wallets.filter(wallet =>
+      selectedAccountAddress
+        ? wallet.receiveAddress === selectedAccountAddress
+        : false,
+    );
   }
 
   if (recipient && ['coinbase', 'contact', 'scanner'].includes(context)) {
