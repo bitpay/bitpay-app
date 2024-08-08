@@ -117,6 +117,7 @@ export const buildWalletObj = (
     isHardwareWallet = false,
     hardwareData = {},
     singleAddress,
+    receiveAddress,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -138,6 +139,7 @@ export const buildWalletObj = (
       accountPath?: string;
     };
     singleAddress: boolean;
+    receiveAddress?: string;
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
@@ -193,6 +195,7 @@ export const buildWalletObj = (
     isHardwareWallet,
     hardwareData,
     singleAddress,
+    receiveAddress,
   };
 };
 
