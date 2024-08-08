@@ -159,6 +159,15 @@ export const updateWalletName = (payload: {
   payload,
 });
 
+export const updateAccountName = (payload: {
+  keyId: string;
+  name: string;
+  accountAddress: string;
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_ACCOUNT_NAME,
+  payload,
+});
+
 export const setWalletRefreshing = (payload: {
   keyId: string;
   walletId: string;
@@ -199,6 +208,20 @@ export const updateWalletTxHistory = (payload: {
   payload,
 });
 
+export const updateAccountTxHistory = (payload: {
+  keyId: string;
+  accountTransactionsHistory: {
+    [key: string]: {
+      transactions: any[];
+      loadMore: boolean;
+      hasConfirmingTxs: boolean;
+    };
+  };
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_ACCOUNT_TX_HISTORY,
+  payload,
+});
+
 export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS,
   payload,
@@ -231,6 +254,14 @@ export const toggleHideWallet = (payload: {
   wallet: Wallet;
 }): WalletActionType => ({
   type: WalletActionTypes.TOGGLE_HIDE_WALLET,
+  payload,
+});
+
+export const toggleHideAccount = (payload: {
+  accountAddress: string;
+  keyId: string;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HIDE_ACCOUNT,
   payload,
 });
 

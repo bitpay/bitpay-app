@@ -10,7 +10,6 @@ import styled, {useTheme} from 'styled-components/native';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {useAppSelector} from '../../../utils/hooks';
 import {HomeCarouselLayoutType} from '../../../store/app/app.models';
-import {Balance, KeyName} from '../../wallet/components/KeyDropdownOption';
 import {BoxShadow} from '../../tabs/home/components/Styled';
 import {H3} from '../../../components/styled/Text';
 import {LightBlack, White} from '../../../styles/colors';
@@ -24,6 +23,7 @@ import {
   BalanceCode,
   BalanceCodeContainer,
 } from '../../tabs/home/components/Wallet';
+import {Balance, OptionName} from '../../wallet/components/DropdownOption';
 
 interface CoinbaseCardComponentProps {
   layout: HomeCarouselLayoutType;
@@ -98,7 +98,7 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
         <Row style={{alignItems: 'center', justifyContent: 'center'}}>
           <Column>
             {HeaderComponentList}
-            <KeyName>Coinbase</KeyName>
+            <OptionName>Coinbase</OptionName>
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
             {!hideAllBalances ? (

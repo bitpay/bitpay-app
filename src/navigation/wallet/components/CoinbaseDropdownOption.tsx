@@ -6,11 +6,11 @@ import {formatFiatAmountObj} from '../../../utils/helper-methods';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {useAppSelector} from '../../../utils/hooks';
-import {Balance, KeyName, OptionContainer} from './KeyDropdownOption';
 import {
   BalanceCode,
   BalanceCodeContainer,
 } from '../../tabs/home/components/Wallet';
+import {Balance, OptionName, OptionContainer} from './DropdownOption';
 
 interface Props {
   onPress: () => void;
@@ -29,7 +29,7 @@ const CoinbaseDropdownOption = ({onPress}: Props) => {
       <Row style={{alignItems: 'center', justifyContent: 'center'}}>
         <Row style={{alignItems: 'center', justifyContent: 'flex-start'}}>
           <CoinbaseSvg style={{marginRight: 4}} width="25" />
-          <KeyName>Coinbase</KeyName>
+          <OptionName>Coinbase</OptionName>
         </Row>
         {!hideAllBalances ? (
           <>

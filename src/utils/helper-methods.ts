@@ -216,6 +216,19 @@ export const formatFiatAmount = (
   return `${numberString} ${code}`;
 };
 
+type FormatFiatOptions = {
+  fiatAmount: number;
+  defaultAltCurrencyIsoCode: string;
+  currencyDisplay?: 'symbol' | 'code';
+};
+
+export const formatFiat = ({
+  fiatAmount,
+  defaultAltCurrencyIsoCode,
+  currencyDisplay,
+}: FormatFiatOptions) =>
+  formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode, {currencyDisplay});
+
 export const findContact = (
   contactList: ContactRowProps[],
   address: string,

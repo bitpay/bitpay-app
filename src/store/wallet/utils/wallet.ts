@@ -11,6 +11,7 @@ import {
 import {Rates} from '../../rate/rate.models';
 import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
 import {
+  BitpaySupportedCoins,
   BitpaySupportedMaticTokens,
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
@@ -18,12 +19,14 @@ import {
 } from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
-import {GetName, GetPrecision, GetProtocolPrefix} from './currency';
+import {GetName, GetPrecision, GetProtocolPrefix, IsEVMCoin} from './currency';
 import merge from 'lodash.merge';
 import cloneDeep from 'lodash.clonedeep';
 import {
   addTokenChainSuffix,
   convertToFiat,
+  formatCurrencyAbbreviation,
+  formatFiat,
   formatFiatAmount,
   getBadgeImg,
   getCurrencyAbbreviation,
@@ -46,9 +49,10 @@ import {
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
-import {find, isEqual} from 'lodash';
+import _, {find, isEqual} from 'lodash';
 import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {Invoice} from '../../../store/shop/shop.models';
+import {AccountRowProps} from '../../../components/list/AccountListRow';
 
 export const mapAbbreviationAndName =
   (
@@ -112,6 +116,8 @@ export const buildWalletObj = (
     pendingTxps = [],
     isHardwareWallet = false,
     hardwareData = {},
+    singleAddress,
+    receiveAddress,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -132,6 +138,8 @@ export const buildWalletObj = (
     hardwareData?: {
       accountPath?: string;
     };
+    singleAddress: boolean;
+    receiveAddress?: string;
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
@@ -165,6 +173,7 @@ export const buildWalletObj = (
     currencyAbbreviation: updatedCurrencyAbbreviation,
     tokenAddress: token?.address?.toLowerCase(),
     chain,
+    chainName: BitpaySupportedCoins[chain].name,
     walletName,
     balance,
     tokens,
@@ -185,6 +194,8 @@ export const buildWalletObj = (
     pendingTxps,
     isHardwareWallet,
     hardwareData,
+    singleAddress,
+    receiveAddress,
   };
 };
 
@@ -331,9 +342,10 @@ export const toFiat =
   };
 
 export const findWalletById = (
-  wallets: Wallet[],
+  wallets: Wallet[] | WalletRowProps[],
   id: string,
-): Wallet | undefined => wallets.find(wallet => wallet.id === id);
+): Wallet | WalletRowProps | undefined =>
+  wallets.find(wallet => wallet.id === id);
 
 export const findWalletByAddress = (
   address: string,
@@ -402,7 +414,7 @@ export const GetProtocolPrefixAddress =
   };
 
 export const getRemainingWalletCount = (
-  wallets?: Wallet[],
+  wallets?: Wallet[] | WalletRowProps[],
 ): undefined | number => {
   if (!wallets || wallets.length < WALLET_DISPLAY_LIMIT) {
     return;
@@ -836,4 +848,258 @@ export const findWalletByIdHashed = (
       return resolve({wallet, keyId: wallet?.keyId});
     });
   });
+};
+
+type getFiatOptions = {
+  dispatch: AppDispatch;
+  satAmount: number;
+  defaultAltCurrencyIsoCode: string;
+  currencyAbbreviation: string;
+  chain: string;
+  rates: Rates;
+  tokenAddress: string | undefined;
+  hideWallet: boolean | undefined;
+  network: Network;
+  currencyDisplay?: 'symbol' | 'code';
+};
+
+const getFiat = ({
+  dispatch,
+  satAmount,
+  defaultAltCurrencyIsoCode,
+  currencyAbbreviation,
+  chain,
+  rates,
+  tokenAddress,
+  hideWallet,
+  network,
+}: getFiatOptions) =>
+  convertToFiat(
+    dispatch(
+      toFiat(
+        satAmount,
+        defaultAltCurrencyIsoCode,
+        currencyAbbreviation,
+        chain,
+        rates,
+        tokenAddress,
+      ),
+    ),
+    hideWallet,
+    network,
+  );
+
+export const buildUIFormattedWallet: (
+  wallet: Wallet,
+  defaultAltCurrencyIsoCode: string,
+  rates: Rates,
+  dispatch: AppDispatch,
+  currencyDisplay?: 'symbol',
+  skipFiatCalculations?: boolean,
+) => WalletRowProps = (
+  wallet,
+  defaultAltCurrencyIsoCode,
+  rates,
+  dispatch,
+  currencyDisplay,
+  skipFiatCalculations,
+) => {
+  const {
+    id,
+    img,
+    badgeImg,
+    currencyName,
+    chainName,
+    currencyAbbreviation,
+    chain,
+    tokenAddress,
+    network,
+    walletName,
+    balance,
+    credentials,
+    keyId,
+    isRefreshing,
+    isScanning,
+    hideWallet,
+    hideBalance,
+    pendingTxps,
+    receiveAddress,
+  } = wallet;
+
+  const opts: Omit<getFiatOptions, 'satAmount'> = {
+    dispatch,
+    defaultAltCurrencyIsoCode,
+    currencyAbbreviation,
+    chain,
+    rates,
+    tokenAddress,
+    hideWallet,
+    network,
+    currencyDisplay,
+  };
+
+  const buildUIFormattedWallet = {
+    id,
+    keyId,
+    img,
+    badgeImg,
+    currencyName,
+    chainName,
+    currencyAbbreviation: formatCurrencyAbbreviation(currencyAbbreviation),
+    chain,
+    walletName: walletName || credentials.walletName,
+    cryptoBalance: balance.crypto,
+    cryptoLockedBalance: balance.cryptoLocked,
+    cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
+    cryptoSpendableBalance: balance.cryptoSpendable,
+    cryptoPendingBalance: balance.cryptoPending,
+    network,
+    isRefreshing,
+    isScanning,
+    hideWallet,
+    hideBalance,
+    pendingTxps,
+    multisig:
+      credentials.n > 1
+        ? `- Multisig ${credentials.m}/${credentials.n}`
+        : undefined,
+    isComplete: credentials.isComplete(),
+    receiveAddress,
+    account: credentials.account,
+  } as WalletRowProps;
+
+  if (!skipFiatCalculations) {
+    const computeFiatBalance = (satAmount: number) =>
+      getFiat({...opts, satAmount});
+
+    const fiatBalance = computeFiatBalance(balance.sat);
+    const fiatLockedBalance = computeFiatBalance(balance.satLocked);
+    const fiatConfirmedLockedBalance = computeFiatBalance(
+      balance.satConfirmedLocked,
+    );
+    const fiatSpendableBalance = computeFiatBalance(balance.satSpendable);
+    const fiatPendingBalance = computeFiatBalance(balance.satPending);
+
+    const formatBalance = (fiatAmount: number) =>
+      formatFiat({
+        fiatAmount,
+        defaultAltCurrencyIsoCode,
+        currencyDisplay,
+      });
+    buildUIFormattedWallet.fiatBalance = fiatBalance;
+    buildUIFormattedWallet.fiatLockedBalance = fiatLockedBalance;
+    buildUIFormattedWallet.fiatConfirmedLockedBalance =
+      fiatConfirmedLockedBalance;
+    buildUIFormattedWallet.fiatSpendableBalance = fiatSpendableBalance;
+    buildUIFormattedWallet.fiatPendingBalance = fiatPendingBalance;
+    buildUIFormattedWallet.fiatBalanceFormat = formatBalance(fiatBalance);
+    buildUIFormattedWallet.fiatLockedBalanceFormat =
+      formatBalance(fiatLockedBalance);
+    buildUIFormattedWallet.fiatConfirmedLockedBalanceFormat = formatBalance(
+      fiatConfirmedLockedBalance,
+    );
+    buildUIFormattedWallet.fiatSpendableBalanceFormat =
+      formatBalance(fiatSpendableBalance);
+    buildUIFormattedWallet.fiatPendingBalanceFormat =
+      formatBalance(fiatPendingBalance);
+  }
+
+  return buildUIFormattedWallet;
+};
+
+export const buildAccountList = (
+  key: Key,
+  defaultAltCurrencyIsoCode: string,
+  rates: Rates,
+  dispatch: AppDispatch,
+  skipFiatCalculations?: boolean,
+) => {
+  const accountMap: {[key: string]: Partial<AccountRowProps>} = {};
+
+  const formatBalance = (fiatAmount: number) =>
+    formatFiat({
+      fiatAmount,
+      defaultAltCurrencyIsoCode,
+      currencyDisplay: 'symbol',
+    });
+
+  key.wallets.forEach(wallet => {
+    const uiFormattedWallet = buildUIFormattedWallet(
+      wallet,
+      defaultAltCurrencyIsoCode,
+      rates,
+      dispatch,
+      'symbol',
+      skipFiatCalculations,
+    ) as WalletRowProps;
+
+    const {
+      keyId,
+      chain,
+      credentials: {account, walletName},
+      receiveAddress,
+    } = wallet;
+
+    if (!receiveAddress) {
+      // this should never happen
+      return;
+    }
+
+    const isEVMCoin = IsEVMCoin(chain);
+    const name = key.evmAccountsInfo?.[receiveAddress]?.name; // EVM Account Name
+    const existingAccount = accountMap[receiveAddress];
+
+    if (!existingAccount) {
+      accountMap[receiveAddress] = {
+        id: _.uniqueId('account_'),
+        keyId,
+        chains: [chain],
+        accountName: isEVMCoin
+          ? name || `EVM Account ${account}`
+          : uiFormattedWallet.walletName,
+        wallets: [uiFormattedWallet],
+        accountNumber: account,
+        receiveAddress,
+        isMultiNetworkSupported: isEVMCoin,
+        fiatBalance: uiFormattedWallet.fiatBalance ?? 0,
+        fiatLockedBalance: uiFormattedWallet.fiatLockedBalance ?? 0,
+        fiatConfirmedLockedBalance:
+          uiFormattedWallet.fiatConfirmedLockedBalance ?? 0,
+        fiatSpendableBalance: uiFormattedWallet.fiatSpendableBalance ?? 0,
+        fiatPendingBalance: uiFormattedWallet.fiatPendingBalance ?? 0,
+      };
+    } else {
+      existingAccount.chains!.push(chain);
+      existingAccount.wallets!.push(uiFormattedWallet);
+      existingAccount.fiatBalance! += uiFormattedWallet.fiatBalance ?? 0;
+      existingAccount.fiatLockedBalance! +=
+        uiFormattedWallet.fiatLockedBalance ?? 0;
+      existingAccount.fiatConfirmedLockedBalance! +=
+        uiFormattedWallet.fiatConfirmedLockedBalance ?? 0;
+      existingAccount.fiatSpendableBalance! +=
+        uiFormattedWallet.fiatSpendableBalance ?? 0;
+      existingAccount.fiatPendingBalance! +=
+        uiFormattedWallet.fiatPendingBalance ?? 0;
+    }
+  });
+
+  if (!skipFiatCalculations) {
+    Object.values(accountMap).forEach(account => {
+      account.fiatBalanceFormat = formatBalance(account.fiatBalance!);
+      account.fiatLockedBalanceFormat = formatBalance(
+        account.fiatLockedBalance!,
+      );
+      account.fiatConfirmedLockedBalanceFormat = formatBalance(
+        account.fiatConfirmedLockedBalance!,
+      );
+      account.fiatSpendableBalanceFormat = formatBalance(
+        account.fiatSpendableBalance!,
+      );
+      account.fiatPendingBalanceFormat = formatBalance(
+        account.fiatPendingBalance!,
+      );
+    });
+  }
+
+  return Object.values(accountMap) as AccountRowProps[];
 };

@@ -41,7 +41,11 @@ import {
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
-import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
+import {
+  buildUIFormattedWallet,
+  findWalletById,
+  isSegwit,
+} from '../../../store/wallet/utils/wallet';
 import {
   setWalletScanning,
   updatePortfolioBalance,
@@ -81,7 +85,6 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
-import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
@@ -495,9 +498,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     cryptoBalance,
     cryptoLockedBalance,
     cryptoSpendableBalance,
-    fiatBalance,
-    fiatLockedBalance,
-    fiatSpendableBalance,
+    fiatBalanceFormat,
+    fiatLockedBalanceFormat,
+    fiatSpendableBalanceFormat,
     currencyAbbreviation,
     chain,
     tokenAddress,
@@ -530,6 +533,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       chain,
       [],
       tokenAddress,
+      walletId,
     );
     formattedPendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
@@ -1064,7 +1068,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       {showFiatBalance &&
                         !hideAllBalances &&
                         !fullWalletObj.isScanning && (
-                          <Paragraph>{fiatBalance}</Paragraph>
+                          <Paragraph>{fiatBalanceFormat}</Paragraph>
                         )}
                     </Row>
                   </TouchableOpacity>
@@ -1082,7 +1086,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </Text>
                         {showFiatBalance && (
-                          <Text> ({fiatSpendableBalance})</Text>
+                          <Text> ({fiatSpendableBalanceFormat})</Text>
                         )}
                       </Small>
                     </TouchableRow>
@@ -1282,7 +1286,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     <Fiat>
                       {network === 'testnet'
                         ? t('Test Only - No Value')
-                        : fiatLockedBalance}
+                        : fiatLockedBalanceFormat}
                     </Fiat>
                   </TailContainer>
                 </LockedBalanceContainer>

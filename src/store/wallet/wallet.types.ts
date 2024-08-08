@@ -36,6 +36,7 @@ export enum WalletActionTypes {
   UPDATE_PORTFOLIO_BALANCE = 'WALLET/UPDATE_PORTFOLIO_BALANCE',
   UPDATE_KEY_NAME = 'WALLET/UPDATE_KEY_NAME',
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
+  UPDATE_ACCOUNT_NAME = 'WALLET/UPDATE_ACCOUNT_NAME',
   SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SET_WALLET_SCANNING = 'WALLET/SET_WALLET_SCANNING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
@@ -44,8 +45,10 @@ export enum WalletActionTypes {
   SET_QUEUED_TRANSACTIONS = 'WALLET/SET_QUEUED_TRANSACTIONS',
   SET_ENABLE_REPLACE_BY_FEE = 'WALLET/SET_ENABLE_REPLACE_BY_FEE',
   UPDATE_WALLET_TX_HISTORY = 'WALLET/UPDATE_WALLET_TX_HISTORY',
+  UPDATE_ACCOUNT_TX_HISTORY = 'WALLET/UPDATE_ACCOUNT_TX_HISTORY',
   SYNC_WALLETS = 'WALLET/SYNC_WALLETS',
   TOGGLE_HIDE_WALLET = 'WALLET/TOGGLE_HIDE_WALLET',
+  TOGGLE_HIDE_ACCOUNT = 'WALLET/TOGGLE_HIDE_ACCOUNT',
   UPDATE_CACHE_FEE_LEVEL = 'WALLET/UPDATE_CACHE_FEE_LEVEL',
   UPDATE_DEFERRED_IMPORT = 'WALLET/UPDATE_DEFERRED_IMPORT',
   CLEAR_DEFERRED_IMPORT = 'WALLET/CLEAR_DEFERRED_IMPORT',
@@ -219,6 +222,15 @@ interface updateWalletName {
   };
 }
 
+interface updateAccountName {
+  type: typeof WalletActionTypes.UPDATE_ACCOUNT_NAME;
+  payload: {
+    keyId: string;
+    accountAddress: string;
+    name: string;
+  };
+}
+
 interface setWalletRefreshing {
   type: typeof WalletActionTypes.SET_WALLET_REFRESHING;
   payload: {
@@ -267,6 +279,20 @@ interface updateWalletTxHistory {
   };
 }
 
+interface updateAccountTxHistory {
+  type: typeof WalletActionTypes.UPDATE_ACCOUNT_TX_HISTORY;
+  payload: {
+    keyId: string;
+    accountTransactionsHistory: {
+      [key: string]: {
+        transactions: any[];
+        loadMore: boolean;
+        hasConfirmingTxs: boolean;
+      };
+    };
+  };
+}
+
 interface syncWallets {
   type: typeof WalletActionTypes.SYNC_WALLETS;
   payload: {
@@ -279,6 +305,14 @@ interface toggleHideWallet {
   type: typeof WalletActionTypes.TOGGLE_HIDE_WALLET;
   payload: {
     wallet: Wallet;
+  };
+}
+
+interface toggleHideAccount {
+  type: typeof WalletActionTypes.TOGGLE_HIDE_ACCOUNT;
+  payload: {
+    accountAddress: string;
+    keyId: string;
   };
 }
 
@@ -318,6 +352,7 @@ export type WalletActionType =
   | failedUpdateAllKeysAndStatus
   | updateKeyName
   | updateWalletName
+  | updateAccountName
   | setWalletRefreshing
   | setWalletScanning
   | successGetReceiveAddress
@@ -326,7 +361,9 @@ export type WalletActionType =
   | setQueuedTransactions
   | setEnableReplaceByFee
   | updateWalletTxHistory
+  | updateAccountTxHistory
   | syncWallets
   | toggleHideWallet
+  | toggleHideAccount
   | updateCacheFeeLevel
   | SetCustomTokensMigrationComplete;

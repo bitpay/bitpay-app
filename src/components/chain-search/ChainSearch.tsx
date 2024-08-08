@@ -16,7 +16,7 @@ import {AppActions} from '../../store/app';
 import {useTranslation} from 'react-i18next';
 import {EIP155_CHAINS} from '../../constants/WalletConnectV2';
 import cloneDeep from 'lodash.clonedeep';
-import {Wallet} from '../../store/wallet/wallet.models';
+import {TransactionProposal, Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
 import {
   setLocalDefaultChainFilterOption,
@@ -28,6 +28,7 @@ import ChainSelectorModal, {
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {View} from 'react-native';
 import {BitpaySupportedCoins, CurrencyOpts} from '../../constants/currencies';
+import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
@@ -36,6 +37,7 @@ export const SearchIconContainer = styled.View`
 export const SearchFilterContainer = styled.TouchableOpacity`
   position: absolute;
   right: 0;
+  width: 120px;
   justify-content: center;
   align-items: center;
   border-radius: 20px;
@@ -82,6 +84,7 @@ export interface SearchableItem {
   };
   total?: number;
   accounts?: string[]; // Additional properties specific to WCV2SessionType
+  data?: TransactionProposal[] | AssetsByChainData[]; // Additional properties specific to TransactionHistory or AssetList
 }
 
 interface SearchComponentProps<T extends SearchableItem> {
@@ -151,26 +154,11 @@ const SearchComponent = <T extends SearchableItem>({
               selectedChainFilterOption,
             )),
         );
-      } else if (
-        [
-          'keysettings',
-          'keyoverview',
-          'send',
-          'receive',
-          'swap',
-          'buy',
-          'sell',
-        ].includes(context)
-      ) {
+      } else if (['send', 'receive', 'swap', 'buy', 'sell'].includes(context)) {
         results = results.reduce((acc: T[], data) => {
-          if (data.chain) {
-            data.chains = [data.chain]; // Workaround for Key Overview view
-          }
-
           const normalizedCurrencyAbbreviation = normalizeText(
             data?.currencyAbbreviation,
           );
-
           const normalizedCurrencyName = normalizeText(data.currencyName);
           const hasMatchingAbbreviation =
             normalizedCurrencyAbbreviation.includes(normalizedText);
@@ -178,7 +166,6 @@ const SearchComponent = <T extends SearchableItem>({
             normalizedCurrencyName.includes(normalizedText);
           const hasMatching =
             hasMatchingAbbreviation || hasMatchingCurrencyName;
-
           if (
             (normalizedText.length > 0 ? hasMatching : true) &&
             (selectedChainFilterOption
@@ -209,6 +196,29 @@ const SearchComponent = <T extends SearchableItem>({
 
           return acc;
         }, []);
+      } else if (
+        ['keysettings', 'keyoverview', 'accountassetsview'].includes(context) &&
+        selectedChainFilterOption
+      ) {
+        results = results.reduce((acc: T[], data) => {
+          const hasSelectedNetwork = selectedChainFilterOption
+            ? data?.chains?.includes(selectedChainFilterOption)
+            : true;
+          if (hasSelectedNetwork) {
+            acc.push(data);
+          }
+          return acc;
+        }, []);
+      } else if (
+        ['accounthistoryview'].includes(context) &&
+        selectedChainFilterOption
+      ) {
+        results = results.map(result => {
+          const filteredData = result?.data?.filter(
+            (tx: TransactionProposal) => tx.chain === selectedChainFilterOption,
+          );
+          return {...result, data: filteredData};
+        });
       }
       setSearchResults(results);
     }, 300),
@@ -237,16 +247,8 @@ const SearchComponent = <T extends SearchableItem>({
     };
   }, []);
 
-  return (
-    <SearchRoundContainer>
-      <SearchIconContainer>
-        <SearchSvg height={16} width={16} />
-      </SearchIconContainer>
-      <SearchRoundInput
-        placeholderTextColor={Slate}
-        placeholder={t('Search')}
-        onChangeText={updateSearchResults}
-      />
+  const _SearchFilterContainer = () => {
+    return (
       <SearchFilterContainer
         onPress={() => {
           dispatch(AppActions.showChainSelectorModal({context}));
@@ -276,8 +278,30 @@ const SearchComponent = <T extends SearchableItem>({
           </SearchFilterIconContainer>
         </RowFilterContainer>
       </SearchFilterContainer>
+    );
+  };
+
+  return (
+    <>
+      {['keyoverview', 'accountassetsview', 'accounthistoryview'].includes(
+        context,
+      ) ? (
+        _SearchFilterContainer()
+      ) : (
+        <SearchRoundContainer>
+          <SearchIconContainer>
+            <SearchSvg height={16} width={16} />
+          </SearchIconContainer>
+          <SearchRoundInput
+            placeholderTextColor={Slate}
+            placeholder={t('Search')}
+            onChangeText={updateSearchResults}
+          />
+          {_SearchFilterContainer()}
+        </SearchRoundContainer>
+      )}
       <ChainSelectorModal onModalHide={onModalHide} />
-    </SearchRoundContainer>
+    </>
   );
 };
 

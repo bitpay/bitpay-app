@@ -361,6 +361,28 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.UPDATE_ACCOUNT_NAME: {
+      const {keyId, name, accountAddress} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      keyToUpdate.evmAccountsInfo ??= {};
+      keyToUpdate.evmAccountsInfo[accountAddress] = {
+        ...keyToUpdate.evmAccountsInfo[accountAddress],
+        name,
+      };
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     case WalletActionTypes.SET_WALLET_REFRESHING: {
       const {keyId, walletId, isRefreshing} = action.payload;
       const keyToUpdate = state.keys[keyId];
@@ -418,6 +440,30 @@ export const walletReducer = (
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === walletId) {
           wallet.transactionHistory = transactionHistory;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.UPDATE_ACCOUNT_TX_HISTORY: {
+      const {keyId, accountTransactionsHistory} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (accountTransactionsHistory[wallet.id]) {
+          wallet.transactionHistory = accountTransactionsHistory[wallet.id];
         }
         return wallet;
       });
@@ -495,6 +541,35 @@ export const walletReducer = (
         return wallet;
       });
 
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.TOGGLE_HIDE_ACCOUNT: {
+      const {keyId, accountAddress} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      const accountInfo = (keyToUpdate.evmAccountsInfo ??= {});
+      accountInfo[accountAddress] = {
+        ...accountInfo[accountAddress],
+        hideAccount: !accountInfo[accountAddress]?.hideAccount,
+      };
+      // TODO in the future we might want to remove this to keep each wallet hideWallet property without modification
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.receiveAddress === accountAddress) {
+          wallet.hideWallet = accountInfo[accountAddress]?.hideAccount;
+        }
+        return wallet;
+      });
       return {
         ...state,
         keys: {

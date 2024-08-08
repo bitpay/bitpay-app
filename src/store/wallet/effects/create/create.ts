@@ -33,6 +33,7 @@ import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {IsSegwitCoin} from '../../utils/currency';
+import {createWalletAddress} from '../address/address';
 export interface CreateOptions {
   network?: Network;
   account?: number;
@@ -294,6 +295,11 @@ const createMultipleWallets =
           },
         }),
       )) as Wallet;
+      const receiveAddress = (await dispatch<any>(
+        createWalletAddress({wallet, newAddress: true}),
+      )) as string;
+      dispatch(LogActions.info(`new address generated: ${receiveAddress}`));
+      wallet.receiveAddress = receiveAddress;
       wallets.push(wallet);
       for (const token of tokens) {
         if (token.chain === coin.chain) {
