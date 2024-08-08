@@ -3,8 +3,6 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {
   ThorswapCurrency,
   ThorswapGetCurrenciesRequestData,
-  ThorswapGetSwapQuoteData,
-  ThorswapGetSwapQuoteRequestData,
   ThorswapGetSwapTxData,
   ThorswapGetSwapTxRequestData,
 } from '../../models/thorswap.models';
@@ -48,31 +46,6 @@ export const thorswapGetSupportedChains = async (requestData: any) => {
 
     const {data} = await axios.post(
       bwsUri + '/v1/service/thorswap/supportedChains',
-      body,
-      config,
-    );
-
-    return Promise.resolve(data);
-  } catch (err) {
-    console.log(err);
-    return Promise.reject(err);
-  }
-};
-
-export const thorswapGetSwapQuote = async (
-  requestData: ThorswapGetSwapQuoteRequestData,
-): Promise<ThorswapGetSwapQuoteData> => {
-  try {
-    const body = requestData;
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const {data} = await axios.post(
-      bwsUri + '/v1/service/thorswap/getSwapQuote',
       body,
       config,
     );
