@@ -38,6 +38,7 @@ export interface CreateOptions {
   account?: number;
   customAccount?: boolean;
   useNativeSegwit?: boolean;
+  segwitVersion?: number;
   singleAddress?: boolean;
   walletName?: string;
   password?: string;
@@ -374,6 +375,7 @@ const createWallet =
         password,
         singleAddress,
         useNativeSegwit,
+        segwitVersion,
       } = {
         ...DEFAULT_CREATION_OPTIONS,
         ...options,
@@ -402,6 +404,7 @@ const createWallet =
           coin,
           chain,
           useNativeSegwit,
+          segwitVersion,
         },
         (err: any) => {
           if (err) {
