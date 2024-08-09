@@ -196,6 +196,8 @@ export const Badge = styled(BaseText)`
   font-style: normal;
   font-weight: 400;
   text-align: center;
+  line-height: 12px;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
 `;
 
 export const ProposalBadge = styled(BaseText)`

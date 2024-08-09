@@ -432,17 +432,35 @@ export const BadgeContainer = styled.View`
   align-items: center;
   justify-content: center;
   border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  padding: 1px 2px;
-  margin: 2px;
+  padding: 0px 2px;
   border-radius: 2.4px;
-  gap: 2px;
+  gap: 4px;
 `;
 
 export const EmptyListContainer = styled.View`
   justify-content: space-between;
   align-items: center;
   margin-top: 50px;
+`;
+
+export const ChevronContainerTouchable = styled.TouchableOpacity`
+  border-radius: 50px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({theme: {dark}}) => (dark ? SlateDark : NeutralSlate)};
+  margin-left: 2px;
+  height: 20px;
+  width: 20px;
+`;
+
+export const ChevronContainer = styled.View`
+  border-radius: 50px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  margin-left: 2px;
+  height: 20px;
+  width: 20px;
 `;
 
 interface SellTxIconProps {

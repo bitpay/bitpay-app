@@ -48,7 +48,6 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showInAppNotification',
   'showOnGoingProcessModal',
   'showPinModal',
-  'selectedNetworkForDeposit',
   'selectedLocalChainFilterOption',
   'isImportLedgerModalVisible',
 ];
@@ -147,7 +146,6 @@ export interface AppState {
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   selectedChainFilterOption: SupportedChains | undefined;
   selectedLocalChainFilterOption: SupportedChains | undefined;
-  selectedNetworkForDeposit: SupportedChains | undefined;
   recentSelectedChainFilterOption: string[];
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
@@ -242,7 +240,6 @@ const initialState: AppState = {
   recentDefaultAltCurrency: [],
   selectedChainFilterOption: undefined,
   selectedLocalChainFilterOption: undefined,
-  selectedNetworkForDeposit: undefined,
   recentSelectedChainFilterOption: [],
   migrationComplete: false,
   keyMigrationFailure: false,
@@ -676,12 +673,6 @@ export const appReducer = (
         ...state,
         selectedLocalChainFilterOption: action.selectedLocalChainFilterOption,
         recentSelectedChainFilterOption: recentSelectedLocalChainFilterOption,
-      };
-
-    case AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT:
-      return {
-        ...state,
-        selectedNetworkForDeposit: action.selectedNetworkForDeposit,
       };
 
     case AppActionTypes.SET_MIGRATION_COMPLETE:

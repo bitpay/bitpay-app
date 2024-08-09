@@ -1,7 +1,7 @@
-import React, {ReactElement} from 'react';
+import React, {ReactElement, useState} from 'react';
 import styled from 'styled-components/native';
 import {View} from 'react-native';
-import {BaseText} from '../styled/Text';
+import {Badge, BaseText, H5} from '../styled/Text';
 import KeySvg from '../../../assets/img/key.svg';
 import {LightBlack, Slate30, SlateDark, White} from '../../styles/colors';
 import {Wallet} from '../../store/wallet/wallet.models';
@@ -9,6 +9,27 @@ import {WalletRowProps} from './WalletRow';
 import WalletRow from './WalletRow';
 import {SvgProps} from 'react-native-svg';
 import {useTranslation} from 'react-i18next';
+import {
+  ActiveOpacity,
+  BadgeContainer,
+  ChevronContainerTouchable,
+  Column,
+  Row,
+} from '../styled/Containers';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
+import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg';
+import ChevronUpSvgLight from '../../../assets/img/chevron-up-lightmode.svg';
+import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
+import ChevronUpSvgDark from '../../../assets/img/chevron-up-darkmode.svg';
+import {useTheme} from 'styled-components/native';
+import {AccountRowProps} from './AccountListRow';
+import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
+import {formatCryptoAddress} from '../../utils/helper-methods';
+import Blockie from '../blockie/Blockie';
+import {IsEVMChain} from '../../store/wallet/utils/currency';
+import {findWalletById} from '../../store/wallet/utils/wallet';
+import {useAppSelector} from '../../utils/hooks';
+import {BitpaySupportedCoins} from '../../constants/currencies';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -19,6 +40,7 @@ const KeyWalletsRowContainer = styled.View<KeyWalletsRowContainerProps>`
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
   border-bottom-width: 0;
+  gap: 24px;
 `;
 
 interface KeyNameContainerProps {
@@ -28,7 +50,7 @@ interface KeyNameContainerProps {
 const KeyNameContainer = styled.View<KeyNameContainerProps>`
   flex-direction: row;
   align-items: center;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ECEFFD')};
   border-bottom-width: ${({noBorder}) => (noBorder ? 0 : 1)}px;
   margin-top: 20px;
   ${({noBorder}) => (noBorder ? 'margin-left: 10px;' : '')}
@@ -50,15 +72,51 @@ const NeedBackupText = styled(BaseText)`
   margin-left: auto;
 `;
 
-const NoGutter = styled.View<{isDisabled: boolean}>`
-  margin: 0 -10px;
-  padding-right: 5px;
-  opacity: ${({isDisabled}) => (isDisabled ? 0.5 : 1)};
+const CurrencyImageContainer = styled.View`
+  height: 30px;
+  width: 30px;
+  display: flex;
+  justify-content: center;
+  align-self: center;
+  border-radius: 8px;
+`;
+
+const ChainAssetsContainer = styled(Row)`
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: row;
+`;
+
+const AccountChainsContainer = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  margin: 0px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  gap: 11px;
+`;
+
+const AccountChainTitleContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 24px;
+`;
+
+interface AccountContainerProps {
+  isLast?: boolean;
+}
+
+const AccountContainer = styled.View<AccountContainerProps>`
+  gap: 24px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333333' : '#ECEFFD')};
+  border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
+  padding-bottom: 24px;
 `;
 
 type WalletRowType = KeyWallet | WalletRowProps;
 
-export interface KeyWallet extends Wallet, WalletRowProps {
+export interface KeyWallet extends Wallet {
   img: string | ((props: any) => ReactElement);
 }
 
@@ -66,62 +124,200 @@ export interface KeyWalletsRowProps<T> {
   key: string;
   backupComplete?: boolean;
   keyName: string;
-  wallets: T[];
+  accounts: (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[];
 }
 
 interface KeyWalletProps<T extends WalletRowType> {
-  keyWallets: KeyWalletsRowProps<T>[];
+  keyAccounts: KeyWalletsRowProps<T>[];
   keySvg?: React.FC<SvgProps>;
-  onPress: (wallet: T) => void;
+  onPress: (wallet: Wallet) => void;
   currency?: string;
   hideBalance: boolean;
 }
 
 const KeyWalletsRow = <T extends WalletRowType>({
-  keyWallets,
+  keyAccounts,
   keySvg = KeySvg,
   onPress,
   currency,
   hideBalance,
 }: KeyWalletProps<T>) => {
   const {t} = useTranslation();
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const [showChainAssets, setShowChainAssets] = useState<{
+    [key: string]: boolean;
+  }>();
+  const theme = useTheme();
+
+  const onHide = (address: string) => {
+    setShowChainAssets({
+      ...showChainAssets,
+      [address]:
+        showChainAssets?.[address] === undefined
+          ? false
+          : !showChainAssets?.[address],
+    });
+  };
+
   return (
     <View>
-      {keyWallets.map((key, keyIndex) => (
+      {keyAccounts.map((key, keyIndex) => (
         <KeyWalletsRowContainer
           key={key.key}
-          isLast={keyIndex === keyWallets.length - 1}>
-          {key.wallets.length >= 1 ? (
+          isLast={keyIndex === keyAccounts.length - 1}>
+          {key.accounts.length > 0 && (
             <KeyNameContainer noBorder={!!currency}>
               {keySvg({})}
               <KeyName>{key.keyName || 'My Key'}</KeyName>
-              {key.backupComplete || key.wallets[0].coinbaseAccount ? null : (
-                <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
-              )}
+              {!key.backupComplete &&
+                !key.accounts[0].wallets[0].coinbaseAccount && (
+                  <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+                )}
             </KeyNameContainer>
-          ) : null}
+          )}
+          {key.accounts.map((account, index) =>
+            IsEVMChain(account.chains[0]) ? (
+              <AccountContainer
+                key={account.id}
+                isLast={index === key.accounts.length - 1}>
+                <AccountChainsContainer
+                  activeOpacity={ActiveOpacity}
+                  onPress={() => {}}>
+                  <Blockie size={19} seed={account.receiveAddress} />
+                  <Column>
+                    <H5 ellipsizeMode="tail" numberOfLines={1}>
+                      {account.accountName}
+                    </H5>
+                  </Column>
+                  <Column style={{alignItems: 'flex-end'}}>
+                    <ChainAssetsContainer>
+                      <BadgeContainer style={{height: 20}}>
+                        <Badge style={{marginTop: 3}}>
+                          {formatCryptoAddress(account.receiveAddress)}
+                        </Badge>
+                      </BadgeContainer>
 
-          {key.wallets.map((w, walletIndex) => (
-            <NoGutter
-              isDisabled={!key.backupComplete && !w.coinbaseAccount}
-              key={w.id}>
-              <WalletRow
-                wallet={w}
-                id={w.id}
-                hideIcon={!!currency}
-                hideBalance={hideBalance}
-                isLast={
-                  walletIndex === key.wallets.length - 1 &&
-                  keyIndex === keyWallets.length - 1
-                }
-                onPress={() => {
-                  if (key.backupComplete) {
-                    onPress(w);
-                  }
-                }}
-              />
-            </NoGutter>
-          ))}
+                      <ChevronContainerTouchable
+                        onPress={() => onHide(account.receiveAddress)}>
+                        {showChainAssets?.[account.receiveAddress] ===
+                          undefined ||
+                        showChainAssets[account.receiveAddress] ? (
+                          theme.dark ? (
+                            <ChevronDownSvgDark width={10} height={6} />
+                          ) : (
+                            <ChevronDownSvgLight width={10} height={6} />
+                          )
+                        ) : theme.dark ? (
+                          <ChevronUpSvgDark width={10} height={6} />
+                        ) : (
+                          <ChevronUpSvgLight width={10} height={6} />
+                        )}
+                      </ChevronContainerTouchable>
+                    </ChainAssetsContainer>
+                  </Column>
+                </AccountChainsContainer>
+                {showChainAssets?.[account.receiveAddress] === undefined ||
+                showChainAssets[account.receiveAddress]
+                  ? account?.assetsByChain?.map(
+                      ({chain, chainImg, chainName, chainAssetsList}) => (
+                        <View key={chain}>
+                          <AccountChainTitleContainer>
+                            <CurrencyImageContainer>
+                              <CurrencyImage img={chainImg} size={20} />
+                            </CurrencyImageContainer>
+                            <H5 ellipsizeMode="tail" numberOfLines={1}>
+                              {chainName}
+                            </H5>
+                          </AccountChainTitleContainer>
+
+                          <View
+                            style={{marginTop: -10, marginLeft: -10}}
+                            key={chain}>
+                            {chainAssetsList.map((asset, index) => (
+                              <WalletRow
+                                key={asset.id}
+                                id={asset.id}
+                                hideBalance={false}
+                                isLast={false}
+                                onPress={() => {
+                                  const fullWalletObj = findWalletById(
+                                    keys[key.key].wallets,
+                                    asset.id,
+                                  ) as Wallet;
+                                  onPress(fullWalletObj);
+                                }}
+                                wallet={asset}
+                              />
+                            ))}
+                          </View>
+                        </View>
+                      ),
+                    )
+                  : null}
+              </AccountContainer>
+            ) : (
+              account?.wallets?.map(wallet => (
+                <AccountContainer
+                  key={wallet.id}
+                  isLast={index === key.accounts.length - 1}>
+                  <AccountChainsContainer
+                    activeOpacity={ActiveOpacity}
+                    onPress={() => {}}>
+                    <CurrencyImageContainer>
+                      <CurrencyImage img={wallet.img} size={20} />
+                    </CurrencyImageContainer>
+                    <Column>
+                      <H5 ellipsizeMode="tail" numberOfLines={1}>
+                        {
+                          BitpaySupportedCoins[
+                            wallet?.currencyAbbreviation?.toLowerCase()
+                          ]?.name
+                        }
+                      </H5>
+                    </Column>
+                    <Column style={{alignItems: 'flex-end'}}>
+                      <ChainAssetsContainer>
+                        <ChevronContainerTouchable
+                          onPress={() => onHide(wallet.id)}>
+                          {showChainAssets?.[wallet.id] === undefined ||
+                          showChainAssets[wallet.id] ? (
+                            theme.dark ? (
+                              <ChevronDownSvgDark width={10} height={6} />
+                            ) : (
+                              <ChevronDownSvgLight width={10} height={6} />
+                            )
+                          ) : theme.dark ? (
+                            <ChevronUpSvgDark width={10} height={6} />
+                          ) : (
+                            <ChevronUpSvgLight width={10} height={6} />
+                          )}
+                        </ChevronContainerTouchable>
+                      </ChainAssetsContainer>
+                    </Column>
+                  </AccountChainsContainer>
+
+                  {showChainAssets?.[wallet.id] === undefined ||
+                  showChainAssets[wallet.id] ? (
+                    <View style={{marginTop: -10, marginLeft: -10}}>
+                      <WalletRow
+                        id={wallet.id}
+                        hideBalance={false}
+                        isLast={false}
+                        onPress={() => {
+                          const fullWalletObj = findWalletById(
+                            keys[key.key].wallets,
+                            wallet.id,
+                          ) as Wallet;
+                          onPress(fullWalletObj);
+                        }}
+                        wallet={wallet}
+                      />
+                    </View>
+                  ) : null}
+                </AccountContainer>
+              ))
+            ),
+          )}
         </KeyWalletsRowContainer>
       ))}
     </View>

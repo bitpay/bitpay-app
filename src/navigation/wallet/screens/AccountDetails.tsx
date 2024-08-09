@@ -52,7 +52,6 @@ import {
 import {
   formatCryptoAddress,
   formatCurrencyAbbreviation,
-  formatFiat,
   shouldScale,
   sleep,
 } from '../../../utils/helper-methods';
@@ -77,6 +76,7 @@ import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
 import {
   ActiveOpacity,
   BadgeContainer,
+  ChevronContainer,
   EmptyListContainer,
   HeaderRightContainer,
   ProposalBadgeContainer,
@@ -133,8 +133,15 @@ import debounce from 'lodash.debounce';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
-import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {
+  buildAssetsByChainList,
+  findWalletById,
+} from '../../../store/wallet/utils/wallet';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
+import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
+import KeySvg from '../../../../assets/img/key.svg';
+import ReceiveAddress from '../components/ReceiveAddress';
 
 export type AccountDetailsScreenParamList = {
   accountItem: AccountRowProps;
@@ -289,116 +296,14 @@ const AddCustomTokenContainer = styled.View`
   justify-content: center;
 `;
 
-const buildUIFormattedAssetsList = (
-  assetsByChainList: Array<AssetsByChainListProps>,
-  wallet: WalletRowProps,
-  defaultAltCurrencyIsoCode: string,
-  currencyDisplay?: 'symbol',
-) => {
-  let assetsByChain = assetsByChainList.find(
-    ({title}) => title === wallet.chain,
-  ) as AssetsByChainListProps | undefined;
-  if (assetsByChain) {
-    let chainData = assetsByChain.data.find(
-      ({chain}) => chain === wallet.chain,
-    );
-    if (chainData) {
-      chainData.fiatBalance += wallet.fiatBalance ?? 0;
-      chainData.fiatLockedBalance += wallet.fiatLockedBalance ?? 0;
-      chainData.fiatConfirmedLockedBalance +=
-        wallet.fiatConfirmedLockedBalance ?? 0;
-      chainData.fiatSpendableBalance += wallet.fiatSpendableBalance ?? 0;
-      chainData.fiatPendingBalance += wallet.fiatPendingBalance ?? 0;
-      chainData.chainAssetsList.push(wallet);
-
-      chainData.fiatBalanceFormat = formatFiat({
-        fiatAmount: chainData.fiatBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      });
-      chainData.fiatLockedBalanceFormat = formatFiat({
-        fiatAmount: chainData.fiatLockedBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      });
-      chainData.fiatConfirmedLockedBalanceFormat = formatFiat({
-        fiatAmount: chainData.fiatConfirmedLockedBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      });
-      chainData.fiatSpendableBalanceFormat = formatFiat({
-        fiatAmount: chainData.fiatSpendableBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      });
-      chainData.fiatPendingBalanceFormat = formatFiat({
-        fiatAmount: chainData.fiatPendingBalance ?? 0,
-        defaultAltCurrencyIsoCode,
-        currencyDisplay,
-      });
-    }
-  } else {
-    assetsByChainList.push({
-      title: wallet.chain,
-      chains: [wallet.chain], // usefull only for chain selector
-      data: [
-        {
-          id: _.uniqueId('chain_'),
-          chain: wallet.chain,
-          chainImg: wallet.badgeImg || wallet.img,
-          chainName: wallet.chainName,
-          fiatBalance: wallet.fiatBalance ?? 0,
-          fiatLockedBalance: wallet.fiatLockedBalance ?? 0,
-          fiatConfirmedLockedBalance: wallet.fiatConfirmedLockedBalance ?? 0,
-          fiatSpendableBalance: wallet.fiatSpendableBalance ?? 0,
-          fiatPendingBalance: wallet.fiatPendingBalance ?? 0,
-          fiatBalanceFormat: formatFiat({
-            fiatAmount: wallet.fiatBalance ?? 0,
-            defaultAltCurrencyIsoCode,
-            currencyDisplay,
-          }),
-          fiatLockedBalanceFormat: formatFiat({
-            fiatAmount: wallet.fiatLockedBalance ?? 0,
-            defaultAltCurrencyIsoCode,
-            currencyDisplay,
-          }),
-          fiatConfirmedLockedBalanceFormat: formatFiat({
-            fiatAmount: wallet.fiatConfirmedLockedBalance ?? 0,
-            defaultAltCurrencyIsoCode,
-            currencyDisplay,
-          }),
-          fiatSpendableBalanceFormat: formatFiat({
-            fiatAmount: wallet.fiatSpendableBalance ?? 0,
-            defaultAltCurrencyIsoCode,
-            currencyDisplay,
-          }),
-          fiatPendingBalanceFormat: formatFiat({
-            fiatAmount: wallet.fiatPendingBalance ?? 0,
-            defaultAltCurrencyIsoCode,
-            currencyDisplay,
-          }),
-          chainAssetsList: [wallet],
-        },
-      ],
-    });
-  }
-};
-
-const buildAssetsByChainList = (
-  accountItem: AccountRowProps,
-  defaultAltCurrencyIso: string,
-) => {
-  const assetsByChainList: Array<AssetsByChainListProps> = [];
-  accountItem.wallets.forEach(coin => {
-    buildUIFormattedAssetsList(
-      assetsByChainList,
-      coin,
-      defaultAltCurrencyIso,
-      'symbol',
-    );
-  });
-  return assetsByChainList;
-};
+const CenteredText = styled(BaseText)`
+  text-align: center;
+  font-size: 12px;
+  line-height: 18px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  font-weight: 400;
+  margin-left: 4px;
+`;
 
 const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
@@ -438,6 +343,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
+  const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
+    useState(false);
 
   const [searchResultsHistory, setSearchResultsHistory] = useState(
     [] as GroupedHistoryProps[],
@@ -665,10 +572,24 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 <EncryptPasswordImg />
               )
             ) : null}
-            <HeaderTitle>{accountItem?.accountName}</HeaderTitle>
-            {(hasMultipleAccounts || linkedCoinbase) && (
-              <ChevronDownSvg style={{marginLeft: 10}} />
-            )}
+            <View>
+              <Row style={{alignItems: 'center'}}>
+                <KeySvg width={10} height={10} />
+                <CenteredText>{key?.keyName}</CenteredText>
+              </Row>
+              <Row style={{alignItems: 'center'}}>
+                <HeaderTitle>{accountItem?.accountName}</HeaderTitle>
+                {(hasMultipleAccounts || linkedCoinbase) && (
+                  <ChevronContainer>
+                    {!theme.dark ? (
+                      <ChevronDownSvgLight width={8} height={8} />
+                    ) : (
+                      <ChevronDownSvgDark width={8} height={8} />
+                    )}
+                  </ChevronContainer>
+                )}
+              </Row>
+            </View>
           </AccountToogle>
         );
       },
@@ -1138,7 +1059,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               </Row>
             </TouchableOpacity>
             <BadgeContainer style={{alignSelf: 'center', width: 'auto'}}>
-              <Badge>{formatCryptoAddress(accountItem.receiveAddress)}</Badge>
+              <Badge style={{marginTop: 3}}>
+                {formatCryptoAddress(accountItem.receiveAddress)}
+              </Badge>
               <CopyToClipboardContainer
                 onPress={copyToClipboard}
                 activeOpacity={ActiveOpacity}>
@@ -1189,10 +1112,12 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             }}
             receive={{
               cta: () => {
-                navigation.navigate('GlobalSelect', {
-                  context: 'receive',
-                  selectedAccountAddress: accountItem.receiveAddress,
-                });
+                dispatch(
+                  Analytics.track('Clicked Receive', {
+                    context: 'AccountDetails',
+                  }),
+                );
+                setShowReceiveAddressBottomModal(true);
               },
             }}
             send={{
@@ -1259,7 +1184,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               <H5>{t('Activity')}</H5>
             </WalletListHeader>
           </HeaderListContainer>
-          <SearchComponent<GroupedHistoryProps | AssetsByChainListProps>
+          <SearchComponent<
+            GroupedHistoryProps | Partial<AssetsByChainListProps>
+          >
             searchVal={searchVal}
             setSearchVal={setSearchVal}
             searchResults={
@@ -1281,7 +1208,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         </AssetsDataContainer>
       </>
     );
-  }, [showActivityTab, memorizedAssetsByChainList, groupedHistory]);
+  }, [showActivityTab, memorizedAssetsByChainList, groupedHistory, copied]);
 
   const renderDataSectionComponent = useMemo(() => {
     if (!searchVal && !selectedChainFilterOption) {
@@ -1404,6 +1331,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           </AccountDropdownOptionsContainer>
         </AccountDropdown>
       </SheetModal>
+
+      <ReceiveAddress
+        isVisible={showReceiveAddressBottomModal}
+        closeModal={() => setShowReceiveAddressBottomModal(false)}
+        wallet={keyFullWalletObjs[0]}
+        context={'accountdetails'}
+      />
     </AccountDetailsContainer>
   );
 };

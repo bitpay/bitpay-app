@@ -43,7 +43,7 @@ import KeyWalletsRow, {
   KeyWallet,
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
-import {BuildKeyWalletRow} from '../screens/send/SendTo';
+import {BuildKeyAccountRow} from '../screens/send/SendTo';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   RecipientList,
@@ -101,7 +101,7 @@ const SendToAddress = () => {
   const {wallet, context} = route.params;
   const {currencyAbbreviation, id, network, chain} = wallet;
 
-  const keyWallets: KeyWalletsRowProps<KeyWallet>[] = BuildKeyWalletRow(
+  const keyAccounts: KeyWalletsRowProps<KeyWallet>[] = BuildKeyAccountRow(
     keys,
     id,
     currencyAbbreviation,
@@ -326,7 +326,7 @@ const SendToAddress = () => {
       <ScrollViewContainer>
         <View style={{marginTop: 10}}>
           <KeyWalletsRow
-            keyWallets={keyWallets}
+            keyAccounts={keyAccounts}
             hideBalance={hideAllBalances}
             onPress={(selectedWallet: KeyWallet) => {
               onSendToWallet(selectedWallet);

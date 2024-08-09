@@ -30,6 +30,7 @@ import {
   HeaderRightContainer as _HeaderRightContainer,
   ProposalBadgeContainer,
   EmptyListContainer,
+  ChevronContainer,
 } from '../../../components/styled/Containers';
 import {
   showBottomNotificationModal,
@@ -37,8 +38,7 @@ import {
 } from '../../../store/app/app.actions';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {Wallet, Status} from '../../../store/wallet/wallet.models';
-import {Rates} from '../../../store/rate/rate.models';
+import {Status} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
   NeutralSlate,
@@ -54,7 +54,6 @@ import {BalanceUpdateError} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletGroupParamList} from '../WalletGroup';
-import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {startGetRates} from '../../../store/wallet/effects';
@@ -70,13 +69,15 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
-import {IsEVMCoin} from '../../../store/wallet/utils/currency';
+import {IsEVMChain} from '../../../store/wallet/utils/currency';
 import AccountListRow, {
   AccountRowProps,
 } from '../../../components/list/AccountListRow';
 import _ from 'lodash';
 import DropdownOption from '../components/DropdownOption';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
+import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
+import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -212,7 +213,13 @@ const KeyOverview = () => {
                 {key?.keyName}
               </HeaderTitle>
               {(hasMultipleKeys || linkedCoinbase) && (
-                <ChevronDownSvg style={{marginLeft: 10}} />
+                <ChevronContainer>
+                  {!theme.dark ? (
+                    <ChevronDownSvgLight width={8} height={8} />
+                  ) : (
+                    <ChevronDownSvgDark width={8} height={8} />
+                  )}
+                </ChevronContainer>
               )}
             </HeaderTitleContainer>
           </KeyToggle>
@@ -293,6 +300,9 @@ const KeyOverview = () => {
       defaultAltCurrency.isoCode,
       rates,
       dispatch,
+      {
+        filterByHideWallet: true,
+      },
     );
   }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
 
@@ -370,9 +380,9 @@ const KeyOverview = () => {
   const onPressItem = (item: AccountRowProps) => {
     haptic('impactLight');
 
-    if (IsEVMCoin(item.chains[0])) {
+    if (IsEVMChain(item.chains[0])) {
       const accountList = memorizedAccountList.filter(({chains}) =>
-        IsEVMCoin(chains[0]),
+        IsEVMChain(chains[0]),
       ); // pass only evm accounts
       navigation.navigate('AccountDetails', {
         key,

@@ -28,6 +28,7 @@ import {
   sleep,
   getProtocolName,
   titleCasing,
+  getProtocolsName,
 } from '../../../utils/helper-methods';
 import {Status, Wallet} from '../../../store/wallet/wallet.models';
 import ReceiveAddressHeader, {
@@ -155,9 +156,10 @@ interface Props {
   isVisible: boolean;
   closeModal: () => void;
   wallet: Wallet;
+  context?: 'accountdetails';
 }
 
-const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
+const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -357,41 +359,59 @@ const ReceiveAddress = ({isVisible, closeModal, wallet}: Props) => {
           </LoadingContainer>
         )}
 
-        <WarningContainer>
-          <WarningHeader>
-            <WarningSvg />
-            <WarningDescription isToken={wallet.credentials.token?.address}>
-              <WarningTitle>{t('Warning!')}</WarningTitle>
-              {'\n'}
-              {t(
-                'Receive only COIN on the PROTOCOLNAME Network to avoid losing funds.',
-                {
-                  coin: wallet?.currencyAbbreviation?.toUpperCase(),
-                  protocolName: titleCasing(
-                    getProtocolName(wallet.chain, wallet.network)!,
-                  ),
-                },
-              )}
-            </WarningDescription>
-          </WarningHeader>
-          {wallet.credentials.token?.address ? (
-            <>
-              <ContractHeaderContainer>
-                <TitleContainer>{t('Contract Address')}</TitleContainer>
-                <LinkContainer>
-                  <LinkIcon />
-                  <ContractLink
-                    onPress={() => dispatch(viewOnBlockchain(wallet))}>
-                    {t('View Contract')}
-                  </ContractLink>
-                </LinkContainer>
-              </ContractHeaderContainer>
-              <ContractAddressText>
-                {wallet.credentials.token?.address}
-              </ContractAddressText>
-            </>
-          ) : null}
-        </WarningContainer>
+        {context && ['accountdetails'].includes(context) ? (
+          <WarningContainer>
+            <WarningHeader>
+              <WarningSvg />
+              <WarningDescription isToken={wallet.credentials.token?.address}>
+                <WarningTitle>{t('Warning!')}</WarningTitle>
+                {'\n'}
+                {t(
+                  'Only receive tokens on PROTOCOLNAMES networks to avoid losing funds',
+                  {
+                    protocolNames: titleCasing(getProtocolsName()!),
+                  },
+                )}
+              </WarningDescription>
+            </WarningHeader>
+          </WarningContainer>
+        ) : (
+          <WarningContainer>
+            <WarningHeader>
+              <WarningSvg />
+              <WarningDescription isToken={wallet.credentials.token?.address}>
+                <WarningTitle>{t('Warning!')}</WarningTitle>
+                {'\n'}
+                {t(
+                  'Receive only COIN on the PROTOCOLNAME Network to avoid losing funds.',
+                  {
+                    coin: wallet?.currencyAbbreviation?.toUpperCase(),
+                    protocolName: titleCasing(
+                      getProtocolName(wallet.chain, wallet.network)!,
+                    ),
+                  },
+                )}
+              </WarningDescription>
+            </WarningHeader>
+            {wallet.credentials.token?.address ? (
+              <>
+                <ContractHeaderContainer>
+                  <TitleContainer>{t('Contract Address')}</TitleContainer>
+                  <LinkContainer>
+                    <LinkIcon />
+                    <ContractLink
+                      onPress={() => dispatch(viewOnBlockchain(wallet))}>
+                      {t('View Contract')}
+                    </ContractLink>
+                  </LinkContainer>
+                </ContractHeaderContainer>
+                <ContractAddressText>
+                  {wallet.credentials.token?.address}
+                </ContractAddressText>
+              </>
+            ) : null}
+          </WarningContainer>
+        )}
         <CloseButton onPress={_closeModal}>
           <CloseButtonText>{t('CLOSE')}</CloseButtonText>
         </CloseButton>

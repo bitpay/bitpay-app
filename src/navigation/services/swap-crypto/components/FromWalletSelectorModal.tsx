@@ -84,7 +84,6 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
           modalContext={modalContext}
           livenetOnly={livenetOnly}
           onHelpPress={onHelpPress}
-          selectingNetworkForDeposit={false}
         />
 
         <SheetModal

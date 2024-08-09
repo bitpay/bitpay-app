@@ -86,6 +86,7 @@ class Blockie extends Component<BlockieProps> {
     const spotcolor = this.props.spotcolor || this.createColor();
 
     const imageData = this.createImageData(size);
+    const blockSize = size / 5; // Assuming 8x8 grid, adjust as necessary
     const width = Math.sqrt(imageData.length);
 
     return imageData.map((item, i) => {
@@ -95,16 +96,16 @@ class Blockie extends Component<BlockieProps> {
         fill = item === 1 ? color : spotcolor;
       }
 
-      const row = Math.floor(i / size);
-      const col = i % size;
+      const row = Math.floor(i / width);
+      const col = i % width;
 
       return (
         <Rect
           key={i}
-          x={row * 10}
-          y={col * 10}
-          width={size}
-          height={size}
+          x={col * blockSize}
+          y={row * blockSize}
+          width={blockSize}
+          height={blockSize}
           fill={fill}
         />
       );

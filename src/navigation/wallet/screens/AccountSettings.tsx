@@ -108,7 +108,9 @@ const AccountSettings = () => {
       defaultAltCurrency.isoCode,
       rates,
       dispatch,
-      true,
+      {
+        skipFiatCalculations: true,
+      },
     )[0];
   }, [_key, defaultAltCurrency.isoCode, rates]);
 

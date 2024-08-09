@@ -89,7 +89,6 @@ import {startUpdateWalletStatus} from '../../../../store/wallet/effects/status/s
 import SwapCryptoLoadingWalletSkeleton from './SwapCryptoLoadingWalletSkeleton';
 import SwapCryptoBalanceSkeleton from './SwapCryptoBalanceSkeleton';
 import BalanceDetailsModal from '../../../wallet/components/BalanceDetailsModal';
-import {buildUIFormattedWallet} from '../../../wallet/screens/KeyOverview';
 import {
   ExternalServicesConfig,
   ExternalServicesConfigRequestParams,
@@ -123,6 +122,7 @@ import {
   SwapCryptoSupportedExchanges,
 } from '../utils/swap-crypto-utils';
 import {SwapCryptoLimits} from '../../../../store/swap-crypto/swap-crypto.models';
+import { buildUIFormattedWallet } from '../../../../store/wallet/utils/wallet';
 
 export type SwapCryptoRootScreenParams =
   | {
@@ -1693,7 +1693,6 @@ const SwapCryptoRoot: React.FC = () => {
                 : undefined
             }
             globalSelectOnDismiss={onDismiss}
-            selectingNetworkForDeposit={true}
           />
         </GlobalSelectContainer>
       </SheetModal>

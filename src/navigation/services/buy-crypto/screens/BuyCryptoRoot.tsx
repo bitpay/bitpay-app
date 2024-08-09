@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Platform, ScrollView} from 'react-native';
+import {Platform, ScrollView, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled, {useTheme} from 'styled-components/native';
 import {
@@ -20,7 +20,7 @@ import {
   SelectedOptionContainer,
   SelectedOptionText,
   DataText,
-  CoinIconContainer,
+  BuyCryptoItemTopTitle,
 } from '../styled/BuyCryptoCard';
 import Button from '../../../../components/button/Button';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
@@ -36,7 +36,8 @@ import {
   White,
   Black,
   Slate,
-  SlateDark,
+  LightBlack,
+  NeutralSlate,
 } from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
@@ -46,7 +47,7 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
-import {IsERCToken} from '../../../../store/wallet/utils/currency';
+import {IsERCToken, IsEVMChain} from '../../../../store/wallet/utils/currency';
 import {
   BuyCryptoExchangeKey,
   BuyCryptoSupportedExchanges,
@@ -60,9 +61,7 @@ import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
 } from '../../../../constants/currencies';
-import ToWalletSelectorModal, {
-  ToWalletSelectorCustomCurrency,
-} from '../../components/ToWalletSelectorModal';
+import {ToWalletSelectorCustomCurrency} from '../../components/ToWalletSelectorModal';
 import {
   addWallet,
   AddWalletData,
@@ -89,6 +88,13 @@ import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  CurrencyColumn,
+  CurrencyImageContainer,
+  Row,
+} from '../../../../components/styled/Containers';
+import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
+import Blockie from '../../../../components/blockie/Blockie';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -115,6 +121,25 @@ const CtaContainer = styled.View`
 
 const ArrowContainer = styled.View`
   margin-left: 10px;
+`;
+
+const AccountChainsContainer = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  border-radius: 50px;
+  padding: 8px;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+`;
+
+const TitleContainerRow = styled(Row)`
+  margin-top: 8px;
+  margin-left: 16px;
+  margin-right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-content: center;
 `;
 
 let buyCryptoConfig: BuyCryptoConfig | undefined;
@@ -775,8 +800,12 @@ const BuyCryptoRoot = ({
         .filter(currency => !!currency.name);
 
     setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
-
-    selectFirstAvailableWallet();
+    if (fromWallet?.id) {
+      selectFirstAvailableWallet();
+    } else {
+      await sleep(500);
+      dispatch(dismissOnGoingProcessModal());
+    }
   };
 
   const onDismiss = async (
@@ -839,6 +868,90 @@ const BuyCryptoRoot = ({
   return (
     <BuyCryptoRootContainer>
       <ScrollView>
+        {selectedWallet && (
+          <TitleContainerRow>
+            <BuyCryptoItemTopTitle>{t('Deposit to')}</BuyCryptoItemTopTitle>
+            {IsEVMChain(selectedWallet.chain) ? (
+              <AccountChainsContainer>
+                <Blockie size={19} seed={selectedWallet.receiveAddress} />
+                <H7 ellipsizeMode="tail" numberOfLines={1}>
+                  {`EVM Account ${selectedWallet.credentials.account}`}
+                </H7>
+              </AccountChainsContainer>
+            ) : null}
+          </TitleContainerRow>
+        )}
+        <BuyCryptoItemCard
+          onPress={() => {
+            showModal('walletSelector');
+          }}>
+          {!selectedWallet && (
+            <>
+              <BuyCryptoItemTitle>{t('Deposit to')}</BuyCryptoItemTitle>
+              <ActionsContainer>
+                <SelectedOptionContainer style={{backgroundColor: Action}}>
+                  <SelectedOptionText
+                    style={{color: White}}
+                    numberOfLines={1}
+                    ellipsizeMode={'tail'}>
+                    {t('Choose Cypto')}
+                  </SelectedOptionText>
+                  <ArrowContainer>
+                    <SelectorArrowDown
+                      {...{width: 13, height: 13, color: White}}
+                    />
+                  </ArrowContainer>
+                </SelectedOptionContainer>
+              </ActionsContainer>
+            </>
+          )}
+          {selectedWallet && (
+            <ActionsContainer>
+              <CurrencyImageContainer>
+                <CurrencyImage
+                  img={selectedWallet.img}
+                  badgeUri={getBadgeImg(
+                    getCurrencyAbbreviation(
+                      selectedWallet.currencyAbbreviation,
+                      selectedWallet.chain,
+                    ),
+                    selectedWallet.chain,
+                  )}
+                  size={45}
+                />
+              </CurrencyImageContainer>
+              <CurrencyColumn>
+                <Row>
+                  <H5 ellipsizeMode="tail" numberOfLines={1}>
+                    {selectedWallet.walletName
+                      ? selectedWallet.walletName
+                      : selectedWallet.currencyName}
+                  </H5>
+                </Row>
+                <Row style={{alignItems: 'center'}}>
+                  <ListItemSubText
+                    ellipsizeMode="tail"
+                    numberOfLines={1}
+                    style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+                    {selectedWallet.currencyAbbreviation.toUpperCase()}
+                  </ListItemSubText>
+                </Row>
+              </CurrencyColumn>
+              <SelectedOptionCol>
+                <ArrowContainer>
+                  <SelectorArrowRight
+                    {...{
+                      width: 13,
+                      height: 13,
+                      color: theme.dark ? White : Slate,
+                    }}
+                  />
+                </ArrowContainer>
+              </SelectedOptionCol>
+            </ActionsContainer>
+          )}
+        </BuyCryptoItemCard>
+
         <BuyCryptoItemCard
           onPress={() => {
             showModal('amount');
@@ -863,79 +976,6 @@ const BuyCryptoRoot = ({
               </ArrowContainer>
             </SelectedOptionCol>
           </ActionsContainer>
-        </BuyCryptoItemCard>
-
-        <BuyCryptoItemCard
-          onPress={() => {
-            showModal('walletSelector');
-          }}>
-          <BuyCryptoItemTitle>{t('Deposit to')}</BuyCryptoItemTitle>
-          {!selectedWallet && (
-            <ActionsContainer>
-              <SelectedOptionContainer style={{backgroundColor: Action}}>
-                <SelectedOptionText
-                  style={{color: White}}
-                  numberOfLines={1}
-                  ellipsizeMode={'tail'}>
-                  {t('Select Destination')}
-                </SelectedOptionText>
-                <ArrowContainer>
-                  <SelectorArrowDown
-                    {...{width: 13, height: 13, color: White}}
-                  />
-                </ArrowContainer>
-              </SelectedOptionContainer>
-            </ActionsContainer>
-          )}
-          {selectedWallet && (
-            <ActionsContainer>
-              <SelectedOptionContainer style={{minWidth: 120}}>
-                <SelectedOptionCol>
-                  <CoinIconContainer>
-                    <CurrencyImage
-                      img={selectedWallet.img}
-                      badgeUri={getBadgeImg(
-                        getCurrencyAbbreviation(
-                          selectedWallet.currencyAbbreviation,
-                          selectedWallet.chain,
-                        ),
-                        selectedWallet.chain,
-                      )}
-                      size={20}
-                    />
-                  </CoinIconContainer>
-                  <SelectedOptionText numberOfLines={1} ellipsizeMode={'tail'}>
-                    {selectedWallet.currencyAbbreviation.toUpperCase()}
-                  </SelectedOptionText>
-                </SelectedOptionCol>
-                <ArrowContainer>
-                  <SelectorArrowDown
-                    {...{
-                      width: 13,
-                      height: 13,
-                      color: theme.dark ? White : SlateDark,
-                    }}
-                  />
-                </ArrowContainer>
-              </SelectedOptionContainer>
-              <SelectedOptionCol>
-                <DataText numberOfLines={1} ellipsizeMode={'tail'}>
-                  {selectedWallet.walletName
-                    ? selectedWallet.walletName
-                    : selectedWallet.currencyName}
-                </DataText>
-                <ArrowContainer>
-                  <SelectorArrowRight
-                    {...{
-                      width: 13,
-                      height: 13,
-                      color: theme.dark ? White : Slate,
-                    }}
-                  />
-                </ArrowContainer>
-              </SelectedOptionCol>
-            </ActionsContainer>
-          )}
         </BuyCryptoItemCard>
 
         {!!selectedWallet && (
@@ -1015,7 +1055,6 @@ const BuyCryptoRoot = ({
             customToSelectCurrencies={buyCryptoSupportedCoinsFullObj}
             disabledChain={undefined}
             globalSelectOnDismiss={onDismiss}
-            selectingNetworkForDeposit={true}
           />
         </GlobalSelectContainer>
       </SheetModal>

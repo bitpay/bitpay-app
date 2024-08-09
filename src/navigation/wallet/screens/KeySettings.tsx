@@ -71,7 +71,7 @@ import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
-import {IsEVMCoin} from '../../../store/wallet/utils/currency';
+import {IsEVMChain} from '../../../store/wallet/utils/currency';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -136,13 +136,9 @@ const KeySettings = () => {
   );
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const memorizedAccountList = useMemo(() => {
-    return buildAccountList(
-      _key,
-      defaultAltCurrency.isoCode,
-      rates,
-      dispatch,
-      true,
-    );
+    return buildAccountList(_key, defaultAltCurrency.isoCode, rates, dispatch, {
+      skipFiatCalculations: true,
+    });
   }, [dispatch, _key, defaultAltCurrency.isoCode, rates]);
 
   const accountInfo = useAppSelector(
@@ -296,7 +292,7 @@ const KeySettings = () => {
 
   const onPressItem = (item: AccountRowProps) => {
     haptic('impactLight');
-    if (IsEVMCoin(item.chains[0])) {
+    if (IsEVMChain(item.chains[0])) {
       navigation.navigate('AccountSettings', {
         key: _key,
         selectedAccountAddress: item.receiveAddress,

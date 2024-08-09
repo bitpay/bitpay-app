@@ -25,14 +25,8 @@ import {
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
 import {Effect, RootState} from '../../../../store';
-import {
-  convertToFiat,
-  formatCurrencyAbbreviation,
-  formatFiatAmount,
-  getErrorString,
-  sleep,
-} from '../../../../utils/helper-methods';
-import {Key} from '../../../../store/wallet/wallet.models';
+import {getErrorString, sleep} from '../../../../utils/helper-methods';
+import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {Rates} from '../../../../store/rate/rate.models';
 import debounce from 'lodash.debounce';
 import {
@@ -43,8 +37,6 @@ import {
 } from '../../../../store/wallet/utils/validations';
 import {Linking, TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import merge from 'lodash.merge';
-import cloneDeep from 'lodash.clonedeep';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
 import KeyWalletsRow, {
   KeyWallet,
@@ -78,10 +70,13 @@ import {
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
-import {IsUtxoChain} from '../../../../store/wallet/utils/currency';
+import {IsEVMChain, IsUtxoChain} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
-import {toFiat} from '../../../../store/wallet/utils/wallet';
+import {
+  buildAccountList,
+  buildAssetsByChain,
+} from '../../../../store/wallet/utils/wallet';
 import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
 import Icons from '../../components/WalletIcons';
@@ -91,7 +86,9 @@ import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../../store/log';
-import {URL} from '../../../../constants';
+import {Network, URL} from '../../../../constants';
+import {AccountRowProps} from '../../../../components/list/AccountListRow';
+import {AssetsByChainData} from '../AccountDetails';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -156,79 +153,55 @@ const isEmailAddress = (text: string) => {
   return reg.test(text);
 };
 
-export const BuildKeyWalletRow = (
+export const BuildKeyAccountRow = (
   keys: {[key in string]: Key},
   currentWalletId: string,
   currentCurrencyAbbreviation: string,
   currentChain: string,
-  currentNetwork: string,
+  currentNetwork: Network,
   defaultAltCurrencyIsoCode: string,
   searchInput: string,
   rates: Rates,
   dispatch: AppDispatch,
 ) => {
   let filteredKeys: KeyWalletsRowProps<KeyWallet>[] = [];
-  Object.entries(keys).forEach(([key, value]) => {
-    const wallets: KeyWallet[] = [];
-    value.wallets
-      .filter(({hideWallet}) => !hideWallet)
-      .filter(
-        ({currencyAbbreviation, chain, id, network, credentials}) =>
-          currencyAbbreviation.toLowerCase() ===
-            currentCurrencyAbbreviation.toLowerCase() &&
-          chain.toLowerCase() === currentChain.toLowerCase() &&
-          (IsUtxoChain(chain) ||
-            (!IsUtxoChain(chain) && id !== currentWalletId)) &&
-          network === currentNetwork &&
-          credentials?.walletName
-            ?.toLowerCase()
-            .includes(searchInput.toLowerCase()) &&
-          credentials.isComplete(),
-      )
-      .map(wallet => {
-        const {
-          balance,
-          hideWallet,
-          currencyAbbreviation,
-          network,
-          chain,
-          credentials: {walletName: fallbackName},
-          walletName,
-          tokenAddress,
-        } = wallet;
-        // Clone wallet to avoid altering store values
-        const _wallet = merge(cloneDeep(wallet), {
-          cryptoBalance: balance.crypto,
-          cryptoLockedBalance: '',
-          fiatBalance: formatFiatAmount(
-            convertToFiat(
-              dispatch(
-                toFiat(
-                  balance.sat,
-                  defaultAltCurrencyIsoCode,
-                  currencyAbbreviation,
-                  chain,
-                  rates,
-                  tokenAddress,
-                ),
-              ),
-              hideWallet,
-              network,
-            ),
-            defaultAltCurrencyIsoCode,
-          ),
-          fiatLockedBalance: '',
-          currencyAbbreviation:
-            formatCurrencyAbbreviation(currencyAbbreviation),
-          network,
-          walletName: walletName || fallbackName,
-        });
-        wallets.push(_wallet);
-      });
-    if (wallets.length) {
-      const {keyName = 'My Key', backupComplete} = value;
-      filteredKeys.push({key, keyName, backupComplete, wallets});
-    }
+  filteredKeys = Object.entries(keys).map(([key, value]) => {
+    const updatedKey = {
+      ...value,
+      wallets: value.wallets,
+    };
+    const accountList = buildAccountList(
+      updatedKey,
+      defaultAltCurrencyIsoCode,
+      rates,
+      dispatch,
+      {
+        filterByHideWallet: true,
+        filterByWalletOptions: true,
+        network: currentNetwork,
+        chain: currentChain,
+        currencyAbbreviation: currentCurrencyAbbreviation,
+        walletId: currentWalletId,
+      },
+    );
+
+    const accounts = accountList.map(account => {
+      if (IsEVMChain(account.chains[0])) {
+        const assetsByChain = buildAssetsByChain(
+          account,
+          defaultAltCurrencyIsoCode,
+        );
+        return {...account, assetsByChain};
+      }
+      return account;
+    }) as (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[];
+
+    return {
+      key,
+      keyName: value.keyName || 'My Key',
+      backupComplete: value.backupComplete,
+      accounts,
+    };
   });
   return filteredKeys;
 };
@@ -356,7 +329,7 @@ const SendTo = () => {
     });
   });
 
-  const keyWallets: KeyWalletsRowProps<KeyWallet>[] = BuildKeyWalletRow(
+  const keyAccounts: KeyWalletsRowProps<KeyWallet>[] = BuildKeyAccountRow(
     keys,
     id,
     currencyAbbreviation,
@@ -533,7 +506,7 @@ const SendTo = () => {
     validateAndNavigateToConfirm(text, {searching: true});
   }, 300);
 
-  const onSendToWallet = async (selectedWallet: KeyWallet) => {
+  const onSendToWallet = async (selectedWallet: Wallet) => {
     try {
       const {
         credentials,
@@ -748,9 +721,9 @@ const SendTo = () => {
 
         <View style={{marginTop: 10}}>
           <KeyWalletsRow
-            keyWallets={keyWallets}
+            keyAccounts={keyAccounts}
             hideBalance={hideAllBalances}
-            onPress={(selectedWallet: KeyWallet) => {
+            onPress={(selectedWallet: Wallet) => {
               onSendToWallet(selectedWallet);
             }}
           />

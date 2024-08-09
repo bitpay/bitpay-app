@@ -18,10 +18,7 @@ import {EIP155_CHAINS} from '../../constants/WalletConnectV2';
 import cloneDeep from 'lodash.clonedeep';
 import {TransactionProposal, Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
-import {
-  setLocalDefaultChainFilterOption,
-  setSelectedNetworkForDeposit,
-} from '../../store/app/app.actions';
+import {setLocalDefaultChainFilterOption} from '../../store/app/app.actions';
 import ChainSelectorModal, {
   ignoreGlobalListContextList,
 } from '../../components/modal/chain-selector/ChainSelector';
@@ -155,14 +152,9 @@ const SearchComponent = <T extends SearchableItem>({
             )),
         );
       } else if (
-        [
-          'send',
-          'receive',
-          'swapFrom',
-          'swapTo',
-          'buy',
-          'sell',
-        ].includes(context)
+        ['send', 'receive', 'swapFrom', 'swapTo', 'buy', 'sell'].includes(
+          context,
+        )
       ) {
         results = results.reduce((acc: T[], data) => {
           const normalizedCurrencyAbbreviation = normalizeText(
@@ -223,7 +215,8 @@ const SearchComponent = <T extends SearchableItem>({
         selectedChainFilterOption
       ) {
         results = results.map(result => {
-          const filteredData = result?.data?.filter(
+          const data = result?.data as TransactionProposal[];
+          const filteredData = data?.filter(
             (tx: TransactionProposal) => tx.chain === selectedChainFilterOption,
           );
           return {...result, data: filteredData};
@@ -252,7 +245,6 @@ const SearchComponent = <T extends SearchableItem>({
   useEffect(() => {
     return () => {
       dispatch(setLocalDefaultChainFilterOption(undefined));
-      dispatch(setSelectedNetworkForDeposit(undefined));
     };
   }, []);
 

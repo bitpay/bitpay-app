@@ -10,6 +10,7 @@ import _ from 'lodash';
 import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
+import {SUPPORTED_EVM_COINS} from '../constants/currencies';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -164,16 +165,11 @@ const getFormatter = (
     currencyAbbreviation?: string;
     currencyDisplay?: 'symbol' | 'code';
   } = {},
-) =>
-  new Intl.NumberFormat('en-US', {
-    minimumSignificantDigits:
-      amount === 0
-        ? undefined
-        : getSignificantDigits(opts.currencyAbbreviation),
-    maximumSignificantDigits:
-      amount === 0
-        ? undefined
-        : getSignificantDigits(opts.currencyAbbreviation),
+) => {
+  const significantDigits = getSignificantDigits(opts.currencyAbbreviation);
+  return new Intl.NumberFormat('en-US', {
+    minimumSignificantDigits: amount === 0 ? undefined : significantDigits,
+    maximumSignificantDigits: amount === 0 ? undefined : significantDigits,
     style: 'currency',
     currency: currency.toLowerCase(),
     ...(opts.customPrecision === 'minimal' &&
@@ -183,6 +179,7 @@ const getFormatter = (
       }),
     currencyDisplay: opts.currencyDisplay,
   });
+};
 
 export const formatFiatAmount = (
   amount: number,
@@ -398,6 +395,12 @@ export const getProtocolName = (
   return PROTOCOL_NAME[_chain]?.[_network]
     ? PROTOCOL_NAME[_chain][_network]
     : PROTOCOL_NAME.default[_network];
+};
+
+export const getProtocolsName = (): string | undefined => {
+  return SUPPORTED_EVM_COINS.map(
+    chain => PROTOCOL_NAME[chain][Network.mainnet],
+  ).join(', ');
 };
 
 export const getEVMFeeCurrency = (chain: string): string => {

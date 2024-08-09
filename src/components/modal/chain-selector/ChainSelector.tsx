@@ -19,7 +19,6 @@ import {useTheme} from '@react-navigation/native';
 import {
   setDefaultChainFilterOption,
   setLocalDefaultChainFilterOption,
-  setSelectedNetworkForDeposit,
 } from '../../../store/app/app.actions';
 import {
   ActiveOpacity,
@@ -45,7 +44,7 @@ import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
-import {IsEVMCoin} from '../../../store/wallet/utils/currency';
+import {IsEVMChain} from '../../../store/wallet/utils/currency';
 
 export const ignoreGlobalListContextList = [
   'sell',
@@ -60,7 +59,6 @@ export interface ChainSelectorConfig {
   onBackdropDismiss?: () => void;
   context?: string;
   customChains?: SupportedChains[];
-  selectingNetworkForDeposit?: boolean;
 }
 
 const Header = styled.View`
@@ -147,8 +145,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
   const recentSelectedChainFilterOption = useAppSelector(
     ({APP}) => APP.recentSelectedChainFilterOption,
   );
-  const {onBackdropDismiss, context, customChains, selectingNetworkForDeposit} =
-    config || {};
+  const {onBackdropDismiss, context, customChains} = config || {};
 
   const selectedChainFilterOption = useAppSelector(({APP}) =>
     context && ignoreGlobalListContextList.includes(context)
@@ -179,11 +176,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
                 | undefined;
 
               // Check if the context is one of 'sell', 'swapFrom', 'swapTo', 'buy', 'walletconnect'
-              if (selectingNetworkForDeposit) {
-                dispatch(setSelectedNetworkForDeposit(option));
-              } else if (
-                ignoreGlobalListContextList.includes(context as string)
-              ) {
+              if (ignoreGlobalListContextList.includes(context as string)) {
                 dispatch(setLocalDefaultChainFilterOption(option));
               } else {
                 dispatch(setDefaultChainFilterOption(option));
@@ -218,7 +211,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
         ['accountassetsview', 'accounthistoryview'].includes(context)
       ) {
         _SUPPORTED_CURRENCIES_CHAINS = SUPPORTED_CURRENCIES_CHAINS.filter(
-          chain => IsEVMCoin(chain),
+          chain => IsEVMChain(chain),
         );
       }
 
@@ -251,7 +244,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
       ['accountassetsview', 'accounthistoryview'].includes(context)
     ) {
       _recentSelectedChainFilterOption =
-        _recentSelectedChainFilterOption.filter(chain => IsEVMCoin(chain));
+        _recentSelectedChainFilterOption.filter(chain => IsEVMChain(chain));
     }
     if (_recentSelectedChainFilterOption.length && !hasCustomChains) {
       list.unshift({

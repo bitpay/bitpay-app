@@ -155,7 +155,7 @@ const CreateOrImportKey = ({
                   );
 
                   dispatch(
-                    setHomeCarouselConfig({id: createdKey.id, show: true})
+                    setHomeCarouselConfig({id: createdKey.id, show: true}),
                   );
                   dispatch(dismissOnGoingProcessModal());
                   askForTrackingThenNavigate(() =>

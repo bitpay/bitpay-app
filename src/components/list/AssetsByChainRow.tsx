@@ -1,5 +1,11 @@
 import React, {memo, useCallback, useState} from 'react';
-import {ActiveOpacity, Column, Row, RowContainer} from '../styled/Containers';
+import {
+  ActiveOpacity,
+  ChevronContainerTouchable,
+  Column,
+  Row,
+  RowContainer,
+} from '../styled/Containers';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 import {FlatList, View} from 'react-native';
 import {H5} from '../styled/Text';
@@ -10,7 +16,6 @@ import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg'
 import ChevronUpSvgLight from '../../../assets/img/chevron-up-lightmode.svg';
 import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
 import ChevronUpSvgDark from '../../../assets/img/chevron-up-darkmode.svg';
-import {LightBlack, NeutralSlate} from '../../styles/colors';
 import {useTheme} from 'styled-components/native';
 
 const CurrencyImageContainer = styled.View`
@@ -20,16 +25,6 @@ const CurrencyImageContainer = styled.View`
   justify-content: center;
   align-self: center;
   border-radius: 8px;
-`;
-
-const ChevronContainer = styled.TouchableOpacity`
-  border-radius: 50px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  margin-left: 2px;
-  height: 20px;
-  width: 20px;
 `;
 
 const ChainAssetsContainer = styled(Row)`
@@ -59,7 +54,7 @@ const AssetsByChainRow = ({
     accountItem;
   const [showChainAssets, setShowChainAssets] = useState<{
     [key: string]: boolean;
-  }>({[chain]: true});
+  }>({[chain]: false});
   const theme = useTheme();
 
   const memoizedRenderItem = useCallback(({item}: {item: WalletRowProps}) => {
@@ -101,7 +96,7 @@ const AssetsByChainRow = ({
             ) : (
               <H5>****</H5>
             )}
-            <ChevronContainer onPress={onHide}>
+            <ChevronContainerTouchable onPress={onHide}>
               {showChainAssets[chain] ? (
                 theme.dark ? (
                   <ChevronUpSvgDark width={10} height={6} />
@@ -113,7 +108,7 @@ const AssetsByChainRow = ({
               ) : (
                 <ChevronDownSvgLight width={10} height={6} />
               )}
-            </ChevronContainer>
+            </ChevronContainerTouchable>
           </ChainAssetsContainer>
         </Column>
       </RowContainer>

@@ -824,7 +824,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                 </WalletSelectMenuHeaderContainer>
                 <WalletSelectMenuBodyContainer>
                   <KeyWalletsRow
-                    keyWallets={keyWallets!}
+                    keyAccounts={keyWallets!}
                     hideBalance={hideAllBalances}
                     onPress={
                       addTokenToLinkedWallet?.currencyAbbreviation
