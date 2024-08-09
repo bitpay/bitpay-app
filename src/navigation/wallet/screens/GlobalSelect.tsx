@@ -70,7 +70,7 @@ import {useTranslation} from 'react-i18next';
 import {findWalletById, toFiat} from '../../../store/wallet/utils/wallet';
 import {
   IsERCToken,
-  IsEVMCoin,
+  IsEVMChain,
   IsSegwitCoin,
 } from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log';
@@ -315,8 +315,7 @@ const buildSelectableCurrenciesList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
       coinEntry.chainsImg[chain] = {
-        badgeUri:
-          IsEVMCoin(currencyAbbreviation) && !badgeUri ? logoUri : badgeUri,
+        badgeUri: IsEVMChain(chain) && !badgeUri ? logoUri : badgeUri,
         priority,
       };
       if (!coinEntry.chains.includes(chain)) {
@@ -410,7 +409,7 @@ const buildSelectableWalletList = (
         }
         coinEntry.chainsImg[chain] = {
           badgeUri:
-            IsEVMCoin(currencyAbbreviation) && !wallet.badgeImg
+            IsEVMChain(chain) && !wallet.badgeImg
               ? wallet.img
               : wallet.badgeImg,
           priority,
@@ -1098,7 +1097,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             const hasMultipleChainAvailable = selectObj.chains.length > 1;
             if (
               ['buy', 'swapFrom', 'swapTo'].includes(context) &&
-              IsEVMCoin(selectObj.chains[0]) &&
+              IsEVMChain(selectObj.chains[0]) &&
               selectingNetworkForDeposit &&
               !selectedChainFilterOption &&
               hasMultipleChainAvailable
@@ -1507,7 +1506,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                     <Icons.Add />
                   </PlusIconContainer>
                   <H5 style={{fontWeight: '400'}}>
-                    {IsEVMCoin(filteredSelectedObj.chains[0])
+                    {IsEVMChain(filteredSelectedObj.chains[0])
                       ? t('Add as New Account')
                       : t('Add as New Wallet')}
                   </H5>
