@@ -157,7 +157,8 @@ const SearchComponent = <T extends SearchableItem>({
           'keyoverview',
           'send',
           'receive',
-          'swap',
+          'swapFrom',
+          'swapTo',
           'buy',
           'sell',
         ].includes(context)

@@ -84,7 +84,7 @@ const GlobalSelectRow = ({item, hasSelectedChainFilterOption, emit}: Props) => {
         <CurrencyImage img={img} />
       </CurrencyImageContainer>
       <CurrencyColumn>
-        <H5>{currencyName.includes('Ethereum') ? 'Ethereum' : currencyName}</H5>
+        <H5>{currencyName}</H5>
         <ListItemSubText ellipsizeMode="tail" numberOfLines={1}>
           {currencyAbbreviation.toUpperCase()}
         </ListItemSubText>

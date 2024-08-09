@@ -79,9 +79,8 @@ const SwapHistorySelector = () => {
             ? Object.values(allSwapExchangesData).map(
                 (exchange: ExchangeData) => {
                   return exchange?.showExchange ? (
-                    <View>
+                    <View key={exchange.key}>
                       <Setting
-                        key={exchange.key}
                         onPress={() => {
                           haptic('impactLight');
                           navigation.navigate(exchange.screenHistory);
