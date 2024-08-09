@@ -101,12 +101,13 @@ export interface CoinbaseTransactionProps {
   };
   description: string;
   created_at: string;
-  updated_at: string;
   resource: string;
   resource_path: string;
   network: {
+    hash: string;
+    network_name: string;
     status: string;
-    name: string;
+    transaction_fee: string;
   };
   to: {
     address: string;
@@ -115,13 +116,7 @@ export interface CoinbaseTransactionProps {
     resource_path: string;
   };
   from: {
-    currency: string;
     resource: string;
-  };
-  details: {
-    header: string;
-    title: string;
-    subtitle: string;
   };
 }
 
@@ -174,20 +169,11 @@ export interface InvoiceProps {
 }
 
 export interface ConfigApiProps {
-  production: {
-    host: string;
-    api: string;
-    client_id: string;
-    client_secret: string;
-    send_limit_amount: number;
-  };
-  sandbox: {
-    host: string;
-    api: string;
-    client_id: string;
-    client_secret: string;
-    send_limit_amount: number;
-  };
+  host: string;
+  api: string;
+  client_id: string;
+  client_secret: string;
+  send_limit_amount: number;
   redirect_uri: {
     mobile: string;
     desktop: string;

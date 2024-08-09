@@ -181,7 +181,7 @@ const CoinbaseDashboard = () => {
   );
 
   const showError = useCallback(
-    (error: CoinbaseErrorsProps) => {
+    (error: CoinbaseErrorsProps | string) => {
       const errMsg = coinbaseParseErrorToString(error);
       if (errMsg === 'Network Error') {
         return;
