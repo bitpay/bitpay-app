@@ -117,7 +117,7 @@ import {
   ThorswapCurrency,
   ThorswapGetCurrenciesRequestData,
 } from '../../../../store/swap-crypto/models/thorswap.models';
-import {SwapCryptoExchangeKey} from '../utils/swap-crypto-utils';
+import {isPairSupported, SwapCryptoExchangeKey} from '../utils/swap-crypto-utils';
 import {SwapCryptoLimits} from '../../../../store/swap-crypto/swap-crypto.models';
 
 export type SwapCryptoRootScreenParams =
@@ -423,7 +423,15 @@ const SwapCryptoRoot: React.FC = () => {
           exchange.showOffer &&
           !exchange.disabled &&
           exchange.supportedCoins &&
-          exchange.supportedCoins.length > 0,
+          exchange.supportedCoins.length > 0 &&
+          isPairSupported(
+            exchange.key,
+            fromWalletSelected.currencyAbbreviation,
+            fromWalletSelected.chain,
+            toWalletSelected.currencyAbbreviation,
+            toWalletSelected.chain,
+            exchange.supportedCoins,
+          )
       )
       .map(exchange => exchange.key);
 
