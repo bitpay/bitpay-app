@@ -95,16 +95,12 @@ const Title = styled(BaseText)`
 `;
 
 const CopyToClipboard = styled.TouchableOpacity`
-  width: 60%;
+  width: 80%;
   padding: 0 10px;
   flex-direction: row;
 `;
 
 const CopyImgContainer = styled.View`
-  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : '#ECEFFD')};
-  border-right-width: 1px;
-  padding-right: 10px;
-  height: 25px;
   justify-content: center;
 `;
 
@@ -186,20 +182,28 @@ const CoinbaseTransaction = ({
               <DetailInfo align="right">{parseTime(tx.created_at)}</DetailInfo>
             </Detail>
             <Hr />
-            <Detail>
-              <Item>{t('Hash')}</Item>
-              <CopyToClipboard
-                onPress={() => copyToClipboard(tx.network.hash)}
-                activeOpacity={ActiveOpacity}>
-                <CopyImgContainer>
-                  {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
-                </CopyImgContainer>
-                <HashText numberOfLines={1} ellipsizeMode={'tail'}>
-                  {tx.network.hash}
-                </HashText>
-              </CopyToClipboard>
-            </Detail>
-            <Hr />
+            {tx.network?.hash ? (
+              <>
+                <Detail>
+                  <Item>{t('Hash')}</Item>
+                  <CopyToClipboard
+                    onPress={() => copyToClipboard(tx.network.hash)}
+                    activeOpacity={ActiveOpacity}>
+                    <HashText numberOfLines={1} ellipsizeMode={'tail'}>
+                      {tx.network.hash}
+                    </HashText>
+                    <CopyImgContainer>
+                      {!copied ? (
+                        <CopySvg width={17} />
+                      ) : (
+                        <CopiedSvg width={17} />
+                      )}
+                    </CopyImgContainer>
+                  </CopyToClipboard>
+                </Detail>
+                <Hr />
+              </>
+            ) : null}
             {tx.to && tx.to.address ? (
               <>
                 <Detail>

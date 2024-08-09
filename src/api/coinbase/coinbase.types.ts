@@ -169,20 +169,11 @@ export interface InvoiceProps {
 }
 
 export interface ConfigApiProps {
-  production: {
-    host: string;
-    api: string;
-    client_id: string;
-    client_secret: string;
-    send_limit_amount: number;
-  };
-  sandbox: {
-    host: string;
-    api: string;
-    client_id: string;
-    client_secret: string;
-    send_limit_amount: number;
-  };
+  host: string;
+  api: string;
+  client_id: string;
+  client_secret: string;
+  send_limit_amount: number;
   redirect_uri: {
     mobile: string;
     desktop: string;

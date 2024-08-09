@@ -192,9 +192,9 @@ export const parseTransactionTitle = (
   if (data.type === 'send') {
     const num = parseFloat(data.amount.amount);
     if (!isNaN(num) && num < 0) {
-      return 'Withdrawal';
+      return 'Sent';
     } else {
-      return 'Deposit';
+      return 'Received';
     }
   } else {
     return capitalize(data.type);
