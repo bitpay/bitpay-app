@@ -35,12 +35,10 @@ interface StartLoginParams {
   gCaptchaResponse?: string;
 }
 
-export const startBitPayIdStoreInit =
-  (initialData: InitialUserData): Effect<void> =>
+export const startBitPayIdAnalyticsInit =
+  (user: BasicUserInfo): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
-    const {basicInfo: user} = initialData;
-
     if (user) {
       const {eid, name, referralCode} = user;
       let {email, givenName, familyName} = user;
@@ -76,10 +74,20 @@ export const startBitPayIdStoreInit =
           'Cardholder Unique Referral Code': referralCode,
         }),
       );
+    }
+  };
 
-      dispatch(
-        BitPayIdActions.successInitializeStore(APP.network, initialData),
-      );
+export const startBitPayIdStoreInit =
+  (initialData: InitialUserData): Effect<void> =>
+  async (dispatch, getState) => {
+    const {APP} = getState();
+    const {basicInfo: user} = initialData;
+    dispatch(BitPayIdActions.successInitializeStore(APP.network, initialData));
+    try {
+      await dispatch(startBitPayIdAnalyticsInit(user));
+    } catch (err) {
+      dispatch(LogActions.error('Failed init user analytics'));
+      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };
 
