@@ -65,10 +65,10 @@ export const IsUtxoChain = (chain: string): boolean => {
   return Object.keys(BitpaySupportedUtxoCoins).includes(_chain);
 };
 
-export const IsEVMCoin = (currencyAbbreviation: string): boolean => {
-  return Object.keys(BitpaySupportedEvmCoins).includes(
-    currencyAbbreviation.toLowerCase(),
-  );
+export const IsEVMChain = (chain: string): boolean => {
+  const _chain = cloneDeep(chain).toLowerCase();
+
+  return Object.keys(BitpaySupportedEvmCoins).includes(_chain);
 };
 
 export const IsCustomERCToken = (
