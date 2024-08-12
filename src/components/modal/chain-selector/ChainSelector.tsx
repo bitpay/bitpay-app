@@ -48,7 +48,8 @@ import {SearchIconContainer} from '../../chain-search/ChainSearch';
 
 export const ignoreGlobalListContextList = [
   'sell',
-  'swap',
+  'swapFrom',
+  'swapTo',
   'buy',
   'walletconnect',
   'createNewKey',
@@ -176,7 +177,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
                 | SupportedChains
                 | undefined;
 
-              // Check if the context is one of 'sell', 'swap', 'buy', 'walletconnect'
+              // Check if the context is one of 'sell', 'swapFrom', 'swapTo', 'buy', 'walletconnect'
               if (selectingNetworkForDeposit) {
                 dispatch(setSelectedNetworkForDeposit(option));
               } else if (
