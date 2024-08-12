@@ -104,6 +104,8 @@ import throttle from 'lodash.throttle';
 import {SwapCryptoScreens} from '../SwapCryptoGroup';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 
+const ThumbImage = require('../../../../../assets/img/services/swap-crypto/slider-thumb.png');
+
 export type SwapCryptoOffersScreenParams = {
   amountFrom: number;
   coinFrom: string;
@@ -1708,6 +1710,7 @@ const SwapCryptoOffers: React.FC = () => {
                                     alignSelf: 'center',
                                     width: WIDTH - 64,
                                   }}
+                                  thumbImage={ThumbImage}
                                   minimumValue={offer.slippageOpts.min}
                                   lowerLimit={offer.slippageOpts.minLimit}
                                   maximumValue={offer.slippageOpts.max}
