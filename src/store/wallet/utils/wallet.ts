@@ -452,6 +452,7 @@ export const coinbaseAccountToWalletRow = (
     pendingTxps: [],
     chain: _chain,
     badgeImg,
+    isComplete: true,
   };
   return walletItem as WalletRowProps;
 };

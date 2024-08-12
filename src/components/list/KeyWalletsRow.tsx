@@ -95,7 +95,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
             <KeyNameContainer noBorder={!!currency}>
               {keySvg({})}
               <KeyName>{key.keyName || 'My Key'}</KeyName>
-              {key.backupComplete && !key.wallets[0].coinbaseAccount ? null : (
+              {key.backupComplete || key.wallets[0].coinbaseAccount ? null : (
                 <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
               )}
             </KeyNameContainer>

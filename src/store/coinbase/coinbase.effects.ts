@@ -58,7 +58,12 @@ const isExpiredTokenError = (error: CoinbaseErrorsProps): boolean => {
   return error?.errors?.some(err => err.id === 'expired_token');
 };
 
-export const isInvalidTokenError = (error: CoinbaseErrorsProps): boolean => {
+export const isInvalidTokenError = (
+  error: CoinbaseErrorsProps | string,
+): boolean => {
+  if (typeof error === 'string') {
+    return error.includes('Unauthorized');
+  }
   return error?.errors?.some(err => err.id === 'invalid_token');
 };
 
@@ -220,11 +225,20 @@ export const coinbaseDisconnectAccount =
         ),
       ),
     );
-    if (COINBASE.token[COINBASE_ENV]) {
-      await CoinbaseAPI.revokeToken(COINBASE.token[COINBASE_ENV]);
+    try {
+      if (COINBASE.token[COINBASE_ENV]) {
+        await CoinbaseAPI.revokeToken(COINBASE.token[COINBASE_ENV]);
+      }
+      dispatch(revokeTokenSuccess()); // Remove accounts
+      dispatch(LogActions.info('coinbaseDisconnectAccount: success'));
+    } catch (error: CoinbaseErrorsProps | any) {
+      dispatch(revokeTokenSuccess());
+      dispatch(
+        LogActions.error(
+          'coinbaseDisconnectAccount: ' + coinbaseParseErrorToString(error),
+        ),
+      );
     }
-    dispatch(revokeTokenSuccess()); // Remove accounts
-    dispatch(LogActions.info('coinbaseDisconnectAccount: success'));
   };
 
 export const coinbaseGetUser =
@@ -259,6 +273,14 @@ export const coinbaseGetUser =
           ),
         );
         dispatch(coinbaseDisconnectAccount());
+      } else if (isInvalidTokenError(error)) {
+        dispatch(
+          LogActions.warn(
+            'coinbaseGetUser: Token invalid. Refresh new token...',
+          ),
+        );
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseGetUser());
       } else {
         dispatch(userFailed(error));
         dispatch(
@@ -350,6 +372,14 @@ export const coinbaseGetAccountsAndBalance =
           ),
         );
         dispatch(coinbaseDisconnectAccount());
+      } else if (isInvalidTokenError(error)) {
+        dispatch(
+          LogActions.warn(
+            'coinbaseGetAccountsAndBalance: Token invalid. Refresh new token...',
+          ),
+        );
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseGetAccountsAndBalance());
       } else {
         dispatch(accountsFailed(error));
         dispatch(
@@ -425,6 +455,14 @@ export const coinbaseGetTransactionsByAccount =
           ),
         );
         dispatch(coinbaseDisconnectAccount());
+      } else if (isInvalidTokenError(error)) {
+        dispatch(
+          LogActions.warn(
+            'coinbaseGetTransactionsByAccount: Token invalid. Refresh new token...',
+          ),
+        );
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseGetTransactionsByAccount(accountId));
       } else {
         dispatch(transactionsFailed(error));
         dispatch(
@@ -494,6 +532,14 @@ export const coinbaseCreateAddress =
           ),
         );
         dispatch(coinbaseDisconnectAccount());
+      } else if (isInvalidTokenError(error)) {
+        dispatch(
+          LogActions.warn(
+            'coinbaseCreateAddress: Token invalid. Refresh new token...',
+          ),
+        );
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseCreateAddress(accountId));
       } else {
         dispatch(createAddressFailed(error));
         dispatch(
@@ -547,6 +593,14 @@ export const coinbaseSendTransaction =
           ),
         );
         dispatch(coinbaseDisconnectAccount());
+      } else if (isInvalidTokenError(error)) {
+        dispatch(
+          LogActions.warn(
+            'coinbaseSendTransaction: Token invalid. Refresh new token...',
+          ),
+        );
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbaseSendTransaction(accountId, tx));
       } else {
         dispatch(sendTransactionFailed(error));
         dispatch(
@@ -604,6 +658,14 @@ export const coinbasePayInvoice =
           ),
         );
         dispatch(coinbaseDisconnectAccount());
+      } else if (isInvalidTokenError(error)) {
+        dispatch(
+          LogActions.warn(
+            'coinbasePayInvoice: Token invalid. Refresh new token...',
+          ),
+        );
+        await dispatch(coinbaseRefreshToken());
+        dispatch(coinbasePayInvoice(invoiceId, currency));
       } else {
         dispatch(payInvoiceFailed(error));
         dispatch(
