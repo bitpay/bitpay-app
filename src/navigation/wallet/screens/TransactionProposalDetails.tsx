@@ -248,10 +248,13 @@ const TransactionProposalDetails = () => {
         }),
       );
       setTxp(_transaction);
-      setLastSigner(
-        _transaction.actions.filter((a: any) => a?.type === 'accept').length ===
-          _transaction.requiredSignatures - 1,
-      );
+      if (_transaction.actions) {
+        setLastSigner(
+          _transaction.actions.filter((a: any) => a?.type === 'accept')
+            .length ===
+            (_transaction.requiredSignatures as number) - 1,
+        );
+      }
       await sleep(500);
       setIsLoading(false);
     } catch (err) {
