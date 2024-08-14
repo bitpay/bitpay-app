@@ -11,11 +11,11 @@ export const baseNavigatorOptions: NativeStackNavigationOptions = {
   headerBackTitleVisible: false,
   headerTitleAlign: 'center',
   headerShown: true,
-  headerTransparent: Platform.OS === 'ios' ? true : false,
+  headerTransparent: Platform.OS === 'ios',
   headerShadowVisible: false,
   headerBackButtonMenuEnabled: false,
   headerBackVisible: false,
-  animation: Platform.OS === 'android' ? 'slide_from_right' : 'default',
+  animation: 'default',
 };
 
 export const baseNativeHeaderBackButtonProps: HeaderBackButtonProps = {

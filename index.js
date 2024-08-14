@@ -1,5 +1,6 @@
 import 'react-native-get-random-values'; // must import before @ethersproject/shims
 import '@ethersproject/shims';
+import "fast-text-encoding";
 import './shim';
 import '@walletconnect/react-native-compat';
 import {AppRegistry, Alert} from 'react-native';

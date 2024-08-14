@@ -95,7 +95,6 @@ const getRefreshToken = async (
     grant_type: 'refresh_token',
     client_id: CREDENTIALS.client_id,
     client_secret: CREDENTIALS.client_secret,
-    redirect_uri: COINBASE_REDIRECT_URI,
     refresh_token: token.refresh_token,
   };
   const headers = {
@@ -107,7 +106,7 @@ const getRefreshToken = async (
     const {data} = await axios.post(url, body, {headers});
     return data;
   } catch (error: any) {
-    throw error.response.data;
+    throw error.response.data || error;
   }
 };
 
@@ -128,7 +127,7 @@ const getAccessToken = async (code: string): Promise<CoinbaseTokenProps> => {
     const {data} = await axios.post(url, body, {headers});
     return data;
   } catch (error: any) {
-    throw error.response.data;
+    throw error.response.data || error;
   }
 };
 
@@ -142,6 +141,8 @@ const revokeToken = async (
   const url = CREDENTIALS.host + '/oauth/revoke';
   const body = {
     token: token.access_token,
+    client_id: CREDENTIALS.client_id,
+    client_secret: CREDENTIALS.client_secret,
   };
   const headers = {
     'Content-Type': 'application/json',
@@ -153,7 +154,7 @@ const revokeToken = async (
     const {data} = await axios.post(url, body, {headers});
     return data;
   } catch (error: any) {
-    throw error.response.data;
+    throw error.response.data || error;
   }
 };
 
@@ -235,7 +236,8 @@ const getTransactions = async (
     '/v2/accounts/' +
     accountId +
     '/transactions?order=desc&limit=' +
-    TRANSACTIONS_LIMIT;
+    TRANSACTIONS_LIMIT +
+    '&new_version_opt_in=true';
   if (nextStartingAfter) {
     url = url + '&starting_after=' + nextStartingAfter;
   }

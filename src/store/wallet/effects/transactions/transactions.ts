@@ -1,4 +1,9 @@
-import {Wallet, TransactionProposal, Utxo} from '../../wallet.models';
+import {
+  Wallet,
+  TransactionProposal,
+  Utxo,
+  TransactionDetailsBuilt,
+} from '../../wallet.models';
 import {HistoricRate, Rates} from '../../../rate/rate.models';
 import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -85,10 +90,6 @@ export const ProcessPendingTxps =
     const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
-      // Filter received txs with no effects for ERC20 tokens only
-      if (IsERCToken(currencyAbbreviation, chain) && !tx.effects?.[0]) {
-        return;
-      }
       tx = dispatch(ProcessTx(tx, wallet));
 
       // no future transactions...
@@ -216,9 +217,11 @@ const ProcessTx =
       tokenAddress = tx.effects[0].contractAddress?.toLowerCase();
     }
 
-    tx.amountStr = dispatch(
-      FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
-    );
+    if (tx.coin === wallet.currencyAbbreviation) {
+      tx.amountStr = dispatch(
+        FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
+      );
+    }
 
     tx.feeStr = tx.fee
       ? // @ts-ignore
@@ -710,19 +713,19 @@ const getFormattedDate = (time: number): string => {
     : moment(time).format('MMM D, YYYY');
 };
 
-export const IsSent = (action: string): boolean => {
+export const IsSent = (action: string | undefined): boolean => {
   return action === 'sent';
 };
 
-export const IsMoved = (action: string): boolean => {
+export const IsMoved = (action: string | undefined): boolean => {
   return action === 'moved';
 };
 
-export const IsReceived = (action: string): boolean => {
+export const IsReceived = (action: string | undefined): boolean => {
   return action === 'received';
 };
 
-export const IsInvalid = (action: string): boolean => {
+export const IsInvalid = (action: string | undefined): boolean => {
   return action === 'invalid';
 };
 
@@ -976,14 +979,14 @@ export const buildTransactionDetails =
     wallet,
     defaultAltCurrencyIsoCode = 'USD',
   }: {
-    transaction: any;
+    transaction: TransactionProposal;
     wallet: Wallet;
     defaultAltCurrencyIsoCode?: string;
-  }): Effect<Promise<any>> =>
+  }): Effect<Promise<TransactionDetailsBuilt>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
-        const _transaction = {...transaction};
+        const _transaction: TransactionDetailsBuilt = {...transaction};
         const {
           fees,
           fee,
@@ -1034,7 +1037,7 @@ export const buildTransactionDetails =
           _transaction.feeRateStr =
             ((_fee / (amount + _fee)) * 100).toFixed(2) + '%';
           try {
-            const minFee = GetMinFee(wallet);
+            const minFee = await GetMinFee(wallet);
             _transaction.lowAmount = amount < minFee;
           } catch (minFeeErr) {
             const e =
@@ -1058,7 +1061,7 @@ export const buildTransactionDetails =
         const historicFiatRate = await getHistoricFiatRate(
           alternativeCurrency,
           coin,
-          (time * 1000).toString(),
+          (time! * 1000).toString(),
         );
         _transaction.fiatRateStr = dispatch(
           UpdateFiatRate(

@@ -92,7 +92,7 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
           onBackdropPress={() => setSwapCryptoHelpVisible(false)}>
           <SwapCryptoHelpContainer>
             <TextAlign align={'center'}>
-              {modalContext === 'swap' ? (
+              {modalContext === 'swapFrom' ? (
                 <H4>{t('What can I swap?')}</H4>
               ) : null}
               {modalContext === 'sell' ? (
@@ -100,7 +100,7 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
               ) : null}
             </TextAlign>
             <TextAlign align={'center'}>
-              {modalContext === 'swap' ? (
+              {modalContext === 'swapFrom' ? (
                 <SubText>{t('swapFromWalletsConditionMessage')}</SubText>
               ) : null}
               {modalContext === 'sell' ? (

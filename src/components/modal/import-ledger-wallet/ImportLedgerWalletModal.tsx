@@ -13,10 +13,10 @@ import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   deleteKey,
   successCreateKey,
-  updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
 import {setHomeCarouselConfig} from '../../../store/app/app.actions';
 import {sleep} from '../../../utils/helper-methods';
+import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
 
 export const ImportLedgerWalletModal = () => {
   const dispatch = useAppDispatch();
@@ -86,8 +86,6 @@ export const ImportLedgerWalletModal = () => {
             homeCarouselConfig.filter(item => item.id !== key.id),
           ),
         );
-        await sleep(1000);
-        dispatch(updatePortfolioBalance());
       } else {
         dispatch(
           successCreateKey({
@@ -95,6 +93,7 @@ export const ImportLedgerWalletModal = () => {
           }),
         );
       }
+      dispatch(startUpdateAllKeyAndWalletStatus({force: true}));
     }
     dispatch(AppActions.importLedgerModalToggled(false));
   };
@@ -145,9 +144,10 @@ export const ImportLedgerWalletModal = () => {
   };
 
   useEffect(() => {
-    // reset the transport if this modal is closed
+    // reset the transport and scanned wallets if this modal is closed
     if (!isVisible) {
       resetTransportIfNeeded();
+      setScannedWalletsIds(undefined);
     }
   }, [isVisible]);
 

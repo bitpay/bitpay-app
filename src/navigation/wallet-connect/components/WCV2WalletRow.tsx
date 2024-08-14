@@ -10,7 +10,7 @@ import {WCV2Wallet} from '../../../store/wallet-connect-v2/wallet-connect-v2.mod
 import WCV2WalletRowInfo from './WCV2WalletRowInfo';
 
 const CheckBoxContainer = styled.View`
-  margin-right: 12px;
+  margin: 0px 7px;
 `;
 interface WalletBoxProps {
   onPress: (keyId: string, wallet: WCV2Wallet) => void;

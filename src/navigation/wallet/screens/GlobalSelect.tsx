@@ -70,7 +70,7 @@ import {useTranslation} from 'react-i18next';
 import {findWalletById, toFiat} from '../../../store/wallet/utils/wallet';
 import {
   IsERCToken,
-  IsEVMCoin,
+  IsEVMChain,
   IsSegwitCoin,
 } from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log';
@@ -206,7 +206,8 @@ export type GlobalSelectModalContext =
   | 'scanner'
   | 'sell'
   | 'buy'
-  | 'swap'
+  | 'swapFrom'
+  | 'swapTo'
   | 'paperwallet';
 
 export type GlobalSelectParamList = {
@@ -314,8 +315,7 @@ const buildSelectableCurrenciesList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
       coinEntry.chainsImg[chain] = {
-        badgeUri:
-          IsEVMCoin(currencyAbbreviation) && !badgeUri ? logoUri : badgeUri,
+        badgeUri: IsEVMChain(chain) && !badgeUri ? logoUri : badgeUri,
         priority,
       };
       if (!coinEntry.chains.includes(chain)) {
@@ -336,15 +336,38 @@ const buildSelectableCurrenciesList = (
 const buildSelectableWalletList = (
   categories: string[],
   wallets: Wallet[],
+  context?: GlobalSelectModalContext,
 ): GlobalSelectObjByKey => {
   const coins: GlobalSelectObjByKey = {};
 
   categories.forEach(category => {
-    const filteredWallets = wallets.filter(
-      wallet =>
-        getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
-        category,
-    );
+    const filteredWallets = wallets.filter(wallet => {
+      if (
+        context &&
+        ['sell', 'swapFrom', 'swapTo'].includes(context) &&
+        ['eth', 'eth_arb', 'eth_base', 'eth_op'].includes(category)
+      ) {
+        // Workaround to differentiate eth in evm chains from external services
+        const conditions: {[key: string]: {currency: string; chain: string}} = {
+          eth: {currency: 'eth', chain: 'eth'},
+          eth_arb: {currency: 'eth', chain: 'arb'},
+          eth_base: {currency: 'eth', chain: 'base'},
+          eth_op: {currency: 'eth', chain: 'op'},
+        };
+
+        const condition = conditions[category];
+        return (
+          condition &&
+          wallet.currencyAbbreviation === condition.currency &&
+          wallet.chain === condition.chain
+        );
+      } else {
+        return (
+          getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
+          category
+        );
+      }
+    });
     if (filteredWallets.length > 0) {
       const {currencyAbbreviation, chain, currencyName, img} =
         filteredWallets[0];
@@ -386,7 +409,7 @@ const buildSelectableWalletList = (
         }
         coinEntry.chainsImg[chain] = {
           badgeUri:
-            IsEVMCoin(currencyAbbreviation) && !wallet.badgeImg
+            IsEVMChain(chain) && !wallet.badgeImg
               ? wallet.img
               : wallet.badgeImg,
           priority,
@@ -577,7 +600,7 @@ const handleWalletSelection = (
 
 interface GlobalSelectProps {
   useAsModal?: boolean;
-  modalTitle?: any;
+  modalTitle?: string;
   customSupportedCurrencies?: any[];
   customToSelectCurrencies?:
     | ToWalletSelectorCustomCurrency[]
@@ -586,8 +609,8 @@ interface GlobalSelectProps {
     newWallet?: any,
     createNewWalletData?: AddWalletData,
   ) => void;
-  modalContext?: any;
-  livenetOnly?: any;
+  modalContext?: GlobalSelectModalContext;
+  livenetOnly?: boolean;
   disabledChain?: string | undefined;
   onHelpPress?: () => void;
   selectingNetworkForDeposit?: boolean;
@@ -701,7 +724,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   // only show wallets with funds
   if (
-    ['send', 'sell', 'swap', 'coinbase', 'contact', 'scanner'].includes(context)
+    ['send', 'sell', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
+      context,
+    )
   ) {
     wallets = wallets.filter(wallet => wallet.balance.sat > 0);
   }
@@ -737,7 +762,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       [...coins, ...tokens, ...nonBitpayTokens],
       c => c,
     );
-    const allCurrencyData = buildSelectableWalletList(allCurrencies, wallets);
+    const allCurrencyData = buildSelectableWalletList(
+      allCurrencies,
+      wallets,
+      context,
+    );
     setDataToDisplay(Object.values(allCurrencyData).splice(0, 20));
     return Object.values(allCurrencyData);
   }, []);
@@ -1062,14 +1091,13 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       return (
         <GlobalSelectRow
           item={item}
-          context={context}
           hasSelectedChainFilterOption={!!selectedChainFilterOption}
           emit={(selectObj: GlobalSelectObj) => {
             // if only one chain available for the token - skip chain selector
             const hasMultipleChainAvailable = selectObj.chains.length > 1;
             if (
-              ['buy', 'swap'].includes(context) &&
-              IsEVMCoin(selectObj.chains[0]) &&
+              ['buy', 'swapFrom', 'swapTo'].includes(context) &&
+              IsEVMChain(selectObj.chains[0]) &&
               selectingNetworkForDeposit &&
               !selectedChainFilterOption &&
               hasMultipleChainAvailable
@@ -1421,7 +1449,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               </NoWalletsMsg>
             ) : null}
 
-            {context === 'swap' ? (
+            {context === 'swapFrom' ? (
               <NoWalletsMsg>
                 {t(
                   'Your wallet balance is too low to swap crypto. Add funds now and start swapping.',
@@ -1429,7 +1457,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               </NoWalletsMsg>
             ) : null}
 
-            {['sell', 'swap'].includes(context) ? (
+            {['sell', 'swapFrom'].includes(context) ? (
               <Button
                 style={{marginTop: 20}}
                 onPress={goToBuyCrypto}
@@ -1478,7 +1506,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                     <Icons.Add />
                   </PlusIconContainer>
                   <H5 style={{fontWeight: '400'}}>
-                    {IsEVMCoin(filteredSelectedObj.chains[0])
+                    {IsEVMChain(filteredSelectedObj.chains[0])
                       ? t('Add as New Account')
                       : t('Add as New Wallet')}
                   </H5>
@@ -1511,13 +1539,13 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               <WalletSelectMenuHeaderContainer>
                 <TextAlign align={'center'}>
                   <H4>
-                    {context === 'swap'
+                    {context === 'swapTo'
                       ? t('Swap to')
                       : t('Select Destination')}
                   </H4>
                 </TextAlign>
                 <NoWalletsMsg>
-                  {context === 'swap'
+                  {context === 'swapTo'
                     ? t('Choose a key you would like to swap the funds to')
                     : t('Choose a key you would like to deposit the funds to')}
                 </NoWalletsMsg>

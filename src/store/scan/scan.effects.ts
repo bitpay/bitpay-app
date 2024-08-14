@@ -1981,12 +1981,24 @@ const handleWalletConnectUri =
     } catch (e: any) {
       const proposal = getState().WALLET_CONNECT_V2.proposal;
       if (
-        proposal &&
         typeof e === 'object' &&
         e !== null &&
         e.message?.includes('Pairing already exists:')
       ) {
-        navigationRef.navigate('WalletConnectRoot', {uri: data});
+        if (proposal) {
+          navigationRef.navigate('WalletConnectRoot', {uri: data});
+        } else {
+          dispatch(
+            showBottomNotificationModal(
+              CustomErrorMessage({
+                errMsg: t(
+                  'Pairing already exists. Please try refreshing the QR code by reloading the website.',
+                ),
+                title: t('Uh oh, something went wrong'),
+              }),
+            ),
+          );
+        }
       } else {
         dispatch(
           showBottomNotificationModal(

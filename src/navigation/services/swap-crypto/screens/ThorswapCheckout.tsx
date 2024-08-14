@@ -43,6 +43,7 @@ import {
   GetName,
   GetPrecision,
   IsERCToken,
+  IsEVMChain,
   IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
 import {
@@ -101,10 +102,7 @@ import {SwapCryptoActions} from '../../../../store/swap-crypto';
 import {useTranslation} from 'react-i18next';
 import {RootState} from '../../../../store';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {
-  thorswapGetSwapQuote,
-  thorswapGetSwapTx,
-} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
+import {thorswapGetSwapTx} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
 import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../../../navigation/tabs/settings/external-services/ExternalServicesGroup';
@@ -630,11 +628,14 @@ const ThorswapCheckout: React.FC = () => {
       let calldata: string | undefined;
       let gasLimit: number | undefined;
 
-      if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
-        logger.debug('WalletFrom is ERC20 Token: building ERC20 txp');
+      if (IsEVMChain(wallet.chain)) {
+        logger.debug('WalletFrom is EVM Chain: building EVM Chain txp');
 
-        // ERC20 funds are moved in calldata
-        depositSat = 0;
+        if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+          logger.debug('WalletFrom is ERC20 Token: building ERC20 txp');
+          // ERC20 funds are moved in calldata
+          depositSat = 0;
+        }
 
         if (thorswapTransaction?.data && thorswapTransaction?.data !== '') {
           calldata = thorswapTransaction.data;

@@ -205,7 +205,7 @@ const TransactionProposalNotifications = () => {
   ): number => {
     let i = 0;
     txpsPerWallet.forEach(txp => {
-      if (txp.statusForUs === 'pending' && canBeSigned) {
+      if (txp.statusForUs === 'pending' && canBeSigned && txp.amountStr) {
         i = i + 1;
       }
     });
@@ -423,7 +423,7 @@ const TransactionProposalNotifications = () => {
                       icon={TransactionIcons[txp.uiIcon]}
                       creator={txp.uiCreator}
                       time={txp.uiTime}
-                      value={txp.uiValue}
+                      value={txp.uiValue || txp.feeStr}
                       message={txp.message}
                       onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
                       hideIcon={true}

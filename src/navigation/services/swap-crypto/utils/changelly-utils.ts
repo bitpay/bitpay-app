@@ -270,6 +270,12 @@ export const getChangellyCurrenciesFixedProps = (
       contractAddress?: string;
     };
   } = {
+    usdc: {
+      name: 'usdc',
+      fullName: 'USD Coin',
+      blockchain: 'ethereum',
+      contractAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    },
     usdt20: {
       name: 'usdt',
       fullName: 'Tether USD',
@@ -335,14 +341,14 @@ export const getChangellyFixedCurrencyAbbreviation = (
     usdt: {eth: 'usdt20'},
     matic: {matic: 'maticpolygon'},
     eth: {
-      arbitrum: 'etharb',
-      optimism: 'ethop',
+      arb: 'etharb',
+      op: 'ethop',
     },
     usdc: {
       matic: 'usdcmatic',
-      arbitrum: 'usdcarb',
+      arb: 'usdcarb',
       base: 'usdcbase',
-      optimism: 'usdcop',
+      op: 'usdcop',
     },
   };
 

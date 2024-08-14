@@ -6,7 +6,7 @@ import React, {
   useLayoutEffect,
   useRef,
 } from 'react';
-import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../../WalletGroup';
 import {
@@ -72,7 +72,6 @@ import {
   Link,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
-import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
 import {
   ActiveOpacity,
@@ -100,9 +99,6 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
 import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
 import WarningSvg from '../../../../../../assets/img/warning.svg';
-import {CoinbaseScreens} from '../../../../../navigation/coinbase/CoinbaseGroup';
-import {RootStacks} from '../../../../../Root';
-import {TabsScreens} from '../../../../../navigation/tabs/TabsStack';
 import {
   ConfirmHardwareWalletModal,
   SimpleConfirmPaymentState,
@@ -171,9 +167,6 @@ const Confirm = () => {
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
-  const enableReplaceByFee = useAppSelector(
-    ({WALLET}) => WALLET.enableReplaceByFee,
-  );
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const {isoCode} = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -747,21 +740,9 @@ const Confirm = () => {
             onCloseModal={async () => {
               setShowPaymentSentModal(false);
               if (recipient.type === 'coinbase') {
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 1,
-                    routes: [
-                      {
-                        name: RootStacks.TABS,
-                        params: {screen: TabsScreens.HOME},
-                      },
-                      {
-                        name: CoinbaseScreens.ROOT,
-                        params: {},
-                      },
-                    ],
-                  }),
-                );
+                await sleep(500);
+                navigation.dispatch(StackActions.popToTop());
+                navigation.dispatch(StackActions.push('CoinbaseRoot'));
               } else {
                 await sleep(500);
                 navigation.dispatch(StackActions.popToTop());
