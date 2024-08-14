@@ -117,7 +117,11 @@ import {
   ThorswapCurrency,
   ThorswapGetCurrenciesRequestData,
 } from '../../../../store/swap-crypto/models/thorswap.models';
-import {isPairSupported, SwapCryptoExchangeKey} from '../utils/swap-crypto-utils';
+import {
+  isPairSupported,
+  SwapCryptoExchangeKey,
+  SwapCryptoSupportedExchanges,
+} from '../utils/swap-crypto-utils';
 import {SwapCryptoLimits} from '../../../../store/swap-crypto/swap-crypto.models';
 
 export type SwapCryptoRootScreenParams =
@@ -248,9 +252,13 @@ const SwapCryptoRoot: React.FC = () => {
 
   let selectedWallet = route.params?.selectedWallet;
   const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
-  const preSetPartner = route.params?.partner?.toLowerCase() as
-    | SwapCryptoExchangeKey
-    | undefined;
+  const preSetPartner: SwapCryptoExchangeKey | undefined =
+    route.params?.partner &&
+    SwapCryptoSupportedExchanges.includes(
+      route.params.partner.toLowerCase() as SwapCryptoExchangeKey,
+    )
+      ? (route.params.partner.toLowerCase() as SwapCryptoExchangeKey)
+      : undefined;
   const SupportedChains: string[] = SUPPORTED_COINS;
   const [swapLimits, setSwapLimits] = useState<SwapLimits>({
     minAmount: undefined,
@@ -420,6 +428,7 @@ const SwapCryptoRoot: React.FC = () => {
     const enabledExchanges = Object.values(swapCryptoExchangesDefault)
       .filter(
         exchange =>
+          (!preSetPartner || exchange.key === preSetPartner) &&
           exchange.showOffer &&
           !exchange.disabled &&
           exchange.supportedCoins &&
@@ -431,7 +440,7 @@ const SwapCryptoRoot: React.FC = () => {
             toWalletSelected.currencyAbbreviation,
             toWalletSelected.chain,
             exchange.supportedCoins,
-          )
+          ),
       )
       .map(exchange => exchange.key);
 
@@ -1138,7 +1147,12 @@ const SwapCryptoRoot: React.FC = () => {
     });
 
     const enabledExchanges = Object.values(swapCryptoExchangesDefault)
-      .filter(exchange => exchange.showOffer && !exchange.disabled)
+      .filter(
+        exchange =>
+          exchange.showOffer &&
+          !exchange.disabled &&
+          (!preSetPartner || exchange.key === preSetPartner),
+      )
       .map(exchange => exchange.key);
 
     const getCurrenciesPromiseByExchange = (
