@@ -85,10 +85,6 @@ export const ProcessPendingTxps =
     const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
-      // Filter received txs with no effects for ERC20 tokens only
-      if (IsERCToken(currencyAbbreviation, chain) && !tx.effects?.[0]) {
-        return;
-      }
       tx = dispatch(ProcessTx(tx, wallet));
 
       // no future transactions...
@@ -216,9 +212,11 @@ const ProcessTx =
       tokenAddress = tx.effects[0].contractAddress?.toLowerCase();
     }
 
-    tx.amountStr = dispatch(
-      FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
-    );
+    if (tx.coin === wallet.currencyAbbreviation) {
+      tx.amountStr = dispatch(
+        FormatAmountStr(tokenSymbol || coin, chain, tokenAddress, tx.amount),
+      );
+    }
 
     tx.feeStr = tx.fee
       ? // @ts-ignore
