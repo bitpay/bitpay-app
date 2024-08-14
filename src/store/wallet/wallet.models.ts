@@ -5,6 +5,7 @@ import {RootState} from '../index';
 import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
 import {FeeLevels} from './effects/fee/fee';
+import {TxActions} from './effects/transactions/transactions';
 
 /**
  * Currently supported hardware wallet sources.
@@ -104,7 +105,7 @@ export interface WalletObj {
   m: number;
   n: number;
   balance: CryptoBalance;
-  singleAddress: boolean;
+  singleAddress?: boolean;
   pendingTxps: TransactionProposal[];
   tokenAddress?: string;
   tokens?: string[];
@@ -308,24 +309,22 @@ export interface TransactionProposal {
   action: string;
   actions: Action[];
   addressTo: string;
-  coin: string;
-  chain: string;
   amount: number;
   amountStr: string;
-  amountValueStr: string;
   amountUnitStr: string;
-  size: number;
-  feeStr: string;
-  fees: number;
-  feeRate: string;
-  from: string;
+  amountValueStr: string;
+  canBeRemoved: boolean;
+  chain: string;
+  changeAddress: {
+    path: string;
+  };
+  coin: string;
   copayerId: string;
-  walletId: string;
-  nonce?: number;
-  enableRBF?: boolean; // not needed (FULLRBF)
-  replaceTxByFee?: boolean;
-  toAddress: string;
-  outputs: TransactionProposalOutputs[];
+  createdOn: number;
+  customData?: CustomTransactionData;
+  deleteLockTime: number;
+  destinationTag?: number;
+  dryRun: boolean;
   effects?: Array<{
     amount: number | string; // Support BN
     contractAddress?: string;
@@ -334,44 +333,65 @@ export interface TransactionProposal {
     type: string;
     callback?: any;
   }>;
-  inputs: any;
-  fee: any;
-  message: string;
-  customData?: CustomTransactionData;
-  payProUrl: any;
+  enableRBF?: boolean; // not needed (FULLRBF)
   excludeUnconfirmedUtxos: boolean;
-  feePerKb: number;
+  fee: any;
   feeLevel: string;
-  dryRun: boolean;
-  tokenAddress?: string;
-  destinationTag?: number;
-  invoiceID?: string;
-  multisigGnosisContractAddress?: string;
-  multisigContractAddress?: string;
-  instantAcceptanceEscrow?: number;
-  isTokenSwap?: boolean;
-  id: string;
+  feePerKb: number;
+  feeRate: string;
+  feeStr: string;
+  fees: number;
+  from: string;
   gasLimit?: number;
   gasPrice?: number;
-  status: string;
-  sendMaxInfo?: SendMaxInfo;
-  createdOn: number;
-  pendingForUs: boolean;
-  statusForUs: string;
-  deleteLockTime: number;
-  canBeRemoved: boolean;
-  recipientCount: number;
   hasMultiplesOutputs: boolean;
-  requiredSignatures: number;
-  requiredRejections: number;
-  raw?: string;
-  txid?: string;
+  id: string;
   inputPaths: Array<string | null>;
-  changeAddress: {
-    path: string;
-  };
+  inputs: any;
+  instantAcceptanceEscrow?: number;
+  invoiceID?: string;
+  isTokenSwap?: boolean;
+  message: string;
+  multisigContractAddress?: string;
+  multisigGnosisContractAddress?: string;
   network: Network;
+  nonce?: number;
+  note?: {
+    body?: string;
+  };
+  outputs: TransactionProposalOutputs[];
+  payProUrl: any;
+  pendingForUs: boolean;
+  raw?: string;
+  recipientCount: number;
+  replaceTxByFee?: boolean;
+  requiredRejections: number;
+  requiredSignatures: number;
+  sendMaxInfo?: SendMaxInfo;
   signingMethod?: string;
+  size: number;
+  status: string;
+  statusForUs: string;
+  time?: number;
+  toAddress: string;
+  tokenAddress?: string;
+  txid?: string;
+  walletId: string;
+}
+
+export interface TransactionDetailsBuilt extends TransactionProposal {
+  actionsList?: TxActions[];
+  confirmations?: number;
+  creatorName?: string;
+  detailsMemo?: string;
+  error?: any;
+  feeFiatStr?: string;
+  feeRateStr?: string;
+  fiatRateStr?: string;
+  lowAmount?: boolean;
+  lowFee?: boolean;
+  safeConfirmed?: boolean;
+  ts?: number;
 }
 
 export interface ProposalErrorHandlerProps {
