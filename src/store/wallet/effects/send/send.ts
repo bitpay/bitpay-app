@@ -638,7 +638,7 @@ export const buildTxDetails =
           cryptoAmount: dispatch(
             // @ts-ignore
             FormatAmountStr(
-              BitpaySupportedCoins[chain]?.feeCurrency,
+              coin,
               chain,
               tokenAddress,
               amount,
