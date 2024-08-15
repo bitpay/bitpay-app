@@ -301,9 +301,20 @@ const SwapCryptoRoot: React.FC = () => {
     return !!toWalletSelected && !!fromWalletSelected && amountFrom > 0;
   };
 
-  const setSelectedWallet = async () => {
+  const setSelectedWallet = async (supportedCoins: SwapCryptoCoin[]) => {
     if (selectedWallet) {
       const key = keys[selectedWallet.keyId];
+
+      if (!supportedCoins.find(coin => coin.symbol === getExternalServiceSymbol(selectedWallet!.currencyAbbreviation, selectedWallet!.chain))) {
+        const msg = t('Our providers have temporarily disabled exchanges involving coin(chain). Please try a different currency.', {
+          coin: `${cloneDeep(selectedWallet.currencyAbbreviation).toUpperCase()}`,
+          chain: `${cloneDeep(selectedWallet.chain).toUpperCase()}`,
+        });
+        showError(msg);
+        selectedWallet = undefined;
+        return;
+      }
+
       try {
         await dispatch(
           startUpdateWalletStatus({key, wallet: selectedWallet, force: true}),
@@ -380,16 +391,15 @@ const SwapCryptoRoot: React.FC = () => {
 
     possibleCoinsTo = _.uniqBy(possibleCoinsTo, 'symbol');
 
+    // Only includes coins already included in swapCryptoSupportedCoinsFrom
+    possibleCoinsTo = possibleCoinsTo.filter(coin => swapCryptoSupportedCoinsFrom.includes(coin));
+
     // Remove coinsFrom from possible coinsTo
     const coinsTo = cloneDeep(possibleCoinsTo).filter(
-      coin =>
-        SUPPORTED_EVM_COINS.includes(coin.chain) ||
-        (!SUPPORTED_EVM_COINS.includes(coin.chain) &&
-          coin.symbol !==
-            getExternalServiceSymbol(
-              fromWallet.currencyAbbreviation,
-              fromWallet.chain,
-            )),
+      coin => coin.symbol !== getExternalServiceSymbol(
+        fromWallet.currencyAbbreviation,
+        fromWallet.chain,
+      )
     );
 
     setSwapCryptoSupportedCoinsTo(coinsTo);
@@ -916,24 +926,6 @@ const SwapCryptoRoot: React.FC = () => {
         ['asc', 'asc'],
       );
 
-      const coinsToRemove =
-        !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
-      coinsToRemove.push('busd');
-      if (selectedWallet?.balance?.satSpendable === 0) {
-        coinsToRemove.push(selectedWallet.currencyAbbreviation.toLowerCase());
-      }
-      if (coinsToRemove.length > 0) {
-        logger.debug(
-          `Removing ${JSON.stringify(
-            coinsToRemove,
-          )} from Changelly supported coins`,
-        );
-        supportedCoins = supportedCoins.filter(
-          supportedCoin =>
-            !coinsToRemove.includes(supportedCoin.currencyAbbreviation),
-        );
-      }
-
       return supportedCoins;
     }
   };
@@ -1235,6 +1227,22 @@ const SwapCryptoRoot: React.FC = () => {
           }
         });
         if (allSupportedCoins.length > 0) {
+          const coinsToRemove =
+            !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
+          coinsToRemove.push('busd');
+
+          if (coinsToRemove.length > 0) {
+            logger.debug(
+              `Removing ${JSON.stringify(
+                coinsToRemove,
+              )} from Swap supported coins`,
+            );
+            allSupportedCoins = allSupportedCoins.filter(
+              supportedCoin =>
+                !coinsToRemove.includes(supportedCoin.currencyAbbreviation),
+            );
+          }
+
           allSupportedCoins = _.uniqBy(allSupportedCoins, 'symbol');
         }
         setSwapCryptoSupportedCoinsFrom(allSupportedCoins);
@@ -1304,7 +1312,7 @@ const SwapCryptoRoot: React.FC = () => {
 
   useEffect(() => {
     if (swapCryptoSupportedCoinsFrom) {
-      setSelectedWallet();
+      setSelectedWallet(swapCryptoSupportedCoinsFrom);
     }
   }, [swapCryptoSupportedCoinsFrom]);
 
@@ -1576,7 +1584,7 @@ const SwapCryptoRoot: React.FC = () => {
 
       <FromWalletSelectorModal
         isVisible={fromWalletSelectorModalVisible}
-        customSupportedCurrencies={swapCryptoSupportedCoinsFrom}
+        customSupportedCurrencies={useDefaultToWallet && toWalletSelected ? swapCryptoSupportedCoinsFrom?.filter(coin => coin.symbol !== getExternalServiceSymbol(toWalletSelected.currencyAbbreviation, toWalletSelected.chain)) : swapCryptoSupportedCoinsFrom}
         livenetOnly={true}
         modalContext={'swapFrom'}
         modalTitle={t('Swap From')}
