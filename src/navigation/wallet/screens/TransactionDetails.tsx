@@ -5,6 +5,7 @@ import {
   HeaderTitle,
   Link,
   H2,
+  H4,
 } from '../../../components/styled/Text';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -20,7 +21,7 @@ import {
   IsReceived,
   IsSent,
   IsShared,
-  NotZeroAmountEVM,
+  TxForPaymentFeeEVM,
   TxActions,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
@@ -211,6 +212,7 @@ const TransactionDetails = () => {
   const navigation = useNavigation();
   const [txs, setTxs] = useState<TransactionDetailsBuilt>();
   const [memo, setMemo] = useState<string>();
+  const [isForFee, setIsForFee] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const title = getDetailsTitle(transaction, wallet);
   let {
@@ -241,6 +243,13 @@ const TransactionDetails = () => {
       );
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
+      setIsForFee(
+        TxForPaymentFeeEVM(
+          wallet.currencyAbbreviation,
+          transaction.coin,
+          transaction.amount,
+        ),
+      );
       await sleep(500);
       setIsLoading(false);
     } catch (err) {
@@ -417,11 +426,9 @@ const TransactionDetails = () => {
           keyboardShouldPersistTaps={'handled'}
           extraScrollHeight={80}>
           <>
-            {NotZeroAmountEVM(txs.amount!, chain) ? (
-              <H2 medium={true}>{txs.amountStr}</H2>
-            ) : null}
+            {!isForFee ? <H2 medium={true}>{txs.amountStr}</H2> : null}
 
-            {!IsCustomERCToken(tokenAddress, chain) ? (
+            {!IsCustomERCToken(tokenAddress, chain) && !isForFee ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'
@@ -431,9 +438,7 @@ const TransactionDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEVM(txs.amount!, chain) ? (
-              <SubTitle>{t('Interaction with contract')}</SubTitle>
-            ) : null}
+            {isForFee ? <H4>{t('Interaction with contract')}</H4> : null}
           </>
 
           {/* --------- Info ----------------*/}

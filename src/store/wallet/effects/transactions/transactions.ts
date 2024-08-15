@@ -90,6 +90,10 @@ export const ProcessPendingTxps =
     const {currencyAbbreviation, chain, tokenAddress} = wallet;
 
     txps.forEach((tx: TransactionProposal) => {
+      // Filter out txps used for pay fees in other wallets
+      if (currencyAbbreviation !== tx.coin) {
+        return;
+      }
       tx = dispatch(ProcessTx(tx, wallet));
 
       // no future transactions...
@@ -729,8 +733,16 @@ export const IsInvalid = (action: string | undefined): boolean => {
   return action === 'invalid';
 };
 
-export const NotZeroAmountEVM = (amount: number, chain: string): boolean => {
-  return !(amount === 0 && SUPPORTED_EVM_COINS.includes(chain));
+export const IsZeroAmountEVM = (amount: number, chain: string): boolean => {
+  return amount === 0 && SUPPORTED_EVM_COINS.includes(chain);
+};
+
+export const TxForPaymentFeeEVM = (
+  walletCoin: string,
+  TxCoin: string,
+  amount: number,
+): boolean => {
+  return walletCoin !== TxCoin || IsZeroAmountEVM(amount, TxCoin);
 };
 
 export const IsShared = (wallet: Wallet): boolean => {
@@ -760,6 +772,7 @@ export const BuildUiFriendlyList = (
       action,
       time,
       createdOn,
+      coin,
       amount,
       amountStr,
       feeStr,
@@ -776,7 +789,11 @@ export const BuildUiFriendlyList = (
     } = customData || {};
     const {body: noteBody} = note || {};
 
-    const notZeroAmountEVM = NotZeroAmountEVM(amount, chain);
+    const isTxForPaymentFee = TxForPaymentFeeEVM(
+      currencyAbbreviation,
+      coin,
+      amount,
+    );
     const isSent = IsSent(action);
     const isMoved = IsMoved(action);
     const isReceived = IsReceived(action);
@@ -800,7 +817,7 @@ export const BuildUiFriendlyList = (
     if (!confirmations || confirmations <= 0) {
       transaction.uiIcon = 'confirming';
 
-      if (notZeroAmountEVM) {
+      if (!isTxForPaymentFee) {
         if (contactName || transaction.customData?.recipientEmail) {
           if (isSent || isMoved) {
             transaction.uiDescription =
@@ -842,7 +859,7 @@ export const BuildUiFriendlyList = (
               billPayMerchantIds[0]) ||
             giftCardName;
         }
-        if (notZeroAmountEVM) {
+        if (!isTxForPaymentFee) {
           if (noteBody) {
             transaction.uiDescription = noteBody;
           } else if (message) {
@@ -893,7 +910,7 @@ export const BuildUiFriendlyList = (
       }
     }
 
-    if (!notZeroAmountEVM) {
+    if (isTxForPaymentFee) {
       const {uiDescription} = transaction;
       transaction.uiIcon = 'contractInteraction';
 
@@ -906,7 +923,7 @@ export const BuildUiFriendlyList = (
     if (isInvalid) {
       transaction.uiValue = t('(possible double spend)');
     } else {
-      if (notZeroAmountEVM) {
+      if (!isTxForPaymentFee) {
         transaction.uiValue = amountStr;
       }
     }
