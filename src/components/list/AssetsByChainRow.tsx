@@ -41,6 +41,7 @@ interface Props {
   isLast?: boolean;
   onPress: (walletId: string) => void;
   hideBalance: boolean;
+  showChainAssetsByDefault?: boolean;
 }
 
 const AssetsByChainRow = ({
@@ -49,12 +50,13 @@ const AssetsByChainRow = ({
   onPress,
   isLast,
   hideBalance,
+  showChainAssetsByDefault = false,
 }: Props) => {
   const {chain, chainName, fiatBalanceFormat, chainAssetsList, chainImg} =
     accountItem;
   const [showChainAssets, setShowChainAssets] = useState<{
     [key: string]: boolean;
-  }>({[chain]: false});
+  }>({[chain]: showChainAssetsByDefault});
   const theme = useTheme();
 
   const memoizedRenderItem = useCallback(({item}: {item: WalletRowProps}) => {

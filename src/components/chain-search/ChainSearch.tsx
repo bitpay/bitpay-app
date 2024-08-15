@@ -26,6 +26,7 @@ import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {View} from 'react-native';
 import {BitpaySupportedCoins, CurrencyOpts} from '../../constants/currencies';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
+import {AccountRowProps} from '../list/AccountListRow';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
@@ -80,7 +81,9 @@ export interface SearchableItem {
     [key: string]: Wallet[];
   };
   total?: number;
-  accounts?: string[]; // Additional properties specific to WCV2SessionType
+  accounts?:
+    | string[]
+    | (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[]; // Additional properties specific to WCV2SessionType or AssetList
   data?: TransactionProposal[] | AssetsByChainData[]; // Additional properties specific to TransactionHistory or AssetList
 }
 
@@ -142,20 +145,19 @@ const SearchComponent = <T extends SearchableItem>({
       const normalizedText = normalizeText(text);
       let results = cloneDeep(searchFullList);
       // Ignore error when there is no results
-      if (['walletconnect'].includes(context) && results?.[0]?.accounts) {
+      if (
+        ['walletconnect'].includes(context) &&
+        typeof results?.[0]?.accounts?.[0] === 'string'
+      ) {
         results.forEach(
           data =>
             (data.accounts = filterAccounts(
-              data.accounts!,
+              data.accounts! as string[],
               normalizedText,
               selectedChainFilterOption,
             )),
         );
-      } else if (
-        ['send', 'receive', 'swapFrom', 'swapTo', 'buy', 'sell'].includes(
-          context,
-        )
-      ) {
+      } else if (['receive', 'swapTo', 'buy'].includes(context)) {
         results = results.reduce((acc: T[], data) => {
           const normalizedCurrencyAbbreviation = normalizeText(
             data?.currencyAbbreviation,
@@ -221,6 +223,30 @@ const SearchComponent = <T extends SearchableItem>({
           );
           return {...result, data: filteredData};
         });
+      } else if (
+        ['sell', 'send', 'swapFrom'].includes(context) &&
+        selectedChainFilterOption
+      ) {
+        results = results
+          .map(data => {
+            const accounts = data.accounts as (AccountRowProps & {
+              assetsByChain?: AssetsByChainData[];
+            })[];
+            const filteredAccounts = accounts
+              ?.map(account => {
+                if (account.chains?.includes(selectedChainFilterOption)) {
+                  const assetsByChain =
+                    account.assetsByChain as AssetsByChainData[];
+                  const filteredAssetsByChain = assetsByChain?.filter(
+                    ({chain}) => chain === selectedChainFilterOption,
+                  );
+                  return {...account, assetsByChain: filteredAssetsByChain};
+                }
+              })
+              .filter(item => item);
+            return {...data, accounts: filteredAccounts};
+          })
+          .filter(({accounts}) => accounts?.length);
       }
       setSearchResults(results);
     }, 300),

@@ -1124,6 +1124,7 @@
   "Generating Address...": "Generating Address...",
   "Something went wrong. Please try again.": "Something went wrong. Please try again.",
   "Receive only COIN on the PROTOCOLNAME Network to avoid losing funds.": "Receive only {{coin}} on the {{protocolName}} Network to avoid losing funds.",
+  "Only receive tokens on PROTOCOLNAMES networks to avoid losing funds": "Only receive tokens on {{protocolNames}} networks to avoid losing funds",
   "Contract Address": "Contract Address",
   "View Contract": "View Contract",
   "We couldn't find your wallet": "We couldn't find your wallet",

@@ -35,6 +35,9 @@ const BalanceColumn = styled(Column)`
   align-items: flex-end;
 `;
 
+export interface AccountRowListBase extends SearchableItem {}
+
+export type AccountRowListProps = AccountRowListBase & AccountRowProps[];
 export interface AccountRowProps extends SearchableItem {
   id: string;
   keyId: string;

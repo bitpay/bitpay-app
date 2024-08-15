@@ -291,19 +291,9 @@ const KeyOverview = () => {
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
   const memorizedAccountList = useMemo(() => {
-    const updatedKey = {
-      ...key,
-      wallets: key.wallets.filter(wallet => !wallet.hideWallet),
-    };
-    return buildAccountList(
-      updatedKey,
-      defaultAltCurrency.isoCode,
-      rates,
-      dispatch,
-      {
-        filterByHideWallet: true,
-      },
-    );
+    return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
+      filterByHideWallet: true,
+    });
   }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
 
   const keyOptions: Array<Option> = [];

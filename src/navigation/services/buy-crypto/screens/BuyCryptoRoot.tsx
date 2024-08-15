@@ -20,7 +20,6 @@ import {
   SelectedOptionContainer,
   SelectedOptionText,
   DataText,
-  BuyCryptoItemTopTitle,
 } from '../styled/BuyCryptoCard';
 import Button from '../../../../components/button/Button';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
@@ -89,8 +88,11 @@ import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
+  AccountChainsContainer,
   CurrencyColumn,
   CurrencyImageContainer,
+  ExternalServicesItemTopTitle,
+  ExternalServicesTitleContainer,
   Row,
 } from '../../../../components/styled/Containers';
 import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
@@ -121,25 +123,6 @@ const CtaContainer = styled.View`
 
 const ArrowContainer = styled.View`
   margin-left: 10px;
-`;
-
-const AccountChainsContainer = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  border-radius: 50px;
-  padding: 8px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-`;
-
-const TitleContainerRow = styled(Row)`
-  margin-top: 8px;
-  margin-left: 16px;
-  margin-right: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  align-content: center;
 `;
 
 let buyCryptoConfig: BuyCryptoConfig | undefined;
@@ -234,6 +217,13 @@ const BuyCryptoRoot = ({
     dispatch(dismissOnGoingProcessModal());
     await sleep(400);
     dispatch(showWalletError(type, fromCurrencyAbbreviation));
+  };
+
+  const getEVMAccountName = (wallet: Wallet) => {
+    const selectedKey = allKeys[wallet.keyId];
+    const evmAccountInfo =
+      selectedKey.evmAccountsInfo?.[wallet.receiveAddress!];
+    return evmAccountInfo?.name;
   };
 
   const selectFirstAvailableWallet = async () => {
@@ -869,17 +859,21 @@ const BuyCryptoRoot = ({
     <BuyCryptoRootContainer>
       <ScrollView>
         {selectedWallet && (
-          <TitleContainerRow>
-            <BuyCryptoItemTopTitle>{t('Deposit to')}</BuyCryptoItemTopTitle>
+          <ExternalServicesTitleContainer>
+            <ExternalServicesItemTopTitle>
+              {t('Deposit to')}
+            </ExternalServicesItemTopTitle>
             {IsEVMChain(selectedWallet.chain) ? (
               <AccountChainsContainer>
                 <Blockie size={19} seed={selectedWallet.receiveAddress} />
                 <H7 ellipsizeMode="tail" numberOfLines={1}>
-                  {`EVM Account ${selectedWallet.credentials.account}`}
+                  {getEVMAccountName(selectedWallet)
+                    ? getEVMAccountName(selectedWallet)
+                    : `EVM Account ${selectedWallet.credentials.account}`}
                 </H7>
               </AccountChainsContainer>
             ) : null}
-          </TitleContainerRow>
+          </ExternalServicesTitleContainer>
         )}
         <BuyCryptoItemCard
           onPress={() => {
@@ -888,21 +882,19 @@ const BuyCryptoRoot = ({
           {!selectedWallet && (
             <>
               <BuyCryptoItemTitle>{t('Deposit to')}</BuyCryptoItemTitle>
-              <ActionsContainer>
-                <SelectedOptionContainer style={{backgroundColor: Action}}>
-                  <SelectedOptionText
-                    style={{color: White}}
-                    numberOfLines={1}
-                    ellipsizeMode={'tail'}>
-                    {t('Choose Cypto')}
-                  </SelectedOptionText>
-                  <ArrowContainer>
-                    <SelectorArrowDown
-                      {...{width: 13, height: 13, color: White}}
-                    />
-                  </ArrowContainer>
-                </SelectedOptionContainer>
-              </ActionsContainer>
+              <SelectedOptionContainer style={{backgroundColor: Action}}>
+                <SelectedOptionText
+                  style={{color: White}}
+                  numberOfLines={1}
+                  ellipsizeMode={'tail'}>
+                  {t('Choose Crypto')}
+                </SelectedOptionText>
+                <ArrowContainer>
+                  <SelectorArrowRight
+                    {...{width: 13, height: 13, color: White}}
+                  />
+                </ArrowContainer>
+              </SelectedOptionContainer>
             </>
           )}
           {selectedWallet && (
@@ -1051,7 +1043,7 @@ const BuyCryptoRoot = ({
             modalContext={'buy'}
             livenetOnly={!__DEV__}
             useAsModal={true}
-            modalTitle={t('Select Destination')}
+            modalTitle={t('Select Crypto')}
             customToSelectCurrencies={buyCryptoSupportedCoinsFullObj}
             disabledChain={undefined}
             globalSelectOnDismiss={onDismiss}

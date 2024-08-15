@@ -57,12 +57,14 @@ import {
 import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
 import _ from 'lodash';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {toFiat} from '../../../store/wallet/utils/wallet';
+import {
+  buildUIFormattedWallet,
+  toFiat,
+} from '../../../store/wallet/utils/wallet';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import Question from '../../../../assets/img/settings/feedback/question.svg';
 import {ScrollView} from 'react-native-gesture-handler';
-import {buildUIFormattedWallet} from './KeyOverview';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
 

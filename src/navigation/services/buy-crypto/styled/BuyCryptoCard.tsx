@@ -76,8 +76,3 @@ export const BuyCryptoItemTitle = styled.Text`
   color: ${({theme: {dark}}) => (dark ? White : '#434d5a')};
   line-height: 18px;
 `;
-
-export const BuyCryptoItemTopTitle = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : '#434d5a')};
-  line-height: 18px;
-`;

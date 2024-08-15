@@ -30,6 +30,7 @@ import {IsEVMChain} from '../../store/wallet/utils/currency';
 import {findWalletById} from '../../store/wallet/utils/wallet';
 import {useAppSelector} from '../../utils/hooks';
 import {BitpaySupportedCoins} from '../../constants/currencies';
+import {SearchableItem} from '../chain-search/ChainSearch';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -120,7 +121,7 @@ export interface KeyWallet extends Wallet {
   img: string | ((props: any) => ReactElement);
 }
 
-export interface KeyWalletsRowProps<T> {
+export interface KeyWalletsRowProps<T> extends SearchableItem {
   key: string;
   backupComplete?: boolean;
   keyName: string;
@@ -263,9 +264,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                   <AccountChainsContainer
                     activeOpacity={ActiveOpacity}
                     onPress={() => {}}>
-                    <CurrencyImageContainer>
-                      <CurrencyImage img={wallet.img} size={20} />
-                    </CurrencyImageContainer>
+                    <CurrencyImage img={wallet.img} size={20} />
                     <Column>
                       <H5 ellipsizeMode="tail" numberOfLines={1}>
                         {

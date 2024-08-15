@@ -146,6 +146,14 @@ export const addWallet =
               }),
             )) as Wallet;
 
+            const receiveAddress = (await dispatch<any>(
+              createWalletAddress({wallet: associatedWallet, newAddress: true}),
+            )) as string;
+            dispatch(
+              LogActions.info(`new address generated: ${receiveAddress}`),
+            );
+            associatedWallet.receiveAddress = receiveAddress;
+
             const {currencyAbbreviation, currencyName} = dispatch(
               mapAbbreviationAndName(
                 associatedWallet.credentials.coin,
@@ -191,6 +199,7 @@ export const addWallet =
         if (!newWallet) {
           return reject();
         }
+        newWallet.receiveAddress = associatedWallet?.receiveAddress;
 
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
