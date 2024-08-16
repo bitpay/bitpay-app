@@ -315,7 +315,10 @@ const buildSelectableCurrenciesList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
       coinEntry.chainsImg[chain] = {
-        badgeUri: IsEVMChain(chain) && !badgeUri ? logoUri : badgeUri,
+        badgeUri:
+          IsEVMChain(chain) && (!badgeUri || badgeUri === '')
+            ? logoUri
+            : badgeUri,
         priority,
       };
       if (!coinEntry.chains.includes(chain)) {
