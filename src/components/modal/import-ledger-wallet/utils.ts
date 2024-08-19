@@ -25,12 +25,13 @@ export type SupportedLedgerAppNames =
   | 'Bitcoin Legacy'
   | 'Bitcoin Test Legacy'
   | 'Ethereum'
-  | 'Ethereum Amoy'
+  | 'Ethereum Sepolia'
   | 'XRP'
   | 'Bitcoin Cash'
   | 'Litecoin'
   | 'Dogecoin'
-  | 'Polygon';
+  | 'Polygon'
+  | 'Polygon Amoy';
 
 /**
  * Gets info on the currently running Ledger app. The OS info is returned if no app is running.

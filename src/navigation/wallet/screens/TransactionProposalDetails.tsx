@@ -4,6 +4,7 @@ import {
   H6,
   HeaderTitle,
   H2,
+  H4,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -15,7 +16,7 @@ import {
   getDetailsTitle,
   IsMultisigEthInfo,
   IsReceived,
-  NotZeroAmountEVM,
+  TxForPaymentFeeEVM,
   TxActions,
   RemoveTxProposal,
   RejectTxProposal,
@@ -221,6 +222,7 @@ const TransactionProposalDetails = () => {
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [lastSigner, setLastSigner] = useState(false);
+  const [isForFee, setIsForFee] = useState(false);
 
   const title = getDetailsTitle(transaction, wallet);
   let {currencyAbbreviation, chain, network, tokenAddress} = wallet;
@@ -248,9 +250,19 @@ const TransactionProposalDetails = () => {
         }),
       );
       setTxp(_transaction);
-      setLastSigner(
-        _transaction.actions.filter((a: any) => a?.type === 'accept').length ===
-          _transaction.requiredSignatures - 1,
+      if (_transaction.actions) {
+        setLastSigner(
+          _transaction.actions.filter((a: any) => a?.type === 'accept')
+            .length ===
+            (_transaction.requiredSignatures as number) - 1,
+        );
+      }
+      setIsForFee(
+        TxForPaymentFeeEVM(
+          wallet.currencyAbbreviation,
+          transaction.coin,
+          transaction.amount,
+        ),
       );
       await sleep(500);
       setIsLoading(false);
@@ -494,11 +506,9 @@ const TransactionProposalDetails = () => {
       ) : txp ? (
         <ScrollView>
           <>
-            {NotZeroAmountEVM(txp.amount, chain) ? (
-              <H2 medium={true}>{txp.amountStr}</H2>
-            ) : null}
+            {!isForFee ? <H2 medium={true}>{txp.amountStr}</H2> : null}
 
-            {!IsCustomERCToken(tokenAddress, chain) ? (
+            {!IsCustomERCToken(tokenAddress, chain) && !isForFee ? (
               <SubTitle>
                 {!txp.fiatRateStr
                   ? '...'
@@ -508,9 +518,7 @@ const TransactionProposalDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEVM(txp.amount, chain) ? (
-              <SubTitle>{t('Interaction with contract')}</SubTitle>
-            ) : null}
+            {isForFee ? <H4>{t('Interaction with contract')}</H4> : null}
           </>
 
           {txp.removed ? (

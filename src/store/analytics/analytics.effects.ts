@@ -187,5 +187,29 @@ export const Analytics = (() => {
           onComplete?.();
         });
       },
+
+    /**
+     * Installed Application Event
+     *
+     * @param properties An object of properties for the screen view event.
+     * @param onComplete A function to run once the screen event has been successfully sent.
+     */
+    installedApp:
+      (
+        properties: Record<string, any> = {},
+        onComplete?: () => void,
+      ): Effect<any> =>
+      () => {
+        guard(async () => {
+          if (_isTrackingAuthorized) {
+            const eventName = 'Application Installed';
+            BrazeWrapper.track(eventName, properties);
+            MixpanelWrapper.track(eventName, properties);
+            AppsFlyerWrapper.track(eventName, properties);
+          }
+
+          onComplete?.();
+        });
+      },
   };
 })();

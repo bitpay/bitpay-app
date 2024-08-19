@@ -1,5 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {FlashList} from '@shopify/flash-list';
 import i18next from 'i18next';
 import _ from 'lodash';
 import React, {
@@ -17,7 +18,6 @@ import {
   FlatList,
   Linking,
   RefreshControl,
-  SectionList,
   Share,
   Text,
   View,
@@ -41,7 +41,11 @@ import {
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
-import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
+import {
+  buildUIFormattedWallet,
+  findWalletById,
+  isSegwit,
+} from '../../../store/wallet/utils/wallet';
 import {
   setWalletScanning,
   updatePortfolioBalance,
@@ -81,7 +85,6 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
-import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
@@ -109,7 +112,7 @@ import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
 import {isCoinSupportedToSell} from '../../services/sell-crypto/utils/sell-crypto-utils';
-import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/changelly-utils';
+import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/swap-crypto-utils';
 import {
   buildBtcSpeedupTx,
   buildEthERCTokenSpeedupTx,
@@ -496,9 +499,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     cryptoBalance,
     cryptoLockedBalance,
     cryptoSpendableBalance,
-    fiatBalance,
-    fiatLockedBalance,
-    fiatSpendableBalance,
+    fiatBalanceFormat,
+    fiatLockedBalanceFormat,
+    fiatSpendableBalanceFormat,
     currencyAbbreviation,
     chain,
     tokenAddress,
@@ -512,9 +515,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     network !== Network.testnet;
 
   const [history, setHistory] = useState<any[]>([]);
-  const [groupedHistory, setGroupedHistory] = useState<
-    {title: string; data: any[]; time: number}[]
-  >([]);
+  const [groupedHistory, setGroupedHistory] = useState<any[]>([]);
   const [loadMore, setLoadMore] = useState(true);
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
@@ -531,6 +532,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       chain,
       [],
       tokenAddress,
+      walletId,
     );
     formattedPendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
@@ -581,8 +583,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
           if (_history?.length) {
             setHistory(_history);
-            const grouped = GroupTransactionHistory(_history);
-            setGroupedHistory(grouped);
+            const transactionGroups = GroupTransactionHistory(_history);
+            const flattenedGroups = transactionGroups.reduce(
+              (allTransactions, section) => [
+                ...allTransactions,
+                section.title,
+                ...section.data,
+              ],
+              [] as any[],
+            );
+            setGroupedHistory(flattenedGroups);
           }
 
           setLoadMore(_loadMore);
@@ -952,18 +962,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }
   };
 
-  const renderSectionHeader = useCallback(({section: {title, time}}) => {
-    return (
-      <TransactionSectionHeaderContainer key={time}>
-        <H5>{title}</H5>
-      </TransactionSectionHeaderContainer>
-    );
-  }, []);
-
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
-        key={item.id}
         icon={
           item.customData?.recipientEmail ? (
             <ContactIcon
@@ -1007,15 +1008,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   }, []);
 
-  const keyExtractor = useCallback(item => item.txid, []);
-  const pendingTxpsKeyExtractor = useCallback(item => item.id, []);
-
-  const getItemLayout = useCallback(
-    (data, index) => ({
-      length: TRANSACTION_ROW_HEIGHT,
-      offset: TRANSACTION_ROW_HEIGHT * index,
-      index,
-    }),
+  const keyExtractor = useCallback(
+    (item, index: number) => index.toString(),
+    [],
+  );
+  const pendingTxpsKeyExtractor = useCallback(
+    (item, index: number) => index.toString(),
     [],
   );
 
@@ -1023,7 +1021,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   return (
     <WalletDetailsContainer>
-      <SectionList
+      <FlashList
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -1065,7 +1063,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       {showFiatBalance &&
                         !hideAllBalances &&
                         !fullWalletObj.isScanning && (
-                          <Paragraph>{fiatBalance}</Paragraph>
+                          <Paragraph>{fiatBalanceFormat}</Paragraph>
                         )}
                     </Row>
                   </TouchableOpacity>
@@ -1083,7 +1081,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </Text>
                         {showFiatBalance && (
-                          <Text> ({fiatSpendableBalance})</Text>
+                          <Text> ({fiatSpendableBalanceFormat})</Text>
                         )}
                       </Small>
                     </TouchableRow>
@@ -1283,7 +1281,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     <Fiat>
                       {network === 'testnet'
                         ? t('Test Only - No Value')
-                        : fiatLockedBalance}
+                        : fiatLockedBalanceFormat}
                     </Fiat>
                   </TailContainer>
                 </LockedBalanceContainer>
@@ -1291,12 +1289,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             </>
           );
         }}
-        sections={groupedHistory}
-        stickyHeaderIndices={[groupedHistory?.length]}
-        stickySectionHeadersEnabled={true}
+        data={groupedHistory}
         keyExtractor={keyExtractor}
-        renderItem={renderTransaction}
-        renderSectionHeader={renderSectionHeader}
+        renderItem={({item}) => {
+          if (typeof item === 'string') {
+            return (
+              <TransactionSectionHeaderContainer>
+                <H5>{item}</H5>
+              </TransactionSectionHeaderContainer>
+            );
+          } else {
+            return renderTransaction({item});
+          }
+        }}
         ItemSeparatorComponent={itemSeparatorComponent}
         ListFooterComponent={listFooterComponent}
         onMomentumScrollBegin={() => setIsScrolling(true)}
@@ -1306,10 +1311,23 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             debouncedLoadHistory();
           }
         }}
+        stickyHeaderIndices={
+          groupedHistory
+            .map((item, index) => {
+              if (typeof item === 'string') {
+                return index;
+              } else {
+                return null;
+              }
+            })
+            .filter(item => item !== null) as number[]
+        }
+        getItemType={item =>
+          typeof item === 'string' ? 'sectionHeader' : 'row'
+        }
         onEndReachedThreshold={0.3}
         ListEmptyComponent={listEmptyComponent}
-        maxToRenderPerBatch={15}
-        getItemLayout={getItemLayout}
+        estimatedItemSize={TRANSACTION_ROW_HEIGHT}
       />
 
       <OptionsSheet

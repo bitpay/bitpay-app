@@ -446,7 +446,7 @@ export default () => {
     : IntroScreens.START;
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{backgroundColor: theme.colors.background}}>
       <StatusBar
         animated={true}
         barStyle={theme.dark ? 'light-content' : 'dark-content'}

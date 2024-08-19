@@ -29,6 +29,7 @@ export enum AppActionTypes {
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
   SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
+  SET_APP_INSTALLED = 'APP/SET_INSTALLED_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
   SHOW_IN_APP_MESSAGE = 'APP/SHOW_IN_APP_MESSAGE',
@@ -76,7 +77,6 @@ export enum AppActionTypes {
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
   SET_DEFAULT_CHAIN_FILTER_OPTION = 'APP/SET_DEFAULT_CHAIN_FILTER_OPTION',
   SET_LOCAL_CHAIN_FILTER_OPTION = 'APP/SET_LOCAL_CHAIN_FILTER_OPTION',
-  SET_SELECTED_NETWORK_FOR_DEPOSIT = 'APP/SET_SELECTED_NETWORK_FOR_DEPOSIT',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_MIGRATION_MMKV_STORAGE_COMPLETE = 'APP/SET_MIGRATION_MMKV_STORAGE_COMPLETE',
@@ -134,6 +134,10 @@ interface SetIntroCompleted {
 
 interface SetOnboardingCompleted {
   type: typeof AppActionTypes.SET_ONBOARDING_COMPLETED;
+}
+
+interface setAppInstalled {
+  type: typeof AppActionTypes.SET_APP_INSTALLED;
 }
 
 interface ShowOnGoingProcessModal {
@@ -354,10 +358,6 @@ interface SetLocalDefaultChainFilterOption {
   selectedLocalChainFilterOption: SupportedChains | undefined;
 }
 
-interface SetSelectedNetworkForDeposit {
-  type: typeof AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT;
-  selectedNetworkForDeposit: SupportedChains | undefined;
-}
 interface SetMigrationComplete {
   type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
 }
@@ -422,6 +422,7 @@ export type AppActionType =
   | setUserFeedback
   | SetIntroCompleted
   | SetOnboardingCompleted
+  | setAppInstalled
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal
   | ShowInAppMessage
@@ -478,6 +479,5 @@ export type AppActionType =
   | ImportLedgerModalToggled
   | SetDefaultChainFilterOption
   | SetLocalDefaultChainFilterOption
-  | SetSelectedNetworkForDeposit
   | ShowChainSelectorModal
   | DismissChainSelectorModal;

@@ -52,6 +52,7 @@ import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
   setAppFirstOpenEventDate,
+  setAppInstalled,
   setBrazeEid,
   setConfirmedTxAccepted,
   setEmailNotificationsAccepted,
@@ -239,12 +240,16 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
 const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
   const {APP} = getState();
-  const {appFirstOpenData, onboardingCompleted} = APP;
+  const {appFirstOpenData, appInstalled, onboardingCompleted} = APP;
 
   if (onboardingCompleted) {
-    await dispatch(Analytics.initialize());
     QuickActions.clearShortcutItems();
     QuickActions.setShortcutItems(ShortcutList);
+  }
+  await dispatch(Analytics.initialize());
+
+  if (!appInstalled) {
+    dispatch(trackAppInstalled(Math.floor(Date.now() / 1000)));
   }
 
   if (!appFirstOpenData?.firstOpenDate) {
@@ -469,16 +474,10 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       },
     );
 
-    let eid = APP.brazeEid;
-
-    if (!eid) {
-      dispatch(LogActions.debug('Generating EID for anonymous user...'));
-      eid = uuid.v4().toString();
-      dispatch(setBrazeEid(eid));
-    }
-
     // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
-    dispatch(Analytics.identify(eid));
+    if (APP.brazeEid) {
+      dispatch(Analytics.identify(APP.brazeEid));
+    }
 
     dispatch(LogActions.info('Successfully initialized Braze.'));
     dispatch(AppActions.brazeInitialized(contentCardSubscription));
@@ -493,6 +492,28 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
     );
   } finally {
     dispatch(LogActions.info('Initializing Braze content complete.'));
+  }
+};
+
+const createBrazeEid = (): Effect<string | undefined> => dispatch => {
+  try {
+    dispatch(LogActions.info('Generating EID for BWS user...'));
+
+    const eid = uuid.v4().toString();
+    dispatch(setBrazeEid(eid));
+    dispatch(Analytics.identify(eid));
+
+    dispatch(LogActions.info('Generated EID for BWS user.'));
+    return eid;
+  } catch (err) {
+    const errMsg = 'Something went wrong while generating EID for BWS user.';
+
+    dispatch(LogActions.error(errMsg));
+    dispatch(
+      LogActions.error(
+        err instanceof Error ? err.message : JSON.stringify(err),
+      ),
+    );
   }
 };
 
@@ -573,7 +594,7 @@ export const startOnGoingProcessModal =
 
     dispatch(AppActions.showOnGoingProcessModal(_message));
 
-    // After 30 seconds, check if the modal is active. If so, dismiss it.
+    // After 60 seconds, check if the modal is active. If so, dismiss it.
     setTimeout(async () => {
       const currentStore = getState();
       if (
@@ -585,7 +606,7 @@ export const startOnGoingProcessModal =
         dispatch(AppActions.dismissOnGoingProcessModal());
         await sleep(500);
       }
-    }, 30000);
+    }, 60000);
 
     return sleep(100);
   };
@@ -690,6 +711,16 @@ const trackFirstOpenEvent =
     dispatch(
       Analytics.track('First Opened App', {date}, () => {
         dispatch(setAppFirstOpenEventComplete());
+      }),
+    );
+  };
+
+const trackAppInstalled =
+  (date: number): Effect =>
+  dispatch => {
+    dispatch(
+      Analytics.installedApp({date}, () => {
+        dispatch(setAppInstalled());
       }),
     );
   };
@@ -799,11 +830,24 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
     APP,
   } = getState();
 
-  getAllWalletClients(keys).then(walletClients => {
-    walletClients.forEach(walletClient => {
-      dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
+  if (!APP.notificationsAccepted) {
+    return;
+  }
+
+  LogActions.debug('Renewing Push Notifications...');
+
+  let eid = APP.brazeEid;
+  if (!eid) {
+    eid = dispatch(createBrazeEid());
+  }
+
+  if (eid) {
+    getAllWalletClients(keys).then(walletClients => {
+      walletClients.forEach(walletClient => {
+        dispatch(subscribePushNotifications(walletClient, eid!));
+      });
     });
-  });
+  }
 };
 
 export const requestNotificationsPermissions = async (): Promise<boolean> => {
@@ -830,18 +874,24 @@ export const setNotifications =
       APP,
     } = getState();
 
-    getAllWalletClients(keys).then(walletClients => {
-      if (accepted) {
-        walletClients.forEach(walletClient => {
-          dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
-        });
-      } else {
-        walletClients.forEach(walletClient => {
-          dispatch(unSubscribePushNotifications(walletClient, APP.brazeEid!));
-        });
-      }
-      dispatch(LogActions.info('Push Notifications: ' + value));
-    });
+    let eid = APP.brazeEid;
+    if (!eid && accepted) {
+      eid = dispatch(createBrazeEid());
+    }
+    if (eid) {
+      getAllWalletClients(keys).then(walletClients => {
+        if (accepted) {
+          walletClients.forEach(walletClient => {
+            dispatch(subscribePushNotifications(walletClient, eid!));
+          });
+        } else {
+          walletClients.forEach(walletClient => {
+            dispatch(unSubscribePushNotifications(walletClient, eid!));
+          });
+        }
+        dispatch(LogActions.info('Push Notifications: ' + value));
+      });
+    }
   };
 
 export const setConfirmTxNotifications =

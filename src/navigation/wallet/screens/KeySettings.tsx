@@ -1,4 +1,11 @@
-import React, {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   BaseText,
   HeaderTitle,
@@ -10,7 +17,7 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {View, TouchableOpacity, ScrollView} from 'react-native';
+import {View, TouchableOpacity, ScrollView, FlatList} from 'react-native';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -25,7 +32,6 @@ import {
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
 import {SlateDark, White} from '../../../styles/colors';
 import {
   openUrlWithInAppBrowser,
@@ -33,7 +39,6 @@ import {
 } from '../../../store/app/app.effects';
 import InfoSvg from '../../../../assets/img/info.svg';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
-import {buildNestedWalletList} from './KeyOverview';
 import {URL} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
@@ -47,6 +52,7 @@ import {
   WrongPasswordError,
 } from '../components/ErrorMessages';
 import {
+  buildAccountList,
   buildWalletObj,
   generateKeyExportCode,
   mapAbbreviationAndName,
@@ -63,15 +69,16 @@ import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
-import {WalletRowProps} from '../../../components/list/WalletRow';
+import {AccountRowProps} from '../../../components/list/AccountListRow';
+import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
+import {IsEVMChain} from '../../../store/wallet/utils/currency';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const ScrollContainer = styled.ScrollView`
-  margin-top: 20px;
-  padding: 0 ${ScreenGutter};
+const WalletSettingsListContainer = styled.View`
+  padding: ${ScreenGutter};
 `;
 
 const Title = styled(BaseText)`
@@ -82,7 +89,7 @@ const Title = styled(BaseText)`
 `;
 
 const WalletHeaderContainer = styled.View`
-  padding-top: ${ScreenGutter};
+  padding-top: 15px;
   flex-direction: row;
   align-items: center;
 `;
@@ -123,21 +130,20 @@ const KeySettings = () => {
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const [searchVal, setSearchVal] = useState('');
-  const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
+  const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
   const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
-  const coins = _key.wallets.filter(wallet => !wallet.credentials.token);
-  const tokens = _key.wallets.filter(wallet => wallet.credentials.token);
-  const wallets = buildNestedWalletList(
-    coins,
-    tokens,
-    defaultAltCurrency.isoCode,
-    rates,
-    dispatch,
-  );
+  const memorizedAccountList = useMemo(() => {
+    return buildAccountList(_key, defaultAltCurrency.isoCode, rates, dispatch, {
+      skipFiatCalculations: true,
+    });
+  }, [dispatch, _key, defaultAltCurrency.isoCode, rates]);
 
+  const accountInfo = useAppSelector(
+    ({WALLET}) => WALLET.keys[_key.id].evmAccountsInfo,
+  );
   const {keyName} = _key || {};
 
   useEffect(() => {
@@ -284,59 +290,31 @@ const KeySettings = () => {
     }
   };
 
-  const WalletList = ({wallets}: {wallets: WalletRowProps[]}) => {
-    return (
-      <>
-        {wallets.map(
-          ({
-            id,
-            currencyName,
-            chain,
-            img,
-            badgeImg,
-            isToken,
-            network,
-            hideWallet,
-            walletName,
-            isComplete,
-          }) => (
-            <TouchableOpacity
-              onPress={() => {
-                // Ignore if wallet is not complete
-                if (!isComplete) {
-                  return;
-                }
-                haptic('impactLight');
-                navigation.navigate('WalletSettings', {
-                  key: _key,
-                  walletId: id,
-                });
-              }}
-              key={id}
-              activeOpacity={ActiveOpacity}>
-              <WalletSettingsRow
-                id={id}
-                img={img}
-                badgeImg={badgeImg}
-                currencyName={currencyName}
-                chain={chain}
-                key={id}
-                isToken={isToken}
-                network={network}
-                hideWallet={hideWallet}
-                walletName={walletName}
-                isComplete={isComplete}
-              />
-            </TouchableOpacity>
-          ),
-        )}
-      </>
-    );
+  const onPressItem = (item: AccountRowProps) => {
+    haptic('impactLight');
+    if (IsEVMChain(item.chains[0])) {
+      navigation.navigate('AccountSettings', {
+        key: _key,
+        selectedAccountAddress: item.receiveAddress,
+      });
+    } else {
+      const fullWalletObj = key.wallets.find(k => k.id === item.wallets[0].id)!;
+      const {
+        credentials: {walletId},
+      } = fullWalletObj;
+      if (!fullWalletObj.isComplete()) {
+        return;
+      }
+      navigation.navigate('WalletSettings', {
+        key: _key,
+        walletId,
+      });
+    }
   };
 
-  return (
-    <WalletSettingsContainer>
-      <ScrollContainer ref={scrollViewRef}>
+  const renderListHeaderComponent = useCallback(() => {
+    return (
+      <>
         <WalletNameContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
@@ -369,22 +347,22 @@ const KeySettings = () => {
         </WalletHeaderContainer>
 
         <SearchComponentContainer>
-          <SearchComponent<WalletRowProps>
+          <SearchComponent<AccountRowProps>
             searchVal={searchVal}
             setSearchVal={setSearchVal}
             searchResults={searchResults}
             setSearchResults={setSearchResults}
-            searchFullList={wallets}
+            searchFullList={memorizedAccountList}
             context={'keysettings'}
           />
         </SearchComponentContainer>
+      </>
+    );
+  }, []);
 
-        <WalletList
-          wallets={
-            !searchVal && !selectedChainFilterOption ? wallets : searchResults
-          }
-        />
-
+  const renderListFooterComponent = useCallback(() => {
+    return (
+      <>
         {_key && !_key.isReadOnly ? (
           <VerticalPadding style={{alignItems: 'center'}}>
             <AddWalletText
@@ -572,7 +550,39 @@ const KeySettings = () => {
             <WalletSettingsTitle>{t('Delete')}</WalletSettingsTitle>
           </Setting>
         </VerticalPadding>
-      </ScrollContainer>
+      </>
+    );
+  }, []);
+
+  const memoizedRenderItem = useCallback(
+    ({item, index}: {item: AccountRowProps; index: number}) => {
+      return (
+        <AccountSettingsRow
+          key={index.toString()}
+          id={item.id}
+          accountItem={item}
+          accountInfo={accountInfo}
+          onPress={() => onPressItem(item)}
+        />
+      );
+    },
+    [_key],
+  );
+
+  return (
+    <WalletSettingsContainer>
+      <WalletSettingsListContainer>
+        <FlatList<AccountRowProps>
+          ListHeaderComponent={renderListHeaderComponent}
+          ListFooterComponent={renderListFooterComponent}
+          data={
+            !searchVal && !selectedChainFilterOption
+              ? memorizedAccountList
+              : searchResults
+          }
+          renderItem={memoizedRenderItem}
+        />
+      </WalletSettingsListContainer>
     </WalletSettingsContainer>
   );
 };

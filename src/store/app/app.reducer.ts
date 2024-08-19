@@ -48,8 +48,8 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showInAppNotification',
   'showOnGoingProcessModal',
   'showPinModal',
-  'selectedNetworkForDeposit',
   'selectedLocalChainFilterOption',
+  'isImportLedgerModalVisible',
 ];
 
 export type ModalId =
@@ -91,6 +91,7 @@ export interface AppState {
    */
   appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
+  appInstalled: boolean;
   introCompleted: boolean;
   userFeedback: FeedbackType;
   onboardingCompleted: boolean;
@@ -145,7 +146,6 @@ export interface AppState {
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   selectedChainFilterOption: SupportedChains | undefined;
   selectedLocalChainFilterOption: SupportedChains | undefined;
-  selectedNetworkForDeposit: SupportedChains | undefined;
   recentSelectedChainFilterOption: string[];
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
@@ -186,6 +186,7 @@ const initialState: AppState = {
   appWasInit: false,
   appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
+  appInstalled: false,
   introCompleted: false,
   userFeedback: {
     time: moment().unix(),
@@ -239,7 +240,6 @@ const initialState: AppState = {
   recentDefaultAltCurrency: [],
   selectedChainFilterOption: undefined,
   selectedLocalChainFilterOption: undefined,
-  selectedNetworkForDeposit: undefined,
   recentSelectedChainFilterOption: [],
   migrationComplete: false,
   keyMigrationFailure: false,
@@ -319,6 +319,12 @@ export const appReducer = (
       return {
         ...state,
         introCompleted: true,
+      };
+
+    case AppActionTypes.SET_APP_INSTALLED:
+      return {
+        ...state,
+        appInstalled: true,
       };
 
     case AppActionTypes.SHOW_ONGOING_PROCESS_MODAL:
@@ -667,12 +673,6 @@ export const appReducer = (
         ...state,
         selectedLocalChainFilterOption: action.selectedLocalChainFilterOption,
         recentSelectedChainFilterOption: recentSelectedLocalChainFilterOption,
-      };
-
-    case AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT:
-      return {
-        ...state,
-        selectedNetworkForDeposit: action.selectedNetworkForDeposit,
       };
 
     case AppActionTypes.SET_MIGRATION_COMPLETE:

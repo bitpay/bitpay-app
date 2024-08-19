@@ -117,12 +117,24 @@ const WalletConnectIntro = () => {
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       if (
-        proposal &&
         typeof err === 'object' &&
         err !== null &&
         err.message?.includes('Pairing already exists:')
       ) {
-        showWalletSelectorV2();
+        if (proposal) {
+          showWalletSelectorV2();
+        } else {
+          dispatch(
+            showBottomNotificationModal(
+              CustomErrorMessage({
+                errMsg: t(
+                  'Pairing already exists. Please try refreshing the QR code by reloading the website.',
+                ),
+                title: t('Uh oh, something went wrong'),
+              }),
+            ),
+          );
+        }
       } else {
         await showErrorMessage(
           CustomErrorMessage({

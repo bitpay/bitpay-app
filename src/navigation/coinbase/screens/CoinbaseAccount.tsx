@@ -1,5 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {FlashList} from '@shopify/flash-list';
 import React, {
   useEffect,
   useLayoutEffect,
@@ -15,18 +16,14 @@ import {
   useMount,
 } from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {
-  RefreshControl,
-  SectionList,
-  View,
-  TouchableOpacity,
-} from 'react-native';
+import {RefreshControl, View} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
 import {
   getCurrencyAbbreviation,
   getProtocolName,
   sleep,
+  getBadgeImg,
 } from '../../../utils/helper-methods';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -41,7 +38,9 @@ import {
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
-import TransactionRow from '../../../components/list/TransactionRow';
+import TransactionRow, {
+  TRANSACTION_ROW_HEIGHT,
+} from '../../../components/list/TransactionRow';
 
 import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {
@@ -132,11 +131,6 @@ const Type = styled(BaseText)`
   margin-bottom: 10px;
 `;
 
-const TransactionListHeader = styled.View`
-  padding: 10px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
-`;
-
 const BorderBottom = styled.View`
   border-bottom-width: 1px;
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
@@ -184,6 +178,27 @@ export type CoinbaseAccountScreenParamList = {
   refresh?: boolean;
 };
 
+const capitalize = (text: string) => {
+  return text
+    .replace(/_/g, ' ')
+    .replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+};
+
+export const parseTransactionTitle = (
+  data: CoinbaseTransactionProps,
+): string => {
+  if (data.type === 'send') {
+    const num = parseFloat(data.amount.amount);
+    if (!isNaN(num) && num < 0) {
+      return 'Sent';
+    } else {
+      return 'Received';
+    }
+  } else {
+    return capitalize(data.type);
+  }
+};
+
 const CoinbaseAccount = ({
   route,
 }: NativeStackScreenProps<CoinbaseGroupParamList, 'CoinbaseAccount'>) => {
@@ -206,9 +221,7 @@ const CoinbaseAccount = ({
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fiatAmount, setFiatAmount] = useState(0);
   const [cryptoAmount, setCryptoAmount] = useState('0');
-  const [groupedTransactions, setGroupedTransactions] = useState<
-    {title: string; data: CoinbaseTransactionProps[]}[]
-  >([]);
+  const [groupedTransactions, setGroupedTransactions] = useState<any[]>([]);
 
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
@@ -274,8 +287,7 @@ const CoinbaseAccount = ({
     ({item}) => (
       <TransactionRow
         icon={getIcon(item)}
-        description={item.details.title}
-        details={item.details.subtitle}
+        description={parseTransactionTitle(item)}
         time={parseTime(item.created_at)}
         value={parseAmount(item.amount.amount, item.amount.currency)}
         onPressTransaction={() => onPressTransaction(item)}
@@ -418,6 +430,7 @@ const CoinbaseAccount = ({
         chain: _chain,
         name: account.currency.name,
         logoUri: getLogoUri(account.currency.code, chain),
+        badgeUri: getBadgeImg(account.currency.code, _chain),
       };
 
       setCustomSupportedCurrencies([_currency]);
@@ -441,7 +454,15 @@ const CoinbaseAccount = ({
       const _nextStartingAfter =
         transactions[accountId].pagination.next_starting_after;
       const _groupedTxs = GroupCoinbaseTransactions(_transactions);
-      setGroupedTransactions(_groupedTxs);
+      const flattenedGroups = _groupedTxs.reduce(
+        (allTransactions, section) => [
+          ...allTransactions,
+          section.title,
+          ...section.data,
+        ],
+        [] as any[],
+      );
+      setGroupedTransactions(flattenedGroups);
       setNextStartingAfter(_nextStartingAfter);
     }
 
@@ -537,8 +558,9 @@ const CoinbaseAccount = ({
     }
   };
 
-  const onEnteredAmount = (newAmount?: number) => {
+  const onEnteredAmount = async (newAmount?: number) => {
     setAmountModalVisible(false);
+    await sleep(600);
     if (newAmount && selectedWallet) {
       navigation.navigate('CoinbaseWithdraw', {
         accountId,
@@ -590,11 +612,11 @@ const CoinbaseAccount = ({
     }
   });
 
-  const keyExtractor = useCallback(item => item.id, []);
+  const keyExtractor = useCallback((item, index) => index.toString(), []);
 
   return (
     <AccountContainer>
-      <SectionList
+      <FlashList
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -650,20 +672,34 @@ const CoinbaseAccount = ({
             </>
           );
         }}
-        sections={groupedTransactions}
-        stickyHeaderIndices={[groupedTransactions?.length]}
-        stickySectionHeadersEnabled={true}
+        data={groupedTransactions}
+        estimatedItemSize={TRANSACTION_ROW_HEIGHT}
+        stickyHeaderIndices={
+          groupedTransactions
+            .map((item, index) => {
+              if (typeof item === 'string') {
+                return index;
+              } else {
+                return null;
+              }
+            })
+            .filter(item => item !== null) as number[]
+        }
         keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        renderSectionHeader={({section: {title}}) => {
-          return (
-            <TouchableOpacity>
+        renderItem={({item}) => {
+          if (typeof item === 'string') {
+            return (
               <TransactionSectionHeaderContainer>
-                <H5>{title}</H5>
+                <H5>{item}</H5>
               </TransactionSectionHeaderContainer>
-            </TouchableOpacity>
-          );
+            );
+          } else {
+            return renderItem({item});
+          }
         }}
+        getItemType={item =>
+          typeof item === 'string' ? 'sectionHeader' : 'row'
+        }
         ItemSeparatorComponent={() => <BorderBottom />}
         ListEmptyComponent={listEmptyComponent}
         ListFooterComponent={listFooterComponent}
@@ -730,6 +766,8 @@ const CoinbaseAccount = ({
 
       <AmountModal
         isVisible={amountModalVisible}
+        modalTitle={'Coinbase Withdraw'}
+        context={'coinbase'}
         cryptoCurrencyAbbreviation={currencyAbbreviation}
         fiatCurrencyAbbreviation={defaultAltCurrency.isoCode}
         chain={chain}

@@ -145,6 +145,10 @@ const TransactionProposalNotifications = () => {
 
   let pendingTxps: TransactionProposal[] = [];
   _.each(wallets, x => {
+    // Filter out txps used for pay fees in other wallets
+    x.pendingTxps = _.filter(x.pendingTxps, txp => {
+      return txp.coin === x.currencyAbbreviation;
+    });
     if (x.pendingTxps.length > 0) {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
@@ -205,7 +209,7 @@ const TransactionProposalNotifications = () => {
   ): number => {
     let i = 0;
     txpsPerWallet.forEach(txp => {
-      if (txp.statusForUs === 'pending' && canBeSigned) {
+      if (txp.statusForUs === 'pending' && canBeSigned && txp.amountStr) {
         i = i + 1;
       }
     });
@@ -423,7 +427,7 @@ const TransactionProposalNotifications = () => {
                       icon={TransactionIcons[txp.uiIcon]}
                       creator={txp.uiCreator}
                       time={txp.uiTime}
-                      value={txp.uiValue}
+                      value={txp.uiValue || txp.feeStr}
                       message={txp.message}
                       onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
                       hideIcon={true}

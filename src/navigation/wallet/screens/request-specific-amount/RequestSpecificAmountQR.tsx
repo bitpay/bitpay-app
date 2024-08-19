@@ -23,7 +23,7 @@ import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
   GetProtocolPrefix,
-  IsUtxoCoin,
+  IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
 import {
   FormattedAmountObj,
@@ -149,7 +149,7 @@ const RequestSpecificAmountQR = () => {
         ParseAmount(requestAmount, currencyAbbreviation, chain, tokenAddress),
       );
 
-      if (IsUtxoCoin(currencyAbbreviation) || currencyAbbreviation === 'xrp') {
+      if (IsUtxoChain(chain) || chain === 'xrp') {
         _qrValue = _qrValue + '?amount=' + _formattedAmountObj.amount;
       } else {
         _qrValue = _qrValue + '?value=' + _formattedAmountObj.amountSat;

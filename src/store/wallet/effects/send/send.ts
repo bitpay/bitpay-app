@@ -75,7 +75,7 @@ import {
   GetPrecision,
   IsERCToken,
   IsSegwitCoin,
-  IsUtxoCoin,
+  IsUtxoChain,
 } from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -581,6 +581,8 @@ export const buildTxDetails =
           img: wallet.img,
           recipientFullAddress: address,
           recipientChain: chain,
+          recipientCoin: coin,
+          badgeImg: wallet.badgeImg,
         },
         ...(fee !== 0 && {
           fee: {
@@ -636,7 +638,7 @@ export const buildTxDetails =
           cryptoAmount: dispatch(
             // @ts-ignore
             FormatAmountStr(
-              BitpaySupportedCoins[chain]?.feeCurrency,
+              coin,
               chain,
               tokenAddress,
               amount,
@@ -1733,7 +1735,7 @@ const getSignaturesFromLedger = (
   txp: TransactionProposal,
 ) => {
   const {chain: currency, network, chain} = wallet.credentials;
-  if (IsUtxoCoin(currency)) {
+  if (IsUtxoChain(chain)) {
     const configFn = currencyConfigs[chain];
     const params = configFn(network);
     return getUtxoSignaturesFromLedger(

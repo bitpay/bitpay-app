@@ -18,7 +18,6 @@ import _ from 'lodash';
 interface Props {
   item: GlobalSelectObj;
   hasSelectedChainFilterOption: boolean;
-  context: string;
   emit: (item: GlobalSelectObj) => void;
 }
 
@@ -73,12 +72,7 @@ const CurrencyBadgeList: React.FC<CurrencyBadgeListProps> = ({chainsImg}) => {
   );
 };
 
-const GlobalSelectRow = ({
-  item,
-  hasSelectedChainFilterOption,
-  emit,
-  context,
-}: Props) => {
+const GlobalSelectRow = ({item, hasSelectedChainFilterOption, emit}: Props) => {
   const theme = useTheme();
   const {currencyName, currencyAbbreviation, total, img, chainsImg} = item;
   return (
@@ -90,7 +84,7 @@ const GlobalSelectRow = ({
         <CurrencyImage img={img} />
       </CurrencyImageContainer>
       <CurrencyColumn>
-        <H5>{currencyName.includes('Ethereum') ? 'Ethereum' : currencyName}</H5>
+        <H5>{currencyName}</H5>
         <ListItemSubText ellipsizeMode="tail" numberOfLines={1}>
           {currencyAbbreviation.toUpperCase()}
         </ListItemSubText>

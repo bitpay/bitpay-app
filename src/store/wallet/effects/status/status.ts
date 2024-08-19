@@ -31,7 +31,7 @@ import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {ProcessPendingTxps} from '../transactions/transactions';
 import {FormatAmount} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
-import {IsUtxoCoin} from '../../utils/currency';
+import {IsUtxoChain} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
 import {LogActions} from '../../../log';
@@ -299,10 +299,15 @@ const getBulkStatus = (
 };
 
 const updateKeyStatus =
-  (
-    key: Key,
-    force: boolean | undefined,
-  ): Effect<
+  ({
+    key,
+    accountAddress,
+    force,
+  }: {
+    key: Key;
+    force: boolean | undefined;
+    accountAddress?: string;
+  }): Effect<
     Promise<
       | {
           keyId: string;
@@ -333,6 +338,11 @@ const updateKeyStatus =
         }
       >;
 
+      if (accountAddress) {
+        key.wallets = key.wallets.filter(
+          wallet => wallet.receiveAddress === accountAddress,
+        );
+      }
       // remote token wallets from getStatusAll
       const noTokenWallets = key.wallets.filter(wallet => {
         return (
@@ -487,7 +497,15 @@ const updateKeyStatus =
   };
 
 export const startUpdateAllWalletStatusForKeys =
-  ({keys, force}: {keys: Key[]; force?: boolean}): Effect<Promise<void>> =>
+  ({
+    keys,
+    accountAddress,
+    force,
+  }: {
+    keys: Key[];
+    accountAddress?: string;
+    force?: boolean;
+  }): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -495,7 +513,7 @@ export const startUpdateAllWalletStatusForKeys =
           LogActions.info('starting [startUpdateAllWalletStatusForKeys]'),
         );
         const keyUpdatesPromises = keys.map(key =>
-          dispatch(updateKeyStatus(key, force)),
+          dispatch(updateKeyStatus({key, accountAddress, force})),
         );
         const keyUpdates = (await Promise.all(keyUpdatesPromises)).filter(
           Boolean,
@@ -568,12 +586,22 @@ export const startUpdateAllWalletStatusForReadOnlyKeys =
   };
 
 export const startUpdateAllWalletStatusForKey =
-  ({key, force}: {key: Key; force?: boolean}): Effect<Promise<void>> =>
+  ({
+    key,
+    accountAddress,
+    force,
+  }: {
+    key: Key;
+    accountAddress?: string;
+    force?: boolean;
+  }): Effect<Promise<void>> =>
   dispatch => {
     const keys = [key];
 
     return !key.isReadOnly
-      ? dispatch(startUpdateAllWalletStatusForKeys({keys, force}))
+      ? dispatch(
+          startUpdateAllWalletStatusForKeys({keys, accountAddress, force}),
+        )
       : dispatch(
           startUpdateAllWalletStatusForReadOnlyKeys({
             readOnlyKeys: keys,
@@ -778,7 +806,7 @@ const buildBalance =
     let satTotalAmount = totalAmount;
     let satLockedAmount = lockedAmount;
 
-    if (['xrp'].includes(currencyAbbreviation)) {
+    if (['xrp'].includes(chain)) {
       satLockedAmount = lockedAmount - lockedConfirmedAmount;
       satTotalAmount = totalAmount - lockedConfirmedAmount;
     }
@@ -788,7 +816,7 @@ const buildBalance =
       : totalConfirmedAmount - lockedAmount;
 
     const pendingAmount =
-      useUnconfirmedFunds && IsUtxoCoin(currencyAbbreviation)
+      useUnconfirmedFunds && IsUtxoChain(chain)
         ? 0
         : totalAmount - totalConfirmedAmount;
 

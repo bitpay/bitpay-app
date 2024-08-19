@@ -5,6 +5,7 @@ import React, {
   useState,
   useEffect,
 } from 'react';
+import {FlashList} from '@shopify/flash-list';
 import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
@@ -16,7 +17,7 @@ import {
   keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
-import {FlatList, TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 import {AvailableWalletsPill} from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
@@ -590,7 +591,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
     const {currencyName, chainName, currencyAbbreviation, total, img, tokens} =
       item;
     return (
-      <ChainCointainer key={item.id}>
+      <ChainCointainer>
         <RowContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
@@ -798,9 +799,10 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
           )}
           <GlobalSelectContainer>
             {filteredListItems && [...filteredListItems].length > 0 && (
-              <FlatList
+              <FlashList
                 contentContainerStyle={{paddingBottom: 100}}
                 data={[...filteredListItems]}
+                estimatedItemSize={70}
                 keyExtractor={keyExtractor}
                 renderItem={renderItem}
               />
@@ -825,7 +827,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
                 </WalletSelectMenuHeaderContainer>
                 <WalletSelectMenuBodyContainer>
                   <KeyWalletsRow
-                    keyWallets={keyWallets!}
+                    keyAccounts={keyWallets!}
                     hideBalance={hideAllBalances}
                     onPress={
                       addTokenToLinkedWallet?.currencyAbbreviation

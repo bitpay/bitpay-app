@@ -92,7 +92,7 @@ import {Analytics} from '../analytics/analytics.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
 import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
-import {IsUtxoCoin} from '../wallet/utils/currency';
+import {IsUtxoChain} from '../wallet/utils/currency';
 import {BWCErrorMessage} from '../../constants/BWCError';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
 import {MoonpaySellIncomingData} from '../sell-crypto/sell-crypto.models';
@@ -1154,7 +1154,7 @@ const handleBuyCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoCoin(coin)) {
+      if (IsUtxoChain(coin)) {
         chain = coin;
       } else {
         coin = undefined;
@@ -1215,7 +1215,7 @@ const handleSellCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoCoin(coin)) {
+      if (IsUtxoChain(coin)) {
         chain = coin;
       } else {
         coin = undefined;
@@ -1274,7 +1274,7 @@ const handleSwapCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: SwapCryptoScreens.SWAPCRYPTO_ROOT,
+          name: SwapCryptoScreens.SWAP_CRYPTO_ROOT,
           params: {
             partner,
           },
@@ -1981,12 +1981,24 @@ const handleWalletConnectUri =
     } catch (e: any) {
       const proposal = getState().WALLET_CONNECT_V2.proposal;
       if (
-        proposal &&
         typeof e === 'object' &&
         e !== null &&
         e.message?.includes('Pairing already exists:')
       ) {
-        navigationRef.navigate('WalletConnectRoot', {uri: data});
+        if (proposal) {
+          navigationRef.navigate('WalletConnectRoot', {uri: data});
+        } else {
+          dispatch(
+            showBottomNotificationModal(
+              CustomErrorMessage({
+                errMsg: t(
+                  'Pairing already exists. Please try refreshing the QR code by reloading the website.',
+                ),
+                title: t('Uh oh, something went wrong'),
+              }),
+            ),
+          );
+        }
       } else {
         dispatch(
           showBottomNotificationModal(

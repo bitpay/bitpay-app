@@ -20,7 +20,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 
 import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {findWalletById} from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {AppActions} from '../../../store/app';
@@ -30,7 +30,6 @@ import {
   showDecryptPasswordModal,
 } from '../../../store/app/app.actions';
 import {WrongPasswordError} from '../components/ErrorMessages';
-import {useDispatch} from 'react-redux';
 import {
   toggleHideWallet,
   updatePortfolioBalance,
@@ -82,14 +81,20 @@ const WalletSettings = () => {
   const navigation = useNavigation();
 
   const wallets = useAppSelector(({WALLET}) => WALLET.keys[key.id].wallets);
+  const evmAccountsInfo = useAppSelector(
+    ({WALLET}) => WALLET.keys[key.id].evmAccountsInfo,
+  );
   const wallet = findWalletById(wallets, walletId, copayerId) as Wallet;
+  const hideAccount = wallet.receiveAddress
+    ? evmAccountsInfo?.[wallet.receiveAddress]?.hideAccount
+    : false;
   const {
     walletName,
     credentials: {walletName: credentialsWalletName},
     hideWallet,
   } = wallet;
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const buildEncryptModalConfig = (
     cta: (decryptedKey: {
@@ -150,29 +155,32 @@ const WalletSettings = () => {
 
         <Hr />
 
-        <SettingView>
-          <WalletSettingsTitle>{t('Hide Wallet')}</WalletSettingsTitle>
+        {!hideAccount ? (
+          <>
+            <SettingView>
+              <WalletSettingsTitle>{t('Hide Wallet')}</WalletSettingsTitle>
 
-          <ToggleSwitch
-            onChange={async () => {
-              dispatch(toggleHideWallet({wallet}));
-              dispatch(startUpdateWalletStatus({key, wallet, force: true}));
-              await sleep(1000);
-              dispatch(updatePortfolioBalance());
-            }}
-            isEnabled={!!hideWallet}
-          />
-        </SettingView>
-        {!hideWallet ? (
-          <Info>
-            <InfoTriangle />
-            <InfoDescription>
-              {t('This wallet will not be removed from the device.')}
-            </InfoDescription>
-          </Info>
+              <ToggleSwitch
+                onChange={async () => {
+                  dispatch(toggleHideWallet({wallet}));
+                  dispatch(startUpdateWalletStatus({key, wallet, force: true}));
+                  await sleep(1000);
+                  dispatch(updatePortfolioBalance());
+                }}
+                isEnabled={!!hideWallet}
+              />
+            </SettingView>
+            {!hideWallet ? (
+              <Info>
+                <InfoTriangle />
+                <InfoDescription>
+                  {t('This wallet will not be removed from the device.')}
+                </InfoDescription>
+              </Info>
+            ) : null}
+            <Hr />
+          </>
         ) : null}
-
-        <Hr />
 
         <VerticalPadding>
           <Title>{t('Advanced')}</Title>

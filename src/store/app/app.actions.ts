@@ -55,6 +55,10 @@ export const setAppFirstOpenEventDate = (date: number): AppActionType => ({
   payload: date,
 });
 
+export const setAppInstalled = (): AppActionType => ({
+  type: AppActionTypes.SET_APP_INSTALLED,
+});
+
 export const setIntroCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_INTRO_COMPLETED,
 });
@@ -324,13 +328,6 @@ export const setLocalDefaultChainFilterOption = (
 ): AppActionType => ({
   type: AppActionTypes.SET_LOCAL_CHAIN_FILTER_OPTION,
   selectedLocalChainFilterOption,
-});
-
-export const setSelectedNetworkForDeposit = (
-  selectedNetworkForDeposit: SupportedChains | undefined,
-): AppActionType => ({
-  type: AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT,
-  selectedNetworkForDeposit,
 });
 
 export const setMigrationComplete = (): AppActionType => ({

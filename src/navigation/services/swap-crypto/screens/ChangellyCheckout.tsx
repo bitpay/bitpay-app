@@ -15,7 +15,7 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import ChangellyCheckoutSkeleton from './ChangellyCheckoutSkeleton';
+import SwapCheckoutSkeleton from './SwapCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -373,7 +373,7 @@ const ChangellyCheckout: React.FC = () => {
 
         try {
           const rates = await dispatch(startGetRates({}));
-          const presicion = dispatch(
+          const precision = dispatch(
             GetPrecision(
               toWalletSelected.currencyAbbreviation,
               toWalletSelected.chain,
@@ -382,7 +382,7 @@ const ChangellyCheckout: React.FC = () => {
           );
           const newFiatAmountTo = dispatch(
             toFiat(
-              Number(data.result.amountExpectedTo) * presicion!.unitToSatoshi,
+              Number(data.result.amountExpectedTo) * precision!.unitToSatoshi,
               alternativeIsoCode,
               toWalletSelected.currencyAbbreviation.toLowerCase(),
               toWalletSelected.chain,
@@ -397,7 +397,7 @@ const ChangellyCheckout: React.FC = () => {
 
         paymentTimeControl(data.result.payTill);
 
-        const presicion = dispatch(
+        const precision = dispatch(
           GetPrecision(
             fromWalletSelected.currencyAbbreviation,
             fromWalletSelected.chain,
@@ -406,7 +406,7 @@ const ChangellyCheckout: React.FC = () => {
         );
         // To Sat
         const depositSat = Number(
-          (amountExpectedFrom * presicion!.unitToSatoshi).toFixed(0),
+          (amountExpectedFrom * precision!.unitToSatoshi).toFixed(0),
         );
 
         createTx(fromWalletSelected, payinAddress, depositSat, payinExtraId)
@@ -883,7 +883,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>{t('Selling')}</RowLabel>
+          <RowLabel>{t('Swapping')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
               <CoinIconContainer>
@@ -935,7 +935,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         {isLoading ? (
-          <ChangellyCheckoutSkeleton />
+          <SwapCheckoutSkeleton />
         ) : (
           <>
             <RowDataContainer>

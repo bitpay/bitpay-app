@@ -5,6 +5,7 @@ import {
   HeaderTitle,
   Link,
   H2,
+  H4,
 } from '../../../components/styled/Text';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -20,7 +21,7 @@ import {
   IsReceived,
   IsSent,
   IsShared,
-  NotZeroAmountEVM,
+  TxForPaymentFeeEVM,
   TxActions,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
@@ -63,6 +64,7 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
 import {
   Recipient,
+  TransactionDetailsBuilt,
   TransactionOptionsContext,
 } from '../../../store/wallet/wallet.models';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
@@ -208,8 +210,9 @@ const TransactionDetails = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const [txs, setTxs] = useState<any>();
+  const [txs, setTxs] = useState<TransactionDetailsBuilt>();
   const [memo, setMemo] = useState<string>();
+  const [isForFee, setIsForFee] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const title = getDetailsTitle(transaction, wallet);
   let {
@@ -240,6 +243,13 @@ const TransactionDetails = () => {
       );
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
+      setIsForFee(
+        TxForPaymentFeeEVM(
+          wallet.currencyAbbreviation,
+          transaction.coin,
+          transaction.amount,
+        ),
+      );
       await sleep(500);
       setIsLoading(false);
     } catch (err) {
@@ -377,17 +387,22 @@ const TransactionDetails = () => {
       case 'doge':
         url =
           network === 'livenet'
-            ? `https://${url}dogecoin/transaction/${txs.txid}`
-            : `https://${url}tx/DOGETEST/${txs.txid}`;
+            ? `https://${url}dogecoin/transaction/${txs?.txid}`
+            : `https://${url}tx/DOGETEST/${txs?.txid}`;
         break;
       default:
-        url = `https://${url}tx/${txs.txid}`;
+        url = `https://${url}tx/${txs?.txid}`;
     }
 
     dispatch(openUrlWithInAppBrowser(url));
   };
 
   const saveMemo = async (newMemo: string) => {
+    if (!txs?.txid) {
+      dispatch(LogActions.error('[EditTxNote] There is no txid present'));
+      return;
+    }
+
     try {
       await EditTxNote(wallet, {txid: txs.txid, body: newMemo});
       transaction.note = {
@@ -411,11 +426,9 @@ const TransactionDetails = () => {
           keyboardShouldPersistTaps={'handled'}
           extraScrollHeight={80}>
           <>
-            {NotZeroAmountEVM(txs.amount, chain) ? (
-              <H2 medium={true}>{txs.amountStr}</H2>
-            ) : null}
+            {!isForFee ? <H2 medium={true}>{txs.amountStr}</H2> : null}
 
-            {!IsCustomERCToken(tokenAddress, chain) ? (
+            {!IsCustomERCToken(tokenAddress, chain) && !isForFee ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'
@@ -425,9 +438,7 @@ const TransactionDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEVM(txs.amount, chain) ? (
-              <SubTitle>{t('Interaction with contract')}</SubTitle>
-            ) : null}
+            {isForFee ? <H4>{t('Interaction with contract')}</H4> : null}
           </>
 
           {/* --------- Info ----------------*/}
@@ -460,6 +471,8 @@ const TransactionDetails = () => {
           ) : null}
 
           {currencyAbbreviation === 'btc' &&
+          (!txs.customData?.service ||
+            !['changelly', 'thorswap'].includes(txs.customData.service)) && // It is not advisable to accelerate transactions that involve Swap operations.
           (IsSent(txs.action) || IsMoved(txs.action)) &&
           (!txs.confirmations || txs.confirmations === 0) ? (
             <Banner
@@ -539,14 +552,18 @@ const TransactionDetails = () => {
             </>
           ) : null}
 
-          <DetailContainer>
-            <DetailRow>
-              <H7>{t('Date')}</H7>
-              <H7>
-                {GetAmFormatDate((txs.ts || txs.createdOn || txs.time) * 1000)}
-              </H7>
-            </DetailRow>
-          </DetailContainer>
+          {txs.ts || txs.createdOn || txs.time ? (
+            <DetailContainer>
+              <DetailRow>
+                <H7>{t('Date')}</H7>
+                <H7>
+                  {GetAmFormatDate(
+                    (txs.ts || txs.createdOn || txs.time)! * 1000,
+                  )}
+                </H7>
+              </DetailRow>
+            </DetailContainer>
+          ) : null}
 
           <Hr />
 
@@ -591,7 +608,7 @@ const TransactionDetails = () => {
             <DetailRow>
               <H7>{t('Transaction ID')}</H7>
 
-              <CopyTransactionId onPress={() => copyText(txs.txid)}>
+              <CopyTransactionId onPress={() => copyText(txs.txid!)}>
                 <CopyImgContainer>
                   {copied ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainer>

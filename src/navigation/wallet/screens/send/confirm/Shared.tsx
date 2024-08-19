@@ -174,7 +174,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
     recipientType,
   } = recipient;
 
-  let badgeImg;
+  let {badgeImg} = recipient;
 
   if (
     recipientCoin &&
@@ -576,7 +576,8 @@ export const WalletSelector = ({
 
     const {keyWallets, coinbaseWallets} = wa;
     for (const keyWallet of keyWallets) {
-      if (keyWallet.wallets.length > 0) {
+      const wallets = keyWallet.accounts.map(account => account.wallets);
+      if (wallets.length > 0) {
         hasWallets = true;
         break;
       }
@@ -615,12 +616,12 @@ export const WalletSelector = ({
         <WalletSelectMenuBodyContainer>
           <KeyWalletsRow<KeyWallet>
             currency={currency}
-            keyWallets={walletsAndAccounts.keyWallets}
+            keyAccounts={walletsAndAccounts.keyWallets}
             hideBalance={hideAllBalances}
             onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
           />
           <KeyWalletsRow<WalletRowProps>
-            keyWallets={walletsAndAccounts.coinbaseWallets}
+            keyAccounts={walletsAndAccounts.coinbaseWallets}
             keySvg={CoinbaseSmall}
             hideBalance={hideAllBalances}
             onPress={account =>

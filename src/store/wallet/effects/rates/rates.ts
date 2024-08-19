@@ -314,7 +314,7 @@ export const fetchHistoricalRates =
     dateRange: DateRanges = DateRanges.Day,
     currencyAbbreviation?: string,
     fiatIsoCode: string = 'USD',
-  ): Effect<Promise<Array<number>>> =>
+  ): Effect<Promise<Array<Rate>>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
@@ -328,12 +328,8 @@ export const fetchHistoricalRates =
         )
       ) {
         dispatch(LogActions.info('[rates]: using cached rates'));
-        const cachedRatesByCoin: Array<number> = currencyAbbreviation
-          ? cachedRates[dateRange][currencyAbbreviation.toLowerCase()].map(
-              (r: Rate) => {
-                return r.rate;
-              },
-            )
+        const cachedRatesByCoin = currencyAbbreviation
+          ? cachedRates[dateRange][currencyAbbreviation.toLowerCase()]
           : [];
 
         return resolve(cachedRatesByCoin);
@@ -362,10 +358,8 @@ export const fetchHistoricalRates =
           LogActions.info('[rates]: fetched historical rates successfully'),
         );
 
-        const ratesByCoin: Array<number> = currencyAbbreviation
-          ? rates[currencyAbbreviation.toLowerCase()].map((r: Rate) => {
-              return r.rate;
-            })
+        const ratesByCoin = currencyAbbreviation
+          ? rates[currencyAbbreviation.toLowerCase()]
           : [];
         resolve(ratesByCoin);
       } catch (e) {

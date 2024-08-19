@@ -1,9 +1,10 @@
+import React, {memo, useEffect, useLayoutEffect, useState} from 'react';
 import Slider from '@react-native-community/slider';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {memo, useEffect, useLayoutEffect, useState} from 'react';
+import {FlashList} from '@shopify/flash-list';
 import {useTranslation} from 'react-i18next';
-import {Alert, SectionList} from 'react-native';
+import {Alert} from 'react-native';
 import Mailer from 'react-native-mail';
 import styled, {useTheme} from 'styled-components/native';
 import {
@@ -140,7 +141,7 @@ const renderItem = ({item}: {item: LogEntry}) => (
   </Logs>
 );
 
-const keyExtractor = (item: LogEntry, index: number) => item.message + index;
+const keyExtractor = (item: LogEntry, index: number) => index.toString();
 
 const SessionLogs = ({}: SessionLogsScreenProps) => {
   const {t} = useTranslation();
@@ -231,24 +232,28 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
 
   return (
     <LogsContainer>
-      <SectionList
+      <FlashList
         contentContainerStyle={{
           paddingBottom: 150,
-          marginTop: 5,
-          marginLeft: 5,
         }}
-        sections={[
-          {title: t('Previous Sessions'), data: filteredPersistedLogs},
-          {title: t('Current Session'), data: filteredLogs},
+        data={[
+          t('Previous Sessions'),
+          ...filteredPersistedLogs,
+          t('Current Session'),
+          ...filteredLogs,
         ]}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        stickySectionHeadersEnabled={false}
-        renderSectionHeader={({section: {title}}) =>
-          filteredPersistedLogs.length > 0 ? (
-            <ListHeader>{title}</ListHeader>
-          ) : null
+        renderItem={({item}) => {
+          if (typeof item === 'string') {
+            return <ListHeader>{item}</ListHeader>;
+          } else {
+            return renderItem({item});
+          }
+        }}
+        estimatedItemSize={23}
+        getItemType={item =>
+          typeof item === 'string' ? 'sectionHeader' : 'row'
         }
+        keyExtractor={keyExtractor}
       />
 
       <FilterLabels onPress={onFilterLevelChange} />

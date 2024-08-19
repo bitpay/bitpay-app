@@ -21,13 +21,14 @@ import {
 import {formatFiatAmountObj} from '../../../utils/helper-methods';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {getRemainingWalletCount} from '../../../store/wallet/utils/wallet';
+import {WalletRowProps} from '../../../components/list/WalletRow';
 
 interface Props {
-  keyId: string;
-  keyName: string | undefined;
-  wallets: Wallet[];
+  optionId: string;
+  optionName: string | undefined;
+  wallets: WalletRowProps[] | Wallet[];
   totalBalance: number;
-  onPress: (keyId: string) => void;
+  onPress: (optionId: string) => void;
   defaultAltCurrencyIsoCode: string;
   hideKeyBalance: boolean;
 }
@@ -43,19 +44,19 @@ export const OptionContainer = styled.TouchableOpacity`
   padding: 20px;
 `;
 
-export const BaseText = styled(H5)`
+const BaseText = styled(H5)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-export const KeyName = styled(BaseText)``;
+export const OptionName = styled(BaseText)``;
 
 export const Balance = styled(BaseText)`
   font-weight: 700;
 `;
 
-const KeyDropdownOption = ({
-  keyId,
-  keyName,
+const DropdownOption = ({
+  optionId,
+  optionName,
   wallets,
   totalBalance,
   defaultAltCurrencyIsoCode,
@@ -74,10 +75,10 @@ const KeyDropdownOption = ({
   return (
     <OptionContainer
       activeOpacity={ActiveOpacity}
-      onPress={() => onPress(keyId)}>
+      onPress={() => onPress(optionId)}>
       <Row style={{alignItems: 'center', justifyContent: 'center'}}>
         <Column>
-          <KeyName style={{marginBottom: 5}}>{keyName}</KeyName>
+          <OptionName style={{marginBottom: 5}}>{optionName}</OptionName>
           {walletInfo.length > 0 ? (
             <HeaderImg>
               {walletInfo.map((wallet, index) => {
@@ -121,4 +122,4 @@ const KeyDropdownOption = ({
   );
 };
 
-export default KeyDropdownOption;
+export default DropdownOption;
