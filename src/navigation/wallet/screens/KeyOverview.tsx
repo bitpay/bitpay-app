@@ -384,7 +384,7 @@ const KeyOverview = () => {
     }
     const fullWalletObj = key.wallets.find(
       k =>
-        k.id === item.id &&
+        k.id === item.wallets[0].id &&
         (!item.copayerId || k.credentials?.copayerId === item.copayerId),
     )!;
     if (!fullWalletObj.isComplete()) {
