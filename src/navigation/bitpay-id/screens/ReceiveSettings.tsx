@@ -8,8 +8,7 @@ import {
   CtaContainerAbsolute,
 } from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
-import {H3, H5, Paragraph} from '../../../components/styled/Text';
-import {BaseText} from '../../wallet/components/KeyDropdownOption';
+import {BaseText, H3, H5, Paragraph} from '../../../components/styled/Text';
 import {
   LightBlack,
   Slate,

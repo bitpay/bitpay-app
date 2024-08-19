@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {ScrollView, TouchableOpacity} from 'react-native';
+import {Platform, ScrollView, TouchableOpacity} from 'react-native';
 import uuid from 'react-native-uuid';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled, {useTheme} from 'styled-components/native';
@@ -24,7 +24,6 @@ import {
   SelectedOptionContainer,
   SelectedOptionText,
   DataText,
-  CoinIconContainer,
 } from '../../buy-crypto/styled/BuyCryptoCard';
 import Button from '../../../../components/button/Button';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
@@ -55,7 +54,7 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
-import {IsERCToken} from '../../../../store/wallet/utils/currency';
+import {IsERCToken, IsEVMChain} from '../../../../store/wallet/utils/currency';
 import {
   SellCryptoSupportedExchanges,
   getAvailableSellCryptoFiatCurrencies,
@@ -106,7 +105,15 @@ import {
   MoonpayGetSellSignedPaymentUrlRequestData,
   MoonpaySellOrderData,
 } from '../../../../store/sell-crypto/sell-crypto.models';
-import {Br} from '../../../../components/styled/Containers';
+import {
+  AccountChainsContainer,
+  Br,
+  CurrencyColumn,
+  CurrencyImageContainer,
+  ExternalServicesItemTopTitle,
+  ExternalServicesTitleContainer,
+  Row,
+} from '../../../../components/styled/Containers';
 import {
   SellBalanceContainer,
   SellBottomDataText,
@@ -119,19 +126,23 @@ import {TermsText} from '../../buy-crypto/styled/BuyCryptoTerms';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
 import {startUpdateWalletStatus} from '../../../../store/wallet/effects/status/status';
 import InfoSvg from '../../../../../assets/img/info.svg';
-import {buildUIFormattedWallet} from '../../../../navigation/wallet/screens/KeyOverview';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import BalanceDetailsModal from '../../../../navigation/wallet/components/BalanceDetailsModal';
 import SellCryptoBalanceSkeleton from './SellCryptoBalanceSkeleton';
 import cloneDeep from 'lodash.clonedeep';
 import SellCryptoLoadingQuoteSkeleton from './SellCryptoQuoteSkeleton';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
+import {
+  buildUIFormattedWallet,
+  GetProtocolPrefixAddress,
+} from '../../../../store/wallet/utils/wallet';
 import {SatToUnit} from '../../../../store/wallet/effects/amount/amount';
 import {
   getExternalServiceSymbol,
   getSendMaxData,
 } from '../../utils/external-services-utils';
+import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
+import Blockie from '../../../../components/blockie/Blockie';
 
 export type SellCryptoRootScreenParams =
   | {
@@ -291,6 +302,13 @@ const SellCryptoRoot = ({
     dispatch(showWalletError(type, fromCurrencyAbbreviation));
   };
 
+  const getEVMAccountName = (wallet: Wallet) => {
+    const selectedKey = allKeys[wallet.keyId];
+    const evmAccountInfo =
+      selectedKey.evmAccountsInfo?.[wallet.receiveAddress!];
+    return evmAccountInfo?.name;
+  };
+
   const selectFirstAvailableWallet = async () => {
     if (!sellCryptoSupportedCoins || !sellCryptoSupportedCoins[0]) {
       return;
@@ -338,7 +356,6 @@ const SellCryptoRoot = ({
           );
         }
         if (allowedWallets[0]) {
-          setSelectedWallet(allowedWallets[0]);
           await sleep(500);
           dispatch(dismissOnGoingProcessModal());
           setDisabledWalletFrom(false);
@@ -1113,6 +1130,23 @@ const SellCryptoRoot = ({
   return (
     <SellCryptoRootContainer>
       <ScrollView>
+        {selectedWallet && (
+          <ExternalServicesTitleContainer>
+            <ExternalServicesItemTopTitle>
+              {t('Sell from')}
+            </ExternalServicesItemTopTitle>
+            {IsEVMChain(selectedWallet.chain) ? (
+              <AccountChainsContainer>
+                <Blockie size={19} seed={selectedWallet.receiveAddress} />
+                <H7 ellipsizeMode="tail" numberOfLines={1}>
+                  {getEVMAccountName(selectedWallet)
+                    ? getEVMAccountName(selectedWallet)
+                    : `EVM Account ${selectedWallet.credentials.account}`}
+                </H7>
+              </AccountChainsContainer>
+            ) : null}
+          </ExternalServicesTitleContainer>
+        )}
         <BuyCryptoItemCard
           onPress={() => {
             if (disabledWalletFrom) {
@@ -1120,9 +1154,9 @@ const SellCryptoRoot = ({
             }
             showModal('walletSelector');
           }}>
-          <BuyCryptoItemTitle>{t('Sell from')}</BuyCryptoItemTitle>
           {!selectedWallet && (
-            <ActionsContainer>
+            <>
+              <BuyCryptoItemTitle>{t('Sell from')}</BuyCryptoItemTitle>
               <SelectedOptionContainer
                 style={{
                   backgroundColor: disabledWalletFrom
@@ -1141,10 +1175,10 @@ const SellCryptoRoot = ({
                   }}
                   numberOfLines={1}
                   ellipsizeMode={'tail'}>
-                  {t('Select Wallet')}
+                  {t('Choose Crypto')}
                 </SelectedOptionText>
                 <ArrowContainer>
-                  <SelectorArrowDown
+                  <SelectorArrowRight
                     {...{
                       width: 13,
                       height: 13,
@@ -1157,48 +1191,42 @@ const SellCryptoRoot = ({
                   />
                 </ArrowContainer>
               </SelectedOptionContainer>
-            </ActionsContainer>
+            </>
           )}
           {selectedWallet && (
             <>
               <ActionsContainer>
-                <SelectedOptionContainer style={{minWidth: 120}}>
-                  <SelectedOptionCol>
-                    <CoinIconContainer>
-                      <CurrencyImage
-                        img={selectedWallet.img}
-                        badgeUri={getBadgeImg(
-                          getCurrencyAbbreviation(
-                            selectedWallet.currencyAbbreviation,
-                            selectedWallet.chain,
-                          ),
-                          selectedWallet.chain,
-                        )}
-                        size={20}
-                      />
-                    </CoinIconContainer>
-                    <SelectedOptionText
+                <CurrencyImageContainer>
+                  <CurrencyImage
+                    img={selectedWallet.img}
+                    badgeUri={getBadgeImg(
+                      getCurrencyAbbreviation(
+                        selectedWallet.currencyAbbreviation,
+                        selectedWallet.chain,
+                      ),
+                      selectedWallet.chain,
+                    )}
+                    size={45}
+                  />
+                </CurrencyImageContainer>
+                <CurrencyColumn>
+                  <Row>
+                    <H5 ellipsizeMode="tail" numberOfLines={1}>
+                      {selectedWallet.walletName
+                        ? selectedWallet.walletName
+                        : selectedWallet.currencyName}
+                    </H5>
+                  </Row>
+                  <Row style={{alignItems: 'center'}}>
+                    <ListItemSubText
+                      ellipsizeMode="tail"
                       numberOfLines={1}
-                      ellipsizeMode={'tail'}>
+                      style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
                       {selectedWallet.currencyAbbreviation.toUpperCase()}
-                    </SelectedOptionText>
-                  </SelectedOptionCol>
-                  <ArrowContainer>
-                    <SelectorArrowDown
-                      {...{
-                        width: 13,
-                        height: 13,
-                        color: theme.dark ? White : SlateDark,
-                      }}
-                    />
-                  </ArrowContainer>
-                </SelectedOptionContainer>
+                    </ListItemSubText>
+                  </Row>
+                </CurrencyColumn>
                 <SelectedOptionCol>
-                  <DataText numberOfLines={1} ellipsizeMode={'tail'}>
-                    {selectedWallet.walletName
-                      ? selectedWallet.walletName
-                      : selectedWallet.currencyName}
-                  </DataText>
                   <ArrowContainer>
                     <SelectorArrowRight
                       {...{
@@ -1424,7 +1452,7 @@ const SellCryptoRoot = ({
         customSupportedCurrencies={sellCryptoSupportedCoins}
         livenetOnly={!__DEV__}
         modalContext={'sell'}
-        modalTitle={t('Sell From')}
+        modalTitle={t('Crypto to Sell')}
         onDismiss={(selectedWallet: Wallet) => {
           hideModal('walletSelector');
           if (selectedWallet?.currencyAbbreviation) {

@@ -6,6 +6,7 @@ import {
   Row,
   ActiveOpacity,
   RowContainer,
+  BadgeContainer,
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
@@ -23,6 +24,8 @@ import {
 import {ActivityIndicator, Platform} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {SearchableItem} from '../chain-search/ChainSearch';
+import {IsERCToken, IsEVMChain} from '../../store/wallet/utils/currency';
+import GasTokenSvg from '../../../assets/img/gas-token.svg';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -30,10 +33,6 @@ const SpinnerContainer = styled.View`
   justify-content: center;
   align-items: center;
   padding-right: 10px;
-`;
-
-const BadgeContainer = styled.View`
-  margin-left: 3px;
 `;
 
 const BalanceColumn = styled(Column)`
@@ -54,17 +53,23 @@ export interface WalletRowProps extends SearchableItem {
   currencyAbbreviation: string;
   tokenAddress?: string;
   chain: string;
+  chainName: string;
   walletName?: string;
   cryptoBalance: string;
-  cryptoLockedBalance?: string;
-  cryptoConfirmedLockedBalance?: string;
-  cryptoSpendableBalance?: string;
-  cryptoPendingBalance?: string;
-  fiatBalance: string;
-  fiatLockedBalance?: string;
-  fiatConfirmedLockedBalance?: string;
-  fiatSpendableBalance?: string;
-  fiatPendingBalance?: string;
+  cryptoLockedBalance: string;
+  cryptoConfirmedLockedBalance: string;
+  cryptoSpendableBalance: string;
+  cryptoPendingBalance: string;
+  fiatBalance?: number;
+  fiatLockedBalance?: number;
+  fiatConfirmedLockedBalance?: number;
+  fiatSpendableBalance?: number;
+  fiatPendingBalance?: number;
+  fiatBalanceFormat?: string;
+  fiatLockedBalanceFormat?: string;
+  fiatConfirmedLockedBalanceFormat?: string;
+  fiatSpendableBalanceFormat?: string;
+  fiatPendingBalanceFormat?: string;
   isToken?: boolean;
   network: Network;
   isRefreshing?: boolean;
@@ -141,6 +146,22 @@ export const buildUncompleteBadge = (
   );
 };
 
+export const buildGasTokenBadge = (
+  isEVMChain: boolean | undefined,
+): ReactElement | undefined => {
+  if (!isEVMChain) {
+    return;
+  }
+  const badgeLabel = 'Gas Token';
+
+  return (
+    <BadgeContainer>
+      <GasTokenSvg />
+      <Badge style={{paddingTop: 3}}>{badgeLabel}</Badge>
+    </BadgeContainer>
+  );
+};
+
 const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
   const {
     currencyName,
@@ -150,13 +171,12 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
     img,
     badgeImg,
     cryptoBalance,
-    fiatBalance,
+    fiatBalanceFormat,
     isToken,
     network,
     multisig,
     isScanning,
     isComplete,
-    receiveAddress,
   } = wallet;
 
   // @ts-ignore
@@ -192,12 +212,8 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
             {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
           </ListItemSubText>
-          {buildPreviewAddress(
-            chain,
-            isComplete,
-            multisig,
-            receiveAddress,
-            isToken,
+          {buildGasTokenBadge(
+            !IsERCToken(currencyAbbreviation, chain) && IsEVMChain(chain),
           )}
           {buildTestBadge(network, chain, isToken)}
           {buildUncompleteBadge(isComplete)}
@@ -212,7 +228,9 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
               </H5>
               {showFiatBalance && (
                 <ListItemSubText textAlign={'right'}>
-                  {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+                  {network === 'testnet'
+                    ? 'Test - No Value'
+                    : fiatBalanceFormat}
                 </ListItemSubText>
               )}
             </>

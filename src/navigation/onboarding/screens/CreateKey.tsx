@@ -21,9 +21,19 @@ import {useTranslation} from 'react-i18next';
 import {
   useAppDispatch,
   useAppSelector,
+  useLogger,
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {startCreateKey} from '../../../store/wallet/effects';
+import {getBaseKeyCreationCoinsAndTokens} from '../../../constants/currencies';
+import {
+  dismissOnGoingProcessModal,
+  setHomeCarouselConfig,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
+import {sleep} from '../../../utils/helper-methods';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -52,6 +62,7 @@ const CreateOrImportKey = ({
 >) => {
   const {t} = useTranslation();
   const themeType = useThemeType();
+  const logger = useLogger();
   const dispatch = useAppDispatch();
   const isImportLedgerModalVisible = useAppSelector(
     ({APP}) => APP.isImportLedgerModalVisible,
@@ -68,6 +79,24 @@ const CreateOrImportKey = ({
       navigation.navigate('TermsOfUse', {context: 'TOUOnly'});
     });
   });
+
+  const showErrorModal = (e: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Something went wrong'),
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('OK'),
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -117,12 +146,30 @@ const CreateOrImportKey = ({
             <Button
               accessibilityLabel="create-a-key-button"
               buttonStyle={'primary'}
-              onPress={() => {
-                askForTrackingThenNavigate(() =>
-                  navigation.navigate('CurrencySelection', {
-                    context: 'onboarding',
-                  }),
-                );
+              onPress={async () => {
+                try {
+                  const context = 'onboarding';
+                  await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+                  const createdKey = await dispatch(
+                    startCreateKey(getBaseKeyCreationCoinsAndTokens()),
+                  );
+
+                  dispatch(
+                    setHomeCarouselConfig({id: createdKey.id, show: true}),
+                  );
+                  dispatch(dismissOnGoingProcessModal());
+                  askForTrackingThenNavigate(() =>
+                    navigation.navigate('BackupKey', {
+                      context,
+                      key: createdKey,
+                    }),
+                  );
+                } catch (e: any) {
+                  logger.error(e.message);
+                  dispatch(dismissOnGoingProcessModal());
+                  await sleep(500);
+                  showErrorModal(e.message);
+                }
               }}>
               {t('Create a Key')}
             </Button>
