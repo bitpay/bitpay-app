@@ -1,8 +1,12 @@
 import React, {useCallback, useMemo, useState} from 'react';
-import SheetModal from '../base/sheet/SheetModal';
-import {BaseText, H4, TextAlign} from '../../styled/Text';
+import {useTranslation} from 'react-i18next';
+import {Platform, View} from 'react-native';
+import {useTheme} from '@react-navigation/native';
+import {FlashList} from '@shopify/flash-list';
 import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
+import SheetModal from '../base/sheet/SheetModal';
+import {BaseText, H4, TextAlign} from '../../styled/Text';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
 import {
@@ -14,14 +18,14 @@ import {
   LightBlack,
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
-import {FlatList, Platform, SectionList, View} from 'react-native';
-import {useTheme} from '@react-navigation/native';
+
 import {
   setDefaultChainFilterOption,
   setLocalDefaultChainFilterOption,
 } from '../../../store/app/app.actions';
 import {
   ActiveOpacity,
+  HEIGHT,
   Hr,
   NoResultsContainer,
   NoResultsDescription,
@@ -30,7 +34,6 @@ import {
   SearchRoundInput,
 } from '../../styled/Containers';
 import {WalletSelectMenuHeaderContainer} from '../../../navigation/wallet/screens/GlobalSelect';
-import {useTranslation} from 'react-i18next';
 import SearchSvg from '../../../../assets/img/search.svg';
 import {
   BitpaySupportedCoins,
@@ -78,7 +81,7 @@ const ListHeader = styled(BaseText)`
   font-size: 14px;
   line-height: 20px;
   color: ${({theme}) => (theme.dark ? White : SlateDark)};
-  padding: 8px 16px;
+  padding: 16px;
 `;
 
 const NetworkChainContainer = styled.TouchableOpacity<{selected?: boolean}>`
@@ -182,8 +185,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
                 dispatch(setDefaultChainFilterOption(option));
               }
               setSearchVal('');
-            }}
-            key={index.toString()}>
+            }}>
             <RowContainer>
               <ImageContainer>
                 {supportedChain?.img ? (
@@ -201,6 +203,11 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
     },
     [dispatch, context, customChains, selectedChainFilterOption],
   );
+
+  const sectionHeaders = {
+    all: t('All Networks'),
+    recentlySelected: t('Recently Selected'),
+  };
 
   const chainList = useMemo(() => {
     // Function to filter and sort chains based on recent selection
@@ -230,11 +237,11 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
       return filteredChains;
     };
     const hasCustomChains = customChains && customChains?.length > 0;
-    const allNetworkTitle = hasCustomChains ? undefined : t('All Networks');
+    const allNetworkTitle = hasCustomChains ? undefined : sectionHeaders.all;
     const chains = hasCustomChains ? customChains : getFilteredChains();
     const list = [
       {
-        title: t('All Networks'),
+        title: sectionHeaders.all,
         data: [allNetworkTitle, ...chains].filter(Boolean),
       },
     ];
@@ -248,16 +255,25 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
     }
     if (_recentSelectedChainFilterOption.length && !hasCustomChains) {
       list.unshift({
-        title: t('Recently Selected'),
+        title: sectionHeaders.recentlySelected,
         data: _recentSelectedChainFilterOption,
       });
     }
-    return list;
+    const flattenedList = list.reduce(
+      (fullList, section) => [
+        ...fullList,
+        {title: section.title},
+        ...section.data,
+      ],
+      [] as any[],
+    );
+    return flattenedList;
   }, [
-    selectedChainFilterOption,
     customChains,
-    context,
+    sectionHeaders.all,
+    sectionHeaders.recentlySelected,
     recentSelectedChainFilterOption,
+    selectedChainFilterOption,
   ]);
 
   const updateSearchResults = debounce((text: string) => {
@@ -292,7 +308,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
       }}>
       <KeyBoardAvoidingViewWrapper
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={{maxHeight: '75%'}}>
+        <View style={{maxHeight: '75%', minHeight: 350}}>
           <WalletSelectMenuHeaderContainer>
             <TextAlign align={'left'}>
               <H4>{t('Select Network')}</H4>
@@ -312,11 +328,12 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
               />
             </SearchRoundContainer>
           </Header>
-          <HideableView show={!!searchVal}>
+          <HideableView show={!!searchVal} style={{flex: 1}}>
             {searchResults.length ? (
-              <FlatList
+              <FlashList
                 contentContainerStyle={{paddingBottom: 50}}
                 data={searchResults}
+                estimatedItemSize={65}
                 // @ts-ignore
                 renderItem={renderChainItem}
                 keyExtractor={(item, index) => index.toString()}
@@ -334,17 +351,22 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
             )}
           </HideableView>
 
-          <HideableView show={!searchVal}>
-            <SectionList
+          <HideableView
+            show={!searchVal}
+            style={{minHeight: Math.min(450, HEIGHT / 1.5)}}>
+            <FlashList
               contentContainerStyle={{paddingBottom: 50}}
-              sections={chainList}
-              renderItem={renderChainItem}
+              data={chainList}
+              renderItem={({item}) => {
+                if (item.title) {
+                  return <ListHeader>{item.title}</ListHeader>;
+                } else {
+                  return renderChainItem({item});
+                }
+              }}
+              estimatedItemSize={65}
               keyExtractor={(item, index) => index.toString()}
-              stickySectionHeadersEnabled={false}
-              renderSectionHeader={({section: {title}}) => (
-                <ListHeader>{title}</ListHeader>
-              )}
-              renderSectionFooter={() => <View style={{marginBottom: 30}} />}
+              getItemType={item => (item.title ? 'sectionHeader' : 'row')}
             />
           </HideableView>
         </View>

@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {FlatList, RefreshControl, View} from 'react-native';
+import {FlashList} from '@shopify/flash-list';
+import {RefreshControl, View} from 'react-native';
 import styled from 'styled-components/native';
 import WalletRow from '../../../components/list/WalletRow';
 import {BaseText, H2, H5, HeaderTitle} from '../../../components/styled/Text';
@@ -267,10 +268,9 @@ const CoinbaseDashboard = () => {
         )}
       </BalanceContainer>
       <Hr />
-      <FlatList
+      <FlashList
         contentContainerStyle={{
           paddingBottom: 50,
-          marginTop: 5,
         }}
         refreshControl={
           <RefreshControl
@@ -288,6 +288,7 @@ const CoinbaseDashboard = () => {
         }}
         data={accounts}
         renderItem={renderItem}
+        estimatedItemSize={70}
         ListFooterComponent={listFooterComponent}
       />
       <SheetModal

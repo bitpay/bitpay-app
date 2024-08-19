@@ -1,5 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {FlashList} from '@shopify/flash-list';
 import i18next from 'i18next';
 import _ from 'lodash';
 import React, {
@@ -17,7 +18,6 @@ import {
   FlatList,
   Linking,
   RefreshControl,
-  SectionList,
   Share,
   Text,
   View,
@@ -514,9 +514,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     network !== Network.testnet;
 
   const [history, setHistory] = useState<any[]>([]);
-  const [groupedHistory, setGroupedHistory] = useState<
-    {title: string; data: any[]; time: number}[]
-  >([]);
+  const [groupedHistory, setGroupedHistory] = useState<any[]>([]);
   const [loadMore, setLoadMore] = useState(true);
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
@@ -584,8 +582,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
           if (_history?.length) {
             setHistory(_history);
-            const grouped = GroupTransactionHistory(_history);
-            setGroupedHistory(grouped);
+            const transactionGroups = GroupTransactionHistory(_history);
+            const flattenedGroups = transactionGroups.reduce(
+              (allTransactions, section) => [
+                ...allTransactions,
+                section.title,
+                ...section.data,
+              ],
+              [] as any[],
+            );
+            setGroupedHistory(flattenedGroups);
           }
 
           setLoadMore(_loadMore);
@@ -955,18 +961,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }
   };
 
-  const renderSectionHeader = useCallback(({section: {title, time}}) => {
-    return (
-      <TransactionSectionHeaderContainer key={time}>
-        <H5>{title}</H5>
-      </TransactionSectionHeaderContainer>
-    );
-  }, []);
-
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
-        key={item.id}
         icon={
           item.customData?.recipientEmail ? (
             <ContactIcon
@@ -1010,15 +1007,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   }, []);
 
-  const keyExtractor = useCallback(item => item.txid, []);
-  const pendingTxpsKeyExtractor = useCallback(item => item.id, []);
-
-  const getItemLayout = useCallback(
-    (data, index) => ({
-      length: TRANSACTION_ROW_HEIGHT,
-      offset: TRANSACTION_ROW_HEIGHT * index,
-      index,
-    }),
+  const keyExtractor = useCallback(
+    (item, index: number) => index.toString(),
+    [],
+  );
+  const pendingTxpsKeyExtractor = useCallback(
+    (item, index: number) => index.toString(),
     [],
   );
 
@@ -1026,7 +1020,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   return (
     <WalletDetailsContainer>
-      <SectionList
+      <FlashList
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -1294,12 +1288,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             </>
           );
         }}
-        sections={groupedHistory}
-        stickyHeaderIndices={[groupedHistory?.length]}
-        stickySectionHeadersEnabled={true}
+        data={groupedHistory}
         keyExtractor={keyExtractor}
-        renderItem={renderTransaction}
-        renderSectionHeader={renderSectionHeader}
+        renderItem={({item}) => {
+          if (typeof item === 'string') {
+            return (
+              <TransactionSectionHeaderContainer>
+                <H5>{item}</H5>
+              </TransactionSectionHeaderContainer>
+            );
+          } else {
+            return renderTransaction({item});
+          }
+        }}
         ItemSeparatorComponent={itemSeparatorComponent}
         ListFooterComponent={listFooterComponent}
         onMomentumScrollBegin={() => setIsScrolling(true)}
@@ -1309,10 +1310,23 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             debouncedLoadHistory();
           }
         }}
+        stickyHeaderIndices={
+          groupedHistory
+            .map((item, index) => {
+              if (typeof item === 'string') {
+                return index;
+              } else {
+                return null;
+              }
+            })
+            .filter(item => item !== null) as number[]
+        }
+        getItemType={item =>
+          typeof item === 'string' ? 'sectionHeader' : 'row'
+        }
         onEndReachedThreshold={0.3}
         ListEmptyComponent={listEmptyComponent}
-        maxToRenderPerBatch={15}
-        getItemLayout={getItemLayout}
+        estimatedItemSize={TRANSACTION_ROW_HEIGHT}
       />
 
       <OptionsSheet
