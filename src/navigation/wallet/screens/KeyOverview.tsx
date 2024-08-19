@@ -12,7 +12,8 @@ import {
   useRoute,
   useTheme,
 } from '@react-navigation/native';
-import {FlatList, LogBox, RefreshControl, TouchableOpacity} from 'react-native';
+import {FlashList} from '@shopify/flash-list';
+import {LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -497,7 +498,7 @@ const KeyOverview = () => {
         </TouchableOpacity>
       </BalanceContainer>
 
-      <FlatList<AccountRowProps>
+      <FlashList<AccountRowProps>
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -510,6 +511,7 @@ const KeyOverview = () => {
         data={renderDataComponent}
         renderItem={memoizedRenderItem}
         ListEmptyComponent={listEmptyComponent}
+        estimatedItemSize={70}
       />
 
       {keyOptions.length > 0 ? (

@@ -539,6 +539,9 @@ PODS:
     - React-Core
     - SDWebImage (~> 5.11.1)
     - SDWebImageWebPCoder (~> 0.8.4)
+  - RNFlashList (1.7.0):
+    - RCT-Folly (= 2021.07.22.00)
+    - React-Core
   - RNFS (2.20.0):
     - React-Core
   - RNGestureHandler (2.9.0):
@@ -679,6 +682,7 @@ DEPENDENCIES:
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNFastImage (from `../node_modules/react-native-fast-image`)
+  - "RNFlashList (from `../node_modules/@shopify/flash-list`)"
   - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
@@ -861,6 +865,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-device-info"
   RNFastImage:
     :path: "../node_modules/react-native-fast-image"
+  RNFlashList:
+    :path: "../node_modules/@shopify/flash-list"
   RNFS:
     :path: "../node_modules/react-native-fs"
   RNGestureHandler:
@@ -984,6 +990,7 @@ SPEC CHECKSUMS:
   RNCMaskedView: c298b644a10c0c142055b3ae24d83879ecb13ccd
   RNDeviceInfo: b32d24c84e40d54b736e62a7d2abd15e1225258d
   RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8
+  RNFlashList: a74c48e93cded2dd0b8a8b30e73c44afa8275c66
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: 071d7a9ad81e8b83fe7663b303d132406a7d8f39
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
