@@ -30,7 +30,7 @@ import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {Row, ScreenGutter} from '../../../components/styled/Containers';
 import _ from 'lodash';
-import {cloneDeep, groupBy, isEmpty, unionBy, uniqueId} from 'lodash';
+import {cloneDeep, groupBy, unionBy, uniqueId} from 'lodash';
 import KeyWalletsRow, {
   KeyWallet,
   KeyWalletsRowProps,
@@ -347,7 +347,7 @@ const buildSelectableCurrenciesList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
       coinEntry.chainsImg[chain] = {
-        badgeUri: IsEVMChain(chain) && isEmpty(badgeUri) ? logoUri : badgeUri,
+        badgeUri: IsEVMChain(chain) && !badgeUri ? logoUri : badgeUri,
         priority,
       };
       if (!coinEntry.chains.includes(chain)) {
