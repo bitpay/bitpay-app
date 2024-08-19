@@ -20,7 +20,6 @@ import {Wallet, Key} from '../../../store/wallet/wallet.models';
 import {
   convertToFiat,
   formatFiatAmount,
-  getBadgeImg,
   getChainFromTokenByAddressKey,
   getCurrencyAbbreviation,
   keyExtractor,
@@ -39,12 +38,12 @@ import {
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import _ from 'lodash';
+import {cloneDeep, groupBy, isEmpty, unionBy, uniqueId} from 'lodash';
 import KeyWalletsRow, {
   KeyWallet,
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
 import merge from 'lodash.merge';
-import cloneDeep from 'lodash.clonedeep';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {H4, TextAlign, BaseText, H5} from '../../../components/styled/Text';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
@@ -290,7 +289,7 @@ const buildSelectableCurrenciesList = (
       );
 
       const coinEntry = coins[currencyAbbreviation] || {
-        id: _.uniqueId('coin_'),
+        id: uniqueId('coin_'),
         currencyName: name,
         currencyAbbreviation,
         chainsImg: {},
@@ -301,13 +300,13 @@ const buildSelectableCurrenciesList = (
         availableWalletsByKey: {},
       };
 
-      coinEntry.availableWallets = _.unionBy(
+      coinEntry.availableWallets = unionBy(
         [...coinEntry.availableWallets, ...filteredWallets],
         c => c.id,
       );
 
       coinEntry.total = coinEntry.availableWallets.length;
-      coinEntry.availableWalletsByKey = _.groupBy(
+      coinEntry.availableWalletsByKey = groupBy(
         coinEntry.availableWallets,
         'keyId',
       );
@@ -315,7 +314,7 @@ const buildSelectableCurrenciesList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
       coinEntry.chainsImg[chain] = {
-        badgeUri: IsEVMChain(chain) && !badgeUri ? logoUri : badgeUri,
+        badgeUri: IsEVMChain(chain) && isEmpty(badgeUri) ? logoUri : badgeUri,
         priority,
       };
       if (!coinEntry.chains.includes(chain)) {
@@ -373,7 +372,7 @@ const buildSelectableWalletList = (
         filteredWallets[0];
 
       const coinEntry = coins[currencyAbbreviation] || {
-        id: _.uniqueId('coin_'),
+        id: uniqueId('coin_'),
         currencyName,
         currencyAbbreviation,
         chainsImg: {},
@@ -393,7 +392,7 @@ const buildSelectableWalletList = (
         ...Array.from(new Set(filteredWallets.map(w => w.chain))),
       ];
       coinEntry.total = coinEntry.availableWallets.length;
-      coinEntry.availableWalletsByKey = _.groupBy(
+      coinEntry.availableWalletsByKey = groupBy(
         coinEntry.availableWallets,
         'keyId',
       );
@@ -447,7 +446,7 @@ const filterByChain = (
   selectObj: GlobalSelectObj,
   selectedNetworkForDeposit: string,
 ) => {
-  const newSelectObj = _.cloneDeep({...selectObj});
+  const newSelectObj = cloneDeep({...selectObj});
 
   Object.entries(newSelectObj.availableWalletsByKey).forEach(
     ([key, wallets]) => {

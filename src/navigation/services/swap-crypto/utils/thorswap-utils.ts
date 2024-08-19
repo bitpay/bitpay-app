@@ -1,5 +1,5 @@
 import {t} from 'i18next';
-import cloneDeep from 'lodash.clonedeep';
+import {capitalize, cloneDeep} from 'lodash';
 import {
   ThorswapProvider,
   ThorswapProviderNames,
@@ -593,9 +593,8 @@ export const getNameFromThorswapFullName = (
     const firstDotIndex = thorswapFullName.indexOf('.');
     const lastDashIndex = thorswapFullName.lastIndexOf('-');
     if (firstDotIndex > 0 && lastDashIndex > 0) {
-      name = thorswapFullName
-        .slice(firstDotIndex + 1, lastDashIndex)
-        .toLocaleUpperCase();
+      name = thorswapFullName.slice(firstDotIndex + 1, lastDashIndex);
+      name = capitalize(name);
     }
   }
 

@@ -305,11 +305,25 @@ const SwapCryptoRoot: React.FC = () => {
     if (selectedWallet) {
       const key = keys[selectedWallet.keyId];
 
-      if (!supportedCoins.find(coin => coin.symbol === getExternalServiceSymbol(selectedWallet!.currencyAbbreviation, selectedWallet!.chain))) {
-        const msg = t('Our providers have temporarily disabled exchanges involving coin(chain). Please try a different currency.', {
-          coin: `${cloneDeep(selectedWallet.currencyAbbreviation).toUpperCase()}`,
-          chain: `${cloneDeep(selectedWallet.chain).toUpperCase()}`,
-        });
+      if (
+        !supportedCoins.find(
+          coin =>
+            coin.symbol ===
+            getExternalServiceSymbol(
+              selectedWallet!.currencyAbbreviation,
+              selectedWallet!.chain,
+            ),
+        )
+      ) {
+        const msg = t(
+          'Our providers have temporarily disabled exchanges involving coin(chain). Please try a different currency.',
+          {
+            coin: `${cloneDeep(
+              selectedWallet.currencyAbbreviation,
+            ).toUpperCase()}`,
+            chain: `${cloneDeep(selectedWallet.chain).toUpperCase()}`,
+          },
+        );
         showError(msg);
         selectedWallet = undefined;
         return;
@@ -392,17 +406,40 @@ const SwapCryptoRoot: React.FC = () => {
     possibleCoinsTo = _.uniqBy(possibleCoinsTo, 'symbol');
 
     // Only includes coins already included in swapCryptoSupportedCoinsFrom
-    possibleCoinsTo = possibleCoinsTo.filter(coin => swapCryptoSupportedCoinsFrom.includes(coin));
+    possibleCoinsTo = possibleCoinsTo.filter(coin =>
+      swapCryptoSupportedCoinsFrom.includes(coin),
+    );
 
     // Remove coinsFrom from possible coinsTo
     const coinsTo = cloneDeep(possibleCoinsTo).filter(
-      coin => coin.symbol !== getExternalServiceSymbol(
-        fromWallet.currencyAbbreviation,
-        fromWallet.chain,
-      )
+      coin =>
+        coin.symbol !==
+        getExternalServiceSymbol(
+          fromWallet.currencyAbbreviation,
+          fromWallet.chain,
+        ),
     );
 
-    setSwapCryptoSupportedCoinsTo(coinsTo);
+    // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+    let coinsToOrdered = orderBy(
+      coinsTo,
+      [
+        coin => {
+          return orderedArray.includes(coin.symbol)
+            ? orderedArray.indexOf(coin.symbol)
+            : orderedArray.length;
+        },
+        'name',
+      ],
+      ['asc', 'asc'],
+    );
+
+    setSwapCryptoSupportedCoinsTo(coinsToOrdered);
     setFromWalletSelected(fromWallet);
     setLoadingWalletFromStatus(false);
   };
@@ -1021,6 +1058,10 @@ const SwapCryptoRoot: React.FC = () => {
                   ticker.toLowerCase(),
                   protocol.toLowerCase(),
                 ),
+                badgeUri: getBadgeImg(
+                  ticker.toLowerCase(),
+                  protocol.toLowerCase(),
+                ),
                 tokenAddress: address && address !== '' ? address : undefined,
                 supportedBy: {thorswap: true},
               };
@@ -1228,7 +1269,9 @@ const SwapCryptoRoot: React.FC = () => {
         });
         if (allSupportedCoins.length > 0) {
           const coinsToRemove =
-            !locationData || locationData.countryShortCode === 'US' ? ['xrp'] : [];
+            !locationData || locationData.countryShortCode === 'US'
+              ? ['xrp']
+              : [];
           coinsToRemove.push('busd');
 
           if (coinsToRemove.length > 0) {
@@ -1245,7 +1288,30 @@ const SwapCryptoRoot: React.FC = () => {
 
           allSupportedCoins = _.uniqBy(allSupportedCoins, 'symbol');
         }
-        setSwapCryptoSupportedCoinsFrom(allSupportedCoins);
+
+        // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+        const orderedArray = SupportedCurrencyOptions.map(currency =>
+          currency.chain
+            ? getCurrencyAbbreviation(
+                currency.currencyAbbreviation,
+                currency.chain,
+              )
+            : currency.currencyAbbreviation,
+        );
+        let allSupportedCoinsOrdered = orderBy(
+          allSupportedCoins,
+          [
+            coin => {
+              return orderedArray.includes(coin.symbol)
+                ? orderedArray.indexOf(coin.symbol)
+                : orderedArray.length;
+            },
+            'name',
+          ],
+          ['asc', 'asc'],
+        );
+
+        setSwapCryptoSupportedCoinsFrom(allSupportedCoinsOrdered);
       }
     } catch (err) {
       logger.error('Swap crypto getCurrencies Error: ' + JSON.stringify(err));
@@ -1584,7 +1650,18 @@ const SwapCryptoRoot: React.FC = () => {
 
       <FromWalletSelectorModal
         isVisible={fromWalletSelectorModalVisible}
-        customSupportedCurrencies={useDefaultToWallet && toWalletSelected ? swapCryptoSupportedCoinsFrom?.filter(coin => coin.symbol !== getExternalServiceSymbol(toWalletSelected.currencyAbbreviation, toWalletSelected.chain)) : swapCryptoSupportedCoinsFrom}
+        customSupportedCurrencies={
+          useDefaultToWallet && toWalletSelected
+            ? swapCryptoSupportedCoinsFrom?.filter(
+                coin =>
+                  coin.symbol !==
+                  getExternalServiceSymbol(
+                    toWalletSelected.currencyAbbreviation,
+                    toWalletSelected.chain,
+                  ),
+              )
+            : swapCryptoSupportedCoinsFrom
+        }
         livenetOnly={true}
         modalContext={'swapFrom'}
         modalTitle={t('Swap From')}
