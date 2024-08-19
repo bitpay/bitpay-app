@@ -98,8 +98,8 @@ android {
         applicationId "com.bitpay.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 91212223
-        versionName "14.24.3"
+        versionCode 91212225
+        versionName "14.25.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
     }
     splits {
