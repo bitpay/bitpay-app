@@ -1009,7 +1009,7 @@ export const buildAccountList = (
       currencyDisplay: 'symbol',
     });
 
-  key.wallets = key.wallets.filter(wallet => {
+  key.wallets.forEach(wallet => {
     if (opts?.filterByHideWallet && wallet.hideWallet) {
       return false;
     }
@@ -1122,8 +1122,6 @@ export const buildAccountList = (
       existingAccount.fiatPendingBalance! +=
         uiFormattedWallet.fiatPendingBalance ?? 0;
     }
-
-    return true;
   });
 
   if (!opts?.skipFiatCalculations) {

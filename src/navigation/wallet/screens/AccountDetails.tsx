@@ -1332,12 +1332,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         </AccountDropdown>
       </SheetModal>
 
-      <ReceiveAddress
-        isVisible={showReceiveAddressBottomModal}
-        closeModal={() => setShowReceiveAddressBottomModal(false)}
-        wallet={keyFullWalletObjs[0]}
-        context={'accountdetails'}
-      />
+      {keyFullWalletObjs[0] ? (
+        <ReceiveAddress
+          isVisible={showReceiveAddressBottomModal}
+          closeModal={() => setShowReceiveAddressBottomModal(false)}
+          wallet={keyFullWalletObjs[0]}
+          context={'accountdetails'}
+        />
+      ) : null}
     </AccountDetailsContainer>
   );
 };
