@@ -1492,7 +1492,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             onModalHide={onChainSelectorModalHide}
           />
         </SearchComponentContainer>
-        
+
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) &&
           selectedAssetsFromAccount.length === 0 && (

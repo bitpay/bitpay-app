@@ -340,7 +340,6 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const setSelectedWallet = async (supportedCoins: SwapCryptoCoin[]) => {
-
     if (selectedWallet) {
       const key = keys[selectedWallet.keyId];
 

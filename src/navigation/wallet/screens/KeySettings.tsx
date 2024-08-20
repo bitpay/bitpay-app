@@ -42,7 +42,7 @@ import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordTo
 import {URL} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
-import {sleep} from '../../../utils/helper-methods';
+import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -234,6 +234,12 @@ const KeySettings = () => {
               ),
             );
           });
+
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: _syncWallets,
+        });
 
         let message;
 
