@@ -6,7 +6,12 @@ import {
 import {each, filter} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {RefreshControl, ScrollView, TouchableOpacity} from 'react-native';
+import {
+  DeviceEventEmitter,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
@@ -62,6 +67,8 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import Icons from '../../wallet/components/WalletIcons';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -216,6 +223,18 @@ const HomeRoot = () => {
       dispatch(setShowKeyMigrationFailureModal(true));
     }
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.FIX_WALLET_ADDRESS,
+      async wallet => {
+        (await dispatch<any>(
+          createWalletAddress({wallet, newAddress: false}),
+        )) as string;
+      },
+    );
+    return () => subscription.remove();
+  }, []);
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
