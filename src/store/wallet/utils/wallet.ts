@@ -1000,6 +1000,7 @@ export const buildAccountList = (
     currencyAbbreviation?: string | undefined;
     walletId?: string | undefined;
     searchInput?: string | undefined;
+    filterByCustomWallets?: Wallet[] | undefined;
   },
 ) => {
   const accountMap: {[key: string]: Partial<AccountRowProps>} = {};
@@ -1011,7 +1012,9 @@ export const buildAccountList = (
       currencyDisplay: 'symbol',
     });
 
-  key.wallets.forEach(wallet => {
+  const wallets = opts?.filterByCustomWallets || key.wallets;
+
+  wallets.forEach(wallet => {
     if (opts?.filterByHideWallet && wallet.hideWallet) {
       return;
     }
