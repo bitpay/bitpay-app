@@ -14,8 +14,6 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {t} from 'i18next';
-import {createWalletAddress} from '../address/address';
-import {LogActions} from '../../../log';
 
 const BWC = BwcProvider.getInstance();
 
@@ -67,12 +65,6 @@ export const startJoinMultisig =
           };
           dispatch(subscribeEmailNotifications(_wallet, prefs));
         }
-
-        const receiveAddress = (await dispatch<any>(
-          createWalletAddress({wallet: _wallet, newAddress: true}),
-        )) as string;
-        dispatch(LogActions.info(`new address generated: ${receiveAddress}`));
-        _wallet.receiveAddress = receiveAddress;
 
         const {currencyAbbreviation, currencyName} = dispatch(
           mapAbbreviationAndName(

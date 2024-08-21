@@ -121,6 +121,7 @@ export type AddWalletParamList = {
   isToken?: boolean;
   isCustomToken?: boolean;
   tokenAddress?: string;
+  selectedAccountAddress?: string;
 };
 
 const CreateWalletContainer = styled.SafeAreaView`
@@ -151,6 +152,14 @@ const AssociatedWallet = styled.TouchableOpacity`
 `;
 
 const AssociatedAccount = styled.TouchableOpacity`
+  padding: 0 10px;
+  height: 64px;
+  border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+`;
+
+const AssociatedAccountNoTouchable = styled.View`
   padding: 0 10px;
   height: 64px;
   border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
@@ -256,6 +265,7 @@ const AddWallet = ({
     key,
     isToken,
     isCustomToken,
+    selectedAccountAddress,
   } = route.params;
   // temporary until advanced settings is finished
   const [showOptions, setShowOptions] = useState(false);
@@ -468,6 +478,13 @@ const AddWallet = ({
       appDispatch: dispatch,
       wallets: _evmWallets,
     });
+
+    if (selectedAccountAddress) {
+      _evmWallets = key.wallets.filter(
+        w => w.receiveAddress === selectedAccountAddress,
+      );
+    }
+
     let _accountsInfo = _evmWallets.map(wallet => {
       return {
         receiveAddress: wallet.receiveAddress,
@@ -868,7 +885,8 @@ const AddWallet = ({
         {showAssociatedAccountSelectionDropdown &&
         associatedWallet &&
         associatedWallet.receiveAddress &&
-        !loadingEVMWallets ? (
+        !loadingEVMWallets &&
+        !selectedAccountAddress ? (
           <AssociatedAccountContainer>
             <Label>{t('CHOOSE ACCOUNT')}</Label>
             <AssociatedAccount
@@ -910,6 +928,50 @@ const AddWallet = ({
                 </View>
               </Row>
             </AssociatedAccount>
+          </AssociatedAccountContainer>
+        ) : null}
+
+        {showAssociatedAccountSelectionDropdown &&
+        associatedWallet &&
+        associatedWallet.receiveAddress &&
+        !loadingEVMWallets &&
+        selectedAccountAddress ? (
+          <AssociatedAccountContainer>
+            <Label>{t('CHOOSE ACCOUNT')}</Label>
+            <AssociatedAccountNoTouchable>
+              <Row
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <View>
+                  <AccountLabel>
+                    {t('Account')} {associatedWallet.credentials.account}
+                  </AccountLabel>
+                  {associatedWallet.network !== 'livenet' && (
+                    <BadgeContainer>
+                      <Badge>{associatedWallet.network}</Badge>
+                    </BadgeContainer>
+                  )}
+                </View>
+
+                <View>
+                  <AddressRow>
+                    <SendToPillContainer>
+                      <AddPillContainer>
+                        <CurrencyImage
+                          img={CurrencyListIcons[chain]}
+                          size={20}
+                        />
+                        <PillText accent={'action'}>
+                          {formatCryptoAddress(associatedWallet.receiveAddress)}
+                        </PillText>
+                      </AddPillContainer>
+                    </SendToPillContainer>
+                  </AddressRow>
+                </View>
+              </Row>
+            </AssociatedAccountNoTouchable>
           </AssociatedAccountContainer>
         ) : null}
 

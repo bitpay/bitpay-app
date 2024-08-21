@@ -1000,6 +1000,7 @@ export const buildAccountList = (
     currencyAbbreviation?: string | undefined;
     walletId?: string | undefined;
     searchInput?: string | undefined;
+    filterByCustomWallets?: Wallet[] | undefined;
   },
 ) => {
   const accountMap: {[key: string]: Partial<AccountRowProps>} = {};
@@ -1011,7 +1012,9 @@ export const buildAccountList = (
       currencyDisplay: 'symbol',
     });
 
-  key.wallets.forEach(wallet => {
+  const wallets = opts?.filterByCustomWallets || key.wallets;
+
+  wallets.forEach(wallet => {
     if (opts?.filterByHideWallet && wallet.hideWallet) {
       return;
     }
@@ -1212,6 +1215,7 @@ const buildUIFormattedAssetsList = (
           chain: wallet.chain,
           chainImg: wallet.badgeImg || wallet.img,
           chainName: wallet.chainName,
+          accountAddress: wallet.receiveAddress!,
           fiatBalance: wallet.fiatBalance ?? 0,
           fiatLockedBalance: wallet.fiatLockedBalance ?? 0,
           fiatConfirmedLockedBalance: wallet.fiatConfirmedLockedBalance ?? 0,
@@ -1315,6 +1319,7 @@ const buildUIFormattedAssets = (
       chain: wallet.chain,
       chainImg: wallet.badgeImg || wallet.img,
       chainName: wallet.chainName,
+      accountAddress: wallet.receiveAddress!,
       fiatBalance: wallet.fiatBalance ?? 0,
       fiatLockedBalance: wallet.fiatLockedBalance ?? 0,
       fiatConfirmedLockedBalance: wallet.fiatConfirmedLockedBalance ?? 0,

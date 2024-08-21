@@ -26,7 +26,7 @@ import {
   getDecryptPassword,
 } from '../../../store/wallet/effects';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {sleep} from '../../../utils/helper-methods';
+import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
@@ -198,6 +198,11 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
             addedToExistingKey: false,
           }),
         );
+
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: multisigKey.wallets,
+        });
 
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
