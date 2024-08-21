@@ -1,7 +1,7 @@
 import React, {memo, useCallback, useState} from 'react';
 import {
   ActiveOpacity,
-  ChevronContainerTouchable,
+  ChevronContainer,
   Column,
   Row,
   RowContainer,
@@ -17,6 +17,8 @@ import ChevronUpSvgLight from '../../../assets/img/chevron-up-lightmode.svg';
 import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
 import ChevronUpSvgDark from '../../../assets/img/chevron-up-darkmode.svg';
 import {useTheme} from 'styled-components/native';
+import {setLocalAssetsDropdown} from '../../store/app/app.actions';
+import {useAppDispatch, useAppSelector} from '../../utils/hooks';
 
 const CurrencyImageContainer = styled.View`
   height: 30px;
@@ -34,6 +36,11 @@ const ChainAssetsContainer = styled(Row)`
   flex-direction: row;
 `;
 
+export interface LocalAssetsDropdown {
+  [account: string]: {
+    [chain: string]: boolean;
+  };
+}
 interface Props {
   id: string;
   accountItem: AssetsByChainData;
@@ -54,9 +61,16 @@ const AssetsByChainRow = ({
 }: Props) => {
   const {chain, chainName, fiatBalanceFormat, chainAssetsList, chainImg} =
     accountItem;
+  const dispatch = useAppDispatch();
+  const selectedLocalAssetsDropdown = useAppSelector(
+    ({APP}) => APP.selectedLocalAssetsDropdown,
+  );
+  const initialSelected = showChainAssetsByDefault
+    ? {[chain]: showChainAssetsByDefault}
+    : selectedLocalAssetsDropdown?.[accountItem.accountAddress] || {};
   const [showChainAssets, setShowChainAssets] = useState<{
     [key: string]: boolean;
-  }>({[chain]: showChainAssetsByDefault});
+  }>(initialSelected);
   const theme = useTheme();
 
   const memoizedRenderItem = useCallback(({item}: {item: WalletRowProps}) => {
@@ -73,13 +87,21 @@ const AssetsByChainRow = ({
 
   const onHide = () => {
     setShowChainAssets({[chain]: !showChainAssets[chain]});
+    dispatch(
+      setLocalAssetsDropdown({
+        [accountItem.accountAddress]: {
+          ...selectedLocalAssetsDropdown?.[accountItem.accountAddress],
+          [chain]: !showChainAssets[chain],
+        },
+      }),
+    );
   };
 
   return (
     <View>
       <RowContainer
         activeOpacity={ActiveOpacity}
-        onPress={() => {}}
+        onPress={onHide}
         style={{borderBottomWidth: 0, paddingBottom: 0}}>
         <CurrencyImageContainer>
           <CurrencyImage img={chainImg} size={20} />
@@ -98,7 +120,7 @@ const AssetsByChainRow = ({
             ) : (
               <H5>****</H5>
             )}
-            <ChevronContainerTouchable onPress={onHide}>
+            <ChevronContainer>
               {showChainAssets[chain] ? (
                 theme.dark ? (
                   <ChevronUpSvgDark width={10} height={6} />
@@ -110,7 +132,7 @@ const AssetsByChainRow = ({
               ) : (
                 <ChevronDownSvgLight width={10} height={6} />
               )}
-            </ChevronContainerTouchable>
+            </ChevronContainer>
           </ChainAssetsContainer>
         </Column>
       </RowContainer>

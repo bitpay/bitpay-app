@@ -161,6 +161,7 @@ export interface AssetsByChainData {
   chainName: string;
   chainImg: string | ((props?: any) => ReactElement);
   chainAssetsList: WalletRowProps[];
+  accountAddress: string;
   fiatBalance: number;
   fiatLockedBalance: number;
   fiatConfirmedLockedBalance: number;
@@ -545,6 +546,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               key,
               isCustomToken: true,
               isToken: true,
+              selectedAccountAddress: accountItem.receiveAddress,
             });
           }}>
           {t('Add Custom Token')}
