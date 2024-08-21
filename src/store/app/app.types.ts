@@ -17,6 +17,7 @@ import {BiometricModalConfig} from '../../components/modal/biometric/BiometricMo
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
+import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -77,6 +78,7 @@ export enum AppActionTypes {
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
   SET_DEFAULT_CHAIN_FILTER_OPTION = 'APP/SET_DEFAULT_CHAIN_FILTER_OPTION',
   SET_LOCAL_CHAIN_FILTER_OPTION = 'APP/SET_LOCAL_CHAIN_FILTER_OPTION',
+  SET_LOCAL_ASSETS_DROPDOWN = 'APP/SET_LOCAL_ASSETS_DROPDOWN',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_MIGRATION_MMKV_STORAGE_COMPLETE = 'APP/SET_MIGRATION_MMKV_STORAGE_COMPLETE',
@@ -358,6 +360,11 @@ interface SetLocalDefaultChainFilterOption {
   selectedLocalChainFilterOption: SupportedChains | undefined;
 }
 
+interface SetLocalAssetsDropdown {
+  type: typeof AppActionTypes.SET_LOCAL_ASSETS_DROPDOWN;
+  selectedLocalAssetsDropdown: LocalAssetsDropdown | undefined;
+}
+
 interface SetMigrationComplete {
   type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
 }
@@ -479,5 +486,6 @@ export type AppActionType =
   | ImportLedgerModalToggled
   | SetDefaultChainFilterOption
   | SetLocalDefaultChainFilterOption
+  | SetLocalAssetsDropdown
   | ShowChainSelectorModal
   | DismissChainSelectorModal;

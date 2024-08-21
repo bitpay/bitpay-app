@@ -161,6 +161,7 @@ export interface AssetsByChainData {
   chainName: string;
   chainImg: string | ((props?: any) => ReactElement);
   chainAssetsList: WalletRowProps[];
+  accountAddress: string;
   fiatBalance: number;
   fiatLockedBalance: number;
   fiatConfirmedLockedBalance: number;
@@ -545,6 +546,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               key,
               isCustomToken: true,
               isToken: true,
+              selectedAccountAddress: accountItem.receiveAddress,
             });
           }}>
           {t('Add Custom Token')}
@@ -1332,12 +1334,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         </AccountDropdown>
       </SheetModal>
 
-      <ReceiveAddress
-        isVisible={showReceiveAddressBottomModal}
-        closeModal={() => setShowReceiveAddressBottomModal(false)}
-        wallet={keyFullWalletObjs[0]}
-        context={'accountdetails'}
-      />
+      {keyFullWalletObjs[0] ? (
+        <ReceiveAddress
+          isVisible={showReceiveAddressBottomModal}
+          closeModal={() => setShowReceiveAddressBottomModal(false)}
+          wallet={keyFullWalletObjs[0]}
+          context={'accountdetails'}
+        />
+      ) : null}
     </AccountDetailsContainer>
   );
 };

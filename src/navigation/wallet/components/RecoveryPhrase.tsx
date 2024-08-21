@@ -498,6 +498,11 @@ const RecoveryPhrase = () => {
         await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: key.wallets,
+        });
       } catch (error) {
         // ignore error
       }

@@ -569,7 +569,9 @@ export const startCreateKeyWithOpts =
           passphrase: opts.passphrase,
         });
 
-        const _wallet = await dispatch(createWalletWithOpts({key: _key, opts}));
+        const _wallet = (await dispatch(
+          createWalletWithOpts({key: _key, opts}),
+        )) as Wallet;
 
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
@@ -588,6 +590,12 @@ export const startCreateKeyWithOpts =
           };
           dispatch(subscribeEmailNotifications(_wallet, prefs));
         }
+
+        const receiveAddress = (await dispatch<any>(
+          createWalletAddress({wallet: _wallet, newAddress: true}),
+        )) as string;
+        dispatch(LogActions.info(`new address generated: ${receiveAddress}`));
+        _wallet.receiveAddress = receiveAddress;
 
         const {currencyAbbreviation, currencyName} = dispatch(
           mapAbbreviationAndName(

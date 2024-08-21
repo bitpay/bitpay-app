@@ -776,8 +776,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             rates,
             dispatch,
             {
-              filterByHideWallet: true,
-              filterWalletsByBalance: true,
+              filterByCustomWallets: wallets.filter(w => w.keyId === key.id),
             },
           );
 
@@ -1127,7 +1126,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   const renderItem = useCallback(
     ({item}: {item: GlobalSelectObj | KeyWalletsRowProps<KeyWallet>}) => {
-      if (['sell', 'swapFrom', 'send'].includes(context)) {
+      if (
+        ['sell', 'swapFrom', 'send', 'coinbase', 'contact', 'scanner'].includes(
+          context,
+        )
+      ) {
         const keyWallets = item as KeyWalletsRowProps<KeyWallet>;
         return (
           <View>
@@ -1493,7 +1496,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             onModalHide={onChainSelectorModalHide}
           />
         </SearchComponentContainer>
-        
+
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) &&
           selectedAssetsFromAccount.length === 0 && (

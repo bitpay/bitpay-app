@@ -26,6 +26,7 @@ import moment from 'moment';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
+import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'activeModalId',
@@ -146,6 +147,7 @@ export interface AppState {
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   selectedChainFilterOption: SupportedChains | undefined;
   selectedLocalChainFilterOption: SupportedChains | undefined;
+  selectedLocalAssetsDropdown: LocalAssetsDropdown | undefined;
   recentSelectedChainFilterOption: string[];
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
@@ -240,6 +242,7 @@ const initialState: AppState = {
   recentDefaultAltCurrency: [],
   selectedChainFilterOption: undefined,
   selectedLocalChainFilterOption: undefined,
+  selectedLocalAssetsDropdown: undefined,
   recentSelectedChainFilterOption: [],
   migrationComplete: false,
   keyMigrationFailure: false,
@@ -673,6 +676,12 @@ export const appReducer = (
         ...state,
         selectedLocalChainFilterOption: action.selectedLocalChainFilterOption,
         recentSelectedChainFilterOption: recentSelectedLocalChainFilterOption,
+      };
+
+    case AppActionTypes.SET_LOCAL_ASSETS_DROPDOWN:
+      return {
+        ...state,
+        selectedLocalAssetsDropdown: action.selectedLocalAssetsDropdown,
       };
 
     case AppActionTypes.SET_MIGRATION_COMPLETE:

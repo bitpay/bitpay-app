@@ -224,7 +224,9 @@ const SearchComponent = <T extends SearchableItem>({
           return {...result, data: filteredData};
         });
       } else if (
-        ['sell', 'send', 'swapFrom'].includes(context) &&
+        ['sell', 'send', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
+          context,
+        ) &&
         selectedChainFilterOption
       ) {
         results = results

@@ -65,6 +65,8 @@ import {
   AssetsByChainData,
   AssetsByChainListProps,
 } from '../../../navigation/wallet/screens/AccountDetails';
+import {DeviceEventEmitter} from 'react-native';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 
 export const mapAbbreviationAndName =
   (
@@ -1005,6 +1007,7 @@ export const buildAccountList = (
     currencyAbbreviation?: string | undefined;
     walletId?: string | undefined;
     searchInput?: string | undefined;
+    filterByCustomWallets?: Wallet[] | undefined;
   },
 ) => {
   const accountMap: {[key: string]: Partial<AccountRowProps>} = {};
@@ -1016,13 +1019,15 @@ export const buildAccountList = (
       currencyDisplay: 'symbol',
     });
 
-  key.wallets = key.wallets.filter(wallet => {
+  const wallets = opts?.filterByCustomWallets || key.wallets;
+
+  wallets.forEach(wallet => {
     if (opts?.filterByHideWallet && wallet.hideWallet) {
-      return false;
+      return;
     }
 
     if (opts?.filterWalletsByBalance && wallet.balance.sat <= 0) {
-      return false;
+      return;
     }
 
     if (opts?.filterWalletsByPaymentOptions) {
@@ -1038,10 +1043,10 @@ export const buildAccountList = (
           },
         );
         if (!matchesPaymentOption) {
-          return false;
+          return;
         }
       } else if (opts?.network && opts?.network !== wallet.network) {
-        return false;
+        return;
       }
     }
 
@@ -1069,7 +1074,7 @@ export const buildAccountList = (
         // !walletNameMatches ||
         !walletIsComplete
       ) {
-        return false;
+        return;
       }
     }
     const uiFormattedWallet = buildUIFormattedWallet(
@@ -1084,21 +1089,28 @@ export const buildAccountList = (
     const {
       keyId,
       chain,
-      credentials: {account, walletName},
+      credentials: {account, walletId, n},
       receiveAddress,
     } = wallet;
 
-    if (!receiveAddress) {
-      // this should never happen
-      return false;
-    }
+    let accountKey = receiveAddress;
 
+    // Create address if needed - workaround for multisig not incomplete wallets
+    if (!accountKey) {
+      if (wallet?.credentials?.isComplete()) {
+        DeviceEventEmitter.emit(DeviceEmitterEvents.FIX_WALLET_ADDRESS, wallet);
+        return;
+      } else {
+        // Workaround for incomplete multisig wallets
+        accountKey = walletId;
+      }
+    }
     const isEVMChain = IsEVMChain(chain);
-    const name = key.evmAccountsInfo?.[receiveAddress]?.name;
-    const existingAccount = accountMap[receiveAddress];
+    const name = key.evmAccountsInfo?.[accountKey!]?.name;
+    const existingAccount = accountMap[accountKey!];
 
     if (!existingAccount) {
-      accountMap[receiveAddress] = {
+      accountMap[accountKey!] = {
         id: _.uniqueId('account_'),
         keyId,
         chains: [chain],
@@ -1129,8 +1141,6 @@ export const buildAccountList = (
       existingAccount.fiatPendingBalance! +=
         uiFormattedWallet.fiatPendingBalance ?? 0;
     }
-
-    return true;
   });
 
   if (!opts?.skipFiatCalculations) {
@@ -1212,6 +1222,7 @@ const buildUIFormattedAssetsList = (
           chain: wallet.chain,
           chainImg: wallet.badgeImg || wallet.img,
           chainName: wallet.chainName,
+          accountAddress: wallet.receiveAddress!,
           fiatBalance: wallet.fiatBalance ?? 0,
           fiatLockedBalance: wallet.fiatLockedBalance ?? 0,
           fiatConfirmedLockedBalance: wallet.fiatConfirmedLockedBalance ?? 0,
@@ -1315,6 +1326,7 @@ const buildUIFormattedAssets = (
       chain: wallet.chain,
       chainImg: wallet.badgeImg || wallet.img,
       chainName: wallet.chainName,
+      accountAddress: wallet.receiveAddress!,
       fiatBalance: wallet.fiatBalance ?? 0,
       fiatLockedBalance: wallet.fiatLockedBalance ?? 0,
       fiatConfirmedLockedBalance: wallet.fiatConfirmedLockedBalance ?? 0,
