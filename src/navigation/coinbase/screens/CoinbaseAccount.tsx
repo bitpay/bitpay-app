@@ -525,7 +525,7 @@ const CoinbaseAccount = ({
         }
         await sleep(400);
         navigation.navigate('GlobalSelect', {
-          context: 'coinbase',
+          context: 'coinbaseDeposit',
           recipient: {
             name: account.name || 'Coinbase',
             currency: currencyAbbreviation.toLowerCase(),
