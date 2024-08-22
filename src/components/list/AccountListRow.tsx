@@ -1,4 +1,4 @@
-import React, {memo, ReactElement} from 'react';
+import React, {memo, ReactElement, useEffect, useState} from 'react';
 import {
   Column,
   CurrencyImageContainer,
@@ -130,8 +130,17 @@ const AccountListRow = ({
   const _currencyAbbreviation =
     formatCurrencyAbbreviation(currencyAbbreviation);
 
-  // @ts-ignore
   const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
+
+  const [isBlockieReady, setIsBlockieReady] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsBlockieReady(true);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <RowContainer
@@ -141,7 +150,11 @@ const AccountListRow = ({
       {!hideIcon ? (
         <CurrencyImageContainer>
           {isMultiNetworkSupported ? (
-            <Blockie size={40} seed={receiveAddress} />
+            isBlockieReady ? (
+              <Blockie size={40} seed={receiveAddress} />
+            ) : (
+              <></>
+            )
           ) : (
             <CurrencyImage
               img={wallets[0].img}

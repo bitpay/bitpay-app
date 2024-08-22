@@ -484,10 +484,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   useEffect(() => {
     dispatch(Analytics.track('View Account'));
-    updateWalletStatusAndProfileBalance();
-    if (!skipInitializeHistory) {
-      debouncedLoadHistory();
-    }
+    const timer = setTimeout(() => {
+      updateWalletStatusAndProfileBalance();
+      if (!skipInitializeHistory) {
+        debouncedLoadHistory();
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {

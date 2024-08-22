@@ -1606,7 +1606,7 @@ const SwapCryptoRoot: React.FC = () => {
                           }}>
                           {useSendMax ? (
                             <ActionsContainer>
-                              <DataText style={{fontSize: 38}}>
+                              <DataText>
                                 {t('Maximum Amount')}
                               </DataText>
                             </ActionsContainer>

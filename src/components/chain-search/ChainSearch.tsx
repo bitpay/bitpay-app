@@ -35,7 +35,7 @@ export const SearchIconContainer = styled.View`
 export const SearchFilterContainer = styled.TouchableOpacity`
   position: absolute;
   right: 0;
-  width: 120px;
+  width: auto;
   justify-content: center;
   align-items: center;
   border-radius: 20px;
