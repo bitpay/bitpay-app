@@ -178,6 +178,10 @@ const ProcessTx =
     // New transaction output format. Fill tx.amount and tx.toAmount for
     // backward compatibility.
     if (tx.outputs?.length) {
+      // ThorSwap has OP_RETURN output in the first position with addressTo = 'false'.
+      tx.outputs = tx.outputs.filter(o => o.address !== 'false');
+      tx.addressTo = tx.outputs[0].address!;
+
       const outputsNr = tx.outputs.length;
 
       if (tx.action !== 'received') {
