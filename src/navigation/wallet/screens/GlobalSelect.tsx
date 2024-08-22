@@ -527,7 +527,6 @@ const handleLinkedChainSelection = (
   selectedNetworkForDeposit: any,
   filteredSelectedObj: any,
   setAddTokenToLinkedWallet: (obj: any) => void,
-  openWalletSelector: (obj: any) => void,
   openKeySelector: (obj: any) => void,
 ) => {
   const filteredLinkedChain = filterByChain(
@@ -536,10 +535,8 @@ const handleLinkedChainSelection = (
   );
   if (Object.keys(filteredLinkedChain?.availableWalletsByKey).length > 0) {
     setAddTokenToLinkedWallet(filteredSelectedObj);
-    openWalletSelector(filteredLinkedChain);
-  } else {
-    openKeySelector(filteredSelectedObj);
   }
+  openKeySelector(filteredSelectedObj);
 };
 
 const handleTokenWalletSelection = (
@@ -549,7 +546,6 @@ const handleTokenWalletSelection = (
   selectedNetworkForDeposit: any,
   currenciesSupportedList: any[],
   setAddTokenToLinkedWallet: (obj: any) => void,
-  openWalletSelector: (obj: any) => void,
   openKeySelector: (obj: any) => void,
 ) => {
   const linkedChain = currenciesSupportedList.find(
@@ -563,7 +559,6 @@ const handleTokenWalletSelection = (
       selectedNetworkForDeposit,
       filteredSelectedObj,
       setAddTokenToLinkedWallet,
-      openWalletSelector,
       openKeySelector,
     );
   } else {
@@ -1201,7 +1196,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   chain, // as selectedNetworkForDeposit
                   currenciesSupportedList,
                   setAddTokenToLinkedWallet,
-                  openWalletSelector,
                   openKeySelector,
                 );
               } else {
