@@ -16,7 +16,7 @@ import {
   useMount,
 } from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {RefreshControl, View} from 'react-native';
+import {RefreshControl, View, Platform} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
 import {
@@ -34,6 +34,7 @@ import {
   LuckySevens,
   SlateDark,
   White,
+  Black,
 } from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
@@ -73,9 +74,7 @@ import {
   OtherBitpaySupportedCoins,
 } from '../../../constants/currencies';
 import {IsValidBitcoinCashAddress} from '../../../store/wallet/utils/validations';
-import ToWalletSelectorModal, {
-  ToWalletSelectorCustomCurrency,
-} from '../../services/components/ToWalletSelectorModal';
+import {ToWalletSelectorCustomCurrency} from '../../services/components/ToWalletSelectorModal';
 import {
   addWallet,
   AddWalletData,
@@ -88,6 +87,9 @@ import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transactions/transactions';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {BitpaySupportedTokens} from '../../../constants/currencies';
+import GlobalSelect from '../../wallet/screens/GlobalSelect';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const AccountContainer = styled.SafeAreaView`
   flex: 1;
@@ -173,6 +175,11 @@ export const WalletSelectMenuHeaderContainer = styled.View`
   padding: 50px 0;
 `;
 
+const GlobalSelectContainer = styled.View`
+  flex: 1;
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+`;
+
 export type CoinbaseAccountScreenParamList = {
   accountId: string;
   refresh?: boolean;
@@ -203,6 +210,7 @@ const CoinbaseAccount = ({
   route,
 }: NativeStackScreenProps<CoinbaseGroupParamList, 'CoinbaseAccount'>) => {
   const {t} = useTranslation();
+  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -426,10 +434,10 @@ const CoinbaseAccount = ({
 
       const _currency: ToWalletSelectorCustomCurrency = {
         currencyAbbreviation: _currencyAbbreviation,
-        symbol: getCurrencyAbbreviation(account.currency.code, chain),
+        symbol: getCurrencyAbbreviation(account.currency.code, _chain),
         chain: _chain,
         name: account.currency.name,
-        logoUri: getLogoUri(account.currency.code, chain),
+        logoUri: getLogoUri(account.currency.code, _chain),
         badgeUri: getBadgeImg(account.currency.code, _chain),
       };
 
@@ -517,7 +525,7 @@ const CoinbaseAccount = ({
         }
         await sleep(400);
         navigation.navigate('GlobalSelect', {
-          context: 'coinbase',
+          context: 'coinbaseDeposit',
           recipient: {
             name: account.name || 'Coinbase',
             currency: currencyAbbreviation.toLowerCase(),
@@ -611,6 +619,54 @@ const CoinbaseAccount = ({
       onRefresh();
     }
   });
+
+  const onDismiss = async (
+    newWallet?: Wallet,
+    createNewWalletData?: AddWalletData,
+  ) => {
+    setWalletModalVisible(false);
+    if (newWallet?.currencyAbbreviation) {
+      onSelectedWallet(newWallet);
+    } else if (createNewWalletData) {
+      try {
+        if (createNewWalletData.key.isPrivKeyEncrypted) {
+          logger.debug('Key is Encrypted. Trying to decrypt...');
+          await sleep(500);
+          const password = await dispatch(
+            getDecryptPassword(createNewWalletData.key),
+          );
+          createNewWalletData.options.password = password;
+        }
+
+        await sleep(500);
+        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        const createdToWallet = await dispatch(addWallet(createNewWalletData));
+        logger.debug(
+          `Added ${createdToWallet?.currencyAbbreviation} wallet from Coinbase`,
+        );
+        dispatch(
+          Analytics.track('Created Basic Wallet', {
+            coin: createNewWalletData.currency.currencyAbbreviation,
+            chain: createNewWalletData.currency.chain,
+            isErc20Token: createNewWalletData.currency.isToken,
+            context: 'coinbase',
+          }),
+        );
+        onSelectedWallet(createdToWallet);
+        await sleep(300);
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+      } catch (err: any) {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        if (err.message === 'invalid password') {
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        } else {
+          showError(err.message);
+        }
+      }
+    }
+  };
 
   const keyExtractor = useCallback((item, index) => index.toString(), []);
 
@@ -706,63 +762,21 @@ const CoinbaseAccount = ({
         onEndReached={() => loadTransactions()}
       />
 
-      <ToWalletSelectorModal
+      <SheetModal
         isVisible={walletModalVisible}
-        modalContext={'coinbase'}
-        disabledChain={undefined}
-        customSupportedCurrencies={customSupportedCurrencies}
-        livenetOnly={true}
-        modalTitle={t('Select Destination')}
-        onDismiss={async (
-          newWallet?: Wallet,
-          createNewWalletData?: AddWalletData,
-        ) => {
-          setWalletModalVisible(false);
-          if (newWallet?.currencyAbbreviation) {
-            onSelectedWallet(newWallet);
-          } else if (createNewWalletData) {
-            try {
-              if (createNewWalletData.key.isPrivKeyEncrypted) {
-                logger.debug('Key is Encrypted. Trying to decrypt...');
-                await sleep(500);
-                const password = await dispatch(
-                  getDecryptPassword(createNewWalletData.key),
-                );
-                createNewWalletData.options.password = password;
-              }
-
-              await sleep(500);
-              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
-              const createdToWallet = await dispatch(
-                addWallet(createNewWalletData),
-              );
-              logger.debug(
-                `Added ${createdToWallet?.currencyAbbreviation} wallet from Coinbase`,
-              );
-              dispatch(
-                Analytics.track('Created Basic Wallet', {
-                  coin: createNewWalletData.currency.currencyAbbreviation,
-                  chain: createNewWalletData.currency.chain,
-                  isErc20Token: createNewWalletData.currency.isToken,
-                  context: 'coinbase',
-                }),
-              );
-              onSelectedWallet(createdToWallet);
-              await sleep(300);
-              dispatch(dismissOnGoingProcessModal());
-              await sleep(500);
-            } catch (err: any) {
-              dispatch(dismissOnGoingProcessModal());
-              await sleep(500);
-              if (err.message === 'invalid password') {
-                dispatch(showBottomNotificationModal(WrongPasswordError()));
-              } else {
-                showError(err.message);
-              }
-            }
-          }
-        }}
-      />
+        onBackdropPress={() => onDismiss()}>
+        <GlobalSelectContainer
+          style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
+          <GlobalSelect
+            modalContext={'coinbase'}
+            customSupportedCurrencies={customSupportedCurrencies}
+            livenetOnly={true}
+            modalTitle={t('Select Destination')}
+            useAsModal={true}
+            globalSelectOnDismiss={onDismiss}
+          />
+        </GlobalSelectContainer>
+      </SheetModal>
 
       <AmountModal
         isVisible={amountModalVisible}
