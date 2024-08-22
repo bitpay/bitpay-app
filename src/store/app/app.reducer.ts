@@ -50,6 +50,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showOnGoingProcessModal',
   'showPinModal',
   'selectedLocalChainFilterOption',
+  'tokensDataLoaded',
   'isImportLedgerModalVisible',
 ];
 
@@ -162,6 +163,7 @@ export interface AppState {
   hasViewedBillsTab: boolean;
   isImportLedgerModalVisible: boolean;
   inAppBrowserOpen: boolean;
+  tokensDataLoaded: boolean;
 }
 
 const initialState: AppState = {
@@ -257,6 +259,7 @@ const initialState: AppState = {
   hasViewedBillsTab: false,
   isImportLedgerModalVisible: false,
   inAppBrowserOpen: false,
+  tokensDataLoaded: false,
 };
 
 export const appReducer = (
@@ -286,6 +289,12 @@ export const appReducer = (
       return {
         ...state,
         appWasInit: true,
+      };
+
+    case AppActionTypes.APP_TOKENS_DATA_LOADED:
+      return {
+        ...state,
+        tokensDataLoaded: true,
       };
 
     case AppActionTypes.APP_READY_FOR_DEEPLINKING:

@@ -43,6 +43,10 @@ export const failedAppInit = (): AppActionType => ({
   payload: true,
 });
 
+export const appTokensDataLoaded = (): AppActionType => ({
+  type: AppActionTypes.APP_TOKENS_DATA_LOADED,
+});
+
 export const appIsReadyForDeeplinking = (): AppActionType => ({
   type: AppActionTypes.APP_READY_FOR_DEEPLINKING,
 });
