@@ -1265,6 +1265,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     selectedKey: Key,
   ) => {
     setKeySelectorModalVisible(false);
+    await sleep(1000);
     if (selectedKey.backupComplete) {
       logger.debug(
         `Key selected. Adding ${selectedCurrency.currencyAbbreviation} wallet.`,
@@ -1724,6 +1725,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 {accountsCardsList?.accounts?.map((item: AccountRowProps) => {
                   return (
                     <AccountListRow
+                      key={item.id}
                       id={item.id}
                       accountItem={item}
                       hideBalance={hideAllBalances}
