@@ -22,6 +22,7 @@ import {
   getEVMFeeCurrency,
 } from '../../../../utils/helper-methods';
 import {GetProtocolPrefix} from '../../utils/currency';
+import {AppActions} from '../../../app';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
@@ -54,6 +55,7 @@ export const startGetTokenOptions =
         }),
       );
       dispatch(LogActions.info('successful [startGetTokenOptions]'));
+      dispatch(AppActions.appTokensDataLoaded());
     } catch (e) {
       let errorStr;
       if (e instanceof Error) {
@@ -63,6 +65,7 @@ export const startGetTokenOptions =
       }
       dispatch(failedGetTokenOptions());
       dispatch(LogActions.error(`failed [startGetTokenOptions]: ${errorStr}`));
+      dispatch(AppActions.appTokensDataLoaded());
     }
   };
 
