@@ -123,10 +123,10 @@ interface Props {
 }
 
 export const viewOnBlockchain =
-  (wallet: Wallet): Effect =>
+  (wallet: Wallet, address?: string): Effect =>
   async dispatch => {
     const chain = wallet.chain.toLowerCase();
-    const tokenAddress = wallet.credentials.token?.address;
+    const tokenAddress = address ?? wallet.credentials.token?.address;
     const url =
       wallet.network === 'livenet'
         ? `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrls}address/${tokenAddress}`
