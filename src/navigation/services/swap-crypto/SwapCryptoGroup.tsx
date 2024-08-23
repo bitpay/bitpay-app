@@ -28,6 +28,9 @@ import {
   thorswapTxData,
 } from '../../../store/swap-crypto/swap-crypto.models';
 import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-services/ExternalServicesGroup';
+import SwapCryptoApproveErc20, {
+  SwapCryptoApproveErc20Params,
+} from './screens/SwapCryptoApproveErc20';
 
 interface SwapCryptoProps {
   SwapCrypto: typeof Root;
@@ -47,6 +50,7 @@ export type SwapCryptoGroupParamList = {
       }
     | undefined;
   ThorswapCheckout: ThorswapCheckoutProps | undefined;
+  SwapCryptoApproveErc20: SwapCryptoApproveErc20Params;
 };
 
 export enum SwapCryptoScreens {
@@ -54,6 +58,7 @@ export enum SwapCryptoScreens {
   SWAP_CRYPTO_OFFERS = 'SwapCryptoOffers',
   CHANGELLY_CHECKOUT = 'ChangellyCheckout',
   THORSWAP_CHECKOUT = 'ThorswapCheckout',
+  SWAP_CRYPTO_APPROVE = 'SwapCryptoApproveErc20',
 }
 
 const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
@@ -171,6 +176,14 @@ const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
         options={{
           gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Swap Checkout')}</HeaderTitle>,
+        }}
+      />
+      <SwapCrypto.Screen
+        name={SwapCryptoScreens.SWAP_CRYPTO_APPROVE}
+        component={SwapCryptoApproveErc20}
+        options={{
+          gestureEnabled: false,
+          headerTitle: () => <HeaderTitle>{t('Approve Swap')}</HeaderTitle>,
         }}
       />
     </SwapCrypto.Group>
