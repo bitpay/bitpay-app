@@ -1527,17 +1527,19 @@ const SwapCryptoRoot: React.FC = () => {
                         <SwapCryptoLoadingWalletSkeleton />
                       </SelectedOptionCol>
                     )}
-                    <SelectedOptionCol>
-                      <ArrowContainer>
-                        <SelectorArrowRight
-                          {...{
-                            width: 13,
-                            height: 13,
-                            color: theme.dark ? White : Slate,
-                          }}
-                        />
-                      </ArrowContainer>
-                    </SelectedOptionCol>
+                    {fromWalletSelected && !loadingWalletFromStatus ? (
+                      <SelectedOptionCol>
+                        <ArrowContainer>
+                          <SelectorArrowRight
+                            {...{
+                              width: 13,
+                              height: 13,
+                              color: theme.dark ? White : Slate,
+                            }}
+                          />
+                        </ArrowContainer>
+                      </SelectedOptionCol>
+                    ) : null}
                   </TouchableOpacity>
                 </ActionsContainer>
 
@@ -1571,7 +1573,7 @@ const SwapCryptoRoot: React.FC = () => {
           {toWalletSelected ? (
             <>
               {loadingEnterAmountBtn ? (
-                <SpinnerContainer>
+                <SpinnerContainer style={{height: 40}}>
                   <ActivityIndicator color={ProgressBlue} />
                 </SpinnerContainer>
               ) : (
@@ -1606,9 +1608,7 @@ const SwapCryptoRoot: React.FC = () => {
                           }}>
                           {useSendMax ? (
                             <ActionsContainer>
-                              <DataText>
-                                {t('Maximum Amount')}
-                              </DataText>
+                              <DataText>{t('Maximum Amount')}</DataText>
                             </ActionsContainer>
                           ) : (
                             <View style={{flexDirection: 'column'}}>
@@ -1617,7 +1617,8 @@ const SwapCryptoRoot: React.FC = () => {
                                 ellipsizeMode="tail">
                                 {amountFrom || 0}
                               </AmountText>
-                              <DataText style={{fontSize: 12}}>
+                              <DataText
+                                style={{fontSize: 12, textAlign: 'center'}}>
                                 {formatedAmountFrom}
                               </DataText>
                             </View>
