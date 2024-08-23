@@ -97,25 +97,13 @@ const NetworkChainContainer = styled.TouchableOpacity<{selected?: boolean}>`
     `};
 `;
 
-const NetworkName = styled(BaseText)<{selected?: boolean}>`
+export const NetworkName = styled(BaseText)<{selected?: boolean}>`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   font-weight: 500;
   font-size: 16px;
 `;
 
-const NetworkChainLabelContainer = styled.View<{selected?: boolean}>`
-  align-items: center;
-  justify-content: center;
-`;
-
-const NetworkChainLabel = styled(BaseText)<{selected?: boolean}>`
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-  font-size: 12px;
-  line-height: 22px;
-  font-weight: 400;
-`;
-
-const RowContainer = styled.View`
+const NetworkRowContainer = styled.View`
   flex-direction: row;
   display: flex;
   align-items: center;
@@ -186,7 +174,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
               }
               setSearchVal('');
             }}>
-            <RowContainer>
+            <NetworkRowContainer>
               <ImageContainer>
                 {supportedChain?.img ? (
                   <CurrencyImage img={supportedChain?.img} size={32} />
@@ -195,7 +183,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
                 )}
               </ImageContainer>
               <NetworkName selected={selected}>{badgeLabel}</NetworkName>
-            </RowContainer>
+            </NetworkRowContainer>
           </NetworkChainContainer>
           {!selected && !isLastItem ? <Hr /> : null}
         </>
