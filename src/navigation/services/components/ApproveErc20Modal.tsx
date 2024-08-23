@@ -529,8 +529,8 @@ const ApproveErc20Modal: React.FC<ApproveErc20ModalProps> = ({
                       <LinkIcon />
                       <ContractLink
                         onPress={() =>
-                          console.log(
-                            'TODO: spenderData.address: ' + spenderData.address,
+                          dispatch(
+                            viewOnBlockchain(wallet, spenderData.address),
                           )
                         }>
                         {t('View Contract')}

@@ -29,7 +29,6 @@ import {
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {Row, ScreenGutter} from '../../../components/styled/Containers';
-import _ from 'lodash';
 import {cloneDeep, groupBy, unionBy, uniqueId} from 'lodash';
 import KeyWalletsRow, {
   KeyWallet,
@@ -183,10 +182,6 @@ const NoWalletsMsg = styled(BaseText)`
   margin-top: 20px;
 `;
 
-const PlusIconContainer = styled.View`
-  margin-right: 15px;
-`;
-
 const SearchComponentContainer = styled.View`
   margin-bottom: 16px;
 `;
@@ -213,26 +208,11 @@ const CloseButtonText = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
 `;
 
-interface ToWalletSelectorCoinObj {
-  id: string;
-  chain: string;
-  currencyAbbreviation: string;
-  currencyName: string;
-  tokenAddress?: string;
-  img?: string | ((props?: any) => ReactElement);
-  total: number;
-  availableWalletsByKey: {
-    [key in string]: Wallet[];
-  };
-}
-interface ToWalletSelectorChainObj extends ToWalletSelectorCoinObj {
-  tokens?: ToWalletSelectorCoinObj[];
-}
-
 export type GlobalSelectModalContext =
   | 'send'
   | 'receive'
   | 'coinbase'
+  | 'coinbaseDeposit'
   | 'contact'
   | 'scanner'
   | 'sell'
@@ -527,7 +507,6 @@ const handleLinkedChainSelection = (
   selectedNetworkForDeposit: any,
   filteredSelectedObj: any,
   setAddTokenToLinkedWallet: (obj: any) => void,
-  openWalletSelector: (obj: any) => void,
   openKeySelector: (obj: any) => void,
 ) => {
   const filteredLinkedChain = filterByChain(
@@ -536,10 +515,8 @@ const handleLinkedChainSelection = (
   );
   if (Object.keys(filteredLinkedChain?.availableWalletsByKey).length > 0) {
     setAddTokenToLinkedWallet(filteredSelectedObj);
-    openWalletSelector(filteredLinkedChain);
-  } else {
-    openKeySelector(filteredSelectedObj);
   }
+  openKeySelector(filteredSelectedObj);
 };
 
 const handleTokenWalletSelection = (
@@ -549,7 +526,6 @@ const handleTokenWalletSelection = (
   selectedNetworkForDeposit: any,
   currenciesSupportedList: any[],
   setAddTokenToLinkedWallet: (obj: any) => void,
-  openWalletSelector: (obj: any) => void,
   openKeySelector: (obj: any) => void,
 ) => {
   const linkedChain = currenciesSupportedList.find(
@@ -563,7 +539,6 @@ const handleTokenWalletSelection = (
       selectedNetworkForDeposit,
       filteredSelectedObj,
       setAddTokenToLinkedWallet,
-      openWalletSelector,
       openKeySelector,
     );
   } else {
@@ -642,13 +617,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const navigation = useNavigation();
   const [walletSelectModalVisible, setWalletSelectModalVisible] =
     useState(false);
-  const [selectedObj, setSelectedObj] = useState({} as GlobalSelectObj);
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState<
     (GlobalSelectObj | KeyWalletsRowProps<KeyWallet>)[]
-  >([]);
-  const [searchAssetsResults, setSearchAssetsResults] = useState<
-    AssetsByChainData[]
   >([]);
   const [selectedEVMAccount, setSelectedEVMAccount] = useState(
     {} as Partial<AccountRowProps> & {assetsByChain?: AssetsByChainData[]},
@@ -708,9 +679,14 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   // only show wallets with funds
   // only show selected account address wallets if selectedAccountAddress is provided
   if (
-    ['send', 'sell', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
-      context,
-    )
+    [
+      'send',
+      'sell',
+      'swapFrom',
+      'coinbaseDeposit',
+      'contact',
+      'scanner',
+    ].includes(context)
   ) {
     wallets = wallets.filter(
       wallet =>
@@ -729,7 +705,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     );
   }
 
-  if (recipient && ['coinbase', 'contact', 'scanner'].includes(context)) {
+  if (
+    recipient &&
+    ['coinbaseDeposit', 'contact', 'scanner'].includes(context)
+  ) {
     if (recipient.currency && recipient.chain) {
       wallets = wallets.filter(
         wallet =>
@@ -748,6 +727,19 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     wallets = wallets.filter(wallet => wallet.network === 'livenet');
   }
 
+  if (context === 'coinbase' && useAsModal && customSupportedCurrencies) {
+    const supportedCurrencies = [
+      ...new Set(
+        customSupportedCurrencies.map(item =>
+          item.currencyAbbreviation.toLowerCase(),
+        ),
+      ),
+    ];
+    wallets = wallets.filter(wallet =>
+      supportedCurrencies.includes(wallet.currencyAbbreviation),
+    );
+  }
+
   const currenciesSupportedList = useMemo(() => {
     const coins = customSupportedCurrencies
       ? customSupportedCurrencies
@@ -764,9 +756,15 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       | KeyWalletsRowProps<KeyWallet>[]
       | GlobalSelectObjByKey;
     if (
-      ['send', 'sell', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
-        context,
-      )
+      [
+        'send',
+        'sell',
+        'swapFrom',
+        'coinbase',
+        'coinbaseDeposit',
+        'contact',
+        'scanner',
+      ].includes(context)
     ) {
       allCurrencyData = Object.values(keys)
         .map(key => {
@@ -912,7 +910,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       if (!wallet) {
         return;
       }
-      if (['coinbase', 'contact', 'scanner'].includes(context)) {
+      if (
+        ['coinbase', 'coinbaseDeposit', 'contact', 'scanner'].includes(context)
+      ) {
         setWalletSelectModalVisible(false);
         await sleep(500);
         const {name, address, type, destinationTag, opts} = recipient!;
@@ -1127,9 +1127,15 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const renderItem = useCallback(
     ({item}: {item: GlobalSelectObj | KeyWalletsRowProps<KeyWallet>}) => {
       if (
-        ['sell', 'swapFrom', 'send', 'coinbase', 'contact', 'scanner'].includes(
-          context,
-        )
+        [
+          'sell',
+          'swapFrom',
+          'send',
+          'coinbase',
+          'coinbaseDeposit',
+          'contact',
+          'scanner',
+        ].includes(context)
       ) {
         const keyWallets = item as KeyWalletsRowProps<KeyWallet>;
         return (
@@ -1185,10 +1191,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           hasSelectedChainFilterOption={!!selectedChainFilterOption}
           emit={(selectObj: GlobalSelectObj) => {
             // if only one wallet - skip wallet selector
-            const wallets = Object.values(
+            const _wallets = Object.values(
               selectObj.availableWalletsByKey,
             ).flat();
-            if (wallets.length === 0) {
+            if (_wallets.length === 0) {
               const {chains, currencyAbbreviation} = selectObj;
               const chain = chains[0];
               if (
@@ -1202,7 +1208,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   chain, // as selectedNetworkForDeposit
                   currenciesSupportedList,
                   setAddTokenToLinkedWallet,
-                  openWalletSelector,
                   openKeySelector,
                 );
               } else {
@@ -1266,6 +1271,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     selectedKey: Key,
   ) => {
     setKeySelectorModalVisible(false);
+    await sleep(1000);
     if (selectedKey.backupComplete) {
       logger.debug(
         `Key selected. Adding ${selectedCurrency.currencyAbbreviation} wallet.`,
@@ -1322,11 +1328,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       `Account selected. Adding ${selectedAccount.receiveAddress} wallet.`,
     );
 
-    const {keyId, wallets} = selectedAccount;
+    const {keyId, wallets: _wallets} = selectedAccount;
     // Needed to prevent pointer issues
     const associatedWallet = findWalletById(
       keys[keyId].wallets,
-      wallets[0].id,
+      _wallets[0].id,
     ) as Wallet;
 
     handleBasicWalletCreation(selectedCurrency, selectedKey, associatedWallet);
@@ -1725,6 +1731,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 {accountsCardsList?.accounts?.map((item: AccountRowProps) => {
                   return (
                     <AccountListRow
+                      key={item.id}
                       id={item.id}
                       accountItem={item}
                       hideBalance={hideAllBalances}

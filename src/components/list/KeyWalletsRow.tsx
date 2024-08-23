@@ -12,7 +12,7 @@ import {useTranslation} from 'react-i18next';
 import {
   ActiveOpacity,
   BadgeContainer,
-  ChevronContainerTouchable,
+  ChevronContainer,
   Column,
   Row,
 } from '../styled/Containers';
@@ -183,7 +183,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                 isLast={index === key.accounts.length - 1}>
                 <AccountChainsContainer
                   activeOpacity={ActiveOpacity}
-                  onPress={() => {}}>
+                  onPress={() => onHide(account.receiveAddress)}>
                   <Blockie size={19} seed={account.receiveAddress} />
                   <Column>
                     <H5 ellipsizeMode="tail" numberOfLines={1}>
@@ -198,8 +198,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                         </Badge>
                       </BadgeContainer>
 
-                      <ChevronContainerTouchable
-                        onPress={() => onHide(account.receiveAddress)}>
+                      <ChevronContainer>
                         {showChainAssets?.[account.receiveAddress] ===
                           undefined ||
                         showChainAssets[account.receiveAddress] ? (
@@ -213,7 +212,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                         ) : (
                           <ChevronUpSvgLight width={10} height={6} />
                         )}
-                      </ChevronContainerTouchable>
+                      </ChevronContainer>
                     </ChainAssetsContainer>
                   </Column>
                 </AccountChainsContainer>
@@ -263,7 +262,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                   isLast={index === key.accounts.length - 1}>
                   <AccountChainsContainer
                     activeOpacity={ActiveOpacity}
-                    onPress={() => {}}>
+                    onPress={() => onHide(wallet.id)}>
                     <CurrencyImage img={wallet.img} size={20} />
                     <Column>
                       <H5 ellipsizeMode="tail" numberOfLines={1}>
@@ -276,8 +275,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                     </Column>
                     <Column style={{alignItems: 'flex-end'}}>
                       <ChainAssetsContainer>
-                        <ChevronContainerTouchable
-                          onPress={() => onHide(wallet.id)}>
+                        <ChevronContainer>
                           {showChainAssets?.[wallet.id] === undefined ||
                           showChainAssets[wallet.id] ? (
                             theme.dark ? (
@@ -290,7 +288,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                           ) : (
                             <ChevronUpSvgLight width={10} height={6} />
                           )}
-                        </ChevronContainerTouchable>
+                        </ChevronContainer>
                       </ChainAssetsContainer>
                     </Column>
                   </AccountChainsContainer>

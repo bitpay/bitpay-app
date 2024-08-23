@@ -10,7 +10,7 @@ const SwapCryptoLoadingWalletSkeleton = () => {
     <SkeletonPlaceholder
       backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}
       highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
-      <SkeletonPlaceholder.Item width={270} height={12} marginTop={20} />
+      <SkeletonPlaceholder.Item width={270} height={15} marginTop={20} />
     </SkeletonPlaceholder>
   );
 };
