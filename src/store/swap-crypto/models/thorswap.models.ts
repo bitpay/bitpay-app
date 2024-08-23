@@ -247,6 +247,7 @@ export enum ThorswapTrackingStatus {
   retries_exceeded = 'retries_exceeded',
   parsing_error = 'parsing_error',
   success = 'success',
+  error = 'error',
 
   // bitpay custom status
   bitpayTxSent = 'bitpayTxSent',
