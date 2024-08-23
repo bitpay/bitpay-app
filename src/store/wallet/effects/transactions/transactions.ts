@@ -317,46 +317,56 @@ const ProcessNewTxs =
     const {currencyAbbreviation} = wallet;
 
     for (let tx of txs) {
-      // workaround for BWS bug / coin is missing and chain is in uppercase
-      tx.coin = wallet.currencyAbbreviation;
-      tx.chain = wallet.chain;
+      try {
+        // workaround for BWS bug / coin is missing and chain is in uppercase
+        tx.coin = wallet.currencyAbbreviation;
+        tx.chain = wallet.chain;
 
-      if (shouldFilterTx(tx, wallet)) {
-        continue;
-      }
+        if (shouldFilterTx(tx, wallet)) {
+          continue;
+        }
 
-      tx = dispatch(ProcessTx(tx, wallet));
+        tx = dispatch(ProcessTx(tx, wallet));
 
-      // no future transactions...
-      if (tx.time > now) {
-        tx.time = now;
-      }
+        // no future transactions...
+        if (tx.time > now) {
+          tx.time = now;
+        }
 
-      if (tx.confirmations === 0 && currencyAbbreviation === 'btc') {
-        const {inputs} = await GetCoinsForTx(wallet, tx.txid);
-        tx.hasUnconfirmedInputs = inputs.some(
-          (input: any) => input.mintHeight < 0,
-        );
-      }
+        if (tx.confirmations === 0 && currencyAbbreviation === 'btc') {
+          const {inputs} = await GetCoinsForTx(wallet, tx.txid);
+          tx.hasUnconfirmedInputs = inputs.some(
+            (input: any) => input.mintHeight < 0,
+          );
+        }
 
-      if (tx.confirmations >= SAFE_CONFIRMATIONS) {
-        tx.safeConfirmed = SAFE_CONFIRMATIONS + '+';
-      } else {
-        tx.safeConfirmed = false;
-      }
+        if (tx.confirmations >= SAFE_CONFIRMATIONS) {
+          tx.safeConfirmed = SAFE_CONFIRMATIONS + '+';
+        } else {
+          tx.safeConfirmed = false;
+        }
 
-      if (tx.note) {
-        delete tx.note.encryptedEditedByName;
-        delete tx.note.encryptedBody;
-      }
+        if (tx.note) {
+          delete tx.note.encryptedEditedByName;
+          delete tx.note.encryptedBody;
+        }
 
-      if (!txHistoryUnique[tx.txid]) {
-        ret.push(tx);
-        txHistoryUnique[tx.txid] = true;
-      } else {
+        if (!txHistoryUnique[tx.txid]) {
+          ret.push(tx);
+          txHistoryUnique[tx.txid] = true;
+        } else {
+          dispatch(
+            LogActions.info(`Ignoring duplicate TX in history: ${tx.txid}`),
+          );
+        }
+      } catch (e) {
+        const error = e instanceof Error ? e.message : JSON.stringify(e);
         dispatch(
-          LogActions.info(`Ignoring duplicate TX in history: ${tx.txid}`),
+          LogActions.error(
+            `The transaction could not be processed correctly ${tx.txid}: ${error}`,
+          ),
         );
+        continue;
       }
     }
     return Promise.resolve(ret);
