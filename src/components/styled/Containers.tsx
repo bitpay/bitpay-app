@@ -432,9 +432,10 @@ export const BadgeContainer = styled.View`
   align-items: center;
   justify-content: center;
   border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
-  padding: 0px 2px;
+  padding: 4px;
   border-radius: 2.4px;
   gap: 4px;
+  height: 20px;
 `;
 
 export const EmptyListContainer = styled.View`

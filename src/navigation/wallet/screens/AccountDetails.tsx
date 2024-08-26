@@ -1064,7 +1064,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 )}
               </Row>
             </TouchableOpacity>
-            <BadgeContainer style={{alignSelf: 'center', width: 'auto'}}>
+            <BadgeContainer
+              style={{alignSelf: 'center', width: 'auto', height: 25}}>
               <Badge style={{marginTop: 3}}>
                 {formatCryptoAddress(accountItem.receiveAddress)}
               </Badge>

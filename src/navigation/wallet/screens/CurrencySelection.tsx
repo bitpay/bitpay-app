@@ -897,6 +897,9 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       {allListItems.length > 0 || filteredItems.length > 0 ? (
         <ListContainer>
           <FlatList<CurrencySelectionListItem>
+            contentContainerStyle={
+              context === 'addWalletMultisig' ? {marginTop: 20} : undefined
+            }
             data={
               !searchVal && !selectedChainFilterOption
                 ? allListItems

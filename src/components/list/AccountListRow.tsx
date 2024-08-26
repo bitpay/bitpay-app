@@ -182,8 +182,17 @@ const AccountListRow = ({
               style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
               {`${_currencyAbbreviation} ${multisig ? multisig : ''}`}
             </ListItemSubText>
-            {buildTestBadge(network, chain, isToken)}
-            {buildUncompleteBadge(isComplete)}
+            <View
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginLeft: 5,
+                marginTop: 2,
+              }}>
+              {buildTestBadge(network, chain, isToken)}
+              {buildUncompleteBadge(isComplete)}
+            </View>
           </Row>
         </CurrencyColumn>
       )}
