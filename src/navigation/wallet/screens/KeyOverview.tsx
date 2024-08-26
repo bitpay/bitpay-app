@@ -417,7 +417,7 @@ const KeyOverview = () => {
       navigation.navigate('WalletDetails', {
         key,
         walletId: fullWalletObj.credentials.walletId,
-        copayerId: item.copayerId,
+        copayerId: fullWalletObj.credentials.copayerId,
       });
     }
   };
