@@ -845,6 +845,12 @@ export const thorswapGetStatusDetails = (
       statusTitle = t('Failed');
       statusDescription = t('There was an error parsing the transaction data.');
       break;
+    case ThorswapTrackingStatus.error:
+      statusTitle = t('Failed');
+      statusDescription = t(
+        'There was an error processing the transaction or executing the contract, or the previously set slippage was exceeded.',
+      );
+      break;
     case ThorswapTrackingStatus.partially_refunded:
       statusTitle = t('Partially refunded');
       statusDescription = t(
@@ -902,6 +908,7 @@ export const thorswapGetStatusColor = (
     case ThorswapTrackingStatus.success:
       return '#01d1a2';
     case ThorswapTrackingStatus.parsing_error:
+    case ThorswapTrackingStatus.error:
     case ThorswapTrackingStatus.retries_exceeded:
       return '#df5264';
     case ThorswapTrackingStatus.partially_refunded:
