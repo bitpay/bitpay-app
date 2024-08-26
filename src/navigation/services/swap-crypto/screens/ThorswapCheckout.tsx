@@ -672,8 +672,18 @@ const ThorswapCheckout: React.FC = () => {
                 spenderKey,
                 parsedData.name,
               );
-            } catch (error) {
-              console.error('Error trying to estimate gasLimit. Error:', error);
+            } catch (err: any) {
+              // use DEFAULT
+              gasLimit = THORSWAP_DEFAULT_GAS_LIMIT;
+              let msg: string =
+                'Error trying to estimate gasLimit. Using default value.';
+
+              if (typeof err === 'string') {
+                msg = msg + ` Error: ${err}`;
+              } else if (err?.message && typeof err.message === 'string') {
+                msg = msg + ` Error: ${err.message}`;
+              }
+              logger.warn(msg);
             }
           } else {
             // use DEFAULT
