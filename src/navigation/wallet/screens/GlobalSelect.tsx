@@ -1111,6 +1111,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     };
 
     if (addWalletData) {
+      console.log('$$$$$$$$$$$$$$$$$$$$addWalletData', addWalletData);
       onWalletSelect(undefined, addWalletData);
     }
   };
@@ -1183,7 +1184,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           selectedCurrency.currencyAbbreviation.toLowerCase() &&
         w.chain.toLowerCase() === selectedNetwork.toLowerCase(),
     );
-
     const handleWalletSelection = (walletId: string) => {
       const walletFullObject = findWalletById(
         keys[keyId].wallets,
@@ -1193,20 +1193,23 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     };
 
     const handleERC20WalletCreation = () => {
-      const wallet = wallets.find(
+      const associatedWallet = wallets.find(
         w =>
           w.chain === selectedNetwork &&
           !IsERCToken(w.currencyAbbreviation, w.chain),
       )!; // search for associated wallet before creation
-      const associatedWallet = findWalletById(
-        keys[keyId].wallets,
-        wallet.id,
-      ) as Wallet;
+      let associatedWalletFullObject;
+      if (associatedWallet) {
+        associatedWalletFullObject = findWalletById(
+          keys[keyId].wallets,
+          associatedWallet.id,
+        ) as Wallet;
+      }
       handleBasicWalletCreation(
         selectedCurrency,
         selectedKey,
         selectedNetwork,
-        associatedWallet,
+        associatedWalletFullObject,
       );
     };
     if (IsERCToken(selectedCurrency.currencyAbbreviation, selectedNetwork)) {
