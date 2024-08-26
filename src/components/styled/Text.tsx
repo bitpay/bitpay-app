@@ -196,10 +196,7 @@ export const Badge = styled(BaseText)`
   font-style: normal;
   font-weight: 400;
   text-align: center;
-  padding: 1px 2px;
-  border-radius: 2.4px;
-  border: 1px solid;
-  border-color: ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
+  line-height: 12px;
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
 `;
 

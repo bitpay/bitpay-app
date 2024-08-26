@@ -11,8 +11,11 @@ import axios from 'axios';
 import {MORALIS_API_KEY} from '@env';
 
 const MORALIS_EVM_CHAIN: {[key in string]: any} = {
+  arb: EvmChain.ARBITRUM,
+  base: EvmChain.BASE,
   eth: EvmChain.ETHEREUM,
   matic: EvmChain.POLYGON,
+  op: EvmChain.OPTIMISM,
 };
 
 // ------- MORALIS API ------- //
@@ -562,19 +565,33 @@ export const getERC20TokenAllowance =
   }): Effect<Promise<any>> =>
   async dispatch => {
     try {
-      const {raw} = await Moralis.EvmApi.token.getTokenAllowance({
-        address,
-        chain: MORALIS_EVM_CHAIN[chain],
-        ownerAddress,
-        spenderAddress,
-      });
+      const headers = {
+        accept: 'application/json',
+        'X-API-Key': MORALIS_API_KEY,
+        'Cache-Control': 'no-cache',
+      };
+      let qs = [];
 
+      const _chain =
+        MORALIS_EVM_CHAIN[chain]?.apiHex ||
+        MORALIS_EVM_CHAIN[chain]?.hex ||
+        MORALIS_EVM_CHAIN[chain]?.decimal ||
+        chain;
+
+      qs.push('chain=' + _chain);
+      qs.push('owner_address=' + ownerAddress);
+      qs.push('spender_address=' + spenderAddress);
+      qs.push('timestamp=' + new Date().getTime());
+
+      const query = qs.join('&');
+      const URL = `https://deep-index.moralis.io/api/v2.2/erc20/${address}/allowance?${query}`;
+      const {data} = await axios.get(URL, {headers});
       dispatch(
         LogActions.info(
           '[moralis/getERC20TokenAllowance]: get ERC20 token allowance successfully',
         ),
       );
-      return raw;
+      return data;
     } catch (e) {
       let errorStr;
       if (e instanceof Error) {

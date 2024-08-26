@@ -46,7 +46,7 @@ export const startJoinMultisig =
           seedType: 'new',
         });
 
-        const _wallet = await joinMultisigWallet({key: _key, opts});
+        const _wallet = (await joinMultisigWallet({key: _key, opts})) as Wallet;
 
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
@@ -65,6 +65,7 @@ export const startJoinMultisig =
           };
           dispatch(subscribeEmailNotifications(_wallet, prefs));
         }
+
         const {currencyAbbreviation, currencyName} = dispatch(
           mapAbbreviationAndName(
             _wallet.credentials.coin,

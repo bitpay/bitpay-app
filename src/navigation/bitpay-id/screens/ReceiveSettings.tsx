@@ -8,8 +8,7 @@ import {
   CtaContainerAbsolute,
 } from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
-import {H3, H5, Paragraph} from '../../../components/styled/Text';
-import {BaseText} from '../../wallet/components/KeyDropdownOption';
+import {BaseText, H3, H5, Paragraph} from '../../../components/styled/Text';
 import {
   LightBlack,
   Slate,
@@ -55,6 +54,7 @@ import {
 } from '../../../constants/currencies';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import {useTranslation} from 'react-i18next';
+import uniqBy from 'lodash.uniqby';
 
 const ReceiveSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -199,7 +199,10 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
           wallet.currencyAbbreviation === coin && wallet.chain === chain,
       ),
   );
-  const inactiveCurrencyOptions = SupportedCurrencyOptions.filter(
+  const inactiveCurrencyOptions = uniqBy(
+    SupportedCurrencyOptions,
+    currencyOption => currencyOption.currencyAbbreviation,
+  ).filter(
     currencyOption =>
       !uniqueActiveCurrencies.includes(
         currencyOption.currencyAbbreviation.toLowerCase(),
@@ -219,13 +222,18 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
       [getReceivingAddressKey(currencyAbbreviation, chain)]: keyWallets
         .map(keyWallet => ({
           ...keyWallet,
-          wallets: keyWallet.wallets.filter(
-            wallet =>
-              wallet.currencyAbbreviation === walletSelectorCurrency &&
-              wallet.chain === walletSelectorChain,
-          ),
+          accounts: keyWallet.accounts
+            .map(account => ({
+              ...account,
+              wallets: account.wallets.filter(
+                wallet =>
+                  wallet.currencyAbbreviation === currencyAbbreviation &&
+                  wallet.chain === chain,
+              ),
+            }))
+            .filter(account => account.wallets.length > 0),
         }))
-        .filter(keyWallet => keyWallet.wallets.length),
+        .filter(keyWallet => keyWallet.accounts.length > 0),
     }),
     {} as {[key: string]: any[]},
   );

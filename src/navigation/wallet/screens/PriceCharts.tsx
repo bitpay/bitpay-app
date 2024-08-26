@@ -1,16 +1,30 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import {ActivityIndicator, Platform} from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import styled, {useTheme} from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {CtaContainer, WIDTH} from '../../../components/styled/Containers';
-import {Badge, H2, H5, HeaderTitle} from '../../../components/styled/Text';
+import {
+  Badge,
+  BaseText,
+  H2,
+  H5,
+  HeaderTitle,
+} from '../../../components/styled/Text';
 import {
   SlateDark,
   White,
   Black,
   LuckySevens,
   ProgressBlue,
+  LightBlack,
 } from '../../../styles/colors';
 import {
   calculatePercentageDifference,
@@ -41,6 +55,13 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {GraphPoint, LineGraph} from 'react-native-graph';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
+import {findIndex, maxBy, minBy} from 'lodash';
+import Animated, {
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import moment from 'moment';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -54,6 +75,10 @@ interface ChartDataType {
   data: ChartDisplayDataType[];
   percentChange: number;
   priceChange: number;
+  maxIndex?: number;
+  maxPoint?: ChartDisplayDataType;
+  minIndex?: number;
+  minPoint?: ChartDisplayDataType;
 }
 
 const defaultDisplayData: ChartDataType = {
@@ -158,8 +183,17 @@ const getFormattedData = (
     })),
     targetLength,
   );
+
+  const maxPoint = maxBy(scaledData, point => point.value);
+  const minPoint = minBy(scaledData, point => point.value);
+  const maxIndex = findIndex(scaledData, maxPoint);
+  const minIndex = findIndex(scaledData, minPoint);
   return {
     data: scaledData,
+    maxIndex,
+    maxPoint,
+    minIndex,
+    minPoint,
     percentChange,
     priceChange: data[data.length - 1].rate - data[0].rate,
   };
@@ -174,6 +208,69 @@ const PriceChartHeader = ({currencyName, currencyAbbreviation, img}: any) => {
       </HeaderTitle>
       <Badge>{currencyAbbreviation.toUpperCase()}</Badge>
     </RowContainer>
+  );
+};
+
+export const AxisLabel = ({
+  value,
+  index,
+  prevIndex,
+  arrayLength,
+  currencyAbbreviation,
+  type,
+}: {
+  value: number;
+  index: number;
+  prevIndex?: number;
+  arrayLength: number;
+  currencyAbbreviation: string;
+  type: 'min' | 'max';
+}): JSX.Element => {
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const theme = useTheme();
+  const [textWidth, setTextWidth] = useState(50);
+  const prevLocation =
+    ((prevIndex ?? index) / arrayLength) * WIDTH - textWidth / 2;
+  const location = (index / arrayLength) * WIDTH - textWidth / 2;
+  const getTranslateX = (loc: number) => {
+    const minLocation = 5;
+    const maxLocation = WIDTH - textWidth;
+    return Math.min(Math.max(loc, minLocation), maxLocation);
+  };
+  const prevTranslateX = getTranslateX(prevLocation);
+  const newTranslateX = getTranslateX(location);
+  const translateX = useSharedValue(prevTranslateX);
+  translateX.value = withSpring(newTranslateX, {
+    mass: 1,
+    stiffness: 500,
+    damping: 400,
+    velocity: 0,
+  });
+  const translateY = type === 'min' ? 5 : -5;
+  const opacity = useSharedValue(typeof prevIndex !== 'undefined' ? 1 : 0);
+  opacity.value = withTiming(1, {duration: 800});
+  return (
+    <Animated.View
+      style={{
+        flexDirection: 'row',
+        transform: [{translateY}],
+        opacity,
+      }}>
+      <Animated.View
+        style={{transform: [{translateX}]}}
+        onLayout={event => setTextWidth(event.nativeEvent.layout.width)}>
+        <BaseText
+          style={{
+            color: theme.dark ? LuckySevens : SlateDark,
+            fontWeight: '500',
+            fontSize: 13,
+          }}>
+          {formatFiatAmount(value, defaultAltCurrency.isoCode, {
+            currencyAbbreviation,
+          })}
+        </BaseText>
+      </Animated.View>
+    </Animated.View>
   );
 };
 
@@ -223,11 +320,18 @@ const PriceCharts = () => {
   const [loading, setLoading] = useState(true);
   const [showRageDateSelector, setShowRageDateSelector] = useState(true);
   const [displayData, setDisplayData] = useState(defaultDisplayData);
+  const [prevDisplayData, setPrevDisplayData] = useState(defaultDisplayData);
   const [cachedRates, setCachedRates] = useState(defaultCachedRates);
   const [chartRowHeight, setChartRowHeight] = useState(-1);
+  const gestureStarted = useRef(false);
   const [selectedPoint, setSelectedPoint] = useState(
     undefined as
-      | {price: number; priceChange: number; percentChange: number}
+      | {
+          date: Date;
+          price: number;
+          priceChange: number;
+          percentChange: number;
+        }
       | undefined,
   );
 
@@ -248,7 +352,7 @@ const PriceCharts = () => {
       const historicFiatRates = await rateFetchPromises[dateRange]!;
       const formattedRates = getFormattedData(
         historicFiatRates.sort((a, b) => a.ts - b.ts),
-        maxPoints || targetLength || historicFiatRates.length,
+        Math.min(maxPoints, targetLength || historicFiatRates.length),
       );
       setCachedRates(previous => ({
         ...previous,
@@ -281,13 +385,18 @@ const PriceCharts = () => {
     return rates;
   };
 
+  const setNewDisplayData = (data: ChartDataType) => {
+    setPrevDisplayData(displayData);
+    setDisplayData(data);
+  };
+
   const redrawChart = async (dateRange: DateRanges) => {
     if (cachedRates[dateRange].data.length) {
-      setDisplayData(cachedRates[dateRange]);
+      setNewDisplayData(cachedRates[dateRange]);
     } else {
       try {
         const rates = await getHistoricalFiatRates(dateRange);
-        setDisplayData(rates);
+        setNewDisplayData(rates);
         setLoading(false);
       } catch (e) {
         dispatch(dismissOnGoingProcessModal());
@@ -332,11 +441,15 @@ const PriceCharts = () => {
 
   const onPointSelected = useCallback(
     (p: GraphPoint) => {
+      if (!gestureStarted.current) {
+        return;
+      }
       const percentChangeAtPoint = calculatePercentageDifference(
         p.value,
         displayData.data[0].value,
       );
       setSelectedPoint({
+        date: p.date,
         price: p.value,
         priceChange: p.value - displayData.data[0].value,
         percentChange: percentChangeAtPoint,
@@ -348,11 +461,13 @@ const PriceCharts = () => {
 
   const onGestureEnd = useCallback(async () => {
     await sleep(10);
+    gestureStarted.current = false;
     setSelectedPoint(undefined);
     haptic('impactLight');
   }, []);
 
   const onGestureStarted = useCallback(() => {
+    gestureStarted.current = true;
     haptic('impactLight');
   }, []);
 
@@ -363,41 +478,109 @@ const PriceCharts = () => {
     return selectedPoint?.percentChange ?? displayData.percentChange;
   };
 
+  const MinAxisLabel = useCallback(
+    () => (
+      <AxisLabel
+        value={displayData.minPoint?.value!}
+        index={displayData.minIndex!}
+        prevIndex={prevDisplayData.minIndex}
+        arrayLength={displayData.data.length}
+        currencyAbbreviation={currencyAbbreviation}
+        type="min"
+      />
+    ),
+    [
+      currencyAbbreviation,
+      displayData.data.length,
+      displayData.minIndex,
+      displayData.minPoint?.value,
+      prevDisplayData.minIndex,
+    ],
+  );
+
+  const MaxAxisLabel = useCallback(
+    () => (
+      <AxisLabel
+        value={displayData.maxPoint?.value!}
+        index={displayData.maxIndex!}
+        prevIndex={prevDisplayData.maxIndex}
+        arrayLength={displayData.data.length}
+        currencyAbbreviation={currencyAbbreviation}
+        type="max"
+      />
+    ),
+    [
+      currencyAbbreviation,
+      displayData.data.length,
+      displayData.maxIndex,
+      displayData.maxPoint?.value,
+      prevDisplayData.maxIndex,
+    ],
+  );
+
   return (
     <SafeAreaView>
       <HeaderContainer>
-        {currentPrice ? (
-          <H2>
-            {formatFiatAmount(
-              selectedPoint?.price ?? currentPrice,
-              defaultAltCurrency.isoCode,
-              {
-                customPrecision: 'minimal',
-                currencyAbbreviation,
-              },
-            )}
-          </H2>
-        ) : null}
-        <RowContainer>
-          {showLossGainOrNeutralArrow(getPercentChange())}
-          <CurrencyAverageText>
-            {selectedPoint?.priceChange ?? displayData.priceChange
-              ? formatFiatAmount(
-                  selectedPoint?.priceChange ?? displayData.priceChange ?? 0,
+        {loading ? (
+          <SkeletonPlaceholder
+            backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}
+            highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
+            <SkeletonPlaceholder.Item flexDirection="row" alignItems="center">
+              <SkeletonPlaceholder.Item>
+                <SkeletonPlaceholder.Item width={150} height={30} />
+                <SkeletonPlaceholder.Item
+                  marginTop={15}
+                  width={120}
+                  height={15}
+                />
+              </SkeletonPlaceholder.Item>
+            </SkeletonPlaceholder.Item>
+          </SkeletonPlaceholder>
+        ) : (
+          <>
+            {currentPrice ? (
+              <H2>
+                {formatFiatAmount(
+                  selectedPoint?.price ?? currentPrice,
                   defaultAltCurrency.isoCode,
-                  {customPrecision: 'minimal', currencyAbbreviation},
-                )
-              : ''}
-            <>
-              {percentChange ? (
+                  {
+                    customPrecision: 'minimal',
+                    currencyAbbreviation,
+                  },
+                )}
+              </H2>
+            ) : null}
+            <RowContainer>
+              {showLossGainOrNeutralArrow(getPercentChange())}
+              <CurrencyAverageText>
+                {selectedPoint?.priceChange ?? displayData.priceChange
+                  ? formatFiatAmount(
+                      selectedPoint?.priceChange ??
+                        displayData.priceChange ??
+                        0,
+                      defaultAltCurrency.isoCode,
+                      {customPrecision: 'minimal', currencyAbbreviation},
+                    )
+                  : ''}
                 <>
-                  {!loading ? ' (' : ''}
-                  {Math.abs(getPercentChange())}%{!loading ? ')' : ''}
+                  {percentChange ? (
+                    <>
+                      {!loading ? ' (' : ''}
+                      {Math.abs(getPercentChange())}%{!loading ? ')' : ''}
+                    </>
+                  ) : null}
                 </>
-              ) : null}
-            </>
-          </CurrencyAverageText>
-        </RowContainer>
+              </CurrencyAverageText>
+            </RowContainer>
+            <RowContainer style={{marginTop: 7}}>
+              <CurrencyAverageText style={{fontSize: 13.5, fontWeight: '500'}}>
+                {selectedPoint
+                  ? moment(selectedPoint.date).format('MMM DD, YYYY hh:mm a')
+                  : ' '}
+              </CurrencyAverageText>
+            </RowContainer>
+          </>
+        )}
       </HeaderContainer>
 
       <PriceChartContainer
@@ -417,6 +600,8 @@ const PriceCharts = () => {
             onGestureStart={onGestureStarted}
             onPointSelected={onPointSelected}
             onGestureEnd={onGestureEnd}
+            TopAxisLabel={MaxAxisLabel}
+            BottomAxisLabel={MinAxisLabel}
             color={theme.dark && coinColor === Black ? White : coinColor}
             style={{width: WIDTH, height: chartRowHeight, marginTop: 20}}
           />

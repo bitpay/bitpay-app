@@ -18,6 +18,7 @@ import {AppActionType, AppActionTypes} from './app.types';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
+import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
 
 export const importLedgerModalToggled = (show: boolean): AppActionType => ({
   type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
@@ -40,6 +41,10 @@ export const appInitCompleted = (): AppActionType => ({
 export const failedAppInit = (): AppActionType => ({
   type: AppActionTypes.FAILED_APP_INIT,
   payload: true,
+});
+
+export const appTokensDataLoaded = (): AppActionType => ({
+  type: AppActionTypes.APP_TOKENS_DATA_LOADED,
 });
 
 export const appIsReadyForDeeplinking = (): AppActionType => ({
@@ -330,11 +335,11 @@ export const setLocalDefaultChainFilterOption = (
   selectedLocalChainFilterOption,
 });
 
-export const setSelectedNetworkForDeposit = (
-  selectedNetworkForDeposit: SupportedChains | undefined,
+export const setLocalAssetsDropdown = (
+  selectedLocalAssetsDropdown: LocalAssetsDropdown | undefined,
 ): AppActionType => ({
-  type: AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT,
-  selectedNetworkForDeposit,
+  type: AppActionTypes.SET_LOCAL_ASSETS_DROPDOWN,
+  selectedLocalAssetsDropdown,
 });
 
 export const setMigrationComplete = (): AppActionType => ({

@@ -25,7 +25,10 @@ import {getHistoricFiatRate, startGetRates} from '../rates/rates';
 import {toFiat} from '../../utils/wallet';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
 import {GetMinFee} from '../fee/fee';
-import {updateWalletTxHistory} from '../../wallet.actions';
+import {
+  updateAccountTxHistory,
+  updateWalletTxHistory,
+} from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
@@ -87,45 +90,66 @@ export const ProcessPendingTxps =
   (txps: TransactionProposal[], wallet: any): Effect<any> =>
   dispatch => {
     const now = Math.floor(Date.now() / 1000);
-    const {currencyAbbreviation, chain, tokenAddress} = wallet;
+    const {
+      currencyAbbreviation,
+      chain,
+      tokenAddress,
+      credentials: {walletId, copayerId},
+    } = wallet;
 
+    const ret: TransactionProposal[] = [];
     txps.forEach((tx: TransactionProposal) => {
-      tx = dispatch(ProcessTx(tx, wallet));
+      try {
+        // Filter out txps used for pay fees in other wallets
+        if (currencyAbbreviation !== tx.coin) {
+          return;
+        }
+        tx = dispatch(ProcessTx(tx, wallet));
 
-      // no future transactions...
-      if (tx.createdOn > now) {
-        tx.createdOn = now;
-      }
+        // no future transactions...
+        if (tx.createdOn > now) {
+          tx.createdOn = now;
+        }
 
-      tx.copayerId = wallet.credentials.copayerId;
-      tx.walletId = wallet.credentials.walletId;
+        tx.copayerId = copayerId;
+        tx.walletId = walletId;
 
-      const action: any = tx.actions.find(
-        (a: any) => a.copayerId === wallet.credentials.copayerId,
-      );
+        const action: any = tx.actions.find(
+          (a: any) => a.copayerId === copayerId,
+        );
 
-      if ((!action || action.type === 'failed') && tx.status === 'pending') {
-        tx.pendingForUs = true;
-      }
+        if ((!action || action.type === 'failed') && tx.status === 'pending') {
+          tx.pendingForUs = true;
+        }
 
-      if (action && action.type === 'accept') {
-        tx.statusForUs = 'accepted';
-      } else if (action && action.type === 'reject') {
-        tx.statusForUs = 'rejected';
-      } else {
-        tx.statusForUs = 'pending';
-      }
+        if (action && action.type === 'accept') {
+          tx.statusForUs = 'accepted';
+        } else if (action && action.type === 'reject') {
+          tx.statusForUs = 'rejected';
+        } else {
+          tx.statusForUs = 'pending';
+        }
 
-      if (!tx.deleteLockTime) {
-        tx.canBeRemoved = true;
+        if (!tx.deleteLockTime) {
+          tx.canBeRemoved = true;
+        }
+        ret.push(tx);
+      } catch (e) {
+        const error = e instanceof Error ? e.message : JSON.stringify(e);
+        dispatch(
+          LogActions.error(
+            `The transaction proposal could not be processed correctly ${tx.id}: ${error}`,
+          ),
+        );
       }
     });
     return BuildUiFriendlyList(
-      txps,
+      ret,
       currencyAbbreviation,
       chain,
       [],
       tokenAddress,
+      walletId,
     );
   };
 
@@ -165,6 +189,10 @@ const ProcessTx =
     // New transaction output format. Fill tx.amount and tx.toAmount for
     // backward compatibility.
     if (tx.outputs?.length) {
+      // ThorSwap has OP_RETURN output in the first position with addressTo = 'false'.
+      tx.outputs = tx.outputs.filter(o => o.address !== 'false');
+      tx.addressTo = tx.outputs[0].address!;
+
       const outputsNr = tx.outputs.length;
 
       if (tx.action !== 'received') {
@@ -300,46 +328,56 @@ const ProcessNewTxs =
     const {currencyAbbreviation} = wallet;
 
     for (let tx of txs) {
-      // workaround for BWS bug / coin is missing and chain is in uppercase
-      tx.coin = wallet.currencyAbbreviation;
-      tx.chain = wallet.chain;
+      try {
+        // workaround for BWS bug / coin is missing and chain is in uppercase
+        tx.coin = wallet.currencyAbbreviation;
+        tx.chain = wallet.chain;
 
-      if (shouldFilterTx(tx, wallet)) {
-        continue;
-      }
+        if (shouldFilterTx(tx, wallet)) {
+          continue;
+        }
 
-      tx = dispatch(ProcessTx(tx, wallet));
+        tx = dispatch(ProcessTx(tx, wallet));
 
-      // no future transactions...
-      if (tx.time > now) {
-        tx.time = now;
-      }
+        // no future transactions...
+        if (tx.time > now) {
+          tx.time = now;
+        }
 
-      if (tx.confirmations === 0 && currencyAbbreviation === 'btc') {
-        const {inputs} = await GetCoinsForTx(wallet, tx.txid);
-        tx.hasUnconfirmedInputs = inputs.some(
-          (input: any) => input.mintHeight < 0,
-        );
-      }
+        if (tx.confirmations === 0 && currencyAbbreviation === 'btc') {
+          const {inputs} = await GetCoinsForTx(wallet, tx.txid);
+          tx.hasUnconfirmedInputs = inputs.some(
+            (input: any) => input.mintHeight < 0,
+          );
+        }
 
-      if (tx.confirmations >= SAFE_CONFIRMATIONS) {
-        tx.safeConfirmed = SAFE_CONFIRMATIONS + '+';
-      } else {
-        tx.safeConfirmed = false;
-      }
+        if (tx.confirmations >= SAFE_CONFIRMATIONS) {
+          tx.safeConfirmed = SAFE_CONFIRMATIONS + '+';
+        } else {
+          tx.safeConfirmed = false;
+        }
 
-      if (tx.note) {
-        delete tx.note.encryptedEditedByName;
-        delete tx.note.encryptedBody;
-      }
+        if (tx.note) {
+          delete tx.note.encryptedEditedByName;
+          delete tx.note.encryptedBody;
+        }
 
-      if (!txHistoryUnique[tx.txid]) {
-        ret.push(tx);
-        txHistoryUnique[tx.txid] = true;
-      } else {
+        if (!txHistoryUnique[tx.txid]) {
+          ret.push(tx);
+          txHistoryUnique[tx.txid] = true;
+        } else {
+          dispatch(
+            LogActions.info(`Ignoring duplicate TX in history: ${tx.txid}`),
+          );
+        }
+      } catch (e) {
+        const error = e instanceof Error ? e.message : JSON.stringify(e);
         dispatch(
-          LogActions.info(`Ignoring duplicate TX in history: ${tx.txid}`),
+          LogActions.error(
+            `The transaction could not be processed correctly ${tx.txid}: ${error}`,
+          ),
         );
+        continue;
       }
     }
     return Promise.resolve(ret);
@@ -543,6 +581,104 @@ export const GroupTransactionHistory = (history: any[]) => {
   return pendingTransactionsGroup.concat(confirmedTransactionsGroup);
 };
 
+export const GetAccountTransactionHistory =
+  ({
+    wallets,
+    accountTransactionsHistory = {},
+    keyId,
+    limit = TX_HISTORY_LIMIT,
+    refresh = false,
+    contactList = [],
+  }: {
+    wallets: Wallet[];
+    accountTransactionsHistory: {
+      [key: string]: {
+        transactions: any[];
+        loadMore: boolean;
+        hasConfirmingTxs: boolean;
+      };
+    };
+    keyId: string;
+    limit: number;
+    refresh?: boolean;
+    contactList?: any[];
+  }): Effect<
+    Promise<{
+      accountTransactionsHistory: {
+        [key: string]: {
+          transactions: any[];
+          loadMore: boolean;
+          hasConfirmingTxs: boolean;
+        };
+      };
+      sortedCompleteHistory: any[];
+    }>
+  > =>
+  async (
+    dispatch,
+    getState,
+  ): Promise<{
+    accountTransactionsHistory: {
+      [key: string]: {
+        transactions: any[];
+        loadMore: boolean;
+        hasConfirmingTxs: boolean;
+      };
+    };
+    sortedCompleteHistory: any[];
+  }> => {
+    return new Promise(async (resolve, reject) => {
+      let allTransactions = [] as any[];
+      const transactionPromises = wallets.map(async wallet => {
+        try {
+          const [transactionHistory] = await Promise.all([
+            dispatch(
+              GetTransactionHistory({
+                wallet,
+                transactionsHistory:
+                  accountTransactionsHistory[wallet.id]?.transactions ?? [],
+                limit,
+                contactList,
+                refresh,
+                isAccountDetailsView: true,
+              }),
+            ),
+          ]);
+          accountTransactionsHistory[wallet.id] = transactionHistory;
+          return transactionHistory.transactions;
+        } catch (error) {
+          dispatch(
+            LogActions.error(
+              `!! Could not update transaction history for ${wallet.id}: ${error}`,
+            ),
+          );
+          return [];
+        }
+      });
+      const results = await Promise.all(transactionPromises);
+      allTransactions = results
+        .flat()
+        .sort(
+          (a, b) =>
+            new Date(b.time || b.createdOn).getTime() -
+            new Date(a.time || a.createdOn).getTime(),
+        );
+
+      const sortedCompleteHistory = allTransactions.slice(0, limit);
+
+      dispatch(
+        updateAccountTxHistory({
+          keyId: keyId,
+          accountTransactionsHistory,
+        }),
+      );
+      return resolve({
+        accountTransactionsHistory,
+        sortedCompleteHistory,
+      });
+    });
+  };
+
 export const GetTransactionHistory =
   ({
     wallet,
@@ -550,27 +686,45 @@ export const GetTransactionHistory =
     limit = TX_HISTORY_LIMIT,
     refresh = false,
     contactList = [],
+    isAccountDetailsView = false,
   }: {
     wallet: Wallet;
     transactionsHistory: any[];
     limit: number;
     refresh?: boolean;
     contactList?: any[];
-  }): Effect<Promise<{transactions: any[]; loadMore: boolean}>> =>
+    isAccountDetailsView?: boolean;
+  }): Effect<
+    Promise<{transactions: any[]; loadMore: boolean; hasConfirmingTxs: boolean}>
+  > =>
   async (
     dispatch,
     getState,
-  ): Promise<{transactions: any[]; loadMore: boolean}> => {
+  ): Promise<{
+    transactions: any[];
+    loadMore: boolean;
+    hasConfirmingTxs: boolean;
+  }> => {
     return new Promise(async (resolve, reject) => {
       let requestLimit = limit;
 
-      let {walletId, keyId} = wallet.credentials;
+      let {
+        currencyAbbreviation,
+        chain,
+        tokenAddress,
+        credentials: {walletId, keyId},
+        transactionHistory,
+      } = wallet;
 
       if (!keyId) {
-        keyId = wallet.keyId;
+        keyId = keyId;
       }
       if (!walletId || !wallet.isComplete()) {
-        return resolve({transactions: [], loadMore: false});
+        return resolve({
+          transactions: [],
+          loadMore: false,
+          hasConfirmingTxs: false,
+        });
       }
 
       const lastTransactionId = refresh
@@ -580,12 +734,8 @@ export const GetTransactionHistory =
         : null;
       const skip = refresh ? 0 : transactionsHistory.length;
 
-      if (
-        wallet.transactionHistory?.transactions?.length &&
-        !refresh &&
-        !skip
-      ) {
-        return resolve(wallet.transactionHistory);
+      if (transactionHistory?.transactions?.length && !refresh && !skip) {
+        return resolve(transactionHistory);
       }
 
       try {
@@ -596,10 +746,12 @@ export const GetTransactionHistory =
         // To get transaction list details: icon, description, amount and date
         transactions = BuildUiFriendlyList(
           transactions,
-          wallet.currencyAbbreviation,
-          wallet.chain,
+          currencyAbbreviation,
+          chain,
           contactList,
-          wallet.tokenAddress,
+          tokenAddress,
+          walletId,
+          isAccountDetailsView,
         );
 
         const array = transactions
@@ -610,12 +762,12 @@ export const GetTransactionHistory =
           return (x as any).txid;
         });
 
+        let hasConfirmingTxs: boolean = false;
         if (!skip) {
-          let hasConfirmingTxs: boolean = false;
           let transactionHistory;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
-          if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+          if (IsERCToken(currencyAbbreviation, chain)) {
             const {WALLET} = getState();
             const key = WALLET.keys[keyId];
             const linkedWallet = key.wallets.find(({tokens}) =>
@@ -638,19 +790,21 @@ export const GetTransactionHistory =
               }
             }
           }
-          dispatch(
-            updateWalletTxHistory({
-              walletId: walletId,
-              keyId: keyId,
-              transactionHistory: {
-                transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
-                loadMore,
-                hasConfirmingTxs,
-              },
-            }),
-          );
+          if (!isAccountDetailsView) {
+            dispatch(
+              updateWalletTxHistory({
+                walletId: walletId,
+                keyId: keyId,
+                transactionHistory: {
+                  transactions: newHistory.slice(0, TX_HISTORY_LIMIT),
+                  loadMore,
+                  hasConfirmingTxs,
+                },
+              }),
+            );
+          }
         }
-        return resolve({transactions: newHistory, loadMore});
+        return resolve({transactions: newHistory, loadMore, hasConfirmingTxs});
       } catch (err) {
         const errString =
           err instanceof Error ? err.message : JSON.stringify(err);
@@ -729,8 +883,16 @@ export const IsInvalid = (action: string | undefined): boolean => {
   return action === 'invalid';
 };
 
-export const NotZeroAmountEVM = (amount: number, chain: string): boolean => {
-  return !(amount === 0 && SUPPORTED_EVM_COINS.includes(chain));
+export const IsZeroAmountEVM = (amount: number, chain: string): boolean => {
+  return amount === 0 && SUPPORTED_EVM_COINS.includes(chain);
+};
+
+export const TxForPaymentFeeEVM = (
+  walletCoin: string,
+  TxCoin: string,
+  amount: number,
+): boolean => {
+  return walletCoin !== TxCoin || IsZeroAmountEVM(amount, TxCoin);
 };
 
 export const IsShared = (wallet: Wallet): boolean => {
@@ -751,6 +913,8 @@ export const BuildUiFriendlyList = (
   chain: string,
   contactList: any[] = [],
   tokenAddress: string | undefined,
+  walletId: string,
+  isAccountDetailsView?: boolean,
 ): any[] => {
   return transactionList.map(transaction => {
     const {
@@ -760,6 +924,7 @@ export const BuildUiFriendlyList = (
       action,
       time,
       createdOn,
+      coin,
       amount,
       amountStr,
       feeStr,
@@ -776,7 +941,11 @@ export const BuildUiFriendlyList = (
     } = customData || {};
     const {body: noteBody} = note || {};
 
-    const notZeroAmountEVM = NotZeroAmountEVM(amount, chain);
+    const isTxForPaymentFee = TxForPaymentFeeEVM(
+      currencyAbbreviation,
+      coin,
+      amount,
+    );
     const isSent = IsSent(action);
     const isMoved = IsMoved(action);
     const isReceived = IsReceived(action);
@@ -800,7 +969,7 @@ export const BuildUiFriendlyList = (
     if (!confirmations || confirmations <= 0) {
       transaction.uiIcon = 'confirming';
 
-      if (notZeroAmountEVM) {
+      if (!isTxForPaymentFee) {
         if (contactName || transaction.customData?.recipientEmail) {
           if (isSent || isMoved) {
             transaction.uiDescription =
@@ -808,16 +977,28 @@ export const BuildUiFriendlyList = (
           }
         } else {
           if (isSent) {
-            transaction.uiDescription = t('Sending');
+            transaction.uiDescription =
+              t('Sending') +
+              (isAccountDetailsView
+                ? ` ${currencyAbbreviation?.toUpperCase()}`
+                : '');
           }
 
           if (isMoved) {
-            transaction.uiDescription = t('Moving');
+            transaction.uiDescription =
+              t('Moving') +
+              (isAccountDetailsView
+                ? ` ${currencyAbbreviation?.toUpperCase()}`
+                : '');
           }
         }
 
         if (isReceived) {
-          transaction.uiDescription = t('Receiving');
+          transaction.uiDescription =
+            t('Receiving') +
+            (isAccountDetailsView
+              ? ` ${currencyAbbreviation?.toUpperCase()}`
+              : '');
         }
       }
     }
@@ -842,7 +1023,7 @@ export const BuildUiFriendlyList = (
               billPayMerchantIds[0]) ||
             giftCardName;
         }
-        if (notZeroAmountEVM) {
+        if (!isTxForPaymentFee) {
           if (noteBody) {
             transaction.uiDescription = noteBody;
           } else if (message) {
@@ -856,7 +1037,11 @@ export const BuildUiFriendlyList = (
               walletName: toWalletName,
             });
           } else {
-            transaction.uiDescription = t('Sent');
+            transaction.uiDescription =
+              t('Sent') +
+              (isAccountDetailsView
+                ? ` ${currencyAbbreviation?.toUpperCase()}`
+                : '');
           }
         }
       }
@@ -869,7 +1054,11 @@ export const BuildUiFriendlyList = (
         } else if (contactName) {
           transaction.uiDescription = contactName;
         } else {
-          transaction.uiDescription = t('Received');
+          transaction.uiDescription =
+            t('Received') +
+            (isAccountDetailsView
+              ? ` ${currencyAbbreviation?.toUpperCase()}`
+              : '');
         }
       }
 
@@ -882,7 +1071,11 @@ export const BuildUiFriendlyList = (
           transaction.uiDescription = message;
         } else {
           transaction.uiDescription =
-            transaction.customData?.recipientEmail || t('Sent to self');
+            transaction.customData?.recipientEmail ||
+            t('Sent to self') +
+              (isAccountDetailsView
+                ? ` ${currencyAbbreviation?.toUpperCase()}`
+                : '');
         }
       }
 
@@ -893,7 +1086,7 @@ export const BuildUiFriendlyList = (
       }
     }
 
-    if (!notZeroAmountEVM) {
+    if (isTxForPaymentFee) {
       const {uiDescription} = transaction;
       transaction.uiIcon = 'contractInteraction';
 
@@ -906,13 +1099,14 @@ export const BuildUiFriendlyList = (
     if (isInvalid) {
       transaction.uiValue = t('(possible double spend)');
     } else {
-      if (notZeroAmountEVM) {
+      if (!isTxForPaymentFee) {
         transaction.uiValue = amountStr;
       }
     }
 
     transaction.uiTime = getFormattedDate((time || createdOn) * 1000);
     transaction.uiCreator = creatorName;
+    transaction.walletId = walletId;
 
     return transaction;
   });

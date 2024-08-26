@@ -17,12 +17,14 @@ import {BiometricModalConfig} from '../../components/modal/biometric/BiometricMo
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
+import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
   APP_INIT_COMPLETE = 'APP/APP_INIT_COMPLETE',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
+  APP_TOKENS_DATA_LOADED = 'APP/APP_TOKENS_DATA_LOADED',
   APP_READY_FOR_DEEPLINKING = 'APP/READY_FOR_DEEPLINKING',
   APP_OPENING_WAS_TRACKED = 'APP/OPENING_WAS_TRACKED',
   SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
@@ -77,7 +79,7 @@ export enum AppActionTypes {
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
   SET_DEFAULT_CHAIN_FILTER_OPTION = 'APP/SET_DEFAULT_CHAIN_FILTER_OPTION',
   SET_LOCAL_CHAIN_FILTER_OPTION = 'APP/SET_LOCAL_CHAIN_FILTER_OPTION',
-  SET_SELECTED_NETWORK_FOR_DEPOSIT = 'APP/SET_SELECTED_NETWORK_FOR_DEPOSIT',
+  SET_LOCAL_ASSETS_DROPDOWN = 'APP/SET_LOCAL_ASSETS_DROPDOWN',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_MIGRATION_MMKV_STORAGE_COMPLETE = 'APP/SET_MIGRATION_MMKV_STORAGE_COMPLETE',
@@ -114,6 +116,10 @@ interface AppInitComplete {
 interface FailedAppInit {
   type: typeof AppActionTypes.FAILED_APP_INIT;
   payload: boolean;
+}
+
+interface AppTokensDataLoaded {
+  type: typeof AppActionTypes.APP_TOKENS_DATA_LOADED;
 }
 
 interface AppIsReadyForDeeplinking {
@@ -359,10 +365,11 @@ interface SetLocalDefaultChainFilterOption {
   selectedLocalChainFilterOption: SupportedChains | undefined;
 }
 
-interface SetSelectedNetworkForDeposit {
-  type: typeof AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT;
-  selectedNetworkForDeposit: SupportedChains | undefined;
+interface SetLocalAssetsDropdown {
+  type: typeof AppActionTypes.SET_LOCAL_ASSETS_DROPDOWN;
+  selectedLocalAssetsDropdown: LocalAssetsDropdown | undefined;
 }
+
 interface SetMigrationComplete {
   type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
 }
@@ -421,6 +428,7 @@ export type AppActionType =
   | SuccessAppInit
   | AppInitComplete
   | FailedAppInit
+  | AppTokensDataLoaded
   | AppIsReadyForDeeplinking
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
@@ -484,6 +492,6 @@ export type AppActionType =
   | ImportLedgerModalToggled
   | SetDefaultChainFilterOption
   | SetLocalDefaultChainFilterOption
-  | SetSelectedNetworkForDeposit
+  | SetLocalAssetsDropdown
   | ShowChainSelectorModal
   | DismissChainSelectorModal;

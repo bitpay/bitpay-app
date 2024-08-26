@@ -16,13 +16,13 @@ import {
 } from '../../../../components/styled/Containers';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import WalletRow, {WalletRowProps} from '../../../../components/list/WalletRow';
-import {buildUIFormattedWallet} from '../../../../navigation/wallet/screens/KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {successCreateKey} from '../../../../store/wallet/wallet.actions';
 import styled from 'styled-components/native';
 import {useTheme} from 'styled-components/native';
 import {Slate30, SlateDark} from '../../../../styles/colors';
 import {View} from 'react-native';
+import {buildUIFormattedWallet} from '../../../../store/wallet/utils/wallet';
 
 interface Props {
   onComplete: () => void;

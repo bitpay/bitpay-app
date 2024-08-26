@@ -58,8 +58,7 @@ export interface Key {
   keyName?: string;
   hideKeyBalance: boolean;
   isReadOnly: boolean;
-
-  // CLIENT ONLY
+  evmAccountsInfo?: {[key: string]: {name: string; hideAccount: boolean}};
   hardwareSource?: SupportedHardwareSource;
 }
 
@@ -100,6 +99,7 @@ export interface WalletObj {
   id: string;
   keyId: string;
   chain: string;
+  chainName: string;
   currencyName: string;
   currencyAbbreviation: string;
   m: number;

@@ -10,6 +10,8 @@ import {
   Slate,
   NotificationPrimary,
   Action,
+  LuckySevens,
+  Slate30,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 
@@ -423,6 +425,66 @@ export const ProposalBadgeContainer = styled.TouchableOpacity`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+export const BadgeContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
+  padding: 0px 2px;
+  border-radius: 2.4px;
+  gap: 4px;
+`;
+
+export const EmptyListContainer = styled.View`
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 50px;
+`;
+
+export const ChevronContainerTouchable = styled.TouchableOpacity`
+  border-radius: 50px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({theme: {dark}}) => (dark ? SlateDark : NeutralSlate)};
+  margin-left: 2px;
+  height: 20px;
+  width: 20px;
+`;
+
+export const ChevronContainer = styled.View`
+  border-radius: 50px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  margin-left: 2px;
+  height: 20px;
+  width: 20px;
+`;
+
+export const ExternalServicesTitleContainer = styled(Row)`
+  margin-top: 8px;
+  margin-left: 16px;
+  margin-right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-content: center;
+`;
+
+export const ExternalServicesItemTopTitle = styled.Text`
+  color: ${({theme: {dark}}) => (dark ? White : '#434d5a')};
+  line-height: 18px;
+`;
+
+export const AccountChainsContainer = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  border-radius: 50px;
+  padding: 5px 10px;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 
 interface SellTxIconProps {

@@ -4,6 +4,8 @@ import styled from 'styled-components/native';
 import {ScreenGutter} from '../styled/Containers';
 import RemoteImage from '../../navigation/tabs/shop/components/RemoteImage';
 import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
+import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
+import {CurrencyImage} from '../currency-image/CurrencyImage';
 export const TRANSACTION_ROW_HEIGHT = 75;
 
 const TransactionContainer = styled.TouchableOpacity`
@@ -16,6 +18,10 @@ const TransactionContainer = styled.TouchableOpacity`
 
 const IconContainer = styled.View`
   margin-right: 8px;
+  height: 50px;
+  width: 50px;
+  display: flex;
+  justify-content: center;
 `;
 
 const Description = styled(BaseText)`
@@ -36,6 +42,18 @@ const Value = styled(BaseText)`
   font-size: 16px;
 `;
 
+const BadgeContainer = styled.View<{size?: number}>`
+  height: ${({size = 54}) => size}%;
+  width: ${({size = 54}) => size}%;
+  position: absolute;
+  right: -2px;
+  bottom: 0;
+`;
+
+const IconSubContainer = styled.View`
+  position: relative;
+`;
+
 interface Props {
   icon?: ReactElement;
   iconURI?: string;
@@ -43,6 +61,7 @@ interface Props {
   details?: string;
   value?: string;
   time?: string;
+  chain?: string;
   onPressTransaction?: () => void;
 }
 
@@ -53,6 +72,7 @@ const TransactionRow = ({
   details,
   value,
   time,
+  chain,
   onPressTransaction,
 }: Props) => {
   return (
@@ -65,6 +85,15 @@ const TransactionRow = ({
             height={TRANSACTION_ICON_SIZE}
             uri={iconURI}
           />
+        </IconContainer>
+      ) : icon && chain ? (
+        <IconContainer>
+          <IconSubContainer>
+            {icon}
+            <BadgeContainer>
+              <CurrencyImage img={CurrencyListIcons[chain]} size={20} />
+            </BadgeContainer>
+          </IconSubContainer>
         </IconContainer>
       ) : (
         icon && <IconContainer>{icon}</IconContainer>

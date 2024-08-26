@@ -8,7 +8,7 @@ import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {ScreenGutter, WIDTH} from '../../../components/styled/Containers';
-import {Paragraph} from '../../../components/styled/Text';
+import {BaseText, Paragraph} from '../../../components/styled/Text';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import yup from '../../../lib/yup';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -16,7 +16,6 @@ import {joinWaitlist} from '../../../store/app/app.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
-import {BaseText} from '../../wallet/components/KeyDropdownOption';
 import CardIntroHeroImg from './CardIntroHeroImage';
 import CardHighlights from './CardIntroHighlights';
 

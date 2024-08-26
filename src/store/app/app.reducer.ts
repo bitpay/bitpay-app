@@ -26,6 +26,7 @@ import moment from 'moment';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
+import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'activeModalId',
@@ -48,8 +49,8 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showInAppNotification',
   'showOnGoingProcessModal',
   'showPinModal',
-  'selectedNetworkForDeposit',
   'selectedLocalChainFilterOption',
+  'tokensDataLoaded',
   'isImportLedgerModalVisible',
 ];
 
@@ -147,7 +148,7 @@ export interface AppState {
   recentDefaultAltCurrency: Array<AltCurrenciesRowProps>;
   selectedChainFilterOption: SupportedChains | undefined;
   selectedLocalChainFilterOption: SupportedChains | undefined;
-  selectedNetworkForDeposit: SupportedChains | undefined;
+  selectedLocalAssetsDropdown: LocalAssetsDropdown | undefined;
   recentSelectedChainFilterOption: string[];
   migrationComplete: boolean;
   keyMigrationFailure: boolean;
@@ -162,6 +163,7 @@ export interface AppState {
   hasViewedBillsTab: boolean;
   isImportLedgerModalVisible: boolean;
   inAppBrowserOpen: boolean;
+  tokensDataLoaded: boolean;
 }
 
 const initialState: AppState = {
@@ -242,7 +244,7 @@ const initialState: AppState = {
   recentDefaultAltCurrency: [],
   selectedChainFilterOption: undefined,
   selectedLocalChainFilterOption: undefined,
-  selectedNetworkForDeposit: undefined,
+  selectedLocalAssetsDropdown: undefined,
   recentSelectedChainFilterOption: [],
   migrationComplete: false,
   keyMigrationFailure: false,
@@ -257,6 +259,7 @@ const initialState: AppState = {
   hasViewedBillsTab: false,
   isImportLedgerModalVisible: false,
   inAppBrowserOpen: false,
+  tokensDataLoaded: false,
 };
 
 export const appReducer = (
@@ -286,6 +289,12 @@ export const appReducer = (
       return {
         ...state,
         appWasInit: true,
+      };
+
+    case AppActionTypes.APP_TOKENS_DATA_LOADED:
+      return {
+        ...state,
+        tokensDataLoaded: true,
       };
 
     case AppActionTypes.APP_READY_FOR_DEEPLINKING:
@@ -678,10 +687,10 @@ export const appReducer = (
         recentSelectedChainFilterOption: recentSelectedLocalChainFilterOption,
       };
 
-    case AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT:
+    case AppActionTypes.SET_LOCAL_ASSETS_DROPDOWN:
       return {
         ...state,
-        selectedNetworkForDeposit: action.selectedNetworkForDeposit,
+        selectedLocalAssetsDropdown: action.selectedLocalAssetsDropdown,
       };
 
     case AppActionTypes.SET_MIGRATION_COMPLETE:

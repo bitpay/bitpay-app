@@ -637,12 +637,7 @@ export const buildTxDetails =
         subTotal: {
           cryptoAmount: dispatch(
             // @ts-ignore
-            FormatAmountStr(
-              BitpaySupportedCoins[chain]?.feeCurrency,
-              chain,
-              tokenAddress,
-              amount,
-            ),
+            FormatAmountStr(coin, chain, tokenAddress, amount),
           ),
           fiatAmount: formatFiatAmount(amountToFiat, defaultAltCurrencyIsoCode),
         },
