@@ -1357,7 +1357,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       currency: selectedCurrency,
       key: selectKey,
     });
-    await sleep(1000);
+    await sleep(1500);
     setAccountSelectorModalVisible(true);
   };
 
@@ -1502,7 +1502,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             onModalHide={onChainSelectorModalHide}
           />
         </SearchComponentContainer>
-
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) &&
           selectedAssetsFromAccount.length === 0 && (
