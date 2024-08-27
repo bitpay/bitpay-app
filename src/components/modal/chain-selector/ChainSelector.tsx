@@ -261,6 +261,7 @@ const ChainSelector = ({
     recentSelectedChainFilterOption,
     selectedChainFilterOption,
     context,
+    chainsOptions,
   ]);
 
   const updateSearchResults = debounce((text: string) => {
