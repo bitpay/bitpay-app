@@ -170,7 +170,7 @@ const AccountListRow = ({
           {accountName}
         </H5>
       ) : (
-        <CurrencyColumn>
+        <Column>
           <Row>
             <H5 ellipsizeMode="tail" numberOfLines={1}>
               {accountName}
@@ -195,7 +195,7 @@ const AccountListRow = ({
               {buildUncompleteBadge(isComplete)}
             </View>
           </Row>
-        </CurrencyColumn>
+        </Column>
       )}
       {isMultiNetworkSupported ? (
         <BalanceColumn>
