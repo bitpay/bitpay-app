@@ -694,6 +694,18 @@ const SwapCryptoOffers: React.FC = () => {
       const thorswapQuoteData: ThorswapGetSwapQuoteData =
         await selectedWalletFrom.thorswapGetSwapQuote(requestData);
 
+      // TODO: remove this if(...) when Thorswap team fix the 1inch issue
+      // Workaround to prevent an issue from Thorswap in which 1inch v4 is the spender and 1inch v5 is the destination address
+      if (
+        thorswapQuoteData?.routes &&
+        Array.isArray(thorswapQuoteData.routes)
+      ) {
+        logger.debug('Removing ONEINCH from available Thorswap routes');
+        thorswapQuoteData.routes = thorswapQuoteData.routes.filter(
+          r => r.providers[0] !== 'ONEINCH',
+        );
+      }
+
       if (thorswapQuoteData?.routes && thorswapQuoteData?.routes[0]) {
         let bestRoute: ThorswapQuoteRoute = thorswapQuoteData.routes[0];
         if (

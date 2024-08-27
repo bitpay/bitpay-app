@@ -6,7 +6,8 @@ export type ThorswapProvider =
   | 'THORCHAIN'
   | 'ZEROX'
   | 'ONEINCH'
-  | 'SUSHISWAP';
+  | 'SUSHISWAP'
+  | 'KYBER';
 
 export enum ThorswapProviderEnum {
   UNISWAPV2 = 'UNISWAPV2',
@@ -15,6 +16,7 @@ export enum ThorswapProviderEnum {
   ZEROX = 'ZEROX',
   ONEINCH = 'ONEINCH',
   SUSHISWAP = 'SUSHISWAP',
+  KYBER = 'KYBER',
 }
 
 export enum ThorswapProviderNames {
@@ -24,6 +26,7 @@ export enum ThorswapProviderNames {
   ZEROX = 'Zerox',
   ONEINCH = '1inch',
   SUSHISWAP = 'SushiSwap',
+  KYBER = 'KyberSwap',
 }
 
 export interface ThorswapGetCurrenciesRequestData {
@@ -153,7 +156,7 @@ export interface ThorswapRouteCalldata {
   data?: string;
   multicall?: string;
 
-  // UNISWAPV2 | SUSHISWAP
+  // UNISWAPV2 | SUSHISWAP | KYBER
   amountIn?: string;
   amountOutMin?: string;
   to?: string;
