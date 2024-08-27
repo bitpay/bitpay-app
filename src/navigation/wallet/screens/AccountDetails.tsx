@@ -1215,7 +1215,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         </AssetsDataContainer>
       </>
     );
-  }, [showActivityTab, memorizedAssetsByChainList, groupedHistory, copied]);
+  }, [
+    showActivityTab,
+    memorizedAssetsByChainList,
+    groupedHistory,
+    copied,
+    hideAllBalances,
+  ]);
 
   const renderDataSectionComponent = useMemo(() => {
     if (!searchVal && !selectedChainFilterOption) {
