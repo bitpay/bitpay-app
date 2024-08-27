@@ -3,7 +3,7 @@ import FastImage from 'react-native-fast-image';
 const pnglib = require('./pnglib');
 const hsl2rgb = require('./hsl2rgb');
 interface BlockieProps {
-  seed: string;
+  seed?: string;
   color?: string;
   bgcolor?: string;
   spotcolor?: string;
@@ -133,7 +133,10 @@ const makeBlockie = (address: string) => {
 
 class Blockie extends Component<BlockieProps> {
   render() {
-    const {seed, size = 40} = this.props;
+    const {
+      seed = Math.floor(Math.random() * Math.pow(10, 16)).toString(16),
+      size = 40,
+    } = this.props;
     const blockie = makeBlockie(seed);
 
     return (

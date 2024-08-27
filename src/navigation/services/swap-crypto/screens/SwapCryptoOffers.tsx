@@ -702,7 +702,8 @@ const SwapCryptoOffers: React.FC = () => {
         ) {
           const confirmingRoute = getThorswapRouteBySpenderKey(
             thorswapQuoteData.routes,
-            offers.thorswap.selectedSpenderKey);
+            offers.thorswap.selectedSpenderKey,
+          );
 
           if (!confirmingRoute) {
             logger.debug(
@@ -1045,7 +1046,6 @@ const SwapCryptoOffers: React.FC = () => {
       );
     }
 
-
     if (!selectedRoute) {
       let err = t(
         'There was an error trying to perform the Approve ERC20 function for the selected provider. Please try again later',
@@ -1142,7 +1142,6 @@ const SwapCryptoOffers: React.FC = () => {
           route => route.providers[0] === offers.thorswap.selectedSpenderKey,
         );
       }
-
 
       if (!selectedRoute) {
         let err = t(
