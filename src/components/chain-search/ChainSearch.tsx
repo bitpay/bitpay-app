@@ -24,7 +24,11 @@ import ChainSelectorModal, {
 } from '../../components/modal/chain-selector/ChainSelector';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {View} from 'react-native';
-import {BitpaySupportedCoins, CurrencyOpts} from '../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  CurrencyOpts,
+  SUPPORTED_EVM_COINS,
+} from '../../constants/currencies';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 import {AccountRowProps} from '../list/AccountListRow';
 
@@ -110,6 +114,7 @@ const SearchComponent = <T extends SearchableItem>({
   const {t} = useTranslation();
   const theme = useTheme();
   const [currencyInfo, setCurrencyInfo] = useState<CurrencyOpts | undefined>();
+  const [chainsOptions, setChainsOptions] = useState<string[]>();
 
   const selectedChainFilterOption = useAppSelector(({APP}) =>
     ignoreGlobalListContextList.includes(context)
@@ -120,17 +125,18 @@ const SearchComponent = <T extends SearchableItem>({
   const normalizeText = (text: string | undefined) =>
     text?.replace(/\s+/g, '')?.toLowerCase() || '';
 
-  const filterAccounts = (
+  const filterAccountsAndPolulateChainsOptions = (
     accounts: string[],
     normalizedText: string,
     selectedChainFilterOption: string | undefined,
+    chains: string[],
   ) =>
     accounts.filter(account => {
       const index = account.indexOf(':', account.indexOf(':') + 1);
       const protocolChainName = account.substring(0, index);
       const chain = normalizeText(EIP155_CHAINS[protocolChainName]?.chainName);
       const name = normalizeText(EIP155_CHAINS[protocolChainName]?.name);
-
+      chains.push(chain);
       return (
         (chain.includes(normalizedText) ||
           name.includes(normalizedText) ||
@@ -149,14 +155,17 @@ const SearchComponent = <T extends SearchableItem>({
         ['walletconnect'].includes(context) &&
         typeof results?.[0]?.accounts?.[0] === 'string'
       ) {
+        let chains = [] as string[];
         results.forEach(
           data =>
-            (data.accounts = filterAccounts(
+            (data.accounts = filterAccountsAndPolulateChainsOptions(
               data.accounts! as string[],
               normalizedText,
               selectedChainFilterOption,
+              chains,
             )),
         );
+        setChainsOptions(chains);
       } else if (['receive', 'swapTo', 'buy'].includes(context)) {
         results = results.reduce((acc: T[], data) => {
           const normalizedCurrencyAbbreviation = normalizeText(
@@ -199,56 +208,84 @@ const SearchComponent = <T extends SearchableItem>({
 
           return acc;
         }, []);
+        const chains = [
+          ...new Set(searchFullList.flatMap(data => data.chains || [])),
+        ];
+        setChainsOptions(chains);
       } else if (
-        ['keysettings', 'keyoverview', 'accountassetsview'].includes(context) &&
-        selectedChainFilterOption
+        ['keysettings', 'keyoverview', 'accountassetsview'].includes(context)
       ) {
-        results = results.reduce((acc: T[], data) => {
-          const hasSelectedNetwork = selectedChainFilterOption
-            ? data?.chains?.includes(selectedChainFilterOption)
-            : true;
-          if (hasSelectedNetwork) {
-            acc.push(data);
-          }
-          return acc;
-        }, []);
-      } else if (
-        ['accounthistoryview'].includes(context) &&
-        selectedChainFilterOption
-      ) {
-        results = results.map(result => {
-          const data = result?.data as TransactionProposal[];
-          const filteredData = data?.filter(
-            (tx: TransactionProposal) => tx.chain === selectedChainFilterOption,
-          );
-          return {...result, data: filteredData};
-        });
+        if (selectedChainFilterOption) {
+          results = results.reduce((acc: T[], data) => {
+            const hasSelectedNetwork = selectedChainFilterOption
+              ? data?.chains?.includes(selectedChainFilterOption)
+              : true;
+            if (hasSelectedNetwork) {
+              acc.push(data);
+            }
+            return acc;
+          }, []);
+        }
+        const chains = [
+          ...new Set(searchFullList.flatMap(data => data.chains || [])),
+        ];
+        setChainsOptions(chains);
+      } else if (['accounthistoryview'].includes(context)) {
+        if (selectedChainFilterOption) {
+          results = results.map(result => {
+            const data = result?.data as TransactionProposal[];
+            const filteredData = data?.filter(
+              (tx: TransactionProposal) =>
+                tx.chain === selectedChainFilterOption,
+            );
+            return {...result, data: filteredData};
+          });
+        }
+        let chains = SUPPORTED_EVM_COINS;
+        if (searchFullList.length > 0) {
+          chains = [
+            ...new Set(searchFullList.flatMap(data => data.chains || [])),
+          ];
+        }
+        setChainsOptions(chains);
       } else if (
         ['sell', 'send', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
           context,
-        ) &&
-        selectedChainFilterOption
+        )
       ) {
-        results = results
-          .map(data => {
-            const accounts = data.accounts as (AccountRowProps & {
-              assetsByChain?: AssetsByChainData[];
-            })[];
-            const filteredAccounts = accounts
-              ?.map(account => {
-                if (account.chains?.includes(selectedChainFilterOption)) {
-                  const assetsByChain =
-                    account.assetsByChain as AssetsByChainData[];
-                  const filteredAssetsByChain = assetsByChain?.filter(
-                    ({chain}) => chain === selectedChainFilterOption,
-                  );
-                  return {...account, assetsByChain: filteredAssetsByChain};
-                }
-              })
-              .filter(item => item);
-            return {...data, accounts: filteredAccounts};
-          })
-          .filter(({accounts}) => accounts?.length);
+        if (selectedChainFilterOption) {
+          results = results
+            .map(data => {
+              const accounts = data.accounts as (AccountRowProps & {
+                assetsByChain?: AssetsByChainData[];
+              })[];
+              const filteredAccounts = accounts
+                ?.map(account => {
+                  if (account.chains?.includes(selectedChainFilterOption)) {
+                    const assetsByChain =
+                      account.assetsByChain as AssetsByChainData[];
+                    const filteredAssetsByChain = assetsByChain?.filter(
+                      ({chain}) => chain === selectedChainFilterOption,
+                    );
+                    return {...account, assetsByChain: filteredAssetsByChain};
+                  }
+                })
+                .filter(item => item);
+              return {...data, accounts: filteredAccounts};
+            })
+            .filter(({accounts}) => accounts?.length);
+        }
+        const chains = [
+          ...new Set(
+            searchFullList.flatMap(data => {
+              const accounts = data.accounts as (AccountRowProps & {
+                assetsByChain?: AssetsByChainData[];
+              })[];
+              return accounts.flatMap(account => account.chains || []);
+            }),
+          ),
+        ];
+        setChainsOptions(chains);
       }
       setSearchResults(results);
     }, 300),
@@ -329,7 +366,10 @@ const SearchComponent = <T extends SearchableItem>({
           {_SearchFilterContainer()}
         </SearchRoundContainer>
       )}
-      <ChainSelectorModal onModalHide={onModalHide} />
+      <ChainSelectorModal
+        onModalHide={onModalHide}
+        chainsOptions={chainsOptions}
+      />
     </>
   );
 };
