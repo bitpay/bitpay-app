@@ -167,7 +167,7 @@ const AccountSettings = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{t('Wallet Settings')}</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Account Settings')}</HeaderTitle>,
     });
   });
   return (
