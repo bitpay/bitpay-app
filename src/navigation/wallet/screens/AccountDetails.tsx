@@ -358,7 +358,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
-  const [showKeyOptions, setShowKeyOptions] = useState(false);
   const keyFullWalletObjs = key.wallets.filter(
     w => w.receiveAddress === accountItem.receiveAddress,
   );
@@ -624,7 +623,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 <>
                   <Settings
                     onPress={() => {
-                      setShowKeyOptions(true);
+                      navigation.navigate('AccountSettings', {
+                        key,
+                        selectedAccountAddress: accountItem.receiveAddress,
+                      });
                     }}
                   />
                 </>
@@ -952,24 +954,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [key, accountItem, hideAllBalances],
   );
 
-  const keyOptions: Array<Option> = [];
-
-  if (!key?.methods?.isPrivKeyEncrypted()) {
-    keyOptions.push({
-      img: <Icons.Settings />,
-      title: t('Account Settings'),
-      description: t('View all the ways to manage and configure your account.'),
-      onPress: async () => {
-        haptic('impactLight');
-        await sleep(500);
-        navigation.navigate('AccountSettings', {
-          key,
-          selectedAccountAddress: accountItem.receiveAddress,
-        });
-      },
-    });
-  }
-
   const onPressTxpBadge = useMemo(
     () => () => {
       navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
@@ -1280,14 +1264,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         ListEmptyComponent={listEmptyComponent}
         getItemLayout={getItemLayout}
       />
-      {keyOptions.length > 0 ? (
-        <OptionsSheet
-          isVisible={showKeyOptions}
-          title={t('Key Options')}
-          options={keyOptions}
-          closeModal={() => setShowKeyOptions(false)}
-        />
-      ) : null}
 
       <SheetModal
         isVisible={showAccountDropdown}
