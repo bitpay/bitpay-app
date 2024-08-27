@@ -446,7 +446,7 @@ const KeyOverview = () => {
         />
       </WalletListHeader>
     );
-  }, [hideAllBalances]);
+  }, [key, hideAllBalances]);
 
   const renderListFooterComponent = useCallback(() => {
     return (

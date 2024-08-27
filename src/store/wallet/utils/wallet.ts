@@ -1123,7 +1123,7 @@ export const buildAccountList = (
         keyId,
         chains: [chain],
         accountName: isEVMChain
-          ? name || `EVM Account ${account}`
+          ? name || `EVM Account${Number(account) === 0 ? '' : ` (${account})`}`
           : uiFormattedWallet.walletName,
         wallets: [uiFormattedWallet],
         accountNumber: account,

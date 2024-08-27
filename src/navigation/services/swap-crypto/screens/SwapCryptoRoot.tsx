@@ -1445,7 +1445,11 @@ const SwapCryptoRoot: React.FC = () => {
                   <BaseText ellipsizeMode="tail" numberOfLines={1}>
                     {getEVMAccountName(fromWalletSelected)
                       ? getEVMAccountName(fromWalletSelected)
-                      : `EVM Account ${fromWalletSelected.credentials.account}`}
+                      : `EVM Account${
+                          Number(fromWalletSelected.credentials.account) === 0
+                            ? ''
+                            : ` (${fromWalletSelected.credentials.account})`
+                        }`}
                   </BaseText>
                 </AccountChainsContainer>
               ) : null}
@@ -1647,7 +1651,11 @@ const SwapCryptoRoot: React.FC = () => {
                   <H7 ellipsizeMode="tail" numberOfLines={1}>
                     {getEVMAccountName(toWalletSelected)
                       ? getEVMAccountName(toWalletSelected)
-                      : `EVM Account ${toWalletSelected.credentials.account}`}
+                      : `EVM Account${
+                          Number(toWalletSelected.credentials.account) === 0
+                            ? ''
+                            : ` (${toWalletSelected.credentials.account})`
+                        }`}
                   </H7>
                 </AccountChainsContainer>
               ) : null}

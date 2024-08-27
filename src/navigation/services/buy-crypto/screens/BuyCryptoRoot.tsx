@@ -869,7 +869,11 @@ const BuyCryptoRoot = ({
                 <H7 ellipsizeMode="tail" numberOfLines={1}>
                   {getEVMAccountName(selectedWallet)
                     ? getEVMAccountName(selectedWallet)
-                    : `EVM Account ${selectedWallet.credentials.account}`}
+                    : `EVM Account${
+                        Number(selectedWallet.credentials.account) === 0
+                          ? ''
+                          : ` (${selectedWallet.credentials.account})`
+                      }`}
                 </H7>
               </AccountChainsContainer>
             ) : null}
