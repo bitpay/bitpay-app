@@ -232,14 +232,16 @@ const SearchComponent = <T extends SearchableItem>({
         setChainsOptions(chains);
       } else if (['accounthistoryview'].includes(context)) {
         if (selectedChainFilterOption) {
-          results = results.map(result => {
-            const data = result?.data as TransactionProposal[];
-            const filteredData = data?.filter(
-              (tx: TransactionProposal) =>
-                tx.chain === selectedChainFilterOption,
-            );
-            return {...result, data: filteredData};
-          });
+          results = results
+            .map(result => {
+              const data = result?.data as TransactionProposal[];
+              const filteredData = data?.filter(
+                (tx: TransactionProposal) =>
+                  tx.chain === selectedChainFilterOption,
+              );
+              return {...result, data: filteredData};
+            })
+            .filter(result => result.data.length > 0);
         }
         let chains = SUPPORTED_EVM_COINS;
         if (searchFullList.length > 0) {
@@ -306,12 +308,6 @@ const SearchComponent = <T extends SearchableItem>({
     updateSearchResults(searchVal);
     updateSelectedChainInfo();
   }, [selectedChainFilterOption]);
-
-  useEffect(() => {
-    return () => {
-      dispatch(setLocalDefaultChainFilterOption(undefined));
-    };
-  }, []);
 
   const _SearchFilterContainer = () => {
     return (
