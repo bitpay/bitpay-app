@@ -295,7 +295,7 @@ const KeyOverview = () => {
     return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
       filterByHideWallet: true,
     });
-  }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
+  }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
 
   const keyOptions: Array<Option> = [];
 
@@ -444,7 +444,7 @@ const KeyOverview = () => {
         />
       </WalletListHeader>
     );
-  }, []);
+  }, [hideAllBalances]);
 
   const renderListFooterComponent = useCallback(() => {
     return (

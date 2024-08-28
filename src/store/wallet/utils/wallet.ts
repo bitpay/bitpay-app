@@ -1000,6 +1000,7 @@ export const buildAccountList = (
     skipFiatCalculations?: boolean;
     filterByHideWallet?: boolean;
     filterWalletsByBalance?: boolean;
+    filterWalletsByChain?: boolean;
     filterWalletsByPaymentOptions?: boolean;
     filterByWalletOptions?: boolean;
     paymentOptions?: PayProPaymentOption[] | undefined;
@@ -1028,6 +1029,10 @@ export const buildAccountList = (
     }
 
     if (opts?.filterWalletsByBalance && wallet.balance.sat <= 0) {
+      return;
+    }
+
+    if (opts?.filterWalletsByChain && opts?.chain !== wallet.chain) {
       return;
     }
 

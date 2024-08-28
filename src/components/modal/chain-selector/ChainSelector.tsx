@@ -97,25 +97,13 @@ const NetworkChainContainer = styled.TouchableOpacity<{selected?: boolean}>`
     `};
 `;
 
-const NetworkName = styled(BaseText)<{selected?: boolean}>`
+export const NetworkName = styled(BaseText)<{selected?: boolean}>`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   font-weight: 500;
   font-size: 16px;
 `;
 
-const NetworkChainLabelContainer = styled.View<{selected?: boolean}>`
-  align-items: center;
-  justify-content: center;
-`;
-
-const NetworkChainLabel = styled(BaseText)<{selected?: boolean}>`
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
-  font-size: 12px;
-  line-height: 22px;
-  font-weight: 400;
-`;
-
-const RowContainer = styled.View`
+const NetworkRowContainer = styled.View`
   flex-direction: row;
   display: flex;
   align-items: center;
@@ -133,7 +121,13 @@ const KeyBoardAvoidingViewWrapper = styled.KeyboardAvoidingView`
   border-top-right-radius: 12px;
 `;
 
-const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
+const ChainSelector = ({
+  onModalHide,
+  chainsOptions,
+}: {
+  onModalHide?: () => void;
+  chainsOptions: string[] | undefined;
+}) => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
@@ -157,16 +151,13 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
   );
 
   const renderChainItem = useCallback(
-    ({item, index, section}: {item: string; index: number; section: any}) => {
+    ({item, index}: {item: string; index: number}) => {
       const supportedChain = SupportedChainsOptions.find(
         ({chain}) => chain === item,
       );
       const badgeLabel = supportedChain?.chainName || item;
       const selected = selectedChainFilterOption === item;
-      let isLastItem = false;
-      if (section?.data?.length) {
-        isLastItem = index === section.data.length - 1;
-      }
+      const isLastItem = index === chainList.length - 1;
       return (
         <>
           <NetworkChainContainer
@@ -186,7 +177,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
               }
               setSearchVal('');
             }}>
-            <RowContainer>
+            <NetworkRowContainer>
               <ImageContainer>
                 {supportedChain?.img ? (
                   <CurrencyImage img={supportedChain?.img} size={32} />
@@ -195,7 +186,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
                 )}
               </ImageContainer>
               <NetworkName selected={selected}>{badgeLabel}</NetworkName>
-            </RowContainer>
+            </NetworkRowContainer>
           </NetworkChainContainer>
           {!selected && !isLastItem ? <Hr /> : null}
         </>
@@ -211,20 +202,23 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
 
   const chainList = useMemo(() => {
     // Function to filter and sort chains based on recent selection
-    let _SUPPORTED_CURRENCIES_CHAINS = SUPPORTED_CURRENCIES_CHAINS;
-    const getFilteredChains = () => {
-      if (
-        context &&
-        ['accountassetsview', 'accounthistoryview'].includes(context)
-      ) {
-        _SUPPORTED_CURRENCIES_CHAINS = SUPPORTED_CURRENCIES_CHAINS.filter(
-          chain => IsEVMChain(chain),
-        );
-      }
+    let _SUPPORTED_CURRENCIES_CHAINS =
+      chainsOptions && chainsOptions.length > 0
+        ? SUPPORTED_CURRENCIES_CHAINS.filter(chain =>
+            chainsOptions.includes(chain),
+          )
+        : SUPPORTED_CURRENCIES_CHAINS;
+    let _recentSelectedChainFilterOption =
+      chainsOptions && chainsOptions.length > 0
+        ? recentSelectedChainFilterOption.filter(chain =>
+            chainsOptions.includes(chain),
+          )
+        : recentSelectedChainFilterOption;
 
-      if (recentSelectedChainFilterOption.length) {
+    const getFilteredChains = () => {
+      if (_recentSelectedChainFilterOption.length) {
         return _SUPPORTED_CURRENCIES_CHAINS.filter(
-          chain => !recentSelectedChainFilterOption.includes(chain),
+          chain => !_recentSelectedChainFilterOption.includes(chain),
         );
       }
       // Exclude currently selected chain and move it to the front if it exists
@@ -245,14 +239,6 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
         data: [allNetworkTitle, ...chains].filter(Boolean),
       },
     ];
-    let _recentSelectedChainFilterOption = recentSelectedChainFilterOption;
-    if (
-      context &&
-      ['accountassetsview', 'accounthistoryview'].includes(context)
-    ) {
-      _recentSelectedChainFilterOption =
-        _recentSelectedChainFilterOption.filter(chain => IsEVMChain(chain));
-    }
     if (_recentSelectedChainFilterOption.length && !hasCustomChains) {
       list.unshift({
         title: sectionHeaders.recentlySelected,
@@ -274,6 +260,8 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
     sectionHeaders.recentlySelected,
     recentSelectedChainFilterOption,
     selectedChainFilterOption,
+    context,
+    chainsOptions,
   ]);
 
   const updateSearchResults = debounce((text: string) => {
@@ -331,7 +319,7 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
           <HideableView show={!!searchVal} style={{flex: 1}}>
             {searchResults.length ? (
               <FlashList
-                contentContainerStyle={{paddingBottom: 50}}
+                contentContainerStyle={{paddingBottom: 80}}
                 data={searchResults}
                 estimatedItemSize={65}
                 // @ts-ignore
@@ -355,13 +343,13 @@ const ChainSelector = ({onModalHide}: {onModalHide?: () => void}) => {
             show={!searchVal}
             style={{minHeight: Math.min(450, HEIGHT / 1.5)}}>
             <FlashList
-              contentContainerStyle={{paddingBottom: 50}}
+              contentContainerStyle={{paddingBottom: 80}}
               data={chainList}
-              renderItem={({item}) => {
+              renderItem={({item, index}) => {
                 if (item.title) {
                   return <ListHeader>{item.title}</ListHeader>;
                 } else {
-                  return renderChainItem({item});
+                  return renderChainItem({item, index});
                 }
               }}
               estimatedItemSize={65}
