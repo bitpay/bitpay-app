@@ -46,7 +46,7 @@ interface Props {
   accountItem: AssetsByChainData;
   hideIcon?: boolean;
   isLast?: boolean;
-  onPress: (walletId: string) => void;
+  onPress: (walletId: string, copayerId?: string) => void;
   hideBalance: boolean;
   showChainAssetsByDefault?: boolean;
 }
@@ -79,7 +79,7 @@ const AssetsByChainRow = ({
         id={item.id}
         hideBalance={false}
         isLast={false}
-        onPress={() => onPress(item.id)}
+        onPress={() => onPress(item.id, item.copayerId)}
         wallet={item}
       />
     );
