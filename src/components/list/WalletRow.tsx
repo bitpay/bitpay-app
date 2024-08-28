@@ -47,6 +47,7 @@ const NestedArrowContainer = styled.View`
 
 export interface WalletRowProps extends SearchableItem {
   id: string;
+  keyId: string;
   copayerId?: string;
   img: string | ((props: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);
@@ -158,7 +159,7 @@ export const buildGasTokenBadge = (
   return (
     <BadgeContainer>
       <GasTokenSvg />
-      <Badge style={{paddingTop: 3}}>{badgeLabel}</Badge>
+      <Badge>{badgeLabel}</Badge>
     </BadgeContainer>
   );
 };
@@ -213,11 +214,13 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
             {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
           </ListItemSubText>
-          {buildGasTokenBadge(
-            !IsERCToken(currencyAbbreviation, chain) && IsEVMChain(chain),
-          )}
-          {buildTestBadge(network, chain, isToken)}
-          {buildUncompleteBadge(isComplete)}
+          <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
+            {buildGasTokenBadge(
+              !IsERCToken(currencyAbbreviation, chain) && IsEVMChain(chain),
+            )}
+            {buildTestBadge(network, chain, isToken)}
+            {buildUncompleteBadge(isComplete)}
+          </Row>
         </Row>
       </CurrencyColumn>
       {!isScanning ? (

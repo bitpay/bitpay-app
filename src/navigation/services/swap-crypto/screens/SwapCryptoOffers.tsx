@@ -61,6 +61,7 @@ import {
   getEstimatedTimeStrFromRoute,
   getProvidersPathFromRoute,
   getThorswapFixedCoin,
+  getThorswapRouteBySpenderKey,
   getThorswapSpenderDataFromRoute,
   thorswapEnv,
 } from '../utils/thorswap-utils';
@@ -693,8 +694,37 @@ const SwapCryptoOffers: React.FC = () => {
       const thorswapQuoteData: ThorswapGetSwapQuoteData =
         await selectedWalletFrom.thorswapGetSwapQuote(requestData);
 
+      // TODO: remove this if(...) when Thorswap team fix the 1inch issue
+      // Workaround to prevent an issue from Thorswap in which 1inch v4 is the spender and 1inch v5 is the destination address
+      if (
+        thorswapQuoteData?.routes &&
+        Array.isArray(thorswapQuoteData.routes)
+      ) {
+        logger.debug('Removing ONEINCH from available Thorswap routes');
+        thorswapQuoteData.routes = thorswapQuoteData.routes.filter(
+          r => r.providers[0] !== 'ONEINCH',
+        );
+      }
+
       if (thorswapQuoteData?.routes && thorswapQuoteData?.routes[0]) {
-        const bestRoute: ThorswapQuoteRoute = thorswapQuoteData.routes[0];
+        let bestRoute: ThorswapQuoteRoute = thorswapQuoteData.routes[0];
+        if (
+          offers.thorswap.selectedSpenderKey &&
+          offers.thorswap.approveConfirming
+        ) {
+          const confirmingRoute = getThorswapRouteBySpenderKey(
+            thorswapQuoteData.routes,
+            offers.thorswap.selectedSpenderKey,
+          );
+
+          if (!confirmingRoute) {
+            logger.debug(
+              'Route not present in the new Thorswap quote for the confirming allowance provider',
+            );
+            return;
+          }
+          bestRoute = confirmingRoute;
+        }
 
         offers.thorswap.outOfLimitMsg = undefined;
         offers.thorswap.errorMsg = undefined;
@@ -1020,18 +1050,19 @@ const SwapCryptoOffers: React.FC = () => {
   const goToApproveErc20 = (offer: SwapCryptoOffer) => {
     let selectedRoute: ThorswapQuoteRoute | undefined;
     if (offer.selectedSpenderKey) {
+      logger.debug(
+        `Trying to go to Approve ERC20 Screen with spenderKey: ${offer.selectedSpenderKey}`,
+      );
       selectedRoute = (offer.quoteData as ThorswapQuoteRoute[]).find(
         route => route.providers[0] === offer.selectedSpenderKey,
       );
     }
 
     if (!selectedRoute) {
-      selectedRoute = offer.quoteData[0];
-    }
-
-    if (!selectedRoute) {
-      let err = t("Can't get rates at this moment. Please try again later");
-      const reason = 'checkTokenAllowance Error. selectedRoute not found.';
+      let err = t(
+        'There was an error trying to perform the Approve ERC20 function for the selected provider. Please try again later',
+      );
+      const reason = 'goToApproveErc20 Error. selectedRoute not found.';
       showThorswapError(err, reason);
       return;
     }
@@ -1039,9 +1070,11 @@ const SwapCryptoOffers: React.FC = () => {
     const spenderData = getThorswapSpenderDataFromRoute(selectedRoute);
 
     if (!spenderData?.address) {
-      let err = t("Can't get rates at this moment. Please try again later");
+      let err = t(
+        "It was not possible to obtain the provider's address to perform the Approve ERC20 function. Please try again later",
+      );
       const reason =
-        'checkTokenAllowance Error. spenderData.address not included.';
+        'goToApproveErc20 Error. spenderData.address not included.';
       showThorswapError(err, reason);
       return;
     }
@@ -1123,11 +1156,9 @@ const SwapCryptoOffers: React.FC = () => {
       }
 
       if (!selectedRoute) {
-        selectedRoute = offers.thorswap.quoteData[0];
-      }
-
-      if (!selectedRoute) {
-        let err = t("Can't get rates at this moment. Please try again later");
+        let err = t(
+          "Can't get ERC20 allowances at this moment. Please try again later",
+        );
         const reason = 'checkTokenAllowance Error. selectedRoute not found.';
         showThorswapError(err, reason);
         return;
@@ -1135,7 +1166,9 @@ const SwapCryptoOffers: React.FC = () => {
 
       const spenderData = getThorswapSpenderDataFromRoute(selectedRoute);
       if (!spenderData?.address) {
-        let err = t("Can't get rates at this moment. Please try again later");
+        let err = t(
+          "Can't get ERC20 allowances at this moment. Please try again later",
+        );
         const reason =
           'checkTokenAllowance Error. spenderData.address not included.';
         showThorswapError(err, reason);

@@ -40,6 +40,7 @@ import {
 } from '../../../store/wallet/effects/address/address';
 import {
   GetProtocolPrefix,
+  IsEVMChain,
   IsUtxoChain,
 } from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
@@ -156,7 +157,7 @@ interface Props {
   isVisible: boolean;
   closeModal: () => void;
   wallet: Wallet;
-  context?: 'accountdetails';
+  context?: 'accountdetails' | 'globalselect';
 }
 
 const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
@@ -359,7 +360,9 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
           </LoadingContainer>
         )}
 
-        {context && ['accountdetails'].includes(context) ? (
+        {context &&
+        ['accountdetails', 'globalselect'].includes(context) &&
+        IsEVMChain(wallet.chain) ? (
           <WarningContainer>
             <WarningHeader>
               <WarningSvg />

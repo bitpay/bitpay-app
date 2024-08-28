@@ -199,11 +199,6 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
           }),
         );
 
-        await fixWalletAddresses({
-          appDispatch: dispatch,
-          wallets: multisigKey.wallets,
-        });
-
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
 
         navigation.navigate('BackupKey', {

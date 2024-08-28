@@ -1064,7 +1064,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 )}
               </Row>
             </TouchableOpacity>
-            <BadgeContainer style={{alignSelf: 'center', width: 'auto'}}>
+            <BadgeContainer
+              style={{alignSelf: 'center', width: 'auto', height: 25}}>
               <Badge style={{marginTop: 3}}>
                 {formatCryptoAddress(accountItem.receiveAddress)}
               </Badge>
@@ -1214,7 +1215,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         </AssetsDataContainer>
       </>
     );
-  }, [showActivityTab, memorizedAssetsByChainList, groupedHistory, copied]);
+  }, [
+    showActivityTab,
+    memorizedAssetsByChainList,
+    groupedHistory,
+    copied,
+    hideAllBalances,
+  ]);
 
   const renderDataSectionComponent = useMemo(() => {
     if (!searchVal && !selectedChainFilterOption) {
