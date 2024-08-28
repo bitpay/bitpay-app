@@ -567,7 +567,7 @@ export const fixWalletAddresses = async ({
 }) => {
   await Promise.all(
     wallets.map(async wallet => {
-      if (!wallet.receiveAddress) {
+      if (!wallet.receiveAddress && wallet?.credentials?.isComplete()) {
         const walletAddress = (await appDispatch<any>(
           createWalletAddress({wallet, newAddress: false}),
         )) as string;
