@@ -545,7 +545,9 @@ export const startOnGoingProcessModal =
 
     const translations: Record<OnGoingProcessMessages, string> = {
       GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
-      CREATING_KEY: i18n.t('Creating Key'),
+      CREATING_KEY: i18n.t(
+        "Creating Key... Just a second, we're setting a few things up",
+      ),
       LOGGING_IN: i18n.t('Logging In'),
       LOGGING_OUT: i18n.t('Logging Out'),
       PAIRING: i18n.t('Pairing'),

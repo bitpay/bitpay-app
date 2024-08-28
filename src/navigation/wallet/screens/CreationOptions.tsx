@@ -60,7 +60,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       id: 'basic',
       title: t('New Key'),
       description: t(
-        'Add coins like Bitcoin and Dogecoin and also tokens like USDC and APE',
+        'Create a fresh key with a 12-word passphrase to secure your wallets and accounts',
       ),
       cta: async () => {
         try {
@@ -91,7 +91,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       id: 'import',
       title: t('Import Key'),
       description: t(
-        'Use an existing recovery phrase to import an existing wallet',
+        'Recover an existing key by entering your 12-word passphrase to access your wallets and accounts.',
       ),
       cta: () => {
         dispatch(
