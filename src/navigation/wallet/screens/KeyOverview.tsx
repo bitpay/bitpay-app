@@ -358,7 +358,13 @@ const KeyOverview = () => {
     try {
       await dispatch(startGetRates({}));
       await Promise.all([
-        dispatch(startUpdateAllWalletStatusForKey({key, force: true})),
+        dispatch(
+          startUpdateAllWalletStatusForKey({
+            key,
+            force: true,
+            createTokenWalletWithFunds: true,
+          }),
+        ),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());

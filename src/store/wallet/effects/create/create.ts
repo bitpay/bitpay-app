@@ -1,5 +1,6 @@
 import {
   BitpaySupportedCoins,
+  BitpaySupportedEvmCoins,
   SupportedChains,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
@@ -29,11 +30,19 @@ import {
   dismissDecryptPasswordModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
-import {addTokenChainSuffix, sleep} from '../../../../utils/helper-methods';
+import {
+  addTokenChainSuffix,
+  getAccount,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
-import {IsSegwitCoin} from '../../utils/currency';
+import {IsEVMChain, IsSegwitCoin} from '../../utils/currency';
 import {createWalletAddress} from '../address/address';
+import cloneDeep from 'lodash.clonedeep';
+import {MoralisErc20TokenBalanceByWalletData} from '../../../moralis/moralis.types';
+import {getERC20TokenBalanceByWallet} from '../../../moralis/moralis.effects';
+
 export interface CreateOptions {
   network?: Network;
   account?: number;
@@ -469,7 +478,7 @@ const createWallet =
 
 const createTokenWallet =
   (
-    wallet: Wallet,
+    associatedWallet: Wallet,
     tokenName: string,
     tokenAddress: string,
     tokenOptsByAddress: {[key in string]: Token},
@@ -479,19 +488,22 @@ const createTokenWallet =
       try {
         const bwcClient = BWC.getClient();
         const tokenCredentials: Credentials =
-          wallet.credentials.getTokenCredentials(
+          associatedWallet.credentials.getTokenCredentials(
             tokenOptsByAddress[
-              addTokenChainSuffix(tokenAddress, wallet.credentials.chain)
+              addTokenChainSuffix(
+                tokenAddress,
+                associatedWallet.credentials.chain,
+              )
             ],
-            wallet.credentials.chain,
+            associatedWallet.credentials.chain,
           );
         bwcClient.fromObj(tokenCredentials);
         // push walletId as reference - this is used later to build out nested overview lists
-        wallet.tokens = wallet.tokens || [];
-        wallet.tokens.push(tokenCredentials.walletId);
+        associatedWallet.tokens = associatedWallet.tokens || [];
+        associatedWallet.tokens.push(tokenCredentials.walletId);
         // Add the token info to the ethWallet for BWC/BWS
 
-        wallet.preferences = wallet.preferences || {
+        associatedWallet.preferences = associatedWallet.preferences || {
           tokenAddresses: [],
           maticTokenAddresses: [],
           opTokenAddresses: [],
@@ -499,46 +511,49 @@ const createTokenWallet =
           baseTokenAddresses: [],
         };
 
-        switch (wallet.credentials.chain) {
+        switch (associatedWallet.credentials.chain) {
           case 'eth':
-            wallet.preferences.tokenAddresses?.push(
+            associatedWallet.preferences.tokenAddresses?.push(
               // @ts-ignore
               tokenCredentials.token?.address,
             );
             break;
           case 'matic':
-            wallet.preferences.maticTokenAddresses?.push(
+            associatedWallet.preferences.maticTokenAddresses?.push(
               // @ts-ignore
               tokenCredentials.token?.address,
             );
             break;
           case 'op':
-            wallet.preferences.opTokenAddresses?.push(
+            associatedWallet.preferences.opTokenAddresses?.push(
               // @ts-ignore
               tokenCredentials.token?.address,
             );
             break;
           case 'base':
-            wallet.preferences.baseTokenAddresses?.push(
+            associatedWallet.preferences.baseTokenAddresses?.push(
               // @ts-ignore
               tokenCredentials.token?.address,
             );
             break;
           case 'arb':
-            wallet.preferences.arbTokenAddresses?.push(
+            associatedWallet.preferences.arbTokenAddresses?.push(
               // @ts-ignore
               tokenCredentials.token?.address,
             );
             break;
         }
 
-        wallet.savePreferences(wallet.preferences, (err: any) => {
-          if (err) {
-            dispatch(LogActions.error(`Error saving token: ${tokenName}`));
-          }
-          dispatch(LogActions.info(`Added token ${tokenName}`));
-          resolve(bwcClient);
-        });
+        associatedWallet.savePreferences(
+          associatedWallet.preferences,
+          (err: any) => {
+            if (err) {
+              dispatch(LogActions.error(`Error saving token: ${tokenName}`));
+            }
+            dispatch(LogActions.info(`Added token ${tokenName}`));
+            resolve(bwcClient);
+          },
+        );
       } catch (err) {
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
@@ -730,4 +745,95 @@ export const getDecryptPassword =
         }),
       );
     });
+  };
+
+export const detectAndCreateTokensForEachEvmWallet =
+  ({key, force}: {key: Key; force?: boolean}): Effect<Promise<void>> =>
+  async dispatch => {
+    try {
+      dispatch(
+        LogActions.info('starting [detectAndCreateTokensForEachEvmWallet]'),
+      );
+
+      const evmWalletsToCheck = key.wallets.filter(
+        w =>
+          w.credentials &&
+          IsEVMChain(w.credentials.chain) &&
+          BitpaySupportedEvmCoins[w.credentials.chain] &&
+          w.credentials.coin ===
+            BitpaySupportedEvmCoins[w.credentials.chain].coin &&
+          w.receiveAddress,
+      );
+
+      for (const [index, w] of evmWalletsToCheck.entries()) {
+        if (w.chain && w.receiveAddress) {
+          const erc20WithBalanceData: MoralisErc20TokenBalanceByWalletData[] =
+            await dispatch(
+              getERC20TokenBalanceByWallet({
+                chain: w.chain,
+                address: w.receiveAddress,
+              }),
+            );
+
+          let filteredTokens = erc20WithBalanceData.filter(erc20Token => {
+            // Filter by: token already created in the key (present in w.tokens), possible spam and significant balance
+            return (
+              (!w.tokens ||
+                !cloneDeep(w.tokens).some(token =>
+                  token.includes(erc20Token.token_address),
+                )) &&
+              !erc20Token.possible_spam &&
+              erc20Token.balance &&
+              erc20Token.decimals &&
+              parseFloat(erc20Token.balance) /
+                Math.pow(10, erc20Token.decimals) >=
+                1e-6
+            );
+          });
+
+          let account: number | undefined;
+          let customAccount = false;
+          if (w.credentials.rootPath) {
+            account = getAccount(w.credentials.rootPath);
+            customAccount = true;
+          }
+
+          for (const [index, tokenToAdd] of filteredTokens.entries()) {
+            const newTokenWallet: AddWalletData = {
+              key,
+              associatedWallet: w,
+              currency: {
+                chain: w.chain,
+                currencyAbbreviation: tokenToAdd.symbol.toLowerCase(),
+                isToken: true,
+                tokenAddress: tokenToAdd.token_address,
+              },
+              options: {
+                network: Network.mainnet,
+                ...(account !== undefined && {
+                  account,
+                  customAccount,
+                }),
+              },
+            };
+
+            await dispatch(
+              addWallet(newTokenWallet),
+            );
+          }
+          dispatch(
+            LogActions.info('success [detectAndCreateTokensForEachEvmWallet]'),
+          );
+          return Promise.resolve();
+        }
+      }
+
+    } catch (err) {
+      const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
+      dispatch(
+        LogActions.error(
+          `failed [detectAndCreateTokensForEachEvmWallet]: ${errorStr}`,
+        ),
+      );
+    }
   };

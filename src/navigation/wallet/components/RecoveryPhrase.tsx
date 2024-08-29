@@ -420,14 +420,20 @@ const RecoveryPhrase = () => {
           )) as Key);
       try {
         await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await dispatch(
+          startUpdateAllWalletStatusForKey({
+            key,
+            force: true,
+            createTokenWalletWithFunds: true,
+          }),
+        );
         await sleep(1000);
-        await dispatch(updatePortfolioBalance());
         // workaround for fixing wallets without receive address
         await fixWalletAddresses({
           appDispatch: dispatch,
           wallets: key.wallets,
         });
+        await dispatch(updatePortfolioBalance());
       } catch (error) {
         // ignore error
       }
@@ -495,14 +501,20 @@ const RecoveryPhrase = () => {
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
       try {
         await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        await dispatch(
+          startUpdateAllWalletStatusForKey({
+            key,
+            force: true,
+            createTokenWalletWithFunds: true,
+          }),
+        );
         await sleep(1000);
-        await dispatch(updatePortfolioBalance());
         // workaround for fixing wallets without receive address
         await fixWalletAddresses({
           appDispatch: dispatch,
           wallets: key.wallets,
         });
+        await dispatch(updatePortfolioBalance());
       } catch (error) {
         // ignore error
       }
