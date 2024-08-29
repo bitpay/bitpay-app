@@ -134,7 +134,7 @@ const AccountSettings = () => {
 
   const WalletList = ({wallets}: {wallets: WalletRowProps[]}) => {
     return (
-      <>
+      <View style={{paddingBottom: 50}}>
         {wallets.map(
           (
             {
@@ -161,7 +161,7 @@ const AccountSettings = () => {
             />
           ),
         )}
-      </>
+      </View>
     );
   };
 
