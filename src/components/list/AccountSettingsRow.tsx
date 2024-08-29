@@ -55,9 +55,11 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
           />
         )}
       </CurrencyImageContainer>
-      <H5 ellipsizeMode="tail" numberOfLines={1}>
-        {accountName}
-      </H5>
+      <Column>
+        <H5 ellipsizeMode="tail" numberOfLines={1}>
+          {accountName}
+        </H5>
+      </Column>
 
       {hideAccount ? (
         <HiddenColumn>

@@ -1548,7 +1548,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               <TitleNameContainer>
                 <Row style={{alignItems: 'center'}}>
                   <Blockie size={19} seed={selectedEVMAccount.receiveAddress} />
-                  <TitleName>{selectedEVMAccount.accountName}</TitleName>
+                  <View style={{maxWidth: 250}}>
+                    <TitleName ellipsizeMode="tail" numberOfLines={1}>
+                      {selectedEVMAccount.accountName}
+                    </TitleName>
+                  </View>
                 </Row>
                 <CloseButton
                   onPress={() => {

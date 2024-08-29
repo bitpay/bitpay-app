@@ -166,9 +166,11 @@ const AccountListRow = ({
         </CurrencyImageContainer>
       ) : null}
       {isMultiNetworkSupported ? (
-        <H5 ellipsizeMode="tail" numberOfLines={1}>
-          {accountName}
-        </H5>
+        <Column>
+          <H5 ellipsizeMode={'tail'} numberOfLines={1}>
+            {accountName}
+          </H5>
+        </Column>
       ) : (
         <Column>
           <Row>

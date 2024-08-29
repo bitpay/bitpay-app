@@ -108,6 +108,7 @@ import {
 import {
   AccountChainsContainer,
   Br,
+  Column,
   CurrencyColumn,
   CurrencyImageContainer,
   ExternalServicesItemTopTitle,
@@ -1138,15 +1139,17 @@ const SellCryptoRoot = ({
             {IsEVMChain(selectedWallet.chain) ? (
               <AccountChainsContainer>
                 <Blockie size={19} seed={selectedWallet.receiveAddress} />
-                <H7 ellipsizeMode="tail" numberOfLines={1}>
-                  {getEVMAccountName(selectedWallet)
-                    ? getEVMAccountName(selectedWallet)
-                    : `EVM Account${
-                        Number(selectedWallet.credentials.account) === 0
-                          ? ''
-                          : ` (${selectedWallet.credentials.account})`
-                      }`}
-                </H7>
+                <Column>
+                  <H7 ellipsizeMode="tail" numberOfLines={1}>
+                    {getEVMAccountName(selectedWallet)
+                      ? getEVMAccountName(selectedWallet)
+                      : `EVM Account${
+                          Number(selectedWallet.credentials.account) === 0
+                            ? ''
+                            : ` (${selectedWallet.credentials.account})`
+                        }`}
+                  </H7>
+                </Column>
               </AccountChainsContainer>
             ) : null}
           </ExternalServicesTitleContainer>
