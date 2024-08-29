@@ -1563,7 +1563,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 entering={FadeIn.duration(
                   Platform.OS === 'android' ? 800 : 300,
                 )}
-                contentContainerStyle={{paddingBottom: 150}}
+                contentContainerStyle={{paddingBottom: 300}}
                 data={selectedAssetsFromAccount}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={memoizedRenderAssetsItem}
