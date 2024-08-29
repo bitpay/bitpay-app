@@ -192,8 +192,8 @@ const KeyWalletsRow = <T extends WalletRowType>({
                   </Column>
                   <Column style={{alignItems: 'flex-end'}}>
                     <ChainAssetsContainer>
-                      <BadgeContainer style={{height: 20}}>
-                        <Badge style={{marginTop: 3}}>
+                      <BadgeContainer>
+                        <Badge>
                           {formatCryptoAddress(account.receiveAddress)}
                         </Badge>
                       </BadgeContainer>
