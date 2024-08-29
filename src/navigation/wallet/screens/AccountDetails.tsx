@@ -611,7 +611,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       headerRight: () => {
         return (
           <>
-            <HeaderRightContainer>
+            <HeaderRightContainer style={{marginTop: -3}}>
               {pendingProposalsCount ? (
                 <ProposalBadgeContainer
                   style={{marginRight: 10}}
@@ -619,29 +619,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              {key?.methods?.isPrivKeyEncrypted() ? (
-                <CogIconContainer
-                  onPress={async () => {
-                    await sleep(500);
-                    navigation.navigate('KeySettings', {
-                      key,
-                    });
-                  }}
-                  activeOpacity={ActiveOpacity}>
-                  <Icons.Cog />
-                </CogIconContainer>
-              ) : (
-                <>
-                  <Settings
-                    onPress={() => {
-                      navigation.navigate('AccountSettings', {
-                        key,
-                        selectedAccountAddress: accountItem.receiveAddress,
-                      });
-                    }}
-                  />
-                </>
-              )}
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('AccountSettings', {
+                    key,
+                    selectedAccountAddress: accountItem.receiveAddress,
+                  })
+                }>
+                <Icons.AccountSettings />
+              </TouchableOpacity>
             </HeaderRightContainer>
           </>
         );
