@@ -116,7 +116,7 @@ export type WalletGroupParamList = {
   };
   AccountDetails: AccountDetailsScreenParamList;
   WalletDetails: WalletDetailsScreenParamList;
-  WalletSettings: {walletId: string; key: Key};
+  WalletSettings: {walletId: string; key: Key; copayerId: string};
   AccountSettings: {key: Key; selectedAccountAddress: string};
   CreationOptions: undefined;
   Import: ImportParamList;
@@ -146,8 +146,13 @@ export type WalletGroupParamList = {
     walletId: string;
     transactionId: string;
     keyId: string;
+    copayerId?: string;
   };
-  TransactionProposalNotifications: {walletId?: string; keyId?: string};
+  TransactionProposalNotifications: {
+    walletId?: string;
+    keyId?: string;
+    copayerId?: string;
+  };
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
   WalletInformation: {wallet?: WalletModel; accountItem?: AccountRowProps};

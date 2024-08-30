@@ -382,7 +382,11 @@ const KeyOverview = () => {
       });
       return;
     }
-    const fullWalletObj = key.wallets.find(k => k.id === item.wallets[0].id)!;
+    const fullWalletObj = key.wallets.find(
+      k =>
+        k.id === item.wallets[0].id &&
+        (!item.copayerId || k.credentials?.copayerId === item.copayerId),
+    )!;
     if (!fullWalletObj.isComplete()) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
@@ -397,6 +401,7 @@ const KeyOverview = () => {
                 navigation.navigate('WalletDetails', {
                   walletId: fullWalletObj.credentials.walletId,
                   key,
+                  copayerId: item.copayerId,
                 });
               });
               return;
@@ -412,6 +417,7 @@ const KeyOverview = () => {
       navigation.navigate('WalletDetails', {
         key,
         walletId: fullWalletObj.credentials.walletId,
+        copayerId: fullWalletObj.credentials.copayerId,
       });
     }
   };

@@ -358,8 +358,15 @@ export const toFiat =
 export const findWalletById = (
   wallets: Wallet[] | WalletRowProps[],
   id: string,
+  copayerId?: string,
 ): Wallet | WalletRowProps | undefined =>
-  wallets.find(wallet => wallet.id === id);
+  wallets.find(
+    wallet =>
+      wallet.id === id &&
+      (!copayerId ||
+        (wallet as WalletRowProps).copayerId === copayerId ||
+        (wallet as Wallet).credentials?.copayerId === copayerId),
+  );
 
 export const findWalletByAddress = (
   address: string,

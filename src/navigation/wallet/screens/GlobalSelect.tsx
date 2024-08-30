@@ -980,11 +980,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             id={item.id}
             accountItem={item}
             hideBalance={hideAllBalances}
-            onPress={walletId => {
+            onPress={(walletId, copayerId) => {
               const keyFullWalletObjs = keys[selectedEVMAccount.keyId!].wallets;
               const fullWalletObj = findWalletById(
                 keyFullWalletObjs,
                 walletId,
+                copayerId,
               ) as Wallet;
               onWalletSelect(fullWalletObj);
             }}
@@ -1044,6 +1045,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                         const fullWalletObj = findWalletById(
                           keyFullWalletObjs,
                           account.wallets[0].id,
+                          account.wallets[0].copayerId,
                         ) as Wallet;
                         onWalletSelect(fullWalletObj);
                       }
@@ -1184,10 +1186,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           selectedCurrency.currencyAbbreviation.toLowerCase() &&
         w.chain.toLowerCase() === selectedNetwork.toLowerCase(),
     );
-    const handleWalletSelection = (walletId: string) => {
+    const handleWalletSelection = (walletId: string, copayerId?: string) => {
       const walletFullObject = findWalletById(
         keys[keyId].wallets,
         walletId,
+        copayerId,
       ) as Wallet;
       onWalletSelect(walletFullObject, undefined);
     };
@@ -1203,6 +1206,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         associatedWalletFullObject = findWalletById(
           keys[keyId].wallets,
           associatedWallet.id,
+          associatedWallet.copayerId,
         ) as Wallet;
       }
       handleBasicWalletCreation(
@@ -1213,10 +1217,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       );
     };
     if (IsERCToken(selectedCurrency.currencyAbbreviation, selectedNetwork)) {
-      wallet ? handleWalletSelection(wallet.id) : handleERC20WalletCreation();
+      wallet ? handleWalletSelection(wallet.id, wallet.copayerId) : handleERC20WalletCreation();
     } else {
       wallet
-        ? handleWalletSelection(wallet.id)
+        ? handleWalletSelection(wallet.id, wallet.copayerId)
         : handleBasicWalletCreation(
             selectedCurrency,
             selectedKey,
@@ -1319,6 +1323,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       const walletFullObject = findWalletById(
         keys[keyId].wallets,
         wallets[0].id,
+        wallets[0].copayerId,
       ) as Wallet;
       onWalletSelect(walletFullObject, undefined);
       return;

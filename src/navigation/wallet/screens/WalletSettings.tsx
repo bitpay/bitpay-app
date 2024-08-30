@@ -76,7 +76,7 @@ const WalletSettingsTitle = styled(SettingTitle)`
 const WalletSettings = () => {
   const {t} = useTranslation();
   const {
-    params: {walletId, key},
+    params: {walletId, key, copayerId},
   } = useRoute<RouteProp<WalletGroupParamList, 'WalletSettings'>>();
   const navigation = useNavigation();
 
@@ -84,7 +84,7 @@ const WalletSettings = () => {
   const evmAccountsInfo = useAppSelector(
     ({WALLET}) => WALLET.keys[key.id].evmAccountsInfo,
   );
-  const wallet = findWalletById(wallets, walletId) as Wallet;
+  const wallet = findWalletById(wallets, walletId, copayerId) as Wallet;
   const hideAccount = wallet.receiveAddress
     ? evmAccountsInfo?.[wallet.receiveAddress]?.hideAccount
     : false;

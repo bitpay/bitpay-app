@@ -41,6 +41,7 @@ export type AccountRowListProps = AccountRowListBase & AccountRowProps[];
 export interface AccountRowProps extends SearchableItem {
   id: string;
   keyId: string;
+  copayerId?: string;
   chains: string[];
   wallets: WalletRowProps[];
   accountName: string;
