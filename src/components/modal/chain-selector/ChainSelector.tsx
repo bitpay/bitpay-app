@@ -47,7 +47,7 @@ import GhostSvg from '../../../../assets/img/ghost-cheeky.svg';
 import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
-import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {sleep} from '../../../utils/helper-methods';
 
 export const ignoreGlobalListContextList = [
   'sell',
@@ -56,7 +56,8 @@ export const ignoreGlobalListContextList = [
   'buy',
   'walletconnect',
   'createNewKey',
-  'addWallet',
+  'addUtxoWallet',
+  'addEVMWallet',
 ];
 export interface ChainSelectorConfig {
   onBackdropDismiss?: () => void;
@@ -163,8 +164,9 @@ const ChainSelector = ({
           <NetworkChainContainer
             activeOpacity={ActiveOpacity}
             selected={selected}
-            onPress={() => {
+            onPress={async () => {
               dispatch(AppActions.dismissChainSelectorModal());
+              await sleep(300);
               const option = supportedChain?.chain as
                 | SupportedChains
                 | undefined;

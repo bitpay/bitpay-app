@@ -43,10 +43,10 @@ const AddingOptions: React.FC = () => {
 
   const optionList: Option[] = [
     {
-      id: 'basic',
-      title: t('Basic wallet'),
+      id: 'utxo-wallet',
+      title: t('UTXO Wallet'),
       description: t(
-        'Add coins like Bitcoin and Dogecoin, and also tokens like USDC and APE',
+        'Dedicated to a single cryptocurrency like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Perfect for users focusing on one specific coin.',
       ),
       cta: () => {
         dispatch(
@@ -54,14 +54,35 @@ const AddingOptions: React.FC = () => {
             context: 'AddingOptions',
           }),
         );
-        navigation.navigate('CurrencySelection', {context: 'addWallet', key});
+        navigation.navigate('CurrencySelection', {
+          context: 'addUtxoWallet',
+          key,
+        });
       },
     },
     {
-      id: 'multisig',
+      id: 'account-based-wallet',
+      title: t('Account-Based Wallet'),
+      description: t(
+        'An account for Ethereum and EVM-compatible chains like Solana, Ethereum. Supports smart contracts and DeFi across multiple networks.',
+      ),
+      cta: () => {
+        dispatch(
+          Analytics.track('Clicked Create Basic Wallet', {
+            context: 'AddingOptions',
+          }),
+        );
+        navigation.navigate('CurrencySelection', {
+          context: 'addEVMWallet',
+          key,
+        });
+      },
+    },
+    {
+      id: 'multisig-wallet',
       title: t('Multisig Wallet'),
       description: t(
-        'Requires multiple people or devices and is the most secure',
+        'Requires multiple approvals for transactions for wallets like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Ideal for shared funds or enhanced security.',
       ),
       cta: () => setShowMultisigOptions(true),
     },
@@ -72,6 +93,7 @@ const AddingOptions: React.FC = () => {
         <OptionListContainer>
           {optionList.map(({cta, id, title, description}: Option) => (
             <OptionList
+              style={{height: 120}}
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('impactLight');

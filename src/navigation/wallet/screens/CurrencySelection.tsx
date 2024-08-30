@@ -31,10 +31,12 @@ import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle, Link} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
-  SupportedCoinsOptions,
+  OtherSupportedCurrencyOptions,
   SupportedCurrencyOption,
   SupportedCurrencyOptions,
+  SupportedEvmCurrencyOptions,
   SupportedTokenOptions,
+  SupportedUtxoCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {
@@ -49,7 +51,6 @@ import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
-import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
 import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import {orderBy} from 'lodash';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -65,7 +66,10 @@ type CurrencySelectionScreenProps = NativeStackScreenProps<
 >;
 
 type CurrencySelectionContextWithoutKey = 'onboarding' | 'createNewKey';
-type CurrencySelectionContextWithKey = 'addWallet' | 'addWalletMultisig';
+type CurrencySelectionContextWithKey =
+  | 'addUtxoWallet'
+  | 'addEVMWallet'
+  | 'addWalletMultisig';
 export type CurrencySelectionParamList =
   | {
       context: CurrencySelectionContextWithoutKey;
@@ -182,7 +186,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
-
   const appTokenOptionsByAddress = useAppSelector(
     ({WALLET}) => WALLET.tokenOptionsByAddress,
   );
@@ -224,31 +227,45 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   // Initialize supported currencies and tokens into row item format.
   // Resets if tokenOptions or tokenData updates.
   useEffect(() => {
-    if (context === 'addWalletMultisig') {
-      const items = SupportedMultisigCurrencyOptions.map(currency => {
-        const item: CurrencySelectionListItem = {
-          currency: {
-            ...currency,
-            imgSrc: undefined,
-            selected: false,
-            disabled: false,
-            chain: currency.currencyAbbreviation,
-          },
-          tokens: [],
-          popularTokens: [],
-        };
-
-        return item;
-      });
-
-      setAllListItems(items);
-      return;
-    }
-
     const chainMap: Record<string, CurrencySelectionListItem> = {};
+    let _supportedCoinsOptions: Array<SupportedCurrencyOption> = [];
+    switch (context) {
+      case 'addWalletMultisig':
+        const items = SupportedMultisigCurrencyOptions.map(currency => {
+          const item: CurrencySelectionListItem = {
+            // @ts-ignore
+            currency: {
+              ...currency,
+              imgSrc: undefined,
+              selected: false,
+              disabled: false,
+              chain: currency.currencyAbbreviation,
+            },
+            tokens: [],
+            popularTokens: [],
+          };
+          return item;
+        });
 
+        setAllListItems(items);
+        return;
+
+      case 'addEVMWallet':
+        _supportedCoinsOptions = orderBy(
+          SupportedEvmCurrencyOptions,
+          'priority',
+        );
+        break;
+
+      case 'addUtxoWallet':
+        _supportedCoinsOptions = orderBy(
+          [...SupportedUtxoCurrencyOptions, ...OtherSupportedCurrencyOptions],
+          'priority',
+        );
+        break;
+    }
     // Add all chain currencies to list
-    const list: CurrencySelectionListItem[] = SupportedCoinsOptions.map(
+    const list: CurrencySelectionListItem[] = _supportedCoinsOptions.map(
       ({
         id,
         chain,
@@ -260,6 +277,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       }) => {
         const _chain = chain.toLowerCase();
         const item: CurrencySelectionListItem = {
+          // @ts-ignore
           currency: {
             id,
             currencyAbbreviation,
@@ -283,6 +301,10 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       },
     );
 
+    if (context === 'addUtxoWallet') {
+      setAllListItems(list);
+      return;
+    }
     // For each token, add it to the token list for its parent chain object
     const tokenOptionsByAddress: Record<string, Token> = {
       ...BitpaySupportedTokenOptsByAddress,
@@ -345,6 +367,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       } else {
         // Parent chain currency not found, just push to the main list.
         list.push({
+          // @ts-ignore
           currency: token,
           tokens: [],
           popularTokens: [],
@@ -452,7 +475,8 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
         };
       }
 
-      case 'addWallet': {
+      case 'addUtxoWallet':
+      case 'addEVMWallet': {
         return {
           selectionMode: 'single',
           headerTitle: t('Select Currency'),
@@ -881,7 +905,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
 
   return (
     <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
-      {context !== 'addWalletMultisig' ? (
+      {context !== 'addWalletMultisig' && allListItems.length > 0 ? (
         <SearchComponentContainer>
           <SearchComponent<CurrencySelectionListItem>
             searchVal={searchVal}
