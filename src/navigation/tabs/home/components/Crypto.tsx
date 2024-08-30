@@ -178,7 +178,9 @@ export const createHomeCardList = ({
         totalBalanceLastDay,
       );
 
-      wallets = wallets.filter(wallet => !wallet.hideWallet);
+      wallets = wallets.filter(
+        wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
+      );
 
       return {
         id: key.id,

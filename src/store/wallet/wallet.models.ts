@@ -128,6 +128,7 @@ export interface WalletObj {
     hasConfirmingTxs: boolean;
   };
   hideWallet?: boolean;
+  hideWalletByAccount?: boolean;
   hideBalance?: boolean;
   network: Network;
   isHardwareWallet?: boolean;

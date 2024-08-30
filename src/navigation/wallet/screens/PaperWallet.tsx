@@ -150,7 +150,12 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
   const _walletsAvailable = Object.values(keys)
     .filter(key => key.backupComplete)
     .flatMap(key => key.wallets)
-    .filter(wallet => !wallet.hideWallet && wallet.isComplete());
+    .filter(
+      wallet =>
+        !wallet.hideWallet &&
+        !wallet.hideWalletByAccount &&
+        wallet.isComplete(),
+    );
 
   const [walletsAvailable, setWalletsAvailable] = useState<Wallet[]>([]);
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);

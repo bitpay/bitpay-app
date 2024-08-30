@@ -400,6 +400,7 @@ const SellCryptoRoot = ({
       }) &&
       wallet.isComplete() &&
       !wallet.hideWallet &&
+      !wallet.hideWalletByAccount &&
       (!fromCurrencyAbbreviation ||
         (wallet.currencyAbbreviation === fromCurrencyAbbreviation &&
           (fromChain ? wallet.chain === fromChain : true)))

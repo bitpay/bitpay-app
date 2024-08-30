@@ -335,8 +335,10 @@ export const formatFiatAmountObj = (
 export const convertToFiat = (
   fiat: number,
   hideWallet: boolean | undefined,
+  hideWalletByAccount: boolean | undefined,
   network: Network,
-) => (network === Network.mainnet && !hideWallet ? fiat : 0);
+) =>
+  network === Network.mainnet && !hideWallet && !hideWalletByAccount ? fiat : 0;
 
 export const getErrorString = (err: any): string => {
   return err instanceof Error ? err.message : JSON.stringify(err);

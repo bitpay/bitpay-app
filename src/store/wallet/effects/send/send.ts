@@ -2214,7 +2214,12 @@ export const sendCrypto =
     const walletsWithBalance = Object.values(keys)
       .filter(key => key.backupComplete)
       .flatMap(key => key.wallets)
-      .filter(wallet => !wallet.hideWallet && wallet.isComplete())
+      .filter(
+        wallet =>
+          !wallet.hideWallet &&
+          !wallet.hideWalletByAccount &&
+          wallet.isComplete(),
+      )
       .filter(wallet => wallet.balance.sat > 0);
 
     if (!walletsWithBalance.length) {

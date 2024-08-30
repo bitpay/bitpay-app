@@ -60,7 +60,6 @@ import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
 } from '../../../../constants/currencies';
-import {ToWalletSelectorCustomCurrency} from '../../components/ToWalletSelectorModal';
 import {
   addWallet,
   AddWalletData,
@@ -84,7 +83,9 @@ import {banxaEnv, getBanxaCoinFormat} from '../utils/banxa-utils';
 import {BanxaPaymentMethodsData} from '../../../../store/buy-crypto/buy-crypto.models';
 import cloneDeep from 'lodash.clonedeep';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
-import GlobalSelect from '../../../wallet/screens/GlobalSelect';
+import GlobalSelect, {
+  ToWalletSelectorCustomCurrency,
+} from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
@@ -312,6 +313,7 @@ const BuyCryptoRoot = ({
       ) &&
       wallet.isComplete() &&
       !wallet.hideWallet &&
+      !wallet.hideWalletByAccount &&
       (!fromCurrencyAbbreviation ||
         (wallet.currencyAbbreviation === fromCurrencyAbbreviation &&
           (fromChain ? wallet.chain === fromChain : true)))

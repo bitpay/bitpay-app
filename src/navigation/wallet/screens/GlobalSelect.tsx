@@ -97,7 +97,6 @@ import {
 } from '../../../components/modal/chain-selector/ChainSelector';
 import uniqBy from 'lodash.uniqby';
 import {CreateOptions} from '../../../store/wallet/effects';
-import {ToWalletSelectorCustomCurrency} from '../../services/components/ToWalletSelectorModal';
 import {
   SupportedChainOption,
   SupportedChainsOptions,
@@ -167,6 +166,16 @@ export const WalletSelectMenuContainer = styled.View`
   max-height: 75%;
   padding-bottom: 20px;
 `;
+
+export interface ToWalletSelectorCustomCurrency {
+  currencyAbbreviation: string;
+  symbol: string;
+  chain: string;
+  name: string;
+  logoUri: any;
+  badgeUri: any;
+  tokenAddress?: string;
+}
 
 export interface WalletSelectMenuHeaderContainerParams {
   currency?: string;
@@ -618,7 +627,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   // all wallets
   let wallets = Object.values(keys).flatMap(key => key.wallets);
   // Filter hidden wallets
-  wallets = wallets.filter(wallet => !wallet.hideWallet);
+  wallets = wallets.filter(
+    wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
+  );
 
   // only show wallets with funds
   // only show selected account address wallets if selectedAccountAddress is provided

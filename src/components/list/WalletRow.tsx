@@ -77,6 +77,7 @@ export interface WalletRowProps extends SearchableItem {
   isRefreshing?: boolean;
   isScanning?: boolean;
   hideWallet?: boolean;
+  hideWalletByAccount?: boolean;
   hideBalance?: boolean;
   pendingTxps: TransactionProposal[];
   coinbaseAccount?: CoinbaseAccountProps;

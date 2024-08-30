@@ -119,6 +119,7 @@ export const buildWalletObj = (
     n,
     m,
     hideWallet = false,
+    hideWalletByAccount = false,
     hideBalance = false,
     currencyAbbreviation,
     currencyName,
@@ -139,6 +140,7 @@ export const buildWalletObj = (
       symbol: string;
     };
     hideWallet?: boolean; // ionic migration only
+    hideWalletByAccount?: boolean;
     hideBalance?: boolean; // ionic migration only
     network: Network;
     currencyAbbreviation: string;
@@ -201,6 +203,7 @@ export const buildWalletObj = (
     isRefreshing: false,
     isScanning: false,
     hideWallet,
+    hideWalletByAccount,
     hideBalance,
     pendingTxps,
     isHardwareWallet,
@@ -837,6 +840,7 @@ type getFiatOptions = {
   rates: Rates;
   tokenAddress: string | undefined;
   hideWallet: boolean | undefined;
+  hideWalletByAccount: boolean | undefined;
   network: Network;
   currencyDisplay?: 'symbol' | 'code';
 };
@@ -850,6 +854,7 @@ const getFiat = ({
   rates,
   tokenAddress,
   hideWallet,
+  hideWalletByAccount,
   network,
 }: getFiatOptions) =>
   convertToFiat(
@@ -864,6 +869,7 @@ const getFiat = ({
       ),
     ),
     hideWallet,
+    hideWalletByAccount,
     network,
   );
 
@@ -899,6 +905,7 @@ export const buildUIFormattedWallet: (
     isRefreshing,
     isScanning,
     hideWallet,
+    hideWalletByAccount,
     hideBalance,
     pendingTxps,
     receiveAddress,
@@ -912,6 +919,7 @@ export const buildUIFormattedWallet: (
     rates,
     tokenAddress,
     hideWallet,
+    hideWalletByAccount,
     network,
     currencyDisplay,
   };
@@ -935,6 +943,7 @@ export const buildUIFormattedWallet: (
     isRefreshing,
     isScanning,
     hideWallet,
+    hideWalletByAccount,
     hideBalance,
     pendingTxps,
     multisig:

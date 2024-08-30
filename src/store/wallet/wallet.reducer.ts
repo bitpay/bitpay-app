@@ -563,6 +563,14 @@ export const walletReducer = (
         ...accountInfo[accountAddress],
         hideAccount: !accountInfo[accountAddress]?.hideAccount,
       };
+
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.receiveAddress === accountAddress) {
+          wallet.hideWalletByAccount = accountInfo[accountAddress]?.hideAccount;
+        }
+        return wallet;
+      });
+
       return {
         ...state,
         keys: {

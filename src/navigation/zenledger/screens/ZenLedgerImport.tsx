@@ -75,6 +75,7 @@ const ZenLedgerImport: React.FC = () => {
             network,
             balance,
             hideWallet,
+            hideWalletByAccount,
             tokenAddress,
           } = wallet;
 
@@ -91,6 +92,7 @@ const ZenLedgerImport: React.FC = () => {
                 ),
               ),
               hideWallet,
+              hideWalletByAccount,
               network,
             ),
             defaultAltCurrency.isoCode,

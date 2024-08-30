@@ -144,6 +144,7 @@ const AccountSettings = () => {
               badgeImg,
               isToken,
               hideWallet,
+              hideWalletByAccount,
               walletName,
               isComplete,
             },
@@ -156,6 +157,7 @@ const AccountSettings = () => {
               currencyName={currencyName}
               isToken={isToken}
               hideWallet={hideWallet}
+              hideWalletByAccount={hideWalletByAccount}
               walletName={walletName}
               onPress={() => onPressItem(isComplete, id)}
             />
