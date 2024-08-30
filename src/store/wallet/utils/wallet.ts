@@ -1005,7 +1005,7 @@ export const buildAccountList = (
   dispatch: AppDispatch,
   opts?: {
     skipFiatCalculations?: boolean;
-    filterByHideWallet?: boolean;
+    filterByHideWallet?: boolean; // used for hidden wallets and also accounts
     filterWalletsByBalance?: boolean;
     filterWalletsByChain?: boolean;
     filterWalletsByPaymentOptions?: boolean;
@@ -1116,6 +1116,11 @@ export const buildAccountList = (
     const isEVMChain = IsEVMChain(chain);
     const name = key.evmAccountsInfo?.[accountKey!]?.name;
     const existingAccount = accountMap[accountKey!];
+    const hideAccount = key.evmAccountsInfo?.[accountKey!]?.hideAccount;
+
+    if(opts?.filterByHideWallet && hideAccount) {
+      return;
+    }
 
     if (!existingAccount) {
       accountMap[accountKey!] = {

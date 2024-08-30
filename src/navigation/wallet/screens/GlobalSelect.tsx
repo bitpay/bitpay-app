@@ -724,6 +724,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             dispatch,
             {
               filterByCustomWallets: wallets.filter(w => w.keyId === key.id),
+              filterByHideWallet: true,
             },
           );
 
