@@ -6,19 +6,18 @@ import {
 import {each, filter} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {
-  DeviceEventEmitter,
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import {RefreshControl, ScrollView, TouchableOpacity} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
+  dismissOnGoingProcessModal,
   setShowKeyMigrationFailureModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {requestBrazeContentRefresh} from '../../../store/app/app.effects';
+import {
+  requestBrazeContentRefresh,
+  startOnGoingProcessModal,
+} from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
   selectBrazeQuickLinks,
@@ -31,6 +30,7 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {
   calculatePercentageDifference,
+  fixWalletAddresses,
   sleep,
 } from '../../../utils/helper-methods';
 import {
@@ -67,8 +67,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import Icons from '../../wallet/components/WalletIcons';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
-import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
-import {createWalletAddress} from '../../../store/wallet/effects/address/address';
+import {LogActions} from '../../../store/log';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -225,15 +224,24 @@ const HomeRoot = () => {
   }, [dispatch, keyMigrationFailure, keyMigrationFailureModalHasBeenShown]);
 
   useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener(
-      DeviceEmitterEvents.FIX_WALLET_ADDRESS,
-      async wallet => {
-        (await dispatch<any>(
-          createWalletAddress({wallet, newAddress: false}),
-        )) as string;
-      },
-    );
-    return () => subscription.remove();
+    // we need to ensure that each wallet has a receive address before we can create the account list.
+    const runAddressFix = async () => {
+      const walletsToFix = Object.values(keys).flatMap(key =>
+        key.wallets.filter(
+          wallet => !wallet.receiveAddress && wallet?.credentials?.isComplete(),
+        ),
+      );
+      if (walletsToFix.length > 0) {
+        dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: walletsToFix,
+        });
+        dispatch(LogActions.info('success [runAddressFix]'));
+        dispatch(dismissOnGoingProcessModal());
+      }
+    };
+    runAddressFix();
   }, []);
 
   const scrollViewRef = useRef<ScrollView>(null);

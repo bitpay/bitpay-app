@@ -1093,16 +1093,11 @@ export const buildAccountList = (
 
     let accountKey = receiveAddress;
 
-    // Create address if needed - workaround for multisig not incomplete wallets
-    if (!accountKey) {
-      if (wallet?.credentials?.isComplete()) {
-        DeviceEventEmitter.emit(DeviceEmitterEvents.FIX_WALLET_ADDRESS, wallet);
-        return;
-      } else {
-        // Workaround for incomplete multisig wallets
-        accountKey = walletId;
-      }
+    if (!accountKey && !wallet?.credentials?.isComplete()) {
+      // Workaround for incomplete multisig wallets
+      accountKey = walletId;
     }
+
     const isEVMChain = IsEVMChain(chain);
     const name = key.evmAccountsInfo?.[accountKey!]?.name;
     const existingAccount = accountMap[accountKey!];
