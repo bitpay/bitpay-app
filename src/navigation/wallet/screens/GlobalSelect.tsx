@@ -553,7 +553,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [dataToDisplay, setDataToDisplay] = useState<
-    GlobalSelectObj[] | KeyWalletsRowProps<KeyWallet>[]
+    GlobalSelectObj[] | KeyWalletsRowProps[]
   >([]);
   const [showInitiallyHiddenComponents, setShowInitiallyHiddenComponents] =
     useState(false);
@@ -567,7 +567,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     useState(false);
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState<
-    (GlobalSelectObj | KeyWalletsRowProps<KeyWallet>)[]
+    (GlobalSelectObj | KeyWalletsRowProps)[]
   >([]);
   const [selectedEVMAccount, setSelectedEVMAccount] = useState(
     {} as Partial<AccountRowProps> & {assetsByChain?: AssetsByChainData[]},
@@ -589,11 +589,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     title: 'Select Key to Deposit to',
   });
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const [addTokenToLinkedWallet, setAddTokenToLinkedWallet] =
-    useState<GlobalSelectObj>();
-  // object to pass to select modal
-  const [keyAccounts, setKeysAccounts] =
-    useState<KeyWalletsRowProps<KeyWallet>[]>();
 
   useEffect(() => {
     const mountComponents = async () => {
@@ -701,9 +696,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       [...coins, ...tokens, ...nonBitpayTokens],
       c => c,
     );
-    let allCurrencyData = {} as
-      | KeyWalletsRowProps<KeyWallet>[]
-      | GlobalSelectObjByKey;
+    let allCurrencyData = {} as KeyWalletsRowProps[] | GlobalSelectObjByKey;
     if (
       [
         'send',
@@ -999,7 +992,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   );
 
   const renderItem = useCallback(
-    ({item}: {item: GlobalSelectObj | KeyWalletsRowProps<KeyWallet>}) => {
+    ({item}: {item: GlobalSelectObj | KeyWalletsRowProps}) => {
       if (
         [
           'sell',
@@ -1011,7 +1004,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           'scanner',
         ].includes(context)
       ) {
-        const keyWallets = item as KeyWalletsRowProps<KeyWallet>;
+        const keyWallets = item as KeyWalletsRowProps;
         return (
           <View>
             <TitleNameContainer>
@@ -1478,7 +1471,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       )}
       <GlobalSelectContainer>
         <SearchComponentContainer>
-          <SearchComponent<GlobalSelectObj | KeyWalletsRowProps<KeyWallet>>
+          <SearchComponent<GlobalSelectObj | KeyWalletsRowProps>
             searchVal={searchVal}
             setSearchVal={setSearchVal}
             searchResults={searchResults}

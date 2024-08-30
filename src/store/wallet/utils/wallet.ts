@@ -52,10 +52,7 @@ import {
 import {coinbaseGetFiatAmount} from '../../coinbase';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
-import {
-  KeyWallet,
-  KeyWalletsRowProps,
-} from '../../../components/list/KeyWalletsRow';
+import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
 import _, {find, isEqual} from 'lodash';
 import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
@@ -623,8 +620,8 @@ export const BuildKeysAndWalletsList = ({
 };
 
 export interface WalletsAndAccounts {
-  keyWallets: KeyWalletsRowProps<KeyWallet>[];
-  coinbaseWallets: KeyWalletsRowProps<WalletRowProps>[];
+  keyWallets: KeyWalletsRowProps[];
+  coinbaseWallets: KeyWalletsRowProps[];
 }
 
 export const BuildPayProWalletSelectorList =
@@ -1118,7 +1115,7 @@ export const buildAccountList = (
     const existingAccount = accountMap[accountKey!];
     const hideAccount = key.evmAccountsInfo?.[accountKey!]?.hideAccount;
 
-    if(opts?.filterByHideWallet && hideAccount) {
+    if (opts?.filterByHideWallet && hideAccount) {
       return;
     }
 

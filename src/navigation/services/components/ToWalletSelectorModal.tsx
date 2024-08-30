@@ -289,8 +289,7 @@ const ToWalletSelectorModal: React.FC<ToWalletSelectorModalProps> = ({
     op: t('TokensOnOpNetworkDescription'),
   };
   // object to pass to select modal
-  const [keyWallets, setKeysWallets] =
-    useState<KeyWalletsRowProps<KeyWallet>[]>();
+  const [keyWallets, setKeysWallets] = useState<KeyWalletsRowProps[]>();
 
   // all wallets
   let wallets = Object.values(keys).flatMap((key: any) => key.wallets);

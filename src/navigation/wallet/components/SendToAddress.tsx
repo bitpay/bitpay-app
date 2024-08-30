@@ -101,7 +101,7 @@ const SendToAddress = () => {
   const {wallet, context} = route.params;
   const {currencyAbbreviation, id, network, chain} = wallet;
 
-  const keyAccounts: KeyWalletsRowProps<KeyWallet>[] = BuildKeyAccountRow(
+  const keyAccounts: KeyWalletsRowProps[] = BuildKeyAccountRow(
     keys,
     id,
     currencyAbbreviation,
