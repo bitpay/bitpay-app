@@ -59,6 +59,10 @@ export const IsSegwitCoin = (currencyAbbreviation: string = ''): boolean => {
   return ['btc', 'ltc'].includes(currencyAbbreviation.toLowerCase());
 };
 
+export const IsTaprootCoin = (currencyAbbreviation: string = ''): boolean => {
+  return ['btc'].includes(currencyAbbreviation.toLowerCase());
+};
+
 export const IsUtxoChain = (chain: string): boolean => {
   const _chain = cloneDeep(chain).toLowerCase();
 

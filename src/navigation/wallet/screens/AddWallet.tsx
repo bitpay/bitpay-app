@@ -97,7 +97,11 @@ import InfoSvg from '../../../../assets/img/info.svg';
 import {URL} from '../../../constants';
 import {useTranslation} from 'react-i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
-import {IsERCToken, IsSegwitCoin} from '../../../store/wallet/utils/currency';
+import {
+  IsERCToken,
+  IsSegwitCoin,
+  IsTaprootCoin,
+} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
 import {CommonActions, useTheme} from '@react-navigation/native';
@@ -288,7 +292,9 @@ const AddWallet = ({
     BitpaySupportedCoins[currencyAbbreviation?.toLowerCase() as string]
       ?.properties?.singleAddress;
   const nativeSegwitCurrency = IsSegwitCoin(_currencyAbbreviation);
+  const taprootCurrency = IsTaprootCoin(_currencyAbbreviation);
   const [useNativeSegwit, setUseNativeSegwit] = useState(nativeSegwitCurrency);
+  const [segwitVersion, setSegwitVersion] = useState(0);
   const [evmWallets, setEvmWallets] = useState<Wallet[] | undefined>();
   const [accountsInfo, setAccountsInfo] = useState<AccountSelectorProps[]>([]);
   const [associatedWallet, setAssociatedWallet] = useState<
@@ -336,6 +342,16 @@ const AddWallet = ({
       },
     });
   }, [navigation, t]);
+
+  const toggleUseNativeSegwit = () => {
+    setUseNativeSegwit(!(useNativeSegwit && segwitVersion === 0));
+    setSegwitVersion(0);
+  };
+
+  const toggleUseTaproot = () => {
+    setUseNativeSegwit(!(useNativeSegwit && segwitVersion === 1));
+    setSegwitVersion(1);
+  };
 
   const addAssociatedWallet = async () => {
     try {
@@ -580,6 +596,7 @@ const AddWallet = ({
                 ? Network.regtest
                 : network,
               useNativeSegwit,
+              segwitVersion,
               singleAddress,
               walletName,
               ...(account !== undefined && {
@@ -1016,19 +1033,30 @@ const AddWallet = ({
 
             {showOptions && nativeSegwitCurrency && (
               <AdvancedOptions>
-                <RowContainer
-                  onPress={() => {
-                    setUseNativeSegwit(!useNativeSegwit);
-                  }}>
+                <RowContainer onPress={() => toggleUseNativeSegwit()}>
                   <Column>
                     <OptionTitle>Segwit</OptionTitle>
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
-                      checked={useNativeSegwit}
-                      onPress={() => {
-                        setUseNativeSegwit(!useNativeSegwit);
-                      }}
+                      checked={useNativeSegwit && segwitVersion === 0}
+                      onPress={() => toggleUseNativeSegwit()}
+                    />
+                  </CheckBoxContainer>
+                </RowContainer>
+              </AdvancedOptions>
+            )}
+
+            {showOptions && taprootCurrency && (
+              <AdvancedOptions>
+                <RowContainer onPress={() => toggleUseTaproot()}>
+                  <Column>
+                    <OptionTitle>Taproot</OptionTitle>
+                  </Column>
+                  <CheckBoxContainer>
+                    <Checkbox
+                      checked={useNativeSegwit && segwitVersion === 1}
+                      onPress={() => toggleUseTaproot()}
                     />
                   </CheckBoxContainer>
                 </RowContainer>

@@ -45,6 +45,7 @@ import {
   buildUIFormattedWallet,
   findWalletById,
   isSegwit,
+  isTaproot,
 } from '../../../store/wallet/utils/wallet';
 import {
   setWalletScanning,
@@ -283,6 +284,10 @@ const getWalletType = (
 
   if (isSegwit(addressType)) {
     return {title: 'Segwit'};
+  }
+
+  if (isTaproot(addressType)) {
+    return {title: 'Taproot'};
   }
   return;
 };
