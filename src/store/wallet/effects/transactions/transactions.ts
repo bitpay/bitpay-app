@@ -362,12 +362,14 @@ const ProcessNewTxs =
           delete tx.note.encryptedBody;
         }
 
-        if (!txHistoryUnique[tx.txid]) {
+        if (!txHistoryUnique[`${tx.txid}-${tx.coin}`]) {
           ret.push(tx);
-          txHistoryUnique[tx.txid] = true;
+          txHistoryUnique[`${tx.txid}-${tx.coin}`] = true;
         } else {
           dispatch(
-            LogActions.info(`Ignoring duplicate TX in history: ${tx.txid}`),
+            LogActions.info(
+              `Ignoring duplicate TX in history: ${tx.txid}-${tx.coin}`,
+            ),
           );
         }
       } catch (e) {
@@ -631,19 +633,17 @@ export const GetAccountTransactionHistory =
       let allTransactions = [] as any[];
       const transactionPromises = wallets.map(async wallet => {
         try {
-          const [transactionHistory] = await Promise.all([
-            dispatch(
-              GetTransactionHistory({
-                wallet,
-                transactionsHistory:
-                  accountTransactionsHistory[wallet.id]?.transactions ?? [],
-                limit,
-                contactList,
-                refresh,
-                isAccountDetailsView: true,
-              }),
-            ),
-          ]);
+          const transactionHistory = await dispatch(
+            GetTransactionHistory({
+              wallet,
+              transactionsHistory:
+                accountTransactionsHistory[wallet.id]?.transactions ?? [],
+              limit,
+              contactList,
+              refresh,
+              isAccountDetailsView: true,
+            }),
+          );
           accountTransactionsHistory[wallet.id] = transactionHistory;
           return transactionHistory.transactions;
         } catch (error) {

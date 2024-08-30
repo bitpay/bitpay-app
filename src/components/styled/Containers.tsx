@@ -438,6 +438,17 @@ export const BadgeContainer = styled.View`
   height: 20px;
 `;
 
+export const BadgeContainerTouchable = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
+  padding: 4px;
+  border-radius: 2.4px;
+  gap: 4px;
+  height: 20px;
+`;
+
 export const EmptyListContainer = styled.View`
   justify-content: space-between;
   align-items: center;

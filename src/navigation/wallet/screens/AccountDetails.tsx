@@ -75,7 +75,7 @@ import {WalletRowProps} from '../../../components/list/WalletRow';
 import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
 import {
   ActiveOpacity,
-  BadgeContainer,
+  BadgeContainerTouchable,
   ChevronContainer,
   EmptyListContainer,
   HeaderRightContainer,
@@ -218,7 +218,7 @@ const WalletListHeader = styled.TouchableOpacity<{
   opacity: ${({isActive}) => (isActive ? 1 : 0.4)};
 `;
 
-const CopyToClipboardContainer = styled.TouchableOpacity`
+const CopyToClipboardContainer = styled.View`
   justify-content: center;
   height: 20px;
 `;
@@ -336,6 +336,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const [groupedHistory, setGroupedHistory] = useState<GroupedHistoryProps[]>(
     [],
   );
+  const [loadMoreIndex, setLoadMoreIndex] = useState(1);
   const [loadMore, setLoadMore] = useState(true);
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
@@ -429,13 +430,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               wallets: keyFullWalletObjs,
               accountTransactionsHistory,
               keyId: key.id,
-              limit: TX_HISTORY_LIMIT,
+              limit: TX_HISTORY_LIMIT * loadMoreIndex,
               contactList,
               refresh,
             }),
           ),
         ]);
 
+        setLoadMoreIndex(loadMoreIndex + 1);
         if (transactionHistory) {
           let {accountTransactionsHistory, sortedCompleteHistory: _history} =
             transactionHistory;
@@ -486,9 +488,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     dispatch(Analytics.track('View Account'));
     const timer = setTimeout(() => {
       updateWalletStatusAndProfileBalance();
-      if (!skipInitializeHistory) {
-        debouncedLoadHistory();
-      }
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -530,7 +529,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             <BorderBottom />
           </View>
         )}
-        {isLoading ? (
+        {isLoading || isLoading === undefined ? (
           <SkeletonContainer>
             <WalletTransactionSkeletonRow />
           </SkeletonContainer>
@@ -983,15 +982,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     await sleep(1000);
     try {
       await dispatch(startGetRates({}));
-      await Promise.all([
-        await startUpdateAllWalletStatusForKey({
-          key,
-          accountAddress: accountItem.receiveAddress,
-          force: true,
-        }),
-        await debouncedLoadHistory(true),
-        sleep(1000),
-      ]);
+      showActivityTab
+        ? await debouncedLoadHistory(true)
+        : await startUpdateAllWalletStatusForKey({
+            key,
+            accountAddress: accountItem.receiveAddress,
+            force: true,
+          });
       dispatch(updatePortfolioBalance());
       setNeedActionTxps(pendingTxps);
     } catch (err) {
@@ -1005,14 +1002,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const listEmptyComponent = () => {
     return (
       <>
-        {!isLoading && !errorLoadingTxs && (
+        {!isLoading && isLoading !== undefined && !errorLoadingTxs && (
           <EmptyListContainer>
             <H5>{t("It's a ghost town in here")}</H5>
             <GhostSvg style={{marginTop: 20}} />
           </EmptyListContainer>
         )}
 
-        {!isLoading && errorLoadingTxs && (
+        {!isLoading && isLoading !== undefined && errorLoadingTxs && (
           <EmptyListContainer>
             <H5>{t('Could not update transaction history')}</H5>
             <GhostSvg style={{marginTop: 20}} />
@@ -1064,17 +1061,17 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 )}
               </Row>
             </TouchableOpacity>
-            <BadgeContainer
+            <BadgeContainerTouchable
+              onPress={copyToClipboard}
+              activeOpacity={ActiveOpacity}
               style={{alignSelf: 'center', width: 'auto', height: 25}}>
               <Badge style={{marginTop: 3}}>
                 {formatCryptoAddress(accountItem.receiveAddress)}
               </Badge>
-              <CopyToClipboardContainer
-                onPress={copyToClipboard}
-                activeOpacity={ActiveOpacity}>
+              <CopyToClipboardContainer>
                 {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
               </CopyToClipboardContainer>
-            </BadgeContainer>
+            </BadgeContainerTouchable>
           </BalanceContainer>
           <LinkingButtons
             buy={{
@@ -1185,8 +1182,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             </WalletListHeader>
             <WalletListHeader
               isActive={showActivityTab}
-              onPress={() => {
+              onPress={async () => {
                 setShowActivityTab(true);
+                await sleep(200);
+                debouncedLoadHistory();
               }}>
               <H5>{t('Activity')}</H5>
             </WalletListHeader>
