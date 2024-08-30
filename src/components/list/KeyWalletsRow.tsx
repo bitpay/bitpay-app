@@ -121,7 +121,7 @@ export interface KeyWallet extends Wallet {
   img: string | ((props: any) => ReactElement);
 }
 
-export interface KeyWalletsRowProps<T> extends SearchableItem {
+export interface KeyWalletsRowProps extends SearchableItem {
   key: string;
   backupComplete?: boolean;
   keyName: string;
@@ -129,7 +129,7 @@ export interface KeyWalletsRowProps<T> extends SearchableItem {
 }
 
 interface KeyWalletProps<T extends WalletRowType> {
-  keyAccounts: KeyWalletsRowProps<T>[];
+  keyAccounts: KeyWalletsRowProps[];
   keySvg?: React.FC<SvgProps>;
   onPress: (wallet: Wallet) => void;
   currency?: string;
@@ -192,8 +192,8 @@ const KeyWalletsRow = <T extends WalletRowType>({
                   </Column>
                   <Column style={{alignItems: 'flex-end'}}>
                     <ChainAssetsContainer>
-                      <BadgeContainer style={{height: 20}}>
-                        <Badge style={{marginTop: 3}}>
+                      <BadgeContainer>
+                        <Badge>
                           {formatCryptoAddress(account.receiveAddress)}
                         </Badge>
                       </BadgeContainer>

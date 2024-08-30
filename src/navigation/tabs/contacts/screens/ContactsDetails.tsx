@@ -157,6 +157,7 @@ const ContactsDetails = ({
   availableWallets = availableWallets.filter(
     wallet =>
       !wallet.hideWallet &&
+      !wallet.hideWalletByAccount &&
       wallet.network === 'livenet' &&
       wallet.isComplete() &&
       wallet.currencyAbbreviation === contact.coin &&

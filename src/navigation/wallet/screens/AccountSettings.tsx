@@ -134,7 +134,7 @@ const AccountSettings = () => {
 
   const WalletList = ({wallets}: {wallets: WalletRowProps[]}) => {
     return (
-      <>
+      <View style={{paddingBottom: 50}}>
         {wallets.map(
           (
             {
@@ -144,6 +144,7 @@ const AccountSettings = () => {
               badgeImg,
               isToken,
               hideWallet,
+              hideWalletByAccount,
               walletName,
               isComplete,
             },
@@ -156,18 +157,19 @@ const AccountSettings = () => {
               currencyName={currencyName}
               isToken={isToken}
               hideWallet={hideWallet}
+              hideWalletByAccount={hideWalletByAccount}
               walletName={walletName}
               onPress={() => onPressItem(isComplete, id)}
             />
           ),
         )}
-      </>
+      </View>
     );
   };
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <HeaderTitle>{t('Wallet Settings')}</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Account Settings')}</HeaderTitle>,
     });
   });
   return (

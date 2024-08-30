@@ -17,6 +17,7 @@ export interface WalletSettingsRowProps {
   currencyName: string;
   isToken?: boolean;
   hideWallet?: boolean;
+  hideWalletByAccount?: boolean;
   walletName?: string;
   onPress: () => void;
 }
@@ -39,6 +40,7 @@ const WalletSettingsRow = ({
   currencyName,
   isToken,
   hideWallet,
+  hideWalletByAccount,
   walletName,
   onPress,
 }: WalletSettingsRowProps) => {
@@ -54,7 +56,7 @@ const WalletSettingsRow = ({
         {walletName || currencyName} {isToken}
       </H5>
 
-      {hideWallet ? (
+      {hideWallet || hideWalletByAccount ? (
         <HiddenColumn>
           <HiddenContainer>
             <H7>{t('Hidden')}</H7>

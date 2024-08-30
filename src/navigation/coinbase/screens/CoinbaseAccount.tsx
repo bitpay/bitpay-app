@@ -74,7 +74,6 @@ import {
   OtherBitpaySupportedCoins,
 } from '../../../constants/currencies';
 import {IsValidBitcoinCashAddress} from '../../../store/wallet/utils/validations';
-import {ToWalletSelectorCustomCurrency} from '../../services/components/ToWalletSelectorModal';
 import {
   addWallet,
   AddWalletData,
@@ -87,7 +86,9 @@ import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transactions/transactions';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {BitpaySupportedTokens} from '../../../constants/currencies';
-import GlobalSelect from '../../wallet/screens/GlobalSelect';
+import GlobalSelect, {
+  ToWalletSelectorCustomCurrency,
+} from '../../wallet/screens/GlobalSelect';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -400,6 +401,7 @@ const CoinbaseAccount = ({
       availableWallets = availableWallets.filter(
         wallet =>
           !wallet.hideWallet &&
+          !wallet.hideWalletByAccount &&
           wallet.network === 'livenet' &&
           wallet.credentials.coin === _currencyAbbreviation.toLowerCase() &&
           wallet.credentials.chain === _chain &&

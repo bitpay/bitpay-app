@@ -496,6 +496,7 @@ export const AccountChainsContainer = styled.TouchableOpacity`
   gap: 10px;
   border-radius: 50px;
   padding: 5px 10px;
+  max-width: 250px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 

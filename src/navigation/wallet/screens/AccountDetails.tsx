@@ -20,7 +20,6 @@ import {
   Status,
 } from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
-import {AccountRowProps} from '../../../components/list/AccountListRow';
 import {
   KeyToggle as AccountToogle,
   CogIconContainer,
@@ -134,6 +133,7 @@ import {createWalletAddress} from '../../../store/wallet/effects/address/address
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import {
+  buildAccountList,
   buildAssetsByChainList,
   findWalletById,
 } from '../../../store/wallet/utils/wallet';
@@ -142,11 +142,11 @@ import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.s
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
 import KeySvg from '../../../../assets/img/key.svg';
 import ReceiveAddress from '../components/ReceiveAddress';
+import {IsEVMChain} from '../../../store/wallet/utils/currency';
 
 export type AccountDetailsScreenParamList = {
-  accountItem: AccountRowProps;
-  accountList: AccountRowProps[];
-  key: Key;
+  selectedAccountAddress: string;
+  keyId: string;
   skipInitializeHistory?: boolean;
 };
 
@@ -313,13 +313,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {t} = useTranslation();
-  const {accountItem, accountList, skipInitializeHistory} = route.params;
+  const {selectedAccountAddress, keyId, skipInitializeHistory} = route.params;
   const [refreshing, setRefreshing] = useState(false);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [copied, setCopied] = useState(false);
-  const key = keys[accountItem.keyId];
-  const totalBalance = accountItem.fiatBalanceFormat;
-  const hasMultipleAccounts = accountList.length > 1;
   const [searchVal, setSearchVal] = useState('');
   const [showActivityTab, setShowActivityTab] = useState(false);
   const selectedChainFilterOption = useAppSelector(
@@ -347,6 +344,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
+  const {rates} = useAppSelector(({RATE}) => RATE);
 
   const [searchResultsHistory, setSearchResultsHistory] = useState(
     [] as GroupedHistoryProps[],
@@ -358,9 +356,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
-  const [showKeyOptions, setShowKeyOptions] = useState(false);
+
+  const key = keys[keyId];
   const keyFullWalletObjs = key.wallets.filter(
-    w => w.receiveAddress === accountItem.receiveAddress,
+    w => w.receiveAddress === selectedAccountAddress,
   );
   let pendingTxps: AccountProposalsProps = {};
   keyFullWalletObjs.forEach(x => {
@@ -371,6 +370,17 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     }
   });
   const pendingProposalsCount = Object.values(pendingTxps).length;
+  const memorizedAccountList = useMemo(() => {
+    return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
+      filterByHideWallet: true,
+    }).filter(({chains}) => IsEVMChain(chains[0]));
+  }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
+
+  const accountItem = memorizedAccountList.find(
+    a => a.receiveAddress === selectedAccountAddress,
+  )!;
+  const totalBalance = accountItem.fiatBalanceFormat;
+  const hasMultipleAccounts = memorizedAccountList.length > 1;
 
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[accountItem.wallets[0].network],
@@ -601,7 +611,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       headerRight: () => {
         return (
           <>
-            <HeaderRightContainer>
+            <HeaderRightContainer style={{marginTop: -3}}>
               {pendingProposalsCount ? (
                 <ProposalBadgeContainer
                   style={{marginRight: 10}}
@@ -609,26 +619,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              {key?.methods?.isPrivKeyEncrypted() ? (
-                <CogIconContainer
-                  onPress={async () => {
-                    await sleep(500);
-                    navigation.navigate('KeySettings', {
-                      key,
-                    });
-                  }}
-                  activeOpacity={ActiveOpacity}>
-                  <Icons.Cog />
-                </CogIconContainer>
-              ) : (
-                <>
-                  <Settings
-                    onPress={() => {
-                      setShowKeyOptions(true);
-                    }}
-                  />
-                </>
-              )}
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('AccountSettings', {
+                    key,
+                    selectedAccountAddress: accountItem.receiveAddress,
+                  })
+                }>
+                <Icons.AccountSettings />
+              </TouchableOpacity>
             </HeaderRightContainer>
           </>
         );
@@ -952,24 +951,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [key, accountItem, hideAllBalances],
   );
 
-  const keyOptions: Array<Option> = [];
-
-  if (!key?.methods?.isPrivKeyEncrypted()) {
-    keyOptions.push({
-      img: <Icons.Settings />,
-      title: t('Account Settings'),
-      description: t('View all the ways to manage and configure your account.'),
-      onPress: async () => {
-        haptic('impactLight');
-        await sleep(500);
-        navigation.navigate('AccountSettings', {
-          key,
-          selectedAccountAddress: accountItem.receiveAddress,
-        });
-      },
-    });
-  }
-
   const onPressTxpBadge = useMemo(
     () => () => {
       navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
@@ -1280,14 +1261,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         ListEmptyComponent={listEmptyComponent}
         getItemLayout={getItemLayout}
       />
-      {keyOptions.length > 0 ? (
-        <OptionsSheet
-          isVisible={showKeyOptions}
-          title={t('Key Options')}
-          options={keyOptions}
-          closeModal={() => setShowKeyOptions(false)}
-        />
-      ) : null}
 
       <SheetModal
         isVisible={showAccountDropdown}
@@ -1296,7 +1269,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         <AccountDropdown>
           <HeaderTitle style={{margin: 15}}>{t('Other Accounts')}</HeaderTitle>
           <AccountDropdownOptionsContainer>
-            {Object.values(accountList).map(_accountItem => (
+            {Object.values(memorizedAccountList).map(_accountItem => (
               <DropdownOption
                 key={_accountItem.id}
                 optionId={_accountItem.id}
@@ -1305,13 +1278,12 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 totalBalance={_accountItem.fiatBalance}
                 onPress={(accountId: string) => {
                   setShowAccountDropdown(false);
-                  const selectedAccountItem = accountList.find(
+                  const selectedAccountItem = memorizedAccountList.find(
                     account => account.id === accountId,
                   );
                   navigation.setParams({
-                    key,
-                    accountItem: selectedAccountItem,
-                    accountList,
+                    keyId: selectedAccountItem?.keyId,
+                    selectedAccountAddress: selectedAccountItem?.receiveAddress,
                   });
                 }}
                 defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}

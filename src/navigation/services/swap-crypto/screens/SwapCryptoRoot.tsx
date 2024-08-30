@@ -136,6 +136,7 @@ import {
 import {SwapCryptoLimits} from '../../../../store/swap-crypto/swap-crypto.models';
 import {
   AccountChainsContainer,
+  Column,
   CurrencyImageContainer,
   ExternalServicesItemTopTitle,
   ExternalServicesTitleContainer,
@@ -1442,11 +1443,17 @@ const SwapCryptoRoot: React.FC = () => {
               {IsEVMChain(fromWalletSelected.chain) ? (
                 <AccountChainsContainer>
                   <Blockie size={19} seed={fromWalletSelected.receiveAddress} />
-                  <BaseText ellipsizeMode="tail" numberOfLines={1}>
-                    {getEVMAccountName(fromWalletSelected)
-                      ? getEVMAccountName(fromWalletSelected)
-                      : `EVM Account ${fromWalletSelected.credentials.account}`}
-                  </BaseText>
+                  <Column>
+                    <BaseText ellipsizeMode="tail" numberOfLines={1}>
+                      {getEVMAccountName(fromWalletSelected)
+                        ? getEVMAccountName(fromWalletSelected)
+                        : `EVM Account${
+                            Number(fromWalletSelected.credentials.account) === 0
+                              ? ''
+                              : ` (${fromWalletSelected.credentials.account})`
+                          }`}
+                    </BaseText>
+                  </Column>
                 </AccountChainsContainer>
               ) : null}
             </ExternalServicesTitleContainer>
@@ -1644,11 +1651,17 @@ const SwapCryptoRoot: React.FC = () => {
               {IsEVMChain(toWalletSelected.chain) ? (
                 <AccountChainsContainer>
                   <Blockie size={19} seed={toWalletSelected.receiveAddress} />
-                  <H7 ellipsizeMode="tail" numberOfLines={1}>
-                    {getEVMAccountName(toWalletSelected)
-                      ? getEVMAccountName(toWalletSelected)
-                      : `EVM Account ${toWalletSelected.credentials.account}`}
-                  </H7>
+                  <Column>
+                    <H7 ellipsizeMode="tail" numberOfLines={1}>
+                      {getEVMAccountName(toWalletSelected)
+                        ? getEVMAccountName(toWalletSelected)
+                        : `EVM Account${
+                            Number(toWalletSelected.credentials.account) === 0
+                              ? ''
+                              : ` (${toWalletSelected.credentials.account})`
+                          }`}
+                    </H7>
+                  </Column>
                 </AccountChainsContainer>
               ) : null}
             </ExternalServicesTitleContainer>

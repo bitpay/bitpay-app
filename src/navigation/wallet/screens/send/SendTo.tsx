@@ -164,7 +164,7 @@ export const BuildKeyAccountRow = (
   rates: Rates,
   dispatch: AppDispatch,
 ) => {
-  let filteredKeys: KeyWalletsRowProps<KeyWallet>[] = [];
+  let filteredKeys: KeyWalletsRowProps[] = [];
   filteredKeys = Object.entries(keys).map(([key, value]) => {
     const updatedKey = {
       ...value,
@@ -329,7 +329,7 @@ const SendTo = () => {
     });
   });
 
-  const keyAccounts: KeyWalletsRowProps<KeyWallet>[] = BuildKeyAccountRow(
+  const keyAccounts: KeyWalletsRowProps[] = BuildKeyAccountRow(
     keys,
     id,
     currencyAbbreviation,

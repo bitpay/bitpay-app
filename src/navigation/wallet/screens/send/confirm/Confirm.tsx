@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp, StackActions} from '@react-navigation/core';
-import {WalletGroupParamList} from '../../../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../../../WalletGroup';
 import {
   useAppDispatch,
   useAppSelector,
@@ -93,6 +93,7 @@ import {
   GetFeeUnits,
   GetPrecision,
   IsERCToken,
+  IsEVMChain,
 } from '../../../../../store/wallet/utils/currency';
 import prompt from 'react-native-prompt-android';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
@@ -112,6 +113,9 @@ import {currencyConfigs} from '../../../../../components/modal/import-ledger-wal
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
+import {CommonActions} from '@react-navigation/native';
+import {TabsScreens} from '../../../../tabs/TabsStack';
+import {RootStacks} from '../../../../../Root';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -745,13 +749,52 @@ const Confirm = () => {
                 navigation.dispatch(StackActions.push('CoinbaseRoot'));
               } else {
                 await sleep(500);
-                navigation.dispatch(StackActions.popToTop());
-                navigation.dispatch(
-                  StackActions.push('WalletDetails', {
-                    walletId: wallet!.id,
-                    key,
-                  }),
-                );
+                if (IsEVMChain(wallet.chain) && wallet.receiveAddress) {
+                  navigation.dispatch(
+                    CommonActions.reset({
+                      index: 2,
+                      routes: [
+                        {
+                          name: RootStacks.TABS,
+                          params: {screen: TabsScreens.HOME},
+                        },
+                        {
+                          name: WalletScreens.ACCOUNT_DETAILS,
+                          params: {
+                            keyId: wallet.keyId,
+                            selectedAccountAddress: wallet.receiveAddress,
+                          },
+                        },
+                        {
+                          name: WalletScreens.WALLET_DETAILS,
+                          params: {
+                            walletId: wallet!.id,
+                            key,
+                          },
+                        },
+                      ],
+                    }),
+                  );
+                } else {
+                  navigation.dispatch(
+                    CommonActions.reset({
+                      index: 1,
+                      routes: [
+                        {
+                          name: RootStacks.TABS,
+                          params: {screen: TabsScreens.HOME},
+                        },
+                        {
+                          name: WalletScreens.WALLET_DETAILS,
+                          params: {
+                            walletId: wallet!.id,
+                            key,
+                          },
+                        },
+                      ],
+                    }),
+                  );
+                }
               }
             }}
           />

@@ -63,7 +63,9 @@ const DropdownOption = ({
   hideKeyBalance,
   onPress,
 }: Props) => {
-  const _wallets = wallets.filter(wallet => !wallet.hideWallet);
+  const _wallets = wallets.filter(
+    wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
+  );
   const walletInfo = _wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(_wallets);
 

@@ -35,6 +35,7 @@ import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/w
 import {
   GetFeeUnits,
   IsERCToken,
+  IsEVMChain,
 } from '../../../../../store/wallet/utils/currency';
 import {
   InfoDescription,
@@ -94,6 +95,9 @@ import {
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
+import {RootStacks} from '../../../../../Root';
+import {TabsScreens} from '../../../../tabs/TabsStack';
+import {CommonActions} from '@react-navigation/native';
 
 export interface PayProConfirmParamList {
   wallet?: Wallet;
@@ -653,19 +657,61 @@ const PayProConfirm = () => {
           onCloseModal={async () => {
             setShowPaymentSentModal(false);
             await sleep(500);
-            navigation.dispatch(StackActions.popToTop());
             if (coinbaseAccount) {
+              navigation.dispatch(StackActions.popToTop());
               navigation.dispatch(StackActions.pop(3));
+              navigation.navigate('CoinbaseAccount', {
+                accountId: coinbaseAccount.id,
+                refresh: true,
+              });
+            } else {
+              if (IsEVMChain(wallet!.chain) && wallet!.receiveAddress) {
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 2,
+                    routes: [
+                      {
+                        name: RootStacks.TABS,
+                        params: {screen: TabsScreens.HOME},
+                      },
+                      {
+                        name: WalletScreens.ACCOUNT_DETAILS,
+                        params: {
+                          keyId: wallet!.keyId,
+                          selectedAccountAddress: wallet!.receiveAddress,
+                        },
+                      },
+                      {
+                        name: WalletScreens.WALLET_DETAILS,
+                        params: {
+                          walletId: wallet!.id,
+                          key,
+                        },
+                      },
+                    ],
+                  }),
+                );
+              } else {
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 1,
+                    routes: [
+                      {
+                        name: RootStacks.TABS,
+                        params: {screen: TabsScreens.HOME},
+                      },
+                      {
+                        name: WalletScreens.WALLET_DETAILS,
+                        params: {
+                          walletId: wallet!.id,
+                          key,
+                        },
+                      },
+                    ],
+                  }),
+                );
+              }
             }
-            coinbaseAccount
-              ? navigation.navigate('CoinbaseAccount', {
-                  accountId: coinbaseAccount.id,
-                  refresh: true,
-                })
-              : navigation.navigate('WalletDetails', {
-                  walletId: wallet!.id,
-                  key,
-                });
           }}
         />
         {key?.hardwareSource && wallet ? (

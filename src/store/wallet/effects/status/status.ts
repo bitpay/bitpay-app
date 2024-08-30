@@ -200,7 +200,7 @@ export const startUpdateWalletStatus =
 
         if (network === Network.mainnet) {
           const wallets = getState().WALLET.keys[key.id].wallets.filter(
-            w => !w.hideWallet,
+            w => !w.hideWallet && !w.hideWalletByAccount,
           );
 
           const totalFiatBalance = wallets.reduce(
@@ -218,6 +218,7 @@ export const startUpdateWalletStatus =
                   ),
                 ),
                 false, // already filtered by hideWallet
+                false,
                 wallets[index].network,
               ),
             0,
@@ -237,6 +238,7 @@ export const startUpdateWalletStatus =
                   ),
                 ),
                 false, // already filtered by hideWallet
+                false,
                 wallets[index].network,
               );
               return fiatLastDay ? acc + fiatLastDay : acc;
@@ -887,8 +889,14 @@ const buildFiatBalance =
     cryptoBalance: CryptoBalance;
   }): Effect<FiatBalance> =>
   dispatch => {
-    const {currencyAbbreviation, network, chain, hideWallet, tokenAddress} =
-      wallet;
+    const {
+      currencyAbbreviation,
+      network,
+      chain,
+      hideWallet,
+      hideWalletByAccount,
+      tokenAddress,
+    } = wallet;
 
     let {sat, satLocked, satConfirmedLocked, satSpendable, satPending} =
       cryptoBalance;
@@ -906,6 +914,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatLocked: convertToFiat(
@@ -920,6 +929,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatConfirmedLocked: convertToFiat(
@@ -934,6 +944,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatSpendable: convertToFiat(
@@ -948,6 +959,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatPending: convertToFiat(
@@ -962,6 +974,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatLastDay: convertToFiat(
@@ -976,6 +989,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
     };
@@ -1069,6 +1083,7 @@ export const startFormatBalanceAllWalletsForKey =
             network,
             chain,
             hideWallet,
+            hideWalletByAccount,
             tokenAddress,
           } = wallet;
           try {
@@ -1098,6 +1113,7 @@ export const startFormatBalanceAllWalletsForKey =
                   ),
                 ),
                 hideWallet,
+                hideWalletByAccount,
                 network,
               ),
               fiatLocked: convertToFiat(
@@ -1112,6 +1128,7 @@ export const startFormatBalanceAllWalletsForKey =
                   ),
                 ),
                 hideWallet,
+                hideWalletByAccount,
                 network,
               ),
               fiatLastDay: convertToFiat(
@@ -1126,6 +1143,7 @@ export const startFormatBalanceAllWalletsForKey =
                   ),
                 ),
                 hideWallet,
+                hideWalletByAccount,
                 network,
               ),
             };

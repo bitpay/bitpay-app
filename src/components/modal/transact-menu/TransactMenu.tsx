@@ -108,7 +108,10 @@ const TransactModal = () => {
     .flatMap(key => key.wallets)
     .filter(
       wallet =>
-        !wallet.hideWallet && wallet.isComplete() && wallet.balance.sat > 0,
+        !wallet.hideWallet &&
+        !wallet.hideWalletByAccount &&
+        wallet.isComplete() &&
+        wallet.balance.sat > 0,
     );
   const disabledSendingOptions = availableWallets.length === 0;
   const dispatch = useAppDispatch();

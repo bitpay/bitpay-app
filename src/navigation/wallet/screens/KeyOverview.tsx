@@ -372,13 +372,9 @@ const KeyOverview = () => {
     haptic('impactLight');
 
     if (IsEVMChain(item.chains[0])) {
-      const accountList = memorizedAccountList.filter(({chains}) =>
-        IsEVMChain(chains[0]),
-      ); // pass only evm accounts
       navigation.navigate('AccountDetails', {
-        key,
-        accountItem: item,
-        accountList,
+        keyId: item.keyId,
+        selectedAccountAddress: item.receiveAddress,
       });
       return;
     }
@@ -450,7 +446,7 @@ const KeyOverview = () => {
         />
       </WalletListHeader>
     );
-  }, [hideAllBalances]);
+  }, [key, hideAllBalances]);
 
   const renderListFooterComponent = useCallback(() => {
     return (
@@ -483,7 +479,7 @@ const KeyOverview = () => {
     return !searchVal && !selectedChainFilterOption
       ? memorizedAccountList
       : searchResults;
-  }, [searchResults, selectedChainFilterOption]);
+  }, [searchResults, selectedChainFilterOption, key]);
 
   return (
     <OverviewContainer>

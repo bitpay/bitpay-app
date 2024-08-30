@@ -4,6 +4,7 @@ import {
   TxDetailsFee,
   TxDetailsSendingFrom,
   TxDetailsSendingTo,
+  Wallet,
 } from '../../../../../store/wallet/wallet.models';
 import {H4, H5, H6, H7} from '../../../../../components/styled/Text';
 import SendToPill from '../../../components/SendToPill';
@@ -24,7 +25,10 @@ import {
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../../utils/helper-methods';
-import {WalletsAndAccounts} from '../../../../../store/wallet/utils/wallet';
+import {
+  findWalletById,
+  WalletsAndAccounts,
+} from '../../../../../store/wallet/utils/wallet';
 import {
   buildTestBadge,
   WalletRowProps,
@@ -500,7 +504,7 @@ export const WalletSelector = ({
   chain,
 }: {
   walletsAndAccounts: WalletsAndAccounts;
-  onWalletSelect: (wallet: KeyWallet) => void;
+  onWalletSelect: (wallet: Wallet) => void;
   onCoinbaseAccountSelect: (account: WalletRowProps) => void;
   onBackdropPress: () => void;
   isVisible: boolean;
@@ -513,6 +517,7 @@ export const WalletSelector = ({
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {hideAllBalances} = useAppSelector(({APP}) => APP);
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
     typeof autoSelectIfOnlyOneWallet === 'undefined'
@@ -534,23 +539,32 @@ export const WalletSelector = ({
   );
 
   const showSelector = useCallback(
-    async autoSelect => {
+    async (autoSelect: boolean) => {
       const {keyWallets, coinbaseWallets} = walletsAndAccounts;
       if (keyWallets.length || coinbaseWallets.length) {
         if (autoSelect) {
           if (
             keyWallets.length === 1 &&
-            keyWallets[0].wallets.length === 1 &&
+            keyWallets[0].accounts.length === 1 &&
+            keyWallets[0].accounts[0].wallets.length === 1 &&
             coinbaseWallets.length === 0
           ) {
-            return selectOption(() => onWalletSelect(keyWallets[0].wallets[0]));
+            const wallet = keyWallets[0].accounts[0].wallets[0];
+            const fullWalletObj = findWalletById(
+              keys[wallet.keyId].wallets,
+              wallet.id,
+            ) as Wallet;
+            return selectOption(() => onWalletSelect(fullWalletObj));
           } else if (
             coinbaseWallets.length === 1 &&
-            coinbaseWallets[0].wallets.length === 1 &&
+            coinbaseWallets[0].accounts.length === 1 &&
+            coinbaseWallets[0].accounts[0].wallets.length === 1 &&
             keyWallets.length === 0
           ) {
             return selectOption(() =>
-              onCoinbaseAccountSelect(coinbaseWallets[0].wallets[0]),
+              onCoinbaseAccountSelect(
+                coinbaseWallets[0].accounts[0].wallets[0],
+              ),
             );
           }
         }
@@ -582,7 +596,11 @@ export const WalletSelector = ({
         break;
       }
     }
-    if (coinbaseWallets.length > 0 && coinbaseWallets[0].wallets.length > 0) {
+    if (
+      coinbaseWallets.length > 0 &&
+      coinbaseWallets[0].accounts.length > 0 &&
+      coinbaseWallets[0].accounts[0].wallets.length
+    ) {
       hasCoinbase = true;
     }
 

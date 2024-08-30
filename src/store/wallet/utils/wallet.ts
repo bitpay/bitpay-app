@@ -52,10 +52,7 @@ import {
 import {coinbaseGetFiatAmount} from '../../coinbase';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
-import {
-  KeyWallet,
-  KeyWalletsRowProps,
-} from '../../../components/list/KeyWalletsRow';
+import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
 import _, {find, isEqual} from 'lodash';
 import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
@@ -122,6 +119,7 @@ export const buildWalletObj = (
     n,
     m,
     hideWallet = false,
+    hideWalletByAccount = false,
     hideBalance = false,
     currencyAbbreviation,
     currencyName,
@@ -142,6 +140,7 @@ export const buildWalletObj = (
       symbol: string;
     };
     hideWallet?: boolean; // ionic migration only
+    hideWalletByAccount?: boolean;
     hideBalance?: boolean; // ionic migration only
     network: Network;
     currencyAbbreviation: string;
@@ -204,6 +203,7 @@ export const buildWalletObj = (
     isRefreshing: false,
     isScanning: false,
     hideWallet,
+    hideWalletByAccount,
     hideBalance,
     pendingTxps,
     isHardwareWallet,
@@ -623,8 +623,8 @@ export const BuildKeysAndWalletsList = ({
 };
 
 export interface WalletsAndAccounts {
-  keyWallets: KeyWalletsRowProps<KeyWallet>[];
-  coinbaseWallets: KeyWalletsRowProps<WalletRowProps>[];
+  keyWallets: KeyWalletsRowProps[];
+  coinbaseWallets: KeyWalletsRowProps[];
 }
 
 export const BuildPayProWalletSelectorList =
@@ -840,6 +840,7 @@ type getFiatOptions = {
   rates: Rates;
   tokenAddress: string | undefined;
   hideWallet: boolean | undefined;
+  hideWalletByAccount: boolean | undefined;
   network: Network;
   currencyDisplay?: 'symbol' | 'code';
 };
@@ -853,6 +854,7 @@ const getFiat = ({
   rates,
   tokenAddress,
   hideWallet,
+  hideWalletByAccount,
   network,
 }: getFiatOptions) =>
   convertToFiat(
@@ -867,6 +869,7 @@ const getFiat = ({
       ),
     ),
     hideWallet,
+    hideWalletByAccount,
     network,
   );
 
@@ -902,6 +905,7 @@ export const buildUIFormattedWallet: (
     isRefreshing,
     isScanning,
     hideWallet,
+    hideWalletByAccount,
     hideBalance,
     pendingTxps,
     receiveAddress,
@@ -915,6 +919,7 @@ export const buildUIFormattedWallet: (
     rates,
     tokenAddress,
     hideWallet,
+    hideWalletByAccount,
     network,
     currencyDisplay,
   };
@@ -938,6 +943,7 @@ export const buildUIFormattedWallet: (
     isRefreshing,
     isScanning,
     hideWallet,
+    hideWalletByAccount,
     hideBalance,
     pendingTxps,
     multisig:
@@ -1005,7 +1011,7 @@ export const buildAccountList = (
   dispatch: AppDispatch,
   opts?: {
     skipFiatCalculations?: boolean;
-    filterByHideWallet?: boolean;
+    filterByHideWallet?: boolean; // used for hidden wallets and also accounts
     filterWalletsByBalance?: boolean;
     filterWalletsByChain?: boolean;
     filterWalletsByPaymentOptions?: boolean;
@@ -1116,6 +1122,11 @@ export const buildAccountList = (
     const isEVMChain = IsEVMChain(chain);
     const name = key.evmAccountsInfo?.[accountKey!]?.name;
     const existingAccount = accountMap[accountKey!];
+    const hideAccount = key.evmAccountsInfo?.[accountKey!]?.hideAccount;
+
+    if (opts?.filterByHideWallet && hideAccount) {
+      return;
+    }
 
     if (!existingAccount) {
       accountMap[accountKey!] = {
@@ -1123,7 +1134,7 @@ export const buildAccountList = (
         keyId,
         chains: [chain],
         accountName: isEVMChain
-          ? name || `EVM Account ${account}`
+          ? name || `EVM Account${Number(account) === 0 ? '' : ` (${account})`}`
           : uiFormattedWallet.walletName,
         wallets: [uiFormattedWallet],
         accountNumber: account,
