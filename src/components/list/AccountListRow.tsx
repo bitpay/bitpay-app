@@ -206,7 +206,7 @@ const AccountListRow = ({
               {fiatBalanceFormat}
             </H5>
           ) : (
-            <H5>****</H5>
+            <H5 style={{marginTop: 8}}>****</H5>
           )}
         </BalanceColumn>
       ) : !isScanning ? (
@@ -225,7 +225,7 @@ const AccountListRow = ({
               )}
             </>
           ) : (
-            <H5>****</H5>
+            <H5 style={{marginTop: 8}}>****</H5>
           )}
         </BalanceColumn>
       ) : (

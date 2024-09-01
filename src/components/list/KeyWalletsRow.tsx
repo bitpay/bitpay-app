@@ -237,7 +237,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                               <WalletRow
                                 key={asset.id}
                                 id={asset.id}
-                                hideBalance={false}
+                                hideBalance={hideBalance}
                                 isLast={false}
                                 onPress={() => {
                                   const fullWalletObj = findWalletById(
@@ -298,7 +298,7 @@ const KeyWalletsRow = <T extends WalletRowType>({
                     <View style={{marginTop: -10, marginLeft: -10}}>
                       <WalletRow
                         id={wallet.id}
-                        hideBalance={false}
+                        hideBalance={hideBalance}
                         isLast={false}
                         onPress={() => {
                           const fullWalletObj = findWalletById(

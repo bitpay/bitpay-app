@@ -601,7 +601,8 @@ export const startOnGoingProcessModal =
       const currentStore = getState();
       if (
         currentStore.APP.showOnGoingProcessModal &&
-        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing... This process may take a few minutes') &&
+        currentStore.APP.onGoingProcessModalMessage !==
+          i18n.t('Importing... This process may take a few minutes') &&
         currentStore.APP.onGoingProcessModalMessage !==
           i18n.t('Scanning Funds... This process may take a few minutes')
       ) {
