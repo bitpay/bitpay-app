@@ -1222,7 +1222,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       );
     };
     if (IsERCToken(selectedCurrency.currencyAbbreviation, selectedNetwork)) {
-      wallet ? handleWalletSelection(wallet.id, wallet.copayerId) : handleERC20WalletCreation();
+      wallet
+        ? handleWalletSelection(wallet.id, wallet.copayerId)
+        : handleERC20WalletCreation();
     } else {
       wallet
         ? handleWalletSelection(wallet.id, wallet.copayerId)

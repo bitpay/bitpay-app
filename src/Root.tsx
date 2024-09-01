@@ -103,9 +103,13 @@ import DebugScreen, {
 import CardActivationGroup, {
   CardActivationGroupParamList,
 } from './navigation/card-activation/CardActivationGroup';
-import {sleep} from './utils/helper-methods';
+import {fixWalletAddresses, sleep} from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
-import {handleBwsEvent, shortcutListener} from './store/app/app.effects';
+import {
+  handleBwsEvent,
+  shortcutListener,
+  startOnGoingProcessModal,
+} from './store/app/app.effects';
 import NotificationsSettingsGroup, {
   NotificationsSettingsGroupParamsList,
 } from './navigation/tabs/settings/notifications/NotificationsGroup';
@@ -121,7 +125,7 @@ import BillGroup, {
 } from './navigation/tabs/shop/bill/BillGroup';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import RNBootSplash from 'react-native-bootsplash';
-import {showBlur} from './store/app/app.actions';
+import {dismissOnGoingProcessModal, showBlur} from './store/app/app.actions';
 import InAppMessage from './components/modal/in-app-message/InAppMessage';
 import SettingsGroup, {
   SettingsGroupParamList,
@@ -257,6 +261,7 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const blurScreenList: string[] = [
     OnboardingScreens.IMPORT,
@@ -494,16 +499,38 @@ export default () => {
               }
             };
 
+            // we need to ensure that each wallet has a receive address before we can create the account list.
+            const runAddressFix = async () => {
+              const walletsToFix = Object.values(keys).flatMap(key =>
+                key.wallets.filter(
+                  wallet =>
+                    !wallet.receiveAddress && wallet?.credentials?.isComplete(),
+                ),
+              );
+              if (walletsToFix.length > 0) {
+                dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+                await sleep(1000); // give the modal time to show
+                await fixWalletAddresses({
+                  appDispatch: dispatch,
+                  wallets: walletsToFix,
+                });
+                dispatch(LogActions.info('success [runAddressFix]'));
+                dispatch(dismissOnGoingProcessModal());
+              }
+            };
+
             if (pinLockActive || biometricLockActive) {
               const subscriptionToPinModalDismissed =
                 DeviceEventEmitter.addListener(
                   DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
-                  () => {
+                  async () => {
                     subscriptionToPinModalDismissed.remove();
+                    await runAddressFix();
                     urlHandler();
                   },
                 );
             } else {
+              await runAddressFix();
               urlHandler();
             }
 

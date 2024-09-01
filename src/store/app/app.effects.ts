@@ -553,7 +553,7 @@ export const startOnGoingProcessModal =
       PAIRING: i18n.t('Pairing'),
       CREATING_ACCOUNT: i18n.t('Creating Account'),
       UPDATING_ACCOUNT: i18n.t('Updating Account'),
-      IMPORTING: i18n.t('Importing'),
+      IMPORTING: i18n.t('Importing... This process may take a few minutes'),
       DELETING_KEY: i18n.t('Deleting Key'),
       ADDING_WALLET: i18n.t('Adding Wallet'),
       LOADING: i18n.t('Loading'),
@@ -601,7 +601,7 @@ export const startOnGoingProcessModal =
       const currentStore = getState();
       if (
         currentStore.APP.showOnGoingProcessModal &&
-        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing') &&
+        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing... This process may take a few minutes') &&
         currentStore.APP.onGoingProcessModalMessage !==
           i18n.t('Scanning Funds... This process may take a few minutes')
       ) {
