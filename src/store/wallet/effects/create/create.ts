@@ -37,11 +37,13 @@ import {
 } from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
-import {IsEVMChain, IsSegwitCoin} from '../../utils/currency';
+import {IsERCToken, IsEVMChain, IsSegwitCoin} from '../../utils/currency';
 import {createWalletAddress} from '../address/address';
 import cloneDeep from 'lodash.clonedeep';
 import {MoralisErc20TokenBalanceByWalletData} from '../../../moralis/moralis.types';
 import {getERC20TokenBalanceByWallet} from '../../../moralis/moralis.effects';
+import {getTokenContractInfo} from '../status/status';
+import {addCustomTokenOption} from '../currencies/currencies';
 
 export interface CreateOptions {
   network?: Network;
@@ -61,6 +63,8 @@ export interface AddWalletData {
     currencyAbbreviation: string;
     isToken?: boolean;
     tokenAddress?: string;
+    decimals?: number;
+    logo?: string;
   };
   associatedWallet?: Wallet;
   options: CreateOptions;
@@ -184,6 +188,59 @@ export const addWallet =
                 ),
               ),
             );
+          }
+
+          if (currency.tokenAddress && currency.chain) {
+            // Workaround to add a token that is not present in our tokenOptsByAddress as a custom token
+            LogActions.debug(
+              `Checking if tokenAddress: ${currency.tokenAddress} is present in tokenOptsByAddress...`,
+            );
+            const tokenChain = cloneDeep(currency.chain).toLowerCase();
+            const tokenAdressWithChain = addTokenChainSuffix(
+              currency.tokenAddress,
+              tokenChain,
+            );
+            const currentTokenOpts = tokenOptsByAddress[tokenAdressWithChain];
+
+            if (!currentTokenOpts) {
+              LogActions.debug(
+                'Token not present in tokenOptsByAddress. Creating custom token wallet...',
+              );
+              const opts = {
+                tokenAddress: cloneDeep(currency.tokenAddress),
+                chain: tokenChain,
+              };
+
+              let tokenContractInfo;
+              try {
+                tokenContractInfo = await getTokenContractInfo(
+                  associatedWallet,
+                  opts,
+                );
+              } catch (err) {
+                LogActions.debug(
+                  `Error in getTokenContractInfo for opts: ${JSON.stringify(
+                    opts,
+                  )}. Continue anyway...`,
+                );
+              }
+
+              const customToken: Token = {
+                symbol: tokenContractInfo?.symbol
+                  ? tokenContractInfo.symbol.toLowerCase()
+                  : cloneDeep(currency.currencyAbbreviation).toLowerCase(),
+                name:
+                  tokenContractInfo?.name ??
+                  cloneDeep(currency.currencyAbbreviation).toUpperCase(),
+                decimals: tokenContractInfo?.decimals
+                  ? Number(tokenContractInfo.decimals)
+                  : cloneDeep(Number(currency.decimals)),
+                address: cloneDeep(currency.tokenAddress.toLowerCase()),
+              };
+
+              tokenOptsByAddress[tokenAdressWithChain] = customToken;
+              dispatch(addCustomTokenOption(customToken, tokenChain));
+            }
           }
 
           newWallet = (await dispatch(
@@ -487,14 +544,22 @@ const createTokenWallet =
     return new Promise((resolve, reject) => {
       try {
         const bwcClient = BWC.getClient();
+        const tokenAddressWithSuffix = addTokenChainSuffix(
+          tokenAddress,
+          associatedWallet.credentials.chain,
+        );
+
+        const currentTokenOpts = tokenOptsByAddress[tokenAddressWithSuffix];
+
+        if (!currentTokenOpts) {
+          throw new Error(
+            'Could not find tokenOpts for token: ' + tokenAddressWithSuffix,
+          );
+        }
+
         const tokenCredentials: Credentials =
           associatedWallet.credentials.getTokenCredentials(
-            tokenOptsByAddress[
-              addTokenChainSuffix(
-                tokenAddress,
-                associatedWallet.credentials.chain,
-              )
-            ],
+            currentTokenOpts,
             associatedWallet.credentials.chain,
           );
         bwcClient.fromObj(tokenCredentials);
@@ -757,12 +822,7 @@ export const detectAndCreateTokensForEachEvmWallet =
 
       const evmWalletsToCheck = key.wallets.filter(
         w =>
-          w.credentials &&
-          IsEVMChain(w.credentials.chain) &&
-          BitpaySupportedEvmCoins[w.credentials.chain] &&
-          w.credentials.coin ===
-            BitpaySupportedEvmCoins[w.credentials.chain].coin &&
-          w.receiveAddress,
+          IsEVMChain(w.chain) && !IsERCToken(w.currencyAbbreviation, w.chain),
       );
 
       for (const [index, w] of evmWalletsToCheck.entries()) {
@@ -807,6 +867,7 @@ export const detectAndCreateTokensForEachEvmWallet =
                 currencyAbbreviation: tokenToAdd.symbol.toLowerCase(),
                 isToken: true,
                 tokenAddress: tokenToAdd.token_address,
+                decimals: tokenToAdd.decimals,
               },
               options: {
                 network: Network.mainnet,
@@ -816,10 +877,7 @@ export const detectAndCreateTokensForEachEvmWallet =
                 }),
               },
             };
-
-            await dispatch(
-              addWallet(newTokenWallet),
-            );
+            await dispatch(addWallet(newTokenWallet));
           }
           dispatch(
             LogActions.info('success [detectAndCreateTokensForEachEvmWallet]'),
@@ -827,7 +885,6 @@ export const detectAndCreateTokensForEachEvmWallet =
           return Promise.resolve();
         }
       }
-
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(

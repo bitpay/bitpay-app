@@ -419,7 +419,13 @@ const RecoveryPhrase = () => {
             startImportWithDerivationPath(importData, opts),
           )) as Key);
       try {
+        // TODO: update here the ongoingProcess modal message to "Scanning funds..." or similar
         await dispatch(startGetRates({force: true}));
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: key.wallets,
+        });
         await dispatch(
           startUpdateAllWalletStatusForKey({
             key,
@@ -428,11 +434,6 @@ const RecoveryPhrase = () => {
           }),
         );
         await sleep(1000);
-        // workaround for fixing wallets without receive address
-        await fixWalletAddresses({
-          appDispatch: dispatch,
-          wallets: key.wallets,
-        });
         await dispatch(updatePortfolioBalance());
       } catch (error) {
         // ignore error
@@ -500,7 +501,13 @@ const RecoveryPhrase = () => {
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
       try {
+        // TODO: update here the ongoingProcess modal message to "Scanning funds..." or similar
         await dispatch(startGetRates({force: true}));
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: key.wallets,
+        });
         await dispatch(
           startUpdateAllWalletStatusForKey({
             key,
@@ -509,11 +516,6 @@ const RecoveryPhrase = () => {
           }),
         );
         await sleep(1000);
-        // workaround for fixing wallets without receive address
-        await fixWalletAddresses({
-          appDispatch: dispatch,
-          wallets: key.wallets,
-        });
         await dispatch(updatePortfolioBalance());
       } catch (error) {
         // ignore error
