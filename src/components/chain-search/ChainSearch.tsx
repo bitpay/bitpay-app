@@ -77,6 +77,7 @@ export interface SearchableItem {
   currencyAbbreviation?: string;
   accountName?: string;
   chains?: string[]; // (Global Select view)
+  wallets?: Wallet[]; // (Key Overview view)
   chain?: string; // (Key Overview view)
   availableWallets?: Wallet[];
   availableWalletsByKey?: {
@@ -289,27 +290,60 @@ const SearchComponent = <T extends SearchableItem>({
           context,
         )
       ) {
-        if (selectedChainFilterOption) {
-          results = results
-            .map(data => {
-              const accounts = data.accounts as (AccountRowProps & {
-                assetsByChain?: AssetsByChainData[];
-              })[];
-              const filteredAccounts = accounts
-                ?.map(account => {
-                  if (account.chains?.includes(selectedChainFilterOption)) {
-                    const assetsByChain =
-                      account.assetsByChain as AssetsByChainData[];
-                    const filteredAssetsByChain = assetsByChain?.filter(
-                      ({chain}) => chain === selectedChainFilterOption,
-                    );
-                    return {...account, assetsByChain: filteredAssetsByChain};
+        // Filter for first view when selecting currency
+        if (selectedChainFilterOption || normalizedText) {
+          results = results.reduce((acc: T[], data) => {
+            const accounts = data.accounts as (AccountRowProps & {
+              assetsByChain?: AssetsByChainData[];
+              wallets?: Wallet[];
+            })[];
+
+            const filteredAccounts = accounts
+              ?.map(account => {
+                let filteredWallets = account.wallets as Wallet[];
+                if (selectedChainFilterOption) {
+                  filteredWallets = filteredWallets?.filter(
+                    ({chain}) => chain === selectedChainFilterOption,
+                  );
+
+                  if (!filteredWallets?.length) {
+                    return null;
                   }
-                })
-                .filter(item => item);
-              return {...data, accounts: filteredAccounts};
-            })
-            .filter(({accounts}) => accounts?.length);
+                }
+                const normalizedAccountName = normalizeText(
+                  account.accountName,
+                );
+                const hasMatchingAccountName = normalizedText
+                  ? normalizedAccountName.includes(normalizedText)
+                  : false;
+
+                if (hasMatchingAccountName) {
+                  return account; // Return early if the account name matches
+                }
+                if (normalizedText) {
+                  filteredWallets = filteredWallets?.filter(
+                    ({chain, chainName}) =>
+                      chain.includes(normalizedText) ||
+                      chainName.includes(normalizedText),
+                  );
+
+                  if (!filteredWallets?.length) {
+                    return null;
+                  }
+                }
+                return {
+                  ...account,
+                  wallets: filteredWallets,
+                };
+              })
+              .filter(item => item && item.wallets?.length);
+
+            if (filteredAccounts?.length) {
+              acc.push({...data, accounts: filteredAccounts});
+            }
+
+            return acc;
+          }, []);
         }
         const chains = [
           ...new Set(
