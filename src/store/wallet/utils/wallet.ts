@@ -1081,8 +1081,10 @@ export const buildAccountList = (
       const walletIdMatches =
         IsUtxoChain(wallet.chain) ||
         (!IsUtxoChain(wallet.chain) && wallet.id === walletId);
-      const walletNetworkMatches = wallet.network === opts?.network;
-      // const walletNameMatches = wallet.credentials?.walletName?.toLowerCase()?.includes(searchInput?.toLowerCase());
+      const walletNetworkMatches = wallet.network === network;
+      const walletNameMatches = wallet.credentials?.walletName
+        ?.toLowerCase()
+        ?.includes(searchInput?.toLowerCase());
       const walletIsComplete = wallet.credentials.isComplete();
 
       if (
@@ -1090,7 +1092,7 @@ export const buildAccountList = (
         !walletChainMatches ||
         !walletIdMatches ||
         !walletNetworkMatches ||
-        // !walletNameMatches ||
+        !walletNameMatches ||
         !walletIsComplete
       ) {
         return;

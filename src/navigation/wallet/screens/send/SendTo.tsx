@@ -182,6 +182,7 @@ export const BuildKeyAccountRow = (
         chain: currentChain,
         currencyAbbreviation: currentCurrencyAbbreviation,
         walletId: currentWalletId,
+        searchInput,
       },
     );
 
