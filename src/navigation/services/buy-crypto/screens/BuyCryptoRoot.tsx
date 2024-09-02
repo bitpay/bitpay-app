@@ -869,17 +869,18 @@ const BuyCryptoRoot = ({
             {IsEVMChain(selectedWallet.chain) ? (
               <AccountChainsContainer>
                 <Blockie size={19} seed={selectedWallet.receiveAddress} />
-                <Column>
-                  <H7 ellipsizeMode="tail" numberOfLines={1}>
-                    {getEVMAccountName(selectedWallet)
-                      ? getEVMAccountName(selectedWallet)
-                      : `EVM Account${
-                          Number(selectedWallet.credentials.account) === 0
-                            ? ''
-                            : ` (${selectedWallet.credentials.account})`
-                        }`}
-                  </H7>
-                </Column>
+                <H7
+                  ellipsizeMode="tail"
+                  numberOfLines={1}
+                  style={{flexShrink: 1}}>
+                  {getEVMAccountName(selectedWallet)
+                    ? getEVMAccountName(selectedWallet)
+                    : `EVM Account${
+                        Number(selectedWallet.credentials.account) === 0
+                          ? ''
+                          : ` (${selectedWallet.credentials.account})`
+                      }`}
+                </H7>
               </AccountChainsContainer>
             ) : null}
           </ExternalServicesTitleContainer>

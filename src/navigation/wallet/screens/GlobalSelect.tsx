@@ -584,6 +584,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [selectedAssetsFromAccount, setSelectedAssetsFromAccount] = useState(
     [] as AssetsByChainData[],
   );
+  const [hideCloseButton, setHideCloseButton] = useState(false);
   const selectedChainFilterOption = useAppSelector(({APP}) =>
     ignoreGlobalListContextList.includes(context)
       ? APP.selectedLocalChainFilterOption
@@ -1030,6 +1031,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             receiveAddress: selectedAccount.receiveAddress,
           });
           setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
+          setHideCloseButton(true);
           return <></>;
         }
 
@@ -1578,13 +1580,15 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                     </TitleName>
                   </View>
                 </Row>
-                <CloseButton
-                  onPress={() => {
-                    setSelectedAssetsFromAccount([]);
-                    setSelectedEVMAccount({} as Partial<AccountRowProps>);
-                  }}>
-                  <CloseButtonText>{t('CLOSE')}</CloseButtonText>
-                </CloseButton>
+                {!hideCloseButton ? (
+                  <CloseButton
+                    onPress={() => {
+                      setSelectedAssetsFromAccount([]);
+                      setSelectedEVMAccount({} as Partial<AccountRowProps>);
+                    }}>
+                    <CloseButtonText>{t('CLOSE')}</CloseButtonText>
+                  </CloseButton>
+                ) : null}
               </TitleNameContainer>
 
               <Animated.FlatList
