@@ -1016,6 +1016,23 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         ].includes(context)
       ) {
         const keyWallets = item as KeyWalletsRowProps;
+        if (
+          keyWallets?.accounts?.length === 1 &&
+          IsEVMChain(keyWallets.accounts[0].chains[0])
+        ) {
+          // if only one account and is evm show assets directly
+          const selectedAccount = keyWallets.accounts[0];
+          setSelectedEVMAccount({
+            keyId: selectedAccount.keyId,
+            chains: selectedAccount.chains,
+            accountName: selectedAccount.accountName,
+            accountNumber: selectedAccount.accountNumber,
+            receiveAddress: selectedAccount.receiveAddress,
+          });
+          setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
+          return <></>;
+        }
+
         return (
           <View>
             <TitleNameContainer>
