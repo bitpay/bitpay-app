@@ -756,6 +756,24 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         })
         .filter(item => item !== null);
       setDataToDisplay(allCurrencyData);
+      const keyWalletsArray = allCurrencyData as KeyWalletsRowProps[];
+      if (
+        keyWalletsArray.length === 1 &&
+        keyWalletsArray[0]?.accounts?.length === 1 &&
+        IsEVMChain(keyWalletsArray[0].accounts[0].chains[0])
+      ) {
+        // if only one account and is evm show assets directly
+        const selectedAccount = keyWalletsArray[0].accounts[0];
+        setSelectedEVMAccount({
+          keyId: selectedAccount.keyId,
+          chains: selectedAccount.chains,
+          accountName: selectedAccount.accountName,
+          accountNumber: selectedAccount.accountNumber,
+          receiveAddress: selectedAccount.receiveAddress,
+        });
+        setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
+        setHideCloseButton(true);
+      }
       return allCurrencyData;
     } else {
       allCurrencyData = buildSelectableWalletList(
@@ -1017,24 +1035,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         ].includes(context)
       ) {
         const keyWallets = item as KeyWalletsRowProps;
-        if (
-          keyWallets?.accounts?.length === 1 &&
-          IsEVMChain(keyWallets.accounts[0].chains[0])
-        ) {
-          // if only one account and is evm show assets directly
-          const selectedAccount = keyWallets.accounts[0];
-          setSelectedEVMAccount({
-            keyId: selectedAccount.keyId,
-            chains: selectedAccount.chains,
-            accountName: selectedAccount.accountName,
-            accountNumber: selectedAccount.accountNumber,
-            receiveAddress: selectedAccount.receiveAddress,
-          });
-          setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
-          setHideCloseButton(true);
-          return <></>;
-        }
-
         return (
           <View>
             <TitleNameContainer>
@@ -1137,7 +1137,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     };
 
     if (addWalletData) {
-      console.log('$$$$$$$$$$$$$$$$$$$$addWalletData', addWalletData);
       onWalletSelect(undefined, addWalletData);
     }
   };
