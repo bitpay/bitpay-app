@@ -75,6 +75,7 @@ export const SearchFilterIconContainer = styled.View`
 export interface SearchableItem {
   currencyName?: string;
   currencyAbbreviation?: string;
+  accountName?: string;
   chains?: string[]; // (Global Select view)
   chain?: string; // (Key Overview view)
   availableWallets?: Wallet[];
@@ -221,14 +222,41 @@ const SearchComponent = <T extends SearchableItem>({
       } else if (
         ['keysettings', 'keyoverview', 'accountassetsview'].includes(context)
       ) {
-        if (selectedChainFilterOption) {
+        if (selectedChainFilterOption || normalizedText) {
           results = results.reduce((acc: T[], data) => {
-            const hasSelectedNetwork = selectedChainFilterOption
-              ? data?.chains?.includes(selectedChainFilterOption)
-              : true;
+            const hasSelectedNetwork =
+              !selectedChainFilterOption ||
+              data?.chains?.includes(selectedChainFilterOption);
+
             if (hasSelectedNetwork) {
-              acc.push(data);
+              const normalizedAccountName = normalizeText(data?.accountName);
+              const hasMatchingAccountName =
+                normalizedAccountName?.includes(normalizedText);
+
+              if (hasMatchingAccountName) {
+                acc.push(data);
+              } else if (normalizedText) {
+                data.wallets = data?.wallets?.filter(element => {
+                  const normalizedCurrencyAbbreviation = normalizeText(
+                    element.currencyAbbreviation,
+                  );
+                  const normalizedCurrencyName = normalizeText(
+                    element.currencyName,
+                  );
+                  return (
+                    normalizedCurrencyAbbreviation.includes(normalizedText) ||
+                    normalizedCurrencyName.includes(normalizedText)
+                  );
+                });
+
+                if (data.wallets?.length) {
+                  acc.push(data);
+                }
+              } else {
+                acc.push(data);
+              }
             }
+
             return acc;
           }, []);
         }
