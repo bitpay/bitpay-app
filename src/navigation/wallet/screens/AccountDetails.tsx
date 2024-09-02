@@ -14,7 +14,6 @@ import {useTranslation} from 'react-i18next';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
-  Key,
   Wallet,
   TransactionProposal,
   Status,
@@ -22,7 +21,6 @@ import {
 import styled from 'styled-components/native';
 import {
   KeyToggle as AccountToogle,
-  CogIconContainer,
   KeyDropdown as AccountDropdown,
   KeyDropdownOptionsContainer as AccountDropdownOptionsContainer,
 } from './KeyOverview';
@@ -87,14 +85,11 @@ import SearchComponent, {
 import CopySvg from '../../../../assets/img/copy.svg';
 import SentBadgeSvg from '../../../../assets/img/sent-badge.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
-import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import Icons from '../components/WalletIcons';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
-import Settings from '../../../components/settings/Settings';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import haptic from '../../../components/haptic-feedback/haptic';
-import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Clipboard from '@react-native-clipboard/clipboard';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
@@ -143,6 +138,7 @@ import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg
 import KeySvg from '../../../../assets/img/key.svg';
 import ReceiveAddress from '../components/ReceiveAddress';
 import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {LogActions} from '../../../store/log/';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -205,12 +201,6 @@ const Row = styled.View`
   align-items: flex-end;
 `;
 
-const SearchComponentContainer = styled.View`
-  padding-right: 15px;
-  padding-left: 15px;
-  margin-top: 16px;
-`;
-
 const WalletListHeader = styled.TouchableOpacity<{
   isActive: boolean;
 }>`
@@ -266,12 +256,6 @@ const Value = styled(BaseText)`
   font-size: 16px;
 `;
 
-const Fiat = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  text-align: right;
-`;
-
 const BalanceContainer = styled.View`
   padding: 0 15px 40px;
   flex-direction: column;
@@ -290,7 +274,7 @@ const HeaderListContainer = styled.View`
   align-items: center;
 `;
 
-const AddCustomTokenContainer = styled.View`
+const AddCustomTokenContainer = styled.TouchableOpacity`
   margin: 40px;
   display: flex;
   align-items: center;
@@ -313,7 +297,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {t} = useTranslation();
-  const {selectedAccountAddress, keyId, skipInitializeHistory} = route.params;
+  const {selectedAccountAddress, keyId} = route.params;
   const [refreshing, setRefreshing] = useState(false);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [copied, setCopied] = useState(false);
@@ -341,7 +325,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
-  const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -550,20 +533,18 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   const listFooterComponentAssetsTab = () => {
     return (
-      <AddCustomTokenContainer>
+      <AddCustomTokenContainer
+        onPress={() => {
+          haptic('soft');
+          navigation.navigate('AddWallet', {
+            key,
+            isCustomToken: true,
+            isToken: true,
+            selectedAccountAddress: accountItem.receiveAddress,
+          });
+        }}>
         <BaseText>{t("Don't see your token?")}</BaseText>
-        <Link
-          onPress={() => {
-            haptic('soft');
-            navigation.navigate('AddWallet', {
-              key,
-              isCustomToken: true,
-              isToken: true,
-              selectedAccountAddress: accountItem.receiveAddress,
-            });
-          }}>
-          {t('Add Custom Token')}
-        </Link>
+        <Link>{t('Add Custom Token')}</Link>
       </AddCustomTokenContainer>
     );
   };
@@ -911,7 +892,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            // logger.error(`error [getStatus]: ${errStr}`);
+            LogActions.error(`[getStatus] Error: ${errStr}`);
           } else {
             if (status?.wallet?.status === 'complete') {
               fullWalletObj.openWallet({}, () => {
