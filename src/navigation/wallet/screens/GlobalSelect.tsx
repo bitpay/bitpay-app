@@ -576,7 +576,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     useState(false);
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState<
-    (GlobalSelectObj | KeyWalletsRowProps)[]
+    (GlobalSelectObj | KeyWalletsRowProps | AssetsByChainData)[]
   >([]);
   const [selectedEVMAccount, setSelectedEVMAccount] = useState(
     {} as Partial<AccountRowProps> & {assetsByChain?: AssetsByChainData[]},
@@ -772,6 +772,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           receiveAddress: selectedAccount.receiveAddress,
         });
         setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
+        setSearchVal('');
+        setSearchResults([]);
         setHideCloseButton(true);
       }
       return allCurrencyData;
@@ -1056,6 +1058,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                     hideBalance={hideAllBalances}
                     onPress={() => {
                       if (IsEVMChain(account.chains[0])) {
+                        setSearchVal('');
+                        setSearchResults([]);
                         setSelectedEVMAccount({
                           keyId: account.keyId,
                           chains: account.chains,
@@ -1440,6 +1444,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         ) as AccountRowProps & {assetsByChain?: AssetsByChainData[]};
 
       if (selectedAccount) {
+        setSearchVal('');
+        setSearchResults([]);
         setSelectedEVMAccount({
           keyId: selectedAccount.keyId,
           chains: selectedAccount.chains,
@@ -1502,13 +1508,17 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       )}
       <GlobalSelectContainer>
         <SearchComponentContainer>
-          <SearchComponent<GlobalSelectObj | KeyWalletsRowProps>
+          <SearchComponent<
+            GlobalSelectObj | KeyWalletsRowProps | AssetsByChainData
+          >
             searchVal={searchVal}
             setSearchVal={setSearchVal}
             searchResults={searchResults}
             setSearchResults={setSearchResults}
             searchFullList={
-              customCurrenciesSupportedList.length > 0
+              selectedAssetsFromAccount.length > 0
+                ? selectedAssetsFromAccount
+                : customCurrenciesSupportedList.length > 0
                 ? customCurrenciesSupportedList
                 : currenciesSupportedList
             }
@@ -1529,7 +1539,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   data={
                     !searchVal && !selectedChainFilterOption
                       ? dataToDisplay
-                      : searchResults
+                      : (searchResults as (
+                          | GlobalSelectObj
+                          | KeyWalletsRowProps
+                        )[])
                   }
                   keyExtractor={(item, index) => index.toString()}
                   renderItem={renderItem}
@@ -1582,6 +1595,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 {!hideCloseButton ? (
                   <CloseButton
                     onPress={() => {
+                      setSearchVal('');
+                      setSearchResults([]);
                       setSelectedAssetsFromAccount([]);
                       setSelectedEVMAccount({} as Partial<AccountRowProps>);
                     }}>
@@ -1595,7 +1610,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   Platform.OS === 'android' ? 800 : 300,
                 )}
                 contentContainerStyle={{paddingBottom: 300}}
-                data={selectedAssetsFromAccount}
+                data={
+                  !searchVal && !selectedChainFilterOption
+                    ? selectedAssetsFromAccount
+                    : (searchResults as AssetsByChainData[])
+                }
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={memoizedRenderAssetsItem}
                 getItemLayout={(data, index) => ({
