@@ -181,7 +181,6 @@ export const BuildKeyAccountRow = (
         network: currentNetwork,
         chain: currentChain,
         currencyAbbreviation: currentCurrencyAbbreviation,
-        walletId: currentWalletId,
         searchInput,
       },
     );

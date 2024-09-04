@@ -1073,28 +1073,27 @@ export const buildAccountList = (
       const {currencyAbbreviation, chain, walletId, network, searchInput} =
         opts;
 
-      const walletCurrencyMatches =
-        wallet.currencyAbbreviation.toLowerCase() ===
-        currencyAbbreviation?.toLowerCase();
-      const walletChainMatches =
-        wallet.chain.toLowerCase() === chain?.toLowerCase();
-      const walletIdMatches =
-        IsUtxoChain(wallet.chain) ||
-        (!IsUtxoChain(wallet.chain) && wallet.id === walletId);
-      const walletNetworkMatches = wallet.network === network;
-      const walletNameMatches = wallet.credentials?.walletName
-        ?.toLowerCase()
-        ?.includes(searchInput?.toLowerCase());
-      const walletIsComplete = wallet.credentials.isComplete();
+      const matches = {
+        currency:
+          wallet.currencyAbbreviation.toLowerCase() ===
+          currencyAbbreviation?.toLowerCase(),
+        chain: wallet.chain.toLowerCase() === chain?.toLowerCase(),
+        id:
+          walletId !== undefined
+            ? IsUtxoChain(wallet.chain) || wallet.id === walletId
+            : true,
+        network: wallet.network === network,
+        name: searchInput
+          ? wallet.credentials?.walletName
+              ?.toLowerCase()
+              ?.includes(searchInput.toLowerCase())
+          : true,
+        isComplete: wallet.credentials.isComplete(),
+      };
 
-      if (
-        !walletCurrencyMatches ||
-        !walletChainMatches ||
-        !walletIdMatches ||
-        !walletNetworkMatches ||
-        !walletNameMatches ||
-        !walletIsComplete
-      ) {
+      const allMatch = Object.values(matches).every(Boolean);
+
+      if (!allMatch) {
         return;
       }
     }
