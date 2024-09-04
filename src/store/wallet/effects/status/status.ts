@@ -37,6 +37,7 @@ import {Network} from '../../../../constants';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
 import {createWalletAddress} from '../address/address';
+import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
 
 /*
  * post broadcasting of payment
@@ -592,13 +593,27 @@ export const startUpdateAllWalletStatusForKey =
     key,
     accountAddress,
     force,
+    createTokenWalletWithFunds,
   }: {
     key: Key;
     accountAddress?: string;
     force?: boolean;
+    createTokenWalletWithFunds?: boolean;
   }): Effect<Promise<void>> =>
-  dispatch => {
+  async dispatch => {
     const keys = [key];
+
+    if (createTokenWalletWithFunds) {
+      try {
+        await dispatch(detectAndCreateTokensForEachEvmWallet({key}));
+      } catch (error) {
+        dispatch(
+          LogActions.info(
+            'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
+          ),
+        );
+      }
+    }
 
     return !key.isReadOnly
       ? dispatch(

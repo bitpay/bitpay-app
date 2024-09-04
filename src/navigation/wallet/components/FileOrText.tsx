@@ -27,7 +27,7 @@ import {WalletGroupParamList} from '../WalletGroup';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
-import {sleep} from '../../../utils/helper-methods';
+import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
@@ -93,8 +93,20 @@ const FileOrText = () => {
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
 
       try {
+        // TODO: update here the ongoingProcess modal message to "Scanning funds..." or similar
         await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: key.wallets,
+        });
+        await dispatch(
+          startUpdateAllWalletStatusForKey({
+            key,
+            force: true,
+            createTokenWalletWithFunds: true,
+          }),
+        );
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
       } catch (error) {

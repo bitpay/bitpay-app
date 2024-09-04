@@ -9,6 +9,7 @@ import {LogActions} from '../log';
 import {Effect} from '..';
 import axios from 'axios';
 import {MORALIS_API_KEY} from '@env';
+import {MoralisErc20TokenBalanceByWalletData} from './moralis.types';
 
 const MORALIS_EVM_CHAIN: {[key in string]: any} = {
   arb: EvmChain.ARBITRUM,
@@ -446,13 +447,23 @@ export const getMultipleTokenPrices =
   };
 
 export const getERC20TokenBalanceByWallet =
-  ({address, chain}: {address: string; chain: string}): Effect<Promise<any>> =>
+  ({
+    address,
+    chain,
+  }: {
+    address: string;
+    chain: string;
+  }): Effect<Promise<MoralisErc20TokenBalanceByWalletData[]>> =>
   async dispatch => {
     try {
-      const {raw} = await Moralis.EvmApi.token.getWalletTokenBalances({
-        address,
-        chain: MORALIS_EVM_CHAIN[chain],
-      });
+      if (!MORALIS_EVM_CHAIN[chain]) {
+        return [];
+      }
+      const {raw}: {raw: MoralisErc20TokenBalanceByWalletData[]} =
+        await Moralis.EvmApi.token.getWalletTokenBalances({
+          address,
+          chain: MORALIS_EVM_CHAIN[chain],
+        });
 
       dispatch(
         LogActions.info(

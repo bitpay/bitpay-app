@@ -969,6 +969,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             key,
             accountAddress: accountItem.receiveAddress,
             force: true,
+            createTokenWalletWithFunds: true,
           });
       dispatch(updatePortfolioBalance());
       setNeedActionTxps(pendingTxps);

@@ -207,7 +207,13 @@ const AccountSettings = () => {
                   accountAddress: accountItem.receiveAddress,
                 }),
               );
-              dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+              dispatch(
+                startUpdateAllWalletStatusForKey({
+                  key,
+                  force: true,
+                  createTokenWalletWithFunds: true,
+                }),
+              );
               await sleep(1000);
               dispatch(updatePortfolioBalance());
             }}
