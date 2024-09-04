@@ -116,6 +116,7 @@ import {AssetsByChainData} from './AccountDetails';
 import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
 import Blockie from '../../../components/blockie/Blockie';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
+import {getExternalServiceSymbol} from '../../services/utils/external-services-utils';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -720,6 +721,30 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         'scanner',
       ].includes(context)
     ) {
+      const getFilterByCustomWallets = (key: Key): Wallet[] => {
+        let _filterByCustomWallets: Wallet[] = [];
+        if (['sell', 'swapFrom'].includes(context)) {
+          // Workaround to differentiate eth in evm chains from external services
+          _filterByCustomWallets = wallets.filter(
+            w =>
+              allCurrencies.includes(
+                getExternalServiceSymbol(w.currencyAbbreviation, w.chain),
+              ) && w.keyId === key.id,
+          );
+        } else {
+          _filterByCustomWallets = wallets.filter(w => {
+            const isContextValid =
+              !['coinbase', 'coinbaseDeposit'].includes(context) ||
+              allCurrencies.includes(
+                getCurrencyAbbreviation(w.currencyAbbreviation, w.chain),
+              );
+
+            return isContextValid && w.keyId === key.id;
+          });
+        }
+        return _filterByCustomWallets;
+      };
+
       allCurrencyData = Object.values(keys)
         .map(key => {
           const accountList = buildAccountList(
@@ -728,7 +753,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             rates,
             dispatch,
             {
-              filterByCustomWallets: wallets.filter(w => w.keyId === key.id),
+              filterByCustomWallets: getFilterByCustomWallets(key),
               filterByHideWallet: true,
             },
           );
