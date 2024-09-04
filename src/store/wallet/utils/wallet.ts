@@ -601,22 +601,43 @@ export const BuildKeysAndWalletsList = ({
         network,
       },
     );
-    const accounts = accountList.map(account => {
-      if (IsEVMChain(account.chains[0])) {
-        const assetsByChain = buildAssetsByChain(
-          account,
-          defaultAltCurrencyIsoCode,
-        );
-        return {...account, assetsByChain};
-      }
-      return account;
-    }) as (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[];
+    const accounts = accountList
+      .map(account => {
+        if (IsEVMChain(account.chains[0])) {
+          const assetsByChain = buildAssetsByChain(
+            account,
+            defaultAltCurrencyIsoCode,
+          );
+          return {...account, assetsByChain};
+        }
+      })
+      .filter(Boolean) as (AccountRowProps & {
+      assetsByChain?: AssetsByChainData[];
+    })[];
+
+    const mergedUtxoAccounts = accountList.reduce((acc, account) => {
+      account.wallets.forEach(wallet => {
+        if (IsEVMChain(wallet.chain)) {
+          return acc;
+        }
+        //@ts-ignore
+        if (!acc[wallet.chain]) {
+          //@ts-ignore
+          acc[wallet.chain] = [wallet];
+        } else {
+          //@ts-ignore
+          acc[wallet.chain].push(wallet);
+        }
+      });
+      return acc;
+    }, {});
 
     return {
       key: keyId,
       keyName: key.keyName || 'My Key',
       backupComplete: key.backupComplete,
       accounts,
+      mergedUtxoAccounts,
     };
   });
   return keysWallets;

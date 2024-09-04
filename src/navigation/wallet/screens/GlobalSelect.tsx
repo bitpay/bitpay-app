@@ -733,28 +733,53 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             },
           );
 
-          const accounts = accountList.map(account => {
-            if (IsEVMChain(account.chains[0])) {
-              const assetsByChain = buildAssetsByChain(
-                account,
-                defaultAltCurrency.isoCode,
-              );
-              return {...account, assetsByChain};
-            }
-            return account;
-          }) as (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[];
+          const accounts = accountList
+            .map(account => {
+              if (IsEVMChain(account.chains[0])) {
+                const assetsByChain = buildAssetsByChain(
+                  account,
+                  defaultAltCurrency.isoCode,
+                );
+                return {...account, assetsByChain};
+              }
+            })
+            .filter(Boolean) as (AccountRowProps & {
+            assetsByChain?: AssetsByChainData[];
+          })[];
 
-          if (accounts.length === 0) {
+          const mergedUtxoAccounts = accountList.reduce((acc, account) => {
+            account.wallets.forEach(wallet => {
+              if (IsEVMChain(wallet.chain)) {
+                return acc;
+              }
+              //@ts-ignore
+              if (!acc[wallet.chain]) {
+                //@ts-ignore
+                acc[wallet.chain] = [wallet];
+              } else {
+                //@ts-ignore
+                acc[wallet.chain].push(wallet);
+              }
+            });
+            return acc;
+          }, {});
+
+          if (
+            accounts.length === 0 ||
+            Object.values(mergedUtxoAccounts).length === 0
+          ) {
             return null;
           }
+
           return {
             key: key.id,
             keyName: key.keyName || 'My Key',
             backupComplete: key.backupComplete,
             accounts,
+            mergedUtxoAccounts,
           };
         })
-        .filter(item => item !== null);
+        .filter(item => item !== null) as KeyWalletsRowProps[];
       setDataToDisplay(allCurrencyData);
       const keyWalletsArray = allCurrencyData as KeyWalletsRowProps[];
       if (
