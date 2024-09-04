@@ -34,6 +34,7 @@ const ChainAssetsContainer = styled(Row)`
   justify-content: center;
   display: flex;
   flex-direction: row;
+  gap: 3px;
 `;
 
 export interface LocalAssetsDropdown {
@@ -77,8 +78,7 @@ const AssetsByChainRow = ({
     return (
       <WalletRow
         id={item.id}
-        hideBalance={false}
-        isLast={false}
+        hideBalance={hideBalance}
         onPress={() => onPress(item.id, item.copayerId)}
         wallet={item}
       />
@@ -118,7 +118,7 @@ const AssetsByChainRow = ({
                 {fiatBalanceFormat}
               </H5>
             ) : (
-              <H5>****</H5>
+              <H5 style={{marginTop: 8}}>****</H5>
             )}
             <ChevronContainer>
               {showChainAssets[chain] ? (
