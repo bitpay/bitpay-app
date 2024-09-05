@@ -116,8 +116,12 @@ export type WalletGroupParamList = {
   };
   AccountDetails: AccountDetailsScreenParamList;
   WalletDetails: WalletDetailsScreenParamList;
-  WalletSettings: {walletId: string; key: Key; copayerId: string};
-  AccountSettings: {key: Key; selectedAccountAddress: string};
+  WalletSettings: {walletId: string; key: Key; copayerId?: string};
+  AccountSettings: {
+    key: Key;
+    selectedAccountAddress: string;
+    context: 'keySettings' | 'accountDetails';
+  };
   CreationOptions: undefined;
   Import: ImportParamList;
   CreateEncryptPassword: {key: Key};

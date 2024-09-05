@@ -2,14 +2,13 @@ import React, {useLayoutEffect, useMemo, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletGroupParamList} from '../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
   Hr,
   Info,
-  InfoImageContainer,
   InfoTriangle,
   ScreenGutter,
   SettingTitle,
@@ -28,13 +27,16 @@ import {
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {WalletRowProps} from '../../../components/list/WalletRow';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
-import InfoSvg from '../../../../assets/img/info.svg';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {sleep} from '../../../utils/helper-methods';
 import {buildAccountList} from '../../../store/wallet/utils/wallet';
 import {Key} from '../../../store/wallet/wallet.models';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../tabs/TabsStack';
+import {CommonActions} from '@react-navigation/native';
+import {baseNativeHeaderBackButtonProps} from '../../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -69,7 +71,7 @@ const AccountSettingsTitle = styled(SettingTitle)`
 `;
 
 const SearchComponentContainer = styled.View`
-  margin: 20px 0;
+  margin: 5px 0px 20px 0px;
 `;
 
 const AssetsHeaderContainer = styled.View`
@@ -81,7 +83,7 @@ const AssetsHeaderContainer = styled.View`
 const AccountSettings = () => {
   const {t} = useTranslation();
   const {
-    params: {key, selectedAccountAddress},
+    params: {key, selectedAccountAddress, context},
   } = useRoute<RouteProp<WalletGroupParamList, 'AccountSettings'>>();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -170,6 +172,34 @@ const AccountSettings = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Account Settings')}</HeaderTitle>,
+      headerLeft: () => (
+        <HeaderBackButton
+          onPress={() => {
+            if (hideAccount && context === 'accountDetails') {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 1,
+                  routes: [
+                    {
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
+                    },
+                    {
+                      name: WalletScreens.KEY_OVERVIEW,
+                      params: {
+                        id: key.id,
+                      },
+                    },
+                  ],
+                }),
+              );
+            } else {
+              navigation.goBack();
+            }
+          }}
+          {...baseNativeHeaderBackButtonProps}
+        />
+      ),
     });
   });
   return (
@@ -233,15 +263,6 @@ const AccountSettings = () => {
 
         <AssetsHeaderContainer>
           <Title>{t('Assets')}</Title>
-          <InfoImageContainer infoMargin={'0 0 0 8px'}>
-            <TouchableOpacity
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('KeyExplanation');
-              }}>
-              <InfoSvg />
-            </TouchableOpacity>
-          </InfoImageContainer>
         </AssetsHeaderContainer>
 
         <SearchComponentContainer>

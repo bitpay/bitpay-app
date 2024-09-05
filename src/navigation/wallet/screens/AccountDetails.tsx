@@ -605,6 +605,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   navigation.navigate('AccountSettings', {
                     key,
                     selectedAccountAddress: accountItem.receiveAddress,
+                    context: 'accountDetails',
                   })
                 }>
                 <Icons.AccountSettings />
