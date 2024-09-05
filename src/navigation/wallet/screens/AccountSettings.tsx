@@ -2,7 +2,7 @@ import React, {useLayoutEffect, useMemo, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletGroupParamList} from '../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
 import {
@@ -35,6 +35,11 @@ import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/st
 import {sleep} from '../../../utils/helper-methods';
 import {buildAccountList} from '../../../store/wallet/utils/wallet';
 import {Key} from '../../../store/wallet/wallet.models';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../tabs/TabsStack';
+import {CommonActions} from '@react-navigation/native';
+import {baseNativeHeaderBackButtonProps} from '../../../constants/NavigationOptions';
+import {HeaderBackButton} from '@react-navigation/elements';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -81,7 +86,7 @@ const AssetsHeaderContainer = styled.View`
 const AccountSettings = () => {
   const {t} = useTranslation();
   const {
-    params: {key, selectedAccountAddress},
+    params: {key, selectedAccountAddress, context},
   } = useRoute<RouteProp<WalletGroupParamList, 'AccountSettings'>>();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -170,6 +175,34 @@ const AccountSettings = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Account Settings')}</HeaderTitle>,
+      headerLeft: () => (
+        <HeaderBackButton
+          onPress={() => {
+            if (hideAccount && context === 'accountDetails') {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 1,
+                  routes: [
+                    {
+                      name: RootStacks.TABS,
+                      params: {screen: TabsScreens.HOME},
+                    },
+                    {
+                      name: WalletScreens.KEY_OVERVIEW,
+                      params: {
+                        id: key.id,
+                      },
+                    },
+                  ],
+                }),
+              );
+            } else {
+              navigation.goBack();
+            }
+          }}
+          {...baseNativeHeaderBackButtonProps}
+        />
+      ),
     });
   });
   return (

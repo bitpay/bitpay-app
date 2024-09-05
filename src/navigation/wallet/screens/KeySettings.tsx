@@ -302,6 +302,7 @@ const KeySettings = () => {
       navigation.navigate('AccountSettings', {
         key: _key,
         selectedAccountAddress: item.receiveAddress,
+        context: 'keySettings',
       });
     } else {
       const fullWalletObj = key.wallets.find(k => k.id === item.wallets[0].id)!;
