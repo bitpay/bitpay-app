@@ -69,7 +69,8 @@ export const simplexSupportedCoins = [
   'eth_op', // ETH-OPTIMISM
   'doge',
   'ltc',
-  'matic',
+  'matic', // POL // backward compatibility
+  'pol',
   'xrp',
 ];
 
@@ -118,7 +119,7 @@ export const simplexSupportedErc20Tokens = [
   'link',
   'ltx',
   'mana',
-  'matic', // MATIC-ERC20
+  'matic', // POL-ERC20 // backward compatibility
   'meme',
   'mkr',
   'pax', // backward compatibility
@@ -126,6 +127,7 @@ export const simplexSupportedErc20Tokens = [
   'pepe',
   'pkr',
   'pla', // PLA-ERC20
+  'pol', // POL-ERC20 // former matic
   'prt',
   'pyusd',
   'qnt',
@@ -155,12 +157,12 @@ export const simplexSupportedErc20Tokens = [
 ];
 
 export const simplexSupportedMaticTokens = [
-  'eth', // WETH-MATIC
+  'eth', // WETH-POL
   'gmee',
-  'pla', // PLA-MATIC
-  'usdc', // USDC-MATIC
-  'usdt', // USDT-MATIC
-  'weth', // WETH-MATIC
+  'pla', // PLA-POL
+  'usdc', // USDC-POL
+  'usdt', // USDT-POL
+  'weth', // WETH-POL
 ];
 
 export const simplexSupportedArbitrumTokens = [
@@ -179,26 +181,27 @@ export const simplexSupportedOptimismTokens = [
 ];
 
 export const simplexErc20TokensWithSuffix = [
-  'aag',
-  'axs',
-  'coti',
-  'cro',
-  'gmt',
-  'matic',
-  'pla',
-  'satt',
-  'tlos',
-  'uos',
-  'verse',
-  'yoshi',
+  'aag', // AAG-ERC20
+  'axs', // AXS-ERC20
+  'coti', // COTI-ERC20
+  'cro', // CRO-ERC20
+  'gmt', // GMT-ERC20
+  'matic', // POL-ERC20 // backward compatibility
+  'pla', // PLA-ERC20
+  'pol', // POL-ERC20
+  'satt', // SATT-ERC20
+  'tlos', // TLOS-ERC20
+  'uos', // UOS-ERC20
+  'verse', // VERSE-ERC20
+  'yoshi', // YOSHI-ERC20
 ];
 
 export const simplexMaticTokensWithSuffix = [
-  'eth', // WETH-MATIC
-  'pla', // PLA-MATIC
-  'usdc', // USDC-MATIC
-  'usdt', // USDT-MATIC
-  'weth', // WETH-MATIC
+  'eth', // WETH-POL
+  'pla', // PLA-POL
+  'usdc', // USDC-POL
+  'usdt', // USDT-POL
+  'weth', // WETH-POL
 ];
 
 export const simplexArbitrumTokensWithSuffix = [
@@ -240,6 +243,12 @@ export const getSimplexSupportedCurrencies = (): string[] => {
 };
 
 export const getSimplexCoinFormat = (coin: string, chain: string): string => {
+  switch (coin?.toLowerCase()) {
+    case 'matic':
+    case 'pol':
+      coin = 'pol';
+  }
+
   let formattedCoin: string = coin.toUpperCase();
   switch (chain) {
     case 'eth':
@@ -251,10 +260,10 @@ export const getSimplexCoinFormat = (coin: string, chain: string): string => {
       if (simplexMaticTokensWithSuffix.includes(coin.toLowerCase())) {
         switch (coin.toLowerCase()) {
           case 'eth':
-            formattedCoin = 'WETH-MATIC';
+            formattedCoin = 'WETH-POL';
             break;
           default:
-            formattedCoin = `${coin.toUpperCase()}-MATIC`;
+            formattedCoin = `${coin.toUpperCase()}-POL`;
             break;
         }
       }
