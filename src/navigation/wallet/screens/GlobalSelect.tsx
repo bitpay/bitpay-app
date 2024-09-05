@@ -790,7 +790,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           }, {});
 
           if (
-            accounts.length === 0 ||
+            accounts.length === 0 &&
             Object.values(mergedUtxoAccounts).length === 0
           ) {
             return null;
