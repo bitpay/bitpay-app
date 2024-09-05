@@ -9,7 +9,6 @@ import {
   ActiveOpacity,
   Hr,
   Info,
-  InfoImageContainer,
   InfoTriangle,
   ScreenGutter,
   SettingTitle,
@@ -28,9 +27,7 @@ import {
 import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {WalletRowProps} from '../../../components/list/WalletRow';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import WalletSettingsRow from '../../../components/list/WalletSettingsRow';
-import InfoSvg from '../../../../assets/img/info.svg';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {sleep} from '../../../utils/helper-methods';
 import {buildAccountList} from '../../../store/wallet/utils/wallet';
@@ -74,7 +71,7 @@ const AccountSettingsTitle = styled(SettingTitle)`
 `;
 
 const SearchComponentContainer = styled.View`
-  margin: 20px 0;
+  margin: 5px 0px 20px 0px;
 `;
 
 const AssetsHeaderContainer = styled.View`
@@ -266,15 +263,6 @@ const AccountSettings = () => {
 
         <AssetsHeaderContainer>
           <Title>{t('Assets')}</Title>
-          <InfoImageContainer infoMargin={'0 0 0 8px'}>
-            <TouchableOpacity
-              onPress={() => {
-                haptic('impactLight');
-                navigation.navigate('KeyExplanation');
-              }}>
-              <InfoSvg />
-            </TouchableOpacity>
-          </InfoImageContainer>
         </AssetsHeaderContainer>
 
         <SearchComponentContainer>
