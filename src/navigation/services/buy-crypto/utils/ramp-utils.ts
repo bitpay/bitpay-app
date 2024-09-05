@@ -70,7 +70,8 @@ export const rampSupportedCoins = [
   'eth_op',
   'doge',
   'ltc',
-  'matic',
+  'matic', // pol // backward compatibility
+  'pol',
   'xrp',
 ];
 
@@ -150,6 +151,12 @@ export const getRampCoinFormat = (
   coin: string | undefined,
   chain: string | undefined,
 ): string => {
+  switch (coin?.toLowerCase()) {
+    case 'matic':
+    case 'pol':
+      coin = 'pol';
+  }
+
   const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
   const _chain = chain ? cloneDeep(chain).toUpperCase() : undefined;
 
