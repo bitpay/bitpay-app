@@ -273,7 +273,7 @@ export const thorswapSupportedEthErc20Tokens = [
   'mars4',
   'mask',
   'masq',
-  'matic',
+  'matic', // backward compatibility
   'mbbased',
   'mbtc',
   'media',
@@ -341,7 +341,7 @@ export const thorswapSupportedEthErc20Tokens = [
   'osak',
   'ousd',
   'pad',
-  'pax',
+  'pax', // backward compatibility
   'peco',
   'pendle',
   'pepe',
@@ -354,6 +354,7 @@ export const thorswapSupportedEthErc20Tokens = [
   'play',
   'pmon',
   'pnk',
+  'pol',
   'poly',
   'pond',
   'pont',
@@ -846,7 +847,7 @@ export const thorswapGetStatusDetails = (
       statusDescription = t('There was an error parsing the transaction data.');
       break;
     case ThorswapTrackingStatus.error:
-      statusTitle = t('Failed');
+      statusTitle = t('Error');
       statusDescription = t(
         'There was an error processing the transaction or executing the contract, or the previously set slippage was exceeded.',
       );
