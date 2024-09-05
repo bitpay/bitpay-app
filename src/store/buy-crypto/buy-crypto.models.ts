@@ -102,13 +102,7 @@ export interface BanxaPaymentMethodsData {
   message?: any;
 }
 
-export type BanxaBlockchainKey =
-  | 'BTC'
-  | 'DOGE'
-  | 'ETH'
-  | 'LTC'
-  | 'MATIC'
-  | 'XRP';
+export type BanxaBlockchainKey = 'BTC' | 'DOGE' | 'ETH' | 'LTC' | 'POL' | 'XRP';
 export interface BanxaGetQuoteRequestData {
   env: 'sandbox' | 'production';
   source: string;

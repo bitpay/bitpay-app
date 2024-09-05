@@ -53,7 +53,8 @@ export const banxaSupportedCoins = [
   'eth',
   'doge',
   'ltc',
-  'matic',
+  'matic', // POL // backward compatibility
+  'pol',
   'xrp',
 ];
 
@@ -105,6 +106,12 @@ export const getBanxaSupportedCurrencies = (): string[] => {
 };
 
 export const getBanxaCoinFormat = (coin: string): string => {
+  switch (coin?.toLowerCase()) {
+    case 'matic':
+    case 'pol':
+      coin = 'pol';
+  }
+
   let formattedCoin: string = `${coin.toUpperCase()}`;
   return formattedCoin;
 };
@@ -207,7 +214,7 @@ export const getBanxaChainFormat = (
       formattedChain = 'LTC';
       break;
     case 'matic':
-      formattedChain = 'MATIC';
+      formattedChain = 'POL';
       break;
     case 'xrp':
       formattedChain = 'XRP';
