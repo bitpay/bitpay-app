@@ -124,8 +124,9 @@ export const transakSupportedCoins = [
   'eth_arb',
   'eth_base',
   'eth_op',
-  'matic',
+  'matic', // backward compatibility
   'ltc',
+  'pol',
   'xrp',
 ];
 
@@ -339,6 +340,12 @@ export const getPassthroughUri = (): string => {
 };
 
 export const getTransakCoinFormat = (coin: string): string => {
+  switch (coin?.toLowerCase()) {
+    case 'matic':
+    case 'pol':
+      coin = 'pol';
+  }
+
   let formattedCoin: string = `${coin.toUpperCase()}`;
   return formattedCoin;
 };
