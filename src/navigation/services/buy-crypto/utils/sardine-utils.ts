@@ -57,7 +57,8 @@ export const sardineSupportedCoins = [
   'eth_arb',
   'doge',
   'ltc',
-  'matic',
+  'matic', // backward compatibility
+  'pol',
   'xrp',
 ];
 
@@ -73,11 +74,12 @@ export const sardineSupportedErc20Tokens = [
   'knc',
   'link',
   'mana',
-  'matic',
+  'matic', // backward compatibility
   'mkr',
   'omg',
   'pax', // backward compatibility
   'paxg',
+  'pol',
   'sand',
   'shib',
   'tusd',
@@ -111,6 +113,12 @@ export const getSardineSupportedCurrencies = (): string[] => {
 };
 
 export const getSardineCoinFormat = (coin: string): string => {
+  switch (coin?.toLowerCase()) {
+    case 'matic':
+    case 'pol':
+      coin = 'pol';
+  }
+
   let formattedCoin: string = `${coin.toUpperCase()}`;
   return formattedCoin;
 };
