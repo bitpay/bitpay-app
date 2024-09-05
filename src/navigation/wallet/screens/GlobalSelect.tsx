@@ -734,7 +734,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         } else {
           _filterByCustomWallets = wallets.filter(w => {
             const isContextValid =
-              !['coinbase', 'coinbaseDeposit'].includes(context) ||
+              !['coinbaseDeposit'].includes(context) ||
               allCurrencies.includes(
                 getCurrencyAbbreviation(w.currencyAbbreviation, w.chain),
               );
@@ -758,41 +758,18 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             },
           );
 
-          const accounts = accountList
-            .map(account => {
-              if (IsEVMChain(account.chains[0])) {
-                const assetsByChain = buildAssetsByChain(
-                  account,
-                  defaultAltCurrency.isoCode,
-                );
-                return {...account, assetsByChain};
-              }
-            })
-            .filter(Boolean) as (AccountRowProps & {
-            assetsByChain?: AssetsByChainData[];
-          })[];
+          const accounts = accountList.map(account => {
+            if (IsEVMChain(account.chains[0])) {
+              const assetsByChain = buildAssetsByChain(
+                account,
+                defaultAltCurrency.isoCode,
+              );
+              return {...account, assetsByChain};
+            }
+            return account;
+          }) as (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[];
 
-          const mergedUtxoAccounts = accountList.reduce((acc, account) => {
-            account.wallets.forEach(wallet => {
-              if (IsEVMChain(wallet.chain)) {
-                return acc;
-              }
-              //@ts-ignore
-              if (!acc[wallet.chain]) {
-                //@ts-ignore
-                acc[wallet.chain] = [wallet];
-              } else {
-                //@ts-ignore
-                acc[wallet.chain].push(wallet);
-              }
-            });
-            return acc;
-          }, {});
-
-          if (
-            accounts.length === 0 &&
-            Object.values(mergedUtxoAccounts).length === 0
-          ) {
+          if (accounts.length === 0) {
             return null;
           }
 
@@ -801,7 +778,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             keyName: key.keyName || 'My Key',
             backupComplete: key.backupComplete,
             accounts,
-            mergedUtxoAccounts,
           };
         })
         .filter(item => item !== null) as KeyWalletsRowProps[];
