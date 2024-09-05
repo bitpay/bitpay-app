@@ -76,6 +76,7 @@ export const SearchFilterIconContainer = styled.View`
 export interface SearchableItem {
   currencyName?: string;
   currencyAbbreviation?: string;
+  walletName?: string;
   accountName?: string;
   chainAssetsList?: WalletRowProps[];
   chains?: string[]; // (Global Select view)
@@ -175,6 +176,41 @@ const SearchComponent = <T extends SearchableItem>({
               chains,
             )),
         );
+        setChainsOptions(chains);
+      } else if (['accountsettings'].includes(context)) {
+        results = results.reduce((acc: T[], data) => {
+          if (
+            selectedChainFilterOption &&
+            data.chain !== selectedChainFilterOption
+          ) {
+            return acc;
+          }
+
+          const normalizedCurrencyAbbreviation = normalizeText(
+            data.currencyAbbreviation,
+          );
+          const normalizedWalletName = normalizeText(data.walletName);
+          const normalizedCurrencyName = normalizeText(data.currencyName);
+          const hasMatchingAbbreviation =
+            normalizedCurrencyAbbreviation.includes(normalizedText);
+          const hasMatchingWalletName =
+            normalizedWalletName.includes(normalizedText);
+          const hasMatchingCurrencyName =
+            normalizedCurrencyName.includes(normalizedText);
+          const hasMatching =
+            hasMatchingAbbreviation ||
+            hasMatchingCurrencyName ||
+            hasMatchingWalletName;
+
+          if (hasMatching) {
+            acc.push(data);
+          }
+
+          return acc;
+        }, []);
+        const chains = [
+          ...new Set(searchFullList.flatMap(data => data.chains || [])),
+        ];
         setChainsOptions(chains);
       } else if (['receive', 'swapTo', 'buy'].includes(context)) {
         results = results.reduce((acc: T[], data) => {
