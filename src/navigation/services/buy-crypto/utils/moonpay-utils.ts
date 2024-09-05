@@ -58,7 +58,8 @@ export const moonpaySupportedCoins = [
   'eth_op', // eth_optimism in Moonpay
   'ltc',
   'doge',
-  'matic', // matic_polygon in Moonpay
+  'matic', // pol_polygon in Moonpay // backward compatibility
+  'pol', // pol_polygon in Moonpay
 ];
 
 export const nonUSMoonpaySupportedCoins = ['xrp'];
@@ -69,7 +70,8 @@ export const moonpaySupportedErc20Tokens = [
   'gods',
   'imx',
   'link',
-  'matic',
+  'matic', // backward compatibility
+  'pol',
   'shib',
   'usdc',
   'usdt',
@@ -165,7 +167,13 @@ export const getMoonpayFixedCurrencyAbbreviation = (
   currency: string,
   chain: string,
 ): string => {
-  const coin = cloneDeep(currency).toLowerCase();
+  let coin = cloneDeep(currency).toLowerCase();
+  switch (coin) {
+    case 'matic':
+    case 'pol':
+      coin = 'pol';
+  }
+
   switch (chain) {
     case 'matic':
       return coin + '_polygon';
