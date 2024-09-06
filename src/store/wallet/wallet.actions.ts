@@ -275,3 +275,7 @@ export const updateCacheFeeLevel = (
 export const setCustomTokensMigrationComplete = (): WalletActionType => ({
   type: WalletActionTypes.SET_CUSTOM_TOKENS_MIGRATION_COMPLETE,
 });
+
+export const setPolygonMigrationComplete = (): WalletActionType => ({
+  type: WalletActionTypes.SET_POLYGON_MIGRATION_COMPLETE,
+});

@@ -45,14 +45,15 @@ export const GetPrecision =
       ...customTokenDataByAddress,
       ...BitpaySupportedTokens,
     };
-    const currencyName = getCurrencyAbbreviation(
-      tokenAddress ? tokenAddress : currencyAbbreviation,
-      chain,
-    );
-    return (
-      BitpaySupportedCoins[currencyName]?.unitInfo ||
-      tokens[currencyName]?.unitInfo
-    );
+    if (tokenAddress) {
+      const currencyName = getCurrencyAbbreviation(
+        tokenAddress ? tokenAddress : currencyAbbreviation,
+        chain,
+      );
+      return tokens[currencyName]?.unitInfo;
+    } else {
+      return BitpaySupportedCoins[chain]?.unitInfo;
+    }
   };
 
 export const IsSegwitCoin = (currencyAbbreviation: string = ''): boolean => {
@@ -92,6 +93,11 @@ export const IsERCToken = (
 ): boolean => {
   const _currencyAbbreviation = currencyAbbreviation.toLowerCase();
   const _chain = chain.toLowerCase();
+
+  if (_currencyAbbreviation === 'pol' && _chain === 'matic') {
+    return false;
+  }
+
   return (
     (_currencyAbbreviation !== _chain && _currencyAbbreviation !== 'eth') ||
     (isL2NoSideChainNetwork(_chain) && _currencyAbbreviation === _chain)
@@ -145,25 +151,15 @@ export const GetName =
       ...customTokenDataByAddress,
       ...BitpaySupportedTokens,
     };
-    const currencyName = getCurrencyAbbreviation(
-      tokenAddress ? tokenAddress : currencyAbbreviation,
-      chain,
-    );
-
-    if (currencyAbbreviation.toLowerCase() === 'eth') {
-      // workaround for L2 eth
-      const found = SupportedCoinsOptions.find(
-        ({currencyAbbreviation: _currencyAbbreviation, chain: _chain}) => {
-          return (
-            currencyAbbreviation === _currencyAbbreviation && chain === _chain
-          );
-        },
-      )!;
-      return found.currencyName;
+    if (tokenAddress) {
+      const currencyName = getCurrencyAbbreviation(
+        tokenAddress ? tokenAddress : currencyAbbreviation,
+        chain,
+      );
+      return tokens[currencyName]?.name;
+    } else {
+      return BitpaySupportedCoins[chain]?.name;
     }
-    return (
-      BitpaySupportedCoins[currencyName]?.name || tokens[currencyName]?.name
-    );
   };
 
 export const isSingleAddressChain = (chain: string): boolean => {

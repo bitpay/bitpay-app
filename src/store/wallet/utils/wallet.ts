@@ -78,6 +78,11 @@ export const mapAbbreviationAndName =
           currencyAbbreviation: 'usdp',
           currencyName: dispatch(GetName('usdp', chain, tokenAddress)),
         };
+      case 'matic':
+        return {
+          currencyAbbreviation: 'pol',
+          currencyName: dispatch(GetName('pol', chain, tokenAddress)),
+        };
       default:
         return {
           currencyAbbreviation: coin,
@@ -180,6 +185,12 @@ export const buildWalletObj = (
       ];
   }
 
+  const currencyImg = CurrencyListIcons[_currencyAbbreviation]
+    ? CurrencyListIcons[_currencyAbbreviation]
+    : foundToken && foundToken?.logoURI
+    ? (foundToken?.logoURI as string)
+    : img || '';
+
   return {
     id: walletId,
     currencyName,
@@ -192,11 +203,7 @@ export const buildWalletObj = (
     tokens,
     network,
     keyId: keyId ? keyId : 'readonly',
-    img: SUPPORTED_CURRENCIES.includes(_currencyAbbreviation)
-      ? CurrencyListIcons[_currencyAbbreviation]
-      : foundToken && foundToken?.logoURI
-      ? (foundToken?.logoURI as string)
-      : img || '',
+    img: currencyImg,
     badgeImg: getBadgeImg(_currencyAbbreviation, chain),
     n,
     m,

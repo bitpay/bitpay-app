@@ -36,7 +36,7 @@ import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
-import {IsERCToken} from '../../../../store/wallet/utils/currency';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -386,13 +386,15 @@ const ContactsDetails = ({
               </Detail>
             </>
           ) : null}
-          {contact.chain ? (
+          {BitpaySupportedCoins[contact.chain.toLowerCase()].name ? (
             <>
               <Hr />
               <Detail>
                 <Title>{t('Chain')}</Title>
                 <DetailInfo align="right">
-                  {contact.chain.toUpperCase()}
+                  {BitpaySupportedCoins[
+                    contact.chain.toLowerCase()
+                  ].name.toUpperCase()}
                 </DetailInfo>
               </Detail>
             </>

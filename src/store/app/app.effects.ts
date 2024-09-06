@@ -85,6 +85,7 @@ import {
   updatePortfolioBalance,
   setCustomTokensMigrationComplete,
   setWalletScanning,
+  setPolygonMigrationComplete,
 } from '../wallet/wallet.actions';
 import {
   setContactMigrationComplete,
@@ -94,6 +95,7 @@ import {
 import {
   startContactBridgeUsdcMigration,
   startContactMigration,
+  startContactPolMigration,
   startContactTokenAddressMigration,
 } from '../contact/contact.effects';
 import {getStateFromPath, NavigationProp} from '@react-navigation/native';
@@ -118,7 +120,10 @@ import {InAppNotificationMessages} from '../../components/modal/in-app-notificat
 import axios from 'axios';
 import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
-import {startCustomTokensMigration} from '../wallet/effects/currencies/currencies';
+import {
+  startCustomTokensMigration,
+  startPolMigration,
+} from '../wallet/effects/currencies/currencies';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import {Key, Wallet} from '../wallet/wallet.models';
 import {AppDispatch} from '../../utils/hooks';
@@ -151,7 +156,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
     const {migrationComplete} = APP;
-    const {customTokensMigrationComplete} = WALLET;
+    const {customTokensMigrationComplete, polygonMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
 
@@ -192,6 +197,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
       dispatch(LogActions.info('success [setMigrationComplete]'));
+    }
+
+    if (!polygonMigrationComplete) {
+      await dispatch(startPolMigration());
+      await dispatch(startContactPolMigration());
+      dispatch(setPolygonMigrationComplete());
+      dispatch(LogActions.info('success [setPolygonMigrationComplete]'));
     }
 
     const identity = dispatch(initializeAppIdentity());

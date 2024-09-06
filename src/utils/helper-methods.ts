@@ -348,7 +348,8 @@ export const getBadgeImg = (
   currencyAbbreviation: string,
   chain: string,
 ): string | ((props?: any) => ReactElement) => {
-  return currencyAbbreviation?.toLowerCase() !== chain.toLowerCase()
+  return IsERCToken(currencyAbbreviation, chain) ||
+    isL2NoSideChainNetwork(chain)
     ? CurrencyListIcons[chain]
     : '';
 };
@@ -359,6 +360,9 @@ export const getRateByCurrencyName = (
   chain: string,
 ): Rate[] => {
   const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+  if (currencyAbbreviation === 'pol' && rates.matic.length > 0) {
+    return rates.matic;
+  }
   return rates[currencyName] || rates[currencyAbbreviation];
 };
 
