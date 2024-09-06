@@ -7,6 +7,7 @@ import {
   ThorswapRouteTimeEstimates,
   ThorswapTrackingStatus,
 } from '../../../../store/swap-crypto/models/thorswap.models';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {
   ONE_INCH_ABI,
   SUSHISWAP_ABI,
@@ -607,6 +608,8 @@ export const getThorswapFixedCoin = (
   chain: string,
   tokenAddress?: string,
 ): string => {
+  currency = externalServicesCoinMapping(currency);
+  chain = externalServicesCoinMapping(chain);
   const _currency = cloneDeep(currency).toUpperCase();
   const _chain = cloneDeep(chain).toUpperCase();
   return `${_chain}.${_currency}${

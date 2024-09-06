@@ -1,6 +1,7 @@
 import UserAgent from 'react-native-user-agent';
 import {APP_NAME, APP_VERSION} from '../../../../constants/config';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 
 const PASSTHROUGH_URI_DEV = 'https://cmgustavo.github.io/website/simplex/';
 const PASSTHROUGH_URI_PROD = 'https://bws.bitpay.com/static/simplex/';
@@ -243,12 +244,7 @@ export const getSimplexSupportedCurrencies = (): string[] => {
 };
 
 export const getSimplexCoinFormat = (coin: string, chain: string): string => {
-  switch (coin?.toLowerCase()) {
-    case 'matic':
-    case 'pol':
-      coin = 'pol';
-  }
-
+  coin = externalServicesCoinMapping(coin);
   let formattedCoin: string = coin.toUpperCase();
   switch (chain) {
     case 'eth':

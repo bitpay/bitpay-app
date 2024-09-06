@@ -5,6 +5,7 @@ import {
   RampQuoteResultForPaymentMethod,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 
 export const rampEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -151,12 +152,8 @@ export const getRampCoinFormat = (
   coin: string | undefined,
   chain: string | undefined,
 ): string => {
-  switch (coin?.toLowerCase()) {
-    case 'matic':
-    case 'pol':
-      coin = 'pol';
-  }
-
+  coin = coin ? externalServicesCoinMapping(coin) : undefined;
+  chain = chain ? externalServicesCoinMapping(chain) : undefined;
   const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
   const _chain = chain ? cloneDeep(chain).toUpperCase() : undefined;
 

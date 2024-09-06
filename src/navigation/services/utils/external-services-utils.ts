@@ -55,3 +55,15 @@ export const getSendMaxData = (
     }
   });
 };
+
+export const externalServicesCoinMapping = (coin: string): string => {
+  if (coin === 'MATIC') {
+    return 'POL';
+  }
+
+  const _coin = cloneDeep(coin).toLowerCase();
+  if (_coin === 'matic') {
+    return 'pol';
+  }
+  return coin;
+};

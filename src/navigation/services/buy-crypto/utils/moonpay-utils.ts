@@ -1,6 +1,7 @@
 import {t} from 'i18next';
 import cloneDeep from 'lodash.clonedeep';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 
 export const moonpayEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -168,11 +169,7 @@ export const getMoonpayFixedCurrencyAbbreviation = (
   chain: string,
 ): string => {
   let coin = cloneDeep(currency).toLowerCase();
-  switch (coin) {
-    case 'matic':
-    case 'pol':
-      coin = 'pol';
-  }
+  coin = externalServicesCoinMapping(coin);
 
   switch (chain) {
     case 'matic':

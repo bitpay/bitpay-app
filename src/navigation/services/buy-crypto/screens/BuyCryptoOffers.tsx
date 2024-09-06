@@ -537,7 +537,7 @@ const BuyCryptoOffers: React.FC = () => {
         const msg = t(
           'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
           {
-            coin: coin.toUpperCase(),
+            coin: getBanxaCoinFormat(coin)?.toUpperCase(),
             fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
             paymentMethod: paymentMethod.label,
           },
@@ -558,7 +558,7 @@ const BuyCryptoOffers: React.FC = () => {
         const msg = t(
           'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
           {
-            coin: coin.toUpperCase(),
+            coin: getBanxaCoinFormat(coin)?.toUpperCase(),
             fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
             paymentMethod: paymentMethod.label,
           },
