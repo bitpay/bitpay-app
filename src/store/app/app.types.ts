@@ -35,6 +35,7 @@ export enum AppActionTypes {
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
   SHOW_IN_APP_MESSAGE = 'APP/SHOW_IN_APP_MESSAGE',
+  ATTACH_IN_APP_MESSAGE = 'APP/ATTACH_IN_APP_MESSAGE',
   DISMISS_IN_APP_MESSAGE = 'APP/DISMISS_IN_APP_MESSAGE',
   SHOW_IN_APP_NOTIFICATION = 'APP/SHOW_IN_APP_NOTIFICATION',
   DISMISS_IN_APP_NOTIFICATION = 'APP/DISMISS_IN_APP_NOTIFICATION',
@@ -158,6 +159,10 @@ interface DismissOnGoingProcessModal {
 
 interface ShowInAppMessage {
   type: typeof AppActionTypes.SHOW_IN_APP_MESSAGE;
+}
+
+interface AttachInAppMessage {
+  type: typeof AppActionTypes.ATTACH_IN_APP_MESSAGE;
   payload: string;
 }
 
@@ -439,6 +444,7 @@ export type AppActionType =
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal
   | ShowInAppMessage
+  | AttachInAppMessage
   | DismissInAppMessage
   | ShowInAppNotification
   | DismissInAppNotification

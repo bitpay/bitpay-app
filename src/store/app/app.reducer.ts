@@ -36,7 +36,6 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'brazeContentCardSubscription',
   'failedAppInit',
   'inAppBrowserOpen',
-  'inAppMessageData',
   'inAppNotificationData',
   'lockAuthorizedUntil',
   'onGoingProcessModalMessage',
@@ -356,6 +355,11 @@ export const appReducer = (
       return {
         ...state,
         showInAppMessage: true,
+      };
+
+    case AppActionTypes.ATTACH_IN_APP_MESSAGE:
+      return {
+        ...state,
         inAppMessageData: action.payload,
       };
 
@@ -363,7 +367,7 @@ export const appReducer = (
       return {
         ...state,
         showInAppMessage: false,
-        inAppMessageData: undefined,
+        inAppMessageData: '',
       };
 
     case AppActionTypes.SHOW_IN_APP_NOTIFICATION:

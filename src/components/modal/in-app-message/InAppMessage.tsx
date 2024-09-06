@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   isAcceptedUrl,
   useAppDispatch,
@@ -28,6 +28,7 @@ const styles = StyleSheet.create({
 
 const InAppMessage: React.FC = () => {
   const dispatch = useAppDispatch();
+  const [showIAM, setShowIAM] = useState(false);
   const isVisible = useAppSelector(({APP}) => APP.showInAppMessage);
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
   const inAppMessageData = useAppSelector(({APP}) => APP.inAppMessageData);
@@ -35,18 +36,21 @@ const InAppMessage: React.FC = () => {
   const webviewRef = useRef<WebView>(null);
 
   useEffect(() => {
-    if (inAppMessageData) {
+    if (appWasInit && isVisible && inAppMessageData) {
       setInAppHtml(JSON.parse(inAppMessageData).message);
+      setShowIAM(true);
       Braze.logInAppMessageImpression(JSON.parse(inAppMessageData));
     }
-  }, [inAppMessageData]);
+  }, [inAppMessageData, isVisible, appWasInit]);
 
   const onBackdropPress = () => {
     haptic('impactLight');
+    setShowIAM(false);
     dispatch(dismissInAppMessage());
   };
 
   const goToUrl = async (url: string) => {
+    setShowIAM(false);
     await dispatch(dismissInAppMessage());
     await sleep(100);
     navigationRef.navigate('Tabs', {screen: 'Home'});
@@ -92,7 +96,7 @@ const InAppMessage: React.FC = () => {
       id={'inAppMessage'}
       deviceHeight={HEIGHT}
       deviceWidth={WIDTH}
-      isVisible={appWasInit && isVisible}
+      isVisible={showIAM}
       backdropOpacity={0.5}
       hideModalContentWhileAnimating={true}
       useNativeDriverForBackdrop={true}
