@@ -556,6 +556,7 @@ export const startOnGoingProcessModal =
       IMPORTING: i18n.t('Importing... This process may take a few minutes'),
       DELETING_KEY: i18n.t('Deleting Key'),
       ADDING_WALLET: i18n.t('Adding Wallet'),
+      ADDING_ACCOUNT: i18n.t('Adding Account-Based Wallet'),
       LOADING: i18n.t('Loading'),
       FETCHING_PAYMENT_OPTIONS: i18n.t('Fetching payment options...'),
       FETCHING_PAYMENT_INFO: i18n.t('Fetching payment information...'),

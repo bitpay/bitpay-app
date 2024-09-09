@@ -87,7 +87,6 @@ export const startCreateKey =
       try {
         const state = getState();
         const network = state.APP.network;
-        const keys = state.WALLET.keys;
 
         const _key = BWC.createKey({
           seedType: 'new',
@@ -326,7 +325,7 @@ export const addWallet =
 
 /////////////////////////////////////////////////////////////
 
-const createMultipleWallets =
+export const createMultipleWallets =
   ({
     key,
     currencies,
