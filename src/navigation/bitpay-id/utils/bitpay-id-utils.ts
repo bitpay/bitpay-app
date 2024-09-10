@@ -8,7 +8,10 @@ export const chainSuffixMap: {[suffix: string]: string} = {
   op: 'op',
 };
 
-export function getCoinAndChainFromCurrencyCode(currencyCode: string): {
+export function getCoinAndChainFromCurrencyCode(
+  currencyCode: string,
+  context?: string,
+): {
   coin: string;
   chain: string;
 } {
@@ -23,11 +26,13 @@ export function getCoinAndChainFromCurrencyCode(currencyCode: string): {
       : undefined;
 
   if (suffix) {
-    // Special handling for usdc.e and usdc
-    if (coin === 'usdc' && chainSuffixMap[suffix] === 'matic') {
-      return {coin: 'usdc.e', chain: chainSuffixMap[suffix]};
-    } else if (coin === 'usdcn' && chainSuffixMap[suffix] === 'matic') {
-      return {coin: 'usdc', chain: chainSuffixMap[suffix]};
+    if (!context || context !== 'buyCrypto') {
+      // Special handling for usdc.e and usdc
+      if (coin === 'usdc' && chainSuffixMap[suffix] === 'matic') {
+        return {coin: 'usdc.e', chain: chainSuffixMap[suffix]};
+      } else if (coin === 'usdcn' && chainSuffixMap[suffix] === 'matic') {
+        return {coin: 'usdc', chain: chainSuffixMap[suffix]};
+      }
     }
     return {coin, chain: chainSuffixMap[suffix]};
   }

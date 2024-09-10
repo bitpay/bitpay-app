@@ -109,6 +109,7 @@ import {
   rampEnv,
   getChainFromRampChainFormat,
   getRampChainFormat,
+  getCoinFromRampCoinFormat,
 } from '../utils/ramp-utils';
 import BanxaTerms from '../components/terms/banxaTerms';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
@@ -958,7 +959,7 @@ const BuyCryptoOffers: React.FC = () => {
         const selectedAssetData = assetsData.assets.filter(asset => {
           return (
             getRampCoinFormat(
-              asset.symbol,
+              getCoinFromRampCoinFormat(asset.symbol),
               getChainFromRampChainFormat(asset.chain),
             ) === getRampCoinFormat(coin, chain)
           );

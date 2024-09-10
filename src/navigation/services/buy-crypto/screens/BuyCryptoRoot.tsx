@@ -775,7 +775,10 @@ const BuyCryptoRoot = ({
     const initialBuyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
       supportedCoins
         .map((symbol: string) => {
-          const {coin, chain} = getCoinAndChainFromCurrencyCode(symbol);
+          const {coin, chain} = getCoinAndChainFromCurrencyCode(
+            symbol,
+            'buyCrypto',
+          );
           const foundToken = Object.values({
             ...BitpaySupportedTokens,
             ...tokenDataByAddress,
