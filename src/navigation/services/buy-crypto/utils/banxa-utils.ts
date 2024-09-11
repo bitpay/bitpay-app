@@ -210,7 +210,7 @@ export const getBanxaChainFormat = (
       formattedChain = 'LTC';
       break;
     case 'matic':
-      formattedChain = 'POL';
+      formattedChain = 'MATIC';
       break;
     case 'xrp':
       formattedChain = 'XRP';

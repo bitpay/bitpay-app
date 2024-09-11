@@ -171,7 +171,6 @@ export const getRampCoinFormat = (
   chain: string | undefined,
 ): string => {
   coin = coin ? rampCoinMapping(externalServicesCoinMapping(coin)) : undefined;
-  chain = chain ? externalServicesCoinMapping(chain) : undefined;
   const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
   const _chain = chain ? cloneDeep(chain).toUpperCase() : undefined;
 
