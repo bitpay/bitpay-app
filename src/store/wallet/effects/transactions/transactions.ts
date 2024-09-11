@@ -892,7 +892,10 @@ export const TxForPaymentFeeEVM = (
   TxCoin: string,
   amount: number,
 ): boolean => {
-  return walletCoin !== TxCoin || IsZeroAmountEVM(amount, TxCoin);
+  return (
+    walletCoin.toLowerCase() !== TxCoin.toLowerCase() ||
+    IsZeroAmountEVM(amount, TxCoin.toUpperCase())
+  );
 };
 
 export const IsShared = (wallet: Wallet): boolean => {
