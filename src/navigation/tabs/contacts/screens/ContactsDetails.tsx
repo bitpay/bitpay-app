@@ -6,11 +6,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useDispatch} from 'react-redux';
 import {ContactsScreens, ContactsGroupParamList} from '../ContactsGroup';
-import {
-  formatCurrencyAbbreviation,
-  getCurrencyAbbreviation,
-  sleep,
-} from '../../../../utils/helper-methods';
+import {getCurrencyAbbreviation, sleep} from '../../../../utils/helper-methods';
 import {BaseText, TextAlign} from '../../../../components/styled/Text';
 import {Hr} from '../../../../components/styled/Containers';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -36,7 +32,7 @@ import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
-import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {IsEVMChain} from '../../../../store/wallet/utils/currency';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -90,12 +86,12 @@ const AddressContainer = styled.TouchableOpacity`
   justify-content: flex-end;
 `;
 
-const OptionContainer = styled.TouchableOpacity<{lastElement?: string}>`
+const OptionContainer = styled.TouchableOpacity`
   flex-direction: row;
-  padding: 30px 25px;
+  padding: 25px 25px;
   align-items: stretch;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
-  border-bottom-width: ${({lastElement}) => lastElement || '1px'};
+  border-top-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ebecee')};
+  border-top-width: 1px;
 `;
 
 const OptionIconContainer = styled.View`
@@ -120,7 +116,7 @@ const ModalContainer = styled.View`
   background: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
-  padding: 30px 0 0 0;
+  padding: 70px 0 0 0;
 `;
 
 const CopyImgContainer = styled.View`
@@ -170,25 +166,27 @@ const ContactsDetails = ({
       // Remove prefix
       newAddress = ToCashAddress(contact.address, false);
     }
-    contactOptions.push({
-      img: theme.dark ? <SendIconWhite /> : <SendIcon />,
-      title: t('Send ') + contact.coin.toUpperCase(),
-      onPress: async () => {
-        setShowIconOptions(false);
-        await sleep(500);
-        navigation.navigate('GlobalSelect', {
-          context: 'contact',
-          recipient: {
-            name: contact.name,
-            address: newAddress,
-            currency: contact.coin,
-            chain: contact.chain,
-            network: contact.network,
-            destinationTag: contact.tag || contact.destinationTag,
-          },
-        });
-      },
-    });
+    if (!IsEVMChain(contact.chain)) {
+      contactOptions.push({
+        img: theme.dark ? <SendIconWhite /> : <SendIcon />,
+        title: t('Send ') + contact.coin.toUpperCase(),
+        onPress: async () => {
+          setShowIconOptions(false);
+          await sleep(500);
+          navigation.navigate('GlobalSelect', {
+            context: 'contact',
+            recipient: {
+              name: contact.name,
+              address: newAddress,
+              currency: contact.coin,
+              chain: contact.chain,
+              network: contact.network,
+              destinationTag: contact.tag || contact.destinationTag,
+            },
+          });
+        },
+      });
+    }
   }
 
   contactOptions.push({
@@ -257,23 +255,9 @@ const ContactsDetails = ({
     return () => clearTimeout(timer);
   }, [copiedContractAddress]);
 
-  const copyContractAddressToClipboard = () => {
-    haptic('impactLight');
-    Clipboard.setString(contact.tokenAddress!);
-    setCopiedContractAddress(true);
-  };
-
   const deleteContactView = async () => {
     await sleep(500);
-    dispatch(
-      deleteContact(
-        contact.address,
-        contact.coin,
-        contact.network,
-        contact.chain,
-        contact.tokenAddress,
-      ),
-    );
+    dispatch(deleteContact(contact.address));
     navigation.goBack();
   };
 
@@ -313,6 +297,7 @@ const ContactsDetails = ({
             size={100}
             name={contact.name}
             chain={contact.chain}
+            address={contact.address}
             tokenAddress={contact.tokenAddress}
           />
         </ContactImageHeader>
@@ -345,27 +330,6 @@ const ContactsDetails = ({
             </DetailInfo>
           </Detail>
 
-          {contact.tokenAddress ? (
-            <>
-              <Hr />
-              <Detail>
-                <Title>{t('Contract')}</Title>
-                <DetailInfo align="right">
-                  <AddressContainer
-                    onPress={copyContractAddressToClipboard}
-                    activeOpacity={0.7}>
-                    <CopyImgContainer>
-                      {copiedContractAddress ? <CopiedSvg width={17} /> : null}
-                    </CopyImgContainer>
-                    <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
-                      {contact.tokenAddress}
-                    </AddressText>
-                  </AddressContainer>
-                </DetailInfo>
-              </Detail>
-            </>
-          ) : null}
-
           {contact.network !== 'livenet' ? (
             <>
               <Hr />
@@ -375,26 +339,13 @@ const ContactsDetails = ({
               </Detail>
             </>
           ) : null}
-          {contact.coin ? (
+          {contact.coin && contact.chain && !IsEVMChain(contact.chain) ? (
             <>
               <Hr />
               <Detail>
                 <Title>{t('Coin')}</Title>
                 <DetailInfo align="right">
-                  {formatCurrencyAbbreviation(contact.coin)}
-                </DetailInfo>
-              </Detail>
-            </>
-          ) : null}
-          {BitpaySupportedCoins[contact.chain.toLowerCase()].name ? (
-            <>
-              <Hr />
-              <Detail>
-                <Title>{t('Chain')}</Title>
-                <DetailInfo align="right">
-                  {BitpaySupportedCoins[
-                    contact.chain.toLowerCase()
-                  ].name.toUpperCase()}
+                  {contact.coin.toUpperCase()}
                 </DetailInfo>
               </Detail>
             </>
@@ -410,6 +361,15 @@ const ContactsDetails = ({
               </Detail>
             </>
           ) : null}
+          {contact.notes ? (
+            <>
+              <Hr />
+              <Detail>
+                <Title>{t('Notes')}</Title>
+                <DetailInfo align="right">{contact.notes}</DetailInfo>
+              </Detail>
+            </>
+          ) : null}
         </Details>
       </DetailsScrollContainer>
 
@@ -419,10 +379,7 @@ const ContactsDetails = ({
         onBackdropPress={() => setShowIconOptions(false)}>
         <ModalContainer>
           {contactOptions.map(({img, title: optionTitle, onPress}, index) => (
-            <OptionContainer
-              key={index}
-              onPress={onPress}
-              lastElement={contactOptions.length - 1 === index ? '0' : '1px'}>
+            <OptionContainer key={index} onPress={onPress}>
               <OptionIconContainer>{img}</OptionIconContainer>
               <OptionTextContainer>
                 <OptionTitleText>{optionTitle}</OptionTitleText>

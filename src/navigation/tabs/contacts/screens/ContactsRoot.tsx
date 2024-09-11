@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useEffect, useLayoutEffect} from 'react';
+import React, {useState, useCallback, useLayoutEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -127,9 +127,10 @@ const HideableView = styled.View<HideableViewProps>`
   display: ${({show}) => (show ? 'flex' : 'none')};
 `;
 
-const ContactsRoot = ({
-  route,
-}: NativeStackScreenProps<ContactsGroupParamList, ContactsScreens.ROOT>) => {
+const ContactsRoot = ({}: NativeStackScreenProps<
+  ContactsGroupParamList,
+  ContactsScreens.ROOT
+>) => {
   const {t} = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -148,15 +149,6 @@ const ContactsRoot = ({
       },
     });
   }, [navigation, contacts, t]);
-  useEffect(() => {
-    // Sort list
-    contacts.sort((x, y) => {
-      let a = x.name.toUpperCase(),
-        b = y.name.toUpperCase();
-      return a === b ? 0 : a > b ? 1 : -1;
-    });
-    updateSearchResults(searchVal); // if contacts list change, update search results
-  }, [contacts]);
 
   const contactList = contacts as Array<ContactRowProps>;
 

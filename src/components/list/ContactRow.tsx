@@ -40,6 +40,7 @@ export interface ContactRowProps {
   destinationTag?: number;
   email?: string;
   tokenAddress?: string;
+  notes?: string;
 }
 
 interface Props {
@@ -61,6 +62,7 @@ const ContactRow = ({contact, onPress}: Props) => {
             coin={coin}
             size={45}
             chain={chain}
+            address={address}
             tokenAddress={tokenAddress}
           />
         </ContactImageContainer>

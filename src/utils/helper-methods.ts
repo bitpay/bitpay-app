@@ -229,20 +229,9 @@ export const formatFiat = ({
 export const findContact = (
   contactList: ContactRowProps[],
   address: string,
-  coin: string,
-  network: string,
-  chain: string,
-  tokenAddress: string | undefined,
 ) => {
   const foundContacts = contactList.filter((contact: ContactRowProps) => {
-    return (
-      contact.address === address &&
-      contact.coin === coin &&
-      contact.network === network &&
-      contact.chain === chain &&
-      (!contact.tokenAddress ||
-        contact.tokenAddress.toLowerCase() === tokenAddress)
-    );
+    return contact.address === address;
   });
   return !!foundContacts.length;
 };

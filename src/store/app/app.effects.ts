@@ -92,12 +92,14 @@ import {
   setContactMigrationComplete,
   setContactTokenAddressMigrationComplete,
   setContactBridgeUsdcMigrationComplete,
+  setContactMigrationCompleteV2,
 } from '../contact/contact.actions';
 import {
   startContactBridgeUsdcMigration,
   startContactMigration,
   startContactPolMigration,
   startContactTokenAddressMigration,
+  startContactV2Migration,
 } from '../contact/contact.effects';
 import {getStateFromPath, NavigationProp} from '@react-navigation/native';
 import {
@@ -166,6 +168,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     const {
       contactMigrationComplete,
+      contactMigrationCompleteV2,
       contactTokenAddressMigrationComplete,
       contactBridgeUsdcMigrationComplete,
     } = CONTACT;
@@ -193,6 +196,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       await dispatch(startCustomTokensMigration());
       dispatch(setCustomTokensMigrationComplete());
       dispatch(LogActions.info('success [setCustomTokensMigrationComplete]'));
+    }
+
+    if (!contactMigrationCompleteV2) {
+      await dispatch(startContactV2Migration());
+      dispatch(setContactMigrationCompleteV2());
+      dispatch(LogActions.info('success [setContactMigrationCompleteV2]'));
     }
 
     if (!migrationComplete) {

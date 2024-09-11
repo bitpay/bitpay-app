@@ -156,14 +156,7 @@ const MultipleOutputsTx = ({
   const [showMultiOptions, setShowMultiOptions] = useState(false);
 
   const getIcon = () => {
-    const existsContact = findContact(
-      contactList,
-      tx.outputs[0].address,
-      tx.coin,
-      network,
-      tx.chain,
-      tokenAddress,
-    );
+    const existsContact = findContact(contactList, tx.outputs[0].address);
 
     const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
     const img = SUPPORTED_CURRENCIES.includes(coin)
