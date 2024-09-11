@@ -8,11 +8,10 @@ import {
 import {H5, H7} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import Blockie from '../blockie/Blockie';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
 import {AccountRowProps} from './AccountListRow';
-import {useAppSelector} from '../../utils/hooks';
+import {IsEVMChain} from '../../store/wallet/utils/currency';
 
 interface Props {
   id: string;
@@ -39,6 +38,9 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
   const {t} = useTranslation();
 
   const hideAccount = accountInfo?.[accountItem.receiveAddress]?.hideAccount;
+  const isHidden = IsEVMChain(wallets[0].chain)
+    ? hideAccount
+    : wallets[0].hideWallet;
 
   return (
     <AccountSettingsContainer
@@ -61,7 +63,7 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
         </H5>
       </Column>
 
-      {hideAccount ? (
+      {isHidden ? (
         <HiddenColumn>
           <HiddenContainer>
             <H7>{t('Hidden')}</H7>
