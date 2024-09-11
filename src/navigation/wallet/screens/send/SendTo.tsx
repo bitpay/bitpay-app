@@ -163,67 +163,85 @@ export const BuildKeyAccountRow = (
   searchInput: string,
   rates: Rates,
   dispatch: AppDispatch,
+  logger: any,
 ) => {
   let filteredKeys: KeyWalletsRowProps[] = [];
-  filteredKeys = Object.entries(keys).map(([key, value]) => {
-    const updatedKey = {
-      ...value,
-      wallets: value.wallets,
-    };
-    const accountList = buildAccountList(
-      updatedKey,
-      defaultAltCurrencyIsoCode,
-      rates,
-      dispatch,
-      {
-        filterByHideWallet: true,
-        filterByWalletOptions: true,
-        network: currentNetwork,
-        chain: currentChain,
-        currencyAbbreviation: currentCurrencyAbbreviation,
-        searchInput,
-      },
-    );
+  filteredKeys = Object.entries(keys)
+    .map(([key, value]) => {
+      try {
+        const updatedKey = {
+          ...value,
+          wallets: value.wallets,
+        };
+        const accountList = buildAccountList(
+          updatedKey,
+          defaultAltCurrencyIsoCode,
+          rates,
+          dispatch,
+          {
+            filterByHideWallet: true,
+            filterByWalletOptions: true,
+            network: currentNetwork,
+            chain: currentChain,
+            currencyAbbreviation: currentCurrencyAbbreviation,
+            searchInput,
+          },
+        );
+        accountList.forEach(account => {
+          const walletCount = account?.wallets?.length ?? 0;
+          logger.debug(`account list wallets count: ${walletCount}`);
+        });
 
-    const accounts = accountList
-      .map(account => {
-        if (IsEVMChain(account.chains[0])) {
-          const assetsByChain = buildAssetsByChain(
-            account,
-            defaultAltCurrencyIsoCode,
-          );
-          return {...account, assetsByChain};
-        }
-      })
-      .filter(Boolean) as (AccountRowProps & {
-      assetsByChain?: AssetsByChainData[];
-    })[];
+        const accounts = accountList
+          .map(account => {
+            if (IsEVMChain(account.chains[0])) {
+              const assetsByChain = buildAssetsByChain(
+                account,
+                defaultAltCurrencyIsoCode,
+              );
+              return {...account, assetsByChain};
+            }
+          })
+          .filter(Boolean) as (AccountRowProps & {
+          assetsByChain?: AssetsByChainData[];
+        })[];
+        logger.debug(`evm accounts count: ${accounts?.length}`);
 
-    const mergedUtxoAccounts = accountList.reduce((acc, account) => {
-      account.wallets.forEach(wallet => {
-        if (IsEVMChain(wallet.chain)) {
+        const mergedUtxoAccounts = accountList.reduce((acc, account) => {
+          account?.wallets?.forEach(wallet => {
+            if (IsEVMChain(wallet.chain)) {
+              return acc;
+            }
+            //@ts-ignore
+            if (!acc[wallet.chain]) {
+              //@ts-ignore
+              acc[wallet.chain] = [wallet];
+            } else {
+              //@ts-ignore
+              acc[wallet.chain].push(wallet);
+            }
+          });
           return acc;
-        }
-        //@ts-ignore
-        if (!acc[wallet.chain]) {
-          //@ts-ignore
-          acc[wallet.chain] = [wallet];
-        } else {
-          //@ts-ignore
-          acc[wallet.chain].push(wallet);
-        }
-      });
-      return acc;
-    }, {});
+        }, {});
+        logger.debug(
+          `mergedUtxoAccounts count: ${
+            Object.values(mergedUtxoAccounts)?.length ?? 0
+          }`,
+        );
 
-    return {
-      key,
-      keyName: value.keyName || 'My Key',
-      backupComplete: value.backupComplete,
-      accounts,
-      mergedUtxoAccounts,
-    };
-  }) as KeyWalletsRowProps[];
+        return {
+          key,
+          keyName: value.keyName || 'My Key',
+          backupComplete: value.backupComplete,
+          accounts,
+          mergedUtxoAccounts,
+        };
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(`Error while building key account row: ${errStr}`);
+      }
+    })
+    .filter(Boolean) as KeyWalletsRowProps[];
   return filteredKeys;
 };
 
@@ -360,6 +378,7 @@ const SendTo = () => {
     searchInput,
     rates,
     dispatch,
+    logger,
   );
 
   const contacts = useMemo(() => {

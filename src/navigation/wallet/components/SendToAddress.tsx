@@ -44,7 +44,7 @@ import KeyWalletsRow, {
   KeyWalletsRowProps,
 } from '../../../components/list/KeyWalletsRow';
 import {BuildKeyAccountRow} from '../screens/send/SendTo';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   RecipientList,
   RecipientRowContainer,
@@ -82,6 +82,7 @@ const SendToAddress = () => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
+  const logger = useLogger();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -111,6 +112,7 @@ const SendToAddress = () => {
     searchInput,
     rates,
     dispatch,
+    logger,
   );
 
   const onErrorMessageDismiss = () => {
