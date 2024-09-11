@@ -261,6 +261,7 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
+  const inAppMessageData = useAppSelector(({APP}) => APP.inAppMessageData);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const blurScreenList: string[] = [
@@ -421,6 +422,33 @@ export default () => {
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
   }, [dispatch]);
+
+  useEffect(() => {
+    function onAppStateChange(status: AppStateStatus) {
+      // App should be ready to show IAM (after PIN or Biometric)
+      if (status === 'active' && inAppMessageData) {
+        if (pinLockActive || biometricLockActive) {
+          const _subscriptionToPinModalDismissed =
+            DeviceEventEmitter.addListener(
+              DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+              async () => {
+                _subscriptionToPinModalDismissed.remove();
+                dispatch(AppActions.showInAppMessage());
+              },
+            );
+        } else {
+          dispatch(AppActions.showInAppMessage());
+        }
+      }
+    }
+
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+
+    return () => subscriptionAppStateChange.remove();
+  }, [inAppMessageData, pinLockActive, biometricLockActive]);
 
   // THEME
   useEffect(() => {

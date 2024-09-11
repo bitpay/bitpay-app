@@ -421,8 +421,10 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
     }
 
     Braze.subscribeToInAppMessage(false, (event: any) => {
-      LogActions.debug('InAppMessage Event Received');
-      dispatch(AppActions.showInAppMessage(event.inAppMessage));
+      LogActions.debug(
+        'InAppMessage Event Received. Do not show until Home is ready',
+      );
+      dispatch(AppActions.attachInAppMessage(event.inAppMessage));
     });
 
     // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
