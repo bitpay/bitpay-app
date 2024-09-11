@@ -13,14 +13,19 @@ import {
   OptionTitle,
 } from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {Key} from '../../../store/wallet/wallet.models';
+import {Key, KeyMethods, Wallet} from '../../../store/wallet/wallet.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
 import MultisigOptions from './MultisigOptions';
 import {Option} from './CreationOptions';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {createMultipleWallets} from '../../../store/wallet/effects';
+import {getBaseAccountCreationCoinsAndTokens} from '../../../constants/currencies';
+import {successAddWallet} from '../../../store/wallet/wallet.actions';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -33,7 +38,7 @@ const AddingOptions: React.FC = () => {
   const route = useRoute<RouteProp<WalletGroupParamList, 'AddingOptions'>>();
   const {key} = route.params;
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
-
+  const network = useAppSelector(({APP}) => APP.network);
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Select Wallet Type')}</HeaderTitle>,
@@ -66,16 +71,28 @@ const AddingOptions: React.FC = () => {
       description: t(
         'An account for Ethereum and EVM-compatible chains like Solana, Ethereum. Supports smart contracts and DeFi across multiple networks.',
       ),
-      cta: () => {
+      cta: async () => {
         dispatch(
           Analytics.track('Clicked Create Basic Wallet', {
             context: 'AddingOptions',
           }),
         );
-        navigation.navigate('CurrencySelection', {
-          context: 'addEVMWallet',
-          key,
-        });
+        const _key = key.methods as KeyMethods;
+        await dispatch(startOnGoingProcessModal('ADDING_ACCOUNT'));
+        const wallets = await dispatch(
+          createMultipleWallets({
+            key: _key,
+            currencies: getBaseAccountCreationCoinsAndTokens(),
+            options: {
+              network,
+            },
+          }),
+        );
+        key.wallets.push(...(wallets as Wallet[]));
+
+        dispatch(successAddWallet({key}));
+        dispatch(dismissOnGoingProcessModal());
+        navigation.goBack();
       },
     },
     {

@@ -1692,3 +1692,31 @@ export const getBaseKeyCreationCoinsAndTokens = () => {
   // });
   return selectedCurrencies;
 };
+
+export const getBaseAccountCreationCoinsAndTokens = () => {
+  const selectedCurrencies: Array<{
+    chain: string;
+    currencyAbbreviation: string;
+    isToken: boolean;
+    tokenAddress?: string;
+  }> = [];
+  Object.values(BitpaySupportedEvmCoins).forEach(
+    ({chain, coin: currencyAbbreviation}) => {
+      selectedCurrencies.push({
+        chain,
+        currencyAbbreviation,
+        isToken: false,
+      });
+    },
+  );
+  // TODO ?? probably we should add bitpay supported tokens to base creation coins
+  // Object.values(BitpaySupportedTokens).forEach(({chain, coin: currencyAbbreviation, address: tokenAddress}) => {
+  //   selectedCurrencies.push({
+  //     chain,
+  //     currencyAbbreviation,
+  //     isToken: true,
+  //     tokenAddress,
+  //   });
+  // });
+  return selectedCurrencies;
+};
