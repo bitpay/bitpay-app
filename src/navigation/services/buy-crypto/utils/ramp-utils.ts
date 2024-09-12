@@ -5,6 +5,7 @@ import {
   RampQuoteResultForPaymentMethod,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 
 export const rampEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -70,7 +71,8 @@ export const rampSupportedCoins = [
   'eth_op',
   'doge',
   'ltc',
-  'matic',
+  'matic', // pol // backward compatibility
+  'pol',
   'xrp',
 ];
 
@@ -97,7 +99,7 @@ export const rampSupportedMaticTokens = [
   'ovr',
   'sand',
   'usdc',
-  'usdce', // Bridged USD Coin (0x2791bca1f2de4661ed88a30c99a7a9449aa84174) USDC.e
+  'usdc.e', // usdce in Ramp - Bridged USD Coin (0x2791bca1f2de4661ed88a30c99a7a9449aa84174) USDC.e
   'usdt',
   'wmatic',
 ];
@@ -105,20 +107,20 @@ export const rampSupportedMaticTokens = [
 export const rampSupportedArbitrumTokens = [
   'usda',
   'usdc',
-  'usdce', // Bridged USD Coin (0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8) USDC.e
+  'usdc.e', // usdce in Ramp - Bridged USD Coin (0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8) USDC.e
   'usdt',
 ];
 
 export const rampSupportedBaseTokens = [
   'usdc',
-  'usdce', // Bridged USD Coin (0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA) USDC.e
+  'usdc.e', // usdce in Ramp - Bridged USD Coin (0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA) USDC.e
 ];
 
 export const rampSupportedOptimismTokens = [
   'dai',
   'usda',
   'usdc',
-  'usdce', // Bridged USD Coin (0x7F5c764cBc14f9669B88837ca1490cCa17c31607) USDC.e
+  'usdc.e', // usdce in Ramp - Bridged USD Coin (0x7F5c764cBc14f9669B88837ca1490cCa17c31607) USDC.e
   'usdt',
   'wld',
 ];
@@ -146,10 +148,29 @@ export const getRampSupportedCurrencies = (): string[] => {
   return rampSupportedCurrencies;
 };
 
+export const rampCoinMapping = (coin: string): string => {
+  let _coin = cloneDeep(coin);
+
+  if (_coin?.toLowerCase() === 'usdc.e') {
+    _coin = 'usdce';
+  }
+  return _coin;
+};
+
+export const getCoinFromRampCoinFormat = (coin: string): string => {
+  let _coin = cloneDeep(coin);
+
+  if (_coin?.toLowerCase() === 'usdce') {
+    _coin = 'usdc.e';
+  }
+  return _coin;
+};
+
 export const getRampCoinFormat = (
   coin: string | undefined,
   chain: string | undefined,
 ): string => {
+  coin = coin ? rampCoinMapping(externalServicesCoinMapping(coin)) : undefined;
   const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
   const _chain = chain ? cloneDeep(chain).toUpperCase() : undefined;
 

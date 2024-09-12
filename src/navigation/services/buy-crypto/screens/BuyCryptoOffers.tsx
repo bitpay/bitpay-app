@@ -109,6 +109,7 @@ import {
   rampEnv,
   getChainFromRampChainFormat,
   getRampChainFormat,
+  getCoinFromRampCoinFormat,
 } from '../utils/ramp-utils';
 import BanxaTerms from '../components/terms/banxaTerms';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
@@ -537,7 +538,7 @@ const BuyCryptoOffers: React.FC = () => {
         const msg = t(
           'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
           {
-            coin: coin.toUpperCase(),
+            coin: getBanxaCoinFormat(coin)?.toUpperCase(),
             fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
             paymentMethod: paymentMethod.label,
           },
@@ -558,7 +559,7 @@ const BuyCryptoOffers: React.FC = () => {
         const msg = t(
           'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
           {
-            coin: coin.toUpperCase(),
+            coin: getBanxaCoinFormat(coin)?.toUpperCase(),
             fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
             paymentMethod: paymentMethod.label,
           },
@@ -958,7 +959,7 @@ const BuyCryptoOffers: React.FC = () => {
         const selectedAssetData = assetsData.assets.filter(asset => {
           return (
             getRampCoinFormat(
-              asset.symbol,
+              getCoinFromRampCoinFormat(asset.symbol),
               getChainFromRampChainFormat(asset.chain),
             ) === getRampCoinFormat(coin, chain)
           );

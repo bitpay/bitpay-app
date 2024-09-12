@@ -107,6 +107,7 @@ export type BanxaBlockchainKey =
   | 'DOGE'
   | 'ETH'
   | 'LTC'
+  | 'POL'
   | 'MATIC'
   | 'XRP';
 export interface BanxaGetQuoteRequestData {

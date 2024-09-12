@@ -1,6 +1,7 @@
 import {t} from 'i18next';
 import {SardinePaymentType} from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethodKey} from '../constants/BuyCryptoConstants';
 
 export const sardineEnv = __DEV__ ? 'sandbox' : 'production';
@@ -57,7 +58,8 @@ export const sardineSupportedCoins = [
   'eth_arb',
   'doge',
   'ltc',
-  'matic',
+  'matic', // backward compatibility
+  'pol',
   'xrp',
 ];
 
@@ -73,11 +75,12 @@ export const sardineSupportedErc20Tokens = [
   'knc',
   'link',
   'mana',
-  'matic',
+  'matic', // backward compatibility
   'mkr',
   'omg',
   'pax', // backward compatibility
   'paxg',
+  'pol',
   'sand',
   'shib',
   'tusd',
@@ -111,6 +114,7 @@ export const getSardineSupportedCurrencies = (): string[] => {
 };
 
 export const getSardineCoinFormat = (coin: string): string => {
+  coin = externalServicesCoinMapping(coin);
   let formattedCoin: string = `${coin.toUpperCase()}`;
   return formattedCoin;
 };

@@ -46,7 +46,8 @@ export const moonpaySellSupportedCoins = [
   'eth_arb', // eth_arbitrum in MoonpaySell
   'ltc',
   'doge',
-  'matic', // matic_polygon in Moonpay
+  'matic', // pol_polygon in Moonpay // backward compatibility
+  'pol', // pol_polygon in Moonpay
 ];
 
 export const moonpaySellSupportedErc20Tokens = ['axs', 'usdc', 'usdt'];
@@ -89,7 +90,8 @@ export const getMoonpaySellFixedCurrencyAbbreviation = (
     [key: string]: {[key: string]: string};
   } = {
     matic: {
-      matic: 'matic_polygon',
+      matic: 'pol_polygon',
+      pol: 'pol_polygon',
       eth: 'eth_polygon',
       usdc: 'usdc_polygon',
     },
@@ -115,7 +117,7 @@ export const getChainFromMoonpayNetworkCode = (
   const networkCodeMapping: {[key: string]: string} = {
     ethereum: 'eth',
     arbitrum: 'arb',
-    polygon: 'matic',
+    polygon: 'pol',
   };
 
   if (!networkCode) {
@@ -163,7 +165,8 @@ export const getMoonpaySellCurrenciesFixedProps = (
       networkCode: 'ethereum',
       contractAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
     },
-    matic_polygon: {code: 'matic', name: 'Polygon', networkCode: 'polygon'},
+    matic_polygon: {code: 'pol', name: 'Polygon', networkCode: 'polygon'},
+    pol_polygon: {code: 'pol', name: 'Polygon', networkCode: 'polygon'},
     eth_arbitrum: {code: 'eth', name: 'Ethereum', networkCode: 'arbitrum'},
   };
 

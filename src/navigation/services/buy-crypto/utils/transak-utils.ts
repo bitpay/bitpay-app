@@ -6,6 +6,7 @@ import {
   TransakStatusKey,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethod, PaymentMethodKey} from '../constants/BuyCryptoConstants';
 
 const PASSTHROUGH_URI_DEV = 'https://cmgustavo.github.io/website/transak/';
@@ -124,8 +125,9 @@ export const transakSupportedCoins = [
   'eth_arb',
   'eth_base',
   'eth_op',
-  'matic',
+  'matic', // backward compatibility
   'ltc',
+  'pol',
   'xrp',
 ];
 
@@ -339,6 +341,7 @@ export const getPassthroughUri = (): string => {
 };
 
 export const getTransakCoinFormat = (coin: string): string => {
+  coin = externalServicesCoinMapping(coin);
   let formattedCoin: string = `${coin.toUpperCase()}`;
   return formattedCoin;
 };
