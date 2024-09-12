@@ -51,6 +51,7 @@ const Logs = styled(BaseText)<{color?: string | null}>`
   font-weight: 600;
   color: ${({theme: {dark}, color}) =>
     color ? color : dark ? White : SlateDark};
+  padding-left: 16px;
 `;
 
 const LogsMessage = styled.Text`
@@ -150,13 +151,14 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   const navigation = useNavigation();
   const [showOptions, setShowOptions] = useState(false);
   const logs = useAppSelector(({LOG}) => LOG.logs);
-  const [filterLevel, setFilterLevel] = useState(LogLevel.Info);
+  const [filterLevel, setFilterLevel] = useState(LogLevel.Debug);
 
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
   const currentSessionStartTime = new Date(logs[0].timestamp);
   const [filteredPersistedLogs, setFilteredPersistedLogs] = useState(
     [] as LogEntry[],
   );
+  const [persistedLogs, setPersistedLogs] = useState([] as LogEntry[]);
 
   const onFilterLevelChange = (level: LogLevel) => {
     if (level !== filterLevel) {
@@ -194,12 +196,12 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
           return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
         })
         .join('');
-    const persistedLogString = filteredPersistedLogs.length
+    const persistedLogString = persistedLogs.length
       ? 'Previous Sessions\n\n' +
-        printLogs(filteredPersistedLogs) +
+        printLogs(persistedLogs) +
         '\n\nCurrent Session\n\n'
       : '';
-    logStr += persistedLogString + printLogs(filteredLogs);
+    logStr += persistedLogString + printLogs(logs); // Add current session logs and persisted logs including all levels
 
     Alert.alert(
       t('Warning'),
@@ -226,6 +228,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
           log.level <= filterLevel &&
           new Date(log.timestamp) < currentSessionStartTime,
       );
+      setPersistedLogs(JSON.parse(value));
       setFilteredPersistedLogs(_filteredPersistedLogs);
     }
   }, []);
