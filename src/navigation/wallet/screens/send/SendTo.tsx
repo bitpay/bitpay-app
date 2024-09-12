@@ -18,6 +18,7 @@ import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
 import {
   LightBlack,
   Midnight,
+  NeutralSlate,
   Slate30,
   SlateDark,
   White,
@@ -258,7 +259,7 @@ const SendTo = () => {
   const allContacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const theme = useTheme();
-  const placeHolderTextColor = theme.dark ? LightBlack : Slate30;
+  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [searchIsEmailAddress, setSearchIsEmailAddress] = useState(false);
