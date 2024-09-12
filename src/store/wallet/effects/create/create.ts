@@ -33,6 +33,7 @@ import {
 import {
   addTokenChainSuffix,
   getAccount,
+  isL2NoSideChainNetwork,
   sleep,
 } from '../../../../utils/helper-methods';
 import {t} from 'i18next';
@@ -445,8 +446,8 @@ const createWallet =
   async (dispatch): Promise<API> => {
     return new Promise((resolve, reject) => {
       const bwcClient = BWC.getClient();
-      const {key, coin, chain, options, context} = params;
-
+      const {key, coin: _coin, chain, options, context} = params;
+      const coin = _coin === 'pol' ? 'matic' : _coin; // for creating a polygon wallet, we use matic as symbol
       // set defaults
       const {
         account,
@@ -472,7 +473,10 @@ const createWallet =
         }),
       );
 
-      const name = BitpaySupportedCoins[coin.toLowerCase()].name;
+      const name =
+        isL2NoSideChainNetwork(chain) && coin === chain
+          ? BitpaySupportedCoins[coin].name
+          : BitpaySupportedCoins[chain.toLowerCase()].name;
       bwcClient.createWallet(
         name,
         'me',

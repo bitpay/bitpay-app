@@ -1449,14 +1449,14 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
   matic: {
     name: 'Polygon',
     chain: 'matic',
-    coin: 'matic',
-    feeCurrency: 'matic',
+    coin: 'pol',
+    feeCurrency: 'pol',
     img: CurrencyListIcons.matic,
     unitInfo: {
-      unitName: 'Matic',
+      unitName: 'Polygon',
       unitToSatoshi: 1e18,
       unitDecimals: 18,
-      unitCode: 'matic',
+      unitCode: 'pol',
     },
     properties: {
       hasMultiSig: true,

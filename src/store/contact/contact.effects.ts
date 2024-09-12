@@ -146,3 +146,42 @@ export const startContactBridgeUsdcMigration =
       }
     });
   };
+
+export const startContactPolMigration =
+  (): Effect<Promise<void>> =>
+  async (dispatch, getState): Promise<void> => {
+    return new Promise(async resolve => {
+      try {
+        dispatch(LogActions.info('[startContactPolMigration] - starting...'));
+        const contacts = getState().CONTACT.list;
+        dispatch(
+          LogActions.persistLog(
+            LogActions.info(`Migrating: ${JSON.stringify(contacts)}`),
+          ),
+        );
+
+        const migratedContacts = contacts.map(contact =>
+          contact.coin === 'matic' ? {...contact, coin: 'pol'} : contact,
+        );
+        await dispatch(migrateContacts(migratedContacts));
+        dispatch(
+          LogActions.persistLog(
+            LogActions.info(
+              `success [startContactPolMigration]: ${JSON.stringify(
+                migratedContacts,
+              )}`,
+            ),
+          ),
+        );
+        return resolve();
+      } catch (err: unknown) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.persistLog(
+            LogActions.error('[startContactPolMigration] failed - ', errStr),
+          ),
+        );
+        return resolve();
+      }
+    });
+  };

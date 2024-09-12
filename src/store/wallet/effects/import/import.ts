@@ -976,7 +976,7 @@ export const startImportFromHardwareWallet =
       }
 
       const hwKeyId = key.id;
-      const name = dispatch(GetName(coin, chain)); // TODO chain === coin for stored wallets. NOT TRUE ANYMORE
+      const name = dispatch(GetName(coin, chain));
       const credentials = credentialsFromExtendedPublicKey(
         coin,
         chain,

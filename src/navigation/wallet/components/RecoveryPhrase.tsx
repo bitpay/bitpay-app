@@ -201,7 +201,7 @@ const RecoveryPhrase = () => {
   const [advancedOptions, setAdvancedOptions] = useState({
     derivationPath: DefaultDerivationPath.defaultBTC as string,
     coin: CurrencyOptions[0].currencyAbbreviation,
-    chain: CurrencyOptions[0].chain, // chain = currency for all currencies if tokens not included. NOT TRUE ANYMORE
+    chain: CurrencyOptions[0].chain,
     passphrase: undefined as string | undefined,
     isMultisig: false,
   });
@@ -561,7 +561,7 @@ const RecoveryPhrase = () => {
         const advancedOpts = {
           ...advancedOptions,
           coin: currencyAbbreviation,
-          chain, // chain = currency for all currencies if tokens not included. NOT TRUE ANYMORE
+          chain,
           derivationPath,
         };
         setAdvancedOptions(advancedOpts);

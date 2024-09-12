@@ -5,6 +5,7 @@ import {
   failedGetTokenOptions,
   successGetCustomTokenOptions,
   successGetTokenOptions,
+  successImport,
 } from '../../wallet.actions';
 import {
   BitpaySupportedTokens,
@@ -23,6 +24,9 @@ import {
 } from '../../../../utils/helper-methods';
 import {GetProtocolPrefix} from '../../utils/currency';
 import {AppActions} from '../../../app';
+import {buildWalletObj, mapAbbreviationAndName} from '../../utils/wallet';
+import merge from 'lodash.merge';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
@@ -174,6 +178,46 @@ export const startCustomTokensMigration =
         addCustomTokenOption(customToken, chain);
       });
       dispatch(LogActions.info('success [startCustomTokensMigration]}'));
+      return resolve();
+    });
+  };
+
+export const startPolMigration =
+  (): Effect<Promise<void>> =>
+  async (dispatch, getState): Promise<void> => {
+    return new Promise(async resolve => {
+      dispatch(LogActions.info('[startPolMigration] - starting...'));
+      const {keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
+        getState().WALLET;
+      const tokenOpts = {
+        ...BitpaySupportedTokenOptsByAddress,
+        ...tokenOptionsByAddress,
+        ...customTokenOptionsByAddress,
+      };
+      Object.values(keys).forEach(key => {
+        key.wallets = key.wallets.map(wallet => {
+          const {currencyAbbreviation, currencyName} = dispatch(
+            mapAbbreviationAndName(
+              wallet.credentials.coin,
+              wallet.credentials.chain,
+              wallet.credentials?.token?.address,
+            ),
+          );
+          return merge(
+            wallet,
+            buildWalletObj(
+              {...wallet.credentials, currencyAbbreviation, currencyName},
+              tokenOpts,
+            ),
+          );
+        });
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+      });
+      dispatch(LogActions.info('success [startPolMigration]}'));
       return resolve();
     });
   };

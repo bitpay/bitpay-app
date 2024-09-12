@@ -137,7 +137,7 @@ export const WALLET_CONNECT_SUPPORTED_CHAINS: {
   },
   'eip155:137': {
     chain: 'matic',
-    currencyAbbreviation: 'matic',
+    currencyAbbreviation: 'pol',
     network: Network.mainnet,
   },
   'eip155:11155111': {
@@ -147,7 +147,7 @@ export const WALLET_CONNECT_SUPPORTED_CHAINS: {
   },
   'eip155:80002': {
     chain: 'matic',
-    currencyAbbreviation: 'matic',
+    currencyAbbreviation: 'pol',
     network: Network.testnet,
   },
   'eip155:10': {

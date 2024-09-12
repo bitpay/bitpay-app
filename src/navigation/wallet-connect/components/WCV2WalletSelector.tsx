@@ -29,6 +29,7 @@ import {
   CtaContainerAbsolute,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
+import {IsERCToken} from '../../../store/wallet/utils/currency';
 
 const DescriptionText = styled(BaseText)`
   font-style: normal;
@@ -140,7 +141,7 @@ export default ({
               c =>
                 chain === c.chain &&
                 network === c.network &&
-                currencyAbbreviation === c.currencyAbbreviation &&
+                !IsERCToken(currencyAbbreviation, chain) &&
                 !allAccounts.some(account =>
                   account.endsWith(receiveAddress || ''),
                 ),

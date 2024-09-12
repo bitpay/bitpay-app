@@ -74,10 +74,10 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   const img =
     coin &&
     chain &&
-    (SUPPORTED_CURRENCIES.includes(coin)
+    (CurrencyListIcons[coin]
       ? CurrencyListIcons[coin]
       : foundToken && foundToken?.logoURI
-      ? (foundToken.logoURI as string)
+      ? (foundToken?.logoURI as string)
       : '');
 
   const coinBadge = img ? (

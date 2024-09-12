@@ -37,6 +37,7 @@ export interface WalletState {
   enableReplaceByFee: boolean;
   initLogs: AddLog[];
   customTokensMigrationComplete: boolean;
+  polygonMigrationComplete: boolean;
 }
 
 export const initialState: WalletState = {
@@ -69,6 +70,7 @@ export const initialState: WalletState = {
   enableReplaceByFee: false,
   initLogs: [], // keep init logs at the end (order is important)
   customTokensMigrationComplete: false,
+  polygonMigrationComplete: false,
 };
 
 export const walletReducer = (
@@ -596,6 +598,12 @@ export const walletReducer = (
       return {
         ...state,
         customTokensMigrationComplete: true,
+      };
+
+    case WalletActionTypes.SET_POLYGON_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        polygonMigrationComplete: true,
       };
 
     default:
