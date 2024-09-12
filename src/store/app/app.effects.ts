@@ -78,6 +78,7 @@ import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
   APP_DEEPLINK_PREFIX,
   APP_NAME,
+  APP_VERSION,
   BASE_BITPAY_URLS,
   DOWNLOAD_BITPAY_URL,
 } from '../../constants/config';
@@ -139,6 +140,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
       ),
     );
+    dispatch(LogActions.info(`Current App Version: ${APP_VERSION}`));
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
