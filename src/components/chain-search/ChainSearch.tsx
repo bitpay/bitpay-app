@@ -92,7 +92,7 @@ export interface SearchableItem {
   total?: number;
   accounts?:
     | string[]
-    | (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[]; // Additional properties specific to WCV2SessionType or AssetList
+    | (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[]; // Additional properties specific to AssetList
   data?: TransactionProposal[] | AssetsByChainData[]; // Additional properties specific to TransactionHistory or AssetList
   currency?: CurrencyOpts; // Additional properties specific to AddWallet context
 }
@@ -160,21 +160,6 @@ const SearchComponent = <T extends SearchableItem>({
       if (['addUtxoWallet', 'addEVMWallet'].includes(context)) {
         const chains = searchFullList.flatMap(
           data => data?.currency?.chain || [],
-        );
-        setChainsOptions(chains);
-      } else if (
-        ['walletconnect'].includes(context) &&
-        typeof results?.[0]?.accounts?.[0] === 'string'
-      ) {
-        let chains = [] as string[];
-        results.forEach(
-          data =>
-            (data.accounts = filterAccountsAndPolulateChainsOptions(
-              data.accounts! as string[],
-              normalizedText,
-              selectedChainFilterOption,
-              chains,
-            )),
         );
         setChainsOptions(chains);
       } else if (['accountsettings'].includes(context)) {

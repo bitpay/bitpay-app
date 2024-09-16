@@ -25,7 +25,7 @@ export const Slate10 = '#F5F7F8';
 export const Slate30 = '#E1E4E7';
 
 /* Interface */
-export const Caution = '#ef476f';
+export const Caution = '#B51B16';
 export const Caution50 = '#FDAFBB';
 export const Caution25 = '#FFD8DE';
 export const Caution60 = '#ad1313';
@@ -34,7 +34,7 @@ export const Success = '#2fcfa4';
 export const Success50 = '#97E7D1';
 export const Success25 = '#CBF3E8';
 
-export const Warning = '#fdb455';
+export const Warning = '#AC6304';
 export const Warning75 = '#FDC67F';
 export const Warning25 = '#FEECD4';
 

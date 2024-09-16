@@ -1,5 +1,6 @@
 import React from 'react';
 import {Path, Svg} from 'react-native-svg';
+import {Action} from '../../../styles/colors';
 
 const InfoSvg: React.FC<{bgColor: string; size: number}> = ({
   bgColor,
@@ -18,7 +19,7 @@ const InfoSvg: React.FC<{bgColor: string; size: number}> = ({
 };
 
 const InfoIcon = ({
-  bgColor = '#2240C4',
+  bgColor = Action,
   size = 20,
 }: {
   bgColor?: string;

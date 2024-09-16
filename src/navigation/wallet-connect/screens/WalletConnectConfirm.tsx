@@ -12,6 +12,7 @@ import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {sleep} from '../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {
+  dismissBottomNotificationModal,
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
@@ -42,22 +43,49 @@ import {
 } from '../../../store/wallet/effects/fee/fee';
 import {Trans, useTranslation} from 'react-i18next';
 import Banner from '../../../components/banner/Banner';
-import {BaseText} from '../../../components/styled/Text';
+import {BaseText, H7} from '../../../components/styled/Text';
 import {Hr} from '../../../components/styled/Containers';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {
   walletConnectV2ApproveCallRequest,
+  walletConnectV2OnUpdateSession,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {buildTxDetails} from '../../../store/wallet/effects/send/send';
+import {IconContainer, ItemContainer} from '../styled/WalletConnectContainers';
+import {
+  ClipboardContainer,
+  NoteContainer,
+  NoteLabel,
+} from './WalletConnectHome';
+import FastImage from 'react-native-fast-image';
+import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import Clipboard from '@react-native-clipboard/clipboard';
+import {SvgProps} from 'react-native-svg';
+import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
+import {Caution25, Success25, Warning25} from '../../../styles/colors';
+import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
+import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
+import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
+import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const HeaderRightContainer = styled.View``;
+
+const VerifyIconContainer = styled(TouchableOpacity)`
+  padding: 10px;
+  border-radius: 50px;
+`;
 
 export interface WalletConnectConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
   peerName?: string;
+  peerUrl?: string;
+  icons?: string[];
   request: any;
+  topic: string;
+  selectedAccountAddress: string;
 }
 
 const WalletConnectConfirm = () => {
@@ -66,13 +94,49 @@ const WalletConnectConfirm = () => {
   const navigation = useNavigation();
   const route =
     useRoute<RouteProp<WalletConnectGroupParamList, 'WalletConnectConfirm'>>();
-  const {wallet, request, peerName, recipient} = route.params;
+  const {
+    wallet,
+    request,
+    peerName,
+    peerUrl,
+    icons,
+    recipient,
+    topic,
+    selectedAccountAddress,
+  } = route.params;
+  const peerIcon = icons && icons[0];
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+  const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
+  const [showVerifyContextBottomModal, setShowVerifyContextBottomModal] =
+    useState<boolean>(false);
+  const [accountDisconnected, setAccountDisconnected] = useState(false);
 
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const [txDetails, setTxDetails] = useState<TxDetails>();
+
+  const sessionV2: WCV2SessionType | undefined = useAppSelector(
+    ({WALLET_CONNECT_V2}) =>
+      WALLET_CONNECT_V2.sessions.find(session => session.topic === topic),
+  );
+
+  let VerifyIcon: React.FC<SvgProps> | null = null;
+  let bgColor = '';
+  switch (sessionV2?.verifyContext?.verified?.validation) {
+    case 'UNKNOWN':
+      bgColor = Warning25;
+      VerifyIcon = WarningOutlineSvg;
+      break;
+    case 'VALID':
+      bgColor = Success25;
+      VerifyIcon = TrustedDomainSvg;
+      break;
+    case 'INVALID':
+      bgColor = Caution25;
+      VerifyIcon = InvalidDomainSvg;
+      break;
+  }
 
   const _setTxDetails = async () => {
     try {
@@ -174,7 +238,10 @@ const WalletConnectConfirm = () => {
     navigation.setOptions({
       headerRight: () => (
         <HeaderRightContainer>
-          <Button onPress={rejectCallRequest} buttonType="pill">
+          <Button
+            onPress={rejectCallRequest}
+            buttonStyle="danger"
+            buttonType="pill">
             {t('Reject')}
           </Button>
         </HeaderRightContainer>
@@ -193,6 +260,98 @@ const WalletConnectConfirm = () => {
     return () => clearTimeout(timer);
   }, [resetSwipeButton]);
 
+  useEffect(() => {
+    if (!clipboardObj.copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setClipboardObj({copied: false, type: clipboardObj.type});
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [clipboardObj]);
+
+  const copyToClipboard = (value: string, type: string) => {
+    haptic('impactLight');
+    if (!clipboardObj.copied && value) {
+      Clipboard.setString(value);
+      setClipboardObj({copied: true, type});
+
+      setTimeout(() => {
+        setClipboardObj({copied: false, type});
+      }, 3000);
+    }
+  };
+
+  const closeModal = () => {
+    setShowVerifyContextBottomModal(false);
+  };
+
+  const disconnectAccount = async () => {
+    haptic('impactLight');
+    dispatch(
+      showBottomNotificationModal({
+        type: 'question',
+        title: t('Confirm delete'),
+        message: t(
+          'Are you sure you want to delete this account from the connection?',
+        ),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('DELETE'),
+            action: async () => {
+              try {
+                if (sessionV2) {
+                  dispatch(dismissBottomNotificationModal());
+                  await sleep(600);
+                  dispatch(startOnGoingProcessModal('LOADING'));
+                  await sleep(600);
+                  await dispatch(
+                    walletConnectV2OnUpdateSession({
+                      session: sessionV2,
+                      address: selectedAccountAddress,
+                      action: 'disconnect',
+                    }),
+                  );
+                  dispatch(dismissOnGoingProcessModal());
+                  await sleep(600);
+                  setAccountDisconnected(true);
+                }
+              } catch (err) {
+                dispatch(dismissOnGoingProcessModal());
+                await sleep(500);
+                await showErrorMessage(
+                  CustomErrorMessage({
+                    errMsg: BWCErrorMessage(err),
+                    title: t('Uh oh, something went wrong'),
+                  }),
+                );
+              }
+            },
+            primary: true,
+          },
+          {
+            text: t('GO BACK'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
+  };
+
+  useEffect(() => {
+    if (!sessionV2) {
+      setAccountDisconnected(true);
+    }
+  }, [sessionV2]);
+
+  useEffect(() => {
+    if (accountDisconnected) {
+      navigation.goBack();
+    }
+  }, [accountDisconnected]);
+
   return (
     <ConfirmContainer>
       <DetailsList>
@@ -200,7 +359,7 @@ const WalletConnectConfirm = () => {
         <Banner
           height={100}
           type={'warning'}
-          description={''}
+          title={t('Waiting for approval')}
           transComponent={
             <Trans
               i18nKey="WalletConnectBannerConfirm"
@@ -210,7 +369,50 @@ const WalletConnectConfirm = () => {
           }
         />
         <Hr />
+        <ItemContainer>
+          <H7>{t('Connected to')}</H7>
+          {peerUrl && peerIcon ? (
+            <ClipboardContainer>
+              {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
+                <CopiedSvg width={17} />
+              ) : null}
+              {VerifyIcon ? (
+                <VerifyIconContainer
+                  style={{
+                    backgroundColor: bgColor,
+                  }}
+                  onPress={() => setShowVerifyContextBottomModal(true)}>
+                  <VerifyIcon />
+                </VerifyIconContainer>
+              ) : null}
+              <NoteContainer
+                isDappUri={true}
+                disabled={clipboardObj.copied}
+                onPress={() =>
+                  peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
+                }>
+                <IconContainer>
+                  <FastImage
+                    source={{uri: peerIcon}}
+                    style={{width: 18, height: 18}}
+                  />
+                </IconContainer>
+                <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
+                  {peerUrl?.replace('https://', '')}
+                </NoteLabel>
+              </NoteContainer>
+            </ClipboardContainer>
+          ) : null}
+        </ItemContainer>
+        <Hr />
         <SendingTo recipient={txDetails?.sendingTo} hr />
+        <SendingFrom sender={txDetails?.sendingFrom} hr />
+        {txDetails?.rateStr ? (
+          <ExchangeRate
+            description={t('Exchange Rate')}
+            rateStr={txDetails?.rateStr}
+          />
+        ) : null}
         <Fee
           fee={txDetails?.fee}
           feeOptions={feeOptions}
@@ -234,13 +436,6 @@ const WalletConnectConfirm = () => {
         {txDetails?.nonce !== undefined && txDetails?.nonce !== null ? (
           <SharedDetailRow description={'Nonce'} value={txDetails?.nonce} hr />
         ) : null}
-        <SendingFrom sender={txDetails?.sendingFrom} hr />
-        {txDetails?.rateStr ? (
-          <ExchangeRate
-            description={t('Exchange Rate')}
-            rateStr={txDetails?.rateStr}
-          />
-        ) : null}
         <Amount description={t('SubTotal')} amount={txDetails?.subTotal} />
         <Amount description={t('Total')} amount={txDetails?.total} />
       </DetailsList>
@@ -256,6 +451,13 @@ const WalletConnectConfirm = () => {
           setShowPaymentSentModal(false);
           navigation.goBack();
         }}
+      />
+
+      <VerifyContextModal
+        isVisible={showVerifyContextBottomModal}
+        closeModal={closeModal}
+        sessionV2={sessionV2}
+        onRemovePress={disconnectAccount}
       />
     </ConfirmContainer>
   );

@@ -34,6 +34,8 @@ export enum AppActionTypes {
   SET_APP_INSTALLED = 'APP/SET_INSTALLED_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
+  SHOW_WALLET_CONNECT_START_MODAL = 'APP/SHOW_WALLET_CONNECT_START_MODAL',
+  DISMISS_WALLET_CONNECT_START_MODAL = 'APP/DISMISS_WALLET_CONNECT_START_MODAL',
   SHOW_IN_APP_MESSAGE = 'APP/SHOW_IN_APP_MESSAGE',
   ATTACH_IN_APP_MESSAGE = 'APP/ATTACH_IN_APP_MESSAGE',
   DISMISS_IN_APP_MESSAGE = 'APP/DISMISS_IN_APP_MESSAGE',
@@ -157,6 +159,13 @@ interface DismissOnGoingProcessModal {
   type: typeof AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL;
 }
 
+interface ShowWalletConnectStartModal {
+  type: typeof AppActionTypes.SHOW_WALLET_CONNECT_START_MODAL;
+}
+
+interface DismissWalletConnectStartModal {
+  type: typeof AppActionTypes.DISMISS_WALLET_CONNECT_START_MODAL;
+}
 interface ShowInAppMessage {
   type: typeof AppActionTypes.SHOW_IN_APP_MESSAGE;
 }
@@ -500,4 +509,6 @@ export type AppActionType =
   | SetLocalDefaultChainFilterOption
   | SetLocalAssetsDropdown
   | ShowChainSelectorModal
-  | DismissChainSelectorModal;
+  | DismissChainSelectorModal
+  | ShowWalletConnectStartModal
+  | DismissWalletConnectStartModal;

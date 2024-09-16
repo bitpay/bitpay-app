@@ -85,13 +85,14 @@ const InAppNotification: React.FC = () => {
     await sleep(0);
 
     const wallet = request && dispatch(getWalletByRequest(request));
-    if (!wallet) {
+    if (!wallet || !wallet.receiveAddress) {
       return;
     }
 
     navigation.navigate('WalletConnectHome', {
       topic: request?.topic,
-      wallet,
+      selectedAccountAddress: wallet.receiveAddress,
+      keyId: wallet.keyId,
       context: 'notification',
     });
   };

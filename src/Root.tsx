@@ -132,6 +132,7 @@ import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
 import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
+import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletConnectStartModal';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -637,6 +638,7 @@ export default () => {
             <PinModal />
             <BiometricModal />
             <ImportLedgerWalletModal />
+            <WalletConnectStartModal />
           </NavigationContainer>
         </BottomSheetModalProvider>
       </ThemeProvider>

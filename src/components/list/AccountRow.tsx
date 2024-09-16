@@ -27,7 +27,7 @@ const RowContainer = styled.TouchableOpacity<{selected: boolean}>`
     selected &&
     css`
       background: ${({theme: {dark}}) => (dark ? '#2240C440' : '#ECEFFD')};
-      border-color: ${({theme: {dark}}) => (dark ? '#2240C4' : Action)};
+      border-color: ${({theme: {dark}}) => (dark ? Action : Action)};
       border-width: 1px;
       border-radius: 12px;
     `};

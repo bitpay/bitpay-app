@@ -131,7 +131,9 @@ export interface KeyWalletsRowProps extends SearchableItem {
   key: string;
   backupComplete?: boolean;
   keyName: string;
-  accounts: (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[];
+  accounts: (AccountRowProps & {assetsByChain?: AssetsByChainData[]} & {
+    checked?: boolean;
+  })[];
   mergedUtxoAccounts: WalletRowProps[][];
 }
 
