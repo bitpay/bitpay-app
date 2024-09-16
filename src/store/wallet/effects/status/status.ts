@@ -627,13 +627,34 @@ export const startUpdateAllWalletStatusForKey =
         );
   };
 
+type UpdateAllKeyAndWalletStatusContext =
+  | 'homeRootOnRefresh'
+  | 'importLedger'
+  | 'init'
+  | 'newBlockEvent'
+  | 'startMigration';
+
 export const startUpdateAllKeyAndWalletStatus =
-  ({force}: {force?: boolean}): Effect =>
+  ({
+    context,
+    force,
+    createTokenWalletWithFunds,
+    chain,
+    tokenAddress,
+  }: {
+    context?: UpdateAllKeyAndWalletStatusContext;
+    force?: boolean;
+    createTokenWalletWithFunds?: boolean;
+    chain?: string;
+    tokenAddress?: string;
+  }): Effect =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         dispatch(
-          LogActions.info('starting [startUpdateAllKeyAndWalletStatus]'),
+          LogActions.info(
+            `Starting [startUpdateAllKeyAndWalletStatus]. Context: ${context}`,
+          ),
         );
         const {
           WALLET: {keys: _keys, balanceCacheKey},
@@ -651,6 +672,32 @@ export const startUpdateAllKeyAndWalletStatus =
 
         const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
 
+        if (createTokenWalletWithFunds) {
+          LogActions.debug(
+            `Checking for new token with funds.${
+              context ? ' Context: ' + context + '. ' : ''
+            }${chain ? ' Chain: ' + chain + '. ' : ''}${
+              tokenAddress ? ' Contract address: ' + tokenAddress + '. ' : ''
+            }`,
+          );
+          for (const [index, k] of keys.entries()) {
+            try {
+              await dispatch(
+                detectAndCreateTokensForEachEvmWallet({
+                  key: k,
+                  chain,
+                  tokenAddress,
+                }),
+              );
+            } catch (error) {
+              dispatch(
+                LogActions.info(
+                  'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
+                ),
+              );
+            }
+          }
+        }
         await Promise.all([
           dispatch(startUpdateAllWalletStatusForKeys({keys, force})),
           dispatch(

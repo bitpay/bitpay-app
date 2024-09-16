@@ -193,10 +193,17 @@ const HomeRoot = () => {
     try {
       await dispatch(startGetRates({}));
       await Promise.all([
-        dispatch(startUpdateAllKeyAndWalletStatus({force: true})),
+        dispatch(
+          startUpdateAllKeyAndWalletStatus({
+            context: 'homeRootOnRefresh',
+            force: true,
+            createTokenWalletWithFunds: true,
+          }),
+        ),
         dispatch(requestBrazeContentRefresh()),
         sleep(1000),
       ]);
+      await sleep(2000);
       dispatch(updatePortfolioBalance());
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));

@@ -272,7 +272,12 @@ export const startMigration =
 
         // update store with token rates from coin gecko and update balances
         await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllKeyAndWalletStatus({force: true}));
+        await dispatch(
+          startUpdateAllKeyAndWalletStatus({
+            context: 'startMigration',
+            force: true,
+          }),
+        );
         dispatch(
           LogActions.info(
             '[startMigration] - success migration keys and wallets',

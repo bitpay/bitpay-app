@@ -816,17 +816,37 @@ export const getDecryptPassword =
   };
 
 export const detectAndCreateTokensForEachEvmWallet =
-  ({key, force}: {key: Key; force?: boolean}): Effect<Promise<void>> =>
+  ({
+    key,
+    force,
+    chain,
+    tokenAddress,
+  }: {
+    key: Key;
+    force?: boolean;
+    chain?: string;
+    tokenAddress?: string;
+  }): Effect<Promise<void>> =>
   async dispatch => {
     try {
       dispatch(
-        LogActions.info('starting [detectAndCreateTokensForEachEvmWallet]'),
+        LogActions.info('Starting [detectAndCreateTokensForEachEvmWallet]'),
       );
 
-      const evmWalletsToCheck = key.wallets.filter(
-        w =>
-          IsEVMChain(w.chain) && !IsERCToken(w.currencyAbbreviation, w.chain),
-      );
+      const evmWalletsToCheck = key.wallets.filter(w => {
+        const isEVMChain = IsEVMChain(w.chain);
+        const isNotERCToken = !IsERCToken(w.currencyAbbreviation, w.chain);
+        const matchesChain =
+          !chain || (w.chain && chain.toLowerCase() === w.chain.toLowerCase());
+        const notAlreadyCreated =
+          !tokenAddress ||
+          !w.tokens ||
+          !cloneDeep(w.tokens).some(t =>
+            t?.toLowerCase().includes(tokenAddress.toLowerCase()),
+          );
+
+        return isEVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
+      });
 
       for (const [index, w] of evmWalletsToCheck.entries()) {
         if (w.chain && w.receiveAddress) {
@@ -846,6 +866,7 @@ export const detectAndCreateTokensForEachEvmWallet =
                   token.includes(erc20Token.token_address),
                 )) &&
               !erc20Token.possible_spam &&
+              erc20Token.verified_contract &&
               erc20Token.balance &&
               erc20Token.decimals &&
               parseFloat(erc20Token.balance) /

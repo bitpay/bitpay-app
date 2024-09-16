@@ -93,7 +93,12 @@ export const ImportLedgerWalletModal = () => {
           }),
         );
       }
-      dispatch(startUpdateAllKeyAndWalletStatus({force: true}));
+      dispatch(
+        startUpdateAllKeyAndWalletStatus({
+          context: 'importLedger',
+          force: true,
+        }),
+      );
     }
     dispatch(AppActions.importLedgerModalToggled(false));
   };
