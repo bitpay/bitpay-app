@@ -274,7 +274,10 @@ const CoinbaseSettings = () => {
         </Details>
       </SettingsScrollContainer>
       <ButtonContainer>
-        <Button onPress={() => confirmDelete()} buttonStyle={'secondary'}>
+        <Button
+          onPress={() => confirmDelete()}
+          buttonStyle={'danger'}
+          buttonOutline={true}>
           {t('Sign out')}
         </Button>
       </ButtonContainer>

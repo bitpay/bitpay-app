@@ -13,6 +13,8 @@ import {
   Action,
   Air,
   Caution,
+  Caution50,
+  Caution60,
   Disabled,
   DisabledDark,
   DisabledText,
@@ -90,17 +92,13 @@ const ButtonContainer = styled.TouchableOpacity<ButtonProps>`
 `;
 
 const ButtonContent = styled.View<ButtonOptionProps>`
-  background: ${({danger, disabled, theme, secondary}) => {
-    if (secondary) {
+  background: ${({disabled, theme, outline, secondary}) => {
+    if (secondary || outline) {
       return 'transparent';
     }
 
     if (disabled) {
       return theme.dark ? DisabledDark : Disabled;
-    }
-
-    if (danger) {
-      return theme.dark ? '#8B1C1C' : '#FFCDCD';
     }
 
     return Action;
@@ -116,7 +114,7 @@ const ButtonContent = styled.View<ButtonOptionProps>`
       }
 
       if (danger) {
-        return theme.dark ? '#8B1C1C' : '#FFCDCD';
+        return theme.dark ? Caution50 : Caution60;
       }
 
       return Action;
@@ -140,7 +138,7 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
     }
 
     if (danger) {
-      return theme.dark ? White : '#8B1C1C';
+      return theme.dark ? Caution50 : Caution60;
     }
 
     return White;
@@ -148,8 +146,8 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 `;
 
 const PillContent = styled.View<ButtonOptionProps>`
-  background: ${({secondary, cancel, theme, action, disabled}) => {
-    if (secondary) {
+  background: ${({secondary, cancel, theme, action, outline, disabled}) => {
+    if (secondary || outline) {
       return 'transparent';
     }
 
@@ -169,9 +167,13 @@ const PillContent = styled.View<ButtonOptionProps>`
   }};
   border-style: solid;
   border-width: 1px;
-  border-color: ${({secondary, outline, cancel, theme}) => {
+  border-color: ${({secondary, outline, cancel, danger, theme}) => {
     if (outline) {
       return theme?.dark ? White : Action;
+    }
+
+    if (danger) {
+      return theme.dark ? Caution50 : Caution60;
     }
 
     if (secondary) {
@@ -194,13 +196,17 @@ const PillText = styled(BaseText)<ButtonOptionProps>`
   line-height: 22.03px;
   text-align: center;
 
-  color: ${({disabled, cancel, theme, action}) => {
+  color: ${({disabled, cancel, theme, danger, action}) => {
     if (disabled) {
       return theme.dark ? DisabledTextDark : DisabledText;
     }
 
     if (cancel) {
       return theme?.dark ? White : SlateDark;
+    }
+
+    if (danger) {
+      return theme.dark ? Caution50 : Caution60;
     }
 
     if (action) {
@@ -221,12 +227,12 @@ const LinkText = styled(ButtonBaseText)<ButtonOptionProps>`
       return DisabledDark;
     }
 
-    if (theme?.dark) {
-      return theme.colors.text;
+    if (danger) {
+      return theme.dark ? Caution50 : Caution60;
     }
 
-    if (danger) {
-      return Caution;
+    if (theme?.dark) {
+      return theme.colors.text;
     }
 
     return Action;
