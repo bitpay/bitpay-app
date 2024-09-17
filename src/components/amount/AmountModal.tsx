@@ -72,7 +72,11 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
   const theme = useTheme();
 
   return (
-    <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
+    <SheetModal
+      modalLibrary={'bottom-sheet'}
+      isVisible={isVisible}
+      onBackdropPress={onClose}
+      fullscreen>
       <AmountModalContainerHOC>
         <ModalHeader>
           <CloseModalButton

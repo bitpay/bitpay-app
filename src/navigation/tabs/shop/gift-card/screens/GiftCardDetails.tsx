@@ -51,7 +51,7 @@ import {
 } from '../../components/svg/ShopTabSvgs';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
 import {BASE_BITPAY_URLS} from '../../../../../constants/config';
-import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
+import {formatFiatAmount} from '../../../../../utils/helper-methods';
 import {AppActions} from '../../../../../store/app';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {
@@ -343,7 +343,6 @@ const GiftCardDetails = ({
       img: <ExternalLinkSvg theme={theme} />,
       description: t('Share Claim Code'),
       onPress: async () => {
-        await sleep(500);
         const dataToShare =
           Platform.OS === 'ios' && giftCard.claimLink
             ? {url: giftCard.claimLink}
@@ -357,7 +356,6 @@ const GiftCardDetails = ({
             img: <PrintSvg theme={theme} />,
             description: t('Print'),
             onPress: async () => {
-              await sleep(600); // Wait for options sheet to close on iOS
               await RNPrint.print({
                 html: generateGiftCardPrintHtml(
                   cardConfig,
