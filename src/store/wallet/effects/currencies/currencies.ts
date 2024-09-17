@@ -205,10 +205,12 @@ export const startPolMigration =
           );
           return merge(
             wallet,
-            buildWalletObj(
-              {...wallet.credentials, currencyAbbreviation, currencyName},
-              tokenOpts,
-            ),
+            buildWalletObj({
+              ...wallet.credentials,
+              ...wallet,
+              currencyAbbreviation,
+              currencyName,
+            }),
           );
         });
         dispatch(
