@@ -41,7 +41,7 @@ export function getCoinAndChainFromCurrencyCode(
     return {coin, chain: coin};
   }
 
-  return {coin, chain: 'eth'};
+  return {coin, chain: coin === 'pol' ? 'matic' : 'eth'};
 }
 
 export function getCurrencyCodeFromCoinAndChain(
