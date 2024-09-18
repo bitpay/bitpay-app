@@ -5,6 +5,7 @@ import {
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import debounce from 'lodash.debounce';
 import Braze from 'react-native-appboy-sdk';
 import React, {useEffect, useMemo, useState} from 'react';
@@ -488,152 +489,155 @@ export default () => {
       />
 
       <ThemeProvider theme={theme}>
-        <NavigationContainer
-          ref={navigationRef}
-          theme={theme}
-          linking={linking}
-          onReady={async () => {
-            DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
+        <BottomSheetModalProvider>
+          <NavigationContainer
+            ref={navigationRef}
+            theme={theme}
+            linking={linking}
+            onReady={async () => {
+              DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
 
-            dispatch(showBlur(pinLockActive || biometricLockActive));
-            await RNBootSplash.hide({fade: true});
-            // avoid splash conflicting with modal in iOS
-            // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
-            dispatch(
-              LogActions.debug(
-                `Biometric Lock Active: ${biometricLockActive} | Pin Lock Active: ${pinLockActive}`,
-              ),
-            );
-            if (pinLockActive) {
-              await sleep(500);
-              dispatch(AppActions.showPinModal({type: 'check'}));
-            } else if (biometricLockActive) {
-              await sleep(500);
-              dispatch(AppActions.showBiometricModal({}));
-            }
-
-            const urlHandler = async () => {
-              if (onboardingCompleted) {
-                const getBrazeInitialUrl = async (): Promise<string> =>
-                  new Promise(resolve =>
-                    Braze.getInitialURL(deepLink => resolve(deepLink)),
-                  );
-                const [url, brazeUrl] = await Promise.all([
-                  Linking.getInitialURL(),
-                  getBrazeInitialUrl(),
-                ]);
-                await sleep(10);
-                urlEventHandler({url: url || brazeUrl});
-              }
-            };
-
-            // we need to ensure that each wallet has a receive address before we can create the account list.
-            const runAddressFix = async () => {
-              const walletsToFix = Object.values(keys).flatMap(key =>
-                key.wallets.filter(
-                  wallet =>
-                    !wallet.receiveAddress && wallet?.credentials?.isComplete(),
+              dispatch(showBlur(pinLockActive || biometricLockActive));
+              await RNBootSplash.hide({fade: true});
+              // avoid splash conflicting with modal in iOS
+              // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
+              dispatch(
+                LogActions.debug(
+                  `Biometric Lock Active: ${biometricLockActive} | Pin Lock Active: ${pinLockActive}`,
                 ),
               );
-              if (walletsToFix.length > 0) {
-                dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
-                await sleep(1000); // give the modal time to show
-                await fixWalletAddresses({
-                  appDispatch: dispatch,
-                  wallets: walletsToFix,
-                });
-                dispatch(LogActions.info('success [runAddressFix]'));
-                dispatch(dismissOnGoingProcessModal());
+              if (pinLockActive) {
+                await sleep(500);
+                dispatch(AppActions.showPinModal({type: 'check'}));
+              } else if (biometricLockActive) {
+                await sleep(500);
+                dispatch(AppActions.showBiometricModal({}));
               }
-            };
 
-            if (pinLockActive || biometricLockActive) {
-              const subscriptionToPinModalDismissed =
-                DeviceEventEmitter.addListener(
-                  DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
-                  async () => {
-                    subscriptionToPinModalDismissed.remove();
-                    await runAddressFix();
-                    urlHandler();
-                  },
+              const urlHandler = async () => {
+                if (onboardingCompleted) {
+                  const getBrazeInitialUrl = async (): Promise<string> =>
+                    new Promise(resolve =>
+                      Braze.getInitialURL(deepLink => resolve(deepLink)),
+                    );
+                  const [url, brazeUrl] = await Promise.all([
+                    Linking.getInitialURL(),
+                    getBrazeInitialUrl(),
+                  ]);
+                  await sleep(10);
+                  urlEventHandler({url: url || brazeUrl});
+                }
+              };
+
+              // we need to ensure that each wallet has a receive address before we can create the account list.
+              const runAddressFix = async () => {
+                const walletsToFix = Object.values(keys).flatMap(key =>
+                  key.wallets.filter(
+                    wallet =>
+                      !wallet.receiveAddress &&
+                      wallet?.credentials?.isComplete(),
+                  ),
                 );
-            } else {
-              await runAddressFix();
-              urlHandler();
-            }
+                if (walletsToFix.length > 0) {
+                  dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+                  await sleep(1000); // give the modal time to show
+                  await fixWalletAddresses({
+                    appDispatch: dispatch,
+                    wallets: walletsToFix,
+                  });
+                  dispatch(LogActions.info('success [runAddressFix]'));
+                  dispatch(dismissOnGoingProcessModal());
+                }
+              };
 
-            dispatch(LogActions.info('QuickActions Initialized'));
-            QuickActions.popInitialAction()
-              .then(item =>
-                dispatch(shortcutListener(item, navigationRef as any)),
-              )
-              .catch(console.error);
-            DeviceEventEmitter.addListener(
-              'quickActionShortcut',
-              (item: ShortcutItem) => {
-                dispatch(shortcutListener(item, navigationRef as any));
-              },
-            );
-          }}
-          onStateChange={debouncedOnStateChange}>
-          <Root.Navigator
-            screenOptions={{
-              ...baseNavigatorOptions,
-              headerShown: false,
-              headerStyle: {
-                backgroundColor: theme.colors.background,
-              },
+              if (pinLockActive || biometricLockActive) {
+                const subscriptionToPinModalDismissed =
+                  DeviceEventEmitter.addListener(
+                    DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+                    async () => {
+                      subscriptionToPinModalDismissed.remove();
+                      await runAddressFix();
+                      urlHandler();
+                    },
+                  );
+              } else {
+                await runAddressFix();
+                urlHandler();
+              }
+
+              dispatch(LogActions.info('QuickActions Initialized'));
+              QuickActions.popInitialAction()
+                .then(item =>
+                  dispatch(shortcutListener(item, navigationRef as any)),
+                )
+                .catch(console.error);
+              DeviceEventEmitter.addListener(
+                'quickActionShortcut',
+                (item: ShortcutItem) => {
+                  dispatch(shortcutListener(item, navigationRef as any));
+                },
+              );
             }}
-            initialRouteName={initialRoute}>
-            <Root.Screen
-              name={DebugScreens.DEBUG}
-              component={DebugScreen}
-              options={{
+            onStateChange={debouncedOnStateChange}>
+            <Root.Navigator
+              screenOptions={{
                 ...baseNavigatorOptions,
-                gestureEnabled: false,
+                headerShown: false,
+                headerStyle: {
+                  backgroundColor: theme.colors.background,
+                },
               }}
-            />
-            <Root.Screen
-              name={RootStacks.TABS}
-              component={TabsStack}
-              options={{
-                gestureEnabled: false,
-              }}
-            />
-            {AuthGroup({Auth: Root})}
-            {IntroGroup({Intro: Root})}
-            {OnboardingGroup({Onboarding: Root})}
-            {SettingsGroup({Settings: Root})}
-            {BitpayIdGroup({BitpayId: Root})}
-            {WalletGroup({Wallet: Root})}
-            {CardActivationGroup({CardActivation: Root})}
-            {ScanGroup({Scan: Root})}
-            {GiftCardGroup({GiftCard: Root})}
-            {MerchantGroup({Merchant: Root})}
-            {BillGroup({Bill: Root})}
-            {GeneralSettingsGroup({GeneralSettings: Root})}
-            {ContactsGroup({Contacts: Root})}
-            {ExternalServicesSettingsGroup({ExternalServicesSettings: Root})}
-            {NotificationsSettingsGroup({Notifications: Root})}
-            {NetworkFeePolicySettingsGroup({NetworkFeePolicySettings: Root})}
-            {AboutGroup({About: Root})}
-            {CoinbaseGroup({Coinbase: Root})}
-            {BuyCryptoGroup({BuyCrypto: Root})}
-            {SellCryptoGroup({SellCrypto: Root})}
-            {SwapCryptoGroup({SwapCrypto: Root})}
-            {WalletConnectGroup({WalletConnect: Root})}
-            {ZenLedgerGroup({ZenLedger: Root})}
-          </Root.Navigator>
-          <OnGoingProcessModal />
-          <InAppNotification />
-          <InAppMessage />
-          <BottomNotificationModal />
-          <DecryptEnterPasswordModal />
-          <BlurContainer />
-          <PinModal />
-          <BiometricModal />
-          <ImportLedgerWalletModal />
-        </NavigationContainer>
+              initialRouteName={initialRoute}>
+              <Root.Screen
+                name={DebugScreens.DEBUG}
+                component={DebugScreen}
+                options={{
+                  ...baseNavigatorOptions,
+                  gestureEnabled: false,
+                }}
+              />
+              <Root.Screen
+                name={RootStacks.TABS}
+                component={TabsStack}
+                options={{
+                  gestureEnabled: false,
+                }}
+              />
+              {AuthGroup({Auth: Root})}
+              {IntroGroup({Intro: Root})}
+              {OnboardingGroup({Onboarding: Root})}
+              {SettingsGroup({Settings: Root})}
+              {BitpayIdGroup({BitpayId: Root})}
+              {WalletGroup({Wallet: Root})}
+              {CardActivationGroup({CardActivation: Root})}
+              {ScanGroup({Scan: Root})}
+              {GiftCardGroup({GiftCard: Root})}
+              {MerchantGroup({Merchant: Root})}
+              {BillGroup({Bill: Root})}
+              {GeneralSettingsGroup({GeneralSettings: Root})}
+              {ContactsGroup({Contacts: Root})}
+              {ExternalServicesSettingsGroup({ExternalServicesSettings: Root})}
+              {NotificationsSettingsGroup({Notifications: Root})}
+              {NetworkFeePolicySettingsGroup({NetworkFeePolicySettings: Root})}
+              {AboutGroup({About: Root})}
+              {CoinbaseGroup({Coinbase: Root})}
+              {BuyCryptoGroup({BuyCrypto: Root})}
+              {SellCryptoGroup({SellCrypto: Root})}
+              {SwapCryptoGroup({SwapCrypto: Root})}
+              {WalletConnectGroup({WalletConnect: Root})}
+              {ZenLedgerGroup({ZenLedger: Root})}
+            </Root.Navigator>
+            <OnGoingProcessModal />
+            <InAppNotification />
+            <InAppMessage />
+            <BottomNotificationModal />
+            <DecryptEnterPasswordModal />
+            <BlurContainer />
+            <PinModal />
+            <BiometricModal />
+            <ImportLedgerWalletModal />
+          </NavigationContainer>
+        </BottomSheetModalProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

@@ -195,7 +195,10 @@ const Security = () => {
           </Button>
         </Setting>
       </SettingsComponent>
-      <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
+      <SheetModal
+        modalLibrary={'bottom-sheet'}
+        isVisible={modalVisible}
+        onBackdropPress={hideModal}>
         <SheetContainer>
           <Header>
             <Title>{t('Enable Lock')}</Title>

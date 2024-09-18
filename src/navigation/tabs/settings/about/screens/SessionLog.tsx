@@ -276,11 +276,14 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
       />
 
       <SheetModal
-        placement={'top'}
+        modalLibrary={'bottom-sheet'}
+        placement={'bottom'}
         isVisible={showOptions}
         onBackdropPress={() => setShowOptions(false)}>
-        <SheetContainer placement={'top'}>
-          <OptionContainer placement={'top'} onPress={() => showDisclaimer()}>
+        <SheetContainer placement={'bottom'}>
+          <OptionContainer
+            placement={'bottom'}
+            onPress={() => showDisclaimer()}>
             <OptionIconContainer>
               {theme.dark ? <SendIconWhite /> : <SendIcon />}
             </OptionIconContainer>
