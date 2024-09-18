@@ -986,8 +986,16 @@ export const setEmailNotifications =
   };
 
 const _startUpdateAllKeyAndWalletStatus = debounce(
-  async dispatch => {
-    dispatch(startUpdateAllKeyAndWalletStatus({force: true}));
+  async (dispatch, chain, tokenAddress) => {
+    dispatch(
+      startUpdateAllKeyAndWalletStatus({
+        context: 'newBlockEvent',
+        force: true,
+        createTokenWalletWithFunds: true,
+        chain,
+        tokenAddress,
+      }),
+    );
     DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
   },
   5000,
@@ -1071,7 +1079,12 @@ export const handleBwsEvent =
           break;
         case 'NewBlock':
           if (response.network && response.network === 'livenet') {
-            _startUpdateAllKeyAndWalletStatus(dispatch);
+            // Chain and tokenAddress are passed to check if a new token received funds on that network and create the wallet if necessary
+            _startUpdateAllKeyAndWalletStatus(
+              dispatch,
+              response.chain,
+              response.tokenAddress,
+            );
           }
           break;
         case 'TxProposalAcceptedBy':

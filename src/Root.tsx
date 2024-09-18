@@ -209,6 +209,7 @@ export type SilentPushEvent = {
   notification_type?: string;
   ab?: any;
   tokenAddress?: string | null;
+  chain?: string;
   coin?: string;
   network?: string;
 };

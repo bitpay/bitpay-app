@@ -43,7 +43,7 @@ import {createWalletAddress} from '../address/address';
 import cloneDeep from 'lodash.clonedeep';
 import {MoralisErc20TokenBalanceByWalletData} from '../../../moralis/moralis.types';
 import {getERC20TokenBalanceByWallet} from '../../../moralis/moralis.effects';
-import {getTokenContractInfo} from '../status/status';
+import {getTokenContractInfo, startUpdateWalletStatus} from '../status/status';
 import {addCustomTokenOption} from '../currencies/currencies';
 
 export interface CreateOptions {
@@ -816,16 +816,44 @@ export const getDecryptPassword =
   };
 
 export const detectAndCreateTokensForEachEvmWallet =
-  ({key, force}: {key: Key; force?: boolean}): Effect<Promise<void>> =>
+  ({
+    key,
+    force,
+    chain,
+    tokenAddress,
+  }: {
+    key: Key;
+    force?: boolean;
+    chain?: string;
+    tokenAddress?: string;
+  }): Effect<Promise<void>> =>
   async dispatch => {
     try {
       dispatch(
-        LogActions.info('starting [detectAndCreateTokensForEachEvmWallet]'),
+        LogActions.info(
+          'Starting [detectAndCreateTokensForEachEvmWallet] for keyId: ' +
+            key.id,
+        ),
       );
 
-      const evmWalletsToCheck = key.wallets.filter(
-        w =>
-          IsEVMChain(w.chain) && !IsERCToken(w.currencyAbbreviation, w.chain),
+      const evmWalletsToCheck = key.wallets.filter(w => {
+        const isEVMChain = IsEVMChain(w.chain);
+        const isNotERCToken = !IsERCToken(w.currencyAbbreviation, w.chain);
+        const matchesChain =
+          !chain || (w.chain && chain.toLowerCase() === w.chain.toLowerCase());
+        const notAlreadyCreated =
+          !tokenAddress ||
+          !w.tokens ||
+          !cloneDeep(w.tokens).some(t =>
+            t?.toLowerCase().includes(tokenAddress.toLowerCase()),
+          );
+        return isEVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
+      });
+
+      dispatch(
+        LogActions.debug(
+          'Number of EVM wallets to check: ' + evmWalletsToCheck?.length,
+        ),
       );
 
       for (const [index, w] of evmWalletsToCheck.entries()) {
@@ -846,13 +874,20 @@ export const detectAndCreateTokensForEachEvmWallet =
                   token.includes(erc20Token.token_address),
                 )) &&
               !erc20Token.possible_spam &&
+              erc20Token.verified_contract &&
               erc20Token.balance &&
               erc20Token.decimals &&
               parseFloat(erc20Token.balance) /
                 Math.pow(10, erc20Token.decimals) >=
-                1e-6
+                1e-7
             );
           });
+
+          dispatch(
+            LogActions.debug(
+              'Number of tokens to create: ' + filteredTokens?.length,
+            ),
+          );
 
           let account: number | undefined;
           let customAccount = false;
@@ -880,19 +915,26 @@ export const detectAndCreateTokensForEachEvmWallet =
                 }),
               },
             };
-            await dispatch(addWallet(newTokenWallet));
+            const newWallet = await dispatch(addWallet(newTokenWallet));
+            await dispatch(
+              startUpdateWalletStatus({key, wallet: newWallet, force: true}),
+            );
           }
-          dispatch(
-            LogActions.info('success [detectAndCreateTokensForEachEvmWallet]'),
-          );
-          return Promise.resolve();
         }
       }
+
+      dispatch(
+        LogActions.info(
+          'success [detectAndCreateTokensForEachEvmWallet] for keyId: ' +
+            key.id,
+        ),
+      );
+      return Promise.resolve();
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(
         LogActions.error(
-          `failed [detectAndCreateTokensForEachEvmWallet]: ${errorStr}`,
+          `failed [detectAndCreateTokensForEachEvmWallet] - keyId: ${key?.id} - Error: ${errorStr}`,
         ),
       );
     }
