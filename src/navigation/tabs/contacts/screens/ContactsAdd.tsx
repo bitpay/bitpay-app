@@ -23,7 +23,10 @@ import {
   Row,
   ActiveOpacity,
 } from '../../../../components/styled/Containers';
-import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
+import {
+  IsValidEVMAddress,
+  ValidateCoinAddress,
+} from '../../../../store/wallet/utils/validations';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {useNavigation} from '@react-navigation/core';
@@ -373,6 +376,10 @@ const ContactsAdd = ({
         message: t('Contact already exists'),
       });
       return;
+    }
+
+    if (IsValidEVMAddress(addressValue)) {
+      contact.notes = 'EVM compatible address\n';
     }
 
     dispatch(createContact(contact));

@@ -8,6 +8,7 @@ import {
 } from '../../constants/currencies';
 import {LogActions} from '../log';
 import {migrateContacts} from './contact.actions';
+import {IsValidEVMAddress} from '../wallet/utils/validations';
 
 export const startContactV2Migration =
   (): Effect<Promise<void>> =>
@@ -17,18 +18,16 @@ export const startContactV2Migration =
       const contacts = getState().CONTACT.list;
       const merged: Record<string, ContactRowProps> = {};
       contacts.forEach(_contact => {
-        const {address, name, coin, chain} = _contact;
+        const {address, name} = _contact;
         if (!merged[address]) {
-          // First occurrence of the address
+          // First occurrence of the address, no notes
           merged[address] = {
             ..._contact,
-            notes: `Name: ${name}, Coin: ${coin}, Chain: ${chain}`,
+            notes: IsValidEVMAddress(address) ? 'EVM compatible address\n' : '',
           };
         } else {
-          // Append name, coin, and chain to notes if the address already exists
-          merged[
-            address
-          ].notes += ` | Name: ${name}, Coin: ${coin}, Chain: ${chain}`;
+          // Append name to the existing name field, separated by a dash
+          merged[address].name += ` - ${name}`;
         }
       });
       const mergedContacts = Object.values(merged);
