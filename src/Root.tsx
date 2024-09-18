@@ -276,6 +276,7 @@ export default () => {
     WalletScreens.EXPORT_WALLET,
     WalletScreens.JOIN_MULTISIG,
     WalletScreens.KEY_OVERVIEW,
+    WalletScreens.ACCOUNT_DETAILS,
     WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS,
     WalletScreens.WALLET_DETAILS,
   ];
