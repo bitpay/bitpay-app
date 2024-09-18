@@ -190,10 +190,6 @@ export const BuildKeyAccountRow = (
             searchInput,
           },
         );
-        accountList.forEach(account => {
-          const walletCount = account?.wallets?.length ?? 0;
-          logger.debug(`account list wallets count: ${walletCount}`);
-        });
 
         const accounts = accountList
           .map(account => {
@@ -208,7 +204,6 @@ export const BuildKeyAccountRow = (
           .filter(Boolean) as (AccountRowProps & {
           assetsByChain?: AssetsByChainData[];
         })[];
-        logger.debug(`evm accounts count: ${accounts?.length}`);
 
         const mergedUtxoAccounts = accountList.reduce((acc, account) => {
           account?.wallets?.forEach(wallet => {
@@ -226,11 +221,6 @@ export const BuildKeyAccountRow = (
           });
           return acc;
         }, {});
-        logger.debug(
-          `mergedUtxoAccounts count: ${
-            Object.values(mergedUtxoAccounts)?.length ?? 0
-          }`,
-        );
 
         return {
           key,
