@@ -92,19 +92,27 @@ const ButtonContainer = styled.TouchableOpacity<ButtonProps>`
 `;
 
 const ButtonContent = styled.View<ButtonOptionProps>`
-  background: ${({disabled, theme, outline, secondary}) => {
-    if (secondary || outline) {
+  background: ${({disabled, theme, outline, danger, secondary}) => {
+    if (disabled) {
+      return theme.dark ? DisabledDark : Disabled;
+    }
+
+    if (secondary) {
       return 'transparent';
     }
 
-    if (disabled) {
-      return theme.dark ? DisabledDark : Disabled;
+    if (danger) {
+      if (outline) {
+        return 'transparent';
+      } else {
+        return theme.dark ? Caution50 : Caution60;
+      }
     }
 
     return Action;
   }};
   border: 2px solid
-    ${({danger, disabled, secondary, theme}) => {
+    ${({danger, disabled, secondary, outline, theme}) => {
       if (disabled) {
         return theme.dark ? DisabledDark : Disabled;
       }
@@ -114,7 +122,11 @@ const ButtonContent = styled.View<ButtonOptionProps>`
       }
 
       if (danger) {
-        return theme.dark ? Caution50 : Caution60;
+        if (outline) {
+          return theme.dark ? Caution50 : Caution60;
+        } else {
+          return 'transparent';
+        }
       }
 
       return Action;
@@ -128,7 +140,7 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
   font-size: 18px;
   font-weight: 500;
 
-  color: ${({danger, disabled, secondary, theme}) => {
+  color: ${({danger, disabled, secondary, outline, theme}) => {
     if (disabled) {
       return theme.dark ? DisabledTextDark : DisabledText;
     }
@@ -138,7 +150,11 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
     }
 
     if (danger) {
-      return theme.dark ? Caution50 : Caution60;
+      if (outline) {
+        return theme.dark ? Caution50 : Caution60;
+      } else {
+        return theme.dark ? Caution60 : White;
+      }
     }
 
     return White;
@@ -348,6 +364,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
             cancel={cancel}
             danger={danger}
             disabled={disabled}
+            outline={outline}
             action={action}>
             {children}
           </ButtonTypeText>
