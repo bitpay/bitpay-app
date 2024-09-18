@@ -19,7 +19,6 @@ import {
   LightBlack,
   Midnight,
   NeutralSlate,
-  Slate30,
   SlateDark,
   White,
 } from '../../../../styles/colors';
@@ -40,7 +39,6 @@ import {Linking, TouchableOpacity, View} from 'react-native';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {GetPayProUrl} from '../../../../store/wallet/utils/decode-uri';
 import KeyWalletsRow, {
-  KeyWallet,
   KeyWalletsRowProps,
 } from '../../../../components/list/KeyWalletsRow';
 import {
@@ -71,7 +69,11 @@ import {
   TranslateToBchCashAddress,
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
-import {IsEVMChain, IsUtxoChain} from '../../../../store/wallet/utils/currency';
+import {
+  IsEVMChain,
+  IsUtxoChain,
+  IsOtherChain,
+} from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
 import {
@@ -271,6 +273,7 @@ const SendTo = () => {
   const {currencyAbbreviation, id, chain, network} = wallet;
 
   const isUtxo = IsUtxoChain(chain);
+  const isXrp = IsOtherChain(chain);
 
   const selectInputOption: Option = {
     img: <Icons.SelectInputs />,
@@ -383,14 +386,24 @@ const SendTo = () => {
   );
 
   const contacts = useMemo(() => {
-    return allContacts.filter(
-      contact =>
-        contact.coin === currencyAbbreviation.toLowerCase() &&
-        contact.chain === chain.toLowerCase() &&
-        contact.network === network &&
-        (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-          contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
-    );
+    if (isUtxo || isXrp) {
+      return allContacts.filter(
+        contact =>
+          contact.coin === currencyAbbreviation.toLowerCase() &&
+          contact.chain === chain.toLowerCase() &&
+          contact.network === network &&
+          (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+            contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
+      );
+    } else {
+      return allContacts.filter(
+        contact =>
+          IsEVMChain(contact.chain) &&
+          contact.network === network &&
+          (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+            contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
+      );
+    }
   }, [allContacts, currencyAbbreviation, network, searchInput]);
 
   const onErrorMessageDismiss = () => {

@@ -1,3 +1,4 @@
+import {ContactRowProps} from '../../components/list/ContactRow';
 import {Effect} from '..';
 import {
   BitpaySupportedUtxoCoins,
@@ -7,6 +8,41 @@ import {
 } from '../../constants/currencies';
 import {LogActions} from '../log';
 import {migrateContacts} from './contact.actions';
+
+export const startContactV2Migration =
+  (): Effect<Promise<void>> =>
+  async (dispatch, getState): Promise<void> => {
+    return new Promise(async resolve => {
+      dispatch(LogActions.info('[startContactMigrationV2] - starting...'));
+      const contacts = getState().CONTACT.list;
+      const merged: Record<string, ContactRowProps> = {};
+      contacts.forEach(_contact => {
+        const {address, name, coin, chain} = _contact;
+        if (!merged[address]) {
+          // First occurrence of the address
+          merged[address] = {
+            ..._contact,
+            notes: `Name: ${name}, Coin: ${coin}, Chain: ${chain}`,
+          };
+        } else {
+          // Append name, coin, and chain to notes if the address already exists
+          merged[
+            address
+          ].notes += ` | Name: ${name}, Coin: ${coin}, Chain: ${chain}`;
+        }
+      });
+      const mergedContacts = Object.values(merged);
+      await dispatch(migrateContacts(mergedContacts));
+      dispatch(
+        LogActions.info(
+          `success [startContactMigrationV2]: ${JSON.stringify(
+            mergedContacts,
+          )}`,
+        ),
+      );
+      return resolve();
+    });
+  };
 
 export const startContactMigration =
   (): Effect<Promise<void>> =>

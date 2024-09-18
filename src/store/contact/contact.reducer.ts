@@ -7,6 +7,7 @@ export const ContactReduxPersistBlackList = [];
 export interface ContactState {
   list: Array<ContactRowProps>;
   contactMigrationComplete: boolean;
+  contactMigrationCompleteV2: boolean;
   contactTokenAddressMigrationComplete: boolean;
   contactBridgeUsdcMigrationComplete: boolean;
 }
@@ -14,6 +15,7 @@ export interface ContactState {
 const initialState: ContactState = {
   list: [],
   contactMigrationComplete: false,
+  contactMigrationCompleteV2: false,
   contactTokenAddressMigrationComplete: false,
   contactBridgeUsdcMigrationComplete: false,
 };
@@ -24,16 +26,7 @@ export const contactReducer = (
 ) => {
   switch (action.type) {
     case ContactActionTypes.CREATE_CONTACT:
-      if (
-        !findContact(
-          state.list,
-          action.contact.address,
-          action.contact.coin,
-          action.contact.network,
-          action.contact.chain,
-          action.contact.tokenAddress,
-        )
-      ) {
+      if (!findContact(state.list, action.contact.address)) {
         return {
           ...state,
           list: [...state.list, {...action.contact}],
@@ -43,16 +36,11 @@ export const contactReducer = (
       }
 
     case ContactActionTypes.UPDATE_CONTACT:
-      const {address, chain, network, tokenAddress} = action.contact;
+      const {address} = action.contact;
       return {
         ...state,
         list: state.list.map((contact: ContactRowProps) => {
-          if (
-            contact.address === address &&
-            contact.network === network &&
-            contact.chain === chain &&
-            (!contact.tokenAddress || contact.tokenAddress === tokenAddress)
-          ) {
+          if (contact.address === address) {
             contact = action.contact;
           }
           return contact;
@@ -63,14 +51,7 @@ export const contactReducer = (
       return {
         ...state,
         list: state.list.filter((contact: ContactRowProps) => {
-          return (
-            contact.address !== action.address ||
-            contact.coin !== action.coin ||
-            contact.network !== action.network ||
-            contact.chain !== action.chain ||
-            (contact.tokenAddress &&
-              contact.tokenAddress !== action.tokenAddress)
-          );
+          return contact.address !== action.address;
         }),
       };
 
@@ -84,6 +65,12 @@ export const contactReducer = (
       return {
         ...state,
         contactMigrationComplete: true,
+      };
+
+    case ContactActionTypes.SET_CONTACT_MIGRATION_COMPLETE_V2:
+      return {
+        ...state,
+        contactMigrationCompleteV2: true,
       };
 
     case ContactActionTypes.SET_CONTACT_TOKEN_ADDRESS_MIGRATION_COMPLETE:

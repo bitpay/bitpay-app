@@ -5,6 +5,7 @@ import {
   BitpaySupportedEvmCoins,
   BitpaySupportedTokens,
   BitpaySupportedUtxoCoins,
+  OtherBitpaySupportedCoins,
 } from '../../../constants/currencies';
 import {
   getCurrencyAbbreviation,
@@ -68,6 +69,12 @@ export const IsUtxoChain = (chain: string): boolean => {
   const _chain = cloneDeep(chain).toLowerCase();
 
   return Object.keys(BitpaySupportedUtxoCoins).includes(_chain);
+};
+
+export const IsOtherChain = (chain: string): boolean => {
+  const _chain = cloneDeep(chain).toLowerCase();
+
+  return Object.keys(OtherBitpaySupportedCoins).includes(_chain);
 };
 
 export const IsEVMChain = (chain: string): boolean => {
