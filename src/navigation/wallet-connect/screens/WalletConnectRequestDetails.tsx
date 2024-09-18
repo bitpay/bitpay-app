@@ -203,9 +203,11 @@ const WalletConnectRequestDetails = () => {
 
   const goToWalletConnectHome = async (newLinkedWallet?: Wallet) => {
     await sleep(500);
+    const _wallet = newLinkedWallet || wallet;
     navigation.navigate('WalletConnectHome', {
       topic,
-      wallet: newLinkedWallet || wallet,
+      selectedAccountAddress: _wallet.receiveAddress!,
+      keyId: _wallet.keyId,
     });
   };
 

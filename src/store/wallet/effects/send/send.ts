@@ -103,7 +103,6 @@ import {Analytics} from '../../../analytics/analytics.effects';
 import {AppActions} from '../../../app';
 import {Network, URL} from '../../../../constants';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
-import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {SupportedTokenOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {
@@ -463,10 +462,8 @@ export const buildTxDetails =
           ? parseInt(params[0]?.gasPrice, 16)
           : feePerKb!;
         nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
-        chain = WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
-        coin =
-          WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]
-            ?.currencyAbbreviation;
+        chain = wallet.chain;
+        coin = wallet.currencyAbbreviation;
         amount = parseInt(params[0]?.value, 16) || 0;
         gasLimit =
           (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||

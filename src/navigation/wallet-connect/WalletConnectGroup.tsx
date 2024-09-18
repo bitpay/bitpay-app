@@ -4,9 +4,6 @@ import WalletConnectIntro, {
   WalletConnectIntroParamList,
 } from './screens/WalletConnectIntro';
 import WalletConnectIcon from '../../../assets/img/wallet-connect/wallet-connect-icon.svg';
-import WalletConnectStart, {
-  WalletConnectStartParamList,
-} from './screens/WalletConnectStart';
 import WalletConnectHome, {
   WalletConnectHomeParamList,
 } from './screens/WalletConnectHome';
@@ -34,6 +31,10 @@ interface WalletConnectProps {
 const WalletConnectHeaderTitle = styled.View`
   align-items: center;
   flex-direction: row;
+  border-width: 1px;
+  border-color: ${({theme}) => theme.colors.border};
+  padding: 5px 8px;
+  border-radius: 50px;
 `;
 
 export const WalletConnectHeader = () => {
@@ -42,14 +43,13 @@ export const WalletConnectHeader = () => {
       <WalletConnectIconContainer>
         <WalletConnectIcon />
       </WalletConnectIconContainer>
-      <HeaderTitle>WalletConnect</HeaderTitle>
+      <HeaderTitle style={{fontSize: 16}}>WalletConnect</HeaderTitle>
     </WalletConnectHeaderTitle>
   );
 };
 
 export type WalletConnectGroupParamList = {
   WalletConnectRoot: WalletConnectIntroParamList;
-  WalletConnectStart: WalletConnectStartParamList;
   WalletConnectConnections: undefined;
   WalletConnectHome: WalletConnectHomeParamList;
   WalletConnectRequestDetails: WalletConnectRequestDetailsParamList;
@@ -58,7 +58,6 @@ export type WalletConnectGroupParamList = {
 
 export enum WalletConnectScreens {
   WC_ROOT = 'WalletConnectRoot',
-  WC_START = 'WalletConnectStart',
   WC_CONNECTIONS = 'WalletConnectConnections',
   WC_HOME = 'WalletConnectHome',
   WC_REQUEST_DETAILS = 'WalletConnectRequestDetails',
@@ -83,13 +82,6 @@ const WalletConnectGroup: React.FC<WalletConnectProps> = ({WalletConnect}) => {
       <WalletConnect.Screen
         name={WalletConnectScreens.WC_ROOT}
         component={WalletConnectIntro}
-        options={{
-          headerTitle: () => WalletConnectHeader(),
-        }}
-      />
-      <WalletConnect.Screen
-        name={WalletConnectScreens.WC_START}
-        component={WalletConnectStart}
         options={{
           headerTitle: () => WalletConnectHeader(),
         }}

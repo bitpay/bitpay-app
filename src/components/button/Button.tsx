@@ -213,6 +213,10 @@ const PillText = styled(BaseText)<ButtonOptionProps>`
       return White;
     }
 
+    if (danger) {
+      return Caution;
+    }
+
     return theme?.dark ? White : Action;
   }};
 `;

@@ -1,21 +1,34 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {H7, Smallest} from '../../../components/styled/Text';
-import {LightBlack, NeutralSlate} from '../../../styles/colors';
-import EthIcon from '../../../../assets/img/currencies/eth.svg';
-import MaticIcon from '../../../../assets/img/currencies/matic.svg';
+import {
+  H5,
+  H7,
+  ListItemSubText,
+  Smallest,
+} from '../../../components/styled/Text';
+import {
+  Caution25,
+  LightBlack,
+  NeutralSlate,
+  Success25,
+  Warning25,
+} from '../../../styles/colors';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {Hr} from '../../../components/styled/Containers';
-import {HeaderTitle, IconLabel} from '../styled/WalletConnectText';
+import {
+  ActiveOpacity,
+  Column,
+  CtaContainerAbsolute,
+  CurrencyColumn,
+  Hr,
+  Row,
+} from '../../../components/styled/Containers';
+import {HeaderTitle} from '../styled/WalletConnectText';
 import {
   IconContainer,
   ItemContainer,
-  ItemNoteContainer,
-  ItemNoteTouchableContainer,
   ItemTitleContainer,
-  ItemTouchableContainer,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
 import {FlatList, View} from 'react-native';
@@ -51,12 +64,24 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {WalletConnectHeader} from '../WalletConnectGroup';
-import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
 import {InAppNotificationContextType} from '../../../store/app/app.models';
+import Blockie from '../../../components/blockie/Blockie';
+import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
+import {buildTestBadge} from '../../../components/list/WalletRow';
+import Button from '../../../components/button/Button';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {useTheme} from '@react-navigation/native';
+import {BitpaySupportedCoins} from '../../../constants/currencies';
+import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
+import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
+import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
+import {SvgProps} from 'react-native-svg';
+import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
 
 export type WalletConnectHomeParamList = {
   topic?: string;
-  wallet: Wallet;
+  selectedAccountAddress: string;
+  keyId: string;
   context?: InAppNotificationContextType;
 };
 
@@ -64,7 +89,7 @@ const SummaryContainer = styled.View`
   padding-bottom: 64px;
 `;
 
-const NoteContainer = styled.TouchableOpacity<{isDappUri?: boolean}>`
+export const NoteContainer = styled.TouchableOpacity<{isDappUri?: boolean}>`
   background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
   max-width: ${({isDappUri}) => (isDappUri ? '175px' : '126px')};
@@ -74,7 +99,7 @@ const NoteContainer = styled.TouchableOpacity<{isDappUri?: boolean}>`
   padding: 10px 20px;
 `;
 
-const NoteLabel = styled(H7)`
+export const NoteLabel = styled(H7)`
   margin-left: 5px;
 `;
 
@@ -82,21 +107,40 @@ const PRContainer = styled.View`
   flex: 1;
 `;
 
-const ClipboardContainer = styled.View`
+export const ClipboardContainer = styled.View`
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
+  gap: 4px;
+`;
+
+const BalanceColumn = styled(Column)`
+  align-items: flex-end;
+  margin-right: 10px;
+`;
+
+const VerifyIconContainer = styled(TouchableOpacity)`
+  padding: 10px;
+  border-radius: 50px;
 `;
 
 const WalletConnectHome = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [accountDisconnected, setAccountDisconnected] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const {
-    params: {topic, wallet, context},
+    params: {topic, selectedAccountAddress, keyId, context},
   } = useRoute<RouteProp<{params: WalletConnectHomeParamList}>>();
+  const key = keys[keyId];
+  const keyFullWalletObjs = key.wallets.filter(
+    w => w.receiveAddress === selectedAccountAddress,
+  );
+  const [showVerifyContextBottomModal, setShowVerifyContextBottomModal] =
+    useState<boolean>(false);
 
   // version 2
   const sessionV2: WCV2SessionType | undefined = useAppSelector(
@@ -108,24 +152,32 @@ const WalletConnectHome = () => {
       .filter(request => {
         const addressFrom = getAddressFrom(request)?.toLowerCase();
         const filterWithAddress = addressFrom
-          ? addressFrom === wallet.receiveAddress?.toLowerCase()
+          ? addressFrom === selectedAccountAddress?.toLowerCase()
           : true; // if address exist in request check if it matches with connected wallets addresses
-        const walletConnectChain =
-          WALLET_CONNECT_SUPPORTED_CHAINS[request?.params.chainId]?.chain;
-        return (
-          request.topic === topic &&
-          filterWithAddress &&
-          walletConnectChain === wallet.chain
-        );
+        return request.topic === topic && filterWithAddress;
       })
       .reverse(),
   );
-
   const {peer} = sessionV2 || {};
   const {name: peerName, icons, url: peerUrl} = peer?.metadata || {};
   const peerIcon = icons && icons[0];
+  let VerifyIcon: React.FC<SvgProps> | null = null;
+  let bgColor = '';
+  switch (sessionV2?.verifyContext?.verified?.validation) {
+    case 'UNKNOWN':
+      bgColor = Warning25;
+      VerifyIcon = WarningOutlineSvg;
+      break;
+    case 'VALID':
+      bgColor = Success25;
+      VerifyIcon = TrustedDomainSvg;
+      break;
+    case 'INVALID':
+      bgColor = Caution25;
+      VerifyIcon = InvalidDomainSvg;
+      break;
+  }
 
-  const {chain, currencyAbbreviation, receiveAddress, tokenAddress} = wallet;
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
       await sleep(500);
@@ -157,7 +209,7 @@ const WalletConnectHome = () => {
                   await dispatch(
                     walletConnectV2OnUpdateSession({
                       session: sessionV2,
-                      address: receiveAddress,
+                      address: selectedAccountAddress,
                       action: 'disconnect',
                     }),
                   );
@@ -190,22 +242,11 @@ const WalletConnectHome = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => WalletConnectHeader(),
-      headerRight: () => {
-        return (
-          <ItemNoteTouchableContainer
-            onPress={() => {
-              disconnectAccount();
-            }}>
-            <TrashIcon />
-          </ItemNoteTouchableContainer>
-        );
-      },
     });
   }, [navigation, disconnectAccount, t]);
 
-  const goToConfirmView = async (request: any) => {
+  const goToConfirmView = async (request: any, wallet: Wallet) => {
     try {
-      let _wallet;
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
 
@@ -216,10 +257,14 @@ const WalletConnectHome = () => {
       };
 
       navigation.navigate('WalletConnectConfirm', {
-        wallet: _wallet || wallet,
+        wallet: wallet,
         recipient,
         request,
         peerName,
+        peerUrl,
+        icons,
+        topic: sessionV2?.topic!,
+        selectedAccountAddress,
       });
     } catch (error: any) {
       await showErrorMessage(
@@ -243,8 +288,18 @@ const WalletConnectHome = () => {
     }
   };
 
-  const handleRequestMethod = (request: WCV2RequestType) => {
+  const handleRequestMethod = (request: WCV2RequestType, wallet?: Wallet) => {
     const {method} = request.params.request;
+    if (!wallet) {
+      const chain =
+        WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
+      wallet = key.wallets.find(
+        w => w.receiveAddress === selectedAccountAddress && w.chain === chain,
+      );
+    }
+    if (!wallet) {
+      return;
+    }
     method !== 'eth_sendTransaction' && method !== 'eth_signTransaction'
       ? navigation.navigate('WalletConnectRequestDetails', {
           request,
@@ -252,7 +307,7 @@ const WalletConnectHome = () => {
           peerName,
           topic,
         })
-      : goToConfirmView(request);
+      : goToConfirmView(request, wallet);
   };
 
   useEffect(() => {
@@ -284,66 +339,94 @@ const WalletConnectHome = () => {
     }
   }, [context]);
 
+  const closeModal = () => {
+    setShowVerifyContextBottomModal(false);
+  };
+
   const renderItem = useCallback(
     ({item, index}: {item: WCV2RequestType; index: number}) => {
-      const {createdOn, chain: _chain} = item;
-      const {value = '0x0'} = item.params.request.params[0];
+      const {createdOn} = item;
+      const {value = '0x0', data} = item.params.request.params[0];
+      const _chain =
+        WALLET_CONNECT_SUPPORTED_CHAINS[item.params.chainId]?.chain;
+      const wallet = keyFullWalletObjs.find(wallet => wallet.chain === _chain);
+      const {
+        chain,
+        network,
+        currencyAbbreviation,
+        tokenAddress,
+        img,
+        badgeImg,
+        walletName,
+        currencyName,
+      } = wallet as Wallet;
       const amountStr = dispatch(
         FormatAmountStr(
-          _chain || currencyAbbreviation,
+          BitpaySupportedCoins[_chain]?.feeCurrency,
           _chain || chain,
           tokenAddress,
           parseInt(value, 16),
         ),
       );
-
       return (
-        <View key={index.toString()}>
-          <ItemTouchableContainer
-            onPress={() => {
-              haptic('impactLight');
-              handleRequestMethod(item);
+        <TouchableOpacity
+          activeOpacity={ActiveOpacity}
+          onPress={() => {
+            haptic('impactLight');
+            handleRequestMethod(item, wallet);
+          }}>
+          <Row
+            style={{
+              borderBottomWidth: 1,
+              borderBottomColor: theme.dark ? LightBlack : '#ECEFFD',
+              display: 'flex',
+              alignItems: 'center',
+              paddingTop: 10,
+              paddingBottom: 10,
+              paddingLeft: 4,
+              paddingRight: 4,
+              margin: 0,
+              marginLeft: 6,
+              marginRight: 6,
             }}>
-            <ItemTitleContainer style={{maxWidth: '40%'}}>
-              {peerIcon && peerName ? (
-                <>
-                  <IconContainer>
-                    <FastImage
-                      source={{uri: peerIcon}}
-                      style={{width: 25, height: 25}}
-                    />
-                  </IconContainer>
-                  <IconLabel numberOfLines={2} ellipsizeMode={'tail'}>
-                    {peerName}
-                  </IconLabel>
-                </>
-              ) : null}
-            </ItemTitleContainer>
-            <ItemNoteContainer>
-              <View style={{alignItems: 'flex-end'}}>
-                <IconLabel>{amountStr}</IconLabel>
+            <CurrencyImage img={img} badgeUri={badgeImg} size={45} />
+            <CurrencyColumn>
+              <H5 numberOfLines={1} ellipsizeMode="tail">
+                {walletName || currencyName}
+              </H5>
+              <ListItemSubText ellipsizeMode="tail" numberOfLines={1}>
+                <Smallest>{currencyAbbreviation.toUpperCase()}</Smallest>
+              </ListItemSubText>
+              <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
+                {buildTestBadge(network, chain, false)}
+              </Row>
+            </CurrencyColumn>
+            <BalanceColumn>
+              <H5 numberOfLines={1} ellipsizeMode="tail">
+                {amountStr}
+              </H5>
+              <ListItemSubText ellipsizeMode="tail" numberOfLines={1}>
                 {createdOn &&
                   (WithinPastDay(createdOn) ? (
-                    <Smallest style={{marginRight: 12}}>
+                    <Smallest>
                       {t('Created ', {
                         date: GetAmTimeAgo(createdOn),
                       })}
                     </Smallest>
                   ) : (
-                    <Smallest style={{marginRight: 12}}>
+                    <Smallest>
                       {t('Created on', {
                         date: GetAmFormatDate(createdOn),
                       })}
                     </Smallest>
                   ))}
-              </View>
-              <IconContainer>
-                <AngleRight />
-              </IconContainer>
-            </ItemNoteContainer>
-          </ItemTouchableContainer>
-          <Hr />
-        </View>
+              </ListItemSubText>
+            </BalanceColumn>
+            <IconContainer>
+              <AngleRight />
+            </IconContainer>
+          </Row>
+        </TouchableOpacity>
       );
     },
     [],
@@ -362,6 +445,15 @@ const WalletConnectHome = () => {
                 {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
                   <CopiedSvg width={17} />
                 ) : null}
+                {/* {VerifyIcon ? (
+                  <VerifyIconContainer
+                    style={{
+                      backgroundColor: bgColor,
+                    }}
+                    onPress={() => setShowVerifyContextBottomModal(true)}>
+                    <VerifyIcon />
+                  </VerifyIconContainer>
+                ) : null} */}
                 <NoteContainer
                   isDappUri={true}
                   disabled={clipboardObj.copied}
@@ -371,7 +463,7 @@ const WalletConnectHome = () => {
                   <IconContainer>
                     <FastImage
                       source={{uri: peerIcon}}
-                      style={{width: 18, height: 18}}
+                      style={{width: 19, height: 19}}
                     />
                   </IconContainer>
                   <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
@@ -384,7 +476,7 @@ const WalletConnectHome = () => {
           <Hr />
           <ItemContainer>
             <H7>{t('Linked Wallet')}</H7>
-            {wallet.receiveAddress ? (
+            {selectedAccountAddress ? (
               <ClipboardContainer>
                 {clipboardObj.copied && clipboardObj.type === 'address' ? (
                   <CopiedSvg width={17} />
@@ -392,17 +484,13 @@ const WalletConnectHome = () => {
                 <NoteContainer
                   disabled={clipboardObj.copied}
                   onPress={() =>
-                    copyToClipboard(wallet.receiveAddress!, 'address')
+                    copyToClipboard(selectedAccountAddress!, 'address')
                   }>
                   <IconContainer>
-                    {chain === 'eth' ? (
-                      <EthIcon width={18} height={18} />
-                    ) : (
-                      <MaticIcon width={18} height={18} />
-                    )}
+                    <Blockie size={19} seed={selectedAccountAddress} />
                   </IconContainer>
                   <NoteLabel numberOfLines={1} ellipsizeMode={'middle'}>
-                    {wallet.receiveAddress}
+                    {selectedAccountAddress}
                   </NoteLabel>
                 </NoteContainer>
               </ClipboardContainer>
@@ -436,6 +524,32 @@ const WalletConnectHome = () => {
           )}
         </PRContainer>
       </View>
+      <CtaContainerAbsolute
+        background={true}
+        style={{
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+          elevation: 5,
+          bottom: 20,
+        }}>
+        <Button
+          buttonStyle="secondary"
+          onPress={async () => {
+            haptic('impactLight');
+            disconnectAccount();
+          }}>
+          {t('Disconnect')}
+        </Button>
+      </CtaContainerAbsolute>
+
+      {/* <VerifyContextModal
+        isVisible={showVerifyContextBottomModal}
+        closeModal={closeModal}
+        sessionV2={sessionV2}
+        onRemovePress={disconnectAccount}
+      /> */}
     </WalletConnectContainer>
   );
 };

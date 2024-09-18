@@ -85,7 +85,7 @@ export const CloseSvg = ({theme}: {theme: Theme}) => {
 
 export const AddSvg = ({theme}: {theme: Theme}) => {
   const circleColor = theme.dark ? Midnight : '#ECEFFD';
-  const plusColor = theme.dark ? White : '#2240C4';
+  const plusColor = theme.dark ? White : Action;
   return (
     <Svg width="40" height="40" viewBox="0 0 40 40" fill="none">
       <Circle cx="20" cy="20" r="20" fill={circleColor} />

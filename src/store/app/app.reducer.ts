@@ -47,6 +47,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showInAppMessage',
   'showInAppNotification',
   'showOnGoingProcessModal',
+  'showWalletConnectStartModal',
   'showPinModal',
   'selectedLocalChainFilterOption',
   'tokensDataLoaded',
@@ -97,9 +98,10 @@ export interface AppState {
   userFeedback: FeedbackType;
   onboardingCompleted: boolean;
   showOnGoingProcessModal: boolean;
+  showWalletConnectStartModal: boolean;
   onGoingProcessModalMessage: string | undefined;
   showInAppMessage: boolean;
-  inAppMessageData: string;
+  inAppMessageData: string | undefined;
   showInAppNotification: boolean;
   inAppNotificationData:
     | {
@@ -199,9 +201,10 @@ const initialState: AppState = {
   },
   onboardingCompleted: false,
   showOnGoingProcessModal: false,
+  showWalletConnectStartModal: false,
   onGoingProcessModalMessage: undefined,
   showInAppMessage: false,
-  inAppMessageData: '',
+  inAppMessageData: undefined,
   showInAppNotification: false,
   inAppNotificationData: undefined,
   showBottomNotificationModal: false,
@@ -349,6 +352,18 @@ export const appReducer = (
       return {
         ...state,
         showOnGoingProcessModal: false,
+      };
+
+    case AppActionTypes.SHOW_WALLET_CONNECT_START_MODAL:
+      return {
+        ...state,
+        showWalletConnectStartModal: true,
+      };
+
+    case AppActionTypes.DISMISS_WALLET_CONNECT_START_MODAL:
+      return {
+        ...state,
+        showWalletConnectStartModal: false,
       };
 
     case AppActionTypes.SHOW_IN_APP_MESSAGE:

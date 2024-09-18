@@ -9,7 +9,7 @@ import {
 } from '../../constants/WalletConnectV2';
 import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
-import {ProposalTypes, SessionTypes} from '@walletconnect/types';
+import {ProposalTypes, SessionTypes, Verify} from '@walletconnect/types';
 import {sleep} from '../../utils/helper-methods';
 import {BuildApprovedNamespacesParams, getSdkError} from '@walletconnect/utils';
 import {WalletConnectV2Actions} from '.';
@@ -49,6 +49,7 @@ import {navigationRef} from '../../Root';
 import {sessionProposal} from './wallet-connect-v2.actions';
 import {buildApprovedNamespaces} from '@walletconnect/utils';
 import {getFeeLevelsUsingBwcClient} from '../wallet/effects/fee/fee';
+import {AppActions} from '../app';
 
 const BWC = BwcProvider.getInstance();
 
@@ -124,6 +125,7 @@ export const walletConnectV2ApproveSessionProposal =
     proposalParams: ProposalTypes.Struct,
     accounts: string[],
     chains: string[],
+    verifyContext: Verify.Context | undefined,
   ): Effect<Promise<void>> =>
   dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -140,6 +142,7 @@ export const walletConnectV2ApproveSessionProposal =
             proposalParams,
             accounts,
             chains,
+            verifyContext,
           }),
         );
         dispatch(sessionProposal());
@@ -190,6 +193,7 @@ export const walletConnectV2SubscribeToEvents =
       'session_proposal',
       (proposal: Web3WalletTypes.EventArguments['session_proposal']) => {
         dispatch(WalletConnectV2Actions.sessionProposal(proposal));
+        dispatch(AppActions.showWalletConnectStartModal());
         dispatch(
           LogActions.info(
             `[WC-V2/walletConnectV2OnSessionProposal]: session proposal: ${JSON.stringify(

@@ -1,4 +1,4 @@
-import {ProposalTypes, SessionTypes} from '@walletconnect/types';
+import {ProposalTypes, SessionTypes, Verify} from '@walletconnect/types';
 import {Wallet} from '../wallet/wallet.models';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
@@ -30,4 +30,5 @@ export type WCV2SessionType = SessionTypes.Struct & {
   proposalParams: ProposalTypes.Struct;
   accounts: string[];
   chains: string[];
+  verifyContext: Verify.Context | undefined;
 };
