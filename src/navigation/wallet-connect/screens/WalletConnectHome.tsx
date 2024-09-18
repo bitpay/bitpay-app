@@ -445,7 +445,7 @@ const WalletConnectHome = () => {
                 {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
                   <CopiedSvg width={17} />
                 ) : null}
-                {VerifyIcon ? (
+                {/* {VerifyIcon ? (
                   <VerifyIconContainer
                     style={{
                       backgroundColor: bgColor,
@@ -453,7 +453,7 @@ const WalletConnectHome = () => {
                     onPress={() => setShowVerifyContextBottomModal(true)}>
                     <VerifyIcon />
                   </VerifyIconContainer>
-                ) : null}
+                ) : null} */}
                 <NoteContainer
                   isDappUri={true}
                   disabled={clipboardObj.copied}
@@ -544,12 +544,12 @@ const WalletConnectHome = () => {
         </Button>
       </CtaContainerAbsolute>
 
-      <VerifyContextModal
+      {/* <VerifyContextModal
         isVisible={showVerifyContextBottomModal}
         closeModal={closeModal}
         sessionV2={sessionV2}
         onRemovePress={disconnectAccount}
-      />
+      /> */}
     </WalletConnectContainer>
   );
 };

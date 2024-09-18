@@ -447,7 +447,7 @@ export const WalletConnectStartModal = () => {
                         <ExternalLinkSvg width={12} />
                       </UriContainer>
                     </UriContainerTouchable>
-                    {verifyContext &&
+                    {/* {verifyContext &&
                       (() => {
                         let bgColor = '';
                         let textColor = '';
@@ -486,9 +486,9 @@ export const WalletConnectStartModal = () => {
                             <Icon />
                           </ValidationContainer>
                         );
-                      })()}
+                      })()} */}
                   </Row>
-                  {verifyContext &&
+                  {/* {verifyContext &&
                     (() => {
                       let text = '';
                       let type = '';
@@ -526,7 +526,7 @@ export const WalletConnectStartModal = () => {
                           hasBackgroundColor={true}
                         />
                       );
-                    })()}
+                    })()} */}
                 </View>
                 <DescriptionContainer>
                   <H7
