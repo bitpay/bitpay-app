@@ -590,8 +590,9 @@ export const WalletSelector = ({
 
     const {keyWallets, coinbaseWallets} = wa;
     for (const keyWallet of keyWallets) {
-      const wallets = keyWallet.accounts.map(account => account.wallets);
-      if (wallets.length > 0) {
+      const accountWallets = keyWallet.accounts.map(account => account.wallets);
+      const utxoWallets = Object.values(keyWallet.mergedUtxoAccounts);
+      if (accountWallets.length > 0 || utxoWallets.length > 0) {
         hasWallets = true;
         break;
       }
