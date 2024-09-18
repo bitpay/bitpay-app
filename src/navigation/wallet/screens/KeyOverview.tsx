@@ -187,6 +187,7 @@ const KeyOverview = () => {
     }
   });
   const [searchVal, setSearchVal] = useState('');
+  const [isViewUpdating, setIsViewUpdating] = useState(false);
   const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
@@ -286,6 +287,7 @@ const KeyOverview = () => {
 
   useEffect(() => {
     dispatch(Analytics.track('View Key'));
+    updateStatusForKey(false);
   }, []);
 
   const {wallets = [], totalBalance} =
@@ -353,24 +355,36 @@ const KeyOverview = () => {
     [],
   );
 
-  const onRefresh = async () => {
-    setRefreshing(true);
+  const updateStatusForKey = async (forceUpdate?: boolean) => {
+    if (isViewUpdating) {
+      logger.debug('KeyOverview is updating. Do not start forced updateAll...');
+      return;
+    }
+
     try {
+      setIsViewUpdating(true);
       await dispatch(startGetRates({}));
       await Promise.all([
         dispatch(
           startUpdateAllWalletStatusForKey({
             key,
-            force: true,
+            force: forceUpdate,
             createTokenWalletWithFunds: true,
           }),
         ),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
+      setIsViewUpdating(false);
     } catch (err) {
+      setIsViewUpdating(false);
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await updateStatusForKey(true);
     setRefreshing(false);
   };
 
