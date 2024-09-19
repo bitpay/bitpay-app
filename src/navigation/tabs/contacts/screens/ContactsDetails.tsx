@@ -53,6 +53,13 @@ const Detail = styled.View`
   height: 60px;
 `;
 
+const Notes = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 20px;
+`;
+
 const Title = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
@@ -318,16 +325,14 @@ const ContactsDetails = ({
           <Hr />
           <Detail>
             <Title>{t('Address')}</Title>
-            <DetailInfo align="right">
-              <AddressContainer onPress={copyToClipboard} activeOpacity={0.7}>
-                <CopyImgContainer>
-                  {copied ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainer>
-                <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
-                  {contact.address}
-                </AddressText>
-              </AddressContainer>
-            </DetailInfo>
+            <AddressContainer onPress={copyToClipboard} activeOpacity={0.7}>
+              <CopyImgContainer>
+                {copied ? <CopiedSvg width={17} /> : null}
+              </CopyImgContainer>
+              <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
+                {contact.address}
+              </AddressText>
+            </AddressContainer>
           </Detail>
 
           {contact.network !== 'livenet' ? (
@@ -361,13 +366,15 @@ const ContactsDetails = ({
               </Detail>
             </>
           ) : null}
-          {contact.notes ? (
+          {contact.notes && IsEVMChain(contact.chain) ? (
             <>
               <Hr />
-              <Detail>
+              <Notes>
                 <Title>{t('Notes')}</Title>
-                <DetailInfo align="right">{contact.notes}</DetailInfo>
-              </Detail>
+                <DetailInfo align="left" style={{marginHorizontal: 20}}>
+                  {contact.notes}
+                </DetailInfo>
+              </Notes>
             </>
           ) : null}
         </Details>
