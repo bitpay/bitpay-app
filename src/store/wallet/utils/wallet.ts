@@ -23,6 +23,7 @@ import {
   GetName,
   GetPrecision,
   GetProtocolPrefix,
+  IsERCToken,
   IsEVMChain,
   IsUtxoChain,
 } from './currency';
@@ -1209,7 +1210,39 @@ export const buildAccountList = (
     });
   }
 
-  return Object.values(accountMap) as AccountRowProps[];
+  const sortedAccountMap = Object.keys(accountMap).reduce((acc, key) => {
+    const account = {...accountMap[key]};
+    if (!account.wallets) {
+      return acc;
+    }
+    account.wallets = account.wallets.sort((a, b) => {
+      const isANonGasToken =
+        !IsERCToken(a.currencyAbbreviation, a.chain) && IsEVMChain(a.chain);
+      const isBNonGasToken =
+        !IsERCToken(b.currencyAbbreviation, b.chain) && IsEVMChain(b.chain);
+
+      if (isANonGasToken && !isBNonGasToken) {
+        return -1;
+      } else if (!isANonGasToken && isBNonGasToken) {
+        return 1;
+      } else {
+        if (a.fiatBalance && b.fiatBalance) {
+          return b.fiatBalance - a.fiatBalance;
+        } else if (a.fiatBalance) {
+          return -1;
+        } else if (b.fiatBalance) {
+          return 1;
+        } else {
+          return 0;
+        }
+      }
+    });
+    // @ts-ignore
+    acc[key] = account;
+    return acc;
+  }, {});
+
+  return Object.values(sortedAccountMap) as AccountRowProps[];
 };
 
 // needed for building SectionList format
@@ -1323,7 +1356,17 @@ export const buildAssetsByChainList = (
     );
   });
 
-  return Object.values(assetsByChainMap);
+  return Object.values(assetsByChainMap).sort((a, b) => {
+    if (a.data?.[0].fiatBalance && b.data?.[0].fiatBalance) {
+      return b.data?.[0].fiatBalance - a.data?.[0].fiatBalance;
+    } else if (a.data?.[0].fiatBalance) {
+      return -1;
+    } else if (b.data?.[0].fiatBalance) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
 };
 
 const buildUIFormattedAssets = (
