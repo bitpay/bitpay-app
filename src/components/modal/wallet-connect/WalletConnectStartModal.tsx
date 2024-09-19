@@ -155,7 +155,9 @@ export const WalletConnectStartModal = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const theme = useTheme();
-  const isVisible = useAppSelector(({APP}) => APP.showWalletConnectStartModal);
+  const showWalletConnectStartModal = useAppSelector(
+    ({APP}) => APP.showWalletConnectStartModal,
+  );
   const [buttonState, setButtonState] = useState<ButtonState>();
   const {proposal} = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
@@ -358,8 +360,10 @@ export const WalletConnectStartModal = () => {
   };
 
   useEffect(() => {
-    _setAllKeysAndSelectedWallets();
-  }, [chainsSelected]);
+    if (showWalletConnectStartModal) {
+      _setAllKeysAndSelectedWallets();
+    }
+  }, [chainsSelected, showWalletConnectStartModal]);
 
   const _setChainsSelected = (
     requiredNamespaces: ProposalTypes.RequiredNamespaces | undefined,
@@ -388,8 +392,10 @@ export const WalletConnectStartModal = () => {
   };
 
   useEffect(() => {
-    _setChainsSelected(requiredNamespaces, optionalNamespaces);
-  }, [requiredNamespaces, optionalNamespaces]);
+    if (showWalletConnectStartModal) {
+      _setChainsSelected(requiredNamespaces, optionalNamespaces);
+    }
+  }, [requiredNamespaces, optionalNamespaces, showWalletConnectStartModal]);
 
   const onBackdropPress = () => {
     dispatch(dismissWalletConnectStartModal());
@@ -402,7 +408,9 @@ export const WalletConnectStartModal = () => {
   }, [allKeys]);
 
   return (
-    <SheetModal isVisible={isVisible} onBackdropPress={onBackdropPress}>
+    <SheetModal
+      isVisible={showWalletConnectStartModal}
+      onBackdropPress={onBackdropPress}>
       <SheetContainer
         paddingHorizontal={0}
         style={{paddingLeft: 16, paddingRight: 16}}>
@@ -639,7 +647,9 @@ export const WalletConnectStartModal = () => {
               </ActionContainer>
             </View>
           </View>
-          {allKeys && allKeys[0]?.accounts?.length > 0 ? (
+          {allKeys &&
+          allKeys[0]?.accounts?.length > 0 &&
+          showWalletConnectStartModal ? (
             <AccountWCV2RowModal
               isVisible={showAccountWCV2SelectionBottomModal}
               closeModal={() => setShowAccountWCV2SelectionBottomModal(false)}
