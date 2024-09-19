@@ -15,9 +15,10 @@ import {
   WalletSelectMenuHeaderContainer,
 } from '../../../navigation/wallet/screens/GlobalSelect';
 import Checkbox from '../../checkbox/Checkbox';
-import CloseModal from '../../../assets/img/close-modal-icon.svg';
 import {useTheme} from 'styled-components/native';
 import Back from '../../back/Back';
+import {ScrollView} from 'react-native-gesture-handler';
+import {View} from 'react-native';
 
 interface Props {
   isVisible: boolean;
@@ -79,27 +80,31 @@ const AccountWCV2RowModal = ({
             <H4>{t('Select Account')}</H4>
           </TextAlign>
         </WalletSelectMenuHeaderContainer>
-        {accounts.map((account: AccountRowProps & {checked: boolean}) => (
-          <AccountSettingsContainer
-            key={account.receiveAddress}
-            activeOpacity={ActiveOpacity}
-            onPress={() => onPress(account)}>
-            <CurrencyImageContainer style={{height: 40, width: 40}}>
-              <Blockie size={40} seed={account.receiveAddress} />
-            </CurrencyImageContainer>
-            <Column>
-              <H5 ellipsizeMode="tail" numberOfLines={1}>
-                {account.accountName}
-              </H5>
-            </Column>
-            <CheckBoxColumn>
-              <Checkbox
-                checked={account.checked}
-                onPress={() => onPress(account)}
-              />
-            </CheckBoxColumn>
-          </AccountSettingsContainer>
-        ))}
+        <ScrollView>
+          <View style={{paddingBottom: 50}}>
+            {accounts.map((account: AccountRowProps & {checked: boolean}) => (
+              <AccountSettingsContainer
+                key={account.receiveAddress}
+                activeOpacity={ActiveOpacity}
+                onPress={() => onPress(account)}>
+                <CurrencyImageContainer style={{height: 40, width: 40}}>
+                  <Blockie size={40} seed={account.receiveAddress} />
+                </CurrencyImageContainer>
+                <Column>
+                  <H5 ellipsizeMode="tail" numberOfLines={1}>
+                    {account.accountName}
+                  </H5>
+                </Column>
+                <CheckBoxColumn>
+                  <Checkbox
+                    checked={account.checked}
+                    onPress={() => onPress(account)}
+                  />
+                </CheckBoxColumn>
+              </AccountSettingsContainer>
+            ))}
+          </View>
+        </ScrollView>
       </WalletSelectMenuContainer>
     </SheetModal>
   );

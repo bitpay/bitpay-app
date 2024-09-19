@@ -58,8 +58,19 @@ let core = new Core({
 });
 let web3wallet: IWeb3Wallet;
 
+const checkCredentials = () => {
+  return WALLET_CONNECT_V2_PROJECT_ID && WALLETCONNECT_V2_METADATA;
+};
+
 export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
   try {
+    dispatch(LogActions.info('walletConnectV2Init: starting...'));
+
+    if (!checkCredentials()) {
+      dispatch(LogActions.error('walletConnectV2Init: credentials not found'));
+      return;
+    }
+
     web3wallet = await Web3Wallet.init({
       core,
       metadata: WALLETCONNECT_V2_METADATA,
