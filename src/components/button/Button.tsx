@@ -162,13 +162,33 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 `;
 
 const PillContent = styled.View<ButtonOptionProps>`
-  background: ${({secondary, cancel, theme, action, outline, disabled}) => {
-    if (secondary || outline) {
-      return 'transparent';
+  background: ${({
+    secondary,
+    cancel,
+    theme,
+    action,
+    outline,
+    danger,
+    disabled,
+  }) => {
+    if (secondary) {
+      if (outline) {
+        return 'transparent';
+      } else {
+        return theme?.dark ? Midnight : Air;
+      }
     }
 
     if (cancel) {
       return theme?.dark ? LightBlack : NeutralSlate;
+    }
+
+    if (danger) {
+      if (outline) {
+        return 'transparent';
+      } else {
+        return theme.dark ? Caution50 : Caution60;
+      }
     }
 
     if (action) {
@@ -184,16 +204,20 @@ const PillContent = styled.View<ButtonOptionProps>`
   border-style: solid;
   border-width: 1px;
   border-color: ${({secondary, outline, cancel, danger, theme}) => {
-    if (outline) {
-      return theme?.dark ? White : Action;
-    }
-
     if (danger) {
-      return theme.dark ? Caution50 : Caution60;
+      if (outline) {
+        return theme.dark ? Caution50 : Caution60;
+      } else {
+        return 'transparent';
+      }
     }
 
     if (secondary) {
-      return 'transparent';
+      if (outline) {
+        return theme?.dark ? White : Action;
+      } else {
+        return 'transparent';
+      }
     }
 
     if (cancel) {
@@ -212,7 +236,7 @@ const PillText = styled(BaseText)<ButtonOptionProps>`
   line-height: 22.03px;
   text-align: center;
 
-  color: ${({disabled, cancel, theme, danger, action}) => {
+  color: ${({disabled, cancel, theme, danger, outline, action}) => {
     if (disabled) {
       return theme.dark ? DisabledTextDark : DisabledText;
     }
@@ -221,16 +245,16 @@ const PillText = styled(BaseText)<ButtonOptionProps>`
       return theme?.dark ? White : SlateDark;
     }
 
-    if (danger) {
-      return theme.dark ? Caution50 : Caution60;
-    }
-
     if (action) {
       return White;
     }
 
     if (danger) {
-      return Caution;
+      if (outline) {
+        return theme.dark ? Caution50 : Caution60;
+      } else {
+        return theme.dark ? Caution60 : White;
+      }
     }
 
     return theme?.dark ? White : Action;
