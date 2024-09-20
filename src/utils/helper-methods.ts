@@ -11,6 +11,7 @@ import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
 import {SUPPORTED_EVM_COINS} from '../constants/currencies';
+import {LogActions} from '../store/log';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -562,11 +563,20 @@ export const fixWalletAddresses = async ({
 }) => {
   await Promise.all(
     wallets.map(async wallet => {
-      if (!wallet.receiveAddress && wallet?.credentials?.isComplete()) {
-        const walletAddress = (await appDispatch<any>(
-          createWalletAddress({wallet, newAddress: false}),
-        )) as string;
-        wallet.receiveAddress = walletAddress;
+      try {
+        if (!wallet.receiveAddress && wallet?.credentials?.isComplete()) {
+          const walletAddress = (await appDispatch<any>(
+            createWalletAddress({wallet, newAddress: false}),
+          )) as string;
+          wallet.receiveAddress = walletAddress;
+        }
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        appDispatch(
+          LogActions.error(
+            `Error creating address for wallet ${wallet?.id}-${wallet?.chain}-${wallet?.walletName}: ${errMsg}`,
+          ),
+        );
       }
     }),
   );
