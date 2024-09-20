@@ -70,6 +70,7 @@ export interface AddWalletData {
   associatedWallet?: Wallet;
   options: CreateOptions;
   context?: string;
+  enableCustomTokens?: boolean;
 }
 
 const BWC = BwcProvider.getInstance();
@@ -128,6 +129,7 @@ export const addWallet =
     associatedWallet,
     options,
     context,
+    enableCustomTokens,
   }: AddWalletData): Effect<Promise<Wallet>> =>
   async (dispatch, getState): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
@@ -191,7 +193,6 @@ export const addWallet =
           }
 
           if (currency.tokenAddress && currency.chain) {
-            // Workaround to add a token that is not present in our tokenOptsByAddress as a custom token
             LogActions.debug(
               `Checking if tokenAddress: ${currency.tokenAddress} is present in tokenOptsByAddress...`,
             );
@@ -203,43 +204,50 @@ export const addWallet =
             const currentTokenOpts = tokenOptsByAddress[tokenAdressWithChain];
 
             if (!currentTokenOpts) {
+              // Workaround to add a token that is not present in our tokenOptsByAddress as a custom token
               LogActions.debug(
-                'Token not present in tokenOptsByAddress. Creating custom token wallet...',
+                `Token not present in tokenOptsByAddress. ${
+                  enableCustomTokens
+                    ? 'Creating custom token wallet...'
+                    : 'Avoiding token creation.'
+                }`,
               );
-              const opts = {
-                tokenAddress: cloneDeep(currency.tokenAddress),
-                chain: tokenChain,
-              };
+              if (enableCustomTokens) {
+                const opts = {
+                  tokenAddress: cloneDeep(currency.tokenAddress),
+                  chain: tokenChain,
+                };
 
-              let tokenContractInfo;
-              try {
-                tokenContractInfo = await getTokenContractInfo(
-                  associatedWallet,
-                  opts,
-                );
-              } catch (err) {
-                LogActions.debug(
-                  `Error in getTokenContractInfo for opts: ${JSON.stringify(
+                let tokenContractInfo;
+                try {
+                  tokenContractInfo = await getTokenContractInfo(
+                    associatedWallet,
                     opts,
-                  )}. Continue anyway...`,
-                );
+                  );
+                } catch (err) {
+                  LogActions.debug(
+                    `Error in getTokenContractInfo for opts: ${JSON.stringify(
+                      opts,
+                    )}. Continue anyway...`,
+                  );
+                }
+
+                const customToken: Token = {
+                  symbol: tokenContractInfo?.symbol
+                    ? tokenContractInfo.symbol.toLowerCase()
+                    : cloneDeep(currency.currencyAbbreviation).toLowerCase(),
+                  name:
+                    tokenContractInfo?.name ??
+                    cloneDeep(currency.currencyAbbreviation).toUpperCase(),
+                  decimals: tokenContractInfo?.decimals
+                    ? Number(tokenContractInfo.decimals)
+                    : cloneDeep(Number(currency.decimals)),
+                  address: cloneDeep(currency.tokenAddress.toLowerCase()),
+                };
+
+                tokenOptsByAddress[tokenAdressWithChain] = customToken;
+                dispatch(addCustomTokenOption(customToken, tokenChain));
               }
-
-              const customToken: Token = {
-                symbol: tokenContractInfo?.symbol
-                  ? tokenContractInfo.symbol.toLowerCase()
-                  : cloneDeep(currency.currencyAbbreviation).toLowerCase(),
-                name:
-                  tokenContractInfo?.name ??
-                  cloneDeep(currency.currencyAbbreviation).toUpperCase(),
-                decimals: tokenContractInfo?.decimals
-                  ? Number(tokenContractInfo.decimals)
-                  : cloneDeep(Number(currency.decimals)),
-                address: cloneDeep(currency.tokenAddress.toLowerCase()),
-              };
-
-              tokenOptsByAddress[tokenAdressWithChain] = customToken;
-              dispatch(addCustomTokenOption(customToken, tokenChain));
             }
           }
 
@@ -897,28 +905,42 @@ export const detectAndCreateTokensForEachEvmWallet =
           }
 
           for (const [index, tokenToAdd] of filteredTokens.entries()) {
-            const newTokenWallet: AddWalletData = {
-              key,
-              associatedWallet: w,
-              currency: {
-                chain: w.chain,
-                currencyAbbreviation: tokenToAdd.symbol.toLowerCase(),
-                isToken: true,
-                tokenAddress: tokenToAdd.token_address,
-                decimals: tokenToAdd.decimals,
-              },
-              options: {
-                network: Network.mainnet,
-                ...(account !== undefined && {
-                  account,
-                  customAccount,
-                }),
-              },
-            };
-            const newWallet = await dispatch(addWallet(newTokenWallet));
-            await dispatch(
-              startUpdateWalletStatus({key, wallet: newWallet, force: true}),
-            );
+            try {
+              const newTokenWallet: AddWalletData = {
+                key,
+                associatedWallet: w,
+                currency: {
+                  chain: w.chain,
+                  currencyAbbreviation: tokenToAdd.symbol.toLowerCase(),
+                  isToken: true,
+                  tokenAddress: tokenToAdd.token_address,
+                  decimals: tokenToAdd.decimals,
+                },
+                options: {
+                  network: Network.mainnet,
+                  ...(account !== undefined && {
+                    account,
+                    customAccount,
+                  }),
+                },
+              };
+              const newWallet = await dispatch(addWallet(newTokenWallet));
+              if (newWallet) {
+                await dispatch(
+                  startUpdateWalletStatus({
+                    key,
+                    wallet: newWallet,
+                    force: true,
+                  }),
+                );
+              }
+            } catch (err) {
+              dispatch(
+                LogActions.debug(
+                  `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
+                ),
+              );
+            }
           }
         }
       }
