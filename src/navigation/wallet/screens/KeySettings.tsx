@@ -365,7 +365,7 @@ const KeySettings = () => {
         </SearchComponentContainer>
       </>
     );
-  }, []);
+  }, [_key, keyName]);
 
   const renderListFooterComponent = useCallback(() => {
     return (
@@ -559,7 +559,7 @@ const KeySettings = () => {
         </VerticalPadding>
       </>
     );
-  }, []);
+  }, [_key]);
 
   const memoizedRenderItem = useCallback(
     ({item, index}: {item: AccountRowProps; index: number}) => {
