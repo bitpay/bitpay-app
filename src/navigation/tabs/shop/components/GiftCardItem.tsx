@@ -5,7 +5,7 @@ import RemoteImage from './RemoteImage';
 import GiftCardDenoms from './GiftCardDenoms';
 import {BaseText} from '../../../../components/styled/Text';
 import GiftCardDiscountText from './GiftCardDiscountText';
-import {isSupportedDiscountType} from '../../../../lib/gift-cards/gift-card';
+import {getVisibleCoupon} from '../../../../lib/gift-cards/gift-card';
 
 const GiftCardItemContainer = styled.View`
   display: flex;
@@ -33,8 +33,7 @@ export default ({cardConfig}: {cardConfig: CardConfig}) => {
       <RemoteImage uri={icon} height={50} borderRadius={30} />
       <BrandDetails>
         <GiftCardBrandName>{displayName}</GiftCardBrandName>
-        {cardConfig.discounts &&
-        isSupportedDiscountType(cardConfig.discounts[0].type) ? (
+        {getVisibleCoupon(cardConfig) ? (
           <GiftCardDiscountText cardConfig={cardConfig} short={true} />
         ) : (
           <GiftCardDenoms cardConfig={cardConfig} />

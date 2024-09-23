@@ -12,6 +12,7 @@ import {
   CardConfigMap,
   GiftCard,
   GiftCardActivationFee,
+  GiftCardCoupon,
   GiftCardCuration,
   UnsoldGiftCard,
 } from '../../store/shop/shop.models';
@@ -285,16 +286,46 @@ export function getPhoneCountryCodes(
     .filter(country => country.name !== 'Antarctica');
 }
 
-export function isSupportedDiscountType(discountType: string) {
-  return ['percentage', 'flatrate'].includes(discountType);
+export function isSupportedCouponType(coupon: GiftCardCoupon) {
+  return (
+    ['percentage', 'flatrate'].includes(coupon.type) &&
+    ['boost', 'discount'].includes(coupon.displayType)
+  );
 }
 
-export function getVisibleDiscount(cardConfig: CardConfig) {
-  const discounts = cardConfig.discounts;
-  return (
-    discounts &&
-    discounts.find(d => isSupportedDiscountType(d.type) && !d.hidden)
-  );
+export function getVisibleCoupon(cardConfig: CardConfig) {
+  const coupons = cardConfig.coupons;
+  return coupons && coupons.find(c => isSupportedCouponType(c) && !c.hidden);
+}
+
+export function hasVisibleBoost(cardConfig: CardConfig) {
+  const coupon = getVisibleCoupon(cardConfig);
+  return coupon && coupon.displayType === 'boost';
+}
+
+export function getBoostPercentage(couponAmount: number) {
+  const couponPercentage = couponAmount / 100;
+  const displayBoostPercentage = couponPercentage / (1 - couponPercentage);
+  return displayBoostPercentage;
+}
+
+export function getBoostAmount(cardConfig: CardConfig, enteredAmount: number) {
+  const coupon = getVisibleCoupon(cardConfig);
+  if (!coupon || coupon.displayType !== 'boost') {
+    return 0;
+  }
+  return coupon.type === 'percentage'
+    ? enteredAmount * getBoostPercentage(coupon.amount)
+    : coupon.amount;
+}
+
+export function getBoostedAmount(
+  cardConfig: CardConfig,
+  enteredAmount: number,
+) {
+  const boostedAmount =
+    enteredAmount + getBoostAmount(cardConfig, enteredAmount);
+  return boostedAmount;
 }
 
 export function getGiftCardIcons(supportedCardMap: CardConfigMap) {

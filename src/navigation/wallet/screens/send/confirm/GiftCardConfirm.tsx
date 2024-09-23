@@ -1,6 +1,8 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {View} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import styled from 'styled-components/native';
 import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {
@@ -8,7 +10,7 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../../utils/hooks';
-import {H4} from '../../../../../components/styled/Text';
+import {BaseText, H4} from '../../../../../components/styled/Text';
 import {
   Key,
   Recipient,
@@ -55,7 +57,7 @@ import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {URL} from '../../../../../constants';
 import {
   CardConfig,
-  GiftCardDiscount,
+  GiftCardCoupon,
   Invoice,
 } from '../../../../../store/shop/shop.models';
 import {WalletRowProps} from '../../../../../components/list/WalletRow';
@@ -85,15 +87,27 @@ import {
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
+import {
+  getBoostAmount,
+  getBoostedAmount,
+  hasVisibleBoost,
+} from '../../../../../lib/gift-cards/gift-card';
+import GiftCardDiscountText from '../../../../../navigation/tabs/shop/components/GiftCardDiscountText';
+import {Success} from '../../../../../styles/colors';
+
 export interface GiftCardConfirmParamList {
   amount: number;
   cardConfig: CardConfig;
-  discounts: GiftCardDiscount[];
+  coupons: GiftCardCoupon[];
   wallet?: Wallet;
   recipient?: Recipient;
   txp?: TransactionProposal;
   txDetails?: TxDetails;
 }
+
+const BoostAppliedText = styled(BaseText)`
+  margin-left: 10px;
+`;
 
 const GiftCardHeader = ({
   amount,
@@ -103,6 +117,7 @@ const GiftCardHeader = ({
   cardConfig: CardConfig;
 }): JSX.Element | null => {
   const {t} = useTranslation();
+  const boostedAmount = getBoostedAmount(cardConfig, amount);
   return (
     <>
       <Header hr>
@@ -110,7 +125,22 @@ const GiftCardHeader = ({
       </Header>
       <DetailContainer height={73}>
         <DetailRow>
-          <H4>{formatFiatAmount(amount, cardConfig.currency)}</H4>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <H4>{formatFiatAmount(boostedAmount, cardConfig.currency)}</H4>
+            <BoostAppliedText>
+              {hasVisibleBoost(cardConfig) ? (
+                <>
+                  <GiftCardDiscountText
+                    cardConfig={cardConfig}
+                    short={true}
+                    applied={true}
+                    color={Success}
+                    fontSize={17}
+                  />
+                </>
+              ) : null}
+            </BoostAppliedText>
+          </View>
           <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
         </DetailRow>
       </DetailContainer>
@@ -129,7 +159,7 @@ const Confirm = () => {
   const {
     amount,
     cardConfig,
-    discounts,
+    coupons,
     wallet: _wallet,
     recipient: _recipient,
     txDetails: _txDetails,
@@ -138,6 +168,7 @@ const Confirm = () => {
   const appNetwork = useAppSelector(({APP}) => APP.network);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[appNetwork]);
+  const boostedAmount = getBoostedAmount(cardConfig, amount);
 
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
@@ -249,11 +280,11 @@ const Confirm = () => {
     dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
     dispatch(ShopActions.deletedUnsoldGiftCards({network: appNetwork}));
     const invoiceCreationParams = {
-      amount,
+      amount: boostedAmount,
       brand: cardConfig.name,
       currency: cardConfig.currency,
       clientId,
-      discounts: discounts.map(d => d.code) || [],
+      coupons: coupons.map(c => c.code) || [],
       transactionCurrency,
     };
     return dispatch(
@@ -263,7 +294,7 @@ const Confirm = () => {
         return dispatch(
           ShopEffects.startCreateGiftCardInvoice(cardConfig, {
             ...invoiceCreationParams,
-            discounts: [],
+            coupons: [],
           }),
         );
       }
@@ -591,18 +622,30 @@ const Confirm = () => {
               />
             ) : null}
             {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
-              <Amount
-                description={'Discount'}
-                amount={{
-                  fiatAmount: `— ${formatFiatAmount(
-                    unsoldGiftCard.totalDiscount,
-                    cardConfig.currency,
-                  )}`,
-                  cryptoAmount: '',
-                }}
-                fiatOnly
-                hr
-              />
+              getBoostAmount(cardConfig, amount) ? (
+                <Amount
+                  description={'Subtotal'}
+                  amount={{
+                    fiatAmount: formatFiatAmount(amount, cardConfig.currency),
+                    cryptoAmount: '',
+                  }}
+                  fiatOnly
+                  hr
+                />
+              ) : (
+                <Amount
+                  description={'Discount'}
+                  amount={{
+                    fiatAmount: `— ${formatFiatAmount(
+                      unsoldGiftCard.totalDiscount,
+                      cardConfig.currency,
+                    )}`,
+                    cryptoAmount: '',
+                  }}
+                  fiatOnly
+                  hr
+                />
+              )
             ) : null}
             <Amount
               description={t('Network Cost')}
