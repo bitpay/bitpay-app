@@ -155,8 +155,8 @@ const MultipleOutputsTx = ({
 
   const [showMultiOptions, setShowMultiOptions] = useState(false);
 
-  const getIcon = () => {
-    const existsContact = findContact(contactList, tx.outputs[0].address);
+  const getIcon = (address: string) => {
+    const existsContact = findContact(contactList, address);
 
     const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
     const img = SUPPORTED_CURRENCIES.includes(coin)
@@ -169,9 +169,21 @@ const MultipleOutputsTx = ({
       : '';
     const badgeImg = getBadgeImg(coin, chain);
     const icon = tx.customData?.recipientEmail ? (
-      <ContactIcon name={tx.customData?.recipientEmail} size={18} />
+      <ContactIcon
+        name={tx.customData?.recipientEmail}
+        coin={coin}
+        chain={chain}
+        address={address}
+        size={18}
+      />
     ) : existsContact ? (
-      <ContactIcon name={getDesc()} size={18} />
+      <ContactIcon
+        name={getDesc()}
+        coin={coin}
+        chain={chain}
+        address={address}
+        size={18}
+      />
     ) : (
       <CurrencyImage img={img} size={18} badgeUri={badgeImg} />
     );
@@ -230,7 +242,11 @@ const MultipleOutputsTx = ({
                     />
                   ) : (
                     <SendToPill
-                      icon={getIcon()}
+                      icon={getIcon(
+                        tx.outputs[0].addressToShow
+                          ? tx.outputs[0].addressToShow
+                          : tx.outputs[0].address,
+                      )}
                       description={getDesc()}
                       onPress={() =>
                         copyText(
@@ -264,7 +280,11 @@ const MultipleOutputsTx = ({
               <DetailRow>
                 <SendToPillContainer>
                   <SendToPill
-                    icon={getIcon()}
+                    icon={getIcon(
+                      tx.outputs[0].addressToShow ||
+                        tx.outputs[0].address ||
+                        tx.outputs[0].toAddress,
+                    )}
                     description={`${tx.recipientCount} Recipients`}
                     onPress={() => setShowMultiOptions(!showMultiOptions)}
                     dropDown={true}
@@ -283,7 +303,9 @@ const MultipleOutputsTx = ({
                 activeOpacity={ActiveOpacity}
                 onPress={() => copyText(output.toAddress || output.address)}>
                 <DetailRow>
-                  {getIcon()}
+                  {getIcon(
+                    output.toAddress || output.address || output.addressToShow,
+                  )}
                   <MultiOptionsText numberOfLines={1} ellipsizeMode={'tail'}>
                     {output.contactName ||
                       output.addressToShow ||
