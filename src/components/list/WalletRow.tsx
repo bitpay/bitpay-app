@@ -47,7 +47,7 @@ const NestedArrowContainer = styled.View`
 
 export interface WalletRowProps extends SearchableItem {
   id: string;
-  keyId: string;
+  keyId?: string;
   copayerId?: string;
   img: string | ((props: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);
@@ -55,7 +55,7 @@ export interface WalletRowProps extends SearchableItem {
   currencyAbbreviation: string;
   tokenAddress?: string;
   chain: string;
-  chainName: string;
+  chainName?: string;
   walletName?: string;
   cryptoBalance: string;
   cryptoLockedBalance: string;
