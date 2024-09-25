@@ -123,7 +123,7 @@ export interface AmountProps {
   context?: string;
   buttonState?: ButtonState;
   limitsOpts?: LimitsOpts;
-  customAmountSublabel?: any;
+  customAmountSublabel?: (amount: number) => void;
   onSendMaxPressed?: () => any;
 
   /**
@@ -455,7 +455,7 @@ const Amount: React.VFC<AmountProps> = ({
             </CurrencySuperScript>
           </Row>
           {customAmountSublabel ? (
-            <>{customAmountSublabel()}</>
+            <>{customAmountSublabel(+amount)}</>
           ) : cryptoCurrencyAbbreviation ? (
             <Row>
               <AmountEquivText>

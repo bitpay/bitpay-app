@@ -8,6 +8,7 @@ import TagsSvg from '../../../../../../assets/img/tags-stack.svg';
 import {
   BaseText,
   fontFamily,
+  Paragraph,
   TextAlign,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -21,7 +22,13 @@ import {
   getMastheadGradient,
   horizontalPadding,
 } from '../../components/styled/ShopTabComponents';
-import {Feather, SlateDark, White} from '../../../../../styles/colors';
+import {
+  Feather,
+  LightBlack,
+  Slate30,
+  SlateDark,
+  White,
+} from '../../../../../styles/colors';
 import Button from '../../../../../components/button/Button';
 import GiftCardDenomSelector from '../../components/GiftCardDenomSelector';
 import GiftCardDenoms, {
@@ -29,9 +36,10 @@ import GiftCardDenoms, {
 } from '../../components/GiftCardDenoms';
 import {
   getActivationFee,
+  getBoostedAmount,
   getCardImage,
-  getVisibleDiscount,
-  isSupportedDiscountType,
+  getVisibleCoupon,
+  hasVisibleBoost,
 } from '../../../../../lib/gift-cards/gift-card';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {AppActions} from '../../../../../store/app';
@@ -44,6 +52,16 @@ import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import GiftCardImage from '../../components/GiftCardImage';
 import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
+
+const AmountSublabel = styled.View`
+  padding: 7px 18px;
+  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
+  border-radius: 35px;
+`;
+
+const AmountSublabelText = styled(Paragraph)`
+  font-size: 14px;
+`;
 
 const BuyGiftCardContainer = styled.SafeAreaView`
   flex: 1;
@@ -189,17 +207,46 @@ const BuyGiftCard = ({
   };
 
   const goToConfirmScreen = async (amount: number) => {
-    const discount = getVisibleDiscount(cardConfig);
+    const coupon = getVisibleCoupon(cardConfig);
     navigation.navigate(GiftCardScreens.GIFT_CARD_CONFIRM, {
       amount,
       cardConfig,
-      discounts: discount ? [discount] : [],
+      coupons: coupon ? [coupon] : [],
     });
+  };
+  const getCustomAmountSublabel = () => {
+    // eslint-disable-next-line react/no-unstable-nested-components
+    return (amount: number) => {
+      const hasBoost = hasVisibleBoost(cardConfig);
+      return hasBoost && amount > 0 ? (
+        <AmountSublabel>
+          <AmountSublabelText>
+            <AmountSublabelText style={{fontWeight: '500'}}>
+              {formatFiatAmount(
+                getBoostedAmount(cardConfig, amount),
+                cardConfig.currency,
+                {
+                  customPrecision: 'minimal',
+                },
+              )}{' '}
+              with{' '}
+              <GiftCardDiscountText
+                cardConfig={cardConfig}
+                color={theme.dark ? Slate30 : SlateDark}
+              />
+            </AmountSublabelText>
+          </AmountSublabelText>
+        </AmountSublabel>
+      ) : (
+        <></>
+      );
+    };
   };
 
   const goToAmountScreen = (phone?: string) => {
     navigator.navigate(WalletScreens.AMOUNT, {
       fiatCurrencyAbbreviation: cardConfig.currency,
+      customAmountSublabel: getCustomAmountSublabel(),
       onAmountSelected: selectedAmount =>
         onAmountScreenSubmit(+selectedAmount, phone),
     });
@@ -208,7 +255,8 @@ const BuyGiftCard = ({
   const onAmountScreenSubmit = (amount: number, phone?: string) => {
     const minAmount = cardConfig.minAmount as number;
     const maxAmount = cardConfig.maxAmount as number;
-    if (amount < minAmount) {
+    const boostedAmount = getBoostedAmount(cardConfig, amount);
+    if (boostedAmount < minAmount) {
       dispatch(
         AppActions.showBottomNotificationModal(
           CustomErrorMessage({
@@ -227,7 +275,7 @@ const BuyGiftCard = ({
       );
       return;
     }
-    if (amount > maxAmount) {
+    if (boostedAmount > maxAmount) {
       dispatch(
         AppActions.showBottomNotificationModal(
           CustomErrorMessage({
@@ -364,8 +412,7 @@ const BuyGiftCard = ({
           </AmountContainer>
         </GradientBox>
         <DescriptionContainer>
-          {cardConfig.discounts &&
-          isSupportedDiscountType(cardConfig.discounts[0].type) ? (
+          {getVisibleCoupon(cardConfig) ? (
             <DiscountContainer>
               <TagsSvg style={{marginRight: 12}} />
               <GiftCardDiscountText
