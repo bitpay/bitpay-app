@@ -57,6 +57,7 @@ import {LuckySevens} from '../../../../../styles/colors';
 import {IsERCToken} from '../../../../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
+import CoinbaseSvg from '../../../../../../assets/img/wallet/transactions/coinbase.svg';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -224,6 +225,9 @@ export const SendingTo: React.VFC<SendingToProps> = ({
                 <CopiedSvg width={18} />
               ) : recipientType === 'contact' || recipientEmail ? (
                 <ContactIcon name={description} size={20} />
+              ) : recipientType === 'coinbase' ||
+                recipientType === 'coinbaseDeposit' ? (
+                <CoinbaseSvg width={18} height={18} />
               ) : (
                 <CurrencyImage img={img} size={18} badgeUri={badgeImg} />
               )
