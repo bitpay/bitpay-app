@@ -44,6 +44,10 @@ const KeyWalletsRowContainer = styled.View<KeyWalletsRowContainerProps>`
   gap: 24px;
 `;
 
+const OuterContainer = styled.View`
+  padding-bottom: 10px;
+`;
+
 interface KeyNameContainerProps {
   noBorder?: boolean;
 }
@@ -121,6 +125,10 @@ const UtxoAccountContainer = styled.View<AccountContainerProps>`
   padding-bottom: 12px;
 `;
 
+const CoinbaseAccountContainer = styled.View`
+  margin: -10px 0 -15px -10px;
+`;
+
 type WalletRowType = KeyWallet | WalletRowProps;
 
 export interface KeyWallet extends Wallet {
@@ -135,23 +143,24 @@ export interface KeyWalletsRowProps extends SearchableItem {
     checked?: boolean;
   })[];
   mergedUtxoAccounts: WalletRowProps[][];
+  coinbaseAccounts: WalletRowProps[];
 }
 
-interface KeyWalletProps<T extends WalletRowType> {
+interface KeyWalletProps {
   keyAccounts: KeyWalletsRowProps[];
   keySvg?: React.FC<SvgProps>;
-  onPress: (wallet: Wallet) => void;
+  onPress: (wallet: Wallet | WalletRowProps) => void;
   currency?: string;
   hideBalance: boolean;
 }
 
-const KeyWalletsRow = <T extends WalletRowType>({
+const KeyWalletsRow = ({
   keyAccounts,
   keySvg = KeySvg,
   onPress,
   currency,
   hideBalance,
-}: KeyWalletProps<T>) => {
+}: KeyWalletProps) => {
   const {t} = useTranslation();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [showChainAssets, setShowChainAssets] = useState<{
@@ -170,23 +179,23 @@ const KeyWalletsRow = <T extends WalletRowType>({
   };
 
   return (
-    <View>
+    <OuterContainer>
       {keyAccounts.map((key, keyIndex) => (
         <KeyWalletsRowContainer
           key={key.key}
           isLast={keyIndex === keyAccounts.length - 1}>
-          {(key.accounts.length > 0 ||
-            Object.values(key?.mergedUtxoAccounts).length > 0) && (
+          {(key.accounts?.length > 0 ||
+            key.coinbaseAccounts?.length > 0 ||
+            Object.values(key?.mergedUtxoAccounts ?? {})?.length > 0) && (
             <KeyNameContainer noBorder={!!currency}>
               {keySvg({})}
               <KeyName>{key.keyName || 'My Key'}</KeyName>
-              {!key.backupComplete &&
-                !key?.accounts?.[0]?.wallets?.[0]?.coinbaseAccount && (
-                  <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
-                )}
+              {!key.backupComplete && !key?.coinbaseAccounts && (
+                <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+              )}
             </KeyNameContainer>
           )}
-          {key.accounts.map((account, index) =>
+          {key.accounts?.map((account, index) =>
             IsEVMChain(account.chains[0]) ? (
               <AccountContainer
                 key={account.id}
@@ -270,7 +279,6 @@ const KeyWalletsRow = <T extends WalletRowType>({
               </AccountContainer>
             ) : null,
           )}
-
           {key?.mergedUtxoAccounts
             ? Object.values(key?.mergedUtxoAccounts).map(
                 (mergedUtxoAccount, index) => (
@@ -345,9 +353,21 @@ const KeyWalletsRow = <T extends WalletRowType>({
                 ),
               )
             : null}
+
+          {key?.coinbaseAccounts?.map((wallet, index) => (
+            <CoinbaseAccountContainer key={index}>
+              <WalletRow
+                id={wallet.id}
+                hideBalance={hideBalance}
+                isLast={false}
+                onPress={() => onPress(wallet)}
+                wallet={wallet}
+              />
+            </CoinbaseAccountContainer>
+          ))}
         </KeyWalletsRowContainer>
       ))}
-    </View>
+    </OuterContainer>
   );
 };
 

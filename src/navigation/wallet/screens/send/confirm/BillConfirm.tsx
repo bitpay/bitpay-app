@@ -561,7 +561,7 @@ const BillConfirm: React.VFC<
   };
 
   const onSwipeComplete = async () => {
-    if (key.hardwareSource) {
+    if (key?.hardwareSource) {
       await onSwipeCompleteHardwareWallet(key);
     } else {
       await startSendingPayment();

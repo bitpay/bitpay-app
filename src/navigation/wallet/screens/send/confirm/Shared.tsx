@@ -557,14 +557,11 @@ export const WalletSelector = ({
             return selectOption(() => onWalletSelect(fullWalletObj));
           } else if (
             coinbaseWallets.length === 1 &&
-            coinbaseWallets[0].accounts.length === 1 &&
-            coinbaseWallets[0].accounts[0].wallets.length === 1 &&
+            coinbaseWallets[0]?.coinbaseAccounts?.length === 1 &&
             keyWallets.length === 0
           ) {
             return selectOption(() =>
-              onCoinbaseAccountSelect(
-                coinbaseWallets[0].accounts[0].wallets[0],
-              ),
+              onCoinbaseAccountSelect(coinbaseWallets[0].coinbaseAccounts[0]),
             );
           }
         }
@@ -599,8 +596,8 @@ export const WalletSelector = ({
     }
     if (
       coinbaseWallets.length > 0 &&
-      coinbaseWallets[0].accounts.length > 0 &&
-      coinbaseWallets[0].accounts[0].wallets.length
+      coinbaseWallets[0].coinbaseAccounts &&
+      coinbaseWallets[0].coinbaseAccounts.length > 0
     ) {
       hasCoinbase = true;
     }

@@ -482,7 +482,6 @@ export const coinbaseAccountToWalletRow = (
     account.currency.code.toLowerCase(),
     _chain,
   );
-  const badgeImg = getBadgeImg(_currencyAbbreviation.toLowerCase(), _chain);
   const currencyImg = CurrencyListIcons[_currencyAbbreviation.toLowerCase()];
 
   const walletItem = {
@@ -493,14 +492,17 @@ export const coinbaseAccountToWalletRow = (
     walletName: account.currency.name,
     img: currencyImg,
     cryptoBalance: cryptoAmount,
+    cryptoConfirmedLockedBalance: '',
     cryptoLockedBalance: '',
-    fiatBalance: formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode),
-    fiatLockedBalance: '',
+    cryptoPendingBalance: '',
+    cryptoSpendableBalance: cryptoAmount,
+    fiatBalance: fiatAmount,
+    fiatBalanceFormat: formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode),
+    fiatLockedBalance: 0,
     isToken: false,
     network: Network.mainnet,
     pendingTxps: [],
     chain: _chain,
-    badgeImg,
     isComplete: true,
   };
   return walletItem as WalletRowProps;
@@ -569,9 +571,9 @@ export const BuildCoinbaseWalletsList = ({
     {
       key: coinbaseUser.data.id,
       keyName: `${coinbaseUser.data.name}'s Coinbase Account`,
-      wallets,
+      coinbaseAccounts: wallets,
     },
-  ].filter(key => key.wallets.length);
+  ].filter(key => key.coinbaseAccounts.length);
 };
 
 export const BuildKeysAndWalletsList = ({

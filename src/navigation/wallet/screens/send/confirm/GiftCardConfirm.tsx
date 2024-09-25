@@ -535,7 +535,7 @@ const Confirm = () => {
 
   const onSwipeComplete = async () => {
     logger.debug('Swipe completed. Making payment...');
-    if (key.hardwareSource) {
+    if (key?.hardwareSource) {
       onSwipeCompleteHardwareWallet(key);
     } else {
       sendPaymentAndRedeemGiftCard({});
