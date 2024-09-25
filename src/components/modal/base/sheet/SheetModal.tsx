@@ -73,7 +73,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
   return modalLibrary === 'bottom-sheet' ? (
     <BottomSheetModal
       backdropComponent={renderBackdrop}
-      backgroundStyle={{borderRadius: 18}}
+      backgroundStyle={{borderRadius: 20}}
       enableDismissOnClose={true}
       enableDynamicSizing={true}
       enableOverDrag={false}
