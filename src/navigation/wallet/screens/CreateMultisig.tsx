@@ -240,6 +240,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     opts.networkName = options.networkName;
     opts.singleAddress = options.singleAddress;
     opts.coin = currency?.toLowerCase();
+    opts.chain = opts.coin;
 
     CreateMultisigWallet(opts);
   };
