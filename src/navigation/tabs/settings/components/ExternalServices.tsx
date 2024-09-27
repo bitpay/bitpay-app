@@ -102,7 +102,7 @@ const ExternalServices = () => {
           <ExternalServicesIconContainer>
             <RampLogo iconOnly={true} width={30} height={30} />
           </ExternalServicesIconContainer>
-          <SettingTitle>Ramp</SettingTitle>
+          <SettingTitle>Ramp Network</SettingTitle>
         </ExternalServicesItemContainer>
         <AngleRight />
       </Setting>

@@ -192,7 +192,7 @@ const PaymentMethodsModal = ({
             key={exchange}
             iconOnly={context === 'buyCrypto'}
             width={30}
-            height={20}
+            height={30}
           />
         );
       case 'sardine':

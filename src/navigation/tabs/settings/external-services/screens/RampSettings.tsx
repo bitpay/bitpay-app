@@ -115,13 +115,13 @@ const RampSettings: React.FC = () => {
               })}
           {(!paymentRequests || paymentRequests.length === 0) && (
             <NoPrMsg>
-              {t('There are currently no transactions with Ramp')}
+              {t('There are currently no transactions with Ramp Network')}
             </NoPrMsg>
           )}
         </Settings>
       </SettingsContainer>
       <FooterSupport>
-        <SupportTxt>{t('Having problems with Ramp?')}</SupportTxt>
+        <SupportTxt>{t('Having problems with Ramp Network?')}</SupportTxt>
         <TouchableOpacity
           onPress={() => {
             haptic('impactLight');
@@ -131,7 +131,7 @@ const RampSettings: React.FC = () => {
               ),
             );
           }}>
-          <Link>{t('Contact the Ramp support team.')}</Link>
+          <Link>{t('Contact the Ramp Network support team.')}</Link>
         </TouchableOpacity>
       </FooterSupport>
     </>
