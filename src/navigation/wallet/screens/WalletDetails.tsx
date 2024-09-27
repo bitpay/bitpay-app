@@ -15,6 +15,7 @@ import React, {
 import {useTranslation} from 'react-i18next';
 import {
   DeviceEventEmitter,
+  FlatList,
   Linking,
   RefreshControl,
   Share,
@@ -1245,23 +1246,21 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     </ProposalBadgeContainer>
                   </TransactionSectionHeaderContainer>
                   {fullWalletObj.credentials.n > 1 ? (
-                    <FlashList
+                    <FlatList
                       contentContainerStyle={{
                         paddingTop: 20,
                         paddingBottom: 20,
                       }}
-                      estimatedItemSize={TRANSACTION_ROW_HEIGHT}
                       data={needActionPendingTxps}
                       keyExtractor={pendingTxpsKeyExtractor}
                       renderItem={renderTxp}
                     />
                   ) : (
-                    <FlashList
+                    <FlatList
                       contentContainerStyle={{
                         paddingTop: 20,
                         paddingBottom: 20,
                       }}
-                      estimatedItemSize={TRANSACTION_ROW_HEIGHT}
                       data={needActionUnsentTxps}
                       keyExtractor={pendingTxpsKeyExtractor}
                       renderItem={renderTxp}
