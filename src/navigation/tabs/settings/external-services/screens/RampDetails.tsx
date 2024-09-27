@@ -88,7 +88,7 @@ const RampDetails: React.FC = () => {
               <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
             </CryptoContainer>
           </CryptoAmountContainer>
-          <RampLogo iconOnly={true} />
+          <RampLogo iconOnly={true} width={50} height={50} />
         </RowDataContainer>
 
         <RowDataContainer>

@@ -41,7 +41,7 @@ const RampTerms: React.FC<{
       ) : null}
       <ExchangeTermsText>
         {t(
-          'Ramp also charges a dynamic network fee based on the blockchain network conditions, and a partner margin when purchasing crypto within their apps.',
+          'Ramp Network also charges a dynamic network fee based on the blockchain network conditions, and a partner margin when purchasing crypto within their apps.',
         )}
         <TouchableOpacity
           onPress={() => {

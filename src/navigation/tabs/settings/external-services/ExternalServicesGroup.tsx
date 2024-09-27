@@ -203,7 +203,7 @@ const ExternalServicesSettingsGroup: React.FC<
         name={ExternalServicesSettingsScreens.RAMP_SETTINGS}
         component={RampSettings}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Ramp')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Ramp Network')}</HeaderTitle>,
         }}
       />
       <ExternalServicesSettings.Screen
