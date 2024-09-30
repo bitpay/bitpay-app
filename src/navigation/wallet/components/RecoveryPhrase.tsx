@@ -65,7 +65,7 @@ import {
   getAccount,
   getDerivationStrategy,
   getNetworkName,
-  isValidDerivationPathCoin,
+  isValidDerivationPath,
   keyExtractor,
   parsePath,
   sleep,
@@ -76,7 +76,7 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {FlatList, ScrollView} from 'react-native';
+import {FlatList, View} from 'react-native';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {
@@ -368,9 +368,7 @@ const RecoveryPhrase = () => {
         throw new Error(t('Invalid derivation path'));
       }
 
-      if (
-        !isValidDerivationPathCoin(advancedOpts.derivationPath, keyOpts.coin)
-      ) {
+      if (!isValidDerivationPath(advancedOpts.derivationPath, keyOpts.chain)) {
         throw new Error(t('Invalid derivation path for selected coin'));
       }
     }
@@ -553,7 +551,7 @@ const RecoveryPhrase = () => {
         );
         const currencyAbbreviation = _selectedCurrency[0].currencyAbbreviation;
         const chain = _selectedCurrency[0].chain;
-        const defaultCoin = `default${currencyAbbreviation.toUpperCase()}`;
+        const defaultCoin = `default${chain.toUpperCase()}`;
         // @ts-ignore
         const derivationPath = DefaultDerivationPath[defaultCoin];
         setSelectedCurrency(_selectedCurrency[0]);
@@ -765,7 +763,13 @@ const RecoveryPhrase = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                       }}>
-                      <Row>
+                      <View
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}>
                         <CurrencyImage
                           img={selectedCurrency.img}
                           badgeUri={selectedCurrency.badgeUri}
@@ -774,7 +778,7 @@ const RecoveryPhrase = () => {
                         <CurrencyName>
                           {selectedCurrency?.currencyAbbreviation?.toUpperCase()}
                         </CurrencyName>
-                      </Row>
+                      </View>
                       <Icons.DownToggle />
                     </Row>
                   </CurrencyContainer>
