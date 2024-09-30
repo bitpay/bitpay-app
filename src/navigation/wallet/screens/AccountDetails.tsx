@@ -139,6 +139,7 @@ import KeySvg from '../../../../assets/img/key.svg';
 import ReceiveAddress from '../components/ReceiveAddress';
 import {IsEVMChain} from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log/';
+import uniqBy from 'lodash.uniqby';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -341,8 +342,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   );
 
   const key = keys[keyId];
-  const keyFullWalletObjs = key.wallets.filter(
-    w => w.receiveAddress === selectedAccountAddress,
+  const keyFullWalletObjs = uniqBy(
+    key.wallets.filter(w => w.receiveAddress === selectedAccountAddress),
+    wallet => {
+      return wallet.id;
+    },
   );
   let pendingTxps: AccountProposalsProps = {};
   keyFullWalletObjs.forEach(x => {
