@@ -22,7 +22,9 @@ import {
   getMastheadGradient,
   horizontalPadding,
 } from '../../components/styled/ShopTabComponents';
+import {BoostSvg} from '../../components/svg/ShopTabSvgs';
 import {
+  Black,
   Feather,
   LightBlack,
   Slate30,
@@ -40,6 +42,7 @@ import {
   getCardImage,
   getVisibleCoupon,
   hasVisibleBoost,
+  hasVisibleDiscount,
 } from '../../../../../lib/gift-cards/gift-card';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {AppActions} from '../../../../../store/app';
@@ -78,6 +81,7 @@ const GradientBox = styled(LinearGradient)`
 const AmountContainer = styled.View`
   flex-grow: 1;
   display: flex;
+  align-items: center;
   justify-content: center;
 `;
 
@@ -126,6 +130,18 @@ const SupportedAmounts = styled.View`
 
 const SupportedAmountsLabel = styled(GiftCardDenomText)`
   margin-bottom: 2px;
+`;
+
+const BoostPill = styled.View`
+  align-items: center;
+  align-self: center;
+  justify-self: center;
+  background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
+  border-radius: 30px;
+  flex-direction: row;
+  gap: 7px;
+  margin: -10px 0 30px;
+  padding: 8px 9px 8px 10px;
 `;
 
 const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
@@ -221,7 +237,7 @@ const BuyGiftCard = ({
       return hasBoost && amount > 0 ? (
         <AmountSublabel>
           <AmountSublabelText>
-            <AmountSublabelText style={{fontWeight: '500'}}>
+            <AmountSublabelText style={{fontWeight: '400'}}>
               {formatFiatAmount(
                 getBoostedAmount(cardConfig, amount),
                 cardConfig.currency,
@@ -229,11 +245,7 @@ const BuyGiftCard = ({
                   customPrecision: 'minimal',
                 },
               )}{' '}
-              with{' '}
-              <GiftCardDiscountText
-                cardConfig={cardConfig}
-                color={theme.dark ? Slate30 : SlateDark}
-              />
+              with <GiftCardDiscountText cardConfig={cardConfig} />
             </AmountSublabelText>
           </AmountSublabelText>
         </AmountSublabel>
@@ -409,10 +421,20 @@ const BuyGiftCard = ({
                 </Amount>
               </TouchableOpacity>
             )}
+            {hasVisibleBoost(cardConfig) ? (
+              <BoostPill>
+                <BoostSvg />
+                <GiftCardDiscountText
+                  cardConfig={cardConfig}
+                  color={theme.dark ? White : Black}
+                  fontWeight={400}
+                />
+              </BoostPill>
+            ) : null}
           </AmountContainer>
         </GradientBox>
         <DescriptionContainer>
-          {getVisibleCoupon(cardConfig) ? (
+          {hasVisibleDiscount(cardConfig) ? (
             <DiscountContainer>
               <TagsSvg style={{marginRight: 12}} />
               <GiftCardDiscountText

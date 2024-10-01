@@ -1,9 +1,10 @@
 import React from 'react';
 import {useTheme} from 'styled-components/native';
 import {CardConfig, GiftCardCoupon} from '../../../../store/shop/shop.models';
-import {Action, ProgressBlue} from '../../../../styles/colors';
+import {Action, ProgressBlue, Success} from '../../../../styles/colors';
 import {isDark} from '../../../../utils/color';
 import ShopDiscountText from './ShopDiscountText';
+import {hasVisibleBoost} from '../../../../lib/gift-cards/gift-card';
 
 const GiftCardDiscountText = ({
   cardConfig,
@@ -26,6 +27,9 @@ const GiftCardDiscountText = ({
   const brandColor =
     cardConfig.brandColor || cardConfig.logoBackgroundColor || Action;
   const getDiscountTextColor = () => {
+    if (hasVisibleBoost(cardConfig)) {
+      return theme.dark ? Success : '#0B754A';
+    }
     if (brandColor.includes('linear-gradient')) {
       return ProgressBlue;
     }

@@ -298,6 +298,11 @@ export function getVisibleCoupon(cardConfig: CardConfig) {
   return coupons && coupons.find(c => isSupportedCouponType(c) && !c.hidden);
 }
 
+export function hasVisibleDiscount(cardConfig: CardConfig) {
+  const coupon = getVisibleCoupon(cardConfig);
+  return coupon && coupon.displayType === 'discount';
+}
+
 export function hasVisibleBoost(cardConfig: CardConfig) {
   const coupon = getVisibleCoupon(cardConfig);
   return coupon && coupon.displayType === 'boost';
