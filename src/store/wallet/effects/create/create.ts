@@ -367,35 +367,44 @@ export const createMultipleWallets =
     const tokens = currencies.filter(({isToken}) => isToken);
     const coins = currencies.filter(({isToken}) => !isToken);
     for (const coin of coins) {
-      const wallet = (await dispatch(
-        createWallet({
-          key,
-          coin: coin.currencyAbbreviation,
-          chain: coin.chain as SupportedChains,
-          options: {
-            ...options,
-            useNativeSegwit: IsSegwitCoin(coin.currencyAbbreviation),
-          },
-        }),
-      )) as Wallet;
-      const receiveAddress = (await dispatch<any>(
-        createWalletAddress({wallet, newAddress: true}),
-      )) as string;
-      dispatch(LogActions.info(`new address generated: ${receiveAddress}`));
-      wallet.receiveAddress = receiveAddress;
-      wallets.push(wallet);
-      for (const token of tokens) {
-        if (token.chain === coin.chain) {
-          const tokenWallet = await dispatch(
-            createTokenWallet(
-              wallet,
-              token.currencyAbbreviation.toLowerCase(),
-              token.tokenAddress!,
-              tokenOpts,
-            ),
-          );
-          wallets.push(tokenWallet);
+      try {
+        const wallet = (await dispatch(
+          createWallet({
+            key,
+            coin: coin.currencyAbbreviation,
+            chain: coin.chain as SupportedChains,
+            options: {
+              ...options,
+              useNativeSegwit: IsSegwitCoin(coin.currencyAbbreviation),
+            },
+          }),
+        )) as Wallet;
+        const receiveAddress = (await dispatch<any>(
+          createWalletAddress({wallet, newAddress: true}),
+        )) as string;
+        dispatch(LogActions.info(`new address generated: ${receiveAddress}`));
+        wallet.receiveAddress = receiveAddress;
+        wallets.push(wallet);
+        for (const token of tokens) {
+          if (token.chain === coin.chain) {
+            const tokenWallet = await dispatch(
+              createTokenWallet(
+                wallet,
+                token.currencyAbbreviation.toLowerCase(),
+                token.tokenAddress!,
+                tokenOpts,
+              ),
+            );
+            wallets.push(tokenWallet);
+          }
         }
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.debug(
+            `Error creating wallet - continue anyway: ${errMsg}`,
+          ),
+        );
       }
     }
 

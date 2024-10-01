@@ -54,6 +54,7 @@ export enum WalletActionTypes {
   CLEAR_DEFERRED_IMPORT = 'WALLET/CLEAR_DEFERRED_IMPORT',
   SET_CUSTOM_TOKENS_MIGRATION_COMPLETE = 'APP/SET_CUSTOM_TOKENS_MIGRATION_COMPLETE',
   SET_POLYGON_MIGRATION_COMPLETE = 'APP/SET_POLYGON_MIGRATION_COMPLETE',
+  SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE = 'APP/SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE',
 }
 
 interface successWalletStoreInit {
@@ -331,6 +332,10 @@ interface setPolygonMigrationComplete {
   type: typeof WalletActionTypes.SET_POLYGON_MIGRATION_COMPLETE;
 }
 
+interface setAccountEVMCreationMigrationComplete {
+  type: typeof WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -373,4 +378,5 @@ export type WalletActionType =
   | toggleHideAccount
   | updateCacheFeeLevel
   | SetCustomTokensMigrationComplete
-  | setPolygonMigrationComplete;
+  | setPolygonMigrationComplete
+  | setAccountEVMCreationMigrationComplete;

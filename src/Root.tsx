@@ -104,7 +104,12 @@ import DebugScreen, {
 import CardActivationGroup, {
   CardActivationGroupParamList,
 } from './navigation/card-activation/CardActivationGroup';
-import {fixWalletAddresses, sleep} from './utils/helper-methods';
+import {
+  createWalletsForAccounts,
+  fixWalletAddresses,
+  getEvmGasWallets,
+  sleep,
+} from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
 import {
   handleBwsEvent,
@@ -133,6 +138,11 @@ import SettingsGroup, {
 } from './navigation/tabs/settings/SettingsGroup';
 import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletConnectStartModal';
+import {KeyMethods} from './store/wallet/wallet.models';
+import {
+  setAccountEVMCreationMigrationComplete,
+  successAddWallet,
+} from './store/wallet/wallet.actions';
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -266,6 +276,9 @@ export default () => {
   );
   const inAppMessageData = useAppSelector(({APP}) => APP.inAppMessageData);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const accountEvmCreationMigrationComplete = useAppSelector(
+    ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
+  );
 
   const blurScreenList: string[] = [
     OnboardingScreens.IMPORT,
@@ -553,6 +566,50 @@ export default () => {
                 }
               };
 
+              // we need to ensure that each evm account has all supported wallets attached.
+              const runCompleteEvmWalletsAccountFix = async () => {
+                try {
+                  dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+                  await sleep(1000); // give the modal time to show
+                  await Promise.all(
+                    Object.values(keys).map(async key => {
+                      const evmWallets = getEvmGasWallets(key.wallets);
+                      const accountsArray = [
+                        ...new Set(
+                          evmWallets.map(wallet => wallet.credentials.account),
+                        ),
+                      ];
+                      const wallets = await createWalletsForAccounts(
+                        dispatch,
+                        accountsArray,
+                        key.methods as KeyMethods,
+                      );
+                      key.wallets.push(...wallets);
+                      dispatch(successAddWallet({key}));
+                    }),
+                  );
+                  dispatch(
+                    LogActions.info(
+                      'success [runCompleteEvmWalletsAccountFix]',
+                    ),
+                  );
+                  dispatch(setAccountEVMCreationMigrationComplete());
+                  dispatch(dismissOnGoingProcessModal());
+                } catch (error) {
+                  const errMsg =
+                    error instanceof Error
+                      ? error.message
+                      : JSON.stringify(error);
+                  dispatch(
+                    LogActions.error(
+                      `Error in [runCompleteEvmWalletsAccountFix]: ${errMsg}`,
+                    ),
+                  );
+                  dispatch(setAccountEVMCreationMigrationComplete());
+                  dispatch(dismissOnGoingProcessModal());
+                }
+              };
+
               if (pinLockActive || biometricLockActive) {
                 const subscriptionToPinModalDismissed =
                   DeviceEventEmitter.addListener(
@@ -565,6 +622,9 @@ export default () => {
                   );
               } else {
                 await runAddressFix();
+                if (!accountEvmCreationMigrationComplete) {
+                  await runCompleteEvmWalletsAccountFix();
+                }
                 urlHandler();
               }
 

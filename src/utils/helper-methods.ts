@@ -1,17 +1,21 @@
-import {Key, Wallet} from '../store/wallet/wallet.models';
+import {Key, KeyMethods, Wallet} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
 import {ReactElement} from 'react';
-import {IsERCToken} from '../store/wallet/utils/currency';
+import {IsERCToken, IsEVMChain} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
 import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
-import {SUPPORTED_EVM_COINS} from '../constants/currencies';
+import {
+  getBaseAccountCreationCoinsAndTokens,
+  SUPPORTED_EVM_COINS,
+} from '../constants/currencies';
 import {LogActions} from '../store/log';
+import {createMultipleWallets} from '../store/wallet/effects';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -576,5 +580,49 @@ export const fixWalletAddresses = async ({
         );
       }
     }),
+  );
+};
+
+export const createWalletsForAccounts = async (
+  dispatch: any,
+  accountsArray: number[],
+  key: KeyMethods,
+) => {
+  return (
+    await Promise.all(
+      accountsArray.flatMap(async account => {
+        try {
+          const newWallets = (await dispatch(
+            createMultipleWallets({
+              key: key as KeyMethods,
+              currencies: getBaseAccountCreationCoinsAndTokens(),
+              options: {
+                account,
+                customAccount: true,
+              },
+            }),
+          )) as Wallet[];
+          return newWallets;
+        } catch (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(
+            LogActions.debug(
+              `Error creating wallet - continue anyway: ${errMsg}`,
+            ),
+          );
+        }
+      }),
+    )
+  )
+    .flat()
+    .filter(Boolean) as Wallet[];
+};
+
+export const getEvmGasWallets = (wallets: Wallet[]) => {
+  return wallets.filter(
+    wallet =>
+      IsEVMChain(wallet.credentials.chain) &&
+      !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
   );
 };

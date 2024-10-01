@@ -280,3 +280,7 @@ export const setCustomTokensMigrationComplete = (): WalletActionType => ({
 export const setPolygonMigrationComplete = (): WalletActionType => ({
   type: WalletActionTypes.SET_POLYGON_MIGRATION_COMPLETE,
 });
+
+export const setAccountEVMCreationMigrationComplete = (): WalletActionType => ({
+  type: WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE,
+});
