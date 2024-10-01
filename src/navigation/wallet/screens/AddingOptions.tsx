@@ -21,11 +21,16 @@ import {Option} from './CreationOptions';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {createMultipleWallets} from '../../../store/wallet/effects';
 import {getBaseAccountCreationCoinsAndTokens} from '../../../constants/currencies';
 import {successAddWallet} from '../../../store/wallet/wallet.actions';
+import {LogActions} from '../../../store/log';
+import {sleep} from '../../../utils/helper-methods';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -51,7 +56,7 @@ const AddingOptions: React.FC = () => {
       id: 'utxo-wallet',
       title: t('UTXO Wallet'),
       description: t(
-        'Dedicated to a single cryptocurrency like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Perfect for users focusing on one specific coin.',
+        'Dedicated to a single cryptocurrency like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Perfect for users focusing on one specific coin',
       ),
       cta: () => {
         dispatch(
@@ -69,41 +74,69 @@ const AddingOptions: React.FC = () => {
       id: 'account-based-wallet',
       title: t('Account-Based Wallet'),
       description: t(
-        'An account for Ethereum and EVM-compatible chains like Solana, Ethereum. Supports smart contracts and DeFi across multiple networks.',
+        'An account for Ethereum and EVM-compatible networks like Ethereum, Polygon, Base and more. This account type supports Smart Contracts, Dapps and DeFi',
       ),
       cta: async () => {
-        dispatch(
-          Analytics.track('Clicked Create Basic Wallet', {
-            context: 'AddingOptions',
-          }),
-        );
-        const _key = key.methods as KeyMethods;
-        await dispatch(startOnGoingProcessModal('ADDING_ACCOUNT'));
-        const wallets = await dispatch(
-          createMultipleWallets({
-            key: _key,
-            currencies: getBaseAccountCreationCoinsAndTokens(),
-            options: {
-              network,
-            },
-          }),
-        );
-        key.wallets.push(...(wallets as Wallet[]));
+        try {
+          dispatch(
+            Analytics.track('Clicked Create Basic Wallet', {
+              context: 'AddingOptions',
+            }),
+          );
+          const _key = key.methods as KeyMethods;
+          await dispatch(startOnGoingProcessModal('ADDING_ACCOUNT'));
+          const wallets = await dispatch(
+            createMultipleWallets({
+              key: _key,
+              currencies: getBaseAccountCreationCoinsAndTokens(),
+              options: {
+                network,
+              },
+            }),
+          );
+          key.wallets.push(...(wallets as Wallet[]));
 
-        dispatch(successAddWallet({key}));
-        dispatch(dismissOnGoingProcessModal());
-        navigation.goBack();
+          dispatch(successAddWallet({key}));
+          dispatch(dismissOnGoingProcessModal());
+          navigation.goBack();
+        } catch (err) {
+          const errstring =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(LogActions.error(`Error adding account: ${errstring}`));
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(1000);
+          showErrorModal(errstring);
+        }
       },
     },
     {
       id: 'multisig-wallet',
       title: t('Multisig Wallet'),
       description: t(
-        'Requires multiple approvals for transactions for wallets like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Ideal for shared funds or enhanced security.',
+        'Requires multiple approvals for transactions for wallets like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Ideal for shared funds or enhanced security',
       ),
       cta: () => setShowMultisigOptions(true),
     },
   ];
+
+  const showErrorModal = (e: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Something went wrong'),
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('OK'),
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
   return (
     <>
       <OptionContainer>

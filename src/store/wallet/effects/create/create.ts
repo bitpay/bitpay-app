@@ -112,10 +112,7 @@ export const startCreateKey =
         );
         resolve(key);
       } catch (err) {
-        const errstring =
-          err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`Error creating key: ${errstring}`));
-        reject();
+        reject(err);
       }
     });
   };
