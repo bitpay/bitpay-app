@@ -260,6 +260,7 @@ export const toggleHideWallet = (payload: {
 export const toggleHideAccount = (payload: {
   accountAddress: string;
   keyId: string;
+  accountToggleSelected?: boolean;
 }): WalletActionType => ({
   type: WalletActionTypes.TOGGLE_HIDE_ACCOUNT,
   payload,

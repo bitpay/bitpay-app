@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useMemo, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -37,6 +37,7 @@ import {TabsScreens} from '../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
 import {baseNativeHeaderBackButtonProps} from '../../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
+import {IsEVMChain} from '../../../store/wallet/utils/currency';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -87,9 +88,9 @@ const AccountSettings = () => {
   } = useRoute<RouteProp<WalletGroupParamList, 'AccountSettings'>>();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const accountInfo = useAppSelector(
-    ({WALLET}) => WALLET.keys[key.id].evmAccountsInfo,
-  );
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const _key: Key = keys[key.id];
+
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
   const selectedChainFilterOption = useAppSelector(
@@ -97,7 +98,6 @@ const AccountSettings = () => {
   );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
-  const _key: Key = useAppSelector(({WALLET}) => WALLET.keys[key.id]);
   const accountItem = useMemo(() => {
     const updatedKey = {
       ...key,
@@ -115,12 +115,20 @@ const AccountSettings = () => {
       },
     )[0];
   }, [_key, defaultAltCurrency.isoCode, rates]);
-
   const {accountName} = accountItem;
-
   const [hideAccount, setHideAccount] = useState(
-    accountInfo?.[accountItem.receiveAddress]?.hideAccount,
+    () =>
+      _key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false,
   );
+  const hasVisibleWallet = useMemo(
+    () => _key.wallets.some(w => !w.hideWallet && IsEVMChain(w.chain)),
+    [_key],
+  );
+  useEffect(() => {
+    const newHideAccount =
+      _key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false;
+    setHideAccount(newHideAccount);
+  }, [_key]);
 
   const onPressItem = (isComplete: boolean | undefined, walletId: string) => {
     // Ignore if wallet is not complete
@@ -235,6 +243,7 @@ const AccountSettings = () => {
                 toggleHideAccount({
                   keyId: key.id,
                   accountAddress: accountItem.receiveAddress,
+                  accountToggleSelected: !hideAccount,
                 }),
               );
               dispatch(
@@ -248,6 +257,7 @@ const AccountSettings = () => {
               dispatch(updatePortfolioBalance());
             }}
             isEnabled={!!hideAccount}
+            isDisabled={!hasVisibleWallet}
           />
         </SettingView>
         {!hideAccount ? (
@@ -255,6 +265,14 @@ const AccountSettings = () => {
             <InfoTriangle />
             <InfoDescription>
               {t('This account will not be removed from the device.')}
+            </InfoDescription>
+          </Info>
+        ) : null}
+        {!hasVisibleWallet ? (
+          <Info>
+            <InfoTriangle />
+            <InfoDescription>
+              {t('All wallets in this account are hidden.')}
             </InfoDescription>
           </Info>
         ) : null}
