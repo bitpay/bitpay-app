@@ -93,7 +93,6 @@ import {
   hasVisibleBoost,
 } from '../../../../../lib/gift-cards/gift-card';
 import GiftCardDiscountText from '../../../../../navigation/tabs/shop/components/GiftCardDiscountText';
-import {Success} from '../../../../../styles/colors';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -134,8 +133,8 @@ const GiftCardHeader = ({
                     cardConfig={cardConfig}
                     short={true}
                     applied={true}
-                    color={Success}
-                    fontSize={17}
+                    fontWeight={400}
+                    fontSize={16}
                   />
                 </>
               ) : null}
