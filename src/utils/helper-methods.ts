@@ -107,10 +107,7 @@ export const getAccount = (path: string): number | undefined => {
   return +match[1];
 };
 
-export const isValidDerivationPathCoin = (
-  path: string,
-  coin: string,
-): boolean => {
+export const isValidDerivationPath = (path: string, chain: string): boolean => {
   let isValid: boolean = false;
   const coinCode = parsePath(path).coinCode;
 
@@ -119,7 +116,7 @@ export const isValidDerivationPathCoin = (
     return true;
   }
 
-  switch (coin) {
+  switch (chain) {
     case 'btc':
       isValid = ["0'", "1'"].indexOf(coinCode) > -1;
       break;
