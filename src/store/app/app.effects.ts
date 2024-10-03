@@ -571,14 +571,14 @@ export const startOnGoingProcessModal =
     const translations: Record<OnGoingProcessMessages, string> = {
       GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
       CREATING_KEY: i18n.t(
-        "Creating Key... Just a second, we're setting a few things up",
+        "Creating Key... just a second, we're setting a few things up",
       ),
       LOGGING_IN: i18n.t('Logging In'),
       LOGGING_OUT: i18n.t('Logging Out'),
       PAIRING: i18n.t('Pairing'),
       CREATING_ACCOUNT: i18n.t('Creating Account'),
       UPDATING_ACCOUNT: i18n.t('Updating Account'),
-      IMPORTING: i18n.t('Importing... This process may take a few minutes'),
+      IMPORTING: i18n.t('Importing... this process may take a few minutes'),
       DELETING_KEY: i18n.t('Deleting Key'),
       ADDING_WALLET: i18n.t('Adding Wallet'),
       ADDING_ACCOUNT: i18n.t('Adding Account-Based Wallet'),
@@ -607,7 +607,7 @@ export const startOnGoingProcessModal =
       SWEEPING_WALLET: i18n.t('Sweeping Wallet...'),
       SCANNING_FUNDS: i18n.t('Scanning Funds...'),
       SCANNING_FUNDS_WITH_PASSPHRASE: i18n.t(
-        'Scanning Funds... This process may take a few minutes',
+        'Scanning Funds... this process may take a few minutes',
       ),
     };
 

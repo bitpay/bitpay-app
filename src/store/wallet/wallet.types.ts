@@ -314,6 +314,7 @@ interface toggleHideAccount {
   payload: {
     accountAddress: string;
     keyId: string;
+    accountToggleSelected?: boolean;
   };
 }
 

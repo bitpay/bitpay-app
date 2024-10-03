@@ -1,4 +1,4 @@
-import React, {useLayoutEffect} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
@@ -31,11 +31,16 @@ import {
 } from '../../../store/app/app.actions';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {
+  toggleHideAccount,
   toggleHideWallet,
   updatePortfolioBalance,
 } from '../../../store/wallet/wallet.actions';
-import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
+import {
+  startUpdateAllWalletStatusForKey,
+  startUpdateWalletStatus,
+} from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
+import {IsEVMChain} from '../../../store/wallet/utils/currency';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -85,15 +90,42 @@ const WalletSettings = () => {
     ({WALLET}) => WALLET.keys[key.id].evmAccountsInfo,
   );
   const wallet = findWalletById(wallets, walletId, copayerId) as Wallet;
-  const hideAccount = wallet.receiveAddress
-    ? evmAccountsInfo?.[wallet.receiveAddress]?.hideAccount
-    : false;
+  const [hadVisibleWallet, setHadVisibleWallet] = useState(() =>
+    wallets.some(w => w.hideWallet === false && IsEVMChain(w.chain)),
+  );
+
+  const [hideAccount, setHideAccount] = useState(() =>
+    wallet.receiveAddress
+      ? evmAccountsInfo?.[wallet.receiveAddress]?.hideAccount
+      : false,
+  );
+
+  const [accountToggleSelected, setAccountToggleSelected] = useState(() =>
+    wallet.receiveAddress
+      ? evmAccountsInfo?.[wallet.receiveAddress]?.accountToggleSelected
+      : false,
+  );
+
+  useEffect(() => {
+    setHadVisibleWallet(
+      wallets.some(w => !w.hideWallet && IsEVMChain(w.chain)),
+    );
+  }, [wallets]);
+
+  useEffect(() => {
+    if (wallet.receiveAddress) {
+      const {hideAccount, accountToggleSelected} =
+        evmAccountsInfo?.[wallet.receiveAddress] || {};
+      setHideAccount(hideAccount ?? false);
+      setAccountToggleSelected(accountToggleSelected ?? false);
+    }
+  }, [evmAccountsInfo, wallet.receiveAddress]);
+
   const {
     walletName,
     credentials: {walletName: credentialsWalletName},
     hideWallet,
   } = wallet;
-
   const dispatch = useAppDispatch();
 
   const buildEncryptModalConfig = (
@@ -120,6 +152,20 @@ const WalletSettings = () => {
       description: t('To continue please enter your encryption password.'),
       onCancelHandler: () => null,
     };
+  };
+
+  const handleToggleAndUpdateAccount = (
+    keyId: string,
+    accountAddress: string,
+  ) => {
+    dispatch(toggleHideAccount({keyId, accountAddress}));
+    dispatch(
+      startUpdateAllWalletStatusForKey({
+        key,
+        force: true,
+        createTokenWalletWithFunds: true,
+      }),
+    );
   };
 
   useLayoutEffect(() => {
@@ -155,7 +201,7 @@ const WalletSettings = () => {
 
         <Hr />
 
-        {!hideAccount ? (
+        {!accountToggleSelected ? (
           <>
             <SettingView>
               <WalletSettingsTitle>{t('Hide Wallet')}</WalletSettingsTitle>
@@ -164,6 +210,19 @@ const WalletSettings = () => {
                 onChange={async () => {
                   dispatch(toggleHideWallet({wallet}));
                   dispatch(startUpdateWalletStatus({key, wallet, force: true}));
+                  if (IsEVMChain(wallet.chain)) {
+                    const hasVisibleWallet = key.wallets.some(
+                      w => w.hideWallet === false && IsEVMChain(w.chain),
+                    );
+                    if (wallet.receiveAddress) {
+                      const accountAddress = wallet.receiveAddress;
+                      if (!hasVisibleWallet && !hideAccount) {
+                        handleToggleAndUpdateAccount(key.id, accountAddress);
+                      } else if (hasVisibleWallet && !hadVisibleWallet) {
+                        handleToggleAndUpdateAccount(key.id, accountAddress);
+                      }
+                    }
+                  }
                   await sleep(1000);
                   dispatch(updatePortfolioBalance());
                 }}

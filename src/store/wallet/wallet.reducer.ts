@@ -555,20 +555,22 @@ export const walletReducer = (
     }
 
     case WalletActionTypes.TOGGLE_HIDE_ACCOUNT: {
-      const {keyId, accountAddress} = action.payload;
+      const {keyId, accountAddress, accountToggleSelected} = action.payload;
       const keyToUpdate = state.keys[keyId];
       if (!keyToUpdate) {
         return state;
       }
       const accountInfo = (keyToUpdate.evmAccountsInfo ??= {});
-      accountInfo[accountAddress] = {
-        ...accountInfo[accountAddress],
-        hideAccount: !accountInfo[accountAddress]?.hideAccount,
+      const hideAccount = !accountInfo[accountAddress]?.hideAccount;
+      keyToUpdate.evmAccountsInfo[accountAddress] = {
+        ...keyToUpdate.evmAccountsInfo[accountAddress],
+        hideAccount: hideAccount,
+        accountToggleSelected,
       };
 
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.receiveAddress === accountAddress) {
-          wallet.hideWalletByAccount = accountInfo[accountAddress]?.hideAccount;
+          wallet.hideWalletByAccount = hideAccount;
         }
         return wallet;
       });
