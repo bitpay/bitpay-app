@@ -38,6 +38,7 @@ export interface WalletState {
   initLogs: AddLog[];
   customTokensMigrationComplete: boolean;
   polygonMigrationComplete: boolean;
+  accountEvmCreationMigrationComplete: boolean;
 }
 
 export const initialState: WalletState = {
@@ -71,6 +72,7 @@ export const initialState: WalletState = {
   initLogs: [], // keep init logs at the end (order is important)
   customTokensMigrationComplete: false,
   polygonMigrationComplete: false,
+  accountEvmCreationMigrationComplete: false,
 };
 
 export const walletReducer = (
@@ -606,6 +608,12 @@ export const walletReducer = (
       return {
         ...state,
         polygonMigrationComplete: true,
+      };
+
+    case WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        accountEvmCreationMigrationComplete: true,
       };
 
     default:
