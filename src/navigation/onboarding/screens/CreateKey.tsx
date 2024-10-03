@@ -34,6 +34,7 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {sleep} from '../../../utils/helper-methods';
+import {LogActions} from '../../../store/log';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -164,11 +165,15 @@ const CreateOrImportKey = ({
                       key: createdKey,
                     }),
                   );
-                } catch (e: any) {
-                  logger.error(e.message);
+                } catch (err: any) {
+                  const errstring =
+                    err instanceof Error ? err.message : JSON.stringify(err);
+                  dispatch(
+                    LogActions.error(`Error creating key: ${errstring}`),
+                  );
                   dispatch(dismissOnGoingProcessModal());
                   await sleep(500);
-                  showErrorModal(e.message);
+                  showErrorModal(errstring);
                 }
               }}>
               {t('Create a Key')}

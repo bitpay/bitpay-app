@@ -59,6 +59,7 @@ import SearchComponent, {
 } from '../../../components/chain-search/ChainSearch';
 import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
 import cloneDeep from 'lodash.clonedeep';
+import {LogActions} from '../../../store/log';
 
 type CurrencySelectionScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -464,11 +465,13 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
                 }),
               );
               dispatch(dismissOnGoingProcessModal());
-            } catch (e: any) {
-              logger.error(e.message);
+            } catch (err: any) {
+              const errstring =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              dispatch(LogActions.error(`Error creating key: ${errstring}`));
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);
-              showErrorModal(e.message);
+              showErrorModal(errstring);
             }
           },
           selectedCurrencies,

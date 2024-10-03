@@ -320,7 +320,7 @@ export const OptionListContainer = styled.View`
 
 export const OptionList = styled.TouchableOpacity`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
-  height: 100px;
+  height: auto;
   border-radius: 12px;
   margin-bottom: ${ScreenGutter};
   flex-direction: row;

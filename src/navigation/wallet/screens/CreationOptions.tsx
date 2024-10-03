@@ -27,6 +27,7 @@ import {
 } from '../../../store/app/app.actions';
 import {sleep} from '../../../utils/helper-methods';
 import {getBaseKeyCreationCoinsAndTokens} from '../../../constants/currencies';
+import {LogActions} from '../../../store/log';
 
 type CreationOptionsScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -79,11 +80,13 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
 
           navigation.navigate('BackupKey', {context, key: createdKey});
           dispatch(dismissOnGoingProcessModal());
-        } catch (e: any) {
-          logger.error(e.message);
+        } catch (err: any) {
+          const errstring =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(LogActions.error(`Error creating key: ${errstring}`));
           dispatch(dismissOnGoingProcessModal());
           await sleep(500);
-          showErrorModal(e.message);
+          showErrorModal(errstring);
         }
       },
     },
@@ -91,7 +94,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       id: 'import',
       title: t('Import Key'),
       description: t(
-        'Recover an existing key by entering your 12-word passphrase to access your wallets and accounts.',
+        'Recover an existing key by entering your 12-word passphrase to access your wallets and accounts',
       ),
       cta: () => {
         dispatch(
