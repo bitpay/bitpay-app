@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {RefreshControl, Text, TouchableOpacity} from 'react-native';
+import {Platform, RefreshControl, Text, TouchableOpacity} from 'react-native';
 import {
   RouteProp,
   useRoute,
@@ -477,7 +477,8 @@ const MoonpaySellDetails: React.FC = () => {
         )}
 
         {sellOrder.external_id && (__DEV__ || !sellOrder.transaction_id) ? (
-          <ColumnDataContainer>
+          <ColumnDataContainer
+            style={{marginBottom: Platform.OS === 'android' ? 20 : 0}}>
             <TouchableOpacity
               onPress={() => {
                 copyText(sellOrder.external_id);
