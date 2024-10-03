@@ -63,8 +63,7 @@ import {
   AssetsByChainData,
   AssetsByChainListProps,
 } from '../../../navigation/wallet/screens/AccountDetails';
-import {DeviceEventEmitter} from 'react-native';
-import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import uniqBy from 'lodash.uniqby';
 
 export const mapAbbreviationAndName =
   (
@@ -1065,7 +1064,10 @@ export const buildAccountList = (
       currencyDisplay: 'symbol',
     });
 
-  const wallets = opts?.filterByCustomWallets || key.wallets;
+  const wallets = uniqBy(
+    opts?.filterByCustomWallets || key.wallets,
+    wallet => wallet.id,
+  );
 
   wallets.forEach(wallet => {
     if (opts?.filterByHideWallet && wallet.hideWallet) {

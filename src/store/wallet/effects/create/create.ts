@@ -17,6 +17,7 @@ import {
   failedAddWallet,
   successAddWallet,
   successCreateKey,
+  successUpdateKey,
 } from '../../wallet.actions';
 import API from 'bitcore-wallet-client/ts_build';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
@@ -45,6 +46,7 @@ import {MoralisErc20TokenBalanceByWalletData} from '../../../moralis/moralis.typ
 import {getERC20TokenBalanceByWallet} from '../../../moralis/moralis.effects';
 import {getTokenContractInfo, startUpdateWalletStatus} from '../status/status';
 import {addCustomTokenOption} from '../currencies/currencies';
+import {uniq} from 'lodash';
 
 export interface CreateOptions {
   network?: Network;
@@ -902,41 +904,65 @@ export const detectAndCreateTokensForEachEvmWallet =
           }
 
           for (const [index, tokenToAdd] of filteredTokens.entries()) {
-            try {
-              const newTokenWallet: AddWalletData = {
-                key,
-                associatedWallet: w,
-                currency: {
-                  chain: w.chain,
-                  currencyAbbreviation: tokenToAdd.symbol.toLowerCase(),
-                  isToken: true,
-                  tokenAddress: tokenToAdd.token_address,
-                  decimals: tokenToAdd.decimals,
-                },
-                options: {
-                  network: Network.mainnet,
-                  ...(account !== undefined && {
-                    account,
-                    customAccount,
-                  }),
-                },
-              };
-              const newWallet = await dispatch(addWallet(newTokenWallet));
-              if (newWallet) {
-                await dispatch(
-                  startUpdateWalletStatus({
-                    key,
-                    wallet: newWallet,
-                    force: true,
-                  }),
-                );
-              }
-            } catch (err) {
+            const existingTokenWallet = key.wallets.filter(wallet => {
+              return (
+                wallet.id ===
+                `${w.id}-${cloneDeep(tokenToAdd.token_address).toLowerCase()}`
+              );
+            });
+            if (existingTokenWallet[0]) {
+              // workaround for cases where the token was already created but for some reason was not included in the list of tokens in the associated wallet
               dispatch(
                 LogActions.debug(
-                  `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
+                  `Token ${tokenToAdd.symbol} (${tokenToAdd.token_address}) already created for this wallet. Adding to tokens list in the associated wallet`,
                 ),
               );
+
+              (w.tokens || []).push(existingTokenWallet[0].id);
+              w.tokens = uniq(w.tokens);
+
+              await dispatch(
+                successUpdateKey({
+                  key,
+                }),
+              );
+            } else {
+              try {
+                const newTokenWallet: AddWalletData = {
+                  key,
+                  associatedWallet: w,
+                  currency: {
+                    chain: w.chain,
+                    currencyAbbreviation: tokenToAdd.symbol.toLowerCase(),
+                    isToken: true,
+                    tokenAddress: tokenToAdd.token_address,
+                    decimals: tokenToAdd.decimals,
+                  },
+                  options: {
+                    network: Network.mainnet,
+                    ...(account !== undefined && {
+                      account,
+                      customAccount,
+                    }),
+                  },
+                };
+                const newWallet = await dispatch(addWallet(newTokenWallet));
+                if (newWallet) {
+                  await dispatch(
+                    startUpdateWalletStatus({
+                      key,
+                      wallet: newWallet,
+                      force: true,
+                    }),
+                  );
+                }
+              } catch (err) {
+                dispatch(
+                  LogActions.debug(
+                    `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
+                  ),
+                );
+              }
             }
           }
         }
