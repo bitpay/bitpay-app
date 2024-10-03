@@ -11,7 +11,7 @@ import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
   EditTxNote,
@@ -74,6 +74,13 @@ import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
 import {LogActions} from '../../../store/log';
 import {RootState} from '../../../store';
+import {
+  getDecodedTransactionsByHash,
+} from '../../../store/moralis/moralis.effects';
+import {
+  LabelTip,
+  LabelTipText,
+} from '../../tabs/settings/external-services/styled/ExternalServicesDetails';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -202,6 +209,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 };
 
 const TransactionDetails = () => {
+  const logger = useLogger();
   const {
     params: {transaction, wallet, onMemoChange},
   } = useRoute<RouteProp<WalletGroupParamList, 'TransactionDetails'>>();
@@ -214,6 +222,13 @@ const TransactionDetails = () => {
   const [memo, setMemo] = useState<string>();
   const [isForFee, setIsForFee] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [failStatus, setFailStatus] = useState<{
+    showFailStatus: boolean;
+    failStatusMsg: string | undefined;
+  }>({
+    showFailStatus: false,
+    failStatusMsg: undefined,
+  });
   const title = getDetailsTitle(transaction, wallet);
   let {
     currencyAbbreviation,
@@ -241,6 +256,54 @@ const TransactionDetails = () => {
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
         }),
       );
+
+      if (
+        _transaction.customData?.service === 'thorswap' &&
+        !!_transaction.confirmations &&
+        _transaction.confirmations > 0
+      ) {
+        try {
+          if (_transaction.txid && chain) {
+            logger.debug(
+              'Trying to getDecodedTransactionsByHash with: ' +
+                JSON.stringify({
+                  chain: chain,
+                  transactionHash: _transaction.txid,
+                }),
+            );
+            const decodedTxDetails: any = await dispatch(
+              getDecodedTransactionsByHash({
+                chain: chain,
+                transactionHash: _transaction.txid,
+              }),
+            );
+
+            if (decodedTxDetails?.logs && decodedTxDetails.logs.length === 0) {
+              const description = t(
+                'The internal transaction failed, probably due to an error in the execution of the contract.',
+              );
+              setFailStatus({
+                showFailStatus: true,
+                failStatusMsg: `${
+                  decodedTxDetails.to_address_label
+                    ? decodedTxDetails.to_address_label + ': '
+                    : ''
+                }${description}`,
+              });
+            }
+          }
+        } catch (err: any) {
+          const error =
+            err?.message && typeof err.message === 'string'
+              ? err.message
+              : JSON.stringify(err);
+          logger.debug(
+            'Error trying to getDecodedTransactionsByHash. Continue anyways. Error: ' +
+              error,
+          );
+        }
+      }
+
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
       setIsForFee(
@@ -603,6 +666,25 @@ const TransactionDetails = () => {
           </DetailContainer>
 
           <Hr />
+
+          {!!txs.confirmations && failStatus.showFailStatus ? (
+            <>
+              <DetailContainer>
+                <DetailRow>
+                  <H7>{t('Status')}</H7>
+                  <DetailColumn>
+                    <H7 style={{color: Caution}}>{'Fail'}</H7>
+                  </DetailColumn>
+                </DetailRow>
+
+                <LabelTip type="warn" style={{marginTop: 20}}>
+                  <LabelTipText>{failStatus.failStatusMsg}</LabelTipText>
+                </LabelTip>
+              </DetailContainer>
+
+              <Hr />
+            </>
+          ) : null}
 
           <DetailContainer>
             <DetailRow>

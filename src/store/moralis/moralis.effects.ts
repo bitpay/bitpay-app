@@ -187,6 +187,43 @@ export const getDecodedTransactionsByWallet =
     }
   };
 
+export const getDecodedTransactionsByHash =
+  ({
+    transactionHash,
+    chain,
+  }: {
+    transactionHash: string;
+    chain: string;
+  }): Effect<Promise<any>> =>
+  async dispatch => {
+    try {
+      const response = await Moralis.EvmApi.transaction.getTransactionVerbose({
+        transactionHash,
+        chain: MORALIS_EVM_CHAIN[chain],
+      });
+
+      dispatch(
+        LogActions.info(
+          '[moralis/getDecodedTransactionsByHash]: get transactions successfully',
+        ),
+      );
+      return response?.toJSON();
+    } catch (e) {
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(
+        LogActions.error(
+          `[moralis/getDecodedTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
+        ),
+      );
+      throw e;
+    }
+  };
+
 export const getInternalTransactionsByHash =
   ({
     transactionHash,
@@ -197,21 +234,19 @@ export const getInternalTransactionsByHash =
   }): Effect<Promise<any>> =>
   async dispatch => {
     try {
-      const headers = {
-        accept: 'application/json',
-        'X-API-Key': MORALIS_API_KEY,
-      };
-      const {data} = await axios.get(
-        `https://deep-index.moralis.io/api/v2/transaction/${transactionHash}/internal-transactions?chain=${chain}`,
-        {headers},
+      const response = await Moralis.EvmApi.transaction.getInternalTransactions(
+        {
+          transactionHash,
+          chain: MORALIS_EVM_CHAIN[chain],
+        },
       );
+
       dispatch(
         LogActions.info(
           '[moralis/getInternalTransactionsByHash]: get transactions successfully',
         ),
       );
-
-      return data;
+      return response?.toJSON();
     } catch (e) {
       let errorStr;
       if (e instanceof Error) {
@@ -265,45 +300,6 @@ export const getTransactionsByHash =
     }
   };
 
-export const getDecodedTransactionsByHash =
-  ({
-    transactionHash,
-    chain,
-  }: {
-    transactionHash: string;
-    chain: string;
-  }): Effect<Promise<any>> =>
-  async dispatch => {
-    try {
-      const headers = {
-        accept: 'application/json',
-        'X-API-Key': MORALIS_API_KEY,
-      };
-      const {data} = await axios.get(
-        `https://deep-index.moralis.io/api/v2/transaction/${transactionHash}/verbose?chain=${chain}`,
-        {headers},
-      );
-      dispatch(
-        LogActions.info(
-          '[moralis/getDecodedTransactionsByHash]: get transactions successfully',
-        ),
-      );
-      return data;
-    } catch (e) {
-      let errorStr;
-      if (e instanceof Error) {
-        errorStr = e.message;
-      } else {
-        errorStr = JSON.stringify(e);
-      }
-      dispatch(
-        LogActions.error(
-          `[moralis/getDecodedTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
-        ),
-      );
-      throw e;
-    }
-  };
 
 // ------- BLOCK API ------- //
 
