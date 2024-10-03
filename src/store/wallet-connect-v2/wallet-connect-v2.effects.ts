@@ -224,6 +224,18 @@ export const walletConnectV2SubscribeToEvents =
             )}`,
           ),
         );
+
+        const requests: WCV2RequestType[] | undefined =
+          getState().WALLET_CONNECT_V2.requests;
+        const requestExist = requests.some(({id}) => id === event.id);
+        if (requestExist) {
+          dispatch(
+            LogActions.info(
+              '[WC-V2/walletConnectV2SubscribeToEvents]: pending request already stored - update it',
+            ),
+          );
+        }
+
         if (
           Object.keys(WALLET_CONNECT_SUPPORTED_CHAINS).includes(
             event.params.chainId,
@@ -249,13 +261,7 @@ export const walletConnectV2SubscribeToEvents =
             return;
           }
 
-          if (
-            name !== 'WalletConnectHome' ||
-            (name === 'WalletConnectHome' &&
-              (params?.wallet?.receiveAddress !== wallet?.receiveAddress ||
-                params?.wallet?.network !== wallet?.network ||
-                params?.wallet?.chain !== wallet?.chain))
-          ) {
+          if (name !== 'WalletConnectHome' && !requestExist) {
             dispatch(
               startInAppNotification(
                 'NEW_PENDING_REQUEST',
