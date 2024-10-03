@@ -667,6 +667,10 @@ export const getAddressFrom = (request: WCV2RequestType): string => {
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
         addressFrom = params[0];
         break;
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
+        addressFrom = params[0];
+        break;
+
       default:
         break;
     }
