@@ -10,7 +10,7 @@ import {
   SettingTitle,
   SettingView,
 } from '../../../../components/styled/Containers';
-import {Linking, View} from 'react-native';
+import {Share, View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
 import {SlateDark, White} from '../../../../styles/colors';
@@ -131,8 +131,7 @@ const AllAddresses = () => {
         .join('\n');
 
       const subject = appName + ' Addresses';
-      // Works only on device
-      await Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+      await Share.share({title: subject, message: body});
       setButtonState('success');
       await sleep(200);
       setButtonState(undefined);
@@ -245,7 +244,7 @@ const AllAddresses = () => {
           elevation: 5,
         }}>
         <Button onPress={sendAddresses} state={buttonState}>
-          {t('Send Addresses by Email')}
+          {t('Export Addresses')}
         </Button>
       </CtaContainerAbsolute>
     </AddressesContainer>
