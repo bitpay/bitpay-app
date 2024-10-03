@@ -42,17 +42,10 @@ const ContactIconContainer = styled.View`
 
 const CoinBadgeContainer = styled.View<{size: number}>`
   position: absolute;
-  right: ${({size}) => (size === 18 ? '-1' : size !== 45 ? '-1' : '-13')}px;
+  right: ${({size}) =>
+    size <= 20 ? '-1' : size === 45 || size === 30 ? '-13' : '-1'}px;
   bottom: -1px;
 `;
-
-const CoinBadge: React.FC<BadgeProps> = ({size = 20, img, badgeImg}) => {
-  return (
-    <CoinBadgeContainer size={size}>
-      <CurrencyImage img={img} badgeUri={badgeImg} size={size / 2.5} />
-    </CoinBadgeContainer>
-  );
-};
 
 const ContactIcon: React.FC<ContactIconProps> = ({
   coin,
@@ -88,7 +81,13 @@ const ContactIcon: React.FC<ContactIconProps> = ({
       : '');
 
   const coinBadge = img ? (
-    <CoinBadge size={size} img={img} badgeImg={getBadgeImg(coin, chain)} />
+    <CoinBadgeContainer size={size}>
+      <CurrencyImage
+        img={img}
+        badgeUri={getBadgeImg(coin, chain)}
+        size={size / 2.5}
+      />
+    </CoinBadgeContainer>
   ) : chain && IsEVMChain(chain) ? (
     <CoinBadgeContainer size={size}>
       <Blockie size={size / 2.5} seed={address} />
