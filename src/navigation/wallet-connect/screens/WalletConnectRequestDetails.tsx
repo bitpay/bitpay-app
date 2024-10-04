@@ -9,6 +9,7 @@ import {
   Info,
 } from '../../../components/styled/Containers';
 import {
+  BaseText,
   H7,
   InfoDescription,
   InfoHeader,
@@ -41,6 +42,7 @@ import {
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
+import {View} from 'react-native';
 
 export type WalletConnectRequestDetailsParamList = {
   request: any;
@@ -75,7 +77,7 @@ const AddressTextContainer = styled.TouchableOpacity`
 `;
 
 const MessageTitleContainer = styled.View`
-  flex-direction: row;
+  flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
   padding: 16px 0;
@@ -281,6 +283,47 @@ const WalletConnectRequestDetails = () => {
     [dispatch],
   );
 
+  const parseAndDisplayMessage = (messageObj: any) => {
+    const renderObject = (obj: any, indent = 0) => {
+      return Object.keys(obj).map(key => {
+        const value = obj[key];
+        if (typeof value === 'object' && value !== null) {
+          return (
+            <View key={key} style={{paddingLeft: indent * 10}}>
+              <BaseText style={{paddingVertical: 5}}>
+                <BaseText style={{fontWeight: 'bold'}}>{key}:</BaseText>
+              </BaseText>
+              {renderObject(value, indent + 1)}
+            </View>
+          );
+        } else {
+          return (
+            <BaseText
+              key={key}
+              style={{paddingLeft: indent * 10, paddingVertical: 5}}>
+              <BaseText style={{fontWeight: 'bold'}}>{key}:</BaseText>{' '}
+              {value.toString()}
+            </BaseText>
+          );
+        }
+      });
+    };
+
+    return <View>{renderObject(messageObj)}</View>;
+  };
+
+  const renderMessage = (message: string) => {
+    try {
+      const parsedMessage = JSON.parse(message);
+      if (parsedMessage?.message) {
+        return parseAndDisplayMessage(parsedMessage.message);
+      }
+      return message;
+    } catch (error) {
+      return message;
+    }
+  };
+
   return (
     <WalletConnectContainer>
       <ScrollView>
@@ -318,23 +361,7 @@ const WalletConnectRequestDetails = () => {
                 <ItemTitleContainer>
                   <H7>{t('Message')}</H7>
                 </ItemTitleContainer>
-                <MessageNoteContainer>
-                  {clipboardObj.copied && clipboardObj.type === 'message' ? (
-                    <CopiedSvg width={17} />
-                  ) : null}
-                  <MessageTextContainer
-                    disabled={clipboardObj.copied}
-                    onPress={() => {
-                      copyToClipboard(message, 'message');
-                    }}>
-                    <H7
-                      numberOfLines={3}
-                      ellipsizeMode={'tail'}
-                      style={{textAlign: 'right'}}>
-                      {message}
-                    </H7>
-                  </MessageTextContainer>
-                </MessageNoteContainer>
+                {renderMessage(message)}
               </MessageTitleContainer>
             </>
           ) : (
