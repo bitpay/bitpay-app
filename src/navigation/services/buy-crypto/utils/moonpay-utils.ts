@@ -71,11 +71,17 @@ export const moonpaySupportedErc20Tokens = [
   'gods',
   'imx',
   'link',
+  'mana',
   'matic', // backward compatibility
+  'pixel',
   'pol',
+  'pyusd',
+  'steth',
   'shib',
+  'uni',
   'usdc',
   'usdt',
+  'venom',
   'zrx',
 ];
 
