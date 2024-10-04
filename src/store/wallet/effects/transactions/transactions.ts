@@ -622,17 +622,11 @@ export const GetAccountTransactionHistory =
         }
       });
       const results = await Promise.all(transactionPromises);
-      allTransactions = results
-        .flat()
-        .sort(
-          (a, b) =>
-            new Date(b.time || b.createdOn).getTime() -
-            new Date(a.time || a.createdOn).getTime(),
-        );
 
       // filter transactions by txid, but prioritize the one that isERC20 when is not Received
-      const transactionsWithoutRepeated = allTransactions.reduce(
-        (acc, transaction) => {
+      const transactionsWithoutRepeated = results
+        .flat()
+        .reduce((acc, transaction) => {
           const existingTransaction = acc.find(
             t => t.txid === transaction.txid,
           );
@@ -645,11 +639,15 @@ export const GetAccountTransactionHistory =
           }
 
           return acc;
-        },
-        [],
+        }, []);
+
+      allTransactions = transactionsWithoutRepeated.sort(
+        (a, b) =>
+          new Date(b.time || b.createdOn).getTime() -
+          new Date(a.time || a.createdOn).getTime(),
       );
 
-      const sortedCompleteHistory = transactionsWithoutRepeated.slice(0, limit);
+      const sortedCompleteHistory = allTransactions.slice(0, limit);
 
       dispatch(
         updateAccountTxHistory({

@@ -159,7 +159,7 @@ const MultipleOutputsTx = ({
     const existsContact = findContact(contactList, address);
 
     const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
-    const img = SUPPORTED_CURRENCIES.includes(coin)
+    const img = CurrencyListIcons[coin]
       ? CurrencyListIcons[coin]
       : foundToken &&
         // @ts-ignore

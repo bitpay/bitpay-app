@@ -74,7 +74,7 @@ const ContactIcon: React.FC<ContactIconProps> = ({
     coin &&
     chain &&
     (!IsEVMChain(chain) || IsOtherChain(chain)) &&
-    (SUPPORTED_CURRENCIES.includes(coin)
+    (CurrencyListIcons[coin]
       ? CurrencyListIcons[coin]
       : foundToken && foundToken?.logoURI
       ? (foundToken?.logoURI as string)
