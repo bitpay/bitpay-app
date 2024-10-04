@@ -347,7 +347,7 @@ const TransactionProposalDetails = () => {
   };
 
   const getIcon = () => {
-    return SUPPORTED_CURRENCIES.includes(wallet.currencyAbbreviation) ? (
+    return CurrencyListIcons[wallet.currencyAbbreviation] ? (
       CurrencyListIcons[wallet.currencyAbbreviation]({width: 18, height: 18})
     ) : (
       <DefaultSvg width={18} height={18} />

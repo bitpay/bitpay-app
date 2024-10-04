@@ -300,7 +300,6 @@ export const getTransactionsByHash =
     }
   };
 
-
 // ------- BLOCK API ------- //
 
 export const getBlockByHash =

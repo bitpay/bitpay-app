@@ -74,9 +74,7 @@ import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
 import {LogActions} from '../../../store/log';
 import {RootState} from '../../../store';
-import {
-  getDecodedTransactionsByHash,
-} from '../../../store/moralis/moralis.effects';
+import {getDecodedTransactionsByHash} from '../../../store/moralis/moralis.effects';
 import {
   LabelTip,
   LabelTipText,
