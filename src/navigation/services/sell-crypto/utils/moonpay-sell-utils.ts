@@ -44,13 +44,21 @@ export const moonpaySellSupportedCoins = [
   'bch',
   'eth',
   'eth_arb', // eth_arbitrum in MoonpaySell
+  'eth_base',
   'ltc',
   'doge',
   'matic', // pol_polygon in Moonpay // backward compatibility
   'pol', // pol_polygon in Moonpay
+  'xrp',
 ];
 
-export const moonpaySellSupportedErc20Tokens = ['axs', 'usdc', 'usdt'];
+export const moonpaySellSupportedErc20Tokens = [
+  'axs',
+  'pol',
+  'usdc',
+  'usdt',
+  'wld',
+];
 
 export const moonpaySellSupportedMaticTokens = [
   'usdc', // usdc_polygon in MoonpaySell
@@ -58,10 +66,13 @@ export const moonpaySellSupportedMaticTokens = [
 ];
 
 export const moonpaySellSupportedArbitrumTokens = [];
+export const moonpaySellSupportedBaseTokens = [
+  'usdc', // usdc_base in MoonpaySell
+];
 
-// Currently unsupported
-// export const moonpaySellSupportedBaseTokens = [];
-// export const moonpaySellSupportedOptimismTokens = [];
+export const moonpaySellSupportedOptimismTokens = [
+  'wld', // wld_optimism
+];
 
 export const getMoonpaySellSupportedCurrencies = (
   country?: string,
@@ -76,6 +87,12 @@ export const getMoonpaySellSupportedCurrencies = (
     ),
     ...moonpaySellSupportedArbitrumTokens.flatMap(arbitrumToken =>
       getCurrencyAbbreviation(arbitrumToken, 'arb'),
+    ),
+    ...moonpaySellSupportedBaseTokens.flatMap(baseToken =>
+      getCurrencyAbbreviation(baseToken, 'base'),
+    ),
+    ...moonpaySellSupportedOptimismTokens.flatMap(optimismToken =>
+      getCurrencyAbbreviation(optimismToken, 'op'),
     ),
   ];
 
@@ -98,6 +115,13 @@ export const getMoonpaySellFixedCurrencyAbbreviation = (
     arb: {
       eth: 'eth_arbitrum',
     },
+    base: {
+      eth: 'eth_base',
+      usdc: 'usdc_base',
+    },
+    op: {
+      wld: 'wld_optimism',
+    },
   };
 
   const _currency = currency.toLowerCase();
@@ -117,6 +141,8 @@ export const getChainFromMoonpayNetworkCode = (
   const networkCodeMapping: {[key: string]: string} = {
     ethereum: 'eth',
     arbitrum: 'arb',
+    base: 'base',
+    optimism: 'op',
     polygon: 'pol',
   };
 
@@ -153,6 +179,12 @@ export const getMoonpaySellCurrenciesFixedProps = (
       networkCode: 'polygon',
       contractAddress: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
     },
+    usdc_base: {
+      code: 'usdc',
+      name: 'USD Coin',
+      networkCode: 'base',
+      contractAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+    },
     usdc: {
       code: 'usdc',
       name: 'USD Coin',
@@ -165,9 +197,16 @@ export const getMoonpaySellCurrenciesFixedProps = (
       networkCode: 'ethereum',
       contractAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
     },
+    wld_optimism: {
+      code: 'wld',
+      name: 'Worldcoin',
+      networkCode: 'optimism',
+      contractAddress: '0xdc6ff44d5d932cbd77b52e5612ba0529dc6226f1',
+    },
     matic_polygon: {code: 'pol', name: 'Polygon', networkCode: 'polygon'},
     pol_polygon: {code: 'pol', name: 'Polygon', networkCode: 'polygon'},
     eth_arbitrum: {code: 'eth', name: 'Ethereum', networkCode: 'arbitrum'},
+    eth_base: {code: 'eth', name: 'Ethereum', networkCode: 'base'},
   };
 
   moonpayCurrenciesData.forEach((currency: MoonpayCurrency) => {
