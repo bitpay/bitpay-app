@@ -318,6 +318,13 @@ export const toFiat =
     customRate?: number,
   ): Effect<number> =>
   dispatch => {
+    const precision = dispatch(
+      GetPrecision(currencyAbbreviation, chain, tokenAddress),
+    );
+
+    if (customRate && precision) {
+      return totalAmount * (1 / precision.unitToSatoshi) * customRate;
+    }
     const ratesPerCurrency = getRateByCurrencyName(
       rates,
       currencyAbbreviation,
@@ -335,8 +342,7 @@ export const toFiat =
     const rateObj = ratesPerCurrency.find(
       _currency => _currency.code === fiatCode,
     );
-    const rate = rateObj && !rateObj.rate ? 1 : rateObj?.rate;
-    const fiatRate = customRate || rate;
+    const fiatRate = rateObj && !rateObj.rate ? 1 : rateObj?.rate;
 
     if (!fiatRate) {
       // Rate not found for fiat/currency pair
@@ -345,10 +351,6 @@ export const toFiat =
       );
       return 0;
     }
-
-    const precision = dispatch(
-      GetPrecision(currencyAbbreviation, chain, tokenAddress),
-    );
 
     if (!precision) {
       // precision not found return 0
