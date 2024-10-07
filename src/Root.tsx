@@ -617,6 +617,9 @@ export default () => {
                     async () => {
                       subscriptionToPinModalDismissed.remove();
                       await runAddressFix();
+                      if (!accountEvmCreationMigrationComplete) {
+                        await runCompleteEvmWalletsAccountFix();
+                      }
                       urlHandler();
                     },
                   );
