@@ -431,7 +431,7 @@ export const WalletConnectStartModal = () => {
             }}>
             {peerName && peerUrl && (
               <View>
-                <View style={{marginTop: 10}}>
+                <View style={{marginTop: 10, marginBottom: 10}}>
                   <TitleContainer>
                     <H3 style={{textAlign: 'center', fontWeight: '400'}}>
                       {peerName + t(' wants to connect to your wallet')}
