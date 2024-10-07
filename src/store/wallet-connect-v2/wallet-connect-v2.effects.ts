@@ -10,7 +10,11 @@ import {
 import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
 import {ProposalTypes, SessionTypes, Verify} from '@walletconnect/types';
-import {sleep} from '../../utils/helper-methods';
+import {
+  processOtherMethodsRequest,
+  processSwapRequest,
+  sleep,
+} from '../../utils/helper-methods';
 import {BuildApprovedNamespacesParams, getSdkError} from '@walletconnect/utils';
 import {WalletConnectV2Actions} from '.';
 import {utils} from 'ethers';
@@ -246,7 +250,6 @@ export const walletConnectV2SubscribeToEvents =
         ) {
           const {name, params} =
             (navigationRef.current?.getCurrentRoute() as any) || {};
-          const wallet = dispatch(getWalletByRequest(event));
 
           // events that needs to be approved automatically without user interaction
           if (
@@ -261,22 +264,36 @@ export const walletConnectV2SubscribeToEvents =
             return;
           }
 
-          if (name !== 'WalletConnectHome' && !requestExist) {
+          try {
+            let proccesedSwapRequestData = {};
+            if (event.params.request.method === 'eth_sendTransaction') {
+              proccesedSwapRequestData = await dispatch(
+                processSwapRequest(event),
+              );
+            } else {
+              proccesedSwapRequestData = await dispatch(
+                processOtherMethodsRequest(event),
+              );
+            }
             dispatch(
-              startInAppNotification(
-                'NEW_PENDING_REQUEST',
-                event,
-                'notification',
-              ),
+              WalletConnectV2Actions.sessionRequest({
+                ...event,
+                ...proccesedSwapRequestData,
+                createdOn: Date.now(),
+              }),
             );
+            if (name !== 'WalletConnectHome' && !requestExist) {
+              dispatch(
+                startInAppNotification(
+                  'NEW_PENDING_REQUEST',
+                  event,
+                  'notification',
+                ),
+              );
+            }
+          } catch (error) {
+            console.error(`Error processing request ID ${event.id}:`, error);
           }
-
-          dispatch(
-            WalletConnectV2Actions.sessionRequest({
-              ...event,
-              createdOn: Date.now(),
-            }),
-          );
         }
       },
     );
@@ -820,7 +837,7 @@ const WalletConnectV2UpdateSession =
     dispatch(WalletConnectV2Actions.updateSessions([...new Set(allSessions)]));
   };
 
-export const getWalletByRequest =
+export const getGasWalletByRequest =
   (
     request: Web3WalletTypes.EventArguments['session_request'],
   ): Effect<Wallet | undefined> =>

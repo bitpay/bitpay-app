@@ -246,7 +246,7 @@ export const WalletConnectStartModal = () => {
           proposal: proposal.params,
           supportedNamespaces: {
             eip155: {
-              chains,
+              chains: uniqueChains,
               methods: Object.values(EIP155_SIGNING_METHODS),
               events: ['chainChanged', 'accountsChanged'],
               accounts,

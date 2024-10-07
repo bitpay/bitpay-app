@@ -21,4 +21,9 @@ declare module '@env' {
   export const ZENLEDGER_CLIENT_SECRET: string;
   export const APPSFLYER_API_KEY: string;
   export const APPSFLYER_APP_ID: string;
+  export const ETHERSCAN_API_KEY: string;
+  export const POLYGONSCAN_API_KEY: string;
+  export const ARBISCAN_API_KEY: string;
+  export const OPSCAN_API_KEY: string;
+  export const BASESCAN_API_KEY: string;
 }
