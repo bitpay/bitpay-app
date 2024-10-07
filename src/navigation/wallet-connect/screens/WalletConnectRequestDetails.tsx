@@ -320,7 +320,7 @@ const WalletConnectRequestDetails = () => {
       }
       return message;
     } catch (error) {
-      return message;
+      return <BaseText style={{paddingVertical: 5}}>{message}</BaseText>;
     }
   };
 
