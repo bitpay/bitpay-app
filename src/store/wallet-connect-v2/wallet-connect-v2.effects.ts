@@ -224,6 +224,18 @@ export const walletConnectV2SubscribeToEvents =
             )}`,
           ),
         );
+
+        const requests: WCV2RequestType[] | undefined =
+          getState().WALLET_CONNECT_V2.requests;
+        const requestExist = requests.some(({id}) => id === event.id);
+        if (requestExist) {
+          dispatch(
+            LogActions.info(
+              '[WC-V2/walletConnectV2SubscribeToEvents]: pending request already stored - update it',
+            ),
+          );
+        }
+
         if (
           Object.keys(WALLET_CONNECT_SUPPORTED_CHAINS).includes(
             event.params.chainId,
@@ -249,13 +261,7 @@ export const walletConnectV2SubscribeToEvents =
             return;
           }
 
-          if (
-            name !== 'WalletConnectHome' ||
-            (name === 'WalletConnectHome' &&
-              (params?.wallet?.receiveAddress !== wallet?.receiveAddress ||
-                params?.wallet?.network !== wallet?.network ||
-                params?.wallet?.chain !== wallet?.chain))
-          ) {
+          if (name !== 'WalletConnectHome' && !requestExist) {
             dispatch(
               startInAppNotification(
                 'NEW_PENDING_REQUEST',
@@ -560,14 +566,20 @@ export const walletConnectV2OnUpdateSession =
         Promise.resolve();
       }
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(
         LogActions.error(
           `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${JSON.stringify(
-            err,
+            errMsg,
           )}`,
         ),
       );
-      Promise.reject(err);
+      if (errMsg.includes('No accounts provided for chain')) {
+        throw new Error(
+          "Removing this account will invalidate the session's required namespaces. Please disconnect the entire session and reconnect.",
+        );
+      }
+      throw err;
     }
   };
 
@@ -667,6 +679,10 @@ export const getAddressFrom = (request: WCV2RequestType): string => {
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
         addressFrom = params[0];
         break;
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
+        addressFrom = params[0];
+        break;
+
       default:
         break;
     }

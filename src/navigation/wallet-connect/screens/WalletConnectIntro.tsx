@@ -95,18 +95,16 @@ const WalletConnectIntro = () => {
         err !== null &&
         err.message?.includes('Pairing already exists:')
       ) {
-        if (!proposal) {
-          dispatch(
-            showBottomNotificationModal(
-              CustomErrorMessage({
-                errMsg: t(
-                  'Pairing already exists. Please try refreshing the QR code by reloading the website.',
-                ),
-                title: t('Uh oh, something went wrong'),
-              }),
-            ),
-          );
-        }
+        dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              errMsg: t(
+                'Pairing is already established, but the session request failed to complete. Please try reloading the website to refresh the QR code and reconnect.',
+              ),
+              title: t('Uh oh, something went wrong'),
+            }),
+          ),
+        );
       } else {
         await showErrorMessage(
           CustomErrorMessage({

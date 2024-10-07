@@ -46,9 +46,16 @@ export const walletConnectV2Reducer = (
         sessions: [...state.sessions, action.payload.session],
       };
     case WalletConnectV2ActionTypes.SESSION_REQUEST:
+      const requestExists = state.requests.some(
+        r => r.id === action.payload.request.id,
+      );
       return {
         ...state,
-        requests: [...state.requests, action.payload.request],
+        requests: requestExists
+          ? state.requests.map(r =>
+              r.id === action.payload.request.id ? action.payload.request : r,
+            )
+          : [...state.requests, action.payload.request],
       };
     case WalletConnectV2ActionTypes.UPDATE_REQUESTS:
       return {

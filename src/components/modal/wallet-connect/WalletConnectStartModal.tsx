@@ -63,6 +63,7 @@ import ExternalLinkSvg from '../../../../assets/img/external-link-small.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import Banner from '../../banner/Banner';
 import AccountWCV2RowModal from './AccountWCV2RowModal';
+import WCErrorBottomNotification from './WCErrorBottomNotification';
 
 export type WalletConnectStartParamList = {
   // version 2
@@ -180,7 +181,9 @@ export const WalletConnectStartModal = () => {
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
   const [checkedAccountsCount, setCheckedAccountsCount] = useState<number>();
-
+  const [customErrorMessageData, setCustomErrorMessageData] = useState<
+    BottomNotificationConfig | undefined
+  >();
   // version 2
   const {id, params, verifyContext} = proposal || {};
   const {
@@ -195,14 +198,6 @@ export const WalletConnectStartModal = () => {
   const peerName = metadata?.name;
   const peerUrl = metadata?.url;
   const peerImg = metadata?.icons?.[0];
-
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
 
   const transformErrorMessage = (error: string) => {
     const NETWORK_ERROR_PREFIX =
@@ -249,7 +244,6 @@ export const WalletConnectStartModal = () => {
             },
           },
         });
-
         if (id && relays) {
           await dispatch(
             walletConnectV2ApproveSessionProposal(
@@ -273,10 +267,14 @@ export const WalletConnectStartModal = () => {
     } catch (e) {
       setButtonState('failed');
       const transformedMessage = transformErrorMessage(BWCErrorMessage(e));
-      await showErrorMessage(
+      setCustomErrorMessageData(
         CustomErrorMessage({
           errMsg: transformedMessage,
           title: t('Uh oh, something went wrong'),
+          action: () => {
+            setCustomErrorMessageData(undefined);
+            setButtonState(undefined);
+          },
         }),
       );
     }
@@ -433,7 +431,7 @@ export const WalletConnectStartModal = () => {
             }}>
             {peerName && peerUrl && (
               <View>
-                <View style={{marginTop: 10}}>
+                <View style={{marginTop: 10, marginBottom: 10}}>
                   <TitleContainer>
                     <H3 style={{textAlign: 'center', fontWeight: '400'}}>
                       {peerName + t(' wants to connect to your wallet')}
@@ -677,6 +675,13 @@ export const WalletConnectStartModal = () => {
                 setCheckedAccountsCount(checkedCount);
                 _setSelectedWallets(_allKeys);
               }}
+            />
+          ) : null}
+
+          {customErrorMessageData ? (
+            <WCErrorBottomNotification
+              {...customErrorMessageData}
+              isVisible={!!customErrorMessageData}
             />
           ) : null}
         </ScrollView>
