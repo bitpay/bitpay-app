@@ -438,7 +438,8 @@ const WalletConnectConnections = () => {
             bottom: 20,
           }}>
           <Button
-            buttonStyle="secondary"
+            buttonStyle="danger"
+            buttonOutline={true}
             onPress={async () => {
               haptic('impactLight');
               disconnectAccounts();
@@ -461,7 +462,8 @@ const WalletConnectConnections = () => {
             </TextAlign>
             <ActionContainer>
               <Button
-                buttonStyle="secondary"
+                buttonStyle="danger"
+                buttonOutline={true}
                 onPress={async () => {
                   haptic('impactLight');
                   setShowSessionOptions(false);

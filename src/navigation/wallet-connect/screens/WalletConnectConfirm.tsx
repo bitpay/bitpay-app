@@ -241,7 +241,8 @@ const WalletConnectConfirm = () => {
           <Button
             onPress={rejectCallRequest}
             buttonStyle="danger"
-            buttonType="pill">
+            buttonType="pill"
+            buttonOutline={true}>
             {t('Reject')}
           </Button>
         </HeaderRightContainer>
