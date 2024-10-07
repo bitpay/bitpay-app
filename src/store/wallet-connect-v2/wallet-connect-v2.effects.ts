@@ -566,14 +566,20 @@ export const walletConnectV2OnUpdateSession =
         Promise.resolve();
       }
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(
         LogActions.error(
           `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${JSON.stringify(
-            err,
+            errMsg,
           )}`,
         ),
       );
-      Promise.reject(err);
+      if (errMsg.includes('No accounts provided for chain')) {
+        throw new Error(
+          "Removing this account will invalidate the session's required namespaces. Please disconnect the entire session and reconnect.",
+        );
+      }
+      throw err;
     }
   };
 
