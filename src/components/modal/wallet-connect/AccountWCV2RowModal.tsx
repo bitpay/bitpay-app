@@ -86,7 +86,11 @@ const AccountWCV2RowModal = ({
               <AccountSettingsContainer
                 key={account.receiveAddress}
                 activeOpacity={ActiveOpacity}
-                onPress={() => onPress(account)}>
+                onPress={() => {
+                  if (!account.checked) {
+                    onPress(account);
+                  }
+                }}>
                 <CurrencyImageContainer style={{height: 40, width: 40}}>
                   <Blockie size={40} seed={account.receiveAddress} />
                 </CurrencyImageContainer>
@@ -97,8 +101,13 @@ const AccountWCV2RowModal = ({
                 </Column>
                 <CheckBoxColumn>
                   <Checkbox
+                    radio={true}
                     checked={account.checked}
-                    onPress={() => onPress(account)}
+                    onPress={() => {
+                      if (!account.checked) {
+                        onPress(account);
+                      }
+                    }}
                   />
                 </CheckBoxColumn>
               </AccountSettingsContainer>
