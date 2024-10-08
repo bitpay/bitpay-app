@@ -4,7 +4,7 @@ import Button, {ButtonState} from '../../button/Button';
 import {H6, H3, BaseText, Paragraph, Link, H7} from '../../styled/Text';
 import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.svg';
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import { CommonActions, useNavigation, useTheme } from "@react-navigation/native";
 import {
   LightBlack,
   NeutralSlate,
@@ -17,9 +17,10 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {StyleSheet, View} from 'react-native';
 import {popToScreen, sleep} from '../../../utils/helper-methods';
 import {
+  dismissOnGoingProcessModal,
   dismissWalletConnectStartModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+  showBottomNotificationModal
+} from "../../../store/app/app.actions";
 import {BottomNotificationConfig} from '../bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../../navigation/wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -58,13 +59,17 @@ import SelectorArrowRight from '../../../../assets/img/selector-arrow-right.svg'
 import Blockie from '../../blockie/Blockie';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {TouchableOpacity} from 'react-native';
-import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import { openUrlWithInAppBrowser, startOnGoingProcessModal } from "../../../store/app/app.effects";
 import ExternalLinkSvg from '../../../../assets/img/external-link-small.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import Banner from '../../banner/Banner';
 import AccountWCV2RowModal from './AccountWCV2RowModal';
 import WCErrorBottomNotification from './WCErrorBottomNotification';
 import WarningBrownSvg from '../../../../assets/img/warning-brown.svg';
+import { getNavigationTabName, RootStacks } from "../../../Root";
+import { WalletScreens } from "../../../navigation/wallet/WalletGroup";
+import { SettingsScreens } from "../../../navigation/tabs/settings/SettingsGroup";
+
 
 export type WalletConnectStartParamList = {
   // version 2
@@ -262,11 +267,25 @@ export const WalletConnectStartModal = () => {
           );
         }
       }
-      setButtonState('success');
-      dispatch(Analytics.track('WalletConnect Session Request Approved', {}));
       dispatch(dismissWalletConnectStartModal());
-      popToScreen(navigation, 'SettingsHome');
-      navigation.navigate(WalletConnectScreens.WC_CONNECTIONS);
+      dispatch(Analytics.track('WalletConnect Session Request Approved', {}));
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 2,
+          routes: [
+            {
+              name: RootStacks.TABS,
+              params: {screen: getNavigationTabName()},
+            },
+            {
+              name: SettingsScreens.SETTINGS_HOME,
+            },
+            {
+              name: WalletConnectScreens.WC_CONNECTIONS,
+            },
+          ],
+        }),
+      );
     } catch (e) {
       setButtonState('failed');
       const transformedMessage = transformErrorMessage(BWCErrorMessage(e));
