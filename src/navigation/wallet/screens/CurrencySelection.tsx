@@ -75,10 +75,12 @@ export type CurrencySelectionParamList =
   | {
       context: CurrencySelectionContextWithoutKey;
       key?: undefined;
+      selectedAccountAddress?: string;
     }
   | {
       context: CurrencySelectionContextWithKey;
       key: Key;
+      selectedAccountAddress?: string;
     };
 
 type CurrencySelectionListItem = SearchableItem &
@@ -175,7 +177,7 @@ const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
 const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const {context, key} = route.params;
+  const {context, key, selectedAccountAddress} = route.params;
   const logger = useLogger();
   const dispatch = useAppDispatch();
   const [searchVal, setSearchVal] = useState('');
@@ -293,7 +295,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
           },
           tokens: [],
           popularTokens: [],
-          description: DESCRIPTIONS[chain] || '',
         };
 
         chainMap[chain] = item;
@@ -302,7 +303,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       },
     );
 
-    if (context === 'addUtxoWallet') {
+    if (context === 'addUtxoWallet' || context === 'addEVMWallet') {
       setAllListItems(list);
       return;
     }
@@ -555,6 +556,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
               isToken: !!currency.isToken,
               chain: currency.chain,
               tokenAddress: currency.tokenAddress,
+              selectedAccountAddress,
             });
           },
           selectedCurrencies,

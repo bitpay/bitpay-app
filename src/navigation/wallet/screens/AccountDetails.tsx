@@ -140,6 +140,8 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import {IsEVMChain} from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log/';
 import uniqBy from 'lodash.uniqby';
+import OptionsSheet, {Option} from '../components/OptionsSheet';
+import Settings from '../../../components/settings/Settings';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -329,6 +331,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const {rates} = useAppSelector(({RATE}) => RATE);
+  const [showKeyOptions, setShowKeyOptions] = useState(false);
 
   const [searchResultsHistory, setSearchResultsHistory] = useState(
     [] as GroupedHistoryProps[],
@@ -372,6 +375,41 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const accounts = useAppSelector(
     ({SHOP}) => SHOP.billPayAccounts[accountItem.wallets[0].network],
   );
+
+  const keyOptions: Array<Option> = [];
+  const hasAllChains = accountItem.chains.length === 5;
+  if (!hasAllChains) {
+    keyOptions.push({
+      img: <Icons.Wallet width="15" height="15" />,
+      title: t('Add EVM Chain'),
+      description: t(
+        'Choose another evm chain you would like to add to your account.',
+      ),
+      onPress: async () => {
+        haptic('impactLight');
+        await sleep(500);
+        navigation.navigate('CurrencySelection', {
+          context: 'addEVMWallet',
+          key,
+          selectedAccountAddress: accountItem.receiveAddress,
+        });
+      },
+    });
+  }
+  keyOptions.push({
+    img: <Icons.Settings />,
+    title: t('Account Settings'),
+    description: t(
+      'View all the ways to manage and configure your EVM account.',
+    ),
+    onPress: async () => {
+      haptic('impactLight');
+      await sleep(500);
+      navigation.navigate('KeySettings', {
+        key,
+      });
+    },
+  });
 
   const setNeedActionTxps = (accountProposals: AccountProposalsProps) => {
     Object.entries(accountProposals).forEach(([walletId, pendingTxps]) => {
@@ -606,16 +644,26 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('AccountSettings', {
-                    key,
-                    selectedAccountAddress: accountItem.receiveAddress,
-                    context: 'accountDetails',
-                  })
-                }>
-                <Icons.AccountSettings />
-              </TouchableOpacity>
+              {hasAllChains ? (
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('AccountSettings', {
+                      key,
+                      selectedAccountAddress: accountItem.receiveAddress,
+                      context: 'accountDetails',
+                    })
+                  }>
+                  <Icons.AccountSettings />
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <Settings
+                    onPress={() => {
+                      setShowKeyOptions(true);
+                    }}
+                  />
+                </>
+              )}
             </HeaderRightContainer>
           </>
         );
@@ -1304,6 +1352,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           </AccountDropdownOptionsContainer>
         </AccountDropdown>
       </SheetModal>
+
+      {keyOptions.length > 0 ? (
+        <OptionsSheet
+          isVisible={showKeyOptions}
+          title={t('Account Options')}
+          options={keyOptions}
+          closeModal={() => setShowKeyOptions(false)}
+        />
+      ) : null}
 
       {keyFullWalletObjs[0] ? (
         <ReceiveAddress
