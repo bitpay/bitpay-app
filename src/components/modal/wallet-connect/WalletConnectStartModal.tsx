@@ -180,7 +180,9 @@ export const WalletConnectStartModal = () => {
   const [chainNames, setChainNames] = useState<string[]>([]);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
-  const [checkedAccountsCount, setCheckedAccountsCount] = useState<number>();
+  const [checkedAccount, setCheckedAccount] = useState<
+    AccountRowProps & {checked?: boolean}
+  >();
   const [customErrorMessageData, setCustomErrorMessageData] = useState<
     BottomNotificationConfig | undefined
   >();
@@ -335,15 +337,14 @@ export const WalletConnectStartModal = () => {
           },
         ) as AccountRowProps[];
 
-        const accounts = accountList.map(account => ({
+        const accounts = accountList.map((account, index) => ({
           ...account,
-          checked: true,
+          checked: index === 0,
         })) as (AccountRowProps & {checked?: boolean})[];
 
         if (accounts.length === 0) {
           return null;
         }
-        checkedCount = accounts.length;
         return {
           key: key.id,
           keyName: key.keyName || 'My Key',
@@ -353,7 +354,7 @@ export const WalletConnectStartModal = () => {
       })
       .filter(item => item !== null) as KeyWalletsRowProps[];
     setAllkeys(formattedKeys);
-    setCheckedAccountsCount(checkedCount);
+    setCheckedAccount(formattedKeys[0]?.accounts[0]);
     _setSelectedWallets(formattedKeys);
   };
 
@@ -573,7 +574,7 @@ export const WalletConnectStartModal = () => {
                     {t('Accounts')}
                   </H7>
                   <DescriptionItemContainer>
-                    {allKeys && allKeys[0]?.accounts[0] && (
+                    {allKeys && allKeys[0]?.accounts[0] && checkedAccount && (
                       <>
                         <AccountSettingsContainer
                           activeOpacity={ActiveOpacity}
@@ -584,7 +585,7 @@ export const WalletConnectStartModal = () => {
                             style={{height: 30, width: 30}}>
                             <Blockie
                               size={30}
-                              seed={allKeys[0].accounts[0].receiveAddress}
+                              seed={checkedAccount.receiveAddress}
                             />
                           </CurrencyImageContainer>
                           <Row>
@@ -592,14 +593,14 @@ export const WalletConnectStartModal = () => {
                               medium={true}
                               ellipsizeMode="tail"
                               numberOfLines={1}>
-                              {allKeys[0].accounts[0].accountName}
-                              {checkedAccountsCount ? (
+                              {checkedAccount.accountName}
+                              {allKeys[0]?.accounts.length > 1 ? (
                                 <BaseText
                                   style={{
                                     color: theme.dark ? White : SlateDark,
                                   }}>
                                   {' '}
-                                  (+{checkedAccountsCount})
+                                  (+{allKeys[0]?.accounts.length - 1})
                                 </BaseText>
                               ) : (
                                 ''
@@ -620,7 +621,6 @@ export const WalletConnectStartModal = () => {
               <ActionContainer>
                 <Button
                   state={buttonState}
-                  disabled={checkedAccountsCount === -1}
                   onPress={() => {
                     haptic('impactLight');
                     approveSessionProposal();
@@ -653,26 +653,22 @@ export const WalletConnectStartModal = () => {
               closeModal={() => setShowAccountWCV2SelectionBottomModal(false)}
               accounts={getFlatAllKeysAccounts}
               onPress={account => {
-                let checkedCount = -1;
                 const _allKeys = allKeys.map(key => ({
                   ...key,
                   accounts: key.accounts.map(accountItem => {
                     const isChecked =
                       accountItem.receiveAddress === account.receiveAddress
                         ? !account.checked
-                        : accountItem.checked;
+                        : false;
 
-                    if (isChecked) {
-                      checkedCount++;
-                    }
                     return {
                       ...accountItem,
                       checked: isChecked,
                     };
                   }),
                 }));
+                setCheckedAccount(account);
                 setAllkeys(_allKeys);
-                setCheckedAccountsCount(checkedCount);
                 _setSelectedWallets(_allKeys);
               }}
             />
