@@ -565,19 +565,21 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleAccounts && !linkedCoinbase}
             onPress={() => setShowAccountDropdown(true)}>
-            {key.methods?.isPrivKeyEncrypted() ? (
-              theme.dark ? (
-                <EncryptPasswordDarkModeImg />
-              ) : (
-                <EncryptPasswordImg />
-              )
-            ) : null}
             <View>
               <Row style={{alignItems: 'center'}}>
                 <KeySvg width={10} height={10} />
                 <CenteredText>{key?.keyName}</CenteredText>
               </Row>
               <Row style={{alignItems: 'center'}}>
+                {key.methods?.isPrivKeyEncrypted() ? (
+                  <View style={{marginRight: 5}}>
+                    {theme.dark ? (
+                      <EncryptPasswordDarkModeImg />
+                    ) : (
+                      <EncryptPasswordImg />
+                    )}
+                  </View>
+                ) : null}
                 <HeaderTitle>{accountItem?.accountName}</HeaderTitle>
                 {(hasMultipleAccounts || linkedCoinbase) && (
                   <ChevronContainer>
