@@ -64,6 +64,7 @@ import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import Banner from '../../banner/Banner';
 import AccountWCV2RowModal from './AccountWCV2RowModal';
 import WCErrorBottomNotification from './WCErrorBottomNotification';
+import WarningBrownSvg from '../../../../assets/img/warning-brown.svg';
 
 export type WalletConnectStartParamList = {
   // version 2
@@ -574,7 +575,7 @@ export const WalletConnectStartModal = () => {
                     {t('Accounts')}
                   </H7>
                   <DescriptionItemContainer>
-                    {allKeys && allKeys[0]?.accounts[0] && checkedAccount && (
+                    {allKeys && allKeys[0]?.accounts[0] && checkedAccount ? (
                       <>
                         <AccountSettingsContainer
                           activeOpacity={ActiveOpacity}
@@ -612,6 +613,13 @@ export const WalletConnectStartModal = () => {
                           <SelectorArrowRight />
                         ) : null}
                       </>
+                    ) : (
+                      <DescriptionItemContainer>
+                        <WarningBrownSvg />
+                        <DescriptionItem>
+                          {t('No accounts found')}
+                        </DescriptionItem>
+                      </DescriptionItemContainer>
                     )}
                   </DescriptionItemContainer>
                 </DescriptionContainer>
@@ -621,6 +629,7 @@ export const WalletConnectStartModal = () => {
               <ActionContainer>
                 <Button
                   state={buttonState}
+                  disabled={!(allKeys && allKeys[0]?.accounts[0])}
                   onPress={() => {
                     haptic('impactLight');
                     approveSessionProposal();
