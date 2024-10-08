@@ -26,7 +26,10 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {createMultipleWallets} from '../../../store/wallet/effects';
+import {
+  createMultipleWallets,
+  getDecryptPassword,
+} from '../../../store/wallet/effects';
 import {getBaseAccountCreationCoinsAndTokens} from '../../../constants/currencies';
 import {successAddWallet} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
@@ -84,6 +87,12 @@ const AddingOptions: React.FC = () => {
             }),
           );
           const _key = key.methods as KeyMethods;
+          let password: string | undefined;
+          if (_key.isPrivKeyEncrypted) {
+            password = await dispatch(
+              getDecryptPassword(Object.assign({}, key)),
+            );
+          }
           const currentAccountNumber = Math.max(
             ...key.wallets.map(({credentials}) => credentials.account),
           );
@@ -94,6 +103,7 @@ const AddingOptions: React.FC = () => {
               currencies: getBaseAccountCreationCoinsAndTokens(),
               options: {
                 network,
+                password,
                 account: currentAccountNumber + 1,
                 customAccount: true,
               },

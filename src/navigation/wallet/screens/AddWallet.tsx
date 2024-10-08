@@ -266,11 +266,13 @@ const AddWallet = ({
     currencyName: _currencyName,
     chain: _chain,
     tokenAddress: _tokenAddress,
-    key,
+    key: _key,
     isToken,
     isCustomToken,
     selectedAccountAddress,
   } = route.params;
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const key = keys[_key.id];
   // temporary until advanced settings is finished
   const [showOptions, setShowOptions] = useState(false);
   const [loadingEVMWallets, setLoadingEVMWallets] = useState(false);
