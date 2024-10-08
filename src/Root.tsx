@@ -569,6 +569,10 @@ export default () => {
               // we need to ensure that each evm account has all supported wallets attached.
               const runCompleteEvmWalletsAccountFix = async () => {
                 try {
+                  if (Object.keys(keys).length === 0) {
+                    dispatch(setAccountEVMCreationMigrationComplete());
+                    return;
+                  }
                   dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
                   await sleep(1000); // give the modal time to show
                   await Promise.all(
@@ -618,6 +622,7 @@ export default () => {
                       subscriptionToPinModalDismissed.remove();
                       await runAddressFix();
                       if (!accountEvmCreationMigrationComplete) {
+                        await sleep(1000);
                         await runCompleteEvmWalletsAccountFix();
                       }
                       urlHandler();
@@ -626,6 +631,7 @@ export default () => {
               } else {
                 await runAddressFix();
                 if (!accountEvmCreationMigrationComplete) {
+                  await sleep(1000);
                   await runCompleteEvmWalletsAccountFix();
                 }
                 urlHandler();
