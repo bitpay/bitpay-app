@@ -587,6 +587,7 @@ export const createWalletsForAccounts = async (
   dispatch: any,
   accountsArray: number[],
   key: KeyMethods,
+  password?: string,
 ) => {
   return (
     await Promise.all(
@@ -597,6 +598,7 @@ export const createWalletsForAccounts = async (
               key: key as KeyMethods,
               currencies: getBaseAccountCreationCoinsAndTokens(),
               options: {
+                password,
                 account,
                 customAccount: true,
               },
