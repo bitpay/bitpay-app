@@ -25,6 +25,9 @@ export function getCoinAndChainFromCurrencyCode(
       ? currencyCode.slice(lastUnderscoreIndex + 1).toLowerCase()
       : undefined;
 
+  if (coin === 'matic' && (!context || context !== 'buyCrypto')) {
+    return {coin: 'pol', chain: 'matic'};
+  }
   if (suffix) {
     if (!context || context !== 'buyCrypto') {
       // Special handling for usdc.e and usdc
