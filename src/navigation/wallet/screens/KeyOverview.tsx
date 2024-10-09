@@ -38,8 +38,11 @@ import {
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {Status} from '../../../store/wallet/wallet.models';
+import {
+  successAddWallet,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
+import {KeyMethods, Status} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
   NeutralSlate,
@@ -47,7 +50,9 @@ import {
   White,
 } from '../../../styles/colors';
 import {
+  createWalletsForAccounts,
   formatFiatAmount,
+  getEvmGasWallets,
   shouldScale,
   sleep,
 } from '../../../utils/helper-methods';
@@ -57,7 +62,7 @@ import Icons from '../components/WalletIcons';
 import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {startGetRates} from '../../../store/wallet/effects';
+import {getDecryptPassword, startGetRates} from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import {useTranslation} from 'react-i18next';
@@ -79,6 +84,10 @@ import DropdownOption from '../components/DropdownOption';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
+import {
+  BitpaySupportedEvmCoins,
+  SUPPORTED_CURRENCIES_CHAINS,
+} from '../../../constants/currencies';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -196,6 +205,13 @@ const KeyOverview = () => {
     if (!key) {
       return;
     }
+    const missingChainsAccounts = memorizedAccountList.filter(
+      ({chains}) =>
+        IsEVMChain(chains[0]) &&
+        chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
+    );
+
+    console.log(missingChainsAccounts);
     navigation.setOptions({
       headerTitle: () => {
         return (
@@ -238,7 +254,8 @@ const KeyOverview = () => {
                   <ProposalBadge>{pendingTxps.length}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              {key?.methods?.isPrivKeyEncrypted() ? (
+              {key?.methods?.isPrivKeyEncrypted() &&
+              missingChainsAccounts.length === 0 ? (
                 <CogIconContainer
                   onPress={async () => {
                     await sleep(500);
@@ -299,6 +316,36 @@ const KeyOverview = () => {
     });
   }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
 
+  const handleAddEvmChain = async () => {
+    haptic('impactLight');
+    await sleep(500);
+
+    let password;
+    if (key.isPrivKeyEncrypted) {
+      password = await dispatch(getDecryptPassword(Object.assign({}, key)));
+    }
+
+    const evmWallets = getEvmGasWallets(key.wallets);
+    const accountsArray = [
+      ...new Set(evmWallets.map(wallet => wallet.credentials.account)),
+    ];
+
+    const wallets = await createWalletsForAccounts(
+      dispatch,
+      accountsArray,
+      key.methods as KeyMethods,
+      password,
+    );
+
+    key.wallets.push(...wallets);
+    dispatch(successAddWallet({key}));
+  };
+
+  const missingChainsAccounts = memorizedAccountList.filter(
+    ({chains}) =>
+      IsEVMChain(chains[0]) &&
+      chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
+  );
   const keyOptions: Array<Option> = [];
 
   if (!key?.methods?.isPrivKeyEncrypted()) {
@@ -316,6 +363,19 @@ const KeyOverview = () => {
         });
       },
     });
+
+    if (missingChainsAccounts.length > 0) {
+      keyOptions.push({
+        img: <Icons.Wallet width="15" height="15" />,
+        title: t('Add EVM Chain'),
+        description: t(
+          'Add all supported chains to your accounts for this key.',
+        ),
+        onPress: async () => {
+          await handleAddEvmChain();
+        },
+      });
+    }
 
     if (!key?.isReadOnly) {
       keyOptions.push({
@@ -344,6 +404,15 @@ const KeyOverview = () => {
         navigation.navigate('KeySettings', {
           key,
         });
+      },
+    });
+  } else if (missingChainsAccounts.length > 0) {
+    keyOptions.push({
+      img: <Icons.Wallet width="15" height="15" />,
+      title: t('Add EVM Chain'),
+      description: t('Add all supported chains to your accounts for this key.'),
+      onPress: async () => {
+        await handleAddEvmChain();
       },
     });
   }

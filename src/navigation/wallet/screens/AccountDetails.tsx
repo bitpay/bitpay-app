@@ -17,6 +17,7 @@ import {
   Wallet,
   TransactionProposal,
   Status,
+  KeyMethods,
 } from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
 import {
@@ -43,6 +44,7 @@ import {
   ProposalBadge,
 } from '../../../components/styled/Text';
 import {
+  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
@@ -55,9 +57,16 @@ import {
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {Air, LightBlack, SlateDark, White} from '../../../styles/colors';
-import {startGetRates} from '../../../store/wallet/effects';
+import {
+  createMultipleWallets,
+  getDecryptPassword,
+  startGetRates,
+} from '../../../store/wallet/effects';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
+import {
+  successAddWallet,
+  updatePortfolioBalance,
+} from '../../../store/wallet/wallet.actions';
 import {
   BalanceUpdateError,
   CustomErrorMessage,
@@ -142,6 +151,11 @@ import {LogActions} from '../../../store/log/';
 import uniqBy from 'lodash.uniqby';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Settings from '../../../components/settings/Settings';
+import {
+  getBaseAccountCreationCoinsAndTokens,
+  SUPPORTED_CURRENCIES_CHAINS,
+} from '../../../constants/currencies';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -309,6 +323,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
+  const network = useAppSelector(({APP}) => APP.network);
   const [history, setHistory] = useState<any[]>([]);
   const [accountTransactionsHistory, setAccountTransactionsHistory] = useState<{
     [key: string]: {
@@ -377,7 +392,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   );
 
   const keyOptions: Array<Option> = [];
-  const hasAllChains = accountItem.chains.length === 5;
+  const hasAllChains =
+    accountItem.chains.length === SUPPORTED_CURRENCIES_CHAINS.length;
   if (!hasAllChains) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
@@ -388,11 +404,28 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       onPress: async () => {
         haptic('impactLight');
         await sleep(500);
-        navigation.navigate('CurrencySelection', {
-          context: 'addEVMWallet',
-          key,
-          selectedAccountAddress: accountItem.receiveAddress,
-        });
+        const _key = key.methods as KeyMethods;
+        let password: string | undefined;
+        if (_key.isPrivKeyEncrypted) {
+          password = await dispatch(getDecryptPassword(Object.assign({}, key)));
+        }
+        await dispatch(startOnGoingProcessModal('ADDING_ACCOUNT'));
+        const wallets = await dispatch(
+          createMultipleWallets({
+            key: _key,
+            currencies: getBaseAccountCreationCoinsAndTokens(),
+            options: {
+              network,
+              password,
+              account: accountItem.accountNumber,
+              customAccount: true,
+            },
+          }),
+        );
+        key.wallets.push(...(wallets as Wallet[]));
+
+        dispatch(successAddWallet({key}));
+        dispatch(dismissOnGoingProcessModal());
       },
     });
   }

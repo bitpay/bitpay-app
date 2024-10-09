@@ -1183,6 +1183,7 @@ export const buildAccountList = (
       };
     } else {
       existingAccount.chains!.push(chain);
+      existingAccount.chains = [...new Set(existingAccount.chains)];
       existingAccount.wallets!.push(uiFormattedWallet);
       existingAccount.fiatBalance! += uiFormattedWallet.fiatBalance ?? 0;
       existingAccount.fiatLockedBalance! +=
