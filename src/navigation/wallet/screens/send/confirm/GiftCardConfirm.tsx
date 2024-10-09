@@ -90,6 +90,7 @@ import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {
   getBoostAmount,
   getBoostedAmount,
+  getVisibleCoupon,
   hasVisibleBoost,
 } from '../../../../../lib/gift-cards/gift-card';
 import GiftCardDiscountText from '../../../../../navigation/tabs/shop/components/GiftCardDiscountText';
@@ -362,7 +363,10 @@ const Confirm = () => {
           paymentUrl,
           invoice: newInvoice,
           invoiceID: invoiceId,
-          message: `${formatFiatAmount(amount, cardConfig.currency)} Gift Card`,
+          message: `${formatFiatAmount(
+            boostedAmount,
+            cardConfig.currency,
+          )} Gift Card`,
           customData: {
             giftCardName: cardConfig.name,
             service: 'giftcards',
@@ -481,12 +485,14 @@ const Confirm = () => {
       giftCard.status === 'FAILURE'
         ? 'Failed Gift Card'
         : 'Purchased Gift Card';
+    const visibleCoupon = getVisibleCoupon(cardConfig);
     dispatch(
       Analytics.track(purchaseEventName, {
         giftCardAmount: amount,
         giftCardBrand: cardConfig.name,
         giftCardCurrency: cardConfig.currency,
         coin: getTransactionCurrency(),
+        ...(visibleCoupon && {visibleCoupon}),
       }),
     );
   };

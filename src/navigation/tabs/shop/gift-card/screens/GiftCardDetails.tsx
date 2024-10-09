@@ -381,8 +381,12 @@ const GiftCardDetails = ({
         network: appNetwork,
       }),
     );
-    giftCard.archived = !giftCard.archived;
-    if (giftCard.archived) {
+    const newArchivedStatus = !giftCard.archived;
+    setGiftCard({
+      ...giftCard,
+      archived: newArchivedStatus,
+    });
+    if (newArchivedStatus) {
       navigation.pop();
     }
   };
