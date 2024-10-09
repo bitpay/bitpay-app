@@ -181,6 +181,8 @@ export const GetInvoiceCurrency = (c: string) => {
   switch (c.toUpperCase()) {
     case 'USDP':
       return 'PAX'; // TODO workaround. Remove this when usdp is accepted as an option
+    case 'POL':
+      return 'MATIC'; // TODO workaround. Remove this when POL is accepted as an option
     default:
       return c;
   }

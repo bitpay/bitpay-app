@@ -51,6 +51,10 @@ export function getCurrencyCodeFromCoinAndChain(
   if (coin.toLowerCase() === chain.toLowerCase()) {
     return coin.toUpperCase();
   }
+  // TODO - remove this special case once migration to POL is complete
+  if (coin.toLowerCase() === 'pol') {
+    return 'MATIC';
+  }
   const matchingSuffixEntry = Object.entries(chainSuffixMap).find(
     ([_, chainCode]) => chain.toLowerCase() === chainCode,
   ) as [string, string];
