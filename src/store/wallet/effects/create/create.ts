@@ -395,7 +395,9 @@ export const createMultipleWallets =
                 tokenOpts,
               ),
             );
-            wallets.push(tokenWallet);
+            if (tokenWallet) {
+              wallets.push(tokenWallet);
+            }
           }
         }
       } catch (err) {
@@ -571,9 +573,12 @@ const createTokenWallet =
         const currentTokenOpts = tokenOptsByAddress[tokenAddressWithSuffix];
 
         if (!currentTokenOpts) {
-          throw new Error(
-            'Could not find tokenOpts for token: ' + tokenAddressWithSuffix,
+          dispatch(
+            LogActions.debug(
+              `Could not find tokenOpts for token: ${tokenAddressWithSuffix}. Avoid token creation...`,
+            ),
           );
+          return reject();
         }
 
         const tokenCredentials: Credentials =
