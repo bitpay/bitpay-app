@@ -25,6 +25,9 @@ export function getCoinAndChainFromCurrencyCode(
       ? currencyCode.slice(lastUnderscoreIndex + 1).toLowerCase()
       : undefined;
 
+  if (coin === 'matic' && (!context || context !== 'buyCrypto')) {
+    return {coin: 'pol', chain: 'matic'};
+  }
   if (suffix) {
     if (!context || context !== 'buyCrypto') {
       // Special handling for usdc.e and usdc
@@ -50,6 +53,10 @@ export function getCurrencyCodeFromCoinAndChain(
 ): string {
   if (coin.toLowerCase() === chain.toLowerCase()) {
     return coin.toUpperCase();
+  }
+  // TODO - remove this special case once migration to POL is complete
+  if (coin.toLowerCase() === 'pol') {
+    return 'MATIC';
   }
   const matchingSuffixEntry = Object.entries(chainSuffixMap).find(
     ([_, chainCode]) => chain.toLowerCase() === chainCode,
