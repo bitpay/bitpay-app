@@ -32,6 +32,7 @@ import {
   EvmErc20PriceJSON,
 } from '@moralisweb3/common-evm-utils';
 import {calculateUsdToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
+import {IsERCToken} from '../../utils/currency';
 
 export const startGetRates =
   ({init, force}: {init?: boolean; force?: boolean}): Effect<Promise<Rates>> =>
@@ -142,7 +143,10 @@ export const getContractAddresses =
 
     Object.values(keys).forEach(key => {
       key.wallets.forEach(wallet => {
-        if (wallet.currencyAbbreviation === chain && wallet.tokens) {
+        if (
+          !IsERCToken(wallet.currencyAbbreviation, wallet.chain) &&
+          wallet.tokens
+        ) {
           // workaround to get linked wallets
           const tokenAddresses = wallet.tokens.map(t =>
             t.replace(`${wallet.id}-`, ''),
@@ -152,7 +156,8 @@ export const getContractAddresses =
       });
     });
     dispatch(LogActions.info('getContractAddresses: success'));
-    return allTokenAddresses;
+    const uniqueTokenAddresses = [...new Set(allTokenAddresses)];
+    return uniqueTokenAddresses;
   };
 
 export const getTokenRates =
