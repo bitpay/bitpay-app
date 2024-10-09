@@ -5760,10 +5760,10 @@ bitcoinjs-lib@^5.2.0:
     varuint-bitcoin "^1.0.4"
     wif "^2.0.1"
 
-bitcore-lib-cash@^10.0.39:
-  version "10.0.39"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.0.39.tgz#e90a9f2c27a2d7e6ed738134e197d191ef149743"
-  integrity sha512-8Dw+4oAOBDwNmfgYWPLhKGzESimDVEkdq2j4gcxVhsXJcm2S3JMzB1QMxqBTUrFEKHVRavEwAx5oDfwFWd2Qsw==
+bitcore-lib-cash@^10.5.3:
+  version "10.5.3"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.5.3.tgz#791b5d44595ccaefdec8e99566f31e903334ef36"
+  integrity sha512-CVcxGKYIslwj/1XQgbfWA1i4jLQSQQtJsyL5i4o6JIP7UkNIcmL0gujh65q2FJApwON8DihREMJMF2ryi5fpdg==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -5772,10 +5772,10 @@ bitcore-lib-cash@^10.0.39:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-lib-doge@^10.0.36:
-  version "10.0.36"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.0.36.tgz#b4052e63cc8cf5202e111c00eb5077f87219e60c"
-  integrity sha512-/+Za53p5EsrA6xg0fUgzpmPkskEKJkVoB7RfAUlLGZEapS41XNs3B3jkC1NjK2OpkAEhYilewvtBOHjhm5tswA==
+bitcore-lib-doge@^10.5.3:
+  version "10.5.3"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.5.3.tgz#0212efe43a2ce9a2c6fdab252a2bca06e71505c9"
+  integrity sha512-JduFfTVKxdn8bWGsnxZhWt9zJgA46fNgBG26zuJ6KtBZum4mQw88aP/6dYMSiS/oCZOvY0knAJfA8EQjqGG+qA==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -5785,10 +5785,10 @@ bitcore-lib-doge@^10.0.36:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib-ltc@^10.0.36:
-  version "10.0.36"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-10.0.36.tgz#42d5f72a3ebb6f84ec50f72432b5dc30f9b690fa"
-  integrity sha512-6mAUHN0HYHBZZzMbc6bF9ftDPB6VXELsweqtcUvgQKWPEA3I8trS2kt9f7sPRNJ06QPYhfIBF1zJeuT5fs0cKg==
+bitcore-lib-ltc@^10.5.3:
+  version "10.5.3"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-10.5.3.tgz#e3984ae410141b88829a6ab45683ec06c8a81e60"
+  integrity sha512-hVIH5WTED1RInshZ00knBnXaWCbo7tZwrWBax2z2ZcVF7OCC52Ae5v8t1CWWKGRDtWq7panIGe3uuZsmTMmdpA==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
@@ -5799,10 +5799,10 @@ bitcore-lib-ltc@^10.0.36:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib@^10.3.0:
-  version "10.3.0"
-  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.3.0.tgz#d58dabe7b019ad3d565c3d0837db50774a89d545"
-  integrity sha512-q+O4M4adn2iJcBNcVch/KYu81LKEKrUV7VoC0N5qNAzkNIOmuj3kHf90Q2muYx3f+ZP3Mq5Eoqtx1yPcZFDbrg==
+bitcore-lib@^10.5.3:
+  version "10.5.3"
+  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.5.3.tgz#b9ead7e9ff5752e560ff24a5ada31bfbc60b1ba0"
+  integrity sha512-QTeKpe5Md8x4njp6PsBCek+kZ0AA21RfBZi8HmTo+16laRxqyHz+pcn2pxDJgq6ZLmVLfU+AykKgHGqPt1KAYg==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
@@ -5812,24 +5812,24 @@ bitcore-lib@^10.3.0:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-mnemonic@^10.3.0:
-  version "10.3.0"
-  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.3.0.tgz#9a52cd0c6ac442b01975993eb142eae8c56e28fb"
-  integrity sha512-pBPcpAL1CLHUnL/BphkcifpN1eWlyIQwcPijEPEwh27E13Yuw8X8edh4Wf2PpPfvmEF5bp3c5I5QRa/2apGUYw==
+bitcore-mnemonic@^10.5.3:
+  version "10.5.3"
+  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.5.3.tgz#38338d73f4a740c7ed29df735567cf995b26b022"
+  integrity sha512-MPrVoexsjVwEtjxRG9bexG+5/8cSs4o4XMM0u7OhhRPMIlNgIMkjpVbuzohFPQ/kNgmLEQas6aa04FkNabUy8g==
   dependencies:
-    bitcore-lib "^10.3.0"
+    bitcore-lib "^10.5.3"
     unorm "^1.4.1"
 
-bitcore-wallet-client@10.3.0:
-  version "10.3.0"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.3.0.tgz#da29ae41165626a6695d5ecc072813e8116cee83"
-  integrity sha512-VZZL2COMdkr32s+VnlqarhpfFQaOoyxF0FirazziL4qNKE+vy1bnZPhdFMxv7yUAngUl3hCIQSYHGVozg23OmQ==
+bitcore-wallet-client@10.5.4:
+  version "10.5.4"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.5.4.tgz#8469dae8e1a4c8a69a20b24a8df0ec947eec7203"
+  integrity sha512-sp4FIc0C5je4UFViNmBMrJsFWLHmciM+mXR2u5dCRZbu8qilHEmC2XdTWZ+ar2n0rAHwpWU9nEFl8WRQbMmZng==
   dependencies:
     ajv "6.12.0"
     async "0.9.2"
     bip38 "1.4.0"
-    bitcore-mnemonic "^10.3.0"
-    crypto-wallet-core "^10.3.0"
+    bitcore-mnemonic "^10.5.3"
+    crypto-wallet-core "^10.5.3"
     json-stable-stringify "1.0.1"
     lodash "4.17.20"
     preconditions "2.2.3"
@@ -6991,15 +6991,15 @@ crypto-js@3.1.9-1:
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
   integrity sha512-W93aKztssqf29OvUlqfikzGyYbD1rpkXvGP9IQ1JchLY3bxaLXZSWYbwrtib2vk8DobrDzX7PIXcDWHp0B6Ymw==
 
-crypto-wallet-core@^10.3.0:
-  version "10.3.0"
-  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.3.0.tgz#339fd570300b5b89aac1211cc9bed210005f8254"
-  integrity sha512-ElClXc+AA4yAu3q06vEMgSN7bNlwD6GLnDBHU/8C3NZE+U7dGW5RZY8wGxXLs8L28XSu13I4UjNQsIGjudrrGQ==
+crypto-wallet-core@^10.5.3:
+  version "10.5.3"
+  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.5.3.tgz#69347d7fde7f54dfd2f47fcae24d6bddb8d5864c"
+  integrity sha512-eDoUqpuYdYJpZ2fGWOik9W4hBk8GB5zHxx8ZX7Ii6hyzGG4oDtyqZX6hRWsrNqGFlZJGCDPYA1mZYCBqysAoog==
   dependencies:
-    bitcore-lib "^10.3.0"
-    bitcore-lib-cash "^10.0.39"
-    bitcore-lib-doge "^10.0.36"
-    bitcore-lib-ltc "^10.0.36"
+    bitcore-lib "^10.5.3"
+    bitcore-lib-cash "^10.5.3"
+    bitcore-lib-doge "^10.5.3"
+    bitcore-lib-ltc "^10.5.3"
     ethers "^5.7.0"
     info "0.0.6-beta.0"
     web3 "1.4.0"
