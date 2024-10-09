@@ -582,6 +582,7 @@ export const startOnGoingProcessModal =
       DELETING_KEY: i18n.t('Deleting Key'),
       ADDING_WALLET: i18n.t('Adding Wallet'),
       ADDING_ACCOUNT: i18n.t('Adding Account-Based Wallet'),
+      ADDING_CHAINS: i18n.t('Adding EVM Chains'),
       LOADING: i18n.t('Loading'),
       FETCHING_PAYMENT_OPTIONS: i18n.t('Fetching payment options...'),
       FETCHING_PAYMENT_INFO: i18n.t('Fetching payment information...'),

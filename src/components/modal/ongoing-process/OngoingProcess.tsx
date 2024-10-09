@@ -19,6 +19,7 @@ export type OnGoingProcessMessages =
   | 'DELETING_KEY'
   | 'ADDING_WALLET'
   | 'ADDING_ACCOUNT'
+  | 'ADDING_CHAINS'
   | 'LOADING'
   | 'FETCHING_PAYMENT_OPTIONS'
   | 'FETCHING_PAYMENT_INFO'

@@ -406,10 +406,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         await sleep(500);
         const _key = key.methods as KeyMethods;
         let password: string | undefined;
-        if (_key.isPrivKeyEncrypted) {
+        if (key.isPrivKeyEncrypted) {
           password = await dispatch(getDecryptPassword(Object.assign({}, key)));
         }
-        await dispatch(startOnGoingProcessModal('ADDING_ACCOUNT'));
+        await dispatch(startOnGoingProcessModal('ADDING_CHAINS'));
         const wallets = await dispatch(
           createMultipleWallets({
             key: _key,
