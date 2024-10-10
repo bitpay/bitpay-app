@@ -798,6 +798,7 @@ const TransactionProposalDetails = () => {
               );
               await sleep(400);
               await dispatch(publishAndSign({txp, key, wallet}));
+              await sleep(400);
               dispatch(dismissOnGoingProcessModal());
               dispatch(
                 Analytics.track('Sent Crypto', {
