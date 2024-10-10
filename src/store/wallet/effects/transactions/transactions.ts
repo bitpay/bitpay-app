@@ -750,9 +750,9 @@ export const GetTransactionHistory =
           let transactionHistory;
           // linked eth wallet could have pendings txs from different tokens
           // this means we need to check pending txs from the linked wallet if is ERC20Token instead of the sending wallet
-          if (IsERCToken(currencyAbbreviation, chain)) {
-            const {WALLET} = getState();
-            const key = WALLET.keys[keyId];
+          const {WALLET} = getState();
+          const key = WALLET.keys[keyId];
+          if (IsERCToken(currencyAbbreviation, chain) && key) {
             const linkedWallet = key.wallets.find(({tokens}) =>
               tokens?.includes(walletId),
             );
