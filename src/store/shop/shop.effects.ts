@@ -226,7 +226,7 @@ export const startCreateGiftCardInvoice =
         }),
       );
       return {...cardOrder, invoice} as GiftCardOrder;
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       dispatch(ShopActions.failedCreateGiftCardInvoice());
       throw err;

@@ -21,6 +21,14 @@ export const successFetchCatalog = (payload: {
   payload,
 });
 
+export const hidGiftCardCoupon = (payload: {
+  giftCardBrand: string;
+  couponCode: string;
+}): ShopActionType => ({
+  type: ShopActionTypes.HID_GIFT_CARD_COUPON,
+  payload,
+});
+
 export const failedFetchCatalog = (): ShopActionType => ({
   type: ShopActionTypes.FAILED_FETCH_CATALOG,
 });

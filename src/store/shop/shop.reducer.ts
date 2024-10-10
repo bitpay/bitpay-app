@@ -85,6 +85,26 @@ export const shopReducer = (
         categoriesAndCurations,
         integrations,
       };
+    case ShopActionTypes.HID_GIFT_CARD_COUPON:
+      const {giftCardBrand, couponCode} = action.payload;
+      const currentCardConfig = state.availableCardMap[giftCardBrand];
+      const currentCoupons = state.availableCardMap[giftCardBrand].coupons;
+      const newCardConfig = {
+        ...currentCardConfig,
+        coupons: currentCoupons
+          ? currentCoupons.map(coupon => ({
+              ...coupon,
+              hidden: coupon.code === couponCode,
+            }))
+          : [],
+      };
+      return {
+        ...state,
+        availableCardMap: {
+          ...state.availableCardMap,
+          [giftCardBrand]: newCardConfig,
+        },
+      };
     case ShopActionTypes.INITIALIZED_UNSOLD_GIFT_CARD:
       const {giftCard} = action.payload;
       return {

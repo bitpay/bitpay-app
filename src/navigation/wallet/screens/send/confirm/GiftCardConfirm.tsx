@@ -109,6 +109,11 @@ const BoostAppliedText = styled(BaseText)`
   margin-left: 10px;
 `;
 
+enum GiftCardInvoiceCreationErrors {
+  couponExpired = 'This promotion is no longer available.',
+  atLeast1USD = 'Invoice price must be at least $1 USD',
+}
+
 const GiftCardHeader = ({
   amount,
   cardConfig,
@@ -290,7 +295,7 @@ const Confirm = () => {
     return dispatch(
       ShopEffects.startCreateGiftCardInvoice(cardConfig, invoiceCreationParams),
     ).catch(err => {
-      if (err.message === 'Invoice price must be at least $1 USD') {
+      if (err.message === GiftCardInvoiceCreationErrors.atLeast1USD) {
         return dispatch(
           ShopEffects.startCreateGiftCardInvoice(cardConfig, {
             ...invoiceCreationParams,
@@ -298,8 +303,21 @@ const Confirm = () => {
           }),
         );
       }
+      if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
+        dispatch(
+          ShopActions.hidGiftCardCoupon({
+            giftCardBrand: cardConfig.name,
+            couponCode: invoiceCreationParams.coupons[0],
+          }),
+        );
+      }
       throw err;
     });
+  };
+
+  const popToShopHome = async () => {
+    navigation.dispatch(StackActions.popToTop());
+    navigation.dispatch(StackActions.pop());
   };
 
   const handleCreateGiftCardInvoiceOrTxpError = async (err: any) => {
@@ -312,7 +330,12 @@ const Confirm = () => {
     showError({
       defaultErrorMessage:
         err.response?.data?.message || err.message || errorConfig.message,
-      onDismiss: () => openWalletSelector(400),
+      onDismiss: () => {
+        if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
+          return popToShopHome();
+        }
+        return openWalletSelector(400);
+      },
     });
   };
 
@@ -475,8 +498,7 @@ const Confirm = () => {
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
-    navigation.dispatch(StackActions.popToTop());
-    navigation.dispatch(StackActions.pop());
+    popToShopHome();
     navigation.navigate('GiftCardDetails', {
       giftCard,
       cardConfig,
