@@ -33,7 +33,7 @@ import {
 import {getBaseAccountCreationCoinsAndTokens} from '../../../constants/currencies';
 import {successAddWallet} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
-import {sleep} from '../../../utils/helper-methods';
+import {getEvmGasWallets, sleep} from '../../../utils/helper-methods';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -93,9 +93,12 @@ const AddingOptions: React.FC = () => {
               getDecryptPassword(Object.assign({}, key)),
             );
           }
-          const currentAccountNumber = Math.max(
-            ...key.wallets.map(({credentials}) => credentials.account),
+          const evmWallets = getEvmGasWallets(key.wallets);
+          const accounts = evmWallets.map(
+            ({credentials}) => credentials.account,
           );
+          const currentAccountNumber = Math.max(...accounts);
+
           await dispatch(startOnGoingProcessModal('ADDING_CHAINS'));
           const wallets = await dispatch(
             createMultipleWallets({
