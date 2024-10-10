@@ -69,6 +69,11 @@ const allowedUrlPrefixes = [
   'https://goerli.optimism.io',
   'https://goerli-rollup.arbitrum.io/rpc',
   'https://goerli.base.org',
+  'https://api.etherscan.io/api',
+  'https://api.polygonscan.com/api',
+  'https://api.arbiscan.io/api',
+  'https://api-optimistic.etherscan.io/api',
+  'https://api.basescan.org/api',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');
