@@ -170,6 +170,7 @@ const BuyGiftCard = ({
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
   );
+  const visibleCoupon = getVisibleCoupon(cardConfig);
   const [cardImage, setCardImage] = useState(
     getCardImage(
       cardConfig,
@@ -188,9 +189,10 @@ const BuyGiftCard = ({
     dispatch(
       Analytics.track('Viewed Gift Card', {
         giftCardBrand: cardConfig.name,
+        ...(visibleCoupon && {visibleCoupon}),
       }),
     );
-  }, [cardConfig.name, dispatch]);
+  }, [cardConfig, cardConfig.name, dispatch]);
 
   const showActivationFeeSheet = (
     activationFee: number,
@@ -353,6 +355,7 @@ const BuyGiftCard = ({
     dispatch(
       Analytics.track('Started Gift Card Purchase', {
         giftCardBrand: cardConfig.name,
+        ...(visibleCoupon && {visibleCoupon}),
       }),
     );
     const selectedAmount = (cardConfig.supportedAmounts || [])[
