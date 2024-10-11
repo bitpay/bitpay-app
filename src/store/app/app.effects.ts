@@ -631,7 +631,9 @@ export const startOnGoingProcessModal =
         currentStore.APP.onGoingProcessModalMessage !==
           i18n.t('Importing... this process may take a few minutes') &&
         currentStore.APP.onGoingProcessModalMessage !==
-          i18n.t('Scanning Funds... this process may take a few minutes')
+          i18n.t('Scanning Funds... this process may take a few minutes') &&
+        currentStore.APP.onGoingProcessModalMessage !==
+          i18n.t("Creating Key... just a second, we're setting a few things up")
       ) {
         dispatch(AppActions.dismissOnGoingProcessModal());
         await sleep(500);

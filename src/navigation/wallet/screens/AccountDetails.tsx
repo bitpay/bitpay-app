@@ -398,9 +398,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
       title: t('Add EVM Chain'),
-      description: t(
-        'Choose another evm chain you would like to add to your account.',
-      ),
+      description: t('Add all supported chains to this account.'),
       onPress: async () => {
         haptic('impactLight');
         await sleep(500);
@@ -438,8 +436,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     onPress: async () => {
       haptic('impactLight');
       await sleep(500);
-      navigation.navigate('KeySettings', {
+      navigation.navigate('AccountSettings', {
         key,
+        selectedAccountAddress: accountItem.receiveAddress,
+        context: 'accountDetails',
       });
     },
   });
