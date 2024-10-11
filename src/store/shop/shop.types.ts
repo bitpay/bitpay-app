@@ -16,6 +16,7 @@ export enum ShopActionTypes {
   FAILED_FETCH_CATALOG = 'SHOP/FAILED_FETCH_CATALOG',
   SUCCESS_CREATE_GIFT_CARD_INVOICE = 'SHOP/SUCCESS_CREATE_GIFT_CARD_INVOICE',
   FAILED_CREATE_GIFT_CARD_INVOICE = 'SHOP/FAILED_CREATE_GIFT_CARD_INVOICE',
+  HID_GIFT_CARD_COUPON = 'SHOP/HID_GIFT_CARD_COUPON',
   INITIALIZED_UNSOLD_GIFT_CARD = 'SHOP/INITIALIZED_UNSOLD_GIFT_CARD',
   DELETED_UNSOLD_GIFT_CARDS = 'SHOP/DELETED_UNSOLD_GIFT_CARDS',
   UPDATED_EMAIL_ADDRESS = 'SHOP/UPDATED_EMAIL_ADDRESS',
@@ -43,6 +44,13 @@ interface successFetchCatalog {
 }
 interface failedFetchCatalog {
   type: typeof ShopActionTypes.FAILED_FETCH_CATALOG;
+}
+interface hidGiftCardCoupon {
+  type: typeof ShopActionTypes.HID_GIFT_CARD_COUPON;
+  payload: {
+    giftCardBrand: string;
+    couponCode: string;
+  };
 }
 interface successCreateGiftCardInvoice {
   type: typeof ShopActionTypes.SUCCESS_CREATE_GIFT_CARD_INVOICE;
@@ -147,6 +155,7 @@ interface isJoinedWaitlist {
 export type ShopActionType =
   | successFetchCatalog
   | failedFetchCatalog
+  | hidGiftCardCoupon
   | successCreateGiftCardInvoice
   | failedCreateGiftCardInvoice
   | initializedUnsoldGiftCard
