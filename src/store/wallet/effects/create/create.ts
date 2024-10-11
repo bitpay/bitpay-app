@@ -325,7 +325,9 @@ export const addWallet =
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(failedAddWallet());
-        dispatch(LogActions.error(`Error adding wallet: ${errstring}`));
+        if (errstring) {
+          dispatch(LogActions.debug(`Error adding wallet: ${errstring}`));
+        }
         reject(err);
       }
     });
