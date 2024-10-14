@@ -97,8 +97,7 @@ const AddingOptions: React.FC = () => {
           const accounts = evmWallets.map(
             ({credentials}) => credentials.account,
           );
-          const currentAccountNumber = Math.max(...accounts);
-
+          const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
           await dispatch(startOnGoingProcessModal('ADDING_CHAINS'));
           const wallets = await dispatch(
             createMultipleWallets({
@@ -107,7 +106,7 @@ const AddingOptions: React.FC = () => {
               options: {
                 network,
                 password,
-                account: currentAccountNumber + 1,
+                account,
                 customAccount: true,
               },
             }),
