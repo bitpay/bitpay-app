@@ -152,8 +152,8 @@ import uniqBy from 'lodash.uniqby';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Settings from '../../../components/settings/Settings';
 import {
+  BitpaySupportedEvmCoins,
   getBaseAccountCreationCoinsAndTokens,
-  SUPPORTED_CURRENCIES_CHAINS,
 } from '../../../constants/currencies';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 
@@ -393,7 +393,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   const keyOptions: Array<Option> = [];
   const hasAllChains =
-    accountItem.chains.length === SUPPORTED_CURRENCIES_CHAINS.length;
+    accountItem.chains.length === Object.keys(BitpaySupportedEvmCoins).length;
   if (!hasAllChains) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
