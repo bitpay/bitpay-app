@@ -75,6 +75,7 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
+import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import {SvgProps} from 'react-native-svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
 
@@ -460,14 +461,17 @@ const WalletConnectHome = () => {
                   onPress={() =>
                     peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                   }>
-                  {peerIcon ? (
-                    <IconContainer>
+                  <IconContainer>
+                    {peerIcon ? (
                       <FastImage
                         source={{uri: peerIcon}}
                         style={{width: 19, height: 19}}
                       />
-                    </IconContainer>
-                  ) : null}
+                    ) : (
+                      <DefaultImage width={19} height={19} />
+                    )}
+                  </IconContainer>
+
                   <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
                     {peerUrl?.replace('https://', '')}
                   </NoteLabel>

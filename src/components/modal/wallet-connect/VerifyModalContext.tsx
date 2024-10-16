@@ -24,6 +24,7 @@ import {SvgProps} from 'react-native-svg';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
+import DefaultImage from '../../../../assets/img/currencies/default.svg';
 
 const CloseModalButton = styled.TouchableOpacity`
   height: 40px;
@@ -127,7 +128,11 @@ const VerifyContextModal = ({
         <ContentContainer>
           <RowContainer>
             <RowContainer>
-              {peerIcon && <IconContainer source={{uri: peerIcon}} />}
+              {peerIcon ? (
+                <IconContainer source={{uri: peerIcon}} />
+              ) : (
+                <DefaultImage width={30} height={30} style={{marginRight: 5}} />
+              )}
               <H4>{peerName}</H4>
             </RowContainer>
             {peerUrl && (

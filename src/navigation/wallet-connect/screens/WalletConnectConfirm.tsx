@@ -67,6 +67,7 @@ import {Caution25, Success25, Warning25} from '../../../styles/colors';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
+import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 
@@ -392,14 +393,16 @@ const WalletConnectConfirm = () => {
                 onPress={() =>
                   peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                 }>
-                {peerIcon ? (
-                  <IconContainer>
+                <IconContainer>
+                  {peerIcon ? (
                     <FastImage
                       source={{uri: peerIcon}}
                       style={{width: 18, height: 18}}
                     />
-                  </IconContainer>
-                ) : null}
+                  ) : (
+                    <DefaultImage />
+                  )}
+                </IconContainer>
                 <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
                   {peerUrl?.replace('https://', '')}
                 </NoteLabel>
