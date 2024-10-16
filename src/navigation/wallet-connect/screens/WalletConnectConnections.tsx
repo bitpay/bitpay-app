@@ -53,6 +53,7 @@ import Blockie from '../../../components/blockie/Blockie';
 import Settings from '../../../components/settings/Settings';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import Button from '../../../components/button/Button';
+import DefaultImage from '../../../../assets/img/currencies/default.svg';
 
 const WalletConnectConnectionsContainer = styled.SafeAreaView`
   flex: 1;
@@ -138,10 +139,14 @@ const WalletConnectConnections = () => {
       <ItemContainer>
         <ItemTitleContainer>
           <IconContainer>
-            <FastImage
-              source={{uri: peerIcon}}
-              style={{width: 40, height: 40}}
-            />
+            {peerIcon ? (
+              <FastImage
+                source={{uri: peerIcon}}
+                style={{width: 40, height: 40}}
+              />
+            ) : (
+              <DefaultImage width={40} height={40} />
+            )}
           </IconContainer>
           <Column style={{marginLeft: 16}}>
             <H6>{peerName}</H6>
