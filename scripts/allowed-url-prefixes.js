@@ -69,6 +69,7 @@ const allowedUrlPrefixes = [
   'https://goerli.optimism.io',
   'https://goerli-rollup.arbitrum.io/rpc',
   'https://goerli.base.org',
+  'https://verify.walletconnect.com/',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');

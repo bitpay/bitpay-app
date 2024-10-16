@@ -372,12 +372,12 @@ const WalletConnectConfirm = () => {
         <Hr />
         <ItemContainer>
           <H7>{t('Connected to')}</H7>
-          {peerUrl && peerIcon ? (
+          {peerUrl ? (
             <ClipboardContainer>
               {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
                 <CopiedSvg width={17} />
               ) : null}
-              {/* {VerifyIcon ? (
+              {VerifyIcon ? (
                 <VerifyIconContainer
                   style={{
                     backgroundColor: bgColor,
@@ -385,19 +385,21 @@ const WalletConnectConfirm = () => {
                   onPress={() => setShowVerifyContextBottomModal(true)}>
                   <VerifyIcon />
                 </VerifyIconContainer>
-              ) : null} */}
+              ) : null}
               <NoteContainer
                 isDappUri={true}
                 disabled={clipboardObj.copied}
                 onPress={() =>
                   peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                 }>
-                <IconContainer>
-                  <FastImage
-                    source={{uri: peerIcon}}
-                    style={{width: 18, height: 18}}
-                  />
-                </IconContainer>
+                {peerIcon ? (
+                  <IconContainer>
+                    <FastImage
+                      source={{uri: peerIcon}}
+                      style={{width: 18, height: 18}}
+                    />
+                  </IconContainer>
+                ) : null}
                 <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
                   {peerUrl?.replace('https://', '')}
                 </NoteLabel>
@@ -454,12 +456,12 @@ const WalletConnectConfirm = () => {
         }}
       />
 
-      {/* <VerifyContextModal
+      <VerifyContextModal
         isVisible={showVerifyContextBottomModal}
         closeModal={closeModal}
         sessionV2={sessionV2}
         onRemovePress={disconnectAccount}
-      /> */}
+      />
     </ConfirmContainer>
   );
 };

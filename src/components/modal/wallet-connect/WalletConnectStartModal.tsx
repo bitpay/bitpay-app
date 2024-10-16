@@ -6,10 +6,13 @@ import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.sv
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
 import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
 import {
+  Caution,
+  Caution25,
   LightBlack,
   NeutralSlate,
   SlateDark,
   Success25,
+  Warning25,
   White,
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
@@ -57,6 +60,8 @@ import {TouchableOpacity} from 'react-native';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import ExternalLinkSvg from '../../../../assets/img/external-link-small.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
+import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
+import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import Banner from '../../banner/Banner';
 import AccountWCV2RowModal from './AccountWCV2RowModal';
 import WCErrorBottomNotification from './WCErrorBottomNotification';
@@ -467,26 +472,25 @@ export const WalletConnectStartModal = () => {
                         <ExternalLinkSvg width={12} />
                       </UriContainer>
                     </UriContainerTouchable>
-                    {/* {verifyContext &&
+                    {verifyContext &&
                       (() => {
                         let bgColor = '';
                         let textColor = '';
                         let text = '';
                         let Icon = null;
                         switch (verifyContext.verified.validation) {
-                          // TODO it's necessary to add the other case? we already have the banner
-                          // case 'UNKNOWN':
-                          //   bgColor = Warning25;
-                          //   textColor = '#AC6304';
-                          //   text = t('Cannot Verify');
-                          //   Icon = WarningOutlineSvg;
-                          //   break;
-                          // case 'INVALID':
-                          //   bgColor = Caution25;
-                          //   textColor = Caution;
-                          //   text = t('Security Risk');
-                          //   Icon = InvalidDomainSvg;
-                          //   break;
+                          case 'UNKNOWN':
+                            bgColor = Warning25;
+                            textColor = '#AC6304';
+                            text = t('Cannot Verify');
+                            Icon = WarningOutlineSvg;
+                            break;
+                          case 'INVALID':
+                            bgColor = Caution25;
+                            textColor = Caution;
+                            text = t('Security Risk');
+                            Icon = InvalidDomainSvg;
+                            break;
                           case 'VALID':
                             bgColor = Success25;
                             textColor = '#0B754A';
@@ -506,9 +510,9 @@ export const WalletConnectStartModal = () => {
                             <Icon />
                           </ValidationContainer>
                         );
-                      })()} */}
+                      })()}
                   </Row>
-                  {/* {verifyContext &&
+                  {verifyContext &&
                     (() => {
                       let text = '';
                       let type = '';
@@ -546,7 +550,7 @@ export const WalletConnectStartModal = () => {
                           hasBackgroundColor={true}
                         />
                       );
-                    })()} */}
+                    })()}
                 </View>
                 <DescriptionContainer>
                   <H7
