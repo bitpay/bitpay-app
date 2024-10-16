@@ -12,7 +12,7 @@ import haptic from '../../haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import {WIDTH} from '../../styled/Containers';
 import {useNavigation} from '@react-navigation/native';
-import {getWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
+import {getGasWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {sleep} from '../../../utils/helper-methods';
 
 export type InAppNotificationMessages = 'NEW_PENDING_REQUEST';
@@ -84,7 +84,7 @@ const InAppNotification: React.FC = () => {
 
     await sleep(0);
 
-    const wallet = request && dispatch(getWalletByRequest(request));
+    const wallet = request && dispatch(getGasWalletByRequest(request));
     if (!wallet || !wallet.receiveAddress) {
       return;
     }
@@ -92,6 +92,7 @@ const InAppNotification: React.FC = () => {
     navigation.navigate('WalletConnectHome', {
       topic: request?.topic,
       selectedAccountAddress: wallet.receiveAddress,
+      notificationRequestId: request.id,
       keyId: wallet.keyId,
       context: 'notification',
     });

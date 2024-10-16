@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Platform} from 'react-native';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {
@@ -17,6 +16,7 @@ import {
 } from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import {
+  IconContainer,
   ItemContainer,
   ItemTitleContainer,
   ScrollView,
@@ -43,6 +43,7 @@ import {
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
 import {View} from 'react-native';
+import Blockie from '../../../components/blockie/Blockie';
 
 export type WalletConnectRequestDetailsParamList = {
   request: any;
@@ -66,14 +67,12 @@ const AddressTextContainer = styled.TouchableOpacity`
   background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
   height: 37px;
-  width: 103px;
+  width: 150px;
+  margin-left: 2px;
   justify-content: center;
-  padding-right: 13px;
-  padding-left: 17px;
-  padding-top: ${Platform.OS === 'ios' ? '4px' : 0};
   flex-direction: row;
   align-items: center;
-  margin-left: 2px;
+  padding: 10px 20px;
 `;
 
 const MessageTitleContainer = styled.View`
@@ -348,7 +347,13 @@ const WalletConnectRequestDetails = () => {
                         onPress={() => {
                           copyToClipboard(address, 'address');
                         }}>
-                        <H7 numberOfLines={1} ellipsizeMode={'middle'}>
+                        <IconContainer>
+                          <Blockie size={19} seed={address} />
+                        </IconContainer>
+                        <H7
+                          numberOfLines={1}
+                          ellipsizeMode={'middle'}
+                          style={{marginLeft: 10}}>
                           {address}
                         </H7>
                       </AddressTextContainer>
