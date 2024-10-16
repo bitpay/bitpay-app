@@ -440,12 +440,12 @@ const WalletConnectHome = () => {
           <Hr />
           <ItemContainer>
             <H7>{t('Connected to')}</H7>
-            {peerUrl && peerIcon ? (
+            {peerUrl ? (
               <ClipboardContainer>
                 {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
                   <CopiedSvg width={17} />
                 ) : null}
-                {/* {VerifyIcon ? (
+                {VerifyIcon ? (
                   <VerifyIconContainer
                     style={{
                       backgroundColor: bgColor,
@@ -453,19 +453,21 @@ const WalletConnectHome = () => {
                     onPress={() => setShowVerifyContextBottomModal(true)}>
                     <VerifyIcon />
                   </VerifyIconContainer>
-                ) : null} */}
+                ) : null}
                 <NoteContainer
                   isDappUri={true}
                   disabled={clipboardObj.copied}
                   onPress={() =>
                     peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                   }>
-                  <IconContainer>
-                    <FastImage
-                      source={{uri: peerIcon}}
-                      style={{width: 19, height: 19}}
-                    />
-                  </IconContainer>
+                  {peerIcon ? (
+                    <IconContainer>
+                      <FastImage
+                        source={{uri: peerIcon}}
+                        style={{width: 19, height: 19}}
+                      />
+                    </IconContainer>
+                  ) : null}
                   <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
                     {peerUrl?.replace('https://', '')}
                   </NoteLabel>
@@ -545,12 +547,12 @@ const WalletConnectHome = () => {
         </Button>
       </CtaContainerAbsolute>
 
-      {/* <VerifyContextModal
+      <VerifyContextModal
         isVisible={showVerifyContextBottomModal}
         closeModal={closeModal}
         sessionV2={sessionV2}
         onRemovePress={disconnectAccount}
-      /> */}
+      />
     </WalletConnectContainer>
   );
 };
