@@ -506,10 +506,11 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       },
     );
 
-    // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
-    if (APP.brazeEid) {
-      dispatch(Analytics.identify(APP.brazeEid));
+    // Create a Braze EID for all users
+    if (!APP.brazeEid) {
+      dispatch(createBrazeEid());
     }
+    dispatch(Analytics.identify(APP.brazeEid));
 
     dispatch(LogActions.info('Successfully initialized Braze.'));
     dispatch(AppActions.brazeInitialized(contentCardSubscription));
