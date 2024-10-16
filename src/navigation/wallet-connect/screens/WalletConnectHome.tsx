@@ -75,6 +75,7 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
+import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import {SvgProps} from 'react-native-svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
 
@@ -440,12 +441,12 @@ const WalletConnectHome = () => {
           <Hr />
           <ItemContainer>
             <H7>{t('Connected to')}</H7>
-            {peerUrl && peerIcon ? (
+            {peerUrl ? (
               <ClipboardContainer>
                 {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
                   <CopiedSvg width={17} />
                 ) : null}
-                {/* {VerifyIcon ? (
+                {VerifyIcon ? (
                   <VerifyIconContainer
                     style={{
                       backgroundColor: bgColor,
@@ -453,7 +454,7 @@ const WalletConnectHome = () => {
                     onPress={() => setShowVerifyContextBottomModal(true)}>
                     <VerifyIcon />
                   </VerifyIconContainer>
-                ) : null} */}
+                ) : null}
                 <NoteContainer
                   isDappUri={true}
                   disabled={clipboardObj.copied}
@@ -461,11 +462,16 @@ const WalletConnectHome = () => {
                     peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                   }>
                   <IconContainer>
-                    <FastImage
-                      source={{uri: peerIcon}}
-                      style={{width: 19, height: 19}}
-                    />
+                    {peerIcon ? (
+                      <FastImage
+                        source={{uri: peerIcon}}
+                        style={{width: 19, height: 19}}
+                      />
+                    ) : (
+                      <DefaultImage width={19} height={19} />
+                    )}
                   </IconContainer>
+
                   <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
                     {peerUrl?.replace('https://', '')}
                   </NoteLabel>
@@ -545,12 +551,12 @@ const WalletConnectHome = () => {
         </Button>
       </CtaContainerAbsolute>
 
-      {/* <VerifyContextModal
+      <VerifyContextModal
         isVisible={showVerifyContextBottomModal}
         closeModal={closeModal}
         sessionV2={sessionV2}
         onRemovePress={disconnectAccount}
-      /> */}
+      />
     </WalletConnectContainer>
   );
 };

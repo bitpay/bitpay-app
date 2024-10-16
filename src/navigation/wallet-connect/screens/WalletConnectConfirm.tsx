@@ -67,6 +67,7 @@ import {Caution25, Success25, Warning25} from '../../../styles/colors';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
+import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 
@@ -372,12 +373,12 @@ const WalletConnectConfirm = () => {
         <Hr />
         <ItemContainer>
           <H7>{t('Connected to')}</H7>
-          {peerUrl && peerIcon ? (
+          {peerUrl ? (
             <ClipboardContainer>
               {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
                 <CopiedSvg width={17} />
               ) : null}
-              {/* {VerifyIcon ? (
+              {VerifyIcon ? (
                 <VerifyIconContainer
                   style={{
                     backgroundColor: bgColor,
@@ -385,7 +386,7 @@ const WalletConnectConfirm = () => {
                   onPress={() => setShowVerifyContextBottomModal(true)}>
                   <VerifyIcon />
                 </VerifyIconContainer>
-              ) : null} */}
+              ) : null}
               <NoteContainer
                 isDappUri={true}
                 disabled={clipboardObj.copied}
@@ -393,10 +394,14 @@ const WalletConnectConfirm = () => {
                   peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                 }>
                 <IconContainer>
-                  <FastImage
-                    source={{uri: peerIcon}}
-                    style={{width: 18, height: 18}}
-                  />
+                  {peerIcon ? (
+                    <FastImage
+                      source={{uri: peerIcon}}
+                      style={{width: 18, height: 18}}
+                    />
+                  ) : (
+                    <DefaultImage />
+                  )}
                 </IconContainer>
                 <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
                   {peerUrl?.replace('https://', '')}
@@ -454,12 +459,12 @@ const WalletConnectConfirm = () => {
         }}
       />
 
-      {/* <VerifyContextModal
+      <VerifyContextModal
         isVisible={showVerifyContextBottomModal}
         closeModal={closeModal}
         sessionV2={sessionV2}
         onRemovePress={disconnectAccount}
-      /> */}
+      />
     </ConfirmContainer>
   );
 };
