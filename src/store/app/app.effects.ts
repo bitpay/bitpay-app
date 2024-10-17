@@ -507,10 +507,11 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
     );
 
     // Create a Braze EID for all users
-    if (!APP.brazeEid) {
-      dispatch(createBrazeEid());
+    let eid = APP.brazeEid;
+    if (!eid) {
+      eid = dispatch(createBrazeEid());
     }
-    dispatch(Analytics.identify(APP.brazeEid));
+    dispatch(Analytics.identify(eid));
 
     dispatch(LogActions.info('Successfully initialized Braze.'));
     dispatch(AppActions.brazeInitialized(contentCardSubscription));
