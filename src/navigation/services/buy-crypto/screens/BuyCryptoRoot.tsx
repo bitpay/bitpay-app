@@ -779,14 +779,21 @@ const BuyCryptoRoot = ({
             symbol,
             'buyCrypto',
           );
+          const isErc20Token = IsERCToken(coin, chain);
           const foundToken = Object.values({
             ...BitpaySupportedTokens,
             ...tokenDataByAddress,
-          }).find(token => token.coin === coin && token.chain === chain);
+          }).find(
+            token =>
+              token.coin === coin && token.chain === chain && isErc20Token,
+          );
+
           return {
             currencyAbbreviation: coin,
             symbol,
-            name: (BitpaySupportedCoins[symbol]?.name || foundToken?.name)!,
+            name: (isErc20Token
+              ? foundToken?.name
+              : BitpaySupportedCoins[chain]?.name)!,
             chain,
             logoUri: getLogoUri(coin, chain),
             badgeUri: getBadgeImg(coin, chain),
