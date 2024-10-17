@@ -1,8 +1,5 @@
 #import "AppDelegate.h"
 #import "../AllowedUrlPrefixProtocol.h"
-#import "../SilentPushEvent.h"
-#import "Appboy-iOS-SDK/AppboyKit.h"
-#import "../InAppMessageHandler.h"
 #import <RNAppsFlyer.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTHTTPRequestHandler.h>
@@ -10,10 +7,13 @@
 #import <React/RCTRootView.h>
 #import "RNBootSplash.h"
 #import "RNQuickActionManager.h"
-#import "AppboyReactUtils.h"
 #import <React/RCTLinkingManager.h>
 // react-native-keyevent
 #import <RNKeyEvent.h>
+
+// Braze SDK
+#import <BrazeKit/BrazeKit-Swift.h>
+#import "BrazeReactBridge.h"
 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -24,19 +24,16 @@
   self.initialProps = @{};
 
   [super application:application didFinishLaunchingWithOptions:launchOptions];
-
-[ RNBootSplash initWithStoryboard:@"BootSplash" rootView:self.window.rootViewController.view]; // <- initialization using the storyboard file name
-
-  [Appboy startWithApiKey:@"BRAZE_API_KEY_REPLACE_ME"
-       inApplication:application
-       withLaunchOptions:launchOptions];
   
-  // Set the in-app message delegate
-  InAppMessageHandler *inAppMessageHandler = [[InAppMessageHandler alloc] init];
-  [Appboy sharedInstance].inAppMessageController.delegate = inAppMessageHandler;
+  [ RNBootSplash initWithStoryboard:@"BootSplash" rootView:self.window.rootViewController.view]; // <- initialization using the storyboard file name
 
-
-  [[AppboyReactUtils sharedInstance] populateInitialUrlFromLaunchOptions:launchOptions];
+  // Setup Braze
+  BRZConfiguration *configuration = [[BRZConfiguration alloc] initWithApiKey:@"BRAZE_API_KEY_REPLACE_ME" endpoint:@"sdk.iad-05.braze.com"];
+  
+  // Enable logging and customize the configuration here.
+    configuration.logger.level = BRZLoggerLevelInfo;
+    Braze *braze = [BrazeReactBridge initBraze:configuration];
+    AppDelegate.braze = braze;
 
   RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -48,35 +45,6 @@
   });
 
   return YES;
-}
-
-- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
-{
-  [[Appboy sharedInstance] registerDeviceToken:deviceToken];
-}
-
-- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo                                                      fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
-{
-  [[Appboy sharedInstance] registerApplication:application
-                  didReceiveRemoteNotification:userInfo
-                        fetchCompletionHandler:completionHandler];
-  [SilentPushEvent emitEventWithName:@"SilentPushNotification" andPayload:userInfo];
-}
-
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response  withCompletionHandler:(void (^)(void))completionHandler   {
-  [[Appboy sharedInstance] userNotificationCenter:center
-                   didReceiveNotificationResponse:response
-                            withCompletionHandler:completionHandler];
-}
-
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-       willPresentNotification:(UNNotification *)notification
-         withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler {
-  if (@available(iOS 14.0, *)) {
-    completionHandler(UNNotificationPresentationOptionList | UNNotificationPresentationOptionBanner);
-  } else {
-    completionHandler(UNNotificationPresentationOptionAlert);
-  }
 }
 
 - (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL succeeded)) completionHandler {
@@ -161,6 +129,18 @@ RNKeyEvent *keyEvent = nil;
 - (void)keyInput:(UIKeyCommand *)sender {
   NSString *selected = sender.input;
   [keyEvent sendKeyEvent:selected];
+}
+
+#pragma mark - AppDelegate.braze
+
+static Braze *_braze = nil;
+
++ (Braze *)braze {
+  return _braze;
+}
+
++ (void)setBraze:(Braze *)braze {
+  _braze = braze;
 }
 
 @end

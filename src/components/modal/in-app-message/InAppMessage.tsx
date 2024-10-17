@@ -8,7 +8,7 @@ import BaseModal from '../base/BaseModal';
 import {dismissInAppMessage} from '../../../store/app/app.actions';
 import haptic from '../../haptic-feedback/haptic';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
 import {LogActions} from '../../../store/log';
 import {incomingData} from '../../../store/scan/scan.effects';
 import {sleep} from '../../../utils/helper-methods';

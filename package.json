@@ -41,6 +41,7 @@
     "translation:download": "crowdin download --identity crowdin-credentials.yml"
   },
   "dependencies": {
+    "@braze/react-native-sdk": "12.2.0",
     "@ethersproject/shims": "5.7.0",
     "@freakycoder/react-native-bounceable": "0.2.5",
     "@gorhom/bottom-sheet": "5.0.0-alpha.11",
@@ -107,7 +108,6 @@
     "react-hook-form": "7.19.5",
     "react-i18next": "12.2.0",
     "react-native": "0.71.14",
-    "react-native-appboy-sdk": "1.41.0",
     "react-native-appsflyer": "6.5.20",
     "react-native-biometrics": "3.0.1",
     "react-native-ble-plx": "2.0.3",

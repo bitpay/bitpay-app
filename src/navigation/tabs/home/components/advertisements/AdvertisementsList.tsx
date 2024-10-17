@@ -1,5 +1,5 @@
 import React from 'react';
-import {ContentCard} from 'react-native-appboy-sdk';
+import {ContentCard} from '@braze/react-native-sdk';
 import styled, {useTheme} from 'styled-components/native';
 import {ScreenGutter} from '../../../../../components/styled/Containers';
 import AdvertisementCard from './AdvertisementCard';

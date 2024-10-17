@@ -7,7 +7,7 @@ import {
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import debounce from 'lodash.debounce';
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   Appearance,

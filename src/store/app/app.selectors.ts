@@ -1,4 +1,4 @@
-import {ContentCard} from 'react-native-appboy-sdk';
+import {ContentCard} from '@braze/react-native-sdk';
 import {createSelector} from 'reselect';
 import {AppSelector} from '..';
 import {
