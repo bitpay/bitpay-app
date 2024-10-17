@@ -8,7 +8,7 @@ import {
   Platform,
   Share,
 } from 'react-native';
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppReview from 'react-native-in-app-review';
 import InAppBrowser, {

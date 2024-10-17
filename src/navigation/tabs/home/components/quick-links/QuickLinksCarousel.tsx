@@ -1,5 +1,5 @@
 import React from 'react';
-import {ContentCard} from 'react-native-appboy-sdk';
+import {ContentCard} from '@braze/react-native-sdk';
 import Carousel from 'react-native-reanimated-carousel';
 import {WIDTH} from '../../../../../components/styled/Containers';
 import QuickLinksCard from './QuickLinksCard';
