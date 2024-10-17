@@ -970,6 +970,11 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@braze/react-native-sdk@12.2.0":
+  version "12.2.0"
+  resolved "https://registry.yarnpkg.com/@braze/react-native-sdk/-/react-native-sdk-12.2.0.tgz#2187840b616f4f38977b04141a6eccc74ce05bd4"
+  integrity sha512-SgaiET7vU2Dz36a9uDBuATiHETzAyiw84X6h7Ya3NQKOlp808ljCk1T/buZSWnIn4UT8J7OGCOxWra4vidN9pw==
+
 "@egjs/hammerjs@^2.0.17":
   version "2.0.17"
   resolved "https://registry.yarnpkg.com/@egjs/hammerjs/-/hammerjs-2.0.17.tgz#5dc02af75a6a06e4c2db0202cae38c9263895124"

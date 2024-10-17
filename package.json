@@ -41,6 +41,7 @@
     "translation:download": "crowdin download --identity crowdin-credentials.yml"
   },
   "dependencies": {
+    "@braze/react-native-sdk": "12.2.0",
     "@ethersproject/shims": "5.7.0",
     "@freakycoder/react-native-bounceable": "0.2.5",
     "@gorhom/bottom-sheet": "5.0.0-alpha.11",
