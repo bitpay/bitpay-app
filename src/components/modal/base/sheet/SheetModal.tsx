@@ -37,15 +37,15 @@ const SheetModal: React.FC<SheetModalProps> = ({
   const [isModalVisible, setModalVisible] = useState(isVisible);
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
-      if (isVisible && status === 'background') {
+      if (isVisible && !fullscreen && status === 'background') {
         setModalVisible(false);
         onBackdropPress();
       }
     }
     setModalVisible(isVisible);
-    if (isVisible) {
+    if (isVisible && !isModalVisible) {
       bottomSheetModalRef.current?.present();
-    } else {
+    } else if (!isVisible && isModalVisible) {
       bottomSheetModalRef.current?.dismiss();
     }
 
@@ -74,14 +74,15 @@ const SheetModal: React.FC<SheetModalProps> = ({
     <BottomSheetModal
       backdropComponent={renderBackdrop}
       backgroundStyle={{borderRadius: 20}}
+      snapPoints={fullscreen ? ['100%'] : undefined}
       enableDismissOnClose={true}
-      enableDynamicSizing={true}
+      enableDynamicSizing={!fullscreen}
       enableOverDrag={false}
       enablePanDownToClose={false}
       handleComponent={null}
       index={0}
       ref={bottomSheetModalRef}>
-      <BottomSheetView style={{height: fullscreen ? HEIGHT - 20 : undefined}}>
+      <BottomSheetView style={{height: fullscreen ? HEIGHT : undefined}}>
         {children}
       </BottomSheetView>
     </BottomSheetModal>

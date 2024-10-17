@@ -1782,6 +1782,8 @@ const SwapCryptoRoot: React.FC = () => {
       ) : null}
 
       <FromWalletSelectorModal
+        route={route}
+        navigation={navigation}
         isVisible={fromWalletSelectorModalVisible}
         customSupportedCurrencies={
           useDefaultToWallet && toWalletSelected
@@ -1812,6 +1814,8 @@ const SwapCryptoRoot: React.FC = () => {
         <GlobalSelectContainer
           style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
           <GlobalSelect
+            route={route}
+            navigation={navigation}
             modalContext={'swapTo'}
             livenetOnly={true}
             useAsModal={true}

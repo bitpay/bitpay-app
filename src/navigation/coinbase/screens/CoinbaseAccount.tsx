@@ -770,6 +770,8 @@ const CoinbaseAccount = ({
         <GlobalSelectContainer
           style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
           <GlobalSelect
+            route={route}
+            navigation={navigation}
             modalContext={'coinbase'}
             customSupportedCurrencies={customSupportedCurrencies}
             livenetOnly={true}
