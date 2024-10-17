@@ -22,6 +22,7 @@ buildscript {
         classpath 'com.google.android.gms:strict-version-matcher-plugin:1.2.1'
         classpath 'com.google.gms:google-services:4.3.14'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10")
     }
 }
 
