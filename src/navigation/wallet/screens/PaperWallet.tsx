@@ -619,6 +619,8 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
           <GlobalSelectContainer
             style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
             <GlobalSelect
+              route={route}
+              navigation={navigation}
               modalContext={'paperwallet'}
               useAsModal={true}
               modalTitle={t('Select Destination')}

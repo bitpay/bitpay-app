@@ -48,6 +48,8 @@ interface FromWalletSelectorModalProps {
   onDismiss: (toWallet?: any) => void;
   modalContext?: GlobalSelectModalContext;
   modalTitle?: string;
+  navigation: any;
+  route: any;
 }
 
 const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
@@ -57,6 +59,8 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
   onDismiss,
   modalContext,
   modalTitle,
+  navigation,
+  route,
 }) => {
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();
@@ -77,6 +81,8 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
       <GlobalSelectContainer
         style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
         <GlobalSelect
+          route={route}
+          navigation={navigation}
           useAsModal={true}
           modalTitle={modalTitle}
           customSupportedCurrencies={_customSupportedCurrencies}
