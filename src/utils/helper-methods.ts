@@ -678,7 +678,7 @@ interface RequestUiValues {
 export const processOtherMethodsRequest =
   (event: Web3WalletTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
-    console.log('processing other method transaction');
+    dispatch(LogActions.debug('processing other method transaction'));
     const {
       WALLET: {keys},
     } = getState();
@@ -718,7 +718,9 @@ export const processOtherMethodsRequest =
         swapFromCurrencyAbbreviation: currencyAbbreviation,
       };
     } catch (error) {
-      console.error(`Error processing ${method} request:`, error);
+      dispatch(
+        LogActions.error(`Error processing ${method} request: ${error}`),
+      );
       throw error;
     }
   };
@@ -726,30 +728,36 @@ export const processOtherMethodsRequest =
 export const processSwapRequest =
   (event: Web3WalletTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
+    const {
+      WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress, keys},
+      APP: {defaultAltCurrency},
+      RATE: {rates: allRates},
+    } = getState();
+
+    const tokenOptions = {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...tokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
+    };
+
+    const {params} = event;
+    const {chainId} = params;
+    const {method} = params.request;
+
+    const {to, data, from} = params.request.params[0];
+    const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+
+    if (data === '0x') {
+      return handleDefaultTransaction(
+        keys,
+        swapFromChain,
+        from,
+        method,
+        dispatch,
+      );
+    }
+
     try {
-      const {
-        WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress, keys},
-        APP: {defaultAltCurrency},
-        RATE: {rates: allRates},
-      } = getState();
-
-      const tokenOptions = {
-        ...BitpaySupportedTokenOptsByAddress,
-        ...tokenOptionsByAddress,
-        ...customTokenOptionsByAddress,
-      };
-
-      const {params} = event;
-      const {chainId} = params;
-      const {method} = params.request;
-
-      const {to, data, from} = params.request.params[0];
-      const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
-
-      if (data === '0x') {
-        return handleDefaultTransaction(keys, swapFromChain, from, method);
-      }
-
       const abi = await fetchContractAbi(dispatch, swapFromChain, to);
       const contractInterface = new ethers.utils.Interface(abi);
       const transactionData = contractInterface.parseTransaction({data});
@@ -765,9 +773,11 @@ export const processSwapRequest =
           swapFromChain,
           from,
           transactionDataName,
+          dispatch,
         ); // approve  / withdraw / deposit
       }
-      return handleSwapTransaction(
+
+      const transaction = await handleSwapTransaction(
         dispatch,
         keys,
         transactionData,
@@ -777,9 +787,19 @@ export const processSwapRequest =
         allRates,
         from,
       );
+      return transaction;
     } catch (error) {
-      console.error('Error processing swap request:', error);
-      throw error;
+      dispatch(LogActions.error(`Error processing swap request: ${error}`));
+      dispatch(
+        LogActions.debug('Continue anyway bulding a default transaction'),
+      );
+      return handleDefaultTransaction(
+        keys,
+        swapFromChain,
+        from,
+        method,
+        dispatch,
+      );
     }
   };
 
@@ -806,7 +826,7 @@ const fetchContractAbi = async (
     parsedAbi &&
     parsedAbi.some((item: any) => item.name === 'implementation')
   ) {
-    console.log('Detected EIP-1967 proxy contract');
+    dispatch(LogActions.debug('Detected EIP-1967 proxy contract'));
     const implementationSlot =
       '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
     const paddedImplementationAddress = await EtherscanAPI.getStorageAt(
@@ -818,6 +838,10 @@ const fetchContractAbi = async (
     abi = await dispatch(
       EtherscanAPI.getContractAbi(chain, implementationAddress),
     );
+    if (abi === 'Contract source code not verified') {
+      abi = JSON.stringify(ERC20_ABI); // Fallback to ERC20 ABI
+      return abi;
+    }
   }
   return abi;
 };
@@ -827,8 +851,9 @@ const handleDefaultTransaction = async (
   chain: string,
   senderAddress: string,
   transactionDataName: string,
+  dispatch: any,
 ) => {
-  console.log(`processing ${transactionDataName} transaction`);
+  dispatch(LogActions.debug(`processing ${transactionDataName} transaction`));
   const wallet = Object.values(keys).flatMap(key =>
     key.wallets.filter(
       wallet =>
@@ -857,7 +882,7 @@ const handleSwapTransaction = async (
   allRates: Rates,
   senderAddress: string,
 ) => {
-  console.log('processing swap transaction');
+  dispatch(LogActions.debug('processing swap transaction'));
   const inputArgs = transactionData.args[1];
   const inputChunks = splitInputsToChunks(inputArgs);
   const relevantChunk = inputChunks.find(chunk => chunk.length === 8);
