@@ -1,4 +1,4 @@
-import React, {memo} from 'react';
+import React, {memo, useState} from 'react';
 import FastImage from 'react-native-fast-image';
 import styled, {useTheme} from 'styled-components/native';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
@@ -24,7 +24,7 @@ import {SvgProps} from 'react-native-svg';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
-import DefaultImage from '../../../../assets/img/currencies/default.svg';
+import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 
 const CloseModalButton = styled.TouchableOpacity`
   height: 40px;
@@ -72,6 +72,7 @@ const VerifyContextModal = ({
   const theme = useTheme();
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const [imageError, setImageError] = useState(false);
 
   const {peer} = sessionV2 || {};
   const {name: peerName, icons, url: peerUrl} = peer?.metadata || {};
@@ -128,8 +129,14 @@ const VerifyContextModal = ({
         <ContentContainer>
           <RowContainer>
             <RowContainer>
-              {peerIcon ? (
-                <IconContainer source={{uri: peerIcon}} />
+              {peerIcon && !imageError ? (
+                <IconContainer>
+                  <FastImage
+                    source={{uri: peerIcon}}
+                    style={{width: 18, height: 18}}
+                    onError={() => setImageError(true)}
+                  />
+                </IconContainer>
               ) : (
                 <DefaultImage width={30} height={30} style={{marginRight: 5}} />
               )}

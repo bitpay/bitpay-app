@@ -628,7 +628,10 @@ const approveEIP155Request =
               delete sendTransaction.chainId;
             }
             // workaround for bad gas price estimation ONLY matic
-            if (chainId.includes('eip155:137') && !sendTransaction.maxFeePerGas) {
+            if (
+              chainId.includes('eip155:137') &&
+              !sendTransaction.maxFeePerGas
+            ) {
               const feeLevels = await getFeeLevelsUsingBwcClient(
                 'matic',
                 'livenet',

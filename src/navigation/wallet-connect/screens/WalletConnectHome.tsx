@@ -75,7 +75,7 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
-import DefaultImage from '../../../../assets/img/currencies/default.svg';
+import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import {SvgProps} from 'react-native-svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
 
@@ -133,6 +133,7 @@ const WalletConnectHome = () => {
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [accountDisconnected, setAccountDisconnected] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
+  const [imageError, setImageError] = useState(false);
   const {
     params: {topic, selectedAccountAddress, keyId, context},
   } = useRoute<RouteProp<{params: WalletConnectHomeParamList}>>();
@@ -462,10 +463,11 @@ const WalletConnectHome = () => {
                     peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                   }>
                   <IconContainer>
-                    {peerIcon ? (
+                    {peerIcon && !imageError ? (
                       <FastImage
                         source={{uri: peerIcon}}
                         style={{width: 19, height: 19}}
+                        onError={() => setImageError(true)}
                       />
                     ) : (
                       <DefaultImage width={19} height={19} />

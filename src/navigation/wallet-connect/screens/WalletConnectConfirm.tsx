@@ -67,7 +67,7 @@ import {Caution25, Success25, Warning25} from '../../../styles/colors';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
-import DefaultImage from '../../../../assets/img/currencies/default.svg';
+import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 
@@ -112,6 +112,7 @@ const WalletConnectConfirm = () => {
   const [showVerifyContextBottomModal, setShowVerifyContextBottomModal] =
     useState<boolean>(false);
   const [accountDisconnected, setAccountDisconnected] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const rates = useAppSelector(({RATE}) => RATE.rates);
@@ -395,10 +396,11 @@ const WalletConnectConfirm = () => {
                   peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                 }>
                 <IconContainer>
-                  {peerIcon ? (
+                  {peerIcon && !imageError ? (
                     <FastImage
                       source={{uri: peerIcon}}
                       style={{width: 18, height: 18}}
+                      onError={() => setImageError(true)}
                     />
                   ) : (
                     <DefaultImage />

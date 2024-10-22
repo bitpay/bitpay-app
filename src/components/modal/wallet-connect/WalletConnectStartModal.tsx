@@ -62,7 +62,7 @@ import ExternalLinkSvg from '../../../../assets/img/external-link-small.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
-import DefaultImage from '../../../../assets/img/currencies/default.svg';
+import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import Banner from '../../banner/Banner';
 import AccountWCV2RowModal from './AccountWCV2RowModal';
 import WCErrorBottomNotification from './WCErrorBottomNotification';
@@ -186,6 +186,7 @@ export const WalletConnectStartModal = () => {
   const [chainNames, setChainNames] = useState<string[]>([]);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
+  const [imageError, setImageError] = useState(false);
   const [checkedAccount, setCheckedAccount] = useState<
     AccountRowProps & {checked?: boolean}
   >();
@@ -434,7 +435,7 @@ export const WalletConnectStartModal = () => {
         style={{paddingLeft: 16, paddingRight: 16}}>
         <ScrollView>
           <IconContainer style={{marginTop: 36}}>
-            {peerImg ? (
+            {peerImg && !imageError ? (
               <FastImage
                 style={styles.icon}
                 source={{
@@ -442,6 +443,7 @@ export const WalletConnectStartModal = () => {
                   priority: FastImage.priority.normal,
                 }}
                 resizeMode={FastImage.resizeMode.cover}
+                onError={() => setImageError(true)}
               />
             ) : (
               <DefaultImage width={80} height={80} />
