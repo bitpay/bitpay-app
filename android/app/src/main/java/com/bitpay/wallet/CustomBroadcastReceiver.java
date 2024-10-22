@@ -21,6 +21,7 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
         if (action == null) {
             return;
         }
+
         Log.d(TAG, String.format("Received intent with action %s", action));
 
         switch (action) {
@@ -34,11 +35,12 @@ public class CustomBroadcastReceiver extends BroadcastReceiver {
                             extraParams.putString(key, value);
                         }
                     }
-                    Log.d(TAG, "Received push notification. Sending silent event...");
+                    Log.d(TAG, String.format("Received push notification. Sending silent event with params: %s", extraParams));
                     SilentPushModule.sendEvent("SilentPushNotification", extraParams);
                 }
                 break;
             case Constants.BRAZE_PUSH_INTENT_NOTIFICATION_OPENED:
+                Log.d(TAG, "Opened push notification.");
                 BrazeNotificationUtils.routeUserWithNotificationOpenedIntent(context, intent);
                 break;
             case Constants.BRAZE_PUSH_INTENT_NOTIFICATION_DELETED:

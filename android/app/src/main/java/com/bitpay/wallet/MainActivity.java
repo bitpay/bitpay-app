@@ -1,7 +1,6 @@
 package com.bitpay.wallet;
 
 import com.braze.ui.inappmessage.BrazeInAppMessageManager;
-import com.braze.ui.inappmessage.listeners.IInAppMessageManagerListener;
 import com.facebook.react.ReactActivity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,7 +14,7 @@ import android.graphics.Color;
 import android.view.Window;
 import android.view.WindowManager;
 import com.zoontek.rnbootsplash.RNBootSplash;
-import com.bitpay.wallet.CustomInAppMessageManagerListener;
+
 public class MainActivity extends ReactActivity {
 
   /**
@@ -64,9 +63,6 @@ public class MainActivity extends ReactActivity {
         setWindowFlag(this, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, false);
         win.setStatusBarColor(Color.TRANSPARENT);
       }
-      CustomInAppMessageManagerListener customListener = new CustomInAppMessageManagerListener();
-      BrazeInAppMessageManager.getInstance().setCustomInAppMessageManagerListener(customListener);
-      BrazeInAppMessageManager.getInstance().ensureSubscribedToInAppMessageEvents(MainActivity.this);
   }
 
   public static void setWindowFlag(Activity activity, final int bits, boolean on) {
