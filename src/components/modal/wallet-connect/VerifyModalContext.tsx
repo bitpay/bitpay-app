@@ -1,4 +1,4 @@
-import React, {memo} from 'react';
+import React, {memo, useState} from 'react';
 import FastImage from 'react-native-fast-image';
 import styled, {useTheme} from 'styled-components/native';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
@@ -24,6 +24,8 @@ import {SvgProps} from 'react-native-svg';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
+import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
+import {View} from 'react-native';
 
 const CloseModalButton = styled.TouchableOpacity`
   height: 40px;
@@ -53,6 +55,8 @@ const IconContainer = styled(FastImage)`
   width: 30px;
   height: 30px;
   margin-right: 5px;
+  align-items: center;
+  justify-content: center;
 `;
 
 interface VerifyContextModalProps {
@@ -71,6 +75,7 @@ const VerifyContextModal = ({
   const theme = useTheme();
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const [imageError, setImageError] = useState(false);
 
   const {peer} = sessionV2 || {};
   const {name: peerName, icons, url: peerUrl} = peer?.metadata || {};
@@ -127,8 +132,22 @@ const VerifyContextModal = ({
         <ContentContainer>
           <RowContainer>
             <RowContainer>
-              {peerIcon && <IconContainer source={{uri: peerIcon}} />}
-              <H4>{peerName}</H4>
+              {peerIcon && !imageError ? (
+                <IconContainer>
+                  <FastImage
+                    source={{uri: peerIcon}}
+                    style={{width: 18, height: 18}}
+                    onError={() => setImageError(true)}
+                  />
+                </IconContainer>
+              ) : (
+                <DefaultImage width={30} height={30} style={{marginRight: 5}} />
+              )}
+              <View style={{width: 150}}>
+                <H4 ellipsizeMode="tail" numberOfLines={1}>
+                  {peerName}
+                </H4>
+              </View>
             </RowContainer>
             {peerUrl && (
               <UriContainerTouchable
@@ -146,6 +165,7 @@ const VerifyContextModal = ({
             title={title}
             description={text}
             hasBackgroundColor={true}
+            icon={VerifyIcon}
           />
           <RowContainer style={{paddingTop: 16}}>
             <StyledTouchableOpacity onPress={closeModal}>

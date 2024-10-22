@@ -6,10 +6,13 @@ import VerifiedIcon from '../../../../assets/img/wallet-connect/verified-icon.sv
 import WalletIcon from '../../../../assets/img/wallet-connect/wallet-icon.svg';
 import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
 import {
+  Caution,
+  Caution25,
   LightBlack,
   NeutralSlate,
   SlateDark,
   Success25,
+  Warning25,
   White,
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
@@ -57,12 +60,16 @@ import {TouchableOpacity} from 'react-native';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import ExternalLinkSvg from '../../../../assets/img/external-link-small.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
+import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
+import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
+import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import Banner from '../../banner/Banner';
 import AccountWCV2RowModal from './AccountWCV2RowModal';
 import WCErrorBottomNotification from './WCErrorBottomNotification';
 import WarningBrownSvg from '../../../../assets/img/warning-brown.svg';
 import {getNavigationTabName, RootStacks} from '../../../Root';
 import {SettingsScreens} from '../../../navigation/tabs/settings/SettingsGroup';
+import {SvgProps} from 'react-native-svg';
 
 export type WalletConnectStartParamList = {
   // version 2
@@ -179,6 +186,7 @@ export const WalletConnectStartModal = () => {
   const [chainNames, setChainNames] = useState<string[]>([]);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
+  const [imageError, setImageError] = useState(false);
   const [checkedAccount, setCheckedAccount] = useState<
     AccountRowProps & {checked?: boolean}
   >();
@@ -332,9 +340,8 @@ export const WalletConnectStartModal = () => {
   };
 
   const _setAllKeysAndSelectedWallets = () => {
-    let checkedCount = 0;
     const formattedKeys = Object.values(keys)
-      .map(key => {
+      .map((key, keyIndex) => {
         const accountList = buildAccountList(
           key,
           defaultAltCurrency.isoCode,
@@ -350,9 +357,9 @@ export const WalletConnectStartModal = () => {
           },
         ) as AccountRowProps[];
 
-        const accounts = accountList.map((account, index) => ({
+        const accounts = accountList.map((account, accountListIndex) => ({
           ...account,
-          checked: index === 0,
+          checked: accountListIndex === 0 && keyIndex === 0,
         })) as (AccountRowProps & {checked?: boolean})[];
 
         if (accounts.length === 0) {
@@ -427,8 +434,8 @@ export const WalletConnectStartModal = () => {
         paddingHorizontal={0}
         style={{paddingLeft: 16, paddingRight: 16}}>
         <ScrollView>
-          {peerImg ? (
-            <IconContainer style={{marginTop: 36}}>
+          <IconContainer style={{marginTop: 36}}>
+            {peerImg && !imageError ? (
               <FastImage
                 style={styles.icon}
                 source={{
@@ -436,9 +443,12 @@ export const WalletConnectStartModal = () => {
                   priority: FastImage.priority.normal,
                 }}
                 resizeMode={FastImage.resizeMode.cover}
+                onError={() => setImageError(true)}
               />
-            </IconContainer>
-          ) : null}
+            ) : (
+              <DefaultImage width={80} height={80} />
+            )}
+          </IconContainer>
           <View
             style={{
               marginTop: 16,
@@ -467,26 +477,25 @@ export const WalletConnectStartModal = () => {
                         <ExternalLinkSvg width={12} />
                       </UriContainer>
                     </UriContainerTouchable>
-                    {/* {verifyContext &&
+                    {verifyContext &&
                       (() => {
                         let bgColor = '';
                         let textColor = '';
                         let text = '';
                         let Icon = null;
                         switch (verifyContext.verified.validation) {
-                          // TODO it's necessary to add the other case? we already have the banner
-                          // case 'UNKNOWN':
-                          //   bgColor = Warning25;
-                          //   textColor = '#AC6304';
-                          //   text = t('Cannot Verify');
-                          //   Icon = WarningOutlineSvg;
-                          //   break;
-                          // case 'INVALID':
-                          //   bgColor = Caution25;
-                          //   textColor = Caution;
-                          //   text = t('Security Risk');
-                          //   Icon = InvalidDomainSvg;
-                          //   break;
+                          case 'UNKNOWN':
+                            bgColor = Warning25;
+                            textColor = '#AC6304';
+                            text = t('Cannot Verify');
+                            Icon = WarningOutlineSvg;
+                            break;
+                          case 'INVALID':
+                            bgColor = Caution25;
+                            textColor = Caution;
+                            text = t('Security Risk');
+                            Icon = InvalidDomainSvg;
+                            break;
                           case 'VALID':
                             bgColor = Success25;
                             textColor = '#0B754A';
@@ -506,15 +515,17 @@ export const WalletConnectStartModal = () => {
                             <Icon />
                           </ValidationContainer>
                         );
-                      })()} */}
+                      })()}
                   </Row>
-                  {/* {verifyContext &&
+                  {verifyContext &&
                     (() => {
                       let text = '';
                       let type = '';
                       let title = '';
+                      let VerifyIcon: React.FC<SvgProps> | null = null;
                       switch (verifyContext.verified.validation) {
                         case 'UNKNOWN':
+                          VerifyIcon = WarningOutlineSvg;
                           text = t(
                             'The domain sending the request cannot be verified.',
                           );
@@ -527,6 +538,7 @@ export const WalletConnectStartModal = () => {
                         //   title = t('Trusted Domain');
                         //   break;
                         case 'INVALID':
+                          VerifyIcon = InvalidDomainSvg;
                           text = t(
                             "The application's domain doesn't match the sender of this request.",
                           );
@@ -544,9 +556,10 @@ export const WalletConnectStartModal = () => {
                           title={title}
                           description={text}
                           hasBackgroundColor={true}
+                          icon={VerifyIcon}
                         />
                       );
-                    })()} */}
+                    })()}
                 </View>
                 <DescriptionContainer>
                   <H7

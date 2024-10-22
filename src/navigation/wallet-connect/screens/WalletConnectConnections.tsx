@@ -53,6 +53,7 @@ import Blockie from '../../../components/blockie/Blockie';
 import Settings from '../../../components/settings/Settings';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import Button from '../../../components/button/Button';
+import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 
 const WalletConnectConnectionsContainer = styled.SafeAreaView`
   flex: 1;
@@ -98,6 +99,7 @@ const WalletConnectConnections = () => {
   const navigation = useNavigation();
   const theme = useTheme();
   const [showSessionOptions, setShowSessionOptions] = useState(false);
+  const [imageError, setImageError] = useState({});
   const sessions: WCV2SessionType[] = useAppSelector(
     ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
   );
@@ -134,14 +136,23 @@ const WalletConnectConnections = () => {
     peerUrl: string;
     session?: WCV2SessionType;
   }) => {
+    // @ts-ignore
+    const imgError = imageError[peerUrl];
     return (
       <ItemContainer>
         <ItemTitleContainer>
           <IconContainer>
-            <FastImage
-              source={{uri: peerIcon}}
-              style={{width: 40, height: 40}}
-            />
+            {peerIcon && !imgError ? (
+              <FastImage
+                source={{uri: peerIcon}}
+                style={{width: 40, height: 40}}
+                onError={() => {
+                  setImageError({...imageError, [peerUrl]: true});
+                }}
+              />
+            ) : (
+              <DefaultImage width={40} height={40} />
+            )}
           </IconContainer>
           <Column style={{marginLeft: 16}}>
             <H6>{peerName}</H6>
