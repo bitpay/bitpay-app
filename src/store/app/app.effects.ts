@@ -443,20 +443,6 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       contentCardSubscription = null;
     }
 
-    Braze.subscribeToInAppMessage(false, (event: any) => {
-      const parsedData = JSON.parse(event.inAppMessage);
-      if (parsedData.type === 'HTML' || parsedData.type === 'HTML_FULL') {
-        LogActions.debug(
-          'InAppMessage Event Received. Do not show until Home is ready',
-        );
-        dispatch(AppActions.attachInAppMessage(event.inAppMessage));
-      } else {
-        LogActions.debug(
-          `InAppMessage Event Received but format is not supported. Type: ${parsedData.type}, Message: ${parsedData.message}`,
-        );
-      }
-    });
-
     // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
     const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
     const MAX_RETRIES = 3;

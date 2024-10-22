@@ -89,19 +89,6 @@ export const dismissWalletConnectStartModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_WALLET_CONNECT_START_MODAL,
 });
 
-export const showInAppMessage = (): AppActionType => ({
-  type: AppActionTypes.SHOW_IN_APP_MESSAGE,
-});
-
-export const attachInAppMessage = (message: string): AppActionType => ({
-  type: AppActionTypes.ATTACH_IN_APP_MESSAGE,
-  payload: message,
-});
-
-export const dismissInAppMessage = (): AppActionType => ({
-  type: AppActionTypes.DISMISS_IN_APP_MESSAGE,
-});
-
 export const showInAppNotification = (
   context: InAppNotificationContextType,
   message: string,

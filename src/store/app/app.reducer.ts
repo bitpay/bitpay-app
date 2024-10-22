@@ -44,7 +44,6 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showBottomNotificationModal',
   'showChainSelectorModal',
   'showDecryptPasswordModal',
-  'showInAppMessage',
   'showInAppNotification',
   'showOnGoingProcessModal',
   'showWalletConnectStartModal',
@@ -100,7 +99,6 @@ export interface AppState {
   showOnGoingProcessModal: boolean;
   showWalletConnectStartModal: boolean;
   onGoingProcessModalMessage: string | undefined;
-  showInAppMessage: boolean;
   inAppMessageData: string | undefined;
   showInAppNotification: boolean;
   inAppNotificationData:
@@ -203,7 +201,6 @@ const initialState: AppState = {
   showOnGoingProcessModal: false,
   showWalletConnectStartModal: false,
   onGoingProcessModalMessage: undefined,
-  showInAppMessage: false,
   inAppMessageData: undefined,
   showInAppNotification: false,
   inAppNotificationData: undefined,
@@ -364,25 +361,6 @@ export const appReducer = (
       return {
         ...state,
         showWalletConnectStartModal: false,
-      };
-
-    case AppActionTypes.SHOW_IN_APP_MESSAGE:
-      return {
-        ...state,
-        showInAppMessage: true,
-      };
-
-    case AppActionTypes.ATTACH_IN_APP_MESSAGE:
-      return {
-        ...state,
-        inAppMessageData: action.payload,
-      };
-
-    case AppActionTypes.DISMISS_IN_APP_MESSAGE:
-      return {
-        ...state,
-        showInAppMessage: false,
-        inAppMessageData: '',
       };
 
     case AppActionTypes.SHOW_IN_APP_NOTIFICATION:

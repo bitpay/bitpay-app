@@ -36,9 +36,6 @@ export enum AppActionTypes {
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
   SHOW_WALLET_CONNECT_START_MODAL = 'APP/SHOW_WALLET_CONNECT_START_MODAL',
   DISMISS_WALLET_CONNECT_START_MODAL = 'APP/DISMISS_WALLET_CONNECT_START_MODAL',
-  SHOW_IN_APP_MESSAGE = 'APP/SHOW_IN_APP_MESSAGE',
-  ATTACH_IN_APP_MESSAGE = 'APP/ATTACH_IN_APP_MESSAGE',
-  DISMISS_IN_APP_MESSAGE = 'APP/DISMISS_IN_APP_MESSAGE',
   SHOW_IN_APP_NOTIFICATION = 'APP/SHOW_IN_APP_NOTIFICATION',
   DISMISS_IN_APP_NOTIFICATION = 'APP/DISMISS_IN_APP_NOTIFICATION',
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
@@ -165,18 +162,6 @@ interface ShowWalletConnectStartModal {
 
 interface DismissWalletConnectStartModal {
   type: typeof AppActionTypes.DISMISS_WALLET_CONNECT_START_MODAL;
-}
-interface ShowInAppMessage {
-  type: typeof AppActionTypes.SHOW_IN_APP_MESSAGE;
-}
-
-interface AttachInAppMessage {
-  type: typeof AppActionTypes.ATTACH_IN_APP_MESSAGE;
-  payload: string;
-}
-
-interface DismissInAppMessage {
-  type: typeof AppActionTypes.DISMISS_IN_APP_MESSAGE;
 }
 
 interface ShowInAppNotification {
@@ -452,9 +437,6 @@ export type AppActionType =
   | setAppInstalled
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal
-  | ShowInAppMessage
-  | AttachInAppMessage
-  | DismissInAppMessage
   | ShowInAppNotification
   | DismissInAppNotification
   | ShowBottomNotificationModal
