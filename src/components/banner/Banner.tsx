@@ -17,6 +17,7 @@ import {
 import {H7, Link} from '../styled/Text';
 import {ActionContainer, ActiveOpacity, Row} from '../styled/Containers';
 import {TouchableOpacity} from 'react-native';
+import {SvgProps} from 'react-native-svg';
 
 const BANNER_HEIGHT = 80;
 
@@ -51,6 +52,7 @@ interface BannerProps {
   transComponent?: JSX.Element;
   height?: number;
   hasBackgroundColor?: boolean;
+  icon?: React.FC<SvgProps> | null;
 }
 
 const getBgColor = (type: string) => {
@@ -62,7 +64,7 @@ const getBgColor = (type: string) => {
     case 'error':
       return Caution;
     case 'success':
-      return Success;
+      return '#0B754A';
     default:
       return Slate;
   }
@@ -91,6 +93,7 @@ const Banner = ({
   transComponent,
   height,
   hasBackgroundColor,
+  icon,
 }: BannerProps) => {
   const bgColor = getBgColor(type);
   const containerBgColor = hasBackgroundColor
@@ -100,8 +103,7 @@ const Banner = ({
   return (
     <BannerContainer height={height} containerBgColor={containerBgColor}>
       <BannerRow>
-        <Info bgColor={bgColor} />
-
+        {icon ? React.createElement(icon) : <Info bgColor={bgColor} />}
         <Description>
           {title ? (
             <H7

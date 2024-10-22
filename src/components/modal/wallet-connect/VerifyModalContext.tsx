@@ -151,6 +151,7 @@ const VerifyContextModal = ({
             title={title}
             description={text}
             hasBackgroundColor={true}
+            icon={VerifyIcon}
           />
           <RowContainer style={{paddingTop: 16}}>
             <StyledTouchableOpacity onPress={closeModal}>

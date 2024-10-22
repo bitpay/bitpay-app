@@ -69,6 +69,7 @@ import WCErrorBottomNotification from './WCErrorBottomNotification';
 import WarningBrownSvg from '../../../../assets/img/warning-brown.svg';
 import {getNavigationTabName, RootStacks} from '../../../Root';
 import {SettingsScreens} from '../../../navigation/tabs/settings/SettingsGroup';
+import {SvgProps} from 'react-native-svg';
 
 export type WalletConnectStartParamList = {
   // version 2
@@ -520,8 +521,10 @@ export const WalletConnectStartModal = () => {
                       let text = '';
                       let type = '';
                       let title = '';
+                      let VerifyIcon: React.FC<SvgProps> | null = null;
                       switch (verifyContext.verified.validation) {
                         case 'UNKNOWN':
+                          VerifyIcon = WarningOutlineSvg;
                           text = t(
                             'The domain sending the request cannot be verified.',
                           );
@@ -534,6 +537,7 @@ export const WalletConnectStartModal = () => {
                         //   title = t('Trusted Domain');
                         //   break;
                         case 'INVALID':
+                          VerifyIcon = InvalidDomainSvg;
                           text = t(
                             "The application's domain doesn't match the sender of this request.",
                           );
@@ -551,6 +555,7 @@ export const WalletConnectStartModal = () => {
                           title={title}
                           description={text}
                           hasBackgroundColor={true}
+                          icon={VerifyIcon}
                         />
                       );
                     })()}
