@@ -369,6 +369,7 @@ const WalletConnectConfirm = () => {
               components={[<BaseText style={{fontWeight: 'bold'}} />]}
             />
           }
+          icon={VerifyIcon}
         />
         <Hr />
         <ItemContainer>
