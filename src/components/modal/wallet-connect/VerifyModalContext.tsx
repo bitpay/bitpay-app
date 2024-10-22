@@ -25,6 +25,7 @@ import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
+import {View} from 'react-native';
 
 const CloseModalButton = styled.TouchableOpacity`
   height: 40px;
@@ -54,6 +55,8 @@ const IconContainer = styled(FastImage)`
   width: 30px;
   height: 30px;
   margin-right: 5px;
+  align-items: center;
+  justify-content: center;
 `;
 
 interface VerifyContextModalProps {
@@ -140,7 +143,11 @@ const VerifyContextModal = ({
               ) : (
                 <DefaultImage width={30} height={30} style={{marginRight: 5}} />
               )}
-              <H4>{peerName}</H4>
+              <View style={{width: 150}}>
+                <H4 ellipsizeMode="tail" numberOfLines={1}>
+                  {peerName}
+                </H4>
+              </View>
             </RowContainer>
             {peerUrl && (
               <UriContainerTouchable
