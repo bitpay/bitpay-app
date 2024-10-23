@@ -9,8 +9,6 @@
 #import "AppDelegate.h"
 @implementation InAppMessageModule
 
-RCT_EXPORT_MODULE();
-
 RCT_EXPORT_METHOD(notifyReactNativeAppLoaded) {
   dispatch_async(dispatch_get_main_queue(), ^{
     AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;

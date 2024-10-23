@@ -12,8 +12,12 @@
 #import <RNKeyEvent.h>
 
 // Braze SDK
-@import BrazeKit;
+#import <BrazeKit/BrazeKit-Swift.h>
+#import "BrazeReactBridge.h"
 @import BrazeUI;
+
+@interface AppDelegate () <BrazeInAppMessageUIDelegate>
+@end
 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -30,11 +34,12 @@
   // Setup Braze
   BRZConfiguration *configuration = [[BRZConfiguration alloc] initWithApiKey:@"BRAZE_API_KEY_REPLACE_ME" endpoint:@"sdk.iad-05.braze.com"];
   configuration.logger.level = BRZLoggerLevelInfo;
-  Braze *braze = [[Braze alloc] initWithConfiguration:configuration];
+
+  Braze *braze = [BrazeReactBridge initBraze:configuration];
   AppDelegate.braze = braze;
- 
-  // Enable IAM
-  AppDelegate.braze.inAppMessagePresenter = [[BrazeInAppMessageUI alloc] init];
+  BrazeInAppMessageUI *inAppMessageUI = [[BrazeInAppMessageUI alloc] init];
+  inAppMessageUI.delegate = self;
+  AppDelegate.braze.inAppMessagePresenter = inAppMessageUI;
   self.isBitPayAppLoaded = NO;
 
   RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
@@ -145,17 +150,16 @@ static Braze *_braze = nil;
   _braze = braze;
 }
 
-#pragma mark - ABKInAppMessageControllerDelegate
+#pragma mark - inAppMessage
 
-- (BRZInAppMessageUIDisplayChoice)beforeInAppMessageDisplayed:(BRZInAppMessageRaw *)inAppMessage {
+- (enum BRZInAppMessageUIDisplayChoice)inAppMessage:(BrazeInAppMessageUI *)ui displayChoiceForMessage:(BRZInAppMessageRaw *)message {
   if (!self.isBitPayAppLoaded) {
-    // Cache the in-app message if the app is not ready
     NSLog(@"BitPay App not ready, caching the in-app message.");
-    self.cachedInAppMessage = inAppMessage;
-    return BRZInAppMessageUIDisplayChoiceDiscard;
+    self.cachedInAppMessage = message;
+    return BRZInAppMessageUIDisplayChoiceReenqueue;
+  } else {
+    return BRZInAppMessageUIDisplayChoiceNow;
   }
-  // Display the in-app message immediately if the app is ready
-  return BRZInAppMessageUIDisplayChoiceNow;
 }
 
 #pragma mark - Handling App Load State
@@ -164,10 +168,9 @@ static Braze *_braze = nil;
   self.isBitPayAppLoaded = loaded;
 
   if (loaded && self.cachedInAppMessage != nil) {
-    // If the app is ready and there is a cached message, display it
     NSLog(@"BitPay App is ready, displaying cached IAM.");
     [AppDelegate.braze.inAppMessagePresenter presentMessage:self.cachedInAppMessage];
-    self.cachedInAppMessage = nil;  // Clear the cached message
+    self.cachedInAppMessage = nil;
   }
 }
 

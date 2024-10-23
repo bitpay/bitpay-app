@@ -6,7 +6,6 @@
 //
 
 #import <React/RCTBridgeModule.h>
-#import "AppDelegate.h"
 
 @interface RCT_EXTERN_MODULE(InAppMessageModule, NSObject)
 RCT_EXTERN_METHOD(notifyReactNativeAppLoaded)
