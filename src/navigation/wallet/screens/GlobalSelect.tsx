@@ -803,7 +803,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         setHideCloseButton(true);
       }
       return allCurrencyData;
-    } else {
+    } else if (!customToSelectCurrencies) {
       allCurrencyData = buildSelectableWalletList(
         allCurrencies,
         wallets,
@@ -811,6 +811,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       );
       setDataToDisplay(Object.values(allCurrencyData).splice(0, 20));
       return Object.values(allCurrencyData);
+    } else {
+      return [];
     }
   }, []);
 
