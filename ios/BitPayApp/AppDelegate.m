@@ -1,5 +1,6 @@
 #import "AppDelegate.h"
 #import "../AllowedUrlPrefixProtocol.h"
+#import "../SilentPushEvent.h"
 #import <RNAppsFlyer.h>
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTHTTPRequestHandler.h>
@@ -136,6 +137,13 @@ RNKeyEvent *keyEvent = nil;
 - (void)keyInput:(UIKeyCommand *)sender {
   NSString *selected = sender.input;
   [keyEvent sendKeyEvent:selected];
+}
+
+- (void)application:(UIApplication *)application
+didReceiveRemoteNotification:(NSDictionary *)userInfo
+fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+{
+    [SilentPushEvent emitEventWithName:@"SilentPushNotification" andPayload:userInfo];
 }
 
 #pragma mark - AppDelegate.braze
