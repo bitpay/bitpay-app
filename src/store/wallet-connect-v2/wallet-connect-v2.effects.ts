@@ -235,68 +235,136 @@ export const walletConnectV2SubscribeToEvents =
         if (requestExist) {
           dispatch(
             LogActions.info(
-              '[WC-V2/walletConnectV2SubscribeToEvents]: pending request already stored - update it',
+              '[WC-V2/walletConnectV2SubscribeToEvents]: pending request already stored - updating it',
             ),
           );
         }
 
+        const isChainSupported = Object.keys(
+          WALLET_CONNECT_SUPPORTED_CHAINS,
+        ).includes(event.params.chainId);
+        const isMethodSupported = Object.values(
+          EIP155_SIGNING_METHODS,
+        ).includes(event.params.request.method);
+
+        if (!isChainSupported || !isMethodSupported) {
+          return;
+        }
+
+        // If method doesn't require user interaction, auto-approve
         if (
-          Object.keys(WALLET_CONNECT_SUPPORTED_CHAINS).includes(
-            event.params.chainId,
-          ) &&
-          Object.values(EIP155_SIGNING_METHODS).includes(
+          EIP155_METHODS_NOT_INTERACTION_NEEDED.includes(
             event.params.request.method,
           )
         ) {
-          const {name, params} =
-            (navigationRef.current?.getCurrentRoute() as any) || {};
-
-          // events that needs to be approved automatically without user interaction
-          if (
-            EIP155_METHODS_NOT_INTERACTION_NEEDED.includes(
-              event.params.request.method,
-            )
-          ) {
-            await web3wallet.respondSessionRequest({
-              topic: event.topic,
-              response: formatJsonRpcResult(event.id, null),
-            });
-            return;
-          }
-
-          try {
-            let proccesedSwapRequestData = {};
-            if (event.params.request.method === 'eth_sendTransaction') {
-              proccesedSwapRequestData = await dispatch(
-                processSwapRequest(event),
-              );
-            } else {
-              proccesedSwapRequestData = await dispatch(
-                processOtherMethodsRequest(event),
-              );
-            }
-            dispatch(
-              WalletConnectV2Actions.sessionRequest({
-                ...event,
-                ...proccesedSwapRequestData,
-                createdOn: Date.now(),
-              }),
-            );
-            if (name !== 'WalletConnectHome' && !requestExist) {
-              dispatch(
-                startInAppNotification(
-                  'NEW_PENDING_REQUEST',
-                  event,
-                  'notification',
-                ),
-              );
-            }
-          } catch (error) {
-            console.error(`Error processing request ID ${event.id}:`, error);
-          }
+          await handleAutoApproval(event);
+          return;
         }
+
+        // Process the request that requires user interaction
+        await handleUserInteraction(event, requestExist);
       },
     );
+
+    const handleAutoApproval = async (
+      event: Web3WalletTypes.EventArguments['session_request'],
+    ) => {
+      const newChainId = event?.params?.request?.params?.[0]?.chainId;
+
+      if (!newChainId) {
+        return;
+      }
+
+      const eip155ChainId = parseAndFormatChainId(newChainId);
+
+      await web3wallet.respondSessionRequest({
+        topic: event.topic,
+        response: formatJsonRpcResult(event.id, null),
+      });
+
+      try {
+        await emitSessionEvents(event, eip155ChainId);
+      } catch (error) {
+        console.error('Error on emitSessionEvent:', error);
+      }
+    };
+
+    const handleUserInteraction = async (
+      event: Web3WalletTypes.EventArguments['session_request'],
+      requestExist: boolean,
+    ) => {
+      const {name: currentRouteName} =
+        (navigationRef.current?.getCurrentRoute() as any) || {};
+
+      try {
+        let processedRequestData = {};
+
+        if (event.params.request.method === 'eth_sendTransaction') {
+          processedRequestData = await dispatch(processSwapRequest(event));
+        } else {
+          processedRequestData = await dispatch(
+            processOtherMethodsRequest(event),
+          );
+        }
+
+        dispatch(
+          WalletConnectV2Actions.sessionRequest({
+            ...event,
+            ...processedRequestData,
+            createdOn: Date.now(),
+          }),
+        );
+
+        if (currentRouteName !== 'WalletConnectHome' && !requestExist) {
+          dispatch(
+            startInAppNotification(
+              'NEW_PENDING_REQUEST',
+              event,
+              'notification',
+            ),
+          );
+        }
+      } catch (error) {
+        console.error(`Error processing request ID ${event.id}:`, error);
+      }
+    };
+
+    const parseAndFormatChainId = (chainId: string) => {
+      const parsedChainId = chainId.startsWith('0x')
+        ? parseInt(chainId, 16)
+        : parseInt(chainId, 10);
+      return `eip155:${parsedChainId}`;
+    };
+
+    const emitSessionEvents = async (
+      event: Web3WalletTypes.EventArguments['session_request'],
+      eip155ChainId: string,
+    ) => {
+      const chainChanged = {
+        topic: event.topic,
+        event: {
+          name: 'chainChanged',
+          data: parseInt(eip155ChainId.split(':')[1], 10),
+        },
+        chainId: eip155ChainId,
+      };
+
+      const session: WCV2SessionType | undefined =
+        getState().WALLET_CONNECT_V2.sessions.find(
+          (session: WCV2SessionType) => session.topic === event.topic,
+        );
+
+      const address = session?.accounts[0].split(':')[2];
+      const accountsChanged = {
+        topic: event.topic,
+        event: {name: 'accountsChanged', data: [`${eip155ChainId}:${address}`]},
+        chainId: eip155ChainId,
+      };
+
+      await web3wallet.emitSessionEvent(chainChanged);
+      await web3wallet.emitSessionEvent(accountsChanged);
+    };
+
     web3wallet.on(
       'session_delete',
       async (data: Web3WalletTypes.EventArguments['session_delete']) => {
