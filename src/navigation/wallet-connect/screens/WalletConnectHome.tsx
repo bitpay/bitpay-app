@@ -21,8 +21,10 @@ import {
   Column,
   CtaContainerAbsolute,
   CurrencyColumn,
+  CurrencyImageContainer,
   Hr,
   Row,
+  RowContainer,
 } from '../../../components/styled/Containers';
 import {HeaderTitle} from '../styled/WalletConnectText';
 import {
@@ -31,9 +33,9 @@ import {
   ItemTitleContainer,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {FlatList, View} from 'react-native';
+import {FlatList, Platform, View} from 'react-native';
 import FastImage from 'react-native-fast-image';
-import {sleep} from '../../../utils/helper-methods';
+import {getProtocolName, sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
@@ -42,19 +44,14 @@ import {
 } from '../../../store/app/app.actions';
 import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
-import {FormatAmountStr} from '../../../store/wallet/effects/amount/amount';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {
   getAddressFrom,
   walletConnectV2OnUpdateSession,
+  walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {
-  GetAmFormatDate,
-  GetAmTimeAgo,
-  WithinPastDay,
-} from '../../../store/wallet/utils/time';
 import {
   WCV2RequestType,
   WCV2SessionType,
@@ -67,23 +64,29 @@ import {WalletConnectHeader} from '../WalletConnectGroup';
 import {InAppNotificationContextType} from '../../../store/app/app.models';
 import Blockie from '../../../components/blockie/Blockie';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {buildTestBadge} from '../../../components/list/WalletRow';
 import Button from '../../../components/button/Button';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useTheme} from '@react-navigation/native';
-import {BitpaySupportedCoins} from '../../../constants/currencies';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import {SvgProps} from 'react-native-svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
+import {
+  GetAmFormatDate,
+  GetAmTimeAgo,
+  WithinPastDay,
+} from '../../../store/wallet/utils/time';
+import {BitpaySupportedCoins} from '../../../constants/currencies';
+import {Keys} from '../../../store/wallet/wallet.reducer';
 
 export type WalletConnectHomeParamList = {
   topic?: string;
   selectedAccountAddress: string;
   keyId: string;
   context?: InAppNotificationContextType;
+  notificationRequestId?: number;
 };
 
 const SummaryContainer = styled.View`
@@ -125,6 +128,43 @@ const VerifyIconContainer = styled(TouchableOpacity)`
   border-radius: 50px;
 `;
 
+const processRequest = (request: WCV2RequestType, keys: Keys) => {
+  const {senderAddress, swapFromCurrencyAbbreviation, swapFromChain} = request;
+
+  let wallet = Object.values(keys)
+    .flatMap(key => key.wallets)
+    .find(
+      wallet =>
+        wallet.receiveAddress?.toLowerCase() === senderAddress!.toLowerCase() &&
+        wallet.chain === swapFromChain &&
+        wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+    );
+
+  let _swapFromCurrencyAbbreviation = swapFromCurrencyAbbreviation;
+
+  if (!wallet) {
+    wallet = Object.values(keys)
+      .flatMap(key => key.wallets)
+      .find(
+        wallet =>
+          wallet.receiveAddress?.toLowerCase() ===
+            senderAddress!.toLowerCase() && wallet.chain === swapFromChain,
+      );
+
+    _swapFromCurrencyAbbreviation =
+      // @ts-ignore
+      BitpaySupportedCoins[swapFromChain]?.coin?.toLowerCase();
+  }
+
+  const {img, badgeImg} = wallet || {};
+
+  return {
+    ...request,
+    currencyImg: img,
+    badgeImg,
+  };
+};
+
 const WalletConnectHome = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
@@ -135,7 +175,13 @@ const WalletConnectHome = () => {
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const [imageError, setImageError] = useState(false);
   const {
-    params: {topic, selectedAccountAddress, keyId, context},
+    params: {
+      topic,
+      selectedAccountAddress,
+      keyId,
+      context,
+      notificationRequestId,
+    },
   } = useRoute<RouteProp<{params: WalletConnectHomeParamList}>>();
   const key = keys[keyId];
   const keyFullWalletObjs = key.wallets.filter(
@@ -149,7 +195,7 @@ const WalletConnectHome = () => {
     ({WALLET_CONNECT_V2}) =>
       WALLET_CONNECT_V2.sessions.find(session => session.topic === topic),
   );
-  const requestsV2 = useAppSelector(({WALLET_CONNECT_V2}) =>
+  let requestsV2 = useAppSelector(({WALLET_CONNECT_V2}) =>
     WALLET_CONNECT_V2.requests
       .filter(request => {
         const addressFrom = getAddressFrom(request)?.toLowerCase();
@@ -160,6 +206,44 @@ const WalletConnectHome = () => {
       })
       .reverse(),
   );
+
+  requestsV2 = requestsV2.map(request => processRequest(request, keys));
+
+  useEffect(() => {
+    const checkIfRequestsV2AreIncomplete = async () => {
+      const incompleteRequests = requestsV2.filter(
+        request =>
+          request.params.request.method === 'eth_sendTransaction' &&
+          !request.transactionDataName,
+      );
+
+      if (incompleteRequests.length > 0) {
+        await Promise.all(
+          incompleteRequests.map(async request => {
+            await rejectCallRequest(request);
+          }),
+        );
+      }
+    };
+
+    checkIfRequestsV2AreIncomplete();
+  }, [requestsV2]);
+
+  const rejectCallRequest = async (request: WCV2RequestType) => {
+    haptic('impactLight');
+    try {
+      await dispatch(walletConnectV2RejectCallRequest(request));
+    } catch (err) {
+      dispatch(dismissOnGoingProcessModal());
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(err),
+          title: t('Uh oh, something went wrong'),
+        }),
+      );
+    }
+  };
+
   const {peer} = sessionV2 || {};
   const {name: peerName, icons, url: peerUrl} = peer?.metadata || {};
   const peerIcon = icons && icons[0];
@@ -290,18 +374,8 @@ const WalletConnectHome = () => {
     }
   };
 
-  const handleRequestMethod = (request: WCV2RequestType, wallet?: Wallet) => {
+  const handleRequestMethod = (request: WCV2RequestType, wallet: Wallet) => {
     const {method} = request.params.request;
-    if (!wallet) {
-      const chain =
-        WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
-      wallet = key.wallets.find(
-        w => w.receiveAddress === selectedAccountAddress && w.chain === chain,
-      );
-    }
-    if (!wallet) {
-      return;
-    }
     method !== 'eth_sendTransaction' && method !== 'eth_signTransaction'
       ? navigation.navigate('WalletConnectRequestDetails', {
           request,
@@ -336,8 +410,34 @@ const WalletConnectHome = () => {
   }, [accountDisconnected]);
 
   useEffect(() => {
-    if (context && ['notification'].includes(context) && requestsV2[0]) {
-      handleRequestMethod(requestsV2[0]);
+    if (
+      context &&
+      ['notification'].includes(context) &&
+      notificationRequestId
+    ) {
+      const requestV2 = requestsV2.find(({id}) => id === notificationRequestId);
+      if (!requestV2) {
+        return;
+      }
+      const {swapFromCurrencyAbbreviation} = requestV2;
+      const {chainId} = requestV2.params;
+      const chain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+      const wallet = keyFullWalletObjs.find(
+        wallet =>
+          wallet.receiveAddress === selectedAccountAddress &&
+          wallet.chain === chain &&
+          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
+      );
+      if (!wallet) {
+        showErrorMessage(
+          CustomErrorMessage({
+            errMsg: t('No wallet available for performing this action'),
+            title: t('Uh oh, something went wrong'),
+          }),
+        );
+        return;
+      }
+      handleRequestMethod(requestV2, wallet);
     }
   }, [context]);
 
@@ -345,93 +445,116 @@ const WalletConnectHome = () => {
     setShowVerifyContextBottomModal(false);
   };
 
+  const renderCreatedOn = (createdOn: number | undefined) => {
+    return createdOn ? (
+      <ListItemSubText textAlign="right" style={{width: 500}}>
+        {WithinPastDay(createdOn)
+          ? t('Created ', {date: GetAmTimeAgo(createdOn)})
+          : t('Created on', {date: GetAmFormatDate(createdOn)})}
+      </ListItemSubText>
+    ) : null;
+  };
+
+  const renderCurrencyDetails = (
+    method: string,
+    swapFormatAmount: string | undefined,
+    transactionDataName: string | undefined,
+    swapFiatAmount: string | undefined,
+    createdOn: number | undefined,
+  ) => (
+    <>
+      <H5
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={{textTransform: 'capitalize', marginRight: -1}}>
+        {swapFormatAmount || transactionDataName || method}
+      </H5>
+      {swapFiatAmount ? (
+        <ListItemSubText textAlign={'right'}>{swapFiatAmount}</ListItemSubText>
+      ) : (
+        renderCreatedOn(createdOn)
+      )}
+    </>
+  );
+
   const renderItem = useCallback(
     ({item, index}: {item: WCV2RequestType; index: number}) => {
-      const {createdOn} = item;
-      const {value = '0x0', data} = item.params.request.params[0];
-      const _chain =
-        WALLET_CONNECT_SUPPORTED_CHAINS[item.params.chainId]?.chain;
-      const wallet = keyFullWalletObjs.find(wallet => wallet.chain === _chain);
+      const isLast = index === requestsV2.length - 1;
+      const {method} = item.params.request;
       const {
-        chain,
-        network,
-        currencyAbbreviation,
-        tokenAddress,
-        img,
+        swapFromCurrencyAbbreviation,
+        swapFromChain,
+        currencyImg,
         badgeImg,
-        walletName,
-        currencyName,
-      } = wallet as Wallet;
-      const amountStr = dispatch(
-        FormatAmountStr(
-          BitpaySupportedCoins[_chain]?.feeCurrency,
-          _chain || chain,
-          tokenAddress,
-          parseInt(value, 16),
-        ),
+        swapFormatAmount,
+        swapFiatAmount,
+        transactionDataName,
+        createdOn,
+      } = item;
+
+      const wallet = keyFullWalletObjs.find(
+        wallet =>
+          wallet.receiveAddress === selectedAccountAddress &&
+          wallet.chain === swapFromChain &&
+          wallet.currencyAbbreviation === swapFromCurrencyAbbreviation,
       );
+      if (!wallet) {
+        return <></>;
+      }
+
+      const {currencyName, walletName} = wallet;
+
       return (
-        <TouchableOpacity
+        <RowContainer
           activeOpacity={ActiveOpacity}
           onPress={() => {
             haptic('impactLight');
-            handleRequestMethod(item, wallet);
-          }}>
-          <Row
-            style={{
-              borderBottomWidth: 1,
-              borderBottomColor: theme.dark ? LightBlack : '#ECEFFD',
-              display: 'flex',
-              alignItems: 'center',
-              paddingTop: 10,
-              paddingBottom: 10,
-              paddingLeft: 4,
-              paddingRight: 4,
-              margin: 0,
-              marginLeft: 6,
-              marginRight: 6,
-            }}>
-            <CurrencyImage img={img} badgeUri={badgeImg} size={45} />
-            <CurrencyColumn>
-              <H5 numberOfLines={1} ellipsizeMode="tail">
+            const requestV2 = requestsV2.find(
+              ({id: reqId}) => reqId === item.id,
+            ) as WCV2RequestType;
+            handleRequestMethod(requestV2, wallet);
+          }}
+          style={{borderBottomWidth: isLast ? 0 : 1}}>
+          <CurrencyImageContainer>
+            <CurrencyImage
+              img={currencyImg || ''}
+              badgeUri={badgeImg}
+              size={45}
+            />
+          </CurrencyImageContainer>
+          <CurrencyColumn>
+            <Row>
+              <H5 ellipsizeMode="tail" numberOfLines={1}>
                 {walletName || currencyName}
               </H5>
-              <ListItemSubText ellipsizeMode="tail" numberOfLines={1}>
-                <Smallest>{currencyAbbreviation.toUpperCase()}</Smallest>
-              </ListItemSubText>
-              <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
-                {buildTestBadge(network, chain, false)}
+            </Row>
+            {swapFromChain ? (
+              <Row style={{alignItems: 'center'}}>
+                <ListItemSubText
+                  ellipsizeMode="tail"
+                  numberOfLines={1}
+                  style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+                  {item.swapFromCurrencyAbbreviation?.toUpperCase()}
+                </ListItemSubText>
               </Row>
-            </CurrencyColumn>
-            <BalanceColumn>
-              <H5 numberOfLines={1} ellipsizeMode="tail">
-                {amountStr}
-              </H5>
-              <ListItemSubText ellipsizeMode="tail" numberOfLines={1}>
-                {createdOn &&
-                  (WithinPastDay(createdOn) ? (
-                    <Smallest>
-                      {t('Created ', {
-                        date: GetAmTimeAgo(createdOn),
-                      })}
-                    </Smallest>
-                  ) : (
-                    <Smallest>
-                      {t('Created on', {
-                        date: GetAmFormatDate(createdOn),
-                      })}
-                    </Smallest>
-                  ))}
-              </ListItemSubText>
-            </BalanceColumn>
-            <IconContainer>
-              <AngleRight />
-            </IconContainer>
-          </Row>
-        </TouchableOpacity>
+            ) : null}
+          </CurrencyColumn>
+          <BalanceColumn>
+            {renderCurrencyDetails(
+              method,
+              swapFormatAmount,
+              transactionDataName,
+              swapFiatAmount,
+              createdOn,
+            )}
+          </BalanceColumn>
+          <IconContainer>
+            <AngleRight />
+          </IconContainer>
+        </RowContainer>
       );
     },
-    [],
+    [requestsV2],
   );
 
   return (
@@ -509,19 +632,12 @@ const WalletConnectHome = () => {
         <PRContainer>
           <HeaderTitle>{t('Pending Requests')}</HeaderTitle>
           <Hr />
-          {requestsV2 && requestsV2.length ? (
+          {requestsV2 && requestsV2.length > 0 ? (
             <FlatList
-              data={
-                requestsV2 && requestsV2.length ? requestsV2 : ([] as any[])
-              }
+              contentContainerStyle={{paddingTop: 20, paddingBottom: 100}}
+              data={requestsV2}
               keyExtractor={(_item, index) => index.toString()}
-              renderItem={({
-                item,
-                index,
-              }: {
-                item: WCV2RequestType;
-                index: number;
-              }) => renderItem({item, index})}
+              renderItem={renderItem}
             />
           ) : (
             <ItemContainer>
