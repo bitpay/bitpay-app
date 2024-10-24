@@ -1,4 +1,4 @@
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
 import axios from 'axios';
 import {BRAZE_MERGE_AND_DELETE_API_KEY, BRAZE_REST_API_ENDPOINT} from '@env';
 

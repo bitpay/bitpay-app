@@ -2,6 +2,7 @@ package com.bitpay.wallet;
 
 import android.app.Application;
 import android.content.Context;
+
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
 import com.mkuczera.RNReactNativeHapticFeedbackPackage;
@@ -23,10 +24,12 @@ import android.database.CursorWindow;
 import com.facebook.react.views.text.ReactFontManager;
 
 // Braze
+import com.braze.ui.inappmessage.BrazeInAppMessageManager;
 import com.braze.BrazeActivityLifecycleCallbackListener;
 
 public class MainApplication extends Application implements ReactApplication {
   private ArrayList<Class> runningActivities = new ArrayList<>();
+  private CustomInAppMessageManagerListener customInAppMessageManagerListener;
 
   private final ReactNativeHost mReactNativeHost =
       new DefaultReactNativeHost(this) {
@@ -46,6 +49,7 @@ public class MainApplication extends Application implements ReactApplication {
           packages.add(new GooglePushProvisioningPackage());
           packages.add(new SilentPushPackage());
           packages.add(new TimerPackage());
+          packages.add(new InAppMessagePackage());
 
           return packages;
         }
@@ -92,13 +96,19 @@ public class MainApplication extends Application implements ReactApplication {
         }
     });
 
-     // Register custom font
+    // Register custom font
     ReactFontManager.getInstance().addCustomFont(this, "Heebo", R.font.heebo);
 
-    // Braze
+    // Register Braze's Activity Lifecycle Callbacks
     registerActivityLifecycleCallbacks(new BrazeActivityLifecycleCallbackListener());
 
-    // https://github.com/react-native-async-storage/async-storage/issues/617
+    // Initialize the custom IAM listener
+    customInAppMessageManagerListener = new CustomInAppMessageManagerListener();
+
+    // Register the custom in-app message listener
+    BrazeInAppMessageManager.getInstance().setCustomInAppMessageManagerListener(customInAppMessageManagerListener);
+
+      // https://github.com/react-native-async-storage/async-storage/issues/617
     try {
       Field field = CursorWindow.class.getDeclaredField("sCursorWindowSize");
       field.setAccessible(true);
@@ -109,6 +119,15 @@ public class MainApplication extends Application implements ReactApplication {
       }
     }
   }
+
+  public void notifyReactNativeAppLoaded() {
+      customInAppMessageManagerListener.setReactNativeAppLoaded(true);
+  }
+
+  public void notifyReactNativeAppPaused() {
+      customInAppMessageManagerListener.setReactNativeAppLoaded(false);
+  }
+
   /*
     Fix for IAB TODO
   */

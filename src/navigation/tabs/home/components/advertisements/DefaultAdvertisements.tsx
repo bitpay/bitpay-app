@@ -1,4 +1,4 @@
-import {ClassicContentCard} from 'react-native-appboy-sdk';
+import {ClassicContentCard} from '@braze/react-native-sdk';
 import CardIcon from '../../../../../../assets/img/card/bitpay-card-mc-angled-plain-small.svg';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {DEFAULT_CLASSIC_CONTENT_CARD} from '../../../../../utils/braze';

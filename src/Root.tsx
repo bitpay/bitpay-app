@@ -7,7 +7,7 @@ import {
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import debounce from 'lodash.debounce';
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   Appearance,
@@ -132,7 +132,6 @@ import BillGroup, {
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import RNBootSplash from 'react-native-bootsplash';
 import {dismissOnGoingProcessModal, showBlur} from './store/app/app.actions';
-import InAppMessage from './components/modal/in-app-message/InAppMessage';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
@@ -143,6 +142,8 @@ import {
   setAccountEVMCreationMigrationComplete,
   successAddWallet,
 } from './store/wallet/wallet.actions';
+
+const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -210,7 +211,7 @@ declare global {
   }
 }
 
-export type SilentPushEvent = {
+export type SilentPushEventObj = {
   b_use_webview?: number;
   multisigContractAddress?: string | null;
   ab_uri?: string;
@@ -373,14 +374,14 @@ export default () => {
           dispatch(AppActions.showBlur(false));
         } else if (status === 'active' && !failedAppInit) {
           if (lockAuthorizedUntil) {
-            const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+            const timeSinceBoot = await Timer.getRelativeTime();
             const totalSecs =
               Number(lockAuthorizedUntil) - Number(timeSinceBoot);
             if (totalSecs < 0) {
               dispatch(AppActions.lockAuthorizedUntil(undefined));
               showLockOption();
             } else {
-              const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+              const timeSinceBoot = await Timer.getRelativeTime();
               const authorizedUntil =
                 Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
               dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
@@ -426,7 +427,7 @@ export default () => {
 
   // Silent Push Notifications
   useEffect(() => {
-    function onMessageReceived(response: SilentPushEvent) {
+    function onMessageReceived(response: SilentPushEventObj) {
       dispatch(
         LogActions.debug(
           '[Root] Silent Push Notification',
@@ -435,7 +436,7 @@ export default () => {
       );
       dispatch(handleBwsEvent(response));
     }
-    const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
+    const eventEmitter = new NativeEventEmitter(SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
   }, [dispatch]);
@@ -443,19 +444,21 @@ export default () => {
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
       // App should be ready to show IAM (after PIN or Biometric)
-      if (status === 'active' && inAppMessageData) {
+      if (status === 'active') {
         if (pinLockActive || biometricLockActive) {
           const _subscriptionToPinModalDismissed =
             DeviceEventEmitter.addListener(
               DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
               async () => {
                 _subscriptionToPinModalDismissed.remove();
-                dispatch(AppActions.showInAppMessage());
+                InAppMessageModule.notifyReactNativeAppLoaded();
               },
             );
         } else {
-          dispatch(AppActions.showInAppMessage());
+          InAppMessageModule.notifyReactNativeAppLoaded();
         }
+      } else {
+        InAppMessageModule.notifyReactNativeAppPaused();
       }
     }
 
@@ -465,7 +468,7 @@ export default () => {
     );
 
     return () => subscriptionAppStateChange.remove();
-  }, [inAppMessageData, pinLockActive, biometricLockActive]);
+  }, [pinLockActive, biometricLockActive]);
 
   // THEME
   useEffect(() => {
@@ -701,7 +704,6 @@ export default () => {
             </Root.Navigator>
             <OnGoingProcessModal />
             <InAppNotification />
-            <InAppMessage />
             <BottomNotificationModal />
             <DecryptEnterPasswordModal />
             <BlurContainer />
