@@ -67,7 +67,7 @@ import {
   findWalletByIdHashed,
   getAllWalletClients,
 } from '../wallet/utils/wallet';
-import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
+import {navigationRef, RootStacks, SilentPushEventObj} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
@@ -497,6 +497,7 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
     if (!eid) {
       eid = dispatch(createBrazeEid());
     }
+    dispatch(LogActions.debug('Braze EID: ', eid));
     dispatch(Analytics.identify(eid));
 
     dispatch(LogActions.info('Successfully initialized Braze.'));
@@ -1037,7 +1038,7 @@ const _setScanFinishedForWallet = async (
 };
 
 export const handleBwsEvent =
-  (response: SilentPushEvent): Effect =>
+  (response: SilentPushEventObj): Effect =>
   async (dispatch, getState) => {
     const {
       WALLET: {keys},
