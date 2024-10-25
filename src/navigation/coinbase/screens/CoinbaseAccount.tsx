@@ -765,11 +765,15 @@ const CoinbaseAccount = ({
       />
 
       <SheetModal
+        modalLibrary="bottom-sheet"
         isVisible={walletModalVisible}
-        onBackdropPress={() => onDismiss()}>
+        onBackdropPress={() => onDismiss()}
+        fullscreen>
         <GlobalSelectContainer
           style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
           <GlobalSelect
+            route={route}
+            navigation={navigation}
             modalContext={'coinbase'}
             customSupportedCurrencies={customSupportedCurrencies}
             livenetOnly={true}

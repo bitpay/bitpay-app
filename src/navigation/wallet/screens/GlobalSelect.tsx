@@ -1,11 +1,8 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-  useEffect,
-  ReactElement,
-} from 'react';
+import React, {useCallback, useMemo, useState, useEffect} from 'react';
 import styled from 'styled-components/native';
+import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
+import {NavigationProp, RouteProp} from '@react-navigation/native';
+import {FlashList} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   BitpaySupportedCoins,
@@ -20,29 +17,22 @@ import {
   getCurrencyAbbreviation,
   sleep,
 } from '../../../utils/helper-methods';
-import {
-  ActivityIndicator,
-  Platform,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {Platform, TouchableOpacity, View} from 'react-native';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
   ActiveOpacity,
+  HEIGHT,
   Hr,
   ImageContainer,
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import _ from 'lodash';
-import {cloneDeep, groupBy, unionBy, uniqueId} from 'lodash';
-import KeyWalletsRow, {
-  KeyWallet,
-  KeyWalletsRowProps,
-} from '../../../components/list/KeyWalletsRow';
+import {groupBy, unionBy, uniqueId} from 'lodash';
+import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
 import {
   Action,
+  Black,
   LightBlack,
   LinkBlue,
   SlateDark,
@@ -55,10 +45,8 @@ import {
   Paragraph,
 } from '../../../components/styled/Text';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
-import {RouteProp, useRoute} from '@react-navigation/core';
-import {useNavigation, useTheme} from '@react-navigation/native';
 import ReceiveAddress from '../components/ReceiveAddress';
-import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+import CloseIcon from '../../../components/modal/close/Close';
 import KeySvg from '../../../../assets/img/key.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {
@@ -83,7 +71,6 @@ import {
   IsERCToken,
   IsEVMChain,
   IsSegwitCoin,
-  IsUtxoChain,
 } from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -246,21 +233,10 @@ const NetworkRowContainer = styled.View`
   padding: 5px;
 `;
 
-interface ToWalletSelectorCoinObj {
-  id: string;
-  chain: string;
-  currencyAbbreviation: string;
-  currencyName: string;
-  tokenAddress?: string;
-  img?: string | ((props?: any) => ReactElement);
-  total: number;
-  availableWalletsByKey: {
-    [key in string]: Wallet[];
-  };
-}
-interface ToWalletSelectorChainObj extends ToWalletSelectorCoinObj {
-  tokens?: ToWalletSelectorCoinObj[];
-}
+const FlashListCointainer = styled(Animated.View)`
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+  height: ${HEIGHT - 100}px;
+`;
 
 export type GlobalSelectModalContext =
   | 'send'
@@ -522,8 +498,9 @@ interface GlobalSelectProps {
   ) => void;
   modalContext?: GlobalSelectModalContext;
   livenetOnly?: boolean;
-  disabledChain?: string | undefined;
   onHelpPress?: () => void;
+  navigation: NavigationProp<any>;
+  route: RouteProp<WalletGroupParamList, any>;
 }
 
 type GlobalSelectScreenProps = NativeStackScreenProps<
@@ -531,6 +508,16 @@ type GlobalSelectScreenProps = NativeStackScreenProps<
   WalletScreens.GLOBAL_SELECT
 > &
   GlobalSelectProps;
+
+const FlashListComponent: FlashList<any> | typeof BottomSheetFlashList = (
+  props: any,
+) => {
+  const Container = useMemo(
+    () => (props.inModal ? BottomSheetFlashList : FlashList),
+    [props.inModal],
+  );
+  return <Container {...props}>{props.children}</Container>;
+};
 
 const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useAsModal,
@@ -540,16 +527,15 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   globalSelectOnDismiss,
   modalContext,
   livenetOnly,
-  disabledChain,
   onHelpPress,
+  navigation,
+  route,
 }) => {
   const {t} = useTranslation();
-  const route = useRoute<RouteProp<WalletGroupParamList, 'GlobalSelect'>>();
   let {context, recipient, amount, selectedAccountAddress} = route.params || {};
   if (useAsModal && modalContext) {
     context = modalContext;
   }
-  const theme = useTheme();
   const logger = useLogger();
   const dispatch = useAppDispatch();
   const {keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
@@ -560,8 +546,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     ...tokenOptionsByAddress,
     ...customTokenOptionsByAddress,
   };
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
   const [dataToDisplay, setDataToDisplay] = useState<
     GlobalSelectObj[] | KeyWalletsRowProps[]
   >([]);
@@ -572,7 +556,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const [receiveWallet, setReceiveWallet] = useState<Wallet>();
-  const navigation = useNavigation();
   const [cryptoSelectModalVisible, setCryptoSelectModalVisible] =
     useState(false);
   const [searchVal, setSearchVal] = useState('');
@@ -809,7 +792,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         wallets,
         context,
       );
-      setDataToDisplay(Object.values(allCurrencyData).splice(0, 20));
+      setDataToDisplay(Object.values(allCurrencyData));
       return Object.values(allCurrencyData);
     }
   }, []);
@@ -821,7 +804,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         selectedChainFilterOption,
         wallets,
       );
-      setDataToDisplay(Object.values(allCurrencyData).splice(0, 20));
+      setDataToDisplay(Object.values(allCurrencyData));
       return Object.values(allCurrencyData);
     } else {
       return [];
@@ -1416,44 +1399,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   }, [navigation, wallets, useAsModal]);
 
-  const onEndReached = async () => {
-    if (isLoading) {
-      return;
-    }
-    const remainingCustomCurrencies =
-      customCurrenciesSupportedList.length - dataToDisplay.length;
-    const remainingCurrencies =
-      currenciesSupportedList.length - dataToDisplay.length;
-
-    if (remainingCustomCurrencies <= 0 && remainingCurrencies <= 0) {
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    await sleep(1000);
-    const startIndex = currentPage + 20;
-    const endIndex = startIndex + 20;
-    if (!searchVal && !selectedChainFilterOption) {
-      if (customCurrenciesSupportedList.length > 0) {
-        const itemsToAdd = customCurrenciesSupportedList.slice(
-          startIndex,
-          endIndex,
-        );
-
-        setDataToDisplay(
-          prevData => [...prevData, ...itemsToAdd] as GlobalSelectObj[],
-        );
-      } else {
-        const itemsToAdd = currenciesSupportedList.slice(startIndex, endIndex);
-        setDataToDisplay(
-          prevData => [...prevData, ...itemsToAdd] as GlobalSelectObj[],
-        );
-      }
-    }
-    setCurrentPage(prevPage => prevPage + 20);
-    setIsLoading(false);
-  };
-
   useEffect(() => {
     if (selectedEVMAccount) {
       const data =
@@ -1497,7 +1442,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   return (
     <SafeAreaView>
       {useAsModal && (
-        <ModalHeader>
+        <ModalHeader style={{marginTop: Platform.OS === 'android' ? 20 : 0}}>
           <CloseModalButtonContainer>
             <CloseModalButton
               onPress={() => {
@@ -1505,13 +1450,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   globalSelectOnDismiss(undefined);
                 }
               }}>
-              <CloseModal
-                {...{
-                  width: 20,
-                  height: 20,
-                  color: theme.dark ? 'white' : 'black',
-                }}
-              />
+              <CloseIcon />
             </CloseModalButton>
           </CloseModalButtonContainer>
           {!!modalTitle && (
@@ -1557,51 +1496,24 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           selectedAssetsFromAccount.length === 0 && (
             <>
               {showInitiallyHiddenComponents && (
-                <Animated.FlatList
-                  entering={FadeIn.duration(
-                    Platform.OS === 'android' ? 800 : 300,
-                  )}
-                  contentContainerStyle={{paddingBottom: 150}}
-                  data={
-                    !searchVal && !selectedChainFilterOption
-                      ? dataToDisplay
-                      : (searchResults as (
-                          | GlobalSelectObj
-                          | KeyWalletsRowProps
-                        )[])
-                  }
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={renderItem}
-                  getItemLayout={(data, index) => ({
-                    length: 75,
-                    offset: 75 * index,
-                    index,
-                  })}
-                  initialNumToRender={20}
-                  maxToRenderPerBatch={20}
-                  windowSize={21}
-                  onEndReached={onEndReached}
-                  onEndReachedThreshold={0.3}
-                  ListFooterComponent={() =>
-                    !searchVal && !selectedChainFilterOption ? (
-                      isLoading ? (
-                        <View style={{flex: 1}}>
-                          <ActivityIndicator
-                            style={{
-                              paddingVertical: 20,
-                              alignItems: 'center',
-                              height: 60,
-                            }}
-                            size="large"
-                            color={SlateDark}
-                          />
-                        </View>
-                      ) : (
-                        <View style={{flex: 1, height: 60}} />
-                      )
-                    ) : null
-                  }
-                />
+                <FlashListCointainer entering={FadeIn.duration(800)}>
+                  <FlashListComponent
+                    inModal={useAsModal}
+                    contentContainerStyle={{paddingBottom: 150}}
+                    data={
+                      !searchVal && !selectedChainFilterOption
+                        ? dataToDisplay
+                        : (searchResults as (
+                            | GlobalSelectObj
+                            | KeyWalletsRowProps
+                          )[])
+                    }
+                    keyExtractor={(_, index: number) => index.toString()}
+                    renderItem={renderItem}
+                    estimatedItemSize={90}
+                    onEndReachedThreshold={0.3}
+                  />
+                </FlashListCointainer>
               )}
             </>
           )}
@@ -1631,7 +1543,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 ) : null}
               </TitleNameContainer>
 
-              <Animated.FlatList
+              <FlashListComponent
+                inModal={useAsModal}
                 entering={FadeIn.duration(
                   Platform.OS === 'android' ? 800 : 300,
                 )}
@@ -1641,18 +1554,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                     ? selectedAssetsFromAccount
                     : (searchResults as AssetsByChainData[])
                 }
-                keyExtractor={(item, index) => index.toString()}
+                keyExtractor={(_, index: number) => index.toString()}
                 renderItem={memoizedRenderAssetsItem}
-                getItemLayout={(data, index) => ({
-                  length: 75,
-                  offset: 75 * index,
-                  index,
-                })}
-                initialNumToRender={20}
-                maxToRenderPerBatch={20}
-                windowSize={21}
-                onEndReached={onEndReached}
-                onEndReachedThreshold={0.3}
               />
             </View>
           </>

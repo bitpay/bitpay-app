@@ -1457,6 +1457,8 @@ const SellCryptoRoot = ({
       ) : null}
 
       <FromWalletSelectorModal
+        route={route}
+        navigation={navigation}
         isVisible={walletSelectorModalVisible}
         customSupportedCurrencies={sellCryptoSupportedCoins}
         livenetOnly={!__DEV__}

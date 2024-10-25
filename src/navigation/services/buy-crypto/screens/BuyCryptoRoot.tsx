@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Platform, ScrollView, View} from 'react-native';
+import {Platform, ScrollView} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled, {useTheme} from 'styled-components/native';
 import {
@@ -30,14 +30,7 @@ import {
 } from '../../../../store/app/app.actions';
 import {getBuyCryptoFiatLimits} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {
-  Action,
-  White,
-  Black,
-  Slate,
-  LightBlack,
-  NeutralSlate,
-} from '../../../../styles/colors';
+import {Action, White, Black, Slate} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {
@@ -90,7 +83,6 @@ import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   AccountChainsContainer,
-  Column,
   CurrencyColumn,
   CurrencyImageContainer,
   ExternalServicesItemTopTitle,
@@ -1048,17 +1040,20 @@ const BuyCryptoRoot = ({
         onClose={() => hideModal('amount')}
       />
       <SheetModal
+        modalLibrary="bottom-sheet"
         isVisible={walletSelectorModalVisible}
-        onBackdropPress={() => onDismiss()}>
+        onBackdropPress={() => onDismiss()}
+        fullscreen>
         <GlobalSelectContainer
           style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
           <GlobalSelect
+            route={route}
+            navigation={navigation}
             modalContext={'buy'}
             livenetOnly={!__DEV__}
             useAsModal={true}
             modalTitle={t('Select Crypto')}
             customToSelectCurrencies={buyCryptoSupportedCoinsFullObj}
-            disabledChain={undefined}
             globalSelectOnDismiss={onDismiss}
           />
         </GlobalSelectContainer>
