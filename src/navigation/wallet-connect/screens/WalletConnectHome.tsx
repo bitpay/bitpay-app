@@ -1,12 +1,7 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {
-  H5,
-  H7,
-  ListItemSubText,
-  Smallest,
-} from '../../../components/styled/Text';
+import {H5, H7, ListItemSubText} from '../../../components/styled/Text';
 import {
   Caution25,
   LightBlack,
@@ -35,7 +30,7 @@ import {
 } from '../styled/WalletConnectContainers';
 import {FlatList, Platform, View} from 'react-native';
 import FastImage from 'react-native-fast-image';
-import {getProtocolName, sleep} from '../../../utils/helper-methods';
+import {sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
@@ -49,7 +44,7 @@ import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {
   getAddressFrom,
-  walletConnectV2OnUpdateSession,
+  walletConnectV2OnDeleteSession,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {
@@ -274,36 +269,32 @@ const WalletConnectHome = () => {
   );
 
   const disconnectAccount = async () => {
+    if (!sessionV2) {
+      return;
+    }
     haptic('impactLight');
     dispatch(
       showBottomNotificationModal({
         type: 'question',
         title: t('Confirm delete'),
-        message: t(
-          'Are you sure you want to delete this account from the connection?',
-        ),
+        message: t('Are you sure you want to delete this session?'),
         enableBackdropDismiss: true,
         actions: [
           {
             text: t('DELETE'),
             action: async () => {
               try {
-                if (sessionV2) {
-                  dispatch(dismissBottomNotificationModal());
-                  await sleep(600);
-                  dispatch(startOnGoingProcessModal('LOADING'));
-                  await sleep(600);
-                  await dispatch(
-                    walletConnectV2OnUpdateSession({
-                      session: sessionV2,
-                      address: selectedAccountAddress,
-                      action: 'disconnect',
-                    }),
-                  );
-                  dispatch(dismissOnGoingProcessModal());
-                  await sleep(600);
-                  setAccountDisconnected(true);
-                }
+                dispatch(dismissBottomNotificationModal());
+                await sleep(600);
+                dispatch(startOnGoingProcessModal('LOADING'));
+                await sleep(600);
+                await dispatch(
+                  walletConnectV2OnDeleteSession(
+                    sessionV2.topic,
+                    sessionV2.pairingTopic,
+                  ),
+                );
+                dispatch(dismissOnGoingProcessModal());
               } catch (err) {
                 dispatch(dismissOnGoingProcessModal());
                 await sleep(500);

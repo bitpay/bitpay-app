@@ -659,7 +659,10 @@ export const walletConnectV2OnUpdateSession =
           )}`,
         ),
       );
-      if (errMsg.includes('No accounts provided for chain')) {
+      if (
+        errMsg.includes('No accounts provided for chain') ||
+        errMsg.includes('Non conforming namespaces')
+      ) {
         throw new Error(
           "Removing this account will invalidate the session's required namespaces. Please disconnect the entire session and reconnect.",
         );
