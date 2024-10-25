@@ -1,5 +1,5 @@
 import {ColorSchemeName, EventSubscription} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+import {ContentCard} from '@braze/react-native-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -87,19 +87,6 @@ export const showWalletConnectStartModal = (): AppActionType => ({
 
 export const dismissWalletConnectStartModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_WALLET_CONNECT_START_MODAL,
-});
-
-export const showInAppMessage = (): AppActionType => ({
-  type: AppActionTypes.SHOW_IN_APP_MESSAGE,
-});
-
-export const attachInAppMessage = (message: string): AppActionType => ({
-  type: AppActionTypes.ATTACH_IN_APP_MESSAGE,
-  payload: message,
-});
-
-export const dismissInAppMessage = (): AppActionType => ({
-  type: AppActionTypes.DISMISS_IN_APP_MESSAGE,
 });
 
 export const showInAppNotification = (

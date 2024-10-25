@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "705168262213",
+    "project_id": "bitpaytest-7bced",
+    "storage_bucket": "bitpaytest-7bced.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:705168262213:android:da779ab32151eeeeac0f2c",
+        "android_client_info": {
+          "package_name": "com.bitpay.wallet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "705168262213-ubti1r3d4ie4uskdkqbc5amnnk4pu4jm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMMMG24x0a1jWVfepJwZ6rQS1NeAkruUw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "705168262213-ubti1r3d4ie4uskdkqbc5amnnk4pu4jm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

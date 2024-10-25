@@ -8,7 +8,7 @@ import {
   Platform,
   Share,
 } from 'react-native';
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppReview from 'react-native-in-app-review';
 import InAppBrowser, {
@@ -67,7 +67,7 @@ import {
   findWalletByIdHashed,
   getAllWalletClients,
 } from '../wallet/utils/wallet';
-import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
+import {navigationRef, RootStacks, SilentPushEventObj} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
@@ -443,20 +443,6 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       contentCardSubscription = null;
     }
 
-    Braze.subscribeToInAppMessage(false, (event: any) => {
-      const parsedData = JSON.parse(event.inAppMessage);
-      if (parsedData.type === 'HTML' || parsedData.type === 'HTML_FULL') {
-        LogActions.debug(
-          'InAppMessage Event Received. Do not show until Home is ready',
-        );
-        dispatch(AppActions.attachInAppMessage(event.inAppMessage));
-      } else {
-        LogActions.debug(
-          `InAppMessage Event Received but format is not supported. Type: ${parsedData.type}, Message: ${parsedData.message}`,
-        );
-      }
-    });
-
     // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
     const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
     const MAX_RETRIES = 3;
@@ -507,10 +493,12 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
     );
 
     // Create a Braze EID for all users
-    if (!APP.brazeEid) {
-      dispatch(createBrazeEid());
+    let eid = APP.brazeEid;
+    if (!eid) {
+      eid = dispatch(createBrazeEid());
     }
-    dispatch(Analytics.identify(APP.brazeEid));
+    dispatch(LogActions.debug('Braze EID: ', eid));
+    dispatch(Analytics.identify(eid));
 
     dispatch(LogActions.info('Successfully initialized Braze.'));
     dispatch(AppActions.brazeInitialized(contentCardSubscription));
@@ -1050,7 +1038,7 @@ const _setScanFinishedForWallet = async (
 };
 
 export const handleBwsEvent =
-  (response: SilentPushEvent): Effect =>
+  (response: SilentPushEventObj): Effect =>
   async (dispatch, getState) => {
     const {
       WALLET: {keys},

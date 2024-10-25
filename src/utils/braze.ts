@@ -1,10 +1,10 @@
 import {
-  BannerContentCard,
+  BannerNewsFeedCard,
   CaptionedContentCard,
   ClassicContentCard,
   ContentCard,
   ContentCardBase,
-} from 'react-native-appboy-sdk';
+} from '@braze/react-native-sdk';
 
 export const DEFAULT_CONTENT_CARD_BASE: ContentCardBase = {
   id: '',
@@ -28,8 +28,8 @@ export const DEFAULT_CLASSIC_CONTENT_CARD: ClassicContentCard = {
 };
 
 export const isBannerContentCard = (
-  contentCard: ContentCard,
-): contentCard is BannerContentCard => {
+  contentCard: BannerNewsFeedCard,
+): contentCard is BannerNewsFeedCard => {
   return contentCard.type === 'Banner';
 };
 
