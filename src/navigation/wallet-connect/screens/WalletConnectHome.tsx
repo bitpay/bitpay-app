@@ -160,6 +160,7 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
 
   return {
     ...request,
+    swapFromCurrencyAbbreviation: _swapFromCurrencyAbbreviation,
     currencyImg: img,
     badgeImg,
   };
@@ -466,7 +467,7 @@ const WalletConnectHome = () => {
       <H5
         numberOfLines={1}
         ellipsizeMode="tail"
-        style={{textTransform: 'capitalize', marginRight: -1}}>
+        style={{textTransform: 'uppercase', marginRight: -1}}>
         {swapFormatAmount || transactionDataName || method}
       </H5>
       {swapFiatAmount ? (

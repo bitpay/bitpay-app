@@ -114,7 +114,10 @@ const ValidationText = styled(BaseText)<{textColor: string}>`
   color: ${({textColor}) => textColor};
   font-size: 12px;
 `;
-const TitleContainer = styled.View``;
+
+const TitleContainer = styled.View`
+  padding-bottom: 20px;
+`;
 
 const DescriptionContainer = styled.View`
   margin-bottom: 16px;

@@ -712,7 +712,7 @@ export const processOtherMethodsRequest =
       )[0];
       const {currencyAbbreviation} = wallet; // this is the "gas" wallet
       return {
-        transactionDataName: 'Sign Request',
+        transactionDataName: 'SIGN REQUEST',
         swapFromChain,
         senderAddress,
         swapFromCurrencyAbbreviation: currencyAbbreviation,
@@ -759,35 +759,35 @@ export const processSwapRequest =
 
     try {
       const abi = await fetchContractAbi(dispatch, swapFromChain, to);
+      dispatch(LogActions.debug('ABI: ' + JSON.stringify(abi)));
       const contractInterface = new ethers.utils.Interface(abi);
       const transactionData = contractInterface.parseTransaction({data});
-      const transactionDataName = transactionData.name;
-      const transactionTypes = ['approve', 'withdraw', 'deposit'];
-
-      if (
-        transactionTypes.includes(transactionDataName) ||
-        !transactionData.args[1]
-      ) {
-        return handleDefaultTransaction(
-          keys,
-          swapFromChain,
-          from,
-          transactionDataName,
-          dispatch,
-        ); // approve  / withdraw / deposit
-      }
-
-      const transaction = await handleSwapTransaction(
-        dispatch,
-        keys,
-        transactionData,
-        tokenOptions,
-        swapFromChain,
-        defaultAltCurrency,
-        allRates,
-        from,
+      dispatch(
+        LogActions.debug(
+          'Decoded transaction data: ' + JSON.stringify(transactionData),
+        ),
       );
-      return transaction;
+      const transactionDataName = transactionData.name;
+      if (transactionDataName === 'execute') {
+        const transaction = await handleSwapTransaction(
+          dispatch,
+          keys,
+          transactionData,
+          tokenOptions,
+          swapFromChain,
+          defaultAltCurrency,
+          allRates,
+          from,
+        );
+        return transaction;
+      }
+      return handleDefaultTransaction(
+        keys,
+        swapFromChain,
+        from,
+        transactionDataName,
+        dispatch,
+      );
     } catch (error) {
       dispatch(LogActions.error(`Error processing swap request: ${error}`));
       dispatch(
@@ -863,7 +863,7 @@ const handleDefaultTransaction = async (
   )[0];
   const {currencyAbbreviation} = wallet; // this is the "gas" wallet
   return {
-    transactionDataName,
+    transactionDataName: camelCaseToUpperWords(transactionDataName),
     swapFromChain: chain,
     senderAddress,
     swapFromCurrencyAbbreviation: currencyAbbreviation,
@@ -933,7 +933,7 @@ const handleSwapTransaction = async (
   );
 
   return {
-    transactionDataName: transactionData.name,
+    transactionDataName: camelCaseToUpperWords(transactionData.name),
     swapAmount,
     swapFormatAmount,
     swapFiatAmount,
@@ -945,4 +945,8 @@ const handleSwapTransaction = async (
     recipientAddress,
     senderTokenPrice,
   };
+};
+
+export const camelCaseToUpperWords = (input: string) => {
+  return input.replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
 };
