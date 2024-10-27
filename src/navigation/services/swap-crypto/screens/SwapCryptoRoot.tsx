@@ -15,12 +15,10 @@ import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
   SUPPORTED_COINS,
-  SUPPORTED_EVM_COINS,
   SUPPORTED_TOKENS,
 } from '../../../../constants/currencies';
 import {
   Action,
-  SlateDark,
   White,
   ProgressBlue,
   Black,
@@ -35,7 +33,6 @@ import {
   SelectedOptionContainer,
   SelectedOptionText,
   SelectedOptionCol,
-  CoinIconContainer,
   DataText,
   BottomDataText,
   SpinnerContainer,
@@ -66,7 +63,6 @@ import {
   addTokenChainSuffix,
   sleep,
   formatFiatAmount,
-  convertToFiat,
 } from '../../../../utils/helper-methods';
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import {
@@ -83,7 +79,6 @@ import {
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
 import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
-import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {AppActions} from '../../../../store/app';
 import {useTranslation} from 'react-i18next';
@@ -136,18 +131,12 @@ import {
 import {SwapCryptoLimits} from '../../../../store/swap-crypto/swap-crypto.models';
 import {
   AccountChainsContainer,
-  Column,
   CurrencyImageContainer,
   ExternalServicesItemTopTitle,
   ExternalServicesTitleContainer,
   Row,
 } from '../../../../components/styled/Containers';
-import {
-  BaseText,
-  H5,
-  H7,
-  ListItemSubText,
-} from '../../../../components/styled/Text';
+import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
 import Blockie from '../../../../components/blockie/Blockie';
 import {
   buildUIFormattedWallet,
@@ -1782,6 +1771,8 @@ const SwapCryptoRoot: React.FC = () => {
       ) : null}
 
       <FromWalletSelectorModal
+        route={route}
+        navigation={navigation}
         isVisible={fromWalletSelectorModalVisible}
         customSupportedCurrencies={
           useDefaultToWallet && toWalletSelected
@@ -1807,24 +1798,20 @@ const SwapCryptoRoot: React.FC = () => {
       />
 
       <SheetModal
+        modalLibrary="bottom-sheet"
         isVisible={toWalletSelectorModalVisible}
-        onBackdropPress={() => onDismiss()}>
+        onBackdropPress={() => onDismiss()}
+        fullscreen>
         <GlobalSelectContainer
           style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
           <GlobalSelect
+            route={route}
+            navigation={navigation}
             modalContext={'swapTo'}
             livenetOnly={true}
             useAsModal={true}
             modalTitle={t('Swap To')}
             customToSelectCurrencies={swapCryptoSupportedCoinsTo}
-            disabledChain={
-              fromWalletSelected
-                ? getExternalServiceSymbol(
-                    fromWalletSelected.currencyAbbreviation,
-                    fromWalletSelected.chain,
-                  )
-                : undefined
-            }
             globalSelectOnDismiss={onDismiss}
           />
         </GlobalSelectContainer>
