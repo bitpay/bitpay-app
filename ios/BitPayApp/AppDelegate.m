@@ -13,6 +13,7 @@
 #import <RNKeyEvent.h>
 
 // Braze SDK
+#import <UserNotifications/UserNotifications.h>
 #import <BrazeKit/BrazeKit-Swift.h>
 #import "BrazeReactBridge.h"
 @import BrazeUI;
@@ -145,17 +146,30 @@ RNKeyEvent *keyEvent = nil;
 didReceiveRemoteNotification:(NSDictionary *)userInfo
 fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
+  [SilentPushEvent emitEventWithName:@"SilentPushNotification" andPayload:userInfo];
   BOOL processedByBraze = AppDelegate.braze != nil && [AppDelegate.braze.notifications handleBackgroundNotificationWithUserInfo:userInfo fetchCompletionHandler:completionHandler];
   if (processedByBraze) {
     return;
   }
   completionHandler(UIBackgroundFetchResultNoData);
-  [SilentPushEvent emitEventWithName:@"SilentPushNotification" andPayload:userInfo];
 }
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
   [AppDelegate.braze.notifications registerDeviceToken:deviceToken];
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+       willPresentNotification:(UNNotification *)notification
+         withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler {
+  // Check if the app is in the foreground
+  if ([UIApplication sharedApplication].applicationState == UIApplicationStateActive) {
+    // App is in the foreground, do not show the notification banner
+    completionHandler(UNNotificationPresentationOptionNone);
+  } else {
+    // App is in the background, show the notification banner as usual
+    completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionSound | UNNotificationPresentationOptionBadge);
+  }
 }
 
 #pragma mark - AppDelegate.braze
