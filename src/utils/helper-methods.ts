@@ -810,7 +810,7 @@ export const processSwapRequest =
             'No standard token data - fetching contract ABI from Etherscan',
           ),
         );
-        abi = await fetchContractAbi(dispatch, swapFromChain, to);
+        abi = await fetchContractAbi(dispatch, chainId, to);
         dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
         const contractInterface = new ethers.utils.Interface(abi!);
         transactionData = contractInterface.parseTransaction({data});
@@ -858,11 +858,11 @@ export const processSwapRequest =
 
 const fetchContractAbi = async (
   dispatch: any,
-  chain: string,
+  chainId: string,
   address: string,
 ) => {
   const getAbiFromAddress = async (address: string): Promise<any> => {
-    const abi = await dispatch(EtherscanAPI.getContractAbi(chain, address));
+    const abi = await dispatch(EtherscanAPI.getContractAbi(chainId, address));
     if (!abi || abi === 'Contract source code not verified') {
       throw new Error('No ABI found');
     }
@@ -888,7 +888,7 @@ const fetchContractAbi = async (
 
     // Retrieve the address at the implementation slot
     const paddedImplementationAddress = await EtherscanAPI.getStorageAt(
-      chain,
+      chainId,
       address,
       implementationSlot,
     );
