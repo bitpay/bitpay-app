@@ -893,7 +893,7 @@ export const setNotifications =
   (dispatch, getState) => {
     dispatch(setNotificationsAccepted(accepted));
     const value = accepted
-      ? Braze.NotificationSubscriptionTypes.SUBSCRIBED
+      ? Braze.NotificationSubscriptionTypes.OPTED_IN
       : Braze.NotificationSubscriptionTypes.UNSUBSCRIBED;
 
     Braze.setPushNotificationSubscriptionType(value);
