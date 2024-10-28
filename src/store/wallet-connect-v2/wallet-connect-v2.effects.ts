@@ -413,6 +413,28 @@ export const walletConnectV2SubscribeToEvents =
         } catch (error) {}
       },
     );
+    web3wallet.on(
+      'session_request_expire',
+      async (
+        event: Web3WalletTypes.EventArguments['session_request_expire'],
+      ) => {
+        try {
+          dispatch(
+            LogActions.info(
+              `[WC-V2/walletConnectV2SubscribeToEvents] session_request_expire: ${JSON.stringify(
+                event,
+              )}`,
+            ),
+          );
+          const requests: WCV2RequestType[] | undefined =
+            getState().WALLET_CONNECT_V2.requests;
+          const request = requests.find(({id}) => id === event.id);
+          if (request) {
+            await dispatch(walletConnectV2RejectCallRequest(request));
+          }
+        } catch (error) {}
+      },
+    );
   };
 
 export const walletConnectV2ApproveCallRequest =
