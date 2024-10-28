@@ -193,7 +193,7 @@ const CreateOrImportKey = ({
               {t('I already have a Key')}
             </Button>
           </ActionContainer>
-          <ActionContainer>
+          {/* <ActionContainer>
             <Button
               buttonStyle={'secondary'}
               onPress={() => {
@@ -201,7 +201,7 @@ const CreateOrImportKey = ({
               }}>
               {t('Connect your Ledger Nano X')}
             </Button>
-          </ActionContainer>
+          </ActionContainer> */}
         </CtaContainer>
       </ScrollView>
     </CreateKeyContainer>
