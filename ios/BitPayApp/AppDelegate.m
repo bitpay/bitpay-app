@@ -35,6 +35,7 @@
   // Setup Braze
   BRZConfiguration *configuration = [[BRZConfiguration alloc] initWithApiKey:@"BRAZE_API_KEY_REPLACE_ME" endpoint:@"sdk.iad-05.braze.com"];
   configuration.logger.level = BRZLoggerLevelInfo;
+  configuration.triggerMinimumTimeInterval = 1;
 
   Braze *braze = [BrazeReactBridge initBraze:configuration];
   AppDelegate.braze = braze;
@@ -42,6 +43,7 @@
   inAppMessageUI.delegate = self;
   AppDelegate.braze.inAppMessagePresenter = inAppMessageUI;
   self.isBitPayAppLoaded = NO;
+  self.cachedInAppMessage = nil;
 
   RCTSetCustomNSURLSessionConfigurationProvider(^NSURLSessionConfiguration *{
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -143,7 +145,17 @@ RNKeyEvent *keyEvent = nil;
 didReceiveRemoteNotification:(NSDictionary *)userInfo
 fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
-    [SilentPushEvent emitEventWithName:@"SilentPushNotification" andPayload:userInfo];
+  BOOL processedByBraze = AppDelegate.braze != nil && [AppDelegate.braze.notifications handleBackgroundNotificationWithUserInfo:userInfo fetchCompletionHandler:completionHandler];
+  if (processedByBraze) {
+    return;
+  }
+  completionHandler(UIBackgroundFetchResultNoData);
+  [SilentPushEvent emitEventWithName:@"SilentPushNotification" andPayload:userInfo];
+}
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+{
+  [AppDelegate.braze.notifications registerDeviceToken:deviceToken];
 }
 
 #pragma mark - AppDelegate.braze
