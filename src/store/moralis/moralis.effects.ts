@@ -9,7 +9,10 @@ import {LogActions} from '../log';
 import {Effect} from '..';
 import axios from 'axios';
 import {MORALIS_API_KEY} from '@env';
-import {MoralisErc20TokenBalanceByWalletData} from './moralis.types';
+import {
+  MoralisErc20TokenBalanceByWalletData,
+  MoralisWalletApprovalsData,
+} from './moralis.types';
 
 const MORALIS_EVM_CHAIN: {[key in string]: any} = {
   arb: EvmChain.ARBITRUM,
@@ -559,21 +562,22 @@ export const getERC20TokenMetadataBySymbol =
 
 export const getERC20TokenAllowance =
   ({
-    address,
     chain,
     ownerAddress,
-    spenderAddress,
+    limit,
+    cursor,
   }: {
-    address: string;
     chain: string;
     ownerAddress: string;
-    spenderAddress: string;
-  }): Effect<Promise<any>> =>
+    limit?: number;
+    cursor?: string | null;
+  }): Effect<Promise<MoralisWalletApprovalsData>> =>
   async dispatch => {
     try {
       const headers = {
-        accept: 'application/json',
-        'X-API-Key': MORALIS_API_KEY,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Api-Key': MORALIS_API_KEY,
         'Cache-Control': 'no-cache',
       };
       let qs = [];
@@ -585,13 +589,20 @@ export const getERC20TokenAllowance =
         chain;
 
       qs.push('chain=' + _chain);
-      qs.push('owner_address=' + ownerAddress);
-      qs.push('spender_address=' + spenderAddress);
+      if (limit) {
+        qs.push('limit=' + limit);
+      }
+      if (cursor) {
+        qs.push('cursor=' + cursor);
+      }
       qs.push('timestamp=' + new Date().getTime());
 
       const query = qs.join('&');
-      const URL = `https://deep-index.moralis.io/api/v2.2/erc20/${address}/allowance?${query}`;
-      const {data} = await axios.get(URL, {headers});
+      const URL = `https://deep-index.moralis.io/api/v2.2/wallets/${ownerAddress}/approvals?${query}`;
+
+      const {data}: {data: MoralisWalletApprovalsData} = await axios.get(URL, {
+        headers,
+      });
       dispatch(
         LogActions.info(
           '[moralis/getERC20TokenAllowance]: get ERC20 token allowance successfully',
