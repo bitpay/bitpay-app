@@ -26,7 +26,12 @@ import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../constants/WalletConnectV2';
 import {BitpaySupportedTokenOptsByAddress} from '../constants/tokens';
 import {Effect} from '../store';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
-import {ERC20_ABI} from '../navigation/wallet-connect/constants/abi-erc20';
+import {
+  abiERC20,
+  abiERC721,
+  abiERC1155,
+  abiFiatTokenV2,
+} from '../navigation/wallet-connect/constants/abis';
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
 
@@ -725,6 +730,46 @@ export const processOtherMethodsRequest =
     }
   };
 
+const parseStandardTokenTransactionData = (data?: string) => {
+  if (!data) {
+    return {};
+  }
+  const ERC20Interface = new ethers.utils.Interface(abiERC20);
+  const ERC721Interface = new ethers.utils.Interface(abiERC721);
+  const ERC1155Interface = new ethers.utils.Interface(abiERC1155);
+  const USDCInterface = new ethers.utils.Interface(abiFiatTokenV2);
+
+  try {
+    return {
+      transactionData: ERC20Interface.parseTransaction({data}),
+      abi: abiERC20,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: ERC721Interface.parseTransaction({data}),
+      abi: abiERC721,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: ERC1155Interface.parseTransaction({data}),
+      abi: abiERC1155,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: USDCInterface.parseTransaction({data}),
+      abi: abiFiatTokenV2,
+    };
+  } catch {}
+
+  return {};
+};
+
 export const processSwapRequest =
   (event: Web3WalletTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
@@ -758,21 +803,29 @@ export const processSwapRequest =
     }
 
     try {
-      const abi = await fetchContractAbi(dispatch, swapFromChain, to);
-      dispatch(LogActions.debug('ABI: ' + JSON.stringify(abi)));
-      const contractInterface = new ethers.utils.Interface(abi);
-      const transactionData = contractInterface.parseTransaction({data});
+      let {transactionData, abi} = parseStandardTokenTransactionData(data);
+      if (!transactionData && !abi) {
+        dispatch(
+          LogActions.debug(
+            'No standard token data - fetching contract ABI from Etherscan',
+          ),
+        );
+        abi = await fetchContractAbi(dispatch, swapFromChain, to);
+        dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
+        const contractInterface = new ethers.utils.Interface(abi!);
+        transactionData = contractInterface.parseTransaction({data});
+      }
       dispatch(
         LogActions.debug(
           'Decoded transaction data: ' + JSON.stringify(transactionData),
         ),
       );
-      const transactionDataName = transactionData.name;
+      const transactionDataName = transactionData!.name;
       if (transactionDataName === 'execute') {
-        const transaction = await handleSwapTransaction(
+        const transaction = await handleExecuteTransaction(
           dispatch,
           keys,
-          transactionData,
+          transactionData!,
           tokenOptions,
           swapFromChain,
           defaultAltCurrency,
@@ -808,42 +861,44 @@ const fetchContractAbi = async (
   chain: string,
   address: string,
 ) => {
-  let abi = await dispatch(EtherscanAPI.getContractAbi(chain, address));
-  if (!abi) {
-    throw new Error('No abi found');
-  }
-  if (abi === 'Contract source code not verified') {
-    abi = JSON.stringify(ERC20_ABI); // Fallback to ERC20 ABI
-    return abi;
-  }
-  let parsedAbi;
-  try {
-    parsedAbi = JSON.parse(abi);
-  } catch (error) {
-    throw new Error('No abi found');
-  }
-  if (
-    parsedAbi &&
-    parsedAbi.some((item: any) => item.name === 'implementation')
-  ) {
+  const getAbiFromAddress = async (address: string): Promise<any> => {
+    const abi = await dispatch(EtherscanAPI.getContractAbi(chain, address));
+    if (!abi || abi === 'Contract source code not verified') {
+      throw new Error('No ABI found');
+    }
+    try {
+      return JSON.parse(abi);
+    } catch {
+      throw new Error('Failed to parse ABI');
+    }
+  };
+
+  let parsedAbi = await getAbiFromAddress(address);
+
+  const isProxyContract = parsedAbi.some(
+    (item: any) => item.name === 'implementation',
+  );
+
+  if (isProxyContract) {
     dispatch(LogActions.debug('Detected EIP-1967 proxy contract'));
+
+    // EIP-1967 implementation slot
     const implementationSlot =
       '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+
+    // Retrieve the address at the implementation slot
     const paddedImplementationAddress = await EtherscanAPI.getStorageAt(
       chain,
       address,
       implementationSlot,
     );
     const implementationAddress = `0x${paddedImplementationAddress.slice(-40)}`;
-    abi = await dispatch(
-      EtherscanAPI.getContractAbi(chain, implementationAddress),
-    );
-    if (abi === 'Contract source code not verified') {
-      abi = JSON.stringify(ERC20_ABI); // Fallback to ERC20 ABI
-      return abi;
-    }
+
+    // Fetch and parse the ABI from the implementation contract
+    parsedAbi = await getAbiFromAddress(implementationAddress);
   }
-  return abi;
+
+  return parsedAbi;
 };
 
 const handleDefaultTransaction = async (
@@ -870,7 +925,7 @@ const handleDefaultTransaction = async (
   };
 };
 
-const handleSwapTransaction = async (
+const handleExecuteTransaction = async (
   dispatch: any,
   keys: Keys,
   transactionData: ethers.utils.TransactionDescription,
@@ -882,7 +937,7 @@ const handleSwapTransaction = async (
   allRates: Rates,
   senderAddress: string,
 ) => {
-  dispatch(LogActions.debug('processing swap transaction'));
+  dispatch(LogActions.debug('processing execute transaction'));
   const inputArgs = transactionData.args[1];
   const inputChunks = splitInputsToChunks(inputArgs);
   const relevantChunk = inputChunks.find(chunk => chunk.length === 8);
