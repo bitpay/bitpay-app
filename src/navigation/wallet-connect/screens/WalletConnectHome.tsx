@@ -628,10 +628,10 @@ const WalletConnectHome = () => {
           </ItemContainer>
           <Hr />
           {requestsV2 && requestsV2.length > 0 ? (
-            <Info style={{height: 80, marginTop: 10}}>
+            <Info style={{minHeight: 80, marginTop: 10}}>
               <InfoDescription>
                 {t(
-                  'Complete or clear pending requests to allow new ones to come in.',
+                  'Complete or clear pending requests to allow new ones to come in',
                 )}
               </InfoDescription>
             </Info>

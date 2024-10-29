@@ -440,7 +440,7 @@ const WalletConnectConnections = () => {
               </InfoHeader>
               <InfoDescription>
                 {t(
-                  'Complete or clear pending requests to allow new ones to come in.',
+                  'Complete or clear pending requests to allow new ones to come in',
                 )}
               </InfoDescription>
             </Info>
