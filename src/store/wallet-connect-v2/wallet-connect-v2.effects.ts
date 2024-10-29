@@ -231,17 +231,6 @@ export const walletConnectV2SubscribeToEvents =
           ),
         );
 
-        const requests: WCV2RequestType[] | undefined =
-          getState().WALLET_CONNECT_V2.requests;
-        const requestExist = requests.some(({id}) => id === event.id);
-        if (requestExist) {
-          dispatch(
-            LogActions.info(
-              '[WC-V2/walletConnectV2SubscribeToEvents]: pending request already stored - updating it',
-            ),
-          );
-        }
-
         const isChainSupported = Object.keys(
           WALLET_CONNECT_SUPPORTED_CHAINS,
         ).includes(event.params.chainId);
@@ -264,7 +253,7 @@ export const walletConnectV2SubscribeToEvents =
         }
 
         // Process the request that requires user interaction
-        await handleUserInteraction(event, requestExist);
+        await handleUserInteraction(event);
       },
     );
 
@@ -293,7 +282,6 @@ export const walletConnectV2SubscribeToEvents =
 
     const handleUserInteraction = async (
       event: Web3WalletTypes.EventArguments['session_request'],
-      requestExist: boolean,
     ) => {
       const {name: currentRouteName} =
         (navigationRef.current?.getCurrentRoute() as any) || {};
@@ -317,7 +305,7 @@ export const walletConnectV2SubscribeToEvents =
           }),
         );
 
-        if (currentRouteName !== 'WalletConnectHome' && !requestExist) {
+        if (currentRouteName !== 'WalletConnectHome') {
           await sleep(1000);
           dispatch(
             startInAppNotification(

@@ -1017,5 +1017,8 @@ const handleExecuteTransaction = async (
 };
 
 export const camelCaseToUpperWords = (input: string) => {
-  return input.replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
+  return input
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .toUpperCase();
 };

@@ -6,7 +6,7 @@ import {
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 
 export const walletConnectV2ReduxPersistBlackList: (keyof WalletConnectV2State)[] =
-  ['proposal'];
+  ['proposal', 'requests'];
 
 export interface WalletConnectV2State {
   sessions: WCV2SessionType[];
