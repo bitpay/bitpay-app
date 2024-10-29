@@ -22,7 +22,10 @@ import {FormatAmount} from '../store/wallet/effects/amount/amount';
 import {getERC20TokenPrice} from '../store/moralis/moralis.effects';
 import {ethers} from 'ethers';
 import EtherscanAPI from '../api/etherscan';
-import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../constants/WalletConnectV2';
+import {
+  EIP155_CHAINS,
+  WALLET_CONNECT_SUPPORTED_CHAINS,
+} from '../constants/WalletConnectV2';
 import {BitpaySupportedTokenOptsByAddress} from '../constants/tokens';
 import {Effect} from '../store';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
@@ -810,7 +813,8 @@ export const processSwapRequest =
             'No standard token data - fetching contract ABI from Etherscan',
           ),
         );
-        abi = await fetchContractAbi(dispatch, chainId, to);
+        const _chainId = EIP155_CHAINS[chainId]?.chainId?.toString();
+        abi = await fetchContractAbi(dispatch, _chainId, to);
         dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
         const contractInterface = new ethers.utils.Interface(abi!);
         transactionData = contractInterface.parseTransaction({data});
