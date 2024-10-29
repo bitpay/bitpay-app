@@ -450,7 +450,8 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
 
     contentCardSubscription = Braze.addListener(
       Braze.Events.CONTENT_CARDS_UPDATED,
-      async () => {
+      async (update: Braze.ContentCardsUpdatedEvent) => {
+        const contentCards = update.cards;
         const isInitializing = currentRetry < MAX_RETRIES;
 
         dispatch(
@@ -462,8 +463,6 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
                 'Braze content cards updated, fetching latest content cards...',
               ),
         );
-
-        const contentCards = await Braze.getContentCards();
 
         if (contentCards.length) {
           currentRetry = MAX_RETRIES;
