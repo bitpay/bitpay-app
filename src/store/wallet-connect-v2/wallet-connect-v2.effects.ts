@@ -28,6 +28,7 @@ import {Key, Wallet} from '../wallet/wallet.models';
 import {checkBiometricForSending} from '../wallet/effects/send/send';
 import {
   dismissDecryptPasswordModal,
+  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../app/app.actions';
@@ -825,27 +826,35 @@ const getPrivKey =
         }
 
         if (key.isPrivKeyEncrypted) {
-          password = await new Promise<string>((_resolve, _reject) => {
-            dispatch(
-              showDecryptPasswordModal({
-                onSubmitHandler: async (_password: string) => {
-                  if (checkEncryptPassword(key, _password)) {
-                    dispatch(dismissDecryptPasswordModal());
-                    await sleep(500);
-                    _resolve(_password);
-                  } else {
-                    dispatch(dismissDecryptPasswordModal());
-                    await sleep(500);
-                    dispatch(showBottomNotificationModal(WrongPasswordError()));
-                    _reject('invalid password');
-                  }
-                },
-                onCancelHandler: () => {
-                  _reject('password canceled');
-                },
-              }),
-            );
-          });
+          try {
+            password = await new Promise<string>(async (_resolve, _reject) => {
+              dispatch(dismissOnGoingProcessModal()); // dismiss any previous modal
+              await sleep(500);
+              dispatch(
+                showDecryptPasswordModal({
+                  onSubmitHandler: async (_password: string) => {
+                    if (checkEncryptPassword(key, _password)) {
+                      dispatch(dismissDecryptPasswordModal());
+                      await sleep(500);
+                      _resolve(_password);
+                    } else {
+                      dispatch(dismissDecryptPasswordModal());
+                      await sleep(500);
+                      dispatch(
+                        showBottomNotificationModal(WrongPasswordError()),
+                      );
+                      _reject('invalid password');
+                    }
+                  },
+                  onCancelHandler: () => {
+                    _reject('password canceled');
+                  },
+                }),
+              );
+            });
+          } catch (error) {
+            return reject(error);
+          }
         }
 
         const xPrivKey = password
