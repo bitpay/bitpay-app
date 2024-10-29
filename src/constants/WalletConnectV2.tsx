@@ -6,6 +6,14 @@ export const WALLETCONNECT_V2_METADATA = {
   icons: ['https://bitpay.com/resources/content/images/2019/10/bitpay.png'],
 };
 
+export const WC_EVENTS = [
+  'chainChanged',
+  'accountsChanged',
+  'message',
+  'disconnect',
+  'connect',
+];
+
 export const CHAIN_NAME_MAPPING: {[key: string]: string} = {
   // ETHEREUM
   '1': 'Ethereum Mainnet',

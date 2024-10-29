@@ -12,12 +12,14 @@ export interface WalletConnectV2State {
   sessions: WCV2SessionType[];
   requests: WCV2RequestType[];
   proposal?: Web3WalletTypes.EventArguments['session_proposal'];
+  contractAbi: {[key: string]: string};
 }
 
 const initialState: WalletConnectV2State = {
   sessions: [],
   requests: [],
   proposal: undefined,
+  contractAbi: {},
 };
 
 export const walletConnectReducer = (
@@ -46,16 +48,10 @@ export const walletConnectV2Reducer = (
         sessions: [...state.sessions, action.payload.session],
       };
     case WalletConnectV2ActionTypes.SESSION_REQUEST:
-      const requestExists = state.requests.some(
-        r => r.id === action.payload.request.id,
-      );
+      // only one request could exist
       return {
         ...state,
-        requests: requestExists
-          ? state.requests.map(r =>
-              r.id === action.payload.request.id ? action.payload.request : r,
-            )
-          : [...state.requests, action.payload.request],
+        requests: [action.payload.request],
       };
     case WalletConnectV2ActionTypes.UPDATE_REQUESTS:
       return {
@@ -67,6 +63,16 @@ export const walletConnectV2Reducer = (
         ...state,
         sessions: action.payload.sessions,
       };
+
+    case WalletConnectV2ActionTypes.CONTRACT_ABI:
+      return {
+        ...state,
+        contractAbi: {
+          ...state.contractAbi,
+          [action.payload.contractAddress]: action.payload.contractAbi,
+        },
+      };
+
     default:
       return state;
   }

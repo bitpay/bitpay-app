@@ -41,6 +41,7 @@ import {
   CHAIN_NAME_MAPPING,
   EIP155_SIGNING_METHODS,
   WALLET_CONNECT_SUPPORTED_CHAINS,
+  WC_EVENTS,
 } from '../../../constants/WalletConnectV2';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import FastImage from 'react-native-fast-image';
@@ -114,7 +115,10 @@ const ValidationText = styled(BaseText)<{textColor: string}>`
   color: ${({textColor}) => textColor};
   font-size: 12px;
 `;
-const TitleContainer = styled.View``;
+
+const TitleContainer = styled.View`
+  padding-bottom: 20px;
+`;
 
 const DescriptionContainer = styled.View`
   margin-bottom: 16px;
@@ -146,6 +150,14 @@ const AccountSettingsContainer = styled.TouchableOpacity`
   align-items: center;
   display: flex;
   padding: 0px;
+  gap: 8px;
+`;
+
+const AccountSettingsArrowContainer = styled.View`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
   gap: 8px;
 `;
 
@@ -212,6 +224,9 @@ export const WalletConnectStartModal = () => {
     const NETWORK_ERROR_PREFIX =
       "Non conforming namespaces. approve() namespaces chains don't satisfy required namespaces.";
 
+    const EVENTS_ERROR_PREFIX =
+      "Non conforming namespaces. approve() namespaces events don't satisfy namespace events for eip155:1";
+
     if (error.includes(NETWORK_ERROR_PREFIX)) {
       // Replace chain codes with corresponding chain names
       error = error.replace(/eip155:\d+/g, match => {
@@ -222,6 +237,11 @@ export const WalletConnectStartModal = () => {
       let requiredPart = parts[0].replace(/,/g, ', ');
       let approvedPart = parts[1].replace(/,/g, ', ');
       const transformedMessage = `Network compatibility issue. The supported networks do not meet the requirements.\n\nRequired Networks:\n${requiredPart}\n\nSupported Networks:\n${approvedPart}`;
+      return transformedMessage;
+    }
+    if (error.includes(EVENTS_ERROR_PREFIX)) {
+      const transformedMessage =
+        'Events compatibility issue. The current supported events are insufficient to fulfill the requirements of the DApp.';
       return transformedMessage;
     } else {
       return error;
@@ -246,9 +266,9 @@ export const WalletConnectStartModal = () => {
           proposal: proposal.params,
           supportedNamespaces: {
             eip155: {
-              chains,
+              chains: uniqueChains,
               methods: Object.values(EIP155_SIGNING_METHODS),
-              events: ['chainChanged', 'accountsChanged'],
+              events: WC_EVENTS,
               accounts,
             },
           },
@@ -597,47 +617,42 @@ export const WalletConnectStartModal = () => {
                   <H7
                     medium={true}
                     style={{color: theme.dark ? White : SlateDark}}>
-                    {t('Accounts')}
+                    {t('Account')}
                   </H7>
                   <DescriptionItemContainer>
                     {allKeys && allKeys[0]?.accounts[0] && checkedAccount ? (
-                      <>
-                        <AccountSettingsContainer
-                          activeOpacity={ActiveOpacity}
-                          onPress={() => {
-                            setShowAccountWCV2SelectionBottomModal(true);
-                          }}>
-                          <CurrencyImageContainer
-                            style={{height: 30, width: 30}}>
-                            <Blockie
-                              size={30}
-                              seed={checkedAccount.receiveAddress}
-                            />
-                          </CurrencyImageContainer>
-                          <Row>
-                            <H6
-                              medium={true}
-                              ellipsizeMode="tail"
-                              numberOfLines={1}>
-                              {checkedAccount.accountName}
-                              {allKeys[0]?.accounts.length > 1 ? (
-                                <BaseText
-                                  style={{
-                                    color: theme.dark ? White : SlateDark,
-                                  }}>
-                                  {' '}
-                                  (+{allKeys[0]?.accounts.length - 1})
-                                </BaseText>
-                              ) : (
-                                ''
-                              )}
-                            </H6>
-                          </Row>
-                        </AccountSettingsContainer>
-                        {allKeys[0]?.accounts.length > 0 ? (
-                          <SelectorArrowRight />
+                      <AccountSettingsContainer
+                        activeOpacity={ActiveOpacity}
+                        onPress={() => {
+                          setShowAccountWCV2SelectionBottomModal(true);
+                        }}>
+                        <CurrencyImageContainer style={{height: 30, width: 30}}>
+                          <Blockie
+                            size={30}
+                            seed={checkedAccount.receiveAddress}
+                          />
+                        </CurrencyImageContainer>
+                        <Row>
+                          <H6
+                            medium={true}
+                            ellipsizeMode="tail"
+                            numberOfLines={1}>
+                            {checkedAccount.accountName}
+                          </H6>
+                        </Row>
+                        {allKeys[0]?.accounts.length > 1 ? (
+                          <AccountSettingsArrowContainer>
+                            <BaseText
+                              style={{
+                                fontSize: 16,
+                                color: theme.dark ? White : SlateDark,
+                              }}>
+                              (+{allKeys[0]?.accounts.length - 1})
+                            </BaseText>
+                            <SelectorArrowRight />
+                          </AccountSettingsArrowContainer>
                         ) : null}
-                      </>
+                      </AccountSettingsContainer>
                     ) : (
                       <DescriptionItemContainer>
                         <WarningBrownSvg />

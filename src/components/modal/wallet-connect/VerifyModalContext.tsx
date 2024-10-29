@@ -9,7 +9,6 @@ import {
   UriContainerTouchable,
 } from '../../../components/modal/wallet-connect/WalletConnectStartModal';
 import ExternalLinkSvg from '../../../../assets/img/external-link-small.svg';
-import {Caution, NotificationPrimary} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {
@@ -26,6 +25,7 @@ import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import {View} from 'react-native';
+import {BottomNotificationCta} from '../bottom-notification/BottomNotification';
 
 const CloseModalButton = styled.TouchableOpacity`
   height: 40px;
@@ -168,21 +168,21 @@ const VerifyContextModal = ({
             icon={VerifyIcon}
           />
           <RowContainer style={{paddingTop: 16}}>
-            <StyledTouchableOpacity onPress={closeModal}>
-              <H6 medium style={{color: NotificationPrimary}}>
-                {t('I UNDERSTAND')}
-              </H6>
-            </StyledTouchableOpacity>
-            <StyledTouchableOpacity
+            <BottomNotificationCta
+              onPress={closeModal}
+              suppressHighlighting={true}
+              primary={true}>
+              {t('I UNDERSTAND')}
+            </BottomNotificationCta>
+            <BottomNotificationCta
+              suppressHighlighting={true}
               onPress={async () => {
                 closeModal();
                 await sleep(1000);
                 onRemovePress();
               }}>
-              <H6 medium style={{color: Caution}}>
-                {t('REMOVE')}
-              </H6>
-            </StyledTouchableOpacity>
+              {t('REMOVE')}
+            </BottomNotificationCta>
           </RowContainer>
         </ContentContainer>
       </WalletSelectMenuContainer>

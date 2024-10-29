@@ -110,6 +110,7 @@ import {
   currencyConfigs,
 } from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -455,16 +456,17 @@ export const buildTxDetails =
         tokenAddress =
           wallet.tokenAddress || getTokenAddressForOffchainWallet(wallet);
       }
-
       if (context === 'walletConnect' && request) {
+        const {swapFromChain, swapFromCurrencyAbbreviation, swapAmount} =
+          request;
         const {params} = request.params.request;
         gasPrice = params[0].gasPrice
           ? parseInt(params[0]?.gasPrice, 16)
           : feePerKb!;
         nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
-        chain = wallet.chain;
-        coin = wallet.currencyAbbreviation;
-        amount = parseInt(params[0]?.value, 16) || 0;
+        chain = swapFromChain;
+        coin = swapFromCurrencyAbbreviation;
+        amount = Number(swapAmount) || 0;
         gasLimit =
           (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
           (params[0].gas && parseInt(params[0]?.gas, 16)) ||
@@ -475,11 +477,10 @@ export const buildTxDetails =
             from: params[0].from,
             to: params[0].to,
             data: params[0].data,
-            chain,
+            chain: swapFromChain!,
           }));
         fee = gasLimit * gasPrice;
       }
-
       if (proposal) {
         gasPrice = proposal.gasPrice;
         gasLimit = proposal.gasLimit;
@@ -495,7 +496,6 @@ export const buildTxDetails =
         wallet.currencyAbbreviation,
         wallet.chain,
       );
-
       const isOffChain = !proposal;
       if (invoice) {
         amount = isOffChain
@@ -510,7 +510,6 @@ export const buildTxDetails =
           fee = 0;
         }
       }
-
       if (!coin || !chain) {
         throw new Error('Invalid coin or chain');
       }
@@ -534,7 +533,7 @@ export const buildTxDetails =
         coin,
         chain,
       };
-      const rateStr = getRateStr(opts);
+      const rateStr = await dispatch(getRateStr(opts));
       const networkCost =
         !isOffChain &&
         selectedTransactionCurrency &&
@@ -669,25 +668,56 @@ export const buildTxDetails =
     });
   };
 
-const getRateStr = (opts: {
-  effectiveRate: number | undefined;
-  rates: Rates;
-  defaultAltCurrencyIsoCode: string;
-  coin: string;
-  chain: string;
-}): string | undefined => {
-  const fiatRate = !opts.effectiveRate
-    ? getRateByCurrencyName(
+const getRateStr =
+  (opts: {
+    effectiveRate: number | undefined;
+    rates: Rates;
+    defaultAltCurrencyIsoCode: string;
+    coin: string;
+    chain: string;
+    contractAddress?: string;
+  }): Effect<Promise<string | undefined>> =>
+  async (dispatch): Promise<string | undefined> => {
+    let fiatRate = opts.effectiveRate;
+
+    if (!fiatRate) {
+      const rate = getRateByCurrencyName(
         opts.rates,
         opts.coin.toLowerCase(),
         opts.chain,
-      ).find(r => r.code === opts.defaultAltCurrencyIsoCode)!.rate
-    : opts.effectiveRate;
-  return `1 ${formatCurrencyAbbreviation(opts.coin)} @ ${formatFiatAmount(
-    parseFloat(fiatRate.toFixed(2)),
-    opts.defaultAltCurrencyIsoCode,
-  )}`;
-};
+      );
+
+      if (rate) {
+        fiatRate = rate.find(
+          r => r.code === opts.defaultAltCurrencyIsoCode,
+        )?.rate;
+      }
+
+      if (!fiatRate && opts.contractAddress) {
+        const senderTokenPrice = (
+          await dispatch(
+            getERC20TokenPrice({
+              address: opts.contractAddress,
+              chain: opts.chain,
+            }),
+          )
+        ).usdPrice;
+        fiatRate = senderTokenPrice;
+      }
+    }
+
+    if (!fiatRate) {
+      return Promise.resolve(undefined);
+    }
+
+    return Promise.resolve(
+      `1 ${formatCurrencyAbbreviation(opts.coin)} @ ${formatFiatAmount(
+        parseFloat(fiatRate.toFixed(2)),
+        opts.defaultAltCurrencyIsoCode,
+      )}`,
+    );
+  };
+
 /*
  * txp options object for wallet.createTxProposal
  * */

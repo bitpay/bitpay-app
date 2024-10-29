@@ -26,6 +26,16 @@ export const rejectSessionProposal = (): WalletConnectV2ActionType => ({
 export const sessionRequest = (
   request: Web3WalletTypes.EventArguments['session_request'] & {
     createdOn?: number;
+    swapAmount?: string;
+    swapFormatAmount?: string;
+    swapFiatAmount?: string;
+    swapFromChain?: string;
+    swapFromCurrencyAbbreviation?: string;
+    receiveAmount?: string;
+    senderAddress?: string;
+    senderContractAddress?: string;
+    recipientAddress?: string;
+    senderTokenPrice?: number;
   },
 ): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.SESSION_REQUEST,
@@ -44,4 +54,12 @@ export const updateSessions = (
 ): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.UPDATE_SESSIONS,
   payload: {sessions},
+});
+
+export const updateContractAbi = (
+  contractAbi: string,
+  contractAddress: string,
+): WalletConnectV2ActionType => ({
+  type: WalletConnectV2ActionTypes.CONTRACT_ABI,
+  payload: {contractAbi, contractAddress},
 });

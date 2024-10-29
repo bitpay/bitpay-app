@@ -1,4 +1,4 @@
-import {Key, KeyMethods, Wallet} from '../store/wallet/wallet.models';
+import {Key, KeyMethods, Token, Wallet} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
@@ -12,10 +12,31 @@ import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
 import {
   getBaseAccountCreationCoinsAndTokens,
+  BitpaySupportedCoins,
   SUPPORTED_EVM_COINS,
 } from '../constants/currencies';
 import {LogActions} from '../store/log';
 import {createMultipleWallets} from '../store/wallet/effects';
+import {toFiat} from '../store/wallet/utils/wallet';
+import {FormatAmount} from '../store/wallet/effects/amount/amount';
+import {getERC20TokenPrice} from '../store/moralis/moralis.effects';
+import {ethers} from 'ethers';
+import EtherscanAPI from '../api/etherscan';
+import {
+  EIP155_CHAINS,
+  WALLET_CONNECT_SUPPORTED_CHAINS,
+} from '../constants/WalletConnectV2';
+import {BitpaySupportedTokenOptsByAddress} from '../constants/tokens';
+import {Effect} from '../store';
+import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {
+  abiERC20,
+  abiERC721,
+  abiERC1155,
+  abiFiatTokenV2,
+} from '../navigation/wallet-connect/constants/abis';
+import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
+import {Keys} from '../store/wallet/wallet.reducer';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -627,4 +648,374 @@ export const getEvmGasWallets = (wallets: Wallet[]) => {
       IsEVMChain(wallet.credentials.chain) &&
       !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
   );
+};
+
+export const splitInputsToChunks = (inputsArray: any[]) => {
+  const chunksArray = inputsArray.map(input => {
+    const hexString = input.startsWith('0x') ? input.slice(2) : input;
+    return hexString.match(/.{1,64}/g);
+  });
+  return chunksArray;
+};
+
+export const extractAddresses = (hex: string) => {
+  const senderContractAddress = '0x' + hex.slice(0, 40);
+  const recipientAddress = '0x' + hex.slice(46, 86);
+  return {senderContractAddress, recipientAddress};
+};
+
+export const removeTrailingZeros = (hexString: string) => {
+  const trimmedHex = hexString.replace(/0+$/, '');
+  return trimmedHex;
+};
+
+interface RequestUiValues {
+  transactionDataName: string;
+  senderAddress: string;
+  swapFromChain: string;
+  senderContractAddress?: string;
+  swapAmount?: string;
+  swapFormatAmount?: string;
+  swapFiatAmount?: string;
+  swapFromCurrencyAbbreviation?: string;
+  receiveAmount?: string;
+  recipientAddress?: string;
+  senderTokenPrice?: number;
+}
+
+export const processOtherMethodsRequest =
+  (event: Web3WalletTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
+  async (dispatch, getState) => {
+    dispatch(LogActions.debug('processing other method transaction'));
+    const {
+      WALLET: {keys},
+    } = getState();
+    const {params} = event;
+    const {chainId, request} = params;
+    const {method} = params.request;
+    const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+    let senderAddress = '';
+    switch (method) {
+      case 'eth_signTypedData':
+      case 'eth_signTypedData_v1':
+      case 'eth_signTypedData_v3':
+      case 'eth_signTypedData_v4':
+      case 'eth_sign':
+        senderAddress = request.params[0];
+        break;
+      case 'personal_sign':
+        senderAddress = request.params[1];
+        break;
+      case 'eth_signTransaction':
+        senderAddress = request.params[0].from;
+        break;
+    }
+    try {
+      const wallet = Object.values(keys).flatMap(key =>
+        key.wallets.filter(
+          wallet =>
+            wallet.receiveAddress?.toLowerCase() ===
+              senderAddress.toLowerCase() && wallet.chain === swapFromChain,
+        ),
+      )[0];
+      const {currencyAbbreviation} = wallet; // this is the "gas" wallet
+      return {
+        transactionDataName: 'SIGN REQUEST',
+        swapFromChain,
+        senderAddress,
+        swapFromCurrencyAbbreviation: currencyAbbreviation,
+      };
+    } catch (error) {
+      dispatch(
+        LogActions.error(`Error processing ${method} request: ${error}`),
+      );
+      throw error;
+    }
+  };
+
+const parseStandardTokenTransactionData = (data?: string) => {
+  if (!data) {
+    return {};
+  }
+  const ERC20Interface = new ethers.utils.Interface(abiERC20);
+  const ERC721Interface = new ethers.utils.Interface(abiERC721);
+  const ERC1155Interface = new ethers.utils.Interface(abiERC1155);
+  const USDCInterface = new ethers.utils.Interface(abiFiatTokenV2);
+
+  try {
+    return {
+      transactionData: ERC20Interface.parseTransaction({data}),
+      abi: abiERC20,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: ERC721Interface.parseTransaction({data}),
+      abi: abiERC721,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: ERC1155Interface.parseTransaction({data}),
+      abi: abiERC1155,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: USDCInterface.parseTransaction({data}),
+      abi: abiFiatTokenV2,
+    };
+  } catch {}
+
+  return {};
+};
+
+export const processSwapRequest =
+  (event: Web3WalletTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
+  async (dispatch, getState) => {
+    const {
+      WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress, keys},
+      APP: {defaultAltCurrency},
+      RATE: {rates: allRates},
+    } = getState();
+
+    const tokenOptions = {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...tokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
+    };
+
+    const {params} = event;
+    const {chainId} = params;
+    const {method} = params.request;
+
+    const {to, data, from} = params.request.params[0];
+    const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+
+    if (data === '0x') {
+      return handleDefaultTransaction(
+        keys,
+        swapFromChain,
+        from,
+        method,
+        dispatch,
+      );
+    }
+
+    try {
+      let {transactionData, abi} = parseStandardTokenTransactionData(data);
+      if (!transactionData && !abi) {
+        dispatch(
+          LogActions.debug('Continue anyway building a default transaction'),
+        );
+        return handleDefaultTransaction(
+          keys,
+          swapFromChain,
+          from,
+          method,
+          dispatch,
+        );
+        // dispatch(
+        //   LogActions.debug(
+        //     'No standard token data - fetching contract ABI from Etherscan',
+        //   ),
+        // );
+        // const _chainId = EIP155_CHAINS[chainId]?.chainId?.toString();
+        // abi = await fetchContractAbi(dispatch, _chainId, to);
+        // dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
+        // const contractInterface = new ethers.utils.Interface(abi!);
+        // transactionData = contractInterface.parseTransaction({data});
+      }
+      dispatch(
+        LogActions.debug(
+          'Decoded transaction data: ' + JSON.stringify(transactionData),
+        ),
+      );
+      const transactionDataName = transactionData!.name;
+      if (transactionDataName === 'execute') {
+        const transaction = await handleExecuteTransaction(
+          dispatch,
+          keys,
+          transactionData!,
+          tokenOptions,
+          swapFromChain,
+          defaultAltCurrency,
+          allRates,
+          from,
+        );
+        return transaction;
+      }
+      return handleDefaultTransaction(
+        keys,
+        swapFromChain,
+        from,
+        transactionDataName,
+        dispatch,
+      );
+    } catch (error) {
+      dispatch(LogActions.error(`Error processing swap request: ${error}`));
+      dispatch(
+        LogActions.debug('Continue anyway building a default transaction'),
+      );
+      return handleDefaultTransaction(
+        keys,
+        swapFromChain,
+        from,
+        method,
+        dispatch,
+      );
+    }
+  };
+
+const fetchContractAbi = async (
+  dispatch: any,
+  chainId: string,
+  address: string,
+) => {
+  const getAbiFromAddress = async (address: string): Promise<any> => {
+    const abi = await dispatch(EtherscanAPI.getContractAbi(chainId, address));
+    if (!abi || abi === 'Contract source code not verified') {
+      throw new Error('No ABI found');
+    }
+    try {
+      return JSON.parse(abi);
+    } catch {
+      throw new Error('Failed to parse ABI');
+    }
+  };
+
+  let parsedAbi = await getAbiFromAddress(address);
+
+  const isProxyContract = parsedAbi.some(
+    (item: any) => item.name === 'implementation',
+  );
+
+  if (isProxyContract) {
+    dispatch(LogActions.debug('Detected EIP-1967 proxy contract'));
+
+    // EIP-1967 implementation slot
+    const implementationSlot =
+      '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+
+    // Retrieve the address at the implementation slot
+    const paddedImplementationAddress = await EtherscanAPI.getStorageAt(
+      chainId,
+      address,
+      implementationSlot,
+    );
+    const implementationAddress = `0x${paddedImplementationAddress.slice(-40)}`;
+
+    // Fetch and parse the ABI from the implementation contract
+    parsedAbi = await getAbiFromAddress(implementationAddress);
+  }
+
+  return parsedAbi;
+};
+
+const handleDefaultTransaction = async (
+  keys: Keys,
+  chain: string,
+  senderAddress: string,
+  transactionDataName: string,
+  dispatch: any,
+) => {
+  dispatch(LogActions.debug(`processing ${transactionDataName} transaction`));
+  const wallet = Object.values(keys).flatMap(key =>
+    key.wallets.filter(
+      wallet =>
+        wallet.receiveAddress?.toLowerCase() === senderAddress.toLowerCase() &&
+        wallet.chain === chain,
+    ),
+  )[0];
+  const {currencyAbbreviation} = wallet; // this is the "gas" wallet
+  return {
+    transactionDataName: camelCaseToUpperWords(transactionDataName),
+    swapFromChain: chain,
+    senderAddress,
+    swapFromCurrencyAbbreviation: currencyAbbreviation,
+  };
+};
+
+const handleExecuteTransaction = async (
+  dispatch: any,
+  keys: Keys,
+  transactionData: ethers.utils.TransactionDescription,
+  tokenOptions: {
+    [x: string]: Token;
+  },
+  chain: string,
+  defaultAltCurrency: AltCurrenciesRowProps,
+  allRates: Rates,
+  senderAddress: string,
+) => {
+  dispatch(LogActions.debug('processing execute transaction'));
+  const inputArgs = transactionData.args[1];
+  const inputChunks = splitInputsToChunks(inputArgs);
+  const relevantChunk = inputChunks.find(chunk => chunk.length === 8);
+
+  const swapAmount = ethers.BigNumber.from('0x' + relevantChunk[1]).toString();
+  const receiveAmount = ethers.BigNumber.from(
+    '0x' + relevantChunk[2],
+  ).toString();
+  const combinedHex = relevantChunk[6] + relevantChunk[7];
+  const {senderContractAddress, recipientAddress} =
+    extractAddresses(combinedHex);
+
+  const senderTokenPrice = (
+    await dispatch(getERC20TokenPrice({address: senderContractAddress, chain}))
+  ).usdPrice;
+  const formattedTokenAddress = addTokenChainSuffix(
+    senderContractAddress.toLowerCase(),
+    chain,
+  );
+  const swapFromCurrencyAbbreviation =
+    tokenOptions[formattedTokenAddress]?.symbol.toLowerCase() ||
+    BitpaySupportedCoins[chain].coin.toLowerCase();
+
+  const swapFormatAmount = await dispatch(
+    FormatAmount(
+      swapFromCurrencyAbbreviation,
+      chain,
+      senderContractAddress,
+      Number(swapAmount),
+    ),
+  );
+
+  const toFiatAmount = await dispatch(
+    toFiat(
+      Number(swapAmount),
+      defaultAltCurrency.isoCode,
+      swapFromCurrencyAbbreviation,
+      chain,
+      allRates,
+      senderContractAddress,
+      senderTokenPrice,
+    ),
+  );
+
+  const swapFiatAmount = formatFiatAmount(
+    toFiatAmount,
+    defaultAltCurrency.isoCode,
+  );
+
+  return {
+    transactionDataName: camelCaseToUpperWords(transactionData.name),
+    swapAmount,
+    swapFormatAmount,
+    swapFiatAmount,
+    swapFromChain: chain,
+    swapFromCurrencyAbbreviation,
+    receiveAmount,
+    senderAddress,
+    senderContractAddress,
+    recipientAddress,
+    senderTokenPrice,
+  };
+};
+
+export const camelCaseToUpperWords = (input: string) => {
+  return input.replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
 };
