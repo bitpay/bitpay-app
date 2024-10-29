@@ -740,6 +740,9 @@ const approveEIP155Request =
             if (sendTransaction.chainId) {
               delete sendTransaction.chainId;
             }
+            if (sendTransaction.type) {
+              delete sendTransaction.type;
+            }
             // workaround for bad gas price estimation ONLY matic
             if (
               chainId.includes('eip155:137') &&
