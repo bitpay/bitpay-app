@@ -6,6 +6,7 @@ import {
   TEIP155Chain,
   WALLETCONNECT_V2_METADATA,
   WALLET_CONNECT_SUPPORTED_CHAINS,
+  WC_EVENTS,
 } from '../../constants/WalletConnectV2';
 import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
@@ -611,7 +612,7 @@ export const walletConnectV2OnUpdateSession =
             eip155: {
               chains,
               methods: Object.values(EIP155_SIGNING_METHODS),
-              events: ['chainChanged', 'accountsChanged'],
+              events: WC_EVENTS,
               accounts,
             },
           },
@@ -644,7 +645,7 @@ export const walletConnectV2OnUpdateSession =
             eip155: {
               chains: [...new Set([..._chains, ...chains])],
               methods: Object.values(EIP155_SIGNING_METHODS),
-              events: ['chainChanged', 'accountsChanged'],
+              events: WC_EVENTS,
               accounts: [...new Set([..._accounts, ...accounts])],
             },
           },

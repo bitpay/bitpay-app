@@ -41,6 +41,7 @@ import {
   CHAIN_NAME_MAPPING,
   EIP155_SIGNING_METHODS,
   WALLET_CONNECT_SUPPORTED_CHAINS,
+  WC_EVENTS,
 } from '../../../constants/WalletConnectV2';
 import {Web3WalletTypes} from '@walletconnect/web3wallet';
 import FastImage from 'react-native-fast-image';
@@ -215,6 +216,9 @@ export const WalletConnectStartModal = () => {
     const NETWORK_ERROR_PREFIX =
       "Non conforming namespaces. approve() namespaces chains don't satisfy required namespaces.";
 
+    const EVENTS_ERROR_PREFIX =
+      "Non conforming namespaces. approve() namespaces events don't satisfy namespace events for eip155:1";
+
     if (error.includes(NETWORK_ERROR_PREFIX)) {
       // Replace chain codes with corresponding chain names
       error = error.replace(/eip155:\d+/g, match => {
@@ -225,6 +229,11 @@ export const WalletConnectStartModal = () => {
       let requiredPart = parts[0].replace(/,/g, ', ');
       let approvedPart = parts[1].replace(/,/g, ', ');
       const transformedMessage = `Network compatibility issue. The supported networks do not meet the requirements.\n\nRequired Networks:\n${requiredPart}\n\nSupported Networks:\n${approvedPart}`;
+      return transformedMessage;
+    }
+    if (error.includes(EVENTS_ERROR_PREFIX)) {
+      const transformedMessage =
+        'Events compatibility issue. The current supported events are insufficient to fulfill the requirements of the DApp.';
       return transformedMessage;
     } else {
       return error;
@@ -251,7 +260,7 @@ export const WalletConnectStartModal = () => {
             eip155: {
               chains: uniqueChains,
               methods: Object.values(EIP155_SIGNING_METHODS),
-              events: ['chainChanged', 'accountsChanged'],
+              events: WC_EVENTS,
               accounts,
             },
           },
