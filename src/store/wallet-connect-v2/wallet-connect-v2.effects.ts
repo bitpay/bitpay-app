@@ -317,6 +317,7 @@ export const walletConnectV2SubscribeToEvents =
         );
 
         if (currentRouteName !== 'WalletConnectHome' && !requestExist) {
+          await sleep(1000);
           dispatch(
             startInAppNotification(
               'NEW_PENDING_REQUEST',

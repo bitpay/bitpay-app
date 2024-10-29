@@ -2,7 +2,16 @@ import {useNavigation, useTheme} from '@react-navigation/native';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {BaseText, H4, H5, H6, TextAlign} from '../../../components/styled/Text';
+import {
+  BaseText,
+  H4,
+  H5,
+  H6,
+  InfoDescription,
+  InfoHeader,
+  InfoTitle,
+  TextAlign,
+} from '../../../components/styled/Text';
 import {NeutralSlate, SlateDark} from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import AddConnection from '../../../components/add/Add';
@@ -39,6 +48,9 @@ import {
   ActiveOpacity,
   Column,
   CtaContainerAbsolute,
+  Info,
+  InfoImageContainer,
+  InfoTriangle,
   SearchRoundContainer,
   SearchRoundInput,
   SheetContainer,
@@ -54,6 +66,7 @@ import Settings from '../../../components/settings/Settings';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import Button from '../../../components/button/Button';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
+import InfoSvg from '../../../../assets/img/info.svg';
 
 const WalletConnectConnectionsContainer = styled.SafeAreaView`
   flex: 1;
@@ -416,6 +429,22 @@ const WalletConnectConnections = () => {
               }}
             />
           </SearchRoundContainer>
+          {requests && requests.length > 0 ? (
+            <Info style={{marginHorizontal: 10, marginTop: 20}}>
+              <InfoHeader>
+                <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                  <InfoSvg />
+                </InfoImageContainer>
+
+                <InfoTitle>{t('Pending request')}</InfoTitle>
+              </InfoHeader>
+              <InfoDescription>
+                {t(
+                  'Complete or clear pending requests to allow new ones to come in.',
+                )}
+              </InfoDescription>
+            </Info>
+          ) : null}
           {sessions.length ? (
             <SessionList
               sessions={

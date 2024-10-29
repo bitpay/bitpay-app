@@ -1,7 +1,12 @@
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {H5, H7, ListItemSubText} from '../../../components/styled/Text';
+import {
+  H5,
+  H7,
+  InfoDescription,
+  ListItemSubText,
+} from '../../../components/styled/Text';
 import {
   Caution25,
   LightBlack,
@@ -18,6 +23,8 @@ import {
   CurrencyColumn,
   CurrencyImageContainer,
   Hr,
+  Info,
+  InfoTriangle,
   Row,
   RowContainer,
 } from '../../../components/styled/Containers';
@@ -84,8 +91,8 @@ export type WalletConnectHomeParamList = {
   notificationRequestId?: number;
 };
 
-const SummaryContainer = styled.View`
-  padding-bottom: 64px;
+const SummaryContainer = styled.View<{hasRequest: boolean}>`
+  padding-bottom: ${({hasRequest}) => (hasRequest ? '0px' : '80px')};
 `;
 
 export const NoteContainer = styled.TouchableOpacity<{isDappUri?: boolean}>`
@@ -552,7 +559,7 @@ const WalletConnectHome = () => {
   return (
     <WalletConnectContainer>
       <View style={{marginTop: 20, padding: 16, flex: 1}}>
-        <SummaryContainer>
+        <SummaryContainer hasRequest={requestsV2 && requestsV2.length > 0}>
           <HeaderTitle>{t('Summary')}</HeaderTitle>
           <Hr />
           <ItemContainer>
@@ -620,9 +627,18 @@ const WalletConnectHome = () => {
             ) : null}
           </ItemContainer>
           <Hr />
+          {requestsV2 && requestsV2.length > 0 ? (
+            <Info style={{height: 80, marginTop: 10}}>
+              <InfoDescription>
+                {t(
+                  'Complete or clear pending requests to allow new ones to come in.',
+                )}
+              </InfoDescription>
+            </Info>
+          ) : null}
         </SummaryContainer>
         <PRContainer>
-          <HeaderTitle>{t('Pending Requests')}</HeaderTitle>
+          <HeaderTitle>{t('Pending Request')}</HeaderTitle>
           <Hr />
           {requestsV2 && requestsV2.length > 0 ? (
             <FlatList
@@ -634,7 +650,7 @@ const WalletConnectHome = () => {
           ) : (
             <ItemContainer>
               <ItemTitleContainer>
-                <H7>{t('No pending requests')}</H7>
+                <H7>{t('No pending request')}</H7>
               </ItemTitleContainer>
             </ItemContainer>
           )}
