@@ -809,15 +809,25 @@ export const processSwapRequest =
       let {transactionData, abi} = parseStandardTokenTransactionData(data);
       if (!transactionData && !abi) {
         dispatch(
-          LogActions.debug(
-            'No standard token data - fetching contract ABI from Etherscan',
-          ),
+          LogActions.debug('Continue anyway building a default transaction'),
         );
-        const _chainId = EIP155_CHAINS[chainId]?.chainId?.toString();
-        abi = await fetchContractAbi(dispatch, _chainId, to);
-        dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
-        const contractInterface = new ethers.utils.Interface(abi!);
-        transactionData = contractInterface.parseTransaction({data});
+        return handleDefaultTransaction(
+          keys,
+          swapFromChain,
+          from,
+          method,
+          dispatch,
+        );
+        // dispatch(
+        //   LogActions.debug(
+        //     'No standard token data - fetching contract ABI from Etherscan',
+        //   ),
+        // );
+        // const _chainId = EIP155_CHAINS[chainId]?.chainId?.toString();
+        // abi = await fetchContractAbi(dispatch, _chainId, to);
+        // dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
+        // const contractInterface = new ethers.utils.Interface(abi!);
+        // transactionData = contractInterface.parseTransaction({data});
       }
       dispatch(
         LogActions.debug(
@@ -848,7 +858,7 @@ export const processSwapRequest =
     } catch (error) {
       dispatch(LogActions.error(`Error processing swap request: ${error}`));
       dispatch(
-        LogActions.debug('Continue anyway bulding a default transaction'),
+        LogActions.debug('Continue anyway building a default transaction'),
       );
       return handleDefaultTransaction(
         keys,
