@@ -153,6 +153,14 @@ const AccountSettingsContainer = styled.TouchableOpacity`
   gap: 8px;
 `;
 
+const AccountSettingsArrowContainer = styled.View`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  gap: 8px;
+`;
+
 const styles = StyleSheet.create({
   icon: {
     height: 80,
@@ -609,47 +617,42 @@ export const WalletConnectStartModal = () => {
                   <H7
                     medium={true}
                     style={{color: theme.dark ? White : SlateDark}}>
-                    {t('Accounts')}
+                    {t('Account')}
                   </H7>
                   <DescriptionItemContainer>
                     {allKeys && allKeys[0]?.accounts[0] && checkedAccount ? (
-                      <>
-                        <AccountSettingsContainer
-                          activeOpacity={ActiveOpacity}
-                          onPress={() => {
-                            setShowAccountWCV2SelectionBottomModal(true);
-                          }}>
-                          <CurrencyImageContainer
-                            style={{height: 30, width: 30}}>
-                            <Blockie
-                              size={30}
-                              seed={checkedAccount.receiveAddress}
-                            />
-                          </CurrencyImageContainer>
-                          <Row>
-                            <H6
-                              medium={true}
-                              ellipsizeMode="tail"
-                              numberOfLines={1}>
-                              {checkedAccount.accountName}
-                              {allKeys[0]?.accounts.length > 1 ? (
-                                <BaseText
-                                  style={{
-                                    color: theme.dark ? White : SlateDark,
-                                  }}>
-                                  {' '}
-                                  (+{allKeys[0]?.accounts.length - 1})
-                                </BaseText>
-                              ) : (
-                                ''
-                              )}
-                            </H6>
-                          </Row>
-                        </AccountSettingsContainer>
-                        {allKeys[0]?.accounts.length > 0 ? (
-                          <SelectorArrowRight />
+                      <AccountSettingsContainer
+                        activeOpacity={ActiveOpacity}
+                        onPress={() => {
+                          setShowAccountWCV2SelectionBottomModal(true);
+                        }}>
+                        <CurrencyImageContainer style={{height: 30, width: 30}}>
+                          <Blockie
+                            size={30}
+                            seed={checkedAccount.receiveAddress}
+                          />
+                        </CurrencyImageContainer>
+                        <Row>
+                          <H6
+                            medium={true}
+                            ellipsizeMode="tail"
+                            numberOfLines={1}>
+                            {checkedAccount.accountName}
+                          </H6>
+                        </Row>
+                        {allKeys[0]?.accounts.length > 1 ? (
+                          <AccountSettingsArrowContainer>
+                            <BaseText
+                              style={{
+                                fontSize: 16,
+                                color: theme.dark ? White : SlateDark,
+                              }}>
+                              (+{allKeys[0]?.accounts.length - 1})
+                            </BaseText>
+                            <SelectorArrowRight />
+                          </AccountSettingsArrowContainer>
                         ) : null}
-                      </>
+                      </AccountSettingsContainer>
                     ) : (
                       <DescriptionItemContainer>
                         <WarningBrownSvg />
