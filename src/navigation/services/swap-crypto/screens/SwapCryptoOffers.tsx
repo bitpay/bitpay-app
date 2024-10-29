@@ -1127,17 +1127,81 @@ const SwapCryptoOffers: React.FC = () => {
       showThorswapError(err, reason);
       return;
     }
-    const reqData = {
-      address: selectedWalletFrom.tokenAddress, // ERC20 token contract address
+
+    let reqData: {
+      chain: string;
+      ownerAddress: string;
+      limit?: number;
+      cursor?: string | null;
+    } = {
       chain: selectedWalletFrom.chain,
       ownerAddress,
-      spenderAddress: data.spenderAddress,
+      cursor: null,
     };
-    logger.debug(
-      'getERC20TokenAllowance with reqData: ' + JSON.stringify(reqData),
-    );
-    const allowanceData = await dispatch(getERC20TokenAllowance(reqData));
-    return allowanceData;
+
+    const getApprovalsUntilConditionMet = async (
+      cursor: string | null,
+    ): Promise<{allowance: string} | undefined> => {
+      if (cursor) {
+        reqData.cursor = cursor;
+      }
+      logger.debug(
+        'getERC20TokenAllowance with reqData: ' + JSON.stringify(reqData),
+      );
+
+      return await dispatch(getERC20TokenAllowance(reqData))
+        .then(async approvesData => {
+          const spendersList = approvesData.result;
+          const nextCursor = approvesData.cursor;
+          let spenderData;
+
+          if (Array.isArray(spendersList)) {
+            spenderData = spendersList.find(
+              s =>
+                s.spender?.address?.toLowerCase() ===
+                  data?.spenderAddress?.toLowerCase() &&
+                s.token?.address?.toLowerCase() ===
+                  selectedWalletFrom.tokenAddress?.toLowerCase(),
+            );
+          }
+
+          if (spenderData) {
+            return {
+              allowance: spenderData.value ?? '0',
+            };
+          }
+
+          if (!nextCursor) {
+            return {
+              allowance: '0',
+            };
+          }
+
+          // If nextCursor is present, try to fetch the next list of approvals
+          return await getApprovalsUntilConditionMet(nextCursor);
+        })
+        .catch(err => {
+          let msg =
+            typeof err?.message === 'string'
+              ? err.message
+              : JSON.stringify(err);
+          logger.debug(msg);
+          return undefined;
+        });
+    };
+
+    const approvalData = await getApprovalsUntilConditionMet(null);
+
+    if (approvalData) {
+      return approvalData;
+    } else {
+      logger.debug(
+        'Sufficient allowance could not be found for the selected spender. Setting allowance to 0...',
+      );
+      return {
+        allowance: '0',
+      };
+    }
   };
 
   const checkTokenAllowance = async (
@@ -1174,9 +1238,18 @@ const SwapCryptoOffers: React.FC = () => {
         showThorswapError(err, reason);
         return;
       }
-      const tokenAllowance: {allowance: string} = await getTokenAllowance({
+      const tokenAllowance = await getTokenAllowance({
         spenderAddress: spenderData.address,
       });
+
+      if (!tokenAllowance) {
+        let err = t(
+          "Can't get ERC20 allowances at this moment. Please try again later",
+        );
+        const reason = 'checkTokenAllowance Error. tokenAllowance is undefined';
+        showThorswapError(err, reason);
+        return;
+      }
 
       const precision = dispatch(
         GetPrecision(
