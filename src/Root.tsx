@@ -135,7 +135,7 @@ import {dismissOnGoingProcessModal, showBlur} from './store/app/app.actions';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
-import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
+//import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletConnectStartModal';
 import {KeyMethods} from './store/wallet/wallet.models';
 import {
@@ -709,7 +709,7 @@ export default () => {
             <BlurContainer />
             <PinModal />
             <BiometricModal />
-            <ImportLedgerWalletModal />
+            {/* <ImportLedgerWalletModal /> */}
             <WalletConnectStartModal />
           </NavigationContainer>
         </BottomSheetModalProvider>
