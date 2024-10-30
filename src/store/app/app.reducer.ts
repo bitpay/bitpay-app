@@ -23,7 +23,7 @@ import uniqBy from 'lodash.uniqby';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
 import moment from 'moment';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
@@ -105,7 +105,7 @@ export interface AppState {
     | {
         context: InAppNotificationContextType;
         message: string;
-        request?: Web3WalletTypes.EventArguments['session_request'];
+        request?: WalletKitTypes.EventArguments['session_request'];
       }
     | undefined;
   showBottomNotificationModal: boolean;

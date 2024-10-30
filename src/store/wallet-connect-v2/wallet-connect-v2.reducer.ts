@@ -3,7 +3,7 @@ import {
   WalletConnectV2ActionType,
   WalletConnectV2ActionTypes,
 } from './wallet-connect-v2.types';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 
 export const walletConnectV2ReduxPersistBlackList: (keyof WalletConnectV2State)[] =
   ['proposal', 'requests'];
@@ -11,7 +11,7 @@ export const walletConnectV2ReduxPersistBlackList: (keyof WalletConnectV2State)[
 export interface WalletConnectV2State {
   sessions: WCV2SessionType[];
   requests: WCV2RequestType[];
-  proposal?: Web3WalletTypes.EventArguments['session_proposal'];
+  proposal?: WalletKitTypes.EventArguments['session_proposal'];
   contractAbi: {[key: string]: string};
 }
 

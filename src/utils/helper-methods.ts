@@ -28,7 +28,7 @@ import {
 } from '../constants/WalletConnectV2';
 import {BitpaySupportedTokenOptsByAddress} from '../constants/tokens';
 import {Effect} from '../store';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import {
   abiERC20,
   abiERC721,
@@ -684,7 +684,7 @@ interface RequestUiValues {
 }
 
 export const processOtherMethodsRequest =
-  (event: Web3WalletTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
+  (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
     dispatch(LogActions.debug('processing other method transaction'));
     const {
@@ -774,7 +774,7 @@ const parseStandardTokenTransactionData = (data?: string) => {
 };
 
 export const processSwapRequest =
-  (event: Web3WalletTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
+  (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
     const {
       WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress, keys},

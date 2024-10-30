@@ -43,7 +43,7 @@ import {
   WALLET_CONNECT_SUPPORTED_CHAINS,
   WC_EVENTS,
 } from '../../../constants/WalletConnectV2';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import FastImage from 'react-native-fast-image';
 import {WalletConnectScreens} from '../../../navigation/wallet-connect/WalletConnectGroup';
 import SheetModal from '../base/sheet/SheetModal';
@@ -74,7 +74,7 @@ import {SvgProps} from 'react-native-svg';
 
 export type WalletConnectStartParamList = {
   // version 2
-  proposal: Web3WalletTypes.EventArguments['session_proposal'];
+  proposal: WalletKitTypes.EventArguments['session_proposal'];
   selectedWallets?: {
     chain: string;
     address: string;
