@@ -1,6 +1,6 @@
 import {ProposalTypes, SessionTypes, Verify} from '@walletconnect/types';
 import {Wallet} from '../wallet/wallet.models';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import {ReactElement} from 'react';
 
 export type WCV2Key = {
@@ -21,7 +21,7 @@ export type WCV2RequestWalletsType = {
 };
 
 export type WCV2RequestType =
-  Web3WalletTypes.EventArguments['session_request'] & {
+  WalletKitTypes.EventArguments['session_request'] & {
     createdOn?: number;
     transactionDataName?: string;
     swapAmount?: string;

@@ -1,5 +1,5 @@
 import {WCV2RequestType, WCV2SessionType} from './wallet-connect-v2.models';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 
 export enum WalletConnectV2ActionTypes {
   SESSION_PROPOSAL = 'WALLET_CONNECT_V2/SESSION_PROPOSAL',
@@ -14,7 +14,7 @@ export enum WalletConnectV2ActionTypes {
 interface SessionProposal {
   type: typeof WalletConnectV2ActionTypes.SESSION_PROPOSAL;
   payload: {
-    proposal?: Web3WalletTypes.EventArguments['session_proposal'];
+    proposal?: WalletKitTypes.EventArguments['session_proposal'];
   };
 }
 

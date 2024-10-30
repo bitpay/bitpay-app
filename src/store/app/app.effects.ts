@@ -127,7 +127,7 @@ import {
   startCustomTokensMigration,
   startPolMigration,
 } from '../wallet/effects/currencies/currencies';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import {Key, Wallet} from '../wallet/wallet.models';
 import {AppDispatch} from '../../utils/hooks';
 
@@ -641,7 +641,7 @@ export const startOnGoingProcessModal =
 export const startInAppNotification =
   (
     key: InAppNotificationMessages,
-    request: Web3WalletTypes.EventArguments['session_request'],
+    request: WalletKitTypes.EventArguments['session_request'],
     context: InAppNotificationContextType,
   ): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {

@@ -44,11 +44,7 @@ import {
 } from './wallet-connect-v2.models';
 import {ethers, providers} from 'ethers';
 import {Core} from '@walletconnect/core';
-import {
-  Web3Wallet,
-  IWeb3Wallet,
-  Web3WalletTypes,
-} from '@walletconnect/web3wallet';
+import {WalletKit, IWalletKit, WalletKitTypes} from '@reown/walletkit';
 import {WALLET_CONNECT_V2_PROJECT_ID} from '@env';
 import {startInAppNotification} from '../app/app.effects';
 import {navigationRef} from '../../Root';
@@ -62,7 +58,7 @@ const BWC = BwcProvider.getInstance();
 let core = new Core({
   projectId: WALLET_CONNECT_V2_PROJECT_ID,
 });
-let web3wallet: IWeb3Wallet;
+let web3wallet: IWalletKit;
 
 const checkCredentials = () => {
   return WALLET_CONNECT_V2_PROJECT_ID && WALLETCONNECT_V2_METADATA;
@@ -77,7 +73,7 @@ export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
       return;
     }
 
-    web3wallet = await Web3Wallet.init({
+    web3wallet = await WalletKit.init({
       core,
       metadata: WALLETCONNECT_V2_METADATA,
     });
@@ -117,12 +113,12 @@ export const walletConnectV2OnSessionProposal =
     return new Promise(async (resolve, reject) => {
       try {
         if (!web3wallet) {
-          web3wallet = await Web3Wallet.init({
+          web3wallet = await WalletKit.init({
             core,
             metadata: WALLETCONNECT_V2_METADATA,
           });
         }
-        await web3wallet.core.pairing.pair({uri});
+        await web3wallet.pair({uri});
         resolve();
       } catch (e) {
         dispatch(
@@ -208,7 +204,7 @@ export const walletConnectV2SubscribeToEvents =
   (): Effect => (dispatch, getState) => {
     web3wallet.on(
       'session_proposal',
-      (proposal: Web3WalletTypes.EventArguments['session_proposal']) => {
+      (proposal: WalletKitTypes.EventArguments['session_proposal']) => {
         dispatch(WalletConnectV2Actions.sessionProposal(proposal));
         dispatch(AppActions.showWalletConnectStartModal());
         dispatch(
@@ -222,7 +218,7 @@ export const walletConnectV2SubscribeToEvents =
     );
     web3wallet.on(
       'session_request',
-      async (event: Web3WalletTypes.EventArguments['session_request']) => {
+      async (event: WalletKitTypes.EventArguments['session_request']) => {
         dispatch(
           LogActions.info(
             `[WC-V2/walletConnectV2SubscribeToEvents]: new pending request: ${JSON.stringify(
@@ -230,17 +226,6 @@ export const walletConnectV2SubscribeToEvents =
             )}`,
           ),
         );
-
-        const requests: WCV2RequestType[] | undefined =
-          getState().WALLET_CONNECT_V2.requests;
-        const requestExist = requests.some(({id}) => id === event.id);
-        if (requestExist) {
-          dispatch(
-            LogActions.info(
-              '[WC-V2/walletConnectV2SubscribeToEvents]: pending request already stored - updating it',
-            ),
-          );
-        }
 
         const isChainSupported = Object.keys(
           WALLET_CONNECT_SUPPORTED_CHAINS,
@@ -264,12 +249,12 @@ export const walletConnectV2SubscribeToEvents =
         }
 
         // Process the request that requires user interaction
-        await handleUserInteraction(event, requestExist);
+        await handleUserInteraction(event);
       },
     );
 
     const handleAutoApproval = async (
-      event: Web3WalletTypes.EventArguments['session_request'],
+      event: WalletKitTypes.EventArguments['session_request'],
     ) => {
       const newChainId = event?.params?.request?.params?.[0]?.chainId;
 
@@ -292,8 +277,7 @@ export const walletConnectV2SubscribeToEvents =
     };
 
     const handleUserInteraction = async (
-      event: Web3WalletTypes.EventArguments['session_request'],
-      requestExist: boolean,
+      event: WalletKitTypes.EventArguments['session_request'],
     ) => {
       const {name: currentRouteName} =
         (navigationRef.current?.getCurrentRoute() as any) || {};
@@ -317,7 +301,7 @@ export const walletConnectV2SubscribeToEvents =
           }),
         );
 
-        if (currentRouteName !== 'WalletConnectHome' && !requestExist) {
+        if (currentRouteName !== 'WalletConnectHome') {
           await sleep(1000);
           dispatch(
             startInAppNotification(
@@ -340,7 +324,7 @@ export const walletConnectV2SubscribeToEvents =
     };
 
     const emitSessionEvents = async (
-      event: Web3WalletTypes.EventArguments['session_request'],
+      event: WalletKitTypes.EventArguments['session_request'],
       eip155ChainId: string,
     ) => {
       const chainChanged = {
@@ -370,7 +354,7 @@ export const walletConnectV2SubscribeToEvents =
 
     web3wallet.on(
       'session_delete',
-      async (data: Web3WalletTypes.EventArguments['session_delete']) => {
+      async (data: WalletKitTypes.EventArguments['session_delete']) => {
         try {
           const {topic} = data;
           const session: WCV2SessionType | undefined =
@@ -402,8 +386,8 @@ export const walletConnectV2SubscribeToEvents =
       },
     );
     web3wallet.on(
-      'auth_request',
-      async (data: Web3WalletTypes.EventArguments['auth_request']) => {
+      'session_authenticate',
+      async (data: WalletKitTypes.EventArguments['session_authenticate']) => {
         // TODO Handle auth_request
         try {
           dispatch(
@@ -419,7 +403,7 @@ export const walletConnectV2SubscribeToEvents =
     web3wallet.on(
       'session_request_expire',
       async (
-        event: Web3WalletTypes.EventArguments['session_request_expire'],
+        event: WalletKitTypes.EventArguments['session_request_expire'],
       ) => {
         try {
           dispatch(
@@ -514,7 +498,7 @@ export const walletConnectV2OnDeleteSession =
     return new Promise(async resolve => {
       try {
         if (!web3wallet) {
-          web3wallet = await Web3Wallet.init({
+          web3wallet = await WalletKit.init({
             core,
             metadata: WALLETCONNECT_V2_METADATA,
           });
@@ -571,7 +555,7 @@ export const walletConnectV2OnUpdateSession =
   async dispatch => {
     try {
       if (!web3wallet) {
-        web3wallet = await Web3Wallet.init({
+        web3wallet = await WalletKit.init({
           core,
           metadata: WALLETCONNECT_V2_METADATA,
         });
@@ -946,7 +930,7 @@ const WalletConnectV2UpdateSession =
 
 export const getGasWalletByRequest =
   (
-    request: Web3WalletTypes.EventArguments['session_request'],
+    request: WalletKitTypes.EventArguments['session_request'],
   ): Effect<Wallet | undefined> =>
   (_dispatch, getState) => {
     const sessionV2: WCV2SessionType | undefined =

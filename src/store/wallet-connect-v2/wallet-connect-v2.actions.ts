@@ -3,10 +3,10 @@ import {
   WalletConnectV2ActionType,
   WalletConnectV2ActionTypes,
 } from './wallet-connect-v2.types';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 
 export const sessionProposal = (
-  proposal?: Web3WalletTypes.EventArguments['session_proposal'],
+  proposal?: WalletKitTypes.EventArguments['session_proposal'],
 ): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.SESSION_PROPOSAL,
   payload: {proposal},
@@ -24,7 +24,7 @@ export const rejectSessionProposal = (): WalletConnectV2ActionType => ({
 });
 
 export const sessionRequest = (
-  request: Web3WalletTypes.EventArguments['session_request'] & {
+  request: WalletKitTypes.EventArguments['session_request'] & {
     createdOn?: number;
     swapAmount?: string;
     swapFormatAmount?: string;
@@ -43,7 +43,7 @@ export const sessionRequest = (
 });
 
 export const updateRequests = (
-  requests: Web3WalletTypes.EventArguments['session_request'][],
+  requests: WalletKitTypes.EventArguments['session_request'][],
 ): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.UPDATE_REQUESTS,
   payload: {requests},

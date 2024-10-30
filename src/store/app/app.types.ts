@@ -14,7 +14,7 @@ import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {FeedbackType, ModalId} from './app.reducer';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
@@ -168,7 +168,7 @@ interface ShowInAppNotification {
   type: typeof AppActionTypes.SHOW_IN_APP_NOTIFICATION;
   payload: {
     message: string;
-    request: Web3WalletTypes.EventArguments['session_request'];
+    request: WalletKitTypes.EventArguments['session_request'];
     context: InAppNotificationContextType;
   };
 }

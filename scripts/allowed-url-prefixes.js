@@ -70,6 +70,7 @@ const allowedUrlPrefixes = [
   'https://goerli-rollup.arbitrum.io/rpc',
   'https://goerli.base.org',
   'https://verify.walletconnect.com/',
+  'https://verify.walletconnect.org/',
   'https://api.etherscan.io/v2/api',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 

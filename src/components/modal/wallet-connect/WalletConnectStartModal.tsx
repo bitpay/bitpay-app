@@ -43,7 +43,7 @@ import {
   WALLET_CONNECT_SUPPORTED_CHAINS,
   WC_EVENTS,
 } from '../../../constants/WalletConnectV2';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import FastImage from 'react-native-fast-image';
 import {WalletConnectScreens} from '../../../navigation/wallet-connect/WalletConnectGroup';
 import SheetModal from '../base/sheet/SheetModal';
@@ -74,7 +74,7 @@ import {SvgProps} from 'react-native-svg';
 
 export type WalletConnectStartParamList = {
   // version 2
-  proposal: Web3WalletTypes.EventArguments['session_proposal'];
+  proposal: WalletKitTypes.EventArguments['session_proposal'];
   selectedWallets?: {
     chain: string;
     address: string;
@@ -202,6 +202,8 @@ export const WalletConnectStartModal = () => {
   const [checkedAccount, setCheckedAccount] = useState<
     AccountRowProps & {checked?: boolean}
   >();
+  const [availableAccountLength, setAvailableAccountsLength] =
+    useState<number>(0);
   const [customErrorMessageData, setCustomErrorMessageData] = useState<
     BottomNotificationConfig | undefined
   >();
@@ -394,6 +396,11 @@ export const WalletConnectStartModal = () => {
       })
       .filter(item => item !== null) as KeyWalletsRowProps[];
     setAllkeys(formattedKeys);
+    const availableAccountsLength = formattedKeys.reduce(
+      (total, key) => total + key?.accounts?.length || 0,
+      0,
+    );
+    setAvailableAccountsLength(availableAccountsLength);
     setCheckedAccount(formattedKeys[0]?.accounts[0]);
     _setSelectedWallets(formattedKeys);
   };
@@ -640,14 +647,14 @@ export const WalletConnectStartModal = () => {
                             {checkedAccount.accountName}
                           </H6>
                         </Row>
-                        {allKeys[0]?.accounts.length > 1 ? (
+                        {availableAccountLength > 1 ? (
                           <AccountSettingsArrowContainer>
                             <BaseText
                               style={{
                                 fontSize: 16,
                                 color: theme.dark ? White : SlateDark,
                               }}>
-                              (+{allKeys[0]?.accounts.length - 1})
+                              (+{availableAccountLength - 1})
                             </BaseText>
                             <SelectorArrowRight />
                           </AccountSettingsArrowContainer>

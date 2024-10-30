@@ -15,7 +15,7 @@ import {
 } from './app.models';
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
@@ -92,7 +92,7 @@ export const dismissWalletConnectStartModal = (): AppActionType => ({
 export const showInAppNotification = (
   context: InAppNotificationContextType,
   message: string,
-  request: Web3WalletTypes.EventArguments['session_request'],
+  request: WalletKitTypes.EventArguments['session_request'],
 ): AppActionType => ({
   type: AppActionTypes.SHOW_IN_APP_NOTIFICATION,
   payload: {context, message, request},
