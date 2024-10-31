@@ -1544,21 +1544,22 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   </CloseButton>
                 ) : null}
               </TitleNameContainer>
-
-              <FlashListComponent
-                inModal={useAsModal}
-                entering={FadeIn.duration(
-                  Platform.OS === 'android' ? 800 : 300,
-                )}
-                contentContainerStyle={{paddingBottom: 300}}
-                data={
-                  !searchVal && !selectedChainFilterOption
-                    ? selectedAssetsFromAccount
-                    : (searchResults as AssetsByChainData[])
-                }
-                keyExtractor={(_, index: number) => index.toString()}
-                renderItem={memoizedRenderAssetsItem}
-              />
+              <FlashListCointainer
+                entering={FadeIn.duration(500)}
+                style={{height: HEIGHT - 235}}>
+                <FlashListComponent
+                  inModal={useAsModal}
+                  estimatedItemSize={90}
+                  contentContainerStyle={{paddingBottom: 300}}
+                  data={
+                    !searchVal && !selectedChainFilterOption
+                      ? selectedAssetsFromAccount
+                      : (searchResults as AssetsByChainData[])
+                  }
+                  keyExtractor={(_, index: number) => index.toString()}
+                  renderItem={memoizedRenderAssetsItem}
+                />
+              </FlashListCointainer>
             </View>
           </>
         )}
