@@ -342,12 +342,12 @@ export const toFiat =
     const rateObj = ratesPerCurrency.find(
       _currency => _currency.code === fiatCode,
     );
-    const fiatRate = rateObj && !rateObj.rate ? 1 : rateObj?.rate;
+    const fiatRate = rateObj && !rateObj.rate ? 0 : rateObj?.rate;
 
     if (!fiatRate) {
       // Rate not found for fiat/currency pair
       console.log(
-        `[toFiat] Rate not found for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
+        `[toFiat] Rate not found or zero for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
       );
       return 0;
     }
