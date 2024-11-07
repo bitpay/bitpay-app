@@ -51,7 +51,6 @@ import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
-import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import {orderBy} from 'lodash';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import SearchComponent, {
@@ -553,10 +552,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
               key,
               currencyAbbreviation: currency.currencyAbbreviation.toLowerCase(),
               currencyName: currency.currencyName,
-              isToken: !!currency.isToken,
-              chain: currency.chain,
-              tokenAddress: currency.tokenAddress,
-              selectedAccountAddress,
             });
           },
           selectedCurrencies,
@@ -936,28 +931,10 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
             }
             keyExtractor={keyExtractor}
             renderItem={renderItem}
-            ListFooterComponent={() => {
-              return searchVal && key ? (
-                <LinkContainer>
-                  <Link
-                    accessibilityLabel="add-custom-token-button"
-                    onPress={() => {
-                      haptic('soft');
-                      navigation.navigate('AddWallet', {
-                        key,
-                        isCustomToken: true,
-                        isToken: true,
-                      });
-                    }}>
-                    {t('Add Custom Token')}
-                  </Link>
-                </LinkContainer>
-              ) : null;
-            }}
           />
         </ListContainer>
       ) : (
-        <CurrencySelectionNoResults query={searchVal} walletKey={key} />
+        <></>
       )}
 
       {onCtaPress && selectedCurrencies.length > 0 ? (

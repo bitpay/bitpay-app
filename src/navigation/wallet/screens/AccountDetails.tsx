@@ -611,12 +611,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       <AddCustomTokenContainer
         onPress={() => {
           haptic('soft');
-          navigation.navigate('AddWallet', {
-            key,
-            isCustomToken: true,
-            isToken: true,
-            selectedAccountAddress: accountItem.receiveAddress,
-          });
+          if (memorizedAssetsByChainList?.[0].chains?.[0]) {
+            navigation.navigate('AddCustomToken', {
+              key,
+              selectedAccountAddress: accountItem.receiveAddress,
+              selectedChain: memorizedAssetsByChainList[0].chains[0],
+            });
+          }
         }}>
         <BaseText>{t("Don't see your token?")}</BaseText>
         <Link>{t('Add Custom Token')}</Link>
@@ -641,7 +642,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 <KeySvg width={10} height={10} />
                 <CenteredText>{key?.keyName}</CenteredText>
               </Row>
-              <Row style={{alignItems: 'center'}}>
+              <Row style={{alignItems: 'center', gap: 5}}>
                 {key.methods?.isPrivKeyEncrypted() ? (
                   <View style={{marginRight: 5}}>
                     {theme.dark ? (
@@ -669,7 +670,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       headerRight: () => {
         return (
           <>
-            <HeaderRightContainer style={{marginTop: -3}}>
+            <HeaderRightContainer
+              style={{
+                marginTop: -3,
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               {pendingProposalsCount ? (
                 <ProposalBadgeContainer
                   style={{marginRight: 10}}
@@ -1203,25 +1211,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             </LockedBalanceContainer>
           ) : null}
         </HeaderContainer>
-        {pendingProposalsCount > 0 ? (
-          <>
-            <TransactionSectionHeaderContainer>
-              <H5>{t('Unsent Transactions')}</H5>
-              <ProposalBadgeContainer onPress={onPressTxpBadge}>
-                <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
-              </ProposalBadgeContainer>
-            </TransactionSectionHeaderContainer>
-            <FlatList
-              contentContainerStyle={{
-                paddingTop: 20,
-                paddingBottom: 20,
-              }}
-              data={needActionUnsentTxps}
-              keyExtractor={pendingTxpsKeyExtractor}
-              renderItem={renderTxp}
-            />
-          </>
-        ) : null}
         <AssetsDataContainer>
           <HeaderListContainer>
             <WalletListHeader

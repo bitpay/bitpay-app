@@ -394,7 +394,7 @@ export const formatCurrencyAbbreviation = (currencyAbbreviation: string) => {
 };
 
 export const getCurrencyAbbreviation = (name: string, chain: string) => {
-  return IsERCToken(name.toLowerCase(), chain.toLowerCase())
+  return IsERCToken(name.toLowerCase(), chain.toLowerCase()) // if name is contract address this returns true
     ? addTokenChainSuffix(name, chain)
     : name.toLowerCase();
 };

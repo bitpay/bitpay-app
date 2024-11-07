@@ -10,7 +10,7 @@ import {Action} from '../../styles/colors';
 import {css} from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
-import {AddPillContainer} from '../../navigation/wallet/screens/AddWallet';
+import {AddPillContainer} from '../../navigation/wallet/screens/AddCustomToken';
 
 const AddressView = styled(View)`
   align-items: flex-end;
