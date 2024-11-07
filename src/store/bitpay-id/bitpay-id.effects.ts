@@ -28,6 +28,8 @@ import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 import Braze from '@braze/react-native-sdk';
 import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
+import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
+import {DeviceEventEmitter} from 'react-native';
 
 interface StartLoginParams {
   email: string;
@@ -59,10 +61,15 @@ export const startBitPayIdAnalyticsInit =
 
       // Check if Braze EID exists and different
       if (APP.brazeEid && APP.brazeEid !== eid) {
+        BrazeWrapper.startMergingUser();
         // Should migrate the user to the new EID
+        LogActions.info('Merging current user to new EID: ', eid);
         await BrazeWrapper.merge(APP.brazeEid, eid);
-        // Delete old user
-        await BrazeWrapper.delete(APP.brazeEid);
+        // Emit an event that delete the user
+        DeviceEventEmitter.emit(
+          DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
+          APP.brazeEid,
+        );
       }
 
       dispatch(setBrazeEid(eid));
@@ -456,7 +463,7 @@ const startPairAndLoadUser =
         );
       }
 
-      dispatch(startBitPayIdStoreInit(data.user));
+      await dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>

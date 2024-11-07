@@ -143,6 +143,7 @@ import {
   setAccountEVMCreationMigrationComplete,
   successAddWallet,
 } from './store/wallet/wallet.actions';
+import {BrazeWrapper} from './lib/Braze';
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
@@ -276,7 +277,6 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
-  const inAppMessageData = useAppSelector(({APP}) => APP.inAppMessageData);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const accountEvmCreationMigrationComplete = useAppSelector(
     ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
@@ -470,6 +470,24 @@ export default () => {
 
     return () => subscriptionAppStateChange.remove();
   }, [pinLockActive, biometricLockActive]);
+
+  useEffect(() => {
+    const eventBrazeListener = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
+      async eid => {
+        // Wait for a few seconds to ensure the user is deleted
+        await sleep(20000);
+        LogActions.info('Deleting old user EID: ', eid);
+        await BrazeWrapper.delete(eid);
+        await sleep(3000);
+        BrazeWrapper.endMergingUser();
+      },
+    );
+
+    return () => {
+      eventBrazeListener.remove();
+    };
+  }, []);
 
   // THEME
   useEffect(() => {
