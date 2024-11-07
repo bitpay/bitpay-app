@@ -1,14 +1,17 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {AppState, AppStateStatus} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import {useTheme} from '@react-navigation/native';
 import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
+import {Black, White} from '../../../../styles/colors';
 
 interface Props extends SheetParams {
   isVisible: boolean;
@@ -33,6 +36,8 @@ const SheetModal: React.FC<SheetModalProps> = ({
   modalLibrary = 'modal',
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
 
   const [isModalVisible, setModalVisible] = useState(isVisible);
   useEffect(() => {
@@ -82,7 +87,16 @@ const SheetModal: React.FC<SheetModalProps> = ({
       handleComponent={null}
       index={0}
       ref={bottomSheetModalRef}>
-      <BottomSheetView style={{height: fullscreen ? HEIGHT : undefined}}>
+      <BottomSheetView
+        style={
+          fullscreen
+            ? {
+                backgroundColor: theme.dark ? Black : White,
+                height: HEIGHT,
+                paddingTop: insets.top,
+              }
+            : {}
+        }>
         {children}
       </BottomSheetView>
     </BottomSheetModal>
