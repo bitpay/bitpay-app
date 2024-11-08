@@ -391,6 +391,7 @@ const PayProConfirm = () => {
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
+      dispatch(dismissOnGoingProcessModal());
       const twoFactorRequired =
         coinbaseAccount &&
         err?.message?.includes(CoinbaseErrorMessages.twoFactorRequired);
