@@ -34,6 +34,9 @@ import TermsOfUse, {
   TermsOfUseParamList,
 } from '../onboarding/screens/TermsOfUse';
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
+import AddCustomToken, {
+  AddCustomTokenParamList,
+} from './screens/AddCustomToken';
 import AmountScreen, {AmountScreenParamList} from './screens/AmountScreen';
 import SendTo from './screens/send/SendTo';
 import Confirm, {ConfirmParamList} from './screens/send/confirm/Confirm';
@@ -74,9 +77,6 @@ import PayProConfirmTwoFactor, {
 import {useTranslation} from 'react-i18next';
 import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
 import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
-import CurrencyTokenSelectionScreen, {
-  CurrencyTokenSelectionScreenParamList,
-} from './screens/CurrencyTokenSelection';
 import EnterBuyerProvidedEmail from './screens/send/EnterBuyerProvidedEmail';
 import ExportTransactionHistory from './screens/wallet-settings/ExportTransactionHistory';
 import ClearTransactionHistoryCache from './screens/wallet-settings/ClearTransactionHistoryCache';
@@ -98,8 +98,8 @@ interface WalletProps {
 
 export type WalletGroupParamList = {
   CurrencySelection: CurrencySelectionParamList;
-  WalletCurrencyTokenSelectionScreen: CurrencyTokenSelectionScreenParamList;
   AddWallet: AddWalletParamList;
+  AddCustomToken: AddCustomTokenParamList;
   BackupKey: BackupParamList;
   BackupOnboarding: BackupOnboardingParamList;
   RecoveryPhrase: RecoveryPhraseParamList;
@@ -182,8 +182,8 @@ export type WalletGroupParamList = {
 
 export enum WalletScreens {
   CURRENCY_SELECTION = 'CurrencySelection',
-  CURRENCY_TOKEN_SELECTION = 'WalletCurrencyTokenSelectionScreen',
   ADD_WALLET = 'AddWallet',
+  ADD_CUSTOM_TOKEN = 'AddCustomToken',
   BACKUP_KEY = 'BackupKey',
   BACKUP_ONBOARDING = 'BackupOnboarding',
   RECOVERY_PHRASE = 'RecoveryPhrase',
@@ -258,11 +258,11 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
         name={WalletScreens.CURRENCY_SELECTION}
         component={CurrencySelection}
       />
-      <Wallet.Screen
-        name={WalletScreens.CURRENCY_TOKEN_SELECTION}
-        component={CurrencyTokenSelectionScreen}
-      />
       <Wallet.Screen name={WalletScreens.ADD_WALLET} component={AddWallet} />
+      <Wallet.Screen
+        name={WalletScreens.ADD_CUSTOM_TOKEN}
+        component={AddCustomToken}
+      />
       <Wallet.Screen
         options={{
           gestureEnabled: false,

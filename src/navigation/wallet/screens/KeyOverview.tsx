@@ -84,10 +84,7 @@ import DropdownOption from '../components/DropdownOption';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
-import {
-  BitpaySupportedEvmCoins,
-  SUPPORTED_CURRENCIES_CHAINS,
-} from '../../../constants/currencies';
+import {BitpaySupportedEvmCoins} from '../../../constants/currencies';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -98,6 +95,7 @@ export const KeyToggle = styled(TouchableOpacity)`
   align-items: center;
   justify-content: center;
   flex-direction: row;
+  gap: 5px;
 `;
 
 export const KeyDropdown = styled.SafeAreaView`
@@ -211,7 +209,6 @@ const KeyOverview = () => {
         chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
     );
 
-    console.log(missingChainsAccounts);
     navigation.setOptions({
       headerTitle: () => {
         return (
@@ -230,16 +227,16 @@ const KeyOverview = () => {
               <HeaderTitle style={{textAlign: 'center'}}>
                 {key?.keyName}
               </HeaderTitle>
-              {(hasMultipleKeys || linkedCoinbase) && (
-                <ChevronContainer>
-                  {!theme.dark ? (
-                    <ChevronDownSvgLight width={8} height={8} />
-                  ) : (
-                    <ChevronDownSvgDark width={8} height={8} />
-                  )}
-                </ChevronContainer>
-              )}
             </HeaderTitleContainer>
+            {(hasMultipleKeys || linkedCoinbase) && (
+              <ChevronContainer>
+                {!theme.dark ? (
+                  <ChevronDownSvgLight width={8} height={8} />
+                ) : (
+                  <ChevronDownSvgDark width={8} height={8} />
+                )}
+              </ChevronContainer>
+            )}
           </KeyToggle>
         );
       },
@@ -348,65 +345,22 @@ const KeyOverview = () => {
   );
   const keyOptions: Array<Option> = [];
 
-  if (!key?.methods?.isPrivKeyEncrypted()) {
-    keyOptions.push({
-      img: <Icons.Wallet width="15" height="15" />,
-      title: t('Add Wallet'),
-      description: t(
-        'Choose another currency you would like to add to your key.',
-      ),
-      onPress: async () => {
-        haptic('impactLight');
-        await sleep(500);
-        navigation.navigate('AddingOptions', {
-          key,
-        });
-      },
-    });
-
-    if (missingChainsAccounts.length > 0) {
-      keyOptions.push({
-        img: <Icons.Wallet width="15" height="15" />,
-        title: t('Add EVM Chain'),
-        description: t(
-          'Add all supported chains to your accounts for this key.',
-        ),
-        onPress: async () => {
-          await handleAddEvmChain();
-        },
+  keyOptions.push({
+    img: <Icons.Wallet width="15" height="15" />,
+    title: t('Add Wallet'),
+    description: t(
+      'Choose another currency you would like to add to your key.',
+    ),
+    onPress: async () => {
+      haptic('impactLight');
+      await sleep(500);
+      navigation.navigate('AddingOptions', {
+        key,
       });
-    }
+    },
+  });
 
-    if (!key?.isReadOnly) {
-      keyOptions.push({
-        img: <Icons.Encrypt />,
-        title: t('Encrypt your Key'),
-        description: t(
-          'Prevent an unauthorized user from sending funds out of your wallet.',
-        ),
-        onPress: async () => {
-          haptic('impactLight');
-          await sleep(500);
-          navigation.navigate('CreateEncryptPassword', {
-            key,
-          });
-        },
-      });
-    }
-
-    keyOptions.push({
-      img: <Icons.Settings />,
-      title: t('Key Settings'),
-      description: t('View all the ways to manage and configure your key.'),
-      onPress: async () => {
-        haptic('impactLight');
-        await sleep(500);
-        navigation.navigate('KeySettings', {
-          key,
-        });
-      },
-    });
-  } else if (missingChainsAccounts.length > 0) {
+  if (missingChainsAccounts.length > 0) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
       title: t('Add EVM Chain'),
@@ -416,6 +370,36 @@ const KeyOverview = () => {
       },
     });
   }
+
+  if (!key?.isReadOnly && !key?.methods?.isPrivKeyEncrypted()) {
+    keyOptions.push({
+      img: <Icons.Encrypt />,
+      title: t('Encrypt your Key'),
+      description: t(
+        'Prevent an unauthorized user from sending funds out of your wallet.',
+      ),
+      onPress: async () => {
+        haptic('impactLight');
+        await sleep(500);
+        navigation.navigate('CreateEncryptPassword', {
+          key,
+        });
+      },
+    });
+  }
+
+  keyOptions.push({
+    img: <Icons.Settings />,
+    title: t('Key Settings'),
+    description: t('View all the ways to manage and configure your key.'),
+    onPress: async () => {
+      haptic('impactLight');
+      await sleep(500);
+      navigation.navigate('KeySettings', {
+        key,
+      });
+    },
+  });
 
   const onPressTxpBadge = useMemo(
     () => () => {
