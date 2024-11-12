@@ -644,9 +644,11 @@ PODS:
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.10)
   - SocketRocket (0.6.1)
-  - VisionCamera (3.9.2):
-    - React
-    - React-callinvoker
+  - VisionCamera (4.0.1):
+    - VisionCamera/Core (= 4.0.1)
+    - VisionCamera/React (= 4.0.1)
+  - VisionCamera/Core (4.0.1)
+  - VisionCamera/React (4.0.1):
     - React-Core
   - Yoga (1.14.0)
   - YogaKit (1.18.1):
@@ -981,7 +983,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppsFlyerFramework: 9f304d91cc80b6579b1206a59220383056b58b47
-  boost: 57d2868c099736d80fcd648bf211b4431e51a558
+  boost: 7dcd2de282d72e344012f7d6564d024930a6a440
   braze-react-native-sdk: 7ec46f6d33f60946797e75fb06998c03861328d8
   BrazeKit: 4afa5f9a89384d06515719b5d246b4676870f030
   BrazeLocation: 8f8a54c4170d9ee6035495364f493614401acad0
@@ -1093,10 +1095,10 @@ SPEC CHECKSUMS:
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
-  VisionCamera: 36c460338692788a0d377dce7d32f8ba049fb4f2
+  VisionCamera: 6745d27c1ddb33dc8efe85202b7ca67a78a0e5ef
   Yoga: ef534101bb891fb09bae657417f34d399c1efe38
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: 5aa3e5cd6d840371303ab75b3e83caf993b2dc7d
+PODFILE CHECKSUM: d45587e182ed77c86769f50ab49373ff403ea395
 
 COCOAPODS: 1.15.2
