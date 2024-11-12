@@ -26,6 +26,7 @@
 		6D615C4929725FD70063DB8E /* RCTTimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6D615C4729725FD70063DB8E /* RCTTimer.m */; };
 		71BABDA4524A43E98A190C87 /* Heebo-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */; };
 		811ABAC8AE8655497D73EE3E /* libPods-BitPayApp-BitPayAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BAE975BCDFD0F5C27CFCB9C7 /* libPods-BitPayApp-BitPayAppTests.a */; };
+		87C0794CD590C55789224248 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C0CAB126A7B331ACFBA4F933 /* PrivacyInfo.xcprivacy */; };
 		D34892F44CAB44409EC335A9 /* Heebo-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4435EB64D2448EC885B3036 /* Heebo-Black.ttf */; };
 		D9739196BA804EA29143DA96 /* Heebo-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */; };
 		E05E8CCE8C744337E0474386 /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C2A940F24537EFB4641623B /* libPods-BitPayApp.a */; };
@@ -81,6 +82,7 @@
 		780EA24A31E2DB5EB6F58453 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		BAE975BCDFD0F5C27CFCB9C7 /* libPods-BitPayApp-BitPayAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BitPayApp-BitPayAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCDAB70057C84109A9201936 /* Heebo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Regular.ttf"; path = "../assets/fonts/Heebo-Regular.ttf"; sourceTree = "<group>"; };
+		C0CAB126A7B331ACFBA4F933 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = BitPayApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		EC0FDD682CC92E90009E1B35 /* InAppMessageModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InAppMessageModule.h; sourceTree = "<group>"; };
 		EC0FDD692CC92E90009E1B35 /* InAppMessageModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InAppMessageModule.m; sourceTree = "<group>"; };
 		ECCB92762860B25D00F9CF8B /* SilentPushEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SilentPushEvent.m; sourceTree = "<group>"; };
@@ -153,6 +155,7 @@
 				5BC1477C27B490FA004A8EEA /* BitPayAppTests-Bridging-Header.h */,
 				5BEA4BEE2838400700AB2121 /* RCTPaymentPass.h */,
 				5BEA4BEF2838402700AB2121 /* RCTPaymentPass.m */,
+				C0CAB126A7B331ACFBA4F933 /* PrivacyInfo.xcprivacy */,
 			);
 			name = BitPayApp;
 			sourceTree = "<group>";
@@ -331,6 +334,7 @@
 				03632D4B8959429DA3B141C2 /* Heebo-Medium.ttf in Resources */,
 				F64C0BF216CE4402A51A5ACC /* Heebo-Regular.ttf in Resources */,
 				E6807D9059A643129784A5C3 /* Heebo-Thin.ttf in Resources */,
+				87C0794CD590C55789224248 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -725,11 +729,9 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					"-Wl",
-					"-ld_classic",
-				);
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "-no-verify-emitted-module-interface";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
@@ -790,11 +792,9 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					"-Wl",
-					"-ld_classic",
-				);
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_CPLUSPLUSFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "-no-verify-emitted-module-interface";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
