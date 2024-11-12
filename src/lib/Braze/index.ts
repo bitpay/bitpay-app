@@ -14,6 +14,14 @@ const nonCustomAttributes = [
   'phoneNumber',
 ] as const;
 
+const safeSet = (fn: () => void, attributeName: string) => {
+  try {
+    fn();
+  } catch (error) {
+    console.error(`Error setting ${attributeName}:`, error);
+  }
+};
+
 const setUserAttributes = (attributes: BrazeUserAttributes) => {
   const {
     country,
@@ -29,7 +37,7 @@ const setUserAttributes = (attributes: BrazeUserAttributes) => {
   } = attributes;
 
   if (typeof country !== 'undefined') {
-    Braze.setCountry(country);
+    safeSet(() => Braze.setCountry(country), 'country');
   }
 
   if (typeof dateOfBirth !== 'undefined') {
@@ -37,48 +45,53 @@ const setUserAttributes = (attributes: BrazeUserAttributes) => {
     const year = asDate.getFullYear();
     const month = (asDate.getMonth() + 1) as Braze.MonthsAsNumber;
     const day = asDate.getDate();
-
-    Braze.setDateOfBirth(year, month, day);
+    safeSet(() => Braze.setDateOfBirth(year, month, day), 'dateOfBirth');
   }
 
-  if (typeof email !== 'undefined') {
-    Braze.setEmail(email);
+  if (email) {
+    safeSet(() => Braze.setEmail(email), 'email');
   }
 
-  if (typeof firstName !== 'undefined') {
-    Braze.setFirstName(firstName);
+  if (firstName) {
+    safeSet(() => Braze.setFirstName(firstName), 'firstName');
   }
 
-  if (typeof gender !== 'undefined') {
+  if (gender) {
     const supportedGenders = ['m', 'f', 'n', 'o', 'p', 'u'];
     const isSupported = supportedGenders.indexOf(gender) > -1;
 
     if (isSupported) {
-      Braze.setGender(gender as Braze.GenderTypes[keyof Braze.GenderTypes]);
+      safeSet(
+        () =>
+          Braze.setGender(gender as Braze.GenderTypes[keyof Braze.GenderTypes]),
+        'gender',
+      );
     }
   }
 
-  if (typeof homeCity !== 'undefined') {
-    Braze.setHomeCity(homeCity);
+  if (homeCity) {
+    safeSet(() => Braze.setHomeCity(homeCity), 'homeCity');
   }
 
-  if (typeof language !== 'undefined') {
-    Braze.setLanguage(language);
+  if (language) {
+    safeSet(() => Braze.setLanguage(language), 'language');
   }
 
-  if (typeof lastName !== 'undefined') {
-    Braze.setLastName(lastName);
+  if (lastName) {
+    safeSet(() => Braze.setLastName(lastName), 'lastName');
   }
 
-  if (typeof phoneNumber !== 'undefined') {
-    Braze.setPhoneNumber(phoneNumber);
+  if (phoneNumber) {
+    safeSet(() => Braze.setPhoneNumber(phoneNumber), 'phoneNumber');
   }
 
   Object.entries(customAttributes).forEach(([k, v]) => {
     const isValidCustomAttribute = nonCustomAttributes.indexOf(k as any) < 0;
-
     if (isValidCustomAttribute) {
-      Braze.setCustomUserAttribute(k, v);
+      safeSet(
+        () => Braze.setCustomUserAttribute(k, v),
+        `custom attribute ${k}`,
+      );
     }
   });
 };
