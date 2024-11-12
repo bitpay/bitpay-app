@@ -44,7 +44,7 @@
     "@braze/react-native-sdk": "12.2.0",
     "@ethersproject/shims": "5.7.0",
     "@freakycoder/react-native-bounceable": "0.2.5",
-    "@gorhom/bottom-sheet": "5.0.2",
+    "@gorhom/bottom-sheet": "5.0.5",
     "@hookform/resolvers": "2.8.3",
     "@json-rpc-tools/utils": "1.7.6",
     "@ledgerhq/coin-framework": "0.5.1",
