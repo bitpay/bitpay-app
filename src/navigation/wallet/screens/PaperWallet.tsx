@@ -138,7 +138,6 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
-  const insets = useSafeAreaInsets();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [buttonState, setButtonState] = useState<ButtonState>();
   const [balances, setBalances] = useState<
@@ -618,8 +617,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
           isVisible={walletSelectorVisible}
           onBackdropPress={() => onDismiss(undefined)}
           fullscreen>
-          <GlobalSelectContainer
-            style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
+          <GlobalSelectContainer>
             <GlobalSelect
               route={route}
               navigation={navigation}

@@ -211,7 +211,6 @@ const CoinbaseAccount = ({
   route,
 }: NativeStackScreenProps<CoinbaseGroupParamList, 'CoinbaseAccount'>) => {
   const {t} = useTranslation();
-  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -769,8 +768,7 @@ const CoinbaseAccount = ({
         isVisible={walletModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>
-        <GlobalSelectContainer
-          style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
+        <GlobalSelectContainer>
           <GlobalSelect
             route={route}
             navigation={navigation}

@@ -127,7 +127,6 @@ const BuyCryptoRoot = ({
 }: NativeStackScreenProps<BuyCryptoGroupParamList, BuyCryptoScreens.ROOT>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const logger = useLogger();
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
@@ -1050,8 +1049,7 @@ const BuyCryptoRoot = ({
         isVisible={walletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>
-        <GlobalSelectContainer
-          style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
+        <GlobalSelectContainer>
           <GlobalSelect
             route={route}
             navigation={navigation}

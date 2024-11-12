@@ -65,7 +65,6 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
   route,
 }) => {
   const {t} = useTranslation();
-  const insets = useSafeAreaInsets();
   const [swapCryptoHelpVisible, setSwapCryptoHelpVisible] = useState(false);
 
   const _customSupportedCurrencies = customSupportedCurrencies?.map(
@@ -82,8 +81,7 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
       isVisible={isVisible}
       onBackdropPress={() => onDismiss(undefined)}
       fullscreen>
-      <GlobalSelectContainer
-        style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
+      <GlobalSelectContainer>
         <GlobalSelect
           route={route}
           navigation={navigation}
