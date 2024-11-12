@@ -223,7 +223,6 @@ const SwapCryptoRoot: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
-  const insets = useSafeAreaInsets();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
@@ -1802,8 +1801,7 @@ const SwapCryptoRoot: React.FC = () => {
         isVisible={toWalletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>
-        <GlobalSelectContainer
-          style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
+        <GlobalSelectContainer>
           <GlobalSelect
             route={route}
             navigation={navigation}
