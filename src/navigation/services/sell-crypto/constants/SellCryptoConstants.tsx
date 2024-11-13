@@ -41,6 +41,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <BankIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      simplex: false,
     },
     supportedCountries: countriesWithACH,
     enabled: true,
@@ -51,6 +52,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <CreditCardIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: false,
+      simplex: true,
     },
     enabled: true,
   },
@@ -60,6 +62,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <DebitCardIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      simplex: true,
     },
     enabled: true,
   },
@@ -69,6 +72,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <BankIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      simplex: true,
     },
     supportedCountries: countriesWithSEPA,
     enabled: true,
@@ -79,6 +83,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     imgSrc: <BankIcon width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      simplex: false,
     },
     supportedCountries: countriesWithGBPTransfer,
     enabled: true,

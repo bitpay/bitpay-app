@@ -19,6 +19,11 @@ import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
 import {getBadgeImg} from '../../../../utils/helper-methods';
 import {SellCryptoCoin} from '../../sell-crypto/screens/SellCryptoRoot';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  SellCryptoGroupParamList,
+  SellCryptoScreens,
+} from '../../sell-crypto/SellCryptoGroup';
+import {SwapCryptoGroupParamList, SwapCryptoScreens} from '../SwapCryptoGroup';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -51,7 +56,10 @@ interface FromWalletSelectorModalProps {
   modalContext?: GlobalSelectModalContext;
   modalTitle?: string;
   navigation: NavigationProp<any>;
-  route: RouteProp<WalletGroupParamList, 'GlobalSelect'>;
+  route:
+    | RouteProp<WalletGroupParamList, 'GlobalSelect'>
+    | RouteProp<SellCryptoGroupParamList, SellCryptoScreens.ROOT>
+    | RouteProp<SwapCryptoGroupParamList, SwapCryptoScreens.SWAP_CRYPTO_ROOT>;
 }
 
 const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({

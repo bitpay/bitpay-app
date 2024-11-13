@@ -120,7 +120,7 @@ const PaymentMethodsModal = ({
           coin,
           chain,
           locationData?.countryShortCode || 'US',
-          preSetPartner,
+          preSetPartner as BuyCryptoExchangeKey,
         );
 
       case 'sellCrypto':
@@ -129,7 +129,7 @@ const PaymentMethodsModal = ({
           coin,
           chain,
           locationData?.countryShortCode || 'US',
-          'moonpay',
+          preSetPartner as SellCryptoExchangeKey,
         );
 
       default:
@@ -181,7 +181,7 @@ const PaymentMethodsModal = ({
         return (
           <MoonpayLogo
             key={exchange}
-            iconOnly={context === 'buyCrypto'}
+            iconOnly={context === 'buyCrypto'} // TODO: review if iconOnly should be true for more than one exchange
             widthIcon={20}
             heightIcon={20}
           />
