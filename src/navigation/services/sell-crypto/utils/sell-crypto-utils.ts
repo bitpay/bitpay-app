@@ -7,14 +7,19 @@ import {
   getMoonpaySellSupportedCurrencies,
   moonpaySellSupportedFiatCurrencies,
 } from './moonpay-sell-utils';
+import {
+  getSimplexSellSupportedCurrencies,
+  simplexSellSupportedFiatCurrencies,
+} from './simplex-sell-utils';
 import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 
-export type SellCryptoExchangeKey = 'moonpay';
+export type SellCryptoExchangeKey = 'moonpay' | 'simplex';
 
 export const SellCryptoSupportedExchanges: SellCryptoExchangeKey[] = [
   'moonpay',
+  'simplex',
 ];
 
 export const getSellEnabledPaymentMethods = (
@@ -54,14 +59,22 @@ export const getSellEnabledPaymentMethods = (
             country,
           )
       : method.enabled &&
-          isPaymentMethodSupported(
+          (isPaymentMethodSupported(
             'moonpay',
             method,
             coin,
             chain,
             currency,
             country,
-          );
+          ) ||
+            isPaymentMethodSupported(
+              'simplex',
+              method,
+              coin,
+              chain,
+              currency,
+              country,
+            ));
   });
 
   return EnabledPaymentMethods;
@@ -99,12 +112,15 @@ export const getSellCryptoSupportedCoins = (
       return getMoonpaySellSupportedCurrencies(
         locationData?.countryShortCode || 'US',
       );
+    case 'simplex':
+      return getSimplexSellSupportedCurrencies();
     default:
       const allSupportedCurrencies = [
         ...new Set([
           ...getMoonpaySellSupportedCurrencies(
             locationData?.countryShortCode || 'US',
           ),
+          ...getSimplexSellSupportedCurrencies(),
         ]),
       ];
       return allSupportedCurrencies;
@@ -117,11 +133,27 @@ export const getAvailableSellCryptoFiatCurrencies = (
   switch (exchange) {
     case 'moonpay':
       return moonpaySellSupportedFiatCurrencies;
+    case 'simplex':
+      return simplexSellSupportedFiatCurrencies;
     default:
       const allSupportedFiatCurrencies = [
-        ...new Set([...moonpaySellSupportedFiatCurrencies]),
+        ...new Set([
+          ...moonpaySellSupportedFiatCurrencies,
+          ...simplexSellSupportedFiatCurrencies,
+        ]),
       ];
       return allSupportedFiatCurrencies;
+  }
+};
+
+export const getBaseSellCryptoFiatCurrencies = (exchange?: string): string => {
+  switch (exchange) {
+    case 'moonpay':
+      return 'USD';
+    case 'simplex':
+      return 'EUR';
+    default:
+      return 'USD';
   }
 };
 
@@ -146,7 +178,10 @@ export const isCoinSupportedToSell = (
   chain: string,
   country?: string,
 ): boolean => {
-  return isCoinSupportedBy('moonpay', coin, chain, country);
+  return (
+    isCoinSupportedBy('moonpay', coin, chain, country) ||
+    isCoinSupportedBy('simplex', coin, chain)
+  );
 };
 
 const isCoinSupportedBy = (
@@ -158,6 +193,10 @@ const isCoinSupportedBy = (
   switch (exchange) {
     case 'moonpay':
       return getMoonpaySellSupportedCurrencies(country).includes(
+        getExternalServiceSymbol(coin, chain),
+      );
+    case 'simplex':
+      return getSimplexSellSupportedCurrencies().includes(
         getExternalServiceSymbol(coin, chain),
       );
     default:
@@ -172,6 +211,10 @@ const isFiatCurrencySupportedBy = (
   switch (exchange) {
     case 'moonpay':
       return moonpaySellSupportedFiatCurrencies.includes(
+        currency.toUpperCase(),
+      );
+    case 'simplex':
+      return simplexSellSupportedFiatCurrencies.includes(
         currency.toUpperCase(),
       );
     default:
