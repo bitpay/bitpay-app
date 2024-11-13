@@ -462,6 +462,7 @@
   "Error: ": "Error: ",
   "Best Offer": "Best Offer",
   "This exchange doesn't support purchases with , tap 'Buy' to continue paying in .": "This exchange doesn't support purchases with {{altFiatCurrency}}, tap 'Buy' to continue paying in {{availableFiatCurrency}}.",
+  "This exchange doesn't support sales with , tap 'Sell' to continue paying in .": "This exchange doesn't support sales with {{altFiatCurrency}}, tap 'Sell' to continue receiving {{availableFiatCurrency}}.",
   "Provided By": "Provided By",
   "Buy": "Buy",
   "Buy Amount": "Buy Amount",

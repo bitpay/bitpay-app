@@ -96,7 +96,7 @@ import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
 import {IsUtxoChain} from '../wallet/utils/currency';
 import {BWCErrorMessage} from '../../constants/BWCError';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
-import {MoonpaySellIncomingData} from '../sell-crypto/sell-crypto.models';
+import {MoonpaySellIncomingData} from '../sell-crypto/models/moonpay-sell.models';
 import {findWalletById} from '../wallet/utils/wallet';
 import {MoonpaySellCheckoutProps} from '../../navigation/services/sell-crypto/screens/MoonpaySellCheckout';
 import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-services/screens/MoonpaySettings';
@@ -1655,8 +1655,8 @@ const handleMoonpayUri =
       }
 
       const sellCheckoutParams: MoonpaySellCheckoutProps = {
-        sellCrpytoExternalId: externalId,
-        wallet: fullWalletObj,
+        sellCryptoExternalId: externalId,
+        wallet: fullWalletObj as Wallet,
         toAddress: depositWalletAddress,
         amount: Number(baseCurrencyAmount) ?? Number(order?.crypto_amount),
         useSendMax: order?.send_max,
@@ -1921,7 +1921,7 @@ const handleSimplexUri =
         },
         {
           name: 'SimplexSettings',
-          params: {incomingPaymentRequest: stateParams},
+          params: {incomingPaymentRequest: {...stateParams, flow: 'buy'}},
         },
       ],
     });
