@@ -89,7 +89,7 @@ import {
   MoonpaySellIncomingData,
   MoonpaySellOrderData,
   MoonpaySellTransactionDetails,
-} from '../../../../store/sell-crypto/sell-crypto.models';
+} from '../../../../store/sell-crypto/models/moonpay-sell.models';
 import {
   getMoonpaySellFixedCurrencyAbbreviation,
   getMoonpaySellPayoutMethodFormat,
@@ -124,7 +124,7 @@ export const SellCheckoutContainer = styled.SafeAreaView`
 `;
 
 export interface MoonpaySellCheckoutProps {
-  sellCrpytoExternalId: string;
+  sellCryptoExternalId: string;
   wallet: Wallet;
   toAddress: string;
   amount: number;
@@ -137,7 +137,7 @@ let countDown: NodeJS.Timer | undefined;
 const MoonpaySellCheckout: React.FC = () => {
   let {
     params: {
-      sellCrpytoExternalId,
+      sellCryptoExternalId,
       wallet,
       toAddress,
       amount,
@@ -154,7 +154,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const sellOrder: MoonpaySellOrderData = useAppSelector(
-    ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.moonpay[sellCrpytoExternalId],
+    ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.moonpay[sellCryptoExternalId],
   );
   const [isToken, setIsToken] = useState(
     IsERCToken(wallet.currencyAbbreviation, wallet.chain),
@@ -639,7 +639,7 @@ const MoonpaySellCheckout: React.FC = () => {
     broadcastedTx?: Partial<TransactionProposal>,
   ) => {
     const dataToUpdate: MoonpaySellIncomingData = {
-      externalId: sellCrpytoExternalId!,
+      externalId: sellCryptoExternalId!,
       txSentOn: Date.now(),
       txSentId: broadcastedTx?.txid,
       status: 'bitpayTxSent',
@@ -1113,7 +1113,7 @@ const MoonpaySellCheckout: React.FC = () => {
 
           const moonpaySettingsParams: MoonpaySettingsProps = {
             incomingPaymentRequest: {
-              externalId: sellCrpytoExternalId,
+              externalId: sellCryptoExternalId,
               transactionId: sellOrder?.transaction_id,
               status,
               flow: 'sell',
