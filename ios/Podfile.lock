@@ -114,8 +114,6 @@ PODS:
   - MMKVCore (1.3.9)
   - MultiplatformBleAdapter (0.1.9)
   - OpenSSL-Universal (1.1.1100)
-  - Permission-Notifications (3.7.2):
-    - RNPermissions
   - RCT-Folly (2021.07.22.00):
     - boost
     - DoubleConversion
@@ -616,7 +614,7 @@ PODS:
     - React-Core
   - RNOS (1.2.6):
     - React
-  - RNPermissions (3.7.2):
+  - RNPermissions (5.1.0):
     - React-Core
   - RNQuickAction (0.3.13):
     - React
@@ -686,7 +684,6 @@ DEPENDENCIES:
   - libevent (~> 2.1.12)
   - MixpanelReactNative (from `../node_modules/mixpanel-react-native`)
   - OpenSSL-Universal (= 1.1.1100)
-  - Permission-Notifications (from `../node_modules/react-native-permissions/ios/Notifications/Permission-Notifications.podspec`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTRequired (from `../node_modules/react-native/Libraries/RCTRequired`)
   - RCTTypeSafety (from `../node_modules/react-native/Libraries/TypeSafety`)
@@ -818,8 +815,6 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
   MixpanelReactNative:
     :path: "../node_modules/mixpanel-react-native"
-  Permission-Notifications:
-    :path: "../node_modules/react-native-permissions/ios/Notifications/Permission-Notifications.podspec"
   RCT-Folly:
     :podspec: "../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec"
   RCTRequired:
@@ -983,7 +978,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppsFlyerFramework: 9f304d91cc80b6579b1206a59220383056b58b47
-  boost: 7dcd2de282d72e344012f7d6564d024930a6a440
+  boost: 57d2868c099736d80fcd648bf211b4431e51a558
   braze-react-native-sdk: 7ec46f6d33f60946797e75fb06998c03861328d8
   BrazeKit: 4afa5f9a89384d06515719b5d246b4676870f030
   BrazeLocation: 8f8a54c4170d9ee6035495364f493614401acad0
@@ -1013,7 +1008,6 @@ SPEC CHECKSUMS:
   MMKVCore: af055b00e27d88cd92fad301c5fecd1ff9b26dd9
   MultiplatformBleAdapter: 5a6a897b006764392f9cef785e4360f54fb9477d
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
-  Permission-Notifications: dbc8cb572cdfbc3c2941feecce4c7900bbdccea1
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: 01c639ec840ee03928b2d65f5cd5297d737b3834
   RCTTypeSafety: 9623592521a1576363baf3d6ab8d164cfe9062bf
@@ -1083,7 +1077,7 @@ SPEC CHECKSUMS:
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNLocalize: 0df7970cfc60389f00eb62fd7c097dc75af3fb4f
   RNOS: 6f2f9a70895bbbfbdad7196abd952e7b01d45027
-  RNPermissions: 2fbbcb7244357507f958d626d58eb15fb0013d85
+  RNPermissions: 5642e6521a29e7aed5049d00230ee0fa80a352e0
   RNQuickAction: 6d404a869dc872cde841ad3147416a670d13fa93
   RNRate: ef3bcff84f39bb1d1e41c5593d3eea4aab2bd73a
   RNReactNativeHapticFeedback: 1e3efeca9628ff9876ee7cdd9edec1b336913f8c
@@ -1099,6 +1093,6 @@ SPEC CHECKSUMS:
   Yoga: ef534101bb891fb09bae657417f34d399c1efe38
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: d45587e182ed77c86769f50ab49373ff403ea395
+PODFILE CHECKSUM: 49cdbbd02c0126946dd274f37d0abe09128f8378
 
 COCOAPODS: 1.15.2
