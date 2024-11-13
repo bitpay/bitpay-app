@@ -25,7 +25,10 @@ import {
   JsonRpcResult,
 } from '@json-rpc-tools/utils';
 import {Key, Wallet} from '../wallet/wallet.models';
-import {checkBiometricForSending} from '../wallet/effects/send/send';
+import {
+  checkBiometricForSending,
+  getEstimateGas,
+} from '../wallet/effects/send/send';
 import {
   dismissDecryptPasswordModal,
   dismissOnGoingProcessModal,
@@ -165,11 +168,10 @@ export const walletConnectV2ApproveSessionProposal =
           id,
           reason: getSdkError('USER_REJECTED'),
         });
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.error(
-            `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${errMsg}`,
           ),
         );
         reject(err);
@@ -375,11 +377,11 @@ export const walletConnectV2SubscribeToEvents =
             ),
           );
         } catch (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
           dispatch(
             LogActions.error(
-              `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${JSON.stringify(
-                err,
-              )}`,
+              `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${errMsg}`,
             ),
           );
         }
@@ -445,11 +447,10 @@ export const walletConnectV2ApproveCallRequest =
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2UpdateRequests({id}));
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.error(
-            `[WC-V2/walletConnectV2ApproveCallRequest]: an error occurred while approving call request: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/walletConnectV2ApproveCallRequest]: an error occurred while approving call request: ${errMsg}`,
           ),
         );
         reject(err);
@@ -480,11 +481,10 @@ export const walletConnectV2RejectCallRequest =
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2UpdateRequests({id}));
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.error(
-            `[WC-V2/walletConnectV2RejectCallRequest]: an error occurred while rejecting call request: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/walletConnectV2RejectCallRequest]: an error occurred while rejecting call request: ${errMsg}`,
           ),
         );
         reject(err);
@@ -523,11 +523,10 @@ export const walletConnectV2OnDeleteSession =
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2DeleteSessions(topic));
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.warn(
-            `[WC-V2/walletConnectV2OnDeleteSession]: an error occurred while deleting session: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/walletConnectV2OnDeleteSession]: an error occurred while deleting session: ${errMsg}`,
           ),
         );
         resolve();
@@ -663,9 +662,7 @@ export const walletConnectV2OnUpdateSession =
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(
         LogActions.error(
-          `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${JSON.stringify(
-            errMsg,
-          )}`,
+          `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${errMsg}`,
         ),
       );
       if (
@@ -721,25 +718,42 @@ const approveEIP155Request =
               sendTransaction.gasLimit = sendTransaction.gas;
               delete sendTransaction.gas;
             }
+            if (!sendTransaction.gasLimit) {
+              sendTransaction.gasLimit = await getEstimateGas({
+                wallet: wallet as Wallet,
+                network: wallet.network,
+                value: sendTransaction.amount || 0,
+                from: sendTransaction.from,
+                to: sendTransaction.to,
+                data: sendTransaction.data,
+                chain: WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain,
+              });
+            }
             if (sendTransaction.chainId) {
               delete sendTransaction.chainId;
             }
             if (sendTransaction.type) {
               delete sendTransaction.type;
             }
-            // workaround for bad gas price estimation ONLY matic
+
             if (
-              chainId.includes('eip155:137') &&
-              !sendTransaction.maxFeePerGas
+              !sendTransaction.maxFeePerGas &&
+              !sendTransaction.maxPriorityFeePerGas
             ) {
-              const feeLevels = await getFeeLevelsUsingBwcClient(
-                'matic',
-                'livenet',
-              );
-              const urgentFee = feeLevels.find(({level}) => level === 'urgent');
-              if (urgentFee?.feePerKb) {
-                sendTransaction.gasPrice = urgentFee?.feePerKb;
+              if (!sendTransaction.gasPrice) {
+                const feeLevels = await getFeeLevelsUsingBwcClient(
+                  WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain,
+                  wallet.network,
+                );
+                const urgentFee = feeLevels.find(
+                  ({level}) => level === 'urgent',
+                );
+                if (urgentFee?.feePerKb) {
+                  sendTransaction.gasPrice = urgentFee?.feePerKb;
+                }
               }
+            } else {
+              sendTransaction.type = 2;
             }
             const connectedWallet = signer.connect(provider);
             const {hash} = await connectedWallet.sendTransaction(
@@ -859,11 +873,10 @@ const getPrivKey =
         );
         resolve(priv);
       } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.error(
-            `[WC-V2/getPrivKey]: an error occurred while getting private key: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/getPrivKey]: an error occurred while getting private key: ${errMsg}`,
           ),
         );
         reject(err);
