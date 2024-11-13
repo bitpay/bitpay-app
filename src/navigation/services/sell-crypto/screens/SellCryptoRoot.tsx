@@ -73,7 +73,7 @@ import {
   SUPPORTED_TOKENS,
 } from '../../../../constants/currencies';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
-import {orderBy} from 'lodash';
+import {orderBy, uniqBy} from 'lodash';
 import {showWalletError} from '../../../../store/wallet/effects/errors/errors';
 import {getExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
 import {
@@ -96,6 +96,7 @@ import {
   getMoonpaySellPayoutMethodFormat,
   moonpaySellEnv,
 } from '../utils/moonpay-sell-utils';
+import {SellCryptoLimits} from '../../../../store/sell-crypto/sell-crypto.models';
 import {
   MoonpayCurrency,
   MoonpayCurrencyMetadata,
@@ -104,7 +105,7 @@ import {
   MoonpayGetSellSignedPaymentUrlData,
   MoonpayGetSellSignedPaymentUrlRequestData,
   MoonpaySellOrderData,
-} from '../../../../store/sell-crypto/sell-crypto.models';
+} from '../../../../store/sell-crypto/models/moonpay-sell.models';
 import {
   AccountChainsContainer,
   Br,
@@ -144,6 +145,15 @@ import {
 } from '../../utils/external-services-utils';
 import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
 import Blockie from '../../../../components/blockie/Blockie';
+import {
+  SimplexCurrency,
+  SimplexGetCurrenciesRequestData,
+} from '../../../../store/buy-crypto/models/simplex.models';
+import {
+  getChainFromSimplexNetworkCode,
+  simplexSellEnv,
+} from '../utils/simplex-sell-utils';
+import {simplexGetCurrencies} from '../../../../store/buy-crypto/effects/simplex/simplex';
 
 export type SellCryptoRootScreenParams =
   | {
@@ -160,16 +170,51 @@ export interface SellCryptoCoin {
   symbol: string;
   chain: string;
   name: string;
-  protocol?: string;
+  protocol?: string; // Moonpay | Simplex
   logoUri?: any;
   tokenAddress?: string;
   limits?: {
     min: number | undefined;
     max: number | undefined;
   };
-  supportsTestMode?: boolean;
-  precision?: number;
+  supportsTestMode?: boolean; // Moonpay
+  precision?: number; // Moonpay
 }
+
+export interface SellCryptoExchange {
+  key: SellCryptoExchangeKey;
+  showOffer: boolean;
+  supportedCoins: SellCryptoCoin[] | undefined;
+  disabled: boolean; // The offer card is shown but with an error message
+  offerError: string | undefined;
+  limits?: SellCryptoLimits;
+}
+
+export type PreLoadPartnersData = {
+  [key in SellCryptoExchangeKey]: SellCryptoExchange;
+};
+
+const sellCryptoExchangesDefault: PreLoadPartnersData = {
+  moonpay: {
+    key: 'moonpay',
+    showOffer: true,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: {
+      min: undefined,
+      max: undefined,
+    },
+  },
+  simplex: {
+    key: 'simplex',
+    showOffer: true,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: undefined,
+  },
+};
 
 export interface SellLimits {
   minAmount?: number;
@@ -506,36 +551,9 @@ const SellCryptoRoot = ({
     }
   };
 
-  const continueToViewOffers = async () => {
+  const continueToViewOffers = () => {
     if (!selectedWallet) {
       return;
-    }
-
-    let address: string = '';
-    try {
-      address = (await dispatch<any>(
-        createWalletAddress({wallet: selectedWallet, newAddress: false}),
-      )) as string;
-    } catch (err) {
-      console.error(err);
-      const msg = t('Error when trying to generate wallet address.');
-      const reason = 'createWalletAddress Error';
-      showError(msg, undefined, reason, undefined, true);
-      return;
-    }
-
-    if (
-      selectedWallet.currencyAbbreviation.toLowerCase() === 'bch' &&
-      selectedWallet.chain.toLowerCase() === 'bch'
-    ) {
-      address = dispatch(
-        GetProtocolPrefixAddress(
-          selectedWallet.currencyAbbreviation,
-          selectedWallet.network,
-          address,
-          selectedWallet.chain,
-        ),
-      );
     }
 
     dispatch(
@@ -548,83 +566,26 @@ const SellCryptoRoot = ({
       }),
     );
 
-    const newId = uuid.v4().toString();
-    const externalTransactionId = `${selectedWallet.id}-${newId}`;
-
-    const requestData: MoonpayGetSellSignedPaymentUrlRequestData = {
-      env: moonpaySellEnv,
-      baseCurrencyCode: getMoonpaySellFixedCurrencyAbbreviation(
-        selectedWallet.currencyAbbreviation,
-        selectedWallet.chain,
-      ),
-      baseCurrencyAmount: amount,
-      externalTransactionId: externalTransactionId,
-      paymentMethod: getMoonpaySellPayoutMethodFormat(
-        selectedPaymentMethod!.method,
-      ),
-      externalCustomerId: user?.eid ?? selectedWallet.id,
-      redirectURL:
-        APP_DEEPLINK_PREFIX +
-        `moonpay?flow=sell&externalId=${externalTransactionId}` +
-        `${useSendMax ? '&sendMax=true' : ''}`,
-      refundWalletAddress: address,
-      lockAmount: true,
-      colorCode: BitPay,
-      theme: theme.dark ? 'dark' : 'light',
-      quoteCurrencyCode: cloneDeep(fiatCurrency).toLowerCase(),
-      showWalletAddressForm: false,
-    };
-
-    let data: MoonpayGetSellSignedPaymentUrlData;
-    try {
-      data = await selectedWallet.moonpayGetSellSignedPaymentUrl(requestData);
-      if (!data?.urlWithSignature) {
-        const msg = t(
-          'Our partner Moonpay is not currently available. Please try again later.',
-        );
-        const reason =
-          'moonpayGetSignedPaymentUrl Error. urlWithSignature not present.';
-        showError(msg, undefined, reason, undefined, true);
-        return;
-      }
-    } catch (err) {
-      const msg = t(
-        'Our partner Moonpay is not currently available. Please try again later.',
-      );
-      const reason = 'moonpayGetSignedPaymentUrl Error.';
-      showError(msg, undefined, reason, undefined, true);
-      return;
-    }
-
-    const newData: MoonpaySellOrderData = {
-      env: __DEV__ ? 'dev' : 'prod',
-      wallet_id: selectedWallet.id,
-      coin: cloneDeep(selectedWallet.currencyAbbreviation).toUpperCase(),
-      chain: cloneDeep(selectedWallet.chain).toLowerCase(),
-      external_id: externalTransactionId,
-      created_on: Date.now(),
-      crypto_amount: amount,
-      refund_address: address,
-      fiat_currency: sellQuoteData?.quoteCurrency?.code
-        ? cloneDeep(sellQuoteData.quoteCurrency.code).toUpperCase()
-        : fiatCurrency,
-      payment_method: selectedPaymentMethod!.method,
-      fiat_fee_amount: Number(sellQuoteData!.totalFee),
-      fiat_receiving_amount: Number(sellQuoteData!.quoteCurrencyAmount),
-      status: 'createdOrder',
-      send_max: useSendMax,
-    };
-
-    dispatch(
-      SellCryptoActions.successSellOrderMoonpay({
-        moonpaySellOrderData: newData,
-      }),
-    );
-
-    await sleep(300);
-    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
-    await sleep(500);
-    navigation.goBack();
+    navigation.navigate(SellCryptoScreens.SELL_CRYPTO_OFFERS, {
+      amount,
+      fiatCurrency,
+      coin: selectedWallet.currencyAbbreviation || '',
+      chain: selectedWallet.chain || '',
+      country: locationData?.countryShortCode || 'US',
+      selectedWallet: selectedWallet,
+      paymentMethod: selectedPaymentMethod!,
+      sellCryptoConfig,
+      preSetPartner,
+      preLoadPartnersData: sellCryptoExchangesDefault,
+      // TODO: review and handle sendMax (similar to swapCryptoRoot)
+      useSendMax: IsERCToken(
+        selectedWallet!.currencyAbbreviation,
+        selectedWallet!.chain,
+      )
+        ? false
+        : useSendMax,
+      //   sendMaxInfo: sendMaxInfo, // the sendMaxInfo shouldn't be necessary for Moonpay, review it for Simplex
+    });
   };
 
   const setDefaultPaymentMethod = () => {
@@ -717,6 +678,218 @@ const SellCryptoRoot = ({
     return Math.trunc(amount * factor) / factor;
   };
 
+  const filterMoonpayCurrenciesConditions = (
+    currency: MoonpayCurrency,
+  ): boolean => {
+    return (
+      !currency.isSuspended &&
+      currency.isSellSupported &&
+      currency.type === 'crypto'
+    );
+  };
+
+  const getMoonpayCurrencies = async () => {
+    const requestData: MoonpayGetCurrenciesRequestData = {
+      env: moonpaySellEnv,
+    };
+    const moonpayAllCurrencies: MoonpayCurrency[] = await moonpayGetCurrencies(
+      requestData,
+    );
+    console.log('============ moonpayAllCurrencies: ', moonpayAllCurrencies);
+
+    const moonpayAllSellCurrencies = moonpayAllCurrencies.filter(
+      (moonpayCurrency: MoonpayCurrency) => {
+        return filterMoonpayCurrenciesConditions(moonpayCurrency);
+      },
+    );
+    console.log(
+      '============ moonpayAllSellCurrencies: ',
+      moonpayAllSellCurrencies,
+    );
+
+    const moonpayAllSellSupportedCurrenciesFixedProps: MoonpayCurrency[] =
+      getMoonpaySellCurrenciesFixedProps(moonpayAllSellCurrencies);
+
+    const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
+    const moonpaySellSupportedCurrenciesFullObj =
+      moonpayAllSellSupportedCurrenciesFixedProps.filter(currency => {
+        return (
+          currency.metadata?.networkCode &&
+          [...SupportedChains].includes(
+            getChainFromMoonpayNetworkCode(
+              currency.code,
+              currency.metadata.networkCode,
+            ),
+          ) &&
+          (currency.code === 'eth' ||
+            (['ethereum', 'polygon', 'arbitrum', 'base', 'optimism'].includes(
+              currency.metadata.networkCode.toLowerCase(),
+            )
+              ? allSupportedTokens.includes(
+                  getCurrencyAbbreviation(
+                    currency.code,
+                    getChainFromMoonpayNetworkCode(
+                      currency.code,
+                      currency.metadata.networkCode,
+                    ),
+                  ),
+                )
+              : true))
+        );
+      });
+
+    console.log(
+      '============= moonpaySellSupportedCurrenciesFullObj: ',
+      moonpaySellSupportedCurrenciesFullObj,
+    );
+
+    const moonpaySellSupportedCurrencies: SellCryptoCoin[] =
+      moonpaySellSupportedCurrenciesFullObj.map(
+        ({
+          code,
+          name,
+          metadata,
+          minSellAmount,
+          maxSellAmount,
+          supportsTestMode,
+          precision,
+        }: {
+          code: string;
+          name: string;
+          metadata?: MoonpayCurrencyMetadata;
+          minSellAmount?: number;
+          maxSellAmount?: number;
+          supportsTestMode?: boolean;
+          precision?: number;
+        }) => {
+          const chain = getChainFromMoonpayNetworkCode(
+            code,
+            metadata?.networkCode,
+          );
+          return {
+            currencyAbbreviation: code.toLowerCase(),
+            symbol: getExternalServiceSymbol(code, chain),
+            name,
+            chain,
+            protocol: metadata?.networkCode,
+            logoUri: getLogoUri(code.toLowerCase(), chain),
+            tokenAddress: metadata?.contractAddress,
+            limits: {
+              min: minSellAmount,
+              max: maxSellAmount,
+            },
+            supportsTestMode,
+            precision,
+          };
+        },
+      );
+
+    console.log(
+      '============= moonpaySellSupportedCurrencies: ',
+      moonpaySellSupportedCurrencies,
+    );
+
+    // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+    let supportedCoins = orderBy(
+      moonpaySellSupportedCurrencies,
+      [
+        coin => {
+          return orderedArray.includes(coin.symbol)
+            ? orderedArray.indexOf(coin.symbol)
+            : orderedArray.length;
+        },
+        'name',
+      ],
+      ['asc', 'asc'],
+    );
+
+    return supportedCoins;
+  };
+
+  const filterSimplexCurrenciesConditions = (
+    currency: SimplexCurrency,
+  ): boolean => {
+    return (
+      // TODO: generalize this filter
+      currency.ticker_symbol === 'BTC' && currency.network_code === 'bitcoin'
+    );
+  };
+
+  const getSimplexCurrencies = async () => {
+    const requestData: SimplexGetCurrenciesRequestData = {
+      env: simplexSellEnv,
+    };
+    const simplexAllCurrencies: SimplexCurrency[] = await simplexGetCurrencies(
+      requestData,
+    );
+    console.log('============ simplexAllCurrencies: ', simplexAllCurrencies);
+
+    const simplexAllSellCurrencies = simplexAllCurrencies.filter(
+      (simplexCurrency: SimplexCurrency) => {
+        return filterSimplexCurrenciesConditions(simplexCurrency);
+      },
+    );
+
+    console.log(
+      '============ simplexAllSellCurrencies: ',
+      simplexAllSellCurrencies,
+    );
+
+    const simplexSellSupportedCurrencies: SellCryptoCoin[] =
+      simplexAllSellCurrencies.map((simplexCurrency: SimplexCurrency) => {
+        const coin = simplexCurrency.ticker_symbol.toLowerCase();
+        const chain = getChainFromSimplexNetworkCode(
+          coin,
+          simplexCurrency.network_code,
+        );
+        return {
+          currencyAbbreviation: coin,
+          symbol: getExternalServiceSymbol(coin, chain),
+          name: simplexCurrency.name,
+          chain,
+          protocol: simplexCurrency.network_code,
+          logoUri: getLogoUri(coin.toLowerCase(), chain),
+          tokenAddress: simplexCurrency.contract_address ?? undefined,
+          limits: {
+            // TODO: handle max/min limits correctly
+            min: simplexCurrency.fixed_min_amount ?? undefined,
+            max: undefined,
+          },
+        };
+      });
+
+    console.log(
+      '============ simplexSellSupportedCurrencies: ',
+      simplexSellSupportedCurrencies,
+    );
+
+    // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+    let supportedCoins = orderBy(
+      simplexSellSupportedCurrencies,
+      [
+        coin => {
+          return orderedArray.includes(coin.symbol)
+            ? orderedArray.indexOf(coin.symbol)
+            : orderedArray.length;
+        },
+        'name',
+      ],
+      ['asc', 'asc'],
+    );
+
+    return supportedCoins;
+  };
+
   const init = async () => {
     try {
       dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
@@ -766,183 +939,168 @@ const SellCryptoRoot = ({
       return;
     }
 
-    if (preSetPartner) {
-      logger.debug(
-        `preSetPartner: ${preSetPartner} - fromAmount: ${fromAmount} - fromCurrencyAbbreviation: ${fromCurrencyAbbreviation} - fromChain: ${fromChain}`,
-      );
-    }
+    const supportedExchanges: SellCryptoExchangeKey[] = Object.keys(
+      sellCryptoExchangesDefault,
+    ) as SellCryptoExchangeKey[];
+
+    // prevent "getCurrencies" from deleted or disabled exchanges
+    supportedExchanges.forEach(exchange => {
+      if (sellCryptoConfig && sellCryptoConfig[exchange]) {
+        sellCryptoExchangesDefault[exchange].showOffer =
+          !sellCryptoConfig[exchange]?.removed;
+        sellCryptoExchangesDefault[exchange].disabled =
+          !!sellCryptoConfig[exchange]?.disabled;
+      }
+    });
+
+    const enabledExchanges = Object.values(sellCryptoExchangesDefault)
+      .filter(
+        exchange =>
+          exchange.showOffer &&
+          !exchange.disabled &&
+          (!preSetPartner || exchange.key === preSetPartner),
+      )
+      .map(exchange => exchange.key);
+
+    const getCurrenciesPromiseByExchange = (
+      exchange: SellCryptoExchangeKey,
+    ) => {
+      switch (exchange) {
+        case 'moonpay':
+          return getMoonpayCurrencies();
+        case 'simplex':
+          return getSimplexCurrencies();
+        default:
+          return Promise.resolve([]);
+      }
+    };
+
+    const getCurrenciesPromises = enabledExchanges.map(exchange =>
+      getCurrenciesPromiseByExchange(exchange),
+    );
 
     try {
-      const requestData: MoonpayGetCurrenciesRequestData = {
-        env: moonpaySellEnv,
-      };
-      const moonpayAllCurrencies: MoonpayCurrency[] =
-        await moonpayGetCurrencies(requestData);
-      const moonpayAllSellCurrencies = moonpayAllCurrencies.filter(currency => {
-        return (
-          !currency.isSuspended &&
-          currency.isSellSupported &&
-          currency.type === 'crypto'
-        );
+      const responseByExchange = await Promise.allSettled([
+        ...getCurrenciesPromises,
+        sleep(400),
+      ]);
+      const responseByExchangeKey = responseByExchange.map((res, index) => {
+        const exchangeKey: SellCryptoExchangeKey | undefined =
+          enabledExchanges[index] ?? undefined;
+        return {exchangeKey, promiseRes: res};
       });
 
-      const moonpayAllSellSupportedCurrenciesFixedProps: MoonpayCurrency[] =
-        getMoonpaySellCurrenciesFixedProps(moonpayAllSellCurrencies);
+      console.log('========= responseByExchangeKey: ', responseByExchangeKey);
 
-      const allSupportedTokens: string[] = [
-        ...tokenOptions,
-        ...SUPPORTED_TOKENS,
-      ];
-      const moonpaySellSupportedCurrenciesFullObj =
-        moonpayAllSellSupportedCurrenciesFixedProps.filter(currency => {
-          return (
-            currency.metadata?.networkCode &&
-            [...SupportedChains].includes(
-              getChainFromMoonpayNetworkCode(
-                currency.code,
-                currency.metadata.networkCode,
-              ),
-            ) &&
-            (currency.code === 'eth' ||
-              (['ethereum', 'polygon', 'arbitrum'].includes(
-                currency.metadata.networkCode.toLowerCase(),
-              )
-                ? allSupportedTokens.includes(
-                    getCurrencyAbbreviation(
-                      currency.code,
-                      getChainFromMoonpayNetworkCode(
-                        currency.code,
-                        currency.metadata.networkCode,
-                      ),
-                    ),
-                  )
-                : true))
-          );
-        });
+      let allSupportedCoins: SellCryptoCoin[] = [];
 
-      const moonpaySellSupportedCurrencies: SellCryptoCoin[] =
-        moonpaySellSupportedCurrenciesFullObj.map(
-          ({
-            code,
-            name,
-            metadata,
-            minSellAmount,
-            maxSellAmount,
-            supportsTestMode,
-            precision,
-          }: {
-            code: string;
-            name: string;
-            metadata?: MoonpayCurrencyMetadata;
-            minSellAmount?: number;
-            maxSellAmount?: number;
-            supportsTestMode?: boolean;
-            precision?: number;
-          }) => {
-            const chain = getChainFromMoonpayNetworkCode(
-              code,
-              metadata?.networkCode,
+      if (responseByExchangeKey instanceof Array) {
+        responseByExchangeKey.forEach((e, index) => {
+          if (e.promiseRes.status === 'rejected') {
+            logger.error(
+              `Sell crypto getCurrencies[${index}] Rejected: + ${JSON.stringify(
+                e.promiseRes.reason,
+              )}`,
             );
-            return {
-              currencyAbbreviation: code.toLowerCase(),
-              symbol: getExternalServiceSymbol(code, chain),
-              name,
-              chain,
-              protocol: metadata?.networkCode,
-              logoUri: getLogoUri(code.toLowerCase(), chain),
-              tokenAddress: metadata?.contractAddress,
-              limits: {
-                min: minSellAmount,
-                max: maxSellAmount,
-              },
-              supportsTestMode,
-              precision,
-            };
-          },
-        );
+            if (e.promiseRes.reason instanceof Error) {
+              switch (e.exchangeKey) {
+                case 'moonpay':
+                  logger.debug(
+                    'getMoonpayCurrencies Error: ' +
+                      e.promiseRes.reason.message,
+                  );
+                  sellCryptoExchangesDefault.moonpay.showOffer = false;
+                  break;
+                case 'simplex':
+                  logger.debug(
+                    'getSimplexCurrencies Error: ' +
+                      e.promiseRes.reason.message,
+                  );
+                  sellCryptoExchangesDefault.simplex.showOffer = false;
+                  break;
+                default:
+                  logger.debug('Error: ' + e.promiseRes.reason.message);
+                  break;
+              }
+            }
+          } else if (e.promiseRes.status === 'fulfilled') {
+            switch (e.exchangeKey) {
+              case 'moonpay':
+                sellCryptoExchangesDefault.moonpay.supportedCoins = e.promiseRes
+                  .value as SellCryptoCoin[];
+                break;
+              case 'simplex':
+                sellCryptoExchangesDefault.simplex.supportedCoins = e.promiseRes
+                  .value as SellCryptoCoin[];
+                break;
+              default:
+                break;
+            }
 
-      // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
-      const orderedArray = SupportedCurrencyOptions.map(currency =>
-        currency.chain
-          ? getCurrencyAbbreviation(
-              currency.currencyAbbreviation,
-              currency.chain,
-            )
-          : currency.currencyAbbreviation,
-      );
-      let supportedCoins = orderBy(
-        moonpaySellSupportedCurrencies,
-        [
-          coin => {
-            return orderedArray.includes(coin.symbol)
-              ? orderedArray.indexOf(coin.symbol)
-              : orderedArray.length;
-          },
-          'name',
-        ],
-        ['asc', 'asc'],
-      );
+            allSupportedCoins = [
+              ...allSupportedCoins,
+              ...((e.promiseRes.value as SellCryptoCoin[]) || []),
+            ];
+          }
+        });
+        if (allSupportedCoins.length > 0) {
+          const coinsToRemove =
+            !locationData || locationData.countryShortCode === 'US'
+              ? ['xrp']
+              : [];
+          coinsToRemove.push('busd');
 
-      if (supportedCoins.length === 0) {
-        const msg = t(
-          'Our partner Moonpay is not currently available. Please try again later.',
-        );
-        const reason = 'No supportedCoins present';
-        showError(msg, undefined, reason, undefined, true);
-        return;
-      }
+          if (coinsToRemove.length > 0) {
+            logger.debug(
+              `Removing ${JSON.stringify(
+                coinsToRemove,
+              )} from Sell supported coins`,
+            );
+            allSupportedCoins = allSupportedCoins.filter(
+              supportedCoin =>
+                !coinsToRemove.includes(supportedCoin.currencyAbbreviation),
+            );
+          }
 
-      if (fromWallet?.chain && fromWallet?.currencyAbbreviation) {
-        const fromWalletSymbol = getExternalServiceSymbol(
-          fromWallet!.currencyAbbreviation,
-          fromWallet!.chain,
-        );
-        const isFromWalletSymbolEnabled = supportedCoins.find(
-          supportedCoin => supportedCoin.symbol === fromWalletSymbol,
-        );
-        if (!isFromWalletSymbolEnabled) {
-          logger.error(
-            `Moonpay has temporarily disabled ${fromWalletSymbol} sales`,
-          );
-          const actions = [
-            {
-              text: t('OK'),
-              action: () => {
-                navigation.goBack();
-              },
-              primary: true,
-            },
-          ];
-          const title = t('Moonpay Error');
-          const msg = t(
-            'Our partner Moonpay has temporarily disabled sales for the selected wallet.',
-          );
-          showError(msg, title, undefined, actions, true);
-          return;
+          allSupportedCoins = uniqBy(allSupportedCoins, 'symbol');
         }
-      }
 
-      const coinsToRemove = ['xrp', 'busd'];
-      if (coinsToRemove.length > 0) {
-        logger.debug(
-          `Removing ${JSON.stringify(
-            coinsToRemove,
-          )} from Sell Crypto supported coins`,
+        // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+        const orderedArray = SupportedCurrencyOptions.map(currency =>
+          currency.chain
+            ? getCurrencyAbbreviation(
+                currency.currencyAbbreviation,
+                currency.chain,
+              )
+            : currency.currencyAbbreviation,
         );
-        supportedCoins = supportedCoins.filter(
-          supportedCoin =>
-            !coinsToRemove.includes(supportedCoin.currencyAbbreviation),
+        let allSupportedCoinsOrdered = orderBy(
+          allSupportedCoins,
+          [
+            coin => {
+              return orderedArray.includes(coin.symbol)
+                ? orderedArray.indexOf(coin.symbol)
+                : orderedArray.length;
+            },
+            'name',
+          ],
+          ['asc', 'asc'],
         );
-      }
 
-      setSellCryptoSupportedCoins(supportedCoins);
+        console.log(
+          '========= allSupportedCoinsOrdered: ',
+          allSupportedCoinsOrdered,
+        );
+        setSellCryptoSupportedCoins(allSupportedCoinsOrdered);
+      }
     } catch (err) {
-      logger.error('Moonpay getCurrencies Error: ' + JSON.stringify(err));
+      logger.error('Sell crypto getCurrencies Error: ' + JSON.stringify(err));
       const msg = t(
-        'Our partner Moonpay is not currently available. Please try again later.',
+        'Sell Crypto feature is not available at this moment. Please try again later.',
       );
-      const reason = 'getCurrencies Error';
-      showError(msg, undefined, reason, undefined, true);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(200);
+      showError(msg);
     }
   };
 
@@ -1025,6 +1183,7 @@ const SellCryptoRoot = ({
   });
 
   useEffect(() => {
+    // TODO: Check if limits are correctly handled. Compare with swapCryptoRoot
     if (sellCryptoSupportedCoins && sellCryptoSupportedCoins.length > 0) {
       selectFirstAvailableWallet();
     }
@@ -1063,71 +1222,71 @@ const SellCryptoRoot = ({
     checkPaymentMethodRef.current();
   }, [selectedWallet]);
 
-  useEffect(() => {
-    // get sell quote
-    if (!selectedWallet || !selectedPaymentMethod || amount === 0) {
-      return;
-    }
+  // useEffect(() => {
+  //   // get sell quote
+  //   if (!selectedWallet || !selectedPaymentMethod || amount === 0) {
+  //     return;
+  //   }
 
-    const _moonpayGetSellQuote = async (
-      requestData: MoonpayGetSellQuoteRequestData,
-    ) => {
-      try {
-        setLoadingQuote(true);
-        const sellQuote = await selectedWallet.moonpayGetSellQuote(requestData);
-        if (sellQuote?.quoteCurrencyAmount) {
-          sellQuote.totalFee =
-            Number(sellQuote.extraFeeAmount) + Number(sellQuote.feeAmount);
-          setSellQuoteData(sellQuote);
-          setLoadingQuote(false);
-        } else {
-          if (!sellQuote) {
-            logger.error('Moonpay error: No data received');
-          }
-          if (sellQuote.message && typeof sellQuote.message === 'string') {
-            logger.error('Moonpay error: ' + sellQuote.message);
-          }
-          if (sellQuote.error && typeof sellQuote.error === 'string') {
-            logger.error('Moonpay error: ' + sellQuote.error);
-          }
-          if (sellQuote.errors) {
-            logger.error(sellQuote.errors);
-          }
-          let err = t("Can't get rates at this moment. Please try again later");
-          const reason = 'moonpayGetQuote Error. Necessary data not included.';
-          showError(err, undefined, reason, undefined, false);
-        }
-      } catch (err: any) {
-        let msg: string = t(
-          "Can't get rates at this moment. Please try again later",
-        );
-        if (typeof err === 'string') {
-          msg = msg + ` - Error: ${err}`;
-        } else if (typeof err?.message === 'string') {
-          msg = msg + ` - Error: ${err.message}`;
-        }
-        const reason = 'moonpayGetQuote Error.';
-        showError(msg, undefined, reason, undefined, false);
-      }
-    };
+  //   const _moonpayGetSellQuote = async (
+  //     requestData: MoonpayGetSellQuoteRequestData,
+  //   ) => {
+  //     try {
+  //       setLoadingQuote(true);
+  //       const sellQuote = await selectedWallet.moonpayGetSellQuote(requestData);
+  //       if (sellQuote?.quoteCurrencyAmount) {
+  //         sellQuote.totalFee =
+  //           Number(sellQuote.extraFeeAmount) + Number(sellQuote.feeAmount);
+  //         setSellQuoteData(sellQuote);
+  //         setLoadingQuote(false);
+  //       } else {
+  //         if (!sellQuote) {
+  //           logger.error('Moonpay error: No data received');
+  //         }
+  //         if (sellQuote.message && typeof sellQuote.message === 'string') {
+  //           logger.error('Moonpay error: ' + sellQuote.message);
+  //         }
+  //         if (sellQuote.error && typeof sellQuote.error === 'string') {
+  //           logger.error('Moonpay error: ' + sellQuote.error);
+  //         }
+  //         if (sellQuote.errors) {
+  //           logger.error(sellQuote.errors);
+  //         }
+  //         let err = t("Can't get rates at this moment. Please try again later");
+  //         const reason = 'moonpayGetQuote Error. Necessary data not included.';
+  //         showError(err, undefined, reason, undefined, false);
+  //       }
+  //     } catch (err: any) {
+  //       let msg: string = t(
+  //         "Can't get rates at this moment. Please try again later",
+  //       );
+  //       if (typeof err === 'string') {
+  //         msg = msg + ` - Error: ${err}`;
+  //       } else if (typeof err?.message === 'string') {
+  //         msg = msg + ` - Error: ${err.message}`;
+  //       }
+  //       const reason = 'moonpayGetQuote Error.';
+  //       showError(msg, undefined, reason, undefined, false);
+  //     }
+  //   };
 
-    const requestData: MoonpayGetSellQuoteRequestData = {
-      env: moonpaySellEnv,
-      currencyAbbreviation: getMoonpaySellFixedCurrencyAbbreviation(
-        selectedWallet.currencyAbbreviation,
-        selectedWallet.chain,
-      ),
-      quoteCurrencyCode: fiatCurrency,
-      baseCurrencyAmount: amount,
-      // extraFeePercentage?: number,
-      payoutMethod: getMoonpaySellPayoutMethodFormat(
-        selectedPaymentMethod.method,
-      ),
-    };
-    _moonpayGetSellQuote(requestData);
+  //   const requestData: MoonpayGetSellQuoteRequestData = {
+  //     env: moonpaySellEnv,
+  //     currencyAbbreviation: getMoonpaySellFixedCurrencyAbbreviation(
+  //       selectedWallet.currencyAbbreviation,
+  //       selectedWallet.chain,
+  //     ),
+  //     quoteCurrencyCode: fiatCurrency,
+  //     baseCurrencyAmount: amount,
+  //     // extraFeePercentage?: number,
+  //     payoutMethod: getMoonpaySellPayoutMethodFormat(
+  //       selectedPaymentMethod.method,
+  //     ),
+  //   };
+  //   _moonpayGetSellQuote(requestData);
 
-    checkPaymentMethodRef.current();
-  }, [amount, selectedWallet, selectedPaymentMethod]);
+  //   checkPaymentMethodRef.current();
+  // }, [amount, selectedWallet, selectedPaymentMethod]);
 
   return (
     <SellCryptoRootContainer>
@@ -1362,7 +1521,7 @@ const SellCryptoRoot = ({
                 )}
               </SelectedOptionCol>
             </ActionsContainer>
-            {amount > 0 ? (
+            {/* {amount > 0 ? (
               <>
                 <Br />
                 {loadingQuote ? (
@@ -1427,7 +1586,7 @@ const SellCryptoRoot = ({
                   </TermsText>
                 </SellTermsContainer>
               </>
-            ) : null}
+            ) : null} */}
           </BuyCryptoItemCard>
         ) : null}
 
@@ -1435,10 +1594,8 @@ const SellCryptoRoot = ({
           <Button
             buttonStyle={'primary'}
             disabled={
-              !selectedWallet ||
-              !amount ||
-              amount <= 0 ||
-              !sellQuoteData?.quoteCurrencyAmount
+              !selectedWallet || !amount || amount <= 0 // ||
+              // !sellQuoteData?.quoteCurrencyAmount
             }
             onPress={() => {
               checkIfErc20Token();
@@ -1533,6 +1690,7 @@ const SellCryptoRoot = ({
           }
 
           if (maxAmount) {
+            // TODO: move adjustMoonpayAmount to sellCryptoOffers (?)
             const adjustedMaxAmount = adjustMoonpayAmount(
               maxAmount,
               moonpaySelectedCoin?.precision,
