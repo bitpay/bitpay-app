@@ -1,4 +1,5 @@
-import {MoonpaySellOrderData} from './sell-crypto.models';
+import {MoonpaySellOrderData} from './models/moonpay-sell.models';
+import {SimplexSellOrderData} from './models/simplex-sell.models';
 import {SellCryptoActionType, SellCryptoActionTypes} from './sell-crypto.types';
 
 type SellCryptoReduxPersistBlackList = string[];
@@ -7,10 +8,12 @@ export const sellCryptoReduxPersistBlackList: SellCryptoReduxPersistBlackList =
 
 export interface SellCryptoState {
   moonpay: {[key in string]: MoonpaySellOrderData};
+  simplex: {[key in string]: SimplexSellOrderData};
 }
 
 const initialState: SellCryptoState = {
   moonpay: {},
+  simplex: {},
 };
 
 export const sellCryptoReducer = (
@@ -92,6 +95,100 @@ export const sellCryptoReducer = (
       return {
         ...state,
         moonpay: {...moonpaySellOrdersList},
+      };
+
+    case SellCryptoActionTypes.SUCCESS_SELL_ORDER_SIMPLEX:
+      const {simplexSellOrderData} = action.payload;
+      return {
+        ...state,
+        simplex: {
+          ...state.simplex,
+          [simplexSellOrderData.external_id]: simplexSellOrderData,
+        },
+      };
+
+    case SellCryptoActionTypes.UPDATE_SELL_ORDER_SIMPLEX:
+      // TODO: review this "update sell order case"
+      const {simplexSellIncomingData} = action.payload;
+      const simplexId = simplexSellIncomingData?.simplexExternalId;
+
+      if (simplexId && state.simplex[simplexId]) {
+        const currentData = state.simplex[simplexId];
+
+        const setOrDefault = (newValue: any, defaultValue: any) =>
+          newValue !== undefined ? newValue : defaultValue;
+
+        state.simplex[simplexId] = {
+          ...currentData,
+          status: setOrDefault(
+            simplexSellIncomingData.status,
+            currentData.status,
+          ),
+          transaction_id: setOrDefault(
+            simplexSellIncomingData.transactionId,
+            currentData.transaction_id,
+          ),
+          address_to: setOrDefault(
+            simplexSellIncomingData.depositWalletAddress,
+            currentData.address_to,
+          ),
+          crypto_amount: setOrDefault(
+            simplexSellIncomingData.baseCurrencyAmount
+              ? Number(simplexSellIncomingData.baseCurrencyAmount)
+              : undefined,
+            currentData.crypto_amount,
+          ),
+          fiat_currency: setOrDefault(
+            simplexSellIncomingData.fiatCurrencyCode,
+            currentData.fiat_currency,
+          ),
+          payment_method: setOrDefault(
+            simplexSellIncomingData.paymentMethod,
+            currentData.payment_method,
+          ),
+          tx_sent_on: setOrDefault(
+            simplexSellIncomingData.txSentOn
+              ? Number(simplexSellIncomingData.txSentOn)
+              : undefined,
+            currentData.tx_sent_on,
+          ),
+          fiat_fee_amount: setOrDefault(
+            simplexSellIncomingData.totalFee
+              ? Number(simplexSellIncomingData.totalFee)
+              : undefined,
+            currentData.fiat_fee_amount,
+          ),
+          fiat_receiving_amount: setOrDefault(
+            simplexSellIncomingData.fiatAmount
+              ? Number(simplexSellIncomingData.fiatAmount)
+              : undefined,
+            currentData.fiat_receiving_amount,
+          ),
+          tx_sent_id: setOrDefault(
+            simplexSellIncomingData.txSentId,
+            currentData.tx_sent_id,
+          ),
+        };
+
+        return {
+          ...state,
+          simplex: {
+            ...state.simplex,
+            [simplexId]: state.simplex[simplexId],
+          },
+        };
+      } else {
+        return state;
+      }
+
+    case SellCryptoActionTypes.REMOVE_SELL_ORDER_SIMPLEX:
+      const {simplexExternalId} = action.payload;
+      const simplexSellOrdersList = {...state.simplex};
+      delete simplexSellOrdersList[simplexExternalId];
+
+      return {
+        ...state,
+        simplex: {...simplexSellOrdersList},
       };
 
     default:
