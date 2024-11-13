@@ -172,7 +172,7 @@ const SimplexDetails: React.FC = () => {
         <ColumnDataContainer>
           <TouchableOpacity
             onPress={() => {
-              copyText(paymentRequest.address);
+              copyText(paymentRequest.address || '');
               setCopiedDepositAddress(true);
             }}>
             <RowLabel>{t('Deposit address')}</RowLabel>

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {TouchableOpacity} from 'react-native';
 import {
   RouteProp,
@@ -29,13 +29,19 @@ import {
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
 import {useTranslation} from 'react-i18next';
+import {SimplexSellOrderData} from '../../../../../store/sell-crypto/models/simplex-sell.models';
+import {ScreenOptions} from '../../../../../styles/tabNavigator';
+import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 
 export interface SimplexSettingsProps {
   incomingPaymentRequest: {
-    success: string;
-    paymentId: string;
-    quoteId: string;
-    userId: string;
+    flow?: 'buy' | 'sell';
+    success?: string;
+    paymentId?: string;
+    quoteId?: string;
+    userId?: string;
+    externalId?: string;
+    transactionId?: string;
   };
 }
 
@@ -44,6 +50,9 @@ const SimplexSettings: React.FC = () => {
   const simplexHistory = useSelector(
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.simplex,
   );
+  const simplexSellHistory = useSelector(
+    ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.simplex,
+  );
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
@@ -51,14 +60,172 @@ const SimplexSettings: React.FC = () => {
   const [paymentRequests, setTransactions] = useState(
     [] as SimplexPaymentData[],
   );
+  const [sellOrders, setSellOrders] = useState([] as SimplexSellOrderData[]);
+
+  const Tab = createMaterialTopTabNavigator();
+  const TabTitle = {
+    buy: t('Buy History'),
+    sell: t('Sell History'),
+  };
 
   const route = useRoute<RouteProp<{params: SimplexSettingsProps}>>();
   const {incomingPaymentRequest} = route.params || {};
 
+  const memoizedBuyCryptoHistory = useCallback(
+    () => (
+      <Settings style={{marginTop: 10, paddingBottom: 500}}>
+        {paymentRequests && paymentRequests.length > 0 && (
+          <PrTitle>{t('Payment Requests')}</PrTitle>
+        )}
+        {paymentRequests &&
+          paymentRequests.length > 0 &&
+          paymentRequests
+            .sort((a, b) => b.created_on - a.created_on)
+            .map(pr => {
+              return (
+                <PrRow
+                  key={pr.payment_id}
+                  onPress={() => {
+                    haptic('impactLight');
+                    navigation.navigate('SimplexDetails', {
+                      paymentRequest: pr,
+                    });
+                  }}>
+                  <PrRowLeft>
+                    <PrTxtFiatAmount>
+                      {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
+                    </PrTxtFiatAmount>
+                    {pr.status === 'failed' && (
+                      <PrTxtStatus style={{color: '#df5264'}}>
+                        {t('Payment request rejected')}
+                      </PrTxtStatus>
+                    )}
+                    {pr.status === 'success' && (
+                      <PrTxtStatus style={{color: '#01d1a2'}}>
+                        {t('Payment request approved')}
+                      </PrTxtStatus>
+                    )}
+                    {pr.status === 'paymentRequestSent' && (
+                      <PrTxtStatus>
+                        {t('Attempted payment request')}
+                      </PrTxtStatus>
+                    )}
+                  </PrRowLeft>
+                  <PrRowRight>
+                    <PrTxtCryptoAmount>
+                      {pr.crypto_amount} {pr.coin}
+                    </PrTxtCryptoAmount>
+                    <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
+                  </PrRowRight>
+                </PrRow>
+              );
+            })}
+        {(!paymentRequests || paymentRequests.length === 0) && (
+          <NoPrMsg>
+            {t('There are currently no transactions with Simplex')}
+          </NoPrMsg>
+        )}
+      </Settings>
+    ),
+    [paymentRequests],
+  );
+
+  const memoizedSellCryptoHistory = useCallback(
+    () => (
+      <Settings style={{marginTop: 10, paddingBottom: 500}}>
+        {sellOrders && sellOrders.length > 0 && (
+          <PrTitle>{t('Sell Orders')}</PrTitle>
+        )}
+        {sellOrders &&
+          sellOrders.length > 0 &&
+          sellOrders
+            .sort((a, b) => b.created_on - a.created_on)
+            .map(so => {
+              return (
+                <PrRow
+                  key={so.external_id}
+                  onPress={() => {
+                    haptic('impactLight');
+                    navigation.navigate('SimplexSellDetails', {
+                      sellOrder: so,
+                    });
+                  }}>
+                  <PrRowLeft>
+                    <PrTxtFiatAmount>
+                      {so.crypto_amount} {so.coin}
+                    </PrTxtFiatAmount>
+                    {so.status === 'failed' && (
+                      <PrTxtStatus style={{color: '#df5264'}}>
+                        {t('Sell order failed')}
+                      </PrTxtStatus>
+                    )}
+                    {so.status === 'bitpayCanceled' && (
+                      <PrTxtStatus style={{color: '#df5264'}}>
+                        {t('Sell order canceled')}
+                      </PrTxtStatus>
+                    )}
+                    {so.status &&
+                      ['waitingForDeposit', 'bitpayPending'].includes(
+                        so.status,
+                      ) && (
+                        <PrTxtStatus>{t('Waiting for deposit')}</PrTxtStatus>
+                      )}
+                    {so.status === 'completed' && (
+                      <PrTxtStatus style={{color: '#01d1a2'}}>
+                        {t('Sell order completed')}
+                      </PrTxtStatus>
+                    )}
+                    {!so.status ||
+                      (so.status === 'createdOrder' && (
+                        <PrTxtStatus>{t('Sell order started')}</PrTxtStatus>
+                      ))}
+                    {so.status &&
+                      ['pending', 'bitpayTxSent'].includes(so.status) && (
+                        <PrTxtStatus>{t('Processing sell order')}</PrTxtStatus>
+                      )}
+                  </PrRowLeft>
+                  <PrRowRight>
+                    <PrTxtCryptoAmount>
+                      {Number(so.fiat_receiving_amount).toFixed(2)}{' '}
+                      {so.fiat_currency}
+                    </PrTxtCryptoAmount>
+                    <PrTxtDate>{moment(so.created_on).fromNow()}</PrTxtDate>
+                  </PrRowRight>
+                </PrRow>
+              );
+            })}
+        {(!sellOrders || sellOrders.length === 0) && (
+          <NoPrMsg>
+            {t('There are currently no transactions with Moonpay')}
+          </NoPrMsg>
+        )}
+      </Settings>
+    ),
+    [sellOrders],
+  );
+
   useEffect(() => {
-    if (incomingPaymentRequest) {
+    if (incomingPaymentRequest?.flow === 'buy') {
       logger.debug(
-        `Coming from payment request: ${incomingPaymentRequest.paymentId}`,
+        `Coming from payment request: ExternalID: ${
+          incomingPaymentRequest.externalId
+        }${
+          incomingPaymentRequest.transactionId
+            ? ` - TransactionID: ${incomingPaymentRequest.transactionId}`
+            : ''
+        }`,
+      );
+    }
+
+    if (incomingPaymentRequest?.flow === 'sell') {
+      logger.debug(
+        `Coming from sell order: ExternalID: ${
+          incomingPaymentRequest.externalId
+        }${
+          incomingPaymentRequest.transactionId
+            ? ` - TransactionID: ${incomingPaymentRequest.transactionId}`
+            : ''
+        }`,
       );
     }
   }, []);
@@ -69,65 +236,35 @@ const SimplexSettings: React.FC = () => {
         pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
       );
       setTransactions(simplexPaymentRequests);
+
+      const simplexSellOrders = Object.values(simplexSellHistory).filter(
+        pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
+      );
+      setSellOrders(simplexSellOrders);
     }
   }, [isFocused]);
 
   return (
     <>
       <SettingsContainer>
-        <Settings style={{paddingBottom: 500}}>
-          {paymentRequests && paymentRequests.length > 0 && (
-            <PrTitle>{t('Payment Requests')}</PrTitle>
-          )}
-          {paymentRequests &&
-            paymentRequests.length > 0 &&
-            paymentRequests
-              .sort((a, b) => b.created_on - a.created_on)
-              .map(pr => {
-                return (
-                  <PrRow
-                    key={pr.payment_id}
-                    onPress={() => {
-                      haptic('impactLight');
-                      navigation.navigate('SimplexDetails', {
-                        paymentRequest: pr,
-                      });
-                    }}>
-                    <PrRowLeft>
-                      <PrTxtFiatAmount>
-                        {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
-                      </PrTxtFiatAmount>
-                      {pr.status === 'failed' && (
-                        <PrTxtStatus style={{color: '#df5264'}}>
-                          {t('Payment request rejected')}
-                        </PrTxtStatus>
-                      )}
-                      {pr.status === 'success' && (
-                        <PrTxtStatus style={{color: '#01d1a2'}}>
-                          {t('Payment request approved')}
-                        </PrTxtStatus>
-                      )}
-                      {pr.status === 'paymentRequestSent' && (
-                        <PrTxtStatus>
-                          {t('Attempted payment request')}
-                        </PrTxtStatus>
-                      )}
-                    </PrRowLeft>
-                    <PrRowRight>
-                      <PrTxtCryptoAmount>
-                        {pr.crypto_amount} {pr.coin}
-                      </PrTxtCryptoAmount>
-                      <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
-                    </PrRowRight>
-                  </PrRow>
-                );
-              })}
-          {(!paymentRequests || paymentRequests.length === 0) && (
-            <NoPrMsg>
-              {t('There are currently no transactions with Simplex')}
-            </NoPrMsg>
-          )}
-        </Settings>
+        <Tab.Navigator
+          initialRouteName={
+            incomingPaymentRequest?.flow === 'sell'
+              ? TabTitle.sell
+              : TabTitle.buy
+          }
+          screenOptions={{...ScreenOptions()}}>
+          <Tab.Screen
+            name={TabTitle.buy}
+            initialParams={route.params}
+            component={memoizedBuyCryptoHistory}
+          />
+          <Tab.Screen
+            name={TabTitle.sell}
+            initialParams={route.params}
+            component={memoizedSellCryptoHistory}
+          />
+        </Tab.Navigator>
       </SettingsContainer>
       <FooterSupport>
         <SupportTxt>{t('Having problems with Simplex?')}</SupportTxt>
