@@ -51,27 +51,23 @@ const Notifications = () => {
 
   const setNotificationValue = useCallback(
     async (accepted: boolean) => {
+      dispatch(AppEffects.setNotifications(accepted));
+      dispatch(AppEffects.setConfirmTxNotifications(accepted));
+      dispatch(AppEffects.setAnnouncementsNotifications(accepted));
       const systemEnabled = await AppEffects.checkNotificationsPermissions();
-      if (systemEnabled) {
-        dispatch(AppEffects.setNotifications(accepted));
-        dispatch(AppEffects.setConfirmTxNotifications(accepted));
-        dispatch(AppEffects.setAnnouncementsNotifications(accepted));
-      } else {
-        if (accepted && Platform.OS === 'ios') {
-          const requestPermissions =
-            await AppEffects.requestNotificationsPermissions();
-          if (requestPermissions) {
-            dispatch(AppEffects.setNotifications(accepted));
-          } else {
-            openSettings();
-            dispatch(AppEffects.setNotifications(false));
-            dispatch(AppEffects.setConfirmTxNotifications(false));
-            dispatch(AppEffects.setAnnouncementsNotifications(false));
+      if (!systemEnabled) {
+        if (accepted) {
+          if (Platform.OS === 'ios') {
+            const requestPermissions =
+              await AppEffects.requestNotificationsPermissions();
+            if (requestPermissions) {
+              return;
+            }
           }
-        } else {
           dispatch(AppEffects.setNotifications(false));
           dispatch(AppEffects.setConfirmTxNotifications(false));
           dispatch(AppEffects.setAnnouncementsNotifications(false));
+          openSettings();
         }
       }
     },

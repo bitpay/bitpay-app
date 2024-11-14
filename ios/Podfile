@@ -1,4 +1,16 @@
-require_relative '../node_modules/react-native/scripts/react_native_pods'
+def node_require(script)
+  # Resolve script with node to allow for hoisting
+  require Pod::Executable.execute_command('node', ['-p',
+    "require.resolve(
+      '#{script}',
+      {paths: [process.argv[1]]},
+    )", __dir__]).strip
+end
+
+# Use it to require both react-native's and this package's scripts:
+node_require('react-native/scripts/react_native_pods.rb')
+node_require('react-native-permissions/scripts/setup.rb')
+
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
 #######
@@ -12,6 +24,16 @@ min_ios_version_supported = project.build_configurations.first.build_settings['I
 
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
+
+# Setup permissions you need
+setup_permissions([
+'AppTrackingTransparency',
+'Bluetooth',
+'Camera',
+'FaceID',
+'LocationWhenInUse',
+'Notifications',
+])
 
 # If you are using a `react-native-flipper` your iOS build will fail when `NO_FLIPPER=1` is set.
 # because `react-native-flipper` depends on (FlipperKit,...) that will be excluded
@@ -34,8 +56,6 @@ end
 $VCEnableLocation=false
 
 target 'BitPayApp' do
-  permissions_path = '../node_modules/react-native-permissions/ios'
-  pod 'Permission-Notifications', :path => "#{permissions_path}/Notifications/Permission-Notifications.podspec"
   pod 'React-RCTText', :path => '../node_modules/react-native/Libraries/Text', :modular_headers => true
 
   config = use_native_modules!
