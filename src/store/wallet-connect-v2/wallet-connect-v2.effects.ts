@@ -273,8 +273,13 @@ export const walletConnectV2SubscribeToEvents =
 
       try {
         await emitSessionEvents(event, eip155ChainId);
-      } catch (error) {
-        console.error('Error on emitSessionEvent:', error);
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.error(
+            `[WC-V2/handleAutoApproval]: an error occurred while emiting session event: ${errMsg}`,
+          ),
+        );
       }
     };
 
@@ -755,6 +760,13 @@ const approveEIP155Request =
             } else {
               sendTransaction.type = 2;
             }
+            dispatch(
+              LogActions.info(
+                `[WC-V2/approveEIP155Request]: ETH_SEND_TRANSACTION: ${JSON.stringify(
+                  sendTransaction,
+                )}`,
+              ),
+            );
             const connectedWallet = signer.connect(provider);
             const {hash} = await connectedWallet.sendTransaction(
               sendTransaction,
