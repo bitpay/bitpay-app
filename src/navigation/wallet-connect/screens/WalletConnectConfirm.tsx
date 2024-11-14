@@ -413,6 +413,15 @@ const WalletConnectConfirm = () => {
           ) : null}
         </ItemContainer>
         <Hr />
+        {request?.params?.request?.method ? (
+          <ItemContainer>
+            <H7>{t('Method')}</H7>
+            <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
+              {request?.params?.request?.method}
+            </NoteLabel>
+          </ItemContainer>
+        ) : null}
+        <Hr />
         <SendingTo recipient={txDetails?.sendingTo} hr />
         <SendingFrom sender={txDetails?.sendingFrom} hr />
         {txDetails?.rateStr ? (
