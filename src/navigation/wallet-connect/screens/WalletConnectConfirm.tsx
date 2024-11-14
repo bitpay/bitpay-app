@@ -62,7 +62,10 @@ import FastImage from 'react-native-fast-image';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {SvgProps} from 'react-native-svg';
-import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
+import {
+  WCV2RequestType,
+  WCV2SessionType,
+} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {Caution25, Success25, Warning25} from '../../../styles/colors';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
@@ -112,6 +115,7 @@ const WalletConnectConfirm = () => {
   const [showVerifyContextBottomModal, setShowVerifyContextBottomModal] =
     useState<boolean>(false);
   const [accountDisconnected, setAccountDisconnected] = useState(false);
+  const [requestDismissed, setRequestDismissed] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -121,6 +125,11 @@ const WalletConnectConfirm = () => {
   const sessionV2: WCV2SessionType | undefined = useAppSelector(
     ({WALLET_CONNECT_V2}) =>
       WALLET_CONNECT_V2.sessions.find(session => session.topic === topic),
+  );
+
+  const requestV2: WCV2RequestType | undefined = useAppSelector(
+    ({WALLET_CONNECT_V2}) =>
+      WALLET_CONNECT_V2.requests.find(requestV2 => requestV2.topic === topic),
   );
 
   let VerifyIcon: React.FC<SvgProps> | null = null;
@@ -355,6 +364,18 @@ const WalletConnectConfirm = () => {
     }
   }, [accountDisconnected]);
 
+  useEffect(() => {
+    if (!requestV2) {
+      setRequestDismissed(true);
+    }
+  }, [requestV2]);
+
+  useEffect(() => {
+    if (requestDismissed) {
+      navigation.goBack();
+    }
+  }, [requestDismissed]);
+
   return (
     <ConfirmContainer>
       <DetailsList>
@@ -413,11 +434,20 @@ const WalletConnectConfirm = () => {
           ) : null}
         </ItemContainer>
         <Hr />
+        {request?.params?.request?.method ? (
+          <ItemContainer>
+            <H7>{t('Method')}</H7>
+            <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
+              {request?.params?.request?.method}
+            </NoteLabel>
+          </ItemContainer>
+        ) : null}
+        <Hr />
         <SendingTo recipient={txDetails?.sendingTo} hr />
         <SendingFrom sender={txDetails?.sendingFrom} hr />
         {txDetails?.rateStr ? (
           <ExchangeRate
-            description={t('Exchange Rate')}
+            description={t('Exchange rate')}
             rateStr={txDetails?.rateStr}
           />
         ) : null}
@@ -440,6 +470,30 @@ const WalletConnectConfirm = () => {
             value={txDetails?.gasLimit}
             hr
           />
+        ) : null}
+        {txDetails?.data ? (
+          <>
+            <ItemContainer>
+              <H7>{t('Encoded Data')}</H7>
+              <ClipboardContainer>
+                {clipboardObj.copied && clipboardObj.type === 'contractData' ? (
+                  <CopiedSvg width={17} />
+                ) : null}
+
+                <NoteContainer
+                  isDappUri={true}
+                  disabled={clipboardObj.copied}
+                  onPress={() =>
+                    copyToClipboard(txDetails.data!, 'contractData')
+                  }>
+                  <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
+                    {txDetails.data}
+                  </NoteLabel>
+                </NoteContainer>
+              </ClipboardContainer>
+            </ItemContainer>
+            <Hr />
+          </>
         ) : null}
         {txDetails?.nonce !== undefined && txDetails?.nonce !== null ? (
           <SharedDetailRow description={'Nonce'} value={txDetails?.nonce} hr />

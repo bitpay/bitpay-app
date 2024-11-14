@@ -463,6 +463,7 @@ export interface TxDetails {
   gasPrice?: number;
   gasLimit?: number;
   nonce?: number;
+  data?: string;
   //
   sendingFrom: TxDetailsSendingFrom;
   subTotal: TxDetailsAmount;
