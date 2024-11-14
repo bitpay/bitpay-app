@@ -1,11 +1,5 @@
 import React, {useEffect, useCallback} from 'react';
-import {
-  Alert,
-  Linking,
-  LogBox,
-  DeviceEventEmitter,
-  Platform,
-} from 'react-native';
+import {Alert, Linking, LogBox, DeviceEventEmitter} from 'react-native';
 import {AppEffects} from '../../../../store/app';
 import {
   ActiveOpacity,
@@ -57,7 +51,7 @@ const Notifications = () => {
         dispatch(AppEffects.setConfirmTxNotifications(accepted));
         dispatch(AppEffects.setAnnouncementsNotifications(accepted));
       } else {
-        if (accepted && Platform.OS === 'ios') {
+        if (accepted) {
           const requestPermissions =
             await AppEffects.requestNotificationsPermissions();
           if (requestPermissions) {
