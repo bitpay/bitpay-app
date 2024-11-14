@@ -1,5 +1,11 @@
 import React, {useEffect, useCallback} from 'react';
-import {Alert, Linking, LogBox, DeviceEventEmitter} from 'react-native';
+import {
+  Alert,
+  Linking,
+  LogBox,
+  DeviceEventEmitter,
+  Platform,
+} from 'react-native';
 import {AppEffects} from '../../../../store/app';
 import {
   ActiveOpacity,
@@ -45,27 +51,23 @@ const Notifications = () => {
 
   const setNotificationValue = useCallback(
     async (accepted: boolean) => {
+      dispatch(AppEffects.setNotifications(accepted));
+      dispatch(AppEffects.setConfirmTxNotifications(accepted));
+      dispatch(AppEffects.setAnnouncementsNotifications(accepted));
       const systemEnabled = await AppEffects.checkNotificationsPermissions();
-      if (systemEnabled) {
-        dispatch(AppEffects.setNotifications(accepted));
-        dispatch(AppEffects.setConfirmTxNotifications(accepted));
-        dispatch(AppEffects.setAnnouncementsNotifications(accepted));
-      } else {
+      if (!systemEnabled) {
         if (accepted) {
-          const requestPermissions =
-            await AppEffects.requestNotificationsPermissions();
-          if (requestPermissions) {
-            dispatch(AppEffects.setNotifications(accepted));
-          } else {
-            openSettings();
-            dispatch(AppEffects.setNotifications(false));
-            dispatch(AppEffects.setConfirmTxNotifications(false));
-            dispatch(AppEffects.setAnnouncementsNotifications(false));
+          if (Platform.OS === 'ios') {
+            const requestPermissions =
+              await AppEffects.requestNotificationsPermissions();
+            if (requestPermissions) {
+              return;
+            }
           }
-        } else {
           dispatch(AppEffects.setNotifications(false));
           dispatch(AppEffects.setConfirmTxNotifications(false));
           dispatch(AppEffects.setAnnouncementsNotifications(false));
+          openSettings();
         }
       }
     },

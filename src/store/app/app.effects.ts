@@ -847,7 +847,7 @@ export const unSubscribeEmailNotifications =
 
 export const checkNotificationsPermissions = async (): Promise<boolean> => {
   if (Platform.OS === 'android') {
-    return await requestNotificationsPermissions();
+    return requestNotificationsPermissions();
   }
   const {status} = await checkNotifications().catch(() => ({status: null}));
   return status === RESULTS.GRANTED;

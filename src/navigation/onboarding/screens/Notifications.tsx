@@ -1,7 +1,6 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef} from 'react';
-import {Platform, ScrollView} from 'react-native';
-import {requestNotifications, RESULTS} from 'react-native-permissions';
+import {ScrollView} from 'react-native';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -86,15 +85,12 @@ const NotificationsScreen = ({
   }, [navigation, t]);
 
   const onSetNotificationsPress = async (notificationsAccepted: boolean) => {
-    const setAndNavigate = async (accepted: boolean) => {
+    const setAndNavigate = (accepted: boolean) => {
       haptic('impactLight');
-      const systemEnabled = await AppEffects.checkNotificationsPermissions();
-      if (systemEnabled) {
-        dispatch(AppEffects.setNotifications(accepted));
-        dispatch(AppEffects.setConfirmTxNotifications(accepted));
-        dispatch(AppEffects.setAnnouncementsNotifications(accepted));
-      }
-      await askForTrackingThenNavigate(() => navigation.navigate('Pin'));
+      dispatch(AppEffects.setNotifications(accepted));
+      dispatch(AppEffects.setConfirmTxNotifications(accepted));
+      dispatch(AppEffects.setAnnouncementsNotifications(accepted));
+      askForTrackingThenNavigate(() => navigation.navigate('Pin'));
     };
 
     if (!notificationsAccepted) {
@@ -102,21 +98,8 @@ const NotificationsScreen = ({
       return;
     }
 
-    if (Platform.OS === 'ios') {
-      try {
-        const {status: updatedStatus} = await requestNotifications([
-          'alert',
-          'badge',
-          'sound',
-        ]);
-        setAndNavigate(updatedStatus === RESULTS.GRANTED);
-        return;
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    setAndNavigate(true);
+    const accepted = await AppEffects.requestNotificationsPermissions();
+    setAndNavigate(accepted);
   };
 
   return (

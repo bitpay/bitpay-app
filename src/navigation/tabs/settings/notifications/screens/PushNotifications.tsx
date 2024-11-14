@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {selectSettingsNotificationState} from '../../../../../store/app/app.selectors';
 import {View, DeviceEventEmitter} from 'react-native';
@@ -88,6 +88,12 @@ const PushNotifications = () => {
       },
     },
   ];
+
+  useEffect(() => {
+    setPushNotifications(notificationsState.pushNotifications);
+    setAnnouncements(notificationsState.announcements);
+    setConfirmedTx(notificationsState.confirmedTx);
+  }, [notificationsState]);
 
   return (
     <SettingsContainer>
