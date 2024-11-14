@@ -1113,10 +1113,7 @@ export const buildAccountList = (
           wallet.currencyAbbreviation.toLowerCase() ===
           currencyAbbreviation?.toLowerCase(),
         chain: wallet.chain.toLowerCase() === chain?.toLowerCase(),
-        id:
-          walletId !== undefined
-            ? IsUtxoChain(wallet.chain) || wallet.id === walletId
-            : true,
+        id: wallet.id !== walletId,
         network: wallet.network === network,
         name: searchInput
           ? wallet.credentials?.walletName
