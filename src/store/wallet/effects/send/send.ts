@@ -450,7 +450,8 @@ export const buildTxDetails =
         chain,
         amount,
         fee,
-        tokenAddress;
+        tokenAddress,
+        data;
 
       if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
         tokenAddress =
@@ -464,6 +465,7 @@ export const buildTxDetails =
           ? parseInt(params[0]?.gasPrice, 16)
           : feePerKb!;
         nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
+        data = params[0].data;
         chain = swapFromChain;
         coin = swapFromCurrencyAbbreviation;
         amount = Number(swapAmount) || 0;
@@ -663,6 +665,7 @@ export const buildTxDetails =
         nonce,
         destinationTag,
         rateStr,
+        data,
       };
       return resolve(tx);
     });
