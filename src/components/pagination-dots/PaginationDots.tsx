@@ -39,6 +39,7 @@ const PaginationItem: React.FC<{
   }, [animValue, index, length]);
   return (
     <View
+      accessibilityLabel="pagination-button"
       style={{
         backgroundColor: LuckySevens,
         width,

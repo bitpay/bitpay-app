@@ -199,6 +199,7 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const headerLeft = useMemo(() => {
     return () => (
       <TouchableOpacity
+        accessibilityLabel="cancel-button"
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}
         onPress={onPressHeaderCancelRef.current}>

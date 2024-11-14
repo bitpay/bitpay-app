@@ -609,6 +609,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const listFooterComponentAssetsTab = () => {
     return (
       <AddCustomTokenContainer
+        accessibilityLabel="add-custom-token-button"
         onPress={() => {
           haptic('soft');
           if (memorizedAssetsByChainList?.[0].chains?.[0]) {
