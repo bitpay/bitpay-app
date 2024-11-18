@@ -1,5 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Linking, ScrollView} from 'react-native';
+import {
+  ActivityIndicator,
+  Linking,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import uuid from 'react-native-uuid';
 import styled from 'styled-components/native';
 import {
@@ -9,6 +14,7 @@ import {
   StackActions,
 } from '@react-navigation/native';
 import cloneDeep from 'lodash.clonedeep';
+import InfoSvg from '../../../../../assets/img/info.svg';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import Button from '../../../../components/button/Button';
 import haptic from '../../../../components/haptic-feedback/haptic';
@@ -17,44 +23,37 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {useLogger} from '../../../../utils/hooks/useLogger';
 import MoonpayLogo from '../../../../components/icons/external-services/moonpay/moonpay-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
-import {SellCryptoExpandibleCard, ItemDivisor} from '../styled/SellCryptoCard';
+import {
+  SellCryptoExpandibleCard,
+  ItemDivisor,
+  SellBalanceContainer,
+} from '../styled/SellCryptoCard';
 import {
   Black,
   SlateDark,
   ProgressBlue,
   White,
   BitPay,
+  LuckySevens,
 } from '../../../../styles/colors';
-// import {
-//   getPaymentUrl,
-//   simplexPaymentRequest,
-//   simplexEnv,
-//   getSimplexCoinFormat,
-// } from '../utils/simplex-utils';
 import {RootState} from '../../../../store';
-import {GetPrecision} from '../../../../store/wallet/utils/currency';
+import {
+  GetPrecision,
+  IsERCToken,
+} from '../../../../store/wallet/utils/currency';
 import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
 import {SellCryptoLimits} from '../../../../store/sell-crypto/sell-crypto.models';
 import {
-  // MoonpayPaymentData,
   MoonpayGetSellQuoteRequestData,
   MoonpayGetSellSignedPaymentUrlData,
   MoonpayGetSellSignedPaymentUrlRequestData,
   MoonpaySellOrderData,
-  // SimplexGetSellQuoteRequestData,
-  // SimplexPaymentData,
 } from '../../../../store/sell-crypto/models/moonpay-sell.models';
-import {
-  calculateAltFiatToUsd,
-  // getSellCryptoFiatLimits,
-} from '../../../../store/buy-crypto/buy-crypto.effects';
+import {calculateAnyFiatToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {SendMaxInfo, Wallet} from '../../../../store/wallet/wallet.models';
-import {
-  APP_DEEPLINK_PREFIX,
-  APP_NAME_UPPERCASE,
-} from '../../../../constants/config';
+import {APP_DEEPLINK_PREFIX} from '../../../../constants/config';
 import {
   SellCryptoExchangeKey,
   SellCryptoSupportedExchanges,
@@ -71,12 +70,6 @@ import {
 import {PaymentMethod} from '../constants/SellCryptoConstants';
 import {useTranslation} from 'react-i18next';
 import {
-  getMoonpayFixedCurrencyAbbreviation,
-  moonpayEnv,
-} from '../../buy-crypto/utils/moonpay-utils';
-import MoonpayTerms from '../../buy-crypto/components/terms/MoonpayTerms';
-// import SimplexTerms from '../../buy-crypto/components/terms/SimplexTerms';
-import {
   TermsContainer,
   TermsText,
 } from '../../buy-crypto/styled/BuyCryptoTerms'; // TODO: move to SellCryptoTerms
@@ -84,19 +77,16 @@ import {SellCryptoConfig} from '../../../../store/external-services/external-ser
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {AppActions} from '../../../../store/app';
 import {
+  adjustMoonpaySellAmount,
   getMoonpaySellFixedCurrencyAbbreviation,
   getMoonpaySellPayoutMethodFormat,
   moonpaySellEnv,
 } from '../utils/moonpay-sell-utils';
-import {
-  MoonpayPaymentData,
-  SimplexPaymentData,
-} from '../../../../store/buy-crypto/buy-crypto.models';
-import SimplexTerms from '../../buy-crypto/components/terms/SimplexTerms';
 import {PreLoadPartnersData} from './SellCryptoRoot';
 import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
 import {useTheme} from 'styled-components/native';
 import {
+  getSimplexBaseAmountFormat,
   getSimplexCoinFormat,
   getSimplexSellReturnURL,
   simplexSellEnv,
@@ -136,12 +126,13 @@ export type CryptoOffer = {
   expanded: boolean;
   sellClicked: boolean;
   fiatCurrency: string;
-  fiatAmount: number;
-  amountCost?: number;
+  cryptoAmount: number;
   sellAmount?: number;
   fee?: number;
+  precision?: number; // Moonpay to calculate adjusted amount
   fiatMoney?: string; // Rate without fees
   amountReceiving?: string;
+  amountReceivingAltFiatCurrency?: string;
   amountReceivingUnit?: string; // Ramp
   amountLimits?: SellCryptoLimits;
   errorMsg?: string;
@@ -239,8 +230,13 @@ const BestOfferTagText = styled(Small)`
   color: ${Black};
 `;
 
-const OfferDataCryptoAmount = styled(H5)`
+const OfferDataAmount = styled(H5)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
+`;
+
+const OfferDataAmountUsd = styled(BaseText)`
+  font-size: 12px;
+  color: ${LuckySevens};
 `;
 
 const OfferDataInfoContainer = styled.View`
@@ -255,9 +251,13 @@ const OfferDataInfoLabel = styled(H7)`
   margin-right: 10px;
 `;
 
+const OfferDataFeeLabel = styled(H7)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
+
 const OfferDataWarningContainer = styled.View`
   max-width: 85%;
-  margin-top: 20px;
+  margin-top: 10px;
 `;
 
 const OfferDataWarningMsg = styled(BaseText)`
@@ -301,20 +301,22 @@ const offersDefault: {
 } = {
   moonpay: {
     key: 'moonpay',
-    amountReceiving: '0',
+    amountReceiving: '0', // Fiat amount
+    amountReceivingAltFiatCurrency: '0', // Fiat amount in alt fiat currency
     showOffer: true,
     logo: <MoonpayLogo widthIcon={25} heightIcon={25} />,
     expanded: false,
     sellClicked: false,
     fiatCurrency: 'USD',
-    fiatAmount: 0,
+    cryptoAmount: 0,
     fiatMoney: undefined,
     errorMsg: undefined,
     outOfLimitMsg: undefined,
   },
   simplex: {
     key: 'simplex',
-    amountReceiving: '0',
+    amountReceiving: '0', // Fiat amount
+    amountReceivingAltFiatCurrency: '0', // Fiat amount in alt fiat currency
     showOffer: true,
     logo: (
       <SimplexLogo
@@ -327,7 +329,7 @@ const offersDefault: {
     expanded: false,
     sellClicked: false,
     fiatCurrency: 'EUR',
-    fiatAmount: 0,
+    cryptoAmount: 0,
     fiatMoney: undefined,
     errorMsg: undefined,
     outOfLimitMsg: undefined,
@@ -357,7 +359,6 @@ const SellCryptoOffers: React.FC = () => {
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
@@ -369,6 +370,16 @@ const SellCryptoOffers: React.FC = () => {
 
         offersDefault[exchange].amountLimits =
           preLoadPartnersData[exchange].limits;
+
+        if (exchange === 'moonpay') {
+          offersDefault.moonpay.precision =
+            preLoadPartnersData.moonpay.precision;
+          const adjustedSellAmount = adjustMoonpaySellAmount(
+            amount,
+            preLoadPartnersData?.moonpay?.precision,
+          );
+          offersDefault.moonpay.sellAmount = adjustedSellAmount;
+        }
       }
 
       offersDefault[exchange].fiatCurrency =
@@ -428,10 +439,7 @@ const SellCryptoOffers: React.FC = () => {
       return;
     }
 
-    offers.moonpay.fiatAmount =
-      offers.moonpay.fiatCurrency === fiatCurrency
-        ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+    offers.moonpay.cryptoAmount = amount;
 
     // TODO:review this limits handling
     // console.log(
@@ -490,7 +498,7 @@ const SellCryptoOffers: React.FC = () => {
         selectedWallet.chain,
       ),
       quoteCurrencyCode: offers.moonpay.fiatCurrency.toLowerCase(),
-      baseCurrencyAmount: amount,
+      baseCurrencyAmount: offers.moonpay.sellAmount || amount,
       // extraFeePercentage?: number,
       payoutMethod: getMoonpaySellPayoutMethodFormat(paymentMethod.method),
     };
@@ -508,9 +516,11 @@ const SellCryptoOffers: React.FC = () => {
 
           if (
             (offers.moonpay.amountLimits.min &&
-              offers.moonpay.fiatAmount < offers.moonpay.amountLimits.min) ||
+              Number(offers.moonpay.sellAmount) <
+                offers.moonpay.amountLimits.min) ||
             (offers.moonpay.amountLimits.max &&
-              offers.moonpay.fiatAmount > offers.moonpay.amountLimits.max)
+              Number(offers.moonpay.sellAmount) >
+                offers.moonpay.amountLimits.max)
           ) {
             offers.moonpay.outOfLimitMsg = t(
               'There are no Moonpay offers available, as the current sell limits for this exchange must be between and',
@@ -526,7 +536,6 @@ const SellCryptoOffers: React.FC = () => {
             offers.moonpay.outOfLimitMsg = undefined;
             offers.moonpay.errorMsg = undefined;
             offers.moonpay.quoteData = data;
-            offers.moonpay.amountCost = data.totalAmount;
             offers.moonpay.sellAmount = data.baseCurrencyAmount;
             offers.moonpay.fee =
               Number(data.extraFeeAmount) + Number(data.feeAmount);
@@ -547,13 +556,18 @@ const SellCryptoOffers: React.FC = () => {
               offers.moonpay.fiatCurrency === fiatCurrency
                 ? Number(data.quoteCurrencyAmount)
                 : dispatch(
-                    calculateAltFiatToUsd(
+                    calculateAnyFiatToAltFiat(
                       Number(data.quoteCurrencyAmount),
                       offers.moonpay.fiatCurrency,
+                      fiatCurrency,
                     ),
                   ) || Number(data.quoteCurrencyAmount);
 
-            offers.moonpay.amountReceiving = adjustedFiatAmount.toFixed(2);
+            offers.moonpay.amountReceiving = Number(
+              data.quoteCurrencyAmount,
+            ).toFixed(2);
+            offers.moonpay.amountReceivingAltFiatCurrency =
+              adjustedFiatAmount.toFixed(2);
 
             logger.debug('Moonpay getting sell quote: SUCCESS');
             setFinishedMoonpay(!finishedMoonpay);
@@ -611,7 +625,8 @@ const SellCryptoOffers: React.FC = () => {
         context: 'SellCryptoOffers',
         reason: reason || 'unknown',
         paymentMethod: paymentMethod.method || '',
-        amount: Number(offers.moonpay.fiatAmount) || '',
+        cryptoAmount: amount || '',
+        fiatAmount: Number(offers.moonpay.amountReceiving) || '',
         coin: coin?.toLowerCase() || '',
         chain: chain?.toLowerCase() || '',
         fiatCurrency: offers.moonpay.fiatCurrency || '',
@@ -637,20 +652,14 @@ const SellCryptoOffers: React.FC = () => {
       return;
     }
 
-    offers.simplex.fiatAmount =
-      offers.simplex.fiatCurrency === fiatCurrency
-        ? amount
-        : dispatch(calculateAltFiatToUsd(amount, fiatCurrency)) || amount;
+    offers.simplex.cryptoAmount = amount;
 
-    // offers.simplex.amountLimits = dispatch(
-    //   getSellCryptoFiatLimits('simplex', offers.simplex.fiatCurrency),
-    // );
 
     if (
       (offers.simplex.amountLimits?.min &&
-        offers.simplex.fiatAmount < offers.simplex.amountLimits.min) ||
+        Number(offers.simplex.sellAmount) < offers.simplex.amountLimits.min) ||
       (offers.simplex.amountLimits?.max &&
-        offers.simplex.fiatAmount > offers.simplex.amountLimits.max)
+        Number(offers.simplex.sellAmount) > offers.simplex.amountLimits.max)
     ) {
       offers.simplex.outOfLimitMsg = t(
         'There are no Simplex offers available, as the current sell limits for this exchange must be between and',
@@ -694,9 +703,9 @@ const SellCryptoOffers: React.FC = () => {
       const requestData: SimplexGetSellQuoteRequestData = {
         env: simplexSellEnv,
         base_currency: getSimplexCoinFormat(coin, selectedWallet.chain),
-        base_amount: amount * 1e6, // TODO: review this amount
-        quote_currency: 'EUR', // TODO: use offers.simplex.fiatCurrency.toUpperCase(),
-        pp_payment_method: 'sepa', // TODO: use simplexPaymentMethod,
+        base_amount: getSimplexBaseAmountFormat(amount), // base_amount should be integer, which counts millionths of a whole currency unit.
+        quote_currency: offers.simplex.fiatCurrency.toUpperCase(),
+        pp_payment_method: 'sepa', // pp_payment_method = "sepa" (this does not impact user payment method but is needed to get a quote, no impact on price) | TODO: use simplexPaymentMethod,
       };
 
       console.log('===== SIMPLEX sellQuote enviado: ', requestData);
@@ -710,9 +719,8 @@ const SellCryptoOffers: React.FC = () => {
             offers.simplex.outOfLimitMsg = undefined;
             offers.simplex.errorMsg = undefined;
             offers.simplex.quoteData = data;
-            // offers.simplex.amountCost = Number(data.fiat_amount);
             offers.simplex.sellAmount = cloneDeep(amount);
-            offers.simplex.fee = 0; // TODO: ask about Simplex fees
+            offers.simplex.fee = Number(data.fiat_amount) * 0.05;
 
             const precision = dispatch(
               GetPrecision(coin, chain, selectedWallet.tokenAddress),
@@ -733,13 +741,18 @@ const SellCryptoOffers: React.FC = () => {
               offers.simplex.fiatCurrency === fiatCurrency
                 ? Number(data.fiat_amount)
                 : dispatch(
-                    calculateAltFiatToUsd(
+                    calculateAnyFiatToAltFiat(
                       Number(data.fiat_amount),
                       offers.simplex.fiatCurrency,
+                      fiatCurrency,
                     ),
                   ) || Number(data.fiat_amount);
 
-            offers.simplex.amountReceiving = adjustedFiatAmount.toFixed(2);
+            offers.simplex.amountReceiving = Number(data.fiat_amount).toFixed(
+              2,
+            );
+            offers.simplex.amountReceivingAltFiatCurrency =
+              adjustedFiatAmount.toFixed(2);
 
             logger.debug('Simplex getting sell quote: SUCCESS');
             setFinishedSimplex(!finishedSimplex);
@@ -796,7 +809,8 @@ const SellCryptoOffers: React.FC = () => {
         context: 'SellCryptoOffers',
         reason: reason || 'unknown',
         paymentMethod: paymentMethod.method || '',
-        amount: Number(offers.simplex.fiatAmount) || '',
+        cryptoAmount: amount || '',
+        fiatAmount: Number(offers.simplex.amountReceiving) || '',
         coin: coin?.toLowerCase() || '',
         chain: chain?.toLowerCase() || '',
         fiatCurrency: offers.simplex.fiatCurrency || '',
@@ -865,7 +879,7 @@ const SellCryptoOffers: React.FC = () => {
         selectedWallet.currencyAbbreviation,
         selectedWallet.chain,
       ),
-      baseCurrencyAmount: amount,
+      baseCurrencyAmount: offers.moonpay.sellAmount || amount,
       externalTransactionId: externalTransactionId,
       paymentMethod: getMoonpaySellPayoutMethodFormat(paymentMethod!.method),
       externalCustomerId: user?.eid ?? selectedWallet.id,
@@ -909,7 +923,7 @@ const SellCryptoOffers: React.FC = () => {
       chain: cloneDeep(selectedWallet.chain).toLowerCase(),
       external_id: externalTransactionId,
       created_on: Date.now(),
-      crypto_amount: amount,
+      crypto_amount: offers.moonpay.sellAmount || amount,
       refund_address: address,
       fiat_currency: offers.moonpay.quoteData?.quoteCurrency?.code
         ? cloneDeep(offers.moonpay.quoteData.quoteCurrency.code).toUpperCase()
@@ -957,7 +971,7 @@ const SellCryptoOffers: React.FC = () => {
 
     const quoteData: SimplexSellPaymentRequestReqData = {
       env: simplexSellEnv,
-      referer_url: return_url, // TODO: ask what is referer_url exactly
+      referer_url: 'https://bitpay.com/',
       return_url: return_url,
       txn_details: {quote_id: offers.simplex.quoteData.quote_id},
     };
@@ -986,7 +1000,7 @@ const SellCryptoOffers: React.FC = () => {
 
         logger.debug('Simplex creating sell payment request: SUCCESS');
 
-        // const destinationChain = selectedWallet.chain;
+        const destinationChain = selectedWallet.chain;
 
         // const newData: SimplexPaymentData = {
         //   address: undefined, // Simplex Off-ramp does not provide the desposit address in advance
@@ -1021,6 +1035,19 @@ const SellCryptoOffers: React.FC = () => {
         //   }),
         // );
 
+        dispatch(
+          Analytics.track('Sell Crypto Order Created', {
+            exchange: 'simplex',
+            cryptoAmount: offers.simplex.sellAmount,
+            fiatAmount: offers.simplex.quoteData?.fiat_amount
+              ? Number(offers.simplex.quoteData.fiat_amount)
+              : '',
+            fiatCurrency: offers.simplex.fiatCurrency || '',
+            coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+            chain: destinationChain?.toLowerCase(),
+          }),
+        );
+
         const ref = data.app_sell_ref_id ?? 'bitpay';
         const paymentUrl = `${data.txn_url}?ref=${ref}`;
 
@@ -1032,13 +1059,19 @@ const SellCryptoOffers: React.FC = () => {
         // TODO
         navigation.goBack();
         navigation.navigate(SellCryptoScreens.SIMPLEX_SELL_CHECKOUT, {
-          // TODO: set this correctly - review sendMax
           simplexQuoteOffer: offers.simplex,
           wallet: selectedWallet,
           amount: amount,
           externalId: externalTransactionId,
           paymentMethod: paymentMethod.method,
           simplexTxId: data.txn_id,
+          useSendMax: IsERCToken(
+            selectedWallet!.currencyAbbreviation,
+            selectedWallet!.chain,
+          )
+            ? false
+            : useSendMax,
+          sendMaxInfo: sendMaxInfo,
         });
       })
       .catch(err => {
@@ -1157,8 +1190,8 @@ const SellCryptoOffers: React.FC = () => {
         {Object.values(offers)
           .sort(
             (a, b) =>
-              parseFloat(b.amountReceiving || '0') -
-              parseFloat(a.amountReceiving || '0'),
+              parseFloat(b.amountReceivingAltFiatCurrency || '0') -
+              parseFloat(a.amountReceivingAltFiatCurrency || '0'),
           )
           .map((offer: CryptoOffer, index: number) => {
             return offer.showOffer ? (
@@ -1201,12 +1234,21 @@ const SellCryptoOffers: React.FC = () => {
                             </BestOfferTag>
                           </BestOfferTagContainer>
                         ) : null}
-                        <OfferDataCryptoAmount>
+                        <OfferDataAmount>
                           {Number(offer.amountReceiving)
                             .toFixed(8)
                             .replace(/\.?0+$/, '')}{' '}
-                          {fiatCurrency.toUpperCase()}
-                        </OfferDataCryptoAmount>
+                          {offer.fiatCurrency.toUpperCase()}
+                        </OfferDataAmount>
+                        {offer.fiatCurrency !== fiatCurrency ? (
+                          <OfferDataAmountUsd>
+                            {'≈ ' +
+                              Number(offer.amountReceivingAltFiatCurrency)
+                                .toFixed(8)
+                                .replace(/\.?0+$/, '')}{' '}
+                            {fiatCurrency}
+                          </OfferDataAmountUsd>
+                        ) : null}
                         {offer.fiatCurrency !== fiatCurrency ? (
                           <OfferDataWarningContainer>
                             <OfferDataWarningMsg>
@@ -1277,9 +1319,34 @@ const SellCryptoOffers: React.FC = () => {
                     </OfferExpandibleItem>
                     <ItemDivisor />
                     <OfferExpandibleItem>
-                      <OfferDataInfoLabel>
-                        {t('Exchange Fee')}
-                      </OfferDataInfoLabel>
+                      <SellBalanceContainer>
+                        <OfferDataFeeLabel>
+                          {t('Exchange Fee')}
+                        </OfferDataFeeLabel>
+                        <TouchableOpacity
+                          onPress={() => {
+                            haptic('impactLight');
+                            switch (offer.key) {
+                              case 'moonpay':
+                                dispatch(
+                                  openUrlWithInAppBrowser(
+                                    'https://support.moonpay.com/customers/docs/moonpay-fees',
+                                  ),
+                                );
+                                break;
+                              case 'simplex':
+                                dispatch(
+                                  openUrlWithInAppBrowser(
+                                    'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-do-you-charge-for-card-payments',
+                                  ),
+                                );
+                                break;
+                            }
+                          }}
+                          style={{marginLeft: 8, marginTop: -3}}>
+                          <InfoSvg width={20} height={20} />
+                        </TouchableOpacity>
+                      </SellBalanceContainer>
                       <OfferDataInfoText>
                         {formatFiatAmount(
                           Number(offer.fee),
@@ -1298,16 +1365,6 @@ const SellCryptoOffers: React.FC = () => {
                         )}
                       </OfferDataInfoTotal>
                     </OfferExpandibleItem>
-                    {/* TODO: Terms */}
-                    {/* {offer.key == 'moonpay' ? (
-                      <MoonpayTerms
-                        paymentMethod={paymentMethod}
-                        country={country}
-                      />
-                    ) : null}
-                    {offer.key == 'simplex' ? (
-                      <SimplexTerms paymentMethod={paymentMethod} />
-                    ) : null} */}
                   </>
                 ) : null}
               </SellCryptoExpandibleCard>
@@ -1317,10 +1374,9 @@ const SellCryptoOffers: React.FC = () => {
         <TermsContainer>
           <TermsText>
             {t(
-              'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
+              'This quote provides an estimated price only. The final cost may vary based on the exact timing when your crypto is exchanged and the type of fiat currency used for withdrawal. Be aware that additional fees from third parties may also apply.',
             )}
           </TermsText>
-          <TermsText>{t('Additional third-party fees may apply.')}</TermsText>
         </TermsContainer>
       </ScrollView>
     </SellCryptoOffersContainer>

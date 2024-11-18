@@ -1,6 +1,7 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {ScrollView, TouchableOpacity} from 'react-native';
+import InfoSvg from '../../../../../assets/img/info.svg';
 import {
   useTheme,
   RouteProp,
@@ -132,6 +133,7 @@ import {
 } from '../../../../store/wallet/effects/address/address';
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
 import {CryptoOffer} from './SellCryptoOffers';
+import {SellBalanceContainer} from '../styled/SellCryptoCard';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -474,9 +476,15 @@ const SimplexSellCheckout: React.FC = () => {
         }
       }
 
-      if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
-        txp.feeLevel = 'priority';
-      } // Avoid expired order due to slow TX confirmation
+      if (useSendMax && sendMaxInfo) {
+        txp.inputs = sendMaxInfo.inputs;
+        txp.fee = sendMaxInfo.fee;
+        txp.feePerKb = undefined;
+      } else {
+        if (['btc', 'eth', 'matic'].includes(wallet.chain)) {
+          txp.feeLevel = 'priority';
+        } // Avoid expired order due to slow TX confirmation
+      }
 
       if (destTag) {
         txp.destinationTag = Number(destTag);
@@ -565,6 +573,19 @@ const SimplexSellCheckout: React.FC = () => {
       dispatch(
         SellCryptoActions.successSellOrderSimplex({
           simplexSellOrderData: newData,
+        }),
+      );
+
+      dispatch(
+        Analytics.track('Successful Crypto Sell', {
+          coin: wallet.currencyAbbreviation.toLowerCase(),
+          chain: wallet.chain.toLowerCase(),
+          amount: amountExpected,
+          fiatAmount: Number(simplexQuoteOffer.quoteData.fiat_amount) || '',
+          fiatCurrency: simplexQuoteOffer.fiatCurrency
+            ? cloneDeep(simplexQuoteOffer.fiatCurrency).toLocaleLowerCase()
+            : '',
+          exchange: 'simplex',
         }),
       );
 
@@ -699,33 +720,6 @@ const SimplexSellCheckout: React.FC = () => {
     );
     const fee = dispatch(SatToUnit(sendMaxInfo.fee, coin, chain, tokenAddress));
 
-    const realMaxAmount = dispatch(
-      SatToUnit(
-        cloneDeep(sendMaxInfo.amount),
-        wallet.currencyAbbreviation,
-        wallet.chain,
-        wallet.tokenAddress,
-      ),
-    );
-    if (realMaxAmount && realMaxAmount > amountExpected) {
-      try {
-        const precision = dispatch(
-          GetPrecision(
-            wallet.currencyAbbreviation,
-            wallet.chain,
-            wallet.tokenAddress,
-          ),
-        );
-        const amountBelowSimplexMinUnit = Number(
-          (realMaxAmount - amountExpected).toFixed(precision?.unitDecimals),
-        );
-        const message = `A total of ${amountBelowSimplexMinUnit} ${coin.toUpperCase()} were excluded. These funds are not enough to cover the minimum Simplex purchase unit.`;
-        warningMsg = warningMsg + `\n${message}`;
-      } catch (err) {
-        // continue without message
-      }
-    }
-
     const msg =
       `Because you are sending the maximum amount contained in this wallet, the ${
         dispatch(GetName(chain, chain)) || cloneDeep(chain).toUpperCase()
@@ -785,8 +779,10 @@ const SimplexSellCheckout: React.FC = () => {
         reasonForFailure: reason || 'unknown',
         amountFrom: amountExpected || '',
         fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
-        // fiatAmount: sellOrder?.fiat_receiving_amount || '',
-        // fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
+        fiatAmount: Number(simplexQuoteOffer.quoteData.fiat_amount) || '',
+        fiatCurrency: simplexQuoteOffer.fiatCurrency
+          ? cloneDeep(simplexQuoteOffer.fiatCurrency).toUpperCase()
+          : '',
       }),
     );
 
@@ -909,8 +905,10 @@ const SimplexSellCheckout: React.FC = () => {
           reasonForFailure: 'Time to make the payment expired',
           amountFrom: amountExpected || '',
           fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
-          // fiatAmount: sellOrder?.fiat_receiving_amount || '',
-          // fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
+          fiatAmount: Number(simplexQuoteOffer.quoteData.fiat_amount) || '',
+          fiatCurrency: simplexQuoteOffer.fiatCurrency
+            ? cloneDeep(simplexQuoteOffer.fiatCurrency).toUpperCase()
+            : '',
         }),
       );
       setExpiredAnalyticSent(true);
@@ -1095,8 +1093,23 @@ const SimplexSellCheckout: React.FC = () => {
                 {totalExchangeFee ? (
                   <>
                     <RowDataContainer>
-                      <RowLabel>{t('Exchange Fee')}</RowLabel>
+                      <SellBalanceContainer>
+                        <RowLabel>{t('Exchange Fee')}</RowLabel>
+                        <TouchableOpacity
+                          onPress={() => {
+                            haptic('impactLight');
+                            dispatch(
+                              openUrlWithInAppBrowser(
+                                'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-do-you-charge-for-card-payments',
+                              ),
+                            );
+                          }}
+                          style={{marginLeft: 8, marginTop: -3}}>
+                          <InfoSvg width={20} height={20} />
+                        </TouchableOpacity>
+                      </SellBalanceContainer>
                       <RowData>
+                        {'≈ '}
                         {Number(totalExchangeFee).toFixed(2)}{' '}
                         {simplexQuoteOffer?.fiatCurrency?.toUpperCase()}
                       </RowData>
