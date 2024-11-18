@@ -1,5 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Platform, ScrollView, TouchableOpacity} from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import _ from 'lodash';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled, {useTheme} from 'styled-components/native';
@@ -41,6 +46,7 @@ import {
   Disabled,
   DisabledTextDark,
   DisabledText,
+  ProgressBlue,
 } from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
@@ -62,9 +68,7 @@ import {
   isCoinSupportedToSellBy,
 } from '../utils/sell-crypto-utils';
 import {useTranslation} from 'react-i18next';
-import {
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
+import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   BitpaySupportedCoins,
   SUPPORTED_COINS,
@@ -94,7 +98,6 @@ import {SellCryptoLimits} from '../../../../store/sell-crypto/sell-crypto.models
 import {
   MoonpayCurrency,
   MoonpayCurrencyMetadata,
-  MoonpayGetSellQuoteData,
 } from '../../../../store/sell-crypto/models/moonpay-sell.models';
 import {
   AccountChainsContainer,
@@ -113,9 +116,7 @@ import InfoSvg from '../../../../../assets/img/info.svg';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import BalanceDetailsModal from '../../../../navigation/wallet/components/BalanceDetailsModal';
 import SellCryptoBalanceSkeleton from './SellCryptoBalanceSkeleton';
-import {
-  buildUIFormattedWallet,
-} from '../../../../store/wallet/utils/wallet';
+import {buildUIFormattedWallet} from '../../../../store/wallet/utils/wallet';
 import {SatToUnit} from '../../../../store/wallet/effects/amount/amount';
 import {
   getExternalServiceSymbol,
@@ -216,6 +217,13 @@ const ArrowContainer = styled.View`
   margin-left: 10px;
 `;
 
+const SpinnerContainer = styled.View`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`;
+
 let sellCryptoConfig: SellCryptoConfig | undefined;
 
 const SellCryptoRoot = ({
@@ -263,7 +271,7 @@ const SellCryptoRoot = ({
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
   const [disabledWalletFrom, setDisabledWalletFrom] = useState(true);
   const [loadingEnterAmountBtn, setLoadingEnterAmountBtn] =
-    useState<boolean>(false); // TODO: use this in the EnterAmount button
+    useState<boolean>(false);
   const [loadingWalletFromStatus, setLoadingWalletFromStatus] =
     useState<boolean>(false);
   const [balanceDetailsModalVisible, setBalanceDetailsModalVisible] =
@@ -289,7 +297,6 @@ const SellCryptoRoot = ({
     minAmount: undefined,
     maxAmount: undefined,
   });
-  const [sellQuoteData, setSellQuoteData] = useState<MoonpayGetSellQuoteData>();
   const [uiFormattedWallet, setUiFormattedWallet] = useState<WalletRowProps>();
   const [useSendMax, setUseSendMax] = useState<boolean>(false);
   const [sendMaxInfo, setSendMaxInfo] = useState<SendMaxInfo | undefined>();
@@ -659,6 +666,7 @@ const SellCryptoRoot = ({
   const sellGetLimits = async () => {
     setLoadingEnterAmountBtn(true);
     if (!selectedWallet) {
+      setLoadingEnterAmountBtn(false);
       return;
     }
 
@@ -865,16 +873,11 @@ const SellCryptoRoot = ({
     const moonpayAllCurrencies: MoonpayCurrency[] = await moonpayGetCurrencies(
       requestData,
     );
-    console.log('============ moonpayAllCurrencies: ', moonpayAllCurrencies);
 
     const moonpayAllSellCurrencies = moonpayAllCurrencies.filter(
       (moonpayCurrency: MoonpayCurrency) => {
         return filterMoonpayCurrenciesConditions(moonpayCurrency);
       },
-    );
-    console.log(
-      '============ moonpayAllSellCurrencies: ',
-      moonpayAllSellCurrencies,
     );
 
     const moonpayAllSellSupportedCurrenciesFixedProps: MoonpayCurrency[] =
@@ -907,11 +910,6 @@ const SellCryptoRoot = ({
               : true))
         );
       });
-
-    console.log(
-      '============= moonpaySellSupportedCurrenciesFullObj: ',
-      moonpaySellSupportedCurrenciesFullObj,
-    );
 
     const moonpaySellSupportedCurrencies: SellCryptoCoin[] =
       moonpaySellSupportedCurrenciesFullObj.map(
@@ -954,11 +952,6 @@ const SellCryptoRoot = ({
         },
       );
 
-    console.log(
-      '============= moonpaySellSupportedCurrencies: ',
-      moonpaySellSupportedCurrencies,
-    );
-
     // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
     const orderedArray = SupportedCurrencyOptions.map(currency =>
       currency.chain
@@ -985,7 +978,7 @@ const SellCryptoRoot = ({
     currency: SimplexCurrency,
   ): boolean => {
     return (
-      // TODO: generalize this filter
+      // For now, BTC is the only coin supported for sale on Simplex.
       currency.ticker_symbol === 'BTC' && currency.network_code === 'bitcoin'
     );
   };
@@ -997,17 +990,11 @@ const SellCryptoRoot = ({
     const simplexAllCurrencies: SimplexCurrency[] = await simplexGetCurrencies(
       requestData,
     );
-    console.log('============ simplexAllCurrencies: ', simplexAllCurrencies);
 
     const simplexAllSellCurrencies = simplexAllCurrencies.filter(
       (simplexCurrency: SimplexCurrency) => {
         return filterSimplexCurrenciesConditions(simplexCurrency);
       },
-    );
-
-    console.log(
-      '============ simplexAllSellCurrencies: ',
-      simplexAllSellCurrencies,
     );
 
     const simplexSellSupportedCurrencies: SellCryptoCoin[] =
@@ -1031,11 +1018,6 @@ const SellCryptoRoot = ({
           },
         };
       });
-
-    console.log(
-      '============ simplexSellSupportedCurrencies: ',
-      simplexSellSupportedCurrencies,
-    );
 
     // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
     const orderedArray = SupportedCurrencyOptions.map(currency =>
@@ -1159,8 +1141,6 @@ const SellCryptoRoot = ({
         return {exchangeKey, promiseRes: res};
       });
 
-      console.log('========= responseByExchangeKey: ', responseByExchangeKey);
-
       let allSupportedCoins: SellCryptoCoin[] = [];
 
       if (responseByExchangeKey instanceof Array) {
@@ -1256,10 +1236,6 @@ const SellCryptoRoot = ({
           ['asc', 'asc'],
         );
 
-        console.log(
-          '========= allSupportedCoinsOrdered: ',
-          allSupportedCoinsOrdered,
-        );
         setSellCryptoSupportedCoins(allSupportedCoinsOrdered);
       }
     } catch (err) {
@@ -1389,79 +1365,12 @@ const SellCryptoRoot = ({
       sellGetLimits();
     }
 
-    setSellQuoteData(undefined);
     setAmount(0);
     setUseSendMax(false);
     setSendMaxInfo(undefined);
 
     checkPaymentMethodRef.current();
   }, [selectedWallet]);
-
-  // useEffect(() => {
-  //   // get sell quote
-  //   if (!selectedWallet || !selectedPaymentMethod || amount === 0) {
-  //     return;
-  //   }
-
-  //   const _moonpayGetSellQuote = async (
-  //     requestData: MoonpayGetSellQuoteRequestData,
-  //   ) => {
-  //     try {
-  //       setLoadingQuote(true);
-  //       const sellQuote = await selectedWallet.moonpayGetSellQuote(requestData);
-  //       if (sellQuote?.quoteCurrencyAmount) {
-  //         sellQuote.totalFee =
-  //           Number(sellQuote.extraFeeAmount) + Number(sellQuote.feeAmount);
-  //         setSellQuoteData(sellQuote);
-  //         setLoadingQuote(false);
-  //       } else {
-  //         if (!sellQuote) {
-  //           logger.error('Moonpay error: No data received');
-  //         }
-  //         if (sellQuote.message && typeof sellQuote.message === 'string') {
-  //           logger.error('Moonpay error: ' + sellQuote.message);
-  //         }
-  //         if (sellQuote.error && typeof sellQuote.error === 'string') {
-  //           logger.error('Moonpay error: ' + sellQuote.error);
-  //         }
-  //         if (sellQuote.errors) {
-  //           logger.error(sellQuote.errors);
-  //         }
-  //         let err = t("Can't get rates at this moment. Please try again later");
-  //         const reason = 'moonpayGetQuote Error. Necessary data not included.';
-  //         showError(err, undefined, reason, undefined, false);
-  //       }
-  //     } catch (err: any) {
-  //       let msg: string = t(
-  //         "Can't get rates at this moment. Please try again later",
-  //       );
-  //       if (typeof err === 'string') {
-  //         msg = msg + ` - Error: ${err}`;
-  //       } else if (typeof err?.message === 'string') {
-  //         msg = msg + ` - Error: ${err.message}`;
-  //       }
-  //       const reason = 'moonpayGetQuote Error.';
-  //       showError(msg, undefined, reason, undefined, false);
-  //     }
-  //   };
-
-  //   const requestData: MoonpayGetSellQuoteRequestData = {
-  //     env: moonpaySellEnv,
-  //     currencyAbbreviation: getMoonpaySellFixedCurrencyAbbreviation(
-  //       selectedWallet.currencyAbbreviation,
-  //       selectedWallet.chain,
-  //     ),
-  //     quoteCurrencyCode: fiatCurrency,
-  //     baseCurrencyAmount: amount,
-  //     // extraFeePercentage?: number,
-  //     payoutMethod: getMoonpaySellPayoutMethodFormat(
-  //       selectedPaymentMethod.method,
-  //     ),
-  //   };
-  //   _moonpayGetSellQuote(requestData);
-
-  //   checkPaymentMethodRef.current();
-  // }, [amount, selectedWallet, selectedPaymentMethod]);
 
   return (
     <SellCryptoRootContainer>
@@ -1665,113 +1574,53 @@ const SellCryptoRoot = ({
                 </SelectedOptionText>
               </SelectedOptionContainer>
               <SelectedOptionCol>
-                {amount && amount > 0 ? (
-                  <>
-                    {useSendMax ? (
-                      <DataText>{t('Maximum Amount')}</DataText>
-                    ) : (
-                      <DataText>{Number(amount.toFixed(8))}</DataText>
-                    )}
-                    <ArrowContainer>
-                      <SelectorArrowRight
-                        {...{
-                          width: 13,
-                          height: 13,
-                          color: theme.dark ? White : Slate,
-                        }}
-                      />
-                    </ArrowContainer>
-                  </>
+                {loadingEnterAmountBtn ? (
+                  <SpinnerContainer>
+                    <ActivityIndicator color={ProgressBlue} />
+                  </SpinnerContainer>
                 ) : (
-                  <SelectedOptionContainer style={{backgroundColor: Action}}>
-                    <SelectedOptionCol>
-                      <SelectedOptionText
-                        style={{color: White}}
-                        numberOfLines={1}
-                        ellipsizeMode={'tail'}>
-                        {t('Enter Amount')}
-                      </SelectedOptionText>
-                    </SelectedOptionCol>
-                  </SelectedOptionContainer>
+                  <>
+                    {amount && amount > 0 ? (
+                      <>
+                        {useSendMax ? (
+                          <DataText>{t('Maximum Amount')}</DataText>
+                        ) : (
+                          <DataText>{Number(amount.toFixed(8))}</DataText>
+                        )}
+                        <ArrowContainer>
+                          <SelectorArrowRight
+                            {...{
+                              width: 13,
+                              height: 13,
+                              color: theme.dark ? White : Slate,
+                            }}
+                          />
+                        </ArrowContainer>
+                      </>
+                    ) : (
+                      <SelectedOptionContainer
+                        style={{backgroundColor: Action}}>
+                        <SelectedOptionCol>
+                          <SelectedOptionText
+                            style={{color: White}}
+                            numberOfLines={1}
+                            ellipsizeMode={'tail'}>
+                            {t('Enter Amount')}
+                          </SelectedOptionText>
+                        </SelectedOptionCol>
+                      </SelectedOptionContainer>
+                    )}
+                  </>
                 )}
               </SelectedOptionCol>
             </ActionsContainer>
-            {/* {amount > 0 ? (
-              <>
-                <Br />
-                {loadingQuote ? (
-                  <SellCryptoLoadingQuoteSkeleton />
-                ) : sellQuoteData ? (
-                  <>
-                    {sellQuoteData.totalFee ? (
-                      <SellCryptoOfferLine>
-                        <SellBalanceContainer>
-                          <SellCryptoOfferText>
-                            {t('Exchange Fee')}
-                          </SellCryptoOfferText>
-                          <TouchableOpacity
-                            onPress={() => {
-                              haptic('impactLight');
-                              dispatch(
-                                openUrlWithInAppBrowser(
-                                  'https://support.moonpay.com/customers/docs/moonpay-fees',
-                                ),
-                              );
-                            }}
-                            style={{marginLeft: 8}}>
-                            <InfoSvg width={20} height={20} />
-                          </TouchableOpacity>
-                        </SellBalanceContainer>
-
-                        <SelectedOptionCol>
-                          <SellCryptoOfferDataText>
-                            {formatFiatAmount(
-                              Number(sellQuoteData.totalFee),
-                              sellQuoteData.quoteCurrency?.code ?? fiatCurrency,
-                              {customPrecision: 'minimal'},
-                            )}
-                          </SellCryptoOfferDataText>
-                        </SelectedOptionCol>
-                      </SellCryptoOfferLine>
-                    ) : null}
-                    <SellCryptoOfferLine>
-                      <SellCryptoOfferText>
-                        {t('Receiving')}
-                      </SellCryptoOfferText>
-                      <SelectedOptionCol>
-                        <SellCryptoOfferDataText>
-                          {formatFiatAmount(
-                            Number(sellQuoteData.quoteCurrencyAmount),
-                            sellQuoteData.quoteCurrency?.code ?? fiatCurrency,
-                            {customPrecision: 'minimal'},
-                          )}
-                        </SellCryptoOfferDataText>
-                      </SelectedOptionCol>
-                    </SellCryptoOfferLine>
-                  </>
-                ) : null}
-                <SellTermsContainer>
-                  <TermsText>
-                    {t(
-                      'This quote provides an estimated price only. The final cost may vary based on the exact timing when your crypto is exchanged and the type of fiat currency used for withdrawal. Be aware that additional fees from third parties may also apply.',
-                    )}
-                  </TermsText>
-                  <TermsText>
-                    {t('Additional third-party fees may apply.')}
-                  </TermsText>
-                </SellTermsContainer>
-              </>
-            ) : null} */}
           </BuyCryptoItemCard>
         ) : null}
 
         <CtaContainer>
           <Button
             buttonStyle={'primary'}
-            disabled={
-              !selectedWallet || !amount || amount <= 0 // ||
-              // !sellQuoteData?.quoteCurrencyAmount
-            }
+            disabled={!selectedWallet || !amount || amount <= 0}
             onPress={() => {
               checkIfErc20Token();
             }}>
@@ -1878,7 +1727,6 @@ const SellCryptoRoot = ({
           setUseSendMax(false);
           setSendMaxInfo(undefined);
           setLoadingQuote(false);
-          setSellQuoteData(undefined);
           checkAndSetFiatCurrency(paymentMethod.method);
         }}
         isVisible={paymentMethodModalVisible}
