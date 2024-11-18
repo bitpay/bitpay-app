@@ -322,6 +322,14 @@ export const getMoonpayFiatListByPayoutMethod = (
   return fiatList;
 };
 
+export const adjustMoonpaySellAmount = (amount: number, precision?: number) => {
+  if (!precision) {
+    return amount;
+  }
+  const factor = Math.pow(10, precision);
+  return Math.trunc(amount * factor) / factor;
+};
+
 export interface MoonpaySellStatus {
   statusTitle?: string;
   statusDescription?: string;

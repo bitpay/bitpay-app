@@ -167,9 +167,11 @@ export const isPaymentMethodSupported = (
 ): boolean => {
   return (
     paymentMethod.supportedExchanges[exchange] &&
-    isCoinSupportedBy(exchange, coin, chain, country) &&
+    isCoinSupportedToSellBy(exchange, coin, chain, country) &&
     (isFiatCurrencySupportedBy(exchange, currency) ||
-      isFiatCurrencySupportedBy(exchange, 'USD'))
+      isFiatCurrencySupportedBy(exchange, 'USD') ||
+      (['simplex'].includes(exchange) &&
+        isFiatCurrencySupportedBy(exchange, 'EUR')))
   );
 };
 
@@ -179,12 +181,12 @@ export const isCoinSupportedToSell = (
   country?: string,
 ): boolean => {
   return (
-    isCoinSupportedBy('moonpay', coin, chain, country) ||
-    isCoinSupportedBy('simplex', coin, chain)
+    isCoinSupportedToSellBy('moonpay', coin, chain, country) ||
+    isCoinSupportedToSellBy('simplex', coin, chain)
   );
 };
 
-const isCoinSupportedBy = (
+export const isCoinSupportedToSellBy = (
   exchange: string,
   coin: string,
   chain: string,

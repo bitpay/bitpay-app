@@ -161,7 +161,7 @@ const Amount: React.VFC<AmountProps> = ({
         ? defaultAltCurrency.isoCode
         : 'USD';
     } else if (context === 'sellCrypto') {
-      return getAvailableSellCryptoFiatCurrencies('moonpay').includes(
+      return getAvailableSellCryptoFiatCurrencies().includes(
         defaultAltCurrency.isoCode,
       )
         ? defaultAltCurrency.isoCode

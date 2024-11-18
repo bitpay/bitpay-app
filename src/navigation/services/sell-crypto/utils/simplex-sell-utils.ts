@@ -139,10 +139,27 @@ export const getSimplexSellPayoutMethodFormat = (
   return formattedPaymentMethod;
 };
 
-export const getSimplexSellReturnURL = (id: string, useSendMax?: boolean) => {
+export const getSimplexBaseAmountFormat = (amount: number): number => {
+  // base_amount should be integer, which counts millionths of a whole currency unit.
+  const simplexBaseAmountFormat = Math.trunc(amount * 1e6);
+  return simplexBaseAmountFormat;
+};
+
+export const getSimplexSellFiatAmountLimits = () => {
+  return {
+    fiatCurrency: 'EUR',
+    min: 50, // fixed in EUR
+    max: 15000, // fixed in EUR
+  };
+};
+
+export const getSimplexSellReturnURL = (
+  externalId: string,
+  useSendMax?: boolean,
+) => {
   const returnUrl =
     getPassthroughUri() +
-    `end.html?flow=sell&success=true&externalId=${id}` +
+    `end.html?flow=sell&success=true&externalId=${externalId}` +
     `${useSendMax ? '&sendMax=true' : ''}`;
 
   return returnUrl;

@@ -1,10 +1,5 @@
 import styled from 'styled-components/native';
-import {
-  LightBlack,
-  SlateDark,
-  White,
-  Slate30,
-} from '../../../../styles/colors';
+import {LightBlack, SlateDark, White, Slate30} from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
 
 export const SellCryptoExpandibleCard = styled.TouchableOpacity`

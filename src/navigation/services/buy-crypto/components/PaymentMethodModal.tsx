@@ -181,7 +181,7 @@ const PaymentMethodsModal = ({
         return (
           <MoonpayLogo
             key={exchange}
-            iconOnly={context === 'buyCrypto'} // TODO: review if iconOnly should be true for more than one exchange
+            iconOnly={context === 'buyCrypto'}
             widthIcon={20}
             heightIcon={20}
           />
