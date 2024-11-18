@@ -103,6 +103,9 @@ import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-serv
 import {getMoonpaySellFixedCurrencyAbbreviation} from '../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
 import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
+import {SimplexSellIncomingData} from '../sell-crypto/models/simplex-sell.models';
+import {ExternalServicesSettingsScreens} from '../../navigation/tabs/settings/external-services/ExternalServicesGroup';
+import {SimplexSettingsProps} from '../../navigation/tabs/settings/external-services/screens/SimplexSettings';
 
 export const incomingData =
   (
@@ -1872,59 +1875,144 @@ const handleSardineUri =
 
 const handleSimplexUri =
   (data: string): Effect<void> =>
-  (dispatch, getState) => {
+  async (dispatch, getState) => {
     dispatch(LogActions.info('Incoming-data (redirect): Simplex URL: ' + data));
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
-    const paymentId = getParameterByName('paymentId', res);
-    if (!paymentId) {
-      dispatch(LogActions.warn('No paymentId present. Do not redir'));
-      return;
+
+    const simplexFlow = getParameterByName('flow', res);
+
+    if (simplexFlow === 'sell') {
+      // Simplex Sell Crypto Flow
+      const externalId = getParameterByName('externalId', res);
+      if (!externalId) {
+        dispatch(LogActions.warn('No externalId present. Do not redir'));
+        return;
+      }
+
+      const success = getParameterByName('success', res);
+      const sendMax = getParameterByName('sendMax', res);
+
+      dispatch(
+        LogActions.debug(
+          `Return from Simplex checkout page for Sell Order with externalId: ${externalId} | success: ${success} | sendMax: ${sendMax}`,
+        ),
+      );
+
+      const {SELL_CRYPTO} = getState();
+      const order = SELL_CRYPTO.moonpay[externalId];
+
+      if (!order) {
+        dispatch(
+          LogActions.warn(
+            `No sell order found for externalId: ${externalId}. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              'It seems that the order id: {{externalId}} was not created from this wallet or has been deleted.',
+              {externalId},
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
+      const stateParams: SimplexSellIncomingData = {
+        simplexExternalId: externalId,
+        status: 'completed', // TODO: can this status be failed?
+      };
+
+      dispatch(
+        SellCryptoActions.updateSellOrderSimplex({
+          simplexSellIncomingData: stateParams,
+        }),
+      );
+
+      const simplexSettingsParams: SimplexSettingsProps = {
+        incomingPaymentRequest: {
+          externalId,
+          flow: 'sell',
+        },
+      };
+
+      navigationRef.reset({
+        index: 2,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
+          },
+          {
+            name: ExternalServicesSettingsScreens.SIMPLEX_SETTINGS,
+            params: {simplexSettingsParams},
+          },
+        ],
+      });
+    } else {
+      // Simplex Buy Crypto Flow
+      const paymentId = getParameterByName('paymentId', res);
+      if (!paymentId) {
+        dispatch(LogActions.warn('No paymentId present. Do not redir'));
+        return;
+      }
+
+      const success = getParameterByName('success', res);
+      const quoteId = getParameterByName('quoteId', res);
+      const userId = getParameterByName('userId', res);
+
+      const stateParams: SimplexIncomingData = {
+        success,
+        paymentId,
+        quoteId,
+        userId,
+      };
+
+      dispatch(
+        BuyCryptoActions.updatePaymentRequestSimplex({
+          simplexIncomingData: stateParams,
+        }),
+      );
+
+      const {BUY_CRYPTO} = getState();
+      const order = BUY_CRYPTO.simplex[paymentId];
+
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'simplex',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin?.toLowerCase() || '',
+          chain: order?.chain?.toLowerCase() || '',
+        }),
+      );
+
+      navigationRef.reset({
+        index: 2,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
+          },
+          {
+            name: 'SimplexSettings',
+            params: {incomingPaymentRequest: {...stateParams, flow: 'buy'}},
+          },
+        ],
+      });
     }
-
-    const success = getParameterByName('success', res);
-    const quoteId = getParameterByName('quoteId', res);
-    const userId = getParameterByName('userId', res);
-
-    const stateParams: SimplexIncomingData = {
-      success,
-      paymentId,
-      quoteId,
-      userId,
-    };
-
-    dispatch(
-      BuyCryptoActions.updatePaymentRequestSimplex({
-        simplexIncomingData: stateParams,
-      }),
-    );
-
-    const {BUY_CRYPTO} = getState();
-    const order = BUY_CRYPTO.simplex[paymentId];
-
-    dispatch(
-      Analytics.track('Purchased Buy Crypto', {
-        exchange: 'simplex',
-        fiatAmount: order?.fiat_total_amount || '',
-        fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin?.toLowerCase() || '',
-        chain: order?.chain?.toLowerCase() || '',
-      }),
-    );
-
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'SimplexSettings',
-          params: {incomingPaymentRequest: {...stateParams, flow: 'buy'}},
-        },
-      ],
-    });
   };
 
 const handleTransakUri =
