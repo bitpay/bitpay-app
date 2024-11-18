@@ -17,7 +17,10 @@ import InAppBrowser, {
 import {
   checkNotifications,
   requestNotifications,
+  check,
+  request,
   RESULTS,
+  PERMISSIONS,
 } from 'react-native-permissions';
 import uuid from 'react-native-uuid';
 import {AppActions} from '.';
@@ -1361,6 +1364,23 @@ export const shareApp = (): Effect<Promise<void>> => async dispatch => {
     }
     dispatch(LogActions.error(`failed [shareApp]: ${errorStr}`));
   }
+};
+
+export const checkFaceIdPermissions = async (): Promise<boolean> => {
+  // only supported by iOS
+  if (Platform.OS !== 'ios') {
+    return true; // Check permissions in the next step
+  }
+  const status = await check(PERMISSIONS.IOS.FACE_ID).catch(() => ({
+    status: null,
+  }));
+  if (status === RESULTS.DENIED) {
+    const requestStatus = await request(PERMISSIONS.IOS.FACE_ID).catch(() => ({
+      status: null,
+    }));
+    return requestStatus === RESULTS.GRANTED;
+  }
+  return status === RESULTS.GRANTED;
 };
 
 export const isVersionUpdated =

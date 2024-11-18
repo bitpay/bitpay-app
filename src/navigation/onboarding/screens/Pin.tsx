@@ -16,7 +16,7 @@ import {
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {BiometricErrorNotification} from '../../../constants/BiometricError';
-import {AppActions} from '../../../store/app';
+import {AppActions, AppEffects} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   useAppDispatch,
@@ -92,6 +92,10 @@ const PinScreen = ({
   const onSetBiometricPress = async () => {
     try {
       haptic('impactLight');
+      const permissions = await AppEffects.checkFaceIdPermissions();
+      if (!permissions) {
+        throw new Error('Face ID permissions not granted');
+      }
       const rnBiometrics = new ReactNativeBiometrics({
         allowDeviceCredentials: true,
       });
