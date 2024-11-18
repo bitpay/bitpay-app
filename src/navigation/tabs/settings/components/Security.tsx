@@ -12,10 +12,11 @@ import {useDispatch, useSelector} from 'react-redux';
 import {useThemeType} from '../../../../utils/hooks/useThemeType';
 import {RootState} from '../../../../store';
 import {AppActions} from '../../../../store/app';
-import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
+import ReactNativeBiometrics from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {LOCK_AUTHORIZED_TIME} from '../../../../constants/Lock';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {checkFaceIdPermissions} from '../../../../store/app/app.effects';
 import FingerprintImg from '../../../../../assets/img/fingerprint.svg';
 import FingerprintDarkModeImg from '../../../../../assets/img/fingerprint-darkmode.svg';
 import FaceImg from '../../../../../assets/img/face.svg';
@@ -102,6 +103,10 @@ const Security = () => {
 
   const setBiometric = async () => {
     try {
+      const permissions = await checkFaceIdPermissions();
+      if (!permissions) {
+        throw new Error('Face ID permissions not granted');
+      }
       const rnBiometrics = new ReactNativeBiometrics({
         allowDeviceCredentials: true,
       });
