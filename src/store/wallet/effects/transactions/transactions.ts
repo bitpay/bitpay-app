@@ -289,6 +289,36 @@ const ProcessTx =
     return tx;
   };
 
+const shouldFilterTx = (tx: any, wallet: Wallet) => {
+  const isERCToken = IsERCToken(tx.coin, tx.chain);
+  const emptyEffects = Array.isArray(tx.effects) && tx.effects.length === 0; // workaround for handling old txs with no effects
+  const hasEffects = Array.isArray(tx.effects) && tx.effects.length > 0;
+
+  // Filter received txs with no effects for ERC20 tokens only
+  if (isERCToken && emptyEffects) {
+    return true;
+  }
+
+  // Filter if contract doesn't match the wallet token address
+  if (isERCToken && hasEffects) {
+    tx.effects = tx.effects.filter(
+      (effect: any) =>
+        effect.contractAddress?.toLowerCase() ===
+        wallet.tokenAddress?.toLowerCase(),
+    );
+    if (tx.effects.length === 0) {
+      return true;
+    }
+  }
+
+  // Filter received txs with effects for non ERC20 wallets
+  if (!isERCToken && hasEffects && tx.action === 'received') {
+    return true;
+  }
+
+  return false;
+};
+
 const ProcessNewTxs =
   (wallet: Wallet, txs: any[]): Effect<Promise<any>> =>
   async dispatch => {
@@ -302,6 +332,10 @@ const ProcessNewTxs =
         // workaround for BWS bug / coin is missing and chain is in uppercase
         tx.coin = wallet.currencyAbbreviation;
         tx.chain = wallet.chain;
+
+        if (shouldFilterTx(tx, wallet)) {
+          continue;
+        }
 
         tx = dispatch(ProcessTx(tx, wallet));
 
