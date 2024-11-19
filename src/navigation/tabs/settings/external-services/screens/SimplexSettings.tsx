@@ -196,7 +196,7 @@ const SimplexSettings: React.FC = () => {
             })}
         {(!sellOrders || sellOrders.length === 0) && (
           <NoPrMsg>
-            {t('There are currently no transactions with Moonpay')}
+            {t('There are currently no transactions with Simplex')}
           </NoPrMsg>
         )}
       </Settings>

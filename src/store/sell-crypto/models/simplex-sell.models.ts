@@ -54,6 +54,7 @@ export interface SimplexSellIncomingData {
 
 export interface SimplexGetSellQuoteRequestData {
   env: SimplexSellEnv;
+  userCountry: string;
   base_currency: string;
   base_amount: number;
   quote_currency: string;
@@ -72,6 +73,7 @@ export interface SimplexGetSellQuoteData {
 
 export interface SimplexSellPaymentRequestReqData {
   env: SimplexSellEnv;
+  userCountry: string;
   referer_url: string;
   return_url: string;
   txn_details: {

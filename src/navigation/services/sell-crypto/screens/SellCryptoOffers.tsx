@@ -88,6 +88,7 @@ import {useTheme} from 'styled-components/native';
 import {
   getSimplexBaseAmountFormat,
   getSimplexCoinFormat,
+  getSimplexCountryFormat,
   getSimplexSellReturnURL,
   simplexSellEnv,
 } from '../utils/simplex-sell-utils';
@@ -634,9 +635,11 @@ const SellCryptoOffers: React.FC = () => {
         showSimplexError(msg, reason);
         return;
       }
+      const userCountry = getSimplexCountryFormat(country, user?.country);
 
       const requestData: SimplexGetSellQuoteRequestData = {
         env: simplexSellEnv,
+        userCountry: __DEV__ ? 'LT' : userCountry || 'US',
         base_currency: getSimplexCoinFormat(coin, selectedWallet.chain),
         base_amount: getSimplexBaseAmountFormat(amount), // base_amount should be integer, which counts millionths of a whole currency unit.
         quote_currency: offers.simplex.fiatCurrency.toUpperCase(),
@@ -898,8 +901,11 @@ const SellCryptoOffers: React.FC = () => {
       useSendMax,
     );
 
+    const userCountry = getSimplexCountryFormat(country, user?.country);
+
     const quoteData: SimplexSellPaymentRequestReqData = {
       env: simplexSellEnv,
+      userCountry: __DEV__ ? 'LT' : userCountry || 'US',
       referer_url: 'https://bitpay.com/',
       return_url: return_url,
       txn_details: {quote_id: offers.simplex.quoteData.quote_id},

@@ -5,6 +5,7 @@ import {PaymentMethodKey} from '../constants/SellCryptoConstants';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {SimplexCurrencyNetworkCode} from '../../../../store/buy-crypto/models/simplex.models';
 import {getPassthroughUri} from '../../buy-crypto/utils/simplex-utils';
+import {isEuCountry} from '../../../../store/location/location.effects';
 
 export const simplexSellEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -137,6 +138,17 @@ export const getSimplexSellPayoutMethodFormat = (
       break;
   }
   return formattedPaymentMethod;
+};
+
+export const getSimplexCountryFormat = (
+  locationCountry: string,
+  userCountry?: string | undefined,
+): string => {
+  if (userCountry && isEuCountry(userCountry)) {
+    return userCountry;
+  } else {
+    return locationCountry;
+  }
 };
 
 export const getSimplexBaseAmountFormat = (amount: number): number => {
