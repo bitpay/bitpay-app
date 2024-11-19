@@ -291,12 +291,12 @@ const ProcessTx =
 
 const shouldFilterTx = (tx: any, wallet: Wallet) => {
   const isERCToken = IsERCToken(tx.coin, tx.chain);
-  const emptyEffects = Array.isArray(tx.effects) && tx.effects.length === 0; // workaround for handling old txs with no effects
+  const emptyEffects = Array.isArray(tx.effects) && tx.effects.length === 0;
   const hasEffects = Array.isArray(tx.effects) && tx.effects.length > 0;
 
-  // Filter received txs with no effects for ERC20 tokens only
+  // Workaround for handling old txs with no effects
   if (isERCToken && emptyEffects) {
-    return true;
+    return false;
   }
 
   // Filter if contract doesn't match the wallet token address
