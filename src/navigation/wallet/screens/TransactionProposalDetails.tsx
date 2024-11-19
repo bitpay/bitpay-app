@@ -40,7 +40,11 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Banner from '../../../components/banner/Banner';
 import Info from '../../../components/icons/info/Info';
 import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  getBadgeImg,
+  getCurrencyAbbreviation,
+  sleep,
+} from '../../../utils/helper-methods';
 import {GetAmFormatDate, GetAmTimeAgo} from '../../../store/wallet/utils/time';
 import SendToPill from '../components/SendToPill';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
@@ -83,6 +87,7 @@ import {
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../store/log';
 import {GetPayProDetails} from '../../../store/wallet/effects/paypro/paypro';
+import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 
 const TxpDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -347,8 +352,13 @@ const TransactionProposalDetails = () => {
   };
 
   const getIcon = () => {
-    return CurrencyListIcons[wallet.currencyAbbreviation] ? (
-      CurrencyListIcons[wallet.currencyAbbreviation]({width: 18, height: 18})
+    const _currencyAbbreviation = getCurrencyAbbreviation(
+      wallet.currencyAbbreviation,
+      wallet.chain,
+    );
+
+    return CurrencyListIcons[_currencyAbbreviation] ? (
+      CurrencyListIcons[_currencyAbbreviation]({width: 18, height: 18})
     ) : (
       <DefaultSvg width={18} height={18} />
     );
@@ -681,8 +691,22 @@ const TransactionProposalDetails = () => {
                 <H7>{t('Sending from')}</H7>
                 <SendToPillContainer>
                   <SendToPill
-                    icon={getIcon()}
-                    description={wallet.credentials.walletName}
+                    icon={
+                      <CurrencyImage
+                        img={wallet.img}
+                        size={18}
+                        badgeUri={getBadgeImg(
+                          getCurrencyAbbreviation(
+                            wallet.currencyAbbreviation,
+                            wallet.chain,
+                          ),
+                          wallet.chain,
+                        )}
+                      />
+                    }
+                    description={
+                      wallet.walletName || wallet.credentials.walletName
+                    }
                   />
                 </SendToPillContainer>
               </DetailRow>
