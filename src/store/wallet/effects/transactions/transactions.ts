@@ -906,12 +906,13 @@ export const IsZeroAmountEVM = (amount: number, chain: string): boolean => {
 
 export const TxForPaymentFeeEVM = (
   walletCoin: string,
-  TxCoin: string,
+  txCoin: string,
+  txChain: string,
   amount: number,
 ): boolean => {
   return (
-    walletCoin.toLowerCase() !== TxCoin.toLowerCase() ||
-    IsZeroAmountEVM(amount, TxCoin.toLowerCase())
+    walletCoin.toLowerCase() !== txCoin.toLowerCase() ||
+    IsZeroAmountEVM(amount, txChain.toLowerCase())
   );
 };
 
@@ -964,6 +965,7 @@ export const BuildUiFriendlyList = (
     const isTxForPaymentFee = TxForPaymentFeeEVM(
       currencyAbbreviation,
       coin,
+      chain,
       amount,
     );
     const isSent = IsSent(action);

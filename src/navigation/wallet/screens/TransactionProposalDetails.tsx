@@ -266,6 +266,7 @@ const TransactionProposalDetails = () => {
         TxForPaymentFeeEVM(
           wallet.currencyAbbreviation,
           transaction.coin,
+          transaction.chain,
           transaction.amount,
         ),
       );
