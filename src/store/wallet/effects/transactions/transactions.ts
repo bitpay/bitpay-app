@@ -911,7 +911,7 @@ export const TxForPaymentFeeEVM = (
 ): boolean => {
   return (
     walletCoin.toLowerCase() !== TxCoin.toLowerCase() ||
-    IsZeroAmountEVM(amount, TxCoin.toUpperCase())
+    IsZeroAmountEVM(amount, TxCoin.toLowerCase())
   );
 };
 
