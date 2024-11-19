@@ -387,6 +387,7 @@ const TransactionProposalNotifications = () => {
       const fullWalletObj = findWalletById(wallets, item.walletId) as Wallet;
       const {
         img,
+        badgeImg,
         currencyAbbreviation,
         currencyName,
         keyId,
@@ -396,7 +397,7 @@ const TransactionProposalNotifications = () => {
         <>
           <RowContainer disabled={true} style={{opacity: 1}}>
             <CurrencyImageContainer>
-              <CurrencyImage img={img} size={45} />
+              <CurrencyImage img={img} size={45} badgeUri={badgeImg} />
             </CurrencyImageContainer>
             <CurrencyColumn>
               <Row>
