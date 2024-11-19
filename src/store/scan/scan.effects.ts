@@ -1900,7 +1900,7 @@ const handleSimplexUri =
       );
 
       const {SELL_CRYPTO} = getState();
-      const order = SELL_CRYPTO.moonpay[externalId];
+      const order = SELL_CRYPTO.simplex[externalId];
 
       if (!order) {
         dispatch(
@@ -1957,7 +1957,7 @@ const handleSimplexUri =
           },
           {
             name: ExternalServicesSettingsScreens.SIMPLEX_SETTINGS,
-            params: {simplexSettingsParams},
+            params: simplexSettingsParams,
           },
         ],
       });
