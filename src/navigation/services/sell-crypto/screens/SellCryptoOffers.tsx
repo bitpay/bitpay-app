@@ -59,7 +59,7 @@ import {
   SellCryptoSupportedExchanges,
   getAvailableSellCryptoFiatCurrencies,
   getBaseSellCryptoFiatCurrencies,
-  isPaymentMethodSupported,
+  isWithdrawalMethodSupported,
 } from '../utils/sell-crypto-utils';
 import {
   formatFiatAmount,
@@ -99,11 +99,11 @@ import {
   SimplexSellPaymentRequestData,
   SimplexSellPaymentRequestReqData,
 } from '../../../../store/sell-crypto/models/simplex-sell.models';
+import {SellCryptoScreens} from '../SellCryptoGroup';
 import {
   simplexGetSellQuote,
   simplexSellPaymentRequest,
 } from '../../../../store/buy-crypto/effects/simplex/simplex';
-import {SellCryptoScreens} from '../SellCryptoGroup';
 
 export type SellCryptoOffersScreenParams = {
   amount: number;
@@ -392,26 +392,28 @@ const SellCryptoOffers: React.FC = () => {
       ) {
         offersDefault[exchange].showOffer =
           preSetPartner === exchange
-            ? isPaymentMethodSupported(
+            ? isWithdrawalMethodSupported(
                 preSetPartner,
                 paymentMethod,
                 coin,
                 chain,
                 offersDefault[preSetPartner].fiatCurrency,
                 country,
+                user?.country,
               ) &&
               (!sellCryptoConfig?.[preSetPartner] ||
                 !sellCryptoConfig?.[preSetPartner]?.removed)
             : false;
       } else {
         offersDefault[exchange].showOffer =
-          isPaymentMethodSupported(
+          isWithdrawalMethodSupported(
             exchange,
             paymentMethod,
             coin,
             chain,
             offersDefault[exchange].fiatCurrency,
             country,
+            user?.country,
           ) &&
           (!sellCryptoConfig?.[exchange] ||
             !sellCryptoConfig?.[exchange]?.removed);

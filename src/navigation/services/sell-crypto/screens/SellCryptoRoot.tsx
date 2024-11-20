@@ -62,7 +62,7 @@ import {IsERCToken, IsEVMChain} from '../../../../store/wallet/utils/currency';
 import {
   SellCryptoSupportedExchanges,
   getAvailableSellCryptoFiatCurrencies,
-  isPaymentMethodSupported,
+  isWithdrawalMethodSupported,
   SellCryptoExchangeKey,
   getDefaultPaymentMethod,
   isCoinSupportedToSellBy,
@@ -134,6 +134,7 @@ import {
   simplexSellEnv,
 } from '../utils/simplex-sell-utils';
 import {simplexGetCurrencies} from '../../../../store/buy-crypto/effects/simplex/simplex';
+import {isEuCountry} from '../../../../store/location/location.effects';
 
 export type SellCryptoRootScreenParams =
   | {
@@ -606,23 +607,34 @@ const SellCryptoRoot = ({
     if (
       (preSetPartner &&
         SellCryptoSupportedExchanges.includes(preSetPartner) &&
-        isPaymentMethodSupported(
+        isWithdrawalMethodSupported(
           preSetPartner,
           selectedPaymentMethod,
           selectedWallet.currencyAbbreviation,
           selectedWallet.chain,
           fiatCurrency,
           locationData?.countryShortCode || 'US',
+          user?.country,
         )) ||
       (!preSetPartner &&
-        isPaymentMethodSupported(
+        (isWithdrawalMethodSupported(
           'moonpay',
           selectedPaymentMethod,
           selectedWallet.currencyAbbreviation,
           selectedWallet.chain,
           fiatCurrency,
           locationData?.countryShortCode || 'US',
-        ))
+          user?.country,
+        ) ||
+          isWithdrawalMethodSupported(
+            'simplex',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+            locationData?.countryShortCode || 'US',
+            user?.country,
+          )))
     ) {
       logger.debug(
         `Selected withdrawal method available for ${selectedWallet.currencyAbbreviation} and ${fiatCurrency}`,
@@ -1101,6 +1113,15 @@ const SellCryptoRoot = ({
           !sellCryptoConfig[exchange]?.removed;
         sellCryptoExchangesDefault[exchange].disabled =
           !!sellCryptoConfig[exchange]?.disabled;
+      }
+
+      if (exchange === 'simplex' && sellCryptoExchangesDefault.simplex) {
+        // Simplex sell only available in the EU
+        sellCryptoExchangesDefault.simplex.showOffer =
+          !!(
+            locationData?.countryShortCode &&
+            isEuCountry(locationData.countryShortCode)
+          ) || !!(user?.country && isEuCountry(user.country));
       }
     });
 

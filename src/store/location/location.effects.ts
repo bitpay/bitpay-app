@@ -4,7 +4,7 @@ import {Effect} from '..';
 import {EUCountries} from './location.constants';
 import cloneDeep from 'lodash.clonedeep';
 
-export const isEuCountry = (countryShortCode: string): boolean => {
+export const isEuCountry = (countryShortCode: string | undefined): boolean => {
   if (!countryShortCode) {
     return false;
   }

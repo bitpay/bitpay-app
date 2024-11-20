@@ -26,7 +26,8 @@ export const simplexSellBaseTokensWithSuffix: string[] = [];
 export const simplexSellOptimismTokensWithSuffix: string[] = [];
 
 export const getSimplexSellSupportedCurrencies = (
-  country?: string,
+  locationCountry?: string,
+  userCountry?: string,
 ): string[] => {
   const simplexSellSupportedCurrencies = [
     ...simplexSellSupportedCoins,
@@ -47,7 +48,11 @@ export const getSimplexSellSupportedCurrencies = (
     ),
   ];
 
-  return simplexSellSupportedCurrencies;
+  if (isEuCountry(locationCountry) || isEuCountry(userCountry)) {
+    return simplexSellSupportedCurrencies;
+  } else {
+    return [];
+  }
 };
 
 export const getSimplexCoinFormat = (coin: string, chain: string): string => {
