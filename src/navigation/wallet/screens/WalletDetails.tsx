@@ -15,7 +15,6 @@ import React, {
 import {useTranslation} from 'react-i18next';
 import {
   DeviceEventEmitter,
-  FlatList,
   Linking,
   RefreshControl,
   Share,
@@ -31,6 +30,7 @@ import {
   H2,
   H5,
   HeaderTitle,
+  Link,
   Paragraph,
   ProposalBadge,
   Small,
@@ -262,6 +262,12 @@ const IconContainer = styled.View`
 const TypeText = styled(BaseText)`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
+`;
+
+const LinkText = styled(Link)`
+  font-weight: 500;
+  font-size: 18px;
+  text-align: center;
 `;
 
 const getWalletType = (
@@ -994,30 +1000,40 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   }, []);
 
-  const renderTxp = useCallback(({item}) => {
-    return (
-      <TransactionProposalRow
-        key={item.id}
-        icon={TransactionIcons[item.uiIcon]}
-        creator={item.uiCreator}
-        time={item.uiTime}
-        value={item.uiValue}
-        message={item.message}
-        onPressTransaction={() => onPressTxp(item)}
-        recipientCount={item.recipientCount}
-        toAddress={item.toAddress}
-        tokenAddress={item.tokenAddress}
-        chain={item.chain}
-        contactList={contactList}
-      />
-    );
-  }, []);
+  const renderTxp = useCallback(
+    (items: any[]) => {
+      return (
+        <View style={{paddingTop: 20}}>
+          {items.slice(0, 5).map((item, index) => (
+            <TransactionProposalRow
+              key={`${item.id}-${index}`}
+              icon={TransactionIcons[item.uiIcon]}
+              creator={item.uiCreator}
+              time={item.uiTime}
+              value={item.uiValue}
+              message={item.message}
+              onPressTransaction={() => onPressTxp(item)}
+              recipientCount={item.recipientCount}
+              toAddress={item.toAddress}
+              tokenAddress={item.tokenAddress}
+              chain={item.chain}
+              contactList={contactList}
+            />
+          ))}
+          {items.length > 5 && (
+            <TouchableOpacity
+              style={{paddingTop: 10}}
+              onPress={onPressTxpBadge}>
+              <LinkText>{t('Show more')}</LinkText>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    },
+    [needActionPendingTxps, needActionUnsentTxps],
+  );
 
   const keyExtractor = useCallback(
-    (item, index: number) => index.toString(),
-    [],
-  );
-  const pendingTxpsKeyExtractor = useCallback(
     (item, index: number) => index.toString(),
     [],
   );
@@ -1245,27 +1261,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       <ProposalBadge>{pendingTxps.length}</ProposalBadge>
                     </ProposalBadgeContainer>
                   </TransactionSectionHeaderContainer>
-                  {fullWalletObj.credentials.n > 1 ? (
-                    <FlatList
-                      contentContainerStyle={{
-                        paddingTop: 20,
-                        paddingBottom: 20,
-                      }}
-                      data={needActionPendingTxps}
-                      keyExtractor={pendingTxpsKeyExtractor}
-                      renderItem={renderTxp}
-                    />
-                  ) : (
-                    <FlatList
-                      contentContainerStyle={{
-                        paddingTop: 20,
-                        paddingBottom: 20,
-                      }}
-                      data={needActionUnsentTxps}
-                      keyExtractor={pendingTxpsKeyExtractor}
-                      renderItem={renderTxp}
-                    />
-                  )}
+                  {fullWalletObj.credentials.n > 1 &&
+                  needActionPendingTxps.length > 0
+                    ? renderTxp(needActionPendingTxps)
+                    : needActionUnsentTxps.length > 0
+                    ? renderTxp(needActionUnsentTxps)
+                    : null}
                 </>
               ) : null}
 
