@@ -953,6 +953,7 @@ export const BuildUiFriendlyList = (
       note,
       message,
       creatorName,
+      recipientCount,
     } = transaction || {};
     const {
       service: customDataService,
@@ -1050,6 +1051,8 @@ export const BuildUiFriendlyList = (
             transaction.uiDescription = noteBody;
           } else if (message) {
             transaction.uiDescription = message;
+          } else if (recipientCount && recipientCount > 1) {
+            transaction.uiDescription = t('Multiple recipients');
           } else if (contactName || transaction.customData?.recipientEmail) {
             transaction.uiDescription =
               contactName || transaction.customData?.recipientEmail;
