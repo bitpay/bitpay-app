@@ -1275,6 +1275,7 @@ const handleSellCryptoUri =
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
+            fromDeeplink: true,
           },
         },
       ],

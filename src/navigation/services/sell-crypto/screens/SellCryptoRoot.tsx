@@ -143,6 +143,7 @@ export type SellCryptoRootScreenParams =
       currencyAbbreviation?: string | undefined; // used from charts and deeplinks.
       chain?: string | undefined; // used from charts and deeplinks.
       partner?: SellCryptoExchangeKey | undefined; // used from deeplinks.
+      fromDeeplink?: boolean;
     }
   | undefined;
 
@@ -268,6 +269,7 @@ const SellCryptoRoot = ({
   const preSetPartner = route.params?.partner?.toLowerCase() as
     | SellCryptoExchangeKey
     | undefined;
+  const fromDeeplink = route.params?.fromDeeplink;
   const [amount, setAmount] = useState<number>(fromAmount);
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
   const [disabledWalletFrom, setDisabledWalletFrom] = useState(true);
@@ -1055,6 +1057,9 @@ const SellCryptoRoot = ({
 
   const init = async () => {
     try {
+      if (fromDeeplink) {
+        await sleep(300);
+      }
       dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
       const requestData: ExternalServicesConfigRequestParams = {
         currentLocationCountry: locationData?.countryShortCode,
@@ -1133,6 +1138,33 @@ const SellCryptoRoot = ({
           (!preSetPartner || exchange.key === preSetPartner),
       )
       .map(exchange => exchange.key);
+
+    if (!enabledExchanges || enabledExchanges.length === 0) {
+      logger.error(
+        'There are no partners with offers available for the user parameters.',
+      );
+      let msg: string;
+
+      if (
+        preSetPartner === 'simplex' &&
+        !(
+          isEuCountry(locationData?.countryShortCode) ||
+          isEuCountry(user?.country)
+        )
+      ) {
+        msg = t(
+          'Sell Crypto feature is currently unavailable in your country. Please try again later.',
+        );
+      } else {
+        msg = t(
+          'Sell Crypto feature is not available at this moment. Please try again later.',
+        );
+      }
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(300);
+      showError(msg);
+      return;
+    }
 
     const getCurrenciesPromiseByExchange = (
       exchange: SellCryptoExchangeKey,
