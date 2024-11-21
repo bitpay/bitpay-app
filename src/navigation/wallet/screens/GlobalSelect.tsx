@@ -1217,6 +1217,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   ) => {
     setCryptoSelectModalVisible(false);
     await sleep(1000);
+
+    if (!selectedAccount) {
+      handleBasicWalletCreation(selectedCurrency, selectedKey, selectedNetwork);
+      return;
+    }
+
     const {keyId, wallets} = selectedAccount;
     const wallet = wallets.find(
       w =>
@@ -1258,14 +1264,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       wallet
         ? handleWalletSelection(wallet.id, wallet.copayerId)
         : handleERC20WalletCreation();
-    } else {
-      wallet
-        ? handleWalletSelection(wallet.id, wallet.copayerId)
-        : handleBasicWalletCreation(
-            selectedCurrency,
-            selectedKey,
-            selectedNetwork,
-          );
+    } else if (wallet) {
+      handleWalletSelection(wallet.id, wallet.copayerId);
     }
   };
 
