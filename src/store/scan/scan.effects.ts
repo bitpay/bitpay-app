@@ -42,6 +42,7 @@ import {
   isValidBanxaUri,
   IsValidPrivateKey,
   isValidSwapCryptoUri,
+  IsValidAddKeyPath,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -223,7 +224,10 @@ export const incomingData =
       } else if (IsValidPrivateKey(data)) {
         dispatch(handlePrivateKey(data));
         return true;
-        // Import Private Key
+        // Go to Add Key
+      } else if (IsValidAddKeyPath(data)) {
+        dispatch(goToAddKey(data));
+        // Join multisig wallet
       } else if (IsValidImportPrivateKey(data)) {
         dispatch(goToImport(data));
         // Join multisig wallet
@@ -648,6 +652,30 @@ const handlePrivateKey =
     dispatch(LogActions.info('[scan] Incoming-data: private key'));
     navigationRef.navigate(WalletScreens.PAPER_WALLET, {
       scannedPrivateKey,
+    });
+  };
+
+const goToAddKey =
+  (data?: string): Effect<void> =>
+  dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: Go to Add key path', data));
+    dispatch(
+      Analytics.track('Clicked create, import or join', {
+        context: 'DeepLink',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 1,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'CreationOptions',
+        },
+      ],
     });
   };
 
