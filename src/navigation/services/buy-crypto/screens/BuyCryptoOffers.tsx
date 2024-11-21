@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, ScrollView} from 'react-native';
+import {ActivityIndicator, ScrollView, View} from 'react-native';
 import uuid from 'react-native-uuid';
 import styled from 'styled-components/native';
 import {
@@ -2505,7 +2505,7 @@ const BuyCryptoOffers: React.FC = () => {
                       <OfferDataInfoLabel>
                         {t('Provided By')}
                       </OfferDataInfoLabel>
-                      {offer.logo}
+                      <View accessibilityLabel={'offer.key'}>{offer.logo}</View>
                     </OfferDataInfoContainer>
                   </OfferDataContainer>
                   {offer.fiatMoney ? (
