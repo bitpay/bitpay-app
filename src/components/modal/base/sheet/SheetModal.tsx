@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {AppState, AppStateStatus} from 'react-native';
+import {AppState, AppStateStatus, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   BottomSheetBackdrop,
@@ -76,30 +76,33 @@ const SheetModal: React.FC<SheetModalProps> = ({
   );
 
   return modalLibrary === 'bottom-sheet' ? (
-    <BottomSheetModal
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{borderRadius: 20}}
-      snapPoints={fullscreen ? ['100%'] : undefined}
-      enableDismissOnClose={true}
-      enableDynamicSizing={!fullscreen}
-      enableOverDrag={false}
-      enablePanDownToClose={false}
-      handleComponent={null}
-      index={0}
-      ref={bottomSheetModalRef}>
-      <BottomSheetView
-        style={
-          fullscreen
-            ? {
-                backgroundColor: theme.dark ? Black : White,
-                height: HEIGHT,
-                paddingTop: insets.top,
-              }
-            : {}
-        }>
-        {children}
-      </BottomSheetView>
-    </BottomSheetModal>
+    <View testID={'modalBackdrop'}>
+      <BottomSheetModal
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{borderRadius: 20}}
+        snapPoints={fullscreen ? ['100%'] : undefined}
+        enableDismissOnClose={true}
+        enableDynamicSizing={!fullscreen}
+        enableOverDrag={false}
+        enablePanDownToClose={false}
+        handleComponent={null}
+        index={0}
+        accessibilityLabel={'modalBackdrop'}
+        ref={bottomSheetModalRef}>
+        <BottomSheetView
+          style={
+            fullscreen
+              ? {
+                  backgroundColor: theme.dark ? Black : White,
+                  height: HEIGHT,
+                  paddingTop: insets.top,
+                }
+              : {}
+          }>
+          {children}
+        </BottomSheetView>
+      </BottomSheetModal>
+    </View>
   ) : (
     <BaseModal
       id={'sheetModal'}
