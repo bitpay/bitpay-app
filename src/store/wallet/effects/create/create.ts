@@ -258,6 +258,7 @@ export const addWallet =
               tokenOptsByAddress,
             ),
           )) as Wallet;
+          newWallet.receiveAddress = associatedWallet?.receiveAddress;
         } else {
           newWallet = (await dispatch(
             createWallet({
@@ -268,12 +269,16 @@ export const addWallet =
               context,
             }),
           )) as Wallet;
+          const receiveAddress = (await dispatch<any>(
+            createWalletAddress({wallet: newWallet, newAddress: true}),
+          )) as string;
+          dispatch(LogActions.info(`new address generated: ${receiveAddress}`));
+          newWallet.receiveAddress = receiveAddress;
         }
 
         if (!newWallet) {
           return reject();
         }
-        newWallet.receiveAddress = associatedWallet?.receiveAddress;
 
         // subscribe new wallet to push notifications
         if (notificationsAccepted) {
