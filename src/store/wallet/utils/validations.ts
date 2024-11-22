@@ -523,6 +523,10 @@ export const IsValidPrivateKey = (data: string): boolean => {
   return !!(data && (data.substring(0, 2) == '6P' || checkPrivateKey(data)));
 };
 
+export const IsValidAddKeyPath = (data: string) => {
+  return !!data?.includes('bitpay://addKey');
+};
+
 export const IsValidImportPrivateKey = (data: string): boolean => {
   return !!(
     data &&
