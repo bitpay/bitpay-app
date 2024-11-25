@@ -1151,7 +1151,6 @@ const SellCryptoOffers: React.FC = () => {
                         {offer.fiatCurrency !== fiatCurrency ? (
                           <OfferDataWarningContainer>
                             <OfferDataWarningMsg>
-                              {/* TODO: add translations */}
                               {t(
                                 "This exchange doesn't support sales with , tap 'Sell' to continue paying in .",
                                 {
