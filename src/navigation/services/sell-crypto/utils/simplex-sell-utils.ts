@@ -7,8 +7,10 @@ import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {PaymentMethodKey} from '../constants/SellCryptoConstants';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {SimplexCurrencyNetworkCode} from '../../../../store/buy-crypto/models/simplex.models';
-import {getPassthroughUri} from '../../buy-crypto/utils/simplex-utils';
 import {isEuCountry} from '../../../../store/location/location.effects';
+
+const PASSTHROUGH_URI_DEV = 'https://cmgustavo.github.io/website/simplex/';
+const PASSTHROUGH_URI_PROD = 'https://bws.bitpay.com/static/simplex/';
 
 export const simplexSellEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -171,6 +173,10 @@ export const getSimplexSellFiatAmountLimits = () => {
     min: 50, // fixed in EUR
     max: 15000, // fixed in EUR
   };
+};
+
+export const getPassthroughUri = (): string => {
+  return __DEV__ ? PASSTHROUGH_URI_DEV : PASSTHROUGH_URI_PROD;
 };
 
 export const getSimplexSellReturnURL = (

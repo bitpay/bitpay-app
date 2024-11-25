@@ -913,7 +913,8 @@ const SellCryptoOffers: React.FC = () => {
       txn_details: {quote_id: offers.simplex.quoteData.quote_id},
     };
 
-    simplexSellPaymentRequest(quoteData)
+    selectedWallet
+      .simplexSellPaymentRequest(quoteData)
       .then(async (data: SimplexSellPaymentRequestData) => {
         if (data?.error) {
           const reason = 'simplexSellPaymentRequest Error';
