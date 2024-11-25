@@ -663,7 +663,7 @@ const SellCryptoOffers: React.FC = () => {
             );
             if (offers.simplex.sellAmount && coin && precision) {
               offers.simplex.fiatMoney = Number(
-                offers.simplex.sellAmount / Number(data.fiat_amount), // TODO: review this
+                offers.simplex.sellAmount / Number(data.fiat_amount),
               ).toFixed(precision!.unitDecimals);
             } else {
               logger.error(
@@ -878,7 +878,7 @@ const SellCryptoOffers: React.FC = () => {
     await sleep(300);
     dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
     await sleep(500);
-    navigation.goBack(); // TODO: review if use popToTop
+    navigation.dispatch(StackActions.popToTop());
   };
 
   const goToSimplexSellPage = () => {

@@ -4,16 +4,7 @@ export type SimplexSellEnv = 'sandbox' | 'production';
 
 export type SimplexPayoutMethodType = 'card' | 'sepa';
 
-// TODO: review all this status
-export type SimplexSellOrderStatus =
-  | 'createdOrder'
-  | 'bitpayPending'
-  | 'bitpayTxSent'
-  | 'bitpayCanceled'
-  | 'waitingForDeposit'
-  | 'pending'
-  | 'failed'
-  | 'completed';
+export type SimplexSellOrderStatus = 'bitpayTxSent' | 'bitpayFromCheckout';
 
 export interface SimplexSellOrderData {
   env: 'dev' | 'prod';
@@ -37,7 +28,6 @@ export interface SimplexSellOrderData {
 }
 
 export interface SimplexSellIncomingData {
-  // TODO: review this interface
   simplexExternalId: string;
   transactionId?: string;
   status?: SimplexSellOrderStatus;

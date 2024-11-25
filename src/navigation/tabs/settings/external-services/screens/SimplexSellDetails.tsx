@@ -160,7 +160,7 @@ const SimplexSellDetails: React.FC = () => {
                 color: simplexSellGetStatusColor(sellOrder.status),
                 textTransform: 'capitalize',
               }}>
-              {status.statusTitle}
+              {status.statusTitle || t('Sell Order started')}
             </RowData>
           </RowDataContainer>
         )}
@@ -177,7 +177,12 @@ const SimplexSellDetails: React.FC = () => {
 
         {!!sellOrder.status && (
           <LabelTip type="info">
-            <LabelTipText>{status.statusDescription}</LabelTipText>
+            <LabelTipText>
+              {status.statusDescription ||
+                t(
+                  'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
+                )}
+            </LabelTipText>
             {['failed'].includes(sellOrder.status) ? (
               <>
                 <LabelTipText>

@@ -108,7 +108,6 @@ export const sellCryptoReducer = (
       };
 
     case SellCryptoActionTypes.UPDATE_SELL_ORDER_SIMPLEX:
-      // TODO: review this "update sell order case"
       const {simplexSellIncomingData} = action.payload;
       const simplexId = simplexSellIncomingData?.simplexExternalId;
 

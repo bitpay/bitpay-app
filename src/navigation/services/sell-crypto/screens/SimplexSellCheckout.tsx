@@ -19,7 +19,7 @@ import {
 } from '../../../../utils/hooks';
 import SuccessIcon from '../../../../../assets/img/success.svg';
 import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
-import MoonpaySellCheckoutSkeleton from './MoonpaySellCheckoutSkeleton';
+import SimplexSellCheckoutSkeleton from './SimplexSellCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -87,29 +87,12 @@ import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../../tabs/settings/external-services/ExternalServicesGroup';
-import {
-  SimplexGetSellQuoteRequestData,
-  SimplexSellOrderData,
-  // SimplexSellIncomingData,
-  // SimplexSellOrderData,
-  // SimplexSellTransactionDetails,
-} from '../../../../store/sell-crypto/models/simplex-sell.models';
-import {
-  // getSimplexSellFixedCurrencyAbbreviation,
-  getSimplexSellPayoutMethodFormat,
-  // getPayoutMethodKeyFromSimplexType,
-  simplexSellEnv,
-} from '../utils/simplex-sell-utils';
-// import {simplexGetSellTransactionDetails} from '../../../../store/buy-crypto/effects/simplex/simplex';
+import {SimplexSellOrderData} from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {SimplexSettingsProps} from '../../../../navigation/tabs/settings/external-services/screens/SimplexSettings';
 import SendToPill from '../../../../navigation/wallet/components/SendToPill';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {
-  PaymentMethodKey,
-  PaymentMethodsAvailable,
-} from '../constants/SellCryptoConstants';
-import {getSendMaxData} from '../../utils/external-services-utils';
+import {PaymentMethodKey} from '../constants/SellCryptoConstants';
 import {
   ConfirmHardwareWalletModal,
   SimpleConfirmPaymentState,
@@ -127,10 +110,7 @@ import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../../components/form/BoxInput';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
-import {
-  GetCoinAndNetwork,
-  ToAddress,
-} from '../../../../store/wallet/effects/address/address';
+import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
 import {CryptoOffer} from './SellCryptoOffers';
 import {SellBalanceContainer} from '../styled/SellCryptoCard';
@@ -319,25 +299,19 @@ const SimplexSellCheckout: React.FC = () => {
   const init = async () => {
     let payTill: number | null | undefined;
 
-    // try {
-    //   payTill = Number(simplexQuoteOffer.quoteData.expiry_ts);
-    // } catch (err) {
-    //   payTill = undefined;
-    // }
-
     if (!payTill) {
+      // simplexQuoteOffer.quoteData.expiry_ts expires in less than 1 min
       logger.debug(
         'No expiry_ts parameter present. Setting custom expiration time.',
       );
       const now = Date.now();
-      payTill = now + 10 * 60 * 1000;
+      payTill = now + 15 * 60 * 1000;
     }
 
     paymentTimeControl(payTill);
 
-    // TODO: review fee
     const _totalExchangeFee = simplexQuoteOffer.quoteData?.fiat_amount
-      ? Number(simplexQuoteOffer.quoteData.fiat_amount) * 0.05
+      ? Number(simplexQuoteOffer.quoteData.fiat_amount) * 0.05 // %5
       : undefined;
     setTotalExchangeFee(_totalExchangeFee);
   };
@@ -365,17 +339,9 @@ const SimplexSellCheckout: React.FC = () => {
         );
 
         if (isValid) {
-          // TODO: handle this if valid
           clearErrors('toAddress');
           setValidAddress(true);
           setToAddressValue(address);
-          // setValidValues(
-          //   address,
-          //   coin || coinAndNetwork.coin,
-          //   network || coinAndNetwork.network,
-          //   chain || coinAndNetwork.coin,
-          //   tokenAddress,
-          // );
         } else {
           // try testnet
           const isValidTest = ValidateCoinAddress(
@@ -384,16 +350,11 @@ const SimplexSellCheckout: React.FC = () => {
             'testnet',
           );
           if (isValidTest) {
-            // TODO: show an error here if address is testnet
-            setToAddressValue('');
             setValidAddress(false);
-            // setValidValues(
-            //   address,
-            //   coin || coinAndNetwork.coin,
-            //   network || 'testnet',
-            //   chain || coinAndNetwork.coin,
-            //   tokenAddress,
-            // );
+            setError('toAddress', {
+              type: 'manual',
+              message: t('Testnet addresses are not allowed'),
+            });
           }
         }
       } else {
@@ -401,7 +362,6 @@ const SimplexSellCheckout: React.FC = () => {
           type: 'manual',
           message: t('Invalid address'),
         });
-        // setToAddressValue('');
         setValidAddress(false);
       }
     } else {
@@ -417,7 +377,6 @@ const SimplexSellCheckout: React.FC = () => {
     );
     navigation.navigate('ScanRoot', {
       onScanComplete: address => {
-        // TODO: review setValue
         setValue('toAddress', address, {shouldDirty: true});
         processAddress(address);
       },
@@ -537,14 +496,13 @@ const SimplexSellCheckout: React.FC = () => {
       } else {
         dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         await sleep(400);
-        // TODO: uncomment this
-        // broadcastedTx = await dispatch(
-        //   publishAndSign({
-        //     txp: ctxp! as TransactionProposal,
-        //     key,
-        //     wallet,
-        //   }),
-        // );
+        broadcastedTx = await dispatch(
+          publishAndSign({
+            txp: ctxp! as TransactionProposal,
+            key,
+            wallet,
+          }),
+        );
       }
 
       const newData: SimplexSellOrderData = {
@@ -567,8 +525,6 @@ const SimplexSellCheckout: React.FC = () => {
         quote_id: simplexQuoteOffer.quoteData.quote_id ?? '',
         send_max: useSendMax,
       };
-
-      console.log('=========== Saving new Simplex order: ', newData);
 
       dispatch(
         SellCryptoActions.successSellOrderSimplex({
@@ -665,46 +621,6 @@ const SimplexSellCheckout: React.FC = () => {
       showError(msg, t('Unsupported hardware wallet'));
     }
   };
-
-  // const updateSimplexTx = (
-  //   simplexTxData: SimplexSellTransactionDetails,
-  //   broadcastedTx?: Partial<TransactionProposal>,
-  // ) => {
-  //   const dataToUpdate: SimplexSellIncomingData = {
-  //     externalId: sellCryptoExternalId!,
-  //     txSentOn: Date.now(),
-  //     txSentId: broadcastedTx?.txid,
-  //     status: 'bitpayTxSent',
-  //     fiatAmount: simplexTxData.quoteCurrencyAmount,
-  //     baseCurrencyCode: cloneDeep(
-  //       simplexTxData.quoteCurrency.code,
-  //     ).toUpperCase(),
-  //     totalFee: totalExchangeFee,
-  //   };
-
-  //   dispatch(
-  //     SellCryptoActions.updateSellOrderSimplex({
-  //       simplexSellIncomingData: dataToUpdate,
-  //     }),
-  //   );
-
-  //   logger.debug('Updated sell order with: ' + JSON.stringify(dataToUpdate));
-
-  //   dispatch(
-  //     Analytics.track('Successful Crypto Sell', {
-  //       coin: wallet.currencyAbbreviation.toLowerCase(),
-  //       chain: wallet.chain.toLowerCase(),
-  //       amount: amountExpected,
-  //       fiatAmount:
-  //         simplexTxData?.quoteCurrencyAmount ||
-  //         sellOrder?.fiat_receiving_amount,
-  //       fiatCurrency:
-  //         simplexTxData?.quoteCurrency?.code?.toLowerCase() ||
-  //         sellOrder?.fiat_currency?.toLowerCase(),
-  //       exchange: 'simplex',
-  //     }),
-  //   );
-  // };
 
   const showSendMaxWarning = async (
     coin: string,
@@ -809,25 +725,11 @@ const SimplexSellCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    const _getSendMaxData = async (wallet: Wallet) => {
-      // We obtain the sendMaxData, but we do not send the maximum amount, since Simplex misinterprets it
-      // (It rounds the last digit of the decimal up, based on a variable precision number from its side. Therefore, it causes a failure in the execution of the order)
-      // As a workaround we continue to use the previously agreed amount
-      const sendMaxData = await getSendMaxData(wallet);
-      sendMaxInfo = cloneDeep(sendMaxData);
-      init();
-    };
-
-    // dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
     if (isToken) {
       useSendMax = false;
     }
-    // TODO: review this commented section
-    // if (sellOrder?.send_max && !isToken) {
-    //   _getSendMaxData(wallet);
-    // } else {
+
     init();
-    // }
 
     return () => {
       if (countDown) {
@@ -837,7 +739,7 @@ const SimplexSellCheckout: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (validAddress && toAddressValue) {
+    if (validAddress && toAddressValue && toAddressValue !== '') {
       dispatch(startOnGoingProcessModal('CREATING_TXP'));
       setIsLoading(true);
 
@@ -966,111 +868,71 @@ const SimplexSellCheckout: React.FC = () => {
           </SelectedOptionContainer>
         </RowDataContainer>
         <ItemDivisor />
-        {/* <RowDataContainer>
-          <RowLabel>{t('Deposit Address')}</RowLabel>
-          <SendToPill
-            icon={
-              <CurrencyImage
-                img={wallet.img}
-                size={18}
-                badgeUri={getBadgeImg(
-                  getCurrencyAbbreviation(
-                    wallet.currencyAbbreviation,
+        {validAddress && toAddressValue && toAddressValue !== '' ? (
+          <RowDataContainer>
+            <RowLabel>{t('Simplex Deposit Address')}</RowLabel>
+            <SendToPill
+              icon={
+                <CurrencyImage
+                  img={wallet.img}
+                  size={18}
+                  badgeUri={getBadgeImg(
+                    getCurrencyAbbreviation(
+                      wallet.currencyAbbreviation,
+                      wallet.chain,
+                    ),
                     wallet.chain,
-                  ),
-                  wallet.chain,
-                )}
-              />
-            }
-            description={formatCryptoAddress(toAddress)}
-            onPress={() => {
-              copyText(toAddress);
-            }}
-          />
-        </RowDataContainer>
-        <ItemDivisor /> */}
-        <InputContainer>
-          <RowLabel style={{marginBottom: 10}}>
-            {t('Simplex Deposit Address')}
-          </RowLabel>
-          <Controller
-            control={control}
-            render={({field: {onChange, onBlur, value}}) => (
-              <BoxInput
-                placeholder={'Crypto address'}
-                // label={t('Simplex Deposit Address')}
-                onBlur={onBlur}
-                onChangeText={(newValue: string) => {
-                  const trimmedValue = newValue.trim();
-                  onChange(trimmedValue);
-                  processAddress(trimmedValue);
-                }}
-                error={errors.toAddress?.message}
-                value={value}
-                paddingRight={38}
-              />
+                  )}
+                />
+              }
+              description={formatCryptoAddress(toAddressValue)}
+              onPress={() => {
+                copyText(toAddressValue);
+              }}
+            />
+          </RowDataContainer>
+        ) : (
+          <InputContainer>
+            <RowLabel style={{marginBottom: 10}}>
+              {t('Simplex Deposit Address')}
+            </RowLabel>
+            <Controller
+              control={control}
+              render={({field: {onChange, onBlur, value}}) => (
+                <BoxInput
+                  placeholder={'Crypto address'}
+                  onBlur={onBlur}
+                  onChangeText={(newValue: string) => {
+                    const trimmedValue = newValue.trim();
+                    onChange(trimmedValue);
+                    processAddress(trimmedValue);
+                  }}
+                  error={errors.toAddress?.message}
+                  value={value}
+                  paddingRight={38}
+                />
+              )}
+              name="toAddress"
+              defaultValue=""
+            />
+            {toAddressValue && dirtyFields.toAddress ? (
+              <AddressBadge>
+                <SuccessIcon />
+              </AddressBadge>
+            ) : (
+              <ScanButtonContainer onPress={goToScan}>
+                <ScanSvg />
+              </ScanButtonContainer>
             )}
-            name="toAddress"
-            defaultValue=""
-          />
-          {toAddressValue && dirtyFields.toAddress ? (
-            <AddressBadge>
-              <SuccessIcon />
-            </AddressBadge>
-          ) : (
-            <ScanButtonContainer onPress={goToScan}>
-              <ScanSvg />
-            </ScanButtonContainer>
-          )}
-        </InputContainer>
+          </InputContainer>
+        )}
         <ItemDivisor />
         {validAddress ? (
           <>
             {isLoading ? (
-              // TODO: Use SimplexSkeleton
-              <MoonpaySellCheckoutSkeleton />
+              <SimplexSellCheckoutSkeleton />
             ) : (
               <>
-                {/* {getPayoutMethodKeyFromSimplexType(txData?.payoutMethod) &&
-            PaymentMethodsAvailable[
-              getPayoutMethodKeyFromSimplexType(txData?.payoutMethod)!
-            ] ? (
-              <>
-                <RowDataContainer>
-                  <RowLabel>{t('Withdrawing Method')}</RowLabel>
-                  <SelectedOptionContainer>
-                    <SelectedOptionText
-                      numberOfLines={1}
-                      ellipsizeMode={'tail'}>
-                      {
-                        PaymentMethodsAvailable[
-                          getPayoutMethodKeyFromSimplexType(
-                            txData?.payoutMethod,
-                          )!
-                        ].label
-                      }
-                    </SelectedOptionText>
-                  </SelectedOptionContainer>
-                </RowDataContainer>
-                <ItemDivisor />
-              </>
-            ) : PaymentMethodsAvailable &&
-              sellOrder.payment_method &&
-              PaymentMethodsAvailable[sellOrder.payment_method] ? (
-              <>
-                <RowDataContainer>
-                  <RowLabel>{t('Withdrawing Method')}</RowLabel>
-                  <SelectedOptionContainer>
-                    <SelectedOptionText
-                      numberOfLines={1}
-                      ellipsizeMode={'tail'}>
-                      {PaymentMethodsAvailable[sellOrder.payment_method].label}
-                    </SelectedOptionText>
-                  </SelectedOptionContainer>
-                </RowDataContainer>
-                <ItemDivisor />
-              </>
-            ) : null} */}
                 <RowDataContainer>
                   <RowLabel>{t('Miner Fee')}</RowLabel>
                   {fee ? (

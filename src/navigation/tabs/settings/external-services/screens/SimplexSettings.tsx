@@ -154,35 +154,17 @@ const SimplexSettings: React.FC = () => {
                     <PrTxtFiatAmount>
                       {so.crypto_amount} {so.coin}
                     </PrTxtFiatAmount>
-                    {so.status === 'failed' && (
-                      <PrTxtStatus style={{color: '#df5264'}}>
-                        {t('Sell order failed')}
-                      </PrTxtStatus>
-                    )}
-                    {so.status === 'bitpayCanceled' && (
-                      <PrTxtStatus style={{color: '#df5264'}}>
-                        {t('Sell order canceled')}
-                      </PrTxtStatus>
-                    )}
+                    {!so.status ? (
+                      <PrTxtStatus>{t('Sell order started')}</PrTxtStatus>
+                    ) : null}
                     {so.status &&
-                      ['waitingForDeposit', 'bitpayPending'].includes(
-                        so.status,
-                      ) && (
-                        <PrTxtStatus>{t('Waiting for deposit')}</PrTxtStatus>
-                      )}
-                    {so.status === 'completed' && (
-                      <PrTxtStatus style={{color: '#01d1a2'}}>
-                        {t('Sell order completed')}
-                      </PrTxtStatus>
+                    ['bitpayFromCheckout', 'bitpayTxSent'].includes(
+                      so.status,
+                    ) ? (
+                      <PrTxtStatus>{t('Processing sell order')}</PrTxtStatus>
+                    ) : (
+                      <PrTxtStatus>{t('Sell order started')}</PrTxtStatus>
                     )}
-                    {!so.status ||
-                      (so.status === 'createdOrder' && (
-                        <PrTxtStatus>{t('Sell order started')}</PrTxtStatus>
-                      ))}
-                    {so.status &&
-                      ['pending', 'bitpayTxSent'].includes(so.status) && (
-                        <PrTxtStatus>{t('Processing sell order')}</PrTxtStatus>
-                      )}
                   </PrRowLeft>
                   <PrRowRight>
                     <PrTxtCryptoAmount>

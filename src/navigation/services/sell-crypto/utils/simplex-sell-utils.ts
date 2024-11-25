@@ -1,4 +1,7 @@
-import {SimplexPayoutMethodType} from '../../../../store/sell-crypto/models/simplex-sell.models';
+import {
+  SimplexPayoutMethodType,
+  SimplexSellOrderStatus,
+} from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {t} from 'i18next';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {PaymentMethodKey} from '../constants/SellCryptoConstants';
@@ -188,21 +191,20 @@ export interface SimplexSellStatus {
 }
 
 export const simplexSellGetStatusDetails = (
-  status: string,
+  status: SimplexSellOrderStatus,
 ): SimplexSellStatus => {
   let statusDescription, statusTitle;
   switch (status) {
-    case 'createdOrder':
+    case 'bitpayFromCheckout':
       statusTitle = t('Sell Order started');
-      statusDescription = t(
-        'Sell order started. You must complete the selling process with our partner Simplex.',
-      );
-      break;
-    case 'bitpayPending':
-      statusTitle = t('Exchange waiting for crypto');
-      statusDescription = t(
-        'Simplex is waiting for payment in crypto from your BitPay wallet.',
-      );
+      statusDescription =
+        t(
+          'Sell order started. You must complete the selling process with our partner Simplex.',
+        ) +
+        '\n' +
+        t(
+          'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
+        );
       break;
     case 'bitpayTxSent':
       statusTitle = t('Crypto payment sent');
@@ -212,34 +214,6 @@ export const simplexSellGetStatusDetails = (
         t(
           'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
         );
-      break;
-    case 'bitpayCanceled':
-      statusTitle = t('Canceled');
-      statusDescription = t('Sell order canceled by user.');
-      break;
-    case 'waitingForDeposit':
-      statusTitle = t('Waiting For Desposit');
-      statusDescription = t(
-        'Simplex is waiting for an incoming crypto payment.',
-      );
-      break;
-    case 'pending':
-      statusTitle = t('Pending');
-      statusDescription = t(
-        'Simplex received your payment and is processing the order. This may take a few minutes. Thanks for your patience.',
-      );
-      break;
-    case 'completed':
-      statusTitle = t('Finished');
-      statusDescription = t(
-        "Fiat amount were successfully sent to the user's payout method. Remember that depending on your Payout method, it may take a few days to be reflected.",
-      );
-      break;
-    case 'failed':
-      statusTitle = t('Failed');
-      statusDescription = t(
-        "Order has failed. In most cases, it's because you haven't properly verified your identity or payout method or you've reached your maximum daily/weekly sales limit.",
-      );
       break;
     default:
       statusTitle = undefined;
@@ -252,17 +226,11 @@ export const simplexSellGetStatusDetails = (
   };
 };
 
-export const simplexSellGetStatusColor = (status: string): string => {
+export const simplexSellGetStatusColor = (
+  status: SimplexSellOrderStatus,
+): string => {
   switch (status) {
-    case 'completed':
-      return '#01d1a2';
-    case 'failed':
-    case 'bitpayCanceled':
-      return '#df5264';
-    case 'waitingForDeposit':
-    case 'pending':
-    case 'bitpayPending':
-      return '#fdb455';
+    case 'bitpayFromCheckout':
     case 'bitpayTxSent':
       return '#9b9bab';
     default:

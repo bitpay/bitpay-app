@@ -1933,7 +1933,7 @@ const handleSimplexUri =
 
       const stateParams: SimplexSellIncomingData = {
         simplexExternalId: externalId,
-        status: 'completed', // TODO: can this status be failed?
+        status: 'bitpayFromCheckout', // We cannot currently know whether it comes from a success or a fail process
       };
 
       dispatch(
