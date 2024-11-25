@@ -2,7 +2,7 @@ import {
   MoonpayCurrency,
   MoonpayPayoutMethodType,
   MoonpaySellOrderStatus,
-} from '../../../../store/sell-crypto/sell-crypto.models';
+} from '../../../../store/sell-crypto/models/moonpay-sell.models';
 import {t} from 'i18next';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {PaymentMethodKey} from '../constants/SellCryptoConstants';
@@ -218,7 +218,9 @@ export const getMoonpaySellCurrenciesFixedProps = (
       mapping.networkCode?.toLowerCase() ===
         currency.metadata?.networkCode?.toLowerCase() &&
       (!mapping.contractAddress ||
-        mapping.contractAddress === currency.metadata?.contractAddress)
+        (currency.metadata?.contractAddress &&
+          mapping.contractAddress ===
+            currency.metadata.contractAddress.toLowerCase()))
     ) {
       currency.code = mapping.code;
       currency.name = mapping.name;
@@ -318,6 +320,14 @@ export const getMoonpayFiatListByPayoutMethod = (
       break;
   }
   return fiatList;
+};
+
+export const adjustMoonpaySellAmount = (amount: number, precision?: number) => {
+  if (!precision) {
+    return amount;
+  }
+  const factor = Math.pow(10, precision);
+  return Math.trunc(amount * factor) / factor;
 };
 
 export interface MoonpaySellStatus {

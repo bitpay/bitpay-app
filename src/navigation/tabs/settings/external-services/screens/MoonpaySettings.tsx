@@ -31,7 +31,7 @@ import {
 import {useTranslation} from 'react-i18next';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../../../styles/tabNavigator';
-import {MoonpaySellOrderData} from '../../../../../store/sell-crypto/sell-crypto.models';
+import {MoonpaySellOrderData} from '../../../../../store/sell-crypto/models/moonpay-sell.models';
 
 export interface MoonpaySettingsProps {
   incomingPaymentRequest?: {

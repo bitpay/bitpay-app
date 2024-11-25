@@ -58,7 +58,7 @@ import {
   MoonpaySellOrderData,
   MoonpaySellOrderStatus,
   MoonpaySellTransactionDetails,
-} from '../../../../../store/sell-crypto/sell-crypto.models';
+} from '../../../../../store/sell-crypto/models/moonpay-sell.models';
 import {RootState} from '../../../../../store';
 import {Wallet} from '../../../../../store/wallet/wallet.models';
 
@@ -449,7 +449,7 @@ const MoonpaySellDetails: React.FC = () => {
                   {sellOrder.tx_sent_id}
                 </ColumnData>
                 <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedTransactionId ? <CopiedSvg width={17} /> : null}
+                  {copiedTransactionSentId ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainerRight>
               </CopiedContainer>
             </TouchableOpacity>

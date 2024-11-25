@@ -519,7 +519,7 @@ export interface SimplexGetQuoteRequestData {
 }
 
 export interface SimplexPaymentData {
-  address: string;
+  address: string | undefined;
   chain: string;
   created_on: number;
   crypto_amount: number;
@@ -530,7 +530,7 @@ export interface SimplexPaymentData {
   fiat_total_amount_currency: string;
   order_id: string;
   payment_id: string;
-  status: string;
+  status: 'paymentRequestSent' | 'paymentSentToSimplex' | 'success' | 'failed';
   user_id: string;
 }
 

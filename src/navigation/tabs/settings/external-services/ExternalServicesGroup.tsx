@@ -12,6 +12,7 @@ import SardineSettings from './screens/SardineSettings';
 import SardineDetails from './screens/SardineDetails';
 import SimplexSettings from './screens/SimplexSettings';
 import SimplexDetails from './screens/SimplexDetails';
+import SimplexSellDetails from './screens/SimplexSellDetails';
 import TransakSettings from './screens/TransakSettings';
 import TransakDetails from './screens/TransakDetails';
 import WyreSettings from './screens/WyreSettings';
@@ -35,7 +36,8 @@ import {
   TransakPaymentData,
   WyrePaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
-import {MoonpaySellOrderData} from '../../../../store/sell-crypto/sell-crypto.models';
+import {MoonpaySellOrderData} from '../../../../store/sell-crypto/models/moonpay-sell.models';
+import {SimplexSellOrderData} from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {thorswapTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {Root} from '../../../../Root';
@@ -94,6 +96,9 @@ export type ExternalServicesSettingsGroupParamList = {
   SimplexDetails: {
     paymentRequest: SimplexPaymentData;
   };
+  SimplexSellDetails: {
+    sellOrder: SimplexSellOrderData;
+  };
   TransakSettings:
     | {
         incomingPaymentRequest?: TransakIncomingData;
@@ -134,6 +139,7 @@ export enum ExternalServicesSettingsScreens {
   SARDINE_DETAILS = 'SardineDetails',
   SIMPLEX_SETTINGS = 'SimplexSettings',
   SIMPLEX_DETAILS = 'SimplexDetails',
+  SIMPLEX_SELL_DETAILS = 'SimplexSellDetails',
   TRANSAK_SETTINGS = 'TransakSettings',
   TRANSAK_DETAILS = 'TransakDetails',
   WYRE_SETTINGS = 'WyreSettings',
@@ -239,6 +245,15 @@ const ExternalServicesSettingsGroup: React.FC<
         component={SimplexDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.SIMPLEX_SELL_DETAILS}
+        component={SimplexSellDetails}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Sell Order Details')}</HeaderTitle>
+          ),
         }}
       />
       <ExternalServicesSettings.Screen

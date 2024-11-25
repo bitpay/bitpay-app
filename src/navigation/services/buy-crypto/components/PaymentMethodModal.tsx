@@ -15,7 +15,9 @@ import {
 } from '../utils/buy-crypto-utils';
 import {
   getSellEnabledPaymentMethods,
+  isWithdrawalMethodSupported,
   SellCryptoExchangeKey,
+  SellCryptoSupportedExchanges,
 } from '../../sell-crypto/utils/sell-crypto-utils';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Checkbox from '../../../../components/checkbox/Checkbox';
@@ -111,6 +113,9 @@ const PaymentMethodsModal = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const getEnabledPaymentMethods = () => {
     switch (context) {
@@ -120,7 +125,7 @@ const PaymentMethodsModal = ({
           coin,
           chain,
           locationData?.countryShortCode || 'US',
-          preSetPartner,
+          preSetPartner as BuyCryptoExchangeKey,
         );
 
       case 'sellCrypto':
@@ -129,7 +134,8 @@ const PaymentMethodsModal = ({
           coin,
           chain,
           locationData?.countryShortCode || 'US',
-          'moonpay',
+          user?.country,
+          preSetPartner as SellCryptoExchangeKey,
         );
 
       default:
@@ -166,13 +172,14 @@ const PaymentMethodsModal = ({
 
   const getPartnerLogo = (
     exchange: BuyCryptoExchangeKey,
+    iconOnly?: boolean,
   ): JSX.Element | null => {
     switch (exchange) {
       case 'banxa':
         return (
           <BanxaLogo
             key={exchange}
-            iconOnly={context === 'buyCrypto'}
+            iconOnly={iconOnly}
             width={35}
             height={20}
           />
@@ -181,25 +188,20 @@ const PaymentMethodsModal = ({
         return (
           <MoonpayLogo
             key={exchange}
-            iconOnly={context === 'buyCrypto'}
+            iconOnly={iconOnly}
             widthIcon={20}
             heightIcon={20}
           />
         );
       case 'ramp':
         return (
-          <RampLogo
-            key={exchange}
-            iconOnly={context === 'buyCrypto'}
-            width={30}
-            height={30}
-          />
+          <RampLogo key={exchange} iconOnly={iconOnly} width={30} height={30} />
         );
       case 'sardine':
         return (
           <SardineLogo
             key={exchange}
-            iconOnly={context === 'buyCrypto'}
+            iconOnly={iconOnly}
             width={30}
             height={20}
           />
@@ -208,7 +210,7 @@ const PaymentMethodsModal = ({
         return (
           <SimplexLogo
             key={exchange}
-            iconOnly={context === 'buyCrypto'}
+            iconOnly={iconOnly}
             widthIcon={20}
             heightIcon={20}
           />
@@ -217,7 +219,7 @@ const PaymentMethodsModal = ({
         return (
           <TransakLogo
             key={exchange}
-            iconOnly={context === 'buyCrypto'}
+            iconOnly={iconOnly}
             width={30}
             height={17}
           />
@@ -297,24 +299,60 @@ const PaymentMethodsModal = ({
                             </PaymentMethodProviderText>
                           </PaymentMethodProvider>
                           <PaymentMethodProvider style={{height: 30}}>
-                            {preSetPartner &&
-                            BuyCryptoSupportedExchanges.includes(preSetPartner)
-                              ? getPartnerLogo(preSetPartner)
-                              : BuyCryptoSupportedExchanges.map(exchange => {
-                                  return coin &&
-                                    currency &&
-                                    chain &&
-                                    isPaymentMethodSupported(
-                                      exchange,
-                                      paymentMethod,
-                                      coin,
-                                      chain,
-                                      currency,
-                                      locationData?.countryShortCode || 'US',
-                                    )
-                                    ? getPartnerLogo(exchange)
-                                    : null;
-                                })}
+                            {context === 'buyCrypto' ? (
+                              <>
+                                {preSetPartner &&
+                                BuyCryptoSupportedExchanges.includes(
+                                  preSetPartner as BuyCryptoExchangeKey,
+                                )
+                                  ? getPartnerLogo(preSetPartner, false)
+                                  : BuyCryptoSupportedExchanges.map(
+                                      exchange => {
+                                        return coin &&
+                                          currency &&
+                                          chain &&
+                                          isPaymentMethodSupported(
+                                            exchange,
+                                            paymentMethod,
+                                            coin,
+                                            chain,
+                                            currency,
+                                            locationData?.countryShortCode ||
+                                              'US',
+                                          )
+                                          ? getPartnerLogo(exchange, true)
+                                          : null;
+                                      },
+                                    )}
+                              </>
+                            ) : null}
+                            {context === 'sellCrypto' ? (
+                              <>
+                                {preSetPartner &&
+                                SellCryptoSupportedExchanges.includes(
+                                  preSetPartner as SellCryptoExchangeKey,
+                                )
+                                  ? getPartnerLogo(preSetPartner)
+                                  : SellCryptoSupportedExchanges.map(
+                                      exchange => {
+                                        return coin &&
+                                          currency &&
+                                          chain &&
+                                          isWithdrawalMethodSupported(
+                                            exchange,
+                                            paymentMethod,
+                                            coin,
+                                            chain,
+                                            currency,
+                                            locationData?.countryShortCode ||
+                                              'US',
+                                          )
+                                          ? getPartnerLogo(exchange)
+                                          : null;
+                                      },
+                                    )}
+                              </>
+                            ) : null}
                           </PaymentMethodProvider>
                         </PaymentMethodCheckboxTexts>
                       </PaymentMethodCardContainer>

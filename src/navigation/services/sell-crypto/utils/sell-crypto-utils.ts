@@ -7,61 +7,143 @@ import {
   getMoonpaySellSupportedCurrencies,
   moonpaySellSupportedFiatCurrencies,
 } from './moonpay-sell-utils';
+import {
+  getSimplexSellSupportedCurrencies,
+  simplexSellSupportedFiatCurrencies,
+} from './simplex-sell-utils';
 import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 
-export type SellCryptoExchangeKey = 'moonpay';
+export type SellCryptoExchangeKey = 'moonpay' | 'simplex';
 
 export const SellCryptoSupportedExchanges: SellCryptoExchangeKey[] = [
   'moonpay',
+  'simplex',
 ];
 
 export const getSellEnabledPaymentMethods = (
   currency?: string,
   coin?: string,
   chain?: string,
-  country?: string,
+  locationCountry?: string,
+  userCountry?: string,
   exchange?: SellCryptoExchangeKey | undefined,
 ): Partial<PaymentMethods> => {
   if (!currency || !coin || !chain) {
     return {};
   }
-  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!(
-    country &&
-    PaymentMethodsAvailable.sepaBankTransfer.supportedCountries?.includes(
-      country,
-    )
+
+  const isPaymentMethodEnabled = (
+    paymentMethod: PaymentMethod,
+    locationCountry: string | undefined,
+    userCountry: string | undefined,
+  ) => {
+    return !!(
+      (locationCountry &&
+        paymentMethod.supportedCountries?.includes(locationCountry)) ||
+      (userCountry && paymentMethod.supportedCountries?.includes(userCountry))
+    );
+  };
+
+  PaymentMethodsAvailable.sepaBankTransfer.enabled = isPaymentMethodEnabled(
+    PaymentMethodsAvailable.sepaBankTransfer,
+    locationCountry,
+    userCountry,
   );
-  PaymentMethodsAvailable.ach.enabled = !!(
-    country && PaymentMethodsAvailable.ach.supportedCountries?.includes(country)
+
+  PaymentMethodsAvailable.ach.enabled = isPaymentMethodEnabled(
+    PaymentMethodsAvailable.ach,
+    locationCountry,
+    userCountry,
   );
-  PaymentMethodsAvailable.gbpBankTransfer.enabled = !!(
-    country &&
-    PaymentMethodsAvailable.gbpBankTransfer.supportedCountries?.includes(
-      country,
-    )
+
+  PaymentMethodsAvailable.gbpBankTransfer.enabled = isPaymentMethodEnabled(
+    PaymentMethodsAvailable.gbpBankTransfer,
+    locationCountry,
+    userCountry,
   );
+
+  // Helper function to check if a payment method is supported by a specific exchange
+  const isSupportedByExchange = (
+    exchange: SellCryptoExchangeKey,
+    method: PaymentMethod,
+    coin: string,
+    chain: string,
+    currency: string,
+    locationCountry: string | undefined,
+    userCountry: string | undefined,
+  ) => {
+    return isWithdrawalMethodSupported(
+      exchange,
+      method,
+      coin,
+      chain,
+      currency,
+      locationCountry,
+      userCountry,
+    );
+  };
+
+  // Determine supported exchanges for a payment method
+  const getSupportedExchanges = (
+    exchange: SellCryptoExchangeKey | undefined,
+    method: PaymentMethod,
+    coin: string,
+    chain: string,
+    currency: string,
+    locationCountry: string | undefined,
+    userCountry: string | undefined,
+  ) => {
+    if (exchange && SellCryptoSupportedExchanges.includes(exchange)) {
+      return isSupportedByExchange(
+        exchange,
+        method,
+        coin,
+        chain,
+        currency,
+        locationCountry,
+        userCountry,
+      );
+    }
+
+    // Default to 'moonpay' and 'simplex' if no specific exchange is provided
+    return (
+      isSupportedByExchange(
+        'moonpay',
+        method,
+        coin,
+        chain,
+        currency,
+        locationCountry,
+        userCountry,
+      ) ||
+      isSupportedByExchange(
+        'simplex',
+        method,
+        coin,
+        chain,
+        currency,
+        locationCountry,
+        userCountry,
+      )
+    );
+  };
+
+  // Filter enabled payment methods
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
-    return exchange && SellCryptoSupportedExchanges.includes(exchange)
-      ? method.enabled &&
-          isPaymentMethodSupported(
-            exchange,
-            method,
-            coin,
-            chain,
-            currency,
-            country,
-          )
-      : method.enabled &&
-          isPaymentMethodSupported(
-            'moonpay',
-            method,
-            coin,
-            chain,
-            currency,
-            country,
-          );
+    return (
+      method.enabled &&
+      getSupportedExchanges(
+        exchange,
+        method,
+        coin,
+        chain,
+        currency,
+        locationCountry,
+        userCountry,
+      )
+    );
   });
 
   return EnabledPaymentMethods;
@@ -93,17 +175,27 @@ export const getDefaultPaymentMethod = (country?: string): PaymentMethod => {
 export const getSellCryptoSupportedCoins = (
   locationData?: LocationData | null,
   exchange?: string,
+  userCountry?: string | undefined,
 ): string[] => {
   switch (exchange) {
     case 'moonpay':
       return getMoonpaySellSupportedCurrencies(
         locationData?.countryShortCode || 'US',
       );
+    case 'simplex':
+      return getSimplexSellSupportedCurrencies(
+        locationData?.countryShortCode,
+        userCountry,
+      );
     default:
       const allSupportedCurrencies = [
         ...new Set([
           ...getMoonpaySellSupportedCurrencies(
             locationData?.countryShortCode || 'US',
+          ),
+          ...getSimplexSellSupportedCurrencies(
+            locationData?.countryShortCode,
+            userCountry,
           ),
         ]),
       ];
@@ -117,49 +209,96 @@ export const getAvailableSellCryptoFiatCurrencies = (
   switch (exchange) {
     case 'moonpay':
       return moonpaySellSupportedFiatCurrencies;
+    case 'simplex':
+      return simplexSellSupportedFiatCurrencies;
     default:
       const allSupportedFiatCurrencies = [
-        ...new Set([...moonpaySellSupportedFiatCurrencies]),
+        ...new Set([
+          ...moonpaySellSupportedFiatCurrencies,
+          ...simplexSellSupportedFiatCurrencies,
+        ]),
       ];
       return allSupportedFiatCurrencies;
   }
 };
 
-export const isPaymentMethodSupported = (
+export const getBaseSellCryptoFiatCurrencies = (exchange?: string): string => {
+  switch (exchange) {
+    case 'moonpay':
+      return 'USD';
+    case 'simplex':
+      return 'EUR';
+    default:
+      return 'USD';
+  }
+};
+
+export const isWithdrawalMethodSupported = (
   exchange: SellCryptoExchangeKey,
   paymentMethod: PaymentMethod,
   coin: string,
   chain: string,
   currency: string,
-  country?: string,
+  locationCountry?: string,
+  userCountry?: string,
 ): boolean => {
   return (
     paymentMethod.supportedExchanges[exchange] &&
-    isCoinSupportedBy(exchange, coin, chain, country) &&
+    isCoinSupportedToSellBy(
+      exchange,
+      coin,
+      chain,
+      locationCountry,
+      userCountry,
+    ) &&
     (isFiatCurrencySupportedBy(exchange, currency) ||
-      isFiatCurrencySupportedBy(exchange, 'USD'))
+      isFiatCurrencySupportedBy(exchange, 'USD') ||
+      (['simplex'].includes(exchange) &&
+        isFiatCurrencySupportedBy(exchange, 'EUR')))
   );
 };
 
 export const isCoinSupportedToSell = (
   coin: string,
   chain: string,
-  country?: string,
+  locationCountry?: string,
+  userCountry?: string,
 ): boolean => {
-  return isCoinSupportedBy('moonpay', coin, chain, country);
+  return (
+    isCoinSupportedToSellBy(
+      'moonpay',
+      coin,
+      chain,
+      locationCountry,
+      userCountry,
+    ) ||
+    isCoinSupportedToSellBy(
+      'simplex',
+      coin,
+      chain,
+      locationCountry,
+      userCountry,
+    )
+  );
 };
 
-const isCoinSupportedBy = (
+export const isCoinSupportedToSellBy = (
   exchange: string,
   coin: string,
   chain: string,
-  country?: string,
+  locationCountry?: string,
+  userCountry?: string,
 ): boolean => {
   switch (exchange) {
     case 'moonpay':
-      return getMoonpaySellSupportedCurrencies(country).includes(
+      return getMoonpaySellSupportedCurrencies(locationCountry).includes(
         getExternalServiceSymbol(coin, chain),
       );
+    case 'simplex':
+      return getSimplexSellSupportedCurrencies(
+        locationCountry,
+        userCountry,
+      ).includes(getExternalServiceSymbol(coin, chain));
     default:
       return false;
   }
@@ -172,6 +311,10 @@ const isFiatCurrencySupportedBy = (
   switch (exchange) {
     case 'moonpay':
       return moonpaySellSupportedFiatCurrencies.includes(
+        currency.toUpperCase(),
+      );
+    case 'simplex':
+      return simplexSellSupportedFiatCurrencies.includes(
         currency.toUpperCase(),
       );
     default:

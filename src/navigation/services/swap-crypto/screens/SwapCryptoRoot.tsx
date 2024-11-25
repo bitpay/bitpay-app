@@ -242,7 +242,9 @@ const SwapCryptoRoot: React.FC = () => {
   const {rates} = useAppSelector(({RATE}) => RATE);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const route =
-    useRoute<RouteProp<SwapCryptoGroupParamList, 'SwapCryptoRoot'>>();
+    useRoute<
+      RouteProp<SwapCryptoGroupParamList, SwapCryptoScreens.SWAP_CRYPTO_ROOT>
+    >();
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fromWalletSelectorModalVisible, setFromWalletSelectorModalVisible] =
     useState(false);

@@ -608,7 +608,7 @@ const SwapCryptoOffers: React.FC = () => {
       }
     }
 
-    logger.error('Changelly error: ' + msg);
+    logger.error('Changelly error: ' + msg + ' | Reason: ' + reason);
 
     dispatch(
       Analytics.track('Failed Swap Crypto', {

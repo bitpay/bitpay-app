@@ -2,9 +2,13 @@ import axios from 'axios';
 import {LocationActions} from '.';
 import {Effect} from '..';
 import {EUCountries} from './location.constants';
+import cloneDeep from 'lodash.clonedeep';
 
-export const isEuCountry = (countryShortCode: string) => {
-  return EUCountries.includes(countryShortCode);
+export const isEuCountry = (countryShortCode: string | undefined): boolean => {
+  if (!countryShortCode) {
+    return false;
+  }
+  return EUCountries.includes(cloneDeep(countryShortCode).toUpperCase());
 };
 
 export const getLocationData = (): Effect => async dispatch => {
