@@ -13,13 +13,16 @@ export type PaymentMethodKey =
   | 'creditCard'
   | 'debitCard'
   | 'sepaBankTransfer'
-  | 'other';
+  | 'other'
+  | 'paypal'
+  | 'venmo';
 
 export type PaymentMethods = {
   [key in PaymentMethodKey]: PaymentMethod;
 };
 
 export interface PaymentMethod {
+  order: number;
   label: string;
   method: PaymentMethodKey;
   imgSrc: JSX.Element;
@@ -32,6 +35,7 @@ export interface PaymentMethod {
 
 export const PaymentMethodsAvailable: PaymentMethods = {
   ach: {
+    order: 6,
     label: 'ACH Bank Transfer',
     method: 'ach',
     imgSrc: <PaymentMethodIcon paymentMethodId="ach" width={40} height={40} />,
@@ -47,6 +51,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   applePay: {
+    order: 2,
     label: 'Apple Pay',
     method: 'applePay',
     imgSrc: (
@@ -63,6 +68,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: Platform.OS === 'ios',
   },
   creditCard: {
+    order: 5,
     label: 'Credit Card',
     method: 'creditCard',
     imgSrc: (
@@ -79,6 +85,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   debitCard: {
+    order: 1,
     label: 'Debit Card',
     method: 'debitCard',
     imgSrc: (
@@ -95,6 +102,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   sepaBankTransfer: {
+    order: 7,
     label: 'SEPA Bank Transfer',
     method: 'sepaBankTransfer',
     imgSrc: (
@@ -116,6 +124,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   other: {
+    order: 8,
     label: 'Other',
     method: 'other',
     imgSrc: (
@@ -128,6 +137,40 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       sardine: true,
       simplex: true,
       transak: true,
+    },
+    enabled: true,
+  },
+  paypal: {
+    order: 3,
+    label: 'PayPal',
+    method: 'paypal',
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="paypal" width={80} height={80} />
+    ),
+    supportedExchanges: {
+      banxa: false,
+      moonpay: true,
+      ramp: false,
+      sardine: false,
+      simplex: false,
+      transak: false,
+    },
+    enabled: true,
+  },
+  venmo: {
+    order: 4,
+    label: 'Venmo',
+    method: 'venmo',
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="venmo" width={80} height={80} />
+    ),
+    supportedExchanges: {
+      banxa: false,
+      moonpay: true,
+      ramp: false,
+      sardine: false,
+      simplex: false,
+      transak: false,
     },
     enabled: true,
   },

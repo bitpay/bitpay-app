@@ -92,7 +92,7 @@ import {SimplexSettingsProps} from '../../../../navigation/tabs/settings/externa
 import SendToPill from '../../../../navigation/wallet/components/SendToPill';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {PaymentMethodKey} from '../constants/SellCryptoConstants';
+import {WithdrawalMethodKey} from '../constants/SellCryptoConstants';
 import {
   ConfirmHardwareWalletModal,
   SimpleConfirmPaymentState,
@@ -143,7 +143,7 @@ export interface SimplexSellCheckoutProps {
   wallet: Wallet;
   amount: number;
   externalId: string;
-  paymentMethod: PaymentMethodKey;
+  paymentMethod: WithdrawalMethodKey;
   simplexTxId: string;
   useSendMax?: boolean;
   sendMaxInfo?: SendMaxInfo;

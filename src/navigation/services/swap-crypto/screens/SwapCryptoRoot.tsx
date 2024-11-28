@@ -78,7 +78,7 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
-import ArrowDown from '../../../../../assets/img/services/swap-crypto/down-arrow.svg';
+import ArrowDown from '../../../../../assets/img/swap-crypto/down-arrow.svg';
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {AppActions} from '../../../../store/app';
 import {useTranslation} from 'react-i18next';

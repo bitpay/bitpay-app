@@ -104,7 +104,7 @@ import throttle from 'lodash.throttle';
 import {SwapCryptoScreens} from '../SwapCryptoGroup';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 
-const ThumbImage = require('../../../../../assets/img/services/swap-crypto/slider-thumb.png');
+const ThumbImage = require('../../../../../assets/img/swap-crypto/slider-thumb.png');
 
 export type SwapCryptoOffersScreenParams = {
   amountFrom: number;

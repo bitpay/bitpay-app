@@ -101,7 +101,7 @@ import {MoonpaySettingsProps} from '../../../../navigation/tabs/settings/externa
 import SendToPill from '../../../../navigation/wallet/components/SendToPill';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {PaymentMethodsAvailable} from '../constants/SellCryptoConstants';
+import {WithdrawalMethodsAvailable} from '../constants/SellCryptoConstants';
 import {getSendMaxData} from '../../utils/external-services-utils';
 import {
   ConfirmHardwareWalletModal,
@@ -924,7 +924,7 @@ const MoonpaySellCheckout: React.FC = () => {
         ) : (
           <>
             {getPayoutMethodKeyFromMoonpayType(txData?.payoutMethod) &&
-            PaymentMethodsAvailable[
+            WithdrawalMethodsAvailable[
               getPayoutMethodKeyFromMoonpayType(txData?.payoutMethod)!
             ] ? (
               <>
@@ -935,7 +935,7 @@ const MoonpaySellCheckout: React.FC = () => {
                       numberOfLines={1}
                       ellipsizeMode={'tail'}>
                       {
-                        PaymentMethodsAvailable[
+                        WithdrawalMethodsAvailable[
                           getPayoutMethodKeyFromMoonpayType(
                             txData?.payoutMethod,
                           )!
@@ -946,9 +946,9 @@ const MoonpaySellCheckout: React.FC = () => {
                 </RowDataContainer>
                 <ItemDivisor />
               </>
-            ) : PaymentMethodsAvailable &&
+            ) : WithdrawalMethodsAvailable &&
               sellOrder.payment_method &&
-              PaymentMethodsAvailable[sellOrder.payment_method] ? (
+              WithdrawalMethodsAvailable[sellOrder.payment_method] ? (
               <>
                 <RowDataContainer>
                   <RowLabel>{t('Withdrawing Method')}</RowLabel>
@@ -956,7 +956,10 @@ const MoonpaySellCheckout: React.FC = () => {
                     <SelectedOptionText
                       numberOfLines={1}
                       ellipsizeMode={'tail'}>
-                      {PaymentMethodsAvailable[sellOrder.payment_method].label}
+                      {
+                        WithdrawalMethodsAvailable[sellOrder.payment_method]
+                          .label
+                      }
                     </SelectedOptionText>
                   </SelectedOptionContainer>
                 </RowDataContainer>

@@ -7,21 +7,23 @@ import {
 } from '../../constants/PaymentMethodsConstants';
 import {SellCryptoExchangeKey} from '../utils/sell-crypto-utils';
 
-// ach_bank_transfer, credit_debit_card, sepa_bank_transfer and gbp_bank_transfer
-export type PaymentMethodKey =
+export type WithdrawalMethodKey =
   | 'ach'
   | 'creditCard'
   | 'debitCard'
   | 'sepaBankTransfer'
-  | 'gbpBankTransfer';
+  | 'gbpBankTransfer'
+  | 'paypal'
+  | 'venmo';
 
-export type PaymentMethods = {
-  [key in PaymentMethodKey]: PaymentMethod;
+export type WithdrawalMethods = {
+  [key in WithdrawalMethodKey]: WithdrawalMethod;
 };
 
-export interface PaymentMethod {
+export interface WithdrawalMethod {
+  order: number;
   label: string;
-  method: PaymentMethodKey;
+  method: WithdrawalMethodKey;
   imgSrc: JSX.Element;
   supportedExchanges: {
     [key in SellCryptoExchangeKey]: boolean;
@@ -30,8 +32,9 @@ export interface PaymentMethod {
   supportedCountries?: string[];
 }
 
-export const PaymentMethodsAvailable: PaymentMethods = {
+export const WithdrawalMethodsAvailable: WithdrawalMethods = {
   ach: {
+    order: 5,
     label: 'ACH Bank Transfer',
     method: 'ach',
     imgSrc: <PaymentMethodIcon paymentMethodId="ach" width={40} height={40} />,
@@ -43,6 +46,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   creditCard: {
+    order: 4,
     label: 'Credit Card',
     method: 'creditCard',
     imgSrc: (
@@ -55,6 +59,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   debitCard: {
+    order: 1,
     label: 'Debit Card',
     method: 'debitCard',
     imgSrc: (
@@ -67,6 +72,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   sepaBankTransfer: {
+    order: 6,
     label: 'SEPA Bank Transfer',
     method: 'sepaBankTransfer',
     imgSrc: (
@@ -84,6 +90,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   gbpBankTransfer: {
+    order: 7,
     label: 'GBP Bank Transfer',
     method: 'gbpBankTransfer',
     imgSrc: (
@@ -98,6 +105,32 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       simplex: false,
     },
     supportedCountries: countriesWithGBPTransfer,
+    enabled: true,
+  },
+  paypal: {
+    order: 2,
+    label: 'PayPal',
+    method: 'paypal',
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="paypal" width={80} height={80} />
+    ),
+    supportedExchanges: {
+      moonpay: true,
+      simplex: false,
+    },
+    enabled: true,
+  },
+  venmo: {
+    order: 3,
+    label: 'Venmo',
+    method: 'venmo',
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="venmo" width={80} height={80} />
+    ),
+    supportedExchanges: {
+      moonpay: true,
+      simplex: false,
+    },
     enabled: true,
   },
 };

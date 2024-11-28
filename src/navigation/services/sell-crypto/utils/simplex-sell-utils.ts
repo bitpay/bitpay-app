@@ -4,7 +4,7 @@ import {
 } from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {t} from 'i18next';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
-import {PaymentMethodKey} from '../constants/SellCryptoConstants';
+import {WithdrawalMethodKey} from '../constants/SellCryptoConstants';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {SimplexCurrencyNetworkCode} from '../../../../store/buy-crypto/models/simplex.models';
 import {isEuCountry} from '../../../../store/location/location.effects';
@@ -130,7 +130,7 @@ export const getChainFromSimplexNetworkCode = (
 };
 
 export const getSimplexSellPayoutMethodFormat = (
-  method: PaymentMethodKey,
+  method: WithdrawalMethodKey,
 ): SimplexPayoutMethodType | undefined => {
   if (!method) {
     return undefined;
