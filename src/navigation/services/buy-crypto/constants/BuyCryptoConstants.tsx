@@ -1,11 +1,6 @@
 import React from 'react';
 import {Platform} from 'react-native';
-
-// Images
-import ApplePayIcon from '../../../../../assets/img/services/payment-methods/apple-pay-logo.svg';
-import BankIcon from '../../../../../assets/img/services/payment-methods/icon-bank.svg';
-import CreditCardIcon from '../../../../../assets/img/services/payment-methods/icon-creditcard.svg';
-import DebitCardIcon from '../../../../../assets/img/services/payment-methods/icon-debitcard.svg';
+import PaymentMethodIcon from '../../../../components/icons/payment-methods/payment-methods';
 import {
   countriesWithACH,
   countriesWithSEPA,
@@ -39,7 +34,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   ach: {
     label: 'ACH Bank Transfer',
     method: 'ach',
-    imgSrc: <BankIcon width={40} height={40} />,
+    imgSrc: <PaymentMethodIcon paymentMethodId="ach" width={40} height={40} />,
     supportedExchanges: {
       banxa: false,
       moonpay: false,
@@ -54,7 +49,9 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   applePay: {
     label: 'Apple Pay',
     method: 'applePay',
-    imgSrc: <ApplePayIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="applePay" width={40} height={40} />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,
@@ -68,7 +65,9 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   creditCard: {
     label: 'Credit Card',
     method: 'creditCard',
-    imgSrc: <CreditCardIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="creditCard" width={40} height={40} />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,
@@ -82,7 +81,9 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   debitCard: {
     label: 'Debit Card',
     method: 'debitCard',
-    imgSrc: <DebitCardIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="debitCard" width={40} height={40} />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,
@@ -96,7 +97,13 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   sepaBankTransfer: {
     label: 'SEPA Bank Transfer',
     method: 'sepaBankTransfer',
-    imgSrc: <BankIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon
+        paymentMethodId="sepaBankTransfer"
+        width={40}
+        height={40}
+      />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,
@@ -111,7 +118,9 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   other: {
     label: 'Other',
     method: 'other',
-    imgSrc: <CreditCardIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="other" width={40} height={40} />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,

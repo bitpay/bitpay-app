@@ -1,9 +1,5 @@
 import React from 'react';
-
-// Images
-import BankIcon from '../../../../../assets/img/services/payment-methods/icon-bank.svg';
-import CreditCardIcon from '../../../../../assets/img/services/payment-methods/icon-creditcard.svg';
-import DebitCardIcon from '../../../../../assets/img/services/payment-methods/icon-debitcard.svg';
+import PaymentMethodIcon from '../../../../components/icons/payment-methods/payment-methods';
 import {
   countriesWithACH,
   countriesWithGBPTransfer,
@@ -38,7 +34,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   ach: {
     label: 'ACH Bank Transfer',
     method: 'ach',
-    imgSrc: <BankIcon width={40} height={40} />,
+    imgSrc: <PaymentMethodIcon paymentMethodId="ach" width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
       simplex: false,
@@ -49,7 +45,9 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   creditCard: {
     label: 'Credit Card',
     method: 'creditCard',
-    imgSrc: <CreditCardIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="creditCard" width={40} height={40} />
+    ),
     supportedExchanges: {
       moonpay: false,
       simplex: true,
@@ -59,7 +57,9 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   debitCard: {
     label: 'Debit Card',
     method: 'debitCard',
-    imgSrc: <DebitCardIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="debitCard" width={40} height={40} />
+    ),
     supportedExchanges: {
       moonpay: true,
       simplex: true,
@@ -69,7 +69,13 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   sepaBankTransfer: {
     label: 'SEPA Bank Transfer',
     method: 'sepaBankTransfer',
-    imgSrc: <BankIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon
+        paymentMethodId="sepaBankTransfer"
+        width={40}
+        height={40}
+      />
+    ),
     supportedExchanges: {
       moonpay: true,
       simplex: true,
@@ -80,7 +86,13 @@ export const PaymentMethodsAvailable: PaymentMethods = {
   gbpBankTransfer: {
     label: 'GBP Bank Transfer',
     method: 'gbpBankTransfer',
-    imgSrc: <BankIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon
+        paymentMethodId="gbpBankTransfer"
+        width={40}
+        height={40}
+      />
+    ),
     supportedExchanges: {
       moonpay: true,
       simplex: false,
