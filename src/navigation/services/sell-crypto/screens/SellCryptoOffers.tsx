@@ -377,9 +377,12 @@ const SellCryptoOffers: React.FC = () => {
       }
 
       offersDefault[exchange].fiatCurrency =
-        getAvailableSellCryptoFiatCurrencies(exchange).includes(fiatCurrency)
+        getAvailableSellCryptoFiatCurrencies(
+          exchange,
+          paymentMethod.method,
+        ).includes(fiatCurrency)
           ? fiatCurrency
-          : getBaseSellCryptoFiatCurrencies(exchange);
+          : getBaseSellCryptoFiatCurrencies(exchange, paymentMethod.method);
 
       if (
         preSetPartner &&

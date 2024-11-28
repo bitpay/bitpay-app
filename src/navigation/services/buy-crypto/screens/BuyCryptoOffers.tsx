@@ -49,7 +49,10 @@ import {
   BanxaQuoteData,
   BuyCryptoLimits,
   MoonpayGetCurrencyLimitsRequestData,
+  MoonpayGetSignedPaymentUrlData,
+  MoonpayGetSignedPaymentUrlReqData,
   MoonpayPaymentData,
+  MoonpayPaymentType,
   RampGetAssetsData,
   RampGetAssetsRequestData,
   RampPaymentData,
@@ -101,6 +104,7 @@ import {
 } from '../utils/banxa-utils';
 import {
   getMoonpayFixedCurrencyAbbreviation,
+  getMoonpayPaymentMethodFormat,
   moonpayEnv,
 } from '../utils/moonpay-utils';
 import {
@@ -728,23 +732,12 @@ const BuyCryptoOffers: React.FC = () => {
       return;
     }
 
-    let _paymentMethod: string | undefined;
-    switch (paymentMethod.method) {
-      case 'debitCard':
-      case 'creditCard':
-        _paymentMethod = 'credit_debit_card';
-        break;
-      case 'sepaBankTransfer':
-        _paymentMethod = 'sepa_bank_transfer';
-        // Moonpay only accepts EUR as a base currency for SEPA payments
-        offers.moonpay.fiatCurrency = 'EUR';
-        break;
-      case 'applePay':
-        _paymentMethod = 'mobile_wallet';
-        break;
-      default:
-        _paymentMethod = undefined;
-        break;
+    let _paymentMethod: MoonpayPaymentType | undefined =
+      getMoonpayPaymentMethodFormat(paymentMethod.method);
+
+    if (_paymentMethod === 'sepa_bank_transfer') {
+      // Moonpay only accepts EUR as a base currency for SEPA payments
+      offers.moonpay.fiatCurrency = 'EUR';
     }
 
     offers.moonpay.fiatAmount =
@@ -1844,7 +1837,7 @@ const BuyCryptoOffers: React.FC = () => {
       }),
     );
 
-    const quoteData = {
+    const quoteData: MoonpayGetSignedPaymentUrlReqData = {
       currencyCode: getMoonpayFixedCurrencyAbbreviation(
         coin.toLowerCase(),
         destinationChain,
@@ -1860,9 +1853,17 @@ const BuyCryptoOffers: React.FC = () => {
       showWalletAddressForm: false,
     };
 
-    let data;
+    let _paymentMethod: MoonpayPaymentType | undefined =
+      getMoonpayPaymentMethodFormat(paymentMethod.method);
+    if (_paymentMethod) {
+      quoteData.paymentMethod = _paymentMethod;
+    }
+
+    let data: MoonpayGetSignedPaymentUrlData;
     try {
-      data = await selectedWallet.moonpayGetSignedPaymentUrl(quoteData);
+      data = (await selectedWallet.moonpayGetSignedPaymentUrl(
+        quoteData,
+      )) as MoonpayGetSignedPaymentUrlData;
     } catch (err) {
       const reason = 'moonpayGetSignedPaymentUrl Error';
       showMoonpayError(err, reason);

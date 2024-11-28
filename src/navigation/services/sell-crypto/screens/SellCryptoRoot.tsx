@@ -588,17 +588,6 @@ const SellCryptoRoot = ({
       locationData?.countryShortCode,
     );
     setSelectedPaymentMethod(defaultPaymentMethod);
-    checkAndSetFiatCurrency(defaultPaymentMethod.method);
-  };
-
-  const checkAndSetFiatCurrency = (paymentMethodKey: PaymentMethodKey) => {
-    const fiatList = getMoonpayFiatListByPayoutMethod(paymentMethodKey);
-    if (fiatList && fiatList[0] && !fiatList.includes(fiatCurrency)) {
-      logger.debug(
-        `Updating fiat currency from ${fiatCurrency} to ${fiatList[0]}.`,
-      );
-      setFiatCurrency(fiatList[0]);
-    }
   };
 
   const checkPaymentMethod = () => {
@@ -1779,7 +1768,6 @@ const SellCryptoRoot = ({
           setUseSendMax(false);
           setSendMaxInfo(undefined);
           setLoadingQuote(false);
-          checkAndSetFiatCurrency(paymentMethod.method);
         }}
         isVisible={paymentMethodModalVisible}
         onBackdropPress={() => hideModal('paymentMethod')}
