@@ -31,7 +31,6 @@ setup_permissions([
 'Bluetooth',
 'Camera',
 'FaceID',
-'LocationWhenInUse',
 'Notifications',
 ])
 

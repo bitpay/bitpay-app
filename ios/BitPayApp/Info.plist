@@ -72,8 +72,6 @@
 	<string>We need permission to access your camera to scan QR codes.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Enabling Face ID allows you quick and secure access to your account.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Tracking is used to identify source of traffic, optimize campaigns, and improve user experiences in the app.</string>
 	<key>UIAppFonts</key>
