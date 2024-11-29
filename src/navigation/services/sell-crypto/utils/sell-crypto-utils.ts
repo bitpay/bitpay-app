@@ -1,9 +1,11 @@
 import {
-  PaymentMethod,
-  PaymentMethods,
-  PaymentMethodsAvailable,
+  WithdrawalMethod,
+  WithdrawalMethodKey,
+  WithdrawalMethods,
+  WithdrawalMethodsAvailable,
 } from '../constants/SellCryptoConstants';
 import {
+  getMoonpayFiatListByPayoutMethod,
   getMoonpaySellSupportedCurrencies,
   moonpaySellSupportedFiatCurrencies,
 } from './moonpay-sell-utils';
@@ -29,13 +31,13 @@ export const getSellEnabledPaymentMethods = (
   locationCountry?: string,
   userCountry?: string,
   exchange?: SellCryptoExchangeKey | undefined,
-): Partial<PaymentMethods> => {
+): Partial<WithdrawalMethods> => {
   if (!currency || !coin || !chain) {
     return {};
   }
 
   const isPaymentMethodEnabled = (
-    paymentMethod: PaymentMethod,
+    paymentMethod: WithdrawalMethod,
     locationCountry: string | undefined,
     userCountry: string | undefined,
   ) => {
@@ -46,20 +48,20 @@ export const getSellEnabledPaymentMethods = (
     );
   };
 
-  PaymentMethodsAvailable.sepaBankTransfer.enabled = isPaymentMethodEnabled(
-    PaymentMethodsAvailable.sepaBankTransfer,
+  WithdrawalMethodsAvailable.sepaBankTransfer.enabled = isPaymentMethodEnabled(
+    WithdrawalMethodsAvailable.sepaBankTransfer,
     locationCountry,
     userCountry,
   );
 
-  PaymentMethodsAvailable.ach.enabled = isPaymentMethodEnabled(
-    PaymentMethodsAvailable.ach,
+  WithdrawalMethodsAvailable.ach.enabled = isPaymentMethodEnabled(
+    WithdrawalMethodsAvailable.ach,
     locationCountry,
     userCountry,
   );
 
-  PaymentMethodsAvailable.gbpBankTransfer.enabled = isPaymentMethodEnabled(
-    PaymentMethodsAvailable.gbpBankTransfer,
+  WithdrawalMethodsAvailable.gbpBankTransfer.enabled = isPaymentMethodEnabled(
+    WithdrawalMethodsAvailable.gbpBankTransfer,
     locationCountry,
     userCountry,
   );
@@ -67,7 +69,7 @@ export const getSellEnabledPaymentMethods = (
   // Helper function to check if a payment method is supported by a specific exchange
   const isSupportedByExchange = (
     exchange: SellCryptoExchangeKey,
-    method: PaymentMethod,
+    method: WithdrawalMethod,
     coin: string,
     chain: string,
     currency: string,
@@ -88,7 +90,7 @@ export const getSellEnabledPaymentMethods = (
   // Determine supported exchanges for a payment method
   const getSupportedExchanges = (
     exchange: SellCryptoExchangeKey | undefined,
-    method: PaymentMethod,
+    method: WithdrawalMethod,
     coin: string,
     chain: string,
     currency: string,
@@ -131,45 +133,48 @@ export const getSellEnabledPaymentMethods = (
   };
 
   // Filter enabled payment methods
-  const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
-    return (
-      method.enabled &&
-      getSupportedExchanges(
-        exchange,
-        method,
-        coin,
-        chain,
-        currency,
-        locationCountry,
-        userCountry,
-      )
-    );
-  });
+  const EnabledWithdrawalMethods = pickBy(
+    WithdrawalMethodsAvailable,
+    method => {
+      return (
+        method.enabled &&
+        getSupportedExchanges(
+          exchange,
+          method,
+          coin,
+          chain,
+          currency,
+          locationCountry,
+          userCountry,
+        )
+      );
+    },
+  );
 
-  return EnabledPaymentMethods;
+  return EnabledWithdrawalMethods;
 };
 
-export const getDefaultPaymentMethod = (country?: string): PaymentMethod => {
+export const getDefaultPaymentMethod = (country?: string): WithdrawalMethod => {
   if (!country) {
-    return PaymentMethodsAvailable.debitCard;
+    return WithdrawalMethodsAvailable.debitCard;
   } else if (
-    PaymentMethodsAvailable.ach.supportedCountries?.includes(country)
+    WithdrawalMethodsAvailable.ach.supportedCountries?.includes(country)
   ) {
-    return PaymentMethodsAvailable.ach;
+    return WithdrawalMethodsAvailable.ach;
   } else if (
-    PaymentMethodsAvailable.gbpBankTransfer.supportedCountries?.includes(
+    WithdrawalMethodsAvailable.gbpBankTransfer.supportedCountries?.includes(
       country,
     )
   ) {
-    return PaymentMethodsAvailable.gbpBankTransfer;
+    return WithdrawalMethodsAvailable.gbpBankTransfer;
   } else if (
-    PaymentMethodsAvailable.sepaBankTransfer.supportedCountries?.includes(
+    WithdrawalMethodsAvailable.sepaBankTransfer.supportedCountries?.includes(
       country,
     )
   ) {
-    return PaymentMethodsAvailable.sepaBankTransfer;
+    return WithdrawalMethodsAvailable.sepaBankTransfer;
   }
-  return PaymentMethodsAvailable.debitCard;
+  return WithdrawalMethodsAvailable.debitCard;
 };
 
 export const getSellCryptoSupportedCoins = (
@@ -205,10 +210,15 @@ export const getSellCryptoSupportedCoins = (
 
 export const getAvailableSellCryptoFiatCurrencies = (
   exchange?: string,
+  paymentMethodKey?: WithdrawalMethodKey,
 ): string[] => {
   switch (exchange) {
     case 'moonpay':
-      return moonpaySellSupportedFiatCurrencies;
+      if (paymentMethodKey) {
+        return getMoonpayFiatListByPayoutMethod(paymentMethodKey);
+      } else {
+        return moonpaySellSupportedFiatCurrencies;
+      }
     case 'simplex':
       return simplexSellSupportedFiatCurrencies;
     default:
@@ -222,10 +232,17 @@ export const getAvailableSellCryptoFiatCurrencies = (
   }
 };
 
-export const getBaseSellCryptoFiatCurrencies = (exchange?: string): string => {
+export const getBaseSellCryptoFiatCurrencies = (
+  exchange?: string,
+  paymentMethodKey?: WithdrawalMethodKey,
+): string => {
   switch (exchange) {
     case 'moonpay':
-      return 'USD';
+      const fiatList = getAvailableSellCryptoFiatCurrencies(
+        'moonpay',
+        paymentMethodKey,
+      );
+      return fiatList[0] || 'USD';
     case 'simplex':
       return 'EUR';
     default:
@@ -235,7 +252,7 @@ export const getBaseSellCryptoFiatCurrencies = (exchange?: string): string => {
 
 export const isWithdrawalMethodSupported = (
   exchange: SellCryptoExchangeKey,
-  paymentMethod: PaymentMethod,
+  paymentMethod: WithdrawalMethod,
   coin: string,
   chain: string,
   currency: string,

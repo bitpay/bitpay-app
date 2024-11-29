@@ -261,6 +261,30 @@ export interface MoonpayGetCurrencyLimitsRequestData {
   paymentMethod?: string;
 }
 
+export type MoonpayPaymentType =
+  | 'venmo'
+  | 'paypal'
+  | 'mobile_wallet' // applePay
+  | 'sepa_bank_transfer'
+  | 'credit_debit_card';
+
+export interface MoonpayGetSignedPaymentUrlReqData {
+  env: 'sandbox' | 'production';
+  currencyCode: string;
+  walletAddress: string;
+  baseCurrencyCode: string;
+  baseCurrencyAmount: number;
+  externalTransactionId: string;
+  redirectURL: string;
+  lockAmount: boolean;
+  showWalletAddressForm: boolean;
+  paymentMethod?: MoonpayPaymentType;
+}
+
+export interface MoonpayGetSignedPaymentUrlData {
+  urlWithSignature: string;
+}
+
 export interface MoonpayPaymentData {
   address: string;
   chain: string;

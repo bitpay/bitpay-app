@@ -16,8 +16,7 @@ import {
 } from '../../../../utils/hooks';
 import {SellCryptoScreens, SellCryptoGroupParamList} from '../SellCryptoGroup';
 import {
-  PaymentMethod,
-  PaymentMethodKey,
+  WithdrawalMethod,
 } from '../../sell-crypto/constants/SellCryptoConstants';
 import PaymentMethodsModal from '../../buy-crypto/components/PaymentMethodModal';
 import AmountModal from '../../../../components/amount/AmountModal';
@@ -286,7 +285,7 @@ const SellCryptoRoot = ({
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
     useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod>();
+    useState<WithdrawalMethod>();
   const [sellCryptoSupportedCoins, setSellCryptoSupportedCoins] =
     useState<SellCryptoCoin[]>();
   const [moonpaySelectedCoin, setMoonpaySelectedCoin] =
@@ -585,21 +584,10 @@ const SellCryptoRoot = ({
   };
 
   const setDefaultPaymentMethod = () => {
-    const defaultPaymentMethod: PaymentMethod = getDefaultPaymentMethod(
+    const defaultPaymentMethod: WithdrawalMethod = getDefaultPaymentMethod(
       locationData?.countryShortCode,
     );
     setSelectedPaymentMethod(defaultPaymentMethod);
-    checkAndSetFiatCurrency(defaultPaymentMethod.method);
-  };
-
-  const checkAndSetFiatCurrency = (paymentMethodKey: PaymentMethodKey) => {
-    const fiatList = getMoonpayFiatListByPayoutMethod(paymentMethodKey);
-    if (fiatList && fiatList[0] && !fiatList.includes(fiatCurrency)) {
-      logger.debug(
-        `Updating fiat currency from ${fiatCurrency} to ${fiatList[0]}.`,
-      );
-      setFiatCurrency(fiatList[0]);
-    }
   };
 
   const checkPaymentMethod = () => {
@@ -1780,7 +1768,6 @@ const SellCryptoRoot = ({
           setUseSendMax(false);
           setSendMaxInfo(undefined);
           setLoadingQuote(false);
-          checkAndSetFiatCurrency(paymentMethod.method);
         }}
         isVisible={paymentMethodModalVisible}
         onBackdropPress={() => hideModal('paymentMethod')}

@@ -36,7 +36,6 @@ import {
   BitPay,
   LuckySevens,
 } from '../../../../styles/colors';
-import {RootState} from '../../../../store';
 import {
   GetPrecision,
   IsERCToken,
@@ -67,7 +66,7 @@ import {
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
-import {PaymentMethod} from '../constants/SellCryptoConstants';
+import {WithdrawalMethod} from '../constants/SellCryptoConstants';
 import {useTranslation} from 'react-i18next';
 import {
   TermsContainer,
@@ -100,10 +99,6 @@ import {
   SimplexSellPaymentRequestReqData,
 } from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {SellCryptoScreens} from '../SellCryptoGroup';
-import {
-  simplexGetSellQuote,
-  simplexSellPaymentRequest,
-} from '../../../../store/buy-crypto/effects/simplex/simplex';
 
 export type SellCryptoOffersScreenParams = {
   amount: number;
@@ -112,7 +107,7 @@ export type SellCryptoOffersScreenParams = {
   chain: string;
   country: string;
   selectedWallet: Wallet;
-  paymentMethod: PaymentMethod;
+  paymentMethod: WithdrawalMethod;
   sellCryptoConfig: SellCryptoConfig | undefined;
   preSetPartner?: SellCryptoExchangeKey | undefined;
   preLoadPartnersData?: PreLoadPartnersData;
@@ -382,9 +377,12 @@ const SellCryptoOffers: React.FC = () => {
       }
 
       offersDefault[exchange].fiatCurrency =
-        getAvailableSellCryptoFiatCurrencies(exchange).includes(fiatCurrency)
+        getAvailableSellCryptoFiatCurrencies(
+          exchange,
+          paymentMethod.method,
+        ).includes(fiatCurrency)
           ? fiatCurrency
-          : getBaseSellCryptoFiatCurrencies(exchange);
+          : getBaseSellCryptoFiatCurrencies(exchange, paymentMethod.method);
 
       if (
         preSetPartner &&

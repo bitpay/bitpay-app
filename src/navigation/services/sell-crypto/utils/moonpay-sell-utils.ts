@@ -5,7 +5,7 @@ import {
 } from '../../../../store/sell-crypto/models/moonpay-sell.models';
 import {t} from 'i18next';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
-import {PaymentMethodKey} from '../constants/SellCryptoConstants';
+import {WithdrawalMethodKey} from '../constants/SellCryptoConstants';
 import cloneDeep from 'lodash.clonedeep';
 
 export const moonpaySellEnv = __DEV__ ? 'sandbox' : 'production';
@@ -231,7 +231,7 @@ export const getMoonpaySellCurrenciesFixedProps = (
 };
 
 export const getMoonpaySellPayoutMethodFormat = (
-  method: PaymentMethodKey,
+  method: WithdrawalMethodKey,
 ): MoonpayPayoutMethodType | undefined => {
   if (!method) {
     return undefined;
@@ -251,6 +251,12 @@ export const getMoonpaySellPayoutMethodFormat = (
     case 'gbpBankTransfer':
       formattedPaymentMethod = 'gbp_bank_transfer';
       break;
+    case 'paypal':
+      formattedPaymentMethod = 'paypal';
+      break;
+    case 'venmo':
+      formattedPaymentMethod = 'venmo';
+      break;
     default:
       formattedPaymentMethod = undefined;
       break;
@@ -260,11 +266,11 @@ export const getMoonpaySellPayoutMethodFormat = (
 
 export const getPayoutMethodKeyFromMoonpayType = (
   method: MoonpayPayoutMethodType | undefined,
-): PaymentMethodKey | undefined => {
+): WithdrawalMethodKey | undefined => {
   if (!method) {
     return undefined;
   }
-  let formattedPaymentMethod: PaymentMethodKey | undefined;
+  let formattedPaymentMethod: WithdrawalMethodKey | undefined;
   switch (method) {
     case 'ach_bank_transfer':
       formattedPaymentMethod = 'ach';
@@ -286,18 +292,17 @@ export const getPayoutMethodKeyFromMoonpayType = (
 };
 
 export const getMoonpayFiatListByPayoutMethod = (
-  method: PaymentMethodKey,
-): string[] | undefined => {
-  if (!method) {
-    return undefined;
-  }
-  let fiatList: string[] | undefined;
+  method: WithdrawalMethodKey,
+): string[] => {
+  let fiatList: string[];
   switch (method) {
     case 'ach':
       fiatList = ['USD'];
       break;
     case 'creditCard':
     case 'debitCard':
+    case 'paypal':
+    case 'venmo':
       const debitCardSupportedFiat = cloneDeep(
         moonpaySellSupportedFiatCurrencies,
       );

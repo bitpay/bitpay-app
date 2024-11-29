@@ -1608,7 +1608,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             onBackdropPress={() => {
               setCryptoSelectModalVisible(false);
             }}>
-            <WalletSelectMenuContainer style={{minHeight: 300}}>
+            <WalletSelectMenuContainer
+              style={{minHeight: 300, paddingBottom: 80}}>
               <WalletSelectMenuHeaderContainer style={{marginBottom: 10}}>
                 <TextAlign align={'center'}>
                   <H4>{cryptoSelectContext?.title}</H4>

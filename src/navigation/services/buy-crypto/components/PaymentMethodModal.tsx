@@ -1,5 +1,6 @@
 import React from 'react';
 import {ScrollView, SafeAreaView, View} from 'react-native';
+import {orderBy} from 'lodash';
 import styled from 'styled-components/native';
 import {
   ModalContainer,
@@ -39,6 +40,7 @@ import {
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
+import {WithdrawalMethod} from '../../sell-crypto/constants/SellCryptoConstants';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
 
@@ -144,6 +146,14 @@ const PaymentMethodsModal = ({
   };
 
   const EnabledPaymentMethods = getEnabledPaymentMethods();
+
+  const OrderedEnabledPaymentMethods = EnabledPaymentMethods
+    ? orderBy(
+        EnabledPaymentMethods,
+        ['order'],
+        ['asc'],
+      )
+    : null;
 
   const showOtherPaymentMethodsInfoSheet = async (
     paymentMethod: PaymentMethod,
@@ -252,113 +262,116 @@ const PaymentMethodsModal = ({
           </ModalHeader>
 
           <ScrollView style={{marginTop: 20}}>
-            {EnabledPaymentMethods
-              ? Object.values(EnabledPaymentMethods).map(paymentMethod => {
-                  return (
-                    <PaymentMethodCard
-                      key={paymentMethod.method}
-                      onPress={() => {
-                        paymentMethod.method !== 'other'
-                          ? onPress(paymentMethod)
-                          : showOtherPaymentMethodsInfoSheet(
-                              paymentMethod,
-                              onPress,
-                            );
-                      }}>
-                      <PaymentMethodCardContainer>
-                        <Checkbox
-                          radio={true}
-                          onPress={() => onPress(paymentMethod)}
-                          checked={
-                            selectedPaymentMethod.method == paymentMethod.method
-                          }
-                        />
-                        <PaymentMethodCheckboxTexts>
-                          <PaymentMethodLabel>
-                            {paymentMethod.label}
-                          </PaymentMethodLabel>
+            {OrderedEnabledPaymentMethods
+              ? Object.values(OrderedEnabledPaymentMethods).map(
+                  paymentMethod => {
+                    return paymentMethod ? (
+                      <PaymentMethodCard
+                        key={paymentMethod.method}
+                        onPress={() => {
+                          paymentMethod.method !== 'other'
+                            ? onPress(paymentMethod)
+                            : showOtherPaymentMethodsInfoSheet(
+                                paymentMethod,
+                                onPress,
+                              );
+                        }}>
+                        <PaymentMethodCardContainer>
+                          <Checkbox
+                            radio={true}
+                            onPress={() => onPress(paymentMethod)}
+                            checked={
+                              selectedPaymentMethod.method ==
+                              paymentMethod.method
+                            }
+                          />
+                          <PaymentMethodCheckboxTexts>
+                            <PaymentMethodLabel>
+                              {paymentMethod.label}
+                            </PaymentMethodLabel>
 
-                          {paymentMethod.method === 'other' ? (
-                            <View
-                              style={{
-                                marginBottom: 10,
-                                flexDirection: 'row',
-                              }}>
+                            {paymentMethod.method === 'other' ? (
+                              <View
+                                style={{
+                                  marginBottom: 10,
+                                  flexDirection: 'row',
+                                }}>
+                                <PaymentMethodProviderText>
+                                  See
+                                </PaymentMethodProviderText>
+                                <PaymentMethodProviderLink>
+                                  other supported payment methods
+                                </PaymentMethodProviderLink>
+                              </View>
+                            ) : null}
+
+                            <PaymentMethodProvider>
                               <PaymentMethodProviderText>
-                                See
+                                {t('Provided by')}
                               </PaymentMethodProviderText>
-                              <PaymentMethodProviderLink>
-                                other supported payment methods
-                              </PaymentMethodProviderLink>
-                            </View>
-                          ) : null}
-
-                          <PaymentMethodProvider>
-                            <PaymentMethodProviderText>
-                              {t('Provided by')}
-                            </PaymentMethodProviderText>
-                          </PaymentMethodProvider>
-                          <PaymentMethodProvider style={{height: 30}}>
-                            {context === 'buyCrypto' ? (
-                              <>
-                                {preSetPartner &&
-                                BuyCryptoSupportedExchanges.includes(
-                                  preSetPartner as BuyCryptoExchangeKey,
-                                )
-                                  ? getPartnerLogo(preSetPartner, false)
-                                  : BuyCryptoSupportedExchanges.map(
-                                      exchange => {
-                                        return coin &&
-                                          currency &&
-                                          chain &&
-                                          isPaymentMethodSupported(
-                                            exchange,
-                                            paymentMethod,
-                                            coin,
-                                            chain,
-                                            currency,
-                                            locationData?.countryShortCode ||
-                                              'US',
-                                          )
-                                          ? getPartnerLogo(exchange, true)
-                                          : null;
-                                      },
-                                    )}
-                              </>
-                            ) : null}
-                            {context === 'sellCrypto' ? (
-                              <>
-                                {preSetPartner &&
-                                SellCryptoSupportedExchanges.includes(
-                                  preSetPartner as SellCryptoExchangeKey,
-                                )
-                                  ? getPartnerLogo(preSetPartner)
-                                  : SellCryptoSupportedExchanges.map(
-                                      exchange => {
-                                        return coin &&
-                                          currency &&
-                                          chain &&
-                                          isWithdrawalMethodSupported(
-                                            exchange,
-                                            paymentMethod,
-                                            coin,
-                                            chain,
-                                            currency,
-                                            locationData?.countryShortCode ||
-                                              'US',
-                                          )
-                                          ? getPartnerLogo(exchange)
-                                          : null;
-                                      },
-                                    )}
-                              </>
-                            ) : null}
-                          </PaymentMethodProvider>
-                        </PaymentMethodCheckboxTexts>
-                      </PaymentMethodCardContainer>
-                    </PaymentMethodCard>
-                  );
-                })
+                            </PaymentMethodProvider>
+                            <PaymentMethodProvider style={{height: 30}}>
+                              {context === 'buyCrypto' ? (
+                                <>
+                                  {preSetPartner &&
+                                  BuyCryptoSupportedExchanges.includes(
+                                    preSetPartner as BuyCryptoExchangeKey,
+                                  )
+                                    ? getPartnerLogo(preSetPartner, false)
+                                    : BuyCryptoSupportedExchanges.map(
+                                        exchange => {
+                                          return coin &&
+                                            currency &&
+                                            chain &&
+                                            isPaymentMethodSupported(
+                                              exchange,
+                                              paymentMethod as PaymentMethod,
+                                              coin,
+                                              chain,
+                                              currency,
+                                              locationData?.countryShortCode ||
+                                                'US',
+                                            )
+                                            ? getPartnerLogo(exchange, true)
+                                            : null;
+                                        },
+                                      )}
+                                </>
+                              ) : null}
+                              {context === 'sellCrypto' ? (
+                                <>
+                                  {preSetPartner &&
+                                  SellCryptoSupportedExchanges.includes(
+                                    preSetPartner as SellCryptoExchangeKey,
+                                  )
+                                    ? getPartnerLogo(preSetPartner)
+                                    : SellCryptoSupportedExchanges.map(
+                                        exchange => {
+                                          return coin &&
+                                            currency &&
+                                            chain &&
+                                            isWithdrawalMethodSupported(
+                                              exchange,
+                                              paymentMethod as WithdrawalMethod,
+                                              coin,
+                                              chain,
+                                              currency,
+                                              locationData?.countryShortCode ||
+                                                'US',
+                                            )
+                                            ? getPartnerLogo(exchange)
+                                            : null;
+                                        },
+                                      )}
+                                </>
+                              ) : null}
+                            </PaymentMethodProvider>
+                          </PaymentMethodCheckboxTexts>
+                        </PaymentMethodCardContainer>
+                      </PaymentMethodCard>
+                    ) : null;
+                  },
+                )
               : null}
           </ScrollView>
         </SafeAreaView>

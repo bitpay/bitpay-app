@@ -13,7 +13,7 @@ import ThorswapCheckout, {
 } from './screens/ThorswapCheckout';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import HistoryIcon from '../../../../assets/img/services/swap-crypto/icon-history.svg';
+import HistoryIcon from '../../../../assets/img/swap-crypto/icon-history.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Root, navigationRef} from '../../../Root';

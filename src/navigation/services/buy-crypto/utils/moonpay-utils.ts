@@ -1,7 +1,9 @@
 import {t} from 'i18next';
 import cloneDeep from 'lodash.clonedeep';
+import {MoonpayPaymentType} from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
+import {PaymentMethodKey} from '../constants/BuyCryptoConstants';
 
 export const moonpayEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -189,6 +191,36 @@ export const getMoonpayFixedCurrencyAbbreviation = (
     default:
       return coin;
   }
+};
+
+export const getMoonpayPaymentMethodFormat = (
+  method: PaymentMethodKey,
+): MoonpayPaymentType | undefined => {
+  let moonpayPaymentMethod: MoonpayPaymentType | undefined;
+  if (method) {
+    switch (method) {
+      case 'debitCard':
+      case 'creditCard':
+        moonpayPaymentMethod = 'credit_debit_card';
+        break;
+      case 'sepaBankTransfer':
+        moonpayPaymentMethod = 'sepa_bank_transfer';
+        break;
+      case 'applePay':
+        moonpayPaymentMethod = 'mobile_wallet';
+        break;
+      case 'paypal':
+        moonpayPaymentMethod = 'paypal';
+        break;
+      case 'venmo':
+        moonpayPaymentMethod = 'venmo';
+        break;
+      default:
+        moonpayPaymentMethod = undefined;
+        break;
+    }
+  }
+  return moonpayPaymentMethod;
 };
 
 export const getMoonpayFiatAmountLimits = () => {
