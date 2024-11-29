@@ -59,6 +59,7 @@ import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {
   IsSegwitCoin,
   IsTaprootCoin,
+  IsUtxoChain,
 } from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
@@ -144,6 +145,15 @@ const AddWallet = ({
   const {currencyAbbreviation, currencyName, key: _key} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const key = keys[_key.id];
+  const filteredWallets = key.wallets.filter(
+    ({currencyAbbreviation: c}) => currencyAbbreviation === c && IsUtxoChain(c),
+  );
+  let nextAccountNumber;
+  if (filteredWallets.length > 0) {
+    nextAccountNumber = (
+      Math.max(...filteredWallets.map(wallet => wallet.credentials.account)) + 1
+    ).toString();
+  }
   // temporary until advanced settings is finished
   const [showOptions, setShowOptions] = useState(false);
   const [isTestnet, setIsTestnet] = useState(false);
@@ -191,7 +201,9 @@ const AddWallet = ({
   } = useForm<{walletName: string}>({
     resolver: yupResolver(schema),
     defaultValues: {
-      walletName: currencyName,
+      walletName: nextAccountNumber
+        ? `${currencyName} (${nextAccountNumber})`
+        : currencyName,
     },
   });
 
@@ -353,7 +365,6 @@ const AddWallet = ({
               />
             )}
             name="walletName"
-            defaultValue={`${currencyName}`}
           />
         ) : null}
 
