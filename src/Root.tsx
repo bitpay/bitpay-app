@@ -113,6 +113,7 @@ import {
 } from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
 import {
+  checkNotificationsPermissions,
   handleBwsEvent,
   shortcutListener,
   startOnGoingProcessModal,
@@ -144,6 +145,7 @@ import {
   successAddWallet,
 } from './store/wallet/wallet.actions';
 import {BrazeWrapper} from './lib/Braze';
+import {selectSettingsNotificationState} from './store/app/app.selectors';
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
@@ -281,6 +283,7 @@ export default () => {
   const accountEvmCreationMigrationComplete = useAppSelector(
     ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
   );
+  const notificationsState = useAppSelector(selectSettingsNotificationState);
 
   const blurScreenList: string[] = [
     OnboardingScreens.IMPORT,
@@ -351,6 +354,37 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
+
+  // CHECK NOTIFICATIONS SETTINGS
+  useEffect(() => {
+    const _checkNotificationsPermissions = async () => {
+      const {announcements, confirmedTx, pushNotifications} =
+        notificationsState;
+      const systemEnabled = await checkNotificationsPermissions();
+      if (
+        !systemEnabled &&
+        (announcements || confirmedTx || pushNotifications)
+      ) {
+        dispatch(AppEffects.setNotifications(false));
+        dispatch(AppEffects.setConfirmTxNotifications(false));
+        dispatch(AppEffects.setAnnouncementsNotifications(false));
+      }
+    };
+
+    const onAppStateChange = (status: AppStateStatus) => {
+      if (status === 'active') {
+        _checkNotificationsPermissions();
+      }
+    };
+
+    _checkNotificationsPermissions();
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+
+    return () => subscriptionAppStateChange.remove();
+  }, []);
 
   // CHECK PIN || BIOMETRIC
   useEffect(() => {

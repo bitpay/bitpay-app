@@ -148,11 +148,7 @@ const PaymentMethodsModal = ({
   const EnabledPaymentMethods = getEnabledPaymentMethods();
 
   const OrderedEnabledPaymentMethods = EnabledPaymentMethods
-    ? orderBy(
-        EnabledPaymentMethods,
-        ['order'],
-        ['asc'],
-      )
+    ? orderBy(EnabledPaymentMethods, ['order'], ['asc'])
     : null;
 
   const showOtherPaymentMethodsInfoSheet = async (
