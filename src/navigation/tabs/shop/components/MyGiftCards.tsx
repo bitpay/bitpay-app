@@ -21,7 +21,7 @@ import {
   sortByDescendingDate,
 } from '../../../../lib/gift-cards/gift-card';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
 
 const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`
   margin-bottom: -10px;
@@ -94,6 +94,7 @@ const MyGiftCards = ({
   }, [slideIndex]);
 
   const longestSlideLength = Math.max(...slides.map(slide => slide.length));
+  const carouselHeight = longestSlideLength * giftCardHeight || 60;
 
   return (
     <>
@@ -123,56 +124,59 @@ const MyGiftCards = ({
           ) : null}
         </MyGiftCardsHeaderContainer>
       </SectionContainer>
-      <Carousel
-        ref={carouselRef}
-        loop={false}
-        vertical={false}
-        width={WIDTH}
-        height={longestSlideLength * giftCardHeight || 60}
-        autoPlay={false}
-        data={slides}
-        enabled={false}
-        renderItem={({item}: {item: GiftCard[]; index: number}) => (
-          <>
-            {item.length ? (
-              <>
-                {item.sort(sortByDescendingDate).map(giftCard => {
-                  const cardConfig = supportedGiftCardMap[giftCard.name];
-                  return (
-                    cardConfig && (
-                      <TouchableOpacity
-                        style={{paddingHorizontal: horizontalPadding}}
-                        activeOpacity={ActiveOpacity}
-                        key={giftCard.invoiceId}
-                        onPress={() => {
-                          navigation.navigate(
-                            GiftCardScreens.GIFT_CARD_DETAILS,
-                            {
-                              cardConfig,
-                              giftCard,
-                            },
-                          );
-                        }}>
-                        <GiftCardCreditsItem
+      <View style={{height: carouselHeight}}>
+        <Carousel
+          ref={carouselRef}
+          loop={false}
+          vertical={false}
+          width={WIDTH}
+          height={carouselHeight}
+          autoPlay={false}
+          data={slides}
+          enabled={false}
+          renderItem={({item}: {item: GiftCard[]; index: number}) => (
+            <>
+              {item.length ? (
+                <>
+                  {item.sort(sortByDescendingDate).map(giftCard => {
+                    const cardConfig = supportedGiftCardMap[giftCard.name];
+                    return (
+                      cardConfig && (
+                        <TouchableOpacity
+                          style={{paddingHorizontal: horizontalPadding}}
+                          activeOpacity={ActiveOpacity}
                           key={giftCard.invoiceId}
-                          cardConfig={cardConfig}
-                          amount={giftCard.amount}
-                        />
-                      </TouchableOpacity>
-                    )
-                  );
-                })}
-              </>
-            ) : (
-              <NoGiftCards>
-                <NoGiftCardsText>
-                  {t('You have no active gift cards.')}
-                </NoGiftCardsText>
-              </NoGiftCards>
-            )}
-          </>
-        )}
-      />
+                          onPress={() => {
+                            navigation.navigate(
+                              GiftCardScreens.GIFT_CARD_DETAILS,
+                              {
+                                cardConfig,
+                                giftCard,
+                              },
+                            );
+                          }}>
+                          <GiftCardCreditsItem
+                            key={giftCard.invoiceId}
+                            cardConfig={cardConfig}
+                            amount={giftCard.amount}
+                          />
+                        </TouchableOpacity>
+                      )
+                    );
+                  })}
+                </>
+              ) : (
+                <NoGiftCards>
+                  <NoGiftCardsText>
+                    {t('You have no active gift cards.')}
+                  </NoGiftCardsText>
+                </NoGiftCards>
+              )}
+            </>
+          )}
+        />
+      </View>
+      
     </>
   );
 };

@@ -254,7 +254,6 @@ const ShopHome: React.FC<
   });
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
       <TabContainer>
         <HeaderContainer>
           <HeaderTitle>{t('Pay with Crypto')}</HeaderTitle>
@@ -315,7 +314,6 @@ const ShopHome: React.FC<
           </ShopInnerContainer>
         </ScrollView>
       </TabContainer>
-    </GestureHandlerRootView>
   );
 };
 

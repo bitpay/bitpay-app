@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Platform} from 'react-native';
 import {useTranslation} from 'react-i18next';
+import { ScrollView } from 'react-native-gesture-handler';
 import styled, {css} from 'styled-components/native';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
@@ -90,14 +91,14 @@ const FilterSheet = ({
   const [categoryMap, setCategoryMap] = useState(categories);
   return (
     <SheetModal
-      modalLibrary={'bottom-sheet'}
+      modalLibrary={'modal'}
       isVisible={isVisible}
       onBackdropPress={() => {
         setCategoryMap(initialCategoryMap);
         closeModal();
       }}>
       <PillSheetContainer>
-        <BottomSheetScrollView>
+        <ScrollView>
           <SheetTitleContainer>
             <TextAlign align={'left'}>
               <H4>{t('Filter Gift Cards')}</H4>
@@ -119,7 +120,7 @@ const FilterSheet = ({
               </Pill>
             ))}
           </Pills>
-        </BottomSheetScrollView>
+        </ScrollView>
         <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>
           <BottomNotificationCta
