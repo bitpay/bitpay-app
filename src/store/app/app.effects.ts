@@ -849,11 +849,8 @@ export const unSubscribeEmailNotifications =
   };
 
 export const checkNotificationsPermissions = async (): Promise<boolean> => {
-  if (Platform.OS === 'android') {
-    return requestNotificationsPermissions();
-  }
   const {status} = await checkNotifications().catch(() => ({status: null}));
-  return status === RESULTS.GRANTED;
+  return status?.toLowerCase() === RESULTS.GRANTED;
 };
 
 export const renewSubscription = (): Effect => (dispatch, getState) => {
@@ -889,7 +886,7 @@ export const requestNotificationsPermissions = async (): Promise<boolean> => {
     'sound',
   ]).catch(() => ({status: null}));
 
-  return status === RESULTS.GRANTED;
+  return status?.toLowerCase() === RESULTS.GRANTED;
 };
 
 export const setNotifications =

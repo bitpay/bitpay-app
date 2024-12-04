@@ -50,25 +50,23 @@ const Notifications = () => {
   }, [t]);
 
   const setNotificationValue = useCallback(
-    async (accepted: boolean) => {
-      dispatch(AppEffects.setNotifications(accepted));
-      dispatch(AppEffects.setConfirmTxNotifications(accepted));
-      dispatch(AppEffects.setAnnouncementsNotifications(accepted));
+    async (isEnabled: boolean) => {
+      const changePermissions = () => {
+        dispatch(AppEffects.setNotifications(isEnabled));
+        dispatch(AppEffects.setConfirmTxNotifications(isEnabled));
+        dispatch(AppEffects.setAnnouncementsNotifications(isEnabled));
+      };
       const systemEnabled = await AppEffects.checkNotificationsPermissions();
-      if (!systemEnabled) {
-        if (accepted) {
-          if (Platform.OS === 'ios') {
-            const requestPermissions =
-              await AppEffects.requestNotificationsPermissions();
-            if (requestPermissions) {
-              return;
-            }
-          }
-          dispatch(AppEffects.setNotifications(false));
-          dispatch(AppEffects.setConfirmTxNotifications(false));
-          dispatch(AppEffects.setAnnouncementsNotifications(false));
-          openSettings();
+      if (!systemEnabled && isEnabled) {
+        const permissionGranted =
+          await AppEffects.requestNotificationsPermissions();
+        if (permissionGranted) {
+          changePermissions();
+          return;
         }
+        openSettings();
+      } else {
+        changePermissions();
       }
     },
     [dispatch, openSettings],
@@ -77,8 +75,8 @@ const Notifications = () => {
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.PUSH_NOTIFICATIONS,
-      ({accepted}) => {
-        setNotificationValue(accepted);
+      ({isEnabled}) => {
+        setNotificationValue(isEnabled);
       },
     );
     return () => subscription.remove();

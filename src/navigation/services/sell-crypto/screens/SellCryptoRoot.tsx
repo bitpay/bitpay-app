@@ -15,9 +15,7 @@ import {
   useMount,
 } from '../../../../utils/hooks';
 import {SellCryptoScreens, SellCryptoGroupParamList} from '../SellCryptoGroup';
-import {
-  WithdrawalMethod,
-} from '../../sell-crypto/constants/SellCryptoConstants';
+import {WithdrawalMethod} from '../../sell-crypto/constants/SellCryptoConstants';
 import PaymentMethodsModal from '../../buy-crypto/components/PaymentMethodModal';
 import AmountModal from '../../../../components/amount/AmountModal';
 import {
