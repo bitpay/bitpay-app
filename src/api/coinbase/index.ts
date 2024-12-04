@@ -1,6 +1,5 @@
 // Coinbase API
 import axios from 'axios';
-import {Platform} from 'react-native';
 
 import {
   CoinbaseAccountsProps,
@@ -24,10 +23,7 @@ import {
 } from './coinbase.constants';
 
 // Redirect URI
-const COINBASE_REDIRECT_URI =
-  Platform.OS !== 'android'
-    ? COINBASE_CONFIG_API.redirect_uri.mobile
-    : 'https://bitpay.com/oauth/coinbase/redirect';
+const COINBASE_REDIRECT_URI = COINBASE_CONFIG_API.redirect_uri.mobile;
 
 // OAuth
 let oauthStateCode: string = ''; // Random
