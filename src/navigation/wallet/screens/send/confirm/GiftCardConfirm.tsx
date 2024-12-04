@@ -1,7 +1,11 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View} from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
@@ -323,20 +327,23 @@ const Confirm = () => {
   const handleCreateGiftCardInvoiceOrTxpError = async (err: any) => {
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
+    const onDismiss = () => {
+      if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
+        return popToShopHome();
+      }
+      return openWalletSelector(400);
+    };
     const [errorConfig] = await Promise.all([
-      dispatch(handleCreateTxProposalError(err)),
+      dispatch(handleCreateTxProposalError(err, onDismiss)),
       sleep(500),
     ]);
-    showError({
-      defaultErrorMessage:
-        err.response?.data?.message || err.message || errorConfig.message,
-      onDismiss: () => {
-        if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
-          return popToShopHome();
-        }
-        return openWalletSelector(400);
-      },
-    });
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        ...errorConfig,
+        errMsg:
+          err.response?.data?.message || err.message || errorConfig.message,
+      }),
+    );
   };
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
@@ -626,9 +633,11 @@ const Confirm = () => {
     return () => clearTimeout(timer);
   }, [resetSwipeButton]);
 
-  useEffect(() => {
-    openWalletSelector(100);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      openWalletSelector(100);
+    }, []),
+  );
 
   return (
     <ConfirmContainer>

@@ -1022,3 +1022,17 @@ export const camelCaseToUpperWords = (input: string) => {
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .toUpperCase();
 };
+
+export const getFullLinkedWallet = (key: Key, wallet: Wallet) => {
+  const {
+    credentials: {token, walletId},
+  } = wallet;
+  if (token) {
+    const linkedWallet = key.wallets.find(({tokens}) =>
+      tokens?.includes(walletId),
+    );
+    return linkedWallet;
+  }
+
+  return;
+};

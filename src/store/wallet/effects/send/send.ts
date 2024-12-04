@@ -45,6 +45,7 @@ import {
   formatCurrencyAbbreviation,
   formatFiatAmount,
   getCWCChain,
+  getFullLinkedWallet,
   getRateByCurrencyName,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -74,6 +75,7 @@ import {
 import {
   GetPrecision,
   IsERCToken,
+  IsEVMChain,
   IsSegwitCoin,
   IsUtxoChain,
 } from '../../utils/currency';
@@ -111,6 +113,7 @@ import {
 } from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
+import {getLinkedWallet} from '@/navigation/wallet/screens/wallet-settings/WalletInformation';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1874,59 +1877,206 @@ export const removeTxp = (wallet: Wallet, txp: TransactionProposal) => {
   });
 };
 
+const formatAmounts = (
+  dispatch: any,
+  wallet: any,
+  amount: number,
+): {formatAvailableAmount: string; formatSendingAmount: string} => {
+  const _formatAvailableAmount = dispatch(
+    FormatAmountStr(
+      wallet.currencyAbbreviation,
+      wallet.chain,
+      wallet.tokenAddress,
+      Number(wallet.balance.satSpendable),
+      false,
+    ),
+  );
+
+  const formatAvailableAmount = `~${_formatAvailableAmount}`;
+  const formatSendingAmount = `~${amount.toFixed(
+    2,
+  )} ${formatCurrencyAbbreviation(wallet.currencyAbbreviation)}`;
+  return {formatAvailableAmount, formatSendingAmount};
+};
+
+const generateInsufficientFundsError = (
+  dispatch: any,
+  wallet: Wallet,
+  amount: number,
+  onDismiss?: () => void,
+) => {
+  const {formatAvailableAmount, formatSendingAmount} = formatAmounts(
+    dispatch,
+    wallet,
+    amount,
+  );
+  let errMsg = IsEVMChain(wallet.chain)
+    ? t(
+        'You are trying to send more funds than you have available.\n\nTrying to send: {{formatSendingAmount}}\nAvailable to send: {{formatAvailableAmount}}',
+        {
+          formatSendingAmount,
+          formatAvailableAmount,
+        },
+      )
+    : t(
+        'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals.\n\nTrying to send: {{formatSendingAmount}}\nAvailable to send: {{formatAvailableAmount}}',
+        {
+          formatSendingAmount,
+          formatAvailableAmount,
+        },
+      );
+  return CustomErrorMessage({
+    title: t('Insufficient funds'),
+    errMsg: errMsg,
+    action: onDismiss,
+    cta: [
+      {
+        text: t('Buy Crypto'),
+        action: () => {
+          dispatch(
+            Analytics.track('Clicked Buy Crypto', {
+              context: 'errorBottomNotification',
+            }),
+          );
+          navigationRef.navigate('BuyCryptoRoot', {
+            amount: 100,
+            fromWallet: wallet,
+          });
+        },
+        primary: true,
+      },
+    ],
+  });
+};
+
+const generateInsufficientConfirmedFundsError = (onDismiss?: () => void) => {
+  return CustomErrorMessage({
+    title: t('Insufficient confirmed funds'),
+    errMsg: t(
+      'You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable "Use unconfirmed funds" in Advanced Settings.',
+    ),
+    action: onDismiss,
+    cta: [
+      {
+        text: t('APP SETTINGS'),
+        action: () => {
+          navigationRef.navigate('SettingsHome');
+        },
+        primary: true,
+      },
+    ],
+  });
+};
+
+const processInsufficientFunds = async (
+  proposalErrorProps: ProposalErrorHandlerProps,
+  dispatch: any,
+  onDismiss?: () => void,
+) => {
+  const {tx, txp, getState} = proposalErrorProps;
+
+  if (!tx || !txp || !getState) {
+    return GeneralError();
+  }
+
+  const {wallet, amount} = tx;
+  const {feeLevel} = txp;
+
+  const feeRatePerKb = await getFeeRatePerKb({
+    wallet,
+    feeLevel: feeLevel || FeeLevels.NORMAL,
+  });
+
+  const useConfirmedFunds = !getState().WALLET.useUnconfirmedFunds;
+  const amountSat = dispatch(
+    ParseAmount(
+      amount,
+      wallet.currencyAbbreviation,
+      wallet.chain,
+      wallet.tokenAddress,
+    ),
+  ).amountSat;
+  if (useConfirmedFunds && wallet.balance.sat >= amountSat + feeRatePerKb) {
+    return generateInsufficientConfirmedFundsError(onDismiss);
+  } else {
+    return generateInsufficientFundsError(dispatch, wallet, amount, onDismiss);
+  }
+};
+
+const handleDefaultError = (
+  proposalErrorProps: ProposalErrorHandlerProps,
+  dispatch: any,
+  onDismiss?: () => void,
+) => {
+  const {err, tx, txp, getState} = proposalErrorProps;
+
+  if (!tx || !txp || !getState) {
+    return GeneralError();
+  }
+
+  const keys = getState().WALLET.keys;
+  const {wallet, amount} = tx;
+  const {feeLevel} = txp;
+
+  const title = IsEVMChain(wallet.chain)
+    ? t('Not enough gas for transaction')
+    : t('Insufficient funds for fee.');
+  const body = IsERCToken(wallet.currencyAbbreviation, wallet.chain)
+    ? t(
+        'Insufficient funds in your linked wallet to cover the transaction fee.',
+        {
+          linkedWalletAbbreviation:
+            wallet.chain === 'matic' ? 'POL' : wallet.chain.toUpperCase(),
+        },
+      )
+    : t(
+        'You have enough funds to make this payment, but your wallet doesn’t have enough to cover the network fees.',
+      );
+  return CustomErrorMessage({
+    title,
+    errMsg: body,
+    action: onDismiss,
+    cta: [
+      {
+        text: t('Buy Crypto'),
+        action: () => {
+          dispatch(
+            Analytics.track('Clicked Buy Crypto', {
+              context: 'errorBottomNotification',
+            }),
+          );
+          navigationRef.navigate('BuyCryptoRoot', {
+            amount: 100,
+            fromWallet: IsERCToken(wallet.currencyAbbreviation, wallet.chain)
+              ? getFullLinkedWallet(keys[wallet.keyId], wallet)
+              : wallet,
+          });
+        },
+        primary: true,
+      },
+    ],
+  });
+};
+
 export const handleCreateTxProposalError =
-  (proposalErrorProps: ProposalErrorHandlerProps): Effect<Promise<any>> =>
+  (
+    proposalErrorProps: ProposalErrorHandlerProps,
+    onDismiss?: () => void,
+  ): Effect<Promise<any>> =>
   async dispatch => {
     try {
       const {err} = proposalErrorProps;
-
-      switch (getErrorName(err)) {
+      const errorName = getErrorName(err);
+      switch (errorName) {
         case 'INSUFFICIENT_FUNDS':
-          const {tx, txp, getState} = proposalErrorProps;
-
-          if (!tx || !txp || !getState) {
-            return GeneralError();
-          }
-
-          const {wallet, amount} = tx;
-          const {feeLevel} = txp;
-
-          const feeRatePerKb = await getFeeRatePerKb({
-            wallet,
-            feeLevel: feeLevel || FeeLevels.NORMAL,
-          });
-
-          if (
-            !getState().WALLET.useUnconfirmedFunds &&
-            wallet.balance.sat >=
-              dispatch(
-                ParseAmount(
-                  amount,
-                  wallet.currencyAbbreviation,
-                  wallet.chain,
-                  wallet.tokenAddress,
-                ),
-              ).amountSat +
-                feeRatePerKb
-          ) {
-            return CustomErrorMessage({
-              title: t('Insufficient confirmed funds'),
-              errMsg: t(
-                'You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable "Use unconfirmed funds" in Advanced Settings.',
-              ),
-            });
-          } else {
-            return CustomErrorMessage({
-              title: t('Insufficient funds'),
-              errMsg: BWCErrorMessage(err),
-            });
-          }
+          return await processInsufficientFunds(
+            proposalErrorProps,
+            dispatch,
+            onDismiss,
+          );
 
         default:
-          return CustomErrorMessage({
-            title: t('Error'),
-            errMsg: BWCErrorMessage(err),
-          });
+          return handleDefaultError(proposalErrorProps, dispatch, onDismiss);
       }
     } catch (err2) {
       return GeneralError();

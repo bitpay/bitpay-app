@@ -276,15 +276,18 @@ const BillConfirm: React.VFC<
   const handleBillPayInvoiceOrTxpError = async (err: any) => {
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
+    const onDismiss = () => openWalletSelector(400);
     const [errorConfig] = await Promise.all([
-      dispatch(handleCreateTxProposalError(err)),
+      dispatch(handleCreateTxProposalError(err, onDismiss)),
       sleep(500),
     ]);
-    showError({
-      defaultErrorMessage:
-        err.response?.data?.message || err.message || errorConfig.message,
-      onDismiss: () => openWalletSelector(400),
-    });
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        ...errorConfig,
+        errMsg:
+          err.response?.data?.message || err.message || errorConfig.message,
+      }),
+    );
   };
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {

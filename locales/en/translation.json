@@ -1598,6 +1598,7 @@
   "Insufficient confirmed funds": "Insufficient confirmed funds",
   "You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable \"Use unconfirmed funds\" in Advanced Settings.": "You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable \"Use unconfirmed funds\" in Advanced Settings.",
   "Insufficient funds": "Insufficient funds",
+  "Insufficient funds in your linked wallet to cover the transaction fee.": "Insufficient funds in your linked {{linkedWalletAbbreviation}} wallet to cover the transaction fee.",
   "No compatible wallets": "No compatible wallets",
   "You currently don't have any wallets capable of sending this payment. Would you like to import one?": "You currently don't have any wallets capable of sending this payment. Would you like to import one?",
   "Maybe Later": "Maybe Later",
