@@ -973,7 +973,7 @@
   "All of your wallet balance may not be available for immediate spending.": "您的所有 {{currencyName}} 钱包余额可能均无法用于立即消费。",
   "XRP Locked Balance": "XRP 锁定余额",
   "Test Only - No Value": "仅测试 - 无值",
-  "The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.": "The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.",
+  "The XRP ledger requires that all wallets maintain a minimum balance of XRP. This non-refundable XRP will remain permanently locked in your wallet.": "The XRP ledger requires that all wallets maintain a minimum balance of {{lockedBalance}} XRP. This non-refundable {{lockedBalance}} XRP will remain permanently locked in your wallet.",
   "The total amount of stored in this wallet.": "存入此钱包的 {{wallet}} 的总金额。",
   "Not including locked funds required for activation.": "不包括激活所需的锁定资金。",
   "Available": "可用",

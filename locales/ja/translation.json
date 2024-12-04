@@ -973,7 +973,7 @@
   "All of your wallet balance may not be available for immediate spending.": "お客様の {{currencyName}} ウォレットの残高は全額、すぐにはご利用になれない可能性があります。",
   "XRP Locked Balance": "XRPロック残高",
   "Test Only - No Value": "テストのみ - 値なし",
-  "The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.": "The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.",
+  "The XRP ledger requires that all wallets maintain a minimum balance of XRP. This non-refundable XRP will remain permanently locked in your wallet.": "The XRP ledger requires that all wallets maintain a minimum balance of {{lockedBalance}} XRP. This non-refundable {{lockedBalance}} XRP will remain permanently locked in your wallet.",
   "The total amount of stored in this wallet.": "このウォレットに保管された {{wallet}} の総額。",
   "Not including locked funds required for activation.": "有効化が必要なロックされた資金は含みません。",
   "Available": "利用可能",

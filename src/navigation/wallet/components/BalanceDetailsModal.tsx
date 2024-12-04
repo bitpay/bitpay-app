@@ -153,9 +153,9 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 </Row>
                 <LabelTip type="info">
                   <LabelTipText>
-                    {t(
-                      'The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.',
-                    )}
+                    {t('The XRP ledger requires that all wallets maintain a minimum balance of XRP. This non-refundable XRP will remain permanently locked in your wallet.', {
+                      lockedBalance: wallet.cryptoConfirmedLockedBalance,
+                    })}
                   </LabelTipText>
                 </LabelTip>
               </>

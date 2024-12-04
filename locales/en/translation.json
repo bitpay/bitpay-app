@@ -1072,7 +1072,7 @@
   "All of your wallet balance may not be available for immediate spending.": "All of your {{currencyName}} wallet balance may not be available for immediate spending.",
   "XRP Locked Balance": "XRP Locked Balance",
   "Test Only - No Value": "Test Only - No Value",
-  "The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.": "The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.",
+  "The XRP ledger requires that all wallets maintain a minimum balance of XRP. This non-refundable XRP will remain permanently locked in your wallet.": "The XRP ledger requires that all wallets maintain a minimum balance of {{lockedBalance}} XRP. This non-refundable {{lockedBalance}} XRP will remain permanently locked in your wallet.",
   "The total amount of stored in this wallet.": "The total amount of {{wallet}} stored in this wallet.",
   "Not including locked funds required for activation.": "Not including locked funds required for activation.",
   "Available": "Available",
