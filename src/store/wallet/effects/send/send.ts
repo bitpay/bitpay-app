@@ -1882,6 +1882,11 @@ const formatAmounts = (
   wallet: any,
   amount: number,
 ): {formatAvailableAmount: string; formatRequiredAmount: string} => {
+  const hasMoreThanSixDecimalDigits = (value: number): boolean => {
+    const decimalPart = value.toString().split('.')[1];
+    return !!decimalPart && decimalPart.length > 6;
+  };
+
   const _formatAvailableAmount = dispatch(
     FormatAmountStr(
       wallet.currencyAbbreviation,
@@ -1902,8 +1907,16 @@ const formatAmounts = (
     ),
   );
 
-  const formatAvailableAmount = `~${_formatAvailableAmount}`;
-  const formatRequiredAmount = `~${_formatRequiredAmount}`;
+  const formatAvailableAmount = hasMoreThanSixDecimalDigits(
+    Number(wallet.balance.satSpendable),
+  )
+    ? `~${_formatAvailableAmount}`
+    : _formatAvailableAmount;
+
+  const formatRequiredAmount = hasMoreThanSixDecimalDigits(amount)
+    ? `~${_formatRequiredAmount}`
+    : _formatRequiredAmount;
+
   return {formatAvailableAmount, formatRequiredAmount};
 };
 
