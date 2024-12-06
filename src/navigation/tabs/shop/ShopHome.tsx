@@ -26,6 +26,7 @@ import {useTranslation} from 'react-i18next';
 import {useFocusEffect, useScrollToTop} from '@react-navigation/native';
 import {HeaderContainer} from '../../tabs/home/components/Styled';
 import {HeaderTitle} from '../../../components/styled/Text';
+import {HEIGHT} from '../../../components/styled/Containers';
 import {useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
@@ -65,7 +66,12 @@ const getGiftCardsScrollViewHeight = (
   const giftCardListHeight =
     (numSelectedGiftCards || availableGiftCards.length) * giftCardItemHeight +
     giftCardsBottomPadding;
-  return staticGiftCardScrollViewHeight + giftCardListHeight;
+  const minGiftCardCatalogHeight = HEIGHT - 600;
+  const giftCardCatalogHeight = Math.max(
+    giftCardListHeight,
+    minGiftCardCatalogHeight,
+  );
+  return staticGiftCardScrollViewHeight + giftCardCatalogHeight;
 };
 
 const getShopOnlineScrollViewHeight = (categories: Category[]) => {
