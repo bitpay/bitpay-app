@@ -24,9 +24,9 @@ export const BiometricErrorNotification = (
       {
         text: t('Open Settings'),
         action: () => {
+          openSettings('application');
           if (onDismissModal) {
             onDismissModal();
-            openSettings('application');
           }
         },
         primary: false,
