@@ -1,6 +1,10 @@
 import Transport from '@ledgerhq/hw-transport';
 import {RouteProp, StackActions} from '@react-navigation/core';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from '@react-navigation/native';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {WalletScreens, WalletGroupParamList} from '../../../WalletGroup';
@@ -244,28 +248,29 @@ const PayProConfirm = () => {
     } catch (err: any) {
       await sleep(400);
       dispatch(dismissOnGoingProcessModal());
+      const onDismiss = () =>
+        wallet ? navigation.goBack() : reshowWalletSelector();
       const [errorConfig] = await Promise.all([
-        dispatch(handleCreateTxProposalError(err)),
+        dispatch(handleCreateTxProposalError(err, onDismiss)),
         sleep(500),
       ]);
       dispatch(
-        AppActions.showBottomNotificationModal(
-          CustomErrorMessage({
-            title: t('Error'),
-            errMsg:
-              err.response?.data?.message || err.message || errorConfig.message,
-            action: () =>
-              wallet ? navigation.goBack() : reshowWalletSelector(),
-          }),
-        ),
+        AppActions.showBottomNotificationModal({
+          ...errorConfig,
+          errMsg:
+            err.response?.data?.message || err.message || errorConfig.message,
+        }),
       );
     }
   };
 
-  useEffect(() => {
-    wallet ? createTxp(wallet) : setTimeout(() => openKeyWalletSelector(), 500);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      wallet
+        ? createTxp(wallet)
+        : setTimeout(() => openKeyWalletSelector(), 500);
+    }, []),
+  );
 
   const openKeyWalletSelector = () => {
     setWalletSelectorVisible(true);
@@ -274,19 +279,17 @@ const PayProConfirm = () => {
   const handleTxpError = async (err: any) => {
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
+    const onDismiss = () => reshowWalletSelector();
     const [errorConfig] = await Promise.all([
-      dispatch(handleCreateTxProposalError(err)),
+      dispatch(handleCreateTxProposalError(err, onDismiss)),
       sleep(500),
     ]);
     dispatch(
-      AppActions.showBottomNotificationModal(
-        CustomErrorMessage({
-          title: t('Error'),
-          errMsg:
-            err.response?.data?.message || err.message || errorConfig.message,
-          action: () => reshowWalletSelector(),
-        }),
-      ),
+      AppActions.showBottomNotificationModal({
+        ...errorConfig,
+        errMsg:
+          err.response?.data?.message || err.message || errorConfig.message,
+      }),
     );
   };
 

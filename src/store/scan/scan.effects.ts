@@ -561,6 +561,7 @@ const goToConfirm =
     } catch (err: any) {
       if (setButtonState) {
         setButtonState('failed');
+        sleep(1000).then(() => setButtonState?.(null));
       } else {
         dispatch(dismissOnGoingProcessModal());
       }
@@ -571,17 +572,6 @@ const goToConfirm =
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {
-                if (setButtonState) {
-                  setButtonState(undefined);
-                }
-              },
-            },
-          ],
         }),
       );
     }

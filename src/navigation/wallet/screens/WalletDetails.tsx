@@ -791,12 +791,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         showBottomNotificationModal({
           ...errorMessageConfig,
           enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
         }),
       );
     }

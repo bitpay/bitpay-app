@@ -983,6 +983,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         if (setButtonState) {
           setButtonState('failed');
+          sleep(1000).then(() => setButtonState?.(null));
         } else {
           dispatch(dismissOnGoingProcessModal());
         }
@@ -994,16 +995,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           showBottomNotificationModal({
             ...errorMessageConfig,
             enableBackdropDismiss: false,
-            actions: [
-              {
-                text: t('OK'),
-                action: () => {
-                  if (setButtonState) {
-                    setButtonState(undefined);
-                  }
-                },
-              },
-            ],
           }),
         );
       }
