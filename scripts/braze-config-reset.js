@@ -17,7 +17,7 @@ const dotenv = require('dotenv');
 
   // Configure Braze for iOS
   if (process.env.BRAZE_API_KEY_IOS) {
-    const brazeConfigFileIOS = `${__dirname}/../ios/BitPayApp/AppDelegate.m`;
+    const brazeConfigFileIOS = `${__dirname}/../ios/BitPayApp/AppDelegate.mm`;
     let contentiOS = fs.readFileSync(brazeConfigFileIOS, 'utf8');
     contentiOS = contentiOS.replace(
       process.env.BRAZE_API_KEY_IOS,

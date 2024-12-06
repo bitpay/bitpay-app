@@ -3,7 +3,7 @@ import React, {useCallback, useMemo} from 'react';
 import {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {FlatList, TouchableOpacity} from 'react-native';
-import {SharedElement} from 'react-navigation-shared-element';
+// import {SharedElement} from 'react-navigation-shared-element';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import GhostImg from '../../../../assets/img/ghost-cheeky.svg';
@@ -177,18 +177,19 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   const renderSlide = useCallback(
     ({item}: {item: Card[]}) =>
       activeCard.id === item[0].id ? (
-        <SharedElement
-          id={'card.dashboard.active-card.' + item[0].id}
-          style={{paddingHorizontal: 10}}>
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => goToCardSettingsRef.current()}>
-            <CardOverviewSlide
-              card={item[0]}
-              designCurrency={virtualDesignCurrency}
-            />
-          </TouchableOpacity>
-        </SharedElement>
+        <></>
+        // <SharedElement
+        //   id={'card.dashboard.active-card.' + item[0].id}
+        //   style={{paddingHorizontal: 10}}>
+        //   <TouchableOpacity
+        //     activeOpacity={1}
+        //     onPress={() => goToCardSettingsRef.current()}>
+        //     <CardOverviewSlide
+        //       card={item[0]}
+        //       designCurrency={virtualDesignCurrency}
+        //     />
+        //   </TouchableOpacity>
+        // </SharedElement>
       ) : (
         <CardOverviewSlide
           card={item[0]}

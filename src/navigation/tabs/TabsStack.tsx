@@ -95,7 +95,6 @@ const TabsStack = () => {
           minHeight: 68,
         },
         tabBarShowLabel: false,
-        lazy: false,
         tabBarIcon: ({focused}) => {
           let {name: icon} = route;
           if (focused) {

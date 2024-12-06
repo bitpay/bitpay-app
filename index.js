@@ -22,6 +22,11 @@ import {Analytics} from './src/store/analytics/analytics.effects';
 import {APP_VERSION} from './src/constants/config';
 import {GIT_COMMIT_HASH} from '@env';
 import {LogActions} from './src/store/log';
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from 'react-native-reanimated';
+
 enableFreeze(true);
 
 const {store, persistor} = getStore();
@@ -62,6 +67,13 @@ const exceptionHandler = () => {
 // Handle uncaught exceptions
 setJSExceptionHandler(errorHandler, true);
 setNativeExceptionHandler(exceptionHandler);
+
+
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
+
 
 const ReduxProvider = () => {
   return (

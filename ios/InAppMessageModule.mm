@@ -1,5 +1,5 @@
 //
-//  InAppMessageModule.m
+//  InAppMessageModule.mm
 //  BitPayApp
 //
 //  Created by Gustavo on 22/10/2024.

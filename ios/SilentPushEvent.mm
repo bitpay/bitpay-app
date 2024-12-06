@@ -1,5 +1,5 @@
 //
-//  SilentPushEvent.m
+//  SilentPushEvent.mm
 //  BitPayApp
 //
 //  Created by Gustavo Cortez on 10/06/2022.

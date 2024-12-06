@@ -1,6 +1,7 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {createSharedElementStackNavigator} from 'react-navigation-shared-element';
+// import {createSharedElementStackNavigator} from 'react-navigation-shared-element';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {oldBaseNavigatorOptions} from '../../constants/NavigationOptions';
 import CardHome, {CardHomeScreenParamList} from './screens/CardHome';
 import CardPairingScreen, {
@@ -36,7 +37,8 @@ export enum CardScreens {
   RESET_PIN = 'CardResetPin',
 }
 
-const Card = createSharedElementStackNavigator<CardStackParamList>();
+// const Card = createSharedElementStackNavigator<CardStackParamList>();
+const Card = createNativeStackNavigator<CardStackParamList>();
 
 const CardStack = () => {
   const {t} = useTranslation();
@@ -55,14 +57,14 @@ const CardStack = () => {
           headerLeft: () => null,
           headerTitle: () => <HeaderTitle>{t('Card')}</HeaderTitle>,
         }}
-        sharedElements={route => {
-          return [
-            {
-              id: 'card.dashboard.active-card.' + route.params.id,
-              animation: 'fade',
-            },
-          ];
-        }}
+        // sharedElements={route => {
+        //   return [
+        //     {
+        //       id: 'card.dashboard.active-card.' + route.params.id,
+        //       animation: 'fade',
+        //     },
+        //   ];
+        // }}
       />
       <Card.Screen
         name={CardScreens.PAIRING}

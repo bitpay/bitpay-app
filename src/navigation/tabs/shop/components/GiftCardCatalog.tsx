@@ -55,10 +55,18 @@ const Curations = ({
   underlayColor: string;
 }) => {
   const navigation = useNavigation();
+  const itemHeight = 85;
+  const maxItemsPerColumn = 3;
+  const getNumRows = (giftCards: CardConfig[]) => {
+    if (giftCards.length > maxItemsPerColumn) {
+      return maxItemsPerColumn;
+    }
+    return giftCards.length;
+  };
   return (
     <>
       {curations.map(curation => (
-        <View key={curation.displayName}>
+        <View key={curation.displayName} style={{height: itemHeight * getNumRows(curation.giftCards) + 70}}>
           <SectionContainer>
             <SectionHeader>{curation.displayName}</SectionHeader>
           </SectionContainer>
@@ -69,10 +77,10 @@ const Curations = ({
             )}
             itemUnderlayColor={underlayColor}
             itemWidthInLastSlide={WIDTH}
-            itemHeight={85}
-            maxItemsPerColumn={3}
+            itemHeight={itemHeight}
+            maxItemsPerColumn={maxItemsPerColumn}
             screenWidth={WIDTH}
-            windowSize={3}
+            windowSize={maxItemsPerColumn}
             onItemPress={item => {
               navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
                 cardConfig: item as CardConfig,

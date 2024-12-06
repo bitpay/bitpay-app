@@ -11,7 +11,6 @@ export const TRANSACTION_ROW_HEIGHT = 75;
 const TransactionContainer = styled.TouchableOpacity`
   flex-direction: row;
   padding: ${ScreenGutter};
-  justify-content: center;
   align-items: center;
   height: ${TRANSACTION_ROW_HEIGHT}px;
 `;
@@ -24,16 +23,19 @@ const IconContainer = styled.View`
   justify-content: center;
 `;
 
+const DescriptionContainer = styled.View`
+  flex-grow: 1;
+  flex-shrink: 1;
+  margin-right: 10px;
+`;
+
 const Description = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
   overflow: hidden;
-  margin-right: 175px;
   font-size: 16px;
 `;
 
-const TailContainer = styled.View`
-  margin-left: auto;
-`;
+const TailContainer = styled.View``;
 
 const Value = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
@@ -99,15 +101,17 @@ const TransactionRow = ({
         icon && <IconContainer>{icon}</IconContainer>
       )}
       {!!description && (
-        <Description numberOfLines={details ? 2 : 1} ellipsizeMode={'tail'}>
-          {description}
-          {details && (
-            <ListItemSubText>
-              {'\n'}
-              {details}
-            </ListItemSubText>
-          )}
-        </Description>
+        <DescriptionContainer>
+          <Description numberOfLines={details ? 2 : 1} ellipsizeMode={'tail'}>
+            {description}
+            {details && (
+              <ListItemSubText>
+                {'\n'}
+                {details}
+              </ListItemSubText>
+            )}
+          </Description>
+        </DescriptionContainer>
       )}
       <TailContainer>
         {value ? <Value>{value}</Value> : null}
