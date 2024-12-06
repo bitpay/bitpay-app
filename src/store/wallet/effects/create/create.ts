@@ -577,7 +577,7 @@ const createTokenWallet =
           associatedWallet.credentials.chain,
         );
 
-        const currentTokenOpts = tokenOptsByAddress[tokenAddressWithSuffix];
+        const currentTokenOpts = tokenOptsByAddress?.[tokenAddressWithSuffix];
 
         if (!currentTokenOpts) {
           dispatch(
@@ -585,7 +585,7 @@ const createTokenWallet =
               `Could not find tokenOpts for token: ${tokenAddressWithSuffix}. Avoid token creation...`,
             ),
           );
-          return reject();
+          return reject(new Error(`Could not find token: ${tokenAddress}`));
         }
 
         const tokenCredentials: Credentials =
@@ -654,7 +654,7 @@ const createTokenWallet =
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(LogActions.error(`Error creating token wallet: ${errstring}`));
-        reject();
+        reject(err);
       }
     });
   };

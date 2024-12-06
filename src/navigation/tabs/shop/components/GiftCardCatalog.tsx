@@ -7,7 +7,11 @@ import {Platform, View, TouchableOpacity} from 'react-native';
 import {useForm, Controller} from 'react-hook-form';
 import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
-import {BaseText, Paragraph, TextAlign} from '../../../../components/styled/Text';
+import {
+  BaseText,
+  Paragraph,
+  TextAlign,
+} from '../../../../components/styled/Text';
 import GiftCardItem from './GiftCardItem';
 import {
   CardConfig,
@@ -221,13 +225,13 @@ export default ({
         {purchasedGiftCards.length ? (
           <>
             <MyGiftCards supportedGiftCards={supportedGiftCards} />
-            { availableGiftCards.length ? <SectionDivider /> : null }
+            {availableGiftCards.length ? <SectionDivider /> : null}
             <SectionSpacer height={20} />
           </>
         ) : (
           <SectionSpacer height={40} />
         )}
-        { availableGiftCards.length ? (
+        {availableGiftCards.length ? (
           <>
             <SectionContainer>
               <Controller
@@ -284,9 +288,14 @@ export default ({
                   </NoResultsImgContainer>
                   <Paragraph>
                     {t("We couldn't find a match for ")}
-                    <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
+                    <BaseText style={{fontWeight: 'bold'}}>
+                      {searchVal}
+                    </BaseText>
+                    .
                   </Paragraph>
-                  <Paragraph>{t('Please try searching something else.')}</Paragraph>
+                  <Paragraph>
+                    {t('Please try searching something else.')}
+                  </Paragraph>
                 </NoResultsContainer>
               )}
             </HideableView>
@@ -300,7 +309,9 @@ export default ({
                     onPress={() => setIsFilterSheetShown(!isFilterSheetShown)}>
                     <SectionHeaderButton>
                       {t('Filter')}
-                      {numSelectedCategories ? ` (${numSelectedCategories})` : null}
+                      {numSelectedCategories
+                        ? ` (${numSelectedCategories})`
+                        : null}
                     </SectionHeaderButton>
                   </TouchableOpacity>
                 </SectionHeaderContainer>
@@ -325,7 +336,9 @@ export default ({
           <ZeroState>
             <TextAlign align={'center'}>
               <Paragraph>
-                {t('No gift cards are currently available for purchase in your region. Please check back later.')}
+                {t(
+                  'No gift cards are currently available for purchase in your region. Please check back later.',
+                )}
               </Paragraph>
             </TextAlign>
           </ZeroState>

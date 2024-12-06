@@ -212,6 +212,8 @@ const AddCustomToken = ({
   const [currencyAbbreviation, setCurrencyAbbreviation] = useState<
     string | undefined
   >();
+  const [invalidTokenAddress, setInvalidTokenAddress] =
+    useState<boolean>(false);
 
   const DESCRIPTIONS: Record<string, string> = {
     eth: t('TokensOnEthereumNetworkDescription'),
@@ -487,8 +489,10 @@ const AddCustomToken = ({
         addrData?.coin.toLowerCase() && network === addrData?.network;
 
       if (!isValid) {
+        setInvalidTokenAddress(true);
         return;
       }
+      setInvalidTokenAddress(false);
 
       let tokenContractInfo =
         tokenOptionsByAddress?.[getCurrencyAbbreviation(tokenAddress, chain)];
@@ -620,7 +624,7 @@ const AddCustomToken = ({
             onChangeText={(text: string) => {
               setTokenInfo(text);
             }}
-            error={errors.walletName?.message}
+            error={errors.walletName?.message || invalidTokenAddress}
             value={tokenAddress}
           />
         </View>
@@ -644,7 +648,7 @@ const AddCustomToken = ({
         <ButtonContainer>
           <Button
             accessibilityLabel="add-custom-token-button"
-            disabled={!walletNameValue}
+            disabled={!walletNameValue || invalidTokenAddress}
             onPress={add}
             buttonStyle={'primary'}>
             {t('Add Custom Token')}
