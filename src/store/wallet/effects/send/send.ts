@@ -1881,7 +1881,7 @@ const formatAmounts = (
   dispatch: any,
   wallet: any,
   amount: number,
-): {formatAvailableAmount: string; formatSendingAmount: string} => {
+): {formatAvailableAmount: string; formatRequiredAmount: string} => {
   const _formatAvailableAmount = dispatch(
     FormatAmountStr(
       wallet.currencyAbbreviation,
@@ -1892,11 +1892,19 @@ const formatAmounts = (
     ),
   );
 
+  const _formatRequiredAmount = dispatch(
+    FormatAmountStr(
+      wallet.currencyAbbreviation,
+      wallet.chain,
+      wallet.tokenAddress,
+      amount,
+      false,
+    ),
+  );
+
   const formatAvailableAmount = `~${_formatAvailableAmount}`;
-  const formatSendingAmount = `~${amount.toFixed(
-    2,
-  )} ${formatCurrencyAbbreviation(wallet.currencyAbbreviation)}`;
-  return {formatAvailableAmount, formatSendingAmount};
+  const formatRequiredAmount = `~${_formatRequiredAmount}`;
+  return {formatAvailableAmount, formatRequiredAmount};
 };
 
 const generateInsufficientFundsError = (
@@ -1905,23 +1913,23 @@ const generateInsufficientFundsError = (
   amount: number,
   onDismiss?: () => void,
 ) => {
-  const {formatAvailableAmount, formatSendingAmount} = formatAmounts(
+  const {formatAvailableAmount, formatRequiredAmount} = formatAmounts(
     dispatch,
     wallet,
     amount,
   );
   let errMsg = IsEVMChain(wallet.chain)
     ? t(
-        'You are trying to send more funds than you have available.\n\nTrying to send: {{formatSendingAmount}}\nAvailable to send: {{formatAvailableAmount}}',
+        'You are trying to send more funds than you have available.\n\nTrying to send:\nAvailable to send:',
         {
-          formatSendingAmount,
+          formatRequiredAmount,
           formatAvailableAmount,
         },
       )
     : t(
-        'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals.\n\nTrying to send: {{formatSendingAmount}}\nAvailable to send: {{formatAvailableAmount}}',
+        'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals.\n\nTrying to send:\nAvailable to send:',
         {
-          formatSendingAmount,
+          formatRequiredAmount,
           formatAvailableAmount,
         },
       );
@@ -1999,7 +2007,12 @@ const processInsufficientFunds = async (
   if (useConfirmedFunds && wallet.balance.sat >= amountSat + feeRatePerKb) {
     return generateInsufficientConfirmedFundsError(onDismiss);
   } else {
-    return generateInsufficientFundsError(dispatch, wallet, amount, onDismiss);
+    return generateInsufficientFundsError(
+      dispatch,
+      wallet,
+      amountSat,
+      onDismiss,
+    );
   }
 };
 
@@ -2016,17 +2029,33 @@ const handleDefaultError = (
 
   const keys = getState().WALLET.keys;
   const {wallet, amount} = tx;
-  const {feeLevel} = txp;
+  let toShowAmount = amount;
+  let linkedWallet: Wallet | undefined;
+  if (IsERCToken(wallet.currencyAbbreviation, wallet.chain) && err.message) {
+    const match = err.message.match(/RequiredFee:\s*([0-9]+)/);
+    if (match && match[1]) {
+      toShowAmount = Number(match[1]);
+      linkedWallet = getFullLinkedWallet(keys[wallet.keyId], wallet);
+    }
+  }
+
+  const {formatAvailableAmount, formatRequiredAmount} = formatAmounts(
+    dispatch,
+    linkedWallet ? linkedWallet : wallet,
+    toShowAmount,
+  );
 
   const title = IsEVMChain(wallet.chain)
     ? t('Not enough gas for transaction')
     : t('Insufficient funds for fee.');
   const body = IsERCToken(wallet.currencyAbbreviation, wallet.chain)
     ? t(
-        'Insufficient funds in your linked wallet to cover the transaction fee.',
+        'Insufficient funds in your linked wallet to cover the transaction fee.\n\nRequired Gas:\nLinked Wallet Balance:',
         {
           linkedWalletAbbreviation:
             wallet.chain === 'matic' ? 'POL' : wallet.chain.toUpperCase(),
+          formatRequiredAmount,
+          formatAvailableAmount,
         },
       )
     : t(
@@ -2048,7 +2077,7 @@ const handleDefaultError = (
           navigationRef.navigate('BuyCryptoRoot', {
             amount: 100,
             fromWallet: IsERCToken(wallet.currencyAbbreviation, wallet.chain)
-              ? getFullLinkedWallet(keys[wallet.keyId], wallet)
+              ? linkedWallet
               : wallet,
           });
         },
