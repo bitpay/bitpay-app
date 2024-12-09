@@ -326,7 +326,14 @@ const AddWallet = ({
         );
       }
     } catch (err: any) {
-      dispatch(LogActions.error(JSON.stringify(err)));
+      const errstring =
+        err instanceof Error
+          ? err.message
+          : err !== undefined
+          ? JSON.stringify(err)
+          : 'An unknown error occurred';
+
+      dispatch(LogActions.debug(`Error adding wallet: ${errstring}`));
     }
   });
 
