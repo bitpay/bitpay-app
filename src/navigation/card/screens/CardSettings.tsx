@@ -9,7 +9,7 @@ import Animated, {
   SlideInLeft,
   SlideInRight,
 } from 'react-native-reanimated';
-import {SharedElement} from 'react-navigation-shared-element';
+// import {SharedElement} from 'react-navigation-shared-element';
 import Carousel, {ICarouselInstance} from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import Button from '../../../components/button/Button';
@@ -134,15 +134,16 @@ const CardSettings: React.FC<CardSettingsProps> = ({navigation, route}) => {
 
   const renderSettingsSlide = useCallback(
     ({item}: {item: Card}) => (
-      <SharedElement id={'card.dashboard.active-card.' + item.id}>
-        <View>
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => goToCardHomeRef.current()}>
-            <SettingsSlide card={item} />
-          </TouchableOpacity>
-        </View>
-      </SharedElement>
+      <></>
+      // <SharedElement id={'card.dashboard.active-card.' + item.id}>
+      //   <View>
+      //     <TouchableOpacity
+      //       activeOpacity={1}
+      //       onPress={() => goToCardHomeRef.current()}>
+      //       <SettingsSlide card={item} />
+      //     </TouchableOpacity>
+      //   </View>
+      // </SharedElement>
     ),
     [],
   );

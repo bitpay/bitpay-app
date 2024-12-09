@@ -1,5 +1,5 @@
 //
-//  RCTDosh.m
+//  RCTDosh.mm
 //  BitPayApp
 //
 //  Created by Johnathan White on 1/5/22.
