@@ -165,7 +165,8 @@ export const GetName =
       );
       return tokens[currencyName]?.name;
     } else {
-      return BitpaySupportedCoins[chain]?.name;
+      const coin = SupportedCoinsOptions.find(({chain: _chain}) => _chain === chain);
+      return coin?.currencyName || BitpaySupportedCoins[chain]?.name;
     }
   };
 
