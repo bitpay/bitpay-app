@@ -85,7 +85,7 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
 
   return (
     <SheetModal
-      modalLibrary="bottom-sheet"
+      modalLibrary="modal"
       isVisible={isVisible}
       onBackdropPress={() => onDismiss(undefined)}
       fullscreen>

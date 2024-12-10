@@ -2502,8 +2502,9 @@ const BuyCryptoOffers: React.FC = () => {
                         ) : null}
                       </>
                     ) : null}
-                    <OfferDataInfoContainer testID={offer.key}>
-                      <OfferDataInfoLabel>
+                    <OfferDataInfoContainer>
+                      <OfferDataInfoLabel
+                        accessibilityLabel={'Provided By ' + offer.key}>
                         {t('Provided By')}
                       </OfferDataInfoLabel>
                       {offer.logo}

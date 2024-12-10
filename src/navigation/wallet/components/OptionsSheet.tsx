@@ -82,7 +82,7 @@ const OptionsSheet = ({
   };
   return (
     <SheetModal
-      modalLibrary={'bottom-sheet'}
+      modalLibrary={'modal'}
       isVisible={isVisible}
       onBackdropPress={closeModal}
       placement={sheetPlacement}>

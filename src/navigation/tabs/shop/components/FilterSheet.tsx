@@ -1,9 +1,8 @@
 import React, {useState} from 'react';
 import {Platform} from 'react-native';
 import {useTranslation} from 'react-i18next';
-import { ScrollView } from 'react-native-gesture-handler';
+import {ScrollView} from 'react-native-gesture-handler';
 import styled, {css} from 'styled-components/native';
-import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {BaseText, H4, TextAlign} from '../../../../components/styled/Text';
 import {

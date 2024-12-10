@@ -1045,7 +1045,7 @@ const BuyCryptoRoot = ({
         onClose={() => hideModal('amount')}
       />
       <SheetModal
-        modalLibrary="bottom-sheet"
+        modalLibrary="modal"
         isVisible={walletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>

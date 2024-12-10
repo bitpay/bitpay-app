@@ -1,6 +1,5 @@
 import React, {useCallback, useMemo, useState, useEffect} from 'react';
 import styled from 'styled-components/native';
-import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
@@ -508,16 +507,6 @@ type GlobalSelectScreenProps = NativeStackScreenProps<
   WalletScreens.GLOBAL_SELECT
 > &
   GlobalSelectProps;
-
-const FlashListComponent: FlashList<any> | typeof BottomSheetFlashList = (
-  props: any,
-) => {
-  const Container = useMemo(
-    () => (props.inModal ? BottomSheetFlashList : FlashList),
-    [props.inModal],
-  );
-  return <Container {...props}>{props.children}</Container>;
-};
 
 const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useAsModal,
@@ -1490,8 +1479,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             <>
               {showInitiallyHiddenComponents && (
                 <FlashListCointainer entering={FadeIn.duration(800)}>
-                  <FlashListComponent
-                    inModal={useAsModal}
+                  <FlashList
                     contentContainerStyle={{paddingBottom: 150}}
                     data={
                       !searchVal && !selectedChainFilterOption
@@ -1538,8 +1526,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               <FlashListCointainer
                 entering={FadeIn.duration(500)}
                 style={{height: HEIGHT - 235}}>
-                <FlashListComponent
-                  inModal={useAsModal}
+                <FlashList
                   estimatedItemSize={90}
                   contentContainerStyle={{paddingBottom: 300}}
                   data={
