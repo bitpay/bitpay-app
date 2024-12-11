@@ -13,6 +13,8 @@ import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import styled from 'styled-components/native';
+import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
+import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 
 const SettingRow = styled(View)`
   flex-grow: 1;
@@ -33,6 +35,7 @@ const PushNotifications = () => {
   const dispatch = useAppDispatch();
 
   const notificationsState = useAppSelector(selectSettingsNotificationState);
+  const visibleOnGoingProcess = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
 
   const [confirmedTx, setConfirmedTx] = useState(
     notificationsState.confirmedTx,
@@ -51,6 +54,7 @@ const PushNotifications = () => {
       checked: pushNotifications,
       onPress: async () => {
         const isEnabled = !pushNotifications;
+        dispatch(startOnGoingProcessModal('LOADING'));
         DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
           isEnabled,
         });
@@ -82,6 +86,9 @@ const PushNotifications = () => {
     setPushNotifications(notificationsState.pushNotifications);
     setAnnouncements(notificationsState.announcements);
     setConfirmedTx(notificationsState.confirmedTx);
+    if (visibleOnGoingProcess) {
+      dispatch(dismissOnGoingProcessModal());
+    }
   }, [notificationsState]);
 
   return (
