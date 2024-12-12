@@ -216,38 +216,8 @@ const RecoveryPhrase = () => {
 
   const showErrorModal = (e: Error) => {
     if (e && e.message === 'WALLET_DOES_NOT_EXIST') {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: t("We couldn't find your wallet"),
-          message: t(
-            'There are no records of your wallet on our servers. If you are importing a BIP44 compatible wallet from a 3rd party you can continue to recreate it. If you wallet is not BIP44 compatible, you will not be able to access its funds.',
-          ),
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: t('Continue'),
-              action: async () => {
-                await sleep(500);
-                if (derivationPathEnabled) {
-                  const {text} = getValues();
-                  setOptsAndCreate(text, advancedOptions);
-                } else {
-                  // select coin to create
-                  setRecreateWallet(true);
-                  setCurrencyModalVisible(true);
-                }
-              },
-              primary: true,
-            },
-            {
-              text: t('Go Back'),
-              action: () => {},
-              primary: false,
-            },
-          ],
-        }),
-      );
+      const {text} = getValues();
+      setOptsAndCreate(text, advancedOptions);
     } else {
       dispatch(
         showBottomNotificationModal({
@@ -563,12 +533,6 @@ const RecoveryPhrase = () => {
           derivationPath,
         };
         setAdvancedOptions(advancedOpts);
-
-        // is trying to create wallet in bws
-        if (recreateWallet) {
-          const {text} = getValues();
-          setOptsAndCreate(text, advancedOpts);
-        }
       };
 
       return (
