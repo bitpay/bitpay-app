@@ -445,6 +445,11 @@ export const WalletConnectStartModal = () => {
 
   const onBackdropPress = () => {
     dispatch(dismissWalletConnectStartModal());
+    if (proposal) {
+      dispatch(
+        walletConnectV2RejectSessionProposal(proposal.id),
+      );
+    }
   };
 
   const getFlatAllKeysAccounts = useMemo(() => {
