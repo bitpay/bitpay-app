@@ -158,6 +158,7 @@ const WalletConnectIntro = () => {
           buttonStyle={'primary'}
           onPress={() => {
             validateWalletConnectUri(uri);
+            setUri('');
           }}>
           {t('Connect')}
         </Button>
