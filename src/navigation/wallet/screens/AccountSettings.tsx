@@ -38,6 +38,8 @@ import {CommonActions} from '@react-navigation/native';
 import {baseNativeHeaderBackButtonProps} from '../../../constants/NavigationOptions';
 import {HeaderBackButton} from '@react-navigation/elements';
 import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -238,6 +240,7 @@ const AccountSettings = () => {
 
           <ToggleSwitch
             onChange={async () => {
+              dispatch(startOnGoingProcessModal('LOADING'));
               setHideAccount(!hideAccount);
               dispatch(
                 toggleHideAccount({
@@ -255,6 +258,7 @@ const AccountSettings = () => {
               );
               await sleep(1000);
               dispatch(updatePortfolioBalance());
+              dispatch(dismissOnGoingProcessModal());
             }}
             isEnabled={!!hideAccount}
             isDisabled={!hasVisibleWallet}
