@@ -319,7 +319,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
 
   return (
     <SheetModal
-      modalLibrary={'bottom-sheet'}
+      modalLibrary={'modal'}
       isVisible={isVisible}
       onBackdropPress={_closeModal}>
       <ReceiveAddressContainer>
