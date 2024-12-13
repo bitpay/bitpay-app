@@ -1,6 +1,6 @@
 import {
   BitpaySupportedCoins,
-  BitpaySupportedEvmCoins,
+  getBaseKeyCreationCoinsAndTokens,
   SupportedChains,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
@@ -666,15 +666,6 @@ export const startCreateKeyWithOpts =
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
-        const {
-          APP: {
-            notificationsAccepted,
-            emailNotifications,
-            brazeEid,
-            defaultLanguage,
-          },
-          WALLET: {keys},
-        } = getState();
         const _key = BWC.createKey({
           seedType: opts.seedType!,
           seedData: opts.mnemonic || opts.extendedPrivateKey,
@@ -682,56 +673,16 @@ export const startCreateKeyWithOpts =
           useLegacyPurpose: opts.useLegacyPurpose,
           passphrase: opts.passphrase,
         });
-
-        const _wallet = (await dispatch(
-          createWalletWithOpts({key: _key, opts}),
-        )) as Wallet;
-
-        // subscribe new wallet to push notifications
-        if (notificationsAccepted) {
-          dispatch(subscribePushNotifications(_wallet, brazeEid!));
-        }
-        // subscribe new wallet to email notifications
-        if (
-          emailNotifications &&
-          emailNotifications.accepted &&
-          emailNotifications.email
-        ) {
-          const prefs = {
-            email: emailNotifications.email,
-            language: defaultLanguage,
-            unit: 'btc', // deprecated
-          };
-          dispatch(subscribeEmailNotifications(_wallet, prefs));
-        }
-
-        const receiveAddress = (await dispatch<any>(
-          createWalletAddress({wallet: _wallet, newAddress: true}),
-        )) as string;
-        dispatch(LogActions.info(`new address generated: ${receiveAddress}`));
-        _wallet.receiveAddress = receiveAddress;
-
-        const {currencyAbbreviation, currencyName} = dispatch(
-          mapAbbreviationAndName(
-            _wallet.credentials.coin,
-            _wallet.credentials.chain,
-            _wallet.credentials?.token?.address,
-          ),
-        );
-
-        // build out app specific props
-        const wallet = merge(
-          _wallet,
-          buildWalletObj({
-            ..._wallet.credentials,
-            currencyAbbreviation,
-            currencyName,
+        const wallets = await dispatch(
+          createMultipleWallets({
+            key: _key,
+            currencies: getBaseKeyCreationCoinsAndTokens(),
+            options: opts,
           }),
-        ) as Wallet;
-
+        );
         const key = buildKeyObj({
           key: _key,
-          wallets: [wallet],
+          wallets: wallets,
           backupComplete: true,
         });
         dispatch(
