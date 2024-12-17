@@ -105,7 +105,7 @@ const CoinbaseWithdrawConfirm = () => {
     async (code?: string) => {
       const buildTx = {
         to: receiveAddress,
-        amount: amount,
+        amount: amount.toString(),
         currency: currency,
       };
       dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
