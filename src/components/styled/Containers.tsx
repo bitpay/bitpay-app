@@ -16,6 +16,7 @@ import {
 import {BaseText} from './Text';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
+export const isNotMobile = HEIGHT / WIDTH < 1.6;
 
 export const ScreenGutter = '15px';
 export const ActiveOpacity = 0.75;

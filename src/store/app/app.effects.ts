@@ -133,6 +133,7 @@ import {
 import {WalletKitTypes} from '@reown/walletkit';
 import {Key, Wallet} from '../wallet/wallet.models';
 import {AppDispatch} from '../../utils/hooks';
+import {isNotMobile} from '../../components/styled/Containers';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -1363,21 +1364,38 @@ export const shareApp = (): Effect<Promise<void>> => async dispatch => {
   }
 };
 
-export const checkFaceIdPermissions = async (): Promise<boolean> => {
+export const checkFaceIdPermissions = async () => {
   // only supported by iOS
   if (Platform.OS !== 'ios') {
-    return true; // Check permissions in the next step
+    return;
+  }
+  // Workaround for Desktop App (Apple Silicon)
+  if (isNotMobile) {
+    return;
   }
   const status = await check(PERMISSIONS.IOS.FACE_ID).catch(() => ({
     status: null,
   }));
-  if (status === RESULTS.DENIED) {
-    const requestStatus = await request(PERMISSIONS.IOS.FACE_ID).catch(() => ({
-      status: null,
-    }));
-    return requestStatus === RESULTS.GRANTED;
+
+  if (status === RESULTS.GRANTED) {
+    return;
   }
-  return status === RESULTS.GRANTED;
+  const requestStatus = await request(PERMISSIONS.IOS.FACE_ID).catch(() => ({
+    status: null,
+  }));
+  switch (requestStatus) {
+    case RESULTS.UNAVAILABLE:
+      throw new Error('Biometric is not available on this device');
+    case RESULTS.BLOCKED:
+      throw new Error('Biometric is blocked on this device');
+    case RESULTS.LIMITED:
+      throw new Error('Biometric is limited on this device');
+    case RESULTS.DENIED:
+      throw new Error('Biometric is denied on this device');
+    case RESULTS.GRANTED:
+    default:
+      return;
+  }
 };
 
 export const isVersionUpdated =
