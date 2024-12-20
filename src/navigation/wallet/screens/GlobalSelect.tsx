@@ -641,10 +641,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     if (recipient.currency && recipient.chain) {
       wallets = wallets.filter(
         wallet =>
-          (wallet.currencyAbbreviation === recipient?.currency &&
-            wallet.chain === recipient?.chain) ||
+          (wallet.credentials.coin === recipient?.currency &&
+            wallet.credentials.chain === recipient?.chain) ||
           (recipient?.opts?.showEVMWalletsAndTokens &&
-            BitpaySupportedEvmCoins[wallet.currencyAbbreviation]),
+            BitpaySupportedEvmCoins[wallet.credentials.coin]),
       );
     }
     if (recipient?.network) {
@@ -665,7 +665,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       ),
     ];
     wallets = wallets.filter(wallet =>
-      supportedCurrencies.includes(wallet.currencyAbbreviation),
+      supportedCurrencies.includes(wallet.credentials.coin),
     );
   }
 
@@ -700,7 +700,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           _filterByCustomWallets = wallets.filter(
             w =>
               allCurrencies.includes(
-                getExternalServiceSymbol(w.currencyAbbreviation, w.chain),
+                getExternalServiceSymbol(
+                  w.credentials.coin,
+                  w.credentials.chain,
+                ),
               ) && w.keyId === key.id,
           );
         } else {
@@ -708,7 +711,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             const isContextValid =
               !['coinbaseDeposit'].includes(context) ||
               allCurrencies.includes(
-                getCurrencyAbbreviation(w.currencyAbbreviation, w.chain),
+                getCurrencyAbbreviation(
+                  w.credentials.coin,
+                  w.credentials.chain,
+                ),
               );
 
             return isContextValid && w.keyId === key.id;
@@ -879,8 +885,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               wallet,
               sendTo,
               sendMaxEnabled: ['contact', 'scanner'].includes(context),
-              cryptoCurrencyAbbreviation:
-                wallet.currencyAbbreviation.toUpperCase(),
+              cryptoCurrencyAbbreviation: wallet.credentials.coin.toUpperCase(),
               chain: wallet.chain,
               tokenAddress: wallet.tokenAddress,
               onAmountSelected: async (amount, setButtonState, opts) => {

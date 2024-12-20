@@ -15,7 +15,6 @@ import {
   BitpaySupportedMaticTokens,
   BitpaySupportedUtxoCoins,
   OtherBitpaySupportedCoins,
-  SUPPORTED_CURRENCIES,
 } from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import {BwcProvider} from '../../../lib/bwc';
@@ -25,7 +24,6 @@ import {
   GetProtocolPrefix,
   IsERCToken,
   IsEVMChain,
-  IsUtxoChain,
 } from './currency';
 import {
   addTokenChainSuffix,
