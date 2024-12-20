@@ -90,7 +90,6 @@ import GlobalSelect, {
   ToWalletSelectorCustomCurrency,
 } from '../../wallet/screens/GlobalSelect';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const AccountContainer = styled.SafeAreaView`
   flex: 1;
@@ -312,7 +311,7 @@ const CoinbaseAccount = ({
             <BorderBottom />
           </View>
         )}
-        {isLoading || initialLoad ? (
+        {isLoading && initialLoad ? (
           <SkeletonContainer>
             <WalletTransactionSkeletonRow />
           </SkeletonContainer>
