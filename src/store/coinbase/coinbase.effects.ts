@@ -29,6 +29,7 @@ import {
   payInvoicePending,
   payInvoiceSuccess,
   payInvoiceFailed,
+  setFiatCurrency,
 } from './index';
 
 import {includes} from 'lodash';
@@ -127,9 +128,24 @@ export const coinbaseInitialize =
 
 export const coinbaseUpdateExchangeRate =
   (): Effect<Promise<any>> => async (dispatch, getState) => {
-    const {APP} = getState();
-    const selectedCurrency: string = APP.defaultAltCurrency.isoCode || 'USD';
+    const {APP, COINBASE} = getState();
+    const appCurrency: string = APP.defaultAltCurrency.isoCode;
+    let selectedCurrency: string = COINBASE.fiatCurrency;
     try {
+      if (appCurrency !== selectedCurrency) {
+        // Check if the BitPay App currency is supported by Coinbase
+        // If not, use the default currency to USD
+        const supportedFiatCurrencies = await CoinbaseAPI.getFiatCurrencies();
+        if (
+          supportedFiatCurrencies.data.find(
+            currency => currency.id === appCurrency,
+          ) !== undefined
+        ) {
+          selectedCurrency = appCurrency;
+          dispatch(setFiatCurrency(appCurrency));
+        }
+      }
+
       dispatch(exchangeRatesPending());
       const exchangeRates = await CoinbaseAPI.getExchangeRates(
         selectedCurrency,

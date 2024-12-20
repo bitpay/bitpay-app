@@ -29,6 +29,7 @@ export {
   payInvoicePending,
   payInvoiceSuccess,
   payInvoiceFailed,
+  setFiatCurrency,
 } from './coinbase.actions';
 export {
   isInvalidTokenError,

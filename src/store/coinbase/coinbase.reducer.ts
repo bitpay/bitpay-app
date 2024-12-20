@@ -65,6 +65,7 @@ export interface CoinbaseState {
   exchangeRates: CoinbaseExchangeRatesProps | null;
   hideTotalBalance: boolean;
   blockchainNetwork: EVM_CHAINS;
+  fiatCurrency: string;
   token: {
     [key in CoinbaseEnvironment]: CoinbaseTokenProps | null;
   };
@@ -102,6 +103,7 @@ const initialState: CoinbaseState = {
   payInvoiceError: null,
   exchangeRates: null,
   hideTotalBalance: false,
+  fiatCurrency: 'USD',
   // Other chain is not supported by Coinbase API
   blockchainNetwork: CoinbaseSupportedNetwork.ethereum,
   token: {
@@ -422,6 +424,12 @@ export const coinbaseReducer = (
       return {
         ...state,
         blockchainNetwork: action.payload,
+      };
+
+    case CoinbaseActionTypes.FIAT_CURRENCY:
+      return {
+        ...state,
+        fiatCurrency: action.payload,
       };
 
     default:

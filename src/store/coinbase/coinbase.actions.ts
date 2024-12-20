@@ -9,6 +9,13 @@ import {
 } from '../../api/coinbase/coinbase.types';
 import {CoinbaseActionType, CoinbaseActionTypes} from './coinbase.types';
 
+// ------- Settings -------- //
+
+export const setFiatCurrency = (fiatCurrency: string): CoinbaseActionType => ({
+  type: CoinbaseActionTypes.FIAT_CURRENCY,
+  payload: fiatCurrency,
+});
+
 // ------- Exchange Rates -------- //
 
 export const exchangeRatesPending = (): CoinbaseActionType => ({

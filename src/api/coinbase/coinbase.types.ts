@@ -135,6 +135,31 @@ export interface CoinbaseExchangeRatesProps {
   };
 }
 
+export interface CoinbaseFiatCurrencyProps {
+  id: string;
+  name: string;
+  min_size: string;
+}
+
+export interface CoinbaseFiatCurrenciesProps {
+  data: CoinbaseFiatCurrencyProps[];
+}
+
+export interface CoinbaseCryptoCurrencyProps {
+  code: string;
+  name: string;
+  color: string;
+  sort_index: number;
+  exponent: number;
+  type: string;
+  address_regex: string;
+  asset_id: string;
+}
+
+export interface CoinbaseCryptoCurrenciesProps {
+  data: CoinbaseCryptoCurrencyProps[];
+}
+
 export interface CoinbaseCreateAddressProps {
   data: {
     id: string;

@@ -11,6 +11,8 @@ import {
   CoinbaseCreateAddressProps,
   CoinbaseTransactionsProps,
   CoinbaseTransactionProps,
+  CoinbaseFiatCurrenciesProps,
+  CoinbaseCryptoCurrenciesProps,
 } from './coinbase.types';
 
 import {
@@ -349,6 +351,27 @@ const getExchangeRates = async (
   }
 };
 
+const getFiatCurrencies = async (): Promise<CoinbaseFiatCurrenciesProps> => {
+  const url = CREDENTIALS.api_url + '/v2/currencies';
+  try {
+    const {data} = await axios.get(url);
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
+};
+
+const getCryptoCurrencies =
+  async (): Promise<CoinbaseCryptoCurrenciesProps> => {
+    const url = CREDENTIALS.api_url + '/v2/currencies/crypto';
+    try {
+      const {data} = await axios.get(url);
+      return data;
+    } catch (error: any) {
+      throw error.response.data;
+    }
+  };
+
 const CoinbaseAPI = {
   revokeToken,
   getAccessToken,
@@ -363,6 +386,8 @@ const CoinbaseAPI = {
   payInvoice,
   getOAuthUrl,
   getOauthStateCode,
+  getFiatCurrencies,
+  getCryptoCurrencies,
 };
 
 export default CoinbaseAPI;
