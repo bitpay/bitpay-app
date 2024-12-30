@@ -298,7 +298,11 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
               <>
                 <CheckboxControl accessibilityLabel="agreed-terms-of-use-checkbox">
                   <Checkbox
-                    onPress={() => setValue('agreedToTOSandPP', !field.value)}
+                    onPress={() =>
+                      setValue('agreedToTOSandPP', !field.value, {
+                        shouldValidate: true,
+                      })
+                    }
                     checked={field.value}
                   />
 
