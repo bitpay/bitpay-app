@@ -255,12 +255,12 @@ const KeyWalletsRow = ({
                           <View
                             style={{marginTop: -10, marginLeft: -10}}
                             key={chain}>
-                            {chainAssetsList.map((asset, index) => (
+                            {chainAssetsList.map(asset => (
                               <WalletRow
                                 key={asset.id}
                                 id={asset.id}
                                 hideBalance={hideBalance}
-                                isLast={false}
+                                noBorder={true}
                                 onPress={() => {
                                   const fullWalletObj = findWalletById(
                                     keys[key.key].wallets,
@@ -283,7 +283,8 @@ const KeyWalletsRow = ({
             ? Object.values(key?.mergedUtxoAccounts).map(
                 (mergedUtxoAccount, index) => (
                   <UtxoAccountContainer
-                    key={mergedUtxoAccount[0]?.chain || index}>
+                    key={mergedUtxoAccount[0]?.chain || index}
+                    isLast={index === Object.values(key?.mergedUtxoAccounts).length - 1}>
                     <AccountChainsContainer
                       activeOpacity={ActiveOpacity}
                       onPress={() =>
@@ -336,7 +337,7 @@ const KeyWalletsRow = ({
                           <WalletRow
                             id={wallet.id}
                             hideBalance={hideBalance}
-                            isLast={false}
+                            noBorder={true}
                             onPress={() => {
                               const fullWalletObj = findWalletById(
                                 keys[key.key].wallets,
@@ -359,7 +360,7 @@ const KeyWalletsRow = ({
               <WalletRow
                 id={wallet.id}
                 hideBalance={hideBalance}
-                isLast={false}
+                noBorder={true}
                 onPress={() => onPress(wallet)}
                 wallet={wallet}
               />

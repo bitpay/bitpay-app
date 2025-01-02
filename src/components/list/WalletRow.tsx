@@ -92,6 +92,7 @@ interface Props {
   wallet: WalletRowProps;
   hideIcon?: boolean;
   isLast?: boolean;
+  noBorder?: boolean;
   onPress: () => void;
   hideBalance: boolean;
 }
@@ -165,7 +166,7 @@ export const buildGasTokenBadge = (
   );
 };
 
-const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
+const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance, noBorder}: Props) => {
   const {
     currencyName,
     currencyAbbreviation,
@@ -191,7 +192,8 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
     <RowContainer
       activeOpacity={ActiveOpacity}
       onPress={onPress}
-      style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}>
+      style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}
+      noBorder={noBorder}>
       {isToken && (
         <NestedArrowContainer>
           <NestedArrowIcon />

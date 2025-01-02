@@ -212,7 +212,6 @@ const LockedBalanceContainer = styled.TouchableOpacity`
 
 const Description = styled(BaseText)`
   overflow: hidden;
-  margin-right: 175px;
   font-size: 16px;
 `;
 
