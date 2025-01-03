@@ -173,27 +173,28 @@ const ContactsDetails = ({
       // Remove prefix
       newAddress = ToCashAddress(contact.address, false);
     }
-    if (!IsEVMChain(contact.chain)) {
-      contactOptions.push({
-        img: theme.dark ? <SendIconWhite /> : <SendIcon />,
-        title: t('Send ') + contact.coin.toUpperCase(),
-        onPress: async () => {
-          setShowIconOptions(false);
-          await sleep(500);
-          navigation.navigate('GlobalSelect', {
-            context: 'contact',
-            recipient: {
-              name: contact.name,
-              address: newAddress,
-              currency: contact.coin,
-              chain: contact.chain,
-              network: contact.network,
-              destinationTag: contact.tag || contact.destinationTag,
+    contactOptions.push({
+      img: theme.dark ? <SendIconWhite /> : <SendIcon />,
+      title: t('Send to this contact'),
+      onPress: async () => {
+        setShowIconOptions(false);
+        await sleep(500);
+        navigation.navigate('GlobalSelect', {
+          context: 'contact',
+          recipient: {
+            name: contact.name,
+            address: newAddress,
+            currency: contact.coin,
+            chain: contact.chain,
+            network: contact.network,
+            destinationTag: contact.tag || contact.destinationTag,
+            opts: {
+              showEVMWalletsAndTokens: true,
             },
-          });
-        },
-      });
-    }
+          },
+        });
+      },
+    });
   }
 
   contactOptions.push({

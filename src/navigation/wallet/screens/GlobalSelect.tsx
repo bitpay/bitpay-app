@@ -644,7 +644,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           (wallet.credentials.coin === recipient?.currency &&
             wallet.credentials.chain === recipient?.chain) ||
           (recipient?.opts?.showEVMWalletsAndTokens &&
-            BitpaySupportedEvmCoins[wallet.credentials.coin]),
+            BitpaySupportedEvmCoins[wallet.credentials.chain]),
       );
     }
     if (recipient?.network) {
