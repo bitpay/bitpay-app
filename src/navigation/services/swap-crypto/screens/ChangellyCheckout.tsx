@@ -438,11 +438,13 @@ const ChangellyCheckout: React.FC = () => {
           })
           .catch(err => {
             let msg = t('Error creating transaction');
+            let errorMsgLog;
             if (typeof err?.message === 'string') {
               msg = msg + `: ${err.message}`;
+              errorMsgLog = err.message;
             }
             const reason = 'createTx Error';
-            showError(msg, reason);
+            showError(msg, reason, errorMsgLog);
             return;
           });
       })
@@ -487,8 +489,10 @@ const ChangellyCheckout: React.FC = () => {
           context: 'ChangellyCheckout',
           reasonForFailure: 'Time to make the payment expired',
           amountFrom: amountFrom || '',
-          fromCoin: fromWalletSelected.currencyAbbreviation || '',
-          toCoin: toWalletSelected.currencyAbbreviation || '',
+          fromCoin: fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+          fromChain: fromWalletSelected.chain?.toLowerCase() || '',
+          toCoin: toWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+          toChain: toWalletSelected.chain?.toLowerCase() || '',
         }),
       );
       return;
@@ -818,7 +822,7 @@ const ChangellyCheckout: React.FC = () => {
     );
   };
 
-  const showError = async (msg?: string, reason?: string) => {
+  const showError = async (msg?: string, reason?: string, errorMsgLog?: string) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
@@ -827,9 +831,12 @@ const ChangellyCheckout: React.FC = () => {
         exchange: 'changelly',
         context: 'ChangellyCheckout',
         reasonForFailure: reason || 'unknown',
+        errorMsg: errorMsgLog || 'unknown',
         amountFrom: amountFrom || '',
-        fromCoin: fromWalletSelected.currencyAbbreviation || '',
-        toCoin: toWalletSelected.currencyAbbreviation || '',
+        fromCoin: fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+        fromChain: fromWalletSelected.chain?.toLowerCase() || '',
+        toCoin: toWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+        toChain: toWalletSelected.chain?.toLowerCase() || '',
       }),
     );
     dispatch(

@@ -680,7 +680,7 @@ const SimplexSellCheckout: React.FC = () => {
     return msg;
   };
 
-  const showError = async (err?: any, reason?: string) => {
+  const showError = async (err?: any, reason?: string, errorMsgLog?: string) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
 
@@ -693,8 +693,10 @@ const SimplexSellCheckout: React.FC = () => {
         exchange: 'simplex',
         context: 'SimplexSellCheckout',
         reasonForFailure: reason || 'unknown',
+        errorMsg: errorMsgLog || 'unknown',
         amountFrom: amountExpected || '',
         fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
+        fromChain: wallet.chain?.toLowerCase() || '',
         fiatAmount: Number(simplexQuoteOffer.quoteData.fiat_amount) || '',
         fiatCurrency: simplexQuoteOffer.fiatCurrency
           ? cloneDeep(simplexQuoteOffer.fiatCurrency).toUpperCase()
@@ -788,11 +790,13 @@ const SimplexSellCheckout: React.FC = () => {
         })
         .catch(err => {
           let msg = t('Error creating transaction');
+          let errorMsgLog;
           if (typeof err?.message === 'string') {
             msg = msg + `: ${err.message}`;
+            errorMsgLog = err.message;
           }
           const reason = 'createTx Error';
-          showError(msg, reason);
+          showError(msg, reason, errorMsgLog);
           return;
         });
     }
