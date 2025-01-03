@@ -817,9 +817,6 @@ const updateWalletStatus =
 
             const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
             const singleAddress = status.wallet?.singleAddress;
-            console.log('[updateWalletStatus] wallet obj', wallet);
-            console.log('[updateWalletStatus] newBalance', newBalance);
-            console.log('[updateWalletStatus] newPendingTxps', newPendingTxps);
 
             resolve({
               balance: newBalance,
