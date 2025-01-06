@@ -92,28 +92,30 @@ const PinScreen = ({
   const onSetBiometricPress = async () => {
     try {
       haptic('impactLight');
-      const permissions = await AppEffects.checkFaceIdPermissions();
-      if (!permissions) {
-        throw new Error('Face ID permissions not granted');
-      }
       const rnBiometrics = new ReactNativeBiometrics({
         allowDeviceCredentials: true,
       });
       const {available, biometryType} = await rnBiometrics.isSensorAvailable();
+      if (biometryType === BiometryTypes.FaceID) {
+        await AppEffects.checkFaceIdPermissions();
+      }
       if (available) {
-        logger.debug(`${biometryType} is supported`);
+        logger.debug(`[Biometrics] ${biometryType} is supported`);
         dispatch(AppActions.biometricLockActive(true));
         askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
       } else {
-        logger.debug('Biometrics not supported');
         dispatch(
           showBottomNotificationModal(
-            BiometricErrorNotification('Biometrics not supported'),
+            BiometricErrorNotification(
+              'Biometric method is not available on this device: ' +
+                biometryType,
+            ),
           ),
         );
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`[Biometrics] failed with error: ${errMsg}`);
       dispatch(showBottomNotificationModal(BiometricErrorNotification(errMsg)));
     }
   };
