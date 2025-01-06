@@ -6,7 +6,6 @@ import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ActionContainer,
-  CtaContainer,
   CtaContainerAbsolute,
   ImageContainer,
   TextContainer,
@@ -15,7 +14,7 @@ import {
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch, useLogger} from '../../../utils/hooks';
+import {useAppDispatch, useLogger, useAppSelector} from '../../../utils/hooks';
 import {OnboardingImage} from '../../../navigation/onboarding/components/Containers';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -24,10 +23,10 @@ import {AppActions} from '../../../store/app';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
 import Share, {ShareOptions} from 'react-native-share';
-import {ShareOpenResult} from 'react-native-share/lib/typescript/src/types';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../components/ErrorMessages';
+import {checkBiometricForSending} from '../../../store/wallet/effects/send/send';
 
 export type BackupOnboardingParamList = {
   key: Key;
@@ -60,6 +59,7 @@ const BackupOnboarding: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const logger = useLogger();
+  const {biometricLockActive} = useAppSelector(({APP}) => APP);
 
   const route = useRoute<RouteProp<WalletGroupParamList, 'BackupOnboarding'>>();
   const {key, buildEncryptModalConfig} = route.params;
@@ -120,8 +120,7 @@ const BackupOnboarding: React.FC = () => {
       };
 
       logger.debug('Trying to execute Share.open');
-      const shareResponse: ShareOpenResult = await Share.open(opts);
-      logger.debug(JSON.stringify(shareResponse));
+      Share.open(opts);
     } catch (err) {
       let errMsg = '';
       if (err instanceof Error) {
@@ -185,9 +184,12 @@ const BackupOnboarding: React.FC = () => {
           <Button
             accessibilityLabel="write-down-backup-button"
             buttonStyle={'primary'}
-            onPress={() => {
+            onPress={async () => {
               haptic('impactLight');
               if (!key.methods?.isPrivKeyEncrypted()) {
+                if (biometricLockActive) {
+                  await dispatch(checkBiometricForSending());
+                }
                 navigation.navigate('RecoveryPhrase', {
                   keyId: key.id,
                   words: getMnemonic(key),
