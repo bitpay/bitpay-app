@@ -432,11 +432,13 @@ const MoonpaySellCheckout: React.FC = () => {
       })
       .catch(err => {
         let msg = t('Error creating transaction');
+        let errorMsgLog;
         if (typeof err?.message === 'string') {
           msg = msg + `: ${err.message}`;
+          errorMsgLog = err.message;
         }
         const reason = 'createTx Error';
-        showError(msg, reason);
+        showError(msg, reason, errorMsgLog);
         return;
       });
   };
@@ -759,7 +761,7 @@ const MoonpaySellCheckout: React.FC = () => {
     return msg;
   };
 
-  const showError = async (err?: any, reason?: string) => {
+  const showError = async (err?: any, reason?: string, errorMsgLog?: string) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
 
@@ -772,8 +774,10 @@ const MoonpaySellCheckout: React.FC = () => {
         exchange: 'moonpay',
         context: 'MoonpaySellCheckout',
         reasonForFailure: reason || 'unknown',
+        errorMsg: errorMsgLog || 'unknown',
         amountFrom: amountExpected || '',
         fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
+        fromChain: wallet.chain?.toLowerCase() || '',
         fiatAmount: sellOrder?.fiat_receiving_amount || '',
         fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
       }),
