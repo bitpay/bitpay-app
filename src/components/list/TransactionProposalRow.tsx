@@ -25,7 +25,6 @@ const Description = styled(BaseText)`
 
 const Creator = styled(ListItemSubText)`
   overflow: hidden;
-  margin-right: 175px;
 `;
 
 const TailContainer = styled.View`
