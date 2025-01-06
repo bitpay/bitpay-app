@@ -7,7 +7,8 @@ import {
   RowContainer,
 } from '../styled/Containers';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
-import {FlatList, View} from 'react-native';
+import {View} from 'react-native';
+import {FlashList} from '@shopify/flash-list';
 import {H5} from '../styled/Text';
 import WalletRow, {WalletRowProps} from './WalletRow';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
@@ -137,7 +138,8 @@ const AssetsByChainRow = ({
         </Column>
       </RowContainer>
       {showChainAssets[chain] ? (
-        <FlatList<WalletRowProps>
+        <FlashList<WalletRowProps>
+          estimatedItemSize={90}
           data={chainAssetsList}
           renderItem={memoizedRenderItem}
         />
