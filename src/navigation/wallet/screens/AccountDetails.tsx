@@ -10,6 +10,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import {RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -27,7 +28,6 @@ import {
 } from './KeyOverview';
 import {
   DeviceEventEmitter,
-  FlatList,
   RefreshControl,
   SectionList,
   TouchableOpacity,
@@ -53,6 +53,7 @@ import {
   formatCurrencyAbbreviation,
   shouldScale,
   sleep,
+  fixWalletAddresses,
 } from '../../../utils/helper-methods';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -61,11 +62,14 @@ import {
   createMultipleWallets,
   getDecryptPassword,
   startGetRates,
+  serverAssistedImport,
+  normalizeMnemonic,
 } from '../../../store/wallet/effects';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {
   successAddWallet,
   updatePortfolioBalance,
+  syncWallets,
 } from '../../../store/wallet/wallet.actions';
 import {
   BalanceUpdateError,
@@ -140,6 +144,8 @@ import {
   buildAccountList,
   buildAssetsByChainList,
   findWalletById,
+  buildWalletObj,
+  mapAbbreviationAndName,
 } from '../../../store/wallet/utils/wallet';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
@@ -156,6 +162,8 @@ import {
   getBaseAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -391,6 +399,117 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     ({SHOP}) => SHOP.billPayAccounts[accountItem.wallets[0].network],
   );
 
+  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
+    return {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
+    };
+  });
+
+  const startSyncWallets = async (mnemonic: string) => {
+    if (key.isPrivKeyEncrypted) {
+      // To close decrypt modal
+      await sleep(500);
+    }
+    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
+    const opts = {
+      words: normalizeMnemonic(mnemonic),
+      mnemonic,
+    };
+    try {
+      let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
+        opts,
+      );
+
+      if (_syncKey.fingerPrint === key.properties!.fingerPrint) {
+        // Filter for new wallets
+        _syncWallets = _syncWallets
+          .filter(
+            sw =>
+              sw.isComplete() &&
+              !key.wallets.some(ew => ew.id === sw.credentials.walletId),
+          )
+          .map(syncWallet => {
+            // update to keyId
+            syncWallet.credentials.keyId = key.properties!.id;
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                syncWallet.credentials.coin,
+                syncWallet.credentials.chain,
+                syncWallet.credentials.token?.address,
+              ),
+            );
+            return _.merge(
+              syncWallet,
+              buildWalletObj(
+                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                _tokenOptionsByAddress,
+              ),
+            );
+          });
+
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: _syncWallets,
+        });
+
+        let message;
+
+        const syncWalletsLength = _syncWallets.length;
+        if (syncWalletsLength) {
+          message =
+            syncWalletsLength === 1
+              ? t('New wallet found')
+              : t('wallets found', {syncWalletsLength});
+          dispatch(syncWallets({keyId: key.id, wallets: _syncWallets}));
+        } else {
+          message = t('Your key is already synced');
+        }
+
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'error',
+            title: t('Sync wallet'),
+            message,
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+      } else {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        await dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              errMsg: t('Failed to Sync wallets'),
+            }),
+          ),
+        );
+      }
+    } catch (e) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e),
+            title: t('Error'),
+          }),
+        ),
+      );
+    }
+  };
+
   const keyOptions: Array<Option> = [];
   const hasAllChains =
     accountItem.chains.length === Object.keys(BitpaySupportedEvmCoins).length;
@@ -420,9 +539,17 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             },
           }),
         );
-        key.wallets.push(...(wallets as Wallet[]));
-
-        dispatch(successAddWallet({key}));
+        if (_.isEmpty(wallets)) {
+          if (!key.isPrivKeyEncrypted) {
+            await startSyncWallets(key.properties!.mnemonic);
+          } else {
+            const mnemonic = key.methods!.get(password).mnemonic;
+            await startSyncWallets(mnemonic);
+          }
+        } else {
+          key.wallets.push(...(wallets as Wallet[]));
+          dispatch(successAddWallet({key}));
+        }
         dispatch(dismissOnGoingProcessModal());
       },
     });
