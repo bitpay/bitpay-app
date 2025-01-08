@@ -7,10 +7,10 @@ import {GetContactName} from '../../store/wallet/effects/transactions/transactio
 import {ContactRowProps} from './ContactRow';
 
 const TransactionContainer = styled.TouchableOpacity`
+  flex: 1;
   flex-direction: row;
   padding: 10px ${ScreenGutter};
-  justify-content: center;
-  align-items: center;
+  justify-content: space-between;
 `;
 
 const IconContainer = styled.View`
@@ -19,8 +19,8 @@ const IconContainer = styled.View`
 
 const Description = styled(BaseText)`
   overflow: hidden;
-  margin-right: 175px;
   font-size: 16px;
+  max-width: 150px;
 `;
 
 const Creator = styled(ListItemSubText)`
