@@ -26,9 +26,9 @@ export const PillContainer = styled.Pressable<StyleProps>`
   border-radius: 40px;
   align-items: center;
   justify-content: center;
-  padding: 0 13px;
+  padding: 0 11px;
   height: ${({height}) => (height ? height : '100%')};
-  max-width: 230px;
+  max-width: 202px;
 `;
 
 const IconContainer = styled.View`
@@ -69,7 +69,7 @@ const SendToPill = ({
       height={height}>
       <IconContainer>{icon}</IconContainer>
       <PillText numberOfLines={1} ellipsizeMode={'middle'} accent={accent}>
-        {description.replace('bitcoincash:', '')}
+        {description}
       </PillText>
 
       {dropDown ? (

@@ -24,6 +24,7 @@ import {
   getBadgeImg,
   getCurrencyAbbreviation,
   sleep,
+  formatCryptoAddress,
 } from '../../../../../utils/helper-methods';
 import {
   findWalletById,
@@ -206,7 +207,12 @@ export const SendingTo: React.VFC<SendingToProps> = ({
       ' ' +
       (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
   } else {
-    description = recipientName || recipientEmail || recipientFullAddress || '';
+    description =
+      recipientName ||
+      recipientEmail ||
+      formatCryptoAddress(
+        (recipientFullAddress || '').replace('bitcoincash:', ''),
+      );
   }
 
   return (
