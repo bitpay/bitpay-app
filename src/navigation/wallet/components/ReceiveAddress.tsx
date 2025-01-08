@@ -69,7 +69,7 @@ const CopyToClipboard = styled.TouchableOpacity`
 const AddressText = styled(BaseText)`
   font-size: 16px;
   color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
-  padding: 0 20px 0 10px;
+  padding: 0 20px 0 5px;
 `;
 
 const CopyImgContainer = styled.View`
@@ -170,6 +170,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
   const [loading, setLoading] = useState(true);
   const [bchAddressType, setBchAddressType] = useState('Cash Address');
   const [bchAddress, setBchAddress] = useState('');
+  const [protocolPrefix, setProtocolPrefix] = useState('');
   const [wasInit, setWasInit] = useState(false);
   const [singleAddress, setSingleAddress] = useState(false);
 
@@ -233,8 +234,9 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
       )) as string;
       setLoading(false);
       if (currencyAbbreviation === 'bch') {
-        const protocolPrefix = GetProtocolPrefix(network, chain);
-        const formattedAddr = protocolPrefix + ':' + walletAddress;
+        const _protocolPrefix = GetProtocolPrefix(network, chain);
+        setProtocolPrefix(_protocolPrefix);
+        const formattedAddr = _protocolPrefix + ':' + walletAddress;
         setAddress(formattedAddr);
         setBchAddress(formattedAddr);
         setBchAddressType('Cash Address');
@@ -339,8 +341,10 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
               <CopyImgContainer>
                 {!copied ? <CopySvg width={17} /> : <CopiedSvg width={17} />}
               </CopyImgContainer>
-              <AddressText numberOfLines={1} ellipsizeMode={'tail'}>
-                {address}
+              <AddressText numberOfLines={1} ellipsizeMode={'middle'}>
+                {protocolPrefix
+                  ? address.replace(protocolPrefix + ':', '')
+                  : address}
               </AddressText>
             </CopyToClipboard>
 

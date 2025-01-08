@@ -206,7 +206,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
       ' ' +
       (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
   } else {
-    description = recipientName || recipientEmail || recipientAddress || '';
+    description = recipientName || recipientEmail || recipientFullAddress || '';
   }
 
   return (
