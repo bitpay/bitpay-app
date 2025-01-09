@@ -25,6 +25,7 @@ import {
   TransactionOptionsContext,
   BitcoreUtxoTransactionLike,
   BitcoreEvmTransactionLike,
+  ProposalErrorHandlerContext,
 } from '../../wallet.models';
 import {
   FormatAmount,
@@ -61,7 +62,7 @@ import {
   GeneralError,
   WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
-import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
+import {BWCErrorName, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
@@ -1384,13 +1385,14 @@ export const publishAndSignMultipleProposals =
 export const createTxProposal = (
   wallet: Wallet,
   txp: Partial<TransactionProposal>,
-): Promise<TransactionProposal> => {
+): Effect<Promise<TransactionProposal>> =>
+  (dispatch, getState) => {
   return new Promise((resolve, reject) => {
     wallet.createTxProposal(
       txp,
       (err: Error, createdTxp: TransactionProposal) => {
         if (err) {
-          return reject(err);
+          return reject({err, tx: {wallet, amount: txp?.amount}, txp, getState});
         }
         return resolve(createdTxp);
       },
@@ -1948,6 +1950,7 @@ const generateInsufficientFundsError = (
       );
   return CustomErrorMessage({
     title: t('Insufficient funds'),
+    code: BWCErrorName.INSUFFICIENT_FUNDS,
     errMsg: errMsg,
     action: onDismiss,
     cta: [
@@ -1972,6 +1975,7 @@ const generateInsufficientFundsError = (
 
 const generateInsufficientConfirmedFundsError = (onDismiss?: () => void) => {
   return CustomErrorMessage({
+    code: BWCErrorName.INSUFFICIENT_FUNDS,
     title: t('Insufficient confirmed funds'),
     errMsg: t(
       'You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable "Use unconfirmed funds" in Advanced Settings.',
@@ -2033,6 +2037,8 @@ const handleDefaultError = (
   proposalErrorProps: ProposalErrorHandlerProps,
   dispatch: any,
   onDismiss?: () => void,
+  errorCode?: string | Error,
+  context?: ProposalErrorHandlerContext,
 ) => {
   const {err, tx, txp, getState} = proposalErrorProps;
 
@@ -2074,29 +2080,54 @@ const handleDefaultError = (
     : t(
         'You have enough funds to make this payment, but your wallet doesn’t have enough to cover the network fees.',
       );
-  return CustomErrorMessage({
-    title,
-    errMsg: body,
-    action: onDismiss,
-    cta: [
+
+    const ctaAction = [
       {
         text: t('Buy Crypto'),
         action: () => {
+        const goToBuyCrypto = async () => {
           dispatch(
             Analytics.track('Clicked Buy Crypto', {
               context: 'errorBottomNotification',
             }),
           );
+          if (context && ['sell', 'swap'].includes(context)) {
+            navigationRef.goBack();
+            await (sleep(100));
+          }
           navigationRef.navigate('BuyCryptoRoot', {
             amount: 100,
             fromWallet: IsERCToken(wallet.currencyAbbreviation, wallet.chain)
               ? linkedWallet
               : wallet,
           });
+        };
+        goToBuyCrypto();
         },
         primary: true,
       },
-    ],
+    ];
+
+    if (context && ['sell', 'swap'].includes(context)) {
+      ctaAction.push({
+        text: t('GO BACK'),
+        action: () => {
+            const goBack = async () => {
+              navigationRef.goBack();
+              await (sleep(100));
+            };
+            goBack();
+        },
+        primary: false,
+      },);
+    }
+
+  return CustomErrorMessage({
+    title,
+    code: typeof errorCode === 'string' ? errorCode : undefined,
+    errMsg: body,
+    action: onDismiss,
+    cta: ctaAction,
   });
 };
 
@@ -2104,13 +2135,14 @@ export const handleCreateTxProposalError =
   (
     proposalErrorProps: ProposalErrorHandlerProps,
     onDismiss?: () => void,
+    context?: ProposalErrorHandlerContext,
   ): Effect<Promise<any>> =>
   async dispatch => {
     try {
       const {err} = proposalErrorProps;
       const errorName = getErrorName(err);
       switch (errorName) {
-        case 'INSUFFICIENT_FUNDS':
+        case BWCErrorName.INSUFFICIENT_FUNDS:
           return await processInsufficientFunds(
             proposalErrorProps,
             dispatch,
@@ -2118,7 +2150,7 @@ export const handleCreateTxProposalError =
           );
 
         default:
-          return handleDefaultError(proposalErrorProps, dispatch, onDismiss);
+          return handleDefaultError(proposalErrorProps, dispatch, onDismiss, errorName, context);
       }
     } catch (err2) {
       return GeneralError();

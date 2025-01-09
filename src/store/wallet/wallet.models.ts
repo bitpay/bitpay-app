@@ -409,6 +409,8 @@ export interface ProposalErrorHandlerProps {
   txp?: Partial<TransactionProposal>;
 }
 
+export type ProposalErrorHandlerContext =  'sell' | 'swap';
+
 // UI details
 export interface TxDetailsAmount {
   cryptoAmount: string;

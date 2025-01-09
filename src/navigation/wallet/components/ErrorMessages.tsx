@@ -119,11 +119,13 @@ export const CustomErrorMessage = ({
   action = () => null,
   cta,
   title,
+  code,
 }: {
   errMsg: string;
+  code?: string;
   title?: string;
   action?: () => void;
-  cta?: [{text: string; action: () => void; primary: boolean}];
+  cta?: {text: string; action: () => void; primary: boolean}[];
 }): BottomNotificationConfig => {
   if (!cta) {
     // set CTA with action if default
@@ -138,6 +140,7 @@ export const CustomErrorMessage = ({
   return {
     type: 'error',
     title: title || t('Something went wrong'),
+    code: code || undefined,
     message: errMsg,
     enableBackdropDismiss: true,
     onBackdropDismiss: action,

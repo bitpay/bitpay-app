@@ -37,6 +37,7 @@ export interface BottomNotificationConfig {
     primary?: boolean;
     action: (rootState: RootState) => any;
   }>;
+  code?: string;
   message2?: ReactChild;
   enableBackdropDismiss: boolean;
   onBackdropDismiss?: () => void;

@@ -12,7 +12,7 @@ import {
   ActiveOpacity,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {BWCErrorMessage} from '../../../constants/BWCError';
+import {BWCErrorMessage, BWCErrorName} from '../../../constants/BWCError';
 import {CustomErrorMessage} from './ErrorMessages';
 import {
   Action,
@@ -243,7 +243,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
       }
     } catch (createAddressErr: any) {
       switch (createAddressErr?.type) {
-        case 'INVALID_ADDRESS_GENERATED':
+        case BWCErrorName.INVALID_ADDRESS_GENERATED:
           logger.error(createAddressErr.error);
 
           if (retryCount < 3) {
@@ -258,7 +258,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
             );
           }
           break;
-        case 'MAIN_ADDRESS_GAP_REACHED':
+        case BWCErrorName.MAIN_ADDRESS_GAP_REACHED:
           showErrorMessage(
             CustomErrorMessage({
               errMsg: BWCErrorMessage(createAddressErr.error),
