@@ -204,7 +204,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
   );
 };
 
-let countDown: NodeJS.Timer | undefined;
+let countDown: NodeJS.Timeout | undefined;
 
 const TransactionProposalDetails = () => {
   const {t} = useTranslation();
@@ -333,7 +333,7 @@ const TransactionProposalDetails = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timer,
+    countDown?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
