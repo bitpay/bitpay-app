@@ -28,7 +28,7 @@ export const PillContainer = styled.Pressable<StyleProps>`
   justify-content: center;
   padding: 0 11px;
   height: ${({height}) => (height ? height : '100%')};
-  max-width: 200px;
+  max-width: 202px;
 `;
 
 const IconContainer = styled.View`
@@ -68,7 +68,7 @@ const SendToPill = ({
       accent={accent}
       height={height}>
       <IconContainer>{icon}</IconContainer>
-      <PillText numberOfLines={1} ellipsizeMode={'tail'} accent={accent}>
+      <PillText numberOfLines={1} ellipsizeMode={'middle'} accent={accent}>
         {description}
       </PillText>
 

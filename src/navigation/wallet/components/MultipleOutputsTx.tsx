@@ -148,7 +148,9 @@ const MultipleOutputsTx = ({
       tx.customData?.recipientEmail ||
       tx.customData?.toWalletName ||
       (tx.outputs[0].addressToShow
-        ? formatCryptoAddress(tx.outputs[0].addressToShow)
+        ? formatCryptoAddress(
+            tx.outputs[0].toAddress || tx.outputs[0].addressToShow,
+          )
         : formatCryptoAddress(tx.outputs[0].address))
     );
   };
