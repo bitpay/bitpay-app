@@ -903,7 +903,7 @@ const handleMaticUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Matic URI'));
-    const coin = 'matic';
+    const coin = 'pol';
     const chain = 'matic';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;

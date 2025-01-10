@@ -298,7 +298,7 @@ const PriceCharts = () => {
 
   const buttonLabel =
     t('Buy ') +
-    (currencyAbbreviation === 'matic'
+    (currencyAbbreviation === 'pol'
       ? currencyAbbreviation.charAt(0).toUpperCase() +
         currencyAbbreviation.slice(1)
       : currencyName);

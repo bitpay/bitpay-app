@@ -1401,7 +1401,7 @@ export const GetUtxos = (wallet: Wallet): Promise<Utxo[]> => {
   return new Promise((resolve, reject) => {
     wallet.getUtxos(
       {
-        coin: wallet.credentials.coin,
+        coin: wallet.credentials.chain,
       },
       (err: any, resp: any) => {
         if (err || !resp || !resp.length) {

@@ -645,8 +645,8 @@ export const createWalletsForAccounts = async (
 export const getEvmGasWallets = (wallets: Wallet[]) => {
   return wallets.filter(
     wallet =>
-      IsEVMChain(wallet.credentials.chain) &&
-      !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
+      IsEVMChain(wallet.chain) &&
+      !IsERCToken(wallet.currencyAbbreviation, wallet.chain),
   );
 };
 

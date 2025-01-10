@@ -398,7 +398,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const createViewOnBlockchainOption = () => {
     if (
       ['eth', 'matic', 'xrp', 'arb', 'base', 'op'].includes(
-        fullWalletObj.currencyAbbreviation.toLowerCase(),
+        fullWalletObj.chain.toLowerCase(),
       ) ||
       IsERCToken(
         fullWalletObj.currencyAbbreviation.toLowerCase(),
@@ -807,7 +807,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     const chain = fullWalletObj.chain.toLowerCase();
 
     if (
-      ['eth', 'matic', 'xrp', 'arb', 'base', 'op'].includes(coin) ||
+      ['eth', 'matic', 'xrp', 'arb', 'base', 'op'].includes(chain) ||
       IsERCToken(coin, chain)
     ) {
       let address;

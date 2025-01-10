@@ -401,8 +401,8 @@ const CoinbaseAccount = ({
           !wallet.hideWallet &&
           !wallet.hideWalletByAccount &&
           wallet.network === 'livenet' &&
-          wallet.credentials.coin === _currencyAbbreviation.toLowerCase() &&
-          wallet.credentials.chain === _chain &&
+          wallet.currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
+          wallet.chain === _chain &&
           wallet.isComplete(),
       );
 

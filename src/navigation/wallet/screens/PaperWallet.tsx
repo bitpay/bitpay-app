@@ -178,7 +178,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     // If the user wishes to sweep funds to a different wallet, they will need to rescan for funds.
     // TODO: Consider whether this rescan requirement is fine or if there's a more user-friendly approach.
     const balanceToSweep = balances.find(
-      b => b.coin === selectedWallet.credentials.coin,
+      b => b.coin === selectedWallet.currencyAbbreviation,
     );
     if (!balanceToSweep) {
       throw new Error('Balance not found for the selected wallet');
@@ -361,7 +361,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
             // this is used just for scanning funds
             const wallet = _walletsAvailable.filter(
               w =>
-                w.credentials.coin === coin &&
+                w.currencyAbbreviation === coin &&
                 w.credentials.network === network,
             )[0];
             // const bwcClient = BWC.getClient(); // unfortunately, we need to create a new client for each coin with credentials. Check getBalanceFromPrivateKey implementation in bwc
@@ -434,7 +434,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
 
       const availableCoins = new Set(_balances.map(d => d.coin));
       const walletsAvailable = _walletsAvailable.filter(w =>
-        availableCoins.has(w.credentials.coin),
+        availableCoins.has(w.currencyAbbreviation),
       );
 
       setWalletsAvailable(walletsAvailable);
@@ -625,7 +625,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
               useAsModal={true}
               modalTitle={t('Select Destination')}
               customSupportedCurrencies={[
-                ...new Set(walletsAvailable.map(w => w.credentials.coin)),
+                ...new Set(walletsAvailable.map(w => w.currencyAbbreviation)),
               ]}
               globalSelectOnDismiss={onDismiss}
             />

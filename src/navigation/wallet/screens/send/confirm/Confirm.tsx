@@ -283,10 +283,10 @@ const Confirm = () => {
   }, []);
 
   const isTxLevelAvailable = () => {
-    const includedCurrencies = ['btc', 'eth', 'matic', 'arb', 'base', 'op'];
+    const includedChains = ['btc', 'eth', 'matic', 'arb', 'base', 'op'];
     // TODO: exclude paypro, coinbase, usingMerchantFee txs,
     // const {payProUrl} = txDetails;
-    return includedCurrencies.includes(currencyAbbreviation.toLowerCase());
+    return includedChains.includes(chain.toLowerCase());
   };
 
   const onCloseTxLevelModal = async (
