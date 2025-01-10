@@ -1,5 +1,5 @@
 #import <RCTAppDelegate.h>
-@import BrazeUI;
+#import <BrazeUI/BrazeUI-Swift.h>
 @interface AppDelegate : RCTAppDelegate
 @property (nonatomic, assign) BOOL isBitPayAppLoaded;
 @property (nonatomic, strong) BRZInAppMessageRaw *cachedInAppMessage;

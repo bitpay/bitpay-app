@@ -1,6 +1,7 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {Platform, ScrollView, View, TouchableOpacity} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
 import {GiftCardScreens, GiftCardGroupParamList} from '../GiftCardGroup';
@@ -73,8 +74,7 @@ const BuyGiftCardContainer = styled.SafeAreaView`
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
   align-items: center;
-  padding-top: 40px;
-  flex-grow: 1;
+  flex: 1;
   justify-content: center;
 `;
 
@@ -110,7 +110,7 @@ const DescriptionBox = styled.View`
   width: ${WIDTH}px;
   background-color: ${({theme}) =>
     theme.dark ? theme.colors.background : 'transparent'};
-  padding: 20px ${horizontalPadding}px 100px;
+  padding: 20px ${horizontalPadding}px ${Platform.OS === 'android' ? 75 : 50}px;
 `;
 
 const FooterButton = styled(CtaContainerAbsolute)`
@@ -151,6 +151,7 @@ const BuyGiftCard = ({
   navigation,
 }: NativeStackScreenProps<GiftCardGroupParamList, 'BuyGiftCard'>) => {
   const {t} = useTranslation();
+  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
   const theme = useTheme();
@@ -372,11 +373,12 @@ const BuyGiftCard = ({
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
-          minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 110),
+          minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 100),
         }}>
         <GradientBox colors={getMastheadGradient(theme)}>
           <View
             style={{
+              paddingTop: '30',
               shadowColor: '#000',
               shadowOffset: {width: 0, height: 12},
               shadowOpacity: 0.08,
@@ -436,7 +438,7 @@ const BuyGiftCard = ({
             ) : null}
           </AmountContainer>
         </GradientBox>
-        <DescriptionContainer>
+        <DescriptionContainer style={{paddingBottom: insets.bottom + 30}}>
           {hasVisibleDiscount(cardConfig) ? (
             <DiscountContainer>
               <TagsSvg style={{marginRight: 12}} />

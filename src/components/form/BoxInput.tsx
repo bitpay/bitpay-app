@@ -6,6 +6,7 @@ import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
 import ObfuscationShow from '../../../assets/img/obfuscation-show.svg';
 import Search from '../../../assets/img/search.svg';
 import {
+  Black,
   Caution,
   LightBlack,
   LuckySevens,
@@ -34,6 +35,7 @@ const InputContainer = styled.View<InputProps>`
   border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
+  padding: 1px 1px 0 1px;
   flex-direction: row;
   justify-content: center;
   position: relative;
@@ -73,6 +75,7 @@ const Affix = styled.View`
   border-width: 0;
   flex: 0 0 auto;
   flex-direction: row;
+  background-color: ${({theme}) => (theme.dark ? Black : White)};
 `;
 
 const Separator = styled.View`
@@ -89,6 +92,7 @@ const Input = styled(TextInputMask)<InputProps>`
   padding: 10px;
   flex: 1 1 auto;
   font-weight: 500;
+  background-color: ${({theme}) => (theme.dark ? Black : White)};
 
   ${({isError}) =>
     isError &&

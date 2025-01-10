@@ -11,3 +11,16 @@ index c94f33f..c045381 100644
      }
      repositories {
          jcenter()
+diff --git a/node_modules/react-native-text-input-mask/ios/TextInputMask.swift b/node_modules/react-native-text-input-mask/ios/TextInputMask.swift
+index 7626c50..8131a1a 100644
+--- a/node_modules/react-native-text-input-mask/ios/TextInputMask.swift
++++ b/node_modules/react-native-text-input-mask/ios/TextInputMask.swift
+@@ -12,7 +12,7 @@ class TextInputMask: NSObject, RCTBridgeModule, MaskedTextFieldDelegateListener
+     }
+ 
+     var methodQueue: DispatchQueue {
+-        bridge.uiManager.methodQueue
++        return bridge?.uiManager?.methodQueue ?? DispatchQueue.main
+     }
+ 
+     var bridge: RCTBridge!

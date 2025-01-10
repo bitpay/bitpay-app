@@ -666,6 +666,7 @@ const BuyCryptoRoot = ({
 
   const init = async () => {
     try {
+      await sleep(100);
       dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
       const requestData: ExternalServicesConfigRequestParams = {
         currentLocationCountry: locationData?.countryShortCode,
@@ -1045,7 +1046,7 @@ const BuyCryptoRoot = ({
         onClose={() => hideModal('amount')}
       />
       <SheetModal
-        modalLibrary="modal"
+        modalLibrary="bottom-sheet"
         isVisible={walletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>

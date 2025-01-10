@@ -16,7 +16,7 @@
 #import <UserNotifications/UserNotifications.h>
 #import <BrazeKit/BrazeKit-Swift.h>
 #import "BrazeReactBridge.h"
-@import BrazeUI;
+#import <BrazeUI/BrazeUI-Swift.h>
 
 @interface AppDelegate () <BrazeInAppMessageUIDelegate>
 @end

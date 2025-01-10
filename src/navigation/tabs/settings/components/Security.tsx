@@ -202,7 +202,7 @@ const Security = () => {
         </Setting>
       </SettingsComponent>
       <SheetModal
-        modalLibrary={'modal'}
+        modalLibrary={'bottom-sheet'}
         isVisible={modalVisible}
         onBackdropPress={hideModal}>
         <SheetContainer>

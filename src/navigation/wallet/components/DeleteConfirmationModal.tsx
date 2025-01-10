@@ -51,7 +51,7 @@ const DeleteConfirmationModal = ({
   const {t} = useTranslation();
   return (
     <SheetModal
-      modalLibrary={'modal'}
+      modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={onPressCancel}>
       <SheetContainer>

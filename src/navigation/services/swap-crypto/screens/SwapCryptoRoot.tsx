@@ -1147,6 +1147,7 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const init = async () => {
+    await sleep(100);
     dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
 
     try {
@@ -1799,7 +1800,7 @@ const SwapCryptoRoot: React.FC = () => {
       />
 
       <SheetModal
-        modalLibrary="modal"
+        modalLibrary="bottom-sheet"
         isVisible={toWalletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>
