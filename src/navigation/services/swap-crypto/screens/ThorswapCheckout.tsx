@@ -95,6 +95,7 @@ import {
 } from '../../../../store/app/app.actions';
 import {
   createTxProposal,
+  handleCreateTxProposalError,
   publishAndSign,
 } from '../../../../store/wallet/effects/send/send';
 import {thorswapTxData} from '../../../../store/swap-crypto/swap-crypto.models';
@@ -153,7 +154,7 @@ export interface ThorswapCheckoutProps {
   sendMaxInfo?: SendMaxInfo;
 }
 
-let countDown: NodeJS.Timer | undefined;
+let countDown: NodeJS.Timeout | undefined;
 
 const ThorswapCheckout: React.FC = () => {
   let {
@@ -556,13 +557,18 @@ const ThorswapCheckout: React.FC = () => {
         }
       }
     } catch (err: any) {
+      const reason = 'createTx Error';
+          if (err.code) {
+            showError(err.message , reason, err.code, err.title, err.actions);
+            return;
+          }
+
       let msg = t('Error creating transaction');
       let errorMsgLog;
       if (err?.message && typeof err.message === 'string') {
         msg = msg + `: ${err.message}`;
         errorMsgLog = err.message;
       }
-      const reason = 'createTx Error';
       showError(msg, reason, errorMsgLog);
       return;
     }
@@ -580,7 +586,7 @@ const ThorswapCheckout: React.FC = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timer,
+    countDown?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
@@ -619,7 +625,7 @@ const ThorswapCheckout: React.FC = () => {
     thorswapTransaction?: ThorswapTransaction,
     thorswapCalldata?: ThorswapRouteCalldata,
     destTag?: string,
-  ) => {
+  ): Promise<TransactionProposal> => {
     try {
       const message =
         fromWalletSelected.currencyAbbreviation.toUpperCase() +
@@ -804,16 +810,18 @@ const ThorswapCheckout: React.FC = () => {
         txp.destinationTag = Number(destTag);
       }
 
-      const ctxp = await createTxProposal(wallet, txp);
+      const ctxp = await dispatch(createTxProposal(wallet, txp));
       return Promise.resolve(ctxp);
     } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      const log = `createTxProposal error: ${errStr}`;
+      const errStr = err instanceof Error ? err.message : err?.err?.message ?? JSON.stringify(err);
+      const log = `thorswapCheckout createTxProposal error: ${errStr}`;
       logger.error(log);
-      return Promise.reject({
-        title: t('Could not create transaction'),
-        message: BWCErrorMessage(err),
-      });
+
+      const [errorMessageConfig] = await Promise.all([
+        dispatch(handleCreateTxProposalError(err, undefined, 'swap')),
+        sleep(400),
+      ]);
+      return Promise.reject(errorMessageConfig);
     }
   };
 
@@ -1037,7 +1045,7 @@ const ThorswapCheckout: React.FC = () => {
     );
   };
 
-  const showError = async (msg?: string, reason?: string, errorMsgLog?: string) => {
+  const showError = async (msg?: string, reason?: string, errorMsgLog?: string, title?: string, actions?: any[]) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
@@ -1057,10 +1065,10 @@ const ThorswapCheckout: React.FC = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: t('Error'),
-        message: msg ? msg : t('Unknown Error'),
+        title: title ?? t('Error'),
+        message: msg ?? t('Unknown Error'),
         enableBackdropDismiss: false,
-        actions: [
+        actions: actions ?? [
           {
             text: t('OK'),
             action: async () => {

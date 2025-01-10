@@ -290,11 +290,11 @@ const SwapCryptoApproveErc20: React.FC = () => {
         },
       };
 
-      const _ctxp = await createTxProposal(wallet, txp);
+      const _ctxp = await dispatch(createTxProposal(wallet, txp));
       return Promise.resolve(_ctxp);
     } catch (err: any) {
       const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      const log = `createTxProposal error: ${errStr}`;
+      const log = `swapCryptoApproveErc20 createTxProposal error: ${errStr}`;
       logger.error(log);
       return Promise.reject({
         title: t('Could not create transaction'),
