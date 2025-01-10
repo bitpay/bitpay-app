@@ -100,6 +100,10 @@ export const ProcessPendingTxps =
     const ret: TransactionProposal[] = [];
     txps.forEach((tx: TransactionProposal) => {
       try {
+        // Workaround for txps with matic as coin
+        if (tx.coin === 'matic') {
+          tx.coin = 'pol';
+        }
         // Filter out txps used for pay fees in other wallets
         if (currencyAbbreviation !== tx.coin) {
           return;
@@ -174,7 +178,7 @@ const ProcessTx =
     // Therefore, to identify an ERC20 token payout it is necessary to check if exist the tokenAddress field
     let tokenSymbol: string | undefined;
 
-    if (coin === chain && payoutContractAddress) {
+    if (payoutContractAddress) {
       tokenSymbol = Object.values(tokensOptsByAddress)
         .find(
           ({address}) =>
