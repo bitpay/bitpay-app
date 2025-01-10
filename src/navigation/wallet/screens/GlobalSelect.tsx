@@ -641,10 +641,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     if (recipient.currency && recipient.chain) {
       wallets = wallets.filter(
         wallet =>
-          (wallet.credentials.coin === recipient?.currency &&
-            wallet.credentials.chain === recipient?.chain) ||
+          (wallet.currencyAbbreviation === recipient?.currency &&
+            wallet.chain === recipient?.chain) ||
           (recipient?.opts?.showEVMWalletsAndTokens &&
-            BitpaySupportedEvmCoins[wallet.credentials.chain]),
+            BitpaySupportedEvmCoins[wallet.chain]),
       );
     }
     if (recipient?.network) {
@@ -665,7 +665,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       ),
     ];
     wallets = wallets.filter(wallet =>
-      supportedCurrencies.includes(wallet.credentials.coin),
+      supportedCurrencies.includes(wallet.currencyAbbreviation),
     );
   }
 
@@ -701,8 +701,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             w =>
               allCurrencies.includes(
                 getExternalServiceSymbol(
-                  w.credentials.coin,
-                  w.credentials.chain,
+                  w.currencyAbbreviation,
+                  w.chain,
                 ),
               ) && w.keyId === key.id,
           );
@@ -712,8 +712,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               !['coinbaseDeposit'].includes(context) ||
               allCurrencies.includes(
                 getCurrencyAbbreviation(
-                  w.credentials.coin,
-                  w.credentials.chain,
+                  w.currencyAbbreviation,
+                  w.chain,
                 ),
               );
 
@@ -885,7 +885,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               wallet,
               sendTo,
               sendMaxEnabled: ['contact', 'scanner'].includes(context),
-              cryptoCurrencyAbbreviation: wallet.credentials.coin.toUpperCase(),
+              cryptoCurrencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
               chain: wallet.chain,
               tokenAddress: wallet.tokenAddress,
               onAmountSelected: async (amount, setButtonState, opts) => {

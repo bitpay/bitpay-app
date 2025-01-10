@@ -158,7 +158,7 @@ export const createProposalAndBuildTxDetails =
           },
         } = getState();
 
-        if (wallet.isHardwareWallet && credentials.coin === 'bch') {
+        if (wallet.isHardwareWallet && credentials.chain === 'bch') {
           tx.signingMethod = 'ecdsa';
         }
 

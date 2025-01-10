@@ -983,8 +983,8 @@ export const startImportFromHardwareWallet =
       const walletExists = key?.wallets.some(
         w =>
           w.credentials.rootPath === accountPath &&
-          w.credentials.coin === coin &&
-          w.credentials.chain === chain &&
+          w.currencyAbbreviation === coin &&
+          w.chain === chain &&
           w.credentials.account === accountNumber &&
           w.credentials.network === network,
       );

@@ -555,6 +555,7 @@ const SendTo = () => {
     try {
       const {
         credentials,
+        currencyAbbreviation: currency,
         id: walletId,
         keyId,
         walletName,
@@ -578,7 +579,7 @@ const SendTo = () => {
         walletId,
         keyId,
         address,
-        currency: credentials.coin,
+        currency,
         chain,
       };
 
