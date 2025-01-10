@@ -95,10 +95,6 @@ const ProposalsContainer = styled.TouchableOpacity`
   align-items: center;
 `;
 
-const ProposalsInfoContainer = styled.View`
-  flex: 1;
-`;
-
 const CheckBoxContainer = styled.View`
   flex-direction: column;
   justify-content: center;
@@ -423,22 +419,20 @@ const TransactionProposalNotifications = () => {
           {item?.txps[0]
             ? item.txps.map((txp: any) => (
                 <ProposalsContainer key={txp.id}>
-                  <ProposalsInfoContainer>
-                    <TransactionProposalRow
-                      icon={TransactionIcons[txp.uiIcon]}
-                      creator={txp.uiCreator}
-                      time={txp.uiTime}
-                      value={txp.uiValue || txp.feeStr}
-                      message={txp.message}
-                      onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
-                      hideIcon={true}
-                      recipientCount={txp.recipientCount}
-                      toAddress={txp.toAddress}
-                      tokenAddress={txp.tokenAddress}
-                      chain={txp.chain}
-                      contactList={contactList}
-                    />
-                  </ProposalsInfoContainer>
+                  <TransactionProposalRow
+                    icon={TransactionIcons[txp.uiIcon]}
+                    creator={txp.uiCreator}
+                    time={txp.uiTime}
+                    value={txp.uiValue || txp.feeStr}
+                    message={txp.message}
+                    onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
+                    hideIcon={true}
+                    recipientCount={txp.recipientCount}
+                    toAddress={txp.toAddress}
+                    tokenAddress={txp.tokenAddress}
+                    chain={txp.chain}
+                    contactList={contactList}
+                  />
                   {item.needSign ? (
                     <CheckBoxContainer>
                       <Checkbox
