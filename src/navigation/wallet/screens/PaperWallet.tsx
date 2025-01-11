@@ -613,7 +613,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
           )}
         </PaperWalletItemCard>
         <SheetModal
-          modalLibrary="modal"
+          modalLibrary="bottom-sheet"
           isVisible={walletSelectorVisible}
           onBackdropPress={() => onDismiss(undefined)}
           fullscreen>

@@ -90,7 +90,7 @@ const FilterSheet = ({
   const [categoryMap, setCategoryMap] = useState(categories);
   return (
     <SheetModal
-      modalLibrary={'modal'}
+      modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={() => {
         setCategoryMap(initialCategoryMap);

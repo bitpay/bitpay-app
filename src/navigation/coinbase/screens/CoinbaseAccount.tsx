@@ -16,7 +16,7 @@ import {
   useMount,
 } from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {RefreshControl, View} from 'react-native';
+import {RefreshControl, View, Platform} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
 import {
@@ -763,7 +763,7 @@ const CoinbaseAccount = ({
       />
 
       <SheetModal
-        modalLibrary="modal"
+        modalLibrary="bottom-sheet"
         isVisible={walletModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>

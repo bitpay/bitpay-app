@@ -1044,8 +1044,9 @@ const SellCryptoRoot = ({
   const init = async () => {
     try {
       if (fromDeeplink) {
-        await sleep(300);
+        await sleep(200);
       }
+      await sleep(100);
       dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
       const requestData: ExternalServicesConfigRequestParams = {
         currentLocationCountry: locationData?.countryShortCode,

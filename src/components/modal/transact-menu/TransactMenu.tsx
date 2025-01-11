@@ -253,7 +253,7 @@ const TransactModal = () => {
         </TouchableOpacity>
       </TransactButton>
       <SheetModal
-        modalLibrary={'modal'}
+        modalLibrary={'bottom-sheet'}
         isVisible={modalVisible}
         onBackdropPress={hideModal}>
         <ModalContainer>

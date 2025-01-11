@@ -276,7 +276,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
       />
 
       <SheetModal
-        modalLibrary={'modal'}
+        modalLibrary={'bottom-sheet'}
         placement={'bottom'}
         isVisible={showOptions}
         onBackdropPress={() => setShowOptions(false)}>
