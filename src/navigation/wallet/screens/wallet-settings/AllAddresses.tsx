@@ -1,4 +1,4 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {BaseText, H7, HeaderTitle} from '../../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -8,7 +8,6 @@ import {
   Hr,
   ScreenGutter,
   SettingTitle,
-  SettingView,
 } from '../../../../components/styled/Containers';
 import {Share, View} from 'react-native';
 import {RouteProp} from '@react-navigation/core';
@@ -24,6 +23,7 @@ import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {LogActions} from '../../../../store/log';
+import {FlashList} from '@shopify/flash-list';
 
 export type AllAddressesParamList = {
   walletName: string;
@@ -38,19 +38,14 @@ const AddressesContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const ScrollView = styled.ScrollView`
-  margin: 20px 0 65px;
-  padding: 0 ${ScreenGutter};
-`;
-
 const VerticalPadding = styled.View`
-  padding: ${ScreenGutter} 0;
+  padding: ${ScreenGutter};
 `;
 
 const Title = styled(BaseText)`
   font-weight: bold;
   font-size: 18px;
-  margin: 5px 0;
+  padding: 20px 0px 0px 15px;
   color: ${({theme}) => theme.colors.text};
 `;
 
@@ -82,23 +77,22 @@ const AllAddresses = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
+  const combinedAddresses = [
+    ...(usedAddresses?.length
+      ? [{type: 'sectionHeader', title: t('Addresses with balance')}, ...usedAddresses]
+      : []),
+    ...(unusedAddresses?.length
+      ? [{type: 'sectionHeader', title: t('Unused addresses')}, ...unusedAddresses]
+      : []),
+  ];
+
   const [buttonState, setButtonState] = useState<ButtonState>();
-  const [copiedAddressWithBalance, setCopiedAddressWithBalance] = useState('');
-  const [copiedUnusedAddress, setCopiedUnusedAddress] = useState('');
+  const [copiedAddress, setCopiedAddress] = useState('');
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCopiedAddressWithBalance('');
-    }, 3000);
+    const timer = setTimeout(() => setCopiedAddress(''), 3000);
     return () => clearTimeout(timer);
-  }, [copiedAddressWithBalance]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCopiedUnusedAddress('');
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [copiedUnusedAddress]);
+  }, [copiedAddress]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -109,6 +103,7 @@ const AllAddresses = () => {
   const copyText = (text: string) => {
     haptic('impactLight');
     Clipboard.setString(text);
+    setCopiedAddress(text);
   };
 
   const sendAddresses = async () => {
@@ -144,95 +139,86 @@ const AllAddresses = () => {
     }
   };
 
+  const renderItem = useCallback(
+    ({item}: {item: any}) => {
+      if (item.title) {
+        return (
+          <Title>{item.title}</Title>
+        );
+      } else if (item.amount) {
+        const {address, amount} = item;
+        return (
+          <View>
+            <VerticalPadding style={{flex: 1, alignItems: 'center', justifyContent: 'space-between' ,flexDirection: 'row'}}>
+              <CopyRow
+                style={{justifyContent: 'center'}}
+                activeOpacity={ActiveOpacity}
+                onPress={() => copyText(address)}>
+                <SettingTitle
+                  numberOfLines={1}
+                  ellipsizeMode={'middle'}
+                  style={{maxWidth: 180}}>
+                  {address}
+                </SettingTitle>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedAddress === address ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopyRow>
+              <H7>
+                {dispatch(
+                  FormatAmountStr(currencyAbbreviation, chain, tokenAddress, amount),
+                )}
+              </H7>
+              </VerticalPadding>
+              <Hr />
+          </View>
+        );
+      } else {
+        const {address, path, uiTime} = item;
+        return (
+          <View>
+            <VerticalPadding>
+              <CopyRow
+                activeOpacity={ActiveOpacity}
+                onPress={() => copyText(address)}>
+                <SettingTitle
+                  numberOfLines={1}
+                  ellipsizeMode={'middle'}
+                  style={{width: '90%'}}>
+                  {address}
+                </SettingTitle>
+                <CopyImgContainerRight style={{width: '10%'}}>
+                  {copiedAddress === address ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopyRow>
+              <SubText>
+                {path} {uiTime}
+              </SubText>
+            </VerticalPadding>
+            <Hr />
+          </View>
+        );
+      }
+    },
+    [copiedAddress],
+  );
+
   return (
     <AddressesContainer>
-      <ScrollView>
-        {usedAddresses?.length ? (
-          <>
-            <VerticalPadding>
-              <Title>{t('Addresses with balance')}</Title>
-
-              {usedAddresses.map(({address, amount}, index) => (
-                <View key={index}>
-                  <SettingView>
-                    <CopyRow
-                      style={{justifyContent: 'center'}}
-                      activeOpacity={ActiveOpacity}
-                      onPress={() => {
-                        copyText(address);
-                        setCopiedAddressWithBalance(address);
-                      }}>
-                      <SettingTitle
-                        numberOfLines={1}
-                        ellipsizeMode={'tail'}
-                        style={{maxWidth: 225}}>
-                        {address}
-                      </SettingTitle>
-                      <CopyImgContainerRight style={{minWidth: '10%'}}>
-                        {copiedAddressWithBalance === address ? (
-                          <CopiedSvg width={17} />
-                        ) : null}
-                      </CopyImgContainerRight>
-                    </CopyRow>
-
-                    <H7>
-                      {dispatch(
-                        FormatAmountStr(
-                          currencyAbbreviation,
-                          chain,
-                          tokenAddress,
-                          amount,
-                        ),
-                      )}
-                    </H7>
-                  </SettingView>
-
-                  <Hr />
-                </View>
-              ))}
-            </VerticalPadding>
-          </>
-        ) : null}
-
-        {unusedAddresses?.length ? (
-          <>
-            <VerticalPadding>
-              <Title>{t('Unused addresses')}</Title>
-
-              {unusedAddresses.map(({address, path, uiTime}, index) => (
-                <View key={index}>
-                  <VerticalPadding>
-                    <CopyRow
-                      activeOpacity={ActiveOpacity}
-                      onPress={() => {
-                        copyText(address);
-                        setCopiedUnusedAddress(address);
-                      }}>
-                      <SettingTitle
-                        style={{width: '90%'}}
-                        numberOfLines={1}
-                        ellipsizeMode={'tail'}>
-                        {address}
-                      </SettingTitle>
-                      <CopyImgContainerRight style={{width: '10%'}}>
-                        {copiedUnusedAddress === address ? (
-                          <CopiedSvg width={17} />
-                        ) : null}
-                      </CopyImgContainerRight>
-                    </CopyRow>
-
-                    <SubText>
-                      {path} {uiTime}
-                    </SubText>
-                  </VerticalPadding>
-
-                  <Hr />
-                </View>
-              ))}
-            </VerticalPadding>
-          </>
-        ) : null}
-      </ScrollView>
+      {combinedAddresses.length > 0 ? (
+        <FlashList
+          data={combinedAddresses}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={renderItem}
+          estimatedItemSize={90}
+          onEndReachedThreshold={0.3}
+          contentContainerStyle={{paddingBottom: 150}}
+        />
+      ) : (
+        <VerticalPadding>
+          <Title>{t('No addresses available')}</Title>
+        </VerticalPadding>
+      )}
 
       <CtaContainerAbsolute
         background={true}
