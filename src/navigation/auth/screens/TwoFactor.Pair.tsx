@@ -41,7 +41,7 @@ const TwoFactorPairContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const TwoFactorPairing: React.VFC<TwoFactorPairingScreenProps> = ({
+const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   navigation,
   route,
 }) => {

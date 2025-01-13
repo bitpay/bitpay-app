@@ -99,7 +99,7 @@ export interface BillConfirmParamList {
   txp?: TransactionProposal;
 }
 
-const BillConfirm: React.VFC<
+const BillConfirm: React.FC<
   NativeStackScreenProps<BillGroupParamList, BillScreens.BILL_CONFIRM>
 > = ({navigation}) => {
   const {t} = useTranslation();

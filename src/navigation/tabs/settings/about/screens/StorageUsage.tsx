@@ -29,7 +29,7 @@ const HeaderTitle = styled(Setting)`
 const storagePath =
   Platform.OS === 'ios' ? RNFS.MainBundlePath : RNFS.DocumentDirectoryPath;
 
-const StorageUsage: React.VFC = () => {
+const StorageUsage: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
 

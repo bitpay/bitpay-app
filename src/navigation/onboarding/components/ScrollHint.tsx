@@ -13,7 +13,7 @@ export const ScrollHintContainer = styled.View`
   width: 100%;
 `;
 
-const ScrollHint: React.VFC<ScrollHintProps> = props => {
+const ScrollHint: React.FC<ScrollHintProps> = props => {
   const {height, offset = 0.25} = props;
   const theme = useTheme();
 

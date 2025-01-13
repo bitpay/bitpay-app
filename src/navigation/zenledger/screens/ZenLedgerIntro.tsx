@@ -72,7 +72,7 @@ const LinkCointainer = styled.TouchableOpacity`
   align-items: center;
   justify-content: center;
 `;
-const ZenLedgerIntro: React.VFC = () => {
+const ZenLedgerIntro: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();

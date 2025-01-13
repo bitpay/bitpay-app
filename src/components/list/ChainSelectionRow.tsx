@@ -39,7 +39,7 @@ interface ChainSelectionRowProps {
   onToggle: (currencyAbbreviation: string, chain: string) => any;
 }
 
-export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
+export const ChainSelectionRow: React.FC<ChainSelectionRowProps> = memo(
   props => {
     const {onToggle, chainObj} = props;
     const {coin: currencyAbbreviation, chain, img, name} = chainObj;

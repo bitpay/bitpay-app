@@ -95,10 +95,10 @@ const OnGoingProcessModal: React.FC = () => {
   const animatedStyles = useAnimatedStyle(() => {
     return {
       opacity: opacity.value,
-      height: HEIGHT, 
-      width: WIDTH, 
-      alignItems: 'center', 
-      justifyContent: 'center', 
+      height: HEIGHT,
+      width: WIDTH,
+      alignItems: 'center',
+      justifyContent: 'center',
     };
   });
   useEffect(() => {

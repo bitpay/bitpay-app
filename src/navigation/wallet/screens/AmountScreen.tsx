@@ -61,7 +61,7 @@ const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
   return <>{props.children}</>;
 });
 
-const AmountScreen: React.VFC<
+const AmountScreen: React.FC<
   NativeStackScreenProps<WalletGroupParamList, WalletScreens.AMOUNT>
 > = ({navigation, route}) => {
   const {t} = useTranslation();

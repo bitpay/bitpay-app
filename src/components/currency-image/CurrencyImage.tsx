@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const CurrencyImage: React.VFC<CurrencyImageProps> = ({
+export const CurrencyImage: React.FC<CurrencyImageProps> = ({
   img,
   imgSrc,
   badgeUri,

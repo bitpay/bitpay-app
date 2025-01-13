@@ -121,7 +121,7 @@ interface FeeCurrencySelectionRowProps {
   onToggle?: (currencyAbbreviation: string, chain: string) => any;
 }
 
-export const FeeCurrencySelectionRow: React.VFC<FeeCurrencySelectionRowProps> =
+export const FeeCurrencySelectionRow: React.FC<FeeCurrencySelectionRowProps> =
   memo(props => {
     const {onToggle, currency, hideCheckbox, selectionMode, disableCheckbox} =
       props;
@@ -183,7 +183,7 @@ interface TokenSelectionRowProps {
   badgeUri?: string | ((props?: any) => ReactElement);
 }
 
-export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
+export const TokenSelectionRow: React.FC<TokenSelectionRowProps> = memo(
   props => {
     const {
       token,
@@ -261,7 +261,7 @@ export const DescriptionRow: React.FC = ({children}) => {
   );
 };
 
-const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
+const CurrencySelectionRow: React.FC<CurrencySelectionRowProps> = ({
   currency,
   description,
   tokens,

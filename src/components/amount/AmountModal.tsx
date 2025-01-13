@@ -59,7 +59,7 @@ const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
   );
 });
 
-const AmountModal: React.VFC<AmountModalProps> = props => {
+const AmountModal: React.FC<AmountModalProps> = props => {
   const {
     onClose,
     onSendMaxPressed,

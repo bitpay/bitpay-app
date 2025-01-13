@@ -16,7 +16,7 @@ import {LanguageList} from '../../../../../constants/LanguageSelectionList';
 import {useTheme} from 'styled-components/native';
 import {SlateDark} from '../../../../../styles/colors';
 
-const LanguageSettingsScreen: React.VFC = () => {
+const LanguageSettingsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);

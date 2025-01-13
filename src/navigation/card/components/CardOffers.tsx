@@ -66,7 +66,7 @@ const IconImage = styled(FastImage)`
   width: ${ICON_SIZE}px;
 `;
 
-const CardOffers: React.VFC<CardOffersProps> = props => {
+const CardOffers: React.FC<CardOffersProps> = props => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const {contentCard} = props;
