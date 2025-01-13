@@ -94,7 +94,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
             fullscreen
               ? {
                   backgroundColor: theme.dark ? Black : White,
-                  height: HEIGHT,
+                  height: HEIGHT + insets.top, // insets.top added to avoid the white gap on android devices
                   paddingTop: insets.top,
                 }
               : {}
