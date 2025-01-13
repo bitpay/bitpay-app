@@ -7,14 +7,14 @@ import {PixelRatio} from 'react-native';
 import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
 const PIXEL_DENSITY_LIMIT = 3;
 export const VIRTUAL_KEYBOARD_BUTTON_SIZE =
-  PixelRatio.get() < PIXEL_DENSITY_LIMIT ? 70 : 85;
+  PixelRatio.get() < PIXEL_DENSITY_LIMIT ? 65 : 85;
 
 interface SymbolContainerProps {
   showLetters?: boolean;
 }
 
-const KeyboardContainer = styled.View`
-  margin: 10px 0;
+const KeyboardContainer = styled.View<{isSmallScreen?: boolean;}>`
+  margin: ${({isSmallScreen}) => (isSmallScreen ? 7 : 10)}px 0;
 `;
 
 const RowContainer = styled.View`
@@ -35,7 +35,7 @@ const CellValue = styled(BaseText)<{
   font-weight: 500;
   color: ${({theme, darkModeOnly}) =>
     darkModeOnly ? White : theme.colors.text};
-  line-height: ${({isSmallScreen}) => (isSmallScreen ? 50 : 65)}px;
+  line-height: ${({isSmallScreen}) => (isSmallScreen ? 45 : 65)}px;
 `;
 
 const CellLetter = styled(BaseText)`
@@ -143,7 +143,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
       : 'rgba(0, 0, 0, 0.1)';
   const bgColor = darkModeOnly || theme.dark ? White : '#4A4A4A';
   return (
-    <KeyboardContainer>
+    <KeyboardContainer isSmallScreen={PixelRatio.get() < PIXEL_DENSITY_LIMIT}>
       <Row
         numArray={[
           {
