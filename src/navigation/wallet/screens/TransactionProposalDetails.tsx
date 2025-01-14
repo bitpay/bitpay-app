@@ -262,7 +262,7 @@ const TransactionProposalDetails = () => {
             (_transaction.requiredSignatures as number) - 1,
         );
       }
-      setIsForFee(
+      setIsForFee(_transaction.action !== 'received' &&
         TxForPaymentFeeEVM(
           wallet.currencyAbbreviation,
           transaction.coin,

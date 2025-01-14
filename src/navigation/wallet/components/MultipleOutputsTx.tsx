@@ -155,7 +155,7 @@ const MultipleOutputsTx = ({
     );
   };
 
-  const [showMultiOptions, setShowMultiOptions] = useState(false);
+  const [showMultiOptions, setShowMultiOptions] = useState(true);
 
   const getIcon = (address: string) => {
     const existsContact = findContact(contactList, address);

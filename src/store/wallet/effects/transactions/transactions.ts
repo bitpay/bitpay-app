@@ -104,10 +104,6 @@ export const ProcessPendingTxps =
         if (tx.coin === 'matic') {
           tx.coin = 'pol';
         }
-        // Filter out txps used for pay fees in other wallets
-        if (currencyAbbreviation !== tx.coin) {
-          return;
-        }
         tx = dispatch(ProcessTx(tx, wallet));
 
         // no future transactions...
@@ -255,27 +251,27 @@ const ProcessTx =
       );
     }
 
-    tx.feeStr = tx.fee
-      ? // @ts-ignore
-        dispatch(
-          FormatAmountStr(
-            BitpaySupportedCoins[chain]?.feeCurrency,
-            chain,
-            undefined,
-            tx.fee,
-          ),
-        )
-      : tx.fees
-      ? // @ts-ignore
-        dispatch(
-          FormatAmountStr(
-            BitpaySupportedCoins[chain]?.feeCurrency,
-            chain,
-            undefined,
-            tx.fees,
-          ),
-        )
-      : 'N/A';
+    tx.feeStr = tx.fee !== undefined && tx.fee !== null
+    ? // @ts-ignore
+      dispatch(
+        FormatAmountStr(
+          BitpaySupportedCoins[chain]?.feeCurrency,
+          chain,
+          undefined,
+          tx.fee,
+        ),
+      )
+    : tx.fees !== undefined && tx.fees !== null
+    ? // @ts-ignore
+      dispatch(
+        FormatAmountStr(
+          BitpaySupportedCoins[chain]?.feeCurrency,
+          chain,
+          undefined,
+          tx.fees,
+        ),
+      )
+    : 'N/A';
 
     if (tx.amountStr) {
       tx.amountValueStr = tx.amountStr.split(' ')[0];
@@ -967,16 +963,17 @@ export const BuildUiFriendlyList = (
     } = customData || {};
     const {body: noteBody} = note || {};
 
-    const isTxForPaymentFee = TxForPaymentFeeEVM(
+    const isSent = IsSent(action);
+    const isMoved = IsMoved(action);
+    const isReceived = IsReceived(action);
+    const isInvalid = IsInvalid(action);
+
+    const isTxForPaymentFee = !isReceived && TxForPaymentFeeEVM(
       currencyAbbreviation,
       coin,
       chain,
       amount,
     );
-    const isSent = IsSent(action);
-    const isMoved = IsMoved(action);
-    const isReceived = IsReceived(action);
-    const isInvalid = IsInvalid(action);
     let contactName;
     if (
       (isSent || isMoved) &&
@@ -1222,7 +1219,7 @@ export const buildTransactionDetails =
           coin,
           chain,
         } = transaction;
-        const _fee = fees || fee;
+        const _fee = fees != null ? fees : fee;
 
         const alternativeCurrency = defaultAltCurrencyIsoCode;
 

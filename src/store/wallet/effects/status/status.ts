@@ -31,7 +31,7 @@ import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {ProcessPendingTxps} from '../transactions/transactions';
 import {FormatAmount} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
-import {IsUtxoChain} from '../../utils/currency';
+import {IsERCToken, IsUtxoChain} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
 import {LogActions} from '../../../log';
@@ -1063,6 +1063,10 @@ const buildPendingTxps =
     status: Status;
   }): Effect<TransactionProposal[]> =>
   dispatch => {
+    // skip erc20 pending proposals since those need to be signed with the associated wallet
+    if(IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+      return [];
+    }
     let newPendingTxps = [];
     try {
       if (status.pendingTxps?.length > 0) {

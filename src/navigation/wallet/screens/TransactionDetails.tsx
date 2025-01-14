@@ -304,7 +304,7 @@ const TransactionDetails = () => {
 
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
-      setIsForFee(
+      setIsForFee(transaction.action !== 'received' &&
         TxForPaymentFeeEVM(
           wallet.currencyAbbreviation,
           transaction.coin,

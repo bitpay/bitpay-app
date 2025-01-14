@@ -130,7 +130,7 @@ const FileOrText = () => {
     } catch (e: any) {
       logger.error(e.message);
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
+      await sleep(1000);
       showErrorModal(e.message);
       return;
     }
