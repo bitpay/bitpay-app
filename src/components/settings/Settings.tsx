@@ -28,7 +28,7 @@ const Settings = ({onPress}: {onPress: () => void}) => {
 
   return (
     <HeaderRightContainer>
-      <SettingsSvgContainer activeOpacity={ActiveOpacity} onPress={onPress}>
+      <SettingsSvgContainer activeOpacity={ActiveOpacity} onPressOut={onPress}>
         <SettingsSvg color={color} background={background} />
       </SettingsSvgContainer>
     </HeaderRightContainer>
