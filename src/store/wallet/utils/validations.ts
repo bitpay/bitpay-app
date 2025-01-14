@@ -499,28 +499,44 @@ export const ValidateCoinAddress = (
 };
 
 export const IsValidPrivateKey = (data: string): boolean => {
-  const checkPrivateKey = (privateKey: string): boolean => {
-    try {
-      const PKregex = new RegExp(/^[c|5KL][1-9A-HJ-NP-Za-km-z]{50,51}$/);
-      // Check if it is a Transaction ID to prevent errors
-      const isPK: boolean = !!PKregex.exec(privateKey);
-      if (!isPK) {
-        return false;
-      }
-      BwcProvider.getInstance().getBitcore().PrivateKey(privateKey, 'livenet');
-    } catch (err) {
+  const checkPrivateKey = (privateKey: string, network: 'livenet' | 'testnet'): boolean => {
+    const providers = [
+      BwcProvider.getInstance().getBitcore(),
+      BwcProvider.getInstance().getBitcoreCash(),
+      BwcProvider.getInstance().getBitcoreLtc(),
+      BwcProvider.getInstance().getBitcoreDoge(),
+    ];
+
+    for (const provider of providers) {
       try {
-        BwcProvider.getInstance()
-          .getBitcore()
-          .PrivateKey(privateKey, 'testnet');
+        provider.PrivateKey(privateKey, network);
+        return true;
       } catch (err) {
-        return false;
       }
     }
-    return true;
-  };
 
-  return !!(data && (data.substring(0, 2) == '6P' || checkPrivateKey(data)));
+    return false;
+  };
+  
+  if(data && (data.substring(0, 2) === '6P')) {
+    return true;
+  }
+
+  try {
+    const PKregex = /^[c5KL6][1-9A-HJ-NP-Za-km-z]{50,51}$/;
+    const isPK = PKregex.test(data);
+    if (!isPK) {
+      return false;
+    }
+    if (checkPrivateKey(data, 'livenet')) {
+      return true;
+    }
+    if (checkPrivateKey(data, 'testnet')) {
+      return true;
+    }
+  } catch (err) {
+  }
+  return false;
 };
 
 export const IsValidAddKeyPath = (data: string) => {

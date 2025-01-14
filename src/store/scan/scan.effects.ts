@@ -230,7 +230,7 @@ export const incomingData =
         // Go to Add Key
       } else if (IsValidAddKeyPath(data)) {
         dispatch(goToAddKey(data));
-        // Join multisig wallet
+        // Import private key
       } else if (IsValidImportPrivateKey(data)) {
         dispatch(goToImport(data));
         // Join multisig wallet
