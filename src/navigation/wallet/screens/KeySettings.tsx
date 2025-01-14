@@ -142,7 +142,7 @@ const KeySettings = () => {
   }, [dispatch, _key, defaultAltCurrency.isoCode, rates]);
 
   const accountInfo = useAppSelector(
-    ({WALLET}) => WALLET.keys[_key.id].evmAccountsInfo,
+    ({WALLET}) => WALLET.keys[key.id]?.evmAccountsInfo,
   );
   const {keyName} = _key || {};
 

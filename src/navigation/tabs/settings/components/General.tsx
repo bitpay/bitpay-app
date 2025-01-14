@@ -21,8 +21,12 @@ import {
   HeaderRightContainer,
 } from '../../../../components/styled/Containers';
 import styled from 'styled-components/native';
-import CloseModal from '../../../../../assets/img/close-modal-icon.svg';
-import {White, SlateDark} from '../../../../styles/colors';
+import CloseIcon from '../../../../components/modal/close/Close';
+
+const CloseModalButtonContainer = styled.View`
+  position: absolute;
+  left: 0;
+`;
 
 const CloseModalButton = styled.TouchableOpacity`
   padding: 5px;
@@ -66,15 +70,12 @@ const General = () => {
     navigation.setOptions({
       headerLeft: () => (
         <HeaderRightContainer>
-          <CloseModalButton onPress={() => navigation.goBack()}>
-            <CloseModal
-              {...{
-                width: 20,
-                height: 20,
-                color: theme.dark ? White : SlateDark,
-              }}
-            />
-          </CloseModalButton>
+          <CloseModalButtonContainer>
+            <CloseModalButton
+             onPress={() => navigation.goBack()}>
+              <CloseIcon />
+            </CloseModalButton>
+          </CloseModalButtonContainer>
         </HeaderRightContainer>
       ),
     });

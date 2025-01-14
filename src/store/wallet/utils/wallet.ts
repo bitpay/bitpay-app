@@ -1065,7 +1065,7 @@ export const buildAccountList = (
     });
 
   const wallets = uniqBy(
-    opts?.filterByCustomWallets || key.wallets,
+    opts?.filterByCustomWallets || key?.wallets,
     wallet => wallet.id,
   );
 
