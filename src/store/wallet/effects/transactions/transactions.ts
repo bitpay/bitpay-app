@@ -104,10 +104,6 @@ export const ProcessPendingTxps =
         if (tx.coin === 'matic') {
           tx.coin = 'pol';
         }
-        // Filter out txps used for pay fees in other wallets
-        if (currencyAbbreviation !== tx.coin) {
-          return;
-        }
         tx = dispatch(ProcessTx(tx, wallet));
 
         // no future transactions...
@@ -255,27 +251,27 @@ const ProcessTx =
       );
     }
 
-    tx.feeStr = tx.fee
-      ? // @ts-ignore
-        dispatch(
-          FormatAmountStr(
-            BitpaySupportedCoins[chain]?.feeCurrency,
-            chain,
-            undefined,
-            tx.fee,
-          ),
-        )
-      : tx.fees
-      ? // @ts-ignore
-        dispatch(
-          FormatAmountStr(
-            BitpaySupportedCoins[chain]?.feeCurrency,
-            chain,
-            undefined,
-            tx.fees,
-          ),
-        )
-      : 'N/A';
+    tx.feeStr = tx.fee !== undefined && tx.fee !== null
+    ? // @ts-ignore
+      dispatch(
+        FormatAmountStr(
+          BitpaySupportedCoins[chain]?.feeCurrency,
+          chain,
+          undefined,
+          tx.fee,
+        ),
+      )
+    : tx.fees !== undefined && tx.fees !== null
+    ? // @ts-ignore
+      dispatch(
+        FormatAmountStr(
+          BitpaySupportedCoins[chain]?.feeCurrency,
+          chain,
+          undefined,
+          tx.fees,
+        ),
+      )
+    : 'N/A';
 
     if (tx.amountStr) {
       tx.amountValueStr = tx.amountStr.split(' ')[0];
@@ -297,6 +293,7 @@ const shouldFilterTx = (tx: any, wallet: Wallet) => {
   const isERCToken = IsERCToken(tx.coin, tx.chain);
   const emptyEffects = Array.isArray(tx.effects) && tx.effects.length === 0;
   const hasEffects = Array.isArray(tx.effects) && tx.effects.length > 0;
+  const isReceived = tx.action === 'received';
 
   // Workaround for handling old txs with no effects
   if (isERCToken && emptyEffects) {
@@ -305,11 +302,11 @@ const shouldFilterTx = (tx: any, wallet: Wallet) => {
 
   // Filter if contract doesn't match the wallet token address
   if (isERCToken && hasEffects) {
-    tx.effects = tx.effects.filter(
-      (effect: any) =>
-        effect.contractAddress?.toLowerCase() ===
-        wallet.tokenAddress?.toLowerCase(),
-    );
+    tx.effects = tx.effects.filter((effect: any) => {
+      const isMatchingContract = effect.contractAddress?.toLowerCase() === wallet.tokenAddress?.toLowerCase();
+      const isMatchingRecipient = !isReceived || effect.to === wallet.receiveAddress;
+      return isMatchingContract && isMatchingRecipient;
+    });
     if (tx.effects.length === 0) {
       return true;
     }
@@ -967,16 +964,17 @@ export const BuildUiFriendlyList = (
     } = customData || {};
     const {body: noteBody} = note || {};
 
-    const isTxForPaymentFee = TxForPaymentFeeEVM(
+    const isSent = IsSent(action);
+    const isMoved = IsMoved(action);
+    const isReceived = IsReceived(action);
+    const isInvalid = IsInvalid(action);
+
+    const isTxForPaymentFee = !isReceived && TxForPaymentFeeEVM(
       currencyAbbreviation,
       coin,
       chain,
       amount,
     );
-    const isSent = IsSent(action);
-    const isMoved = IsMoved(action);
-    const isReceived = IsReceived(action);
-    const isInvalid = IsInvalid(action);
     let contactName;
     if (
       (isSent || isMoved) &&
@@ -1222,7 +1220,7 @@ export const buildTransactionDetails =
           coin,
           chain,
         } = transaction;
-        const _fee = fees || fee;
+        const _fee = fees != null ? fees : fee;
 
         const alternativeCurrency = defaultAltCurrencyIsoCode;
 
