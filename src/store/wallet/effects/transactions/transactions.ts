@@ -293,6 +293,7 @@ const shouldFilterTx = (tx: any, wallet: Wallet) => {
   const isERCToken = IsERCToken(tx.coin, tx.chain);
   const emptyEffects = Array.isArray(tx.effects) && tx.effects.length === 0;
   const hasEffects = Array.isArray(tx.effects) && tx.effects.length > 0;
+  const isReceived = tx.action === 'received';
 
   // Workaround for handling old txs with no effects
   if (isERCToken && emptyEffects) {
@@ -301,11 +302,11 @@ const shouldFilterTx = (tx: any, wallet: Wallet) => {
 
   // Filter if contract doesn't match the wallet token address
   if (isERCToken && hasEffects) {
-    tx.effects = tx.effects.filter(
-      (effect: any) =>
-        effect.contractAddress?.toLowerCase() ===
-        wallet.tokenAddress?.toLowerCase(),
-    );
+    tx.effects = tx.effects.filter((effect: any) => {
+      const isMatchingContract = effect.contractAddress?.toLowerCase() === wallet.tokenAddress?.toLowerCase();
+      const isMatchingRecipient = !isReceived || effect.to === wallet.receiveAddress;
+      return isMatchingContract && isMatchingRecipient;
+    });
     if (tx.effects.length === 0) {
       return true;
     }
