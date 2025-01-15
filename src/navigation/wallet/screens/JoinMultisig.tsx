@@ -75,7 +75,17 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
     invitationCode: yup
       .string()
       .required()
-      .matches(/^[0-9A-HJ-NP-Za-km-z]{70,80}$/, t('InvalidInvitationCode')),
+      .trim()
+      .test(
+        'valid-invitation-code',
+        t('InvalidInvitationCode'),
+        (value) => {
+          if (!value) return false;
+          const partToValidate = value.slice(0, -4); // assuming network + chain is always 4 characters eg Lbtc
+          const regex = /^[0-9A-HJ-NP-Za-km-z]{70,80}$/;
+          return regex.test(partToValidate);
+        }
+      ),
   });
   const {
     control,
@@ -269,7 +279,7 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <BoxInput
-              onChangeText={(text: string) => onChange(text)}
+              onChangeText={(text: string) => onChange(text.trim())}
               onBlur={onBlur}
               value={value}
               error={errors.invitationCode?.message}
