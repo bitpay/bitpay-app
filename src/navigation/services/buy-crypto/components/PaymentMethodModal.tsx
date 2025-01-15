@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, SafeAreaView, View} from 'react-native';
+import {SafeAreaView, View} from 'react-native';
 import {orderBy} from 'lodash';
 import styled from 'styled-components/native';
 import {
@@ -43,6 +43,7 @@ import {PaymentMethod} from '../constants/BuyCryptoConstants';
 import {WithdrawalMethod} from '../../sell-crypto/constants/SellCryptoConstants';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
+import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
@@ -237,8 +238,10 @@ const PaymentMethodsModal = ({
 
   return (
     <SheetModal
+      modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
-      onBackdropPress={onBackdropPress ? onBackdropPress : () => {}}>
+      onBackdropPress={onBackdropPress ? onBackdropPress : () => {}}
+      fullscreen>
       <ModalContainer>
         <SafeAreaView style={{height: '100%'}}>
           <ModalHeader>
@@ -257,7 +260,7 @@ const PaymentMethodsModal = ({
             </ModalHeaderRight>
           </ModalHeader>
 
-          <ScrollView style={{marginTop: 20}}>
+          <BottomSheetScrollView style={{marginTop: 20}}>
             {OrderedEnabledPaymentMethods
               ? Object.values(OrderedEnabledPaymentMethods).map(
                   paymentMethod => {
@@ -369,7 +372,7 @@ const PaymentMethodsModal = ({
                   },
                 )
               : null}
-          </ScrollView>
+          </BottomSheetScrollView>
         </SafeAreaView>
       </ModalContainer>
     </SheetModal>
