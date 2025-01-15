@@ -1906,8 +1906,27 @@ PODS:
     - React-Core
   - RNCClipboard (1.11.2):
     - React-Core
-  - RNCMaskedView (0.2.6):
+  - RNCMaskedView (0.3.2):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - RNDeviceInfo (8.4.7):
     - React-Core
   - RNFastImage (8.6.3):
@@ -2663,7 +2682,7 @@ SPEC CHECKSUMS:
   RNBootSplash: 72e9103ddcf03a4f462b6c068d69ecd571c2b8ea
   RNCAsyncStorage: 0c357f3156fcb16c8589ede67cc036330b6698ca
   RNCClipboard: 3f0451a8100393908bea5c5c5b16f96d45f30bfc
-  RNCMaskedView: c298b644a10c0c142055b3ae24d83879ecb13ccd
+  RNCMaskedView: 381d041f80e6bf7983d2c058a34362e6a362ce01
   RNDeviceInfo: b32d24c84e40d54b736e62a7d2abd15e1225258d
   RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8
   RNFlashList: 67528478a3686204442522a5a4fc33e0f9b11449
