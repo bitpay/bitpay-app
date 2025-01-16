@@ -1204,7 +1204,7 @@ export const buildTransactionDetails =
     wallet: Wallet;
     defaultAltCurrencyIsoCode?: string;
   }): Effect<Promise<TransactionDetailsBuilt>> =>
-  async dispatch => {
+  async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         const _transaction: TransactionDetailsBuilt = {...transaction};
@@ -1219,7 +1219,32 @@ export const buildTransactionDetails =
           hasMultiplesOutputs,
           coin,
           chain,
+          tokenAddress,
         } = transaction;
+
+          const {
+            WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress},
+          } = getState();
+
+          const tokensOptsByAddress = {
+            ...BitpaySupportedTokenOptsByAddress,
+            ...tokenOptionsByAddress,
+            ...customTokenOptionsByAddress,
+          };
+
+        // Only for payouts. For this case chain and coin have the same value.
+        // Therefore, to identify an ERC20 token payout it is necessary to check if exist the tokenAddress field
+        let tokenSymbol: string | undefined;
+
+        if (tokenAddress) {
+          tokenSymbol = Object.values(tokensOptsByAddress)
+            .find(
+              ({address}) =>
+                tokenAddress?.toLowerCase() === address?.toLowerCase(),
+            )
+            ?.symbol.toLowerCase();
+        }
+
         const _fee = fees != null ? fees : fee;
 
         const alternativeCurrency = defaultAltCurrencyIsoCode;
@@ -1241,7 +1266,7 @@ export const buildTransactionDetails =
                   toFiat(
                     o.amount,
                     alternativeCurrency,
-                    coin,
+                    tokenSymbol || coin,
                     chain,
                     rates,
                     wallet.tokenAddress,
@@ -1281,7 +1306,7 @@ export const buildTransactionDetails =
 
         const historicFiatRate = await getHistoricFiatRate(
           alternativeCurrency,
-          coin,
+          tokenSymbol || coin,
           (time! * 1000).toString(),
         );
         _transaction.fiatRateStr = dispatch(
@@ -1289,7 +1314,7 @@ export const buildTransactionDetails =
             historicFiatRate,
             transaction,
             rates,
-            coin,
+            tokenSymbol || coin,
             alternativeCurrency,
             chain,
             wallet.tokenAddress,
