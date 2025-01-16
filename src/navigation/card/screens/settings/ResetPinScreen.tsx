@@ -36,7 +36,7 @@ const SpinnerWrapper = styled.View`
   margin-top: 24px;
 `;
 
-const ResetPinScreen: React.VFC<
+const ResetPinScreen: React.FC<
   NativeStackScreenProps<CardStackParamList, CardScreens.RESET_PIN>
 > = ({navigation, route}) => {
   const {id} = route.params;

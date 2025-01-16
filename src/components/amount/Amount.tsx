@@ -132,7 +132,7 @@ export interface AmountProps {
   onSubmit: (amount: number) => void;
 }
 
-const Amount: React.VFC<AmountProps> = ({
+const Amount: React.FC<AmountProps> = ({
   cryptoCurrencyAbbreviation,
   fiatCurrencyAbbreviation,
   chain,

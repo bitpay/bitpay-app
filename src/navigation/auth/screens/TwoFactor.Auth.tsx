@@ -43,7 +43,7 @@ const schema = yup.object().shape({
   code: yup.string().required(),
 });
 
-const TwoFactorAuthentication: React.VFC<
+const TwoFactorAuthentication: React.FC<
   TwoFactorAuthenticationScreenProps
 > = props => {
   const {t} = useTranslation();

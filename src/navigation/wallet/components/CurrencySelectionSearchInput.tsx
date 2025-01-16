@@ -13,7 +13,7 @@ interface CurrencySelectionSearchInputProps {
   onSearch?: (query: string) => any;
 }
 
-const CurrencySelectionSearchInput: React.VFC<
+const CurrencySelectionSearchInput: React.FC<
   CurrencySelectionSearchInputProps
 > = props => {
   const theme = useTheme();

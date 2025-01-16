@@ -43,7 +43,7 @@ interface CreateAccountFieldValues {
   agreedToMarketingCommunications: boolean;
 }
 
-const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
+const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   navigation,
 }) => {
   const {t} = useTranslation();

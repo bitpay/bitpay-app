@@ -116,7 +116,7 @@ const LogColorMap: Partial<{[key in LogLevel]: string | null}> = {
   [LogLevel.Debug]: LinkBlue,
 };
 
-const FilterLabels: React.VFC<{onPress?: (level: LogLevel) => any}> = memo(
+const FilterLabels: React.FC<{onPress?: (level: LogLevel) => any}> = memo(
   props => {
     const levels = [];
 

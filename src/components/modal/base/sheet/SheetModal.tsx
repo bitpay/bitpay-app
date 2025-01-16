@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {AppState, AppStateStatus, View} from 'react-native';
+import {AppState, AppStateStatus, Platform, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   BottomSheetBackdrop,
@@ -94,7 +94,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
             fullscreen
               ? {
                   backgroundColor: theme.dark ? Black : White,
-                  height: HEIGHT,
+                  height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
                   paddingTop: insets.top,
                 }
               : {}

@@ -145,7 +145,7 @@ interface SendingToProps {
   hr?: boolean;
 }
 
-export const SendingTo: React.VFC<SendingToProps> = ({
+export const SendingTo: React.FC<SendingToProps> = ({
   recipient,
   recipientList,
   hr,
@@ -312,7 +312,7 @@ interface SendingFromProps {
   hr?: boolean;
 }
 
-export const SendingFrom: React.VFC<SendingFromProps> = ({
+export const SendingFrom: React.FC<SendingFromProps> = ({
   sender,
   onPress,
   hr,

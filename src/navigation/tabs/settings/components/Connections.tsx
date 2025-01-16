@@ -34,7 +34,7 @@ const ConnectionIconContainer = styled.View`
   margin-right: 5px;
 `;
 
-const Connections: React.VFC<ConnectionsProps> = props => {
+const Connections: React.FC<ConnectionsProps> = props => {
   const {redirectTo} = props;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();

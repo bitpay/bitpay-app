@@ -8,6 +8,7 @@ import {BaseText} from '../../components/styled/Text';
 import {Black, White} from '../../styles/colors';
 import SheetModal from '../modal/base/sheet/SheetModal';
 import Amount, {AmountProps, LimitsOpts} from './Amount';
+import {Platform} from 'react-native';
 
 const ModalHeaderText = styled(BaseText)`
   font-size: 18px;
@@ -40,10 +41,10 @@ const ModalHeaderRight = styled(BaseText)`
   right: 5px;
 `;
 
-const StyledAmountModalContainer = styled.SafeAreaView`
+const StyledAmountModalContainer = styled.SafeAreaView<{platform: string}>`
   background-color: ${({theme}) => (theme.dark ? Black : White)};
   flex: 1;
-  padding-bottom: 45px;
+  margin-bottom: ${({platform}) => platform === 'ios' ? 25 : 10}px;
 `;
 
 type AmountModalProps = AmountProps & {
@@ -56,7 +57,7 @@ type AmountModalProps = AmountProps & {
 
 const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
   return (
-    <StyledAmountModalContainer>{props.children}</StyledAmountModalContainer>
+    <StyledAmountModalContainer platform={Platform.OS}>{props.children}</StyledAmountModalContainer>
   );
 });
 
