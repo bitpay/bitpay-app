@@ -71,8 +71,7 @@ const General = () => {
       headerLeft: () => (
         <HeaderRightContainer>
           <CloseModalButtonContainer>
-            <CloseModalButton
-             onPress={() => navigation.goBack()}>
+            <CloseModalButton onPressOut={() => navigation.goBack()}>
               <CloseIcon />
             </CloseModalButton>
           </CloseModalButtonContainer>

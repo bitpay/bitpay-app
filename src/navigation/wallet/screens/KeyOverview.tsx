@@ -13,7 +13,7 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
-import {LogBox, RefreshControl, TouchableOpacity} from 'react-native';
+import {LogBox, Platform, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -215,7 +215,7 @@ const KeyOverview = () => {
           <KeyToggle
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys && !linkedCoinbase}
-            onPress={() => setShowKeyDropdown(true)}>
+            onPressOut={() => setShowKeyDropdown(true)}>
             {key.methods?.isPrivKeyEncrypted() ? (
               theme.dark ? (
                 <EncryptPasswordDarkModeImg />
