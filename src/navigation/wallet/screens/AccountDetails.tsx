@@ -472,7 +472,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         await sleep(500);
         dispatch(
           showBottomNotificationModal({
-            type: 'error',
+            type: 'success',
             title: t('Sync wallet'),
             message,
             enableBackdropDismiss: true,
