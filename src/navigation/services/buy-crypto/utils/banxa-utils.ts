@@ -121,10 +121,10 @@ export const getBanxaSelectedPaymentMethodData = (
   switch (selectedPaymentMethod.method) {
     // "ach" | "applePay" | "creditCard" | "debitCard" | "sepaBankTransfer" | "other"
     case 'applePay':
-      // Prioritize WORLDPAYAPPLE, if it is not included, look for cards type
+      // Prioritize PRIMERAP or WORLDPAYAPPLE, if it is not included, look for cards type
       selectedBanxaPMData = banxaPaymentMethods.find(
         (banxaPaymentMethod: BanxaPaymentMethod) => {
-          if (['WORLDPAYAPPLE'].includes(banxaPaymentMethod.paymentType)) {
+          if (['PRIMERAP', 'WORLDPAYAPPLE'].includes(banxaPaymentMethod.paymentType)) {
             return true;
           }
         },
