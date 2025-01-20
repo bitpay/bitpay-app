@@ -249,6 +249,7 @@ const AccountSettings = () => {
                   accountToggleSelected: !hideAccount,
                 }),
               );
+              await sleep(1000);
               dispatch(
                 startUpdateAllWalletStatusForKey({
                   key,

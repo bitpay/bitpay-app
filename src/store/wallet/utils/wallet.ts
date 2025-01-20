@@ -1349,7 +1349,7 @@ export const buildAssetsByChainList = (
 ) => {
   const assetsByChainMap: {[key: string]: Partial<AssetsByChainListProps>} = {};
 
-  accountItem.wallets.forEach(coin => {
+  accountItem?.wallets?.forEach(coin => {
     buildUIFormattedAssetsList(
       assetsByChainMap,
       coin,
@@ -1463,7 +1463,7 @@ export const buildAssetsByChain = (
 ) => {
   const assetsByChainList: {[key: string]: AssetsByChainData} = {};
 
-  accountItem.wallets.forEach(coin => {
+  accountItem?.wallets?.forEach(coin => {
     buildUIFormattedAssets(
       assetsByChainList,
       coin,
