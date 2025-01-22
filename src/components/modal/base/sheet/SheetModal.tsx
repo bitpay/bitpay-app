@@ -2,8 +2,6 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {AppState, AppStateStatus, Platform, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
-  BottomSheetBackdrop,
-  BottomSheetBackdropProps,
   BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
@@ -12,6 +10,8 @@ import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
 import {Black, White} from '../../../../styles/colors';
+import {Pressable} from 'react-native';
+import Animated, {useSharedValue, useAnimatedStyle, withTiming} from 'react-native-reanimated';
 
 interface Props extends SheetParams {
   isVisible: boolean;
@@ -24,6 +24,37 @@ interface Props extends SheetParams {
 }
 
 type SheetModalProps = React.PropsWithChildren<Props>;
+
+const AnimatedBackdrop = ({ visible, onPress }: {visible: boolean, onPress: () => any}) => {
+  const opacity = useSharedValue(0);
+  useEffect(() => {
+    opacity.value = withTiming(visible ? 0.5 : 0, { duration: 300 });
+  }, [visible]);
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          backgroundColor: Black,
+        },
+        animatedStyle,
+      ]}
+    >
+      <Pressable
+        onPress={() => {
+          onPress();
+          opacity.value = withTiming(0, { duration: 300 });
+        }}
+        style={{ flex: 1 }}
+      />
+    </Animated.View>
+  );
+};
 
 const SheetModal: React.FC<SheetModalProps> = ({
   children,
@@ -63,16 +94,12 @@ const SheetModal: React.FC<SheetModalProps> = ({
   }, [isVisible, onBackdropPress]);
 
   const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        onPress={onBackdropPress}
-        pressBehavior={enableBackdropDismiss === false ? 'none' : 'close'}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-      />
+    () => (
+      <AnimatedBackdrop
+        visible={isModalVisible}
+        onPress={onBackdropPress} />
     ),
-    [enableBackdropDismiss, onBackdropPress],
+    [enableBackdropDismiss, isModalVisible, onBackdropPress],
   );
 
   return modalLibrary === 'bottom-sheet' ? (
