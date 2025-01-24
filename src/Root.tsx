@@ -8,7 +8,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import debounce from 'lodash.debounce';
 import Braze from '@braze/react-native-sdk';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState, useCallback} from 'react';
 import {
   Appearance,
   AppState,
@@ -29,6 +29,7 @@ import {DeviceEmitterEvents} from './constants/device-emitter-events';
 import {baseNavigatorOptions} from './constants/NavigationOptions';
 import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
 import BiometricModal from './components/modal/biometric/BiometricModal';
+import ArchaxBanner from './components/archax/archax-banner';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
@@ -70,9 +71,11 @@ import AboutGroup, {
 } from './navigation/tabs/settings/about/AboutGroup';
 import AuthGroup, {AuthGroupParamList} from './navigation/auth/AuthGroup';
 import BuyCryptoGroup, {
+  BuyCryptoScreens,
   BuyCryptoGroupParamList,
 } from './navigation/services/buy-crypto/BuyCryptoGroup';
 import SellCryptoGroup, {
+  SellCryptoScreens,
   SellCryptoGroupParamList,
 } from './navigation/services/sell-crypto/SellCryptoGroup';
 import SwapCryptoGroup, {
@@ -284,6 +287,9 @@ export default () => {
     ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
   );
   const notificationsState = useAppSelector(selectSettingsNotificationState);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const [archaxBannerVisible, setArchaxBannerVisible] =
+    useState(showArchaxBanner);
 
   const blurScreenList: string[] = [
     OnboardingScreens.IMPORT,
@@ -301,6 +307,38 @@ export default () => {
     WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS,
     WalletScreens.WALLET_DETAILS,
   ];
+
+  const _showArchaxBanner = useCallback(() => {
+    const archaxScreenList: string[] = [
+      TabsScreens.HOME,
+      WalletScreens.PRICE_CHARTS,
+      WalletScreens.KEY_OVERVIEW,
+      WalletScreens.WALLET_DETAILS,
+      BuyCryptoScreens.ROOT,
+      BuyCryptoScreens.OFFERS,
+      SellCryptoScreens.ROOT,
+    ];
+    if (showArchaxBanner) {
+      if (navigationRef.isReady()) {
+        const currentNavState = navigationRef.getState()?.routes?.slice(-1)[0];
+        const currentScreen: string | undefined =
+          currentNavState?.name ?? navigationRef.getCurrentRoute()?.name;
+        const currentTab: number | undefined = currentNavState?.state?.index;
+        if (
+          (currentScreen && archaxScreenList.includes(currentScreen)) ||
+          (currentScreen === 'Tabs' && (!currentTab || currentTab === 0))
+        ) {
+          setArchaxBannerVisible(true);
+        } else {
+          setArchaxBannerVisible(false);
+        }
+      }
+    }
+  }, [showArchaxBanner]);
+
+  useEffect(() => {
+    setArchaxBannerVisible(showArchaxBanner);
+  }, [showArchaxBanner]);
 
   const debouncedOnStateChange = useMemo(
     () =>
@@ -334,6 +372,8 @@ export default () => {
               dispatch(Analytics.screen(stackName, {screen: screenName || ''}));
             }
           }
+          // Show Archax Banner if enabled
+          _showArchaxBanner();
         }
       }, 300),
     [dispatch],
@@ -563,6 +603,7 @@ export default () => {
       <ThemeProvider theme={theme}>
         <GestureHandlerRootView style={{flex: 1}}>
           <BottomSheetModalProvider>
+            {archaxBannerVisible && <ArchaxBanner />}
             <NavigationContainer
               ref={navigationRef}
               theme={theme}
