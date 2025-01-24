@@ -1,9 +1,10 @@
 import React from 'react';
 import {H6, Link} from '../../../../components/styled/Text';
 import {RootState} from '../../../../store';
+import Icons from '../../../wallet/components/WalletIcons';
 import {useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
-import {useNavigation} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   ActiveOpacity,
   Hr,
@@ -11,9 +12,9 @@ import {
 } from '../../../../components/styled/Containers';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
-import Icons from '../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
 import ContactRow from '../../../../components/list/ContactRow';
+import {SettingsDetailsParamList} from '../SettingsDetails';
 
 const SeeAllLink = styled(Link)`
   font-weight: 500;
@@ -24,10 +25,12 @@ const PlusIconContainer = styled.View`
   margin-right: 15px;
 `;
 
-const Contacts = () => {
+type Props = NativeStackScreenProps<SettingsDetailsParamList, 'Contacts'>;
+
+const Contacts: React.FC<Props> = ({navigation}) => {
   const {t} = useTranslation();
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
-  const navigation = useNavigation();
+  
   return (
     <SettingsComponent>
       {contacts.length

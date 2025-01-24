@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useMemo, useState, useLayoutEffect} from 'react';
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -7,7 +7,7 @@ import {
   ActiveOpacity,
   CtaContainerAbsolute,
 } from '../../../../../../components/styled/Containers';
-import {H7} from '../../../../../../components/styled/Text';
+import {H7, HeaderTitle} from '../../../../../../components/styled/Text';
 import HamburgerSvg from '../../../../../../../assets/img/hamburger.svg';
 import Button from '../../../../../../components/button/Button';
 import {FlatList} from 'react-native';
@@ -18,11 +18,11 @@ import {
   setHomeCarouselLayoutType,
 } from '../../../../../../store/app/app.actions';
 import {useNavigation} from '@react-navigation/native';
+import {useTheme} from '@react-navigation/native';
 import {sleep} from '../../../../../../utils/helper-methods';
 import haptic from '../../../../../../components/haptic-feedback/haptic';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {ScreenOptions} from '../../../../../../styles/tabNavigator';
-import {useTheme} from 'styled-components/native';
 import {
   CarouselSvg,
   createCustomizeCardList,
@@ -70,6 +70,13 @@ const CustomizeHomeSettings = () => {
   const [dirty, setDirty] = useState(false);
   const [hiddenList, setHiddenList] = useState(_hidden);
   const Tab = createMaterialTopTabNavigator();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: props => <HeaderTitle {...props} />,
+      headerTitleAlign: 'center',
+    });
+  }, [navigation, theme]);
 
   const toggle = useCallback(
     (item: CustomizeItem) => {

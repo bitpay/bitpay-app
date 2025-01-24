@@ -12,7 +12,7 @@ import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {SimplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
@@ -73,8 +73,8 @@ const SimplexSettings: React.FC = () => {
 
   const memoizedBuyCryptoHistory = useCallback(
     () => (
-      <Settings style={{marginTop: 10, paddingBottom: 500}}>
-        {paymentRequests && paymentRequests.length > 0 && (
+      <SettingsComponent style={{marginTop: 10, paddingBottom: 500}}>
+        {!!paymentRequests?.length && (
           <PrTitle>{t('Payment Requests')}</PrTitle>
         )}
         {paymentRequests &&
@@ -125,17 +125,15 @@ const SimplexSettings: React.FC = () => {
             {t('There are currently no transactions with Simplex')}
           </NoPrMsg>
         )}
-      </Settings>
+      </SettingsComponent>
     ),
     [paymentRequests],
   );
 
   const memoizedSellCryptoHistory = useCallback(
     () => (
-      <Settings style={{marginTop: 10, paddingBottom: 500}}>
-        {sellOrders && sellOrders.length > 0 && (
-          <PrTitle>{t('Sell Orders')}</PrTitle>
-        )}
+      <SettingsComponent style={{marginTop: 10, paddingBottom: 500}}>
+        {!!sellOrders?.length && <PrTitle>{t('Sell Orders')}</PrTitle>}
         {sellOrders &&
           sellOrders.length > 0 &&
           sellOrders
@@ -181,7 +179,7 @@ const SimplexSettings: React.FC = () => {
             {t('There are currently no transactions with Simplex')}
           </NoPrMsg>
         )}
-      </Settings>
+      </SettingsComponent>
     ),
     [sellOrders],
   );

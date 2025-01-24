@@ -1,5 +1,5 @@
 import i18n from 'i18next';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {View, ActivityIndicator} from 'react-native';
 import Braze from '@braze/react-native-sdk';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
@@ -8,20 +8,33 @@ import {
   Setting,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
+import {RootState} from '../../../../../store';
 import {AppActions} from '../../../../../store/app';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {LanguageList} from '../../../../../constants/LanguageSelectionList';
 import {useTheme} from 'styled-components/native';
 import {SlateDark} from '../../../../../styles/colors';
+import {useTranslation} from 'react-i18next';
+import {useNavigation} from '@react-navigation/native';
+import {HeaderTitle} from '../../../../../components/styled/Text';
+import { SettingsComponent, SettingsContainer } from '../../SettingsRoot';
+import { Analytics } from '../../../../../store/analytics/analytics.effects';
 
-const LanguageSettingsScreen: React.FC = () => {
+const LanguageSettings: React.FC = () => {
+  const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const navigation = useNavigation();
   const theme = useTheme();
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const [selected, setSelected] = useState(appLanguage);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => <HeaderTitle>{t('Language')}</HeaderTitle>,
+      headerTitleAlign: 'center',
+    });
+  }, [navigation, t]);
 
   useEffect(() => {
     if (selected !== appLanguage) {
@@ -36,7 +49,7 @@ const LanguageSettingsScreen: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <Settings>
+      <SettingsComponent>
         {LanguageList.map(({name, isoCode}) => {
           return (
             <View key={isoCode}>
@@ -60,9 +73,9 @@ const LanguageSettingsScreen: React.FC = () => {
             </View>
           );
         })}
-      </Settings>
+      </SettingsComponent>
     </SettingsContainer>
   );
 };
 
-export default LanguageSettingsScreen;
+export default LanguageSettings;
