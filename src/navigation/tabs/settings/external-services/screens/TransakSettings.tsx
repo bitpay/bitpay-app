@@ -12,7 +12,7 @@ import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {TransakPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
@@ -74,8 +74,8 @@ const TransakSettings: React.FC = () => {
   return (
     <>
       <SettingsContainer>
-        <Settings style={{paddingBottom: 500}}>
-          {paymentRequests && paymentRequests.length > 0 && (
+        <SettingsComponent style={{paddingBottom: 500}}>
+          {!!paymentRequests?.length && (
             <PrTitle>{t('Payment Requests')}</PrTitle>
           )}
           {paymentRequests &&
@@ -157,7 +157,7 @@ const TransakSettings: React.FC = () => {
               {t('There are currently no transactions with Transak')}
             </NoPrMsg>
           )}
-        </Settings>
+        </SettingsComponent>
       </SettingsContainer>
       <FooterSupport>
         <SupportTxt>Having problems with Transak?</SupportTxt>

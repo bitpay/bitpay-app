@@ -9,7 +9,7 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import MoonpayLogo from '../../../../../components/icons/external-services/moonpay/moonpay-logo';
 import {
@@ -270,7 +270,7 @@ const MoonpaySellDetails: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <Settings
+      <SettingsComponent
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -626,7 +626,7 @@ const MoonpaySellDetails: React.FC = () => {
             <Text style={{color: 'red'}}>{t('Remove')}</Text>
           </RemoveCta>
         ) : null}
-      </Settings>
+      </SettingsComponent>
     </SettingsContainer>
   );
 };

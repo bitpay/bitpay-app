@@ -6,7 +6,8 @@ import {
   baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
 } from '../../../constants/NavigationOptions';
-import SettingsHome, {SettingsHomeParamList} from './SettingsRoot';
+import SettingsHome, {SettingsHomeProps} from './SettingsRoot';
+import SettingsDetails, {SettingsDetailsParamList} from './SettingsDetails';
 import {HeaderBackButton} from '@react-navigation/elements';
 
 interface SettingsProps {
@@ -14,11 +15,18 @@ interface SettingsProps {
 }
 
 export type SettingsGroupParamList = {
-  SettingsHome: SettingsHomeParamList;
-};
+  SettingsHome: {
+    redirectTo?: string;
+  };
+  SettingsDetails: {
+    initialRoute?: keyof SettingsDetailsParamList;
+    redirectTo?: string;
+  };
+} & SettingsDetailsParamList;
 
 export enum SettingsScreens {
   SETTINGS_HOME = 'SettingsHome',
+  SETTINGS_DETAILS = 'SettingsDetails',
 }
 
 const SettingsGroup: React.FC<SettingsProps> = ({Settings}) => {
@@ -43,6 +51,14 @@ const SettingsGroup: React.FC<SettingsProps> = ({Settings}) => {
         options={{
           animation: 'slide_from_bottom',
           headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
+        }}
+      />
+      <Settings.Screen
+        name={SettingsScreens.SETTINGS_DETAILS}
+        component={SettingsDetails}
+        options={{
+          // animation: 'slide_from_right',
+          headerShown: false,
         }}
       />
     </Settings.Group>

@@ -175,6 +175,8 @@ export const Setting = styled.TouchableOpacity`
   flex-direction: row;
   flex-wrap: nowrap;
   height: 58px;
+  padding-left: 15px;
+  padding-right: 15px;
 `;
 
 export const SettingTitle = styled(BaseText)`

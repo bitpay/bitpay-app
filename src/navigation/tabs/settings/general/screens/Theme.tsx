@@ -1,7 +1,6 @@
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ColorSchemeName, Pressable, View} from 'react-native';
-import {useTheme} from 'styled-components/native';
+import {ColorSchemeName, Pressable, View, SafeAreaView} from 'react-native';
 import {TEST_MODE_NETWORK} from '@env';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
@@ -12,9 +11,8 @@ import {
 import {RootState} from '../../../../../store';
 import {AppActions} from '../../../../../store/app';
 import {LogActions} from '../../../../../store/log';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
 import {HeaderTitle} from '../../../../../components/styled/Text';
-import {useNavigation} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {Network} from '../../../../../constants';
 import {
@@ -24,12 +22,14 @@ import {
 import {sleep} from '../../../../../utils/helper-methods';
 import RNRestart from 'react-native-restart';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {SettingsDetailsParamList} from '../../SettingsDetails';
 
-const ThemeSettings: React.FC = () => {
+type Props = NativeStackScreenProps<SettingsDetailsParamList, 'Theme'>;
+
+const ThemeSettings: React.FC<Props> = ({navigation}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const currentTheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
-  const navigation = useNavigation();
   const [clickCount, setClickCount] = useState(0);
   const network = useAppSelector(({APP}) => APP.network);
   const testModeNetwork = TEST_MODE_NETWORK || Network.testnet;
@@ -88,7 +88,6 @@ const ThemeSettings: React.FC = () => {
   }, [navigation, t, onPressTitleRef]);
 
   const onSetThemePress = (setScheme: ColorSchemeName) => {
-    setSelected(setScheme);
     dispatch(AppActions.setColorScheme(setScheme));
     dispatch(
       LogActions.info('Theme updated to ' + (setScheme || 'system default')),
@@ -99,37 +98,26 @@ const ThemeSettings: React.FC = () => {
       }),
     );
   };
-  const [selected, setSelected] = useState(currentTheme);
-  const selectedTheme = useTheme();
-  const textStyle = {color: selectedTheme.colors.text};
-
-  const SETTINGS: {title: string; theme: ColorSchemeName}[] = [
-    {title: t('Light Mode'), theme: 'light'},
-    {title: t('Dark Mode'), theme: 'dark'},
-    {title: t('System Default'), theme: null},
-  ];
 
   return (
-    <SettingsContainer>
-      <Settings>
+    <SafeAreaView style={{flex: 1}}>
+      <View>
+        <Setting onPress={() => onSetThemePress('light')}>
+          <SettingTitle>{t('Light Mode')}</SettingTitle>
+          <Checkbox radio onPress={() => onSetThemePress('light')} checked={currentTheme === 'light'} />
+        </Setting>
         <Hr />
-        {SETTINGS.map(({title, theme}) => {
-          return (
-            <View key={theme}>
-              <Setting onPress={() => onSetThemePress(theme)}>
-                <SettingTitle style={textStyle}>{title}</SettingTitle>
-                <Checkbox
-                  radio={true}
-                  onPress={() => onSetThemePress(theme)}
-                  checked={selected === theme}
-                />
-              </Setting>
-              <Hr />
-            </View>
-          );
-        })}
-      </Settings>
-    </SettingsContainer>
+        <Setting onPress={() => onSetThemePress('dark')}>
+          <SettingTitle>{t('Dark Mode')}</SettingTitle>
+          <Checkbox radio onPress={() => onSetThemePress('dark')} checked={currentTheme === 'dark'} />
+        </Setting>
+        <Hr />
+        <Setting onPress={() => onSetThemePress(null)}>
+          <SettingTitle>{t('System Default')}</SettingTitle>
+          <Checkbox radio onPress={() => onSetThemePress(null)} checked={currentTheme === null} />
+        </Setting>
+      </View>
+    </SafeAreaView>
   );
 };
 

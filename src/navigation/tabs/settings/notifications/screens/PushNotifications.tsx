@@ -10,7 +10,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import styled from 'styled-components/native';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
@@ -93,7 +93,7 @@ const PushNotifications = () => {
 
   return (
     <SettingsContainer>
-      <Settings>
+      <SettingsComponent>
         <Hr />
         {notificationsList.map(
           ({id, title, checked, onPress, description}, i) => {
@@ -125,7 +125,7 @@ const PushNotifications = () => {
             );
           },
         )}
-      </Settings>
+      </SettingsComponent>
     </SettingsContainer>
   );
 };

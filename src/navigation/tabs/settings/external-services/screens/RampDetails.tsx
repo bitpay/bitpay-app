@@ -4,7 +4,7 @@ import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import RampLogo from '../../../../../components/icons/external-services/ramp/ramp-logo';
 import {RampPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
@@ -40,6 +40,7 @@ import {
   RampStatus,
 } from '../../../../services/buy-crypto/utils/ramp-utils';
 import {Br} from '../../../../../components/styled/Containers';
+
 export interface RampDetailsProps {
   paymentRequest: RampPaymentData;
 }
@@ -79,7 +80,7 @@ const RampDetails: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <Settings>
+      <SettingsComponent>
         <RowDataContainer>
           <CryptoAmountContainer>
             <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
@@ -246,7 +247,7 @@ const RampDetails: React.FC = () => {
           }}>
           <Text style={{color: 'red'}}>{t('Remove')}</Text>
         </RemoveCta>
-      </Settings>
+      </SettingsComponent>
     </SettingsContainer>
   );
 };

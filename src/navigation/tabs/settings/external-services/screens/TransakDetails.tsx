@@ -8,7 +8,7 @@ import {
 } from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import TransakLogo from '../../../../../components/icons/external-services/transak/transak-logo';
 import {
@@ -284,7 +284,7 @@ const TransakDetails: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <Settings
+      <SettingsComponent
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -499,7 +499,7 @@ const TransakDetails: React.FC = () => {
           }}>
           <Text style={{color: 'red'}}>{t('Remove')}</Text>
         </RemoveCta>
-      </Settings>
+      </SettingsComponent>
     </SettingsContainer>
   );
 };

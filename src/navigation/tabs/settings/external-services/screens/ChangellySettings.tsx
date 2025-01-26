@@ -5,7 +5,7 @@ import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {changellyTxData} from '../../../../../store/swap-crypto/swap-crypto.models';
 import {
@@ -44,7 +44,7 @@ const ChangellySettings: React.FC = () => {
   return (
     <>
       <SettingsContainer>
-        <Settings style={{paddingBottom: 500}}>
+        <SettingsComponent style={{paddingBottom: 500}}>
           {!!swapTxs?.length && <PrTitle>{t('Transactions')}</PrTitle>}
           {!!swapTxs?.length &&
             swapTxs.map(swapTx => {
@@ -85,7 +85,7 @@ const ChangellySettings: React.FC = () => {
               {t('There are currently no transactions with Changelly')}
             </NoPrMsg>
           )}
-        </Settings>
+        </SettingsComponent>
       </SettingsContainer>
       <FooterSupport>
         <SupportTxt>{t('Having problems with Changelly?')}</SupportTxt>
