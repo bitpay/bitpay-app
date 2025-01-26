@@ -378,22 +378,22 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const memorizedAccountList = useMemo(() => {
     return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
       filterByHideWallet: true,
-    }).filter(({chains}) => IsEVMChain(chains[0]));
+    }).filter(({chains}) => IsEVMChain(chains[0])) || {};
   }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
 
   const accountItem = memorizedAccountList.find(
     a => a.receiveAddress === selectedAccountAddress,
   )!;
-  const totalBalance = accountItem.fiatBalanceFormat;
+  const totalBalance = accountItem?.fiatBalanceFormat;
   const hasMultipleAccounts = memorizedAccountList.length > 1;
 
   const accounts = useAppSelector(
-    ({SHOP}) => SHOP.billPayAccounts[accountItem.wallets[0].network],
+    ({SHOP}) => SHOP.billPayAccounts[accountItem?.wallets[0]?.network],
   );
 
   const keyOptions: Array<Option> = [];
   const hasAllChains =
-    accountItem.chains.length === Object.keys(BitpaySupportedEvmCoins).length;
+    accountItem?.chains?.length === Object.keys(BitpaySupportedEvmCoins).length;
   if (!hasAllChains) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
@@ -415,7 +415,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             options: {
               network,
               password,
-              account: accountItem.accountNumber,
+              account: accountItem?.accountNumber,
               customAccount: true,
             },
           }),
@@ -438,7 +438,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       await sleep(500);
       navigation.navigate('AccountSettings', {
         key,
-        selectedAccountAddress: accountItem.receiveAddress,
+        selectedAccountAddress: accountItem?.receiveAddress,
         context: 'accountDetails',
       });
     },
@@ -546,7 +546,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const updateWalletStatusAndProfileBalance = async () => {
     await startUpdateAllWalletStatusForKey({
       key,
-      accountAddress: accountItem.receiveAddress,
+      accountAddress: accountItem?.receiveAddress,
       force: true,
     });
     dispatch(updatePortfolioBalance);
@@ -615,7 +615,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           if (memorizedAssetsByChainList?.[0].chains?.[0]) {
             navigation.navigate('AddCustomToken', {
               key,
-              selectedAccountAddress: accountItem.receiveAddress,
+              selectedAccountAddress: accountItem?.receiveAddress,
               selectedChain: memorizedAssetsByChainList[0].chains[0],
             });
           }
@@ -691,7 +691,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                   onPress={() =>
                     navigation.navigate('AccountSettings', {
                       key,
-                      selectedAccountAddress: accountItem.receiveAddress,
+                      selectedAccountAddress: accountItem?.receiveAddress,
                       context: 'accountDetails',
                     })
                   }>
@@ -1039,7 +1039,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         ? await debouncedLoadHistory(true)
         : await startUpdateAllWalletStatusForKey({
             key,
-            accountAddress: accountItem.receiveAddress,
+            accountAddress: accountItem?.receiveAddress,
             force: true,
             createTokenWalletWithFunds: true,
           });
@@ -1080,7 +1080,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const copyToClipboard = () => {
     haptic('impactLight');
     if (!copied) {
-      Clipboard.setString(accountItem.receiveAddress);
+      Clipboard.setString(accountItem?.receiveAddress);
       setCopied(true);
     }
   };
@@ -1120,7 +1120,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               activeOpacity={ActiveOpacity}
               style={{alignSelf: 'center', width: 'auto', height: 25}}>
               <Badge style={{marginTop: 3}}>
-                {formatCryptoAddress(accountItem.receiveAddress)}
+                {formatCryptoAddress(accountItem?.receiveAddress)}
               </Badge>
               <CopyToClipboardContainer>
                 {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
@@ -1182,12 +1182,12 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               cta: () => {
                 navigation.navigate('GlobalSelect', {
                   context: 'send',
-                  selectedAccountAddress: accountItem.receiveAddress,
+                  selectedAccountAddress: accountItem?.receiveAddress,
                 });
               },
             }}
           />
-          {Number(accountItem.fiatLockedBalanceFormat) > 0 ? (
+          {Number(accountItem?.fiatLockedBalanceFormat) > 0 ? (
             <LockedBalanceContainer onPress={() => {}}>
               <View>
                 <Description numberOfLines={1} ellipsizeMode={'tail'}>
@@ -1197,7 +1197,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
               <TailContainer>
                 <Value>
-                  {accountItem.fiatLockedBalanceFormat}{' '}
+                  {accountItem?.fiatLockedBalanceFormat}{' '}
                   {formatCurrencyAbbreviation(
                     key.wallets[1].currencyAbbreviation,
                   )}
@@ -1325,11 +1325,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           <AccountDropdownOptionsContainer>
             {Object.values(memorizedAccountList).map(_accountItem => (
               <DropdownOption
-                key={_accountItem.id}
-                optionId={_accountItem.id}
-                optionName={_accountItem.accountName}
-                wallets={_accountItem.wallets}
-                totalBalance={_accountItem.fiatBalance}
+                key={_accountItem?.id}
+                optionId={_accountItem?.id}
+                optionName={_accountItem?.accountName}
+                wallets={_accountItem?.wallets}
+                totalBalance={_accountItem?.fiatBalance}
                 onPress={(accountId: string) => {
                   setShowAccountDropdown(false);
                   const selectedAccountItem = memorizedAccountList.find(
