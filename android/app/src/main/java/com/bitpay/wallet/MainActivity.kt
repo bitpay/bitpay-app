@@ -30,9 +30,9 @@ class MainActivity : ReactActivity() {
         DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        RNBootSplash.init(this, R.style.BootTheme)
         super.onCreate(null)
         (application as MainApplication).addActivityToStack(this.javaClass)
-        RNBootSplash.init(this, R.drawable.bootsplash)
         
         window.apply {
             setFlags(
