@@ -13,7 +13,7 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
-import {LogBox, Platform, RefreshControl, TouchableOpacity} from 'react-native';
+import {LogBox, RefreshControl, TouchableOpacity} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -33,16 +33,19 @@ import {
   EmptyListContainer,
   ChevronContainer,
 } from '../../../components/styled/Containers';
+import {RootState} from '../../../store';
 import {
   showBottomNotificationModal,
   toggleHideAllBalances,
+  dismissOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {
   successAddWallet,
   updatePortfolioBalance,
+  syncWallets,
 } from '../../../store/wallet/wallet.actions';
-import {KeyMethods, Status} from '../../../store/wallet/wallet.models';
+import {KeyMethods, Status, Wallet} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
   NeutralSlate,
@@ -55,18 +58,31 @@ import {
   getEvmGasWallets,
   shouldScale,
   sleep,
+  fixWalletAddresses,
 } from '../../../utils/helper-methods';
-import {BalanceUpdateError} from '../components/ErrorMessages';
+import {
+  BalanceUpdateError,
+  CustomErrorMessage,
+} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {getDecryptPassword, startGetRates} from '../../../store/wallet/effects';
+import {
+  getDecryptPassword,
+  startGetRates,
+  normalizeMnemonic,
+  serverAssistedImport,
+} from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import {useTranslation} from 'react-i18next';
-import {buildAccountList} from '../../../store/wallet/utils/wallet';
+import {
+  buildAccountList,
+  mapAbbreviationAndName,
+  buildWalletObj,
+} from '../../../store/wallet/utils/wallet';
 import {each} from 'lodash';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
@@ -85,6 +101,9 @@ import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
 import {BitpaySupportedEvmCoins} from '../../../constants/currencies';
+import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {BWCErrorMessage} from '../../../constants/BWCError';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -313,6 +332,117 @@ const KeyOverview = () => {
     });
   }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
 
+  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
+    return {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
+    };
+  });
+
+  const startSyncWallets = async (mnemonic: string) => {
+    if (key.isPrivKeyEncrypted) {
+      // To close decrypt modal
+      await sleep(500);
+    }
+    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
+    const opts = {
+      words: normalizeMnemonic(mnemonic),
+      mnemonic,
+    };
+    try {
+      let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
+        opts,
+      );
+
+      if (_syncKey.fingerPrint === key.properties!.fingerPrint) {
+        // Filter for new wallets
+        _syncWallets = _syncWallets
+          .filter(
+            sw =>
+              sw.isComplete() &&
+              !key.wallets.some(ew => ew.id === sw.credentials.walletId),
+          )
+          .map(syncWallet => {
+            // update to keyId
+            syncWallet.credentials.keyId = key.properties!.id;
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                syncWallet.credentials.coin,
+                syncWallet.credentials.chain,
+                syncWallet.credentials.token?.address,
+              ),
+            );
+            return _.merge(
+              syncWallet,
+              buildWalletObj(
+                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                _tokenOptionsByAddress,
+              ),
+            );
+          });
+
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: _syncWallets,
+        });
+
+        let message;
+
+        const syncWalletsLength = _syncWallets.length;
+        if (syncWalletsLength) {
+          message =
+            syncWalletsLength === 1
+              ? t('New wallet found')
+              : t('wallets found', {syncWalletsLength});
+          dispatch(syncWallets({keyId: key.id, wallets: _syncWallets}));
+        } else {
+          message = t('Your key is already synced');
+        }
+
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'success',
+            title: t('Sync wallet'),
+            message,
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+      } else {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        await dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              errMsg: t('Failed to Sync wallets'),
+            }),
+          ),
+        );
+      }
+    } catch (e) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e),
+            title: t('Error'),
+          }),
+        ),
+      );
+    }
+  };
+
   const handleAddEvmChain = async () => {
     haptic('impactLight');
     await sleep(500);
@@ -334,8 +464,17 @@ const KeyOverview = () => {
       password,
     );
 
-    key.wallets.push(...wallets);
-    dispatch(successAddWallet({key}));
+    if (_.isEmpty(wallets)) {
+      if (!key.isPrivKeyEncrypted) {
+        await startSyncWallets(key.properties!.mnemonic);
+      } else {
+        const mnemonic = key.methods!.get(password).mnemonic;
+        await startSyncWallets(mnemonic);
+      }
+    } else {
+      key.wallets.push(...(wallets as Wallet[]));
+      dispatch(successAddWallet({key}));
+    }
   };
 
   const missingChainsAccounts = memorizedAccountList.filter(
