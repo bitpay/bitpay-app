@@ -809,13 +809,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               {pendingProposalsCount ? (
                 <ProposalBadgeContainer
                   style={{marginRight: 10}}
-                  onPress={onPressTxpBadge}>
+                  onPressOut={onPressTxpBadge}>
                   <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
               {hasAllChains ? (
                 <TouchableOpacity
-                  onPress={() =>
+                  onPressOut={() =>
                     navigation.navigate('AccountSettings', {
                       key,
                       selectedAccountAddress: accountItem?.receiveAddress,
