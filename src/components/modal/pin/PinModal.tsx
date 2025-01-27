@@ -23,7 +23,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
-import {ActiveOpacity, HEIGHT} from '../../styled/Containers';
+import {ActiveOpacity, HEIGHT, WIDTH} from '../../styled/Containers';
 import {H5} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 import PinDots from './PinDots';
@@ -35,7 +35,8 @@ export interface PinModalConfig {
 }
 
 const PinContainer = styled.View`
-  flex: 1;
+  height: ${HEIGHT}px;
+  width: ${WIDTH}px;
   background-color: ${BitPay};
 `;
 
@@ -74,17 +75,6 @@ export const hashPin = (pin: string[]) => {
   return sjcl.codec.hex.fromBits(bits);
 };
 
-const getHeaderMargin = (
-  type?: 'set' | 'check',
-  onClosePresent?: boolean,
-): string => {
-  if (HEIGHT < 700) {
-    return type === 'set' || onClosePresent ? '1%' : '20%';
-  } else {
-    return type === 'set' || onClosePresent ? '10%' : '40%';
-  }
-};
-
 const Pin = gestureHandlerRootHOC(() => {
   const {t} = useTranslation();
   const logger = useLogger();
@@ -95,9 +85,6 @@ const Pin = gestureHandlerRootHOC(() => {
     pin: Array<string | undefined>;
     firstPinEntered: Array<string | undefined>;
   }>({pin: [], firstPinEntered: []});
-  const [headerMargin, setHeaderMargin] = useState<string>(
-    getHeaderMargin(type, !!onClose),
-  );
   const [message, setMessage] = useState<string>(t('Please enter your PIN'));
   const [shakeDots, setShakeDots] = useState(false);
   const insets = useSafeAreaInsets();
@@ -330,7 +317,7 @@ const Pin = gestureHandlerRootHOC(() => {
         <SheetHeaderContainer style={{marginTop: insets.top, marginLeft: 15}}>
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
-            onPress={() => {
+            onPressOut={() => {
               dispatch(AppActions.dismissPinModal());
               reset();
             }}>
@@ -342,7 +329,7 @@ const Pin = gestureHandlerRootHOC(() => {
           </TouchableOpacity>
         </SheetHeaderContainer>
       ) : null}
-      <View style={{marginTop: headerMargin}}>
+      <View>
         <BitPayLogo height={50} />
       </View>
       <PinMessagesContainer>
