@@ -1,8 +1,7 @@
 import {Effect, RootState} from '../../../index';
 import {WalletActions} from '../../index';
-import {startGetRates} from '../rates/rates';
 import {startGetTokenOptions} from '../currencies/currencies';
-import {startUpdateAllKeyAndWalletStatus} from '../status/status';
+import {getAndDispatchUpdatedWalletBalances} from '../status/statusv2';
 import {LogActions} from '../../../log';
 
 export const startWalletStoreInit =
@@ -11,12 +10,16 @@ export const startWalletStoreInit =
     try {
       const {WALLET} = getState();
 
-      // both needed for startUpdateAllKeyAndWalletStatus
-      await dispatch(startGetTokenOptions()); // needed for getRates. Get more recent 1inch tokens list
-      await dispatch(startGetRates({init: true})); // populate rates and alternative currency list
+      // Get token options first as it's needed for rates
+      await dispatch(startGetTokenOptions());
 
       if (Object.keys(WALLET.keys).length) {
-        dispatch(startUpdateAllKeyAndWalletStatus({context: 'init'}));
+        await dispatch(
+          getAndDispatchUpdatedWalletBalances({
+            context: 'init',
+            skipRateUpdate: false, // We still need rates for the initial load
+          }),
+        );
       }
 
       dispatch(WalletActions.successWalletStoreInit());

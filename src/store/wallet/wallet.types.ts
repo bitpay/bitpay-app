@@ -55,6 +55,7 @@ export enum WalletActionTypes {
   SET_CUSTOM_TOKENS_MIGRATION_COMPLETE = 'APP/SET_CUSTOM_TOKENS_MIGRATION_COMPLETE',
   SET_POLYGON_MIGRATION_COMPLETE = 'APP/SET_POLYGON_MIGRATION_COMPLETE',
   SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE = 'APP/SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE',
+  SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS',
 }
 
 interface successWalletStoreInit {
@@ -336,6 +337,26 @@ interface setAccountEVMCreationMigrationComplete {
   type: typeof WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE;
 }
 
+interface successUpdateWalletBalancesAndStatus {
+  type: typeof WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS;
+  payload: {
+    keyBalances: {
+      keyId: string;
+      totalBalance: number;
+      totalBalanceLastDay: number;
+    }[];
+    walletBalances: Array<{
+      keyId: string;
+      walletId: string;
+      status: {
+        balance: CryptoBalance;
+        pendingTxps: TransactionProposal[];
+        singleAddress: boolean;
+      };
+    }>;
+  };
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -348,8 +369,8 @@ export type WalletActionType =
   | successImport
   | failedImport
   | setBackupComplete
-  | deleteKey
   | successEncryptOrDecryptPassword
+  | deleteKey
   | successGetTokenOptions
   | successGetCustomTokenOptions
   | failedGetTokenOptions
@@ -379,4 +400,5 @@ export type WalletActionType =
   | updateCacheFeeLevel
   | SetCustomTokensMigrationComplete
   | setPolygonMigrationComplete
-  | setAccountEVMCreationMigrationComplete;
+  | setAccountEVMCreationMigrationComplete
+  | successUpdateWalletBalancesAndStatus;

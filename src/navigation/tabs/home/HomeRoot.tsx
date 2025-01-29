@@ -20,8 +20,7 @@ import {
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
 import {selectCardGroups} from '../../../store/card/card.selectors';
-import {startGetRates} from '../../../store/wallet/effects';
-import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
+import {getAndDispatchUpdatedWalletBalances} from '../../../store/wallet/effects/status/statusv2';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {
@@ -191,12 +190,10 @@ const HomeRoot = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await dispatch(startGetRates({}));
       await Promise.all([
         dispatch(
-          startUpdateAllKeyAndWalletStatus({
+          getAndDispatchUpdatedWalletBalances({
             context: 'homeRootOnRefresh',
-            force: true,
             createTokenWalletWithFunds: true,
           }),
         ),
@@ -204,7 +201,6 @@ const HomeRoot = () => {
         sleep(1000),
       ]);
       await sleep(2000);
-      dispatch(updatePortfolioBalance());
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }

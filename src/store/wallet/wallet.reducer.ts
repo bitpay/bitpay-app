@@ -616,6 +616,55 @@ export const walletReducer = (
         accountEvmCreationMigrationComplete: true,
       };
 
+    case WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS: {
+      const {keyBalances, walletBalances} = action.payload;
+      const updatedKeys = {...state.keys};
+
+      // Update key balances
+      keyBalances.forEach(({keyId, totalBalance, totalBalanceLastDay}) => {
+        if (updatedKeys[keyId]) {
+          updatedKeys[keyId] = {
+            ...updatedKeys[keyId],
+            totalBalance,
+            totalBalanceLastDay,
+          };
+        }
+      });
+
+      // Update wallet statuses
+      walletBalances.forEach(({keyId, walletId, status}) => {
+        if (updatedKeys[keyId]?.wallets?.[walletId]) {
+          updatedKeys[keyId].wallets[walletId] = {
+            ...updatedKeys[keyId].wallets[walletId],
+            balance: status.balance,
+            pendingTxps: status.pendingTxps,
+            singleAddress: status.singleAddress,
+          };
+        }
+      });
+
+      // Calculate and update portfolio balance
+      const currentPortfolioBalance = Object.values(updatedKeys).reduce(
+        (total, key) => total + (key.totalBalance || 0),
+        0,
+      );
+
+      const lastDayPortfolioBalance = Object.values(updatedKeys).reduce(
+        (total, key) => total + (key.totalBalanceLastDay || 0),
+        0,
+      );
+
+      return {
+        ...state,
+        keys: updatedKeys,
+        portfolioBalance: {
+          current: currentPortfolioBalance,
+          lastDay: lastDayPortfolioBalance,
+          previous: state.portfolioBalance.current,
+        },
+      };
+    }
+
     default:
       return state;
   }
