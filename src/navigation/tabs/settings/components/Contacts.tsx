@@ -8,6 +8,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   ActiveOpacity,
   Hr,
+  ScreenGutter,
   Setting,
 } from '../../../../components/styled/Containers';
 import {View} from 'react-native';
@@ -25,27 +26,33 @@ const PlusIconContainer = styled.View`
   margin-right: 15px;
 `;
 
+const ContactsContainer = styled.SafeAreaView`
+  margin: ${ScreenGutter};
+`;
+
 type Props = NativeStackScreenProps<SettingsDetailsParamList, 'Contacts'>;
 
 const Contacts: React.FC<Props> = ({navigation}) => {
   const {t} = useTranslation();
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
-  
+
   return (
     <SettingsComponent>
-      {contacts.length
-        ? contacts.slice(0, 2).map((item, index) => (
-            <View key={index}>
-              <ContactRow
-                contact={item}
-                onPress={() => {
-                  navigation.navigate('ContactsDetails', {contact: item});
-                }}
-              />
-              <Hr />
-            </View>
-          ))
-        : null}
+      <ContactsContainer>
+        {contacts.length
+          ? contacts.slice(0, 6).map((item, index) => (
+              <View key={index}>
+                <ContactRow
+                  contact={item}
+                  onPress={() => {
+                    navigation.navigate('ContactsDetails', {contact: item});
+                  }}
+                />
+                <Hr />
+              </View>
+            ))
+          : null}
+      </ContactsContainer>
 
       <Setting
         activeOpacity={ActiveOpacity}
@@ -59,7 +66,7 @@ const Contacts: React.FC<Props> = ({navigation}) => {
         <H6 medium={true}>{t('Add Contact')}</H6>
       </Setting>
 
-      {contacts.length > 2 ? (
+      {contacts.length > 6 ? (
         <Setting
           style={{justifyContent: 'center'}}
           onPress={() => navigation.navigate('ContactsRoot')}

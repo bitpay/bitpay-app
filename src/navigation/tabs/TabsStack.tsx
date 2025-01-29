@@ -6,6 +6,7 @@ import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 import HomeRoot from './home/HomeRoot';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
 import CardStack, {CardStackParamList} from '../card/CardStack';
+import SettingsStack from './settings/SettingsStack';
 
 import {SvgProps} from 'react-native-svg';
 import HomeIcon from '../../../assets/img/tab-icons/home.svg';
@@ -61,6 +62,7 @@ export enum TabsScreens {
   SHOP = 'Shop',
   TRANSACT_BUTTON = 'TransactButton',
   BILLS = 'Bills',
+  SETTINGS = 'Settings',
   CARD = 'Card',
   CAMERA = 'Camera',
 }
@@ -71,6 +73,7 @@ export type TabsStackParamList = {
   TransactButton: undefined;
   Bills: undefined;
   Card: NavigatorScreenParams<CardStackParamList> | undefined;
+  Settings: undefined;
   Camera: undefined;
 };
 
@@ -142,7 +145,10 @@ const TabsStack = () => {
             dispatch(Analytics.track('Bill Pay - Clicked Bill Pay')),
         })}
       />
-      <Tab.Screen name={TabsScreens.CARD} component={CardStack} />
+       <Tab.Screen
+        name={TabsScreens.SETTINGS}
+        component={SettingsStack}
+      />
     </Tab.Navigator>
   );
 };

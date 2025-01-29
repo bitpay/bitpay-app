@@ -232,12 +232,7 @@ const HomeRoot = () => {
       {appIsLoading ? null : (
         <>
           <HeaderContainer>
-            <HeaderLeftContainer>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('SettingsHome')}>
-                <Icons.HomeSettings />
-              </TouchableOpacity>
-            </HeaderLeftContainer>
+            <HeaderLeftContainer />
             {pendingTxps.length ? (
               <ProposalBadgeContainer onPress={onPressTxpBadge}>
                 <ProposalBadge>{pendingTxps.length}</ProposalBadge>

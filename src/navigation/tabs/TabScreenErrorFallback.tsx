@@ -14,6 +14,7 @@ import {
 import TabContainer from './TabContainer';
 import {ShopScreens, ShopStackParamList} from './shop/ShopStack';
 import {BillGroupParamList, BillScreens} from './shop/bill/BillGroup';
+import { SettingsGroupParamList, SettingsScreens } from './settings/SettingsGroup';
 import {CardHomeScreenProps} from '../card/screens/CardHome';
 import {HeaderContainer, HeaderLeftContainer} from './home/components/Styled';
 import {H3, Link, Paragraph, TextAlign} from '../../components/styled/Text';
@@ -123,7 +124,8 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
 type TabScreenProps =
   | CardHomeScreenProps
   | NativeStackScreenProps<BillGroupParamList, BillScreens.BILLS_HOME>
-  | NativeStackScreenProps<ShopStackParamList, ShopScreens.HOME>;
+  | NativeStackScreenProps<ShopStackParamList, ShopScreens.HOME>
+  | NativeStackScreenProps<SettingsGroupParamList, SettingsScreens.SETTINGS_HOME>;
 
 export const withErrorFallback = <T extends TabScreenProps>(
   TabScreen: React.FC<T>,
