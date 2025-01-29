@@ -17,7 +17,7 @@ export const startWalletStoreInit =
         await dispatch(
           getAndDispatchUpdatedWalletBalances({
             context: 'init',
-            skipRateUpdate: false, // We still need rates for the initial load
+            skipRateUpdate: true, // Skip rate update on initial load to improve performance
           }),
         );
       }
