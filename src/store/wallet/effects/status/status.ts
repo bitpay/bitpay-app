@@ -272,7 +272,7 @@ export const startUpdateWalletStatus =
     });
   };
 
-const getBulkStatus = (
+export const getBulkStatus = (
   bulkClient: any,
   credentials: any,
   walletOptions: Record<
@@ -301,21 +301,30 @@ const getBulkStatus = (
   });
 };
 
-const updateKeyStatus =
+export const updateKeyStatus =
   ({
     key,
     accountAddress,
     force,
+    dataOnly,
   }: {
     key: Key;
     force: boolean | undefined;
     accountAddress?: string;
+    dataOnly?: boolean;
   }): Effect<
     Promise<
       | {
           keyId: string;
           totalBalance: number;
           totalBalanceLastDay: number;
+          walletUpdates: Array<{
+            walletId: string;
+            balance: any;
+            pendingTxps: any[];
+            isRefreshing: boolean;
+            singleAddress: boolean;
+          }>;
         }
       | undefined
     >
@@ -326,6 +335,7 @@ const updateKeyStatus =
       const {defaultAltCurrency} = APP;
       const {balanceCacheKey} = WALLET;
       const {rates, lastDayRates} = RATE;
+
       if (
         !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION) &&
         !force
@@ -379,6 +389,15 @@ const updateKeyStatus =
           credentials,
           walletOptions,
         )) as BulkStatus[];
+
+        const walletUpdates: Array<{
+          walletId: string;
+          balance: any;
+          pendingTxps: any[];
+          isRefreshing: boolean;
+          singleAddress: boolean;
+        }> = [];
+
         const balances = key.wallets.map(wallet => {
           const {balance: cachedBalance, pendingTxps} = wallet;
 
@@ -416,6 +435,7 @@ const updateKeyStatus =
           const hasPendingTxps = pendingTxps?.length > 0;
           const shouldUpdateStatus =
             amountHasChanged || hasNewPendingTxps || hasPendingTxps;
+
           if (status && success && shouldUpdateStatus) {
             const cryptoBalance = dispatch(
               buildBalance({
@@ -439,11 +459,22 @@ const updateKeyStatus =
 
             const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
 
-            // properties to update
-            wallet.balance = cryptoBalance;
-            wallet.pendingTxps = newPendingTxps;
-            wallet.isRefreshing = false;
-            wallet.singleAddress = status.wallet?.singleAddress;
+            // Collect wallet updates instead of applying them
+            walletUpdates.push({
+              walletId: wallet.id,
+              balance: cryptoBalance,
+              pendingTxps: newPendingTxps,
+              isRefreshing: false,
+              singleAddress: status.wallet?.singleAddress,
+            });
+
+            if (!dataOnly) {
+                // properties to update
+                wallet.balance = cryptoBalance;
+                wallet.pendingTxps = newPendingTxps;
+                wallet.isRefreshing = false;
+                wallet.singleAddress = status.wallet?.singleAddress;
+            }
 
             dispatch(
               LogActions.info(
@@ -470,15 +501,19 @@ const updateKeyStatus =
 
         dispatch(LogActions.info(`Key: ${key.id} - status updated`));
 
-        dispatch(
-          successUpdateKey({
-            key,
-          }),
-        );
+        if (!dataOnly) {
+          dispatch(
+            successUpdateKey({
+              key,
+            }),
+          );
+        }
+
         return resolve({
           keyId: key.id,
           totalBalance: getTotalFiatBalance(balances),
           totalBalanceLastDay: getTotalFiatLastDayBalance(balances),
+          walletUpdates,
         });
       } catch (err) {
         if (err) {
@@ -627,10 +662,12 @@ export const startUpdateAllWalletStatusForKey =
         );
   };
 
-type UpdateAllKeyAndWalletStatusContext =
+export type UpdateAllKeyAndWalletStatusContext =
   | 'homeRootOnRefresh'
   | 'importLedger'
+  | 'importWallet'
   | 'init'
+  | 'appEffectsDebounced'
   | 'newBlockEvent'
   | 'startMigration';
 
@@ -727,7 +764,7 @@ export const startUpdateAllKeyAndWalletStatus =
     });
   };
 
-const updateWalletStatus =
+export const updateWalletStatus =
   ({
     wallet,
     defaultAltCurrencyIsoCode,
@@ -846,7 +883,7 @@ const updateWalletStatus =
     });
   };
 
-const buildBalance =
+export const buildBalance =
   ({wallet, status}: {wallet: Wallet; status: Status}): Effect<CryptoBalance> =>
   (dispatch, getState) => {
     const {currencyAbbreviation, chain, tokenAddress} = wallet;
@@ -933,7 +970,7 @@ const buildBalance =
     };
   };
 
-const buildFiatBalance =
+export const buildFiatBalance =
   ({
     wallet,
     defaultAltCurrencyIsoCode,
@@ -1054,7 +1091,7 @@ const buildFiatBalance =
     };
   };
 
-const buildPendingTxps =
+export const buildPendingTxps =
   ({
     wallet,
     status,
