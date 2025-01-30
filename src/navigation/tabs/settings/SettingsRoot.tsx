@@ -20,6 +20,8 @@ import {useAppDispatch} from '../../../utils/hooks';
 import {useSelector} from 'react-redux';
 import {useScrollToTop} from '@react-navigation/native';
 import {SettingsScreens, SettingsGroupParamList} from './SettingsGroup';
+import {HeaderContainer} from '../../tabs/home/components/Styled';
+import {HeaderTitle} from '../../../components/styled/Text';
 
 export type SettingsListType =
   | 'General'
@@ -187,6 +189,9 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
 
   return (
     <SettingsContainer>
+      <HeaderContainer>
+        <HeaderTitle>{t('Settings')}</HeaderTitle>
+      </HeaderContainer>
       <SettingsHomeContainer>
         <FlashList
           ref={listRef}
