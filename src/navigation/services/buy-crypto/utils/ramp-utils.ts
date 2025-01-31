@@ -77,6 +77,8 @@ export const rampSupportedCoins = [
 ];
 
 export const rampSupportedErc20Tokens = [
+  '1inch',
+  'arkm',
   'bat',
   'dai',
   'ens',
@@ -89,6 +91,7 @@ export const rampSupportedErc20Tokens = [
   'usda',
   'usdc',
   'usdt',
+  'xaut'
 ];
 
 export const rampSupportedMaticTokens = [
@@ -101,6 +104,7 @@ export const rampSupportedMaticTokens = [
   'usdc',
   'usdc.e', // usdce in Ramp - Bridged USD Coin (0x2791bca1f2de4661ed88a30c99a7a9449aa84174) USDC.e
   'usdt',
+  'weth', // MATIC-ETH in Ramp - (They call it ETH but use the WETH contract: 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619)
   'wmatic',
 ];
 
@@ -173,6 +177,10 @@ export const getRampCoinFormat = (
   coin = coin ? rampCoinMapping(externalServicesCoinMapping(coin)) : undefined;
   const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
   const _chain = chain ? cloneDeep(chain).toUpperCase() : undefined;
+
+  if (_coin === 'WETH' && _chain === 'MATIC') {
+    return 'MATIC_ETH';
+  }
 
   let formattedCoin: string = `${_chain}_${_coin}`;
   return formattedCoin;
