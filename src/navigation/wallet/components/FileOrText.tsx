@@ -32,7 +32,7 @@ import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/st
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {ScrollView} from 'react-native';
+import {ScrollView, Keyboard} from 'react-native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 
@@ -88,7 +88,8 @@ const FileOrText = () => {
     opts: Partial<KeyOptions>,
   ) => {
     try {
-      await dispatch(startOnGoingProcessModal('IMPORTING'));
+      dispatch(startOnGoingProcessModal('IMPORTING'));
+      await sleep(1000);
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
 
@@ -132,7 +133,6 @@ const FileOrText = () => {
       dispatch(dismissOnGoingProcessModal());
       await sleep(1000);
       showErrorModal(e.message);
-      return;
     }
   };
 
@@ -156,6 +156,8 @@ const FileOrText = () => {
 
   const onSubmit = handleSubmit(formData => {
     const {text, password} = formData;
+
+    Keyboard.dismiss();
 
     let opts: Partial<KeyOptions> = {};
     if (route.params?.keyId) {
@@ -192,6 +194,10 @@ const FileOrText = () => {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
+                autoCapitalize={'none'}
+                autoCorrect={false}
+                spellCheck={false}
+                autoComplete="off"
               />
             )}
             name="text"
