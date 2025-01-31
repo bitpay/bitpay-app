@@ -55,7 +55,7 @@ import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import AddressCard from '../../../components/AddressCard';
 import {LuckySevens} from '../../../../../styles/colors';
-import {IsERCToken} from '../../../../../store/wallet/utils/currency';
+import {IsERCToken, IsUtxoChain} from '../../../../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
 import CoinbaseSvg from '../../../../../../assets/img/wallet/transactions/coinbase.svg';
@@ -598,7 +598,7 @@ export const WalletSelector = ({
     const {keyWallets, coinbaseWallets} = wa;
     for (const keyWallet of keyWallets) {
       const accountWallets = keyWallet.accounts.map(account => account.wallets);
-      const utxoWallets = Object.values(keyWallet.mergedUtxoAccounts);
+      const utxoWallets = keyWallet.mergedUtxoAndEvmAccounts.filter((w)=> w?.chain ? IsUtxoChain(w.chain) : false);
       if (accountWallets.length > 0 || utxoWallets.length > 0) {
         hasWallets = true;
         break;
