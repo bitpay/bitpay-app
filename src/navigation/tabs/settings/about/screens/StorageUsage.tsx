@@ -45,6 +45,7 @@ const StorageUsage: React.FC = () => {
   const [walletStorage, setWalletStorage] = useState<string>('');
   const [customTokenStorage, setCustomTokenStorage] = useState<string>('');
   const [contactStorage, setContactStorage] = useState<string>('');
+  const [ratesStorage, setRatesStorage] = useState<string>('');
 
   const giftCards = useAppSelector(
     ({APP, SHOP}) => SHOP.giftCards[APP.network],
@@ -52,6 +53,7 @@ const StorageUsage: React.FC = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const customTokens = useAppSelector(({WALLET}) => WALLET.customTokenData);
   const contacts = useAppSelector(({CONTACT}) => CONTACT.list);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
 
   const formatBytes = (bytes: number, decimals = 2): string => {
     if (!+bytes) {
@@ -173,6 +175,18 @@ const StorageUsage: React.FC = () => {
         dispatch(LogActions.error('[setContactStorage] Error ', errStr));
       }
     };
+    const _setRatesStorage = async () => {
+      try {
+        const _ratesStorageSize = await getSize(
+          RNFS.TemporaryDirectoryPath + '/rates.txt',
+          JSON.stringify(rates),
+        );
+        setRatesStorage(formatBytes(_ratesStorageSize));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setRatesStorage] Error ', errStr));
+      }
+    };
     _setAppSize();
     _setDeviceStorage();
     _setDataCounterStorage();
@@ -180,6 +194,7 @@ const StorageUsage: React.FC = () => {
     _setGiftCardStorage();
     _setCustomTokensStorage();
     _setContactStorage();
+    _setRatesStorage();
   }, [dispatch]);
 
   return (
@@ -247,6 +262,13 @@ const StorageUsage: React.FC = () => {
             </SettingTitle>
 
             <Button buttonType="pill">{contactStorage}</Button>
+          </Setting>
+
+          <Hr />
+          <Setting>
+            <SettingTitle>{t('Rates')}</SettingTitle>
+
+            <Button buttonType="pill">{ratesStorage}</Button>
           </Setting>
         </SettingsComponent>
       </ScrollContainer>
