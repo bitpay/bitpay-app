@@ -92,6 +92,7 @@ import {LogActions} from '../../../../store/log';
 import {Network, URL} from '../../../../constants';
 import {AccountRowProps} from '../../../../components/list/AccountListRow';
 import {AssetsByChainData} from '../AccountDetails';
+import { WalletRowProps } from '../../../../components/list/WalletRow';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -192,8 +193,8 @@ export const BuildKeyAccountRow = (
           },
         );
 
-        const accounts = accountList
-          .map(account => {
+        const mergedAccounts = accountList
+        .map(account => {
             if (IsEVMChain(account.chains[0])) {
               const assetsByChain = buildAssetsByChain(
                 account,
@@ -201,34 +202,47 @@ export const BuildKeyAccountRow = (
               );
               return {...account, assetsByChain};
             }
+            return account.wallets;
           })
-          .filter(Boolean) as (AccountRowProps & {
+          .filter(Boolean) as (WalletRowProps[] | AccountRowProps & {
           assetsByChain?: AssetsByChainData[];
         })[];
 
-        const mergedUtxoAccounts = accountList.reduce((acc, account) => {
-          account?.wallets?.forEach(wallet => {
-            if (IsEVMChain(wallet.chain)) {
-              return acc;
-            }
-            //@ts-ignore
-            if (!acc[wallet.chain]) {
-              //@ts-ignore
-              acc[wallet.chain] = [wallet];
-            } else {
-              //@ts-ignore
-              acc[wallet.chain].push(wallet);
-            }
-          });
-          return acc;
-        }, {});
+        const getMaxFiatBalanceWallet = (wallets: WalletRowProps[], defaultWallet: any) => {
+          return wallets.reduce((max, w) =>
+            w?.fiatBalance && w.fiatBalance > max.fiatBalance ? w : max
+          , defaultWallet);
+        };
 
+        const flatMergedAccounts = Object.values(mergedAccounts).flat();
+        const accounts = flatMergedAccounts.filter((a)=>{!a.chain;});
+
+        const mergedUtxoAndEvmAccounts = flatMergedAccounts.sort((a, b) => {
+
+          const chainA = a.chains?.[0] ?? a.chain ?? '';
+          const chainB = b.chains?.[0] ?? b.chain ?? '';
+          const isEVMA = IsEVMChain(chainA);
+          const isEVMB = IsEVMChain(chainB);
+
+          const walletA = isEVMA
+            ? getMaxFiatBalanceWallet((a as AccountRowProps).wallets, (a as AccountRowProps).wallets[0])
+            : getMaxFiatBalanceWallet((flatMergedAccounts.filter(wallet => wallet?.chain === a.chain) as WalletRowProps[]), a);
+
+          const walletB = isEVMB
+            ? getMaxFiatBalanceWallet((b as AccountRowProps).wallets, (b as AccountRowProps).wallets[0])
+            : getMaxFiatBalanceWallet((flatMergedAccounts.filter(wallet => wallet?.chain === b.chain)as WalletRowProps[]), b);
+
+          const balanceA = walletA.fiatBalance || 0;
+          const balanceB = walletB.fiatBalance || 0;
+
+          return balanceB - balanceA;
+        }) as (WalletRowProps[] | (AccountRowProps & { assetsByChain?: AssetsByChainData[] }));
         return {
           key,
           keyName: value.keyName || 'My Key',
           backupComplete: value.backupComplete,
           accounts,
-          mergedUtxoAccounts,
+          mergedUtxoAndEvmAccounts,
         };
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
