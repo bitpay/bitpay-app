@@ -429,7 +429,7 @@ export const updateKeyStatus =
             }) || {};
 
           const amountHasChanged =
-            status?.balance.availableAmount !== cachedBalance?.satAvailable;
+            status?.balance?.availableAmount !== cachedBalance?.satAvailable;
           const hasNewPendingTxps =
             status?.pendingTxps && status?.pendingTxps.length > 0;
           const hasPendingTxps = pendingTxps?.length > 0;
