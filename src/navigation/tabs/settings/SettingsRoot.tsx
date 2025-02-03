@@ -22,6 +22,7 @@ import {useScrollToTop} from '@react-navigation/native';
 import {SettingsScreens, SettingsGroupParamList} from './SettingsGroup';
 import {HeaderContainer} from '../../tabs/home/components/Styled';
 import {HeaderTitle} from '../../../components/styled/Text';
+import TabContainer from '../../tabs/TabContainer';
 
 export type SettingsListType =
   | 'General'
@@ -133,7 +134,11 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
     [t],
   );
 
-  const renderSettingItem = ({item}: {item: {id: SettingsListType; title: string}}) => {
+  const renderSettingItem = ({
+    item,
+  }: {
+    item: {id: SettingsListType; title: string};
+  }) => {
     return (
       <View>
         <Setting
@@ -177,9 +182,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
           <BitPayIdUserText>{user.email}</BitPayIdUserText>
         </BitPayIdUserContainer>
       ) : (
-        <BitPayIdSettingTitle>
-          {t('Log In or Sign Up')}
-        </BitPayIdSettingTitle>
+        <BitPayIdSettingTitle>{t('Log In or Sign Up')}</BitPayIdSettingTitle>
       )}
       <SettingIcon suffix>
         <AngleRight />
@@ -188,7 +191,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
   );
 
   return (
-    <SettingsContainer>
+    <TabContainer>
       <HeaderContainer>
         <HeaderTitle>{t('Settings')}</HeaderTitle>
       </HeaderContainer>
@@ -202,7 +205,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
           contentContainerStyle={{paddingBottom: 100}}
         />
       </SettingsHomeContainer>
-    </SettingsContainer>
+    </TabContainer>
   );
 };
 
