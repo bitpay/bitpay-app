@@ -43,6 +43,7 @@ type SessionLogsScreenProps = NativeStackScreenProps<
 
 const LogsContainer = styled.SafeAreaView`
   flex: 1;
+  padding-bottom: ${IS_ANDROID ? '55px' : 0};
 `;
 
 const Logs = styled(BaseText)<{color?: string | null}>`
@@ -266,10 +267,11 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
         value={filterLevel}
         minimumValue={MIN_LOG_LEVEL}
         maximumValue={MAX_LOG_LEVEL}
-        onValueChange={onFilterLevelChange}
+        onSlidingComplete={onFilterLevelChange}
         style={{
           alignSelf: 'center',
           width: SLIDER_WIDTH,
+          height: 40,
         }}
         // iOS
         tapToSeek={true}
