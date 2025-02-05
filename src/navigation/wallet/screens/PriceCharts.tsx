@@ -62,6 +62,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import moment from 'moment';
+import ArchaxFooter from '../../../components/archax/archax-footer';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -276,6 +277,7 @@ export const AxisLabel = ({
 
 const PriceCharts = () => {
   const {t} = useTranslation();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -628,6 +630,7 @@ const PriceCharts = () => {
           {buttonLabel}
         </Button>
       </CtaContainer>
+      {showArchaxBanner && <ArchaxFooter />}
     </SafeAreaView>
   );
 };
