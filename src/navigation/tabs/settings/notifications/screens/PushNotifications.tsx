@@ -5,16 +5,23 @@ import {View, DeviceEventEmitter} from 'react-native';
 import {AppEffects} from '../../../../../store/app';
 import {
   Hr,
+  ScreenGutter,
   SettingDescription,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
-import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
+import {SettingsContainer} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import styled from 'styled-components/native';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
+
+const SettingsComponent = styled.ScrollView`
+  flex: 1;
+  margin-top: 15px;
+  padding: 0 ${ScreenGutter};
+`;
 
 const SettingRow = styled(View)`
   flex-grow: 1;
@@ -35,7 +42,9 @@ const PushNotifications = () => {
   const dispatch = useAppDispatch();
 
   const notificationsState = useAppSelector(selectSettingsNotificationState);
-  const visibleOnGoingProcess = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
+  const visibleOnGoingProcess = useAppSelector(
+    ({APP}) => APP.showOnGoingProcessModal,
+  );
 
   const [confirmedTx, setConfirmedTx] = useState(
     notificationsState.confirmedTx,
@@ -94,7 +103,6 @@ const PushNotifications = () => {
   return (
     <SettingsContainer>
       <SettingsComponent>
-        <Hr />
         {notificationsList.map(
           ({id, title, checked, onPress, description}, i) => {
             const disabled = ['transactions', 'announcements'].includes(id)
