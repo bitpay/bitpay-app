@@ -3,7 +3,7 @@ import {RateActionType, RateActionTypes} from './rate.types';
 import {DEFAULT_DATE_RANGE} from '../../constants/rate';
 
 type RateReduxPersistBlackList = string[];
-export const rateReduxPersistBlackList: RateReduxPersistBlackList = [];
+export const rateReduxPersistBlackList: RateReduxPersistBlackList = ['ratesByDateRange'];
 
 export interface RateState {
   lastDayRates: Rates;
@@ -34,21 +34,19 @@ export const rateReducer = (
   switch (action.type) {
     case RateActionTypes.SUCCESS_GET_RATES: {
       const {rates, lastDayRates} = action.payload;
-
       return {
         ...state,
-        rates: {...state.rates, ...rates},
+        rates: {...initialState.rates, ...rates},
         ratesCacheKey: {
-          ...state.ratesCacheKey,
+          ...initialState.ratesCacheKey,
           [DEFAULT_DATE_RANGE]: Date.now(),
         },
-        lastDayRates: {...state.lastDayRates, ...lastDayRates},
+        lastDayRates: {...initialState.lastDayRates, ...lastDayRates},
       };
     }
 
     case RateActionTypes.SUCCESS_GET_HISTORICAL_RATES: {
       const {ratesByDateRange, dateRange = DEFAULT_DATE_RANGE} = action.payload;
-
       return {
         ...state,
         ratesByDateRange: {
@@ -66,7 +64,7 @@ export const rateReducer = (
       const {cacheKey, dateRange = DEFAULT_DATE_RANGE} = action.payload;
       return {
         ...state,
-        [cacheKey]: {...state.ratesCacheKey, [dateRange]: Date.now()},
+        [cacheKey]: {...initialState.ratesCacheKey, [dateRange]: Date.now()},
       };
     }
 
@@ -74,7 +72,7 @@ export const rateReducer = (
       const {cacheKey, dateRange = DEFAULT_DATE_RANGE} = action.payload;
       return {
         ...state,
-        [cacheKey]: {...state.ratesHistoricalCacheKey, [dateRange]: Date.now()},
+        [cacheKey]: {...initialState.ratesHistoricalCacheKey, [dateRange]: Date.now()},
       };
     }
 

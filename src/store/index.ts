@@ -215,6 +215,7 @@ const getStore = () => {
             ),
           );
         },
+        unencryptedStores: ['RATE'],
       }),
     ],
   };
