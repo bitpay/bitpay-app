@@ -33,9 +33,10 @@ import {
 } from '@moralisweb3/common-evm-utils';
 import {calculateUsdToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {IsERCToken} from '../../utils/currency';
+import { UpdateAllKeyAndWalletStatusContext } from '../status/status';
 
 export const startGetRates =
-  ({init, force}: {init?: boolean; force?: boolean}): Effect<Promise<Rates>> =>
+  ({context, force}: {context?: UpdateAllKeyAndWalletStatusContext; force?: boolean}): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
     return new Promise(async resolve => {
       dispatch(LogActions.info('startGetRates: starting...'));
@@ -82,7 +83,7 @@ export const startGetRates =
           LogActions.info('startGetRates: success get request (yesterday)'),
         );
 
-        if (init) {
+        if (context === 'init') {
           dispatch(
             LogActions.info('startGetRates: setting alternative currency list'),
           );
