@@ -65,7 +65,8 @@ export enum BWCErrorName {
   WALLET_NOT_FOUND = 'WALLET_NOT_FOUND',
   WRONG_ADDRESS = 'WRONG_ADDRESS',
   WRONG_AMOUNT = 'WRONG_AMOUNT',
-  WRONG_PASSWORD = 'WRONG_PASSWORD'
+  WRONG_PASSWORD = 'WRONG_PASSWORD',
+  TX_NONCE_CONFLICT = 'TX_NONCE_CONFLICT',
 }
 
 export const getErrorName = (err: Error) =>
@@ -252,6 +253,8 @@ const _getErrorMessage = (err: Error) => {
       );
     case BWCErrorName.WRONG_PASSWORD:
       return t('Wrong password');
+    case BWCErrorName.TX_NONCE_CONFLICT:
+      return t('Unsigned TX proposal(s) with lower or conflicting nonces exist. Please sign or reject them first.');
     case BWCErrorName.ERROR:
       return err.message;
     default:
