@@ -12,8 +12,8 @@ import {
 } from './shop.models';
 import {ShopActionType, ShopActionTypes} from './shop.types';
 
-type ShopReduxPersistBlackList = [];
-export const shopReduxPersistBlackList: ShopReduxPersistBlackList = [];
+type ShopReduxPersistBlackList = string[];
+export const shopReduxPersistBlackList: ShopReduxPersistBlackList = ['integrations'];
 
 export interface ShopState {
   availableCardMap: CardConfigMap;
