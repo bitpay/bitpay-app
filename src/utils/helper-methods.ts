@@ -180,7 +180,7 @@ export const getSignificantDigits = (currencyAbbreviation?: string) => {
     : undefined;
 };
 
-const getFormatter = (
+const getFormatterOptions = (
   amount: number,
   currency: string = 'USD',
   opts: {
@@ -188,9 +188,9 @@ const getFormatter = (
     currencyAbbreviation?: string;
     currencyDisplay?: 'symbol' | 'code';
   } = {},
-) => {
+): Intl.NumberFormatOptions => {
   const significantDigits = getSignificantDigits(opts.currencyAbbreviation);
-  return new Intl.NumberFormat('en-US', {
+  const formatterOptions: Intl.NumberFormatOptions = {
     minimumSignificantDigits: amount === 0 ? undefined : significantDigits,
     maximumSignificantDigits: amount === 0 ? undefined : significantDigits,
     style: 'currency',
@@ -200,8 +200,9 @@ const getFormatter = (
         maximumFractionDigits: 0,
         minimumFractionDigits: 0,
       }),
-    currencyDisplay: opts.currencyDisplay,
-  });
+      currencyDisplay: opts.currencyDisplay,
+  };
+  return formatterOptions;
 };
 
 export const formatFiatAmount = (
@@ -213,27 +214,30 @@ export const formatFiatAmount = (
     currencyDisplay?: 'symbol' | 'code';
   } = {},
 ) => {
+  const formatterOptions = getFormatterOptions(amount, currency, opts);
   const currencyDisplay = opts.currencyDisplay || 'symbol';
-  const formatter = getFormatter(amount, currency, {...opts, currencyDisplay});
 
   if (currencyDisplay === 'symbol') {
-    return formatter.format(amount);
+    return amount.toLocaleString('en-US', formatterOptions);
   }
 
-  let code;
-  let numberString = formatter
-    .formatToParts(amount)
-    .map(({type, value}) => {
-      switch (type) {
-        case 'currency':
-          code = value;
-          return '';
-        default:
-          return value;
-      }
+  let code: string | undefined;
+  let numberString = amount
+    .toLocaleString('en-US', {
+      ...formatterOptions,
+      currencyDisplay: 'code',
     })
-    .reduce((string, part) => string + part);
-  return `${numberString} ${code}`;
+    .split('')
+    .map((char) => {
+      if (char.match(/[A-Za-z]/)) {
+        code = (code || '') + char;
+        return '';
+      }
+      return char;
+    })
+    .join('');
+
+  return `${numberString.trim()} ${code || currency}`;
 };
 
 type FormatFiatOptions = {
@@ -320,28 +324,31 @@ export const formatFiatAmountObj = (
     currencyAbbreviation?: string;
     currencyDisplay?: 'symbol' | 'code';
   } = {},
-): {amount: string; code?: string} => {
+): { amount: string; code?: string } => {
   const currencyDisplay = opts.currencyDisplay || 'symbol';
-  const formatter = getFormatter(amount, currency, {...opts, currencyDisplay});
+  const formatterOptions = getFormatterOptions(amount, currency, { ...opts, currencyDisplay });
 
   if (currencyDisplay === 'symbol') {
-    return {amount: formatter.format(amount)};
+    return { amount: amount.toLocaleString('en-US', formatterOptions) };
   }
 
-  let code;
-  let numberString = formatter
-    .formatToParts(amount)
-    .map(({type, value}) => {
-      switch (type) {
-        case 'currency':
-          code = value;
-          return '';
-        default:
-          return value;
-      }
+  let code: string | undefined;
+  let numberString = amount
+    .toLocaleString('en-US', {
+      ...formatterOptions,
+      currencyDisplay: 'code',
     })
-    .reduce((string, part) => string + part);
-  return {amount: numberString, code};
+    .split('')
+    .map((char) => {
+      if (char.match(/[A-Za-z]/)) {
+        code = (code || '') + char;
+        return '';
+      }
+      return char;
+    })
+    .join('');
+
+  return { amount: numberString.trim(), code: code || currency };
 };
 
 export const convertToFiat = (
