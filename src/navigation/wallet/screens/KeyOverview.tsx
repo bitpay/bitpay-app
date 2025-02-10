@@ -561,7 +561,7 @@ const KeyOverview = () => {
           startUpdateAllWalletStatusForKey({
             key,
             force: forceUpdate,
-            createTokenWalletWithFunds: true,
+            createTokenWalletWithFunds: forceUpdate,
           }),
         ),
         sleep(1000),

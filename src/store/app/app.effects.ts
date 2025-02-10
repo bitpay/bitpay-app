@@ -992,7 +992,7 @@ const _startUpdateAllKeyAndWalletStatus = debounce(
       startUpdateAllKeyAndWalletStatus({
         context: 'newBlockEvent',
         force: true,
-        createTokenWalletWithFunds: true,
+        createTokenWalletWithFunds: false,
         chain,
         tokenAddress,
       }),

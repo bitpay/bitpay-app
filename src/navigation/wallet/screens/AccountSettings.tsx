@@ -254,7 +254,7 @@ const AccountSettings = () => {
                 startUpdateAllWalletStatusForKey({
                   key,
                   force: true,
-                  createTokenWalletWithFunds: true,
+                  createTokenWalletWithFunds: false,
                 }),
               );
               await sleep(1000);
