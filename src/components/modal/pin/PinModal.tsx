@@ -23,7 +23,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
-import {ActiveOpacity, HEIGHT} from '../../styled/Containers';
+import {ActiveOpacity, HEIGHT, WIDTH} from '../../styled/Containers';
 import {H5} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 import PinDots from './PinDots';
@@ -35,7 +35,8 @@ export interface PinModalConfig {
 }
 
 const PinContainer = styled.View`
-  flex: 1;
+  height: ${HEIGHT}px;
+  width: ${WIDTH}px;
   background-color: ${BitPay};
 `;
 
@@ -327,10 +328,10 @@ const Pin = gestureHandlerRootHOC(() => {
   return (
     <PinContainer>
       {showBackButton ? (
-        <SheetHeaderContainer style={{marginTop: insets.top, marginLeft: 15}}>
+        <SheetHeaderContainer style={{marginTop: insets.top, paddingLeft: 25}}>
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
-            onPress={() => {
+            onPressOut={() => {
               dispatch(AppActions.dismissPinModal());
               reset();
             }}>
