@@ -251,7 +251,18 @@ const ProcessTx =
       );
     }
 
-    tx.feeStr = tx.fee !== undefined && tx.fee !== null
+    tx.feeStr = tx.receipt?.gasUsed && tx.receipt?.gasUsed > 0 && 
+    tx.receipt?.effectiveGasPrice && tx.receipt?.effectiveGasPrice > 0
+    ? // @ts-ignore
+      dispatch(
+        FormatAmountStr(
+          BitpaySupportedCoins[chain]?.feeCurrency,
+          chain,
+          undefined,
+          tx.receipt?.gasUsed * tx.receipt?.effectiveGasPrice,
+        ),
+      ) 
+    : tx.fee !== undefined && tx.fee !== null
     ? // @ts-ignore
       dispatch(
         FormatAmountStr(
@@ -1220,6 +1231,7 @@ export const buildTransactionDetails =
           coin,
           chain,
           tokenAddress,
+          receipt,
         } = transaction;
 
           const {
@@ -1245,7 +1257,9 @@ export const buildTransactionDetails =
             ?.symbol.toLowerCase();
         }
 
-        const _fee = fees != null ? fees : fee;
+        const _fee = receipt?.gasUsed && receipt?.gasUsed > 0 && receipt?.effectiveGasPrice && receipt?.effectiveGasPrice > 0 ? 
+        receipt?.gasUsed * receipt?.effectiveGasPrice : 
+        fees != null ? fees : fee;
 
         const alternativeCurrency = defaultAltCurrencyIsoCode;
 

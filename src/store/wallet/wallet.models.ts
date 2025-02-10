@@ -385,6 +385,22 @@ export interface TransactionProposal {
   tokenAddress?: string;
   txid?: string;
   walletId: string;
+  receipt?: {
+    blockHash: string;
+    blockNumber: number;
+    contractAddress: string | null;
+    cumulativeGasUsed: number;
+    effectiveGasPrice: number;
+    from: string;
+    gasUsed: number;
+    logs: any[];
+    logsBloom: string;
+    status: boolean;
+    to: string;
+    transactionHash: string;
+    transactionIndex: number;
+    type: string;
+  }
 }
 
 export interface TransactionDetailsBuilt extends TransactionProposal {
