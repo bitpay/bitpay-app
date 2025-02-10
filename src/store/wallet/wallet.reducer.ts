@@ -632,14 +632,17 @@ export const walletReducer = (
       });
 
       // Update wallet statuses
-      walletBalances.forEach(({keyId, walletId, status}) => {
-        if (updatedKeys[keyId]?.wallets?.[walletId]) {
-          updatedKeys[keyId].wallets[walletId] = {
-            ...updatedKeys[keyId].wallets[walletId],
-            balance: status.balance,
-            pendingTxps: status.pendingTxps,
-            singleAddress: status.singleAddress,
-          };
+      walletBalances.forEach(({ keyId, walletId, status }) => {
+        if (updatedKeys[keyId]?.wallets?.length > 0) {
+          updatedKeys[keyId].wallets = updatedKeys[keyId].wallets.map((wallet) => {
+            if (wallet.id === walletId) {
+              wallet.balance = status.balance;
+              wallet.pendingTxps = status.pendingTxps;
+              wallet.isRefreshing = false;
+              wallet.singleAddress = status.singleAddress;
+            }
+            return wallet;
+          });
         }
       });
 

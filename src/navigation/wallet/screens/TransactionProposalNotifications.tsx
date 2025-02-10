@@ -139,16 +139,7 @@ const TransactionProposalNotifications = () => {
   );
   const [selectAll, setSelectAll] = useState(false);
 
-  let pendingTxps: TransactionProposal[] = [];
-  _.each(wallets, x => {
-    // Filter out txps used for pay fees in other wallets
-    x.pendingTxps = _.filter(x.pendingTxps, txp => {
-      return txp.coin === x.currencyAbbreviation;
-    });
-    if (x.pendingTxps.length > 0) {
-      pendingTxps = pendingTxps.concat(x.pendingTxps);
-    }
-  });
+  let pendingTxps: TransactionProposal[] = wallets.flatMap(w => w.pendingTxps);
 
   if (walletId) {
     pendingTxps = _.filter(pendingTxps, txp => {

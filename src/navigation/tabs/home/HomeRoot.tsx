@@ -74,16 +74,7 @@ const HomeRoot = () => {
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const wallets = Object.values(keys).flatMap(k => k.wallets);
-  let pendingTxps: any = [];
-  each(wallets, x => {
-    // Filter out txps used for pay fees in other wallets
-    x.pendingTxps = filter(x.pendingTxps, txp => {
-      return txp.coin === x.currencyAbbreviation;
-    });
-    if (x.pendingTxps) {
-      pendingTxps = pendingTxps.concat(x.pendingTxps);
-    }
-  });
+  const pendingTxps = wallets.flatMap(w => w.pendingTxps);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const keyMigrationFailure = useAppSelector(

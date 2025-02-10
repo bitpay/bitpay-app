@@ -213,7 +213,7 @@ export const getAndDispatchUpdatedWalletBalances = ({
     try {
       // Update rates if needed
       if (!skipRateUpdate) {
-        await dispatch(startGetRates({}));
+        await dispatch(startGetRates({context}));
       }
 
       // Get updated balances
