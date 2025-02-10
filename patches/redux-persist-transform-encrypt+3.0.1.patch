@@ -1,0 +1,43 @@
+diff --git a/node_modules/redux-persist-transform-encrypt/lib/sync.d.ts b/node_modules/redux-persist-transform-encrypt/lib/sync.d.ts
+index 9951f2c..3f38ed2 100644
+--- a/node_modules/redux-persist-transform-encrypt/lib/sync.d.ts
++++ b/node_modules/redux-persist-transform-encrypt/lib/sync.d.ts
+@@ -3,5 +3,6 @@
+ export interface EncryptTransformConfig {
+     secretKey: string;
+     onError?: (err: Error) => void;
++    unencryptedStores?: string[];
+ }
+ export declare const encryptTransform: (config: EncryptTransformConfig) => import("redux-persist").Transform<unknown, string, any, any>;
+diff --git a/node_modules/redux-persist-transform-encrypt/lib/sync.js b/node_modules/redux-persist-transform-encrypt/lib/sync.js
+index cbb30ff..4b2a4fd 100644
+--- a/node_modules/redux-persist-transform-encrypt/lib/sync.js
++++ b/node_modules/redux-persist-transform-encrypt/lib/sync.js
+@@ -39,12 +39,27 @@ exports.encryptTransform = function (config) {
+         throw makeError('No secret key provided.');
+     }
+     var onError = typeof config.onError === 'function' ? config.onError : console.warn;
++    const unencryptedStores = config.unencryptedStores || [];
++
+     return redux_persist_1.createTransform(function (inboundState, _key) {
++        // Skip encryption for unencrypted stores
++        if (unencryptedStores.includes(_key)) {
++            return json_stringify_safe_1.default(inboundState);
++        }
+         return Aes.encrypt(json_stringify_safe_1.default(inboundState), secretKey).toString();
+     }, function (outboundState, _key) {
+         if (typeof outboundState !== 'string') {
+             return onError(makeError('Expected outbound state to be a string.'));
+         }
++
++        // For unencrypted stores, try parsing first
++        if (unencryptedStores.includes(_key)) {
++            try {
++                return JSON.parse(outboundState);
++            } catch (_e) {} // If parsing fails, try decryption below
++        }
++
++        // Handle both encrypted stores and failed unencrypted parses
+         try {
+             var decryptedString = Aes.decrypt(outboundState, secretKey).toString(CryptoJsCore.enc.Utf8);
+             if (!decryptedString) {
