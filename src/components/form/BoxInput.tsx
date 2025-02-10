@@ -35,7 +35,7 @@ const InputContainer = styled.View<InputProps>`
   border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
-  padding: 1px 1px 0 1px;
+  padding: 1px;
   flex-direction: row;
   justify-content: center;
   position: relative;
