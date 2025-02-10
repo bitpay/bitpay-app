@@ -23,7 +23,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
-import {ActiveOpacity, HEIGHT, WIDTH} from '../../styled/Containers';
+import {ActiveOpacity, HEIGHT} from '../../styled/Containers';
 import {H5} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 import PinDots from './PinDots';
@@ -35,8 +35,7 @@ export interface PinModalConfig {
 }
 
 const PinContainer = styled.View`
-  height: ${HEIGHT}px;
-  width: ${WIDTH}px;
+  flex: 1;
   background-color: ${BitPay};
 `;
 
@@ -375,7 +374,6 @@ const PinModal: React.FC = () => {
       accessibilityLabel="pin-view"
       id={'pin'}
       isVisible={isVisible}
-      coverScreen={true}
       backdropTransitionOutTiming={0}
       hideModalContentWhileAnimating
       backdropOpacity={1}
@@ -383,7 +381,7 @@ const PinModal: React.FC = () => {
       animationIn={'fadeIn'}
       animationOut={'fadeOut'}
       useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
+      useNativeDriver={false}
       style={{margin: 0}}>
       <Pin />
     </BaseModal>
