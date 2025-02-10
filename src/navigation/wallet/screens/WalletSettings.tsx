@@ -163,7 +163,7 @@ const WalletSettings = () => {
       startUpdateAllWalletStatusForKey({
         key,
         force: true,
-        createTokenWalletWithFunds: true,
+        createTokenWalletWithFunds: false,
       }),
     );
   };
