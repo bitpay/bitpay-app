@@ -108,7 +108,7 @@ import {getStateFromPath, NavigationProp} from '@react-navigation/native';
 import {
   getAvailableGiftCards,
   getCategoriesWithIntegrations,
-} from '../shop/shop.selectors';
+} from '../shop-catalog';
 import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantGroup';
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
 import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
@@ -126,6 +126,8 @@ import {InAppNotificationMessages} from '../../components/modal/in-app-notificat
 import axios from 'axios';
 import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
+import {successFetchCatalog, setShopMigrationComplete} from '../shop-catalog/shop-catalog.actions';
+import {clearedShopCatalogFields} from '../shop/shop.actions';
 import {
   startCustomTokensMigration,
   startPolMigration,
@@ -220,6 +222,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(setPolygonMigrationComplete());
       dispatch(LogActions.info('success [setPolygonMigrationComplete]'));
     }
+
+    dispatch(migrateShopCatalog());
 
     const identity = dispatch(initializeAppIdentity());
 
@@ -1143,11 +1147,11 @@ export const getRouteParam = (url: string, param: string) => {
 export const incomingShopLink =
   (url: string): Effect<{merchantName: string} | undefined> =>
   (_, getState) => {
-    const {SHOP} = getState();
-    const availableGiftCards = getAvailableGiftCards(SHOP.availableCardMap);
-    const integrations = Object.values(SHOP.integrations);
+    const {SHOP_CATALOG} = getState();
+    const availableGiftCards = getAvailableGiftCards(SHOP_CATALOG.availableCardMap);
+    const integrations = Object.values(SHOP_CATALOG.integrations);
     const categories = getCategoriesWithIntegrations(
-      Object.values(SHOP.categoriesAndCurations.categories),
+      Object.values(SHOP_CATALOG.categoriesAndCurations.categories),
       integrations,
     );
 
@@ -1554,3 +1558,31 @@ export const joinWaitlist =
       throw err;
     }
   };
+
+export const migrateShopCatalog = (): Effect => (dispatch, getState) => {
+  try {
+    const {SHOP_CATALOG, SHOP} = getState();
+    if (!SHOP_CATALOG.shopMigrationComplete && SHOP.supportedCardMap) { 
+      dispatch(successFetchCatalog({
+        availableCardMap: SHOP.availableCardMap,
+        supportedCardMap: SHOP.supportedCardMap,
+        categoriesAndCurations: SHOP.categoriesAndCurations,
+        integrations: SHOP.integrations,
+      }));
+      dispatch(clearedShopCatalogFields());
+      dispatch(setShopMigrationComplete());
+      dispatch(
+        LogActions.info(
+          'Migrated shop tab catalog fields from SHOP store to SHOP_CATALOG store.',
+        ),
+      );
+    } 
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+    dispatch(
+      LogActions.error(
+        `Error migrating shop tab catalog fields from SHOP store to SHOP_CATALOG store: ${errorMsg}`,
+      ),
+    );
+  }
+};
