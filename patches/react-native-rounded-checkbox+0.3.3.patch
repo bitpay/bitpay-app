@@ -1,0 +1,26 @@
+diff --git a/node_modules/react-native-rounded-checkbox/build/dist/functional/RoundedCheckbox.js b/node_modules/react-native-rounded-checkbox/build/dist/functional/RoundedCheckbox.js
+index 6168cea..f767eda 100644
+--- a/node_modules/react-native-rounded-checkbox/build/dist/functional/RoundedCheckbox.js
++++ b/node_modules/react-native-rounded-checkbox/build/dist/functional/RoundedCheckbox.js
+@@ -29,7 +29,7 @@ const RoundedCheckbox = ({ active, isChecked, children, text = "L", textStyle, o
+         RoundedCheckbox_style_1.default.outerContainer,
+         outerStyle,
+         RoundedCheckbox_style_1._outerBorderWithStyle(isActive ? 1 : 0),
+-    ]} onPress={handlePress}>
++    ]} onPressOut={handlePress}>
+       <react_native_1.View style={[
+         RoundedCheckbox_style_1.default.innerContainer,
+         innerStyle,
+diff --git a/node_modules/react-native-rounded-checkbox/lib/functional/RoundedCheckbox.tsx b/node_modules/react-native-rounded-checkbox/lib/functional/RoundedCheckbox.tsx
+index 2fbdcbe..f888338 100644
+--- a/node_modules/react-native-rounded-checkbox/lib/functional/RoundedCheckbox.tsx
++++ b/node_modules/react-native-rounded-checkbox/lib/functional/RoundedCheckbox.tsx
+@@ -79,7 +79,7 @@ const RoundedCheckbox: React.FC<IRoundedCheckboxProps> = ({
+         outerStyle,
+         _outerBorderWithStyle(isActive ? 1 : 0),
+       ]}
+-      onPress={handlePress}
++      onPressOut={handlePress}
+     >
+       <View
+         style={[

@@ -1,0 +1,27 @@
+diff --git a/node_modules/react-native/Libraries/Components/Touchable/TouchableOpacity.js b/node_modules/react-native/Libraries/Components/Touchable/TouchableOpacity.js
+index 14ca87a..d898142 100644
+--- a/node_modules/react-native/Libraries/Components/Touchable/TouchableOpacity.js
++++ b/node_modules/react-native/Libraries/Components/Touchable/TouchableOpacity.js
+@@ -165,7 +165,6 @@ class TouchableOpacity extends React.Component<Props, State> {
+         }
+       },
+       onLongPress: this.props.onLongPress,
+-      onPress: this.props.onPress,
+       onPressIn: event => {
+         this._opacityActive(
+           event.dispatchConfig.registrationName === 'onResponderGrant'
+@@ -178,8 +177,12 @@ class TouchableOpacity extends React.Component<Props, State> {
+       },
+       onPressOut: event => {
+         this._opacityInactive(250);
+-        if (this.props.onPressOut != null) {
+-          this.props.onPressOut(event);
++        if(this.props.onPress != null) {
++          this.props.onPress(event);
++        } else {
++          if (this.props.onPressOut != null) {
++            this.props.onPressOut(event);
++          }
+         }
+       },
+     };
