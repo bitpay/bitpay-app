@@ -350,7 +350,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
-  const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
+  const supportedCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const {rates} = useAppSelector(({RATE}) => RATE);

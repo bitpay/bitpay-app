@@ -145,6 +145,10 @@ export const clearedGiftCards = (): ShopActionType => ({
   type: ShopActionTypes.CLEARED_GIFT_CARDS,
 });
 
+export const clearedShopCatalogFields = (): ShopActionType => ({
+  type: ShopActionTypes.CLEARED_SHOP_CATALOG_FIELDS,
+});
+
 export const isJoinedWaitlist = (
   isJoinedWaitlist: boolean,
 ): ShopActionType => ({

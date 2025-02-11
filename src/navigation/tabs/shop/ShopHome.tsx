@@ -18,7 +18,7 @@ import {
   selectCategoriesAndCurations,
   selectCategoriesWithIntegrations,
   selectIntegrations,
-} from '../../../store/shop/shop.selectors';
+} from '../../../store/shop-catalog';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {ShopScreens, ShopStackParamList} from './ShopStack';
@@ -30,7 +30,6 @@ import {HEIGHT} from '../../../components/styled/Containers';
 import {useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
 
@@ -101,8 +100,9 @@ const ShopHome: React.FC<
 > = ({route}) => {
   const {t} = useTranslation();
   const theme = useTheme();
-  const availableCardMap = useAppSelector(({SHOP}) => SHOP.availableCardMap);
-  const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
+  const availableCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.availableCardMap); 
+  const supportedCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap);
+
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );

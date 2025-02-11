@@ -31,6 +31,7 @@ export enum ShopActionTypes {
   TOGGLED_GIFT_CARD_ARCHIVED_STATUS = 'SHOP/TOGGLED_GIFT_CARD_ARCHIVED_STATUS',
   TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID = 'SHOP/TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID',
   CLEARED_GIFT_CARDS = 'SHOP/CLEARED_GIFT_CARDS',
+  CLEARED_SHOP_CATALOG_FIELDS = 'SHOP/CLEARED_SHOP_CATALOG_FIELDS',
   IS_JOINED_WAITLIST = 'SHOP/IS_JOINED_WAITLIST',
 }
 
@@ -146,7 +147,9 @@ interface updatedPhone {
 interface clearedGiftCards {
   type: typeof ShopActionTypes.CLEARED_GIFT_CARDS;
 }
-
+interface clearedSupportedCardMap {
+  type: typeof ShopActionTypes.CLEARED_SHOP_CATALOG_FIELDS;
+}
 interface isJoinedWaitlist {
   type: ShopActionTypes.IS_JOINED_WAITLIST;
   payload: {isJoinedWaitlist: boolean};
@@ -172,4 +175,5 @@ export type ShopActionType =
   | updatedGiftCardStatus
   | updatedPhone
   | clearedGiftCards
+  | clearedSupportedCardMap
   | isJoinedWaitlist;

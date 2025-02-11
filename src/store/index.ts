@@ -37,6 +37,7 @@ import {
 } from './location/location.reducer';
 import {logReducer, logReduxPersistBlackList} from './log/log.reducer';
 import {shopReducer, shopReduxPersistBlackList} from './shop/shop.reducer';
+import {shopCatalogReducer} from './shop-catalog/shop-catalog.reducer';
 import {
   swapCryptoReducer,
   swapCryptoReduxPersistBlackList,
@@ -100,6 +101,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   LOG: logReduxPersistBlackList,
   SELL_CRYPTO: sellCryptoReduxPersistBlackList,
   SHOP: shopReduxPersistBlackList,
+  SHOP_CATALOG: [],
   SWAP_CRYPTO: swapCryptoReduxPersistBlackList,
   WALLET: walletReduxPersistBlackList,
   RATE: rateReduxPersistBlackList,
@@ -124,6 +126,7 @@ const reducers = {
   LOG: logReducer,
   SELL_CRYPTO: sellCryptoReducer,
   SHOP: shopReducer,
+  SHOP_CATALOG: shopCatalogReducer,
   SWAP_CRYPTO: swapCryptoReducer,
   WALLET: walletReducer,
   RATE: rateReducer,
@@ -155,6 +158,13 @@ const logger = createLogger({
       SHOP: {
         ...state.SHOP,
         availableCardMap: null,
+        integrations: null,
+        supportedCardMap: null,
+      },
+      SHOP_CATALOG: {
+        ...state.SHOP_CATALOG,
+        availableCardMap: null,
+        categoriesAndCurations: null,
         integrations: null,
         supportedCardMap: null,
       },
@@ -215,7 +225,7 @@ const getStore = () => {
             ),
           );
         },
-        unencryptedStores: ['RATE'],
+        unencryptedStores: ['RATE', 'SHOP_CATALOG'],
       }),
     ],
   };

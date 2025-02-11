@@ -13,13 +13,13 @@ import {
 import {ShopActionType, ShopActionTypes} from './shop.types';
 
 type ShopReduxPersistBlackList = string[];
-export const shopReduxPersistBlackList: ShopReduxPersistBlackList = ['integrations'];
+export const shopReduxPersistBlackList: ShopReduxPersistBlackList = [];
 
 export interface ShopState {
-  availableCardMap: CardConfigMap;
-  supportedCardMap: CardConfigMap;
-  categoriesAndCurations: CategoriesAndCurations;
-  integrations: DirectIntegrationMap;
+  availableCardMap: CardConfigMap; // Legacy field that should now be empty after being moved to the SHOP_CATALOG store
+  supportedCardMap: CardConfigMap; // Legacy field that should now be empty after being moved to the SHOP_CATALOG store
+  categoriesAndCurations: CategoriesAndCurations; // Legacy field that should now be empty after being moved to the SHOP_CATALOG store
+  integrations: DirectIntegrationMap; // Legacy field that should now be empty after being moved to the SHOP_CATALOG store
   email: string;
   phone: string;
   phoneCountryInfo: PhoneCountryInfo;
@@ -242,6 +242,16 @@ export const shopReducer = (
           [Network.regtest]: [],
         },
       };
+
+    case ShopActionTypes.CLEARED_SHOP_CATALOG_FIELDS:
+      return {
+        ...state,
+        supportedCardMap: {},
+        availableCardMap: {},
+        categoriesAndCurations: {curated: {}, categories: {}},
+        integrations: {},
+      };
+
     case ShopActionTypes.IS_JOINED_WAITLIST:
       return {
         ...state,
