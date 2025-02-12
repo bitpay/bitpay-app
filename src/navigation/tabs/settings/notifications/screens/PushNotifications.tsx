@@ -63,7 +63,6 @@ const PushNotifications = () => {
       checked: pushNotifications,
       onPress: async () => {
         const isEnabled = !pushNotifications;
-        dispatch(startOnGoingProcessModal('LOADING'));
         DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
           isEnabled,
         });
