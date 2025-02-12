@@ -3,7 +3,7 @@ import {RateActionType, RateActionTypes} from './rate.types';
 import {DEFAULT_DATE_RANGE} from '../../constants/rate';
 
 type RateReduxPersistBlackList = string[];
-export const rateReduxPersistBlackList: RateReduxPersistBlackList = ['ratesByDateRange'];
+export const rateReduxPersistBlackList: RateReduxPersistBlackList = [];
 
 export interface RateState {
   lastDayRates: Rates;
