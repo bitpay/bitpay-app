@@ -39,7 +39,8 @@ import InputSelectionRow from '../../../components/list/InputsRow';
 import {GetPrecision} from '../../../store/wallet/utils/currency';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Button from '../../../components/button/Button';
-import {LayoutAnimation, TouchableOpacity} from 'react-native';
+import {LayoutAnimation} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -104,7 +105,7 @@ const CtaContainer = styled(_CtaContainer)`
   padding: 0px 16px 10px 16px;
 `;
 
-const DropdownRow = styled.TouchableOpacity`
+const DropdownRow = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: row;
   justify-content: space-between;
@@ -117,7 +118,7 @@ const DropdownTitle = styled.View`
   justify-content: flex-start;
 `;
 
-export const InputTouchableContainer = styled.TouchableOpacity`
+export const InputTouchableContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;

@@ -4,8 +4,9 @@ import {BaseText} from '../styled/Text';
 import {LightBlack, NotificationPrimary, White} from '../../styles/colors';
 import haptic from '../haptic-feedback/haptic';
 import SwapHorizontal from '../icons/swap-horizontal/SwapHorizontal';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
-export const SwapButtonContainer = styled.TouchableOpacity`
+export const SwapButtonContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#edf1fe')};

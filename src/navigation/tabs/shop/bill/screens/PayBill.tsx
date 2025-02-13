@@ -5,7 +5,8 @@ import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {H5, Paragraph} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
-import {Linking, ScrollView, TouchableOpacity, View} from 'react-native';
+import {Linking, ScrollView, View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   LightBlack,
   LuckySevens,

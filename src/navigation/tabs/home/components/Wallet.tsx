@@ -31,6 +31,7 @@ import {useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import AngleRightSvg from '../../../../../assets/img/angle-right.svg';
 import {Balance, OptionName} from '../../../wallet/components/DropdownOption';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -50,7 +51,7 @@ export const HeaderImg = styled.View`
   flex-direction: row;
 `;
 
-export const ListCard = styled.TouchableOpacity<{outlineStyle?: boolean}>`
+export const ListCard = styled(TouchableOpacity)<{outlineStyle?: boolean}>`
   border: ${({outlineStyle, theme}) =>
     outlineStyle ? `1px solid ${theme.dark ? SlateDark : Slate30}` : 'none'};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};

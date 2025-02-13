@@ -1,8 +1,9 @@
 import styled from 'styled-components/native';
 import {LightBlack, SlateDark, White, Slate30} from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
-export const SellCryptoExpandibleCard = styled.TouchableOpacity`
+export const SellCryptoExpandibleCard = styled(TouchableOpacity)`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   border-radius: 9px;
   margin: 20px 15px 0px 15px;

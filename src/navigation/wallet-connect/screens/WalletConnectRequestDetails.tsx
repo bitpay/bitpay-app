@@ -44,6 +44,7 @@ import {
 import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
 import {View} from 'react-native';
 import Blockie from '../../../components/blockie/Blockie';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export type WalletConnectRequestDetailsParamList = {
   request: any;
@@ -63,7 +64,7 @@ const AddressContainer = styled.View`
   padding: 16px 0;
 `;
 
-const AddressTextContainer = styled.TouchableOpacity`
+const AddressTextContainer = styled(TouchableOpacity)`
   background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
   height: 37px;
@@ -88,7 +89,7 @@ const MessageNoteContainer = styled.View`
   justify-content: flex-end;
 `;
 
-const MessageTextContainer = styled.TouchableOpacity`
+const MessageTextContainer = styled(TouchableOpacity)`
   align-items: flex-start;
   max-width: 242px;
   justify-content: center;

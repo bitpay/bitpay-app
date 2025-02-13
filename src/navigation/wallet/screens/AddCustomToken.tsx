@@ -83,6 +83,7 @@ import {PillText} from '../components/SendToPill';
 import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
 import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export type AddCustomTokenParamList = {
   key: Key;
@@ -108,7 +109,7 @@ const AssociatedAccountContainer = styled.View`
   position: relative;
 `;
 
-const AssociatedWallet = styled.TouchableOpacity`
+const AssociatedWallet = styled(TouchableOpacity)`
   padding: 0 20px;
   height: 55px;
   border: 0.75px solid ${({theme}) => (theme.dark ? LuckySevens : Slate)};

@@ -11,13 +11,14 @@ import {css} from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import {AddPillContainer} from '../../navigation/wallet/screens/AddCustomToken';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const AddressView = styled(View)`
   align-items: flex-end;
   margin: 10px;
 `;
 
-const RowContainer = styled.TouchableOpacity<{selected: boolean}>`
+const RowContainer = styled(TouchableOpacity)<{selected: boolean}>`
   flex-direction: row;
   align-items: center;
   padding: 10px 4px;

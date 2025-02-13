@@ -25,10 +25,11 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {Effect} from '../../../store';
 import {useAppDispatch} from '../../../utils/hooks';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
-const CloseButton = styled.TouchableOpacity`
+const CloseButton = styled(TouchableOpacity)`
   margin: auto;
 `;
 

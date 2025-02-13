@@ -5,6 +5,7 @@ import styled from 'styled-components/native';
 import {BaseText, H4} from '../../../components/styled/Text';
 import {Action, NeutralSlate, SlateDark} from '../../../styles/colors';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const Header = styled.View`
   margin-bottom: 30px;
@@ -18,7 +19,7 @@ const Title = styled(H4)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const Refresh = styled.TouchableOpacity<{isBch?: boolean}>`
+const Refresh = styled(TouchableOpacity)<{isBch?: boolean}>`
   position: ${({isBch}) => (isBch ? 'relative' : 'absolute')};
   margin-left: 5px;
   right: 0;
@@ -31,7 +32,7 @@ const Refresh = styled.TouchableOpacity<{isBch?: boolean}>`
   margin-top: ${({isBch}) => (isBch ? '10px' : '0')};
 `;
 
-const BchHeaderAction = styled.TouchableOpacity<{isActive: boolean}>`
+const BchHeaderAction = styled(TouchableOpacity)<{isActive: boolean}>`
   align-items: center;
   justify-content: center;
   margin: 0 10px -1px;

@@ -9,6 +9,7 @@ import {
   LinkBlue,
   Slate,
 } from '../../../../styles/colors';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const ItemDivisor = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
@@ -47,7 +48,7 @@ export const FiatAmount = styled(BaseText)`
   color: #667;
 `;
 
-export const SelectedOptionContainer = styled.TouchableOpacity`
+export const SelectedOptionContainer = styled(TouchableOpacity)`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -100,7 +101,7 @@ export const CheckboxText = styled(BaseText)`
   margin: 0 20px;
 `;
 
-export const PoliciesContainer = styled.TouchableOpacity`
+export const PoliciesContainer = styled(TouchableOpacity)`
   margin: 16px 0 0 20px;
 `;
 

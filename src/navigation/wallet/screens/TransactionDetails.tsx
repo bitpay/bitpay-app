@@ -34,7 +34,7 @@ import {
   GetBlockExplorerUrl,
   IsCustomERCToken,
 } from '../../../store/wallet/utils/currency';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
@@ -151,7 +151,7 @@ const CopyImgContainer = styled.View`
   margin-right: 5px;
 `;
 
-const CopyTransactionId = styled.TouchableOpacity`
+const CopyTransactionId = styled(TouchableOpacity)`
   flex-direction: row;
 `;
 

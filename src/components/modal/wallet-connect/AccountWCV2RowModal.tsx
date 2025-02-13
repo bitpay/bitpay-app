@@ -19,6 +19,7 @@ import {useTheme} from 'styled-components/native';
 import Back from '../../back/Back';
 import {ScrollView} from 'react-native-gesture-handler';
 import {View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface Props {
   isVisible: boolean;
@@ -27,7 +28,7 @@ interface Props {
   closeModal: () => void;
 }
 
-const AccountSettingsContainer = styled.TouchableOpacity`
+const AccountSettingsContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   display: flex;
@@ -39,7 +40,7 @@ const CheckBoxColumn = styled(Column)`
   align-items: flex-end;
 `;
 
-const CloseModalButton = styled.TouchableOpacity`
+const CloseModalButton = styled(TouchableOpacity)`
   height: 40px;
   width: 40px;
   border-radius: 50px;

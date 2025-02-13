@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White, Action, Slate} from '../../../styles/colors';
 import {
@@ -135,7 +135,7 @@ const RoundButton = styled.View`
   border: 1px solid ${({theme: {dark}}) => (dark ? White : Action)};
 `;
 
-const RemoveButton = styled.TouchableOpacity`
+const RemoveButton = styled(TouchableOpacity)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,7 +145,7 @@ const RemoveButton = styled.TouchableOpacity`
   border: 1px solid ${Slate};
 `;
 
-export const AddButton = styled.TouchableOpacity`
+export const AddButton = styled(TouchableOpacity)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +161,7 @@ const CounterNumber = styled.Text`
   font-size: 16px;
 `;
 
-const RowContainer = styled.TouchableOpacity`
+const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   padding: 18px;

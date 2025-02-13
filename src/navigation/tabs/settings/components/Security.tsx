@@ -30,6 +30,7 @@ import {useTranslation} from 'react-i18next';
 import {sleep} from '../../../../utils/helper-methods';
 import {LogActions} from '../../../../store/log';
 import {useLogger} from '../../../../utils/hooks';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const FingerprintSvg = {
   light: <FingerprintImg />,
@@ -46,7 +47,7 @@ const PinSvg = {
   dark: <PinDarkModeImg />,
 };
 
-const ImgContainer = styled.TouchableOpacity`
+const ImgContainer = styled(TouchableOpacity)`
   display: flex;
   align-items: center;
   justify-content: center;

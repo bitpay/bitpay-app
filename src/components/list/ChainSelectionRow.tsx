@@ -5,6 +5,7 @@ import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {ScreenGutter} from '../styled/Containers';
 import {H7} from '../styled/Text';
 import {CurrencyOpts} from '../../constants/currencies';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ChainSelectionRowContainer = styled.View`
   border: 1px solid ${({theme}) => (theme.dark ? SlateDark : Slate30)};
@@ -14,7 +15,7 @@ const ChainSelectionRowContainer = styled.View`
   padding: 16px;
 `;
 
-const FlexRow = styled.TouchableOpacity`
+const FlexRow = styled(TouchableOpacity)`
   flex-direction: row;
 `;
 

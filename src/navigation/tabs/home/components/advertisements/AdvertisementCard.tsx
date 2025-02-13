@@ -24,6 +24,7 @@ import {
 } from '../../../../../utils/braze';
 import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface AdvertisementCardProps {
   contentCard: ContentCard;
@@ -34,7 +35,7 @@ const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
   return src && typeof src === 'function';
 };
 
-const AdvertisementCardContainer = styled.TouchableOpacity`
+const AdvertisementCardContainer = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   flex-direction: column;

@@ -33,6 +33,7 @@ import * as Icons from './ButtonIcons';
 import ButtonOverlay from './ButtonOverlay';
 import ButtonSpinner from './ButtonSpinner';
 import {StyleProp, ViewStyle} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
 export type ButtonStyle =
@@ -80,7 +81,7 @@ const ButtonBaseText = styled(BaseText)`
   text-align: center;
 `;
 
-const ButtonContainer = styled.TouchableOpacity<ButtonProps>`
+const ButtonContainer = styled(TouchableOpacity)<ButtonProps>`
   border-radius: ${({buttonType}) =>
     buttonType === 'link'
       ? LINK_RADIUS

@@ -81,7 +81,8 @@ import {
   InfoTriangle,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import {Platform, TouchableOpacity} from 'react-native';
+import {Platform} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   GetFeeOptions,
   getFeeRatePerKb,
@@ -133,7 +134,7 @@ export interface ConfirmParamList {
   message?: string | undefined;
 }
 
-export const Setting = styled.TouchableOpacity`
+export const Setting = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: row;
   flex-wrap: nowrap;

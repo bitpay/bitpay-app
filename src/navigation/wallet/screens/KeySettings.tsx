@@ -17,7 +17,8 @@ import {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {View, TouchableOpacity, ScrollView, FlatList} from 'react-native';
+import {View, ScrollView, FlatList} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
@@ -94,7 +95,7 @@ const WalletHeaderContainer = styled.View`
   align-items: center;
 `;
 
-const WalletNameContainer = styled.TouchableOpacity`
+const WalletNameContainer = styled(TouchableOpacity)`
   padding: 10px 0 20px 0;
   flex-direction: row;
   align-items: center;

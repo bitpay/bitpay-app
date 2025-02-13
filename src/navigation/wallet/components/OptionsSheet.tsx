@@ -10,12 +10,13 @@ import {
 import {Platform, Image, ImageSourcePropType} from 'react-native';
 import {Action, Black, Slate, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const OptionsTitleContainer = styled.View`
   margin-bottom: 25px;
 `;
 
-const OptionContainer = styled.TouchableOpacity<SheetParams>`
+const OptionContainer = styled(TouchableOpacity)<SheetParams>`
   flex-direction: row;
   align-items: stretch;
   padding-${({placement}) => placement}: 31px;

@@ -48,6 +48,7 @@ import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
 import {sleep} from '../../../utils/helper-methods';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const ignoreGlobalListContextList = [
   'sell',
@@ -85,7 +86,7 @@ const ListHeader = styled(BaseText)`
   padding: 16px;
 `;
 
-const NetworkChainContainer = styled.TouchableOpacity<{selected?: boolean}>`
+const NetworkChainContainer = styled(TouchableOpacity)<{selected?: boolean}>`
   margin-left: 16px;
   margin-right: 16px;
   ${({selected}) =>

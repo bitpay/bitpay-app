@@ -6,7 +6,7 @@ import {
 import {each, filter} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {RefreshControl, ScrollView, TouchableOpacity} from 'react-native';
+import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {

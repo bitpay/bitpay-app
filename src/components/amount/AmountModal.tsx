@@ -9,6 +9,7 @@ import {Black, White} from '../../styles/colors';
 import SheetModal from '../modal/base/sheet/SheetModal';
 import Amount, {AmountProps, LimitsOpts} from './Amount';
 import {Platform} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ModalHeaderText = styled(BaseText)`
   font-size: 18px;
@@ -24,7 +25,7 @@ const ModalHeader = styled.View`
   position: relative;
 `;
 
-const CloseModalButton = styled.TouchableOpacity`
+const CloseModalButton = styled(TouchableOpacity)`
   position: absolute;
   left: 10px;
   height: 41px;

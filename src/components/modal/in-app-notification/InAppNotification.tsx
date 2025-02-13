@@ -14,10 +14,11 @@ import {WIDTH} from '../../styled/Containers';
 import {useNavigation} from '@react-navigation/native';
 import {getGasWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {sleep} from '../../../utils/helper-methods';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export type InAppNotificationMessages = 'NEW_PENDING_REQUEST';
 
-const InAppContainer = styled.TouchableOpacity`
+const InAppContainer = styled(TouchableOpacity)`
   justify-content: center;
   align-items: center;
 `;
@@ -50,7 +51,7 @@ const CloseModalContainer = styled.View`
   justify-content: flex-end;
   align-items: flex-end;
 `;
-const CloseModalButton = styled.TouchableOpacity``;
+const CloseModalButton = styled(TouchableOpacity)``;
 
 const MessageContainer = styled.View`
   flex-direction: row;

@@ -12,6 +12,7 @@ import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequire
 import {useTranslation} from 'react-i18next';
 import {WalletScreens} from '../../../wallet/WalletGroup';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ButtonsRow = styled.View`
   justify-content: center;
@@ -31,7 +32,7 @@ const ButtonText = styled(BaseText)`
   margin-top: 5px;
 `;
 
-const LinkButton = styled.TouchableOpacity`
+const LinkButton = styled(TouchableOpacity)`
   height: 43px;
   width: 43px;
   border-radius: 11px;

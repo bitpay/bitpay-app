@@ -14,6 +14,7 @@ import {
   Slate30,
 } from '../../styles/colors';
 import {BaseText} from './Text';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 export const isNotMobile = HEIGHT / WIDTH < 1.6;
@@ -104,7 +105,7 @@ interface RowContainerProps {
   noBorder?: boolean;
 }
 
-export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
+export const RowContainer = styled(TouchableOpacity)<RowContainerProps>`
   flex-direction: row;
   align-items: center;
   padding: 10px 4px;
@@ -114,7 +115,7 @@ export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
     isLast || noBorder ? 0 : 1}px;
 `;
 
-export const RowContainerWithoutBorders = styled.TouchableOpacity<RowContainerProps>`
+export const RowContainerWithoutBorders = styled(TouchableOpacity)<RowContainerProps>`
   flex-direction: row;
   align-items: center;
   padding: 10px 0px;
@@ -170,7 +171,7 @@ export const SheetContainer = styled.View<SheetParams>`
 `;
 
 // Settings List
-export const Setting = styled.TouchableOpacity`
+export const Setting = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -253,7 +254,7 @@ export const AdvancedOptionsContainer = styled.View`
   margin-bottom: 20px;
 `;
 
-export const AdvancedOptionsButton = styled.TouchableOpacity`
+export const AdvancedOptionsButton = styled(TouchableOpacity)`
   height: 60px;
   background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   padding: 18px;
@@ -296,7 +297,7 @@ export const InfoImageContainer = styled.View<{infoMargin: string}>`
   margin: ${({infoMargin}) => infoMargin};
 `;
 
-export const ScanContainer = styled.TouchableOpacity`
+export const ScanContainer = styled(TouchableOpacity)`
   height: 25px;
   width: 25px;
   align-items: center;
@@ -321,7 +322,7 @@ export const OptionListContainer = styled.View`
   margin-top: 30px;
 `;
 
-export const OptionList = styled.TouchableOpacity`
+export const OptionList = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
   height: auto;
   border-radius: 12px;
@@ -385,7 +386,7 @@ export const HiddenContainer = styled.View`
 
 // Copy to Clipboard
 
-export const CopyToClipboardContainer = styled.TouchableOpacity`
+export const CopyToClipboardContainer = styled(TouchableOpacity)`
   border: 1px solid #9ba3ae;
   border-radius: 4px;
   padding: 0 10px;
@@ -420,7 +421,7 @@ export const NoResultsDescription = styled(BaseText)`
   font-size: 16px;
 `;
 
-export const ProposalBadgeContainer = styled.TouchableOpacity`
+export const ProposalBadgeContainer = styled(TouchableOpacity)`
   background: ${Action};
   border-radius: 10px;
   height: 30px;
@@ -441,7 +442,7 @@ export const BadgeContainer = styled.View`
   height: 20px;
 `;
 
-export const BadgeContainerTouchable = styled.TouchableOpacity`
+export const BadgeContainerTouchable = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   justify-content: center;
@@ -458,7 +459,7 @@ export const EmptyListContainer = styled.View`
   margin-top: 50px;
 `;
 
-export const ChevronContainerTouchable = styled.TouchableOpacity`
+export const ChevronContainerTouchable = styled(TouchableOpacity)`
   border-radius: 50px;
   align-items: center;
   justify-content: center;
@@ -493,7 +494,7 @@ export const ExternalServicesItemTopTitle = styled.Text`
   line-height: 18px;
 `;
 
-export const AccountChainsContainer = styled.TouchableOpacity`
+export const AccountChainsContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   gap: 10px;

@@ -29,6 +29,7 @@ import CopySvg from '../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {CurrencyIconAndBadge} from '../../wallet/screens/send/confirm/Shared';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ModalContainer = styled.View`
   justify-content: center;
@@ -47,7 +48,7 @@ const HeaderContainer = styled.View`
   margin-left: -9px;
 `;
 
-const AddressContainer = styled.TouchableOpacity`
+const AddressContainer = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? Midnight : '#eceffd')};
   border-radius: 8px;
   margin: 0;
