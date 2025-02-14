@@ -42,13 +42,14 @@ export const startGetRates =
       dispatch(LogActions.info('startGetRates: starting...'));
       const {
         RATE: {ratesCacheKey, rates: cachedRates},
+        APP: {altCurrencyList},
       } = getState();
       if (
         !isCacheKeyStale(
           ratesCacheKey[DEFAULT_DATE_RANGE],
           RATES_CACHE_DURATION,
         ) &&
-        !force
+        !force && altCurrencyList.length > 0
       ) {
         dispatch(
           LogActions.info('startGetRates: success (using cached rates)'),
@@ -83,7 +84,7 @@ export const startGetRates =
           LogActions.info('startGetRates: success get request (yesterday)'),
         );
 
-        if (context === 'init') {
+        if (context === 'init' || altCurrencyList.length === 0) {
           dispatch(
             LogActions.info('startGetRates: setting alternative currency list'),
           );
