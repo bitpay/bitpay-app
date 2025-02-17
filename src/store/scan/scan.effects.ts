@@ -51,13 +51,13 @@ import {
   BanxaIncomingData,
   BanxaStatusKey,
   MoonpayIncomingData,
-  RampIncomingData,
   SardineIncomingData,
   SardinePaymentData,
   SimplexIncomingData,
   TransakIncomingData,
   TransakStatusKey,
 } from '../buy-crypto/buy-crypto.models';
+import {RampIncomingData} from '../buy-crypto/models/ramp.models';
 import {LogActions} from '../log';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {
@@ -100,12 +100,13 @@ import {MoonpaySellIncomingData} from '../sell-crypto/models/moonpay-sell.models
 import {findWalletById} from '../wallet/utils/wallet';
 import {MoonpaySellCheckoutProps} from '../../navigation/services/sell-crypto/screens/MoonpaySellCheckout';
 import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-services/screens/MoonpaySettings';
+import {RampSettingsProps} from '../../navigation/tabs/settings/external-services/screens/RampSettings';
+import {SimplexSettingsProps} from '../../navigation/tabs/settings/external-services/screens/SimplexSettings';
 import {getMoonpaySellFixedCurrencyAbbreviation} from '../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
 import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
 import {SimplexSellIncomingData} from '../sell-crypto/models/simplex-sell.models';
 import {ExternalServicesSettingsScreens} from '../../navigation/tabs/settings/external-services/ExternalServicesGroup';
-import {SimplexSettingsProps} from '../../navigation/tabs/settings/external-services/screens/SimplexSettings';
 
 export const incomingData =
   (
@@ -1764,6 +1765,15 @@ const handleRampUri =
       }),
     );
 
+    const rampSettingsParams: RampSettingsProps = {
+      incomingPaymentRequest: {
+        flow: 'buy',
+        rampExternalId,
+        walletId,
+        status,
+      },
+    };
+
     navigationRef.reset({
       index: 2,
       routes: [
@@ -1773,7 +1783,7 @@ const handleRampUri =
         },
         {
           name: 'RampSettings',
-          params: {incomingPaymentRequest: stateParams},
+          params: {incomingPaymentRequest: rampSettingsParams},
         },
       ],
     });
