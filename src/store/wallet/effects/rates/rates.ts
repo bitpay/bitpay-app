@@ -327,17 +327,17 @@ export const fetchHistoricalRates =
         RATE: {ratesHistoricalCacheKey, ratesByDateRange: cachedRates},
       } = getState();
 
+      const cachedRatesByCoin = (currencyAbbreviation &&
+        cachedRates[dateRange][currencyAbbreviation.toLowerCase()]) || [];
+
       if (
         !isCacheKeyStale(
           ratesHistoricalCacheKey[dateRange],
           HISTORIC_RATES_CACHE_DURATION,
-        )
+        ) &&
+        cachedRatesByCoin.length > 0
       ) {
         dispatch(LogActions.info('[rates]: using cached rates'));
-        const cachedRatesByCoin = currencyAbbreviation
-          ? cachedRates[dateRange][currencyAbbreviation.toLowerCase()]
-          : [];
-
         return resolve(cachedRatesByCoin);
       }
 
