@@ -25,10 +25,13 @@ const Description = styled(BaseText)`
 
 const Creator = styled(ListItemSubText)`
   overflow: hidden;
+  max-width: 150px;
 `;
 
 const TailContainer = styled.View`
   margin-left: auto;
+  display: flex;
+  justify-content: center;
 `;
 
 const HeadContainer = styled.View``;
