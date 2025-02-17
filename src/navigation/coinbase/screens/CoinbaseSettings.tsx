@@ -33,9 +33,11 @@ import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {IS_ANDROID} from "../../../constants";
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
+  padding-bottom: ${IS_ANDROID ? '15px' : 0};
 `;
 
 const SettingsScrollContainer = styled.ScrollView`

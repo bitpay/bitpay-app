@@ -13,7 +13,7 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
-import {LogBox, RefreshControl, TouchableOpacity} from 'react-native';
+import {LogBox, RefreshControl} from 'react-native';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -104,6 +104,7 @@ import {BitpaySupportedEvmCoins} from '../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -128,7 +129,7 @@ export const KeyDropdownOptionsContainer = styled.ScrollView`
   padding: 0 ${ScreenGutter};
 `;
 
-export const CogIconContainer = styled.TouchableOpacity`
+export const CogIconContainer = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 50px;
   justify-content: center;
@@ -162,7 +163,7 @@ const WalletListFooterContainer = styled.View`
   margin-top: 15px;
 `;
 
-const WalletListFooter = styled.TouchableOpacity`
+const WalletListFooter = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
 `;
