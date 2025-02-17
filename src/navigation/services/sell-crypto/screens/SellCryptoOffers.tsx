@@ -52,7 +52,7 @@ import {
 import {calculateAnyFiatToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {SendMaxInfo, Wallet} from '../../../../store/wallet/wallet.models';
-import {APP_DEEPLINK_PREFIX} from '../../../../constants/config';
+import {APP_DEEPLINK_PREFIX, APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {
   SellCryptoExchangeKey,
   SellCryptoSupportedExchanges,
@@ -99,6 +99,15 @@ import {
   SimplexSellPaymentRequestReqData,
 } from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {SellCryptoScreens} from '../SellCryptoGroup';
+import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
+import {getRampChainFormat, getRampSellCoinFormat, rampSellEnv} from '../utils/ramp-sell-utils';
+import {RampGetSellQuoteData, RampGetSellQuoteRequestData, RampOfframpSaleCreatedEvent, RampSellCreatedEventPayload, RampSellIncomingData, RampSellOrderData, RampSellQuoteResultForPayoutMethod, RampSellSendCryptoPayload} from '../../../../store/sell-crypto/models/ramp-sell.models';
+import {rampGetSellQuote, rampGetSignedPaymentUrl} from '../../../../store/buy-crypto/effects/ramp/ramp';
+import {WebView, WebViewMessageEvent} from 'react-native-webview';
+import Modal from 'react-native-modal';
+import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
+import {RampGetSellSignedPaymentUrlData, RampPaymentUrlConfigParams} from '../../../../store/buy-crypto/models/ramp.models';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export type SellCryptoOffersScreenParams = {
   amount: number;
@@ -126,13 +135,15 @@ export type CryptoOffer = {
   sellAmount?: number;
   fee?: number;
   precision?: number; // Moonpay to calculate adjusted amount
+  decimals?: number; // Decimals used for coin/token
   fiatMoney?: string; // Rate without fees
   amountReceiving?: string;
   amountReceivingAltFiatCurrency?: string;
   amountReceivingUnit?: string; // Ramp
   amountLimits?: SellCryptoLimits;
   errorMsg?: string;
-  quoteData?: any; // Moonpay | Simplex
+  quoteData?: any; // Moonpay | Ramp | Simplex
+  externalId?: string; // Ramp
   outOfLimitMsg?: string;
 };
 
@@ -293,6 +304,7 @@ const OfferDataRightContainer = styled.View`
 
 const offersDefault: {
   moonpay: CryptoOffer;
+  ramp: CryptoOffer;
   simplex: CryptoOffer;
 } = {
   moonpay: {
@@ -304,6 +316,20 @@ const offersDefault: {
     expanded: false,
     sellClicked: false,
     fiatCurrency: 'USD',
+    cryptoAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  ramp: {
+    key: 'ramp',
+    amountReceiving: '0', // Fiat amount
+    amountReceivingAltFiatCurrency: '0', // Fiat amount in alt fiat currency
+    showOffer: true,
+    logo: <RampLogo width={70} height={20} />,
+    expanded: false,
+    sellClicked: false,
+    fiatCurrency: 'EUR',
     cryptoAmount: 0,
     fiatMoney: undefined,
     errorMsg: undefined,
@@ -353,6 +379,7 @@ const SellCryptoOffers: React.FC = () => {
   const {t} = useTranslation();
   const theme = useTheme();
   const logger = useLogger();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const user = useAppSelector(
@@ -422,8 +449,10 @@ const SellCryptoOffers: React.FC = () => {
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
   const [openingBrowser, setOpeningBrowser] = useState(false);
   const [finishedMoonpay, setFinishedMoonpay] = useState(false);
+  const [finishedRamp, setFinishedRamp] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [updateView, setUpdateView] = useState<number>(0);
+  const [sellModalVisible, setSellModalVisible] = useState<{open: boolean, url: string | undefined}>({open: false, url: undefined});
 
   const getMoonpaySellQuote = async (): Promise<void> => {
     logger.debug('Moonpay getting sell quote');
@@ -582,6 +611,248 @@ const SellCryptoOffers: React.FC = () => {
     offers.moonpay.errorMsg = msg;
     offers.moonpay.fiatMoney = undefined;
     offers.moonpay.expanded = false;
+    setUpdateView(Math.random());
+  };
+
+  const getRampSellQuote = async (): Promise<void> => {
+    logger.debug('Ramp getting sell quote');
+
+    if (sellCryptoConfig?.ramp?.disabled) {
+      let err = sellCryptoConfig?.ramp?.disabledMessage
+        ? sellCryptoConfig?.ramp?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason =
+        'rampGetSellQuote Error. Exchange disabled from config.';
+      showRampError(err, reason);
+      return;
+    }
+
+    offers.ramp.cryptoAmount = amount;
+
+    const requestData: RampGetSellQuoteRequestData = {
+      env: rampSellEnv,
+      cryptoAssetSymbol: getRampSellCoinFormat(
+        selectedWallet.currencyAbbreviation,
+        selectedWallet.chain,
+      ),
+      // fiatValue: offers.ramp.fiatCurrency.toLowerCase(),
+      // cryptoAmount: amount * 10 ** token.decimals, '100000000', // offers.ramp.sellAmount || amount,
+      fiatCurrency: offers.ramp.fiatCurrency.toUpperCase(),
+    };
+
+    const precision = dispatch(
+      GetPrecision(coin, chain, selectedWallet.tokenAddress),
+    );
+    if (precision) {
+      requestData.cryptoAmount =  BigInt((amount * precision.unitToSatoshi).toFixed(0)).toString();
+    } else {
+      logger.error(
+        `Ramp error: Could not get precision for ${coin}`,
+      );
+      // TODO: use fiatValue?: number; instead of cryptoAmount
+      const msg = t(
+        'An error occurred while calculating the quote.',
+      );
+      const reason = 'rampGetSellQuote Error.';
+      showRampError(msg, reason);
+      return;
+    }
+
+    // TODO: use wallet
+    // selectedWallet
+    //   .rampGetSellQuote(requestData)
+    rampGetSellQuote(requestData)
+      .then((data: RampGetSellQuoteData) => {
+        let paymentMethodData: RampSellQuoteResultForPayoutMethod | undefined;
+        if (data?.asset) {
+          switch (paymentMethod.method) {
+            case 'ach':
+              if (data.AMERICAN_BANK_TRANSFER) {
+                paymentMethodData = data.AMERICAN_BANK_TRANSFER;
+              }
+              break;
+            case 'sepaBankTransfer':
+              if (data.SEPA) {
+                paymentMethodData = data.SEPA;
+              }
+              break;
+            case 'debitCard':
+            case 'creditCard':
+              if (data.CARD) {
+                paymentMethodData = data.CARD;
+              }
+              break;
+            default:
+              paymentMethodData = data.CARD;
+          }
+
+          if (!paymentMethodData?.fiatValue) {
+            logger.error('rampGetSellQuote Error: No fiat value provided from Ramp');
+            const reason = 'rampGetSellQuote Error. No fiat value provided from Ramp';
+            showRampError(undefined, reason);
+            return;
+          }
+
+          offers.ramp.amountLimits = {
+            min:
+              data.asset.minPurchaseAmount < 0
+                ? undefined
+                : data.asset.minPurchaseAmount,
+            max:
+              data.asset.maxPurchaseAmount < 0
+                ? undefined
+                : data.asset.maxPurchaseAmount,
+          };
+
+          if (
+            (offers.ramp.amountLimits.min &&
+              Number(offers.ramp.sellAmount) < offers.ramp.amountLimits.min) ||
+            (offers.ramp.amountLimits.max &&
+              Number(offers.ramp.sellAmount) > offers.ramp.amountLimits.max)
+          ) {
+            offers.ramp.outOfLimitMsg = t(
+              'There are no Ramp Network offers available, as the current sell limits for this exchange must be between and',
+              {
+                min: offers.ramp.amountLimits.min,
+                max: offers.ramp.amountLimits.max,
+                fiatCurrency: offers.ramp.fiatCurrency,
+              },
+            );
+            setFinishedRamp(!finishedRamp);
+            return;
+          } else {
+            offers.ramp.outOfLimitMsg = undefined;
+            offers.ramp.errorMsg = undefined;
+            offers.ramp.quoteData = data;
+            offers.ramp.sellAmount = cloneDeep(amount); // paymentMethodData.fiatValue;
+            offers.ramp.fee =
+              Number(paymentMethodData.baseRampFee ?? 0) +
+              Number(paymentMethodData.appliedFee);
+
+            offers.ramp.externalId = uuid.v4().toString();
+
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
+            let decimals: number | undefined;
+
+            if (data.asset.decimals && data.asset.decimals > 0) {
+              decimals = data.asset.decimals;
+            } else if (precision?.unitDecimals) {
+              decimals = precision.unitDecimals;
+            }
+            offers.ramp.decimals = decimals;
+
+            if (offers.ramp.sellAmount && coin && decimals) {
+              offers.ramp.fiatMoney = Number(
+                offers.ramp.sellAmount / Number(paymentMethodData.fiatValue),
+              ).toFixed(decimals);
+            } else {
+              logger.error(`Ramp error: Could not get precision for ${coin}`);
+
+              const reason = 'rampGetSellQuote Error. Could not get decimals';
+              showRampError(undefined, reason);
+              return;
+            }
+
+            const adjustedFiatAmount: number =
+              offers.ramp.fiatCurrency === fiatCurrency
+                ? Number(paymentMethodData.fiatValue)
+                : dispatch(
+                    calculateAnyFiatToAltFiat(
+                      Number(paymentMethodData.fiatValue),
+                      offers.ramp.fiatCurrency,
+                      fiatCurrency,
+                    ),
+                  ) || Number(paymentMethodData.fiatValue);
+
+            offers.ramp.amountReceiving = Number(paymentMethodData.fiatValue).toFixed(2);
+            offers.ramp.amountReceivingAltFiatCurrency =
+              adjustedFiatAmount.toFixed(2);
+            // const amountReceivingNum =
+            //   Number(paymentMethodData.cryptoAmount) / 10 ** decimals;
+            // offers.ramp.amountReceiving = amountReceivingNum.toFixed(8);
+
+            // if (
+            //   offers.ramp.sellAmount &&
+            //   Number(paymentMethodData.fiatValue) > 0 &&
+            //   coin &&
+            //   precision
+            // ) {
+            //   offers.ramp.fiatMoney = Number(
+            //     offers.ramp.sellAmount / paymentMethodData.fiatValue,
+            //   ).toFixed(precision.unitDecimals);
+            // } else {
+            //   logger.error(`Ramp error: Could not get precision for ${coin}`);
+            // }
+
+            logger.debug('Ramp getting quote: SUCCESS');
+            setFinishedRamp(!finishedRamp);
+          }
+        } else {
+          if (!data) {
+            logger.error('Ramp error: No data received');
+          }
+          if (data.message && typeof data.message === 'string') {
+            logger.error('Ramp error: ' + data.message);
+          }
+          if (data.error && typeof data.error === 'string') {
+            logger.error('Ramp error: ' + data.error);
+          }
+          if (data.errors) {
+            logger.error(data.errors);
+          }
+
+          let err = t("Can't get rates at this moment. Please try again later");
+          const reason = 'rampGetSellQuote Error. Necessary data not included.';
+          showRampError(err, reason);
+        }
+      })
+      .catch(err => {
+        const reason = 'rampGetSellQuote Error';
+        showRampError(err, reason);
+      });
+  };
+
+  const showRampError = (err?: any, reason?: string) => {
+    let msg = t('Could not get crypto offer. Please try again later.');
+    if (err) {
+      if (typeof err === 'string') {
+        msg = err;
+      } else {
+        if (err.error && err.error.error) {
+          msg = err.error.error;
+        } else if (err.error && !err.message) {
+          if (typeof err.error === 'string') {
+            msg = err.error;
+          } else if (err.error.message) {
+            msg = err.error.message;
+          }
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+    }
+
+    logger.error('Ramp error: ' + msg + ' | Reason: ' + reason);
+
+    dispatch(
+      Analytics.track('Failed Sell Crypto', {
+        exchange: 'ramp',
+        context: 'SellCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: paymentMethod.method || '',
+        cryptoAmount: amount || '',
+        fiatAmount: Number(offers.ramp.amountReceiving) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: offers.ramp.fiatCurrency || '',
+      }),
+    );
+
+    offers.ramp.errorMsg = msg;
+    offers.ramp.fiatMoney = undefined;
+    offers.ramp.expanded = false;
     setUpdateView(Math.random());
   };
 
@@ -760,7 +1031,9 @@ const SellCryptoOffers: React.FC = () => {
       case 'moonpay':
         goToMoonpaySellPage();
         break;
-
+      case 'ramp':
+        goToRampSellPage();
+        break;
       case 'simplex':
         goToSimplexSellPage();
         break;
@@ -877,6 +1150,276 @@ const SellCryptoOffers: React.FC = () => {
     dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
     await sleep(500);
     navigation.dispatch(StackActions.popToTop());
+  };
+
+  const goToRampSellPage = () => {
+    if (offers.ramp.errorMsg || offers.ramp.outOfLimitMsg) {
+      return;
+    }
+    continueToRamp();
+  };
+
+  const continueToRamp = async () => {
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const msg = t('Error when trying to generate wallet address.');
+      const reason = 'createWalletAddress Error';
+      showRampError(msg, reason);
+      return;
+    }
+
+    if (
+      selectedWallet.currencyAbbreviation.toLowerCase() === 'bch' &&
+      selectedWallet.chain.toLowerCase() === 'bch'
+    ) {
+      address = dispatch(
+        GetProtocolPrefixAddress(
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.network,
+          address,
+          selectedWallet.chain,
+        ),
+      );
+    }
+
+    const externalTransactionId = uuid.v4().toString();
+    const rampAsset = getRampSellCoinFormat(
+      selectedWallet.currencyAbbreviation,
+      getRampChainFormat(selectedWallet.chain),
+    );
+
+    const requestData: RampPaymentUrlConfigParams = {
+      env: rampSellEnv,
+      flow: 'sell',
+      userAddress: address, // TODO: ask Ramp team about this for UTXO coins
+      hostLogoUrl: 'https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg',
+      hostAppName: APP_NAME_UPPERCASE,
+      offrampAsset: rampAsset,
+      swapAsset: rampAsset,
+      // fiatValue: Number(offers.ramp.amountReceiving), // TODO: review this fiatValue
+      swapAmount: offers.ramp.decimals ? Number(offers.ramp.sellAmount) * 10 ** offers.ramp.decimals : undefined,
+      fiatCurrency: offers.ramp.fiatCurrency,
+      enabledFlows: 'OFFRAMP',
+      defaultFlow: 'OFFRAMP',
+      selectedCountryCode: country,
+      defaultAsset: rampAsset,
+      variant: 'webview-mobile',
+      useSendCryptoCallback: true,
+      useSendCryptoCallbackVersion: 1,
+      hideExitButton: false,
+    };
+
+    let data: RampGetSellSignedPaymentUrlData;
+    try {
+      data = // TODO: use await selectedWallet.rampGetSignedPaymentUrl(requestData);
+        await rampGetSignedPaymentUrl(requestData);
+      if (!data?.urlWithSignature) {
+        const msg = t(
+          'Our partner Ramp Network is not currently available. Please try again later.',
+        );
+        const reason =
+          'rampGetSignedPaymentUrl Error. urlWithSignature not present.';
+        showRampError(msg, reason);
+        return;
+      }
+    } catch (err) {
+      const msg = t(
+        'Our partner Ramp Network is not currently available. Please try again later.',
+      );
+      const reason = 'rampGetSignedPaymentUrl Error.';
+      showRampError(msg, reason);
+      return;
+    }
+
+      try {
+        const RampWebView = (url: string) => {
+          setSellModalVisible({open: true, url: url});
+        };
+
+        RampWebView(data.urlWithSignature);
+      } catch (err) {
+        // TODO: handle this err
+        console.log('================== rampGetSignedPaymentUrl err: ', err);
+        return;
+      }
+  };
+
+  const handleRampCheckoutMessage = async(event: WebViewMessageEvent) => {
+    if (event?.nativeEvent?.data) {
+      let parsedEventData: RampOfframpSaleCreatedEvent;
+      try {
+        logger.debug('Trying to parse event JSON: ' + event.nativeEvent.data);
+        parsedEventData = JSON.parse(event.nativeEvent.data) as RampOfframpSaleCreatedEvent;
+        logger.debug('Successfully parsed!');
+      } catch (error) {
+          logger.error('Error trying to parse event JSON: ' + JSON.stringify(error));
+          // TODO: handle this error
+          return;
+      }
+
+      if (parsedEventData.type) {
+        switch (parsedEventData.type) {
+          case 'WIDGET_CONFIG_DONE': // Wdiget successfully opened
+            console.log('WIDGET_CONFIG_DONE handle here!');
+            return;
+
+          case 'OFFRAMP_SALE_CREATED': // Quote accepted in checkout page and continue clicked
+            console.log('OFFRAMP_SALE_CREATED handle here!');
+
+            const orderData = parsedEventData.payload as RampSellCreatedEventPayload;
+
+            const newData: RampSellOrderData = {
+              env: __DEV__ ? 'dev' : 'prod',
+              wallet_id: selectedWallet.id,
+              address_to: '',
+              coin: cloneDeep(selectedWallet.currencyAbbreviation).toUpperCase(),
+              chain: cloneDeep(selectedWallet.chain).toLowerCase(),
+              created_on: Date.now(),
+              crypto_amount: offers.ramp.sellAmount || amount, // TODO: Review if the amount change from the web checkout
+              fiat_receiving_amount: Number(offers.ramp.amountReceiving), // TODO: Review if the fiat amount change from the web checkout
+              fiat_fee_amount: Number(offers.ramp.fee), // TODO: Review if the fee change from the web checkout
+              fiat_currency: offers.ramp.quoteData?.quoteCurrency?.code // TODO: Review if the fiat currency change from the web checkout
+                ? cloneDeep(offers.ramp.quoteData.quoteCurrency.code).toUpperCase()
+                : fiatCurrency,
+              payment_method: paymentMethod!.method, // TODO: Review if the payment method change from the web checkout
+              external_id: cloneDeep(offers.ramp.externalId)!,
+              sale_view_token: orderData.saleViewToken,
+              quote_id: orderData.sale?.id,
+              status: 'createdOrder',
+              send_max: useSendMax,
+            };
+
+            dispatch(
+              SellCryptoActions.successSellOrderRamp({
+                rampSellOrderData: newData,
+              }),
+            );
+          // Mensaje recibido desde la web:
+          //   {
+          //   "type":"OFFRAMP_SALE_CREATED",
+          //   "payload":
+          //     {
+          //     "sale":
+          //       {
+          //       "id":"9b7196d3-2dfe-4852-84e2-fa6a192d38af",
+          //       "createdAt":"2025-02-06T00:00:42.736Z",
+          //       "updatedAt":"2025-02-06T00:00:42.870Z",
+          //       "crypto":
+          //         {
+          //           "amount":"1220000",
+          //           "status":null,
+          //           "assetInfo":
+          //            {
+          //             "address":null,
+          //             "symbol":"BTC",
+          //             "chain":"BTC",
+            //           "type":"NATIVE",
+            //           "name":"Bitcoin",
+            //           "decimals":8
+            //          }
+          //         },
+          //       "fiat":
+          //         {
+          //           "amount":"1128.06",
+          //           "currencySymbol":"USD",
+          //           "status":"not-started",
+          //           "payoutMethod":"CARD"
+          //         },
+          //       "fees":
+          //         {
+          //           "amount":"50.64",
+          //           "currencySymbol":"USD"
+          //         },
+          //       "exchangeRate":"0.961665142427416"
+          //     },
+          //   "saleViewToken":"8tb9yjthm7kasay4",
+          //   "apiUrl":"https://api.demo.ramp.network/api"
+          //   }
+          // }
+
+
+            // navigation.goBack();
+            // navigation.navigate(SellCryptoScreens.RAMP_SELL_CHECKOUT, {
+            //   rampQuoteOffer: offers.ramp,
+            //   wallet: selectedWallet,
+            //   amount: amount,
+            //   toAddress: parsedEventData.
+            //   // sellCryptoExternalId: externalTransactionId,
+            //   paymentMethod: paymentMethod.method,
+            //   // rampTxId: data.txn_id,
+            //   useSendMax: IsERCToken(
+            //     selectedWallet!.currencyAbbreviation,
+            //     selectedWallet!.chain,
+            //   )
+            //     ? false
+            //     : useSendMax,
+            //   sendMaxInfo: sendMaxInfo,
+            // });
+              return;
+          case 'SEND_CRYPTO': // Pay in wallet clicked in checkout page
+            console.log('SEND_CRYPTO handle here!');
+
+            const sendCryptoPayload = parsedEventData.payload as RampSellSendCryptoPayload;
+
+            const dataToUpdate: RampSellIncomingData = {
+              rampExternalId: cloneDeep(offers.ramp.externalId)!,
+              depositWalletAddress: sendCryptoPayload?.address,
+            };
+
+            dispatch(
+              SellCryptoActions.updateSellOrderRamp({
+                rampSellIncomingData: dataToUpdate,
+              }),
+            );
+
+            setSellModalVisible({open: false, url: sellModalVisible?.url});
+            await sleep(1500);
+            navigation.goBack();
+            navigation.navigate(SellCryptoScreens.RAMP_SELL_CHECKOUT, {
+              rampQuoteOffer: offers.ramp,
+              wallet: selectedWallet,
+              toAddress: sendCryptoPayload?.address,
+              amount: amount, // TODO: review if I need to send the new amount from web checkout
+              sellCryptoExternalId: cloneDeep(offers.ramp.externalId)!,
+              paymentMethod: paymentMethod.method,
+              useSendMax: IsERCToken(
+                selectedWallet!.currencyAbbreviation,
+                selectedWallet!.chain,
+              )
+                ? false
+                : useSendMax,
+              sendMaxInfo: sendMaxInfo,
+            });
+            // {
+            //   "type":"SEND_CRYPTO",
+            //   "payload":
+            //     {
+            //       "assetInfo":
+            //         {
+            //           "address":null,
+            //           "symbol":"BTC",
+            //           "chain":"BTC",
+            //           "type":"BTC",
+            //           "name":"Bitcoin",
+            //           "decimals":8
+            //         },
+            //       "amount":"1220000",
+            //       "address":"tb1q0zmzz7lkflcrm0x0hus2a0kagedwfjdqa7y78p"
+            //     }
+            //   }
+            return;
+
+          default:
+            logger.debug('Event not handled: ' + parsedEventData.type);
+            return;
+        }
+      }
+    }
   };
 
   const goToSimplexSellPage = () => {
@@ -1027,6 +1570,9 @@ const SellCryptoOffers: React.FC = () => {
       if (offers.moonpay.showOffer) {
         getMoonpaySellQuote();
       }
+      if (offers.ramp.showOffer) {
+        getRampSellQuote();
+      }
       if (offers.simplex.showOffer) {
         getSimplexSellQuote();
       }
@@ -1035,7 +1581,7 @@ const SellCryptoOffers: React.FC = () => {
 
   useEffect(() => {
     setOffers(offers);
-  }, [finishedMoonpay, finishedSimplex, updateView]);
+  }, [finishedMoonpay, finishedRamp, finishedSimplex, updateView]);
 
   return (
     <SellCryptoOffersContainer>
@@ -1231,6 +1777,13 @@ const SellCryptoOffers: React.FC = () => {
                                   ),
                                 );
                                 break;
+                              case 'ramp':
+                                dispatch(
+                                  openUrlWithInAppBrowser(
+                                    'https://support.ramp.network/en/articles/8957-what-are-the-fees-for-selling-crypto-at-ramp-network',
+                                  ),
+                                );
+                                break;
                               case 'simplex':
                                 dispatch(
                                   openUrlWithInAppBrowser(
@@ -1276,6 +1829,67 @@ const SellCryptoOffers: React.FC = () => {
           </TermsText>
         </TermsContainer>
       </ScrollView>
+
+      <Modal
+        deviceHeight={HEIGHT}
+        deviceWidth={WIDTH}
+        backdropTransitionOutTiming={0}
+        backdropOpacity={0.85}
+        // hideModalContentWhileAnimating={hideModalContentWhileAnimating}
+        useNativeDriverForBackdrop={true}
+        useNativeDriver={true}
+        animationIn={'fadeInUp'}
+        animationOut={'fadeOutDown'}
+        isVisible={sellModalVisible.open}
+        style={{
+          margin: 0,
+          padding: 0,
+        }}
+        >
+        <View style={{
+          flex: 1,
+          // backgroundColor: '#f8f8f8',
+          justifyContent: 'center',
+          overflow: 'scroll',
+        }}>
+          {/* Close Button */}
+          <View style={{
+              borderTopLeftRadius: 15,
+              borderTopRightRadius: 15,
+              marginTop: insets.top,
+              height: 50,
+              backgroundColor: '#f8f8f8',
+              justifyContent: 'center',
+              alignItems: 'flex-start',
+              paddingHorizontal: 15,
+              borderBottomWidth: 1,
+              borderBottomColor: '#ddd',
+            }}>
+            <TouchableOpacity
+              style={{padding: 10}}
+              onPress={() => {
+              setSellModalVisible({open: false, url: undefined});
+              }
+            }>
+              <Text style={{fontSize: 24, color: '#333' }}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <WebView
+            style={{
+              paddingBottom: insets.bottom + 30,
+            }}
+            source={{ uri: sellModalVisible.url ?? '' }}
+            scrollEnabled={true}
+            onMessage={(e: WebViewMessageEvent) => {
+              handleRampCheckoutMessage(e);
+            }}
+            originWhitelist={['https://*']}
+            automaticallyAdjustContentInsets
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+          />
+        </View>
+      </Modal>
     </SellCryptoOffersContainer>
   );
 };
