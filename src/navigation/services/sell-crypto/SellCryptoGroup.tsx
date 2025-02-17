@@ -10,6 +10,9 @@ import SellCryptoRoot, {
 import MoonpaySellCheckout, {
   MoonpaySellCheckoutProps,
 } from './screens/MoonpaySellCheckout';
+import RampSellCheckout, {
+  RampSellCheckoutProps,
+} from './screens/RampSellCheckout';
 import SimplexSellCheckout, {
   SimplexSellCheckoutProps,
 } from './screens/SimplexSellCheckout';
@@ -25,6 +28,7 @@ export type SellCryptoGroupParamList = {
   SellCryptoRoot: SellCryptoRootScreenParams;
   SellCryptoOffers: SellCryptoOffersScreenParams;
   MoonpaySellCheckout: MoonpaySellCheckoutProps;
+  RampSellCheckout: RampSellCheckoutProps;
   SimplexSellCheckout: SimplexSellCheckoutProps;
 };
 
@@ -32,6 +36,7 @@ export enum SellCryptoScreens {
   ROOT = 'SellCryptoRoot',
   SELL_CRYPTO_OFFERS = 'SellCryptoOffers',
   MOONPAY_SELL_CHECKOUT = 'MoonpaySellCheckout',
+  RAMP_SELL_CHECKOUT = 'RampSellCheckout',
   SIMPLEX_SELL_CHECKOUT = 'SimplexSellCheckout',
 }
 
@@ -60,6 +65,13 @@ const SellCryptoGroup: React.FC<SellCryptoProps> = ({SellCrypto}) => {
       <SellCrypto.Screen
         name={SellCryptoScreens.MOONPAY_SELL_CHECKOUT}
         component={MoonpaySellCheckout}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Sell Crypto')}</HeaderTitle>,
+        }}
+      />
+      <SellCrypto.Screen
+        name={SellCryptoScreens.RAMP_SELL_CHECKOUT}
+        component={RampSellCheckout}
         options={{
           headerTitle: () => <HeaderTitle>{t('Sell Crypto')}</HeaderTitle>,
         }}
