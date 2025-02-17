@@ -1562,7 +1562,7 @@ export const joinWaitlist =
 export const migrateShopCatalog = (): Effect => (dispatch, getState) => {
   try {
     const {SHOP_CATALOG, SHOP} = getState();
-    if (!SHOP_CATALOG.shopMigrationComplete && SHOP.supportedCardMap) { 
+    if (!SHOP_CATALOG.shopMigrationComplete && SHOP.supportedCardMap) {
       dispatch(successFetchCatalog({
         availableCardMap: SHOP.availableCardMap,
         supportedCardMap: SHOP.supportedCardMap,
@@ -1576,7 +1576,7 @@ export const migrateShopCatalog = (): Effect => (dispatch, getState) => {
           'Migrated shop tab catalog fields from SHOP store to SHOP_CATALOG store.',
         ),
       );
-    } 
+    }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
     dispatch(

@@ -8,7 +8,7 @@ import {Link} from '../../../../../components/styled/Text';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import RampLogo from '../../../../../components/icons/external-services/ramp/ramp-logo';
-import {RampPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {RampPaymentData} from '../../../../../store/buy-crypto/models/ramp.models';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
