@@ -3,8 +3,6 @@ import {
   BanxaIncomingData,
   MoonpayPaymentData,
   MoonpayIncomingData,
-  RampPaymentData,
-  RampIncomingData,
   SardinePaymentData,
   SardineIncomingData,
   SimplexPaymentData,
@@ -13,6 +11,7 @@ import {
   TransakIncomingData,
   WyrePaymentData,
 } from './buy-crypto.models';
+import {RampIncomingData, RampPaymentData} from './models/ramp.models';
 
 export enum BuyCryptoActionTypes {
   SUCCESS_PAYMENT_REQUEST_BANXA = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_BANXA',

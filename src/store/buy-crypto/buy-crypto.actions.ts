@@ -4,8 +4,6 @@ import {
   BanxaIncomingData,
   MoonpayPaymentData,
   MoonpayIncomingData,
-  RampPaymentData,
-  RampIncomingData,
   SardinePaymentData,
   SardineIncomingData,
   SimplexPaymentData,
@@ -14,6 +12,7 @@ import {
   TransakIncomingData,
   WyrePaymentData,
 } from './buy-crypto.models';
+import {RampIncomingData, RampPaymentData} from './models/ramp.models';
 
 export const successPaymentRequestBanxa = (payload: {
   banxaPaymentData: BanxaPaymentData;
