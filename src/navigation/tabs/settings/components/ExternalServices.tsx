@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {SettingsComponent} from '../SettingsRoot';
 import {
   Hr,
   Setting,
@@ -56,7 +55,7 @@ const ExternalServices = () => {
   }, []);
 
   return (
-    <SettingsComponent>
+    <>
       <Setting
         onPress={() => {
           haptic('impactLight');
@@ -190,7 +189,7 @@ const ExternalServices = () => {
           </Setting>
         </>
       ) : null}
-    </SettingsComponent>
+    </>
   );
 };
 

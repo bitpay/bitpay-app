@@ -46,7 +46,7 @@ export const SettingsContainer = styled.SafeAreaView`
 
 export const SettingsComponent = styled.ScrollView`
   flex: 1;
-  padding: 10px 0;
+  padding: 10px ${ScreenGutter};
 `;
 
 export const SettingsHomeContainer = styled.View`
