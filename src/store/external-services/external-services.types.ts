@@ -24,6 +24,7 @@ export type SellCryptoConfig = {
   disabledTitle?: string;
   disabledMessage?: string;
   moonpay?: ExchangeConfig;
+  ramp?: ExchangeConfig;
   simplex?: ExchangeConfig;
 };
 
