@@ -2,7 +2,8 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Trans, useTranslation} from 'react-i18next';
-import {Linking, View, TouchableOpacity} from 'react-native';
+import {Linking, View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {
   ActiveOpacity,

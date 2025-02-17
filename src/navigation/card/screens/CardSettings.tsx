@@ -1,7 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView, View, TouchableOpacity} from 'react-native';
+import {ScrollView, View} from 'react-native';
 import Animated, {
   Easing,
   FadeOutLeft,

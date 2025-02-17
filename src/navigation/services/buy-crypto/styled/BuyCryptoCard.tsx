@@ -7,15 +7,16 @@ import {
   Slate30,
 } from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
-export const BuyCryptoItemCard = styled.TouchableOpacity`
+export const BuyCryptoItemCard = styled(TouchableOpacity)`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   border-radius: 9px;
   margin: 8px 16px;
   padding: 14px;
 `;
 
-export const BuyCryptoExpandibleCard = styled.TouchableOpacity`
+export const BuyCryptoExpandibleCard = styled(TouchableOpacity)`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   border-radius: 9px;
   margin: 20px 15px 0px 15px;

@@ -2,9 +2,9 @@ import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   ScrollView,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import Slider from '@react-native-community/slider';
 import styled from 'styled-components/native';
 import {
@@ -287,7 +287,7 @@ const OfferExtraOptsContainer = styled.View<{expanded: boolean}>`
   z-index: -1;
 `;
 
-const OfferExtraOptsProvidersContainer = styled.TouchableOpacity`
+const OfferExtraOptsProvidersContainer = styled(TouchableOpacity)`
   border-bottom-width: 1px;
   border-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   padding: 5px 17px 5px 15px;

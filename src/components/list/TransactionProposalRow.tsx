@@ -5,8 +5,9 @@ import {ScreenGutter} from '../styled/Containers';
 import {useTranslation} from 'react-i18next';
 import {GetContactName} from '../../store/wallet/effects/transactions/transactions';
 import {ContactRowProps} from './ContactRow';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
-const TransactionContainer = styled.TouchableOpacity`
+const TransactionContainer = styled(TouchableOpacity)`
   flex: 1;
   flex-direction: row;
   padding: 10px ${ScreenGutter};
@@ -25,10 +26,13 @@ const Description = styled(BaseText)`
 
 const Creator = styled(ListItemSubText)`
   overflow: hidden;
+  max-width: 150px;
 `;
 
 const TailContainer = styled.View`
   margin-left: auto;
+  display: flex;
+  justify-content: center;
 `;
 
 const HeadContainer = styled.View``;

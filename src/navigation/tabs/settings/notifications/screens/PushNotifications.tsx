@@ -16,6 +16,7 @@ import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import styled from 'styled-components/native';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const SettingsComponent = styled.ScrollView`
   flex: 1;
@@ -30,7 +31,7 @@ const SettingRow = styled(View)`
   padding: 8px 0;
 `;
 
-const SettingRowContainer = styled.TouchableOpacity<{isDisabled: boolean}>`
+const SettingRowContainer = styled(TouchableOpacity)<{isDisabled: boolean}>`
   align-items: center;
   flex-direction: row;
   min-height: 58px;
@@ -63,7 +64,6 @@ const PushNotifications = () => {
       checked: pushNotifications,
       onPress: async () => {
         const isEnabled = !pushNotifications;
-        dispatch(startOnGoingProcessModal('LOADING'));
         DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
           isEnabled,
         });

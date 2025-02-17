@@ -1,20 +1,13 @@
 diff --git a/node_modules/@react-navigation/elements/src/Header/HeaderBackButton.tsx b/node_modules/@react-navigation/elements/src/Header/HeaderBackButton.tsx
-index 7c2a541..9f7478b 100644
+index 7c2a541..bbb32c2 100644
 --- a/node_modules/@react-navigation/elements/src/Header/HeaderBackButton.tsx
 +++ b/node_modules/@react-navigation/elements/src/Header/HeaderBackButton.tsx
-@@ -150,7 +150,14 @@ export default function HeaderBackButton({
+@@ -150,7 +150,7 @@ export default function HeaderBackButton({
        accessibilityRole="button"
        accessibilityLabel={accessibilityLabel}
        testID={testID}
 -      onPress={disabled ? undefined : handlePress}
-+      onPress={Platform.select({
-+        android: undefined,
-+        default: disabled ? undefined : handlePress,
-+      })}
-+      onPressOut={Platform.select({
-+        android: disabled ? undefined : handlePress,
-+        default: undefined,
-+      })}
++      onPressOut={disabled ? undefined : handlePress}
        pressColor={pressColor}
        pressOpacity={pressOpacity}
        android_ripple={androidRipple}

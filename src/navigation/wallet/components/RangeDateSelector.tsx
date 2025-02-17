@@ -12,6 +12,7 @@ import {ActiveOpacity} from '../../../components/styled/Containers';
 import {titleCasing} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {DateRanges} from '../../../store/rate/rate.models';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface Props {
   onPress: (dateRange: DateRanges) => void;
@@ -44,7 +45,7 @@ const ButtonText = styled(BaseText)<{isActive: string; label: string}>`
       : LightBlack};
 `;
 
-const LinkButton = styled.TouchableOpacity<{isActive: string; label: string}>`
+const LinkButton = styled(TouchableOpacity)<{isActive: string; label: string}>`
   height: 40px;
   width: 50px;
   border-radius: 18px;

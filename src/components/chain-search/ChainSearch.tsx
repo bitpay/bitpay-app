@@ -32,14 +32,13 @@ import {
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 import {AccountRowProps} from '../list/AccountListRow';
 import {WalletRowProps} from '../list/WalletRow';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;
 `;
 
-export const SearchFilterContainer = styled.TouchableOpacity`
-  position: absolute;
-  right: 0;
+export const SearchFilterContainer = styled(TouchableOpacity)`
   width: auto;
   justify-content: center;
   align-items: center;
@@ -437,35 +436,37 @@ const SearchComponent = <T extends SearchableItem>({
 
   const _SearchFilterContainer = () => {
     return (
-      <SearchFilterContainer
-        onPress={() => {
-          dispatch(AppActions.showChainSelectorModal({context}));
-        }}>
-        <RowFilterContainer>
-          {selectedChainFilterOption && currencyInfo ? (
-            <View style={{marginLeft: 5}}>
-              <CurrencyImage img={currencyInfo.img!} size={25} />
-            </View>
-          ) : null}
-          <SearchFilterLabelContainer
-            style={
-              selectedChainFilterOption && currencyInfo ? {marginLeft: 5} : null
-            }>
-            <SearchFilterLabel>
-              {selectedChainFilterOption && currencyInfo
-                ? currencyInfo.name
-                : t('All Networks')}
-            </SearchFilterLabel>
-          </SearchFilterLabelContainer>
-          <SearchFilterIconContainer>
-            {!theme.dark ? (
-              <ChevronDownSvgLight width={10} height={6} />
-            ) : (
-              <ChevronDownSvgDark width={10} height={6} />
-            )}
-          </SearchFilterIconContainer>
-        </RowFilterContainer>
-      </SearchFilterContainer>
+      <View style={{position: 'absolute', right: 0}}>
+        <SearchFilterContainer
+          onPress={() => {
+            dispatch(AppActions.showChainSelectorModal({context}));
+          }}>
+          <RowFilterContainer>
+            {selectedChainFilterOption && currencyInfo ? (
+              <View style={{marginLeft: 5}}>
+                <CurrencyImage img={currencyInfo.img!} size={25} />
+              </View>
+            ) : null}
+            <SearchFilterLabelContainer
+              style={
+                selectedChainFilterOption && currencyInfo ? {marginLeft: 5} : null
+              }>
+              <SearchFilterLabel>
+                {selectedChainFilterOption && currencyInfo
+                  ? currencyInfo.name
+                  : t('All Networks')}
+              </SearchFilterLabel>
+            </SearchFilterLabelContainer>
+            <SearchFilterIconContainer>
+              {!theme.dark ? (
+                <ChevronDownSvgLight width={10} height={6} />
+              ) : (
+                <ChevronDownSvgDark width={10} height={6} />
+              )}
+            </SearchFilterIconContainer>
+          </RowFilterContainer>
+        </SearchFilterContainer>
+      </View>
     );
   };
 

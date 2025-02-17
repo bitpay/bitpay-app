@@ -2,7 +2,8 @@ import React, {useEffect, useState} from 'react';
 import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
-import {Linking, ScrollView, TouchableOpacity} from 'react-native';
+import {Linking, ScrollView} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   ScreenContainer,
   horizontalPadding,

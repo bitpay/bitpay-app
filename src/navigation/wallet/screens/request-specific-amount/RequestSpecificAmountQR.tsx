@@ -31,6 +31,7 @@ import {
 } from '../../../../store/wallet/effects/amount/amount';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const SpecificAmtQRContainer = styled.SafeAreaView`
   flex: 1;
@@ -72,7 +73,7 @@ const QRHeader = styled(H4)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const CopyToClipboard = styled.TouchableOpacity`
+const CopyToClipboard = styled(TouchableOpacity)`
   border: 1px solid #9ba3ae;
   border-radius: 4px;
   padding: 0 10px;
@@ -95,7 +96,7 @@ const CopyImgContainer = styled.View`
   justify-content: center;
 `;
 
-const ShareIconContainer = styled.TouchableOpacity``;
+const ShareIconContainer = styled(TouchableOpacity)``;
 
 const RequestSpecificAmountQR = () => {
   const {t} = useTranslation();

@@ -1,6 +1,7 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ScrollView, TouchableOpacity} from 'react-native';
+import {ScrollView} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {
   useTheme,
@@ -133,7 +134,7 @@ const AddressBadge = styled.View`
   top: 50%;
 `;
 
-const ScanButtonContainer = styled.TouchableOpacity`
+const ScanButtonContainer = styled(TouchableOpacity)`
   position: absolute;
   right: 5px;
   top: 32px;

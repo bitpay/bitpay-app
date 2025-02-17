@@ -17,6 +17,7 @@ import {
 } from '../../styles/colors';
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 type InputType = 'password' | 'phone' | 'search' | 'number';
 
@@ -122,7 +123,7 @@ const ErrorText = styled(BaseText)`
   margin-top: 4px;
 `;
 
-export const IconContainer = styled.TouchableOpacity.attrs(() => ({
+export const IconContainer = styled(TouchableOpacity).attrs(() => ({
   activeOpacity: ActiveOpacity,
 }))`
   align-items: center;

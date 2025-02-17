@@ -95,7 +95,7 @@ const SummaryContainer = styled.View<{hasRequest: boolean}>`
   padding-bottom: ${({hasRequest}) => (hasRequest ? '0px' : '80px')};
 `;
 
-export const NoteContainer = styled.TouchableOpacity<{isDappUri?: boolean}>`
+export const NoteContainer = styled(TouchableOpacity)<{isDappUri?: boolean}>`
   background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
   max-width: ${({isDappUri}) => (isDappUri ? '175px' : '126px')};

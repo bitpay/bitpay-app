@@ -31,6 +31,7 @@ import {findWalletById} from '../../store/wallet/utils/wallet';
 import {useAppSelector} from '../../utils/hooks';
 import {BitpaySupportedCoins} from '../../constants/currencies';
 import {SearchableItem} from '../chain-search/ChainSearch';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -93,7 +94,7 @@ const ChainAssetsContainer = styled(Row)`
   flex-direction: row;
 `;
 
-const AccountChainsContainer = styled.TouchableOpacity`
+const AccountChainsContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   margin: 0px;

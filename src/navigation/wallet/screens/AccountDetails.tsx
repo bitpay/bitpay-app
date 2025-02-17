@@ -30,9 +30,9 @@ import {
   DeviceEventEmitter,
   RefreshControl,
   SectionList,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   Badge,
   Balance,
@@ -226,7 +226,7 @@ const Row = styled.View`
   align-items: flex-end;
 `;
 
-const WalletListHeader = styled.TouchableOpacity<{
+const WalletListHeader = styled(TouchableOpacity)<{
   isActive: boolean;
 }>`
   padding: 10px;
@@ -257,7 +257,7 @@ const SkeletonContainer = styled.View`
   margin-bottom: 20px;
 `;
 
-const LockedBalanceContainer = styled.TouchableOpacity`
+const LockedBalanceContainer = styled(TouchableOpacity)`
   flex-direction: row;
   padding: ${ScreenGutter};
   justify-content: center;
@@ -299,7 +299,7 @@ const HeaderListContainer = styled.View`
   align-items: center;
 `;
 
-const AddCustomTokenContainer = styled.TouchableOpacity`
+const AddCustomTokenContainer = styled(TouchableOpacity)`
   margin: 40px;
   display: flex;
   align-items: center;
@@ -809,13 +809,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               {pendingProposalsCount ? (
                 <ProposalBadgeContainer
                   style={{marginRight: 10}}
-                  onPressOut={onPressTxpBadge}>
+                  onPress={onPressTxpBadge}>
                   <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
               {hasAllChains ? (
                 <TouchableOpacity
-                  onPressOut={() =>
+                  onPress={() =>
                     navigation.navigate('AccountSettings', {
                       key,
                       selectedAccountAddress: accountItem?.receiveAddress,

@@ -8,7 +8,8 @@ import {Black, LightBlack, SlateDark, White} from '../../../styles/colors';
 import Button from '../../../components/button/Button';
 import {H4, Link, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {Platform, TouchableOpacity, View} from 'react-native';
+import {Platform, View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useAppDispatch} from '../../../utils/hooks';
 import {
   dismissBottomNotificationModal,
@@ -67,7 +68,7 @@ const ZenLedgerBackground = styled(LinearGradient).attrs(({theme}) => ({
   flex: 1;
 `;
 
-const LinkCointainer = styled.TouchableOpacity`
+const LinkCointainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   justify-content: center;

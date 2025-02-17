@@ -31,7 +31,8 @@ import {
 } from '../../../../components/styled/Containers';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Back from '../../../../components/back/Back';
-import {TouchableOpacity, View} from 'react-native';
+import {View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {DetailsList} from './confirm/Shared';
 import Button from '../../../../components/button/Button';
 import {

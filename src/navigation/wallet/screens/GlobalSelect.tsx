@@ -17,7 +17,8 @@ import {
   getCurrencyAbbreviation,
   sleep,
 } from '../../../utils/helper-methods';
-import {Platform, TouchableOpacity, View} from 'react-native';
+import {Platform, View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
@@ -121,7 +122,7 @@ const CloseModalButtonContainer = styled.View`
   left: 0;
 `;
 
-const CloseModalButton = styled.TouchableOpacity`
+const CloseModalButton = styled(TouchableOpacity)`
   padding: 5px;
   height: 41px;
   width: 41px;
@@ -177,7 +178,7 @@ export const WalletSelectMenuHeaderContainer = styled.View<WalletSelectMenuHeade
   border-bottom-width: ${({currency}) => (currency ? 1 : 0)}px;
 `;
 
-export const WalletSelectBottomContainer = styled.TouchableOpacity`
+export const WalletSelectBottomContainer = styled(TouchableOpacity)`
   padding: 16px;
 `;
 
@@ -213,7 +214,7 @@ const TitleName = styled(BaseText)`
   margin-left: 10px;
 `;
 
-const CloseButton = styled.TouchableOpacity`
+const CloseButton = styled(TouchableOpacity)`
   margin-right: 10px;
 `;
 
@@ -221,7 +222,7 @@ const CloseButtonText = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
 `;
 
-const NetworkChainContainer = styled.TouchableOpacity`
+const NetworkChainContainer = styled(TouchableOpacity)`
   margin-left: 12px;
 `;
 

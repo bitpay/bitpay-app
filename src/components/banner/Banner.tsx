@@ -16,7 +16,7 @@ import {
 } from '../../styles/colors';
 import {H7, Link} from '../styled/Text';
 import {ActionContainer, ActiveOpacity, Row} from '../styled/Containers';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {SvgProps} from 'react-native-svg';
 
 const BANNER_HEIGHT = 80;

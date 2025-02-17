@@ -42,13 +42,14 @@ export const startGetRates =
       dispatch(LogActions.info('startGetRates: starting...'));
       const {
         RATE: {ratesCacheKey, rates: cachedRates},
+        APP: {altCurrencyList},
       } = getState();
       if (
         !isCacheKeyStale(
           ratesCacheKey[DEFAULT_DATE_RANGE],
           RATES_CACHE_DURATION,
         ) &&
-        !force
+        !force && altCurrencyList.length > 0
       ) {
         dispatch(
           LogActions.info('startGetRates: success (using cached rates)'),
@@ -83,7 +84,7 @@ export const startGetRates =
           LogActions.info('startGetRates: success get request (yesterday)'),
         );
 
-        if (context === 'init') {
+        if (context === 'init' || altCurrencyList.length === 0) {
           dispatch(
             LogActions.info('startGetRates: setting alternative currency list'),
           );
@@ -327,17 +328,17 @@ export const fetchHistoricalRates =
         RATE: {ratesHistoricalCacheKey, ratesByDateRange: cachedRates},
       } = getState();
 
+      const cachedRatesByCoin = (currencyAbbreviation &&
+        cachedRates[dateRange][currencyAbbreviation.toLowerCase()]) || [];
+
       if (
         !isCacheKeyStale(
           ratesHistoricalCacheKey[dateRange],
           HISTORIC_RATES_CACHE_DURATION,
-        )
+        ) &&
+        cachedRatesByCoin.length > 0
       ) {
         dispatch(LogActions.info('[rates]: using cached rates'));
-        const cachedRatesByCoin = currencyAbbreviation
-          ? cachedRates[dateRange][currencyAbbreviation.toLowerCase()]
-          : [];
-
         return resolve(cachedRatesByCoin);
       }
 

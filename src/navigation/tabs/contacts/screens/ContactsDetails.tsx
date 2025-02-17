@@ -33,6 +33,7 @@ import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {IsEVMChain} from '../../../../store/wallet/utils/currency';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -87,13 +88,13 @@ const AddressText = styled(BaseText)`
   max-width: 250px;
 `;
 
-const AddressContainer = styled.TouchableOpacity`
+const AddressContainer = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: row;
   justify-content: flex-end;
 `;
 
-const OptionContainer = styled.TouchableOpacity`
+const OptionContainer = styled(TouchableOpacity)`
   flex-direction: row;
   padding: 25px 25px;
   align-items: stretch;

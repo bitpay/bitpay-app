@@ -40,7 +40,8 @@ import {Controller, useForm, useWatch} from 'react-hook-form';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import {NeutralSlate, SlateDark, White} from '../../../styles/colors';
-import {View, TouchableOpacity} from 'react-native';
+import {View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {getProtocolName, sleep} from '../../../utils/helper-methods';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
@@ -103,7 +104,7 @@ const OptionTitle = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const RowContainer = styled.TouchableOpacity`
+const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   padding: 18px;

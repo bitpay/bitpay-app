@@ -7,6 +7,7 @@ import PaymentCompleteSvg from '../../../../assets/img/wallet/payment-complete.s
 import {BaseText} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const PaymentSentContainer = styled.View`
   flex: 1;
@@ -33,7 +34,7 @@ const Title = styled(BaseText)`
   margin-top: 15px;
 `;
 
-const CloseButton = styled.TouchableOpacity`
+const CloseButton = styled(TouchableOpacity)`
   margin: 15px 0;
   padding: 5px;
 `;

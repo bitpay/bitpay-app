@@ -18,7 +18,8 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import {RefreshControl, ScrollView, TouchableOpacity} from 'react-native';
+import {RefreshControl, ScrollView} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {ShopEffects} from '../../../../../store/shop';
 import {AppActions} from '../../../../../store/app';

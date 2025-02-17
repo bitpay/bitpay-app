@@ -67,11 +67,12 @@ import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import Button from '../../../components/button/Button';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const WalletConnectConnectionsContainer = styled.SafeAreaView`
   flex: 1;
 `;
-const AddConnectionContainer = styled.TouchableOpacity``;
+const AddConnectionContainer = styled(TouchableOpacity)``;
 
 const EmptyListContainer = styled.View`
   justify-content: space-between;
@@ -87,7 +88,7 @@ const SearchBox = styled(BoxInput)`
   position: relative;
 `;
 
-const AccountSettingsContainer = styled.TouchableOpacity`
+const AccountSettingsContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   display: flex;

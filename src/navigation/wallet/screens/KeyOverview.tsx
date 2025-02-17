@@ -235,7 +235,7 @@ const KeyOverview = () => {
           <KeyToggle
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys && !linkedCoinbase}
-            onPressOut={() => setShowKeyDropdown(true)}>
+            onPress={() => setShowKeyDropdown(true)}>
             {key.methods?.isPrivKeyEncrypted() ? (
               theme.dark ? (
                 <EncryptPasswordDarkModeImg />

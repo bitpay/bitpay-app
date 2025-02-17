@@ -100,6 +100,8 @@ export const ProcessPendingTxps =
     const ret: TransactionProposal[] = [];
     txps.forEach((tx: TransactionProposal) => {
       try {
+        if (wallet.id !== tx.walletId) return;
+
         // Workaround for txps with matic as coin
         if (tx.coin === 'matic') {
           tx.coin = 'pol';
