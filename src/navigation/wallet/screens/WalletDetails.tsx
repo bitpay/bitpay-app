@@ -164,7 +164,7 @@ const Row = styled.View`
   align-items: flex-end;
 `;
 
-const TouchableRow = styled.TouchableOpacity`
+const TouchableRow = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: center;
   align-items: center;
@@ -202,7 +202,7 @@ const EmptyListContainer = styled.View`
   margin-top: 50px;
 `;
 
-const LockedBalanceContainer = styled.TouchableOpacity`
+const LockedBalanceContainer = styled(TouchableOpacity)`
   flex-direction: row;
   padding: ${ScreenGutter};
   justify-content: center;

@@ -22,6 +22,7 @@ import haptic from '../haptic-feedback/haptic';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {ScreenGutter} from '../styled/Containers';
 import {BaseText, H6, H7} from '../styled/Text';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export type CurrencySelectionItem = Pick<
   SupportedCurrencyOption,
@@ -67,7 +68,7 @@ export const CurrencySelectionRowContainer = styled.View`
   padding: 16px;
 `;
 
-const FlexRow = styled.TouchableOpacity`
+const FlexRow = styled(TouchableOpacity)`
   flex-direction: row;
 `;
 

@@ -41,6 +41,7 @@ import {
 } from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
 import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -58,7 +59,7 @@ const Title = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const WalletNameContainer = styled.TouchableOpacity`
+const WalletNameContainer = styled(TouchableOpacity)`
   padding: 10px 0 20px 0;
   flex-direction: row;
   align-items: center;

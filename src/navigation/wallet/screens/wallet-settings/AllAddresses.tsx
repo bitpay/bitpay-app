@@ -24,6 +24,7 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {LogActions} from '../../../../store/log';
 import {FlashList} from '@shopify/flash-list';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export type AllAddressesParamList = {
   walletName: string;
@@ -53,7 +54,7 @@ const SubText = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const CopyRow = styled.TouchableOpacity`
+const CopyRow = styled(TouchableOpacity)`
   flex-direction: row;
 `;
 

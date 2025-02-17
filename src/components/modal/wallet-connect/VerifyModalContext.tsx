@@ -26,8 +26,9 @@ import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import {View} from 'react-native';
 import {BottomNotificationCta} from '../bottom-notification/BottomNotification';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
-const CloseModalButton = styled.TouchableOpacity`
+const CloseModalButton = styled(TouchableOpacity)`
   height: 40px;
   width: 40px;
   border-radius: 50px;
@@ -49,7 +50,7 @@ const RowContainer = styled.View`
   justify-content: space-between;
 `;
 
-const StyledTouchableOpacity = styled.TouchableOpacity``;
+const StyledTouchableOpacity = styled(TouchableOpacity)``;
 
 const IconContainer = styled(FastImage)`
   width: 30px;

@@ -64,6 +64,7 @@ import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -90,9 +91,7 @@ const BorderBottom = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
 `;
 
-const ProposalsContainer = styled.TouchableOpacity`
-  flex-direction: row;
-  align-items: center;
+const ProposalsContainer = styled(TouchableOpacity)`
 `;
 
 const CheckBoxContainer = styled.View`

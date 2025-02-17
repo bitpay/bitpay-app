@@ -31,6 +31,7 @@ import {sleep} from '../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../store/log';
 import Mailer from 'react-native-mail';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const BWC = BwcProvider.getInstance();
 
@@ -69,7 +70,7 @@ interface ExportWalletPasswordFieldValues {
   confirmPassword: string;
 }
 
-const RowContainer = styled.TouchableOpacity`
+const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   padding: 18px;

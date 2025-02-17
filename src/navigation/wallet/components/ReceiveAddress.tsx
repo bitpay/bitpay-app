@@ -54,10 +54,11 @@ import {
   TitleContainer,
   viewOnBlockchain,
 } from './SendingToERC20Warning';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
-const CopyToClipboard = styled.TouchableOpacity`
+const CopyToClipboard = styled(TouchableOpacity)`
   border: 1px solid #9ba3ae;
   border-radius: 4px;
   padding: 0 10px;
@@ -111,7 +112,7 @@ const ReceiveAddressContainer = styled(SheetContainer)`
   min-height: 500px;
 `;
 
-const CloseButton = styled.TouchableOpacity`
+const CloseButton = styled(TouchableOpacity)`
   margin: auto;
 `;
 

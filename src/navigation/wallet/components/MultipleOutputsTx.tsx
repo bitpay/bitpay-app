@@ -40,12 +40,13 @@ import {
   SendToPillContainer,
 } from '../screens/send/confirm/Shared';
 import {RootState} from '../../../store';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
 `;
 
-const MultiOptionsContainer = styled.TouchableOpacity`
+const MultiOptionsContainer = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 10px;
   margin-bottom: 5px;
@@ -66,7 +67,7 @@ const MultiOptionsMessage = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const ContactsIconContainer = styled.TouchableOpacity`
+const ContactsIconContainer = styled(TouchableOpacity)`
   margin-left: 5px;
 `;
 

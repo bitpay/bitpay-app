@@ -44,6 +44,7 @@ import {WithdrawalMethod} from '../../sell-crypto/constants/SellCryptoConstants'
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
@@ -57,7 +58,7 @@ interface PaymentMethodsModalProps {
   preSetPartner?: BuyCryptoExchangeKey | SellCryptoExchangeKey | undefined;
 }
 
-const PaymentMethodCard = styled.TouchableOpacity`
+const PaymentMethodCard = styled(TouchableOpacity)`
   border-radius: 7px;
   margin-bottom: 20px;
   padding: 14px;

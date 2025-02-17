@@ -21,6 +21,7 @@ import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {parseTransactionTitle} from './CoinbaseAccount';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const TransactionContainer = styled.SafeAreaView`
   flex: 1;
@@ -94,7 +95,7 @@ const Title = styled(BaseText)`
   border-bottom-width: 2px;
 `;
 
-const CopyToClipboard = styled.TouchableOpacity`
+const CopyToClipboard = styled(TouchableOpacity)`
   width: 80%;
   padding: 0 10px;
   flex-direction: row;

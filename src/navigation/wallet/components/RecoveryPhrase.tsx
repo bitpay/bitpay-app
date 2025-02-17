@@ -88,6 +88,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {IS_ANDROID, IS_IOS} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -142,7 +143,7 @@ const CurrencySelectorContainer = styled.View`
   position: relative;
 `;
 
-const CurrencyContainer = styled.TouchableOpacity`
+const CurrencyContainer = styled(TouchableOpacity)`
   background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   padding: 0 20px;
   height: 55px;
@@ -168,7 +169,7 @@ const CurrencyOptions = SupportedCurrencyOptions.filter(
   currency => !currency.isToken,
 );
 
-const RowContainer = styled.TouchableOpacity`
+const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   padding: 18px;

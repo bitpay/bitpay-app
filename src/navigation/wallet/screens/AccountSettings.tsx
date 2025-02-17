@@ -40,6 +40,7 @@ import {HeaderBackButton} from '@react-navigation/elements';
 import {IsEVMChain} from '../../../store/wallet/utils/currency';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -57,7 +58,7 @@ const Title = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const WalletNameContainer = styled.TouchableOpacity`
+const WalletNameContainer = styled(TouchableOpacity)`
   padding: 10px 0 20px 0;
   flex-direction: row;
   align-items: center;

@@ -4,12 +4,13 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import {TermsOfUseModel} from '../screens/TermsOfUse';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 interface Props {
   emit: (id: number) => void;
   term: TermsOfUseModel;
 }
 
-const TermsBoxContainer = styled.TouchableOpacity`
+const TermsBoxContainer = styled(TouchableOpacity)`
   padding: 20px;
   flex-direction: row;
   justify-content: flex-start;

@@ -15,7 +15,8 @@ import {
   getCurrencyAbbreviation,
   sleep,
 } from '../../../../utils/helper-methods';
-import {Image, ScrollView, TouchableOpacity} from 'react-native';
+import {Image, ScrollView} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import _ from 'lodash';
 import cloneDeep from 'lodash.clonedeep';
 import {TextAlign, SubText, BaseText} from '../../../../components/styled/Text';
@@ -78,7 +79,7 @@ const ViewContainer = styled.View`
   padding: 16px;
 `;
 
-const RowContainer = styled.TouchableOpacity`
+const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
 `;

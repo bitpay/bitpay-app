@@ -17,10 +17,10 @@ import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
 import {
   Animated,
-  TouchableOpacity,
   NativeModules,
   DeviceEventEmitter,
 } from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {useTranslation} from 'react-i18next';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';

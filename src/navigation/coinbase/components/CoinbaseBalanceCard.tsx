@@ -24,12 +24,13 @@ import {
   BalanceCodeContainer,
 } from '../../tabs/home/components/Wallet';
 import {Balance, OptionName} from '../../wallet/components/DropdownOption';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface CoinbaseCardComponentProps {
   layout: HomeCarouselLayoutType;
 }
 
-const ListCard = styled.TouchableOpacity`
+const ListCard = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   margin: 10px ${ScreenGutter};

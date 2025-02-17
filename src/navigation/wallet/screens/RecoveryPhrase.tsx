@@ -21,7 +21,8 @@ import {
   Slate,
   SlateDark,
 } from '../../../styles/colors';
-import {Platform, TouchableOpacity} from 'react-native';
+import {Platform} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';

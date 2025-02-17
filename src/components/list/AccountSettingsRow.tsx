@@ -12,6 +12,7 @@ import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
 import {AccountRowProps} from './AccountListRow';
 import {IsEVMChain} from '../../store/wallet/utils/currency';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface Props {
   id: string;
@@ -24,7 +25,7 @@ const HiddenColumn = styled(Column)`
   align-items: flex-end;
 `;
 
-const AccountSettingsContainer = styled.TouchableOpacity`
+const AccountSettingsContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   display: flex;

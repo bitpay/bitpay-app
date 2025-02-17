@@ -63,6 +63,7 @@ import {
   SupportedCoinsOptions,
 } from '../../../../constants/SupportedCurrencyOptions';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -89,7 +90,7 @@ const AddressBadge = styled.View`
   top: 50%;
 `;
 
-const ScanButtonContainer = styled.TouchableOpacity`
+const ScanButtonContainer = styled(TouchableOpacity)`
   position: absolute;
   right: 5px;
   top: 32px;
@@ -116,7 +117,7 @@ const Label = styled(BaseText)`
   color: ${({theme}) => (theme && theme.dark ? theme.colors.text : '#434d5a')};
 `;
 
-const CurrencyContainer = styled.TouchableOpacity`
+const CurrencyContainer = styled(TouchableOpacity)`
   background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   padding: 0 20px 0 10px;
   height: 55px;

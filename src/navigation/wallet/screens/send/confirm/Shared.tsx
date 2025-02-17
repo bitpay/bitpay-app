@@ -16,7 +16,8 @@ import {
 } from '../../../../../components/styled/Containers';
 import React, {ReactChild, useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
+import {Pressable, ScrollView, View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
 import InfoSvg from '../../../../../../assets/img/info.svg';
@@ -87,7 +88,7 @@ export const DetailContainer = styled.View<DetailContainerParams>`
   ${({height}) => (height ? `height: ${height}px;` : '')}
 `;
 
-export const PressableDetailContainer = styled.TouchableOpacity<DetailContainerParams>`
+export const PressableDetailContainer = styled(TouchableOpacity)<DetailContainerParams>`
   min-height: 60px;
   padding: 20px 0;
   justify-content: center;

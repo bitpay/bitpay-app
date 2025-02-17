@@ -35,6 +35,7 @@ import SendIcon from '../../../../../../assets/img/send-icon.svg';
 import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
 import {ListHeader} from '../../general/screens/customize-home/Shared';
 import {storage} from '../../../../../store';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 type SessionLogsScreenProps = NativeStackScreenProps<
   AboutGroupParamList,
@@ -69,7 +70,7 @@ const FilterLabel = styled(BaseText)`
   text-align: center;
 `;
 
-const OptionContainer = styled.TouchableOpacity<SheetParams>`
+const OptionContainer = styled(TouchableOpacity)<SheetParams>`
   flex-direction: row;
   align-items: stretch;
   padding-${({placement}) => placement}: 31px;

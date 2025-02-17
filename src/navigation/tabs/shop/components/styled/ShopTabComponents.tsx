@@ -20,6 +20,7 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const horizontalPadding = 20;
 
@@ -109,7 +110,7 @@ export const NoResultsHeader = styled(H4)`
   font-size: 17px;
 `;
 
-export const NavIconButtonContainer = styled.TouchableOpacity`
+export const NavIconButtonContainer = styled(TouchableOpacity)`
   align-items: center;
   justify-content: center;
   transform: scale(1.1);

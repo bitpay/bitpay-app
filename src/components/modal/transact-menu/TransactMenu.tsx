@@ -1,6 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement, useState} from 'react';
-import {FlatList, TouchableOpacity, View} from 'react-native';
+import {FlatList, View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
 import {
@@ -31,7 +32,7 @@ const ModalContainer = styled(SheetContainer)`
   background: ${({theme}) => (theme.dark ? '#101010' : White)};
 `;
 
-const TransactItemContainer = styled.TouchableOpacity`
+const TransactItemContainer = styled(TouchableOpacity)`
   flex-direction: row;
   padding-bottom: 31px;
   align-items: stretch;
@@ -67,7 +68,7 @@ const ItemDescriptionText = styled(BaseText)`
   line-height: 19px;
 `;
 
-const ScanButtonContainer = styled.TouchableOpacity`
+const ScanButtonContainer = styled(TouchableOpacity)`
   background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
   flex-direction: row;
   align-self: center;
@@ -84,7 +85,7 @@ const ScanButtonText = styled(BaseText)`
   color: ${White};
 `;
 
-const CloseButtonContainer = styled.TouchableOpacity`
+const CloseButtonContainer = styled(TouchableOpacity)`
   align-self: center;
 `;
 

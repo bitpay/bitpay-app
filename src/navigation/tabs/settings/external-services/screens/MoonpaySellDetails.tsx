@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {Platform, RefreshControl, Text, TouchableOpacity} from 'react-native';
+import {Platform, RefreshControl, Text} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   RouteProp,
   useRoute,
