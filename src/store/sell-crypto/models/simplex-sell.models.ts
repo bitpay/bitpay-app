@@ -1,4 +1,4 @@
-import {PaymentMethodKey} from '../../../navigation/services/sell-crypto/constants/SellCryptoConstants';
+import {WithdrawalMethodKey} from '../../../navigation/services/sell-crypto/constants/SellCryptoConstants';
 
 export type SimplexSellEnv = 'sandbox' | 'production';
 
@@ -17,7 +17,7 @@ export interface SimplexSellOrderData {
   fiat_receiving_amount: number;
   fiat_fee_amount?: number;
   fiat_currency: string;
-  payment_method: PaymentMethodKey; // bitpay-app payment method id
+  payment_method: WithdrawalMethodKey; // bitpay-app payment method id
   external_id: string; // bitpay-app custom id
   status: SimplexSellOrderStatus;
   transaction_id?: string; // // id form simplex
@@ -35,7 +35,7 @@ export interface SimplexSellIncomingData {
   baseCurrencyAmount?: string | number; // cryptoAmount
   fiatAmount?: number;
   fiatCurrencyCode?: string;
-  paymentMethod?: PaymentMethodKey;
+  paymentMethod?: WithdrawalMethodKey;
   totalFee?: number;
   depositWalletAddress?: string;
   txSentOn?: number;
