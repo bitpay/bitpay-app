@@ -330,7 +330,7 @@ const Pin = gestureHandlerRootHOC(() => {
         <SheetHeaderContainer style={{marginTop: insets.top, paddingLeft: 25}}>
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
-            onPressOut={() => {
+            onPress={() => {
               dispatch(AppActions.dismissPinModal());
               reset();
             }}>

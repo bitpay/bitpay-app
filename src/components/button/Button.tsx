@@ -376,7 +376,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
       accessibilityLabel={accessibilityLabel}
       style={style as any}
       buttonType={buttonType}
-      onPressOut={debouncedOnPress}
+      onPress={debouncedOnPress}
       activeOpacity={disabled ? 1 : ActiveOpacity}
       testID={'button'}>
       <ButtonTypeContainer
