@@ -1,7 +1,6 @@
 import {
   BanxaPaymentData,
   MoonpayPaymentData,
-  RampPaymentData,
   SardinePaymentData,
   SimplexPaymentData,
   TransakPaymentData,
@@ -9,6 +8,7 @@ import {
 } from './buy-crypto.models';
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
 import {handleWyreStatus} from '../../navigation/services/buy-crypto/utils/wyre-utils';
+import {RampPaymentData} from './models/ramp.models';
 
 type BuyCryptoReduxPersistBlackList = string[];
 export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
