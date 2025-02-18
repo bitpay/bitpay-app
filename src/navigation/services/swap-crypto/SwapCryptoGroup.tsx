@@ -18,10 +18,9 @@ import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Root, navigationRef} from '../../../Root';
 import {
-  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
 } from '../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import {SwapCryptoExchangeKey} from './utils/swap-crypto-utils';
 import {
   changellyTxData,
@@ -109,16 +108,9 @@ const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
 
   return (
     <SwapCrypto.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <SwapCrypto.Screen
         name={SwapCryptoScreens.SWAP_CRYPTO_ROOT}

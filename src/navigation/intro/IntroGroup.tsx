@@ -5,11 +5,8 @@ import StartScreen from './screens/Start';
 import WhatsNew from './screens/WhatsNew';
 import CustomizeHome from './screens/CustomizeHome';
 import {Root} from '../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
+import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface IntroProps {
   Intro: typeof Root;
@@ -34,17 +31,10 @@ export const IntroAnimeDelay = 300;
 const IntroStack: React.FC<IntroProps> = ({Intro}) => {
   return (
     <Intro.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
         headerShown: false,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Intro.Screen name={IntroScreens.START} component={StartScreen} />
       <Intro.Screen name={IntroScreens.WHATS_NEW} component={WhatsNew} />

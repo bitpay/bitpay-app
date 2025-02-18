@@ -19,10 +19,9 @@ import WalletConnectConfirm, {
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../Root';
 import {
-  baseNativeHeaderBackButtonProps,
   baseNavigatorOptions,
 } from '../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface WalletConnectProps {
   WalletConnect: typeof Root;
@@ -68,16 +67,9 @@ const WalletConnectGroup: React.FC<WalletConnectProps> = ({WalletConnect}) => {
   const {t} = useTranslation();
   return (
     <WalletConnect.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <WalletConnect.Screen
         name={WalletConnectScreens.WC_ROOT}

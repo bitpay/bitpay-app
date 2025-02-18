@@ -35,8 +35,8 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
-import {baseNativeHeaderBackButtonProps} from '../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import {IsEVMChain} from '../../../store/wallet/utils/currency';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
@@ -208,7 +208,6 @@ const AccountSettings = () => {
               navigation.goBack();
             }
           }}
-          {...baseNativeHeaderBackButtonProps}
         />
       ),
     });

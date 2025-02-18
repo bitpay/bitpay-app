@@ -16,11 +16,8 @@ import CoinbaseTransaction, {
 } from './screens/CoinbaseTransaction';
 import {CoinbaseWithdrawConfirmParamList} from './screens/CoinbaseWithdrawConfirm';
 import {Root} from '../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
+import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface CoinbaseProps {
   Coinbase: typeof Root;
@@ -46,16 +43,9 @@ const CoinbaseGroup: React.FC<CoinbaseProps> = ({Coinbase}) => {
   const {t} = useTranslation();
   return (
     <Coinbase.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Coinbase.Screen name={CoinbaseScreens.ROOT} component={CoinbaseRoot} />
       <Coinbase.Screen

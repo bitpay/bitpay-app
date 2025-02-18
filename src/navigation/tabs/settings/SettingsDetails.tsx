@@ -2,7 +2,7 @@ import React from 'react';
 import {createNativeStackNavigator, NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTheme} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
-import {HeaderBackButton} from '@react-navigation/elements';
+import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import General from './components/General';
 import Security from './components/Security';
 import Notifications from './components/Notifications';
@@ -16,7 +16,6 @@ import ThemeSettings from './general/screens/Theme';
 import CustomizeHomeSettings from './general/screens/customize-home/CustomizeHome';
 import AltCurrencySettings from './general/screens/AltCurrencySettings';
 import LanguageSettings from './general/screens/LanguageSettings';
-import {baseNativeHeaderBackButtonProps} from '../../../constants/NavigationOptions';
 
 export type SettingsDetailsParamList = {
   General: undefined;
@@ -60,7 +59,7 @@ const SettingsDetails = ({
   return (
     <Stack.Navigator
       initialRouteName={initialRoute || 'General'}
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         headerStyle: {
           backgroundColor: theme.colors.background,
         },
@@ -71,12 +70,7 @@ const SettingsDetails = ({
         headerBackTitleVisible: false,
         headerBackVisible: false,
         headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
+          <HeaderBackButton />
         ),
       })}>
       <Stack.Screen name="General" component={General} />

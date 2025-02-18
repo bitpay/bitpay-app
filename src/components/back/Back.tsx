@@ -73,8 +73,7 @@ const BackContainer = styled.View<{
         `
       : platform === 'android' &&
         css`
-          margin-left: -11px;
-          transform: scale(1.1);
+          padding-top: 6px;
         `}
 `;
 

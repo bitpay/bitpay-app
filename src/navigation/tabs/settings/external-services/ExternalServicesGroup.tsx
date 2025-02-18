@@ -41,11 +41,8 @@ import {SimplexSellOrderData} from '../../../../store/sell-crypto/models/simplex
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {thorswapTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {Root} from '../../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import SwapHistorySelector from './screens/SwapHistorySelector';
 
 interface ExternalServicesSettingsProps {
@@ -157,16 +154,9 @@ const ExternalServicesSettingsGroup: React.FC<
   const {t} = useTranslation();
   return (
     <ExternalServicesSettings.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.BANXA_SETTINGS}

@@ -2,13 +2,10 @@ import React from 'react';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../constants/NavigationOptions';
+import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import SettingsHome, {SettingsHomeProps} from './SettingsRoot';
 import SettingsDetails, {SettingsDetailsParamList} from './SettingsDetails';
-import {HeaderBackButton} from '@react-navigation/elements';
 
 interface SettingsProps {
   Settings: typeof Root;
@@ -34,16 +31,9 @@ const SettingsGroup: React.FC<SettingsProps> = ({Settings}) => {
 
   return (
     <Settings.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Settings.Screen
         name={SettingsScreens.SETTINGS_HOME}

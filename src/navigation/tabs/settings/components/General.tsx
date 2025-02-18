@@ -12,7 +12,6 @@ import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {RootState} from '../../../../store';
 import {useAppDispatch} from '../../../../utils/hooks/useAppDispatch';
 import {useTranslation} from 'react-i18next';
-import {SettingsContainer} from '../SettingsRoot';
 import {LanguageList} from '../../../../constants/LanguageSelectionList';
 import {
   ActiveOpacity,
@@ -21,8 +20,7 @@ import {
   SettingTitle,
 } from '../../../../components/styled/Containers';
 import styled from 'styled-components/native';
-import {HeaderBackButton} from '@react-navigation/elements';
-import {baseNativeHeaderBackButtonProps} from '../../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import {SettingsDetailsParamList} from '../SettingsDetails';
 import {FlashList} from '@shopify/flash-list';
 import {View} from 'react-native';
@@ -72,10 +70,7 @@ const General: React.FC<Props> = ({navigation}) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <HeaderBackButton
-          onPress={() => navigation.goBack()}
-          {...baseNativeHeaderBackButtonProps}
-        />
+        <HeaderBackButton />
       ),
     });
   }, [navigation, theme, t]);
