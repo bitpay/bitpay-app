@@ -14,20 +14,14 @@ import {TouchableOpacity} from 'react-native-gesture-handler';
 const ModalHeaderText = styled(BaseText)`
   font-size: 18px;
   font-weight: bold;
+  text-align: center;
+  padding-top: 8px;
 `;
 const ModalHeader = styled.View`
-  height: 50px;
   margin: 10px 10px 10px 10px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  position: relative;
 `;
 
 const CloseModalButton = styled(TouchableOpacity)`
-  position: absolute;
-  left: 10px;
   height: 41px;
   width: 41px;
   border-radius: 50px;
