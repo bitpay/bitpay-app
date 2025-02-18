@@ -213,4 +213,14 @@ static Braze *_braze = nil;
   }
 }
 
+#if TARGET_OS_MACCATALYST
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    UIWindowScene *scene = (UIWindowScene *)[[UIApplication sharedApplication] connectedScenes].allObjects.firstObject;
+    if (scene) {
+        scene.sizeRestrictions.minimumSize = CGSizeMake(400, 300);
+        scene.sizeRestrictions.maximumSize = CGSizeMake(2000, 1500);
+    }
+}
+#endif
+
 @end
