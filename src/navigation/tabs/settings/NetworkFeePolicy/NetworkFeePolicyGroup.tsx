@@ -3,11 +3,9 @@ import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import {Root} from '../../../../Root';
 import NetworkFeePolicy from './screens/NewtorkFeePolicy';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 
 interface NetworkFeePolicyProps {
   NetworkFeePolicySettings: typeof Root;
@@ -28,16 +26,9 @@ const NetworkFeePolicySettingsGroup: React.FC<NetworkFeePolicyProps> = ({
 
   return (
     <NetworkFeePolicySettings.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <NetworkFeePolicySettings.Screen
         name={NetworkFeePolicySettingsScreens.NETWORK_FEE_POLICY}

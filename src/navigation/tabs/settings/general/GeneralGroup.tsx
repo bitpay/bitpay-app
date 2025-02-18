@@ -4,11 +4,8 @@ import Theme from './screens/Theme';
 import CustomizeHomeSettings from './screens/customize-home/CustomizeHome';
 import AltCurrencySettings from './screens/AltCurrencySettings';
 import LanguageSettings from './screens/LanguageSettings';
-import {
-  baseNavigatorOptions,
-  baseNativeHeaderBackButtonProps,
-} from '../../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../../../Root';
 
@@ -36,14 +33,9 @@ const GeneralSettingsGroup: React.FC<GeneralSettingsProps> = ({
   const {t} = useTranslation();
   return (
     <GeneralSettings.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => navigation.goBack()}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <GeneralSettings.Screen
         name={GeneralSettingsScreens.THEME}

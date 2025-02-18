@@ -85,12 +85,8 @@ import BackupOnboarding, {
   BackupOnboardingParamList,
 } from './screens/BackupOnboarding';
 import {Root} from '../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
-import {AccountRowProps} from '../../components/list/AccountListRow';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
+import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface WalletProps {
   Wallet: typeof Root;
@@ -238,16 +234,9 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
   const {t} = useTranslation();
   return (
     <Wallet.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Wallet.Screen
         options={{

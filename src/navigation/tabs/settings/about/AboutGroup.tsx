@@ -4,11 +4,8 @@ import SendFeedback, {SendFeedbackParamList} from './screens/SendFeedback';
 import {useTranslation} from 'react-i18next';
 import StorageUsage from './screens/StorageUsage';
 import {Root} from '../../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 
 interface AboutProps {
   About: typeof Root;
@@ -30,16 +27,9 @@ const AboutGroup: React.FC<AboutProps> = ({About}) => {
   const {t} = useTranslation();
   return (
     <About.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <About.Screen
         name={AboutScreens.STORAGE_USAGE}

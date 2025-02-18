@@ -2,11 +2,8 @@ import React from 'react';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import SellCryptoRoot, {
   SellCryptoRootScreenParams,
 } from './screens/SellCryptoRoot';
@@ -42,16 +39,9 @@ const SellCryptoGroup: React.FC<SellCryptoProps> = ({SellCrypto}) => {
   const {t} = useTranslation();
   return (
     <SellCrypto.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <SellCrypto.Screen
         name={SellCryptoScreens.ROOT}

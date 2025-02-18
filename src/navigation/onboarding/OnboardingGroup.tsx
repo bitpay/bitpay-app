@@ -10,11 +10,8 @@ import {RecoveryPhraseParamList} from '../wallet/screens/RecoveryPhrase';
 import {VerifyPhraseParamList} from '../wallet/screens/VerifyPhrase';
 import {ImportParamList} from '../wallet/screens/Import';
 import {Root} from '../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
+import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface OnboardingProps {
   Onboarding: typeof Root;
@@ -49,16 +46,9 @@ export enum OnboardingScreens {
 const OnboardingStack: React.FC<OnboardingProps> = ({Onboarding}) => {
   return (
     <Onboarding.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Onboarding.Screen
         name={OnboardingScreens.ONBOARDING_START}
