@@ -30,8 +30,8 @@ import {
 } from '../styled/ExternalServicesSettings';
 import {useTranslation} from 'react-i18next';
 import {SimplexSellOrderData} from '../../../../../store/sell-crypto/models/simplex-sell.models';
-import {ScreenOptions} from '../../../../../styles/tabNavigator';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
+import CustomTabBar from '../../../../../components/custom-tab-bar/CustomTabBar';
 
 export interface SimplexSettingsProps {
   incomingPaymentRequest: {
@@ -233,7 +233,7 @@ const SimplexSettings: React.FC = () => {
               ? TabTitle.sell
               : TabTitle.buy
           }
-          screenOptions={{...ScreenOptions()}}>
+          tabBar={(props) => <CustomTabBar {...props} />}>
           <Tab.Screen
             name={TabTitle.buy}
             initialParams={route.params}

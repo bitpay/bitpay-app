@@ -31,6 +31,7 @@ import {
 } from '../../../store/app/app.actions';
 import {useAppDispatch} from '../../../utils/hooks';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import CustomTabBar from '../../../components/custom-tab-bar/CustomTabBar';
 
 export type SendToOptionsParamList = {
   title: string;
@@ -280,7 +281,7 @@ const SendToOptions = () => {
         goToSelectInputsView,
       }}>
       <ImportContainer>
-        <Tab.Navigator screenOptions={{...ScreenOptions()}}>
+        <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />}>
           <Tab.Screen
             name={t('Addresses')}
             component={SendToAddress}
