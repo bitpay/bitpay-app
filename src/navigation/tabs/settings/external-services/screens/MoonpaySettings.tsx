@@ -30,8 +30,8 @@ import {
 } from '../styled/ExternalServicesSettings';
 import {useTranslation} from 'react-i18next';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import {ScreenOptions} from '../../../../../styles/tabNavigator';
 import {MoonpaySellOrderData} from '../../../../../store/sell-crypto/models/moonpay-sell.models';
+import CustomTabBar from '../../../../../components/custom-tab-bar/CustomTabBar';
 
 export interface MoonpaySettingsProps {
   incomingPaymentRequest?: {
@@ -258,7 +258,7 @@ const MoonpaySettings: React.FC = () => {
               ? TabTitle.sell
               : TabTitle.buy
           }
-          screenOptions={{...ScreenOptions()}}>
+          tabBar={(props) => <CustomTabBar {...props} />}>
           <Tab.Screen
             name={TabTitle.buy}
             initialParams={route.params}

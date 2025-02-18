@@ -41,6 +41,7 @@ import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../../../../store/app/app.effects';
 import {Analytics} from '../../../../../../store/analytics/analytics.effects';
+import CustomTabBar from '../../../../../../components/custom-tab-bar/CustomTabBar';
 
 // Layout selector
 const Noop = () => null;
@@ -173,16 +174,7 @@ const CustomizeHomeSettings = () => {
         <Tab.Navigator
           initialRouteName={layoutType}
           style={{marginTop: 20}}
-          screenOptions={{
-            ...ScreenOptions(),
-            tabBarShowLabel: true,
-            tabBarItemStyle: {
-              flexDirection: 'row',
-            },
-            tabBarIconStyle: {
-              justifyContent: 'center',
-            },
-          }}
+          tabBar={(props) => <CustomTabBar {...props} />}
           screenListeners={{
             tabPress: tab => {
               haptic('soft');
