@@ -1,10 +1,10 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import { Platform } from 'react-native';
 import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useTheme } from 'styled-components/native';
-import { Action, LightBlack, NeutralSlate, White } from '../../styles/colors';
+import { Action, LightBlack, NeutralSlate, SlateDark, White } from '../../styles/colors';
+import { BaseText } from '../styled/Text';
 
 const gutter = 5;
 const tabWidth = 150;
@@ -13,11 +13,9 @@ const TabBarContainer = styled.View<{ darkMode: boolean; totalWidth: number }>`
   flex-direction: row;
   align-self: center;
   border-radius: 50px;
-  elevation: 0;
   width: ${({ totalWidth }) => totalWidth}px;
   height: 56px;
   background-color: ${({ darkMode }) => (darkMode ? LightBlack : NeutralSlate)};
-  padding-vertical: ${Platform.OS === 'ios' ? 6 : 2}px;
 `;
 
 const TabButton = styled(TouchableOpacity)<{ isFocused: boolean; tabWidth: number;}>`
@@ -25,25 +23,21 @@ const TabButton = styled(TouchableOpacity)<{ isFocused: boolean; tabWidth: numbe
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 5px;
   width: ${({ tabWidth }) => tabWidth}px;
   height: 44px;
   padding-vertical: 10px;
   border-radius: 50px;
-  margin-horizontal: ${gutter}px;
+  margin: ${gutter}px;
   position: relative;
-  border-bottom-width: ${({ isFocused }) => (isFocused ? '2px' : '0px')};
-  border-bottom-color: ${({ isFocused }) => (isFocused ? Action : 'transparent')};
-  background-color: ${({ isFocused }) => (isFocused ? Action : 'none')};
+  background-color: ${({ isFocused }) => (isFocused ? Action : 'transparent')};
 `;
 
-const TabLabel = styled.Text`
+const TabLabel = styled(BaseText)<{ isFocused: boolean }>`
+  color: ${({ theme: {dark}, isFocused }) => (dark ? NeutralSlate : (isFocused ? NeutralSlate : SlateDark))};
   font-size: 16px;
   text-transform: none;
   font-weight: 500;
-  color: ${White};
-  margin-left: 6px;
-  z-index: 1;
 `;
 
 const IconContainer = styled.View`
@@ -79,7 +73,7 @@ const CustomTabBar: React.FC<MaterialTopTabBarProps> = ({ state, descriptors, na
             }}
           >
             {tabBarIcon && <IconContainer>{tabBarIcon}</IconContainer>}
-            <TabLabel>{tabBarLabel}</TabLabel>
+            <TabLabel isFocused={isFocused}>{tabBarLabel}</TabLabel>
           </TabButton>
         );
       })}
