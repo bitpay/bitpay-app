@@ -1,6 +1,6 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Platform, View} from 'react-native';
+import {Platform, TouchableOpacity, View} from 'react-native';
 import {useTheme} from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
 import styled, {css} from 'styled-components/native';
@@ -48,7 +48,6 @@ import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
 import {sleep} from '../../../utils/helper-methods';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const ignoreGlobalListContextList = [
   'sell',
