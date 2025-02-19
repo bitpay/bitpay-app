@@ -76,7 +76,7 @@
     "babel-plugin-module-resolver": "4.1.0",
     "big-integer": "1.6.51",
     "bitauth": "0.4.1",
-    "bitcore-wallet-client": "10.6.0",
+    "bitcore-wallet-client": "10.8.0",
     "buffer": "4.9.2",
     "countries-list": "2.6.1",
     "eth-sig-util": "3.0.1",

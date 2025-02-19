@@ -7,6 +7,11 @@
   resolved "https://registry.yarnpkg.com/@adobe/css-tools/-/css-tools-4.4.1.tgz#2447a230bfe072c1659e6815129c03cf170710e3"
   integrity sha512-12WGKBQzjUAI4ayyF4IAtfw2QR/IDoqk6jTddXDhtYTJF9ASmoE1zst7cVtP0aL/F1jUJL5r+JxKXKEgHNbEUQ==
 
+"@adraffy/ens-normalize@1.10.1":
+  version "1.10.1"
+  resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.10.1.tgz#63430d04bd8c5e74f8d7d049338f1cd9d4f02069"
+  integrity sha512-96Z2IP3mYmF1Xg2cDm8f1gWGf/HUVedQ3FMifV4kG/PQ4yEP51xDtRAEfhVNt5f/uzpNkZHwWQuUcu6D6K+Ekw==
+
 "@ampproject/remapping@^2.2.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@ampproject/remapping/-/remapping-2.3.0.tgz#ed441b6fa600072520ce18b43d2c8cc8caecc7f4"
@@ -2798,6 +2803,13 @@
   dependencies:
     eslint-scope "5.1.1"
 
+"@noble/curves@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-1.2.0.tgz#92d7e12e4e49b23105a2555c6984d41733d65c35"
+  integrity sha512-oYclrNgRaM9SsBUBVbb8M6DTV7ZHRTKugureoYEncY5c65HOmRzvSiTE3y5CYaPYJA/GVkrhXEoF0M3Ya9PMnw==
+  dependencies:
+    "@noble/hashes" "1.3.2"
+
 "@noble/curves@1.4.2", "@noble/curves@~1.4.0":
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-1.4.2.tgz#40309198c76ed71bc6dbf7ba24e81ceb4d0d1fe9"
@@ -2811,6 +2823,11 @@
   integrity sha512-TlaHRXDehJuRNR9TfZDNQ45mMEd5dwUwmicsafcIX4SsNiqnCHKjE/1alYPd/lDRVhxdhUAlv8uEhMCI5zjIJQ==
   dependencies:
     "@noble/hashes" "1.5.0"
+
+"@noble/hashes@1.3.2":
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.3.2.tgz#6f26dbc8fbc7205873ce3cee2f690eba0d421b39"
+  integrity sha512-MVC8EAQp7MvEcm30KWENFjgR+Mkmf+D189XJTkFIlwohU5hcBbn1ZkKq7KVTi2Hme3PMGF390DaL52beVrIihQ==
 
 "@noble/hashes@1.4.0", "@noble/hashes@~1.4.0":
   version "1.4.0"
@@ -4530,6 +4547,13 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.18.tgz#1d3ca764718915584fcd9f6344621b7672665c67"
   integrity sha512-fh+pAqt4xRzPfqA6eh3Z2y6fyZavRIumvjhaCL753+TVkGKGhpPeyrJG2JftD0T9q4GF00KjefsQ+PQNDdWQaQ==
 
+"@types/node@22.7.5":
+  version "22.7.5"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.7.5.tgz#cfde981727a7ab3611a481510b473ae54442b92b"
+  integrity sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ==
+  dependencies:
+    undici-types "~6.19.2"
+
 "@types/node@^12.12.6":
   version "12.20.55"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.55.tgz#c329cbd434c42164f846b909bd6f85b5537f6240"
@@ -5211,6 +5235,11 @@ aes-js@3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/aes-js/-/aes-js-3.0.0.tgz#e21df10ad6c2053295bcbb8dab40b09dbea87e4d"
   integrity sha512-H7wUZRn8WpTq9jocdxQ2c8x2sKo9ZVmzfRE13GiNJXfp7NcKYEdvl3vspKjXox6RIG2VtaRe4JFvxG4rqp2Zuw==
+
+aes-js@4.0.0-beta.5:
+  version "4.0.0-beta.5"
+  resolved "https://registry.yarnpkg.com/aes-js/-/aes-js-4.0.0-beta.5.tgz#8d2452c52adedebc3a3e28465d858c11ca315873"
+  integrity sha512-G965FqalsNyrPqgEGON7nIx1e/OVENSgiEIzyC63haUMuvNnwIgIjMs52hlTCKhkBny7A2ORNlfY9Zu+jmGk1Q==
 
 agent-base@6:
   version "6.0.2"
@@ -6087,10 +6116,10 @@ bitcoinjs-lib@^5.2.0:
     varuint-bitcoin "^1.0.4"
     wif "^2.0.1"
 
-bitcore-lib-cash@^10.5.3:
-  version "10.5.3"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.5.3.tgz#791b5d44595ccaefdec8e99566f31e903334ef36"
-  integrity sha512-CVcxGKYIslwj/1XQgbfWA1i4jLQSQQtJsyL5i4o6JIP7UkNIcmL0gujh65q2FJApwON8DihREMJMF2ryi5fpdg==
+bitcore-lib-cash@^10.8.0:
+  version "10.8.0"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-10.8.0.tgz#9148146836afb31304c038a55c2b273169a25d87"
+  integrity sha512-fWhKM+lB8vZrkgTzVj4ahmbN8aX/Erfc+moYEFdG9MC/TlcjQORFzoXY6BXgxkRmISANqVqIoRVtBxHT3r7IIQ==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -6099,10 +6128,10 @@ bitcore-lib-cash@^10.5.3:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-lib-doge@^10.5.3:
-  version "10.5.3"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.5.3.tgz#0212efe43a2ce9a2c6fdab252a2bca06e71505c9"
-  integrity sha512-JduFfTVKxdn8bWGsnxZhWt9zJgA46fNgBG26zuJ6KtBZum4mQw88aP/6dYMSiS/oCZOvY0knAJfA8EQjqGG+qA==
+bitcore-lib-doge@^10.8.0:
+  version "10.8.0"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.8.0.tgz#74f740e74221bf944587ecddc88375d37a707ac4"
+  integrity sha512-+JKnAOwHwq6wAlU945fpihL/R1/E8LCe+SAwaS0k9W8DCOu7F4weyNm55EQW9KJBZ8oiK3W64HZqXxj3noYOrA==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -6112,10 +6141,10 @@ bitcore-lib-doge@^10.5.3:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib-ltc@^10.5.3:
-  version "10.5.3"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-10.5.3.tgz#e3984ae410141b88829a6ab45683ec06c8a81e60"
-  integrity sha512-hVIH5WTED1RInshZ00knBnXaWCbo7tZwrWBax2z2ZcVF7OCC52Ae5v8t1CWWKGRDtWq7panIGe3uuZsmTMmdpA==
+bitcore-lib-ltc@^10.8.0:
+  version "10.8.0"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-10.8.0.tgz#8f1b4acfb637b3d945ef947e319ee6a412288ec3"
+  integrity sha512-XyCrIt0P8q36qxmjyiqF3oGuqrnR3sKINO8w6ggciw8+JvJE8z/Sa6trw7dD5r0tferaDqzGW3R7+8Eg3prgxA==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
@@ -6126,10 +6155,10 @@ bitcore-lib-ltc@^10.5.3:
     lodash "^4.17.20"
     scryptsy "2.1.0"
 
-bitcore-lib@^10.5.3:
-  version "10.5.3"
-  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.5.3.tgz#b9ead7e9ff5752e560ff24a5ada31bfbc60b1ba0"
-  integrity sha512-QTeKpe5Md8x4njp6PsBCek+kZ0AA21RfBZi8HmTo+16laRxqyHz+pcn2pxDJgq6ZLmVLfU+AykKgHGqPt1KAYg==
+bitcore-lib@^10.8.0:
+  version "10.8.0"
+  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-10.8.0.tgz#e4bffa5da15c6ba77359babad0406729b8405a65"
+  integrity sha512-E3J8+Qs+ATYJdOd5VfJlWuWN3zd7icJUHOW01bbYmrDnBoH/aJzfgkO66fAnNxYdf4m+Uir5sr+lLvzYEgwTKg==
   dependencies:
     bech32 "=2.0.0"
     bn.js "=4.11.8"
@@ -6139,24 +6168,24 @@ bitcore-lib@^10.5.3:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-bitcore-mnemonic@^10.5.3:
-  version "10.5.3"
-  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.5.3.tgz#38338d73f4a740c7ed29df735567cf995b26b022"
-  integrity sha512-MPrVoexsjVwEtjxRG9bexG+5/8cSs4o4XMM0u7OhhRPMIlNgIMkjpVbuzohFPQ/kNgmLEQas6aa04FkNabUy8g==
+bitcore-mnemonic@^10.8.0:
+  version "10.8.0"
+  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-10.8.0.tgz#cdc399da8ba419daf0ad2f1ba3c2dd5d36b1e0ba"
+  integrity sha512-IQ/AEuLmWDf0VVVwK9nFZh1o4JB5cOr0TVUZbL0nm2J83T2Csut2IQWHxXc7OxEyWvOzmi1DFfn1a5V0ZjDvVQ==
   dependencies:
-    bitcore-lib "^10.5.3"
+    bitcore-lib "^10.8.0"
     unorm "^1.4.1"
 
-bitcore-wallet-client@10.6.0:
-  version "10.6.0"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.6.0.tgz#56ac301c7ec5d83a2d8546f8aa8466230afb0ef9"
-  integrity sha512-ZFgYbGCHy1LUgFmlOzppRAdNxd8qhxD7KMFPtB18xuz2BScvriM3PkcutXZju+OS8rEKAXRHx+gbLX8Qro2Y3Q==
+bitcore-wallet-client@10.8.0:
+  version "10.8.0"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.8.0.tgz#5c1558cad68617eb1a23f09a5f77a3fe60f91dc2"
+  integrity sha512-pZLjJ2EskO8kKSPhVQBgU/NE5WYzHFQJPx/bbasGyCVUoMeHrkO7kOwbVtJmTOakYkBxl36Y4jE/d1R/f/TWdQ==
   dependencies:
     ajv "6.12.0"
     async "0.9.2"
     bip38 "1.4.0"
-    bitcore-mnemonic "^10.5.3"
-    crypto-wallet-core "^10.5.5"
+    bitcore-mnemonic "^10.8.0"
+    crypto-wallet-core "^10.8.0"
     json-stable-stringify "1.0.1"
     lodash "4.17.20"
     preconditions "2.2.3"
@@ -7356,16 +7385,16 @@ crypto-js@3.1.9-1:
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
   integrity sha512-W93aKztssqf29OvUlqfikzGyYbD1rpkXvGP9IQ1JchLY3bxaLXZSWYbwrtib2vk8DobrDzX7PIXcDWHp0B6Ymw==
 
-crypto-wallet-core@^10.5.5:
-  version "10.5.5"
-  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.5.5.tgz#fc8b3276d1d6991a769da0bf1218a4d0a156533d"
-  integrity sha512-CD3fRr7l5uMcTB2voZOUursX9eyE6TBrLwG0ZT4q+hTy4nbr0myOWxUMGljJMOom0AmvS1FXO2eqeIigCyTX4Q==
+crypto-wallet-core@^10.8.0:
+  version "10.8.0"
+  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.8.0.tgz#12485e8c244b879f0a8a69bb168ed333b922066c"
+  integrity sha512-1wGwTmJquszoOfm/m6qMbJ4at3h89ylSMdZWTVoKs55fHTsD8tqdy/2m8Pdyyx1g3ROpxCvwYp3l/EF11GLSAA==
   dependencies:
-    bitcore-lib "^10.5.3"
-    bitcore-lib-cash "^10.5.3"
-    bitcore-lib-doge "^10.5.3"
-    bitcore-lib-ltc "^10.5.3"
-    ethers "^5.7.0"
+    bitcore-lib "^10.8.0"
+    bitcore-lib-cash "^10.8.0"
+    bitcore-lib-doge "^10.8.0"
+    bitcore-lib-ltc "^10.8.0"
+    ethers "6.13.5"
     info "0.0.6-beta.0"
     web3 "1.4.0"
     xrpl "2.13.0"
@@ -8624,7 +8653,7 @@ ethereumjs-util@^7.0.10, ethereumjs-util@^7.1.0, ethereumjs-util@^7.1.5:
     ethereum-cryptography "^0.1.3"
     rlp "^2.2.4"
 
-ethers@5.7.2, ethers@^5.7.0:
+ethers@5.7.2:
   version "5.7.2"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.7.2.tgz#3a7deeabbb8c030d4126b24f84e525466145872e"
   integrity sha512-wswUsmWo1aOK8rR7DIKiWSw9DbLWe6x98Jrn8wcTflTVvaXhAMaB5zGAXy0GYQEQp9iO1iSHWVyARQm11zUtyg==
@@ -8659,6 +8688,19 @@ ethers@5.7.2, ethers@^5.7.0:
     "@ethersproject/wallet" "5.7.0"
     "@ethersproject/web" "5.7.1"
     "@ethersproject/wordlists" "5.7.0"
+
+ethers@6.13.5:
+  version "6.13.5"
+  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.13.5.tgz#8c1d6ac988ac08abc3c1d8fabbd4b8b602851ac4"
+  integrity sha512-+knKNieu5EKRThQJWwqaJ10a6HE9sSehGeqWN65//wE7j47ZpFhKAnHB/JJFibwwg61I/koxaPsXbXpD/skNOQ==
+  dependencies:
+    "@adraffy/ens-normalize" "1.10.1"
+    "@noble/curves" "1.2.0"
+    "@noble/hashes" "1.3.2"
+    "@types/node" "22.7.5"
+    aes-js "4.0.0-beta.5"
+    tslib "2.7.0"
+    ws "8.17.1"
 
 ethjs-unit@0.1.6:
   version "0.1.6"
@@ -16900,6 +16942,11 @@ tslib@2.6.3:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.6.3.tgz#0438f810ad7a9edcde7a241c3d80db693c8cbfe0"
   integrity sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==
 
+tslib@2.7.0:
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.7.0.tgz#d9b40c5c40ab59e8738f297df3087bf1a2690c01"
+  integrity sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==
+
 tslib@^2.0.0, tslib@^2.0.1, tslib@^2.0.3, tslib@^2.1.0:
   version "2.8.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.8.1.tgz#612efe4ed235d567e8aba5f2a5fab70280ade83f"
@@ -17117,7 +17164,7 @@ underscore@1.12.1:
   resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.12.1.tgz#7bb8cc9b3d397e201cf8553336d262544ead829e"
   integrity sha512-hEQt0+ZLDVUMhebKxL4x1BTtDY7bavVofhZ9KZ4aI26X9SRaE+Y3m83XUL1UP2jn8ynjndwCCpEHdUG+9pP1Tw==
 
-undici-types@~6.19.8:
+undici-types@~6.19.2, undici-types@~6.19.8:
   version "6.19.8"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.19.8.tgz#35111c9d1437ab83a7cdc0abae2f26d88eda0a02"
   integrity sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==
@@ -17965,6 +18012,11 @@ ws@7.4.6:
   version "7.4.6"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.4.6.tgz#5654ca8ecdeee47c33a9a4bf6d28e2be2980377c"
   integrity sha512-YmhHDO4MzaDLB+M9ym/mDA5z0naX8j7SIlT8f8z+I0VtzsRbekxEutHSme7NPS2qE8StCYQNUnfWdXta/Yu85A==
+
+ws@8.17.1:
+  version "8.17.1"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.17.1.tgz#9293da530bb548febc95371d90f9c878727d919b"
+  integrity sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==
 
 ws@^3.0.0:
   version "3.3.3"
