@@ -114,6 +114,7 @@ export const Bills = () => {
           ShopEffects.startCheckIfBillPayAvailable(),
         ).catch(_ => false);
         setAvailable(billPayAvailable);
+        await dispatch(ShopEffects.startGetBillPayAccounts()).catch(() => {});
       }
     };
     isAvailable();
