@@ -199,7 +199,7 @@ const KeyWalletsRow = ({
               )}
             </KeyNameContainer>
           )}
-        {key?.mergedUtxoAndEvmAccounts.map((account, index) => {
+        {key?.mergedUtxoAndEvmAccounts?.map((account, index) => {
           const chain = account?.chain ?? account?.chains?.[0] ?? '';
           if (IsEVMChain(chain)) {
             let evmAccount = account as AccountRowProps & {
