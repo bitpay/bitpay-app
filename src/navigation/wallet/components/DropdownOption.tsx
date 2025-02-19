@@ -22,7 +22,7 @@ import {formatFiatAmountObj} from '../../../utils/helper-methods';
 import AngleRight from '../../../../assets/img/angle-right.svg';
 import {getRemainingWalletCount} from '../../../store/wallet/utils/wallet';
 import {WalletRowProps} from '../../../components/list/WalletRow';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native';
 
 interface Props {
   optionId: string;
