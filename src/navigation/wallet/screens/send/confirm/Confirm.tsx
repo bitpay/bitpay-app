@@ -47,7 +47,7 @@ import {
   Amount,
   ConfirmContainer,
   ConfirmScrollView,
-  DetailsListNoScroll,
+  DetailsList,
   ExchangeRate,
   Fee,
   Header,
@@ -60,7 +60,7 @@ import {
   CustomErrorMessage,
   WrongPasswordError,
 } from '../../../components/ErrorMessages';
-import {URL} from '../../../../../constants';
+import {IS_ANDROID, URL} from '../../../../../constants';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
 import {
@@ -590,12 +590,12 @@ const Confirm = () => {
 
   return (
     <>
-      <ConfirmContainer>
+      <ConfirmContainer style={IS_ANDROID ? {paddingBottom: 50} : undefined}>
         <ConfirmScrollView
           extraScrollHeight={50}
           contentContainerStyle={{paddingBottom: 50}}
           keyboardShouldPersistTaps={'handled'}>
-          <DetailsListNoScroll>
+          <DetailsList keyboardShouldPersistTaps={'handled'}>
             <Header>Summary</Header>
             <SendingTo
               recipient={recipientData}
@@ -727,7 +727,7 @@ const Confirm = () => {
                 dispatch(showConfirmAmountInfoSheet('total'));
               }}
             />
-          </DetailsListNoScroll>
+          </DetailsList>
 
           <PaymentSent
             isVisible={showPaymentSentModal}
