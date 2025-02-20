@@ -115,6 +115,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
     };
 
     return (
+      <View>
       <Modal
         deviceHeight={HEIGHT}
         deviceWidth={WIDTH}
@@ -257,6 +258,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
           />
         </View>
       </Modal>
+      </View>
     );
   },
 );
