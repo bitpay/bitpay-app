@@ -66,6 +66,7 @@ const BackContainer = styled.View<{
   platform: string;
   stackNavigation?: boolean;
 }>`
+  padding-top: 2px;
   ${({platform, stackNavigation}) =>
     stackNavigation
       ? css`
