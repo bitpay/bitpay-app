@@ -329,6 +329,7 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
       />
       <Wallet.Screen
         options={{
+          gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Add Funds')}</HeaderTitle>,
         }}
         name={WalletScreens.DEBIT_CARD_CONFIRM}
@@ -336,6 +337,7 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
       />
       <Wallet.Screen
         options={{
+          gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>,
         }}
         name={WalletScreens.PAY_PRO_CONFIRM}
@@ -343,6 +345,7 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
       />
       <Wallet.Screen
         options={{
+          gestureEnabled: false,
           headerTitle: () => (
             <HeaderTitle>{t('Two-Step Verification')}</HeaderTitle>
           ),
