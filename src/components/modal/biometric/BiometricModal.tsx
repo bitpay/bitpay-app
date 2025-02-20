@@ -20,7 +20,7 @@ import {
   NativeModules,
   DeviceEventEmitter,
 } from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {useTranslation} from 'react-i18next';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';

@@ -14,7 +14,7 @@ import {
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
 import {LogBox, RefreshControl} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {

@@ -6,9 +6,9 @@ import {
   RefreshControl,
   Image,
   DeviceEventEmitter,
-  TouchableOpacity,
   Platform,
 } from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import RNPrint from 'react-native-print';
 import RenderHtml from 'react-native-render-html';
 import TimeAgo from 'react-native-timeago';

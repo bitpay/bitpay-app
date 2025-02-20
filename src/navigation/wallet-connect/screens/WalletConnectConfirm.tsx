@@ -72,7 +72,7 @@ import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const HeaderRightContainer = styled.View``;
 

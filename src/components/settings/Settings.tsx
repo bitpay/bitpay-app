@@ -3,7 +3,7 @@ import {Color, Rect, Svg, Ellipse, Circle} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
 import {LightBlack, NeutralSlate, SlateDark, White} from '../../styles/colors';
 import {ActiveOpacity, HeaderRightContainer} from '../styled/Containers';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface SettingsSvgProps {
   color: Color | undefined;

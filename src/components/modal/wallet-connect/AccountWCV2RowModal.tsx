@@ -19,7 +19,7 @@ import {useTheme} from 'styled-components/native';
 import Back from '../../back/Back';
 import {ScrollView} from 'react-native-gesture-handler';
 import {View} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface Props {
   isVisible: boolean;

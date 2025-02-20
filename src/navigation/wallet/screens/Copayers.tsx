@@ -9,8 +9,8 @@ import {
   ScrollView,
   RefreshControl,
   Share,
-  TouchableOpacity,
 } from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   Paragraph,
   BaseText,

@@ -32,7 +32,7 @@ import {
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 import {AccountRowProps} from '../list/AccountListRow';
 import {WalletRowProps} from '../list/WalletRow';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const SearchIconContainer = styled.View`
   margin: 14px;

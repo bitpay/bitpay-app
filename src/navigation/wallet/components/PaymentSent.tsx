@@ -7,7 +7,7 @@ import PaymentCompleteSvg from '../../../../assets/img/wallet/payment-complete.s
 import {BaseText} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const PaymentSentContainer = styled.View`
   flex: 1;

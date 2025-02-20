@@ -4,7 +4,7 @@ import {
   ScrollView,
   View,
 } from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Slider from '@react-native-community/slider';
 import styled from 'styled-components/native';
 import {

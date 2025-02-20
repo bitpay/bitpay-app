@@ -35,7 +35,7 @@ import SendIcon from '../../../../../../assets/img/send-icon.svg';
 import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
 import {ListHeader} from '../../general/screens/customize-home/Shared';
 import {storage} from '../../../../../store';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 type SessionLogsScreenProps = NativeStackScreenProps<
   AboutGroupParamList,

@@ -9,7 +9,7 @@ import {
   LinkBlue,
   Slate,
 } from '../../../../styles/colors';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const ItemDivisor = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};

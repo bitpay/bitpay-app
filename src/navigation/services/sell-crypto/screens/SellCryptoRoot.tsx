@@ -3,11 +3,11 @@ import {
   ActivityIndicator,
   Platform,
   ScrollView,
-  TouchableOpacity,
 } from 'react-native';
 import _ from 'lodash';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled, {useTheme} from 'styled-components/native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   useAppDispatch,
   useAppSelector,

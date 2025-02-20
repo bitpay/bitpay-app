@@ -1,7 +1,7 @@
 import {Platform} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const WalletConnectContainer = styled.SafeAreaView`
   flex: 1;

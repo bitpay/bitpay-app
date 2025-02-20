@@ -14,8 +14,8 @@ import {
   Slate30,
 } from '../../styles/colors';
 import {BaseText} from './Text';
-import {TouchableOpacity} from '../base/TouchableOpacity';
-export {ActiveOpacity} from '../base/TouchableOpacity';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
+export {ActiveOpacity} from '@components/base/TouchableOpacity';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 export const isNotMobile = HEIGHT / WIDTH < 1.6;

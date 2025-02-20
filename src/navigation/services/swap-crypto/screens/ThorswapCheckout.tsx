@@ -2,7 +2,7 @@ import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import uuid from 'react-native-uuid';
 import {ScrollView} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {ethers} from 'ethers';
 import {
   useTheme,
