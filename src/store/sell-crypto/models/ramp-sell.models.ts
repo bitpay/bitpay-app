@@ -5,7 +5,7 @@ export type RampSellEnv = 'sandbox' | 'production';
 
 // export type RampPayoutMethodType = 'card' | 'sepa';
 
-export type RampSellOrderStatus = 'createdOrder' | 'bitpayTxSent' | 'bitpayFromCheckout';
+export type RampSellOrderStatus = 'createdOrder' | 'bitpayTxSent' | 'bitpayFromCheckout' | 'created' | 'released' | 'expired';
 
 export interface RampSellOrderData {
   env: 'dev' | 'prod';
@@ -18,7 +18,7 @@ export interface RampSellOrderData {
   fiat_receiving_amount: number;
   fiat_fee_amount?: number;
   fiat_currency: string;
-  payment_method: WithdrawalMethodKey; // bitpay-app payment method id
+  payment_method?: WithdrawalMethodKey | undefined; // bitpay-app payment method id
   external_id: string; // bitpay-app custom id
   status: RampSellOrderStatus;
   sale_view_token: string;
@@ -120,11 +120,12 @@ export interface RampGetSellTransactionDetailsRequestData {
   saleViewToken: string;
 }
 
+export type RampSellStatus = 'CREATED' | 'RELEASED' | 'EXPIRED';
 export interface RampSellTransactionDetails {
-  // TODO: review this with the actual response
   id: string;
   purchaseViewToken: string;
   createdAt: string;
+  status: RampSellStatus;
   crypto: {
     amount: string;
     assetInfo: {
@@ -151,9 +152,9 @@ export interface RampSellCreatedEventPayload {
     updatedAt: string;
     crypto: {
       amount: string;
-      status: null;
+      status: string | null;
       assetInfo: {
-        address: null;
+        address: string | null;
         symbol: string;
         chain: string;
         type: string;
@@ -165,7 +166,7 @@ export interface RampSellCreatedEventPayload {
       amount: string;
       currencySymbol: string;
       status: string;
-      payoutMethod: string;
+      payoutMethod: RampPayoutMethodName;
     },
     fees: {
       amount: string;

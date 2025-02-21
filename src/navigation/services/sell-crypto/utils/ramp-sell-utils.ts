@@ -11,20 +11,64 @@ import { WithdrawalMethodKey } from '../constants/SellCryptoConstants';
 
 export const rampSellEnv = __DEV__ ? 'sandbox' : 'production';
 
-export const rampSellSupportedFiatCurrencies = ['EUR', 'USD']; // TODO: review this
+export const rampSellSupportedFiatCurrencies = [
+  'BAM',
+  'BGN',
+  'BMD',
+  'BRL',
+  'BWP',
+  'CHF',
+  'CRC',
+  'CZK',
+  'DKK',
+  'EUR',
+  'GEL',
+  'GBP',
+  'GTQ',
+  'HNL',
+  'HUF',
+  'ILS',
+  'INR',
+  'ISK',
+  'KES',
+  'KWD',
+  'KZT',
+  'LAK',
+  'LKR',
+  'MDL',
+  'MKD',
+  'MYR',
+  'MXN',
+  'NZD',
+  'PEN',
+  'PLN',
+  'PYG',
+  'RON',
+  'RSD',
+  'SEK',
+  'SGD',
+  'THB',
+  'USD',
+  'UYU',
+];
 
 export const rampSellSupportedCoins = [
-  'btc',
+  // UTXO coins will be temporarily disabled, as the sale of these coins through Ramp requires the address from which the funds will be sent. This does not match the flow we have for crypto sales in our app.
+  // 'bch',
+  // 'btc',
   'eth',
   'eth_arb',
+  'eth_base',
   'eth_op',
-  'ltc',
-  'doge',
+  // 'ltc',
+  // 'doge',
   'pol', // MATIC_POL in RampSell
+  // 'sol', SOLANA_SOL in RampSell
 ];
 
 export const rampSellSupportedErc20Tokens: string[] = [
   '1inch',
+  'arkm',
   'bat',
   'dai',
   'ens',
@@ -32,24 +76,39 @@ export const rampSellSupportedErc20Tokens: string[] = [
   'mana',
   'rly',
   'sand',
-  // 'sol', SOLANA_SOL in RampSell
+  'ton',
   'usda',
   'usdc',
   'usdt',
+  'xaut',
 ];
 export const rampSellSupportedMaticTokens: string[] = [
+  'bat',
   'dai',
+  'mana',
+  'ovr',
+  'sand',
+  'usdc',
   'usdc.e', // MATIC_USDCE in RampSell
+  'usdt',
   'weth', // MATIC_ETH in RampSell
 ];
 export const rampSellSupportedArbitrumTokens: string[] = [
   'usda',
+  'usdc',
+  'usdc.e', // ARBITRUM_USDCE in RampSell
+  'usdt',
 ];
-export const rampSellSupportedBaseTokens: string[] = [];
+export const rampSellSupportedBaseTokens: string[] = [
+  'usdc',
+  'usdc.e', // BASE_USDCE in RampSell
+];
 export const rampSellSupportedOptimismTokens: string[] = [
   'dai',
   'usda',
+  'usdc',
   'usdc.e', // OPTIMISM_USDCE in RampSell
+  'usdt',
   'wld',
 ];
 
@@ -86,7 +145,7 @@ export const rampCoinMapping = (coin: string): string => {
 };
 
 export const getCoinFromRampCoinFormat = (coin: string): string => {
-  let _coin = cloneDeep(coin);
+  let _coin = cloneDeep(coin).toLowerCase();
 
   if (_coin?.toLowerCase() === 'usdce') {
     _coin = 'usdc.e';
@@ -108,10 +167,18 @@ export const getRampCoinFormat = (
 
 export const getChainFromRampChainFormat = (
   chain: string | undefined,
-): string => {
-  const _chain = chain ? cloneDeep(chain).toLowerCase() : '';
+): string | undefined => {
+  if (!chain) {
+    return undefined;
+  }
 
-  return _chain;
+  const chainMap: {[key: string]: string} = {
+    arbitrum: 'arb',
+    base: 'base',
+    optimism: 'op',
+  };
+
+  return chainMap[chain.toLowerCase()] ?? chain;
 };
 
 export const getRampChainFormat = (chain: string): string | undefined => {
@@ -121,6 +188,9 @@ export const getRampChainFormat = (chain: string): string | undefined => {
   switch (_chain) {
     case 'arb':
       formattedChain = 'arbitrum';
+      break;
+    case 'base':
+      formattedChain = 'base';
       break;
     case 'op':
       formattedChain = 'optimism';
@@ -166,15 +236,74 @@ export const getRampSellCurrenciesFixedProps = (
       contractAddress?: string;
     };
   } = {
-    matic: {
+    'matic-matic': {
       code: 'pol',
       name: 'Polygon',
       chain: 'matic',
     },
+    'pol-matic': {
+      code: 'pol',
+      name: 'Polygon',
+      chain: 'matic',
+    },
+    'usdc-eth': {
+      code: 'usdc',
+      name: 'USD Coin',
+      chain: 'eth',
+      contractAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    },
+    'usdc-arbitrum': {
+      code: 'usdc',
+      name: 'USD Coin',
+      chain: 'arbitrum',
+      contractAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    },
+    'usdc-base': {
+      code: 'usdc',
+      name: 'USD Coin',
+      chain: 'base',
+      contractAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+    },
+    'usdc-matic': {
+      code: 'usdc',
+      name: 'USD Coin',
+      chain: 'matic',
+      contractAddress: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
+    },
+    'usdc-optimism': {
+      code: 'usdc',
+      name: 'USD Coin',
+      chain: 'optimism',
+      contractAddress: '0x0b2c639c533813f4aa9d7837caf62653d097ff85',
+    },
+    'usdt-eth': {
+      code: 'usdt',
+      name: 'Tether USD',
+      chain: 'eth',
+      contractAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    },
+    'usdt-arbitrum': {
+      code: 'usdt',
+      name: 'Tether USD',
+      chain: 'arbitrum',
+      contractAddress: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
+    },
+    'usdt-matic': {
+      code: 'usdt',
+      name: 'Tether USD',
+      chain: 'matic',
+      contractAddress: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
+    },
+    'usdt-optimism': {
+      code: 'usdt',
+      name: 'Tether USD',
+      chain: 'optimism',
+      contractAddress: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58',
+    },
   };
 
   rampCurrenciesData.forEach((currency: RampAssetInfo) => {
-    const key = currency.symbol.toLowerCase();
+    const key = `${currency.symbol?.toLowerCase()}-${currency.chain?.toLowerCase()}`;
     const mapping = currencyMapping[key];
 
     if (
@@ -210,11 +339,29 @@ export const getRampSellCoinFormat = (
   return formattedCoin;
 };
 
-export const getRampSellFiatAmountLimits = () => { // TODO: review these limits
-  return {
-    min: 50, // fixed in USD
-    max: 15000, // fixed in USD
-  };
+export const getRampSellPayoutMethodFormat = (
+  method: WithdrawalMethodKey,
+): RampPayoutMethodName | undefined => {
+  if (!method) {
+    return undefined;
+  }
+  let formattedPaymentMethod: RampPayoutMethodName | undefined;
+  switch (method) {
+    case 'ach':
+      formattedPaymentMethod = RampPayoutMethodName.AMERICAN_BANK_TRANSFER;
+      break;
+    case 'creditCard':
+    case 'debitCard':
+      formattedPaymentMethod = RampPayoutMethodName.CARD;
+      break;
+    case 'sepaBankTransfer':
+      formattedPaymentMethod = RampPayoutMethodName.SEPA;
+      break;
+    default:
+      formattedPaymentMethod = undefined;
+      break;
+  }
+  return formattedPaymentMethod;
 };
 
 export const getPayoutMethodKeyFromRampType = (
@@ -241,24 +388,11 @@ export const getPayoutMethodKeyFromRampType = (
   return formattedPaymentMethod;
 };
 
-// case 'ach':
-//   if (data.AMERICAN_BANK_TRANSFER) {
-//     paymentMethodData = data.AMERICAN_BANK_TRANSFER;
-//   }
-//   break;
-// case 'sepaBankTransfer':
-//   if (data.SEPA) {
-//     paymentMethodData = data.SEPA;
-//   }
-//   break;
-// case 'debitCard':
-// case 'creditCard':
-//   if (data.CARD) {
-//     paymentMethodData = data.CARD;
-//   }
-//   break;
-// default:
-//   paymentMethodData = data.CARD;
+export const getSellStatusFromRampStatus = (rampStatus: string): RampSellOrderStatus => {
+  const status = cloneDeep(rampStatus)?.toLowerCase() || '';
+
+  return status as RampSellOrderStatus;
+};
 
 export interface RampSellStatus {
   statusTitle?: string;
@@ -270,11 +404,18 @@ export const rampSellGetStatusDetails = (
 ): RampSellStatus => {
   let statusDescription, statusTitle;
   switch (status) {
+    case 'createdOrder':
+    case 'created':
+      statusTitle = t('Sell Order started');
+      statusDescription = t(
+        'Sell order started. You must complete the selling process with our partner Ramp Network.',
+      );
+      break;
     case 'bitpayFromCheckout':
       statusTitle = t('Sell Order started');
       statusDescription =
         t(
-          'Sell order started. You must complete the selling process with our partner Ramp.',
+          'Sell order started. You must complete the selling process with our partner Ramp Network.',
         ) +
         '\n' +
         t(
@@ -289,6 +430,18 @@ export const rampSellGetStatusDetails = (
         t(
           'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
         );
+      break;
+    case 'released':
+      statusTitle = t('Finished');
+      statusDescription = t(
+        "Fiat amount were successfully sent to the user's payout method. Remember that depending on your Payout method, it may take a few days to be reflected.",
+      );
+      break;
+    case 'expired':
+      statusTitle = t('Expired');
+      statusDescription = t(
+        'Order has expired. The time for sending crypto funds for the sale has been exceeded.',
+      );
       break;
     default:
       statusTitle = undefined;
@@ -305,9 +458,13 @@ export const rampSellGetStatusColor = (
   status: RampSellOrderStatus,
 ): string => {
   switch (status) {
-    case 'bitpayFromCheckout':
-    case 'bitpayTxSent':
-      return '#9b9bab';
+  case 'released':
+    return '#01d1a2';
+  case 'expired':
+    return '#df5264';
+  case 'bitpayFromCheckout':
+  case 'bitpayTxSent':
+      return '#fdb455';
     default:
       return '#9b9bab';
   }

@@ -40,6 +40,7 @@ import {
   RampSellStatus,
 } from '../../../../services/sell-crypto/utils/ramp-sell-utils';
 import {SellCryptoActions} from '../../../../../store/sell-crypto';
+import {Br} from '../../../../../components/styled/Containers';
 export interface RampSellDetailsProps {
   sellOrder: RampSellOrderData;
 }
@@ -171,19 +172,33 @@ const RampSellDetails: React.FC = () => {
                 'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
               )}
             </LabelTipText>
+            <TouchableOpacity
+              onPress={() => {
+                haptic('impactLight');
+                dispatch(
+                  openUrlWithInAppBrowser(
+                    'https://support.ramp.network/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
+                  ),
+                );
+              }}>
+              <Link style={{marginTop: 15}}>
+                {t('What is the status of my crypto sale?')}
+              </Link>
+            </TouchableOpacity>
           </LabelTip>
         )}
 
-        {!!sellOrder.status && (
+        {sellOrder.status ? (
           <LabelTip type="info">
-            <LabelTipText>
+            <LabelTipText style={{maxWidth: status?.statusDescription ? '80%' : '90%'}}>
               {status.statusDescription ||
                 t(
                   'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
                 )}
             </LabelTipText>
-            {['failed'].includes(sellOrder.status) ? (
+            {['expired'].includes(sellOrder.status) ? (
               <>
+                <Br />
                 <LabelTipText>
                   {t('Having problems with Ramp?')}{' '}
                 </LabelTipText>
@@ -202,8 +217,27 @@ const RampSellDetails: React.FC = () => {
                 </TouchableOpacity>
               </>
             ) : null}
+            {['created', 'createdOrder', 'bitpayTxSent'].includes(sellOrder.status) ? (
+              <>
+                <Br />
+                <LabelTipText>
+                  {t('What is the status of my crypto sale?')}{' '}
+                </LabelTipText>
+                <TouchableOpacity
+                  onPress={() => {
+                    haptic('impactLight');
+                    dispatch(
+                      openUrlWithInAppBrowser(
+                        'https://support.ramp.network/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
+                      ),
+                    );
+                  }}>
+                  <Link style={{marginTop: 15}}>{t('Transaction FAQ')}</Link>
+                </TouchableOpacity>
+              </>
+            ) : null}
           </LabelTip>
-        )}
+        ) : null}
 
         <ColumnDataContainer>
           <TouchableOpacity
@@ -230,7 +264,7 @@ const RampSellDetails: React.FC = () => {
                 copyText(sellOrder.quote_id!);
                 setCopiedPaymentId(true);
               }}>
-              <RowLabel>{t('Ramp Quote ID')}</RowLabel>
+              <RowLabel>{t('Ramp Network Order ID')}</RowLabel>
               <CopiedContainer>
                 <ColumnData style={{maxWidth: '90%'}}>
                   {sellOrder.quote_id}

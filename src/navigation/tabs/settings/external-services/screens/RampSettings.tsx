@@ -37,7 +37,6 @@ export interface RampSettingsProps {
   incomingPaymentRequest: {
     flow?: 'buy' | 'sell';
     rampExternalId: string;
-    walletId?: string;
     status?: string;
   };
 }
@@ -139,17 +138,30 @@ const RampSettings: React.FC = () => {
                     <PrTxtFiatAmount>
                       {so.crypto_amount} {so.coin}
                     </PrTxtFiatAmount>
-                    {!so.status ? (
+                    {!so.status || ['created', 'createdOrder'].includes(so.status) ? (
                       <PrTxtStatus>{t('Sell order started')}</PrTxtStatus>
                     ) : null}
-                    {so.status &&
-                    ['bitpayFromCheckout', 'bitpayTxSent'].includes(
-                      so.status,
-                    ) ? (
-                      <PrTxtStatus>{t('Processing sell order')}</PrTxtStatus>
-                    ) : (
-                      <PrTxtStatus>{t('Sell order started')}</PrTxtStatus>
-                    )}
+                    {so.status ?
+                    <>
+                      {['bitpayFromCheckout', 'bitpayTxSent'].includes(
+                        so.status,
+                      ) && (
+                        <PrTxtStatus>{t('Processing sell order')}</PrTxtStatus>
+                      )}
+
+                      {so.status === 'released' && (
+                        <PrTxtStatus style={{color: '#01d1a2'}}>
+                          {t('Sell order completed')}
+                        </PrTxtStatus>
+                      )}
+
+                      {so.status === 'expired' && (
+                        <PrTxtStatus style={{color: '#df5264'}}>
+                          {t('Sell order expired')}
+                        </PrTxtStatus>
+                      )}
+
+                    </> : null}
                   </PrRowLeft>
                   <PrRowRight>
                     <PrTxtCryptoAmount>
