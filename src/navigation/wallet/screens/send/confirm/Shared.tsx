@@ -60,10 +60,12 @@ import {IsERCToken, IsUtxoChain} from '../../../../../store/wallet/utils/currenc
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
 import CoinbaseSvg from '../../../../../../assets/img/wallet/transactions/coinbase.svg';
+import {IS_ANDROID} from '../../../../../constants';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
   flex: 1;
+  ${IS_ANDROID && 'padding-bottom: 50px;'}
 `;
 
 export const ConfirmScrollView = styled(KeyboardAwareScrollView)`
