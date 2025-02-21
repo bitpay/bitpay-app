@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {Text, TouchableOpacity} from 'react-native';
+import {Text} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
