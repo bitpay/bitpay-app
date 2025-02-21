@@ -86,27 +86,20 @@ import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../tabs/TabsStack';
 import {ExternalServicesSettingsScreens} from '../../../tabs/settings/external-services/ExternalServicesGroup';
 import {
-  RampGetSellQuoteRequestData,
   RampGetSellTransactionDetailsRequestData,
   RampSellIncomingData,
   RampSellOrderData,
   RampSellTransactionDetails,
-  // RampSellTransactionDetails,
 } from '../../../../store/sell-crypto/models/ramp-sell.models';
 import {
-  getPayoutMethodKeyFromRampType,
-  getRampSellFixedCurrencyAbbreviation,
-  // getRampSellPayoutMethodFormat,
-  // getPayoutMethodKeyFromRampType,
+  getSellStatusFromRampStatus,
   rampSellEnv,
 } from '../utils/ramp-sell-utils';
-// import {rampGetSellTransactionDetails} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {RampSettingsProps} from '../../../../navigation/tabs/settings/external-services/screens/RampSettings';
 import SendToPill from '../../../../navigation/wallet/components/SendToPill';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {WithdrawalMethodKey, WithdrawalMethodsAvailable} from '../constants/SellCryptoConstants';
-import {getSendMaxData} from '../../utils/external-services-utils';
 import {
   ConfirmHardwareWalletModal,
   SimpleConfirmPaymentState,
@@ -138,6 +131,7 @@ export interface RampSellCheckoutProps {
   paymentMethod: WithdrawalMethodKey;
   useSendMax?: boolean;
   sendMaxInfo?: SendMaxInfo;
+  showNewQuoteInfo?: boolean;
 }
 
 let countDown: NodeJS.Timeout | undefined;
@@ -152,6 +146,7 @@ const RampSellCheckout: React.FC = () => {
       paymentMethod,
       useSendMax,
       sendMaxInfo,
+      showNewQuoteInfo,
     },
   } = useRoute<RouteProp<{params: RampSellCheckoutProps}>>();
   const {t} = useTranslation();
@@ -185,7 +180,7 @@ const RampSellCheckout: React.FC = () => {
   );
   const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
-  // const [txData, setTxData] = useState<RampSellTransactionDetails>();
+  const [txData, setTxData] = useState<RampSellTransactionDetails>();
 
   const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
     useState(false);
@@ -279,60 +274,61 @@ const RampSellCheckout: React.FC = () => {
   };
 
   const init = async () => {
-    console.log('========== init sellOrder: ', sellOrder);
-    console.log('============RampSellCheckout params: ', {
-      sellCryptoExternalId,
-      wallet,
-      toAddress,
-      amount,
-      paymentMethod,
-      useSendMax,
-      sendMaxInfo,
-    });
     let sellTxDetails: RampSellTransactionDetails;
-    // try {
-    //   const reqData: RampGetSellTransactionDetailsRequestData = {
-    //     env: rampSellEnv,
-    //     id: 'id1', // TODO: use the id from web checkout event
-    //     saleViewToken: 'saleViewToken1'  // TODO: use the id from web checkout event
-    //   }
+    try {
+      if (sellOrder.quote_id && sellOrder.sale_view_token) {
+        const reqData: RampGetSellTransactionDetailsRequestData = {
+          env: rampSellEnv,
+          id: sellOrder.quote_id,
+          saleViewToken: sellOrder.sale_view_token,
+        };
 
-    //   sellTxDetails = await rampGetSellTransactionDetails(reqData);
-    // } catch (err) {
-    //   // logger.debug(
-    //   //   `Error trying to get the Sell Transaction Details from Ramp for id: ${sellOrder.transaction_id}`,
-    //   // );
-    //   showError(
-    //     err,
-    //     'rampGetSellTransactionDetails Error. Could not get order details from Ramp',
-    //   );
-    //   return;
-    // }
+        sellTxDetails = await rampGetSellTransactionDetails(reqData);
 
-    // setTxData(sellTxDetails);
+        if (sellTxDetails.status && getSellStatusFromRampStatus(sellTxDetails.status) === 'expired') {
+          const dataToUpdate: RampSellIncomingData = {
+            rampExternalId: sellOrder.external_id,
+            status: getSellStatusFromRampStatus(sellTxDetails.status),
+          };
 
-    // if (
-    //   sellOrder.address_to !== sellTxDetails.depositWallet.walletAddress &&
-    //   (wallet.currencyAbbreviation.toLowerCase() !== 'btc' ||
-    //     sellOrder.address_to !== sellTxDetails.depositWallet.btcLegacyAddress)
-    // ) {
-    //   const msg = `The destination address of the original Sell Order does not match the address expected by Ramp for the id: ${sellOrder.transaction_id}`;
-    //   showError(
-    //     msg,
-    //     'rampGetSellTransactionDetails Error. Destination address mismatch',
-    //   );
-    //   return;
-    // }
+          dispatch(
+            SellCryptoActions.updateSellOrderRamp({
+              rampSellIncomingData: dataToUpdate,
+            }),
+          );
 
-    // TODO: review this payTill
-    let payTill: string | number | null = null; // sellTxDetails.quoteExpiresAt;
+          logger.debug(
+            `The sell order has expired. id: ${sellOrder.quote_id} | saleViewToken: ${sellOrder.sale_view_token}`,
+          );
+          showError(
+            t('The sales order has expired. Please create a new order and try to make payment on time.'),
+            'rampGetSellTransactionDetails Error. The sell order has expired',
+          );
+          return;
+        }
+
+        setTxData(sellTxDetails);
+      }
+    } catch (err) {
+      logger.debug(
+        `Error trying to get the Sell Transaction Details from Ramp for id: ${sellOrder.quote_id} | saleViewToken: ${sellOrder.sale_view_token}`,
+      );
+      showError(
+        err,
+        'rampGetSellTransactionDetails Error. Could not get order details from Ramp',
+      );
+      return;
+    }
+
+    // Set custom expiration in 15m
+    let payTill: string | number | null = null;
 
     if (!payTill) {
       logger.debug(
         'No quoteExpiresAt parameter present. Setting custom expiration time.',
       );
       const now = Date.now();
-      payTill = now + 5 * 60 * 1000;
+      payTill = now + 15 * 60 * 1000;
     }
 
     paymentTimeControl(payTill);
@@ -370,7 +366,6 @@ const RampSellCheckout: React.FC = () => {
     createTx(wallet, toAddress, depositSat, destinationTag)
       .then(async ctxp => {
         setCtxp(ctxp);
-        console.log('============createTx ctxp: ', ctxp);
         setFee(ctxp.fee);
         setIsLoading(false);
         dispatch(dismissOnGoingProcessModal());
@@ -382,7 +377,6 @@ const RampSellCheckout: React.FC = () => {
         return;
       })
       .catch(err => {
-        console.log('============createTx err: ', err);
         const reason = 'createTx Error';
         if (err.code) {
           showError(err.message , reason, err.code, err.title, err.actions);
@@ -517,8 +511,7 @@ const RampSellCheckout: React.FC = () => {
           }),
         );
       }
-      // TODO: uncomment and handle updateRampTx
-      // updateRampTx(txData!, broadcastedTx as Partial<TransactionProposal>);
+      updateRampTx(txData!, broadcastedTx as Partial<TransactionProposal>);
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
       setShowPaymentSentModal(true);
@@ -596,45 +589,36 @@ const RampSellCheckout: React.FC = () => {
     }
   };
 
-  // const updateRampTx = (
-  //   rampTxData: RampSellTransactionDetails,
-  //   broadcastedTx?: Partial<TransactionProposal>,
-  // ) => {
-  //   const dataToUpdate: RampSellIncomingData = {
-  //     rampExternalId: sellCryptoExternalId!,
-  //     txSentOn: Date.now(),
-  //     txSentId: broadcastedTx?.txid,
-  //     status: 'bitpayTxSent',
-  //     // fiatAmount: rampTxData.quoteCurrencyAmount, // TODO: review if fiatAmount needs an update
-  //     // baseCurrencyCode: cloneDeep(
-  //     //   rampTxData.quoteCurrency.code,
-  //     // ).toUpperCase(),
-  //     totalFee: totalExchangeFee,
-  //   };
+  const updateRampTx = (
+    rampTxData: RampSellTransactionDetails,
+    broadcastedTx?: Partial<TransactionProposal>,
+  ) => {
+    const dataToUpdate: RampSellIncomingData = {
+      rampExternalId: sellCryptoExternalId!,
+      txSentOn: Date.now(),
+      txSentId: broadcastedTx?.txid,
+      status: 'bitpayTxSent',
+    };
 
-  //   dispatch(
-  //     SellCryptoActions.updateSellOrderRamp({
-  //       rampSellIncomingData: dataToUpdate,
-  //     }),
-  //   );
+    dispatch(
+      SellCryptoActions.updateSellOrderRamp({
+        rampSellIncomingData: dataToUpdate,
+      }),
+    );
 
-  //   logger.debug('Updated sell order with: ' + JSON.stringify(dataToUpdate));
+    logger.debug('Updated sell order with: ' + JSON.stringify(dataToUpdate));
 
-  //   dispatch(
-  //     Analytics.track('Successful Crypto Sell', {
-  //       coin: wallet.currencyAbbreviation.toLowerCase(),
-  //       chain: wallet.chain.toLowerCase(),
-  //       amount: amountExpected,
-  //       fiatAmount:
-  //         // rampTxData?.quoteCurrencyAmount ||
-  //         sellOrder?.fiat_receiving_amount,
-  //       fiatCurrency:
-  //         // rampTxData?.quoteCurrency?.code?.toLowerCase() ||
-  //         sellOrder?.fiat_currency?.toLowerCase(),
-  //       exchange: 'ramp',
-  //     }),
-  //   );
-  // };
+    dispatch(
+      Analytics.track('Successful Crypto Sell', {
+        coin: wallet.currencyAbbreviation.toLowerCase(),
+        chain: wallet.chain.toLowerCase(),
+        amount: amountExpected,
+        fiatAmount: sellOrder?.fiat_receiving_amount,
+        fiatCurrency: sellOrder?.fiat_currency?.toLowerCase(),
+        exchange: 'ramp',
+      }),
+    );
+  };
 
   const showSendMaxWarning = async (
     coin: string,
@@ -729,19 +713,19 @@ const RampSellCheckout: React.FC = () => {
 
     logger.error('Ramp error: ' + msg);
 
-    // dispatch(
-    //   Analytics.track('Failed Crypto Sell', {
-    //     exchange: 'ramp',
-    //     context: 'RampSellCheckout',
-    //     reasonForFailure: reason || 'unknown',
-    //     errorMsg: errorMsgLog || 'unknown',
-    //     amountFrom: amountExpected || '',
-    //     fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
-    //     fromChain: wallet.chain?.toLowerCase() || '',
-    //     fiatAmount: sellOrder?.fiat_receiving_amount || '',
-    //     fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
-    //   }),
-    // );
+    dispatch(
+      Analytics.track('Failed Crypto Sell', {
+        exchange: 'ramp',
+        context: 'RampSellCheckout',
+        reasonForFailure: reason || 'unknown',
+        errorMsg: errorMsgLog || 'unknown',
+        amountFrom: amountExpected || '',
+        fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
+        fromChain: wallet.chain?.toLowerCase() || '',
+        fiatAmount: sellOrder?.fiat_receiving_amount || '',
+        fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
+      }),
+    );
 
     await sleep(700);
     dispatch(
@@ -766,25 +750,12 @@ const RampSellCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    // const _getSendMaxData = async (wallet: Wallet) => {
-    //   // TODO: review this
-    //   // We obtain the sendMaxData, but we do not send the maximum amount, since Ramp misinterprets it
-    //   // (It rounds the last digit of the decimal up, based on a variable precision number from its side. Therefore, it causes a failure in the execution of the order)
-    //   // As a workaround we continue to use the previously agreed amount
-    //   const sendMaxData = await getSendMaxData(wallet);
-    //   sendMaxInfo = cloneDeep(sendMaxData);
-    //   init();
-    // };
+    dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
+    if (isToken) {
+      useSendMax = false;
+    }
 
-    // dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
-    // if (isToken) {
-    //   useSendMax = false;
-    // }
-    // if (sellOrder?.send_max && !isToken) {
-    //   _getSendMaxData(wallet);
-    // } else {
-      init();
-    // }
+    init();
 
     return () => {
       if (countDown) {
@@ -795,17 +766,17 @@ const RampSellCheckout: React.FC = () => {
 
   useEffect(() => {
     if (remainingTimeStr === 'expired' && !expiredAnalyticSent) {
-      // dispatch(
-      //   Analytics.track('Failed Crypto Sell', {
-      //     exchange: 'ramp',
-      //     context: 'RampSellCheckout',
-      //     reasonForFailure: 'Time to make the payment expired',
-      //     amountFrom: amountExpected || '',
-      //     fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
-      //     fiatAmount: sellOrder?.fiat_receiving_amount || '',
-      //     fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
-      //   }),
-      // );
+      dispatch(
+        Analytics.track('Failed Crypto Sell', {
+          exchange: 'ramp',
+          context: 'RampSellCheckout',
+          reasonForFailure: 'Time to make the payment expired',
+          amountFrom: amountExpected || '',
+          fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
+          fiatAmount: sellOrder?.fiat_receiving_amount || '',
+          fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
+        }),
+      );
       setExpiredAnalyticSent(true);
     }
   }, [remainingTimeStr, expiredAnalyticSent]);
@@ -888,31 +859,7 @@ const RampSellCheckout: React.FC = () => {
           <RampSellCheckoutSkeleton />
         ) : (
           <>
-          {/* TODO: review this and send the correct param*/}
-            {/* {getPayoutMethodKeyFromRampType(undefined) &&
-            WithdrawalMethodsAvailable[
-              getPayoutMethodKeyFromRampType(undefined)!
-            ] ? (
-              <>
-                <RowDataContainer>
-                  <RowLabel>{t('Withdrawing Method')}</RowLabel>
-                  <SelectedOptionContainer>
-                    <SelectedOptionText
-                      numberOfLines={1}
-                      ellipsizeMode={'tail'}>
-                      {
-                        WithdrawalMethodsAvailable[
-                          getPayoutMethodKeyFromRampType(
-                            undefined,
-                          )!
-                        ].label
-                      }
-                    </SelectedOptionText>
-                  </SelectedOptionContainer>
-                </RowDataContainer>
-                <ItemDivisor />
-              </>
-            ) : WithdrawalMethodsAvailable &&
+            {WithdrawalMethodsAvailable &&
               sellOrder.payment_method &&
               WithdrawalMethodsAvailable[sellOrder.payment_method] ? (
               <>
@@ -931,7 +878,7 @@ const RampSellCheckout: React.FC = () => {
                 </RowDataContainer>
                 <ItemDivisor />
               </>
-            ) : null} */}
+            ) : null}
             <RowDataContainer>
               <RowLabel>{t('Miner Fee')}</RowLabel>
               {fee ? (
@@ -1008,6 +955,11 @@ const RampSellCheckout: React.FC = () => {
               />
               <CheckBoxCol>
                 <CheckboxText>
+                  {showNewQuoteInfo
+                    ? t(
+                        'The original quote was changed on the Ramp Network checkout page. By checking this, you will accept the new offer.',
+                      ) + '\n'
+                    : ''}
                   {t(
                     "Sell Crypto services provided by Ramp Network. By checking this, I acknowledge and accept Ramp Network's terms of service.",
                   )}
@@ -1072,7 +1024,6 @@ const RampSellCheckout: React.FC = () => {
           const rampSettingsParams: RampSettingsProps = {
             incomingPaymentRequest: {
               rampExternalId: sellCryptoExternalId,
-              // transactionId: sellOrder?.transaction_id,
               status: 'bitpayTxSent',
               flow: 'sell',
             },

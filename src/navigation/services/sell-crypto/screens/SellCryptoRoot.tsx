@@ -87,7 +87,6 @@ import FromWalletSelectorModal from '../../swap-crypto/components/FromWalletSele
 import {MoonpayGetCurrenciesRequestData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {
   getChainFromMoonpayNetworkCode,
-  getMoonpayFiatListByPayoutMethod,
   getMoonpaySellCurrenciesFixedProps,
   moonpaySellEnv,
 } from '../utils/moonpay-sell-utils';
@@ -1040,10 +1039,8 @@ const SellCryptoRoot = ({
     currency: RampAssetInfo,
   ): boolean => {
     return (
-      // TODO: review this filter
       !currency.hidden &&
-      currency.enabled //&&
-      // currency.type === 'crypto'
+      currency.enabled
     );
   };
 
@@ -1054,7 +1051,7 @@ const SellCryptoRoot = ({
       currencyCode: cloneDeep(fiatCurrency).toUpperCase(),
       withDisabled: false,
       withHidden: false,
-      useIp: false, // TODO: use useIp: true
+      useIp: true,
     };
 
     const rampAllCurrencies: RampGetAssetsData = await rampGetAssets(
@@ -1062,7 +1059,6 @@ const SellCryptoRoot = ({
     );
 
     if (!rampAllCurrencies?.assets) {
-      // TODO: review this or handle this error
       return [];
     }
 
@@ -1082,10 +1078,10 @@ const SellCryptoRoot = ({
           [...SupportedChains].includes(
             getChainFromRampChainFormat(
               currency.chain,
-            ),
+            )!,
           ) &&
           (getCoinFromRampCoinFormat(currency.symbol) === 'eth' ||
-            (['eth', 'matic', 'arbitrum', 'base', 'optimism'].includes( // TODO: review if Ramp use 'eth' for chain
+            (['eth', 'matic', 'arbitrum', 'base', 'optimism'].includes(
               currency.chain.toLowerCase(),
             )
               ? allSupportedTokens.includes(
@@ -1093,7 +1089,7 @@ const SellCryptoRoot = ({
                     getCoinFromRampCoinFormat(currency.symbol),
                     getChainFromRampChainFormat(
                       currency.chain,
-                    ),
+                    )!,
                   ),
                 )
               : true))
@@ -1127,11 +1123,11 @@ const SellCryptoRoot = ({
             name,
             chain: getChainFromRampChainFormat(
               chain,
-            ),
+            )!,
             protocol: type,
             logoUri: getLogoUri(symbol.toLowerCase(), chain),
             tokenAddress: address,
-            limits: { // TODO: review this limits
+            limits: {
               min: (minPurchaseAmount && minPurchaseAmount > 0) ? minPurchaseAmount : undefined,
               max: (maxPurchaseAmount && maxPurchaseAmount > 0) ? maxPurchaseAmount : undefined,
             },
@@ -1433,6 +1429,7 @@ const SellCryptoRoot = ({
             ];
           }
         });
+
         if (allSupportedCoins.length > 0) {
           const coinsToRemove =
             !locationData || locationData.countryShortCode === 'US'
