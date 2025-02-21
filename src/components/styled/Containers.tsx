@@ -526,3 +526,10 @@ export const SellTxIconBadge = styled.View`
   right: 0px;
   bottom: 0px;
 `;
+
+export const CloseButtonContainer = styled(TouchableOpacity)`
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;

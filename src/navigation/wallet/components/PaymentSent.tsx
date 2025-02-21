@@ -2,7 +2,7 @@ import React from 'react';
 import Modal from 'react-native-modal';
 import styled from 'styled-components/native';
 import {Success, White} from '../../../styles/colors';
-import {WIDTH} from '../../../components/styled/Containers';
+import {CloseButtonContainer, WIDTH} from '../../../components/styled/Containers';
 import PaymentCompleteSvg from '../../../../assets/img/wallet/payment-complete.svg';
 import {BaseText} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -32,11 +32,6 @@ const Title = styled(BaseText)`
   font-weight: 500;
   color: ${White};
   margin-top: 15px;
-`;
-
-const CloseButton = styled(TouchableOpacity)`
-  margin: 15px 0;
-  padding: 5px;
 `;
 
 const CloseText = styled(BaseText)`
@@ -73,13 +68,14 @@ const PaymentSent = ({isVisible, onCloseModal, title}: PaymentSentModal) => {
           <Title>{title || t('Payment Sent')}</Title>
         </PaymentSentHero>
         <PaymentSentFooter>
-          <CloseButton
+          <CloseButtonContainer
+            style={{padding: 15, marginTop: 15}}
             onPress={() => {
               haptic('impactLight');
               onCloseModal();
             }}>
             <CloseText>{t('CLOSE')}</CloseText>
-          </CloseButton>
+          </CloseButtonContainer>
         </PaymentSentFooter>
       </PaymentSentContainer>
     </Modal>
