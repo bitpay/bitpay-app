@@ -4,7 +4,7 @@ import {BaseText} from '../styled/Text';
 import {LightBlack, NotificationPrimary, White} from '../../styles/colors';
 import haptic from '../haptic-feedback/haptic';
 import SwapHorizontal from '../icons/swap-horizontal/SwapHorizontal';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const SwapButtonContainer = styled(TouchableOpacity)`
   flex-direction: row;

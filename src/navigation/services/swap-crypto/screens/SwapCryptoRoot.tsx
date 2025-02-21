@@ -3,13 +3,13 @@ import {
   ActivityIndicator,
   Platform,
   ScrollView,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import _ from 'lodash';
 import cloneDeep from 'lodash.clonedeep';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {
   BitpaySupportedCoins,

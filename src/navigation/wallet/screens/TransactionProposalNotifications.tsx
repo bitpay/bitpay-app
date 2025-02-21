@@ -64,7 +64,7 @@ import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;

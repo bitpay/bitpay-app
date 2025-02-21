@@ -31,7 +31,7 @@ import {sleep} from '../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../store/log';
 import Mailer from 'react-native-mail';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const BWC = BwcProvider.getInstance();
 

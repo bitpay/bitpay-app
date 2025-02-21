@@ -83,7 +83,7 @@ import {PillText} from '../components/SendToPill';
 import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
 import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export type AddCustomTokenParamList = {
   key: Key;

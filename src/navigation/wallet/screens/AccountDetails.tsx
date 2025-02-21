@@ -32,7 +32,7 @@ import {
   SectionList,
   View,
 } from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   Badge,
   Balance,

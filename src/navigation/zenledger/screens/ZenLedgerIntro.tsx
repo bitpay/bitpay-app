@@ -9,7 +9,7 @@ import Button from '../../../components/button/Button';
 import {H4, Link, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {Platform, View} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useAppDispatch} from '../../../utils/hooks';
 import {
   dismissBottomNotificationModal,

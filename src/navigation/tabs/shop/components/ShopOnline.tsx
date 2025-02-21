@@ -3,7 +3,7 @@ import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {View} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled, {useTheme} from 'styled-components/native';
 import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {BaseText, Paragraph} from '../../../../components/styled/Text';

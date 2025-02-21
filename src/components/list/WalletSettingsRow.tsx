@@ -9,7 +9,7 @@ import {
   HiddenContainer,
 } from '../styled/Containers';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export interface WalletSettingsRowProps {
   img: string | ((props: any) => ReactElement);

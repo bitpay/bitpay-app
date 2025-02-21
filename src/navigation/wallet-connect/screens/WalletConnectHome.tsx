@@ -67,7 +67,7 @@ import {InAppNotificationContextType} from '../../../store/app/app.models';
 import Blockie from '../../../components/blockie/Blockie';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import Button from '../../../components/button/Button';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTheme} from '@react-navigation/native';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';

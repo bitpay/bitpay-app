@@ -18,7 +18,7 @@ import {
   ZenLedgerKey,
   ZenLedgerWalletObj,
 } from '../../../store/zenledger/zenledger.models';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;

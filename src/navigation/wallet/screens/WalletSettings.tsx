@@ -41,7 +41,7 @@ import {
 } from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
 import {IsEVMChain} from '../../../store/wallet/utils/currency';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;

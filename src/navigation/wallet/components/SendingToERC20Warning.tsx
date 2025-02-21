@@ -25,7 +25,7 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {Effect} from '../../../store';
 import {useAppDispatch} from '../../../utils/hooks';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 

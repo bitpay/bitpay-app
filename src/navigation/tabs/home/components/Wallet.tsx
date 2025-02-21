@@ -31,7 +31,7 @@ import {useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import AngleRightSvg from '../../../../../assets/img/angle-right.svg';
 import {Balance, OptionName} from '../../../wallet/components/DropdownOption';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
