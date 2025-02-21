@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText, Paragraph} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {SheetContainer} from '../../../components/styled/Containers';
+import {CloseButtonContainer, SheetContainer} from '../../../components/styled/Containers';
 import {
   Action,
   Black,
@@ -25,13 +25,8 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {Effect} from '../../../store';
 import {useAppDispatch} from '../../../utils/hooks';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
-
-const CloseButton = styled(TouchableOpacity)`
-  margin: auto;
-`;
 
 const CloseButtonText = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? White : Action)};
@@ -185,9 +180,9 @@ const SendingToERC20Warning = ({isVisible, closeModal, wallet}: Props) => {
             {wallet.credentials.token?.address}
           </ContractAddressText>
         </SendingInfoContainer>
-        <CloseButton onPress={closeModal}>
+        <CloseButtonContainer onPress={closeModal}>
           <CloseButtonText>{t('CLOSE')}</CloseButtonText>
-        </CloseButton>
+        </CloseButtonContainer>
       </SheetContainer>
     </SheetModal>
   );

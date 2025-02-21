@@ -10,6 +10,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {
   SheetContainer,
   ActiveOpacity,
+  CloseButtonContainer,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BWCErrorMessage, BWCErrorName} from '../../../constants/BWCError';
@@ -110,10 +111,6 @@ const LoadingText = styled(H4)`
 const ReceiveAddressContainer = styled(SheetContainer)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   min-height: 500px;
-`;
-
-const CloseButton = styled(TouchableOpacity)`
-  margin: auto;
 `;
 
 const CloseButtonText = styled(Paragraph)`
@@ -423,9 +420,9 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
             ) : null}
           </WarningContainer>
         )}
-        <CloseButton onPress={_closeModal}>
+        <CloseButtonContainer onPress={_closeModal}>
           <CloseButtonText>{t('CLOSE')}</CloseButtonText>
-        </CloseButton>
+        </CloseButtonContainer>
       </ReceiveAddressContainer>
     </SheetModal>
   );
