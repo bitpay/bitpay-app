@@ -168,7 +168,8 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
             <Button
               accessibilityLabel="log-in-button"
               buttonType={'pill'}
-              onPress={onLoginPressRef.current}>
+              onPress={onLoginPressRef.current}
+              useGHTouchableOpacity={true}>
               {t('Log In')}
             </Button>
           )}
