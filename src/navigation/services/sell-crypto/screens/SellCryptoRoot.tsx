@@ -87,7 +87,6 @@ import FromWalletSelectorModal from '../../swap-crypto/components/FromWalletSele
 import {MoonpayGetCurrenciesRequestData} from '../../../../store/buy-crypto/buy-crypto.models';
 import {
   getChainFromMoonpayNetworkCode,
-  getMoonpayFiatListByPayoutMethod,
   getMoonpaySellCurrenciesFixedProps,
   moonpaySellEnv,
 } from '../utils/moonpay-sell-utils';
@@ -132,6 +131,10 @@ import {
 } from '../utils/simplex-sell-utils';
 import {simplexGetCurrencies} from '../../../../store/buy-crypto/effects/simplex/simplex';
 import {isEuCountry} from '../../../../store/location/location.effects';
+import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
+import {getChainFromRampChainFormat, getCoinFromRampCoinFormat, getRampSellCurrenciesFixedProps, rampSellEnv} from '../utils/ramp-sell-utils';
+import cloneDeep from 'lodash.clonedeep';
+import {RampAssetInfo, RampGetAssetsData, RampGetAssetsRequestData} from '../../../../store/buy-crypto/models/ramp.models';
 
 export type SellCryptoRootScreenParams =
   | {
@@ -149,15 +152,15 @@ export interface SellCryptoCoin {
   symbol: string;
   chain: string;
   name: string;
-  protocol?: string; // Moonpay | Simplex
+  protocol?: string; // Moonpay | Ramp | Simplex
   logoUri?: any;
-  tokenAddress?: string;
+  tokenAddress?: string | null;
   limits?: {
     min: number | undefined;
     max: number | undefined;
   };
   supportsTestMode?: boolean; // Moonpay
-  precision?: number; // Moonpay
+  precision?: number; // Moonpay | Ramp
 }
 
 export interface SellCryptoExchange {
@@ -177,6 +180,17 @@ export type PreLoadPartnersData = {
 const sellCryptoExchangesDefault: PreLoadPartnersData = {
   moonpay: {
     key: 'moonpay',
+    showOffer: true,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: {
+      min: undefined,
+      max: undefined,
+    },
+  },
+  ramp: {
+    key: 'ramp',
     showOffer: true,
     supportedCoins: undefined,
     disabled: false,
@@ -424,10 +438,10 @@ const SellCryptoRoot = ({
       (wallet.network === 'livenet' ||
         (__DEV__ &&
           wallet.network === 'testnet' &&
-          getExternalServiceSymbol(
+          ['btc', 'eth'].includes(getExternalServiceSymbol(
             wallet.currencyAbbreviation.toLowerCase(),
             wallet.chain,
-          ) === 'eth')) &&
+          )))) &&
       wallet.balance?.satSpendable > 0 &&
       sellCryptoSupportedCoins &&
       sellCryptoSupportedCoins.some(coin => {
@@ -452,10 +466,10 @@ const SellCryptoRoot = ({
       (wallet.network === 'livenet' ||
         (__DEV__ &&
           wallet.network === 'testnet' &&
-          getExternalServiceSymbol(
+          ['btc', 'eth'].includes(getExternalServiceSymbol(
             wallet.currencyAbbreviation.toLowerCase(),
             wallet.chain,
-          ) === 'eth')) &&
+          )))) &&
       sellCryptoSupportedCoins &&
       sellCryptoSupportedCoins.some(coin => {
         const symbol = getExternalServiceSymbol(
@@ -613,6 +627,14 @@ const SellCryptoRoot = ({
           fiatCurrency,
           locationData?.countryShortCode || 'US',
           user?.country,
+        ) || isWithdrawalMethodSupported(
+          'ramp',
+          selectedPaymentMethod,
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.chain,
+          fiatCurrency,
+          locationData?.countryShortCode || 'US',
+          user?.country,
         ) ||
           isWithdrawalMethodSupported(
             'simplex',
@@ -697,6 +719,8 @@ const SellCryptoRoot = ({
       switch (exchange) {
         case 'moonpay':
           return moonpayGetLimits(selectedWallet);
+        case 'ramp':
+          return rampGetLimits(selectedWallet);
         case 'simplex':
           return simplexGetLimits(selectedWallet);
         default:
@@ -733,6 +757,17 @@ const SellCryptoRoot = ({
             switch (e.exchangeKey) {
               case 'moonpay':
                 sellCryptoExchangesDefault.moonpay.limits = {
+                  min: e.promiseRes.value?.minAmount
+                    ? Number(e.promiseRes.value.minAmount)
+                    : undefined,
+                  max: e.promiseRes.value?.maxAmount
+                    ? Number(e.promiseRes.value.maxAmount)
+                    : undefined,
+                };
+                allLimits.push(e.promiseRes.value as SellLimits);
+                break;
+              case 'ramp':
+                sellCryptoExchangesDefault.ramp.limits = {
                   min: e.promiseRes.value?.minAmount
                     ? Number(e.promiseRes.value.minAmount)
                     : undefined,
@@ -814,6 +849,32 @@ const SellCryptoRoot = ({
     }
 
     return Promise.resolve(moonpayLimits);
+  };
+
+  const rampGetLimits = async (
+    wallet: Wallet,
+  ): Promise<SellLimits | undefined> => {
+    let rampLimits: SellLimits = {
+      minAmount: undefined,
+      maxAmount: undefined,
+    };
+    if (sellCryptoExchangesDefault.ramp.supportedCoins) {
+      const selectedCoin =
+        sellCryptoExchangesDefault.ramp.supportedCoins.find(
+          coin =>
+            coin.symbol ===
+            getExternalServiceSymbol(wallet.currencyAbbreviation, wallet.chain),
+        );
+
+      if (selectedCoin) {
+        rampLimits = {
+          minAmount: selectedCoin.limits?.min,
+          maxAmount: selectedCoin.limits?.max,
+        };
+      }
+    }
+
+    return Promise.resolve(rampLimits);
   };
 
   const simplexGetLimits = async (
@@ -960,6 +1021,129 @@ const SellCryptoRoot = ({
     );
     let supportedCoins = orderBy(
       moonpaySellSupportedCurrencies,
+      [
+        coin => {
+          return orderedArray.includes(coin.symbol)
+            ? orderedArray.indexOf(coin.symbol)
+            : orderedArray.length;
+        },
+        'name',
+      ],
+      ['asc', 'asc'],
+    );
+
+    return supportedCoins;
+  };
+
+  const filterRampCurrenciesConditions = (
+    currency: RampAssetInfo,
+  ): boolean => {
+    return (
+      !currency.hidden &&
+      currency.enabled
+    );
+  };
+
+  const getRampCurrencies = async () => {
+    const requestData: RampGetAssetsRequestData = {
+      env: rampSellEnv,
+      flow: 'sell',
+      currencyCode: cloneDeep(fiatCurrency).toUpperCase(),
+      withDisabled: false,
+      withHidden: false,
+      useIp: true,
+    };
+
+    const rampAllCurrencies: RampGetAssetsData = await rampGetAssets(
+      requestData,
+    );
+
+    if (!rampAllCurrencies?.assets) {
+      return [];
+    }
+
+    const rampAllSellCurrencies = rampAllCurrencies.assets.filter(
+      (rampCurrency: RampAssetInfo) => {
+        return filterRampCurrenciesConditions(rampCurrency);
+      },
+    );
+
+    const rampAllSellSupportedCurrenciesFixedProps: RampAssetInfo[] = getRampSellCurrenciesFixedProps(rampAllSellCurrencies);
+
+    const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
+    const rampSellSupportedCurrenciesFullObj =
+      rampAllSellSupportedCurrenciesFixedProps.filter(currency => {
+        return (
+          currency.chain &&
+          [...SupportedChains].includes(
+            getChainFromRampChainFormat(
+              currency.chain,
+            )!,
+          ) &&
+          (getCoinFromRampCoinFormat(currency.symbol) === 'eth' ||
+            (['eth', 'matic', 'arbitrum', 'base', 'optimism'].includes(
+              currency.chain.toLowerCase(),
+            )
+              ? allSupportedTokens.includes(
+                  getCurrencyAbbreviation(
+                    getCoinFromRampCoinFormat(currency.symbol),
+                    getChainFromRampChainFormat(
+                      currency.chain,
+                    )!,
+                  ),
+                )
+              : true))
+        );
+      });
+
+    const rampSellSupportedCurrencies: SellCryptoCoin[] =
+      rampSellSupportedCurrenciesFullObj.map(
+        ({
+          symbol,
+          chain,
+          name,
+          address,
+          type,
+          minPurchaseAmount,
+          maxPurchaseAmount,
+          decimals,
+        }: {
+          symbol: string;
+          chain: string;
+          name: string;
+          address?: string | null;
+          type: string;
+          minPurchaseAmount?: number;
+          maxPurchaseAmount?: number;
+          decimals?: number;
+        }) => {
+          return {
+            currencyAbbreviation: symbol.toLowerCase(),
+            symbol: getExternalServiceSymbol(symbol, chain),
+            name,
+            chain: getChainFromRampChainFormat(
+              chain,
+            )!,
+            protocol: type,
+            logoUri: getLogoUri(symbol.toLowerCase(), chain),
+            tokenAddress: address,
+            limits: {
+              min: (minPurchaseAmount && minPurchaseAmount > 0) ? minPurchaseAmount : undefined,
+              max: (maxPurchaseAmount && maxPurchaseAmount > 0) ? maxPurchaseAmount : undefined,
+            },
+            precision: decimals,
+          };
+        },
+      );
+
+    // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+    let supportedCoins = orderBy(
+      rampSellSupportedCurrencies,
       [
         coin => {
           return orderedArray.includes(coin.symbol)
@@ -1159,6 +1343,8 @@ const SellCryptoRoot = ({
       switch (exchange) {
         case 'moonpay':
           return getMoonpayCurrencies();
+        case 'ramp':
+          return getRampCurrencies();
         case 'simplex':
           return getSimplexCurrencies();
         default:
@@ -1200,6 +1386,13 @@ const SellCryptoRoot = ({
                   );
                   sellCryptoExchangesDefault.moonpay.showOffer = false;
                   break;
+                case 'ramp':
+                  logger.debug(
+                    'getRampCurrencies Error: ' +
+                      e.promiseRes.reason.message,
+                  );
+                  sellCryptoExchangesDefault.ramp.showOffer = false;
+                  break;
                 case 'simplex':
                   logger.debug(
                     'getSimplexCurrencies Error: ' +
@@ -1218,6 +1411,10 @@ const SellCryptoRoot = ({
                 sellCryptoExchangesDefault.moonpay.supportedCoins = e.promiseRes
                   .value as SellCryptoCoin[];
                 break;
+              case 'ramp':
+                sellCryptoExchangesDefault.ramp.supportedCoins = e.promiseRes
+                  .value as SellCryptoCoin[];
+                break;
               case 'simplex':
                 sellCryptoExchangesDefault.simplex.supportedCoins = e.promiseRes
                   .value as SellCryptoCoin[];
@@ -1232,6 +1429,7 @@ const SellCryptoRoot = ({
             ];
           }
         });
+
         if (allSupportedCoins.length > 0) {
           const coinsToRemove =
             !locationData || locationData.countryShortCode === 'US'

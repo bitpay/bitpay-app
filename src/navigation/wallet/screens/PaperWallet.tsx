@@ -204,8 +204,8 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       btc: 10000,
       bch: 10000,
       doge: 10000000,
-      ltc: 100000
-    }
+      ltc: 100000,
+    };
     // @ts-ignore
     let opts: {coin: string; fee: number} = {coin: balanceToSweep.coin, fee: DEFAULT_FEE[balanceToSweep.coin]};
 
@@ -335,7 +335,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       {name: 'BitcoreLtc', getProvider: () => BWC.getBitcoreLtc()},
       {name: 'BitcoreDoge', getProvider: () => BWC.getBitcoreDoge()},
     ];
-  
+
     for (const network of networks) {
       for (const provider of providers) {
         try {
@@ -346,7 +346,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
         }
       }
     }
-  
+
     return 'invalid';
   };
 
