@@ -3,6 +3,8 @@ import {
   ActivityIndicator,
   Linking,
   ScrollView,
+  Text,
+  View,
 } from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import uuid from 'react-native-uuid';
