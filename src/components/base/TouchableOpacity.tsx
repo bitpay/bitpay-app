@@ -6,12 +6,13 @@ import {IS_ANDROID} from '../../constants';
 export const ActiveOpacity = 0.75;
 
 // Use intersection of both prop types to ensure compatibility
-export type TouchableOpacityProps = RNTouchableOpacityProps & GHTouchableOpacityProps;
+export type TouchableOpacityProps = RNTouchableOpacityProps & GHTouchableOpacityProps & {useGHTouchableOpacity?: boolean};
 
 export const TouchableOpacity: React.FC<TouchableOpacityProps> = ({
   activeOpacity = ActiveOpacity,
+  useGHTouchableOpacity,
   ...props
 }) => {
-  const TouchableComponent = IS_ANDROID ? RNTouchableOpacity : GHTouchableOpacity;
+  const TouchableComponent = IS_ANDROID && !useGHTouchableOpacity ? RNTouchableOpacity : GHTouchableOpacity;
   return <TouchableComponent activeOpacity={activeOpacity} {...props} />;
 };
