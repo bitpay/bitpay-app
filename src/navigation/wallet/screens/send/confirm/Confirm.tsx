@@ -590,7 +590,7 @@ const Confirm = () => {
 
   return (
     <>
-      <ConfirmContainer style={IS_ANDROID ? {paddingBottom: 50} : undefined}>
+      <ConfirmContainer>
         <ConfirmScrollView
           extraScrollHeight={50}
           contentContainerStyle={{paddingBottom: 50}}
