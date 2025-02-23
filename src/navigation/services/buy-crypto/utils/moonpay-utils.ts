@@ -226,7 +226,7 @@ export const getMoonpayPaymentMethodFormat = (
 export const getMoonpayFiatAmountLimits = () => {
   return {
     min: 30,
-    max: 12000,
+    max: 30000,
   };
 };
 
