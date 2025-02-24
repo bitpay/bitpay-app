@@ -72,13 +72,6 @@ const CustomizeHomeSettings = () => {
   const [hiddenList, setHiddenList] = useState(_hidden);
   const Tab = createMaterialTopTabNavigator();
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: props => <HeaderTitle {...props} />,
-      headerTitleAlign: 'center',
-    });
-  }, [navigation, theme]);
-
   const toggle = useCallback(
     (item: CustomizeItem) => {
       const newItem = {...item};
