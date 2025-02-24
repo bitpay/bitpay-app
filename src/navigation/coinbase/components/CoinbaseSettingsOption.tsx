@@ -4,7 +4,7 @@ import {LightBlack, White, Cloud} from '../../../styles/colors';
 import {ActiveOpacity} from '../../../components/styled/Containers';
 import {Theme} from '@react-navigation/native';
 import Svg, {Path} from 'react-native-svg';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const SettingsSvgContainer = styled(TouchableOpacity)`
   margin: 0;
