@@ -495,7 +495,6 @@ const Confirm = () => {
   };
 
   const redeemGiftCardAndNavigateToGiftCardDetails = async () => {
-    dispatch(startOnGoingProcessModal('GENERATING_GIFT_CARD'));
     const giftCard = await dispatch(
       ShopEffects.startRedeemGiftCard(invoice!.id),
     );

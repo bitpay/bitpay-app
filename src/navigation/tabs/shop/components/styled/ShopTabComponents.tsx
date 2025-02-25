@@ -113,7 +113,6 @@ export const NoResultsHeader = styled(H4)`
 export const NavIconButtonContainer = styled(TouchableOpacity)`
   align-items: center;
   justify-content: center;
-  transform: scale(1.1);
   background-color: ${({theme}) => (theme.dark ? '#252525' : NeutralSlate)};
   border-radius: 50px;
   height: 40px;
