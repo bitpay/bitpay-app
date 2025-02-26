@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import styled from 'styled-components/native';
@@ -19,17 +20,20 @@ const Title = styled(H4)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const Refresh = styled(TouchableOpacity)<{isBch?: boolean}>`
+const RefreshContainer = styled(View)<{isBch?: boolean}>`
   position: ${({isBch}) => (isBch ? 'relative' : 'absolute')};
   margin-left: 5px;
   right: 0;
+  margin-top: ${({isBch}) => (isBch ? '10px' : '0')};
+`;
+
+const Refresh = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? '#616161' : '#F5F7F8')};
   width: 40px;
   height: 40px;
   border-radius: 50px;
   align-items: center;
   justify-content: center;
-  margin-top: ${({isBch}) => (isBch ? '10px' : '0')};
 `;
 
 const BchHeaderAction = styled(TouchableOpacity)<{isActive: boolean}>`
@@ -102,15 +106,15 @@ const ReceiveAddressHeader = ({
                   </BchHeaderActionText>
                 </BchHeaderAction>
               ))}
-
-            <Refresh
-              isBch={true}
-              onPress={() => {
-                haptic('impactLight');
-                onPressRefresh();
-              }}>
-              <RefreshIcon />
-            </Refresh>
+            <RefreshContainer isBch={true}>
+              <Refresh
+                onPress={() => {
+                  haptic('impactLight');
+                  onPressRefresh();
+                }}>
+                <RefreshIcon />
+              </Refresh>
+            </RefreshContainer>
           </BchHeaderActions>
         </BchHeader>
       );
@@ -118,15 +122,17 @@ const ReceiveAddressHeader = ({
       return (
         <Header>
           <Title>{t('Address')}</Title>
-          {showRefresh ? (
-            <Refresh
-              onPress={() => {
-                haptic('impactLight');
-                onPressRefresh();
-              }}>
-              <RefreshIcon />
-            </Refresh>
-          ) : null}
+          <RefreshContainer>
+            {showRefresh ? (
+              <Refresh
+                onPress={() => {
+                  haptic('impactLight');
+                  onPressRefresh();
+                }}>
+                <RefreshIcon />
+              </Refresh>
+            ) : null}
+            </RefreshContainer>
         </Header>
       );
   }
