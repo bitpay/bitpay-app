@@ -102,18 +102,32 @@ const OnGoingProcessModal: React.FC = () => {
     };
   });
   useEffect(() => {
+    let dismissTimeout: NodeJS.Timeout;
+    let opacityTimeout: NodeJS.Timeout;
+
     if (isVisible && appWasInit) {
       bottomSheetModalRef.current?.present();
-      setTimeout(() => {
+      opacityTimeout = setTimeout(() => {
         opacity.value = withTiming(1, {duration: opacityFadeDuration});
       }, 300);
     } else {
       opacity.value = withTiming(0, {duration: opacityFadeDuration});
-      setTimeout(() => {
-        bottomSheetModalRef.current?.dismiss();
-      }, opacityFadeDuration - 50);
+      dismissTimeout = setTimeout(() => {
+        if (bottomSheetModalRef.current) {
+          bottomSheetModalRef.current.dismiss();
+        }
+      }, opacityFadeDuration);
     }
-  }, [appWasInit, isVisible, opacity]);
+
+    return () => {
+      if (dismissTimeout) {
+        clearTimeout(dismissTimeout);
+      }
+      if (opacityTimeout) {
+        clearTimeout(opacityTimeout);
+      }
+    };
+  }, [appWasInit, isVisible, opacity, opacityFadeDuration]);
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
