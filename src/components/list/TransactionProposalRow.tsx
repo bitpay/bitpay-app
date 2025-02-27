@@ -6,12 +6,16 @@ import {useTranslation} from 'react-i18next';
 import {GetContactName} from '../../store/wallet/effects/transactions/transactions';
 import {ContactRowProps} from './ContactRow';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import { Dimensions } from 'react-native';
 
-const TransactionContainer = styled(TouchableOpacity)`
-  flex: 1;
+const { width } = Dimensions.get('window');
+
+const TransactionContainer = styled(TouchableOpacity)<{withCheckBox?: boolean}>`
   flex-direction: row;
   padding: 10px ${ScreenGutter};
   justify-content: space-between;
+  width: ${width - 50}px;
+  width: ${({ withCheckBox }) => (withCheckBox ? `${width - 80}px` :  '100%')};
 `;
 
 const IconContainer = styled.View`
@@ -56,6 +60,7 @@ interface Props {
   tokenAddress?: string;
   contactList?: ContactRowProps[];
   chain?: string;
+  withCheckBox?: boolean;
 }
 
 const TransactionProposalRow = ({
@@ -71,6 +76,7 @@ const TransactionProposalRow = ({
   tokenAddress,
   contactList,
   chain,
+  withCheckBox,
 }: Props) => {
   const {t} = useTranslation();
   let label: string = t('Sending');
@@ -95,7 +101,7 @@ const TransactionProposalRow = ({
   }
 
   return (
-    <TransactionContainer onPress={onPressTransaction}>
+    <TransactionContainer withCheckBox={withCheckBox} onPress={onPressTransaction}>
       {icon && !hideIcon && <IconContainer>{icon}</IconContainer>}
 
       <HeadContainer>

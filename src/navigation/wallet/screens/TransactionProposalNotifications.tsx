@@ -92,13 +92,17 @@ const BorderBottom = styled.View`
 `;
 
 const ProposalsContainer = styled(TouchableOpacity)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 `;
 
 const CheckBoxContainer = styled.View`
-  flex-direction: column;
+  display: flex;
   justify-content: center;
-  margin-left: 5px;
-  margin-right: 15px;
+  align-items: center;
+  width: 80px;
+  padding-right: 10px;
 `;
 
 const TransactionProposalNotifications = () => {
@@ -422,6 +426,7 @@ const TransactionProposalNotifications = () => {
                     tokenAddress={txp.tokenAddress}
                     chain={txp.chain}
                     contactList={contactList}
+                    withCheckBox={item.needSign}
                   />
                   {item.needSign ? (
                     <CheckBoxContainer>
