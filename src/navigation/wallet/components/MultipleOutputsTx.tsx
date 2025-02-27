@@ -41,6 +41,7 @@ import {
 } from '../screens/send/confirm/Shared';
 import {RootState} from '../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import { View } from 'react-native';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -55,8 +56,8 @@ const MultiOptionsContainer = styled(TouchableOpacity)`
 `;
 
 const MultiOptionsText = styled(H7)`
-  max-width: 50%;
   margin: 0 5px;
+  width: 50%;
 `;
 
 const MultiOptionsMessageContainer = styled.View`
@@ -69,6 +70,19 @@ const MultiOptionsMessage = styled(H7)`
 
 const ContactsIconContainer = styled(TouchableOpacity)`
   margin-left: 5px;
+`;
+
+const RecipientsContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+`;
+
+const DetailsContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 `;
 
 const MultipleOutputsTx = ({
@@ -301,15 +315,15 @@ const MultipleOutputsTx = ({
 
       {tx.hasMultiplesOutputs && showMultiOptions
         ? tx.outputs.map((output: any, i: number) => (
-            <DetailRow key={i}>
+            <RecipientsContainer key={i}>
               <MultiOptionsContainer
                 activeOpacity={ActiveOpacity}
                 onPress={() => copyText(output.toAddress || output.address)}>
-                <DetailRow>
+                <DetailsContainer>
                   {getIcon(
                     output.toAddress || output.address || output.addressToShow,
                   )}
-                  <MultiOptionsText numberOfLines={1} ellipsizeMode={'tail'}>
+                  <MultiOptionsText numberOfLines={1} ellipsizeMode={'middle'}>
                     {output.contactName ||
                       output.addressToShow ||
                       output.toAddress ||
@@ -328,7 +342,7 @@ const MultipleOutputsTx = ({
                       <H7>{output.alternativeAmountStr}</H7>
                     ) : null}
                   </DetailColumn>
-                </DetailRow>
+                </DetailsContainer>
 
                 {output.message ? (
                   <MultiOptionsMessageContainer>
@@ -352,7 +366,7 @@ const MultipleOutputsTx = ({
                   <AddContactIcon />
                 </ContactsIconContainer>
               ) : null}
-            </DetailRow>
+            </RecipientsContainer>
           ))
         : null}
 
