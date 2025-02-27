@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
 import styled, {useTheme} from 'styled-components/native';
 import pickBy from 'lodash.pickby';
@@ -35,7 +35,7 @@ import {
   SectionHeaderContainer,
   SectionSpacer,
 } from './styled/ShopTabComponents';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {GiftCardScreens} from '../gift-card/GiftCardGroup';
 import MyGiftCards from './MyGiftCards';
 import FilterSheet, {initializeCategoryMap} from './FilterSheet';
@@ -156,6 +156,7 @@ export default ({
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const [isFilterSheetShown, setIsFilterSheetShown] = useState(false);
   const [purchasedGiftCards, setPurchasedGiftCards] = useState<GiftCard[]>([]);
+  const [isScreenFocused, setIsScreenFocused] = useState(false);
   const [selectedCategoryMap, setSelectedCategoryMap] = useState(
     initializeCategoryMap(categories.map(category => category.displayName)),
   );
@@ -168,6 +169,15 @@ export default ({
   );
   const numActiveGiftCards = activeGiftCards.length;
   const activeGiftCardsHeight = numActiveGiftCards * 62 + 215;
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsScreenFocused(true);
+      return () => {
+        setIsScreenFocused(false);
+      };
+    }, [])
+  )
 
   const updateSearchResults = useMemo(
     () =>
@@ -315,7 +325,10 @@ export default ({
                   <SectionHeader>{t('All Gift Cards')}</SectionHeader>
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
-                    onPress={() => setIsFilterSheetShown(!isFilterSheetShown)}>
+                    onPress={() => {
+                      if (!isScreenFocused) return;
+                      setIsFilterSheetShown(!isFilterSheetShown)
+                    }}>
                     <SectionHeaderButton>
                       {t('Filter')}
                       {numSelectedCategories
