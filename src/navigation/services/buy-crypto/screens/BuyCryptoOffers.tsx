@@ -53,12 +53,6 @@ import {
   MoonpayGetSignedPaymentUrlReqData,
   MoonpayPaymentData,
   MoonpayPaymentType,
-  RampGetAssetsData,
-  RampGetAssetsRequestData,
-  RampPaymentData,
-  RampPaymentUrlConfigParams,
-  RampQuoteRequestData,
-  RampQuoteResultForPaymentMethod,
   SardineGetAuthTokenRequestData,
   SardineGetQuoteRequestData,
   SardinePaymentUrlConfigParams,
@@ -147,6 +141,15 @@ import {
   getTransakSelectedPaymentMethodData,
   transakEnv,
 } from '../utils/transak-utils';
+import {
+  RampGetAssetsData,
+  RampGetAssetsRequestData,
+  RampGetSellSignedPaymentUrlData,
+  RampPaymentData,
+  RampPaymentUrlConfigParams,
+  RampQuoteRequestData,
+  RampQuoteResultForPaymentMethod,
+} from '../../../../store/buy-crypto/models/ramp.models';
 
 export type BuyCryptoOffersScreenParams = {
   amount: number;
@@ -1945,7 +1948,7 @@ const BuyCryptoOffers: React.FC = () => {
       swapAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
       swapAmount: offers.ramp.amountReceivingUnit!,
       fiatCurrency: offers.ramp.fiatCurrency,
-      enabledFlows: 'ONRAMP',
+      enabledFlows: ['ONRAMP'],
       defaultFlow: 'ONRAMP',
       userAddress: address,
       selectedCountryCode: country,
@@ -1953,7 +1956,7 @@ const BuyCryptoOffers: React.FC = () => {
       finalUrl: redirectUrl,
     };
 
-    let data;
+    let data: RampGetSellSignedPaymentUrlData;
     try {
       data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
     } catch (err) {

@@ -232,6 +232,7 @@ export interface CustomTransactionData {
   changelly?: string;
   thorswap?: string;
   moonpay?: string;
+  ramp?: string;
   simplex?: string;
   oneInch?: string;
   shapeShift?: string;
