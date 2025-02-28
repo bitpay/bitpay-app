@@ -252,12 +252,14 @@ const ShopHome: React.FC<
     curations,
   ]);
 
-  useFocusEffect(() => {
-    if (!initialSyncComplete) {
-      dispatch(ShopEffects.startSyncGiftCards());
-      setInitialSyncComplete(true);
-    }
-  });
+  useFocusEffect(
+    useCallback(() => {
+      if (!initialSyncComplete) {
+        dispatch(ShopEffects.startSyncGiftCards());
+        setInitialSyncComplete(true);
+      }
+    }, [initialSyncComplete]),
+  );
 
   return (
       <TabContainer>
