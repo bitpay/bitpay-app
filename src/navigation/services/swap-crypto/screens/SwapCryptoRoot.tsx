@@ -1343,7 +1343,17 @@ const SwapCryptoRoot: React.FC = () => {
           ['asc', 'asc'],
         );
 
-        setSwapCryptoSupportedCoinsFrom(allSupportedCoinsOrdered);
+        if (allSupportedCoinsOrdered?.length > 0) {
+          setSwapCryptoSupportedCoinsFrom(allSupportedCoinsOrdered);
+        } else {
+          logger.error('Swap crypto getCurrencies Error: allSupportedCoins array is empty');
+          const msg = t(
+            'Swap Crypto feature is not available at this moment. Please try again later.',
+          );
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(500);
+          showError(msg, undefined, undefined, true);
+        }
       }
     } catch (err) {
       logger.error('Swap crypto getCurrencies Error: ' + JSON.stringify(err));
@@ -1351,8 +1361,8 @@ const SwapCryptoRoot: React.FC = () => {
         'Swap Crypto feature is not available at this moment. Please try again later.',
       );
       dispatch(dismissOnGoingProcessModal());
-      await sleep(200);
-      showError(msg);
+      await sleep(500);
+      showError(msg, undefined, undefined, true);
     }
   };
 
