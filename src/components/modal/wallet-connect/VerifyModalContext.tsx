@@ -37,6 +37,9 @@ const CloseModalButton = styled(TouchableOpacity)`
   top: 10px;
   left: 16px;
   z-index: 1;
+  justify-content: center;
+  align-items: center;
+  display: flex;
 `;
 
 const ContentContainer = styled.View`
