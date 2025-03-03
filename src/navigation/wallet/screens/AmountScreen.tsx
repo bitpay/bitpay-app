@@ -16,6 +16,7 @@ import OptionsSheet, {
 import WalletIcons from '../../../navigation/wallet/components/WalletIcons';
 import Settings from '../../../components/settings/Settings';
 import {sleep} from '../../../utils/helper-methods';
+import {useAppSelector} from '../../../utils/hooks';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
