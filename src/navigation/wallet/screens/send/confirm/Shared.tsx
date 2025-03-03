@@ -60,12 +60,10 @@ import {IsERCToken, IsUtxoChain} from '../../../../../store/wallet/utils/currenc
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
 import CoinbaseSvg from '../../../../../../assets/img/wallet/transactions/coinbase.svg';
-import {IS_ANDROID} from '../../../../../constants';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
   flex: 1;
-  ${IS_ANDROID && 'padding-bottom: 50px;'}
 `;
 
 export const ConfirmScrollView = styled(KeyboardAwareScrollView)`
@@ -601,8 +599,8 @@ export const WalletSelector = ({
     const {keyWallets, coinbaseWallets} = wa;
     for (const keyWallet of keyWallets) {
       const accountWallets = keyWallet.accounts.map(account => account.wallets);
-      const utxoWallets = keyWallet.mergedUtxoAndEvmAccounts.filter((w)=> w?.chain ? IsUtxoChain(w.chain) : false);
-      if (accountWallets.length > 0 || utxoWallets.length > 0) {
+      const utxoAndEvmWallets = Object.values(keyWallet.mergedUtxoAndEvmAccounts);
+      if (accountWallets.length > 0 || utxoAndEvmWallets.length > 0) {
         hasWallets = true;
         break;
       }

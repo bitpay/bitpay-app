@@ -47,6 +47,7 @@ import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/w
 import {
   Amount,
   ConfirmContainer,
+  ConfirmScrollView,
   DetailContainer,
   DetailRow,
   DetailsList,
@@ -640,83 +641,86 @@ const Confirm = () => {
 
   return (
     <ConfirmContainer>
-      <DetailsList>
-        <GiftCardHeader amount={amount} cardConfig={cardConfig} />
-        {wallet || coinbaseAccount ? (
-          <>
-            <Header hr>Summary</Header>
-            <SendingFrom
-              sender={sendingFrom!}
-              onPress={openWalletSelector}
-              hr
-            />
-            {rateStr ? (
-              <ExchangeRate
-                description={t('Exchange Rate')}
-                rateStr={rateStr}
+      <ConfirmScrollView
+        extraScrollHeight={50}
+        contentContainerStyle={{paddingBottom: 80}}
+        keyboardShouldPersistTaps={'handled'}>
+        <DetailsList>
+          <GiftCardHeader amount={amount} cardConfig={cardConfig} />
+          {wallet || coinbaseAccount ? (
+            <>
+              <Header hr>Summary</Header>
+              <SendingFrom
+                sender={sendingFrom!}
+                onPress={openWalletSelector}
+                hr
               />
-            ) : null}
-            {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
-              getBoostAmount(cardConfig, amount) ? (
-                <Amount
-                  description={'Subtotal'}
-                  amount={{
-                    fiatAmount: formatFiatAmount(amount, cardConfig.currency),
-                    cryptoAmount: '',
-                  }}
-                  fiatOnly
-                  hr
+              {rateStr ? (
+                <ExchangeRate
+                  description={t('Exchange Rate')}
+                  rateStr={rateStr}
                 />
-              ) : (
-                <Amount
-                  description={'Discount'}
-                  amount={{
-                    fiatAmount: `— ${formatFiatAmount(
-                      unsoldGiftCard.totalDiscount,
-                      cardConfig.currency,
-                    )}`,
-                    cryptoAmount: '',
-                  }}
-                  fiatOnly
-                  hr
-                />
-              )
-            ) : null}
-            <Amount
-              description={t('Network Cost')}
-              amount={networkCost}
-              fiatOnly
-              hr
-              showInfoIcon={true}
-              infoIconOnPress={async () => {
-                await sleep(400);
-                dispatch(openUrlWithInAppBrowser(URL.HELP_PAYPRO_NETWORK_COST));
-              }}
-            />
-            <Amount
-              description={t('Miner fee')}
-              amount={fee}
-              fiatOnly
-              hr
-              showInfoIcon={true}
-              infoIconOnPress={async () => {
-                await sleep(400);
-                dispatch(openUrlWithInAppBrowser(URL.HELP_MINER_FEES));
-              }}
-            />
-            <Amount description={t('Total')} amount={total} />
-            <GiftCardTerms terms={cardConfig.terms} />
-          </>
-        ) : null}
-      </DetailsList>
+              ) : null}
+              {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
+                getBoostAmount(cardConfig, amount) ? (
+                  <Amount
+                    description={'Subtotal'}
+                    amount={{
+                      fiatAmount: formatFiatAmount(amount, cardConfig.currency),
+                      cryptoAmount: '',
+                    }}
+                    fiatOnly
+                    hr
+                  />
+                ) : (
+                  <Amount
+                    description={'Discount'}
+                    amount={{
+                      fiatAmount: `— ${formatFiatAmount(
+                        unsoldGiftCard.totalDiscount,
+                        cardConfig.currency,
+                      )}`,
+                      cryptoAmount: '',
+                    }}
+                    fiatOnly
+                    hr
+                  />
+                )
+              ) : null}
+              <Amount
+                description={t('Network Cost')}
+                amount={networkCost}
+                fiatOnly
+                hr
+                showInfoIcon={true}
+                infoIconOnPress={async () => {
+                  await sleep(400);
+                  dispatch(openUrlWithInAppBrowser(URL.HELP_PAYPRO_NETWORK_COST));
+                }}
+              />
+              <Amount
+                description={t('Miner fee')}
+                amount={fee}
+                fiatOnly
+                hr
+                showInfoIcon={true}
+                infoIconOnPress={async () => {
+                  await sleep(400);
+                  dispatch(openUrlWithInAppBrowser(URL.HELP_MINER_FEES));
+                }}
+              />
+              <Amount description={t('Total')} amount={total} />
+              <GiftCardTerms terms={cardConfig.terms} />
+            </>
+          ) : null}
+        </DetailsList>
+      </ConfirmScrollView>
       {wallet || coinbaseAccount ? (
-        <>
           <SwipeButton
             title={t('Slide to send')}
             forceReset={resetSwipeButton}
             onSwipeComplete={onSwipeComplete}
           />
-        </>
       ) : null}
 
       {key?.hardwareSource && wallet ? (

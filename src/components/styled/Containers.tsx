@@ -15,6 +15,7 @@ import {
 } from '../../styles/colors';
 import {BaseText} from './Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
 export {ActiveOpacity} from '@components/base/TouchableOpacity';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
@@ -422,6 +423,16 @@ export const NoResultsDescription = styled(BaseText)`
 `;
 
 export const ProposalBadgeContainer = styled(TouchableOpacity)`
+  background: ${Action};
+  border-radius: 10px;
+  height: 30px;
+  width: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const ProposalHeaderBadgeContainer = styled(GHTouchableOpacity)`
   background: ${Action};
   border-radius: 10px;
   height: 30px;

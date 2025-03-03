@@ -2,11 +2,13 @@ import React from 'react';
 import RNSwipeButton from 'rn-swipe-button';
 import {useTheme} from 'styled-components/native';
 import {NotificationPrimary, White} from '../../styles/colors';
-import BitpayBSvg from '../../../assets/img/logos/bitpay-b.svg';
 import SlideArrowSVG from '../../../assets/img/slide-arrow.svg';
 import haptic from '../haptic-feedback/haptic';
 import styled from 'styled-components/native';
 import * as Svg from 'react-native-svg';
+import { Dimensions } from 'react-native';
+import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { IS_ANDROID } from '../../constants';
 
 export interface SwipeButtonConfig {
   title: string;
@@ -23,7 +25,9 @@ const SwipeButtonBackground = styled.View`
 `;
 
 const SwipeButtonContainer = styled.View`
-  padding: 5px 10%;
+  position: absolute;
+  width: 100%;
+  padding: 10px 10%;
 `;
 
 const SlideArrow = styled(SlideArrowSVG)`
@@ -53,8 +57,13 @@ const SwipeButton = ({
   disabled = false,
 }: SwipeButtonConfig) => {
   const theme = useTheme();
+  // Android safe area
+  const { height } = useSafeAreaFrame();
+  const { height: windowHeight } = Dimensions.get('window');
+  // iOS safe area
+  const insets = useSafeAreaInsets();
   return (
-    <SwipeButtonContainer>
+    <SwipeButtonContainer style={{ bottom: IS_ANDROID ? height - windowHeight : insets.bottom }}>
       <SwipeButtonBackground>
         <RNSwipeButton
           containerStyles={{

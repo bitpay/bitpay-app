@@ -30,9 +30,9 @@ import {
   ActiveOpacity,
   ScreenGutter,
   HeaderRightContainer as _HeaderRightContainer,
-  ProposalBadgeContainer,
   EmptyListContainer,
   ChevronContainer,
+  ProposalHeaderBadgeContainer,
 } from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {
@@ -265,11 +265,11 @@ const KeyOverview = () => {
           <>
             <HeaderRightContainer>
               {pendingTxps.length ? (
-                <ProposalBadgeContainer
+                <ProposalHeaderBadgeContainer
                   style={{marginRight: 10}}
                   onPress={onPressTxpBadge}>
                   <ProposalBadge>{pendingTxps.length}</ProposalBadge>
-                </ProposalBadgeContainer>
+                </ProposalHeaderBadgeContainer>
               ) : null}
               {key?.methods?.isPrivKeyEncrypted() &&
               missingChainsAccounts.length === 0 ? (

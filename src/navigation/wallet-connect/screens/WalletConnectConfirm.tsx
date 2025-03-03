@@ -29,6 +29,7 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {
   Amount,
   ConfirmContainer,
+  ConfirmScrollView,
   DetailsList,
   ExchangeRate,
   Fee,
@@ -231,6 +232,7 @@ const WalletConnectConfirm = () => {
     try {
       dispatch(startOnGoingProcessModal('REJECTING_CALL_REQUEST'));
       await dispatch(walletConnectV2RejectCallRequest(request));
+      await sleep(1000);
       dispatch(dismissOnGoingProcessModal());
       await sleep(1000);
       navigation.goBack();
@@ -378,129 +380,134 @@ const WalletConnectConfirm = () => {
 
   return (
     <ConfirmContainer>
-      <DetailsList>
-        <Header>Summary</Header>
-        <Banner
-          height={100}
-          type={'warning'}
-          title={t('Waiting for approval')}
-          transComponent={
-            <Trans
-              i18nKey="WalletConnectBannerConfirm"
-              values={{peerName}}
-              components={[<BaseText style={{fontWeight: 'bold'}} />]}
-            />
-          }
-        />
-        <Hr />
-        <ItemContainer>
-          <H7>{t('Connected to')}</H7>
-          {peerUrl ? (
-            <ClipboardContainer>
-              {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
-                <CopiedSvg width={17} />
-              ) : null}
-              {VerifyIcon ? (
-                <VerifyIconContainer
-                  style={{
-                    backgroundColor: bgColor,
-                  }}
-                  onPress={() => setShowVerifyContextBottomModal(true)}>
-                  <VerifyIcon />
-                </VerifyIconContainer>
-              ) : null}
-              <NoteContainer
-                isDappUri={true}
-                disabled={clipboardObj.copied}
-                onPress={() =>
-                  peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
-                }>
-                <IconContainer>
-                  {peerIcon && !imageError ? (
-                    <FastImage
-                      source={{uri: peerIcon}}
-                      style={{width: 18, height: 18}}
-                      onError={() => setImageError(true)}
-                    />
-                  ) : (
-                    <DefaultImage />
-                  )}
-                </IconContainer>
-                <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
-                  {peerUrl?.replace('https://', '')}
-                </NoteLabel>
-              </NoteContainer>
-            </ClipboardContainer>
-          ) : null}
-        </ItemContainer>
-        <Hr />
-        {request?.params?.request?.method ? (
+      <ConfirmScrollView
+        extraScrollHeight={50}
+        contentContainerStyle={{paddingBottom: 80}}
+        keyboardShouldPersistTaps={'handled'}>
+        <DetailsList>
+          <Header>Summary</Header>
+          <Banner
+            height={100}
+            type={'warning'}
+            title={t('Waiting for approval')}
+            transComponent={
+              <Trans
+                i18nKey="WalletConnectBannerConfirm"
+                values={{peerName}}
+                components={[<BaseText style={{fontWeight: 'bold'}} />]}
+              />
+            }
+          />
+          <Hr />
           <ItemContainer>
-            <H7>{t('Method')}</H7>
-            <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
-              {request?.params?.request?.method}
-            </NoteLabel>
-          </ItemContainer>
-        ) : null}
-        <Hr />
-        <SendingTo recipient={txDetails?.sendingTo} hr />
-        <SendingFrom sender={txDetails?.sendingFrom} hr />
-        {txDetails?.rateStr ? (
-          <ExchangeRate
-            description={t('Exchange rate')}
-            rateStr={txDetails?.rateStr}
-          />
-        ) : null}
-        <Fee
-          fee={txDetails?.fee}
-          feeOptions={feeOptions}
-          hideFeeOptions={true}
-          hr
-        />
-        {txDetails?.gasPrice !== undefined ? (
-          <SharedDetailRow
-            description={t('Gas price')}
-            value={txDetails?.gasPrice.toFixed(2) + ' Gwei'}
-            hr
-          />
-        ) : null}
-        {txDetails?.gasLimit !== undefined ? (
-          <SharedDetailRow
-            description={t('Gas limit')}
-            value={txDetails?.gasLimit}
-            hr
-          />
-        ) : null}
-        {txDetails?.data ? (
-          <>
-            <ItemContainer>
-              <H7>{t('Encoded Data')}</H7>
+            <H7>{t('Connected to')}</H7>
+            {peerUrl ? (
               <ClipboardContainer>
-                {clipboardObj.copied && clipboardObj.type === 'contractData' ? (
+                {clipboardObj.copied && clipboardObj.type === 'dappUri' ? (
                   <CopiedSvg width={17} />
                 ) : null}
-
+                {VerifyIcon ? (
+                  <VerifyIconContainer
+                    style={{
+                      backgroundColor: bgColor,
+                    }}
+                    onPress={() => setShowVerifyContextBottomModal(true)}>
+                    <VerifyIcon />
+                  </VerifyIconContainer>
+                ) : null}
                 <NoteContainer
                   isDappUri={true}
                   disabled={clipboardObj.copied}
                   onPress={() =>
-                    copyToClipboard(txDetails.data!, 'contractData')
+                    peerUrl ? copyToClipboard(peerUrl, 'dappUri') : null
                   }>
+                  <IconContainer>
+                    {peerIcon && !imageError ? (
+                      <FastImage
+                        source={{uri: peerIcon}}
+                        style={{width: 18, height: 18}}
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <DefaultImage />
+                    )}
+                  </IconContainer>
                   <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
-                    {txDetails.data}
+                    {peerUrl?.replace('https://', '')}
                   </NoteLabel>
                 </NoteContainer>
               </ClipboardContainer>
+            ) : null}
+          </ItemContainer>
+          <Hr />
+          {request?.params?.request?.method ? (
+            <ItemContainer>
+              <H7>{t('Method')}</H7>
+              <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
+                {request?.params?.request?.method}
+              </NoteLabel>
             </ItemContainer>
-            <Hr />
-          </>
-        ) : null}
-        {txDetails?.nonce !== undefined && txDetails?.nonce !== null ? (
-          <SharedDetailRow description={'Nonce'} value={txDetails?.nonce} hr />
-        ) : null}
-        <Amount description={t('SubTotal')} amount={txDetails?.subTotal} />
-        <Amount description={t('Total')} amount={txDetails?.total} />
-      </DetailsList>
+          ) : null}
+          <Hr />
+          <SendingTo recipient={txDetails?.sendingTo} hr />
+          <SendingFrom sender={txDetails?.sendingFrom} hr />
+          {txDetails?.rateStr ? (
+            <ExchangeRate
+              description={t('Exchange rate')}
+              rateStr={txDetails?.rateStr}
+            />
+          ) : null}
+          <Fee
+            fee={txDetails?.fee}
+            feeOptions={feeOptions}
+            hideFeeOptions={true}
+            hr
+          />
+          {txDetails?.gasPrice !== undefined ? (
+            <SharedDetailRow
+              description={t('Gas price')}
+              value={txDetails?.gasPrice.toFixed(2) + ' Gwei'}
+              hr
+            />
+          ) : null}
+          {txDetails?.gasLimit !== undefined ? (
+            <SharedDetailRow
+              description={t('Gas limit')}
+              value={txDetails?.gasLimit}
+              hr
+            />
+          ) : null}
+          {txDetails?.data ? (
+            <>
+              <ItemContainer>
+                <H7>{t('Encoded Data')}</H7>
+                <ClipboardContainer>
+                  {clipboardObj.copied && clipboardObj.type === 'contractData' ? (
+                    <CopiedSvg width={17} />
+                  ) : null}
+
+                  <NoteContainer
+                    isDappUri={true}
+                    disabled={clipboardObj.copied}
+                    onPress={() =>
+                      copyToClipboard(txDetails.data!, 'contractData')
+                    }>
+                    <NoteLabel numberOfLines={1} ellipsizeMode={'tail'}>
+                      {txDetails.data}
+                    </NoteLabel>
+                  </NoteContainer>
+                </ClipboardContainer>
+              </ItemContainer>
+              <Hr />
+            </>
+          ) : null}
+          {txDetails?.nonce !== undefined && txDetails?.nonce !== null ? (
+            <SharedDetailRow description={'Nonce'} value={txDetails?.nonce} hr />
+          ) : null}
+          <Amount description={t('SubTotal')} amount={txDetails?.subTotal} />
+          <Amount description={t('Total')} amount={txDetails?.total} />
+        </DetailsList>
+      </ConfirmScrollView>
       <SwipeButton
         title={t('Slide to approve')}
         onSwipeComplete={approveCallRequest}
