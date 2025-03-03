@@ -189,6 +189,7 @@ const WalletConnectConnections = () => {
       headerRight: () => {
         return (
           <AddConnectionContainer
+            touchableLibrary={'react-native-gesture-handler'}
             onPress={() => {
               navigation.navigate('WalletConnectRoot', {});
             }}>
@@ -505,6 +506,7 @@ const WalletConnectConnections = () => {
               <Button
                 buttonStyle="danger"
                 buttonOutline={true}
+                touchableLibrary={'react-native'}
                 onPress={async () => {
                   haptic('impactLight');
                   setShowSessionOptions(false);
