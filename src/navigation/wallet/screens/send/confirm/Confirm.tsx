@@ -593,7 +593,7 @@ const Confirm = () => {
       <ConfirmContainer>
         <ConfirmScrollView
           extraScrollHeight={50}
-          contentContainerStyle={{paddingBottom: 50}}
+          contentContainerStyle={{paddingBottom: 150}}
           keyboardShouldPersistTaps={'handled'}>
           <DetailsList keyboardShouldPersistTaps={'handled'}>
             <Header>Summary</Header>
