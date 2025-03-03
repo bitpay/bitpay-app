@@ -25,6 +25,7 @@ import CurrencySymbol from '../icons/currency-symbol/CurrencySymbol';
 import {useLogger} from '../../utils/hooks/useLogger';
 import {getBuyCryptoFiatLimits} from '../../store/buy-crypto/buy-crypto.effects';
 import KeyEvent from 'react-native-keyevent';
+import ArchaxFooter from '../archax/archax-footer';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
@@ -150,6 +151,7 @@ const Amount: React.FC<AmountProps> = ({
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const curValRef = useRef('');
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   const fiatCurrency = useMemo(() => {
     if (fiatCurrencyAbbreviation) {
@@ -519,6 +521,7 @@ const Amount: React.FC<AmountProps> = ({
               {t('Continue')}
             </Button>
           </ButtonContainer>
+          {showArchaxBanner && <ArchaxFooter />}
         </ActionContainer>
       </ViewContainer>
     </AmountContainer>

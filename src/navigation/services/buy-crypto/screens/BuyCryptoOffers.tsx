@@ -121,7 +121,11 @@ import RampTerms from '../components/terms/RampTerms';
 import SardineTerms from '../components/terms/SardineTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
 import TransakTerms from '../components/terms/TransakTerms';
-import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
+import {
+  TermsContainer,
+  TermsContainerOffer,
+  TermsText,
+} from '../styled/BuyCryptoTerms';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {AppActions} from '../../../../store/app';
@@ -147,6 +151,7 @@ import {
   getTransakSelectedPaymentMethodData,
   transakEnv,
 } from '../utils/transak-utils';
+import ArchaxFooter from '../../../../components/archax/archax-footer';
 
 export type BuyCryptoOffersScreenParams = {
   amount: number;
@@ -189,6 +194,7 @@ export type CryptoOffer = {
 
 const BuyCryptoOffersContainer = styled.SafeAreaView`
   flex: 1;
+  margin-bottom: 40px;
 `;
 
 const SummaryRow = styled.View`
@@ -199,6 +205,11 @@ const SummaryRow = styled.View`
   height: 60px;
   margin-top: 20px;
   padding: 0px 14px;
+`;
+
+const SummaryNote = styled.View`
+  margin-top: 5px;
+  padding: 0 14px;
 `;
 
 const SummaryItemContainer = styled.View`
@@ -448,6 +459,7 @@ const BuyCryptoOffers: React.FC = () => {
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -2433,6 +2445,11 @@ const BuyCryptoOffers: React.FC = () => {
             </Button>
           </SummaryCtaContainer>
         </SummaryRow>
+        {showArchaxBanner && (
+          <SummaryNote>
+            <SummaryTitle>Additional third-party fees may apply</SummaryTitle>
+          </SummaryNote>
+        )}
 
         {Object.values(offers)
           .sort(
@@ -2476,7 +2493,7 @@ const BuyCryptoOffers: React.FC = () => {
                           <BestOfferTagContainer>
                             <BestOfferTag>
                               <BestOfferTagText>
-                                {t('Best Offer')}
+                                {t('Our Best Offer')}
                               </BestOfferTagText>
                             </BestOfferTag>
                           </BestOfferTagContainer>
@@ -2535,7 +2552,7 @@ const BuyCryptoOffers: React.FC = () => {
                   ) : null}
                 </OfferRow>
 
-                {offer.expanded ? (
+                {offer.expanded || showArchaxBanner ? (
                   <>
                     <ItemDivisor style={{marginTop: 20}} />
                     <OfferExpandibleItem>
@@ -2606,18 +2623,30 @@ const BuyCryptoOffers: React.FC = () => {
                     ) : null}
                   </>
                 ) : null}
+                {showArchaxBanner && (
+                  <TermsContainerOffer>
+                    <TermsText>
+                      {t(
+                        'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
+                      )}
+                    </TermsText>
+                  </TermsContainerOffer>
+                )}
               </BuyCryptoExpandibleCard>
             ) : null;
           })}
 
-        <TermsContainer>
-          <TermsText>
-            {t(
-              'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
-            )}
-          </TermsText>
-          <TermsText>{t('Additional third-party fees may apply.')}</TermsText>
-        </TermsContainer>
+        {!showArchaxBanner && (
+          <TermsContainer>
+            <TermsText>
+              {t(
+                'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
+              )}
+            </TermsText>
+            <TermsText>{t('Additional third-party fees may apply.')}</TermsText>
+          </TermsContainer>
+        )}
+        {showArchaxBanner && <ArchaxFooter />}
       </ScrollView>
     </BuyCryptoOffersContainer>
   );
