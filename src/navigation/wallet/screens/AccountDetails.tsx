@@ -89,7 +89,7 @@ import {
   ChevronContainer,
   EmptyListContainer,
   HeaderRightContainer,
-  ProposalBadgeContainer,
+  ProposalHeaderBadgeContainer,
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import SearchComponent, {
@@ -807,11 +807,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 alignItems: 'center',
               }}>
               {pendingProposalsCount ? (
-                <ProposalBadgeContainer
+                <ProposalHeaderBadgeContainer
                   style={{marginRight: 10}}
                   onPress={onPressTxpBadge}>
                   <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
-                </ProposalBadgeContainer>
+                </ProposalHeaderBadgeContainer>
               ) : null}
               {hasAllChains ? (
                 <TouchableOpacity
