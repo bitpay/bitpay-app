@@ -9,7 +9,9 @@ import SwapButton, {
   ButtonText,
   SwapButtonContainer,
 } from '../../components/swap-button/SwapButton';
-import VirtualKeyboard from '../../components/virtual-keyboard/VirtualKeyboard';
+import VirtualKeyboard, {
+  PIXEL_DENSITY_LIMIT,
+} from '../../components/virtual-keyboard/VirtualKeyboard';
 import {getAvailableFiatCurrencies} from '../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 import {getAvailableSellCryptoFiatCurrencies} from '../../navigation/services/sell-crypto/utils/sell-crypto-utils';
 import {ParseAmount} from '../../store/wallet/effects/amount/amount';
@@ -25,22 +27,24 @@ import CurrencySymbol from '../icons/currency-symbol/CurrencySymbol';
 import {useLogger} from '../../utils/hooks/useLogger';
 import {getBuyCryptoFiatLimits} from '../../store/buy-crypto/buy-crypto.effects';
 import KeyEvent from 'react-native-keyevent';
+import ArchaxFooter from '../archax/archax-footer';
+import {PixelRatio, View} from 'react-native';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const CtaContainer = styled.View`
+const CtaContainer = styled.View<{isSmallScreen?: boolean}>`
   width: 100%;
-  margin-top: 20px;
+  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
   flex-direction: row;
   justify-content: space-between;
 `;
 
-export const AmountHeroContainer = styled.View`
+export const AmountHeroContainer = styled.View<{isSmallScreen: boolean}>`
   flex-direction: column;
   align-items: center;
-  margin-top: 20px;
+  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
   padding: 0 ${ScreenGutter};
 `;
 
@@ -95,9 +99,8 @@ const CurrencySuperScript = styled.View`
   top: 10px;
   right: -20px;
 `;
-
-const CurrencyText = styled(BaseText)`
-  font-size: 20px;
+const CurrencyText = styled(BaseText)<{bigAmount?: boolean}>`
+  font-size: ${({bigAmount}) => (bigAmount ? '12px' : '20px')};
   color: ${({theme}) => theme.colors.text};
   position: absolute;
 `;
@@ -150,6 +153,10 @@ const Amount: React.FC<AmountProps> = ({
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const curValRef = useRef('');
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const _isSmallScreen = showArchaxBanner
+    ? true
+    : PixelRatio.get() < PIXEL_DENSITY_LIMIT;
 
   const fiatCurrency = useMemo(() => {
     if (fiatCurrencyAbbreviation) {
@@ -440,16 +447,17 @@ const Amount: React.FC<AmountProps> = ({
   return (
     <AmountContainer>
       <ViewContainer>
-        <AmountHeroContainer>
+        <AmountHeroContainer isSmallScreen={_isSmallScreen}>
           <Row>
             <AmountText
               numberOfLines={1}
               ellipsizeMode={'tail'}
-              bigAmount={displayAmount?.length > 8}>
+              bigAmount={_isSmallScreen ? true : displayAmount?.length > 8}>
               {displayAmount || 0}
             </AmountText>
             <CurrencySuperScript>
-              <CurrencyText>
+              <CurrencyText
+                bigAmount={_isSmallScreen ? true : displayAmount?.length > 8}>
                 {formatCurrencyAbbreviation(currency) || 'USD'}
               </CurrencyText>
             </CurrencySuperScript>
@@ -465,14 +473,18 @@ const Amount: React.FC<AmountProps> = ({
               </AmountEquivText>
             </Row>
           ) : null}
-          <Row>{getWarnMsg}</Row>
-          <CtaContainer>
+          <View style={{position: 'absolute', top: _isSmallScreen ? 70 : 100}}>
+            {getWarnMsg}
+          </View>
+          <CtaContainer isSmallScreen={_isSmallScreen}>
             {context &&
             ['sellCrypto', 'swapCrypto'].includes(context) &&
             limitsOpts?.maxWalletAmount ? (
-              <SwapButtonContainer onPress={() => swapCryptoSendMax()}>
+              <SwapButtonContainer
+                isSmallScreen={_isSmallScreen}
+                onPress={() => swapCryptoSendMax()}>
                 <CurrencySymbol />
-                <ButtonText>MAX</ButtonText>
+                <ButtonText isSmallScreen={_isSmallScreen}>MAX</ButtonText>
               </SwapButtonContainer>
             ) : (
               <Row />
@@ -519,6 +531,7 @@ const Amount: React.FC<AmountProps> = ({
               {t('Continue')}
             </Button>
           </ButtonContainer>
+          {showArchaxBanner && <ArchaxFooter />}
         </ActionContainer>
       </ViewContainer>
     </AmountContainer>

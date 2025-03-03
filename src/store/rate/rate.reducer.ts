@@ -72,7 +72,10 @@ export const rateReducer = (
       const {cacheKey, dateRange = DEFAULT_DATE_RANGE} = action.payload;
       return {
         ...state,
-        [cacheKey]: {...initialState.ratesHistoricalCacheKey, [dateRange]: Date.now()},
+        [cacheKey]: {
+          ...initialState.ratesHistoricalCacheKey,
+          [dateRange]: Date.now(),
+        },
       };
     }
 

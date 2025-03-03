@@ -100,8 +100,13 @@ const ShopHome: React.FC<
 > = ({route}) => {
   const {t} = useTranslation();
   const theme = useTheme();
-  const availableCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.availableCardMap);
-  const supportedCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const availableCardMap = useAppSelector(
+    ({SHOP_CATALOG}) => SHOP_CATALOG.availableCardMap,
+  );
+  const supportedCardMap = useAppSelector(
+    ({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap,
+  );
 
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -262,66 +267,66 @@ const ShopHome: React.FC<
   );
 
   return (
-      <TabContainer>
-        <HeaderContainer>
-          <HeaderTitle>{t('Pay with Crypto')}</HeaderTitle>
-        </HeaderContainer>
-        <ScrollView
-          ref={scrollViewRef}
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-          onScrollBeginDrag={Keyboard.dismiss}
-          refreshControl={
-            user ? (
-              <RefreshControl
-                tintColor={theme.dark ? White : SlateDark}
-                refreshing={refreshing}
-                onRefresh={async () => {
-                  setRefreshing(true);
-                  await Promise.all([
-                    dispatch(ShopEffects.startSyncGiftCards()),
-                    sleep(600),
-                  ]);
-                  setRefreshing(false);
-                }}
-              />
-            ) : undefined
-          }>
-          <ShopInnerContainer>
-            <Tab.Navigator
-              style={{
-                height: scrollViewHeight,
+    <TabContainer>
+      <HeaderContainer>
+        <HeaderTitle>{t('Pay with Crypto')}</HeaderTitle>
+      </HeaderContainer>
+      <ScrollView
+        ref={scrollViewRef}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={Keyboard.dismiss}
+        refreshControl={
+          user ? (
+            <RefreshControl
+              tintColor={theme.dark ? White : SlateDark}
+              refreshing={refreshing}
+              onRefresh={async () => {
+                setRefreshing(true);
+                await Promise.all([
+                  dispatch(ShopEffects.startSyncGiftCards()),
+                  sleep(600),
+                ]);
+                setRefreshing(false);
               }}
-              screenOptions={ScreenOptions({
-                fontSize: 16,
-                marginHorizontal: 5,
-                numTabs: 2,
-                tabWidth: 120,
-                langAdjustments: true,
-              })}
-              screenListeners={{
-                tabPress: tab => {
-                  if (tab.target) {
-                    setActiveTab(
-                      tab.target.includes(ShopTabs.GIFT_CARDS)
-                        ? ShopTabs.GIFT_CARDS
-                        : ShopTabs.SHOP_ONLINE,
-                    );
-                  }
-                },
-              }}>
-              <Tab.Screen
-                name={t('Gift Cards')}
-                component={memoizedGiftCardCatalog}
-              />
-              <Tab.Screen
-                name={t('Shop Online')}
-                component={memoizedShopOnline}
-              />
-            </Tab.Navigator>
-          </ShopInnerContainer>
-        </ScrollView>
-      </TabContainer>
+            />
+          ) : undefined
+        }>
+        <ShopInnerContainer>
+          <Tab.Navigator
+            style={{
+              height: scrollViewHeight,
+            }}
+            screenOptions={ScreenOptions({
+              fontSize: 16,
+              marginHorizontal: 5,
+              numTabs: 2,
+              tabWidth: 120,
+              langAdjustments: true,
+            })}
+            screenListeners={{
+              tabPress: tab => {
+                if (tab.target) {
+                  setActiveTab(
+                    tab.target.includes(ShopTabs.GIFT_CARDS)
+                      ? ShopTabs.GIFT_CARDS
+                      : ShopTabs.SHOP_ONLINE,
+                  );
+                }
+              },
+            }}>
+            <Tab.Screen
+              name={t('Gift Cards')}
+              component={memoizedGiftCardCatalog}
+            />
+            <Tab.Screen
+              name={t('Shop Online')}
+              component={memoizedShopOnline}
+            />
+          </Tab.Navigator>
+        </ShopInnerContainer>
+      </ScrollView>
+    </TabContainer>
   );
 };
 

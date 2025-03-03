@@ -1,14 +1,17 @@
-import React, {memo, useMemo} from 'react';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import React, {memo, useMemo, ReactNode} from 'react';
 import styled from 'styled-components/native';
 
-const TabContainer: React.FC<React.PropsWithChildren> = ({children}) => {
-  const insets = useSafeAreaInsets();
+type PropsWithMoreParams<P = unknown> = P & {
+  children: ReactNode;
+  removeMarginTop?: boolean;
+};
+
+const TabContainer: React.FC<PropsWithMoreParams> = ({children}) => {
   const Container = useMemo(
     () => styled.View`
       flex: 1;
     `,
-    [insets.top],
+    [],
   );
   return <Container>{children}</Container>;
 };

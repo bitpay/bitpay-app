@@ -24,7 +24,6 @@ import TransactButtonIcon from '../../../assets/img/tab-icons/transact-button.sv
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import TransactModal from '../../components/modal/transact-menu/TransactMenu';
 
-import {ZeroHeightHeader} from '../../components/styled/Text';
 import BillStack from './shop/bill/BillStack';
 import styled from 'styled-components/native';
 import {useAppDispatch, useAppSelector} from '../../utils/hooks';
