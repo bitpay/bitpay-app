@@ -1,9 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  ScrollView,
-} from 'react-native';
+import {ActivityIndicator, Platform, ScrollView} from 'react-native';
 import _ from 'lodash';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled, {useTheme} from 'styled-components/native';
@@ -131,6 +127,7 @@ import {
 } from '../utils/simplex-sell-utils';
 import {simplexGetCurrencies} from '../../../../store/buy-crypto/effects/simplex/simplex';
 import {isEuCountry} from '../../../../store/location/location.effects';
+import ArchaxFooter from '../../../../components/archax/archax-footer';
 import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {getChainFromRampChainFormat, getCoinFromRampCoinFormat, getRampSellCurrenciesFixedProps, rampSellEnv} from '../utils/ramp-sell-utils';
 import cloneDeep from 'lodash.clonedeep';
@@ -250,6 +247,7 @@ const SellCryptoRoot = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const tokenDataByAddress = useAppSelector(
     ({WALLET}: RootState) => WALLET.tokenDataByAddress,
@@ -1876,6 +1874,7 @@ const SellCryptoRoot = ({
           </Button>
         </CtaContainer>
       </ScrollView>
+      {showArchaxBanner && <ArchaxFooter />}
 
       {uiFormattedWallet ? (
         <BalanceDetailsModal

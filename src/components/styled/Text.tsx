@@ -258,3 +258,13 @@ export const CopyToClipboardText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
   padding: 0 20px 0 10px;
 `;
+
+export const ArchaxBannerText = styled(H7)`
+  color: ${({theme}) => theme.colors.text};
+`;
+
+export const ArchaxBannerLink = styled(BaseText)`
+  color: ${({theme}) => theme.colors.link};
+  text-decoration: underline;
+  text-decoration-color: ${({theme}) => theme.colors.link};
+`;

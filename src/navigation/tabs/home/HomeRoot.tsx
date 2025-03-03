@@ -58,9 +58,9 @@ import {
   sendCrypto,
 } from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import Icons from '../../wallet/components/WalletIcons';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
+import ArchaxFooter from '../../../components/archax/archax-footer';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -88,6 +88,8 @@ const HomeRoot = () => {
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
   useBrazeRefreshOnFocus();
+
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
@@ -303,6 +305,7 @@ const HomeRoot = () => {
                 <QuickLinksCarousel contentCards={memoizedQuickLinks} />
               </HomeSection>
             ) : null}
+            {showArchaxBanner && <ArchaxFooter />}
           </ScrollView>
         </>
       )}

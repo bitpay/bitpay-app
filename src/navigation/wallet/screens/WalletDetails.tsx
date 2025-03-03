@@ -137,6 +137,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
 import {BillPayAccount} from '../../../store/shop/shop.models';
 import debounce from 'lodash.debounce';
+import ArchaxFooter from '../../../components/archax/archax-footer';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -308,7 +309,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {walletId, skipInitializeHistory, copayerId} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const supportedCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap);
+  const supportedCardMap = useAppSelector(
+    ({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap,
+  );
 
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
 
@@ -332,6 +335,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     useState(false);
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -1351,6 +1355,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           wallet={fullWalletObj}
         />
       ) : null}
+      {showArchaxBanner && <ArchaxFooter />}
     </WalletDetailsContainer>
   );
 };

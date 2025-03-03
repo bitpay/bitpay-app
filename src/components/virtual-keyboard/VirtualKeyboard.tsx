@@ -5,15 +5,14 @@ import {BaseText} from '../styled/Text';
 import DeleteIcon from '../icons/delete/Delete';
 import {PixelRatio} from 'react-native';
 import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
-const PIXEL_DENSITY_LIMIT = 3;
-export const VIRTUAL_KEYBOARD_BUTTON_SIZE =
-  PixelRatio.get() < PIXEL_DENSITY_LIMIT ? 65 : 85;
+import useAppSelector from '../../utils/hooks/useAppSelector';
+export const PIXEL_DENSITY_LIMIT = 3;
 
 interface SymbolContainerProps {
   showLetters?: boolean;
 }
 
-const KeyboardContainer = styled.View<{isSmallScreen?: boolean;}>`
+const KeyboardContainer = styled.View<{isSmallScreen?: boolean}>`
   margin: ${({isSmallScreen}) => (isSmallScreen ? 7 : 10)}px 0;
 `;
 
@@ -31,11 +30,11 @@ const CellValue = styled(BaseText)<{
   darkModeOnly?: boolean;
   isSmallScreen?: boolean;
 }>`
-  font-size: ${({isSmallScreen}) => (isSmallScreen ? 26 : 32.08)}px;
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? 22 : 32.08)}px;
   font-weight: 500;
   color: ${({theme, darkModeOnly}) =>
     darkModeOnly ? White : theme.colors.text};
-  line-height: ${({isSmallScreen}) => (isSmallScreen ? 45 : 65)}px;
+  line-height: ${({isSmallScreen}) => (isSmallScreen ? 35 : 65)}px;
 `;
 
 const CellLetter = styled(BaseText)`
@@ -79,16 +78,19 @@ const Cell: React.FC<CellProps> = ({
   backgroundColor,
   darkModeOnly,
 }) => {
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const _isSmallScreen = showArchaxBanner
+    ? true
+    : PixelRatio.get() < PIXEL_DENSITY_LIMIT;
   const accessibilityLabel = `${value}-button`;
   return (
     <CellContainer accessibilityLabel={accessibilityLabel}>
       <VirtualKeyboardButtonAnimation
+        isSmallScreen={_isSmallScreen}
         onPress={() => onCellPress?.(value)}
         backgroundColor={backgroundColor}>
         <>
-          <CellValue
-            darkModeOnly={darkModeOnly}
-            isSmallScreen={PixelRatio.get() < PIXEL_DENSITY_LIMIT}>
+          <CellValue darkModeOnly={darkModeOnly} isSmallScreen={_isSmallScreen}>
             {value}
           </CellValue>
           {letters ? <CellLetter>{letters}</CellLetter> : null}
@@ -142,8 +144,12 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
       ? 'rgba(255, 255, 255, 0.2)'
       : 'rgba(0, 0, 0, 0.1)';
   const bgColor = darkModeOnly || theme.dark ? White : '#4A4A4A';
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const _isSmallScreen = showArchaxBanner
+    ? true
+    : PixelRatio.get() < PIXEL_DENSITY_LIMIT;
   return (
-    <KeyboardContainer isSmallScreen={PixelRatio.get() < PIXEL_DENSITY_LIMIT}>
+    <KeyboardContainer isSmallScreen={_isSmallScreen}>
       <Row
         numArray={[
           {
