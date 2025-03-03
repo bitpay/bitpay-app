@@ -6,12 +6,16 @@ import {IS_ANDROID} from '../../constants';
 export const ActiveOpacity = 0.75;
 
 // Use intersection of both prop types to ensure compatibility
-export type TouchableOpacityProps = RNTouchableOpacityProps & GHTouchableOpacityProps;
+export type TouchableOpacityProps = RNTouchableOpacityProps & GHTouchableOpacityProps & {
+  touchableLibrary?: 'react-native' | 'react-native-gesture-handler';
+};
 
 export const TouchableOpacity: React.FC<TouchableOpacityProps> = ({
   activeOpacity = ActiveOpacity,
+  touchableLibrary,
   ...props
 }) => {
-  const TouchableComponent = IS_ANDROID ? RNTouchableOpacity : GHTouchableOpacity;
+  const specifiedTouchable = touchableLibrary && (touchableLibrary === 'react-native' ? RNTouchableOpacity : GHTouchableOpacity);
+  const TouchableComponent = specifiedTouchable || (IS_ANDROID ? RNTouchableOpacity : GHTouchableOpacity);
   return <TouchableComponent activeOpacity={activeOpacity} {...props} />;
 };
