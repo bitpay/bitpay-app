@@ -62,6 +62,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import moment from 'moment';
+import ArchaxFooter from '../../../components/archax/archax-footer';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -71,6 +72,7 @@ interface ChartDisplayDataType {
   date: Date;
   value: number;
 }
+
 interface ChartDataType {
   data: ChartDisplayDataType[];
   percentChange: number;
@@ -93,6 +95,8 @@ const defaultCachedRates: {
   [DateRanges.Day]: {data: [], percentChange: 0, priceChange: 0},
   [DateRanges.Week]: {data: [], percentChange: 0, priceChange: 0},
   [DateRanges.Month]: {data: [], percentChange: 0, priceChange: 0},
+  [DateRanges.Year]: {data: [], percentChange: 0, priceChange: 0},
+  [DateRanges.FiveYears]: {data: [], percentChange: 0, priceChange: 0},
 };
 
 const rateFetchPromises: {
@@ -101,6 +105,8 @@ const rateFetchPromises: {
   [DateRanges.Day]: undefined,
   [DateRanges.Week]: undefined,
   [DateRanges.Month]: undefined,
+  [DateRanges.Year]: undefined,
+  [DateRanges.FiveYears]: undefined,
 };
 
 const SafeAreaView = styled.SafeAreaView`
@@ -276,6 +282,7 @@ export const AxisLabel = ({
 
 const PriceCharts = () => {
   const {t} = useTranslation();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -365,16 +372,26 @@ const PriceCharts = () => {
   };
 
   const fillRateCache = async () => {
-    [DateRanges.Day, DateRanges.Month, DateRanges.Week].forEach(dateRange =>
-      fetchRates(dateRange),
-    );
+    [
+      DateRanges.Day,
+      DateRanges.Month,
+      DateRanges.Week,
+      // TODO uncomment the following lines
+      // DateRanges.Year,
+      // DateRanges.FiveYears,
+    ].forEach(dateRange => fetchRates(dateRange));
     const dayRates = await rateFetchPromises[DateRanges.Day]!;
     const targetLength = dayRates?.length;
-    [DateRanges.Day, DateRanges.Month, DateRanges.Week].forEach(
-      async dateRange => {
-        getHistoricalFiatRates(dateRange, targetLength);
-      },
-    );
+    [
+      DateRanges.Day,
+      DateRanges.Month,
+      DateRanges.Week,
+      // TODO uncomment the following lines
+      // DateRanges.Year,
+      // DateRanges.FiveYears,
+    ].forEach(async dateRange => {
+      getHistoricalFiatRates(dateRange, targetLength);
+    });
   };
 
   const fetchRates = async (dateRange: DateRanges) => {
@@ -628,6 +645,7 @@ const PriceCharts = () => {
           {buttonLabel}
         </Button>
       </CtaContainer>
+      {showArchaxBanner && <ArchaxFooter />}
     </SafeAreaView>
   );
 };

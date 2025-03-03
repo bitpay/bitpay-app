@@ -1,9 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  ScrollView,
-} from 'react-native';
+import {ActivityIndicator, Linking, ScrollView} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import uuid from 'react-native-uuid';
 import styled from 'styled-components/native';
@@ -70,6 +66,7 @@ import {WithdrawalMethod} from '../constants/SellCryptoConstants';
 import {useTranslation} from 'react-i18next';
 import {
   TermsContainer,
+  TermsContainerOffer,
   TermsText,
 } from '../../buy-crypto/styled/BuyCryptoTerms';
 import {SellCryptoConfig} from '../../../../store/external-services/external-services.types';
@@ -99,6 +96,7 @@ import {
   SimplexSellPaymentRequestReqData,
 } from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {SellCryptoScreens} from '../SellCryptoGroup';
+import ArchaxFooter from '../../../../components/archax/archax-footer';
 
 export type SellCryptoOffersScreenParams = {
   amount: number;
@@ -138,6 +136,7 @@ export type CryptoOffer = {
 
 const SellCryptoOffersContainer = styled.SafeAreaView`
   flex: 1;
+  margin-bottom: 40px;
 `;
 
 const SummaryRow = styled.View`
@@ -147,7 +146,12 @@ const SummaryRow = styled.View`
   align-items: center;
   height: 60px;
   margin-top: 20px;
-  padding: 0px 14px;
+  padding: 0 14px;
+`;
+
+const SummaryNote = styled.View`
+  margin-top: 5px;
+  padding: 0 14px;
 `;
 
 const SummaryItemContainer = styled.View`
@@ -358,6 +362,7 @@ const SellCryptoOffers: React.FC = () => {
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   SellCryptoSupportedExchanges.forEach((exchange: SellCryptoExchangeKey) => {
     if (offersDefault[exchange]) {
@@ -1084,6 +1089,11 @@ const SellCryptoOffers: React.FC = () => {
             </Button>
           </SummaryCtaContainer>
         </SummaryRow>
+        {showArchaxBanner && (
+          <SummaryNote>
+            <SummaryTitle>Additional third-party fees may apply</SummaryTitle>
+          </SummaryNote>
+        )}
 
         {Object.values(offers)
           .sort(
@@ -1127,7 +1137,7 @@ const SellCryptoOffers: React.FC = () => {
                           <BestOfferTagContainer>
                             <BestOfferTag>
                               <BestOfferTagText>
-                                {t('Best Offer')}
+                                {t('Our Best Offer')}
                               </BestOfferTagText>
                             </BestOfferTag>
                           </BestOfferTagContainer>
@@ -1194,7 +1204,7 @@ const SellCryptoOffers: React.FC = () => {
                   ) : null}
                 </OfferRow>
 
-                {offer.expanded ? (
+                {offer.expanded || showArchaxBanner ? (
                   <>
                     <ItemDivisor style={{marginTop: 20}} />
                     <OfferExpandibleItem>
@@ -1264,17 +1274,28 @@ const SellCryptoOffers: React.FC = () => {
                     </OfferExpandibleItem>
                   </>
                 ) : null}
+                {showArchaxBanner && (
+                  <TermsContainerOffer>
+                    <TermsText>
+                      {t(
+                        'This quote provides an estimated price only. The final cost may vary based on the exact timing when your crypto is exchanged and the type of fiat currency used for withdrawal. Be aware that additional fees from third parties may also apply.',
+                      )}
+                    </TermsText>
+                  </TermsContainerOffer>
+                )}
               </SellCryptoExpandibleCard>
             ) : null;
           })}
-
-        <TermsContainer>
-          <TermsText>
-            {t(
-              'This quote provides an estimated price only. The final cost may vary based on the exact timing when your crypto is exchanged and the type of fiat currency used for withdrawal. Be aware that additional fees from third parties may also apply.',
-            )}
-          </TermsText>
-        </TermsContainer>
+        {!showArchaxBanner && (
+          <TermsContainer>
+            <TermsText>
+              {t(
+                'This quote provides an estimated price only. The final cost may vary based on the exact timing when your crypto is exchanged and the type of fiat currency used for withdrawal. Be aware that additional fees from third parties may also apply.',
+              )}
+            </TermsText>
+          </TermsContainer>
+        )}
+        {showArchaxBanner && <ArchaxFooter />}
       </ScrollView>
     </SellCryptoOffersContainer>
   );

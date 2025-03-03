@@ -8,6 +8,10 @@ export const TermsContainer = styled.View`
   margin-bottom: 40px;
 `;
 
+export const TermsContainerOffer = styled.View`
+  margin-top: 20px;
+`;
+
 export const ExchangeTermsContainer = styled.View`
   padding: 0 0 10px 0;
 `;
