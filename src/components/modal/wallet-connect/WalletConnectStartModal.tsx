@@ -682,6 +682,7 @@ export const WalletConnectStartModal = () => {
                 <Button
                   state={buttonState}
                   disabled={!(allKeys && allKeys[0]?.accounts[0])}
+                  touchableLibrary={'react-native'}
                   onPress={() => {
                     haptic('impactLight');
                     approveSessionProposal();
@@ -692,6 +693,7 @@ export const WalletConnectStartModal = () => {
               <ActionContainer>
                 <Button
                   buttonStyle="secondary"
+                  touchableLibrary={'react-native'}
                   onPress={() => {
                     haptic('impactLight');
                     if (proposal) {
