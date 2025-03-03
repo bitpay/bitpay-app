@@ -16,6 +16,9 @@ import OptionsSheet, {
 import WalletIcons from '../../../navigation/wallet/components/WalletIcons';
 import Settings from '../../../components/settings/Settings';
 import {sleep} from '../../../utils/helper-methods';
+import ArchaxFooter from '../../../components/archax/archax-footer';
+import ArchaxBanner from '../../../components/archax/archax-banner';
+import {useAppSelector} from '../../../utils/hooks';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
@@ -65,6 +68,7 @@ const AmountScreen: React.FC<
   NativeStackScreenProps<WalletGroupParamList, WalletScreens.AMOUNT>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const [buttonState, setButtonState] = useState<ButtonState>();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
 

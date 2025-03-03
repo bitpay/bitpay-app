@@ -16,6 +16,7 @@ import {
 import {BaseText} from './Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 export {ActiveOpacity} from '@components/base/TouchableOpacity';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 export const isNotMobile = HEIGHT / WIDTH < 1.6;
@@ -115,7 +116,9 @@ export const RowContainer = styled(TouchableOpacity)<RowContainerProps>`
     isLast || noBorder ? 0 : 1}px;
 `;
 
-export const RowContainerWithoutBorders = styled(TouchableOpacity)<RowContainerProps>`
+export const RowContainerWithoutBorders = styled(
+  TouchableOpacity,
+)<RowContainerProps>`
   flex-direction: row;
   align-items: center;
   padding: 10px 0px;
@@ -532,4 +535,15 @@ export const CloseButtonContainer = styled(TouchableOpacity)`
   display: flex;
   justify-content: center;
   align-items: center;
+`;
+
+export const ArchaxBannerContainer = styled.View<{
+  removeMarginTop?: boolean;
+  inset: any;
+}>`
+  background: ${({theme}) => (theme.dark ? '#a25718' : '#ffedc9')};
+  overflow: hidden;
+  padding: 20px;
+  margin-top: ${({removeMarginTop}) =>
+    !removeMarginTop ? ({inset}) => inset.top : 0}px;
 `;
