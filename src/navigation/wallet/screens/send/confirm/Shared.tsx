@@ -65,7 +65,6 @@ import {IS_ANDROID} from '../../../../../constants';
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
   flex: 1;
-  ${IS_ANDROID && 'padding-bottom: 50px;'}
 `;
 
 export const ConfirmScrollView = styled(KeyboardAwareScrollView)`
