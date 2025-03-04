@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState, useLayoutEffect} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -7,10 +7,10 @@ import {
   ActiveOpacity,
   CtaContainerAbsolute,
 } from '../../../../../../components/styled/Containers';
-import {H7, HeaderTitle} from '../../../../../../components/styled/Text';
+import {H7} from '../../../../../../components/styled/Text';
 import HamburgerSvg from '../../../../../../../assets/img/hamburger.svg';
 import Button from '../../../../../../components/button/Button';
-import {FlatList} from 'react-native';
+import {FlashList} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector} from '../../../../../../utils/hooks';
 import {
   dismissOnGoingProcessModal,
@@ -22,7 +22,6 @@ import {useTheme} from '@react-navigation/native';
 import {sleep} from '../../../../../../utils/helper-methods';
 import haptic from '../../../../../../components/haptic-feedback/haptic';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import {ScreenOptions} from '../../../../../../styles/tabNavigator';
 import {
   CarouselSvg,
   createCustomizeCardList,
@@ -142,7 +141,7 @@ const CustomizeHomeSettings = () => {
 
   const memoizedFooterList = useMemo(() => {
     return (
-      <FlatList
+      <FlashList
         ListHeaderComponent={() => {
           return hiddenList.length ? <ListHeader>Hidden</ListHeader> : null;
         }}
@@ -167,7 +166,7 @@ const CustomizeHomeSettings = () => {
         <Tab.Navigator
           initialRouteName={layoutType}
           style={{marginTop: 20}}
-          tabBar={(props) => <CustomTabBar {...props} />}
+          tabBar={props => <CustomTabBar {...props} />}
           screenListeners={{
             tabPress: tab => {
               haptic('soft');
