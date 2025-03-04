@@ -48,6 +48,9 @@ const CloseModalButton = styled(TouchableOpacity)`
   position: absolute;
   top: 10px;
   left: 16px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
 `;
 
 const AccountWCV2RowModal = ({
