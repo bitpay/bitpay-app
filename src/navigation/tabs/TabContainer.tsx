@@ -7,7 +7,6 @@ const TabContainer: React.FC<React.PropsWithChildren> = ({children}) => {
   const Container = useMemo(
     () => styled.View`
       flex: 1;
-      margin-top: ${insets.top}px;
     `,
     [insets.top],
   );
