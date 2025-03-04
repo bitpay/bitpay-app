@@ -712,10 +712,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           _filterByCustomWallets = wallets.filter(
             w =>
               allCurrencies.includes(
-                getExternalServiceSymbol(
-                  w.currencyAbbreviation,
-                  w.chain,
-                ),
+                getExternalServiceSymbol(w.currencyAbbreviation, w.chain),
               ) && w.keyId === key.id,
           );
         } else {
@@ -723,10 +720,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             const isContextValid =
               !['coinbaseDeposit'].includes(context) ||
               allCurrencies.includes(
-                getCurrencyAbbreviation(
-                  w.currencyAbbreviation,
-                  w.chain,
-                ),
+                getCurrencyAbbreviation(w.currencyAbbreviation, w.chain),
               );
 
             return isContextValid && w.keyId === key.id;
@@ -897,7 +891,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               wallet,
               sendTo,
               sendMaxEnabled: ['contact', 'scanner'].includes(context),
-              cryptoCurrencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+              cryptoCurrencyAbbreviation:
+                wallet.currencyAbbreviation.toUpperCase(),
               chain: wallet.chain,
               tokenAddress: wallet.tokenAddress,
               onAmountSelected: async (amount, setButtonState, opts) => {
@@ -1279,6 +1274,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         filterByHideWallet: true,
         skipFiatCalculations: true,
         filterWalletsByChain: true,
+        filterByComplete: true,
         chain: selectedCurrency.chains[0],
       },
     ).filter(account => !IsEVMChain(account.chains[0]));
