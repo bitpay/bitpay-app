@@ -1276,7 +1276,17 @@ const SellCryptoRoot = ({
           ['asc', 'asc'],
         );
 
-        setSellCryptoSupportedCoins(allSupportedCoinsOrdered);
+        if (allSupportedCoinsOrdered?.length > 0) {
+          setSellCryptoSupportedCoins(allSupportedCoinsOrdered);
+        } else {
+          logger.error('Sell crypto getCurrencies Error: allSupportedCoins array is empty');
+          const msg = t(
+            'Sell Crypto feature is not available at this moment. Please try again later.',
+          );
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(500);
+          showError(msg, undefined, undefined, true);
+        }
       }
     } catch (err) {
       logger.error('Sell crypto getCurrencies Error: ' + JSON.stringify(err));
@@ -1284,8 +1294,8 @@ const SellCryptoRoot = ({
         'Sell Crypto feature is not available at this moment. Please try again later.',
       );
       dispatch(dismissOnGoingProcessModal());
-      await sleep(200);
-      showError(msg);
+      await sleep(500);
+      showError(msg, undefined, undefined, true);
     }
   };
 
