@@ -808,6 +808,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               }}>
               {pendingProposalsCount ? (
                 <ProposalBadgeContainer
+                  touchableLibrary={'react-native-gesture-handler'}
                   style={{marginRight: 10}}
                   onPress={onPressTxpBadge}>
                   <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
