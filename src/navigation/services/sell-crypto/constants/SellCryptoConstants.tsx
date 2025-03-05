@@ -40,6 +40,7 @@ export const WithdrawalMethodsAvailable: WithdrawalMethods = {
     imgSrc: <PaymentMethodIcon paymentMethodId="ach" width={40} height={40} />,
     supportedExchanges: {
       moonpay: true,
+      ramp: true,
       simplex: false,
     },
     supportedCountries: countriesWithACH,
@@ -54,6 +55,7 @@ export const WithdrawalMethodsAvailable: WithdrawalMethods = {
     ),
     supportedExchanges: {
       moonpay: false,
+      ramp: true,
       simplex: true,
     },
     enabled: true,
@@ -67,6 +69,7 @@ export const WithdrawalMethodsAvailable: WithdrawalMethods = {
     ),
     supportedExchanges: {
       moonpay: true,
+      ramp: true,
       simplex: true,
     },
     enabled: true,
@@ -84,6 +87,7 @@ export const WithdrawalMethodsAvailable: WithdrawalMethods = {
     ),
     supportedExchanges: {
       moonpay: true,
+      ramp: true,
       simplex: true,
     },
     supportedCountries: countriesWithSEPA,
@@ -102,6 +106,7 @@ export const WithdrawalMethodsAvailable: WithdrawalMethods = {
     ),
     supportedExchanges: {
       moonpay: true,
+      ramp: false,
       simplex: false,
     },
     supportedCountries: countriesWithGBPTransfer,
@@ -116,6 +121,7 @@ export const WithdrawalMethodsAvailable: WithdrawalMethods = {
     ),
     supportedExchanges: {
       moonpay: true,
+      ramp: false,
       simplex: false,
     },
     enabled: true,
@@ -129,6 +135,7 @@ export const WithdrawalMethodsAvailable: WithdrawalMethods = {
     ),
     supportedExchanges: {
       moonpay: true,
+      ramp: false,
       simplex: false,
     },
     enabled: true,

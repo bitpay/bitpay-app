@@ -8,6 +8,7 @@ import MoonpayDetails from './screens/MoonpayDetails';
 import MoonpaySellDetails from './screens/MoonpaySellDetails';
 import RampSettings from './screens/RampSettings';
 import RampDetails from './screens/RampDetails';
+import RampSellDetails from './screens/RampSellDetails';
 import SardineSettings from './screens/SardineSettings';
 import SardineDetails from './screens/SardineDetails';
 import SimplexSettings from './screens/SimplexSettings';
@@ -26,8 +27,6 @@ import {
   BanxaPaymentData,
   MoonpayIncomingData,
   MoonpayPaymentData,
-  RampIncomingData,
-  RampPaymentData,
   SardineIncomingData,
   SardinePaymentData,
   SimplexIncomingData,
@@ -37,6 +36,7 @@ import {
   WyrePaymentData,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {MoonpaySellOrderData} from '../../../../store/sell-crypto/models/moonpay-sell.models';
+import {RampSellOrderData} from '../../../../store/sell-crypto/models/ramp-sell.models';
 import {SimplexSellOrderData} from '../../../../store/sell-crypto/models/simplex-sell.models';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {thorswapTxData} from '../../../../store/swap-crypto/swap-crypto.models';
@@ -44,6 +44,10 @@ import {Root} from '../../../../Root';
 import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
 import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import SwapHistorySelector from './screens/SwapHistorySelector';
+import {
+  RampIncomingData,
+  RampPaymentData,
+} from '../../../../store/buy-crypto/models/ramp.models';
 
 interface ExternalServicesSettingsProps {
   ExternalServicesSettings: typeof Root;
@@ -76,6 +80,9 @@ export type ExternalServicesSettingsGroupParamList = {
     | undefined;
   RampDetails: {
     paymentRequest: RampPaymentData;
+  };
+  RampSellDetails: {
+    sellOrder: RampSellOrderData;
   };
   SardineSettings:
     | {
@@ -132,6 +139,7 @@ export enum ExternalServicesSettingsScreens {
   MOONPAY_SELL_DETAILS = 'MoonpaySellDetails',
   RAMP_SETTINGS = 'RampSettings',
   RAMP_DETAILS = 'RampDetails',
+  RAMP_SELL_DETAILS = 'RampSellDetails',
   SARDINE_SETTINGS = 'SardineSettings',
   SARDINE_DETAILS = 'SardineDetails',
   SIMPLEX_SETTINGS = 'SimplexSettings',
@@ -207,6 +215,15 @@ const ExternalServicesSettingsGroup: React.FC<
         component={RampDetails}
         options={{
           headerTitle: () => <HeaderTitle>{t('Order Details')}</HeaderTitle>,
+        }}
+      />
+      <ExternalServicesSettings.Screen
+        name={ExternalServicesSettingsScreens.RAMP_SELL_DETAILS}
+        component={RampSellDetails}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Sell Order Details')}</HeaderTitle>
+          ),
         }}
       />
       <ExternalServicesSettings.Screen

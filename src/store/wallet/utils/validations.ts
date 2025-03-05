@@ -517,7 +517,7 @@ export const IsValidPrivateKey = (data: string): boolean => {
 
     return false;
   };
-  
+
   if(data && (data.substring(0, 2) === '6P')) {
     return true;
   }
