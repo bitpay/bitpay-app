@@ -200,6 +200,7 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const headerLeft = useMemo(() => {
     return () => (
       <TouchableOpacity
+        touchableLibrary={'react-native-gesture-handler'}
         accessibilityLabel="cancel-button"
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}
