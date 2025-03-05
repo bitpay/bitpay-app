@@ -333,6 +333,9 @@ export interface RampQuoteRequestData {
   [RampPaymentMethodName.AUTO_BANK_TRANSFER]: RampQuoteResultForPaymentMethod;
   [RampPaymentMethodName.CARD_PAYMENT]: RampQuoteResultForPaymentMethod;
   [RampPaymentMethodName.APPLE_PAY]: RampQuoteResultForPaymentMethod;
+  [RampPaymentMethodName.GOOGLE_PAY]: RampQuoteResultForPaymentMethod;
+  [RampPaymentMethodName.PIX]: RampQuoteResultForPaymentMethod;
+  [RampPaymentMethodName.OPEN_BANKING]: RampQuoteResultForPaymentMethod; // PISP
 }
 
 export interface RampGetAssetsRequestData {
@@ -391,6 +394,9 @@ enum RampPaymentMethodName {
   AUTO_BANK_TRANSFER = 'AUTO_BANK_TRANSFER',
   CARD_PAYMENT = 'CARD_PAYMENT',
   APPLE_PAY = 'APPLE_PAY',
+  GOOGLE_PAY = 'GOOGLE_PAY',
+  PIX = 'PIX',
+  OPEN_BANKING = 'OPEN_BANKING', // PISP
 }
 
 export interface RampQuoteResultForPaymentMethod {

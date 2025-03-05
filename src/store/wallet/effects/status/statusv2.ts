@@ -139,7 +139,7 @@ export const getUpdatedWalletBalances = ({
       const keyBalance = await dispatch(updateKeyStatus({
         key,
         force,
-        dataOnly: true
+        dataOnly: true,
       }));
       if (keyBalance) {
         keyBalances.push({
@@ -233,7 +233,7 @@ export const getAndDispatchUpdatedWalletBalances = ({
           walletBalances: balances.walletBalances,
         }),
       );
-      
+
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(
