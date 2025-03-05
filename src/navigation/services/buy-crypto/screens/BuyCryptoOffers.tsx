@@ -934,6 +934,19 @@ const BuyCryptoOffers: React.FC = () => {
       return;
     }
 
+    switch (paymentMethod.method) {
+      case 'pix':
+        // Ramp only accepts BRL as a base currency for Pix payments
+        offers.ramp.fiatCurrency = 'BRL';
+        break;
+      case 'pisp':
+        // Ramp only accepts EUR | GBP as a base currency for PISP payments
+        offers.ramp.fiatCurrency = 'EUR';
+        break;
+      default:
+        break;
+    }
+
     offers.ramp.fiatAmount =
       offers.ramp.fiatCurrency === fiatCurrency
         ? amount
@@ -1000,6 +1013,23 @@ const BuyCryptoOffers: React.FC = () => {
           case 'applePay':
             if (data.APPLE_PAY) {
               paymentMethodData = data.APPLE_PAY;
+            }
+            break;
+          case 'googlePay':
+            if (data.GOOGLE_PAY) {
+              paymentMethodData = data.GOOGLE_PAY;
+            }
+            break;
+          case 'pisp':
+            if (data.OPEN_BANKING) {
+              paymentMethodData = data.OPEN_BANKING;
+            } else if (data.AUTO_BANK_TRANSFER) {
+              paymentMethodData = data.AUTO_BANK_TRANSFER;
+            }
+            break;
+          case 'pix':
+            if (data.PIX) {
+              paymentMethodData = data.PIX;
             }
             break;
           case 'debitCard':
