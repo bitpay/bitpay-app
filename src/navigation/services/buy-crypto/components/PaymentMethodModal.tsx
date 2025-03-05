@@ -255,6 +255,7 @@ const PaymentMethodsModal = ({
               <Button
                 buttonType={'pill'}
                 buttonStyle={'cancel'}
+                touchableLibrary={'react-native'}
                 onPress={onBackdropPress ? onBackdropPress : () => {}}>
                 {t('Close')}
               </Button>
