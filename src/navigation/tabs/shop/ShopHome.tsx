@@ -100,7 +100,7 @@ const ShopHome: React.FC<
 > = ({route}) => {
   const {t} = useTranslation();
   const theme = useTheme();
-  const availableCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.availableCardMap); 
+  const availableCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.availableCardMap);
   const supportedCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap);
 
   const user = useAppSelector(

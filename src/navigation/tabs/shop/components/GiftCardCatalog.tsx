@@ -177,7 +177,7 @@ export default ({
         setIsScreenFocused(false);
       };
     }, [])
-  )
+  );
 
   const updateSearchResults = useMemo(
     () =>
@@ -326,8 +326,8 @@ export default ({
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
-                      if (!isScreenFocused) return;
-                      setIsFilterSheetShown(!isFilterSheetShown)
+                      if (!isScreenFocused) {return;}
+                      setIsFilterSheetShown(!isFilterSheetShown);
                     }}>
                     <SectionHeaderButton>
                       {t('Filter')}

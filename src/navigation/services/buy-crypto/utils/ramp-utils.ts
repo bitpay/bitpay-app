@@ -91,7 +91,7 @@ export const rampSupportedErc20Tokens = [
   'usda',
   'usdc',
   'usdt',
-  'xaut'
+  'xaut',
 ];
 
 export const rampSupportedMaticTokens = [
