@@ -148,9 +148,11 @@ const IconContainer = styled.View`
 const AccountSettingsContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
+  justify-content: space-between;
   display: flex;
   padding: 0px;
   gap: 8px;
+  width: 100%;
 `;
 
 const AccountSettingsArrowContainer = styled.View`
@@ -638,13 +640,13 @@ export const WalletConnectStartModal = () => {
                         onPress={() => {
                           setShowAccountWCV2SelectionBottomModal(true);
                         }}>
-                        <CurrencyImageContainer style={{height: 30, width: 30}}>
-                          <Blockie
-                            size={30}
-                            seed={checkedAccount.receiveAddress}
-                          />
-                        </CurrencyImageContainer>
-                        <Row>
+                        <Row style={{ alignItems: 'center', gap: 8, display: 'flex' }}>
+                          <CurrencyImageContainer style={{height: 30, width: 30}}>
+                            <Blockie
+                              size={30}
+                              seed={checkedAccount.receiveAddress}
+                            />
+                          </CurrencyImageContainer>
                           <H6
                             medium={true}
                             ellipsizeMode="tail"
