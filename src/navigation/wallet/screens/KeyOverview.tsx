@@ -105,6 +105,7 @@ import {BitpaySupportedEvmCoins} from '../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import ArchaxFooter from '../../../components/archax/archax-footer';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -195,6 +196,7 @@ const KeyOverview = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const theme = useTheme();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
@@ -676,6 +678,7 @@ const KeyOverview = () => {
           <Icons.Add />
           <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
         </WalletListFooter>
+        {showArchaxBanner && <ArchaxFooter />}
       </WalletListFooterContainer>
     );
   }, []);
