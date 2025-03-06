@@ -105,6 +105,7 @@ import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
 import Blockie from '../../../components/blockie/Blockie';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {getExternalServiceSymbol} from '../../services/utils/external-services-utils';
+import { Keys } from '../../../store/wallet/wallet.reducer';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -539,7 +540,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   }
   const logger = useLogger();
   const dispatch = useAppDispatch();
-  const {keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
+  const {keys: _keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
     useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const allTokensByAddress = {
@@ -610,6 +611,18 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         .filter((currency): currency is string => currency !== undefined),
     ),
   );
+
+  const filterCompleteWallets = (keys: Keys) => {
+    return Object.fromEntries(
+        Object.entries(keys).filter(([_, keys]) => 
+            keys.wallets.some(wallet => wallet.isComplete())
+        )
+    );
+  }
+
+  // Filter keys with only incomplete wallets
+  const keys = filterCompleteWallets(_keys);
+
   // all wallets
   let wallets = Object.values(keys).flatMap(key => key.wallets);
   // Filter hidden wallets
@@ -1163,6 +1176,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       if (globalSelectOnDismiss) {
         globalSelectOnDismiss();
       }
+      await sleep(1000);
+      setCryptoSelectModalVisible(false);
       await sleep(1000);
       dispatch(
         showBottomNotificationModal(
