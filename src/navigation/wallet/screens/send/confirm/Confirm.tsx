@@ -700,7 +700,7 @@ const Confirm = () => {
                 </Info>
               </>
             ) : null}
-            {txp && currencyAbbreviation !== 'xrp' ? (
+            {txp ? (
               <Memo
                 memo={txp.message || message || ''}
                 onChange={message => setTxp({...txp, message})}
