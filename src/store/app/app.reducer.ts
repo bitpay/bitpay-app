@@ -54,6 +54,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
 ];
 
 export type ModalId =
+  | 'enterEncryptionPassword'
   | 'sheetModal'
   | 'ongoingProcess'
   | 'pin'
