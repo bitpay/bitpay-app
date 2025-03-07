@@ -4,7 +4,7 @@ import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {FlashList} from '@shopify/flash-list';
 import {useTranslation} from 'react-i18next';
-import {Alert} from 'react-native';
+import {Alert, Platform} from 'react-native';
 import Mailer from 'react-native-mail';
 import styled, {useTheme} from 'styled-components/native';
 import {
@@ -13,8 +13,8 @@ import {
   SheetParams,
 } from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
-import {IS_ANDROID, IS_IOS} from '../../../../../constants';
-import {APP_VERSION} from '../../../../../constants/config';
+import {IS_ANDROID, IS_DESKTOP, IS_IOS} from '../../../../../constants';
+import {APP_NAME_UPPERCASE, APP_VERSION} from '../../../../../constants/config';
 import {LogActions} from '../../../../../store/log';
 import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
 import {
@@ -33,9 +33,14 @@ import Settings from '../../../../../components/settings/Settings';
 import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
 import SendIcon from '../../../../../../assets/img/send-icon.svg';
 import SendIconWhite from '../../../../../../assets/img/send-icon-white.svg';
+import ShareIcon from '../../../../../../assets/img/share-icon.svg';
+import ShareIconWhite from '../../../../../../assets/img/share-icon-white.svg';
 import {ListHeader} from '../../general/screens/customize-home/Shared';
 import {storage} from '../../../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import { isAndroidStoragePermissionGranted } from '../../../../../utils/helper-methods';
+import Share, {ShareOptions} from 'react-native-share';
+import RNFS from 'react-native-fs';
 
 type SessionLogsScreenProps = NativeStackScreenProps<
   AboutGroupParamList,
@@ -162,9 +167,53 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   );
   const [persistedLogs, setPersistedLogs] = useState([] as LogEntry[]);
 
+
+  const printLogs = (logsToPrint: LogEntry[]) =>
+    logsToPrint
+      .map(log => {
+        const formattedLevel = LogLevel[log.level].toLowerCase();
+
+        return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
+      })
+      .join('');
+
   const onFilterLevelChange = (level: LogLevel) => {
     if (level !== filterLevel) {
       setFilterLevel(level);
+    }
+  };
+
+  const shareFile = async (data: string) => {
+    try {
+      if (Platform.OS === 'android' && Platform.Version < 30) {
+        await isAndroidStoragePermissionGranted(dispatch);
+      }
+
+      const rootPath =
+        Platform.OS === 'ios'
+          ? RNFS.LibraryDirectoryPath
+          : RNFS.TemporaryDirectoryPath;
+      const txtFilename = `${APP_NAME_UPPERCASE}-logs`;
+      let filePath = `${rootPath}/${txtFilename}`;
+
+      await RNFS.mkdir(filePath);
+
+      filePath += '.txt';
+      const opts: ShareOptions = {
+        title: txtFilename,
+        url: `file://${filePath}`,
+        subject: `${APP_NAME_UPPERCASE} Logs`,
+      };
+
+      await RNFS.writeFile(filePath, data, 'utf8');
+      await Share.open(opts);
+    } catch (err: any) {
+      dispatch(LogActions.debug(`[shareFile]: ${err.message}`));
+      if (err && err.message === 'User did not share') {
+        return;
+      } else {
+        throw err;
+      }
     }
   };
 
@@ -186,18 +235,10 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
     );
   };
 
-  const showDisclaimer = () => {
+  const showDisclaimer = (option: 'email' | 'share') => {
     setShowOptions(false);
     let logStr =
       'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
-    const printLogs = (logsToPrint: LogEntry[]) =>
-      logsToPrint
-        .map(log => {
-          const formattedLevel = LogLevel[log.level].toLowerCase();
-
-          return `[${log.timestamp}] [${formattedLevel}] ${log.message}\n`;
-        })
-        .join('');
     const persistedLogString = persistedLogs.length
       ? 'Previous Sessions\n\n' +
         printLogs(persistedLogs) +
@@ -209,7 +250,16 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
       t('Warning'),
       t('Be careful, this could contain sensitive private data'),
       [
-        {text: t('Continue'), onPress: () => handleEmail(logStr)},
+        {text: t('Continue'), onPress: () => { 
+          switch (option) {
+            case 'email':
+              handleEmail(logStr);
+              break;
+            case 'share':
+              shareFile(logStr);
+              break;
+          }
+        }},
         {text: t('Cancel')},
       ],
       {cancelable: true},
@@ -286,17 +336,24 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
         <SheetContainer placement={'bottom'}>
           <OptionContainer
             placement={'bottom'}
-            onPress={() => showDisclaimer()}>
+            onPress={() => showDisclaimer('share')}>
+            <OptionIconContainer>
+              {theme.dark ? <ShareIconWhite /> : <ShareIcon />}
+            </OptionIconContainer>
+            <OptionTextContainer>
+              <OptionTitleText>{t('Share File')}</OptionTitleText>
+            </OptionTextContainer>
+          </OptionContainer>
+          { !IS_DESKTOP && <OptionContainer
+            placement={'bottom'}
+            onPress={() => showDisclaimer('email')}>
             <OptionIconContainer>
               {theme.dark ? <SendIconWhite /> : <SendIcon />}
             </OptionIconContainer>
             <OptionTextContainer>
               <OptionTitleText>{t('Send Logs By Email')}</OptionTitleText>
-              <OptionDescriptionText>
-                {t('Be careful, this could contain sensitive private data')}
-              </OptionDescriptionText>
             </OptionTextContainer>
-          </OptionContainer>
+          </OptionContainer> }
         </SheetContainer>
       </SheetModal>
     </LogsContainer>
