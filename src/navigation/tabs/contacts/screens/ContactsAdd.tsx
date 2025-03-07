@@ -85,16 +85,10 @@ const ScrollContainer = styled.ScrollView`
 `;
 
 const AddressBadge = styled.View`
-  position: absolute;
-  right: 13px;
-  top: 50%;
+  padding: 0 10px;
 `;
 
-const ScanButtonContainer = styled(TouchableOpacity)`
-  position: absolute;
-  right: 5px;
-  top: 32px;
-`;
+const ScanButtonContainer = styled(TouchableOpacity)``;
 
 const CurrencySelectionModalContainer = styled(SheetContainer)`
   padding: 15px;
@@ -512,21 +506,22 @@ const ContactsAdd = ({
                   }}
                   error={errors.address?.message}
                   value={value}
-                  paddingRight={38}
+                  suffix={() =>
+                    addressValue && dirtyFields.address ? (
+                      <AddressBadge>
+                        <SuccessIcon />
+                      </AddressBadge>
+                    ) : (
+                      <ScanButtonContainer onPress={goToScan}>
+                        <ScanSvg />
+                      </ScanButtonContainer>
+                    )
+                  }
                 />
               )}
               name="address"
               defaultValue=""
             />
-            {addressValue && dirtyFields.address ? (
-              <AddressBadge>
-                <SuccessIcon />
-              </AddressBadge>
-            ) : (
-              <ScanButtonContainer onPress={goToScan}>
-                <ScanSvg />
-              </ScanButtonContainer>
-            )}
           </InputContainer>
         ) : (
           <InputContainer>
