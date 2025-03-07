@@ -80,7 +80,7 @@ export interface CurrencyOpts {
   };
   paymentInfo: {
     paymentCode: string;
-    protocolPrefix: {livenet: string; testnet: string; regtest: string};
+    protocolPrefix: {livenet: string; testnet: string; testnet4?: string; regtest: string;};
     // Urls
     ratesApi: string;
     blockExplorerUrls: string;
@@ -1254,6 +1254,7 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {
         livenet: 'bitcoincash',
         testnet: 'bchtest',
+        testnet4: 'bchtest',
         regtest: 'bchreg',
       },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/bch`,
