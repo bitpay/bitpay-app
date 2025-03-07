@@ -37,6 +37,7 @@ import {
 } from '../navigation/wallet-connect/constants/abis';
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
+import { PermissionsAndroid } from 'react-native';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -1043,3 +1044,36 @@ export const getFullLinkedWallet = (key: Key, wallet: Wallet) => {
 
   return;
 };
+
+  export const isAndroidStoragePermissionGranted = (dispatch: AppDispatch): Promise<boolean> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        ]);
+        if (
+          granted['android.permission.READ_EXTERNAL_STORAGE'] ===
+            PermissionsAndroid.RESULTS.GRANTED &&
+          granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
+            PermissionsAndroid.RESULTS.GRANTED
+        ) {
+          dispatch(
+            LogActions.info(
+              '[isAndroidStoragePermissionGranted]: Storage permission granted',
+            ),
+          );
+          resolve(true);
+        } else {
+          dispatch(
+            LogActions.warn(
+              '[isAndroidStoragePermissionGranted]: Storage permission denied',
+            ),
+          );
+          throw new Error('Storage permission denied');
+        }
+      } catch (e) {
+        reject(e);
+      }
+    });
+  };
