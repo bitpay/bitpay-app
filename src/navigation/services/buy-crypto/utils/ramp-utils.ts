@@ -1,11 +1,8 @@
 import {t} from 'i18next';
 import cloneDeep from 'lodash.clonedeep';
-import {
-  RampQuoteRequestData,
-  RampQuoteResultForPaymentMethod,
-} from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
+import {RampQuoteRequestData, RampQuoteResultForPaymentMethod} from '../../../../store/buy-crypto/models/ramp.models';
 
 export const rampEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -91,7 +88,7 @@ export const rampSupportedErc20Tokens = [
   'usda',
   'usdc',
   'usdt',
-  'xaut'
+  'xaut',
 ];
 
 export const rampSupportedMaticTokens = [

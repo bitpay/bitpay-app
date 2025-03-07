@@ -8,7 +8,7 @@ import {Link} from '../../../../../components/styled/Text';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import RampLogo from '../../../../../components/icons/external-services/ramp/ramp-logo';
-import {RampPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
+import {RampPaymentData} from '../../../../../store/buy-crypto/models/ramp.models';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
@@ -157,7 +157,7 @@ const RampDetails: React.FC = () => {
                 haptic('impactLight');
                 dispatch(
                   openUrlWithInAppBrowser(
-                    'https://support.ramp.network/en/articles/440-how-can-i-check-the-status-of-my-transaction',
+                    'https://support.ramp.network/en/articles/8647-how-do-i-check-the-status-of-my-crypto-purchase-on-ramp-network',
                   ),
                 );
               }}>
@@ -182,7 +182,7 @@ const RampDetails: React.FC = () => {
                     haptic('impactLight');
                     dispatch(
                       openUrlWithInAppBrowser(
-                        'https://support.ramp.network/en/articles/440-how-can-i-check-the-status-of-my-transaction',
+                        'https://support.ramp.network/en/articles/8647-how-do-i-check-the-status-of-my-crypto-purchase-on-ramp-network',
                       ),
                     );
                   }}>

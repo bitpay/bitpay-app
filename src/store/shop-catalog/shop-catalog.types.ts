@@ -24,7 +24,7 @@ export interface setShopMigrationComplete {
   type: typeof ShopCatalogActionTypes.SET_SHOP_MIGRATION_COMPLETE;
 }
 
-export type ShopCatalogActionType = 
-  | successFetchCatalog 
-  | failedFetchCatalog 
+export type ShopCatalogActionType =
+  | successFetchCatalog
+  | failedFetchCatalog
   | setShopMigrationComplete;

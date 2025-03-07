@@ -100,7 +100,7 @@ export const ProcessPendingTxps =
     const ret: TransactionProposal[] = [];
     txps.forEach((tx: TransactionProposal) => {
       try {
-        if (wallet.id !== tx.walletId) return;
+        if (wallet.id !== tx.walletId) {return;}
 
         // Workaround for txps with matic as coin
         if (tx.coin === 'matic') {
@@ -253,7 +253,7 @@ const ProcessTx =
       );
     }
 
-    tx.feeStr = tx.receipt?.gasUsed && tx.receipt?.gasUsed > 0 && 
+    tx.feeStr = tx.receipt?.gasUsed && tx.receipt?.gasUsed > 0 &&
     tx.receipt?.effectiveGasPrice && tx.receipt?.effectiveGasPrice > 0
     ? // @ts-ignore
       dispatch(
@@ -263,7 +263,7 @@ const ProcessTx =
           undefined,
           tx.receipt?.gasUsed * tx.receipt?.effectiveGasPrice,
         ),
-      ) 
+      )
     : tx.fee !== undefined && tx.fee !== null
     ? // @ts-ignore
       dispatch(
@@ -1259,8 +1259,8 @@ export const buildTransactionDetails =
             ?.symbol.toLowerCase();
         }
 
-        const _fee = receipt?.gasUsed && receipt?.gasUsed > 0 && receipt?.effectiveGasPrice && receipt?.effectiveGasPrice > 0 ? 
-        receipt?.gasUsed * receipt?.effectiveGasPrice : 
+        const _fee = receipt?.gasUsed && receipt?.gasUsed > 0 && receipt?.effectiveGasPrice && receipt?.effectiveGasPrice > 0 ?
+        receipt?.gasUsed * receipt?.effectiveGasPrice :
         fees != null ? fees : fee;
 
         const alternativeCurrency = defaultAltCurrencyIsoCode;
