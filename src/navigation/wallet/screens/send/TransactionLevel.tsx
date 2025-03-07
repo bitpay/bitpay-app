@@ -643,7 +643,7 @@ const TransactionLevel = ({
                 </DetailsList>
 
                 <CtaContainer>
-                  <Button onPress={() => onApply()} disabled={disableApply}>
+                  <Button touchableLibrary={'react-native'} onPress={() => onApply()} disabled={disableApply}>
                     {t('Apply')}
                   </Button>
                 </CtaContainer>
