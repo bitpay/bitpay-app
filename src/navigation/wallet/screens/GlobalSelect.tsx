@@ -105,6 +105,7 @@ import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
 import Blockie from '../../../components/blockie/Blockie';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {getExternalServiceSymbol} from '../../services/utils/external-services-utils';
+import { Keys } from '../../../store/wallet/wallet.reducer';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -539,7 +540,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   }
   const logger = useLogger();
   const dispatch = useAppDispatch();
-  const {keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
+  const {keys: _keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
     useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const allTokensByAddress = {
@@ -610,6 +611,18 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         .filter((currency): currency is string => currency !== undefined),
     ),
   );
+
+  const filterCompleteWallets = (keys: Keys) => {
+    return Object.fromEntries(
+        Object.entries(keys).filter(([_, keys]) => 
+            keys.wallets.some(wallet => wallet.isComplete())
+        )
+    );
+  }
+
+  // Filter keys with only incomplete wallets
+  const keys = filterCompleteWallets(_keys);
+
   // all wallets
   let wallets = Object.values(keys).flatMap(key => key.wallets);
   // Filter hidden wallets
@@ -712,10 +725,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           _filterByCustomWallets = wallets.filter(
             w =>
               allCurrencies.includes(
-                getExternalServiceSymbol(
-                  w.currencyAbbreviation,
-                  w.chain,
-                ),
+                getExternalServiceSymbol(w.currencyAbbreviation, w.chain),
               ) && w.keyId === key.id,
           );
         } else {
@@ -723,10 +733,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             const isContextValid =
               !['coinbaseDeposit'].includes(context) ||
               allCurrencies.includes(
-                getCurrencyAbbreviation(
-                  w.currencyAbbreviation,
-                  w.chain,
-                ),
+                getCurrencyAbbreviation(w.currencyAbbreviation, w.chain),
               );
 
             return isContextValid && w.keyId === key.id;
@@ -897,7 +904,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               wallet,
               sendTo,
               sendMaxEnabled: ['contact', 'scanner'].includes(context),
-              cryptoCurrencyAbbreviation: wallet.currencyAbbreviation.toUpperCase(),
+              cryptoCurrencyAbbreviation:
+                wallet.currencyAbbreviation.toUpperCase(),
               chain: wallet.chain,
               tokenAddress: wallet.tokenAddress,
               onAmountSelected: async (amount, setButtonState, opts) => {
@@ -1169,6 +1177,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         globalSelectOnDismiss();
       }
       await sleep(1000);
+      setCryptoSelectModalVisible(false);
+      await sleep(1000);
       dispatch(
         showBottomNotificationModal(
           keyBackupRequired(selectedKey, navigation, dispatch, context),
@@ -1279,6 +1289,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         filterByHideWallet: true,
         skipFiatCalculations: true,
         filterWalletsByChain: true,
+        filterByComplete: true,
         chain: selectedCurrency.chains[0],
       },
     ).filter(account => !IsEVMChain(account.chains[0]));

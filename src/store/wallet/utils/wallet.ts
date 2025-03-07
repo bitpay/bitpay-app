@@ -611,7 +611,7 @@ export const BuildKeysAndWalletsList = ({
       },
     );
     const mergedAccounts = accountList
-    .map(account => {
+      .map(account => {
         if (IsEVMChain(account.chains[0])) {
           const assetsByChain = buildAssetsByChain(
             account,
@@ -621,39 +621,66 @@ export const BuildKeysAndWalletsList = ({
         }
         return account.wallets;
       })
-      .filter(Boolean) as (WalletRowProps[] | AccountRowProps & {
-      assetsByChain?: AssetsByChainData[];
-    })[];
+      .filter(Boolean) as (
+      | WalletRowProps[]
+      | (AccountRowProps & {
+          assetsByChain?: AssetsByChainData[];
+        })
+    )[];
 
-    const getMaxFiatBalanceWallet = (wallets: WalletRowProps[], defaultWallet: any) => {
-      return wallets.reduce((max, w) =>
-        w?.fiatBalance && w.fiatBalance > max.fiatBalance ? w : max
-      , defaultWallet);
+    const getMaxFiatBalanceWallet = (
+      wallets: WalletRowProps[],
+      defaultWallet: any,
+    ) => {
+      return wallets.reduce(
+        (max, w) =>
+          w?.fiatBalance && w.fiatBalance > max.fiatBalance ? w : max,
+        defaultWallet,
+      );
     };
 
     const flatMergedAccounts = Object.values(mergedAccounts).flat();
-    const accounts = flatMergedAccounts.filter((a)=>{!a.chain;});
+    const accounts = flatMergedAccounts.filter(a => {
+      !a.chain;
+    });
 
     const mergedUtxoAndEvmAccounts = flatMergedAccounts.sort((a, b) => {
-
       const chainA = a.chains?.[0] ?? a.chain ?? '';
       const chainB = b.chains?.[0] ?? b.chain ?? '';
       const isEVMA = IsEVMChain(chainA);
       const isEVMB = IsEVMChain(chainB);
 
       const walletA = isEVMA
-        ? getMaxFiatBalanceWallet((a as AccountRowProps).wallets, (a as AccountRowProps).wallets[0])
-        : getMaxFiatBalanceWallet((flatMergedAccounts.filter(wallet => wallet?.chain === a.chain) as WalletRowProps[]), a);
+        ? getMaxFiatBalanceWallet(
+            (a as AccountRowProps).wallets,
+            (a as AccountRowProps).wallets[0],
+          )
+        : getMaxFiatBalanceWallet(
+            flatMergedAccounts.filter(
+              wallet => wallet?.chain === a.chain,
+            ) as WalletRowProps[],
+            a,
+          );
 
       const walletB = isEVMB
-        ? getMaxFiatBalanceWallet((b as AccountRowProps).wallets, (b as AccountRowProps).wallets[0])
-        : getMaxFiatBalanceWallet((flatMergedAccounts.filter(wallet => wallet?.chain === b.chain)as WalletRowProps[]), b);
+        ? getMaxFiatBalanceWallet(
+            (b as AccountRowProps).wallets,
+            (b as AccountRowProps).wallets[0],
+          )
+        : getMaxFiatBalanceWallet(
+            flatMergedAccounts.filter(
+              wallet => wallet?.chain === b.chain,
+            ) as WalletRowProps[],
+            b,
+          );
 
       const balanceA = walletA.fiatBalance || 0;
       const balanceB = walletB.fiatBalance || 0;
 
       return balanceB - balanceA;
-    }) as (WalletRowProps[] | (AccountRowProps & { assetsByChain?: AssetsByChainData[] }));
+    }) as
+      | WalletRowProps[]
+      | (AccountRowProps & {assetsByChain?: AssetsByChainData[]});
 
     return {
       key: keyId,
@@ -1060,6 +1087,7 @@ export const buildAccountList = (
     filterWalletsByChain?: boolean;
     filterWalletsByPaymentOptions?: boolean;
     filterByWalletOptions?: boolean;
+    filterByComplete?: boolean;
     paymentOptions?: PayProPaymentOption[] | undefined;
     network?: Network | undefined;
     chain?: string | undefined;
@@ -1138,6 +1166,11 @@ export const buildAccountList = (
       const allMatch = Object.values(matches).every(Boolean);
 
       if (!allMatch) {
+        return;
+      }
+    }
+    if (opts?.filterByComplete) {
+      if (!wallet.credentials.isComplete()) {
         return;
       }
     }
@@ -1261,7 +1294,7 @@ export const buildAccountList = (
   };
 
   return Object.values(sortedAccountMap).sort(
-    (a, b) => (b.fiatBalance ?? -Infinity) - (a.fiatBalance ?? -Infinity)
+    (a, b) => (b.fiatBalance ?? -Infinity) - (a.fiatBalance ?? -Infinity),
   ) as AccountRowProps[];
 };
 
