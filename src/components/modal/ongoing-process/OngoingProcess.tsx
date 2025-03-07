@@ -6,7 +6,6 @@ import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModal,
-  BottomSheetModalProvider,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
@@ -143,35 +142,33 @@ const OnGoingProcessModal: React.FC = () => {
   );
 
   return modalLibrary === 'bottom-sheet' ? (
-    <BottomSheetModalProvider>
-      <BottomSheetModal
-        detached={true}
-        bottomInset={0}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={{borderRadius: 18}}
-        enableDismissOnClose={true}
-        enableDynamicSizing={false}
-        enableOverDrag={false}
-        enablePanDownToClose={false}
-        handleComponent={null}
-        animateOnMount={true}
-        backgroundComponent={null}
-        snapPoints={['100%']}
-        index={0}
-        ref={bottomSheetModalRef}>
-        <BottomSheetView>
-          <Animated.View style={[animatedStyles]}>
-            <Row>
-              <ActivityIndicatorContainer>
-                <ActivityIndicator color={SlateDark} />
-              </ActivityIndicatorContainer>
-              <Message>{message}</Message>
-              <BlurContainer />
-            </Row>
-          </Animated.View>
-        </BottomSheetView>
-      </BottomSheetModal>
-    </BottomSheetModalProvider>
+    <BottomSheetModal
+      detached={true}
+      bottomInset={0}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{borderRadius: 18}}
+      enableDismissOnClose={true}
+      enableDynamicSizing={false}
+      enableOverDrag={false}
+      enablePanDownToClose={false}
+      handleComponent={null}
+      animateOnMount={true}
+      backgroundComponent={null}
+      snapPoints={['100%']}
+      index={0}
+      ref={bottomSheetModalRef}>
+      <BottomSheetView>
+        <Animated.View style={[animatedStyles]}>
+          <Row>
+            <ActivityIndicatorContainer>
+              <ActivityIndicator color={SlateDark} />
+            </ActivityIndicatorContainer>
+            <Message>{message}</Message>
+            <BlurContainer />
+          </Row>
+        </Animated.View>
+      </BottomSheetView>
+    </BottomSheetModal>
   ) : (
     <BaseModal
       id={'ongoingProcess'}
