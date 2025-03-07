@@ -5,6 +5,7 @@ import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModal,
+  BottomSheetModalProvider,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import {useTheme} from '@react-navigation/native';
@@ -76,33 +77,35 @@ const SheetModal: React.FC<SheetModalProps> = ({
   );
 
   return modalLibrary === 'bottom-sheet' ? (
-    <View testID={'modalBackdrop'}>
-      <BottomSheetModal
-        backdropComponent={renderBackdrop}
-        backgroundStyle={{borderRadius: 20}}
-        snapPoints={fullscreen ? ['100%'] : undefined}
-        enableDismissOnClose={true}
-        enableDynamicSizing={!fullscreen}
-        enableOverDrag={false}
-        enablePanDownToClose={false}
-        handleComponent={null}
-        index={0}
-        accessibilityLabel={'modalBackdrop'}
-        ref={bottomSheetModalRef}>
-        <BottomSheetView
-          style={
-            fullscreen
-              ? {
-                  backgroundColor: theme.dark ? Black : White,
-                  height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
-                  paddingTop: insets.top,
-                }
-              : {}
-          }>
-          {children}
-        </BottomSheetView>
-      </BottomSheetModal>
-    </View>
+    <BottomSheetModalProvider>
+      <View testID={'modalBackdrop'}>
+        <BottomSheetModal
+          backdropComponent={renderBackdrop}
+          backgroundStyle={{borderRadius: 20}}
+          snapPoints={fullscreen ? ['100%'] : undefined}
+          enableDismissOnClose={true}
+          enableDynamicSizing={!fullscreen}
+          enableOverDrag={false}
+          enablePanDownToClose={false}
+          handleComponent={null}
+          index={0}
+          accessibilityLabel={'modalBackdrop'}
+          ref={bottomSheetModalRef}>
+          <BottomSheetView
+            style={
+              fullscreen
+                ? {
+                    backgroundColor: theme.dark ? Black : White,
+                    height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
+                    paddingTop: insets.top,
+                  }
+                : {}
+            }>
+            {children}
+          </BottomSheetView>
+        </BottomSheetModal>
+      </View>
+    </BottomSheetModalProvider>
   ) : (
     <BaseModal
       id={'sheetModal'}
