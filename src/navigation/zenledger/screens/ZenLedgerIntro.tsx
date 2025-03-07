@@ -116,6 +116,7 @@ const ZenLedgerIntro: React.FC = () => {
       },
       headerLeft: () => (
         <TouchableOpacity
+          touchableLibrary={'react-native-gesture-handler'}
           style={{marginLeft: Platform.OS === 'android' ? 10 : 0}}
           activeOpacity={ActiveOpacity}
           onPress={() => {
