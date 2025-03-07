@@ -25,6 +25,9 @@ export interface RampQuoteRequestData {
   [RampPaymentMethodName.AUTO_BANK_TRANSFER]: RampQuoteResultForPaymentMethod;
   [RampPaymentMethodName.CARD_PAYMENT]: RampQuoteResultForPaymentMethod;
   [RampPaymentMethodName.APPLE_PAY]: RampQuoteResultForPaymentMethod;
+  [RampPaymentMethodName.GOOGLE_PAY]: RampQuoteResultForPaymentMethod;
+  [RampPaymentMethodName.PIX]: RampQuoteResultForPaymentMethod;
+  [RampPaymentMethodName.OPEN_BANKING]: RampQuoteResultForPaymentMethod; // PISP
 }
 
 export interface RampGetAssetsRequestData {
@@ -84,6 +87,9 @@ enum RampPaymentMethodName {
   AUTO_BANK_TRANSFER = 'AUTO_BANK_TRANSFER',
   CARD_PAYMENT = 'CARD_PAYMENT',
   APPLE_PAY = 'APPLE_PAY',
+  GOOGLE_PAY = 'GOOGLE_PAY',
+  PIX = 'PIX',
+  OPEN_BANKING = 'OPEN_BANKING', // PISP
 }
 
 export interface RampQuoteResultForPaymentMethod {
@@ -95,6 +101,8 @@ export interface RampQuoteResultForPaymentMethod {
 }
 
 type RampFlow = 'OFFRAMP' | 'ONRAMP';
+
+export type RampPaymentMethodType = 'SEPA' | 'CARD' | 'APPLEPAY' | 'GOOGLEPAY' | 'PISP' | 'PIX';
 
 export interface RampPaymentUrlConfigParams {
   env: 'sandbox' | 'production';
@@ -118,7 +126,7 @@ export interface RampPaymentUrlConfigParams {
   finalUrl?: string; // On-ramp param to return to the app
   useSendCryptoCallback?: boolean; // Off-ramp param to show wallet button in checkout page
   // paymentMethodType: ON-ramp only. An optional string parameter that pre-selects payment method for your user to make their onramping experience even quicker.
-  paymentMethodType?: 'SEPA' | 'CARD' | 'APPLEPAY' | 'GOOGLEPAY' | 'PISP' | 'PIX'; // TODO: use this for buy flow
+  paymentMethodType?: RampPaymentMethodType;
   // hideExitButton: An optional boolean parameter to show or hide internal exit button on widget.
   hideExitButton?: boolean;
   variant?: string;

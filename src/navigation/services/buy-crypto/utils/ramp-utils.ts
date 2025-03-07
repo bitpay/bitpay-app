@@ -2,7 +2,12 @@ import {t} from 'i18next';
 import cloneDeep from 'lodash.clonedeep';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
-import {RampQuoteRequestData, RampQuoteResultForPaymentMethod} from '../../../../store/buy-crypto/models/ramp.models';
+import {
+  RampPaymentMethodType,
+  RampQuoteRequestData,
+  RampQuoteResultForPaymentMethod
+} from '../../../../store/buy-crypto/models/ramp.models';
+import { PaymentMethodKey } from '../constants/BuyCryptoConstants';
 
 export const rampEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -228,6 +233,68 @@ export const getRampDefaultOfferData = (
   data: RampQuoteRequestData,
 ): RampQuoteResultForPaymentMethod => {
   return data.CARD_PAYMENT;
+};
+
+export const getRampPaymentMethodDataFromQuoteData = (paymentMethod: PaymentMethodKey, quoteData: RampQuoteRequestData) => {
+  let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
+  switch (paymentMethod) {
+    case 'sepaBankTransfer':
+      if (quoteData.MANUAL_BANK_TRANSFER) {
+        paymentMethodData = quoteData.MANUAL_BANK_TRANSFER;
+      }
+      break;
+    case 'applePay':
+      if (quoteData.APPLE_PAY) {
+        paymentMethodData = quoteData.APPLE_PAY;
+      }
+      break;
+    case 'googlePay':
+      if (quoteData.GOOGLE_PAY) {
+        paymentMethodData = quoteData.GOOGLE_PAY;
+      }
+      break;
+    case 'pisp':
+      if (quoteData.OPEN_BANKING) {
+        paymentMethodData = quoteData.OPEN_BANKING;
+      } else if (quoteData.AUTO_BANK_TRANSFER) {
+        paymentMethodData = quoteData.AUTO_BANK_TRANSFER;
+      }
+      break;
+    case 'pix':
+      if (quoteData.PIX) {
+        paymentMethodData = quoteData.PIX;
+      }
+      break;
+    case 'debitCard':
+    case 'creditCard':
+      if (quoteData.CARD_PAYMENT) {
+        paymentMethodData = quoteData.CARD_PAYMENT;
+      }
+      break;
+    default:
+      paymentMethodData = getRampDefaultOfferData(quoteData);
+  }
+  return paymentMethodData;
+};
+
+export const getRampPaymentMethodFormat = (paymentMethod: PaymentMethodKey): RampPaymentMethodType => {
+  switch (paymentMethod) {
+    case 'sepaBankTransfer':
+      return 'SEPA';
+    case 'applePay':
+      return 'APPLEPAY';
+    case 'googlePay':
+      return 'GOOGLEPAY';
+    case 'pisp':
+      return 'PISP';
+    case 'pix':
+      return 'PIX';
+    case 'debitCard':
+    case 'creditCard':
+      return 'CARD';
+    default:
+      return 'CARD';
+  }
 };
 
 export interface RampStatus {

@@ -255,6 +255,7 @@ const PaymentMethodsModal = ({
             </ModalHeaderText>
             <ModalHeaderRight>
               <Button
+                touchableLibrary={'react-native'}
                 buttonType={'pill'}
                 buttonStyle={'cancel'}
                 touchableLibrary={'react-native'}

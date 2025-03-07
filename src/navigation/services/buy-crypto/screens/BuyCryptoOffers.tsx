@@ -108,6 +108,8 @@ import {
   getChainFromRampChainFormat,
   getRampChainFormat,
   getCoinFromRampCoinFormat,
+  getRampPaymentMethodDataFromQuoteData,
+  getRampPaymentMethodFormat,
 } from '../utils/ramp-utils';
 import BanxaTerms from '../components/terms/banxaTerms';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
@@ -934,6 +936,19 @@ const BuyCryptoOffers: React.FC = () => {
       return;
     }
 
+    switch (paymentMethod.method) {
+      case 'pix':
+        // Ramp only accepts BRL as a base currency for Pix payments
+        offers.ramp.fiatCurrency = 'BRL';
+        break;
+      case 'pisp':
+        // Ramp only accepts EUR | GBP as a base currency for PISP payments
+        offers.ramp.fiatCurrency = 'EUR';
+        break;
+      default:
+        break;
+    }
+
     offers.ramp.fiatAmount =
       offers.ramp.fiatCurrency === fiatCurrency
         ? amount
@@ -991,26 +1006,7 @@ const BuyCryptoOffers: React.FC = () => {
 
       let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
       if (data?.asset) {
-        switch (paymentMethod.method) {
-          case 'sepaBankTransfer':
-            if (data.MANUAL_BANK_TRANSFER) {
-              paymentMethodData = data.MANUAL_BANK_TRANSFER;
-            }
-            break;
-          case 'applePay':
-            if (data.APPLE_PAY) {
-              paymentMethodData = data.APPLE_PAY;
-            }
-            break;
-          case 'debitCard':
-          case 'creditCard':
-            if (data.CARD_PAYMENT) {
-              paymentMethodData = data.CARD_PAYMENT;
-            }
-            break;
-          default:
-            paymentMethodData = getRampDefaultOfferData(data);
-        }
+        paymentMethodData = getRampPaymentMethodDataFromQuoteData(paymentMethod.method, data);
 
         if (!paymentMethodData?.fiatValue) {
           logger.error('rampGetQuote Error: No fiat value provided from Ramp');
@@ -1954,6 +1950,7 @@ const BuyCryptoOffers: React.FC = () => {
       selectedCountryCode: country,
       defaultAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
       finalUrl: redirectUrl,
+      paymentMethodType: getRampPaymentMethodFormat(paymentMethod.method),
     };
 
     let data: RampGetSellSignedPaymentUrlData;
