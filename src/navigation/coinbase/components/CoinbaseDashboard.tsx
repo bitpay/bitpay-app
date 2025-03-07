@@ -268,29 +268,31 @@ const CoinbaseDashboard = () => {
         )}
       </BalanceContainer>
       <Hr />
-      <FlashList
-        contentContainerStyle={{
-          paddingBottom: 50,
-        }}
-        refreshControl={
-          <RefreshControl
-            tintColor={theme.dark ? White : SlateDark}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }
-        ListHeaderComponent={() => {
-          return (
-            <WalletListHeader>
-              <H5>{t('My Wallets')}</H5>
-            </WalletListHeader>
-          );
-        }}
-        data={accounts}
-        renderItem={renderItem}
-        estimatedItemSize={70}
-        ListFooterComponent={listFooterComponent}
-      />
+      {accounts && accounts.length > 0 ? (
+        <FlashList
+          contentContainerStyle={{
+            paddingBottom: 50,
+          }}
+          refreshControl={
+            <RefreshControl
+              tintColor={theme.dark ? White : SlateDark}
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+            />
+          }
+          ListHeaderComponent={() => {
+            return (
+              <WalletListHeader>
+                <H5>{t('My Wallets')}</H5>
+              </WalletListHeader>
+            );
+          }}
+          data={accounts}
+          renderItem={renderItem}
+          estimatedItemSize={70}
+          ListFooterComponent={listFooterComponent}
+        />
+      ) : null}
       <SheetModal
         isVisible={showKeyDropdown}
         placement={'top'}
