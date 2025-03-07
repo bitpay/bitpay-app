@@ -4,7 +4,7 @@ import {
   ActiveOpacity,
   Column,
 } from '../../styled/Containers';
-import {H4, H5, TextAlign} from '../../styled/Text';
+import {H4, H5} from '../../styled/Text';
 import Blockie from '../../blockie/Blockie';
 import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
@@ -12,7 +12,7 @@ import {AccountRowProps} from '../../list/AccountListRow';
 import SheetModal from '../base/sheet/SheetModal';
 import {
   WalletSelectMenuContainer,
-  WalletSelectMenuHeaderContainer,
+  WalletSelectMenuHeaderContainer as _WalletSelectMenuHeaderContainer,
 } from '../../../navigation/wallet/screens/GlobalSelect';
 import Checkbox from '../../checkbox/Checkbox';
 import {useTheme} from 'styled-components/native';
@@ -45,12 +45,30 @@ const CloseModalButton = styled(TouchableOpacity)`
   width: 40px;
   border-radius: 50px;
   background-color: #9ba3ae33;
-  position: absolute;
-  top: 10px;
-  left: 16px;
+  display: flex;
   justify-content: center;
   align-items: center;
+`;
+
+const WalletSelectMenuHeaderContainer = styled(_WalletSelectMenuHeaderContainer)`
+  margin-bottom: 30px;
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+`;
+
+const CenteredTitleContainer = styled.View`
+  align-items: center;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 20px;
+`;
+
+const InvisiblePlaceholder = styled.View`
+  width: 41px;
 `;
 
 const AccountWCV2RowModal = ({
@@ -64,25 +82,18 @@ const AccountWCV2RowModal = ({
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <WalletSelectMenuContainer style={{minHeight: 300}}>
-        <WalletSelectMenuHeaderContainer
-          style={{
-            marginBottom: 30,
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-          }}>
+        <WalletSelectMenuHeaderContainer>
           <CloseModalButton onPress={closeModal}>
             <Back
               color={theme.dark ? 'white' : 'black'}
               background={'rgba(255, 255, 255, 0.2)'}
               opacity={1}
-            />
+              />
           </CloseModalButton>
-          <TextAlign align={'center'}>
+          <CenteredTitleContainer>
             <H4>{t('Select Account')}</H4>
-          </TextAlign>
+          </CenteredTitleContainer>
+          <InvisiblePlaceholder style={{ width: 41 }} />
         </WalletSelectMenuHeaderContainer>
         <ScrollView>
           <View style={{paddingBottom: 50}}>
