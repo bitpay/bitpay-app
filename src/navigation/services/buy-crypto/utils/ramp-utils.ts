@@ -5,7 +5,7 @@ import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {
   RampPaymentMethodType,
   RampQuoteRequestData,
-  RampQuoteResultForPaymentMethod
+  RampQuoteResultForPaymentMethod,
 } from '../../../../store/buy-crypto/models/ramp.models';
 import { PaymentMethodKey } from '../constants/BuyCryptoConstants';
 

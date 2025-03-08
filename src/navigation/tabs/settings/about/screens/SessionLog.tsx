@@ -250,7 +250,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
       t('Warning'),
       t('Be careful, this could contain sensitive private data'),
       [
-        {text: t('Continue'), onPress: () => { 
+        {text: t('Continue'), onPress: () => {
           switch (option) {
             case 'email':
               handleEmail(logStr);

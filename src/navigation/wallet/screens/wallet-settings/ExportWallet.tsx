@@ -402,7 +402,7 @@ const ExportWallet = () => {
                 {t('Send by Email')}
               </Button>
             </PasswordActionContainer> }
-        </PasswordFormContainer> 
+        </PasswordFormContainer>
       </ScrollView>
     </ExportWalletContainer>
   );

@@ -88,7 +88,7 @@ const DebugScreen: React.FC<
         Platform.OS === 'ios'
           ? RNFS.LibraryDirectoryPath
           : RNFS.TemporaryDirectoryPath;
-      const txtFilename = `App-logs`;
+      const txtFilename = 'App-logs';
       let filePath = `${rootPath}/${txtFilename}`;
 
       await RNFS.mkdir(filePath);
@@ -97,7 +97,7 @@ const DebugScreen: React.FC<
       const opts: ShareOptions = {
         title: txtFilename,
         url: `file://${filePath}`,
-        subject: `App Logs`,
+        subject: 'App Logs',
       };
 
       await RNFS.writeFile(filePath, data, 'utf8');
@@ -152,7 +152,7 @@ const DebugScreen: React.FC<
     Alert.alert(
       'Warning',
       'Be careful, this could contain sensitive private data.',
-      [{text: 'Continue', onPress: () => { 
+      [{text: 'Continue', onPress: () => {
         switch (option) {
           case 'share':
             shareFile(data);

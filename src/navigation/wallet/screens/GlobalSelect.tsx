@@ -614,11 +614,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   const filterCompleteWallets = (keys: Keys) => {
     return Object.fromEntries(
-        Object.entries(keys).filter(([_, keys]) => 
+        Object.entries(keys).filter(([_, keys]) =>
             keys.wallets.some(wallet => wallet.isComplete())
         )
     );
-  }
+  };
 
   // Filter keys with only incomplete wallets
   const keys = filterCompleteWallets(_keys);
