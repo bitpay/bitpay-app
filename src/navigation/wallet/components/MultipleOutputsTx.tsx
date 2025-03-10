@@ -47,7 +47,7 @@ const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
 `;
 
-const MultiOptionsContainer = styled(TouchableOpacity)`
+const MultiOptionsContainer = styled(View)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 10px;
   margin-bottom: 5px;
@@ -316,9 +316,7 @@ const MultipleOutputsTx = ({
       {tx.hasMultiplesOutputs && showMultiOptions
         ? tx.outputs.map((output: any, i: number) => (
             <RecipientsContainer key={i}>
-              <MultiOptionsContainer
-                activeOpacity={ActiveOpacity}
-                onPress={() => copyText(output.toAddress || output.address)}>
+              <MultiOptionsContainer>
                 <DetailsContainer>
                   {getIcon(
                     output.toAddress || output.address || output.addressToShow,
