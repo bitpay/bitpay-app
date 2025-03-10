@@ -110,7 +110,6 @@ export const FeeLevelStepContainer = styled.View<{length: number}>`
 export const FeeLevelStep = styled.View<{isLast?: boolean}>`
   flex-direction: row;
   align-items: center;
-  justify-content: center;
   display: flex;
   height: 40px;
 `;
