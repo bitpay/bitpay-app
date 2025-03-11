@@ -19,6 +19,7 @@ import {
   Animated,
   NativeModules,
   DeviceEventEmitter,
+  View,
 } from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
@@ -152,29 +153,31 @@ const BiometricModal: React.FC = () => {
   }, [isVisible]);
 
   return (
-    <Modal
-      isVisible={isVisible}
-      coverScreen={true}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating
-      backdropOpacity={1}
-      animationIn={'fadeInUp'}
-      animationOut={'fadeOutDown'}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
-      style={{margin: 0}}>
-      <BiometricContainer>
-        <BiometricModalTitleContainer>
-          <BiometricModalTitle>{t('Unlock App')}</BiometricModalTitle>
-        </BiometricModalTitleContainer>
-        <BiometricModalImgContainer onPress={() => authenticate()}>
-          <ImgContainer style={{transform: [{scale}]}}>
-            <BitpaySvg width={80} height={80} />
-          </ImgContainer>
-        </BiometricModalImgContainer>
-        <BiometricModalBottomContainer />
-      </BiometricContainer>
-    </Modal>
+    <View>
+      <Modal
+        isVisible={isVisible}
+        coverScreen={true}
+        backdropTransitionOutTiming={0}
+        hideModalContentWhileAnimating
+        backdropOpacity={1}
+        animationIn={'fadeInUp'}
+        animationOut={'fadeOutDown'}
+        useNativeDriverForBackdrop={true}
+        useNativeDriver={true}
+        style={{margin: 0}}>
+        <BiometricContainer>
+          <BiometricModalTitleContainer>
+            <BiometricModalTitle>{t('Unlock App')}</BiometricModalTitle>
+          </BiometricModalTitleContainer>
+          <BiometricModalImgContainer onPress={() => authenticate()}>
+            <ImgContainer style={{transform: [{scale}]}}>
+              <BitpaySvg width={80} height={80} />
+            </ImgContainer>
+          </BiometricModalImgContainer>
+          <BiometricModalBottomContainer />
+        </BiometricContainer>
+      </Modal>
+    </View>
   );
 };
 
