@@ -240,7 +240,7 @@ const KeyWalletsRow = ({
                   </Column>
                 </AccountChainsContainer>
                 {showChainAssets?.[evmAccount?.receiveAddress] !== false &&
-                  (evmAccount)?.assetsByChain?.map(({ chain, chainImg, chainName, chainAssetsList }: {chain: string, chainImg: string | ((props?: any) => ReactElement), chainName: string, chainAssetsList: WalletRowProps[]}) => (
+                  (evmAccount)?.assetsByChain?.filter(({chainAssetsList}) => chainAssetsList.length > 0).map(({ chain, chainImg, chainName, chainAssetsList }: {chain: string, chainImg: string | ((props?: any) => ReactElement), chainName: string, chainAssetsList: WalletRowProps[]}) => (
                     <View key={chain}>
                       <AccountChainTitleContainer>
                         <CurrencyImageContainer>
