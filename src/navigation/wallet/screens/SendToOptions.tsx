@@ -1,7 +1,7 @@
 import React, {useLayoutEffect, useState} from 'react';
+import {Keyboard} from 'react-native';
 import styled from 'styled-components/native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import {ScreenOptions} from '../../../styles/tabNavigator';
 import {H5, H7, HeaderTitle} from '../../../components/styled/Text';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -210,6 +210,7 @@ const SendToOptions = () => {
     if (recipient.amount && !updateRecipient) {
       setRecipientListContext(recipient);
     } else {
+      Keyboard.dismiss();
       setRecipientAmount({showModal: true, recipient, index, updateRecipient});
     }
   };
