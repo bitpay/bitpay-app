@@ -629,14 +629,16 @@ const CoinbaseAccount = ({
       onSelectedWallet(newWallet);
     } else if (createNewWalletData) {
       try {
-        if (createNewWalletData.key.isPrivKeyEncrypted) {
+        if (createNewWalletData.key.isPrivKeyEncrypted && !(createNewWalletData.currency?.isToken && createNewWalletData.associatedWallet)) {
           logger.debug('Key is Encrypted. Trying to decrypt...');
           await sleep(500);
           const password = await dispatch(
             getDecryptPassword(createNewWalletData.key),
           );
           createNewWalletData.options.password = password;
-        }
+      } else {
+        logger.debug('Key is Encrypted, but not neccessary for tokens. Trying to create wallet...');
+      }
 
         await sleep(500);
         await dispatch(startOnGoingProcessModal('ADDING_WALLET'));

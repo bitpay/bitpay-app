@@ -1375,13 +1375,15 @@ const SwapCryptoRoot: React.FC = () => {
       setToWallet(toWallet);
     } else if (createToWalletData) {
       try {
-        if (createToWalletData.key.isPrivKeyEncrypted) {
-          logger.debug('Key is Encrypted. Trying to decrypt...');
-          await sleep(500);
-          const password = await dispatch(
-            getDecryptPassword(createToWalletData.key),
-          );
-          createToWalletData.options.password = password;
+        if (createToWalletData.key.isPrivKeyEncrypted && !(createToWalletData.currency?.isToken && createToWalletData.associatedWallet)) {
+            logger.debug('Key is Encrypted. Trying to decrypt...');
+            await sleep(500);
+            const password = await dispatch(
+              getDecryptPassword(createToWalletData.key),
+            );
+            createToWalletData.options.password = password;
+        } else {
+          logger.debug('Key is Encrypted, but not neccessary for tokens. Trying to create wallet...');
         }
 
         await sleep(500);
