@@ -172,8 +172,10 @@ export interface WalletSelectMenuHeaderContainerParams {
 }
 
 export const WalletSelectMenuHeaderContainer = styled.View<WalletSelectMenuHeaderContainerParams>`
+  flex-direction: row;
   padding: 16px;
   padding-bottom: ${({currency}) => (currency ? 14 : 0)}px;
+  padding-left: 5;
   justify-content: ${({currency}) => (currency ? 'flex-start' : 'center')};
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
   border-bottom-width: ${({currency}) => (currency ? 1 : 0)}px;

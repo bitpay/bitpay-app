@@ -580,6 +580,7 @@ export const BuildKeysAndWalletsList = ({
   network,
   payProOptions,
   defaultAltCurrencyIsoCode = 'USD',
+  filterWalletsByBalance = true,
   rates,
   dispatch,
 }: {
@@ -587,6 +588,7 @@ export const BuildKeysAndWalletsList = ({
   network?: Network;
   payProOptions?: PayProOptions;
   defaultAltCurrencyIsoCode?: string;
+  filterWalletsByBalance?: boolean;
   rates: Rates;
   dispatch: AppDispatch;
 }) => {
@@ -606,7 +608,7 @@ export const BuildKeysAndWalletsList = ({
         paymentOptions,
         filterWalletsByPaymentOptions: true,
         filterByHideWallet: true,
-        filterWalletsByBalance: true,
+        filterWalletsByBalance,
         network,
       },
     );
