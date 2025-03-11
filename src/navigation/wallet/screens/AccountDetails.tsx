@@ -816,6 +816,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               ) : null}
               {hasAllChains ? (
                 <TouchableOpacity
+                  touchableLibrary={'react-native-gesture-handler'}
                   onPress={() =>
                     navigation.navigate('AccountSettings', {
                       key,
