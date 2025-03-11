@@ -65,6 +65,7 @@ import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/sen
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import haptic from '../../../components/haptic-feedback/haptic';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -402,12 +403,14 @@ const TransactionProposalNotifications = () => {
               </ListItemSubText>
             </CurrencyColumn>
             {item.needSign && item.txps.length > 1 ? (
-              <Link
-                onPress={() => {
-                  txpSelectAll(item.txps, _walletId);
+              <TouchableOpacity onPress={() => {
+                  haptic('impactLight');
+                  txpSelectAll(item.txps, _walletId)
                 }}>
-                {t('Select All')}
-              </Link>
+                  <Link>
+                    {t('Select All')}
+                  </Link>
+              </TouchableOpacity>
             ) : null}
           </RowContainer>
           {item?.txps[0]
