@@ -292,6 +292,7 @@ const GiftCardDetails = ({
     return AppActions.showBottomNotificationModal({
       type: 'success',
       title: t('Copied: ', {copiedValue}),
+      modalLibrary: 'modal',
       message: '',
       message2: (
         <ScrollableBottomNotificationMessageContainer
