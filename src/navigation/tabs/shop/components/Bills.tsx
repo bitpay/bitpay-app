@@ -2,7 +2,7 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Trans, useTranslation} from 'react-i18next';
-import {Linking, View} from 'react-native';
+import {Linking, Platform, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {
@@ -209,7 +209,7 @@ export const Bills = () => {
   };
 
   return (
-    <SectionContainer style={{minHeight: HEIGHT - 200}}>
+    <SectionContainer style={{minHeight: HEIGHT - (Platform.OS === 'android' ? 200 : 225)}}>
       {!isVerified ? (
         <>
           <BillPitch />
