@@ -13,7 +13,6 @@ import {setOnboardingCompleted} from '../../../store/app/app.actions';
 import {setWalletTermsAccepted} from '../../../store/wallet/wallet.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import TermsBox from '../components/TermsBox';
-import {OnboardingGroupParamList} from '../OnboardingGroup';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {
   useAppDispatch,
