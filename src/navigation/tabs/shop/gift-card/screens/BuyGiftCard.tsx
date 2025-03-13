@@ -374,7 +374,7 @@ const BuyGiftCard = ({
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
-          minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 100),
+          minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 125),
         }}>
         <GradientBox colors={getMastheadGradient(theme)}>
           <View
