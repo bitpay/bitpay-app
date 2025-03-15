@@ -644,7 +644,6 @@ export const WalletSelector = ({
         <WalletSelectMenuBodyContainer>
           <KeyWalletsRow<KeyWallet>
             currency={currency}
-            showChainAssets={true}
             keyAccounts={walletsAndAccounts.keyWallets}
             hideBalance={hideAllBalances}
             onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
