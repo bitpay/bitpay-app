@@ -91,6 +91,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
 import Blockie from '../../../../components/blockie/Blockie';
+import ArchaxFooter from '../../../../components/archax/archax-footer';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -129,6 +130,7 @@ const BuyCryptoRoot = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const tokenDataByAddress = useAppSelector(
     ({WALLET}: RootState) => WALLET.tokenDataByAddress,
@@ -1037,6 +1039,7 @@ const BuyCryptoRoot = ({
           </Button>
         </CtaContainer>
       </ScrollView>
+      {showArchaxBanner && <ArchaxFooter />}
 
       <AmountModal
         isVisible={amountModalVisible}
