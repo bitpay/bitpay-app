@@ -93,7 +93,8 @@ import {LogActions} from '../../../../store/log';
 import {Network, URL} from '../../../../constants';
 import {AccountRowProps} from '../../../../components/list/AccountListRow';
 import {AssetsByChainData} from '../AccountDetails';
-import { WalletRowProps } from '../../../../components/list/WalletRow';
+import {WalletRowProps} from '../../../../components/list/WalletRow';
+import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -785,7 +786,22 @@ const SendTo = () => {
             keyAccounts={keyAccounts}
             hideBalance={hideAllBalances}
             onPress={(selectedWallet: Wallet) => {
-              onSendToWallet(selectedWallet);
+              const selectedKey = keys[selectedWallet.keyId];
+              if (selectedKey.backupComplete) {
+                onSendToWallet(selectedWallet);
+              } else {
+                logger.debug('Key selected. Needs backup.');
+                dispatch(
+                  showBottomNotificationModal(
+                    keyBackupRequired(
+                      selectedKey,
+                      navigation,
+                      dispatch,
+                      'send',
+                    ),
+                  ),
+                );
+              }
             }}
           />
         </View>
