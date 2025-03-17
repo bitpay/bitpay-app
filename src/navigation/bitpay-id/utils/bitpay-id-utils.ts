@@ -35,6 +35,10 @@ export function getCoinAndChainFromCurrencyCode(
         return {coin: 'usdc.e', chain: chainSuffixMap[suffix]};
       } else if (coin === 'usdcn' && chainSuffixMap[suffix] === 'matic') {
         return {coin: 'usdc', chain: chainSuffixMap[suffix]};
+      } else if (coin === 'usdte' && chainSuffixMap[suffix] === 'arb') {
+        return {coin: 'usdt', chain: chainSuffixMap[suffix]};
+      } else if (coin === 'usdte' && chainSuffixMap[suffix] === 'op') {
+        return {coin: 'usdt', chain: chainSuffixMap[suffix]};
       }
     }
     return {coin, chain: chainSuffixMap[suffix]};
@@ -57,6 +61,12 @@ export function getCurrencyCodeFromCoinAndChain(
   // TODO - remove this special case once migration to POL is complete
   if (coin.toLowerCase() === 'pol') {
     return 'MATIC';
+  }
+  if (coin.toLowerCase() === 'usdt' && chain.toLowerCase() === 'arb') {
+    return `USDTe_arb`;
+  }
+  if (coin.toLowerCase() === 'usdt' && chain.toLowerCase() === 'op') {
+    return `USDTe_op`;
   }
   const matchingSuffixEntry = Object.entries(chainSuffixMap).find(
     ([_, chainCode]) => chain.toLowerCase() === chainCode,
