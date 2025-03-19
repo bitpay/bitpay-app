@@ -8,6 +8,7 @@ import {BaseText} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import { View } from 'react-native';
 
 const PaymentSentContainer = styled.View`
   flex: 1;
@@ -49,36 +50,38 @@ interface PaymentSentModal {
 const PaymentSent = ({isVisible, onCloseModal, title}: PaymentSentModal) => {
   const {t} = useTranslation();
   return (
-    <Modal
-      isVisible={isVisible}
-      backdropOpacity={1}
-      backdropColor={Success}
-      animationIn={'fadeInUp'}
-      animationOut={'fadeOutDown'}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating={true}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
-      style={{
-        alignItems: 'center',
-      }}>
-      <PaymentSentContainer>
-        <PaymentSentHero>
-          <PaymentCompleteSvg />
-          <Title>{title || t('Payment Sent')}</Title>
-        </PaymentSentHero>
-        <PaymentSentFooter>
-          <CloseButtonContainer
-            style={{padding: 15, marginTop: 15}}
-            onPress={() => {
-              haptic('impactLight');
-              onCloseModal();
-            }}>
-            <CloseText>{t('CLOSE')}</CloseText>
-          </CloseButtonContainer>
-        </PaymentSentFooter>
-      </PaymentSentContainer>
-    </Modal>
+    <View>
+      <Modal
+        isVisible={isVisible}
+        backdropOpacity={1}
+        backdropColor={Success}
+        animationIn={'fadeInUp'}
+        animationOut={'fadeOutDown'}
+        backdropTransitionOutTiming={0}
+        hideModalContentWhileAnimating={true}
+        useNativeDriverForBackdrop={true}
+        useNativeDriver={true}
+        style={{
+          alignItems: 'center',
+        }}>
+        <PaymentSentContainer>
+          <PaymentSentHero>
+            <PaymentCompleteSvg />
+            <Title>{title || t('Payment Sent')}</Title>
+          </PaymentSentHero>
+          <PaymentSentFooter>
+            <CloseButtonContainer
+              style={{padding: 15, marginTop: 15}}
+              onPress={() => {
+                haptic('impactLight');
+                onCloseModal();
+              }}>
+              <CloseText>{t('CLOSE')}</CloseText>
+            </CloseButtonContainer>
+          </PaymentSentFooter>
+        </PaymentSentContainer>
+      </Modal>
+    </View>
   );
 };
 
