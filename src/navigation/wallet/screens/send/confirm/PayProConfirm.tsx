@@ -309,6 +309,7 @@ const PayProConfirm = () => {
       updateTxDetails(newTxDetails);
       updateTxp(undefined);
       setCoinbaseAccount(selectedCoinbaseAccount);
+      await sleep(400);
       dispatch(dismissOnGoingProcessModal());
       dispatch(
         Analytics.track('BitPay App - Start Merchant Purchase', {
