@@ -126,7 +126,10 @@ import {InAppNotificationMessages} from '../../components/modal/in-app-notificat
 import axios from 'axios';
 import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
-import {successFetchCatalog, setShopMigrationComplete} from '../shop-catalog/shop-catalog.actions';
+import {
+  successFetchCatalog,
+  setShopMigrationComplete,
+} from '../shop-catalog/shop-catalog.actions';
 import {clearedShopCatalogFields} from '../shop/shop.actions';
 import {
   startCustomTokensMigration,
@@ -157,7 +160,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
-    const {APP, CONTACT, WALLET} = getState();
+    const {APP, CONTACT, WALLET, LOCATION} = getState();
     const {network, colorScheme} = APP;
 
     WALLET.initLogs.forEach(log => dispatch(log));
@@ -243,6 +246,13 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Initialize Zenledger
     dispatch(zenledgerInitialize());
+
+    // Check location and show Archax Banner if in UK
+    if (LOCATION.locationData?.countryShortCode === 'GB') {
+      dispatch(AppActions.showArchaxBanner(true));
+    } else {
+      dispatch(AppActions.showArchaxBanner(false));
+    }
 
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
@@ -1148,7 +1158,9 @@ export const incomingShopLink =
   (url: string): Effect<{merchantName: string} | undefined> =>
   (_, getState) => {
     const {SHOP_CATALOG} = getState();
-    const availableGiftCards = getAvailableGiftCards(SHOP_CATALOG.availableCardMap);
+    const availableGiftCards = getAvailableGiftCards(
+      SHOP_CATALOG.availableCardMap,
+    );
     const integrations = Object.values(SHOP_CATALOG.integrations);
     const categories = getCategoriesWithIntegrations(
       Object.values(SHOP_CATALOG.categoriesAndCurations.categories),
@@ -1563,12 +1575,14 @@ export const migrateShopCatalog = (): Effect => (dispatch, getState) => {
   try {
     const {SHOP_CATALOG, SHOP} = getState();
     if (!SHOP_CATALOG.shopMigrationComplete && SHOP.supportedCardMap) {
-      dispatch(successFetchCatalog({
-        availableCardMap: SHOP.availableCardMap,
-        supportedCardMap: SHOP.supportedCardMap,
-        categoriesAndCurations: SHOP.categoriesAndCurations,
-        integrations: SHOP.integrations,
-      }));
+      dispatch(
+        successFetchCatalog({
+          availableCardMap: SHOP.availableCardMap,
+          supportedCardMap: SHOP.supportedCardMap,
+          categoriesAndCurations: SHOP.categoriesAndCurations,
+          integrations: SHOP.integrations,
+        }),
+      );
       dispatch(clearedShopCatalogFields());
       dispatch(setShopMigrationComplete());
       dispatch(
