@@ -58,9 +58,9 @@ const LinkButton = styled(TouchableOpacity)<{isActive: string; label: string}>`
 const RangeDateSelector = ({onPress}: Props) => {
   const [activeOption, setActiveOption] = useState<DateRanges>(DateRanges.Day);
   const updateOptions: Array<{label: string; dateRange: DateRanges}> = [
-    {label: '1D', dateRange: DateRanges.Day},
-    {label: '1W', dateRange: DateRanges.Week},
     {label: '1M', dateRange: DateRanges.Month},
+    {label: '1W', dateRange: DateRanges.Week},
+    {label: '1D', dateRange: DateRanges.Day},
   ];
   const isActive = updateOptions.find(
     opt => opt.dateRange === activeOption,

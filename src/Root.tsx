@@ -28,6 +28,7 @@ import {DeviceEmitterEvents} from './constants/device-emitter-events';
 import {baseNavigatorOptions} from './constants/NavigationOptions';
 import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
 import BiometricModal from './components/modal/biometric/BiometricModal';
+import ArchaxBanner from './components/archax/archax-banner';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
@@ -286,6 +287,7 @@ export default () => {
     ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
   );
   const notificationsState = useAppSelector(selectSettingsNotificationState);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   const blurScreenList: string[] = [
     OnboardingScreens.IMPORT,
@@ -565,7 +567,8 @@ export default () => {
       <ThemeProvider theme={theme}>
         <GestureHandlerRootView style={{flex: 1}}>
           <BottomSheetModalProvider>
-            <SafeAreaView style={{ flex: 1}} >
+            <SafeAreaView style={{flex: 1}}>
+              {showArchaxBanner && <ArchaxBanner />}
               {/* https://github.com/react-navigation/react-navigation/issues/11353#issuecomment-1548114655 */}
               <HeaderShownContext.Provider value>
                 <NavigationContainer

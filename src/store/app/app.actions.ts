@@ -397,3 +397,8 @@ export const setInAppBrowserOpen = (payload: boolean): AppActionType => ({
   type: AppActionTypes.IN_APP_BROWSER_OPEN,
   payload,
 });
+
+export const showArchaxBanner = (payload: boolean): AppActionType => ({
+  type: AppActionTypes.SHOW_ARCHAX_BANNER,
+  payload,
+});

@@ -5,19 +5,24 @@ import {LightBlack, NotificationPrimary, White} from '../../styles/colors';
 import haptic from '../haptic-feedback/haptic';
 import SwapHorizontal from '../icons/swap-horizontal/SwapHorizontal';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import useAppSelector from '../../utils/hooks/useAppSelector';
+import {PixelRatio} from 'react-native';
+import {PIXEL_DENSITY_LIMIT} from '../virtual-keyboard/VirtualKeyboard';
 
-export const SwapButtonContainer = styled(TouchableOpacity)`
+export const SwapButtonContainer = styled(TouchableOpacity)<{
+  isSmallScreen?: boolean;
+}>`
   flex-direction: row;
   align-items: center;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#edf1fe')};
-  height: 39px;
+  height: ${({isSmallScreen}) => (isSmallScreen ? 30 : 39)}px;
   padding: 0 15px;
   border-radius: 19.09px;
 `;
 
-export const ButtonText = styled(BaseText)`
+export const ButtonText = styled(BaseText)<{isSmallScreen?: boolean}>`
   margin-left: 10px;
-  font-size: 18px;
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? 12 : 18)}px;
   font-weight: 500;
   color: ${({theme: {dark}}) => (dark ? White : NotificationPrimary)};
 `;
@@ -30,6 +35,10 @@ export interface SwapButtonProps {
 const SwapButton = ({swapList, onChange}: SwapButtonProps) => {
   const initText = swapList[0];
   const [text, setText] = useState(initText);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const _isSmallScreen = showArchaxBanner
+    ? true
+    : PixelRatio.get() < PIXEL_DENSITY_LIMIT;
 
   const swapText = (val: string) => {
     if (swapList.length === 1) {
@@ -42,9 +51,11 @@ const SwapButton = ({swapList, onChange}: SwapButtonProps) => {
   };
 
   return (
-    <SwapButtonContainer onPress={() => swapText(text)}>
+    <SwapButtonContainer
+      isSmallScreen={_isSmallScreen}
+      onPress={() => swapText(text)}>
       <SwapHorizontal />
-      <ButtonText>{text}</ButtonText>
+      <ButtonText isSmallScreen={_isSmallScreen}>{text}</ButtonText>
     </SwapButtonContainer>
   );
 };

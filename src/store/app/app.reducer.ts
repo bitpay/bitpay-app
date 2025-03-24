@@ -51,6 +51,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'selectedLocalChainFilterOption',
   'tokensDataLoaded',
   'isImportLedgerModalVisible',
+  'showArchaxBanner',
 ];
 
 export type ModalId =
@@ -164,6 +165,7 @@ export interface AppState {
   isImportLedgerModalVisible: boolean;
   inAppBrowserOpen: boolean;
   tokensDataLoaded: boolean;
+  showArchaxBanner: boolean;
 }
 
 const initialState: AppState = {
@@ -260,6 +262,7 @@ const initialState: AppState = {
   isImportLedgerModalVisible: false,
   inAppBrowserOpen: false,
   tokensDataLoaded: false,
+  showArchaxBanner: false,
 };
 
 export const appReducer = (
@@ -767,6 +770,12 @@ export const appReducer = (
       return {
         ...state,
         inAppBrowserOpen: action.payload,
+      };
+
+    case AppActionTypes.SHOW_ARCHAX_BANNER:
+      return {
+        ...state,
+        showArchaxBanner: action.payload,
       };
 
     default:

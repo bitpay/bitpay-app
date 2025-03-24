@@ -93,6 +93,7 @@ export enum AppActionTypes {
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
   IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
+  SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
 }
 
 interface ImportLedgerModalToggled {
@@ -422,6 +423,11 @@ interface InAppBrowserOpen {
   payload: boolean;
 }
 
+interface ShowArchaxBanner {
+  type: typeof AppActionTypes.SHOW_ARCHAX_BANNER;
+  payload: boolean;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -493,4 +499,5 @@ export type AppActionType =
   | ShowChainSelectorModal
   | DismissChainSelectorModal
   | ShowWalletConnectStartModal
-  | DismissWalletConnectStartModal;
+  | DismissWalletConnectStartModal
+  | ShowArchaxBanner;
