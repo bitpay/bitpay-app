@@ -118,7 +118,7 @@
     "react-native-fs": "2.20.0",
     "react-native-gesture-handler": "2.21.2",
     "react-native-get-random-values": "1.11.0",
-    "react-native-graph": "git+https://github.com/msalcala11/react-native-graph#5f744a907ca66b004bc14f191e1ed0784f53122d",
+    "react-native-graph": "1.1.0",
     "react-native-haptic-feedback": "1.14.0",
     "react-native-in-app-review": "4.3.1",
     "react-native-inappbrowser-reborn": "3.7.0",

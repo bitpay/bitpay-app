@@ -1,0 +1,12 @@
+diff --git a/node_modules/react-native-graph/src/AnimatedLineGraph.tsx b/node_modules/react-native-graph/src/AnimatedLineGraph.tsx
+index bee225a..2d52f65 100644
+--- a/node_modules/react-native-graph/src/AnimatedLineGraph.tsx
++++ b/node_modules/react-native-graph/src/AnimatedLineGraph.tsx
+@@ -249,6 +249,7 @@ export function AnimatedLineGraph({
+ 
+     setCommandsChanged(commandsChanged + 1)
+ 
++    interpolateProgress.value = 0
+     interpolateProgress.value = withSpring(1, {
+       mass: 1,
+       stiffness: 500,
