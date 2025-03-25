@@ -737,7 +737,6 @@ const Confirm = () => {
                 : t('Payment Sent')
             }
             onCloseModal={async () => {
-              setShowPaymentSentModal(false);
               if (recipient.type === 'coinbase') {
                 await sleep(500);
                 navigation.dispatch(StackActions.popToTop());
@@ -790,6 +789,8 @@ const Confirm = () => {
                     }),
                   );
                 }
+                await sleep(1000);
+                setShowPaymentSentModal(false);
               }
             }}
           />
