@@ -10,6 +10,7 @@ import {
   Caution25,
   LightBlack,
   NeutralSlate,
+  Slate,
   SlateDark,
   Success25,
   Warning25,
@@ -641,7 +642,7 @@ export const WalletConnectStartModal = () => {
                           setShowAccountWCV2SelectionBottomModal(true);
                         }}>
                         <Row style={{ alignItems: 'center', gap: 8, display: 'flex' }}>
-                          <CurrencyImageContainer style={{height: 30, width: 30}}>
+                        <CurrencyImageContainer style={{height: 30, width: 30}}>
                             <Blockie
                               size={30}
                               seed={checkedAccount.receiveAddress}
@@ -663,9 +664,23 @@ export const WalletConnectStartModal = () => {
                               }}>
                               (+{availableAccountLength - 1})
                             </BaseText>
-                            <SelectorArrowRight />
+                            <SelectorArrowRight 
+                              {...{
+                                width: 13,
+                                height: 13,
+                                color: theme.dark ? White : Slate,
+                              }}
+                            />
                           </AccountSettingsArrowContainer>
-                        ) : null}
+                        ) : <View>
+                        <SelectorArrowRight 
+                          {...{
+                            width: 13,
+                            height: 13,
+                            color: theme.dark ? White : Slate,
+                          }}
+                        />
+                      </View>}
                       </AccountSettingsContainer>
                     ) : (
                       <DescriptionItemContainer>
