@@ -48,10 +48,11 @@ const CloseModalButton = styled(TouchableOpacity)`
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-left: 8px;
 `;
 
 const WalletSelectMenuHeaderContainer = styled(_WalletSelectMenuHeaderContainer)`
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: row;
   align-items: center;
