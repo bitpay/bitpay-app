@@ -50,9 +50,7 @@ export const ActionsContainer = styled.View<{alignEnd?: boolean}>`
   align-items: center;
 `;
 
-export const SelectedOptionContainer = styled(TouchableOpacity)<{
-  noBackground?: boolean;
-}>`
+export const SelectedOptionContainer = styled(TouchableOpacity)<{noBackground?: boolean}>`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -122,6 +120,13 @@ export const SpinnerContainer = styled.View`
   flex-direction: column;
   justify-content: center;
   align-items: center;
+`;
+
+export const WalletTextContainer = styled.View`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin-left: 10px;
 `;
 
 export const BalanceContainer = styled.View`

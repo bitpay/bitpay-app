@@ -63,10 +63,10 @@ export function getCurrencyCodeFromCoinAndChain(
     return 'MATIC';
   }
   if (coin.toLowerCase() === 'usdt' && chain.toLowerCase() === 'arb') {
-    return `USDTe_arb`;
+    return 'USDTe_arb';
   }
   if (coin.toLowerCase() === 'usdt' && chain.toLowerCase() === 'op') {
-    return `USDTe_op`;
+    return 'USDTe_op';
   }
   const matchingSuffixEntry = Object.entries(chainSuffixMap).find(
     ([_, chainCode]) => chain.toLowerCase() === chainCode,
