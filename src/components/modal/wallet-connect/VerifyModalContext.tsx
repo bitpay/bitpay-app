@@ -13,7 +13,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {
   WalletSelectMenuContainer,
-  WalletSelectMenuHeaderContainer,
+  WalletSelectMenuHeaderContainer as _WalletSelectMenuHeaderContainer,
 } from '../../../navigation/wallet/screens/GlobalSelect';
 import Banner from '../../banner/Banner';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
@@ -33,13 +33,10 @@ const CloseModalButton = styled(TouchableOpacity)`
   width: 40px;
   border-radius: 50px;
   background-color: #9ba3ae33;
-  position: absolute;
-  top: 10px;
-  left: 16px;
-  z-index: 1;
+  display: flex;
   justify-content: center;
   align-items: center;
-  display: flex;
+  margin-left: 8px;
 `;
 
 const ContentContainer = styled.View`
@@ -61,6 +58,26 @@ const IconContainer = styled(FastImage)`
   margin-right: 5px;
   align-items: center;
   justify-content: center;
+`;
+
+const WalletSelectMenuHeaderContainer = styled(_WalletSelectMenuHeaderContainer)`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+`;
+
+const CenteredTitleContainer = styled.View`
+  align-items: center;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 20px;
+`;
+
+const InvisiblePlaceholder = styled.View`
+  width: 41px;
 `;
 
 interface VerifyContextModalProps {
@@ -122,16 +139,17 @@ const VerifyContextModal = ({
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
       <WalletSelectMenuContainer style={{minHeight: 300}}>
         <WalletSelectMenuHeaderContainer>
-          <CloseModalButton onPress={() => closeModal()}>
+          <CloseModalButton onPress={closeModal}>
             <Back
               color={theme.dark ? 'white' : 'black'}
               background={'rgba(255, 255, 255, 0.2)'}
               opacity={1}
-            />
+              />
           </CloseModalButton>
-          <TextAlign align={'center'}>
+          <CenteredTitleContainer>
             <H4>{modalTitle}</H4>
-          </TextAlign>
+          </CenteredTitleContainer>
+          <InvisiblePlaceholder style={{ width: 41 }} />
         </WalletSelectMenuHeaderContainer>
         <ContentContainer>
           <RowContainer>
