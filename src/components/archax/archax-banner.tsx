@@ -16,7 +16,11 @@ const ArchaxBanner: React.FC = () => {
         if something goes worng.
         <ArchaxBannerLink
           onPress={() => {
-            dispatch(openUrlWithInAppBrowser('http://localhost:8080')); // TODO: Update URL
+            dispatch(
+              openUrlWithInAppBrowser(
+                'https://www.bitpay.com/en-gb/about/risk-summary',
+              ),
+            );
           }}>
           Take 2 mins to learn more.
         </ArchaxBannerLink>
