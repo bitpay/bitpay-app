@@ -443,12 +443,14 @@ export const walletConnectV2SubscribeToEvents =
   };
 
 export const walletConnectV2ApproveCallRequest =
-  (request: WCV2RequestType, wallet: Wallet): Effect<Promise<void>> =>
+  (request: WCV2RequestType, wallet: Wallet, response?: JsonRpcResult<string>): Effect<Promise<void>> =>
   dispatch => {
     return new Promise(async (resolve, reject) => {
       const {topic, id} = request;
       try {
-        const response = await dispatch(approveEIP155Request(request, wallet));
+        if (!response) {
+          response = await dispatch(approveEIP155Request(request, wallet));
+        }
         await web3wallet.respondSessionRequest({
           topic,
           response,
@@ -725,6 +727,7 @@ const approveEIP155Request =
             delete types.EIP712Domain;
             const signedData = await signer._signTypedData(domain, types, data);
             resolve(formatJsonRpcResult(id, signedData));
+          // deprecated - using bws for sending transaction
           case EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION:
             const provider = new providers.JsonRpcProvider(
               EIP155_CHAINS[chainId as TEIP155Chain].rpc,

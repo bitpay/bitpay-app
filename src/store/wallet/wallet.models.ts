@@ -6,6 +6,7 @@ import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
 import {FeeLevels} from './effects/fee/fee';
 import {TxActions} from './effects/transactions/transactions';
+import { WCV2RequestType } from '../wallet-connect-v2/wallet-connect-v2.models';
 
 /**
  * Currently supported hardware wallet sources.
@@ -251,9 +252,9 @@ export type TransactionOptionsContext =
 
 export interface TransactionOptions {
   wallet: Wallet;
-  invoice?: Invoice;
   recipient: Recipient;
   amount: number;
+  invoice?: Invoice;
   context?: TransactionOptionsContext;
   currency?: string;
   chain?: string;
@@ -293,6 +294,8 @@ export interface TransactionOptions {
   inputs?: Utxo[];
   // multisend
   recipientList?: Recipient[];
+  // walletconnect
+  request?: WCV2RequestType;
 }
 
 export interface Action {
