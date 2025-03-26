@@ -405,7 +405,7 @@ const TransactionProposalNotifications = () => {
             {item.needSign && item.txps.length > 1 ? (
               <TouchableOpacity onPress={() => {
                   haptic('impactLight');
-                  txpSelectAll(item.txps, _walletId)
+                  txpSelectAll(item.txps, _walletId);
                 }}>
                   <Link>
                     {t('Select All')}

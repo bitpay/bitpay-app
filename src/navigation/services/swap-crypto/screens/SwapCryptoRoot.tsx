@@ -39,13 +39,12 @@ import {
   BalanceContainer,
   AmountCryptoCard,
   AmountText,
+  WalletTextContainer,
 } from '../styled/SwapCryptoRoot.styled';
 import {SwapCryptoGroupParamList, SwapCryptoScreens} from '../SwapCryptoGroup';
 import Button from '../../../../components/button/Button';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
-import FromWalletSelectorModal, {
-  CurrencyColumn,
-} from '../components/FromWalletSelectorModal';
+import FromWalletSelectorModal from '../components/FromWalletSelectorModal';
 import AmountModal from '../../../../components/amount/AmountModal';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {
@@ -108,7 +107,6 @@ import styled from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import GlobalSelect from '../../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   ChangellyCurrency,
   ChangellyCurrencyBlockchain,
@@ -1488,18 +1486,14 @@ const SwapCryptoRoot: React.FC = () => {
             )}
             {(fromWalletSelected || loadingWalletFromStatus) && (
               <>
-                <ActionsContainer>
-                  <TouchableOpacity
-                    style={{
-                      flex: 1,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}
-                    onPress={() => {
-                      showModal('fromWalletSelector');
-                    }}>
+                <SelectedOptionContainer
+                  noBackground={true}
+                  style={{paddingLeft: 0, paddingRight: 0}}
+                  onPress={() => {
+                    showModal('fromWalletSelector');
+                  }}>
                     {fromWalletSelected && !loadingWalletFromStatus ? (
-                      <>
+                      <SelectedOptionCol>
                         <CurrencyImageContainer>
                           <CurrencyImage
                             img={fromWalletSelected.img}
@@ -1513,15 +1507,12 @@ const SwapCryptoRoot: React.FC = () => {
                             size={45}
                           />
                         </CurrencyImageContainer>
-                        <CurrencyColumn>
-                          <Row>
+                        <WalletTextContainer>
                             <H5 ellipsizeMode="tail" numberOfLines={1}>
                               {fromWalletSelected.walletName
                                 ? fromWalletSelected.walletName
                                 : fromWalletSelected.currencyName}
                             </H5>
-                          </Row>
-                          <Row style={{alignItems: 'center'}}>
                             <ListItemSubText
                               ellipsizeMode="tail"
                               numberOfLines={1}
@@ -1530,9 +1521,8 @@ const SwapCryptoRoot: React.FC = () => {
                               }}>
                               {fromWalletSelected.currencyAbbreviation.toUpperCase()}
                             </ListItemSubText>
-                          </Row>
-                        </CurrencyColumn>
-                      </>
+                        </WalletTextContainer>
+                      </SelectedOptionCol>
                     ) : (
                       <SelectedOptionCol>
                         <SwapCryptoLoadingWalletSkeleton />
@@ -1551,8 +1541,7 @@ const SwapCryptoRoot: React.FC = () => {
                         </ArrowContainer>
                       </SelectedOptionCol>
                     ) : null}
-                  </TouchableOpacity>
-                </ActionsContainer>
+                </SelectedOptionContainer>
 
                 {fromWalletSelected?.balance?.cryptoSpendable &&
                 !loadingWalletFromStatus ? (
@@ -1679,6 +1668,7 @@ const SwapCryptoRoot: React.FC = () => {
                   {t('Swap To')}
                 </BuyCryptoItemTitle>
                 <SelectedOptionContainer
+                  key={isToWalletEnabled() ? 'swapToEnabled' : 'swapToDisabled'}
                   style={{backgroundColor: Action}}
                   disabled={!isToWalletEnabled()}
                   onPress={() => {
@@ -1712,36 +1702,34 @@ const SwapCryptoRoot: React.FC = () => {
                     }
                     showModal('toWalletSelector');
                   }}>
-                  <CurrencyImageContainer>
-                    <CurrencyImage
-                      img={toWalletSelected.img}
-                      badgeUri={getBadgeImg(
-                        getCurrencyAbbreviation(
-                          toWalletSelected.currencyAbbreviation,
+                  <SelectedOptionCol>
+                    <CurrencyImageContainer>
+                      <CurrencyImage
+                        img={toWalletSelected.img}
+                        badgeUri={getBadgeImg(
+                          getCurrencyAbbreviation(
+                            toWalletSelected.currencyAbbreviation,
+                            toWalletSelected.chain,
+                          ),
                           toWalletSelected.chain,
-                        ),
-                        toWalletSelected.chain,
-                      )}
-                      size={45}
-                    />
-                  </CurrencyImageContainer>
-                  <CurrencyColumn>
-                    <Row>
-                      <H5 ellipsizeMode="tail" numberOfLines={1}>
-                        {toWalletSelected.walletName
-                          ? toWalletSelected.walletName
-                          : toWalletSelected.currencyName}
-                      </H5>
-                    </Row>
-                    <Row style={{alignItems: 'center'}}>
-                      <ListItemSubText
-                        ellipsizeMode="tail"
-                        numberOfLines={1}
-                        style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-                        {toWalletSelected.currencyAbbreviation.toUpperCase()}
-                      </ListItemSubText>
-                    </Row>
-                  </CurrencyColumn>
+                        )}
+                        size={45}
+                      />
+                    </CurrencyImageContainer>
+                    <WalletTextContainer>
+                        <H5 ellipsizeMode="tail" numberOfLines={1}>
+                          {toWalletSelected.walletName
+                            ? toWalletSelected.walletName
+                            : toWalletSelected.currencyName}
+                        </H5>
+                        <ListItemSubText
+                          ellipsizeMode="tail"
+                          numberOfLines={1}
+                          style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+                          {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                        </ListItemSubText>
+                    </WalletTextContainer>
+                  </SelectedOptionCol>
                   <SelectedOptionCol>
                     <ArrowContainer>
                       <SelectorArrowRight
