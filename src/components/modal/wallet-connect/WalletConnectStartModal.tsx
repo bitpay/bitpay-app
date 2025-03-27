@@ -664,7 +664,7 @@ export const WalletConnectStartModal = () => {
                               }}>
                               (+{availableAccountLength - 1})
                             </BaseText>
-                            <SelectorArrowRight 
+                            <SelectorArrowRight
                               {...{
                                 width: 13,
                                 height: 13,
@@ -673,7 +673,7 @@ export const WalletConnectStartModal = () => {
                             />
                           </AccountSettingsArrowContainer>
                         ) : <View>
-                        <SelectorArrowRight 
+                        <SelectorArrowRight
                           {...{
                             width: 13,
                             height: 13,
