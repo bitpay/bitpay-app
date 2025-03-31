@@ -62,7 +62,7 @@ import {
   GeneralError,
   WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
-import {BWCErrorName, getErrorName} from '../../../../constants/BWCError';
+import {BWCErrorMessage, BWCErrorName, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
@@ -2033,7 +2033,7 @@ const processInsufficientFunds = async (
   }
 };
 
-const handleDefaultError = (
+const processInsufficientFundsForFee = (
   proposalErrorProps: ProposalErrorHandlerProps,
   dispatch: any,
   onDismiss?: () => void,
@@ -2148,9 +2148,18 @@ export const handleCreateTxProposalError =
             dispatch,
             onDismiss,
           );
-
+        case BWCErrorName.INSUFFICIENT_FUNDS_FOR_FEE:
+        case BWCErrorName.INSUFFICIENT_ETH_FEE:
+        case BWCErrorName.INSUFFICIENT_MATIC_FEE:
+        case BWCErrorName.INSUFFICIENT_ARB_FEE:
+        case BWCErrorName.INSUFFICIENT_OP_FEE:
+        case BWCErrorName.INSUFFICIENT_BASE_FEE:
+          return processInsufficientFundsForFee(proposalErrorProps, dispatch, onDismiss, errorName, context);
         default:
-          return handleDefaultError(proposalErrorProps, dispatch, onDismiss, errorName, context);
+          return CustomErrorMessage({
+            errMsg: BWCErrorMessage(err),
+            title: t('Uh oh, something went wrong'),
+          })
       }
     } catch (err2) {
       return GeneralError();
