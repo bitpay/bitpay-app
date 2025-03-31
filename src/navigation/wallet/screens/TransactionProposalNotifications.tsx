@@ -28,6 +28,7 @@ import React, {
   useState,
 } from 'react';
 import _ from 'lodash';
+import {useLogger} from '../../../utils/hooks/useLogger';
 import {
   Key,
   TransactionProposal,
@@ -117,6 +118,7 @@ const TransactionProposalNotifications = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const logger = useLogger();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const wallets = keyId
@@ -433,12 +435,18 @@ const TransactionProposalNotifications = () => {
                   />
                   {item.needSign ? (
                     <CheckBoxContainer>
-                      <Checkbox
-                        checked={!!txpChecked[txp.id]}
-                        onPress={() => {
-                          txpSelectionChange(txp, _walletId);
-                        }}
-                      />
+                      <TouchableOpacity
+                          touchableLibrary={'react-native-gesture-handler'}
+                          onPress={() => {
+                            txpSelectionChange(txp, _walletId);
+                          }}>
+                        <Checkbox
+                          checked={!!txpChecked[txp.id]}
+                          onPress={() => {
+                            logger.debug('Tx Proposal Notifications: checkbox clicked');
+                          }}
+                        />
+                      </TouchableOpacity>
                     </CheckBoxContainer>
                   ) : null}
                 </ProposalsContainer>
