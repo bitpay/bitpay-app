@@ -10,6 +10,7 @@ import {
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
+import * as Keychain from 'react-native-keychain';
 import {createTransform, persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
@@ -177,7 +178,7 @@ const logger = createLogger({
   },
 });
 
-const getStore = () => {
+const getStore = async () => {
   const middlewares = [thunkMiddleware];
 
   if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {
@@ -192,6 +193,8 @@ const getStore = () => {
       middlewareEnhancers,
     );
   }
+
+  const secretKey = await getEncryptionKey().catch(() => getUniqueId());
 
   const rootPersistConfig = {
     ...basePersistConfig,
@@ -214,7 +217,7 @@ const getStore = () => {
         return inboundState;
       }),
       encryptTransform({
-        secretKey: getUniqueId(),
+        secretKey,
         onError: err => {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
@@ -269,3 +272,23 @@ export function configureTestStore(initialState: any) {
     dispatch: AppDispatch;
   };
 }
+
+export async function getEncryptionKey(): Promise<string> {
+  const encryptionKeyId = 'bitpay-app-encryption-key';
+
+  const existingKey = await Keychain.getGenericPassword({
+    service: encryptionKeyId,
+  });
+
+  if (existingKey && existingKey.password) {
+    return existingKey.password;
+  }
+
+  const newKey = getUniqueId();
+  // Save to keychain
+  await Keychain.setGenericPassword(encryptionKeyId, newKey, {
+    service: encryptionKeyId,
+  });
+
+  return newKey;
+};

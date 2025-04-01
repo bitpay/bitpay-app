@@ -5,7 +5,7 @@ import './shim';
 import '@walletconnect/react-native-compat';
 import {AppRegistry, Alert} from 'react-native';
 import Root from './src/Root';
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import './i18n';
 import {
   setJSExceptionHandler,
@@ -28,8 +28,6 @@ import {
 } from 'react-native-reanimated';
 
 enableFreeze(true);
-
-const {store, persistor} = getStore();
 
 const errorHandler = (e, isFatal) => {
   if (isFatal) {
@@ -76,18 +74,32 @@ configureReanimatedLogger({
 
 
 const ReduxProvider = () => {
+  const [storeReady, setStoreReady] = useState(false);
+  const [{store, persistor}, setStore] = useState({store: null, persistor: null});
+
+  useEffect(() => {
+    getStore().then(store => {
+      setStore(store);
+      setStoreReady(true);
+    });
+  }, []);
+
   return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        {storeRehydrated =>
-          storeRehydrated ? (
-            <AppInitialization>
-              <Root />
-            </AppInitialization>
-          ) : null
-        }
-      </PersistGate>
-    </Provider>
+    <>
+      {storeReady ? (
+        <Provider store={store}>
+          <PersistGate loading={null} persistor={persistor}>
+            {storeRehydrated =>
+              storeRehydrated ? (
+                <AppInitialization>
+                  <Root />
+                </AppInitialization>
+              ) : null
+            }
+          </PersistGate>
+        </Provider>
+      ) : null}
+    </>
   );
 };
 
