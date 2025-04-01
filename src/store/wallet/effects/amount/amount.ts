@@ -85,7 +85,7 @@ const countDecimals = (num: number): number => {
   }
   // count decimals for number in representation like "0.123456"
   if (Math.floor(num) !== num) {
-    return num.toString().split('.')[1].length || 0;
+    return num.toString().split('.')?.[1]?.length || 0;
   }
   return 0;
 };
