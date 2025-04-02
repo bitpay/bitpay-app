@@ -1079,20 +1079,28 @@ const ChangellyCheckout: React.FC = () => {
       ) : null}
 
       {!paymentExpired && !!exchangeTxId ? (
-        <TouchableOpacity
-          onPress={() => {
-            if (!termsAccepted) {
+        <>
+          {!termsAccepted ? (
+            <TouchableOpacity
+            onPress={() => {
               scrollViewRef?.current?.scrollToEnd({animated: true});
-            }
-            setShowCheckTermsMsg(!termsAccepted);
-          }}>
-          <SwipeButton
-            title={'Slide to send'}
-            disabled={!termsAccepted}
-            onSwipeComplete={onSwipeComplete}
-            forceReset={resetSwipeButton}
-          />
-        </TouchableOpacity>
+              setShowCheckTermsMsg(true);
+            }}>
+            <SwipeButton
+              title={'Slide to send'}
+              disabled={true}
+              onSwipeComplete={() => {}}
+            />
+          </TouchableOpacity>
+          ) : (
+            <SwipeButton
+              title={'Slide to send'}
+              disabled={false}
+              onSwipeComplete={onSwipeComplete}
+              forceReset={resetSwipeButton}
+            />
+          )}
+        </>
       ) : null}
 
       <ChangellyPoliciesModal
