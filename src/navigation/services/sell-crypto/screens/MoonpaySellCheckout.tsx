@@ -1105,20 +1105,28 @@ const MoonpaySellCheckout: React.FC = () => {
       ) : null}
 
       {!paymentExpired ? (
-        <TouchableOpacity
-          onPress={() => {
-            if (!termsAccepted) {
+        <>
+          {!termsAccepted ? (
+            <TouchableOpacity
+            onPress={() => {
               scrollViewRef?.current?.scrollToEnd({animated: true});
-            }
-            setShowCheckTermsMsg(!termsAccepted);
-          }}>
-          <SwipeButton
-            title={'Slide to sell'}
-            disabled={!termsAccepted}
-            onSwipeComplete={onSwipeComplete}
-            forceReset={resetSwipeButton}
-          />
-        </TouchableOpacity>
+              setShowCheckTermsMsg(true);
+            }}>
+            <SwipeButton
+              title={'Slide to sell'}
+              disabled={true}
+              onSwipeComplete={() => {}}
+            />
+          </TouchableOpacity>
+          ) : (
+            <SwipeButton
+              title={'Slide to sell'}
+              disabled={false}
+              onSwipeComplete={onSwipeComplete}
+              forceReset={resetSwipeButton}
+            />
+          )}
+        </>
       ) : null}
 
       <PaymentSent
