@@ -39,7 +39,7 @@ import {
   checkEncryptPassword,
   findWalletByAddress,
 } from '../wallet/utils/wallet';
-import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
+import {CustomErrorMessage, WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
 import {
   WCV2RequestType,
   WCV2SessionType,
@@ -55,6 +55,8 @@ import {sessionProposal} from './wallet-connect-v2.actions';
 import {buildApprovedNamespaces} from '@walletconnect/utils';
 import {getFeeLevelsUsingBwcClient} from '../wallet/effects/fee/fee';
 import {AppActions} from '../app';
+import { t } from 'i18next';
+import { BottomNotificationConfig } from '../../components/modal/bottom-notification/BottomNotification';
 
 const BWC = BwcProvider.getInstance();
 
@@ -272,7 +274,11 @@ export const walletConnectV2SubscribeToEvents =
       });
 
       try {
-        await emitSessionEvents(event, eip155ChainId);
+        if (EIP155_CHAINS[eip155ChainId as TEIP155Chain]) {
+          await emitSessionEvents(event, eip155ChainId);
+        } else {
+          throw new Error(`The requested chain (${eip155ChainId}) is not supported.`);
+        }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
@@ -280,6 +286,11 @@ export const walletConnectV2SubscribeToEvents =
             `[WC-V2/handleAutoApproval]: an error occurred while emiting session event: ${errMsg}`,
           ),
         );
+        const bottomNotificationConfig: BottomNotificationConfig = CustomErrorMessage({
+          errMsg: `An error occurred while emiting session event: ${errMsg}`,
+          title: t('Uh oh, something went wrong'),
+        });
+        dispatch(showBottomNotificationModal(bottomNotificationConfig));
       }
     };
 
@@ -432,12 +443,14 @@ export const walletConnectV2SubscribeToEvents =
   };
 
 export const walletConnectV2ApproveCallRequest =
-  (request: WCV2RequestType, wallet: Wallet): Effect<Promise<void>> =>
+  (request: WCV2RequestType, wallet: Wallet, response?: JsonRpcResult<string>): Effect<Promise<void>> =>
   dispatch => {
     return new Promise(async (resolve, reject) => {
       const {topic, id} = request;
       try {
-        const response = await dispatch(approveEIP155Request(request, wallet));
+        if (!response) {
+          response = await dispatch(approveEIP155Request(request, wallet));
+        }
         await web3wallet.respondSessionRequest({
           topic,
           response,
@@ -714,6 +727,7 @@ const approveEIP155Request =
             delete types.EIP712Domain;
             const signedData = await signer._signTypedData(domain, types, data);
             resolve(formatJsonRpcResult(id, signedData));
+          // deprecated - using bws for sending transaction
           case EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION:
             const provider = new providers.JsonRpcProvider(
               EIP155_CHAINS[chainId as TEIP155Chain].rpc,

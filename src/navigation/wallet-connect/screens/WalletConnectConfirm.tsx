@@ -5,6 +5,7 @@ import {RouteProp} from '@react-navigation/core';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   Recipient,
+  TransactionProposal,
   TxDetails,
   Wallet,
 } from '../../../store/wallet/wallet.models';
@@ -39,7 +40,6 @@ import {
 } from '../../wallet/screens/send/confirm/Shared';
 import {
   GetFeeOptions,
-  getFeeRatePerKb,
 } from '../../../store/wallet/effects/fee/fee';
 import {Trans, useTranslation} from 'react-i18next';
 import Banner from '../../../components/banner/Banner';
@@ -51,7 +51,7 @@ import {
   walletConnectV2OnUpdateSession,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {buildTxDetails} from '../../../store/wallet/effects/send/send';
+import {createProposalAndBuildTxDetails, handleCreateTxProposalError, startSendPayment} from '../../../store/wallet/effects/send/send';
 import {IconContainer, ItemContainer} from '../styled/WalletConnectContainers';
 import {
   ClipboardContainer,
@@ -73,6 +73,8 @@ import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import { EIP155_SIGNING_METHODS } from '../../../constants/WalletConnectV2';
+import { formatJsonRpcResult } from '@json-rpc-tools/utils';
 
 const HeaderRightContainer = styled.View``;
 
@@ -118,9 +120,10 @@ const WalletConnectConfirm = () => {
   const [requestDismissed, setRequestDismissed] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const rates = useAppSelector(({RATE}) => RATE.rates);
   const [txDetails, setTxDetails] = useState<TxDetails>();
+  const [txp, setTxp] = useState<Partial<TransactionProposal> | undefined>();
+  const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
+  const key = allKeys[wallet?.keyId!];
 
   const sessionV2: WCV2SessionType | undefined = useAppSelector(
     ({WALLET_CONNECT_V2}) =>
@@ -151,24 +154,29 @@ const WalletConnectConfirm = () => {
 
   const _setTxDetails = async () => {
     try {
-      const feePerKb = await getFeeRatePerKb({wallet, feeLevel: 'normal'});
-      const _txDetails = await dispatch(
-        buildTxDetails({
+      const {txDetails: _txDetails, txp: newTxp} = await dispatch(
+        createProposalAndBuildTxDetails({
           wallet,
-          rates,
-          defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
           recipient,
           context: 'walletConnect',
           request,
-          feePerKb,
+          amount: request.swapAmount ?? 0,
         }),
       );
       setTxDetails(_txDetails);
-    } catch (err) {
-      await showErrorMessage(
-        CustomErrorMessage({
-          errMsg: BWCErrorMessage(err),
-          title: t('Uh oh, something went wrong'),
+      setTxp(newTxp);
+    } catch (err: any) {
+      const errorMessageConfig = (
+        await Promise.all([
+          dispatch(handleCreateTxProposalError(err)),
+          sleep(500),
+        ])
+      )[0];
+      await sleep(500);
+      dispatch(
+        showBottomNotificationModal({
+          ...errorMessageConfig,
+          enableBackdropDismiss: false,
         }),
       );
     }
@@ -183,7 +191,17 @@ const WalletConnectConfirm = () => {
   const approveCallRequest = async () => {
     try {
       dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-      await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
+      const {params, id} = request as WCV2RequestType;
+      const {request: requestProps} = params;
+      // if method is eth_sendTransaction, use bitcore to sign/broadcast transaction
+      if (requestProps.method === EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION && txp) {
+        const broadcastedTx = await dispatch(
+          startSendPayment({txp, key, wallet, recipient}),
+        );
+        await dispatch(walletConnectV2ApproveCallRequest(request, wallet, formatJsonRpcResult(id,  broadcastedTx.txid)));
+      } else {
+        await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
+      }
       dispatch(dismissOnGoingProcessModal());
       await sleep(1000);
       dispatch(

@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {Action, LightBlack} from '../../../styles/colors';
+import {Action, Black, LightBlack, White} from '../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';
@@ -15,6 +15,7 @@ import {useNavigation} from '@react-navigation/native';
 import {getGasWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useTheme} from '@react-navigation/native';
 
 export type InAppNotificationMessages = 'NEW_PENDING_REQUEST';
 
@@ -66,6 +67,7 @@ const InAppNotification: React.FC = () => {
   const inAppNotificationData = useAppSelector(
     ({APP}) => APP.inAppNotificationData,
   );
+  const theme = useTheme();
   const {context, message, request} = inAppNotificationData || {};
 
   const onBackdropPress = () => {
@@ -128,7 +130,11 @@ const InAppNotification: React.FC = () => {
           </MessageContainer>
           <CloseModalContainer>
             <CloseModalButton onPress={onBackdropPress}>
-              <CloseModal width={20} height={20} />
+              <CloseModal {...{
+                width: 20,
+                height: 20,
+                color: theme.dark ? White : Black,
+              }} />
             </CloseModalButton>
           </CloseModalContainer>
           <BlurContainer />

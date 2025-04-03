@@ -62,7 +62,7 @@ import {
   GeneralError,
   WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
-import {BWCErrorName, getErrorName} from '../../../../constants/BWCError';
+import {BWCErrorMessage, BWCErrorName, getErrorName} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
@@ -114,7 +114,6 @@ import {
 } from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
-import {getLinkedWallet} from '@/navigation/wallet/screens/wallet-settings/WalletInformation';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -141,6 +140,7 @@ export const createProposalAndBuildTxDetails =
           dryRun = true,
           destinationTag,
           payProDetails,
+          request,
         } = tx;
 
         let {credentials, currencyAbbreviation, network, tokenAddress} = wallet;
@@ -226,6 +226,7 @@ export const createProposalAndBuildTxDetails =
               feePerKb,
               feeLevel,
               useUnconfirmedFunds,
+              request,
             }),
           )),
           dryRun,
@@ -250,6 +251,7 @@ export const createProposalAndBuildTxDetails =
                   invoice,
                   context,
                   feeLevel,
+                  request,
                 }),
               );
               txp.id = proposal.id;
@@ -464,18 +466,18 @@ export const buildTxDetails =
       if (context === 'walletConnect' && request) {
         const {swapFromChain, swapFromCurrencyAbbreviation, swapAmount} =
           request;
-        const {params} = request.params.request;
-        gasPrice = params[0].gasPrice
+        const {params} = request?.params?.request;
+        gasPrice = params[0]?.gasPrice
           ? parseInt(params[0]?.gasPrice, 16)
           : feePerKb!;
-        nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
-        data = params[0].data;
+        nonce = params[0]?.nonce && parseInt(params[0]?.nonce, 16);
+        data = params[0]?.data;
         chain = swapFromChain;
         coin = swapFromCurrencyAbbreviation;
         amount = Number(swapAmount) || 0;
         gasLimit =
-          (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
-          (params[0].gas && parseInt(params[0]?.gas, 16)) ||
+          (params[0]?.gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
+          (params[0]?.gas && parseInt(params[0]?.gas, 16)) ||
           (await getEstimateGas({
             wallet: wallet as Wallet,
             network: wallet.network,
@@ -745,6 +747,8 @@ const buildTransactionProposal =
           wallet,
           inputs,
           recipientList,
+          request,
+          context,
         } = tx;
         let {customData} = tx;
 
@@ -760,6 +764,10 @@ const buildTransactionProposal =
           } else if (tx.recipient?.email) {
             customData = {
               recipientEmail: tx.recipient.email,
+            };
+          } else if (context === 'walletConnect') {
+            customData = {
+              service: 'walletConnect',
             };
           }
         }
@@ -887,7 +895,6 @@ const buildTransactionProposal =
           }
         }
 
-        const {context} = tx;
         // outputs
         txp.outputs = [];
         switch (context) {
@@ -1003,6 +1010,41 @@ const buildTransactionProposal =
               data: tx.data,
             });
             break;
+          case 'walletConnect':
+            if (request) {
+              const {swapFromChain, swapFromCurrencyAbbreviation, swapAmount} =
+                request;
+              const {params} = request?.params?.request;
+              const gasPrice = params[0]?.gasPrice
+                ? parseInt(params[0]?.gasPrice, 16)
+                : feePerKb!;
+              txp.nonce = params[0]?.nonce && parseInt(params[0]?.nonce, 16);
+              txp.chain = swapFromChain;
+              txp.coin = swapFromCurrencyAbbreviation;
+              txp.amount = Number(swapAmount) || 0;
+              const gasLimit =
+                (params[0]?.gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
+                (params[0]?.gas && parseInt(params[0]?.gas, 16)) ||
+                (await getEstimateGas({
+                  wallet: wallet as Wallet,
+                  network: (wallet as Wallet).network,
+                  value: txp.amount,
+                  from: params[0].from,
+                  to: params[0].to,
+                  data: params[0].data,
+                  chain: swapFromChain!,
+                }));
+              txp.fee = gasLimit * gasPrice;
+              txp.feeLevel = undefined;
+              txp.outputs.push({
+                toAddress: tx.toAddress,
+                amount:  Number(swapAmount) || 0,
+                message: tx.description,
+                data: params[0]?.data,
+                gasLimit,
+              });
+            }
+          break;
           default:
             txp.outputs.push({
               toAddress: tx.toAddress,
@@ -2033,7 +2075,7 @@ const processInsufficientFunds = async (
   }
 };
 
-const handleDefaultError = (
+const processInsufficientFundsForFee = (
   proposalErrorProps: ProposalErrorHandlerProps,
   dispatch: any,
   onDismiss?: () => void,
@@ -2148,9 +2190,18 @@ export const handleCreateTxProposalError =
             dispatch,
             onDismiss,
           );
-
+        case BWCErrorName.INSUFFICIENT_FUNDS_FOR_FEE:
+        case BWCErrorName.INSUFFICIENT_ETH_FEE:
+        case BWCErrorName.INSUFFICIENT_MATIC_FEE:
+        case BWCErrorName.INSUFFICIENT_ARB_FEE:
+        case BWCErrorName.INSUFFICIENT_OP_FEE:
+        case BWCErrorName.INSUFFICIENT_BASE_FEE:
+          return processInsufficientFundsForFee(proposalErrorProps, dispatch, onDismiss, errorName, context);
         default:
-          return handleDefaultError(proposalErrorProps, dispatch, onDismiss, errorName, context);
+          return CustomErrorMessage({
+            errMsg: BWCErrorMessage(err),
+            title: t('Uh oh, something went wrong'),
+          })
       }
     } catch (err2) {
       return GeneralError();
