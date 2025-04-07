@@ -84,7 +84,7 @@ const AssetsByChainRow = ({
         wallet={item}
       />
     );
-  }, []);
+  }, [hideBalance]);
 
   const onHide = () => {
     setShowChainAssets({[chain]: !showChainAssets[chain]});
@@ -142,6 +142,7 @@ const AssetsByChainRow = ({
           estimatedItemSize={90}
           data={chainAssetsList}
           renderItem={memoizedRenderItem}
+          extraData={hideBalance}
         />
       ) : null}
     </View>
