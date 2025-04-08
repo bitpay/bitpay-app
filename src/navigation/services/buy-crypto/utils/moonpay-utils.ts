@@ -63,6 +63,7 @@ export const moonpaySupportedCoins = [
   'doge',
   'matic', // pol_polygon in Moonpay // backward compatibility
   'pol', // pol_polygon in Moonpay
+  'sol',
 ];
 
 export const nonUSMoonpaySupportedCoins = ['xrp'];
@@ -134,8 +135,25 @@ export const moonpaySupportedBaseTokens = [
 ];
 
 export const moonpaySupportedOptimismTokens = [
-  'usdc', // usdc_optimism in Moonpay
-  'wld', // wld_optimism in Moonpay
+
+export const moonpaySupportedSolanaTokens = [
+  'bonk', // bonk_sol
+  'gmt', // gmt_sol
+  'jto', // jto_sol
+  'jup', // jup_sol
+  'me', // me_sol
+  'mew', // mew_sol
+  'moodeng', // moodeng_sol
+  'pengu', // pengu_sol
+  'pnut', // pnut_sol
+  'pyth', // pyth - no "_sol" needed
+  'pyusd', // pyusd_sol
+  'ray', // ray_sol
+  'render', // render_sol
+  'trump', // trump_sol
+  'usdc', // usdc_sol
+  'usdt', // usdt_sol
+  'wif', // wif_sol
 ];
 
 export const getMoonpaySupportedCurrencies = (country?: string): string[] => {
@@ -155,6 +173,9 @@ export const getMoonpaySupportedCurrencies = (country?: string): string[] => {
     ),
     ...moonpaySupportedOptimismTokens.flatMap(optimismToken =>
       getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+    ...moonpaySupportedSolanaTokens.flatMap(solanaToken =>
+      getCurrencyAbbreviation(solanaToken, 'sol'),
     ),
   ];
 
@@ -188,6 +209,12 @@ export const getMoonpayFixedCurrencyAbbreviation = (
       return coin + '_base';
     case 'op':
       return coin + '_optimism';
+    case 'sol':
+      if (['pyth'].includes(coin)) {
+        return 'pyth';
+      } else {
+        return coin + '_sol';
+      }
     default:
       return coin;
   }
