@@ -6,7 +6,7 @@ import DeleteIcon from '../icons/delete/Delete';
 import {PixelRatio} from 'react-native';
 import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
 import useAppSelector from '../../utils/hooks/useAppSelector';
-export const PIXEL_DENSITY_LIMIT = 3;
+export const PIXEL_DENSITY_LIMIT = 2.5;
 
 interface SymbolContainerProps {
   showLetters?: boolean;
