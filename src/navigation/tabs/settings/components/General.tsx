@@ -69,9 +69,7 @@ const General: React.FC<Props> = ({navigation}) => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerLeft: () => (
-        <HeaderBackButton />
-      ),
+      headerLeft: () => <HeaderBackButton />,
     });
   }, [navigation, theme, t]);
 
@@ -81,11 +79,12 @@ const General: React.FC<Props> = ({navigation}) => {
         id: 'theme',
         title: t('Theme'),
         type: 'button' as const,
-        value: colorScheme === 'light'
-          ? t('Light Mode')
-          : colorScheme === 'dark'
-          ? t('Dark Mode')
-          : t('System Default'),
+        value:
+          colorScheme === 'light'
+            ? t('Light Mode')
+            : colorScheme === 'dark'
+            ? t('Dark Mode')
+            : t('System Default'),
         navigationTarget: 'Theme',
       },
       {
@@ -99,14 +98,16 @@ const General: React.FC<Props> = ({navigation}) => {
         title: t('Show Portfolio'),
         type: 'toggle' as const,
         value: showPortfolioValue,
-        onPress: (value: boolean) => dispatch(AppActions.showPortfolioValue(value)),
+        onPress: (value: boolean) =>
+          dispatch(AppActions.showPortfolioValue(value)),
       },
       {
         id: 'hideBalances',
         title: t('Hide All Balances'),
         type: 'toggle' as const,
         value: hideAllBalances,
-        onPress: (value: boolean) => dispatch(AppActions.toggleHideAllBalances(value)),
+        onPress: (value: boolean) =>
+          dispatch(AppActions.toggleHideAllBalances(value)),
       },
       {
         id: 'displayCurrency',
@@ -126,47 +127,56 @@ const General: React.FC<Props> = ({navigation}) => {
         id: 'resetSettings',
         title: t('Reset All Settings'),
         type: 'reset' as const,
-        onPress: () => dispatch(
-          showBottomNotificationModal({
-            type: 'warning',
-            title: t('Reset all settings'),
-            message: t('Are you sure you want to reset all settings?'),
-            enableBackdropDismiss: true,
-            actions: [
-              {
-                text: t('RESET'),
-                action: async () => {
-                  dispatch(resetAllSettings());
-                  await sleep(400);
-                  dispatch(
-                    showBottomNotificationModal({
-                      type: 'success',
-                      title: t('Reset complete'),
-                      message: t('All settings have been reset.'),
-                      enableBackdropDismiss: true,
-                      actions: [
-                        {
-                          text: t('OK'),
-                          action: () => null,
-                          primary: true,
-                        },
-                      ],
-                    }),
-                  );
+        onPress: () =>
+          dispatch(
+            showBottomNotificationModal({
+              type: 'warning',
+              title: t('Reset all settings'),
+              message: t('Are you sure you want to reset all settings?'),
+              enableBackdropDismiss: true,
+              actions: [
+                {
+                  text: t('RESET'),
+                  action: async () => {
+                    dispatch(resetAllSettings());
+                    await sleep(400);
+                    dispatch(
+                      showBottomNotificationModal({
+                        type: 'success',
+                        title: t('Reset complete'),
+                        message: t('All settings have been reset.'),
+                        enableBackdropDismiss: true,
+                        actions: [
+                          {
+                            text: t('OK'),
+                            action: () => null,
+                            primary: true,
+                          },
+                        ],
+                      }),
+                    );
+                  },
+                  primary: true,
                 },
-                primary: true,
-              },
-              {
-                text: t('CANCEL'),
-                action: () => {},
-                primary: true,
-              },
-            ],
-          }),
-        ),
+                {
+                  text: t('CANCEL'),
+                  action: () => {},
+                  primary: true,
+                },
+              ],
+            }),
+          ),
       },
     ];
-  }, [t, colorScheme, showPortfolioValue, hideAllBalances, selectedAltCurrency.name, appLanguageName, dispatch]);
+  }, [
+    t,
+    colorScheme,
+    showPortfolioValue,
+    hideAllBalances,
+    selectedAltCurrency.name,
+    appLanguageName,
+    dispatch,
+  ]);
 
   const renderItem = ({item}: {item: SettingItem}) => {
     return (
@@ -175,7 +185,8 @@ const General: React.FC<Props> = ({navigation}) => {
           activeOpacity={item.type === 'toggle' ? 1 : ActiveOpacity}
           onPress={() => {
             if (item.type === 'navigation' || item.type === 'button') {
-              item.navigationTarget && navigation.navigate(item.navigationTarget);
+              item.navigationTarget &&
+                navigation.navigate(item.navigationTarget);
             } else if (item.type === 'reset' && item.onPress) {
               item.onPress();
             }
@@ -191,7 +202,10 @@ const General: React.FC<Props> = ({navigation}) => {
           {item.type === 'button' && (
             <Button
               buttonType={'pill'}
-              onPress={() => item.navigationTarget && navigation.navigate(item.navigationTarget)}>
+              onPress={() =>
+                item.navigationTarget &&
+                navigation.navigate(item.navigationTarget)
+              }>
               {item.value as string}
             </Button>
           )}

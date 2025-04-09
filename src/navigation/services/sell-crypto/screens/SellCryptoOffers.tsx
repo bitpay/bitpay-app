@@ -1,11 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import {ActivityIndicator, Linking, ScrollView, Text, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import uuid from 'react-native-uuid';
 import styled from 'styled-components/native';
@@ -54,7 +48,10 @@ import {
 import {calculateAnyFiatToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {SendMaxInfo, Wallet} from '../../../../store/wallet/wallet.models';
-import {APP_DEEPLINK_PREFIX, APP_NAME_UPPERCASE} from '../../../../constants/config';
+import {
+  APP_DEEPLINK_PREFIX,
+  APP_NAME_UPPERCASE,
+} from '../../../../constants/config';
 import {
   SellCryptoExchangeKey,
   SellCryptoSupportedExchanges,
@@ -104,12 +101,31 @@ import {
 import {SellCryptoScreens} from '../SellCryptoGroup';
 import ArchaxFooter from '../../../../components/archax/archax-footer';
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
-import {getChainFromRampChainFormat, getCoinFromRampCoinFormat, getPayoutMethodKeyFromRampType, getRampChainFormat, getRampSellCoinFormat, rampSellEnv} from '../utils/ramp-sell-utils';
-import {RampGetSellQuoteData, RampGetSellQuoteRequestData, RampOfframpSaleCreatedEvent, RampSellCreatedEventPayload, RampSellIncomingData, RampSellOrderData, RampSellQuoteResultForPayoutMethod, RampSellSendCryptoPayload} from '../../../../store/sell-crypto/models/ramp-sell.models';
+import {
+  getChainFromRampChainFormat,
+  getCoinFromRampCoinFormat,
+  getPayoutMethodKeyFromRampType,
+  getRampChainFormat,
+  getRampSellCoinFormat,
+  rampSellEnv,
+} from '../utils/ramp-sell-utils';
+import {
+  RampGetSellQuoteData,
+  RampGetSellQuoteRequestData,
+  RampOfframpSaleCreatedEvent,
+  RampSellCreatedEventPayload,
+  RampSellIncomingData,
+  RampSellOrderData,
+  RampSellQuoteResultForPayoutMethod,
+  RampSellSendCryptoPayload,
+} from '../../../../store/sell-crypto/models/ramp-sell.models';
 import {WebView, WebViewMessageEvent} from 'react-native-webview';
 import Modal from 'react-native-modal';
 import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
-import {RampGetSellSignedPaymentUrlData, RampPaymentUrlConfigParams} from '../../../../store/buy-crypto/models/ramp.models';
+import {
+  RampGetSellSignedPaymentUrlData,
+  RampPaymentUrlConfigParams,
+} from '../../../../store/buy-crypto/models/ramp.models';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export type SellCryptoOffersScreenParams = {
@@ -462,7 +478,10 @@ const SellCryptoOffers: React.FC = () => {
   const [finishedRamp, setFinishedRamp] = useState(false);
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [updateView, setUpdateView] = useState<number>(0);
-  const [sellModalVisible, setSellModalVisible] = useState<{open: boolean, url: string | undefined}>({open: false, url: undefined});
+  const [sellModalVisible, setSellModalVisible] = useState<{
+    open: boolean;
+    url: string | undefined;
+  }>({open: false, url: undefined});
 
   const getMoonpaySellQuote = async (): Promise<void> => {
     logger.debug('Moonpay getting sell quote');
@@ -631,8 +650,7 @@ const SellCryptoOffers: React.FC = () => {
       let err = sellCryptoConfig?.ramp?.disabledMessage
         ? sellCryptoConfig?.ramp?.disabledMessage
         : t("Can't get rates at this moment. Please try again later");
-      const reason =
-        'rampGetSellQuote Error. Exchange disabled from config.';
+      const reason = 'rampGetSellQuote Error. Exchange disabled from config.';
       showRampError(err, reason);
       return;
     }
@@ -652,14 +670,12 @@ const SellCryptoOffers: React.FC = () => {
       GetPrecision(coin, chain, selectedWallet.tokenAddress),
     );
     if (precision) {
-      requestData.cryptoAmount =  BigInt((amount * precision.unitToSatoshi).toFixed(0)).toString();
+      requestData.cryptoAmount = BigInt(
+        (amount * precision.unitToSatoshi).toFixed(0),
+      ).toString();
     } else {
-      logger.error(
-        `Ramp error: Could not get precision for ${coin}`,
-      );
-      const msg = t(
-        'An error occurred while calculating the quote.',
-      );
+      logger.error(`Ramp error: Could not get precision for ${coin}`);
+      const msg = t('An error occurred while calculating the quote.');
       const reason = 'rampGetSellQuote Error. Could not get precision';
       showRampError(msg, reason);
       return;
@@ -692,8 +708,11 @@ const SellCryptoOffers: React.FC = () => {
           }
 
           if (!paymentMethodData?.fiatValue) {
-            logger.error('rampGetSellQuote Error: No fiat value provided from Ramp');
-            const reason = 'rampGetSellQuote Error. No fiat value provided from Ramp';
+            logger.error(
+              'rampGetSellQuote Error: No fiat value provided from Ramp',
+            );
+            const reason =
+              'rampGetSellQuote Error. No fiat value provided from Ramp';
             showRampError(undefined, reason);
             return;
           }
@@ -771,7 +790,9 @@ const SellCryptoOffers: React.FC = () => {
                     ),
                   ) || Number(paymentMethodData.fiatValue);
 
-            offers.ramp.amountReceiving = Number(paymentMethodData.fiatValue).toFixed(2);
+            offers.ramp.amountReceiving = Number(
+              paymentMethodData.fiatValue,
+            ).toFixed(2);
             offers.ramp.amountReceivingAltFiatCurrency =
               adjustedFiatAmount.toFixed(2);
             // const amountReceivingNum =
@@ -1206,7 +1227,9 @@ const SellCryptoOffers: React.FC = () => {
       hostAppName: APP_NAME_UPPERCASE,
       offrampAsset: rampAsset,
       swapAsset: rampAsset,
-      swapAmount: offers.ramp.decimals ? Number(offers.ramp.sellAmount) * 10 ** offers.ramp.decimals : undefined,
+      swapAmount: offers.ramp.decimals
+        ? Number(offers.ramp.sellAmount) * 10 ** offers.ramp.decimals
+        : undefined,
       fiatCurrency: offers.ramp.fiatCurrency,
       enabledFlows: 'OFFRAMP',
       defaultFlow: 'OFFRAMP',
@@ -1239,33 +1262,37 @@ const SellCryptoOffers: React.FC = () => {
       return;
     }
 
-      try {
-        const RampWebView = (url: string) => {
-          setSellModalVisible({open: true, url: url});
-        };
+    try {
+      const RampWebView = (url: string) => {
+        setSellModalVisible({open: true, url: url});
+      };
 
-        RampWebView(data.urlWithSignature);
-      } catch (err) {
-        const msg = t(
-          'The Ramp Network checkout page could not be opened. Please try again later.',
-        );
-        const reason =
-          'rampGetSignedPaymentUrl Error. The checkout page could not be opened.';
-        showRampError(msg, reason);
-        return;
-      }
+      RampWebView(data.urlWithSignature);
+    } catch (err) {
+      const msg = t(
+        'The Ramp Network checkout page could not be opened. Please try again later.',
+      );
+      const reason =
+        'rampGetSignedPaymentUrl Error. The checkout page could not be opened.';
+      showRampError(msg, reason);
+      return;
+    }
   };
 
-  const handleRampCheckoutMessage = async(event: WebViewMessageEvent) => {
+  const handleRampCheckoutMessage = async (event: WebViewMessageEvent) => {
     if (event?.nativeEvent?.data) {
       let parsedEventData: RampOfframpSaleCreatedEvent;
       try {
         logger.debug('Trying to parse event JSON: ' + event.nativeEvent.data);
-        parsedEventData = JSON.parse(event.nativeEvent.data) as RampOfframpSaleCreatedEvent;
+        parsedEventData = JSON.parse(
+          event.nativeEvent.data,
+        ) as RampOfframpSaleCreatedEvent;
         logger.debug('Successfully parsed!');
       } catch (error) {
-          logger.error('Error trying to parse event JSON: ' + JSON.stringify(error));
-          return;
+        logger.error(
+          'Error trying to parse event JSON: ' + JSON.stringify(error),
+        );
+        return;
       }
 
       if (parsedEventData.type) {
@@ -1275,21 +1302,26 @@ const SellCryptoOffers: React.FC = () => {
             return;
 
           case 'OFFRAMP_SALE_CREATED': // Quote accepted in checkout page and continue clicked
-          logger.debug('Ramp checkout event: OFFRAMP_SALE_CREATED');
-          const orderData = parsedEventData.payload as RampSellCreatedEventPayload;
+            logger.debug('Ramp checkout event: OFFRAMP_SALE_CREATED');
+            const orderData =
+              parsedEventData.payload as RampSellCreatedEventPayload;
 
             const newData: RampSellOrderData = {
               env: __DEV__ ? 'dev' : 'prod',
               wallet_id: selectedWallet.id,
               address_to: '',
-              coin: cloneDeep(selectedWallet.currencyAbbreviation).toUpperCase(),
+              coin: cloneDeep(
+                selectedWallet.currencyAbbreviation,
+              ).toUpperCase(),
               chain: cloneDeep(selectedWallet.chain).toLowerCase(),
               created_on: Date.now(),
               crypto_amount: offers.ramp.sellAmount || amount,
               fiat_receiving_amount: Number(offers.ramp.amountReceiving),
               fiat_fee_amount: Number(offers.ramp.fee),
               fiat_currency: offers.ramp.quoteData?.quoteCurrency?.code
-                ? cloneDeep(offers.ramp.quoteData.quoteCurrency.code).toUpperCase()
+                ? cloneDeep(
+                    offers.ramp.quoteData.quoteCurrency.code,
+                  ).toUpperCase()
                 : fiatCurrency,
               payment_method: paymentMethod!.method,
               external_id: cloneDeep(offers.ramp.externalId)!,
@@ -1299,46 +1331,99 @@ const SellCryptoOffers: React.FC = () => {
               send_max: useSendMax,
             };
 
-            if (IsERCToken(cloneDeep(selectedWallet.currencyAbbreviation), cloneDeep(selectedWallet.chain))) {
-              if (orderData.sale?.crypto?.assetInfo?.address && selectedWallet.tokenAddress) {
-                const contractAddressFromRamp = cloneDeep(orderData.sale.crypto.assetInfo.address).toLowerCase();
-                const contractAddress = cloneDeep(selectedWallet.tokenAddress).toLowerCase();
+            if (
+              IsERCToken(
+                cloneDeep(selectedWallet.currencyAbbreviation),
+                cloneDeep(selectedWallet.chain),
+              )
+            ) {
+              if (
+                orderData.sale?.crypto?.assetInfo?.address &&
+                selectedWallet.tokenAddress
+              ) {
+                const contractAddressFromRamp = cloneDeep(
+                  orderData.sale.crypto.assetInfo.address,
+                ).toLowerCase();
+                const contractAddress = cloneDeep(
+                  selectedWallet.tokenAddress,
+                ).toLowerCase();
                 if (contractAddress !== contractAddressFromRamp) {
-                  logger.warn(`The contract address from Ramp: ${contractAddressFromRamp} is different from the selected wallet: ${contractAddress}. The sale process is going to be cancelled.`);
+                  logger.warn(
+                    `The contract address from Ramp: ${contractAddressFromRamp} is different from the selected wallet: ${contractAddress}. The sale process is going to be cancelled.`,
+                  );
 
-                  const errMsg = t('There was an error trying to create the sale transaction. Please try again later.');
+                  const errMsg = t(
+                    'There was an error trying to create the sale transaction. Please try again later.',
+                  );
 
-                  setSellModalVisible({open: false, url: sellModalVisible?.url});
+                  setSellModalVisible({
+                    open: false,
+                    url: sellModalVisible?.url,
+                  });
                   await sleep(1500);
                   showError(undefined, errMsg);
                 }
               }
             } else {
-              if (orderData.sale?.crypto?.assetInfo?.symbol && orderData.sale?.crypto?.assetInfo?.chain) {
-                const orderCoin = getCoinFromRampCoinFormat(cloneDeep(orderData.sale.crypto.assetInfo.symbol).toLowerCase());
-                const orderChain = getChainFromRampChainFormat(cloneDeep(orderData.sale.crypto.assetInfo.chain).toLowerCase());
-                if (orderCoin !== selectedWallet.currencyAbbreviation.toLowerCase() || orderChain !== selectedWallet.chain.toLowerCase()) {
-                  logger.warn(`The order coin-cain: ${orderCoin}-${orderChain} is different from the selected wallet: ${selectedWallet.currencyAbbreviation.toLowerCase()}-${selectedWallet.chain.toLowerCase()}. The sale process is going to be cancelled.`);
+              if (
+                orderData.sale?.crypto?.assetInfo?.symbol &&
+                orderData.sale?.crypto?.assetInfo?.chain
+              ) {
+                const orderCoin = getCoinFromRampCoinFormat(
+                  cloneDeep(
+                    orderData.sale.crypto.assetInfo.symbol,
+                  ).toLowerCase(),
+                );
+                const orderChain = getChainFromRampChainFormat(
+                  cloneDeep(
+                    orderData.sale.crypto.assetInfo.chain,
+                  ).toLowerCase(),
+                );
+                if (
+                  orderCoin !==
+                    selectedWallet.currencyAbbreviation.toLowerCase() ||
+                  orderChain !== selectedWallet.chain.toLowerCase()
+                ) {
+                  logger.warn(
+                    `The order coin-cain: ${orderCoin}-${orderChain} is different from the selected wallet: ${selectedWallet.currencyAbbreviation.toLowerCase()}-${selectedWallet.chain.toLowerCase()}. The sale process is going to be cancelled.`,
+                  );
 
-                  const errMsg = t('There was an error trying to create the sale transaction. Please try again later.');
+                  const errMsg = t(
+                    'There was an error trying to create the sale transaction. Please try again later.',
+                  );
 
-                  setSellModalVisible({open: false, url: sellModalVisible?.url});
+                  setSellModalVisible({
+                    open: false,
+                    url: sellModalVisible?.url,
+                  });
                   await sleep(1500);
                   showError(undefined, errMsg);
                 }
               }
             }
 
-            if (orderData.sale?.fiat?.payoutMethod && getPayoutMethodKeyFromRampType(orderData.sale.fiat.payoutMethod) !== paymentMethod.method) {
+            if (
+              orderData.sale?.fiat?.payoutMethod &&
+              getPayoutMethodKeyFromRampType(
+                orderData.sale.fiat.payoutMethod,
+              ) !== paymentMethod.method
+            ) {
               logger.debug(
                 `Payout Method changed on the checkout page. Updating payment_method from: ${paymentMethod.method} to: ${orderData.sale.fiat.payoutMethod}`,
               );
-              newData.payment_method = getPayoutMethodKeyFromRampType(orderData.sale.fiat.payoutMethod);
+              newData.payment_method = getPayoutMethodKeyFromRampType(
+                orderData.sale.fiat.payoutMethod,
+              );
             }
 
-
-            if (orderData.sale?.crypto?.amount && Number(orderData.sale.crypto.amount) && offers.ramp.decimals) {
-              const orderAmount = Number(orderData.sale.crypto.amount) / 10 ** offers.ramp.decimals;
+            if (
+              orderData.sale?.crypto?.amount &&
+              Number(orderData.sale.crypto.amount) &&
+              offers.ramp.decimals
+            ) {
+              const orderAmount =
+                Number(orderData.sale.crypto.amount) /
+                10 ** offers.ramp.decimals;
               if (orderAmount !== newData.crypto_amount) {
                 // TODO: review the send max case here. Set it to undefined when the amount changed
                 logger.debug(
@@ -1349,38 +1434,52 @@ const SellCryptoOffers: React.FC = () => {
               }
             }
 
-            if (orderData.sale?.fiat?.amount && Number(orderData.sale.fiat.amount) && Number(orderData.sale.fiat.amount) !== newData.fiat_receiving_amount) {
+            if (
+              orderData.sale?.fiat?.amount &&
+              Number(orderData.sale.fiat.amount) &&
+              Number(orderData.sale.fiat.amount) !==
+                newData.fiat_receiving_amount
+            ) {
               logger.debug(
                 `Receiving Amount changed on the checkout page. Updating fiat_receiving_amount from: ${newData.fiat_receiving_amount} to: ${orderData.sale.fiat.amount}`,
               );
-              newData.fiat_receiving_amount = Number(orderData.sale.fiat.amount);
+              newData.fiat_receiving_amount = Number(
+                orderData.sale.fiat.amount,
+              );
             }
 
-            if (orderData.sale?.fiat?.currencySymbol && orderData.sale.fiat.currencySymbol !== newData.fiat_currency) {
+            if (
+              orderData.sale?.fiat?.currencySymbol &&
+              orderData.sale.fiat.currencySymbol !== newData.fiat_currency
+            ) {
               logger.debug(
                 `Fiat Currency changed on the checkout page. Updating fiat_currency from: ${newData.fiat_currency} to: ${orderData.sale.fiat.amount}`,
               );
               newData.fiat_currency = orderData.sale.fiat.amount;
             }
 
-            if (orderData.sale?.fees?.amount && Number(orderData.sale.fees.amount) && Number(orderData.sale.fees.amount) !== newData.fiat_fee_amount) {
+            if (
+              orderData.sale?.fees?.amount &&
+              Number(orderData.sale.fees.amount) &&
+              Number(orderData.sale.fees.amount) !== newData.fiat_fee_amount
+            ) {
               logger.debug(
                 `Fees Amount changed on the checkout page. Updating fiat_fee_amount from: ${newData.fiat_fee_amount} to: ${orderData.sale.fees.amount}`,
               );
               newData.fiat_fee_amount = Number(orderData.sale.fees.amount);
             }
 
-
             dispatch(
               SellCryptoActions.successSellOrderRamp({
                 rampSellOrderData: newData,
               }),
             );
-              return;
+            return;
           case 'SEND_CRYPTO': // Pay in wallet clicked in checkout page
             logger.debug('Ramp checkout event: SEND_CRYPTO');
 
-            const sendCryptoPayload = parsedEventData.payload as RampSellSendCryptoPayload;
+            const sendCryptoPayload =
+              parsedEventData.payload as RampSellSendCryptoPayload;
 
             const dataToUpdate: RampSellIncomingData = {
               rampExternalId: cloneDeep(offers.ramp.externalId)!,
@@ -1816,7 +1915,9 @@ const SellCryptoOffers: React.FC = () => {
                         {formatFiatAmount(
                           Number(offer.amountReceiving),
                           offer.fiatCurrency,
-                          {customPrecision: 'minimal'},
+                          {
+                            customPrecision: 'minimal',
+                          },
                         )}
                       </OfferDataInfoTotal>
                     </OfferExpandibleItem>
@@ -1860,16 +1961,17 @@ const SellCryptoOffers: React.FC = () => {
         style={{
           margin: 0,
           padding: 0,
-        }}
-        >
-        <View style={{
-          flex: 1,
-          // backgroundColor: '#f8f8f8',
-          justifyContent: 'center',
-          overflow: 'scroll',
         }}>
+        <View
+          style={{
+            flex: 1,
+            // backgroundColor: '#f8f8f8',
+            justifyContent: 'center',
+            overflow: 'scroll',
+          }}>
           {/* Close Button */}
-          <View style={{
+          <View
+            style={{
               borderTopLeftRadius: 15,
               borderTopRightRadius: 15,
               marginTop: insets.top,
@@ -1884,17 +1986,16 @@ const SellCryptoOffers: React.FC = () => {
             <TouchableOpacity
               style={{padding: 10}}
               onPress={() => {
-              setSellModalVisible({open: false, url: undefined});
-              }
-            }>
-              <Text style={{fontSize: 24, color: '#333' }}>✕</Text>
+                setSellModalVisible({open: false, url: undefined});
+              }}>
+              <Text style={{fontSize: 24, color: '#333'}}>✕</Text>
             </TouchableOpacity>
           </View>
           <WebView
             style={{
               paddingBottom: insets.bottom + 30,
             }}
-            source={{ uri: sellModalVisible.url ?? '' }}
+            source={{uri: sellModalVisible.url ?? ''}}
             scrollEnabled={true}
             onMessage={(e: WebViewMessageEvent) => {
               handleRampCheckoutMessage(e);

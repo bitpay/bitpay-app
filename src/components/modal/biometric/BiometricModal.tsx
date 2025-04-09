@@ -15,12 +15,7 @@ import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import styled from 'styled-components/native';
 import {BaseText} from '../../styled/Text';
 import BitpaySvg from '../../../../assets/img/wallet/transactions/bitpay.svg';
-import {
-  Animated,
-  NativeModules,
-  DeviceEventEmitter,
-  View,
-} from 'react-native';
+import {Animated, NativeModules, DeviceEventEmitter, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {useTranslation} from 'react-i18next';

@@ -5,7 +5,13 @@ export type RampSellEnv = 'sandbox' | 'production';
 
 // export type RampPayoutMethodType = 'card' | 'sepa';
 
-export type RampSellOrderStatus = 'createdOrder' | 'bitpayTxSent' | 'bitpayFromCheckout' | 'created' | 'released' | 'expired';
+export type RampSellOrderStatus =
+  | 'createdOrder'
+  | 'bitpayTxSent'
+  | 'bitpayFromCheckout'
+  | 'created'
+  | 'released'
+  | 'expired';
 
 export interface RampSellOrderData {
   env: 'dev' | 'prod';
@@ -49,11 +55,11 @@ export interface RampGetSellQuoteRequestData {
   cryptoAssetSymbol: string;
   fiatCurrency: string;
   /*
-    * Although fiatValue and cryptoAmount are not both required, you need to pass one of them.
-    * cryptoAmount - should be passed in token wei - e.g. for 1ETH cryptoAmount: 1000000000000000000
-    * cryptoAmount?: string;
-    * fiatValue?: number;
-  */
+   * Although fiatValue and cryptoAmount are not both required, you need to pass one of them.
+   * cryptoAmount - should be passed in token wei - e.g. for 1ETH cryptoAmount: 1000000000000000000
+   * cryptoAmount?: string;
+   * fiatValue?: number;
+   */
   fiatValue?: number;
   cryptoAmount?: string;
 }
@@ -135,19 +141,22 @@ export interface RampSellTransactionDetails {
       type: string;
       name: string;
       decimals: number;
-    }
-  },
+    };
+  };
   fiat: {
     amount: number;
     currencySymbol: string;
-  }
+  };
 }
 
-export type RampSellEventType = 'OFFRAMP_SALE_CREATED' | 'SEND_CRYPTO' | 'WIDGET_CONFIG_DONE';
+export type RampSellEventType =
+  | 'OFFRAMP_SALE_CREATED'
+  | 'SEND_CRYPTO'
+  | 'WIDGET_CONFIG_DONE';
 
 export interface RampSellCreatedEventPayload {
   sale: {
-    id: string,
+    id: string;
     createdAt: string;
     updatedAt: string;
     crypto: {
@@ -160,34 +169,33 @@ export interface RampSellCreatedEventPayload {
         type: string;
         name: string;
         decimals: number;
-      }
-    },
+      };
+    };
     fiat: {
       amount: string;
       currencySymbol: string;
       status: string;
       payoutMethod: RampPayoutMethodName;
-    },
+    };
     fees: {
       amount: string;
       currencySymbol: string;
-    },
+    };
     exchangeRate: string;
-  },
+  };
   saleViewToken: string;
   apiUrl: string;
 }
 
 export interface RampSellSendCryptoPayload {
-  assetInfo:
-    {
-      address: null | string;
-      symbol: string;
-      chain: string;
-      type: string;
-      name: string;
-      decimals: number;
-    },
+  assetInfo: {
+    address: null | string;
+    symbol: string;
+    chain: string;
+    type: string;
+    name: string;
+    decimals: number;
+  };
   amount: string;
   address: string;
 }

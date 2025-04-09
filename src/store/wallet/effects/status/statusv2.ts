@@ -1,10 +1,6 @@
 import {Effect} from '../../../index';
-import {
-  WalletStatus,
-} from '../../wallet.models';
-import {
-  successUpdateWalletBalancesAndStatus,
-} from '../../wallet.actions';
+import {WalletStatus} from '../../wallet.models';
+import {successUpdateWalletBalancesAndStatus} from '../../wallet.actions';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
@@ -68,33 +64,38 @@ export const clearWalletBalances =
       }),
     );
 
-    dispatch(LogActions.info('success [clearWalletBalances]: all balances cleared'));
+    dispatch(
+      LogActions.info('success [clearWalletBalances]: all balances cleared'),
+    );
   };
 
-export const getUpdatedWalletBalances = ({
-  context,
-  force,
-  createTokenWalletWithFunds,
-  chain,
-  tokenAddress,
-}: {
-  context?: UpdateAllKeyAndWalletStatusContext;
-  force?: boolean;
-  createTokenWalletWithFunds?: boolean;
-  chain?: string;
-  tokenAddress?: string;
-}): Effect<Promise<{
-  keyBalances: {
-    keyId: string;
-    totalBalance: number;
-    totalBalanceLastDay: number;
-  }[];
-  walletBalances: {
-    keyId: string;
-    walletId: string;
-    status: WalletStatus;
-  }[];
-}>> =>
+export const getUpdatedWalletBalances =
+  ({
+    context,
+    force,
+    createTokenWalletWithFunds,
+    chain,
+    tokenAddress,
+  }: {
+    context?: UpdateAllKeyAndWalletStatusContext;
+    force?: boolean;
+    createTokenWalletWithFunds?: boolean;
+    chain?: string;
+    tokenAddress?: string;
+  }): Effect<
+    Promise<{
+      keyBalances: {
+        keyId: string;
+        totalBalance: number;
+        totalBalanceLastDay: number;
+      }[];
+      walletBalances: {
+        keyId: string;
+        walletId: string;
+        status: WalletStatus;
+      }[];
+    }>
+  > =>
   async (dispatch, getState) => {
     const {
       WALLET: {keys: _keys},
@@ -136,11 +137,13 @@ export const getUpdatedWalletBalances = ({
 
     // Process regular keys
     for (const key of keys) {
-      const keyBalance = await dispatch(updateKeyStatus({
-        key,
-        force,
-        dataOnly: true,
-      }));
+      const keyBalance = await dispatch(
+        updateKeyStatus({
+          key,
+          force,
+          dataOnly: true,
+        }),
+      );
       if (keyBalance) {
         keyBalances.push({
           keyId: keyBalance.keyId,
@@ -194,21 +197,22 @@ export const getUpdatedWalletBalances = ({
     };
   };
 
-export const getAndDispatchUpdatedWalletBalances = ({
-  context,
-  force = true,
-  createTokenWalletWithFunds = false,
-  chain,
-  tokenAddress,
-  skipRateUpdate = false,
-}: {
-  context?: UpdateAllKeyAndWalletStatusContext;
-  force?: boolean;
-  createTokenWalletWithFunds?: boolean;
-  chain?: string;
-  tokenAddress?: string;
-  skipRateUpdate?: boolean;
-}): Effect<Promise<void>> =>
+export const getAndDispatchUpdatedWalletBalances =
+  ({
+    context,
+    force = true,
+    createTokenWalletWithFunds = false,
+    chain,
+    tokenAddress,
+    skipRateUpdate = false,
+  }: {
+    context?: UpdateAllKeyAndWalletStatusContext;
+    force?: boolean;
+    createTokenWalletWithFunds?: boolean;
+    chain?: string;
+    tokenAddress?: string;
+    skipRateUpdate?: boolean;
+  }): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     try {
       // Update rates if needed
@@ -233,7 +237,6 @@ export const getAndDispatchUpdatedWalletBalances = ({
           walletBalances: balances.walletBalances,
         }),
       );
-
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(

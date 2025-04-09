@@ -191,7 +191,8 @@ const RampSellDetails: React.FC = () => {
 
         {sellOrder.status ? (
           <LabelTip type="info">
-            <LabelTipText style={{maxWidth: status?.statusDescription ? '80%' : '90%'}}>
+            <LabelTipText
+              style={{maxWidth: status?.statusDescription ? '80%' : '90%'}}>
               {status.statusDescription ||
                 t(
                   'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
@@ -200,16 +201,12 @@ const RampSellDetails: React.FC = () => {
             {['expired'].includes(sellOrder.status) ? (
               <>
                 <Br />
-                <LabelTipText>
-                  {t('Having problems with Ramp?')}{' '}
-                </LabelTipText>
+                <LabelTipText>{t('Having problems with Ramp?')} </LabelTipText>
                 <TouchableOpacity
                   onPress={() => {
                     haptic('impactLight');
                     dispatch(
-                      openUrlWithInAppBrowser(
-                        'https://www.ramp.com/support/',
-                      ),
+                      openUrlWithInAppBrowser('https://www.ramp.com/support/'),
                     );
                   }}>
                   <Link style={{marginTop: 15}}>
@@ -218,7 +215,9 @@ const RampSellDetails: React.FC = () => {
                 </TouchableOpacity>
               </>
             ) : null}
-            {['created', 'createdOrder', 'bitpayTxSent'].includes(sellOrder.status) ? (
+            {['created', 'createdOrder', 'bitpayTxSent'].includes(
+              sellOrder.status,
+            ) ? (
               <>
                 <Br />
                 <LabelTipText>

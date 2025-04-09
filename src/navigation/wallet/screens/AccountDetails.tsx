@@ -350,7 +350,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const [needActionPendingTxps, setNeedActionPendingTxps] = useState<any[]>([]);
   const [needActionUnsentTxps, setNeedActionUnsentTxps] = useState<any[]>([]);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
-  const supportedCardMap = useAppSelector(({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap);
+  const supportedCardMap = useAppSelector(
+    ({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap,
+  );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -384,9 +386,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   });
   const pendingProposalsCount = Object.values(pendingTxps).length;
   const memorizedAccountList = useMemo(() => {
-    return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
-      filterByHideWallet: true,
-    }).filter(({chains}) => IsEVMChain(chains[0])) || {};
+    return (
+      buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
+        filterByHideWallet: true,
+      }).filter(({chains}) => IsEVMChain(chains[0])) || {}
+    );
   }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
 
   const accountItem = memorizedAccountList.find(

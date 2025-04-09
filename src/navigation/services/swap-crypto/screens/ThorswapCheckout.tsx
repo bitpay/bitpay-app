@@ -559,10 +559,10 @@ const ThorswapCheckout: React.FC = () => {
       }
     } catch (err: any) {
       const reason = 'createTx Error';
-          if (err.code) {
-            showError(err.message , reason, err.code, err.title, err.actions);
-            return;
-          }
+      if (err.code) {
+        showError(err.message, reason, err.code, err.title, err.actions);
+        return;
+      }
 
       let msg = t('Error creating transaction');
       let errorMsgLog;
@@ -604,7 +604,8 @@ const ThorswapCheckout: React.FC = () => {
           context: 'ThorswapCheckout',
           reasonForFailure: 'Time to make the payment expired',
           amountFrom: amountFrom || '',
-          fromCoin: fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+          fromCoin:
+            fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
           fromChain: fromWalletSelected.chain?.toLowerCase() || '',
           toCoin: toWalletSelected.currencyAbbreviation?.toLowerCase() || '',
           toChain: toWalletSelected.chain?.toLowerCase() || '',
@@ -814,7 +815,10 @@ const ThorswapCheckout: React.FC = () => {
       const ctxp = await dispatch(createTxProposal(wallet, txp));
       return Promise.resolve(ctxp);
     } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : err?.err?.message ?? JSON.stringify(err);
+      const errStr =
+        err instanceof Error
+          ? err.message
+          : err?.err?.message ?? JSON.stringify(err);
       const log = `thorswapCheckout createTxProposal error: ${errStr}`;
       logger.error(log);
 
@@ -1046,7 +1050,13 @@ const ThorswapCheckout: React.FC = () => {
     );
   };
 
-  const showError = async (msg?: string, reason?: string, errorMsgLog?: string, title?: string, actions?: any[]) => {
+  const showError = async (
+    msg?: string,
+    reason?: string,
+    errorMsgLog?: string,
+    title?: string,
+    actions?: any[],
+  ) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
@@ -1296,20 +1306,20 @@ const ThorswapCheckout: React.FC = () => {
         />
       ) : null}
 
-    {!paymentExpired ? (
+      {!paymentExpired ? (
         <>
           {!termsAccepted ? (
             <TouchableOpacity
-            onPress={() => {
-              scrollViewRef?.current?.scrollToEnd({animated: true});
-              setShowCheckTermsMsg(true);
-            }}>
-            <SwipeButton
-              title={'Slide to send'}
-              disabled={true}
-              onSwipeComplete={() => {}}
-            />
-          </TouchableOpacity>
+              onPress={() => {
+                scrollViewRef?.current?.scrollToEnd({animated: true});
+                setShowCheckTermsMsg(true);
+              }}>
+              <SwipeButton
+                title={'Slide to send'}
+                disabled={true}
+                onSwipeComplete={() => {}}
+              />
+            </TouchableOpacity>
           ) : (
             <SwipeButton
               title={'Slide to send'}

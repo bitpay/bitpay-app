@@ -33,7 +33,7 @@ const GiftCardItem = styled(LinearGradient)<GiftCardCreditsItemProps>`
     css`
       overflow: hidden;
       border-radius: 30px;
-      border-width: .4px;
+      border-width: 0.4px;
       margin-top: 10px;
       margin-bottom: 0px;
       display: flex;

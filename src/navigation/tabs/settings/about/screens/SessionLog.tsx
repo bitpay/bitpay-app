@@ -38,7 +38,7 @@ import ShareIconWhite from '../../../../../../assets/img/share-icon-white.svg';
 import {ListHeader} from '../../general/screens/customize-home/Shared';
 import {storage} from '../../../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import { isAndroidStoragePermissionGranted } from '../../../../../utils/helper-methods';
+import {isAndroidStoragePermissionGranted} from '../../../../../utils/helper-methods';
 import Share, {ShareOptions} from 'react-native-share';
 import RNFS from 'react-native-fs';
 
@@ -167,7 +167,6 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   );
   const [persistedLogs, setPersistedLogs] = useState([] as LogEntry[]);
 
-
   const printLogs = (logsToPrint: LogEntry[]) =>
     logsToPrint
       .map(log => {
@@ -250,16 +249,19 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
       t('Warning'),
       t('Be careful, this could contain sensitive private data'),
       [
-        {text: t('Continue'), onPress: () => {
-          switch (option) {
-            case 'email':
-              handleEmail(logStr);
-              break;
-            case 'share':
-              shareFile(logStr);
-              break;
-          }
-        }},
+        {
+          text: t('Continue'),
+          onPress: () => {
+            switch (option) {
+              case 'email':
+                handleEmail(logStr);
+                break;
+              case 'share':
+                shareFile(logStr);
+                break;
+            }
+          },
+        },
         {text: t('Cancel')},
       ],
       {cancelable: true},
@@ -344,16 +346,18 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
               <OptionTitleText>{t('Share File')}</OptionTitleText>
             </OptionTextContainer>
           </OptionContainer>
-          { !IS_DESKTOP && <OptionContainer
-            placement={'bottom'}
-            onPress={() => showDisclaimer('email')}>
-            <OptionIconContainer>
-              {theme.dark ? <SendIconWhite /> : <SendIcon />}
-            </OptionIconContainer>
-            <OptionTextContainer>
-              <OptionTitleText>{t('Send Logs By Email')}</OptionTitleText>
-            </OptionTextContainer>
-          </OptionContainer> }
+          {!IS_DESKTOP && (
+            <OptionContainer
+              placement={'bottom'}
+              onPress={() => showDisclaimer('email')}>
+              <OptionIconContainer>
+                {theme.dark ? <SendIconWhite /> : <SendIcon />}
+              </OptionIconContainer>
+              <OptionTextContainer>
+                <OptionTitleText>{t('Send Logs By Email')}</OptionTitleText>
+              </OptionTextContainer>
+            </OptionContainer>
+          )}
         </SheetContainer>
       </SheetModal>
     </LogsContainer>

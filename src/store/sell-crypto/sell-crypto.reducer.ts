@@ -1,5 +1,5 @@
 import {MoonpaySellOrderData} from './models/moonpay-sell.models';
-import { RampSellOrderData } from './models/ramp-sell.models';
+import {RampSellOrderData} from './models/ramp-sell.models';
 import {SimplexSellOrderData} from './models/simplex-sell.models';
 import {SellCryptoActionType, SellCryptoActionTypes} from './sell-crypto.types';
 
@@ -100,7 +100,7 @@ export const sellCryptoReducer = (
         moonpay: {...moonpaySellOrdersList},
       };
 
-      case SellCryptoActionTypes.SUCCESS_SELL_ORDER_RAMP:
+    case SellCryptoActionTypes.SUCCESS_SELL_ORDER_RAMP:
       const {rampSellOrderData} = action.payload;
       return {
         ...state,
@@ -122,10 +122,7 @@ export const sellCryptoReducer = (
 
         state.ramp[rampId] = {
           ...currentData,
-          status: setOrDefault(
-            rampSellIncomingData.status,
-            currentData.status,
-          ),
+          status: setOrDefault(rampSellIncomingData.status, currentData.status),
           transaction_id: setOrDefault(
             rampSellIncomingData.transactionId,
             currentData.transaction_id,

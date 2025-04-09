@@ -1018,7 +1018,10 @@ const BuyCryptoOffers: React.FC = () => {
 
       let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
       if (data?.asset) {
-        paymentMethodData = getRampPaymentMethodDataFromQuoteData(paymentMethod.method, data);
+        paymentMethodData = getRampPaymentMethodDataFromQuoteData(
+          paymentMethod.method,
+          data,
+        );
 
         if (!paymentMethodData?.fiatValue) {
           logger.error('rampGetQuote Error: No fiat value provided from Ramp');
@@ -2587,7 +2590,9 @@ const BuyCryptoOffers: React.FC = () => {
                         {formatFiatAmount(
                           Number(offer.amountCost),
                           offer.fiatCurrency,
-                          {customPrecision: 'minimal'},
+                          {
+                            customPrecision: 'minimal',
+                          },
                         )}
                       </OfferDataInfoTotal>
                     </OfferExpandibleItem>

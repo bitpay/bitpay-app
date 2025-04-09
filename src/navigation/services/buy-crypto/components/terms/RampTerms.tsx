@@ -53,9 +53,7 @@ const RampTerms: React.FC<{
             ),
           );
         }}>
-        <Link style={{fontSize: 12}}>
-          {t('Read more')}
-        </Link>
+        <Link style={{fontSize: 12}}>{t('Read more')}</Link>
       </TouchableOpacity>
       <ExchangeTermsText style={{marginTop: 6}}>
         {t(

@@ -5,13 +5,13 @@ import SettingsHome from './SettingsRoot';
 import {useTheme} from 'styled-components/native';
 
 export type SettingsStackParamList = {
-    SettingsHome: {
-      redirectTo?: string;
-    };
+  SettingsHome: {
+    redirectTo?: string;
   };
+};
 
 export enum SettingsScreens {
-    SETTINGS_HOME = 'SettingsHome',
+  SETTINGS_HOME = 'SettingsHome',
 }
 
 const Settings = createNativeStackNavigator<SettingsStackParamList>();
@@ -31,8 +31,8 @@ const SettingsStack = () => {
         name={SettingsScreens.SETTINGS_HOME}
         component={SettingsHome}
         options={{
-            headerShown: false,
-          }}
+          headerShown: false,
+        }}
       />
     </Settings.Navigator>
   );

@@ -1,9 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  View,
-} from 'react-native';
+import {ActivityIndicator, ScrollView, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Slider from '@react-native-community/slider';
 import styled from 'styled-components/native';

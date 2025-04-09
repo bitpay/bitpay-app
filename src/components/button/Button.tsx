@@ -33,7 +33,10 @@ import * as Icons from './ButtonIcons';
 import ButtonOverlay from './ButtonOverlay';
 import ButtonSpinner from './ButtonSpinner';
 import {StyleProp, ViewStyle} from 'react-native';
-import {TouchableOpacity, TouchableOpacityProps} from '@components/base/TouchableOpacity';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
 export type ButtonStyle =

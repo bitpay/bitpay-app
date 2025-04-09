@@ -100,7 +100,10 @@ import {RampSettingsProps} from '../../../../navigation/tabs/settings/external-s
 import SendToPill from '../../../../navigation/wallet/components/SendToPill';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {WithdrawalMethodKey, WithdrawalMethodsAvailable} from '../constants/SellCryptoConstants';
+import {
+  WithdrawalMethodKey,
+  WithdrawalMethodsAvailable,
+} from '../constants/SellCryptoConstants';
 import {
   ConfirmHardwareWalletModal,
   SimpleConfirmPaymentState,
@@ -286,7 +289,10 @@ const RampSellCheckout: React.FC = () => {
 
         sellTxDetails = await rampGetSellTransactionDetails(reqData);
 
-        if (sellTxDetails.status && getSellStatusFromRampStatus(sellTxDetails.status) === 'expired') {
+        if (
+          sellTxDetails.status &&
+          getSellStatusFromRampStatus(sellTxDetails.status) === 'expired'
+        ) {
           const dataToUpdate: RampSellIncomingData = {
             rampExternalId: sellOrder.external_id,
             status: getSellStatusFromRampStatus(sellTxDetails.status),
@@ -302,7 +308,9 @@ const RampSellCheckout: React.FC = () => {
             `The sell order has expired. id: ${sellOrder.quote_id} | saleViewToken: ${sellOrder.sale_view_token}`,
           );
           showError(
-            t('The sales order has expired. Please create a new order and try to make payment on time.'),
+            t(
+              'The sales order has expired. Please create a new order and try to make payment on time.',
+            ),
             'rampGetSellTransactionDetails Error. The sell order has expired',
           );
           return;
@@ -334,7 +342,7 @@ const RampSellCheckout: React.FC = () => {
 
     paymentTimeControl(payTill);
 
-    const _totalExchangeFee =  Number(sellOrder.fiat_fee_amount);
+    const _totalExchangeFee = Number(sellOrder.fiat_fee_amount);
     setTotalExchangeFee(_totalExchangeFee);
 
     const precision = dispatch(
@@ -380,7 +388,7 @@ const RampSellCheckout: React.FC = () => {
       .catch(err => {
         const reason = 'createTx Error';
         if (err.code) {
-          showError(err.message , reason, err.code, err.title, err.actions);
+          showError(err.message, reason, err.code, err.title, err.actions);
           return;
         }
 
@@ -458,7 +466,10 @@ const RampSellCheckout: React.FC = () => {
       const ctxp = await dispatch(createTxProposal(wallet, txp));
       return Promise.resolve(ctxp);
     } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : err?.err?.message ?? JSON.stringify(err);
+      const errStr =
+        err instanceof Error
+          ? err.message
+          : err?.err?.message ?? JSON.stringify(err);
       const log = `rampSellCheckout createTxProposal error: ${errStr}`;
       logger.error(log);
 
@@ -706,7 +717,13 @@ const RampSellCheckout: React.FC = () => {
     return msg;
   };
 
-  const showError = async (err?: any, reason?: string, errorMsgLog?: string, title?: string, actions?: any[]) => {
+  const showError = async (
+    err?: any,
+    reason?: string,
+    errorMsgLog?: string,
+    title?: string,
+    actions?: any[],
+  ) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
 
@@ -861,8 +878,8 @@ const RampSellCheckout: React.FC = () => {
         ) : (
           <>
             {WithdrawalMethodsAvailable &&
-              sellOrder.payment_method &&
-              WithdrawalMethodsAvailable[sellOrder.payment_method] ? (
+            sellOrder.payment_method &&
+            WithdrawalMethodsAvailable[sellOrder.payment_method] ? (
               <>
                 <RowDataContainer>
                   <RowLabel>{t('Withdrawing Method')}</RowLabel>
@@ -1003,16 +1020,16 @@ const RampSellCheckout: React.FC = () => {
         <>
           {!termsAccepted ? (
             <TouchableOpacity
-            onPress={() => {
-              scrollViewRef?.current?.scrollToEnd({animated: true});
-              setShowCheckTermsMsg(true);
-            }}>
-            <SwipeButton
-              title={'Slide to sell'}
-              disabled={true}
-              onSwipeComplete={() => {}}
-            />
-          </TouchableOpacity>
+              onPress={() => {
+                scrollViewRef?.current?.scrollToEnd({animated: true});
+                setShowCheckTermsMsg(true);
+              }}>
+              <SwipeButton
+                title={'Slide to sell'}
+                disabled={true}
+                onSwipeComplete={() => {}}
+              />
+            </TouchableOpacity>
           ) : (
             <SwipeButton
               title={'Slide to sell'}

@@ -282,7 +282,7 @@ const SendToOptions = () => {
         goToSelectInputsView,
       }}>
       <ImportContainer>
-        <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />}>
+        <Tab.Navigator tabBar={props => <CustomTabBar {...props} />}>
           <Tab.Screen
             name={t('Addresses')}
             component={SendToAddress}

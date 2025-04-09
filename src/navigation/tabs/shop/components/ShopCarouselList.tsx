@@ -82,7 +82,7 @@ export default ({
 
   return (
     <Carousel
-      onConfigurePanGesture={(gestureChain) => {
+      onConfigurePanGesture={gestureChain => {
         gestureChain.activeOffsetX([-10, 10]);
         gestureChain.failOffsetY([-10, 10]);
       }}

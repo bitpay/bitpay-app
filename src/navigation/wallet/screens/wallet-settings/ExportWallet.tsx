@@ -27,16 +27,19 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
 import {BwcProvider} from '../../../../lib/bwc';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {isAndroidStoragePermissionGranted, sleep} from '../../../../utils/helper-methods';
+import {
+  isAndroidStoragePermissionGranted,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../store/log';
 import Mailer from 'react-native-mail';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {IS_DESKTOP} from '../../../../constants';
-import { Platform } from 'react-native';
+import {Platform} from 'react-native';
 import Share, {ShareOptions} from 'react-native-share';
 import RNFS from 'react-native-fs';
-import { APP_NAME_UPPERCASE } from '../../../../constants/config';
+import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 
 const BWC = BwcProvider.getInstance();
 
@@ -389,19 +392,19 @@ const ExportWallet = () => {
           </PasswordActionContainer>
 
           <PasswordActionContainer>
-            <Button onPress={handleSubmit(shareFile)}>
-              {t('Share File')}
-            </Button>
+            <Button onPress={handleSubmit(shareFile)}>{t('Share File')}</Button>
           </PasswordActionContainer>
 
-         { !IS_DESKTOP && <PasswordActionContainer>
+          {!IS_DESKTOP && (
+            <PasswordActionContainer>
               <Button
                 onPress={handleSubmit(onSendByEmail)}
                 state={sendButtonState}
                 buttonStyle={'secondary'}>
                 {t('Send by Email')}
               </Button>
-            </PasswordActionContainer> }
+            </PasswordActionContainer>
+          )}
         </PasswordFormContainer>
       </ScrollView>
     </ExportWalletContainer>

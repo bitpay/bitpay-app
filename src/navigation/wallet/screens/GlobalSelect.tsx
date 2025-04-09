@@ -105,7 +105,7 @@ import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
 import Blockie from '../../../components/blockie/Blockie';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {getExternalServiceSymbol} from '../../services/utils/external-services-utils';
-import { Keys } from '../../../store/wallet/wallet.reducer';
+import {Keys} from '../../../store/wallet/wallet.reducer';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -542,8 +542,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   }
   const logger = useLogger();
   const dispatch = useAppDispatch();
-  const {keys: _keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
-    useAppSelector(({WALLET}) => WALLET);
+  const {
+    keys: _keys,
+    tokenOptionsByAddress,
+    customTokenOptionsByAddress,
+  } = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const allTokensByAddress = {
     ...BitpaySupportedTokenOptsByAddress,
@@ -616,9 +619,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   const filterCompleteWallets = (keys: Keys) => {
     return Object.fromEntries(
-        Object.entries(keys).filter(([_, keys]) =>
-            keys.wallets.some(wallet => wallet.isComplete())
-        )
+      Object.entries(keys).filter(([_, keys]) =>
+        keys.wallets.some(wallet => wallet.isComplete()),
+      ),
     );
   };
 

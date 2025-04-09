@@ -37,7 +37,7 @@ import {
 } from '../navigation/wallet-connect/constants/abis';
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
-import { PermissionsAndroid } from 'react-native';
+import {PermissionsAndroid} from 'react-native';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -201,7 +201,7 @@ const getFormatterOptions = (
         maximumFractionDigits: 0,
         minimumFractionDigits: 0,
       }),
-      currencyDisplay: opts.currencyDisplay,
+    currencyDisplay: opts.currencyDisplay,
   };
   return formatterOptions;
 };
@@ -229,7 +229,7 @@ export const formatFiatAmount = (
       currencyDisplay: 'code',
     })
     .split('')
-    .map((char) => {
+    .map(char => {
       if (char.match(/[A-Za-z]/)) {
         code = (code || '') + char;
         return '';
@@ -325,12 +325,15 @@ export const formatFiatAmountObj = (
     currencyAbbreviation?: string;
     currencyDisplay?: 'symbol' | 'code';
   } = {},
-): { amount: string; code?: string } => {
+): {amount: string; code?: string} => {
   const currencyDisplay = opts.currencyDisplay || 'symbol';
-  const formatterOptions = getFormatterOptions(amount, currency, { ...opts, currencyDisplay });
+  const formatterOptions = getFormatterOptions(amount, currency, {
+    ...opts,
+    currencyDisplay,
+  });
 
   if (currencyDisplay === 'symbol') {
-    return { amount: amount.toLocaleString('en-US', formatterOptions) };
+    return {amount: amount.toLocaleString('en-US', formatterOptions)};
   }
 
   let code: string | undefined;
@@ -340,7 +343,7 @@ export const formatFiatAmountObj = (
       currencyDisplay: 'code',
     })
     .split('')
-    .map((char) => {
+    .map(char => {
       if (char.match(/[A-Za-z]/)) {
         code = (code || '') + char;
         return '';
@@ -349,7 +352,7 @@ export const formatFiatAmountObj = (
     })
     .join('');
 
-  return { amount: numberString.trim(), code: code || currency };
+  return {amount: numberString.trim(), code: code || currency};
 };
 
 export const convertToFiat = (
@@ -1045,35 +1048,37 @@ export const getFullLinkedWallet = (key: Key, wallet: Wallet) => {
   return;
 };
 
-  export const isAndroidStoragePermissionGranted = (dispatch: AppDispatch): Promise<boolean> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        ]);
-        if (
-          granted['android.permission.READ_EXTERNAL_STORAGE'] ===
-            PermissionsAndroid.RESULTS.GRANTED &&
-          granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
-            PermissionsAndroid.RESULTS.GRANTED
-        ) {
-          dispatch(
-            LogActions.info(
-              '[isAndroidStoragePermissionGranted]: Storage permission granted',
-            ),
-          );
-          resolve(true);
-        } else {
-          dispatch(
-            LogActions.warn(
-              '[isAndroidStoragePermissionGranted]: Storage permission denied',
-            ),
-          );
-          throw new Error('Storage permission denied');
-        }
-      } catch (e) {
-        reject(e);
+export const isAndroidStoragePermissionGranted = (
+  dispatch: AppDispatch,
+): Promise<boolean> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ]);
+      if (
+        granted['android.permission.READ_EXTERNAL_STORAGE'] ===
+          PermissionsAndroid.RESULTS.GRANTED &&
+        granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
+          PermissionsAndroid.RESULTS.GRANTED
+      ) {
+        dispatch(
+          LogActions.info(
+            '[isAndroidStoragePermissionGranted]: Storage permission granted',
+          ),
+        );
+        resolve(true);
+      } else {
+        dispatch(
+          LogActions.warn(
+            '[isAndroidStoragePermissionGranted]: Storage permission denied',
+          ),
+        );
+        throw new Error('Storage permission denied');
       }
-    });
-  };
+    } catch (e) {
+      reject(e);
+    }
+  });
+};

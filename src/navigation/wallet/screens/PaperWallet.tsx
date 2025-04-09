@@ -207,7 +207,10 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       ltc: 100000,
     };
     // @ts-ignore
-    let opts: {coin: string; fee: number} = {coin: balanceToSweep.coin, fee: DEFAULT_FEE[balanceToSweep.coin]};
+    let opts: {coin: string; fee: number} = {
+      coin: balanceToSweep.coin,
+      fee: DEFAULT_FEE[balanceToSweep.coin],
+    };
 
     try {
       const testTx: any = await buildTransaction(
@@ -327,7 +330,9 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     BWC.getClient().decryptBIP38PrivateKey(scannedKey, passphrase, null, cb);
   };
 
-  const checkPrivateKeyAndReturnCorrectNetwork = (privateKey: string): string => {
+  const checkPrivateKeyAndReturnCorrectNetwork = (
+    privateKey: string,
+  ): string => {
     const networks = ['livenet', 'testnet'];
     const providers = [
       {name: 'Bitcore', getProvider: () => BWC.getBitcore()},

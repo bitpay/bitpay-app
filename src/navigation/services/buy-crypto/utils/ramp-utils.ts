@@ -7,7 +7,7 @@ import {
   RampQuoteRequestData,
   RampQuoteResultForPaymentMethod,
 } from '../../../../store/buy-crypto/models/ramp.models';
-import { PaymentMethodKey } from '../constants/BuyCryptoConstants';
+import {PaymentMethodKey} from '../constants/BuyCryptoConstants';
 
 export const rampEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -235,7 +235,10 @@ export const getRampDefaultOfferData = (
   return data.CARD_PAYMENT;
 };
 
-export const getRampPaymentMethodDataFromQuoteData = (paymentMethod: PaymentMethodKey, quoteData: RampQuoteRequestData) => {
+export const getRampPaymentMethodDataFromQuoteData = (
+  paymentMethod: PaymentMethodKey,
+  quoteData: RampQuoteRequestData,
+) => {
   let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
   switch (paymentMethod) {
     case 'sepaBankTransfer':
@@ -277,7 +280,9 @@ export const getRampPaymentMethodDataFromQuoteData = (paymentMethod: PaymentMeth
   return paymentMethodData;
 };
 
-export const getRampPaymentMethodFormat = (paymentMethod: PaymentMethodKey): RampPaymentMethodType => {
+export const getRampPaymentMethodFormat = (
+  paymentMethod: PaymentMethodKey,
+): RampPaymentMethodType => {
   switch (paymentMethod) {
     case 'sepaBankTransfer':
       return 'SEPA';

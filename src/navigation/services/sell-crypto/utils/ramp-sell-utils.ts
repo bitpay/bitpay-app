@@ -6,8 +6,8 @@ import {t} from 'i18next';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import cloneDeep from 'lodash.clonedeep';
-import { RampAssetInfo } from '../../../../store/buy-crypto/models/ramp.models';
-import { WithdrawalMethodKey } from '../constants/SellCryptoConstants';
+import {RampAssetInfo} from '../../../../store/buy-crypto/models/ramp.models';
+import {WithdrawalMethodKey} from '../constants/SellCryptoConstants';
 
 export const rampSellEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -308,12 +308,10 @@ export const getRampSellCurrenciesFixedProps = (
 
     if (
       mapping &&
-      mapping.chain?.toLowerCase() ===
-        currency.chain?.toLowerCase() &&
+      mapping.chain?.toLowerCase() === currency.chain?.toLowerCase() &&
       (!mapping.contractAddress ||
         (currency.address &&
-          mapping.contractAddress ===
-            currency.address.toLowerCase()))
+          mapping.contractAddress === currency.address.toLowerCase()))
     ) {
       currency.symbol = mapping.code;
       currency.name = mapping.name;
@@ -388,7 +386,9 @@ export const getPayoutMethodKeyFromRampType = (
   return formattedPaymentMethod;
 };
 
-export const getSellStatusFromRampStatus = (rampStatus: string): RampSellOrderStatus => {
+export const getSellStatusFromRampStatus = (
+  rampStatus: string,
+): RampSellOrderStatus => {
   const status = cloneDeep(rampStatus)?.toLowerCase() || '';
 
   return status as RampSellOrderStatus;
@@ -454,16 +454,14 @@ export const rampSellGetStatusDetails = (
   };
 };
 
-export const rampSellGetStatusColor = (
-  status: RampSellOrderStatus,
-): string => {
+export const rampSellGetStatusColor = (status: RampSellOrderStatus): string => {
   switch (status) {
-  case 'released':
-    return '#01d1a2';
-  case 'expired':
-    return '#df5264';
-  case 'bitpayFromCheckout':
-  case 'bitpayTxSent':
+    case 'released':
+      return '#01d1a2';
+    case 'expired':
+      return '#df5264';
+    case 'bitpayFromCheckout':
+    case 'bitpayTxSent':
       return '#fdb455';
     default:
       return '#9b9bab';

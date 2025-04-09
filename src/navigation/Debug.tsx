@@ -77,7 +77,6 @@ const DebugScreen: React.FC<
       return output;
     });
 
-
   const shareFile = async (data: string) => {
     try {
       if (Platform.OS === 'android' && Platform.Version < 30) {
@@ -152,16 +151,22 @@ const DebugScreen: React.FC<
     Alert.alert(
       'Warning',
       'Be careful, this could contain sensitive private data.',
-      [{text: 'Continue', onPress: () => {
-        switch (option) {
-          case 'share':
-            shareFile(data);
-            break;
-          case 'email':
-            handleEmail(data);
-            break;
-        }
-      }}, {text: 'Cancel'}],
+      [
+        {
+          text: 'Continue',
+          onPress: () => {
+            switch (option) {
+              case 'share':
+                shareFile(data);
+                break;
+              case 'email':
+                handleEmail(data);
+                break;
+            }
+          },
+        },
+        {text: 'Cancel'},
+      ],
       {cancelable: true},
     );
   };
@@ -178,11 +183,13 @@ const DebugScreen: React.FC<
           Share Logs
         </Button>
       </ButtonContainer>
-      {!IS_DESKTOP && <ButtonContainer>
-        <Button onPress={() => showDisclaimer(logStr, 'email')}>
-          Send Logs By Email
-        </Button>
-      </ButtonContainer> }
+      {!IS_DESKTOP && (
+        <ButtonContainer>
+          <Button onPress={() => showDisclaimer(logStr, 'email')}>
+            Send Logs By Email
+          </Button>
+        </ButtonContainer>
+      )}
     </DebugContainer>
   );
 };

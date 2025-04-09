@@ -33,10 +33,16 @@ import {
 } from '@moralisweb3/common-evm-utils';
 import {calculateUsdToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {IsERCToken} from '../../utils/currency';
-import { UpdateAllKeyAndWalletStatusContext } from '../status/status';
+import {UpdateAllKeyAndWalletStatusContext} from '../status/status';
 
 export const startGetRates =
-  ({context, force}: {context?: UpdateAllKeyAndWalletStatusContext; force?: boolean}): Effect<Promise<Rates>> =>
+  ({
+    context,
+    force,
+  }: {
+    context?: UpdateAllKeyAndWalletStatusContext;
+    force?: boolean;
+  }): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
     return new Promise(async resolve => {
       dispatch(LogActions.info('startGetRates: starting...'));
@@ -49,7 +55,8 @@ export const startGetRates =
           ratesCacheKey[DEFAULT_DATE_RANGE],
           RATES_CACHE_DURATION,
         ) &&
-        !force && altCurrencyList.length > 0
+        !force &&
+        altCurrencyList.length > 0
       ) {
         dispatch(
           LogActions.info('startGetRates: success (using cached rates)'),
@@ -328,8 +335,10 @@ export const fetchHistoricalRates =
         RATE: {ratesHistoricalCacheKey, ratesByDateRange: cachedRates},
       } = getState();
 
-      const cachedRatesByCoin = (currencyAbbreviation &&
-        cachedRates[dateRange][currencyAbbreviation.toLowerCase()]) || [];
+      const cachedRatesByCoin =
+        (currencyAbbreviation &&
+          cachedRates[dateRange][currencyAbbreviation.toLowerCase()]) ||
+        [];
 
       if (
         !isCacheKeyStale(

@@ -414,7 +414,9 @@ const PayAllBills = ({
                             {formatFiatAmount(
                               account[account.type].lastStatementBalance!,
                               'USD',
-                              {customPrecision: 'minimal'},
+                              {
+                                customPrecision: 'minimal',
+                              },
                             )}
                           </BillPayOptionAmount>
                         </BillPayOption>

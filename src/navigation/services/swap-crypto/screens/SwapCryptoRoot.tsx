@@ -1,10 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  ScrollView,
-  View,
-} from 'react-native';
+import {ActivityIndicator, Platform, ScrollView, View} from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import _ from 'lodash';
@@ -1344,7 +1339,9 @@ const SwapCryptoRoot: React.FC = () => {
         if (allSupportedCoinsOrdered?.length > 0) {
           setSwapCryptoSupportedCoinsFrom(allSupportedCoinsOrdered);
         } else {
-          logger.error('Swap crypto getCurrencies Error: allSupportedCoins array is empty');
+          logger.error(
+            'Swap crypto getCurrencies Error: allSupportedCoins array is empty',
+          );
           const msg = t(
             'Swap Crypto feature is not available at this moment. Please try again later.',
           );
@@ -1373,15 +1370,23 @@ const SwapCryptoRoot: React.FC = () => {
       setToWallet(toWallet);
     } else if (createToWalletData) {
       try {
-        if (createToWalletData.key.isPrivKeyEncrypted && !(createToWalletData.currency?.isToken && createToWalletData.associatedWallet)) {
-            logger.debug('Key is Encrypted. Trying to decrypt...');
-            await sleep(500);
-            const password = await dispatch(
-              getDecryptPassword(createToWalletData.key),
-            );
-            createToWalletData.options.password = password;
+        if (
+          createToWalletData.key.isPrivKeyEncrypted &&
+          !(
+            createToWalletData.currency?.isToken &&
+            createToWalletData.associatedWallet
+          )
+        ) {
+          logger.debug('Key is Encrypted. Trying to decrypt...');
+          await sleep(500);
+          const password = await dispatch(
+            getDecryptPassword(createToWalletData.key),
+          );
+          createToWalletData.options.password = password;
         } else {
-          logger.debug('Key is Encrypted, but not neccessary for tokens. Trying to create wallet...');
+          logger.debug(
+            'Key is Encrypted, but not neccessary for tokens. Trying to create wallet...',
+          );
         }
 
         await sleep(500);
@@ -1492,55 +1497,55 @@ const SwapCryptoRoot: React.FC = () => {
                   onPress={() => {
                     showModal('fromWalletSelector');
                   }}>
-                    {fromWalletSelected && !loadingWalletFromStatus ? (
-                      <SelectedOptionCol>
-                        <CurrencyImageContainer>
-                          <CurrencyImage
-                            img={fromWalletSelected.img}
-                            badgeUri={getBadgeImg(
-                              getCurrencyAbbreviation(
-                                fromWalletSelected.currencyAbbreviation,
-                                fromWalletSelected.chain,
-                              ),
+                  {fromWalletSelected && !loadingWalletFromStatus ? (
+                    <SelectedOptionCol>
+                      <CurrencyImageContainer>
+                        <CurrencyImage
+                          img={fromWalletSelected.img}
+                          badgeUri={getBadgeImg(
+                            getCurrencyAbbreviation(
+                              fromWalletSelected.currencyAbbreviation,
                               fromWalletSelected.chain,
-                            )}
-                            size={45}
-                          />
-                        </CurrencyImageContainer>
-                        <WalletTextContainer>
-                            <H5 ellipsizeMode="tail" numberOfLines={1}>
-                              {fromWalletSelected.walletName
-                                ? fromWalletSelected.walletName
-                                : fromWalletSelected.currencyName}
-                            </H5>
-                            <ListItemSubText
-                              ellipsizeMode="tail"
-                              numberOfLines={1}
-                              style={{
-                                marginTop: Platform.OS === 'ios' ? 2 : 0,
-                              }}>
-                              {fromWalletSelected.currencyAbbreviation.toUpperCase()}
-                            </ListItemSubText>
-                        </WalletTextContainer>
-                      </SelectedOptionCol>
-                    ) : (
-                      <SelectedOptionCol>
-                        <SwapCryptoLoadingWalletSkeleton />
-                      </SelectedOptionCol>
-                    )}
-                    {fromWalletSelected && !loadingWalletFromStatus ? (
-                      <SelectedOptionCol>
-                        <ArrowContainer>
-                          <SelectorArrowRight
-                            {...{
-                              width: 13,
-                              height: 13,
-                              color: theme.dark ? White : Slate,
-                            }}
-                          />
-                        </ArrowContainer>
-                      </SelectedOptionCol>
-                    ) : null}
+                            ),
+                            fromWalletSelected.chain,
+                          )}
+                          size={45}
+                        />
+                      </CurrencyImageContainer>
+                      <WalletTextContainer>
+                        <H5 ellipsizeMode="tail" numberOfLines={1}>
+                          {fromWalletSelected.walletName
+                            ? fromWalletSelected.walletName
+                            : fromWalletSelected.currencyName}
+                        </H5>
+                        <ListItemSubText
+                          ellipsizeMode="tail"
+                          numberOfLines={1}
+                          style={{
+                            marginTop: Platform.OS === 'ios' ? 2 : 0,
+                          }}>
+                          {fromWalletSelected.currencyAbbreviation.toUpperCase()}
+                        </ListItemSubText>
+                      </WalletTextContainer>
+                    </SelectedOptionCol>
+                  ) : (
+                    <SelectedOptionCol>
+                      <SwapCryptoLoadingWalletSkeleton />
+                    </SelectedOptionCol>
+                  )}
+                  {fromWalletSelected && !loadingWalletFromStatus ? (
+                    <SelectedOptionCol>
+                      <ArrowContainer>
+                        <SelectorArrowRight
+                          {...{
+                            width: 13,
+                            height: 13,
+                            color: theme.dark ? White : Slate,
+                          }}
+                        />
+                      </ArrowContainer>
+                    </SelectedOptionCol>
+                  ) : null}
                 </SelectedOptionContainer>
 
                 {fromWalletSelected?.balance?.cryptoSpendable &&
@@ -1717,17 +1722,17 @@ const SwapCryptoRoot: React.FC = () => {
                       />
                     </CurrencyImageContainer>
                     <WalletTextContainer>
-                        <H5 ellipsizeMode="tail" numberOfLines={1}>
-                          {toWalletSelected.walletName
-                            ? toWalletSelected.walletName
-                            : toWalletSelected.currencyName}
-                        </H5>
-                        <ListItemSubText
-                          ellipsizeMode="tail"
-                          numberOfLines={1}
-                          style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-                          {toWalletSelected.currencyAbbreviation.toUpperCase()}
-                        </ListItemSubText>
+                      <H5 ellipsizeMode="tail" numberOfLines={1}>
+                        {toWalletSelected.walletName
+                          ? toWalletSelected.walletName
+                          : toWalletSelected.currencyName}
+                      </H5>
+                      <ListItemSubText
+                        ellipsizeMode="tail"
+                        numberOfLines={1}
+                        style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+                        {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                      </ListItemSubText>
                     </WalletTextContainer>
                   </SelectedOptionCol>
                   <SelectedOptionCol>

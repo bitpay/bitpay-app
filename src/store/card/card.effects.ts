@@ -503,7 +503,13 @@ export const startAddToAppleWallet =
           const res = await CardApi.startCreateAppleWalletProvisioningRequest(
             token,
             id,
-            {cert1, cert2, nonce, nonceSignature, walletProvider: 'apple'},
+            {
+              cert1,
+              cert2,
+              nonce,
+              nonceSignature,
+              walletProvider: 'apple',
+            },
           );
           dispatch(completeAddApplePaymentPass({res}));
         },

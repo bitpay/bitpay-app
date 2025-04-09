@@ -1382,24 +1382,30 @@ export const publishAndSignMultipleProposals =
     });
   };
 
-export const createTxProposal = (
-  wallet: Wallet,
-  txp: Partial<TransactionProposal>,
-): Effect<Promise<TransactionProposal>> =>
+export const createTxProposal =
+  (
+    wallet: Wallet,
+    txp: Partial<TransactionProposal>,
+  ): Effect<Promise<TransactionProposal>> =>
   (dispatch, getState) => {
-  return new Promise((resolve, reject) => {
-    wallet.createTxProposal(
-      txp,
-      (err: Error, createdTxp: TransactionProposal) => {
-        if (err) {
-          return reject({err, tx: {wallet, amount: txp?.amount}, txp, getState});
-        }
-        return resolve(createdTxp);
-      },
-      null,
-    );
-  });
-};
+    return new Promise((resolve, reject) => {
+      wallet.createTxProposal(
+        txp,
+        (err: Error, createdTxp: TransactionProposal) => {
+          if (err) {
+            return reject({
+              err,
+              tx: {wallet, amount: txp?.amount},
+              txp,
+              getState,
+            });
+          }
+          return resolve(createdTxp);
+        },
+        null,
+      );
+    });
+  };
 
 export const publishTx = (
   wallet: Wallet,
@@ -2081,10 +2087,10 @@ const handleDefaultError = (
         'You have enough funds to make this payment, but your wallet doesn’t have enough to cover the network fees.',
       );
 
-    const ctaAction = [
-      {
-        text: t('Buy Crypto'),
-        action: () => {
+  const ctaAction = [
+    {
+      text: t('Buy Crypto'),
+      action: () => {
         const goToBuyCrypto = async () => {
           dispatch(
             Analytics.track('Clicked Buy Crypto', {
@@ -2093,7 +2099,7 @@ const handleDefaultError = (
           );
           if (context && ['sell', 'swap'].includes(context)) {
             navigationRef.goBack();
-            await (sleep(100));
+            await sleep(100);
           }
           navigationRef.navigate('BuyCryptoRoot', {
             amount: 100,
@@ -2103,24 +2109,24 @@ const handleDefaultError = (
           });
         };
         goToBuyCrypto();
-        },
-        primary: true,
       },
-    ];
+      primary: true,
+    },
+  ];
 
-    if (context && ['sell', 'swap'].includes(context)) {
-      ctaAction.push({
-        text: t('GO BACK'),
-        action: () => {
-            const goBack = async () => {
-              navigationRef.goBack();
-              await (sleep(100));
-            };
-            goBack();
-        },
-        primary: false,
-      },);
-    }
+  if (context && ['sell', 'swap'].includes(context)) {
+    ctaAction.push({
+      text: t('GO BACK'),
+      action: () => {
+        const goBack = async () => {
+          navigationRef.goBack();
+          await sleep(100);
+        };
+        goBack();
+      },
+      primary: false,
+    });
+  }
 
   return CustomErrorMessage({
     title,
@@ -2150,7 +2156,13 @@ export const handleCreateTxProposalError =
           );
 
         default:
-          return handleDefaultError(proposalErrorProps, dispatch, onDismiss, errorName, context);
+          return handleDefaultError(
+            proposalErrorProps,
+            dispatch,
+            onDismiss,
+            errorName,
+            context,
+          );
       }
     } catch (err2) {
       return GeneralError();

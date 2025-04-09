@@ -16,7 +16,10 @@ import {
 import pickBy from 'lodash.pickby';
 import {LocationData} from '../../../../store/location/location.models';
 import {getExternalServiceSymbol} from '../../utils/external-services-utils';
-import {getRampSellSupportedCurrencies, rampSellSupportedFiatCurrencies} from './ramp-sell-utils';
+import {
+  getRampSellSupportedCurrencies,
+  rampSellSupportedFiatCurrencies,
+} from './ramp-sell-utils';
 
 export type SellCryptoExchangeKey = 'moonpay' | 'ramp' | 'simplex';
 
@@ -121,7 +124,8 @@ export const getSellEnabledPaymentMethods = (
         currency,
         locationCountry,
         userCountry,
-      ) || isSupportedByExchange(
+      ) ||
+      isSupportedByExchange(
         'ramp',
         method,
         coin,
@@ -362,9 +366,7 @@ const isFiatCurrencySupportedBy = (
         currency.toUpperCase(),
       );
     case 'ramp':
-      return rampSellSupportedFiatCurrencies.includes(
-        currency.toUpperCase(),
-      );
+      return rampSellSupportedFiatCurrencies.includes(currency.toUpperCase());
     case 'simplex':
       return simplexSellSupportedFiatCurrencies.includes(
         currency.toUpperCase(),

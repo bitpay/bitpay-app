@@ -204,7 +204,12 @@ const PaymentMethodsModal = ({
       case 'ramp':
         return (
           <View key={exchange} style={{marginRight: iconOnly ? 0 : 10}}>
-            <RampLogo key={exchange} iconOnly={iconOnly} width={iconOnly ? 30 : 60} height={iconOnly ? 30 : 40} />
+            <RampLogo
+              key={exchange}
+              iconOnly={iconOnly}
+              width={iconOnly ? 30 : 60}
+              height={iconOnly ? 30 : 40}
+            />
           </View>
         );
       case 'sardine':

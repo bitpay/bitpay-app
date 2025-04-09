@@ -71,7 +71,9 @@ const Curations = ({
   return (
     <>
       {curations.map(curation => (
-        <View key={curation.displayName} style={{height: itemHeight * getNumRows(curation.giftCards) + 70}}>
+        <View
+          key={curation.displayName}
+          style={{height: itemHeight * getNumRows(curation.giftCards) + 70}}>
           <SectionContainer>
             <SectionHeader>{curation.displayName}</SectionHeader>
           </SectionContainer>
@@ -176,7 +178,7 @@ export default ({
       return () => {
         setIsScreenFocused(false);
       };
-    }, [])
+    }, []),
   );
 
   const updateSearchResults = useMemo(
@@ -326,7 +328,9 @@ export default ({
                   <TouchableOpacity
                     activeOpacity={ActiveOpacity}
                     onPress={() => {
-                      if (!isScreenFocused) {return;}
+                      if (!isScreenFocused) {
+                        return;
+                      }
                       setIsFilterSheetShown(!isFilterSheetShown);
                     }}>
                     <SectionHeaderButton>

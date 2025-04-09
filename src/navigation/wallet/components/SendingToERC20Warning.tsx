@@ -2,7 +2,10 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText, Paragraph} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {CloseButtonContainer, SheetContainer} from '../../../components/styled/Containers';
+import {
+  CloseButtonContainer,
+  SheetContainer,
+} from '../../../components/styled/Containers';
 import {
   Action,
   Black,

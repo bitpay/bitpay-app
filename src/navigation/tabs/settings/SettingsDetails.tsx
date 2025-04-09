@@ -1,5 +1,8 @@
 import React from 'react';
-import {createNativeStackNavigator, NativeStackScreenProps} from '@react-navigation/native-stack';
+import {
+  createNativeStackNavigator,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
 import {useTheme} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
@@ -16,7 +19,7 @@ import ThemeSettings from './general/screens/Theme';
 import CustomizeHomeSettings from './general/screens/customize-home/CustomizeHome';
 import AltCurrencySettings from './general/screens/AltCurrencySettings';
 import LanguageSettings from './general/screens/LanguageSettings';
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
 
 export type SettingsDetailsParamList = {
   General: undefined;
@@ -51,12 +54,15 @@ const Stack = createNativeStackNavigator<SettingsDetailsStackParamList>();
 
 const SettingsDetails = ({
   route,
-}: NativeStackScreenProps<SettingsDetailsStackParamList, keyof SettingsDetailsParamList> & {
-  route: { params?: SettingsDetailsRouteProp }
+}: NativeStackScreenProps<
+  SettingsDetailsStackParamList,
+  keyof SettingsDetailsParamList
+> & {
+  route: {params?: SettingsDetailsRouteProp};
 }) => {
   const theme = useTheme();
   const {t} = useTranslation();
-  const { initialRoute } = route.params || {};
+  const {initialRoute} = route.params || {};
 
   return (
     <Stack.Navigator
@@ -71,49 +77,101 @@ const SettingsDetails = ({
         headerTitle: props => <HeaderTitle {...props} />,
         headerBackTitleVisible: false,
         headerBackVisible: false,
-        headerLeft: () => (
-          <HeaderBackButton />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
-      <Stack.Screen name="General" component={General} options={{
-        headerTitle: () => <HeaderTitle>{t('General')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Contacts" component={Contacts} options={{
-        headerTitle: () => <HeaderTitle>{t('Contacts')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Crypto" component={Crypto} options={{
-        headerTitle: () => <HeaderTitle>{t('Crypto')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Wallets & Keys" component={WalletsAndKeys} options={{
-        headerTitle: () => <HeaderTitle>{t('Wallets & Keys')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Security" component={Security} options={{
-        headerTitle: () => <HeaderTitle>{t('Security')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="External Services" component={ExternalServices} options={{
-        headerTitle: () => <HeaderTitle>{t('External Services')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Notifications" component={Notifications} options={{
-        headerTitle: () => <HeaderTitle>{t('Notifications')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Connections" component={Connections} options={{
-        headerTitle: () => <HeaderTitle>{t('Connections')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="About BitPay" component={About} options={{
-        headerTitle: () => <HeaderTitle>{t('About BitPay')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Theme" component={ThemeSettings} options={{
-        headerTitle: () => <HeaderTitle>{t('Theme')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Customize Home" component={CustomizeHomeSettings} options={{
-        headerTitle: () => <HeaderTitle>{t('Customize Home')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Display Currency" component={AltCurrencySettings} options={{
-        headerTitle: () => <HeaderTitle>{t('Display Currency')}</HeaderTitle>,
-      }}/>
-      <Stack.Screen name="Language" component={LanguageSettings} options={{
-        headerTitle: () => <HeaderTitle>{t('Language')}</HeaderTitle>,
-      }}/>
+      <Stack.Screen
+        name="General"
+        component={General}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('General')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="Contacts"
+        component={Contacts}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Contacts')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="Crypto"
+        component={Crypto}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Crypto')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="Wallets & Keys"
+        component={WalletsAndKeys}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Wallets & Keys')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="Security"
+        component={Security}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Security')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="External Services"
+        component={ExternalServices}
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('External Services')}</HeaderTitle>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={Notifications}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Notifications')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="Connections"
+        component={Connections}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Connections')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="About BitPay"
+        component={About}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('About BitPay')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="Theme"
+        component={ThemeSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Theme')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="Customize Home"
+        component={CustomizeHomeSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Customize Home')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="Display Currency"
+        component={AltCurrencySettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Display Currency')}</HeaderTitle>,
+        }}
+      />
+      <Stack.Screen
+        name="Language"
+        component={LanguageSettings}
+        options={{
+          headerTitle: () => <HeaderTitle>{t('Language')}</HeaderTitle>,
+        }}
+      />
     </Stack.Navigator>
   );
 };

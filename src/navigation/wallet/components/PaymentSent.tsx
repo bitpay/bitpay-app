@@ -2,13 +2,16 @@ import React from 'react';
 import Modal from 'react-native-modal';
 import styled from 'styled-components/native';
 import {Success, White} from '../../../styles/colors';
-import {CloseButtonContainer, WIDTH} from '../../../components/styled/Containers';
+import {
+  CloseButtonContainer,
+  WIDTH,
+} from '../../../components/styled/Containers';
 import PaymentCompleteSvg from '../../../../assets/img/wallet/payment-complete.svg';
 import {BaseText} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import { View } from 'react-native';
+import {View} from 'react-native';
 
 const PaymentSentContainer = styled.View`
   flex: 1;

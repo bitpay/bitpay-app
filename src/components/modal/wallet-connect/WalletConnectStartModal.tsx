@@ -449,9 +449,7 @@ export const WalletConnectStartModal = () => {
   const onBackdropPress = () => {
     dispatch(dismissWalletConnectStartModal());
     if (proposal) {
-      dispatch(
-        walletConnectV2RejectSessionProposal(proposal.id),
-      );
+      dispatch(walletConnectV2RejectSessionProposal(proposal.id));
     }
   };
 
@@ -641,8 +639,14 @@ export const WalletConnectStartModal = () => {
                         onPress={() => {
                           setShowAccountWCV2SelectionBottomModal(true);
                         }}>
-                        <Row style={{ alignItems: 'center', gap: 8, display: 'flex' }}>
-                        <CurrencyImageContainer style={{height: 30, width: 30}}>
+                        <Row
+                          style={{
+                            alignItems: 'center',
+                            gap: 8,
+                            display: 'flex',
+                          }}>
+                          <CurrencyImageContainer
+                            style={{height: 30, width: 30}}>
                             <Blockie
                               size={30}
                               seed={checkedAccount.receiveAddress}
@@ -672,15 +676,17 @@ export const WalletConnectStartModal = () => {
                               }}
                             />
                           </AccountSettingsArrowContainer>
-                        ) : <View>
-                        <SelectorArrowRight
-                          {...{
-                            width: 13,
-                            height: 13,
-                            color: theme.dark ? White : Slate,
-                          }}
-                        />
-                      </View>}
+                        ) : (
+                          <View>
+                            <SelectorArrowRight
+                              {...{
+                                width: 13,
+                                height: 13,
+                                color: theme.dark ? White : Slate,
+                              }}
+                            />
+                          </View>
+                        )}
                       </AccountSettingsContainer>
                     ) : (
                       <DescriptionItemContainer>

@@ -401,7 +401,7 @@ export interface TransactionProposal {
     transactionHash: string;
     transactionIndex: number;
     type: string;
-  }
+  };
 }
 
 export interface TransactionDetailsBuilt extends TransactionProposal {
@@ -426,7 +426,7 @@ export interface ProposalErrorHandlerProps {
   txp?: Partial<TransactionProposal>;
 }
 
-export type ProposalErrorHandlerContext =  'sell' | 'swap';
+export type ProposalErrorHandlerContext = 'sell' | 'swap';
 
 // UI details
 export interface TxDetailsAmount {

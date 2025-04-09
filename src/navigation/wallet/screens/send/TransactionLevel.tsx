@@ -120,8 +120,10 @@ export const FeeLevelStepCircle = styled.Pressable<{
   isDisabled?: boolean;
 }>`
   background-color: ${({backgroundColor}) => backgroundColor};
-  width: ${({ isActive }) => (isActive ? `${CIRCLE_ACTIVE_SIZE}px`  : `${CIRCLE_SIZE}px`)};
-  height: ${({ isActive }) => (isActive ? `${CIRCLE_ACTIVE_SIZE}px`  : `${CIRCLE_SIZE}px`)};
+  width: ${({isActive}) =>
+    isActive ? `${CIRCLE_ACTIVE_SIZE}px` : `${CIRCLE_SIZE}px`};
+  height: ${({isActive}) =>
+    isActive ? `${CIRCLE_ACTIVE_SIZE}px` : `${CIRCLE_SIZE}px`};
   border-width: ${({isActive}) => (isActive ? '3px' : 0)};
   border-color: ${White};
   border-radius: 50px;
@@ -642,7 +644,10 @@ const TransactionLevel = ({
                 </DetailsList>
 
                 <CtaContainer>
-                  <Button touchableLibrary={'react-native'} onPress={() => onApply()} disabled={disableApply}>
+                  <Button
+                    touchableLibrary={'react-native'}
+                    onPress={() => onApply()}
+                    disabled={disableApply}>
                     {t('Apply')}
                   </Button>
                 </CtaContainer>

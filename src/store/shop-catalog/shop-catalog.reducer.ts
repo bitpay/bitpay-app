@@ -1,5 +1,8 @@
 import {ShopCatalogState} from './shop-catalog.models';
-import {ShopCatalogActionType, ShopCatalogActionTypes} from './shop-catalog.types';
+import {
+  ShopCatalogActionType,
+  ShopCatalogActionTypes,
+} from './shop-catalog.types';
 
 export const initialShopCatalogState: ShopCatalogState = {
   availableCardMap: {},
@@ -15,7 +18,12 @@ export function shopCatalogReducer(
 ): ShopCatalogState {
   switch (action.type) {
     case ShopCatalogActionTypes.SUCCESS_FETCH_CATALOG:
-      const {availableCardMap, supportedCardMap, categoriesAndCurations, integrations} = action.payload;
+      const {
+        availableCardMap,
+        supportedCardMap,
+        categoriesAndCurations,
+        integrations,
+      } = action.payload;
       return {
         ...state,
         availableCardMap,

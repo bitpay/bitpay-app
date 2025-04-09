@@ -76,16 +76,14 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
       .string()
       .required()
       .trim()
-      .test(
-        'valid-invitation-code',
-        t('InvalidInvitationCode'),
-        (value) => {
-          if (!value) {return false;}
-          const partToValidate = value.slice(0, -4); // assuming network + chain is always 4 characters eg Lbtc
-          const regex = /^[0-9A-HJ-NP-Za-km-z]{70,80}$/;
-          return regex.test(partToValidate);
+      .test('valid-invitation-code', t('InvalidInvitationCode'), value => {
+        if (!value) {
+          return false;
         }
-      ),
+        const partToValidate = value.slice(0, -4); // assuming network + chain is always 4 characters eg Lbtc
+        const regex = /^[0-9A-HJ-NP-Za-km-z]{70,80}$/;
+        return regex.test(partToValidate);
+      }),
   });
   const {
     control,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import {View} from 'react-native';
 import haptic from '../../../components/haptic-feedback/haptic';
 import RefreshIcon from '../../../components/icons/refresh/RefreshIcon';
 import styled from 'styled-components/native';
@@ -132,7 +132,7 @@ const ReceiveAddressHeader = ({
                 <RefreshIcon />
               </Refresh>
             ) : null}
-            </RefreshContainer>
+          </RefreshContainer>
         </Header>
       );
   }

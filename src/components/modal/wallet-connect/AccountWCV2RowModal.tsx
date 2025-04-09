@@ -51,7 +51,9 @@ const CloseModalButton = styled(TouchableOpacity)`
   margin-left: 8px;
 `;
 
-const WalletSelectMenuHeaderContainer = styled(_WalletSelectMenuHeaderContainer)`
+const WalletSelectMenuHeaderContainer = styled(
+  _WalletSelectMenuHeaderContainer,
+)`
   margin-bottom: 20px;
   display: flex;
   flex-direction: row;
@@ -89,12 +91,12 @@ const AccountWCV2RowModal = ({
               color={theme.dark ? 'white' : 'black'}
               background={'rgba(255, 255, 255, 0.2)'}
               opacity={1}
-              />
+            />
           </CloseModalButton>
           <CenteredTitleContainer>
             <H4>{t('Select Account')}</H4>
           </CenteredTitleContainer>
-          <InvisiblePlaceholder style={{ width: 41 }} />
+          <InvisiblePlaceholder style={{width: 41}} />
         </WalletSelectMenuHeaderContainer>
         <ScrollView>
           <View style={{paddingBottom: 50}}>

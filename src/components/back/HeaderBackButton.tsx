@@ -19,9 +19,7 @@ const HeaderBackButton: React.FC<HeaderBackButtonProps> = ({onPress}) => {
   };
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      style={{paddingRight: 10}}>
+    <TouchableOpacity onPress={handlePress} style={{paddingRight: 10}}>
       <Back opacity={1} />
     </TouchableOpacity>
   );

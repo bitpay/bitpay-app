@@ -18,9 +18,7 @@ import WalletConnectConfirm, {
 } from './screens/WalletConnectConfirm';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../Root';
-import {
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
 import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface WalletConnectProps {

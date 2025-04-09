@@ -1,7 +1,10 @@
 import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {RampGetAssetsRequestData} from '../../models/ramp.models';
-import {RampSellTransactionDetails, RampGetSellTransactionDetailsRequestData} from '../../../sell-crypto/models/ramp-sell.models';
+import {
+  RampSellTransactionDetails,
+  RampGetSellTransactionDetailsRequestData,
+} from '../../../sell-crypto/models/ramp-sell.models';
 
 const bwsUri = BASE_BWS_URL;
 

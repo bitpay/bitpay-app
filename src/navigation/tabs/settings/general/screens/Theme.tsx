@@ -104,17 +104,29 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
       <View>
         <Setting onPress={() => onSetThemePress('light')}>
           <SettingTitle>{t('Light Mode')}</SettingTitle>
-          <Checkbox radio onPress={() => onSetThemePress('light')} checked={currentTheme === 'light'} />
+          <Checkbox
+            radio
+            onPress={() => onSetThemePress('light')}
+            checked={currentTheme === 'light'}
+          />
         </Setting>
         <Hr />
         <Setting onPress={() => onSetThemePress('dark')}>
           <SettingTitle>{t('Dark Mode')}</SettingTitle>
-          <Checkbox radio onPress={() => onSetThemePress('dark')} checked={currentTheme === 'dark'} />
+          <Checkbox
+            radio
+            onPress={() => onSetThemePress('dark')}
+            checked={currentTheme === 'dark'}
+          />
         </Setting>
         <Hr />
         <Setting onPress={() => onSetThemePress(null)}>
           <SettingTitle>{t('System Default')}</SettingTitle>
-          <Checkbox radio onPress={() => onSetThemePress(null)} checked={currentTheme === null} />
+          <Checkbox
+            radio
+            onPress={() => onSetThemePress(null)}
+            checked={currentTheme === null}
+          />
         </Setting>
       </View>
     </SafeAreaView>

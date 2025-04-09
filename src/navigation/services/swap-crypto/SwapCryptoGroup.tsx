@@ -17,9 +17,7 @@ import HistoryIcon from '../../../../assets/img/swap-crypto/icon-history.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Root, navigationRef} from '../../../Root';
-import {
-  baseNavigatorOptions,
-} from '../../../constants/NavigationOptions';
+import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import {SwapCryptoExchangeKey} from './utils/swap-crypto-utils';
 import {

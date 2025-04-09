@@ -50,7 +50,9 @@ export const ActionsContainer = styled.View<{alignEnd?: boolean}>`
   align-items: center;
 `;
 
-export const SelectedOptionContainer = styled(TouchableOpacity)<{noBackground?: boolean}>`
+export const SelectedOptionContainer = styled(TouchableOpacity)<{
+  noBackground?: boolean;
+}>`
   display: flex;
   flex-direction: row;
   justify-content: space-between;

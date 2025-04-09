@@ -2,7 +2,10 @@ import {
   MoonpaySellOrderData,
   MoonpaySellIncomingData,
 } from './models/moonpay-sell.models';
-import { RampSellIncomingData, RampSellOrderData } from './models/ramp-sell.models';
+import {
+  RampSellIncomingData,
+  RampSellOrderData,
+} from './models/ramp-sell.models';
 import {
   SimplexSellIncomingData,
   SimplexSellOrderData,

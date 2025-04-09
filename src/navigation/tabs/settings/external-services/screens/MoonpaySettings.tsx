@@ -258,7 +258,7 @@ const MoonpaySettings: React.FC = () => {
               ? TabTitle.sell
               : TabTitle.buy
           }
-          tabBar={(props) => <CustomTabBar {...props} />}>
+          tabBar={props => <CustomTabBar {...props} />}>
           <Tab.Screen
             name={TabTitle.buy}
             initialParams={route.params}
