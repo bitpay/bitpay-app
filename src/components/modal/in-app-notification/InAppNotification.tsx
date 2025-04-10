@@ -130,11 +130,13 @@ const InAppNotification: React.FC = () => {
           </MessageContainer>
           <CloseModalContainer>
             <CloseModalButton onPress={onBackdropPress}>
-              <CloseModal {...{
-                width: 20,
-                height: 20,
-                color: theme.dark ? White : Black,
-              }} />
+              <CloseModal
+                {...{
+                  width: 20,
+                  height: 20,
+                  color: theme.dark ? White : Black,
+                }}
+              />
             </CloseModalButton>
           </CloseModalContainer>
           <BlurContainer />

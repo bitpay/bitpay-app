@@ -62,7 +62,11 @@ import {
   GeneralError,
   WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
-import {BWCErrorMessage, BWCErrorName, getErrorName} from '../../../../constants/BWCError';
+import {
+  BWCErrorMessage,
+  BWCErrorName,
+  getErrorName,
+} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
@@ -1038,13 +1042,13 @@ const buildTransactionProposal =
               txp.feeLevel = undefined;
               txp.outputs.push({
                 toAddress: tx.toAddress,
-                amount:  Number(swapAmount) || 0,
+                amount: Number(swapAmount) || 0,
                 message: tx.description,
                 data: params[0]?.data,
                 gasLimit,
               });
             }
-          break;
+            break;
           default:
             txp.outputs.push({
               toAddress: tx.toAddress,
@@ -2202,12 +2206,18 @@ export const handleCreateTxProposalError =
         case BWCErrorName.INSUFFICIENT_ARB_FEE:
         case BWCErrorName.INSUFFICIENT_OP_FEE:
         case BWCErrorName.INSUFFICIENT_BASE_FEE:
-          return processInsufficientFundsForFee(proposalErrorProps, dispatch, onDismiss, errorName, context);
+          return processInsufficientFundsForFee(
+            proposalErrorProps,
+            dispatch,
+            onDismiss,
+            errorName,
+            context,
+          );
         default:
           return CustomErrorMessage({
             errMsg: BWCErrorMessage(err),
             title: t('Uh oh, something went wrong'),
-          })
+          });
       }
     } catch (err2) {
       return GeneralError();
