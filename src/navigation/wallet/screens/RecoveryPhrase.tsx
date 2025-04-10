@@ -135,24 +135,26 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const renderWordPairs = () => {
     const wordPairs = [];
 
-    for (let i = 0; i < words.length - 6; i++) {
+    for (let i = 0; i < words.length; i += 2) {
       const word1 = words[i];
-      const word2 = words[i + 6];
+      const word2 = words[i + 1];
+      const index1 = i + 1;
+      const index2 = i + 2;
 
-      const pair = (
+      wordPairs.push(
         <WordPairLine key={i}>
           <WordPairColumn>
-            <WordTextIndex>{i + 1}.</WordTextIndex>
+            <WordTextIndex>{index1}.</WordTextIndex>
             <WordText>{word1}</WordText>
           </WordPairColumn>
-          <WordPairColumn>
-            <WordTextIndex>{i + 7}.</WordTextIndex>
-            <WordText>{word2}</WordText>
-          </WordPairColumn>
-        </WordPairLine>
+          {word2 && (
+            <WordPairColumn>
+              <WordTextIndex>{index2}.</WordTextIndex>
+              <WordText>{word2}</WordText>
+            </WordPairColumn>
+          )}
+        </WordPairLine>,
       );
-
-      wordPairs.push(pair);
     }
 
     return wordPairs;
