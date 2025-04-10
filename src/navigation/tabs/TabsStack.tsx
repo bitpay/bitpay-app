@@ -144,10 +144,7 @@ const TabsStack = () => {
             dispatch(Analytics.track('Bill Pay - Clicked Bill Pay')),
         })}
       />
-       <Tab.Screen
-        name={TabsScreens.SETTINGS}
-        component={SettingsStack}
-      />
+      <Tab.Screen name={TabsScreens.SETTINGS} component={SettingsStack} />
     </Tab.Navigator>
   );
 };

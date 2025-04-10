@@ -80,10 +80,16 @@ const AllAddresses = () => {
 
   const combinedAddresses = [
     ...(usedAddresses?.length
-      ? [{type: 'sectionHeader', title: t('Addresses with balance')}, ...usedAddresses]
+      ? [
+          {type: 'sectionHeader', title: t('Addresses with balance')},
+          ...usedAddresses,
+        ]
       : []),
     ...(unusedAddresses?.length
-      ? [{type: 'sectionHeader', title: t('Unused addresses')}, ...unusedAddresses]
+      ? [
+          {type: 'sectionHeader', title: t('Unused addresses')},
+          ...unusedAddresses,
+        ]
       : []),
   ];
 
@@ -117,7 +123,10 @@ const AllAddresses = () => {
 
       let body: string = t(
         ' Wallet "" Addresses\nOnly Main Addresses are shown.\n\n\n\'',
-        {appName, walletName},
+        {
+          appName,
+          walletName,
+        },
       );
 
       body += allAddresses
@@ -143,14 +152,18 @@ const AllAddresses = () => {
   const renderItem = useCallback(
     ({item}: {item: any}) => {
       if (item.title) {
-        return (
-          <Title>{item.title}</Title>
-        );
+        return <Title>{item.title}</Title>;
       } else if (item.amount) {
         const {address, amount} = item;
         return (
           <View>
-            <VerticalPadding style={{flex: 1, alignItems: 'center', justifyContent: 'space-between' ,flexDirection: 'row'}}>
+            <VerticalPadding
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexDirection: 'row',
+              }}>
               <CopyRow
                 style={{justifyContent: 'center'}}
                 activeOpacity={ActiveOpacity}
@@ -167,11 +180,16 @@ const AllAddresses = () => {
               </CopyRow>
               <H7>
                 {dispatch(
-                  FormatAmountStr(currencyAbbreviation, chain, tokenAddress, amount),
+                  FormatAmountStr(
+                    currencyAbbreviation,
+                    chain,
+                    tokenAddress,
+                    amount,
+                  ),
                 )}
               </H7>
-              </VerticalPadding>
-              <Hr />
+            </VerticalPadding>
+            <Hr />
           </View>
         );
       } else {

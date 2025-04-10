@@ -100,7 +100,9 @@ export const ProcessPendingTxps =
     const ret: TransactionProposal[] = [];
     txps.forEach((tx: TransactionProposal) => {
       try {
-        if (wallet.id !== tx.walletId) {return;}
+        if (wallet.id !== tx.walletId) {
+          return;
+        }
 
         // Workaround for txps with matic as coin
         if (tx.coin === 'matic') {
@@ -253,38 +255,41 @@ const ProcessTx =
       );
     }
 
-    tx.feeStr = tx.receipt?.gasUsed && tx.receipt?.gasUsed > 0 &&
-    tx.receipt?.effectiveGasPrice && tx.receipt?.effectiveGasPrice > 0
-    ? // @ts-ignore
-      dispatch(
-        FormatAmountStr(
-          BitpaySupportedCoins[chain]?.feeCurrency,
-          chain,
-          undefined,
-          tx.receipt?.gasUsed * tx.receipt?.effectiveGasPrice,
-        ),
-      )
-    : tx.fee !== undefined && tx.fee !== null
-    ? // @ts-ignore
-      dispatch(
-        FormatAmountStr(
-          BitpaySupportedCoins[chain]?.feeCurrency,
-          chain,
-          undefined,
-          tx.fee,
-        ),
-      )
-    : tx.fees !== undefined && tx.fees !== null
-    ? // @ts-ignore
-      dispatch(
-        FormatAmountStr(
-          BitpaySupportedCoins[chain]?.feeCurrency,
-          chain,
-          undefined,
-          tx.fees,
-        ),
-      )
-    : 'N/A';
+    tx.feeStr =
+      tx.receipt?.gasUsed &&
+      tx.receipt?.gasUsed > 0 &&
+      tx.receipt?.effectiveGasPrice &&
+      tx.receipt?.effectiveGasPrice > 0
+        ? // @ts-ignore
+          dispatch(
+            FormatAmountStr(
+              BitpaySupportedCoins[chain]?.feeCurrency,
+              chain,
+              undefined,
+              tx.receipt?.gasUsed * tx.receipt?.effectiveGasPrice,
+            ),
+          )
+        : tx.fee !== undefined && tx.fee !== null
+        ? // @ts-ignore
+          dispatch(
+            FormatAmountStr(
+              BitpaySupportedCoins[chain]?.feeCurrency,
+              chain,
+              undefined,
+              tx.fee,
+            ),
+          )
+        : tx.fees !== undefined && tx.fees !== null
+        ? // @ts-ignore
+          dispatch(
+            FormatAmountStr(
+              BitpaySupportedCoins[chain]?.feeCurrency,
+              chain,
+              undefined,
+              tx.fees,
+            ),
+          )
+        : 'N/A';
 
     if (tx.amountStr) {
       tx.amountValueStr = tx.amountStr.split(' ')[0];
@@ -316,8 +321,11 @@ const shouldFilterTx = (tx: any, wallet: Wallet) => {
   // Filter if contract doesn't match the wallet token address
   if (isERCToken && hasEffects) {
     tx.effects = tx.effects.filter((effect: any) => {
-      const isMatchingContract = effect.contractAddress?.toLowerCase() === wallet.tokenAddress?.toLowerCase();
-      const isMatchingRecipient = !isReceived || effect.to === wallet.receiveAddress;
+      const isMatchingContract =
+        effect.contractAddress?.toLowerCase() ===
+        wallet.tokenAddress?.toLowerCase();
+      const isMatchingRecipient =
+        !isReceived || effect.to === wallet.receiveAddress;
       return isMatchingContract && isMatchingRecipient;
     });
     if (tx.effects.length === 0) {
@@ -982,12 +990,9 @@ export const BuildUiFriendlyList = (
     const isReceived = IsReceived(action);
     const isInvalid = IsInvalid(action);
 
-    const isTxForPaymentFee = !isReceived && TxForPaymentFeeEVM(
-      currencyAbbreviation,
-      coin,
-      chain,
-      amount,
-    );
+    const isTxForPaymentFee =
+      !isReceived &&
+      TxForPaymentFeeEVM(currencyAbbreviation, coin, chain, amount);
     let contactName;
     if (
       (isSent || isMoved) &&
@@ -1236,15 +1241,15 @@ export const buildTransactionDetails =
           receipt,
         } = transaction;
 
-          const {
-            WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress},
-          } = getState();
+        const {
+          WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress},
+        } = getState();
 
-          const tokensOptsByAddress = {
-            ...BitpaySupportedTokenOptsByAddress,
-            ...tokenOptionsByAddress,
-            ...customTokenOptionsByAddress,
-          };
+        const tokensOptsByAddress = {
+          ...BitpaySupportedTokenOptsByAddress,
+          ...tokenOptionsByAddress,
+          ...customTokenOptionsByAddress,
+        };
 
         // Only for payouts. For this case chain and coin have the same value.
         // Therefore, to identify an ERC20 token payout it is necessary to check if exist the tokenAddress field
@@ -1259,9 +1264,15 @@ export const buildTransactionDetails =
             ?.symbol.toLowerCase();
         }
 
-        const _fee = receipt?.gasUsed && receipt?.gasUsed > 0 && receipt?.effectiveGasPrice && receipt?.effectiveGasPrice > 0 ?
-        receipt?.gasUsed * receipt?.effectiveGasPrice :
-        fees != null ? fees : fee;
+        const _fee =
+          receipt?.gasUsed &&
+          receipt?.gasUsed > 0 &&
+          receipt?.effectiveGasPrice &&
+          receipt?.effectiveGasPrice > 0
+            ? receipt?.gasUsed * receipt?.effectiveGasPrice
+            : fees != null
+            ? fees
+            : fee;
 
         const alternativeCurrency = defaultAltCurrencyIsoCode;
 

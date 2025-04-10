@@ -24,8 +24,8 @@ import {
 } from '../../../store/app/app.effects';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
-import { RootStacks } from '../../../Root';
-import { TabsScreens } from '../../../navigation/tabs/TabsStack';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 
 const DeleteKeyContainer = styled.SafeAreaView`
   flex: 1;

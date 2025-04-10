@@ -41,7 +41,7 @@ import {
 } from '../screens/send/confirm/Shared';
 import {RootState} from '../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import { View } from 'react-native';
+import {View} from 'react-native';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;

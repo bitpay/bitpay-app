@@ -469,11 +469,11 @@ export const updateKeyStatus =
             });
 
             if (!dataOnly) {
-                // properties to update
-                wallet.balance = cryptoBalance;
-                wallet.pendingTxps = newPendingTxps;
-                wallet.isRefreshing = false;
-                wallet.singleAddress = status.wallet?.singleAddress;
+              // properties to update
+              wallet.balance = cryptoBalance;
+              wallet.pendingTxps = newPendingTxps;
+              wallet.isRefreshing = false;
+              wallet.singleAddress = status.wallet?.singleAddress;
             }
 
             dispatch(
@@ -1101,7 +1101,7 @@ export const buildPendingTxps =
   }): Effect<TransactionProposal[]> =>
   dispatch => {
     // skip erc20 pending proposals since those need to be signed with the associated wallet
-    if(IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+    if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
       return [];
     }
     let newPendingTxps = [];

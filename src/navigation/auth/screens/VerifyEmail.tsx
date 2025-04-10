@@ -153,7 +153,9 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
             <VerifyEmailParagraph>
               {t(
                 'We sent a verification email to. Open the link inside to continue.',
-                {email: email || t('your email address')},
+                {
+                  email: email || t('your email address'),
+                },
               )}
             </VerifyEmailParagraph>
 

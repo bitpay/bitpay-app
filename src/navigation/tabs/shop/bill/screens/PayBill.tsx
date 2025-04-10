@@ -318,7 +318,9 @@ const PayBill = ({
                     {formatFiatAmount(
                       account[account.type].nextPaymentMinimumAmount,
                       'USD',
-                      {customPrecision: 'minimal'},
+                      {
+                        customPrecision: 'minimal',
+                      },
                     )}
                   </BillPayOptionAmount>
                 </BillPayOption>
@@ -345,7 +347,9 @@ const PayBill = ({
                     {formatFiatAmount(
                       account[account.type].lastStatementBalance!,
                       'USD',
-                      {customPrecision: 'minimal'},
+                      {
+                        customPrecision: 'minimal',
+                      },
                     )}
                   </BillPayOptionAmount>
                 </BillPayOption>

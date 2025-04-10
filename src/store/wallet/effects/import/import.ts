@@ -205,7 +205,9 @@ export const startMigration =
 
         const profile = JSON.parse(
           await RNFS.readFile(cordovaStoragePath + 'profile', 'utf8'),
-        ) as {credentials: Wallet[]};
+        ) as {
+          credentials: Wallet[];
+        };
 
         // no keys
         if (!keys.length) {

@@ -59,9 +59,7 @@ const SardineTerms: React.FC<{
       <TouchableOpacity
         onPress={() => {
           haptic('impactLight');
-          dispatch(
-            openUrlWithInAppBrowser('https://crypto.sardine.ai/terms'),
-          );
+          dispatch(openUrlWithInAppBrowser('https://crypto.sardine.ai/terms'));
         }}>
         <Link style={{fontSize: 12}}>{t('Terms of service')}</Link>
       </TouchableOpacity>

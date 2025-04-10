@@ -1,6 +1,10 @@
 import React, {useCallback, useEffect, useRef} from 'react';
 import {ActivityIndicator} from 'react-native';
-import Animated, {useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import styled from 'styled-components/native';
 import {
   BottomSheetBackdrop,

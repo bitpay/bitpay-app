@@ -129,7 +129,9 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
               <LabelTipText>
                 {t(
                   'All of your wallet balance may not be available for immediate spending.',
-                  {currencyName: wallet.currencyName},
+                  {
+                    currencyName: wallet.currencyName,
+                  },
                 )}
               </LabelTipText>
             </LabelTip>

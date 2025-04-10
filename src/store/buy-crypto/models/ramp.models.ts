@@ -102,7 +102,13 @@ export interface RampQuoteResultForPaymentMethod {
 
 type RampFlow = 'OFFRAMP' | 'ONRAMP';
 
-export type RampPaymentMethodType = 'SEPA' | 'CARD' | 'APPLEPAY' | 'GOOGLEPAY' | 'PISP' | 'PIX';
+export type RampPaymentMethodType =
+  | 'SEPA'
+  | 'CARD'
+  | 'APPLEPAY'
+  | 'GOOGLEPAY'
+  | 'PISP'
+  | 'PIX';
 
 export interface RampPaymentUrlConfigParams {
   env: 'sandbox' | 'production';

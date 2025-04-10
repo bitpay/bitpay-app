@@ -262,13 +262,14 @@ const TransactionProposalDetails = () => {
             (_transaction.requiredSignatures as number) - 1,
         );
       }
-      setIsForFee(_transaction.action !== 'received' &&
-        TxForPaymentFeeEVM(
-          wallet.currencyAbbreviation,
-          transaction.coin,
-          transaction.chain,
-          transaction.amount,
-        ),
+      setIsForFee(
+        _transaction.action !== 'received' &&
+          TxForPaymentFeeEVM(
+            wallet.currencyAbbreviation,
+            transaction.coin,
+            transaction.chain,
+            transaction.amount,
+          ),
       );
       await sleep(500);
       setIsLoading(false);

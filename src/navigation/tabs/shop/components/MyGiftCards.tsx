@@ -177,7 +177,6 @@ const MyGiftCards = ({
           )}
         />
       </View>
-
     </>
   );
 };

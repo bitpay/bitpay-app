@@ -16,9 +16,7 @@ import PayAllBills from './screens/PayAllBills';
 import BillSettings from './screens/BillSettings';
 import ConnectBillsOptions from './screens/ConnectBillsOptions';
 import {Root} from '../../../../Root';
-import {
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
 import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import BillsHome from './screens/BillsHome';
 

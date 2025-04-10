@@ -64,7 +64,10 @@ const RangeDateSelector = ({onPress}: Props) => {
   ];
   const isActive = updateOptions.find(
     opt => opt.dateRange === activeOption,
-  ) as {label: string; dateRange: DateRanges};
+  ) as {
+    label: string;
+    dateRange: DateRanges;
+  };
 
   return (
     <ButtonsRow>

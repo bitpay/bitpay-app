@@ -58,8 +58,12 @@ export const getBuyEnabledPaymentMethods = (
   if (!currency || !coin || !chain) {
     return {};
   }
-  Object.values(PaymentMethodsAvailable).forEach((pm) => {
-    if (pm.enabled && pm.supportedCountries && pm.supportedCountries.length > 0) {
+  Object.values(PaymentMethodsAvailable).forEach(pm => {
+    if (
+      pm.enabled &&
+      pm.supportedCountries &&
+      pm.supportedCountries.length > 0
+    ) {
       pm.enabled = !!(country && pm.supportedCountries.includes(country));
     }
   });

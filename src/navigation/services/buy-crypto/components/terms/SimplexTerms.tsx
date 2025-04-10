@@ -33,18 +33,16 @@ const SimplexTerms: React.FC<{
             )}
           </ExchangeTermsText>
           <TouchableOpacity
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-am-I-paying-',
-              ),
-            );
-          }}>
-          <Link style={{fontSize: 12}}>
-            {t('Read more')}
-          </Link>
-        </TouchableOpacity>
+            onPress={() => {
+              haptic('impactLight');
+              dispatch(
+                openUrlWithInAppBrowser(
+                  'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-am-I-paying-',
+                ),
+              );
+            }}>
+            <Link style={{fontSize: 12}}>{t('Read more')}</Link>
+          </TouchableOpacity>
         </>
       ) : null}
       <ExchangeTermsText style={{marginTop: 6}}>

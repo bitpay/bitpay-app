@@ -145,7 +145,9 @@ export interface KeyWalletsRowProps extends SearchableItem {
   accounts: (AccountRowProps & {assetsByChain?: AssetsByChainData[]} & {
     checked?: boolean;
   })[];
-  mergedUtxoAndEvmAccounts: (WalletRowProps[] | (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[]);
+  mergedUtxoAndEvmAccounts:
+    | WalletRowProps[]
+    | (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[];
   coinbaseAccounts: WalletRowProps[];
 }
 
@@ -199,125 +201,164 @@ const KeyWalletsRow = ({
               )}
             </KeyNameContainer>
           )}
-        {key?.mergedUtxoAndEvmAccounts?.map((account, index) => {
-          const chain = account?.chain ?? account?.chains?.[0] ?? '';
-          if (IsEVMChain(chain)) {
-            let evmAccount = account as AccountRowProps & {
+          {key?.mergedUtxoAndEvmAccounts?.map((account, index) => {
+            const chain = account?.chain ?? account?.chains?.[0] ?? '';
+            if (IsEVMChain(chain)) {
+              let evmAccount = account as AccountRowProps & {
                 assetsByChain?: AssetsByChainData[];
-            };
-            return (
-              <AccountContainer
-                key={account.id}
-                isLast={key?.mergedUtxoAndEvmAccounts.length === index + 1}>
-                <AccountChainsContainer
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => onHide(evmAccount?.receiveAddress)}>
-                  <Blockie size={19} seed={evmAccount?.receiveAddress} />
-                  <Column>
-                    <H5 ellipsizeMode="tail" numberOfLines={1}>
-                      {evmAccount?.accountName}
-                    </H5>
-                  </Column>
-                  <Column style={{ alignItems: 'flex-end' }}>
-                    <ChainAssetsContainer>
-                      <BadgeContainer>
-                        <Badge>{formatCryptoAddress(evmAccount?.receiveAddress)}</Badge>
-                      </BadgeContainer>
-                      <ChevronContainer>
-                        {theme.dark ? (
-                          showChainAssets?.[evmAccount?.receiveAddress] !== false ? (
-                            <ChevronDownSvgDark width={10} height={6} />
+              };
+              return (
+                <AccountContainer
+                  key={account.id}
+                  isLast={key?.mergedUtxoAndEvmAccounts.length === index + 1}>
+                  <AccountChainsContainer
+                    activeOpacity={ActiveOpacity}
+                    onPress={() => onHide(evmAccount?.receiveAddress)}>
+                    <Blockie size={19} seed={evmAccount?.receiveAddress} />
+                    <Column>
+                      <H5 ellipsizeMode="tail" numberOfLines={1}>
+                        {evmAccount?.accountName}
+                      </H5>
+                    </Column>
+                    <Column style={{alignItems: 'flex-end'}}>
+                      <ChainAssetsContainer>
+                        <BadgeContainer>
+                          <Badge>
+                            {formatCryptoAddress(evmAccount?.receiveAddress)}
+                          </Badge>
+                        </BadgeContainer>
+                        <ChevronContainer>
+                          {theme.dark ? (
+                            showChainAssets?.[evmAccount?.receiveAddress] !==
+                            false ? (
+                              <ChevronDownSvgDark width={10} height={6} />
+                            ) : (
+                              <ChevronUpSvgDark width={10} height={6} />
+                            )
+                          ) : showChainAssets?.[evmAccount?.receiveAddress] !==
+                            false ? (
+                            <ChevronDownSvgLight width={10} height={6} />
                           ) : (
-                            <ChevronUpSvgDark width={10} height={6} />
-                          )
-                        ) : showChainAssets?.[evmAccount?.receiveAddress] !== false ? (
-                          <ChevronDownSvgLight width={10} height={6} />
-                        ) : (
-                          <ChevronUpSvgLight width={10} height={6} />
-                        )}
-                      </ChevronContainer>
-                    </ChainAssetsContainer>
-                  </Column>
-                </AccountChainsContainer>
-                {showChainAssets?.[evmAccount?.receiveAddress] !== false &&
-                  (evmAccount)?.assetsByChain?.filter(({chainAssetsList}) => chainAssetsList.length > 0).map(({ chain, chainImg, chainName, chainAssetsList }: {chain: string, chainImg: string | ((props?: any) => ReactElement), chainName: string, chainAssetsList: WalletRowProps[]}) => (
-                    <View key={chain}>
-                      <AccountChainTitleContainer>
-                        <CurrencyImageContainer>
-                          <CurrencyImage img={chainImg} size={20} />
-                        </CurrencyImageContainer>
-                        <H5 ellipsizeMode="tail" numberOfLines={1}>
-                          {chainName}
-                        </H5>
-                      </AccountChainTitleContainer>
+                            <ChevronUpSvgLight width={10} height={6} />
+                          )}
+                        </ChevronContainer>
+                      </ChainAssetsContainer>
+                    </Column>
+                  </AccountChainsContainer>
+                  {showChainAssets?.[evmAccount?.receiveAddress] !== false &&
+                    evmAccount?.assetsByChain
+                      ?.filter(
+                        ({chainAssetsList}) => chainAssetsList.length > 0,
+                      )
+                      .map(
+                        ({
+                          chain,
+                          chainImg,
+                          chainName,
+                          chainAssetsList,
+                        }: {
+                          chain: string;
+                          chainImg: string | ((props?: any) => ReactElement);
+                          chainName: string;
+                          chainAssetsList: WalletRowProps[];
+                        }) => (
+                          <View key={chain}>
+                            <AccountChainTitleContainer>
+                              <CurrencyImageContainer>
+                                <CurrencyImage img={chainImg} size={20} />
+                              </CurrencyImageContainer>
+                              <H5 ellipsizeMode="tail" numberOfLines={1}>
+                                {chainName}
+                              </H5>
+                            </AccountChainTitleContainer>
 
-                      <View style={{ marginTop: -10, marginLeft: -10 }}>
-                        {chainAssetsList.map(asset => (
-                          <WalletRow
-                            key={asset.id}
-                            id={asset.id}
-                            hideBalance={hideBalance}
-                            noBorder={true}
-                            onPress={() => {
-                              const fullWalletObj = findWalletById(
-                                keys[key.key].wallets,
-                                asset.id
-                              ) as Wallet;
-                              onPress(fullWalletObj);
-                            }}
-                            wallet={asset}
-                          />
-                        ))}
-                      </View>
-                    </View>
-                  ))}
-              </AccountContainer>
-            );
-          } else {
-            const wallet = account as WalletRowProps;
-            const prev = prevValueRef.current;
-            prevValueRef.current = wallet;
-            const showAssets =
-              showChainAssets?.[`${wallet.chain}-${key.key}`] !== false;
-            const chainWalletslength = Object.values(key.mergedUtxoAndEvmAccounts).flat().filter(wallet => wallet?.chain && wallet.chain === chain).length;
-            return (
-              <UtxoAccountContainer
-                key={wallet.id}
-                isLast={ key?.mergedUtxoAndEvmAccounts.length === index + 1 || !prev || (prev.chain !== wallet.chain && chainWalletslength === index + 1) }
-                isSameChain={!prev || prev.chain === wallet.chain}>
-                { !prev || prev.chain !== wallet.chain && <AccountChainsContainer
-                  activeOpacity={ActiveOpacity}
-                  onPress={() =>
-                    wallet?.chain && onHide(`${wallet.chain}-${key.key}`)
-                  }>
-                  <CurrencyImage img={wallet?.img} size={20} />
-                  <Column>
-                    <H5 ellipsizeMode="tail" numberOfLines={1}>
-                      {BitpaySupportedCoins[
-                      // @ts-ignore
-                        wallet?.currencyAbbreviation?.toLowerCase()
-                      ]?.name ?? ''}
-                    </H5>
-                  </Column>
-                  <Column style={{ alignItems: 'flex-end' }}>
-                    <ChainAssetsContainer>
-                      <ChevronContainer>
-                        {theme.dark ? (
-                          showChainAssets?.[`${wallet?.chain}-${key.key}`] !== false ? (
-                            <ChevronDownSvgDark width={10} height={6} />
-                          ) : (
-                            <ChevronUpSvgDark width={10} height={6} />
-                          )
-                        ) : showChainAssets?.[`${wallet?.chain}-${key.key}`] !== false ? (
-                          <ChevronDownSvgLight width={10} height={6} />
-                        ) : (
-                          <ChevronUpSvgLight width={10} height={6} />
-                        )}
-                      </ChevronContainer>
-                    </ChainAssetsContainer>
-                  </Column>
-                </AccountChainsContainer> }
-                    { showAssets && <View style={{ marginLeft: -10 }} key={wallet.id}>
+                            <View style={{marginTop: -10, marginLeft: -10}}>
+                              {chainAssetsList.map(asset => (
+                                <WalletRow
+                                  key={asset.id}
+                                  id={asset.id}
+                                  hideBalance={hideBalance}
+                                  noBorder={true}
+                                  onPress={() => {
+                                    const fullWalletObj = findWalletById(
+                                      keys[key.key].wallets,
+                                      asset.id,
+                                    ) as Wallet;
+                                    onPress(fullWalletObj);
+                                  }}
+                                  wallet={asset}
+                                />
+                              ))}
+                            </View>
+                          </View>
+                        ),
+                      )}
+                </AccountContainer>
+              );
+            } else {
+              const wallet = account as WalletRowProps;
+              const prev = prevValueRef.current;
+              prevValueRef.current = wallet;
+              const showAssets =
+                showChainAssets?.[`${wallet.chain}-${key.key}`] !== false;
+              const chainWalletslength = Object.values(
+                key.mergedUtxoAndEvmAccounts,
+              )
+                .flat()
+                .filter(
+                  wallet => wallet?.chain && wallet.chain === chain,
+                ).length;
+              return (
+                <UtxoAccountContainer
+                  key={wallet.id}
+                  isLast={
+                    key?.mergedUtxoAndEvmAccounts.length === index + 1 ||
+                    !prev ||
+                    (prev.chain !== wallet.chain &&
+                      chainWalletslength === index + 1)
+                  }
+                  isSameChain={!prev || prev.chain === wallet.chain}>
+                  {!prev ||
+                    (prev.chain !== wallet.chain && (
+                      <AccountChainsContainer
+                        activeOpacity={ActiveOpacity}
+                        onPress={() =>
+                          wallet?.chain && onHide(`${wallet.chain}-${key.key}`)
+                        }>
+                        <CurrencyImage img={wallet?.img} size={20} />
+                        <Column>
+                          <H5 ellipsizeMode="tail" numberOfLines={1}>
+                            {BitpaySupportedCoins[
+                              // @ts-ignore
+                              wallet?.currencyAbbreviation?.toLowerCase()
+                            ]?.name ?? ''}
+                          </H5>
+                        </Column>
+                        <Column style={{alignItems: 'flex-end'}}>
+                          <ChainAssetsContainer>
+                            <ChevronContainer>
+                              {theme.dark ? (
+                                showChainAssets?.[
+                                  `${wallet?.chain}-${key.key}`
+                                ] !== false ? (
+                                  <ChevronDownSvgDark width={10} height={6} />
+                                ) : (
+                                  <ChevronUpSvgDark width={10} height={6} />
+                                )
+                              ) : showChainAssets?.[
+                                  `${wallet?.chain}-${key.key}`
+                                ] !== false ? (
+                                <ChevronDownSvgLight width={10} height={6} />
+                              ) : (
+                                <ChevronUpSvgLight width={10} height={6} />
+                              )}
+                            </ChevronContainer>
+                          </ChainAssetsContainer>
+                        </Column>
+                      </AccountChainsContainer>
+                    ))}
+                  {showAssets && (
+                    <View style={{marginLeft: -10}} key={wallet.id}>
                       <WalletRow
                         id={wallet.id}
                         hideBalance={hideBalance}
@@ -325,17 +366,18 @@ const KeyWalletsRow = ({
                         onPress={() => {
                           const fullWalletObj = findWalletById(
                             keys[key.key].wallets,
-                            wallet.id
+                            wallet.id,
                           ) as Wallet;
                           onPress(fullWalletObj);
                         }}
                         wallet={wallet}
                       />
-                    </View> }
-              </UtxoAccountContainer>
-            );
-          }
-        })}
+                    </View>
+                  )}
+                </UtxoAccountContainer>
+              );
+            }
+          })}
 
           {key?.coinbaseAccounts?.map((wallet, index) => (
             <CoinbaseAccountContainer key={index}>

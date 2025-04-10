@@ -65,53 +65,55 @@ const RampSettings: React.FC = () => {
 
   const memoizedBuyCryptoHistory = useCallback(
     () => (
-      <SettingsComponent style={{marginTop:10, paddingBottom: 500}}>
-          {!!paymentRequests?.length && <PrTitle>{t('Payment Requests')}</PrTitle>}
-          {paymentRequests &&
-            paymentRequests.length > 0 &&
-            paymentRequests
-              .sort((a, b) => b.created_on - a.created_on)
-              .map(pr => {
-                return (
-                  <PrRow
-                    key={pr.external_id}
-                    onPress={() => {
-                      haptic('impactLight');
-                      navigation.navigate('RampDetails', {
-                        paymentRequest: pr,
-                      });
-                    }}>
-                    <PrRowLeft>
-                      <PrTxtFiatAmount>
-                        {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
-                      </PrTxtFiatAmount>
-                      {!pr.status ||
-                        (pr.status === 'paymentRequestSent' && (
-                          <PrTxtStatus>
-                            {t('Attempted payment request')}
-                          </PrTxtStatus>
-                        ))}
-                      {pr.status && ['pending'].includes(pr.status) && (
+      <SettingsComponent style={{marginTop: 10, paddingBottom: 500}}>
+        {!!paymentRequests?.length && (
+          <PrTitle>{t('Payment Requests')}</PrTitle>
+        )}
+        {paymentRequests &&
+          paymentRequests.length > 0 &&
+          paymentRequests
+            .sort((a, b) => b.created_on - a.created_on)
+            .map(pr => {
+              return (
+                <PrRow
+                  key={pr.external_id}
+                  onPress={() => {
+                    haptic('impactLight');
+                    navigation.navigate('RampDetails', {
+                      paymentRequest: pr,
+                    });
+                  }}>
+                  <PrRowLeft>
+                    <PrTxtFiatAmount>
+                      {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
+                    </PrTxtFiatAmount>
+                    {!pr.status ||
+                      (pr.status === 'paymentRequestSent' && (
                         <PrTxtStatus>
-                          {t('Processing payment request')}
+                          {t('Attempted payment request')}
                         </PrTxtStatus>
-                      )}
-                    </PrRowLeft>
-                    <PrRowRight>
-                      <PrTxtCryptoAmount>
-                        {pr.crypto_amount} {pr.coin}
-                      </PrTxtCryptoAmount>
-                      <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
-                    </PrRowRight>
-                  </PrRow>
-                );
-              })}
-          {(!paymentRequests || paymentRequests.length === 0) && (
-            <NoPrMsg>
-              {t('There are currently no transactions with Ramp Network')}
-            </NoPrMsg>
-          )}
-        </SettingsComponent>
+                      ))}
+                    {pr.status && ['pending'].includes(pr.status) && (
+                      <PrTxtStatus>
+                        {t('Processing payment request')}
+                      </PrTxtStatus>
+                    )}
+                  </PrRowLeft>
+                  <PrRowRight>
+                    <PrTxtCryptoAmount>
+                      {pr.crypto_amount} {pr.coin}
+                    </PrTxtCryptoAmount>
+                    <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
+                  </PrRowRight>
+                </PrRow>
+              );
+            })}
+        {(!paymentRequests || paymentRequests.length === 0) && (
+          <NoPrMsg>
+            {t('There are currently no transactions with Ramp Network')}
+          </NoPrMsg>
+        )}
+      </SettingsComponent>
     ),
     [paymentRequests],
   );
@@ -138,30 +140,33 @@ const RampSettings: React.FC = () => {
                     <PrTxtFiatAmount>
                       {so.crypto_amount} {so.coin}
                     </PrTxtFiatAmount>
-                    {!so.status || ['created', 'createdOrder'].includes(so.status) ? (
+                    {!so.status ||
+                    ['created', 'createdOrder'].includes(so.status) ? (
                       <PrTxtStatus>{t('Sell order started')}</PrTxtStatus>
                     ) : null}
-                    {so.status ?
-                    <>
-                      {['bitpayFromCheckout', 'bitpayTxSent'].includes(
-                        so.status,
-                      ) && (
-                        <PrTxtStatus>{t('Processing sell order')}</PrTxtStatus>
-                      )}
+                    {so.status ? (
+                      <>
+                        {['bitpayFromCheckout', 'bitpayTxSent'].includes(
+                          so.status,
+                        ) && (
+                          <PrTxtStatus>
+                            {t('Processing sell order')}
+                          </PrTxtStatus>
+                        )}
 
-                      {so.status === 'released' && (
-                        <PrTxtStatus style={{color: '#01d1a2'}}>
-                          {t('Sell order completed')}
-                        </PrTxtStatus>
-                      )}
+                        {so.status === 'released' && (
+                          <PrTxtStatus style={{color: '#01d1a2'}}>
+                            {t('Sell order completed')}
+                          </PrTxtStatus>
+                        )}
 
-                      {so.status === 'expired' && (
-                        <PrTxtStatus style={{color: '#df5264'}}>
-                          {t('Sell order expired')}
-                        </PrTxtStatus>
-                      )}
-
-                    </> : null}
+                        {so.status === 'expired' && (
+                          <PrTxtStatus style={{color: '#df5264'}}>
+                            {t('Sell order expired')}
+                          </PrTxtStatus>
+                        )}
+                      </>
+                    ) : null}
                   </PrRowLeft>
                   <PrRowRight>
                     <PrTxtCryptoAmount>
@@ -186,17 +191,13 @@ const RampSettings: React.FC = () => {
   useEffect(() => {
     if (incomingPaymentRequest?.flow === 'buy') {
       logger.debug(
-        `Coming from payment request: rampExternalId: ${
-          incomingPaymentRequest.rampExternalId
-        }`,
+        `Coming from payment request: rampExternalId: ${incomingPaymentRequest.rampExternalId}`,
       );
     }
 
     if (incomingPaymentRequest?.flow === 'sell') {
       logger.debug(
-        `Coming from sell order: rampExternalId: ${
-          incomingPaymentRequest.rampExternalId
-        }`,
+        `Coming from sell order: rampExternalId: ${incomingPaymentRequest.rampExternalId}`,
       );
     }
   }, []);
@@ -218,7 +219,7 @@ const RampSettings: React.FC = () => {
   return (
     <>
       <SettingsContainer>
-      <Tab.Navigator
+        <Tab.Navigator
           initialRouteName={
             incomingPaymentRequest?.flow === 'sell'
               ? TabTitle.sell

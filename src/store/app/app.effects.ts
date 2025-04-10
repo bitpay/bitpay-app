@@ -899,7 +899,9 @@ export const requestNotificationsPermissions = async (): Promise<boolean> => {
     'alert',
     'badge',
     'sound',
-  ]).catch(() => ({status: null}));
+  ]).catch(() => ({
+    status: null,
+  }));
 
   return status?.toLowerCase() === RESULTS.GRANTED;
 };

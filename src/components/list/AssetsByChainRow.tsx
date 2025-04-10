@@ -75,16 +75,19 @@ const AssetsByChainRow = ({
   }>(initialSelected);
   const theme = useTheme();
 
-  const memoizedRenderItem = useCallback(({item}: {item: WalletRowProps}) => {
-    return (
-      <WalletRow
-        id={item.id}
-        hideBalance={hideBalance}
-        onPress={() => onPress(item.id, item.copayerId)}
-        wallet={item}
-      />
-    );
-  }, [hideBalance]);
+  const memoizedRenderItem = useCallback(
+    ({item}: {item: WalletRowProps}) => {
+      return (
+        <WalletRow
+          id={item.id}
+          hideBalance={hideBalance}
+          onPress={() => onPress(item.id, item.copayerId)}
+          wallet={item}
+        />
+      );
+    },
+    [hideBalance],
+  );
 
   const onHide = () => {
     setShowChainAssets({[chain]: !showChainAssets[chain]});

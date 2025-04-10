@@ -8,7 +8,7 @@ import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import CustomTabBar from '../../../components/custom-tab-bar/CustomTabBar';
-import { Platform } from 'react-native';
+import {Platform} from 'react-native';
 
 type ImportScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -39,9 +39,17 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
 
   return (
     <ImportContainer accessibilityLabel="import-view">
-      <Tab.Navigator tabBar={(props) => <CustomTabBar {...props} />}>
-        <Tab.Screen name={t('Phrase')} component={RecoveryPhrase} initialParams={route.params} />
-        <Tab.Screen name={t('Plain Text')} component={FileOrText} initialParams={route.params} />
+      <Tab.Navigator tabBar={props => <CustomTabBar {...props} />}>
+        <Tab.Screen
+          name={t('Phrase')}
+          component={RecoveryPhrase}
+          initialParams={route.params}
+        />
+        <Tab.Screen
+          name={t('Plain Text')}
+          component={FileOrText}
+          initialParams={route.params}
+        />
       </Tab.Navigator>
     </ImportContainer>
   );

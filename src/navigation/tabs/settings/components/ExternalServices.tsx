@@ -42,7 +42,7 @@ const ExternalServices = () => {
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre,
   );
   const [thorswapTxData, setThorswapTxData] = useState(
-    Object.values(thorswapHistory)
+    Object.values(thorswapHistory),
   );
   const [wyrePaymentRequests, setWyrePaymentRequests] = useState(
     [] as WyrePaymentData[],

@@ -412,47 +412,52 @@ const ChangellyCheckout: React.FC = () => {
         );
 
         try {
-          const ctxp = await createTx(fromWalletSelected, payinAddress, depositSat, payinExtraId);
-            setCtxp(ctxp);
-            setFee(ctxp.fee);
+          const ctxp = await createTx(
+            fromWalletSelected,
+            payinAddress,
+            depositSat,
+            payinExtraId,
+          );
+          setCtxp(ctxp);
+          setFee(ctxp.fee);
 
-            const _txData = {
-              addressFrom,
-              addressTo,
-              payinExtraId,
-              status,
-              payinAddress,
-            };
-            setTxData(_txData);
+          const _txData = {
+            addressFrom,
+            addressTo,
+            payinExtraId,
+            status,
+            payinAddress,
+          };
+          setTxData(_txData);
 
-            setIsLoading(false);
-            dispatch(dismissOnGoingProcessModal());
-            await sleep(400);
+          setIsLoading(false);
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(400);
 
-            if (useSendMax) {
-              showSendMaxWarning(
-                ctxp.coin,
-                ctxp.chain,
-                fromWalletSelected.tokenAddress,
-              );
-            }
-            return;
+          if (useSendMax) {
+            showSendMaxWarning(
+              ctxp.coin,
+              ctxp.chain,
+              fromWalletSelected.tokenAddress,
+            );
+          }
+          return;
         } catch (err: any) {
           const reason = 'createTx Error';
           if (err.code) {
-            showError(err.message , reason, err.code, err.title, err.actions);
+            showError(err.message, reason, err.code, err.title, err.actions);
             return;
           }
 
           let msg = t('Error creating transaction');
-            let errorMsgLog;
-            if (typeof err?.message === 'string') {
-              msg = msg + `: ${err.message}`;
-              errorMsgLog = err.message;
-            }
+          let errorMsgLog;
+          if (typeof err?.message === 'string') {
+            msg = msg + `: ${err.message}`;
+            errorMsgLog = err.message;
+          }
 
-            showError(msg, reason, errorMsgLog);
-            return;
+          showError(msg, reason, errorMsgLog);
+          return;
         }
       })
       .catch(err => {
@@ -496,7 +501,8 @@ const ChangellyCheckout: React.FC = () => {
           context: 'ChangellyCheckout',
           reasonForFailure: 'Time to make the payment expired',
           amountFrom: amountFrom || '',
-          fromCoin: fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+          fromCoin:
+            fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
           fromChain: fromWalletSelected.chain?.toLowerCase() || '',
           toCoin: toWalletSelected.currencyAbbreviation?.toLowerCase() || '',
           toChain: toWalletSelected.chain?.toLowerCase() || '',
@@ -624,7 +630,10 @@ const ChangellyCheckout: React.FC = () => {
       const ctxp = await dispatch(createTxProposal(wallet, txp));
       return Promise.resolve(ctxp);
     } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : err?.err?.message ?? JSON.stringify(err);
+      const errStr =
+        err instanceof Error
+          ? err.message
+          : err?.err?.message ?? JSON.stringify(err);
       const log = `changellyCheckout createTxProposal error: ${errStr}`;
       logger.error(log);
 
@@ -831,7 +840,13 @@ const ChangellyCheckout: React.FC = () => {
     );
   };
 
-  const showError = async (msg?: string, reason?: string, errorMsgLog?: string, title?: string, actions?: any[]) => {
+  const showError = async (
+    msg?: string,
+    reason?: string,
+    errorMsgLog?: string,
+    title?: string,
+    actions?: any[],
+  ) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
@@ -1082,16 +1097,16 @@ const ChangellyCheckout: React.FC = () => {
         <>
           {!termsAccepted ? (
             <TouchableOpacity
-            onPress={() => {
-              scrollViewRef?.current?.scrollToEnd({animated: true});
-              setShowCheckTermsMsg(true);
-            }}>
-            <SwipeButton
-              title={'Slide to send'}
-              disabled={true}
-              onSwipeComplete={() => {}}
-            />
-          </TouchableOpacity>
+              onPress={() => {
+                scrollViewRef?.current?.scrollToEnd({animated: true});
+                setShowCheckTermsMsg(true);
+              }}>
+              <SwipeButton
+                title={'Slide to send'}
+                disabled={true}
+                onSwipeComplete={() => {}}
+              />
+            </TouchableOpacity>
           ) : (
             <SwipeButton
               title={'Slide to send'}

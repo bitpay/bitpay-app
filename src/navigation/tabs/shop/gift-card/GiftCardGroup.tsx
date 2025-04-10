@@ -15,9 +15,7 @@ import Confirm, {
 } from '../../../wallet/screens/send/confirm/GiftCardConfirm';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../../../Root';
-import {
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
 import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import GiftCardDeeplinkScreen, {
   GiftCardDeeplinkScreenParamList,

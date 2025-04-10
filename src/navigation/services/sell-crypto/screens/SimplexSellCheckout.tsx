@@ -454,7 +454,10 @@ const SimplexSellCheckout: React.FC = () => {
       const ctxp = await dispatch(createTxProposal(wallet, txp));
       return Promise.resolve(ctxp);
     } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : err?.err?.message ?? JSON.stringify(err);
+      const errStr =
+        err instanceof Error
+          ? err.message
+          : err?.err?.message ?? JSON.stringify(err);
       const log = `simplexSellCheckout createTxProposal error: ${errStr}`;
       logger.error(log);
 
@@ -684,7 +687,13 @@ const SimplexSellCheckout: React.FC = () => {
     return msg;
   };
 
-  const showError = async (err?: any, reason?: string, errorMsgLog?: string, title?: string, actions?: any[]) => {
+  const showError = async (
+    err?: any,
+    reason?: string,
+    errorMsgLog?: string,
+    title?: string,
+    actions?: any[],
+  ) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
 
@@ -795,7 +804,7 @@ const SimplexSellCheckout: React.FC = () => {
         .catch((err: any) => {
           const reason = 'createTx Error';
           if (err.code) {
-            showError(err.message , reason, err.code, err.title, err.actions);
+            showError(err.message, reason, err.code, err.title, err.actions);
             return;
           }
 
@@ -1087,16 +1096,16 @@ const SimplexSellCheckout: React.FC = () => {
         <>
           {!termsAccepted ? (
             <TouchableOpacity
-            onPress={() => {
-              scrollViewRef?.current?.scrollToEnd({animated: true});
-              setShowCheckTermsMsg(true);
-            }}>
-            <SwipeButton
-              title={'Slide to sell'}
-              disabled={true}
-              onSwipeComplete={() => {}}
-            />
-          </TouchableOpacity>
+              onPress={() => {
+                scrollViewRef?.current?.scrollToEnd({animated: true});
+                setShowCheckTermsMsg(true);
+              }}>
+              <SwipeButton
+                title={'Slide to sell'}
+                disabled={true}
+                onSwipeComplete={() => {}}
+              />
+            </TouchableOpacity>
           ) : (
             <SwipeButton
               title={'Slide to sell'}

@@ -182,9 +182,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 9,
     label: 'PISP',
     method: 'pisp',
-    imgSrc: (
-      <PaymentMethodIcon paymentMethodId="pisp" width={40} height={40} />
-    ),
+    imgSrc: <PaymentMethodIcon paymentMethodId="pisp" width={40} height={40} />,
     supportedExchanges: {
       banxa: false,
       moonpay: false,

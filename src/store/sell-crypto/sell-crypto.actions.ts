@@ -7,7 +7,10 @@ import {
   SimplexSellIncomingData,
   SimplexSellOrderData,
 } from './models/simplex-sell.models';
-import { RampSellIncomingData, RampSellOrderData } from './models/ramp-sell.models';
+import {
+  RampSellIncomingData,
+  RampSellOrderData,
+} from './models/ramp-sell.models';
 
 export const successSellOrderMoonpay = (payload: {
   moonpaySellOrderData: MoonpaySellOrderData;

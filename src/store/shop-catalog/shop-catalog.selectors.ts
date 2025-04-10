@@ -9,7 +9,9 @@ import {
   DirectIntegrationMap,
 } from '../shop/shop.models';
 
-export const selectAvailableCardMap: AppSelector<CardConfigMap> = ({SHOP_CATALOG}) => {
+export const selectAvailableCardMap: AppSelector<CardConfigMap> = ({
+  SHOP_CATALOG,
+}) => {
   return SHOP_CATALOG.availableCardMap;
 };
 

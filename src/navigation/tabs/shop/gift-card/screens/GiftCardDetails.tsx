@@ -276,7 +276,9 @@ const GiftCardDetails = ({
       cardConfig.redeemInstructions ||
       t(
         'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
-        {website: cardConfig.website},
+        {
+          website: cardConfig.website,
+        },
       );
     const containsHtml =
       redeemInstructions.includes('</') || redeemInstructions.includes('/>');

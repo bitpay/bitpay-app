@@ -80,7 +80,12 @@ export interface CurrencyOpts {
   };
   paymentInfo: {
     paymentCode: string;
-    protocolPrefix: {livenet: string; testnet: string; testnet4?: string; regtest: string;};
+    protocolPrefix: {
+      livenet: string;
+      testnet: string;
+      testnet4?: string;
+      regtest: string;
+    };
     // Urls
     ratesApi: string;
     blockExplorerUrls: string;

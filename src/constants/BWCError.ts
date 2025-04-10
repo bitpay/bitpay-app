@@ -94,9 +94,7 @@ const _getErrorMessage = (err: Error) => {
     case BWCErrorName.COPAYER_IN_WALLET:
       return t('Copayer already in this wallet');
     case BWCErrorName.COPAYER_REGISTERED:
-      return t(
-        'Key already associated with an existing wallet',
-      );
+      return t('Key already associated with an existing wallet');
     case BWCErrorName.COPAYER_VOTED:
       return t('Copayer already voted on this spend proposal');
     case BWCErrorName.COULD_NOT_BUILD_TRANSACTION:
@@ -254,7 +252,9 @@ const _getErrorMessage = (err: Error) => {
     case BWCErrorName.WRONG_PASSWORD:
       return t('Wrong password');
     case BWCErrorName.TX_NONCE_CONFLICT:
-      return t('Unsigned TX proposal(s) with lower or conflicting nonces exist. Please sign or reject them first.');
+      return t(
+        'Unsigned TX proposal(s) with lower or conflicting nonces exist. Please sign or reject them first.',
+      );
     case BWCErrorName.ERROR:
       return err.message;
     default:

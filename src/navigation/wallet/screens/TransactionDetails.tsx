@@ -304,13 +304,14 @@ const TransactionDetails = () => {
 
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
-      setIsForFee(transaction.action !== 'received' &&
-        TxForPaymentFeeEVM(
-          wallet.currencyAbbreviation,
-          transaction.coin,
-          transaction.chain,
-          transaction.amount,
-        ),
+      setIsForFee(
+        transaction.action !== 'received' &&
+          TxForPaymentFeeEVM(
+            wallet.currencyAbbreviation,
+            transaction.coin,
+            transaction.chain,
+            transaction.amount,
+          ),
       );
       await sleep(500);
       setIsLoading(false);

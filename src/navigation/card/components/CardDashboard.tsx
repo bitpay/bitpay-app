@@ -178,6 +178,7 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
     ({item}: {item: Card[]}) =>
       activeCard.id === item[0].id ? (
         <></>
+      ) : (
         // <SharedElement
         //   id={'card.dashboard.active-card.' + item[0].id}
         //   style={{paddingHorizontal: 10}}>
@@ -190,7 +191,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
         //     />
         //   </TouchableOpacity>
         // </SharedElement>
-      ) : (
         <CardOverviewSlide
           card={item[0]}
           designCurrency={virtualDesignCurrency}

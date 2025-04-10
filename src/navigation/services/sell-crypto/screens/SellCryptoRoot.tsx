@@ -129,9 +129,18 @@ import {simplexGetCurrencies} from '../../../../store/buy-crypto/effects/simplex
 import {isEuCountry} from '../../../../store/location/location.effects';
 import ArchaxFooter from '../../../../components/archax/archax-footer';
 import {rampGetAssets} from '../../../../store/buy-crypto/effects/ramp/ramp';
-import {getChainFromRampChainFormat, getCoinFromRampCoinFormat, getRampSellCurrenciesFixedProps, rampSellEnv} from '../utils/ramp-sell-utils';
+import {
+  getChainFromRampChainFormat,
+  getCoinFromRampCoinFormat,
+  getRampSellCurrenciesFixedProps,
+  rampSellEnv,
+} from '../utils/ramp-sell-utils';
 import cloneDeep from 'lodash.clonedeep';
-import {RampAssetInfo, RampGetAssetsData, RampGetAssetsRequestData} from '../../../../store/buy-crypto/models/ramp.models';
+import {
+  RampAssetInfo,
+  RampGetAssetsData,
+  RampGetAssetsRequestData,
+} from '../../../../store/buy-crypto/models/ramp.models';
 
 export type SellCryptoRootScreenParams =
   | {
@@ -436,10 +445,12 @@ const SellCryptoRoot = ({
       (wallet.network === 'livenet' ||
         (__DEV__ &&
           wallet.network === 'testnet' &&
-          ['btc', 'eth'].includes(getExternalServiceSymbol(
-            wallet.currencyAbbreviation.toLowerCase(),
-            wallet.chain,
-          )))) &&
+          ['btc', 'eth'].includes(
+            getExternalServiceSymbol(
+              wallet.currencyAbbreviation.toLowerCase(),
+              wallet.chain,
+            ),
+          ))) &&
       wallet.balance?.satSpendable > 0 &&
       sellCryptoSupportedCoins &&
       sellCryptoSupportedCoins.some(coin => {
@@ -464,10 +475,12 @@ const SellCryptoRoot = ({
       (wallet.network === 'livenet' ||
         (__DEV__ &&
           wallet.network === 'testnet' &&
-          ['btc', 'eth'].includes(getExternalServiceSymbol(
-            wallet.currencyAbbreviation.toLowerCase(),
-            wallet.chain,
-          )))) &&
+          ['btc', 'eth'].includes(
+            getExternalServiceSymbol(
+              wallet.currencyAbbreviation.toLowerCase(),
+              wallet.chain,
+            ),
+          ))) &&
       sellCryptoSupportedCoins &&
       sellCryptoSupportedCoins.some(coin => {
         const symbol = getExternalServiceSymbol(
@@ -625,15 +638,16 @@ const SellCryptoRoot = ({
           fiatCurrency,
           locationData?.countryShortCode || 'US',
           user?.country,
-        ) || isWithdrawalMethodSupported(
-          'ramp',
-          selectedPaymentMethod,
-          selectedWallet.currencyAbbreviation,
-          selectedWallet.chain,
-          fiatCurrency,
-          locationData?.countryShortCode || 'US',
-          user?.country,
         ) ||
+          isWithdrawalMethodSupported(
+            'ramp',
+            selectedPaymentMethod,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            fiatCurrency,
+            locationData?.countryShortCode || 'US',
+            user?.country,
+          ) ||
           isWithdrawalMethodSupported(
             'simplex',
             selectedPaymentMethod,
@@ -857,12 +871,11 @@ const SellCryptoRoot = ({
       maxAmount: undefined,
     };
     if (sellCryptoExchangesDefault.ramp.supportedCoins) {
-      const selectedCoin =
-        sellCryptoExchangesDefault.ramp.supportedCoins.find(
-          coin =>
-            coin.symbol ===
-            getExternalServiceSymbol(wallet.currencyAbbreviation, wallet.chain),
-        );
+      const selectedCoin = sellCryptoExchangesDefault.ramp.supportedCoins.find(
+        coin =>
+          coin.symbol ===
+          getExternalServiceSymbol(wallet.currencyAbbreviation, wallet.chain),
+      );
 
       if (selectedCoin) {
         rampLimits = {
@@ -1033,13 +1046,8 @@ const SellCryptoRoot = ({
     return supportedCoins;
   };
 
-  const filterRampCurrenciesConditions = (
-    currency: RampAssetInfo,
-  ): boolean => {
-    return (
-      !currency.hidden &&
-      currency.enabled
-    );
+  const filterRampCurrenciesConditions = (currency: RampAssetInfo): boolean => {
+    return !currency.hidden && currency.enabled;
   };
 
   const getRampCurrencies = async () => {
@@ -1066,7 +1074,8 @@ const SellCryptoRoot = ({
       },
     );
 
-    const rampAllSellSupportedCurrenciesFixedProps: RampAssetInfo[] = getRampSellCurrenciesFixedProps(rampAllSellCurrencies);
+    const rampAllSellSupportedCurrenciesFixedProps: RampAssetInfo[] =
+      getRampSellCurrenciesFixedProps(rampAllSellCurrencies);
 
     const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
     const rampSellSupportedCurrenciesFullObj =
@@ -1074,9 +1083,7 @@ const SellCryptoRoot = ({
         return (
           currency.chain &&
           [...SupportedChains].includes(
-            getChainFromRampChainFormat(
-              currency.chain,
-            )!,
+            getChainFromRampChainFormat(currency.chain)!,
           ) &&
           (getCoinFromRampCoinFormat(currency.symbol) === 'eth' ||
             (['eth', 'matic', 'arbitrum', 'base', 'optimism'].includes(
@@ -1085,9 +1092,7 @@ const SellCryptoRoot = ({
               ? allSupportedTokens.includes(
                   getCurrencyAbbreviation(
                     getCoinFromRampCoinFormat(currency.symbol),
-                    getChainFromRampChainFormat(
-                      currency.chain,
-                    )!,
+                    getChainFromRampChainFormat(currency.chain)!,
                   ),
                 )
               : true))
@@ -1119,15 +1124,19 @@ const SellCryptoRoot = ({
             currencyAbbreviation: symbol.toLowerCase(),
             symbol: getExternalServiceSymbol(symbol, chain),
             name,
-            chain: getChainFromRampChainFormat(
-              chain,
-            )!,
+            chain: getChainFromRampChainFormat(chain)!,
             protocol: type,
             logoUri: getLogoUri(symbol.toLowerCase(), chain),
             tokenAddress: address,
             limits: {
-              min: (minPurchaseAmount && minPurchaseAmount > 0) ? minPurchaseAmount : undefined,
-              max: (maxPurchaseAmount && maxPurchaseAmount > 0) ? maxPurchaseAmount : undefined,
+              min:
+                minPurchaseAmount && minPurchaseAmount > 0
+                  ? minPurchaseAmount
+                  : undefined,
+              max:
+                maxPurchaseAmount && maxPurchaseAmount > 0
+                  ? maxPurchaseAmount
+                  : undefined,
             },
             precision: decimals,
           };
@@ -1386,8 +1395,7 @@ const SellCryptoRoot = ({
                   break;
                 case 'ramp':
                   logger.debug(
-                    'getRampCurrencies Error: ' +
-                      e.promiseRes.reason.message,
+                    'getRampCurrencies Error: ' + e.promiseRes.reason.message,
                   );
                   sellCryptoExchangesDefault.ramp.showOffer = false;
                   break;
@@ -1475,7 +1483,9 @@ const SellCryptoRoot = ({
         if (allSupportedCoinsOrdered?.length > 0) {
           setSellCryptoSupportedCoins(allSupportedCoinsOrdered);
         } else {
-          logger.error('Sell crypto getCurrencies Error: allSupportedCoins array is empty');
+          logger.error(
+            'Sell crypto getCurrencies Error: allSupportedCoins array is empty',
+          );
           const msg = t(
             'Sell Crypto feature is not available at this moment. Please try again later.',
           );

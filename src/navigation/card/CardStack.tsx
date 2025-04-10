@@ -1,7 +1,7 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 // import {createSharedElementStackNavigator} from 'react-navigation-shared-element';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {oldBaseNavigatorOptions} from '../../constants/NavigationOptions';
 import CardHome, {CardHomeScreenParamList} from './screens/CardHome';
 import CardPairingScreen, {

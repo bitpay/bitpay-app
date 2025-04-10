@@ -499,7 +499,10 @@ export const ValidateCoinAddress = (
 };
 
 export const IsValidPrivateKey = (data: string): boolean => {
-  const checkPrivateKey = (privateKey: string, network: 'livenet' | 'testnet'): boolean => {
+  const checkPrivateKey = (
+    privateKey: string,
+    network: 'livenet' | 'testnet',
+  ): boolean => {
     const providers = [
       BwcProvider.getInstance().getBitcore(),
       BwcProvider.getInstance().getBitcoreCash(),
@@ -511,14 +514,13 @@ export const IsValidPrivateKey = (data: string): boolean => {
       try {
         provider.PrivateKey(privateKey, network);
         return true;
-      } catch (err) {
-      }
+      } catch (err) {}
     }
 
     return false;
   };
 
-  if(data && (data.substring(0, 2) === '6P')) {
+  if (data && data.substring(0, 2) === '6P') {
     return true;
   }
 
@@ -534,8 +536,7 @@ export const IsValidPrivateKey = (data: string): boolean => {
     if (checkPrivateKey(data, 'testnet')) {
       return true;
     }
-  } catch (err) {
-  }
+  } catch (err) {}
   return false;
 };
 

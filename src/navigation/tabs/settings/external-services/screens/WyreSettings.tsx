@@ -71,7 +71,9 @@ const WyreSettings: React.FC = () => {
     <>
       <SettingsContainer>
         <SettingsComponent style={{paddingBottom: 500}}>
-          {!!paymentRequests?.length && <PrTitle>{t('Payment Requests')}</PrTitle>}
+          {!!paymentRequests?.length && (
+            <PrTitle>{t('Payment Requests')}</PrTitle>
+          )}
           {paymentRequests &&
             paymentRequests.length > 0 &&
             paymentRequests

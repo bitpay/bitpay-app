@@ -19,6 +19,7 @@
     "build:android:release": "export NODE_OPTIONS=--openssl-legacy-provider && ./scripts/android-release.sh",
     "postbuild:android:release": "yarn reset:prod",
     "lint": "eslint --fix . --ext .js,.jsx,.ts,.tsx",
+    "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "postinstall": "./scripts/postinstall.sh",
     "clean": "react-native-clean-project",
     "pod:install": "command -v pod && (cd ios/ && bundle exec pod install && cd ..) || echo \"pod command not found\"",

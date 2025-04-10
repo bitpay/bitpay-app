@@ -1,4 +1,8 @@
-import {CardConfigMap, CategoriesAndCurations, DirectIntegrationMap} from '../shop/shop.models';
+import {
+  CardConfigMap,
+  CategoriesAndCurations,
+  DirectIntegrationMap,
+} from '../shop/shop.models';
 
 export enum ShopCatalogActionTypes {
   SUCCESS_FETCH_CATALOG = 'SHOP_CATALOG/SUCCESS_FETCH_CATALOG',

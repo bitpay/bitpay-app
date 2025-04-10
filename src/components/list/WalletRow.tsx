@@ -166,7 +166,14 @@ export const buildGasTokenBadge = (
   );
 };
 
-const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance, noBorder}: Props) => {
+const WalletRow = ({
+  wallet,
+  hideIcon,
+  onPress,
+  isLast,
+  hideBalance,
+  noBorder,
+}: Props) => {
   const {
     currencyName,
     currencyAbbreviation,

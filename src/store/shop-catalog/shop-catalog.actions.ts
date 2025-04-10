@@ -1,4 +1,8 @@
-import {CardConfigMap, CategoriesAndCurations, DirectIntegrationMap} from '../shop/shop.models';
+import {
+  CardConfigMap,
+  CategoriesAndCurations,
+  DirectIntegrationMap,
+} from '../shop/shop.models';
 import {ShopCatalogActionTypes} from './shop-catalog.types';
 
 export const successFetchCatalog = (payload: {

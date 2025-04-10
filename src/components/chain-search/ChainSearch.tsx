@@ -449,7 +449,9 @@ const SearchComponent = <T extends SearchableItem>({
             ) : null}
             <SearchFilterLabelContainer
               style={
-                selectedChainFilterOption && currencyInfo ? {marginLeft: 5} : null
+                selectedChainFilterOption && currencyInfo
+                  ? {marginLeft: 5}
+                  : null
               }>
               <SearchFilterLabel>
                 {selectedChainFilterOption && currencyInfo

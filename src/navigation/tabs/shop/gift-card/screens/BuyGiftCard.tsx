@@ -184,7 +184,9 @@ const BuyGiftCard = ({
   );
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: t('BuyGiftCard', {displayName: cardConfig.displayName.replace(' Gift Card', '')}),
+      headerTitle: t('BuyGiftCard', {
+        displayName: cardConfig.displayName.replace(' Gift Card', ''),
+      }),
     });
   });
   useEffect(() => {

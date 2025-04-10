@@ -282,11 +282,13 @@ const ExportTransactionHistory = () => {
           </Button>
         </ButtonContainer>
 
-        { !IS_DESKTOP && <ButtonContainer>
-          <Button onPress={() => onSubmit('email')} buttonStyle={'secondary'}>
-            {t('Send by Email')}
-          </Button>
-        </ButtonContainer> }
+        {!IS_DESKTOP && (
+          <ButtonContainer>
+            <Button onPress={() => onSubmit('email')} buttonStyle={'secondary'}>
+              {t('Send by Email')}
+            </Button>
+          </ButtonContainer>
+        )}
       </ScrollView>
     </ExportTransactionHistoryContainer>
   );

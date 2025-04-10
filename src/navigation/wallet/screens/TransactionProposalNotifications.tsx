@@ -405,13 +405,12 @@ const TransactionProposalNotifications = () => {
               </ListItemSubText>
             </CurrencyColumn>
             {item.needSign && item.txps.length > 1 ? (
-              <TouchableOpacity onPress={() => {
+              <TouchableOpacity
+                onPress={() => {
                   haptic('impactLight');
                   txpSelectAll(item.txps, _walletId);
                 }}>
-                  <Link>
-                    {t('Select All')}
-                  </Link>
+                <Link>{t('Select All')}</Link>
               </TouchableOpacity>
             ) : null}
           </RowContainer>
@@ -436,14 +435,16 @@ const TransactionProposalNotifications = () => {
                   {item.needSign ? (
                     <CheckBoxContainer>
                       <TouchableOpacity
-                          touchableLibrary={'react-native-gesture-handler'}
-                          onPress={() => {
-                            txpSelectionChange(txp, _walletId);
-                          }}>
+                        touchableLibrary={'react-native-gesture-handler'}
+                        onPress={() => {
+                          txpSelectionChange(txp, _walletId);
+                        }}>
                         <Checkbox
                           checked={!!txpChecked[txp.id]}
                           onPress={() => {
-                            logger.debug('Tx Proposal Notifications: checkbox clicked');
+                            logger.debug(
+                              'Tx Proposal Notifications: checkbox clicked',
+                            );
                           }}
                         />
                       </TouchableOpacity>

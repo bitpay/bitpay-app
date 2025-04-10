@@ -17,8 +17,8 @@ import {SlateDark} from '../../../../../styles/colors';
 import {useTranslation} from 'react-i18next';
 import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle} from '../../../../../components/styled/Text';
-import { SettingsComponent, SettingsContainer } from '../../SettingsRoot';
-import { Analytics } from '../../../../../store/analytics/analytics.effects';
+import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
+import {Analytics} from '../../../../../store/analytics/analytics.effects';
 
 const LanguageSettings: React.FC = () => {
   const {t} = useTranslation();

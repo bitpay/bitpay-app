@@ -210,7 +210,8 @@ export const Bills = () => {
   };
 
   return (
-    <SectionContainer style={{minHeight: HEIGHT - (Platform.OS === 'android' ? 200 : 225)}}>
+    <SectionContainer
+      style={{minHeight: HEIGHT - (Platform.OS === 'android' ? 200 : 225)}}>
       {!isVerified ? (
         <>
           <BillPitch />

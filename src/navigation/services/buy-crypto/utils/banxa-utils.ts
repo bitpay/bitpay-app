@@ -124,7 +124,11 @@ export const getBanxaSelectedPaymentMethodData = (
       // Prioritize PRIMERAP or WORLDPAYAPPLE, if it is not included, look for cards type
       selectedBanxaPMData = banxaPaymentMethods.find(
         (banxaPaymentMethod: BanxaPaymentMethod) => {
-          if (['PRIMERAP', 'WORLDPAYAPPLE'].includes(banxaPaymentMethod.paymentType)) {
+          if (
+            ['PRIMERAP', 'WORLDPAYAPPLE'].includes(
+              banxaPaymentMethod.paymentType,
+            )
+          ) {
             return true;
           }
         },

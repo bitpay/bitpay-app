@@ -116,30 +116,30 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
 
     return (
       <View>
-      <Modal
-        deviceHeight={HEIGHT}
-        deviceWidth={WIDTH}
-        backdropTransitionOutTiming={0}
-        backdropOpacity={0.85}
-        hideModalContentWhileAnimating={hideModalContentWhileAnimating}
-        useNativeDriverForBackdrop={true}
-        useNativeDriver={true}
-        animationIn={'fadeInUp'}
-        animationOut={'fadeOutDown'}
-        isVisible={isVisible}
-        style={styles.modal}>
-        <View style={styles.wrapper}>
-          <WebView
-            ref={webviewRef}
-            style={styles.webview}
-            onMessage={onMessage}
-            automaticallyAdjustContentInsets
-            originWhitelist={['*']}
-            mixedContentMode={'always'}
-            javaScriptEnabled={true}
-            source={{
-              baseUrl,
-              html: `
+        <Modal
+          deviceHeight={HEIGHT}
+          deviceWidth={WIDTH}
+          backdropTransitionOutTiming={0}
+          backdropOpacity={0.85}
+          hideModalContentWhileAnimating={hideModalContentWhileAnimating}
+          useNativeDriverForBackdrop={true}
+          useNativeDriver={true}
+          animationIn={'fadeInUp'}
+          animationOut={'fadeOutDown'}
+          isVisible={isVisible}
+          style={styles.modal}>
+          <View style={styles.wrapper}>
+            <WebView
+              ref={webviewRef}
+              style={styles.webview}
+              onMessage={onMessage}
+              automaticallyAdjustContentInsets
+              originWhitelist={['*']}
+              mixedContentMode={'always'}
+              javaScriptEnabled={true}
+              source={{
+                baseUrl,
+                html: `
               <!DOCTYPE html>
               <html style="margin: 0; padding: 0;">
                 <head>
@@ -254,10 +254,10 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                 </body>
               </html>
             `,
-            }}
-          />
-        </View>
-      </Modal>
+              }}
+            />
+          </View>
+        </Modal>
       </View>
     );
   },

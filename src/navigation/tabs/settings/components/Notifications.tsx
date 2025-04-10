@@ -1,10 +1,5 @@
 import React, {useEffect, useCallback} from 'react';
-import {
-  Alert,
-  Linking,
-  LogBox,
-  DeviceEventEmitter,
-} from 'react-native';
+import {Alert, Linking, LogBox, DeviceEventEmitter} from 'react-native';
 import {AppEffects} from '../../../../store/app';
 import {
   ActiveOpacity,

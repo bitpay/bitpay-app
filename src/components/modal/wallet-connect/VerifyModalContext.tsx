@@ -60,7 +60,9 @@ const IconContainer = styled(FastImage)`
   justify-content: center;
 `;
 
-const WalletSelectMenuHeaderContainer = styled(_WalletSelectMenuHeaderContainer)`
+const WalletSelectMenuHeaderContainer = styled(
+  _WalletSelectMenuHeaderContainer,
+)`
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -144,12 +146,12 @@ const VerifyContextModal = ({
               color={theme.dark ? 'white' : 'black'}
               background={'rgba(255, 255, 255, 0.2)'}
               opacity={1}
-              />
+            />
           </CloseModalButton>
           <CenteredTitleContainer>
             <H4>{modalTitle}</H4>
           </CenteredTitleContainer>
-          <InvisiblePlaceholder style={{ width: 41 }} />
+          <InvisiblePlaceholder style={{width: 41}} />
         </WalletSelectMenuHeaderContainer>
         <ContentContainer>
           <RowContainer>
