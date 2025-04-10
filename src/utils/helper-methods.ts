@@ -34,6 +34,7 @@ import {
   abiERC721,
   abiERC1155,
   abiFiatTokenV2,
+  InvoiceAbi,
 } from '../navigation/wallet-connect/constants/abis';
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
@@ -749,6 +750,7 @@ const parseStandardTokenTransactionData = (data?: string) => {
   const ERC721Interface = new ethers.utils.Interface(abiERC721);
   const ERC1155Interface = new ethers.utils.Interface(abiERC1155);
   const USDCInterface = new ethers.utils.Interface(abiFiatTokenV2);
+  const InvoiceInterface = new ethers.utils.Interface(InvoiceAbi);
 
   try {
     return {
@@ -775,6 +777,13 @@ const parseStandardTokenTransactionData = (data?: string) => {
     return {
       transactionData: USDCInterface.parseTransaction({data}),
       abi: abiFiatTokenV2,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: InvoiceInterface.parseTransaction({data}),
+      abi: InvoiceAbi,
     };
   } catch {}
 
@@ -845,6 +854,18 @@ export const processSwapRequest =
       const transactionDataName = transactionData!.name;
       if (transactionDataName === 'execute') {
         const transaction = await handleExecuteTransaction(
+          dispatch,
+          keys,
+          transactionData!,
+          tokenOptions,
+          swapFromChain,
+          defaultAltCurrency,
+          allRates,
+          from,
+        );
+        return transaction;
+      } else if (transactionDataName === 'pay') {
+        const transaction = await handlePayTransaction(
           dispatch,
           keys,
           transactionData!,
@@ -944,6 +965,89 @@ const handleDefaultTransaction = async (
     swapFromChain: chain,
     senderAddress,
     swapFromCurrencyAbbreviation: currencyAbbreviation,
+  };
+};
+
+const handlePayTransaction = async (
+  dispatch: any,
+  keys: Keys,
+  transactionData: ethers.utils.TransactionDescription,
+  tokenOptions: {
+    [x: string]: Token;
+  },
+  chain: string,
+  defaultAltCurrency: AltCurrenciesRowProps,
+  allRates: Rates,
+  senderAddress: string,
+) => {
+  dispatch(LogActions.debug('processing pay transaction'));
+
+  const [
+    valueBN,
+    gasPriceBN,
+    expirationBN,
+    payload,
+    hash,
+    v,
+    r,
+    s,
+    tokenContract
+  ] = transactionData.args;
+
+  const swapAmount = valueBN.toString();
+  const senderContractAddress = tokenContract;
+  const recipientAddress = senderAddress;
+
+  const senderTokenPrice = (
+    await dispatch(getERC20TokenPrice({address: senderContractAddress, chain}))
+  ).usdPrice;
+
+  const formattedTokenAddress = addTokenChainSuffix(
+    senderContractAddress.toLowerCase(),
+    chain,
+  );
+
+  const swapFromCurrencyAbbreviation =
+    tokenOptions[formattedTokenAddress]?.symbol.toLowerCase() ||
+    BitpaySupportedCoins[chain].coin.toLowerCase();
+
+  const swapFormatAmount = await dispatch(
+    FormatAmount(
+      swapFromCurrencyAbbreviation,
+      chain,
+      senderContractAddress,
+      Number(swapAmount),
+    ),
+  );
+
+  const toFiatAmount = await dispatch(
+    toFiat(
+      Number(swapAmount),
+      defaultAltCurrency.isoCode,
+      swapFromCurrencyAbbreviation,
+      chain,
+      allRates,
+      senderContractAddress,
+      senderTokenPrice,
+    ),
+  );
+
+  const swapFiatAmount = formatFiatAmount(
+    toFiatAmount,
+    defaultAltCurrency.isoCode,
+  );
+
+  return {
+    transactionDataName: camelCaseToUpperWords(transactionData.name),
+    swapAmount,
+    swapFormatAmount,
+    swapFiatAmount,
+    swapFromChain: chain,
+    swapFromCurrencyAbbreviation,
+    senderAddress,
+    senderContractAddress,
+    recipientAddress,
+    senderTokenPrice,
   };
 };
 
