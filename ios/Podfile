@@ -28,6 +28,7 @@ prepare_react_native_project!
 # Setup permissions you need
 setup_permissions([
 'AppTrackingTransparency',
+'Bluetooth',
 'Camera',
 'FaceID',
 'Notifications',
