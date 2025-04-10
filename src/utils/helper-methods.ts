@@ -994,7 +994,7 @@ const handlePayTransaction = async (
     v,
     r,
     s,
-    tokenContract
+    tokenContract,
   ] = transactionData.args;
 
   const swapAmount = valueBN.toString();

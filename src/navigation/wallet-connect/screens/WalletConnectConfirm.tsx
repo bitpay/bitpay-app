@@ -38,9 +38,7 @@ import {
   SendingTo,
   SharedDetailRow,
 } from '../../wallet/screens/send/confirm/Shared';
-import {
-  GetFeeOptions,
-} from '../../../store/wallet/effects/fee/fee';
+import {GetFeeOptions} from '../../../store/wallet/effects/fee/fee';
 import {Trans, useTranslation} from 'react-i18next';
 import Banner from '../../../components/banner/Banner';
 import {BaseText, H7} from '../../../components/styled/Text';
@@ -51,7 +49,11 @@ import {
   walletConnectV2OnUpdateSession,
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {createProposalAndBuildTxDetails, handleCreateTxProposalError, startSendPayment} from '../../../store/wallet/effects/send/send';
+import {
+  createProposalAndBuildTxDetails,
+  handleCreateTxProposalError,
+  startSendPayment,
+} from '../../../store/wallet/effects/send/send';
 import {IconContainer, ItemContainer} from '../styled/WalletConnectContainers';
 import {
   ClipboardContainer,
@@ -73,8 +75,8 @@ import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyModalContext';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import { EIP155_SIGNING_METHODS } from '../../../constants/WalletConnectV2';
-import { formatJsonRpcResult } from '@json-rpc-tools/utils';
+import {EIP155_SIGNING_METHODS} from '../../../constants/WalletConnectV2';
+import {formatJsonRpcResult} from '@json-rpc-tools/utils';
 
 const HeaderRightContainer = styled.View``;
 
@@ -194,11 +196,20 @@ const WalletConnectConfirm = () => {
       const {params, id} = request as WCV2RequestType;
       const {request: requestProps} = params;
       // if method is eth_sendTransaction, use bitcore to sign/broadcast transaction
-      if (requestProps.method === EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION && txp) {
+      if (
+        requestProps.method === EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION &&
+        txp
+      ) {
         const broadcastedTx = await dispatch(
           startSendPayment({txp, key, wallet, recipient}),
         );
-        await dispatch(walletConnectV2ApproveCallRequest(request, wallet, formatJsonRpcResult(id,  broadcastedTx.txid)));
+        await dispatch(
+          walletConnectV2ApproveCallRequest(
+            request,
+            wallet,
+            formatJsonRpcResult(id, broadcastedTx.txid),
+          ),
+        );
       } else {
         await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
       }

@@ -39,9 +39,9 @@ PODS:
   - FBLazyVector (0.76.9)
   - fmt (11.0.2)
   - glog (0.3.5)
-  - hermes-engine (0.76.5):
-    - hermes-engine/Pre-built (= 0.76.5)
-  - hermes-engine/Pre-built (0.76.5)
+  - hermes-engine (0.76.9):
+    - hermes-engine/Pre-built (= 0.76.9)
+  - hermes-engine/Pre-built (0.76.9)
   - InputMask (6.1.0)
   - libwebp (1.3.2):
     - libwebp/demux (= 1.3.2)
@@ -2005,7 +2005,7 @@ PODS:
     - Yoga
   - RNFS (2.20.0):
     - React-Core
-  - RNGestureHandler (2.21.2):
+  - RNGestureHandler (2.25.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2015,6 +2015,7 @@ PODS:
     - React-Core
     - React-debug
     - React-Fabric
+    - React-FabricComponents
     - React-featureflags
     - React-graphics
     - React-ImageManager
@@ -2669,7 +2670,7 @@ SPEC CHECKSUMS:
   FBLazyVector: 7605ea4810e0e10ae4815292433c09bf4324ba45
   fmt: 01b82d4ca6470831d1cc0852a1af644be019e8f6
   glog: 08b301085f15bcbb6ff8632a8ebaf239aae04e6a
-  hermes-engine: 06a9c6900587420b90accc394199527c64259db4
+  hermes-engine: 9e868dc7be781364296d6ee2f56d0c1a9ef0bb11
   InputMask: 71d291dc54d2deaeac6512afb6ec2304228c0bb7
   libwebp: 1786c9f4ff8a279e4dac1e8f385004d5fc253009
   Mixpanel-swift: d7c7c6a2f7c65f735af3cb4746ed61a5aab0e551
@@ -2764,12 +2765,12 @@ SPEC CHECKSUMS:
   RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8
   RNFlashList: de71c325cb6e5b73a74f6dd01b0e8062da98eb3a
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
-  RNGestureHandler: 87aed90a37c6c22e70845e797734cffd8dedd5ea
+  RNGestureHandler: c74975e16bc27971316465bde1a7523af5a6a256
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNKeychain: c187e4657dbdc66340045b97e9f1921c33c1bf21
   RNLocalize: 0df7970cfc60389f00eb62fd7c097dc75af3fb4f
   RNOS: 6f2f9a70895bbbfbdad7196abd952e7b01d45027
-  RNPermissions: e89bcca2f409117123bdeece714859bdb621342e
+  RNPermissions: 1dca439bd2bcd6af74fefd884a0dd3eb793f6f40
   RNQuickAction: 6d404a869dc872cde841ad3147416a670d13fa93
   RNRate: ef3bcff84f39bb1d1e41c5593d3eea4aab2bd73a
   RNReactNativeHapticFeedback: 1e3efeca9628ff9876ee7cdd9edec1b336913f8c
@@ -2783,6 +2784,6 @@ SPEC CHECKSUMS:
   VisionCamera: 1fcf8b7952080132a6c06df1ff32187d1774e1de
   Yoga: 1259c7a8cbaccf7b4c3ddf8ee36ca11be9dee407
 
-PODFILE CHECKSUM: 1b378d29e5e9a01e74b637f40559730ffbbf59c9
+PODFILE CHECKSUM: 9a43793d26171a3494d035f210ea1f445c8e2786
 
 COCOAPODS: 1.15.2

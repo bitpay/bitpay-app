@@ -6,7 +6,7 @@ import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
 import {FeeLevels} from './effects/fee/fee';
 import {TxActions} from './effects/transactions/transactions';
-import { WCV2RequestType } from '../wallet-connect-v2/wallet-connect-v2.models';
+import {WCV2RequestType} from '../wallet-connect-v2/wallet-connect-v2.models';
 
 /**
  * Currently supported hardware wallet sources.

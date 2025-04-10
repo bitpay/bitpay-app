@@ -291,4 +291,4 @@ export async function getEncryptionKey(): Promise<string> {
   });
 
   return newKey;
-};
+}
