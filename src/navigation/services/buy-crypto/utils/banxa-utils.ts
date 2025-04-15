@@ -1,7 +1,5 @@
 import {t} from 'i18next';
-import {
-  BanxaPaymentMethod,
-} from '../../../../store/buy-crypto/buy-crypto.models';
+import {BanxaPaymentMethod} from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
@@ -128,23 +126,11 @@ export const banxaSupportedMaticTokens = [
   'wombat',
 ];
 
-export const banxaSupportedArbitrumTokens = [
-  'gmx',
-  'grt',
-  'usdc',
-  'usdt',
-];
+export const banxaSupportedArbitrumTokens = ['gmx', 'grt', 'usdc', 'usdt'];
 
-export const banxaSupportedBaseTokens = [
-  'brett',
-  'dai',
-  'eurc',
-  'usdc',
-];
+export const banxaSupportedBaseTokens = ['brett', 'dai', 'eurc', 'usdc'];
 
-export const banxaSupportedOptimismTokens = [
-  'usdc',
-];
+export const banxaSupportedOptimismTokens = ['usdc'];
 
 export const banxaSupportedSolanaTokens = [
   'barsik',
@@ -267,9 +253,7 @@ export const getBanxaSelectedPaymentMethodData = (
   return selectedBanxaPMData;
 };
 
-export const getBanxaChainFormat = (
-  chain: string,
-): string | undefined => {
+export const getBanxaChainFormat = (chain: string): string | undefined => {
   if (!chain) {
     return undefined;
   }
