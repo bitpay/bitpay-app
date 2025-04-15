@@ -126,7 +126,9 @@ export const getSardineCoinFormat = (coin: string): string => {
 };
 
 export const getSardineChainFormat = (chain: string): string | undefined => {
-  if (!chain) {return undefined;}
+  if (!chain) {
+    return undefined;
+  }
 
   const chainMap: Record<string, string> = {
     arb: 'arbitrum',
