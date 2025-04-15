@@ -163,7 +163,7 @@ const MoonpayDetails: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <SettingsComponent>
+      <SettingsComponent
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
