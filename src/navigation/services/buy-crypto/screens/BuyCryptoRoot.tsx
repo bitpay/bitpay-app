@@ -766,36 +766,65 @@ const BuyCryptoRoot = ({
       ['asc', 'asc'],
     );
 
-    const initialBuyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
-      supportedCoins
-        .map((symbol: string) => {
-          const {coin, chain} = getCoinAndChainFromCurrencyCode(
-            symbol,
-            'buyCrypto',
-          );
-          const isErc20Token = IsERCToken(coin, chain);
-          let foundToken;
-          if (isErc20Token) {
-            foundToken = Object.values({
-              ...BitpaySupportedTokens,
-              ...tokenDataByAddress,
-            }).find(token => token.coin === coin && token.chain === chain);
-          }
-          return {
-            currencyAbbreviation: coin,
-            symbol,
-            name: (isErc20Token
-              ? foundToken?.name || ''
-              : BitpaySupportedCoins[chain]?.name)!,
-            chain,
-            logoUri: getLogoUri(coin, chain),
-            badgeUri: getBadgeImg(coin, chain),
-            tokenAddress: foundToken?.address,
-          };
-        })
-        .filter(currency => !!currency.name);
+    try {
+      const initialBuyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[] =
+        supportedCoins
+          .map((symbol: string) => {
+            const {coin, chain} = getCoinAndChainFromCurrencyCode(
+              symbol,
+              'buyCrypto',
+            );
+            const isErc20Token = IsERCToken(coin, chain);
+            let foundToken;
+            if (isErc20Token) {
+              foundToken = Object.values({
+                ...BitpaySupportedTokens,
+                ...tokenDataByAddress,
+              }).find(token => token.coin === coin && token.chain === chain);
+            }
+            return {
+              currencyAbbreviation: coin,
+              symbol,
+              name: (isErc20Token
+                ? foundToken?.name || ''
+                : BitpaySupportedCoins[chain]?.name)!,
+              chain,
+              logoUri: getLogoUri(coin, chain),
+              badgeUri: getBadgeImg(coin, chain),
+              tokenAddress: foundToken?.address,
+            };
+          })
+          .filter(currency => !!currency.name);
 
-    setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
+      setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
+    } catch (error) {
+      logger.error('Buy crypto Error when trying to build the list of supported coins from: ' + JSON.stringify(supportedCoins));
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(600);
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          title: t('Out of service'),
+          message: t('There was an error building the list of supported coins. Please try again later.'),
+          type: 'warning',
+          actions: [
+            {
+              text: t('OK'),
+              action: async () => {
+                await sleep(600);
+                navigation.dispatch(StackActions.popToTop());
+              },
+            },
+          ],
+          enableBackdropDismiss: true,
+          onBackdropDismiss: async () => {
+            await sleep(600);
+            navigation.dispatch(StackActions.popToTop());
+          },
+        }),
+      );
+      return;
+    }
+
     if (fromWallet?.id) {
       selectFirstAvailableWallet();
     } else {
