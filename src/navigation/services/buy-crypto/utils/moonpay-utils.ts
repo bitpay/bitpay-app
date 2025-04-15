@@ -140,7 +140,7 @@ export const moonpaySupportedArbitrumTokens = [
   'arb', // arb_arb
   'magic', // magic_arbitrum
   'usdc', // usdc_arbitrum
-  'usdt' , // usdt_arbitrum
+  'usdt', // usdt_arbitrum
 ];
 
 export const moonpaySupportedBaseTokens = [
@@ -220,7 +220,21 @@ export const getMoonpayFixedCurrencyAbbreviation = (
 
   switch (chain) {
     case 'eth':
-      if (['1inch', 'arkm', 'blur', 'crv', 'eigen', 'fet', 'ldo', 'lpt', 'neiro', 'ondo', 'trb'].includes(coin)) {
+      if (
+        [
+          '1inch',
+          'arkm',
+          'blur',
+          'crv',
+          'eigen',
+          'fet',
+          'ldo',
+          'lpt',
+          'neiro',
+          'ondo',
+          'trb',
+        ].includes(coin)
+      ) {
         return coin + '_eth';
       } else {
         return coin;

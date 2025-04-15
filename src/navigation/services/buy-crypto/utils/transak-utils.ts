@@ -232,13 +232,9 @@ export const transakSupportedMaticTokens = [
   'zed',
 ];
 
-export const transakSupportedArbitrumTokens = [
-  'usdc',
-];
+export const transakSupportedArbitrumTokens = ['usdc'];
 
-export const transakSupportedBaseTokens = [
-  'tower',
-  'usdc'];
+export const transakSupportedBaseTokens = ['tower', 'usdc'];
 
 export const transakSupportedOptimismTokens = ['usdc'];
 

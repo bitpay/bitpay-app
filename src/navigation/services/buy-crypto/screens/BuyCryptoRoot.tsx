@@ -798,13 +798,18 @@ const BuyCryptoRoot = ({
 
       setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
     } catch (error) {
-      logger.error('Buy crypto Error when trying to build the list of supported coins from: ' + JSON.stringify(supportedCoins));
+      logger.error(
+        'Buy crypto Error when trying to build the list of supported coins from: ' +
+          JSON.stringify(supportedCoins),
+      );
       dispatch(dismissOnGoingProcessModal());
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
           title: t('Out of service'),
-          message: t('There was an error building the list of supported coins. Please try again later.'),
+          message: t(
+            'There was an error building the list of supported coins. Please try again later.',
+          ),
           type: 'warning',
           actions: [
             {
