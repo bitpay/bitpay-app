@@ -48,6 +48,7 @@ type SettingsDetailsStackParamList = SettingsDetailsParamList;
 
 type SettingsDetailsRouteProp = {
   initialRoute?: SettingsDetailsScreens;
+  redirectTo?: string;
 };
 
 const Stack = createNativeStackNavigator<SettingsDetailsStackParamList>();
@@ -62,7 +63,7 @@ const SettingsDetails = ({
 }) => {
   const theme = useTheme();
   const {t} = useTranslation();
-  const {initialRoute} = route.params || {};
+  const {initialRoute, redirectTo} = route.params || {};
 
   return (
     <Stack.Navigator
@@ -136,6 +137,7 @@ const SettingsDetails = ({
         options={{
           headerTitle: () => <HeaderTitle>{t('Connections')}</HeaderTitle>,
         }}
+        initialParams={{redirectTo}}
       />
       <Stack.Screen
         name="About BitPay"

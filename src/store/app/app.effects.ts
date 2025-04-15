@@ -139,6 +139,7 @@ import {WalletKitTypes} from '@reown/walletkit';
 import {Key, Wallet} from '../wallet/wallet.models';
 import {AppDispatch} from '../../utils/hooks';
 import {isNotMobile} from '../../components/styled/Containers';
+import {SettingsScreens} from '../../navigation/tabs/settings/SettingsGroup';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -1274,8 +1275,15 @@ export const incomingLink =
     } else if (pathSegments[0] === 'connections') {
       const redirectTo = pathSegments[1];
 
-      handler = () => {
-        navigationRef.navigate('SettingsHome', {redirectTo: redirectTo as any});
+      handler = async () => {
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.SETTINGS,
+        });
+        await sleep(800);
+        navigationRef.navigate(SettingsScreens.SETTINGS_DETAILS, {
+          initialRoute: 'Connections',
+          redirectTo,
+        });
       };
     } else if (pathSegments[0] === 'wallet') {
       if (pathSegments[1] === 'create') {
