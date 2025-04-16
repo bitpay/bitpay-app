@@ -113,7 +113,7 @@ const CustomizeHomeSettings = () => {
     return (
       <ListFooterButtonContainer>
         <Button
-          disabled={!dirty}
+          disabled={!dirty && defaultLayoutType === layoutType}
           onPress={async () => {
             dispatch(startOnGoingProcessModal('SAVING_LAYOUT'));
             await sleep(1000);
@@ -171,7 +171,6 @@ const CustomizeHomeSettings = () => {
             tabPress: tab => {
               haptic('soft');
               if (tab.target) {
-                setDirty(true);
                 const _layoutType = tab.target.split('-')[0] as
                   | 'carousel'
                   | 'listView';
