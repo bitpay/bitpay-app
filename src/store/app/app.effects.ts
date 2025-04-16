@@ -160,7 +160,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
-    const {APP, CONTACT, WALLET, LOCATION} = getState();
+    const {APP, CONTACT, WALLET} = getState();
     const {network, colorScheme} = APP;
 
     WALLET.initLogs.forEach(log => dispatch(log));
@@ -246,13 +246,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // Initialize Zenledger
     dispatch(zenledgerInitialize());
-
-    // Check location and show Archax Banner if in UK
-    if (LOCATION.locationData?.countryShortCode === 'GB') {
-      dispatch(AppActions.showArchaxBanner(true));
-    } else {
-      dispatch(AppActions.showArchaxBanner(false));
-    }
 
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
