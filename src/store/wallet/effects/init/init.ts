@@ -3,6 +3,7 @@ import {WalletActions} from '../../index';
 import {startGetTokenOptions} from '../currencies/currencies';
 import {getAndDispatchUpdatedWalletBalances} from '../status/statusv2';
 import {LogActions} from '../../../log';
+import {startGetRates} from '../../effects';
 
 export const startWalletStoreInit =
   (): Effect<Promise<void>> => async (dispatch, getState: () => RootState) => {
@@ -17,9 +18,11 @@ export const startWalletStoreInit =
         await dispatch(
           getAndDispatchUpdatedWalletBalances({
             context: 'init',
-            skipRateUpdate: false, // Skip rate update on initial load to improve performance
+            skipRateUpdate: false,
           }),
         );
+      } else {
+        await dispatch(startGetRates({context: 'init'}));
       }
 
       dispatch(WalletActions.successWalletStoreInit());
