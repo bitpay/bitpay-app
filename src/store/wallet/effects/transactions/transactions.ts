@@ -17,7 +17,7 @@ import {
   WithinSameMonth,
   WithinSameMonthTimestamp,
 } from '../../utils/time';
-import moment from 'moment';
+import moment, {MomentInput} from 'moment';
 import 'moment/min/locales';
 import i18n from 'i18next';
 import {Effect} from '../../../index';
@@ -538,6 +538,19 @@ const IsFirstInCoinbaseGroup = (index: number, history: any[]) => {
   return !WithinSameMonthTimestamp(curTx.created_at, prevTx.created_at);
 };
 
+const getMonthName = (time: MomentInput): String => {
+  let month = '';
+  try {
+    month = moment(time).locale(i18n.language).format('MMMM');
+  } catch (e) {
+    // Fallback to default locale if the language is not supported
+    const error = e instanceof Error ? e.message : JSON.stringify(e);
+    LogActions.warn('Error formatting date:', error);
+    month = moment(time).format('MMMM');
+  }
+  return month;
+};
+
 export const GroupCoinbaseTransactions = (txs: any[]) => {
   const [_pendingTransactions, _confirmedTransactions] = partition(txs, t => {
     return t.status === 'pending';
@@ -560,9 +573,7 @@ export const GroupCoinbaseTransactions = (txs: any[]) => {
     }, [])
     .map((group: any[]) => {
       const time = Date.parse(group[0].created_at);
-      const month = moment(time)
-        .locale(i18n.language || 'en')
-        .format('MMMM');
+      const month = getMonthName(time);
       const title = IsDateInCurrentMonth(time) ? t('Recent') : month;
       return {title, data: group};
     });
@@ -596,9 +607,7 @@ export const GroupTransactionHistory = (history: any[]) => {
     }, [])
     .map((group: any[]) => {
       const time = group[0].time * 1000;
-      const month = moment(time)
-        .locale(i18n.language || 'en')
-        .format('MMMM');
+      const month = getMonthName(time);
       const title = IsDateInCurrentMonth(time) ? t('Recent') : month;
       return {title, data: group, time};
     });
@@ -850,7 +859,7 @@ export const GetTransactionHistory =
 
         dispatch(
           LogActions.error(
-            `!! Could not update transaction history for 
+            `!! Could not update transaction history for
           ${wallet.id}: ${errString}`,
           ),
         );
@@ -1403,6 +1412,7 @@ export interface TxActions {
   description: string;
   by?: string;
 }
+
 const GetActionsList = (transaction: any, wallet: Wallet) => {
   const {actions, createdOn, creatorName, time, action} = transaction;
 
