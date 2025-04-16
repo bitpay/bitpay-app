@@ -246,7 +246,9 @@ export const CustomizeCard = ({
           </Row>
         ) : null}
         {wallets ? <Row>{header()}</Row> : null}
-        <OptionName>{name}</OptionName>
+        <OptionName numberOfLines={1} ellipsizeMode={'tail'}>
+          {name}
+        </OptionName>
       </Column>
       <Toggle onPressOut={toggle}>
         {show ? (
