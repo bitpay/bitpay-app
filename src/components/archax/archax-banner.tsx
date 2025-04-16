@@ -13,7 +13,7 @@ const ArchaxBanner: React.FC = () => {
       <ArchaxBannerText>
         Don't invest unless you're prepared to lose all the money you invest.
         This is a high-risk investment and you should not expect to be protected
-        if something goes worng.
+        if something goes wrong.{' '}
         <ArchaxBannerLink
           onPress={() => {
             dispatch(

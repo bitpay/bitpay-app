@@ -264,7 +264,6 @@ export const ArchaxBannerText = styled(H7)`
 `;
 
 export const ArchaxBannerLink = styled(BaseText)`
-  color: ${({theme}) => theme.colors.link};
+  color: ${({theme}) => (theme.dark ? '#ffffff' : theme.colors.link)};
   text-decoration: underline;
-  text-decoration-color: ${({theme}) => theme.colors.link};
 `;
