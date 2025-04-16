@@ -30,6 +30,9 @@ const QuickLinksCarousel: React.FC<QuickLinksCarouselProps> = ({
         navigation.navigate('WalletConnectRoot', {});
       }
     },
+    dev_zenLedger: () => {
+      navigation.navigate('ZenLedgerRoot');
+    },
   };
 
   return (
