@@ -143,7 +143,9 @@ const CustomizeHomeSettings = () => {
     return (
       <FlashList
         ListHeaderComponent={() => {
-          return hiddenList.length ? <ListHeader>Hidden</ListHeader> : null;
+          return hiddenList.length ? (
+            <ListHeader>{t('Hidden')}</ListHeader>
+          ) : null;
         }}
         contentContainerStyle={{paddingBottom: 250}}
         data={hiddenList}
