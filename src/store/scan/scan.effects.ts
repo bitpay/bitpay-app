@@ -2088,7 +2088,19 @@ const handleWalletConnectUri =
           );
           throw errMsg;
         } else {
-          await dispatch(walletConnectV2OnSessionProposal(data));
+          let decodedUri: string;
+          try {
+            const url = new URL(data);
+            const rawUri = url.searchParams.get('uri');
+            try {
+              decodedUri = rawUri ? decodeURIComponent(rawUri) : data;
+            } catch {
+              decodedUri = rawUri || data;
+            }
+            await dispatch(walletConnectV2OnSessionProposal(decodedUri));
+          } catch {
+            await dispatch(walletConnectV2OnSessionProposal(data));
+          }
           navigationRef.navigate('WalletConnectRoot', {});
         }
       } else {
