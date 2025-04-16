@@ -92,6 +92,8 @@ export const ListFooterButtonContainer = styled.View`
 export const Column = styled.View`
   flex-direction: column;
   flex: 1;
+  max-width: 75%;
+  margin: 3px 0;
 `;
 
 export const Row = styled.View`
@@ -99,9 +101,20 @@ export const Row = styled.View`
   margin: 3px 0;
 `;
 
+const DraggableContentContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const HideImgContainer = styled.View`
+  align-items: flex-end;
+  margin-right: -5;
+`;
+
 export const Toggle = styled(TouchableOpacity)`
-  justify-content: center;
-  position: absolute;
   right: 10px;
   width: 50px;
 `;
@@ -223,24 +236,27 @@ export const CustomizeCard = ({
   };
 
   return (
-    <>
-      <Row>
-        <Column>
-          {key === 'coinbaseBalanceCard' ? (
-            <Row>
-              <HeaderImg>
-                <CoinbaseSvg width="15" height="15" />
-              </HeaderImg>
-            </Row>
-          ) : null}
-          {wallets ? <Row>{header()}</Row> : null}
-
-          <OptionName>{name}</OptionName>
-        </Column>
-      </Row>
-      <Toggle onPress={toggle}>
-        {show ? <ObfuscationShow /> : <ObfuscationHide />}
+    <DraggableContentContainer>
+      <Column>
+        {key === 'coinbaseBalanceCard' ? (
+          <Row>
+            <HeaderImg>
+              <CoinbaseSvg width="15" height="15" />
+            </HeaderImg>
+          </Row>
+        ) : null}
+        {wallets ? <Row>{header()}</Row> : null}
+        <OptionName>{name}</OptionName>
+      </Column>
+      <Toggle onPressOut={toggle}>
+        {show ? (
+          <ObfuscationShow />
+        ) : (
+          <HideImgContainer>
+            <ObfuscationHide />
+          </HideImgContainer>
+        )}
       </Toggle>
-    </>
+    </DraggableContentContainer>
   );
 };
