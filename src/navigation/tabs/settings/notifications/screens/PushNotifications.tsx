@@ -14,7 +14,6 @@ import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {SettingsContainer} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import styled from 'styled-components/native';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
@@ -64,6 +63,12 @@ const PushNotifications = () => {
       checked: pushNotifications,
       onPress: async () => {
         const isEnabled = !pushNotifications;
+        setPushNotifications(isEnabled);
+        // Align settings with push notifications
+        setConfirmedTx(isEnabled);
+        dispatch(AppEffects.setConfirmTxNotifications(isEnabled));
+        setAnnouncements(isEnabled);
+        dispatch(AppEffects.setAnnouncementsNotifications(isEnabled));
         DeviceEventEmitter.emit(DeviceEmitterEvents.PUSH_NOTIFICATIONS, {
           isEnabled,
         });
@@ -76,6 +81,7 @@ const PushNotifications = () => {
       description: t('Automated alerts about wallet or card.'),
       onPress: () => {
         const isEnabled = !confirmedTx;
+        setConfirmedTx(isEnabled);
         dispatch(AppEffects.setConfirmTxNotifications(isEnabled));
       },
     },
@@ -86,6 +92,7 @@ const PushNotifications = () => {
       description: t('Updates on new features and other relevant news.'),
       onPress: () => {
         const isEnabled = !announcements;
+        setAnnouncements(isEnabled);
         dispatch(AppEffects.setAnnouncementsNotifications(isEnabled));
       },
     },
