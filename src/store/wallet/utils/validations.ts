@@ -60,7 +60,13 @@ export const IsValidPayPro = (data: string): boolean => {
 };
 
 export const isValidWalletConnectUri = (data: string): boolean => {
-  return !!/(wallet\/wc|wc:)/g.exec(data);
+  const pattern = /(wallet\/wc|wc:)/g;
+  try {
+    const decoded = decodeURIComponent(data);
+    return pattern.test(decoded);
+  } catch {
+    return pattern.test(data);
+  }
 };
 
 export const isValidBuyCryptoUri = (data: string): boolean => {
