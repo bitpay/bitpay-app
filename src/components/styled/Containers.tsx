@@ -67,7 +67,8 @@ export const CtaContainer = styled.View`
 export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
   padding: 15px;
   position: absolute;
-  bottom: 10px;
+  padding-bottom: 10px;
+  bottom: 0;
   left: 0;
   right: 0;
   border-top-left-radius: 20px;
