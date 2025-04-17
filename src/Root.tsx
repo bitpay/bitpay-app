@@ -287,6 +287,7 @@ export default () => {
     ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
   );
   const notificationsState = useAppSelector(selectSettingsNotificationState);
+  const currentLocation = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   const blurScreenList: string[] = [
@@ -358,6 +359,17 @@ export default () => {
       i18n.changeLanguage(appLanguage);
     }
   }, [appLanguage]);
+
+  // LOCATION
+  useEffect(() => {
+    if (currentLocation) {
+      if (currentLocation.countryShortCode.toUpperCase() === 'GB') {
+        dispatch(AppActions.showArchaxBanner(true));
+      } else {
+        dispatch(AppActions.showArchaxBanner(false));
+      }
+    }
+  }, [dispatch, currentLocation]);
 
   // CHECK NOTIFICATIONS SETTINGS
   useEffect(() => {
