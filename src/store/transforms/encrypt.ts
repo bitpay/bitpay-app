@@ -1,5 +1,6 @@
 import Aes from 'crypto-js/aes.js';
 import CryptoJsCore from 'crypto-js/core.js';
+import {Network} from '../../constants';
 
 const encryptedPrefix = 'encrypted:';
 
@@ -92,6 +93,49 @@ export const encryptWalletStore = (state: any, secretKey: string): any => {
 
 export const decryptWalletStore = (state: any, secretKey: string): any => {
   return transformWalletStore(state, secretKey, decryptValue, value =>
+    value.startsWith(encryptedPrefix),
+  );
+};
+
+// Generic function to transform app store (encrypt or decrypt)
+const transformAppStore = (
+  state: any,
+  secretKey: string,
+  transformer: (value: any, secretKey: string) => any,
+  checkCondition: (value: string) => boolean,
+): any => {
+  if (!state || !state.identity) return state;
+
+  const identity = state.identity[Network.mainnet];
+  if (!identity || !identity.priv) return state;
+
+  const privValue = identity.priv;
+  if (privValue && typeof privValue === 'string' && checkCondition(privValue)) {
+    return {
+      ...state,
+      identity: {
+        ...state.identity,
+        [Network.mainnet]: {
+          ...identity,
+          priv: transformer(privValue, secretKey),
+        },
+      },
+    };
+  }
+  return state;
+};
+
+export const encryptAppStore = (state: any, secretKey: string): any => {
+  return transformAppStore(
+    state,
+    secretKey,
+    encryptValue,
+    value => !value.startsWith(encryptedPrefix),
+  );
+};
+
+export const decryptAppStore = (state: any, secretKey: string): any => {
+  return transformAppStore(state, secretKey, decryptValue, value =>
     value.startsWith(encryptedPrefix),
   );
 };
