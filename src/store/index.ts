@@ -16,11 +16,12 @@ import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
-import {bindWalletKeys, transformContacts, encryptSpecificFields} from './transforms/transforms';
 import {
-  appReducer,
-  appReduxPersistBlackList,
-} from './app/app.reducer';
+  bindWalletKeys,
+  transformContacts,
+  encryptSpecificFields,
+} from './transforms/transforms';
+import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
 import {
   bitPayIdReducer,
   bitPayIdReduxPersistBlackList,

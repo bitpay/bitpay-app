@@ -28,6 +28,7 @@ export type OnGoingProcessMessages =
   | 'CREATING_ACCOUNT'
   | 'UPDATING_ACCOUNT'
   | 'IMPORTING'
+  | 'IMPORT_SCANNING_FUNDS'
   | 'DELETING_KEY'
   | 'ADDING_WALLET'
   | 'ADDING_ACCOUNT'

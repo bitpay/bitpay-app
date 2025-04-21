@@ -37,9 +37,11 @@ export const createWalletAddress =
   ({
     wallet,
     newAddress = true,
+    skipDispatch = false,
   }: {
     wallet: Wallet;
     newAddress?: boolean;
+    skipDispatch?: boolean;
   }): Effect<Promise<string>> =>
   async dispatch => {
     return new Promise((resolve, reject) => {
@@ -79,13 +81,15 @@ export const createWalletAddress =
                   }
 
                   const receiveAddress = addr[0].address;
-                  dispatch(
-                    successGetReceiveAddress({
-                      keyId,
-                      walletId: id,
-                      receiveAddress,
-                    }),
-                  );
+                  if (!skipDispatch) {
+                    dispatch(
+                      successGetReceiveAddress({
+                        keyId,
+                        walletId: id,
+                        receiveAddress,
+                      }),
+                    );
+                  }
 
                   return resolve(receiveAddress);
                 },
@@ -103,13 +107,15 @@ export const createWalletAddress =
             });
           } else if (addressObj) {
             const receiveAddress = addressObj.address;
-            dispatch(
-              successGetReceiveAddress({
-                keyId,
-                walletId: id,
-                receiveAddress,
-              }),
-            );
+            if (!skipDispatch) {
+              dispatch(
+                successGetReceiveAddress({
+                  keyId,
+                  walletId: id,
+                  receiveAddress,
+                }),
+              );
+            }
             return resolve(receiveAddress);
           }
         });
