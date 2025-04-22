@@ -139,3 +139,63 @@ export const decryptAppStore = (state: any, secretKey: string): any => {
     value.startsWith(encryptedPrefix),
   );
 };
+
+// Generic function to transform shop store (encrypt or decrypt)
+const transformShopStore = (
+  state: any,
+  secretKey: string,
+  transformer: (value: any, secretKey: string) => any,
+  checkCondition: (value: string) => boolean,
+): any => {
+  if (!state || !state.giftCards || !state.giftCards[Network.mainnet])
+    return state;
+
+  const giftCards = state.giftCards[Network.mainnet];
+  if (!Array.isArray(giftCards)) return state;
+
+  const fieldsToTransform = [
+    'accessKey',
+    'barcodeData',
+    'barcodeImage',
+    'claimCode',
+    'claimLink',
+    'pin',
+  ];
+
+  // Transform each gift card in mainnet
+  const newGiftCards = giftCards.map((card: any) => {
+    const updatedCard = {...card};
+    fieldsToTransform.forEach(field => {
+      const value = card[field];
+      if (value && typeof value === 'string' && checkCondition(value)) {
+        updatedCard[field] = transformer(value, secretKey);
+      }
+    });
+    // Always set invoice to undefined for persisted state
+    updatedCard.invoice = undefined;
+    return updatedCard;
+  });
+
+  return {
+    ...state,
+    giftCards: {
+      ...state.giftCards,
+      [Network.mainnet]: newGiftCards,
+    },
+  };
+};
+
+export const encryptShopStore = (state: any, secretKey: string): any => {
+  return transformShopStore(
+    state,
+    secretKey,
+    encryptValue,
+    value => !value.startsWith(encryptedPrefix),
+  );
+};
+
+export const decryptShopStore = (state: any, secretKey: string): any => {
+  return transformShopStore(state, secretKey, decryptValue, value =>
+    value.startsWith(encryptedPrefix),
+  );
+};

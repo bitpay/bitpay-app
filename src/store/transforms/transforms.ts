@@ -12,7 +12,14 @@ import {buildWalletObj} from '../wallet/utils/wallet';
 import {ContactRowProps} from '../../components/list/ContactRow';
 import {AddLog} from '../log/log.types';
 import {LogActions} from '../log';
-import {encryptWalletStore, decryptWalletStore, encryptAppStore, decryptAppStore} from './encrypt';
+import {
+  encryptAppStore,
+  decryptAppStore,
+  encryptShopStore,
+  decryptShopStore,
+  encryptWalletStore,
+  decryptWalletStore,
+} from './encrypt';
 
 const BWCProvider = BwcProvider.getInstance();
 const initLogs: AddLog[] = [];
@@ -167,6 +174,11 @@ export const encryptSpecificFields = (secretKey: string) => {
           return encryptAppStore(inboundState, secretKey);
         } catch (error) {}
       }
+      if (key === 'SHOP') {
+        try {
+          return encryptShopStore(inboundState, secretKey);
+        } catch (error) {}
+      }
       return inboundState;
     },
     // Decrypt specified fields on outbound (loading from storage)
@@ -181,7 +193,12 @@ export const encryptSpecificFields = (secretKey: string) => {
           return decryptAppStore(outboundState, secretKey);
         } catch (error) {}
       }
+      if (key === 'SHOP') {
+        try {
+          return decryptShopStore(outboundState, secretKey);
+        } catch (error) {}
+      }
       return outboundState;
-    }
+    },
   );
 };
