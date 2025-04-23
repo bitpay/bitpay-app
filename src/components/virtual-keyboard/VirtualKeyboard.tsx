@@ -3,9 +3,9 @@ import styled, {css, useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import DeleteIcon from '../icons/delete/Delete';
-import {PixelRatio} from 'react-native';
 import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
 import useAppSelector from '../../utils/hooks/useAppSelector';
+import {HEIGHT} from '../styled/Containers';
 export const PIXEL_DENSITY_LIMIT = 2.5;
 
 interface SymbolContainerProps {
@@ -13,11 +13,13 @@ interface SymbolContainerProps {
 }
 
 const KeyboardContainer = styled.View<{isSmallScreen?: boolean}>`
-  margin: ${({isSmallScreen}) => (isSmallScreen ? 7 : 10)}px 0;
+  margin: ${({isSmallScreen}) => (isSmallScreen ? 5 : 10)}px 0;
 `;
 
-const RowContainer = styled.View`
+const RowContainer = styled.View<{isSmallScreen?: boolean}>`
   flex-direction: row;
+  align-items: center;
+  margin: 0;
 `;
 
 const CellContainer = styled.View`
@@ -79,9 +81,7 @@ const Cell: React.FC<CellProps> = ({
   darkModeOnly,
 }) => {
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner
-    ? true
-    : PixelRatio.get() < PIXEL_DENSITY_LIMIT;
+  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
   const accessibilityLabel = `${value}-button`;
   return (
     <CellContainer accessibilityLabel={accessibilityLabel}>
@@ -145,9 +145,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
       : 'rgba(0, 0, 0, 0.1)';
   const bgColor = darkModeOnly || theme.dark ? White : '#4A4A4A';
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner
-    ? true
-    : PixelRatio.get() < PIXEL_DENSITY_LIMIT;
+  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
   return (
     <KeyboardContainer isSmallScreen={_isSmallScreen}>
       <Row
@@ -211,13 +209,16 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         darkModeOnly={darkModeOnly}
       />
 
-      <RowContainer>
+      <RowContainer isSmallScreen={_isSmallScreen}>
         <CellContainer>
           {showDot ? (
             <VirtualKeyboardButtonAnimation
               onPress={() => onCellPress?.('.')}
+              isSmallScreen={_isSmallScreen}
               backgroundColor={backgroundColor}>
-              <CellValue style={{lineHeight: 30}} darkModeOnly={darkModeOnly}>
+              <CellValue
+                darkModeOnly={darkModeOnly}
+                isSmallScreen={_isSmallScreen}>
                 .
               </CellValue>
             </VirtualKeyboardButtonAnimation>
@@ -234,6 +235,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         <CellContainer>
           <VirtualKeyboardButtonAnimation
             backgroundColor={backgroundColor}
+            isSmallScreen={_isSmallScreen}
             onLongPress={() => onCellPress?.('reset')}
             onPress={() => onCellPress?.('backspace')}>
             <SymbolContainer showLetters={showLetters}>

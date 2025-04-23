@@ -5,16 +5,22 @@ import {openUrlWithInAppBrowser} from '../../store/app/app.effects';
 import {useAppDispatch} from '../../utils/hooks';
 import {ArchaxBannerContainer} from '../../components/styled/Containers';
 
-const ArchaxBanner: React.FC = () => {
+interface ArchaxBannerProps {
+  isSmallScreen?: boolean;
+}
+
+const ArchaxBanner: React.FC<ArchaxBannerProps> = ({isSmallScreen}) => {
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
+
   return (
-    <ArchaxBannerContainer inset={insets}>
-      <ArchaxBannerText>
+    <ArchaxBannerContainer inset={insets} isSmallScreen={isSmallScreen}>
+      <ArchaxBannerText isSmallScreen={isSmallScreen}>
         Don't invest unless you're prepared to lose all the money you invest.
         This is a high-risk investment and you should not expect to be protected
         if something goes wrong.{' '}
         <ArchaxBannerLink
+          isSmallScreen={isSmallScreen}
           onPress={() => {
             dispatch(
               openUrlWithInAppBrowser(

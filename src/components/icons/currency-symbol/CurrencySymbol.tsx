@@ -3,8 +3,7 @@ import {useTheme} from 'styled-components/native';
 import {Path, Svg, G} from 'react-native-svg';
 import {NotificationPrimary, White} from '../../../styles/colors';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
-import {PixelRatio} from 'react-native';
-import {PIXEL_DENSITY_LIMIT} from '../../virtual-keyboard/VirtualKeyboard';
+import {HEIGHT} from '../../styled/Containers';
 
 interface CurrencySymbolProps {
   isDark: boolean;
@@ -33,9 +32,7 @@ const CurrencySymbolSvg: React.FC<CurrencySymbolProps> = ({
 const CurrencySymbol = () => {
   const theme = useTheme();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner
-    ? true
-    : PixelRatio.get() < PIXEL_DENSITY_LIMIT;
+  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
 
   return (
     <CurrencySymbolSvg isDark={theme.dark} isSmallScreen={_isSmallScreen} />
