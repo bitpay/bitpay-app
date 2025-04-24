@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Modal from 'react-native-modal';
+import {View} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {
@@ -131,6 +132,7 @@ const AddressModal = ({
   }, [copied]);
 
   return (
+    <View>
     <Modal
       isVisible={!!receivingAddress}
       backdropOpacity={theme.dark ? 0.8 : 0.6}
@@ -185,6 +187,7 @@ const AddressModal = ({
         ) : null}
         <ActionContainer>
           <Button
+            touchableLibrary={'react-native'}
             onPress={() => {
               removalStarted ? close(true) : setRemovalStarted(true);
             }}
@@ -195,12 +198,15 @@ const AddressModal = ({
           </Button>
         </ActionContainer>
         <ActionContainer>
-          <Button onPress={() => close()} buttonStyle={'secondary'} height={50}>
+          <Button
+            touchableLibrary={'react-native'}
+            onPress={() => close()} buttonStyle={'secondary'} height={50}>
             {t('Close')}
           </Button>
         </ActionContainer>
       </ModalContainer>
     </Modal>
+    </View>
   );
 };
 

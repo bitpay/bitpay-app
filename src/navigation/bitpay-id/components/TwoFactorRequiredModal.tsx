@@ -12,6 +12,7 @@ import {
 import {useTranslation} from 'react-i18next';
 import {H4, Paragraph, TextAlign} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
+import {View} from 'react-native';
 
 const ModalContainer = styled.View`
   justify-content: center;
@@ -48,6 +49,7 @@ const TwoFactorRequiredModal = ({
   };
 
   return (
+    <View>
     <Modal
       isVisible={isVisible}
       backdropOpacity={theme.dark ? 0.8 : 0.6}
@@ -71,10 +73,11 @@ const TwoFactorRequiredModal = ({
             'Two-Factor Authentication must be enabled before you can receive crypto to your email address.',
           )}
         </Description>
-        <Button onPress={() => onClose(true)}>
+        <Button touchableLibrary={'react-native'} onPress={() => onClose(true)}>
           {t('Set Up Two-Factor Authentication')}
         </Button>
         <SecondaryAction
+          touchableLibrary={'react-native'}
           buttonType={'link'}
           onPress={() => onClose()}
           height={40}>
@@ -82,6 +85,7 @@ const TwoFactorRequiredModal = ({
         </SecondaryAction>
       </ModalContainer>
     </Modal>
+    </View>
   );
 };
 
