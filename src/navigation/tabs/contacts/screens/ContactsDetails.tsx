@@ -72,6 +72,8 @@ const DetailInfo = styled(TextAlign)`
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
+  max-width: 75%;
+  padding-left: 10px;
 `;
 
 const ContactImageHeader = styled.View`
@@ -322,7 +324,9 @@ const ContactsDetails = ({
           ) : null}
           <Detail>
             <Title>{t('Name')}</Title>
-            <DetailInfo align="right">{contact.name}</DetailInfo>
+            <DetailInfo align="right" numberOfLines={2} ellipsizeMode={'tail'}>
+              {contact.name}
+            </DetailInfo>
           </Detail>
           <Hr />
           <Detail>
