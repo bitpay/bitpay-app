@@ -400,11 +400,24 @@ const Amount: React.FC<AmountProps> = ({
       !primaryIsFiat &&
       getRateByCurrencyName(allRates, currency.toLowerCase(), chain!)
     ) {
-      const fiatRate = getRateByCurrencyName(
+      const rateByCurrencyName = getRateByCurrencyName(
         allRates,
         currency.toLowerCase(),
         chain!,
-      ).find(r => r.code === fiatCurrency)!.rate;
+      );
+      const fiatRateData = rateByCurrencyName.find(
+        r => r.code === fiatCurrency,
+      );
+
+      if (!fiatRateData) {
+        logger.warn(
+          `There is no fiatRateData for: ${currency.toLowerCase()} (${chain}) and ${fiatCurrency}. Setting rate to 0.`,
+        );
+        setRate(0);
+        return;
+      }
+
+      const fiatRate = fiatRateData.rate;
       setRate(fiatRate);
     }
   };
@@ -423,7 +436,12 @@ const Amount: React.FC<AmountProps> = ({
   };
 
   useEffect(() => {
-    initRef.current();
+    try {
+      initRef.current();
+    } catch (err: any) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`[Amount] could not initialize view: ${errStr}`);
+    }
     initLimits();
   }, []);
 
