@@ -217,7 +217,6 @@ export const startCreateGiftCardInvoice =
         invoiceId: cardOrder.invoiceId,
         name: params.brand,
         totalDiscount: cardOrder.totalDiscount,
-        invoice: invoice,
         status: 'UNREDEEMED',
         ...(user && user.eid && {userEid: user.eid}),
       } as UnsoldGiftCard;

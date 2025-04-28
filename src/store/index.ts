@@ -232,7 +232,7 @@ const getStore = async () => {
             ),
           );
         },
-        unencryptedStores: ['RATE', 'SHOP_CATALOG', 'WALLET'],
+        unencryptedStores: ['APP', 'RATE', 'SHOP', 'SHOP_CATALOG', 'WALLET'],
       }),
     ],
   };
