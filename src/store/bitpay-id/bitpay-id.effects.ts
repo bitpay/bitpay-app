@@ -42,7 +42,7 @@ export const startBitPayIdAnalyticsInit =
   async (dispatch, getState) => {
     const {APP} = getState();
     if (user) {
-      const {eid, name, referralCode} = user;
+      const {eid, name} = user;
       let {email, givenName, familyName} = user;
 
       if (email) {
@@ -78,7 +78,6 @@ export const startBitPayIdAnalyticsInit =
           email,
           firstName: givenName,
           lastName: familyName,
-          'Cardholder Unique Referral Code': referralCode,
         }),
       );
     }

@@ -1324,18 +1324,6 @@ export const incomingLink =
 
           dispatch(CardEffects.startOpenDosh());
         });
-      } else if (cardPath === 'referral') {
-        handler = createCardHandler(cards => {
-          navigationRef.navigate(RootStacks.TABS, {
-            screen: TabsScreens.CARD,
-            params: {
-              screen: CardScreens.REFERRAL,
-              params: {
-                card: cards[0],
-              },
-            },
-          });
-        });
       }
     }
 
