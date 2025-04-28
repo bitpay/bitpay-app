@@ -172,6 +172,6 @@ export const encryptSpecificFields = (secretKey: string) => {
         } catch (error) {}
       }
       return outboundState;
-    }
+    },
   );
 };

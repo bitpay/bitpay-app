@@ -387,8 +387,10 @@ const RecoveryPhrase = () => {
         : ((await dispatch<any>(
             startImportWithDerivationPath(importData, opts),
           )) as Key);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(1000);
       try {
-        // TODO: update here the ongoingProcess modal message to "Scanning funds..." or similar
+        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
         await dispatch(startGetRates({force: true}));
         // workaround for fixing wallets without receive address
         await fixWalletAddresses({
@@ -469,8 +471,10 @@ const RecoveryPhrase = () => {
       await dispatch(startOnGoingProcessModal('CREATING_KEY'));
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(1000);
       try {
-        // TODO: update here the ongoingProcess modal message to "Scanning funds..." or similar
+        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
         await dispatch(startGetRates({force: true}));
         // workaround for fixing wallets without receive address
         await fixWalletAddresses({

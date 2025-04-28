@@ -591,16 +591,18 @@ export const popToScreen = (
 export const fixWalletAddresses = async ({
   appDispatch,
   wallets,
+  skipDispatch = true, // Avoid dispatching when fixing addresses, as the store will be updated directly after fixWalletAddresses
 }: {
   appDispatch: AppDispatch;
   wallets: Wallet[];
+  skipDispatch?: boolean;
 }) => {
   await Promise.all(
     wallets.map(async wallet => {
       try {
         if (!wallet.receiveAddress && wallet?.credentials?.isComplete()) {
           const walletAddress = (await appDispatch<any>(
-            createWalletAddress({wallet, newAddress: false}),
+            createWalletAddress({wallet, newAddress: false, skipDispatch}),
           )) as string;
           wallet.receiveAddress = walletAddress;
         }

@@ -44,14 +44,18 @@ const transformWalletStore = (
   transformer: (value: any, secretKey: string) => any,
   checkCondition: (value: string) => boolean,
 ): any => {
-  if (!state || !state.keys) return state;
+  if (!state || !state.keys) {
+    return state;
+  }
 
   // Create a copy of the state to maintain immutability
   const newState = {...state};
 
   Object.keys(state.keys).forEach(keyId => {
     const properties = state.keys[keyId]?.properties;
-    if (!properties) return;
+    if (!properties) {
+      return;
+    }
 
     const fieldsToTransform = [
       'mnemonic',

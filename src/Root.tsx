@@ -649,6 +649,7 @@ export default () => {
                         await fixWalletAddresses({
                           appDispatch: dispatch,
                           wallets: walletsToFix,
+                          skipDispatch: false,
                         });
                         dispatch(LogActions.info('success [runAddressFix]'));
                         dispatch(dismissOnGoingProcessModal());

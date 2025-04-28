@@ -586,6 +586,9 @@ export const startOnGoingProcessModal =
       CREATING_ACCOUNT: i18n.t('Creating Account'),
       UPDATING_ACCOUNT: i18n.t('Updating Account'),
       IMPORTING: i18n.t('Importing... this process may take a few minutes'),
+      IMPORT_SCANNING_FUNDS: i18n.t(
+        'Scanning Funds... this process may take a few minutes',
+      ),
       DELETING_KEY: i18n.t('Deleting Key'),
       ADDING_WALLET: i18n.t('Adding Wallet'),
       ADDING_ACCOUNT: i18n.t('Adding Account-Based Wallet'),

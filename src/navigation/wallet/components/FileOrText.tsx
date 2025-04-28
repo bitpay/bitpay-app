@@ -92,9 +92,10 @@ const FileOrText = () => {
       await sleep(1000);
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
-
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(1000);
       try {
-        // TODO: update here the ongoingProcess modal message to "Scanning funds..." or similar
+        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
         await dispatch(startGetRates({force: true}));
         // workaround for fixing wallets without receive address
         await fixWalletAddresses({
