@@ -628,6 +628,7 @@
   "There was a problem importing your keys. You can either import your keys with your 12-word Recovery Phrase or you can restore to the previous version of the BitPay app.": "Houve um problema na importação das suas chaves. Pode importar as suas chaves com a sua frase de recuperação de 12 palavras ou pode repor a versão anterior da aplicação do BitPay.",
   "Import Recovery Phrase": "Importar frase de recuperação",
   "buy": "comprar",
+  "sell": "vender",
   "swap": "trocar",
   "receive": "receber",
   "send": "enviar",

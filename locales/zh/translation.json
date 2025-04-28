@@ -628,6 +628,7 @@
   "There was a problem importing your keys. You can either import your keys with your 12-word Recovery Phrase or you can restore to the previous version of the BitPay app.": "导入密钥时出现问题。您可以使用 12 字恢复短语导入密钥，或者可以恢复到先前版本的 BitPay 应用。",
   "Import Recovery Phrase": "导入恢复短语",
   "buy": "购买",
+  "sell": "出售",
   "swap": "兑换",
   "receive": "接收",
   "send": "发送",

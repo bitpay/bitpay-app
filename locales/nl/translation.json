@@ -628,6 +628,7 @@
   "There was a problem importing your keys. You can either import your keys with your 12-word Recovery Phrase or you can restore to the previous version of the BitPay app.": "Er was een probleem met het importeren van uw keys. U kunt uw keys importeren met uw herstelzin van 12 woorden of u kunt de vorige versie van de BitPay-app herstellen.",
   "Import Recovery Phrase": "Herstelzin importeren",
   "buy": "kopen",
+  "sell": "verkopen",
   "swap": "ruilen",
   "receive": "ontvangen",
   "send": "versturen",
