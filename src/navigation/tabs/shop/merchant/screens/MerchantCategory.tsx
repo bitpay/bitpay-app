@@ -7,6 +7,7 @@ import {MerchantScreens, MerchantGroupParamList} from '../MerchantGroup';
 import MerchantItem from './../../components/MerchantItem';
 import {horizontalPadding} from './../../components/styled/ShopTabComponents';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
+import HeaderBackButton from '../../../../../components/back/HeaderBackButton';
 
 const MerchantCategoryScreenContainer = styled.SafeAreaView`
   flex: 1;
@@ -27,6 +28,7 @@ const MerchantCategory = ({
   console.log('integrations', integrations);
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerLeft: () => <HeaderBackButton />,
       headerTitle: category.displayName,
     });
   });

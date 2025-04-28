@@ -7,7 +7,6 @@ import MerchantDetails from './screens/MerchantDetails';
 import MerchantCategory from './screens/MerchantCategory';
 import {Root} from '../../../../Root';
 import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 
 interface MerchantProps {
   Merchant: typeof Root;
@@ -31,7 +30,6 @@ const MerchantGroup: React.FC<MerchantProps> = ({Merchant}) => {
     <Merchant.Group
       screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
       })}>
       <Merchant.Screen
         name={MerchantScreens.MERCHANT_CATEGORY}
