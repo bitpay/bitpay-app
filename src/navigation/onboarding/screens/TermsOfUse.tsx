@@ -24,6 +24,7 @@ import {
 } from '../../../navigation/wallet/WalletGroup';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
+import {sleep} from '../../../utils/helper-methods';
 
 type TermsOfUseScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -171,37 +172,23 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
         <Button
           accessibilityLabel="agree-and-continue-button"
           onPress={() => {
-            askForTrackingThenNavigate(() => {
+            askForTrackingThenNavigate(async () => {
               if (agreed.length >= 2) {
                 dispatch(setWalletTermsAccepted());
               }
-              if (key) {
-                navigation.dispatch(
-                  CommonActions.reset({
-                    routes: [
-                      {
-                        name: RootStacks.TABS,
-                        params: {
-                          screen: TabsScreens.HOME,
-                        },
+              navigation.dispatch(
+                CommonActions.reset({
+                  routes: [
+                    {
+                      name: RootStacks.TABS,
+                      params: {
+                        screen: TabsScreens.HOME,
                       },
-                    ],
-                  }),
-                );
-              } else {
-                navigation.dispatch(
-                  CommonActions.reset({
-                    routes: [
-                      {
-                        name: RootStacks.TABS,
-                        params: {
-                          screen: TabsScreens.HOME,
-                        },
-                      },
-                    ],
-                  }),
-                );
-              }
+                    },
+                  ],
+                }),
+              );
+              await sleep(1000);
               dispatch(setOnboardingCompleted());
               DeviceEventEmitter.emit(
                 DeviceEmitterEvents.APP_ONBOARDING_COMPLETED,

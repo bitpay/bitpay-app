@@ -492,6 +492,7 @@ export default () => {
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
   }, [dispatch]);
 
+  // IAM handler
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
       // App should be ready to show IAM (after PIN or Biometric)
@@ -502,6 +503,15 @@ export default () => {
               DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
               async () => {
                 _subscriptionToPinModalDismissed.remove();
+                InAppMessageModule.notifyReactNativeAppLoaded();
+              },
+            );
+        } else if (!onboardingCompleted) {
+          const _subscriptionToOnboardingCompleted =
+            DeviceEventEmitter.addListener(
+              DeviceEmitterEvents.APP_ONBOARDING_COMPLETED,
+              async () => {
+                _subscriptionToOnboardingCompleted.remove();
                 InAppMessageModule.notifyReactNativeAppLoaded();
               },
             );
