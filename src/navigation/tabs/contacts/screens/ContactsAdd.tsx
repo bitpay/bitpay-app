@@ -467,6 +467,7 @@ const ContactsAdd = ({
                 error={errors.name?.message}
                 value={value}
                 autoCorrect={false}
+                maxLength={50}
               />
             )}
             name="name"

@@ -67,7 +67,9 @@ const ContactRow = ({contact, onPress}: Props) => {
           />
         </ContactImageContainer>
         <ContactColumn>
-          <H5>{name}</H5>
+          <H5 numberOfLines={2} ellipsizeMode={'tail'}>
+            {name}
+          </H5>
           <ListItemSubText numberOfLines={1} ellipsizeMode={'tail'}>
             {email ? email : address}
           </ListItemSubText>
