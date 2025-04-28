@@ -29,7 +29,7 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
   isSmallScreen,
   children,
 }) => {
-  const virtualKeyboardButtonSize = isSmallScreen ? 65 : 85;
+  const virtualKeyboardButtonSize = isSmallScreen ? 60 : 85;
   onLongPress = onLongPress || onPress;
   const centerX = useSharedValue(0);
   const centerY = useSharedValue(0);

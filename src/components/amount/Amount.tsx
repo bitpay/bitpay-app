@@ -3,15 +3,13 @@ import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
-import {ScreenGutter} from '../../components/styled/Containers';
+import {HEIGHT, ScreenGutter} from '../../components/styled/Containers';
 import {BaseText} from '../../components/styled/Text';
 import SwapButton, {
   ButtonText,
   SwapButtonContainer,
 } from '../../components/swap-button/SwapButton';
-import VirtualKeyboard, {
-  PIXEL_DENSITY_LIMIT,
-} from '../../components/virtual-keyboard/VirtualKeyboard';
+import VirtualKeyboard from '../../components/virtual-keyboard/VirtualKeyboard';
 import {getAvailableFiatCurrencies} from '../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 import {getAvailableSellCryptoFiatCurrencies} from '../../navigation/services/sell-crypto/utils/sell-crypto-utils';
 import {ParseAmount} from '../../store/wallet/effects/amount/amount';
@@ -28,7 +26,7 @@ import {useLogger} from '../../utils/hooks/useLogger';
 import {getBuyCryptoFiatLimits} from '../../store/buy-crypto/buy-crypto.effects';
 import KeyEvent from 'react-native-keyevent';
 import ArchaxFooter from '../archax/archax-footer';
-import {PixelRatio, View} from 'react-native';
+import {View} from 'react-native';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
@@ -49,8 +47,7 @@ export const AmountHeroContainer = styled.View<{isSmallScreen: boolean}>`
 `;
 
 const ActionContainer = styled.View<{isModal?: boolean}>`
-  position: absolute;
-  bottom: 15px;
+  margin-bottom: 15px;
   width: 100%;
 `;
 
@@ -60,6 +57,9 @@ const ButtonContainer = styled.View`
 
 const ViewContainer = styled.View`
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 `;
 
 const VirtualKeyboardContainer = styled.View`
@@ -124,8 +124,10 @@ export interface AmountProps {
   tokenAddress?: string;
   chain?: string;
   context?: string;
+  reduceTopGap?: boolean;
   buttonState?: ButtonState;
   limitsOpts?: LimitsOpts;
+  isModal?: boolean;
   customAmountSublabel?: (amount: number) => void;
   onSendMaxPressed?: () => any;
 
@@ -141,8 +143,10 @@ const Amount: React.FC<AmountProps> = ({
   chain,
   tokenAddress,
   context,
+  reduceTopGap,
   buttonState,
   limitsOpts,
+  isModal,
   customAmountSublabel,
   onSendMaxPressed,
   onSubmit,
@@ -154,9 +158,7 @@ const Amount: React.FC<AmountProps> = ({
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const curValRef = useRef('');
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner
-    ? true
-    : PixelRatio.get() < PIXEL_DENSITY_LIMIT;
+  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
 
   const fiatCurrency = useMemo(() => {
     if (fiatCurrencyAbbreviation) {
@@ -446,7 +448,16 @@ const Amount: React.FC<AmountProps> = ({
 
   return (
     <AmountContainer>
-      <ViewContainer>
+      <ViewContainer
+        style={{
+          marginTop: _isSmallScreen
+            ? reduceTopGap && isModal
+              ? -40
+              : 0
+            : reduceTopGap && isModal
+            ? -10
+            : 0,
+        }}>
         <AmountHeroContainer isSmallScreen={_isSmallScreen}>
           <Row>
             <AmountText
@@ -473,7 +484,15 @@ const Amount: React.FC<AmountProps> = ({
               </AmountEquivText>
             </Row>
           ) : null}
-          <View style={{position: 'absolute', top: _isSmallScreen ? 70 : 100}}>
+          <View
+            style={{
+              position: 'absolute',
+              top: _isSmallScreen
+                ? !context || !['sellCrypto', 'swapCrypto'].includes(context)
+                  ? 40
+                  : 70
+                : 100,
+            }}>
             {getWarnMsg}
           </View>
           <CtaContainer isSmallScreen={_isSmallScreen}>
@@ -531,7 +550,7 @@ const Amount: React.FC<AmountProps> = ({
               {t('Continue')}
             </Button>
           </ButtonContainer>
-          {showArchaxBanner && <ArchaxFooter />}
+          {showArchaxBanner && <ArchaxFooter isSmallScreen={_isSmallScreen} />}
         </ActionContainer>
       </ViewContainer>
     </AmountContainer>

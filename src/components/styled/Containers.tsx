@@ -16,7 +16,6 @@ import {
 import {BaseText} from './Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 export {ActiveOpacity} from '@components/base/TouchableOpacity';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 export const isNotMobile = HEIGHT / WIDTH < 1.6;
@@ -538,8 +537,11 @@ export const CloseButtonContainer = styled(TouchableOpacity)`
   align-items: center;
 `;
 
-export const ArchaxBannerContainer = styled.View<{inset: any}>`
+export const ArchaxBannerContainer = styled.View<{
+  inset: any;
+  isSmallScreen?: boolean;
+}>`
   background: ${({theme}) => (theme.dark ? '#a25718' : '#ffedc9')};
   overflow: hidden;
-  padding: 20px;
+  padding: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '16px')};
 `;
