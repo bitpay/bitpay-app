@@ -365,6 +365,8 @@ export const SearchInput = styled.TextInput`
 // Search Round
 export const SearchRoundContainer = styled.View`
   flex-direction: row;
+  display: flex;
+  justify-content: space-between;
   border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : '#e1e4e7')};
   border-radius: 100px;
   align-items: center;

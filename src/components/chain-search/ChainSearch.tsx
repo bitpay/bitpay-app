@@ -36,12 +36,13 @@ export const SearchIconContainer = styled.View`
 `;
 
 export const SearchFilterContainer = styled(TouchableOpacity)`
-  width: auto;
+  min-width: 60px;
+  max-width: 130px;
   justify-content: center;
   align-items: center;
   border-radius: 20px;
   height: 32px;
-  margin: 15px 8px 12px 15px;
+  margin: auto 8px auto 15px;
   border: 1px solid ${({theme: {dark}}) => (dark ? Action : 'transparent')};
   background: ${({theme: {dark}}) => (dark ? '#2240C440' : '#ECEFFD')};
 `;
@@ -51,18 +52,28 @@ export const RowFilterContainer = styled.View`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
+`;
+
+const LeftSideContainer = styled.View`
+  flex-direction: row;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex: 1 1 auto;
+  padding-right: 35px;
 `;
 
 export const SearchFilterLabelContainer = styled.View`
   margin-left: 15px;
   margin-right: 15px;
+  flex: 1 1 auto;
 `;
 
 export const SearchFilterLabel = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : Action)};
   font-size: 12px;
   font-weight: 400;
+  min-width: 70px;
 `;
 
 export const SearchFilterIconContainer = styled.View`
@@ -431,41 +442,37 @@ const SearchComponent = <T extends SearchableItem>({
 
   const _SearchFilterContainer = () => {
     return (
-      <View style={{position: 'absolute', right: 0}}>
-        <SearchFilterContainer
-          onPress={() => {
-            dispatch(
-              AppActions.showChainSelectorModal({context, chainsOptions}),
-            );
-          }}>
-          <RowFilterContainer>
-            {selectedChainFilterOption && currencyInfo ? (
-              <View style={{marginLeft: 5}}>
-                <CurrencyImage img={currencyInfo.img!} size={25} />
-              </View>
-            ) : null}
-            <SearchFilterLabelContainer
-              style={
-                selectedChainFilterOption && currencyInfo
-                  ? {marginLeft: 5}
-                  : null
-              }>
-              <SearchFilterLabel>
-                {selectedChainFilterOption && currencyInfo
-                  ? currencyInfo.name
-                  : t('All Networks')}
-              </SearchFilterLabel>
-            </SearchFilterLabelContainer>
-            <SearchFilterIconContainer>
-              {!theme.dark ? (
-                <ChevronDownSvgLight width={10} height={6} />
-              ) : (
-                <ChevronDownSvgDark width={10} height={6} />
-              )}
-            </SearchFilterIconContainer>
-          </RowFilterContainer>
-        </SearchFilterContainer>
-      </View>
+      <SearchFilterContainer
+        onPress={() => {
+          dispatch(
+            AppActions.showChainSelectorModal({context, chainsOptions}),
+          );
+        }}>
+        <RowFilterContainer>
+          {selectedChainFilterOption && currencyInfo ? (
+            <View style={{marginLeft: 5}}>
+              <CurrencyImage img={currencyInfo.img!} size={25} />
+            </View>
+          ) : null}
+          <SearchFilterLabelContainer
+            style={
+              selectedChainFilterOption && currencyInfo ? {marginLeft: 5} : null
+            }>
+            <SearchFilterLabel numberOfLines={1} ellipsizeMode="tail">
+              {selectedChainFilterOption && currencyInfo
+                ? currencyInfo.name
+                : t('All Networks')}
+            </SearchFilterLabel>
+          </SearchFilterLabelContainer>
+          <SearchFilterIconContainer>
+            {!theme.dark ? (
+              <ChevronDownSvgLight width={10} height={6} />
+            ) : (
+              <ChevronDownSvgDark width={10} height={6} />
+            )}
+          </SearchFilterIconContainer>
+        </RowFilterContainer>
+      </SearchFilterContainer>
     );
   };
 
@@ -477,14 +484,18 @@ const SearchComponent = <T extends SearchableItem>({
         _SearchFilterContainer()
       ) : (
         <SearchRoundContainer>
-          <SearchIconContainer>
-            <SearchSvg height={16} width={16} />
-          </SearchIconContainer>
-          <SearchRoundInput
-            placeholderTextColor={Slate}
-            placeholder={t('Search')}
-            onChangeText={updateSearchResults}
-          />
+          <LeftSideContainer>
+            <SearchIconContainer>
+              <SearchSvg height={16} width={16} />
+            </SearchIconContainer>
+            <View>
+              <SearchRoundInput
+                placeholderTextColor={Slate}
+                placeholder={t('Search')}
+                onChangeText={updateSearchResults}
+              />
+            </View>
+          </LeftSideContainer>
           {_SearchFilterContainer()}
         </SearchRoundContainer>
       )}
