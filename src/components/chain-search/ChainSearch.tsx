@@ -18,10 +18,7 @@ import {EIP155_CHAINS} from '../../constants/WalletConnectV2';
 import cloneDeep from 'lodash.clonedeep';
 import {TransactionProposal, Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
-import {setLocalDefaultChainFilterOption} from '../../store/app/app.actions';
-import ChainSelectorModal, {
-  ignoreGlobalListContextList,
-} from '../../components/modal/chain-selector/ChainSelector';
+import {ignoreGlobalListContextList} from '../../components/modal/chain-selector/ChainSelector';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {View} from 'react-native';
 import {
@@ -103,7 +100,6 @@ interface SearchComponentProps<T extends SearchableItem> {
   setSearchResults: (val: T[]) => void;
   searchFullList: T[];
   context: string;
-  onModalHide?: () => void;
 }
 
 const SearchComponent = <T extends SearchableItem>({
@@ -113,7 +109,6 @@ const SearchComponent = <T extends SearchableItem>({
   setSearchResults,
   searchFullList,
   context,
-  onModalHide,
 }: SearchComponentProps<T>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
@@ -439,7 +434,9 @@ const SearchComponent = <T extends SearchableItem>({
       <View style={{position: 'absolute', right: 0}}>
         <SearchFilterContainer
           onPress={() => {
-            dispatch(AppActions.showChainSelectorModal({context}));
+            dispatch(
+              AppActions.showChainSelectorModal({context, chainsOptions}),
+            );
           }}>
           <RowFilterContainer>
             {selectedChainFilterOption && currencyInfo ? (
@@ -491,10 +488,6 @@ const SearchComponent = <T extends SearchableItem>({
           {_SearchFilterContainer()}
         </SearchRoundContainer>
       )}
-      <ChainSelectorModal
-        onModalHide={onModalHide}
-        chainsOptions={chainsOptions}
-      />
     </>
   );
 };

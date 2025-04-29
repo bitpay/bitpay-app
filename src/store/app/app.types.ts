@@ -43,6 +43,7 @@ export enum AppActionTypes {
   RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG = 'APP/RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG',
   SHOW_CHAIN_SELECTOR_MODAL = 'APP/SHOW_CHAIN_SELECTOR_MODAL',
   DISMISS_CHAIN_SELECTOR_MODAL = 'APP/DISMISS_CHAIN_SELECTOR_MODAL',
+  CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS = 'APP/CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS',
   SET_COLOR_SCHEME = 'APP/SET_COLOR_SCHEME',
   SET_CURRENT_ROUTE = 'APP/SET_CURRENT_ROUTE',
   SUCCESS_GENERATE_APP_IDENTITY = 'APP/SUCCESS_GENERATE_APP_IDENTITY',
@@ -198,6 +199,10 @@ interface ShowChainSelectorModal {
 
 interface DismissChainSelectorModal {
   type: typeof AppActionTypes.DISMISS_CHAIN_SELECTOR_MODAL;
+}
+
+interface ClearChainSelectorModalOptions {
+  type: typeof AppActionTypes.CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS;
 }
 
 interface SetColorScheme {
@@ -498,6 +503,7 @@ export type AppActionType =
   | SetLocalAssetsDropdown
   | ShowChainSelectorModal
   | DismissChainSelectorModal
+  | ClearChainSelectorModalOptions
   | ShowWalletConnectStartModal
   | DismissWalletConnectStartModal
   | ShowArchaxBanner;

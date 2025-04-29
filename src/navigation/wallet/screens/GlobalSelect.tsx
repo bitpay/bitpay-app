@@ -1501,7 +1501,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                 : currenciesSupportedList
             }
             context={context}
-            onModalHide={() => {}}
           />
         </SearchComponentContainer>
         {(currenciesSupportedList?.length > 0 ||

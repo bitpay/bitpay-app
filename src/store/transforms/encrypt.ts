@@ -108,10 +108,14 @@ const transformAppStore = (
   transformer: (value: any, secretKey: string) => any,
   checkCondition: (value: string) => boolean,
 ): any => {
-  if (!state || !state.identity) return state;
+  if (!state || !state.identity) {
+    return state;
+  }
 
   const identity = state.identity[Network.mainnet];
-  if (!identity || !identity.priv) return state;
+  if (!identity || !identity.priv) {
+    return state;
+  }
 
   const privValue = identity.priv;
   if (privValue && typeof privValue === 'string' && checkCondition(privValue)) {
@@ -151,11 +155,14 @@ const transformShopStore = (
   transformer: (value: any, secretKey: string) => any,
   checkCondition: (value: string) => boolean,
 ): any => {
-  if (!state || !state.giftCards || !state.giftCards[Network.mainnet])
+  if (!state || !state.giftCards || !state.giftCards[Network.mainnet]) {
     return state;
+  }
 
   const giftCards = state.giftCards[Network.mainnet];
-  if (!Array.isArray(giftCards)) return state;
+  if (!Array.isArray(giftCards)) {
+    return state;
+  }
 
   const fieldsToTransform = [
     'accessKey',

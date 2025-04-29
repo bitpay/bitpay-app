@@ -121,6 +121,10 @@ export const dismissChainSelectorModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_CHAIN_SELECTOR_MODAL,
 });
 
+export const clearChainSelectorModalOptions = (): AppActionType => ({
+  type: AppActionTypes.CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS,
+});
+
 export const showChainSelectorModal = (
   config: ChainSelectorConfig,
 ): AppActionType => ({

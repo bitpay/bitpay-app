@@ -411,6 +411,11 @@ export const appReducer = (
       return {
         ...state,
         showChainSelectorModal: false,
+      };
+
+    case AppActionTypes.CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS:
+      return {
+        ...state,
         chainSelectorModalConfig: undefined,
       };
 
