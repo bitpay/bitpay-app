@@ -88,6 +88,7 @@ import WalletConnectGroup, {
 import GiftCardGroup, {
   GiftCardGroupParamList,
 } from './navigation/tabs/shop/gift-card/GiftCardGroup';
+import ChainSelectorModal from './components/modal/chain-selector/ChainSelector';
 import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
 import MerchantGroup, {
   MerchantGroupParamList,
@@ -804,6 +805,7 @@ export default () => {
                   <BiometricModal />
                   {/* <ImportLedgerWalletModal /> */}
                   <WalletConnectStartModal />
+                  <ChainSelectorModal />
                 </NavigationContainer>
               </HeaderShownContext.Provider>
             </SafeAreaView>

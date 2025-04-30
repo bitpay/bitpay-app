@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useMemo, memo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Platform, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -63,6 +63,7 @@ export const ignoreGlobalListContextList = [
 export interface ChainSelectorConfig {
   onBackdropDismiss?: () => void;
   context?: string;
+  chainsOptions?: string[];
   customChains?: SupportedChains[];
 }
 
@@ -123,13 +124,7 @@ const KeyBoardAvoidingViewWrapper = styled.KeyboardAvoidingView`
   border-top-right-radius: 12px;
 `;
 
-const ChainSelector = ({
-  onModalHide,
-  chainsOptions,
-}: {
-  onModalHide?: () => void;
-  chainsOptions: string[] | undefined;
-}) => {
+const ChainSelectorModal = () => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
@@ -144,7 +139,8 @@ const ChainSelector = ({
   const recentSelectedChainFilterOption = useAppSelector(
     ({APP}) => APP.recentSelectedChainFilterOption,
   );
-  const {onBackdropDismiss, context, customChains} = config || {};
+  const {onBackdropDismiss, context, chainsOptions, customChains} =
+    config || {};
 
   const selectedChainFilterOption = useAppSelector(({APP}) =>
     context && ignoreGlobalListContextList.includes(context)
@@ -167,7 +163,8 @@ const ChainSelector = ({
             selected={selected}
             onPress={async () => {
               dispatch(AppActions.dismissChainSelectorModal());
-              await sleep(300);
+              await sleep(1000);
+              dispatch(AppActions.clearChainSelectorModalOptions());
               const option = supportedChain?.chain as
                 | SupportedChains
                 | undefined;
@@ -288,10 +285,11 @@ const ChainSelector = ({
   return (
     <SheetModal
       isVisible={isVisible}
-      onModalHide={onModalHide}
-      onBackdropPress={() => {
-        setSearchVal('');
+      onBackdropPress={async () => {
         dispatch(AppActions.dismissChainSelectorModal());
+        await sleep(1000);
+        dispatch(AppActions.clearChainSelectorModalOptions());
+        setSearchVal('');
         haptic('impactLight');
         if (onBackdropDismiss) {
           onBackdropDismiss();
@@ -366,4 +364,4 @@ const ChainSelector = ({
   );
 };
 
-export default ChainSelector;
+export default memo(ChainSelectorModal);

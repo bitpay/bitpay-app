@@ -215,6 +215,7 @@ const KeyOverview = () => {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [searchVal, setSearchVal] = useState('');
   const [isViewUpdating, setIsViewUpdating] = useState(false);
   const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
@@ -656,7 +657,10 @@ const KeyOverview = () => {
           searchVal={searchVal}
           setSearchVal={setSearchVal}
           searchResults={searchResults}
-          setSearchResults={setSearchResults}
+          setSearchResults={(searchResults)=>{
+            setSearchResults(searchResults);
+            setIsLoadingInitial(false);
+          }}
           searchFullList={memorizedAccountList}
           context={'keyoverview'}
         />
@@ -683,14 +687,18 @@ const KeyOverview = () => {
     );
   }, []);
 
-  const listEmptyComponent = useCallback(() => {
-    return (
-      <EmptyListContainer>
+  const listEmptyComponent = useMemo(
+    () =>
+      !isLoadingInitial ? (
+        <EmptyListContainer>
         <H5>{t("It's a ghost town in here")}</H5>
         <GhostSvg style={{marginTop: 20}} />
       </EmptyListContainer>
-    );
-  }, []);
+      ) : (
+        null
+      ),
+    [t, isLoadingInitial],
+  );
 
   const renderDataComponent = useMemo(() => {
     return !searchVal && !selectedChainFilterOption
@@ -717,7 +725,7 @@ const KeyOverview = () => {
         </TouchableOpacity>
       </BalanceContainer>
 
-      <FlashList<AccountRowProps>
+     <FlashList<AccountRowProps>
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}

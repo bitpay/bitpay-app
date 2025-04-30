@@ -133,79 +133,81 @@ const AddressModal = ({
 
   return (
     <View>
-    <Modal
-      isVisible={!!receivingAddress}
-      backdropOpacity={theme.dark ? 0.8 : 0.6}
-      backdropColor={theme.dark ? LightBlack : Black}
-      animationIn={'fadeInUp'}
-      animationOut={'fadeOutDown'}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating={true}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
-      onBackdropPress={() => close()}
-      style={{
-        alignItems: 'center',
-      }}>
-      <ModalContainer>
-        {receivingAddress ? (
-          <>
-            <HeaderContainer>
-              <CurrencyIconAndBadge
-                coin={receivingAddress.coin}
-                chain={receivingAddress.chain}
-                size={30}
-              />
-              <HeaderTitle>{receivingAddress.label}</HeaderTitle>
-            </HeaderContainer>
-            <AddressContainer
-              onPress={() => copyToClipboard(receivingAddress.address)}
-              activeOpacity={ActiveOpacity}>
-              <AddressTextContainer>
-                <AddressText>{receivingAddress.address}</AddressText>
-              </AddressTextContainer>
-              <CopyContainer>
-                {copied ? <CopiedSvg /> : <CopySvg />}
-              </CopyContainer>
-            </AddressContainer>
-          </>
-        ) : null}
-        <Divider />
-        {removalStarted ? (
-          <ConfirmText>
-            <TextAlign align={'center'} style={{marginBottom: 8}}>
-              <H3>Are you sure?</H3>
-            </TextAlign>
-            <TextAlign align={'center'}>
-              <Disclaimer>
-                {t(
-                  'Your BitPay ID will no longer be associated to this wallet, and senders will have to enter the address to send funds.',
-                )}
-              </Disclaimer>
-            </TextAlign>
-          </ConfirmText>
-        ) : null}
-        <ActionContainer>
-          <Button
-            touchableLibrary={'react-native'}
-            onPress={() => {
-              removalStarted ? close(true) : setRemovalStarted(true);
-            }}
-            height={50}
-            buttonType={'button'}
-            buttonStyle={removalStarted ? 'danger' : 'primary'}>
-            {removalStarted ? t('Confirm') : t('Remove Address')}
-          </Button>
-        </ActionContainer>
-        <ActionContainer>
-          <Button
-            touchableLibrary={'react-native'}
-            onPress={() => close()} buttonStyle={'secondary'} height={50}>
-            {t('Close')}
-          </Button>
-        </ActionContainer>
-      </ModalContainer>
-    </Modal>
+      <Modal
+        isVisible={!!receivingAddress}
+        backdropOpacity={theme.dark ? 0.8 : 0.6}
+        backdropColor={theme.dark ? LightBlack : Black}
+        animationIn={'fadeInUp'}
+        animationOut={'fadeOutDown'}
+        backdropTransitionOutTiming={0}
+        hideModalContentWhileAnimating={true}
+        useNativeDriverForBackdrop={true}
+        useNativeDriver={true}
+        onBackdropPress={() => close()}
+        style={{
+          alignItems: 'center',
+        }}>
+        <ModalContainer>
+          {receivingAddress ? (
+            <>
+              <HeaderContainer>
+                <CurrencyIconAndBadge
+                  coin={receivingAddress.coin}
+                  chain={receivingAddress.chain}
+                  size={30}
+                />
+                <HeaderTitle>{receivingAddress.label}</HeaderTitle>
+              </HeaderContainer>
+              <AddressContainer
+                onPress={() => copyToClipboard(receivingAddress.address)}
+                activeOpacity={ActiveOpacity}>
+                <AddressTextContainer>
+                  <AddressText>{receivingAddress.address}</AddressText>
+                </AddressTextContainer>
+                <CopyContainer>
+                  {copied ? <CopiedSvg /> : <CopySvg />}
+                </CopyContainer>
+              </AddressContainer>
+            </>
+          ) : null}
+          <Divider />
+          {removalStarted ? (
+            <ConfirmText>
+              <TextAlign align={'center'} style={{marginBottom: 8}}>
+                <H3>Are you sure?</H3>
+              </TextAlign>
+              <TextAlign align={'center'}>
+                <Disclaimer>
+                  {t(
+                    'Your BitPay ID will no longer be associated to this wallet, and senders will have to enter the address to send funds.',
+                  )}
+                </Disclaimer>
+              </TextAlign>
+            </ConfirmText>
+          ) : null}
+          <ActionContainer>
+            <Button
+              touchableLibrary={'react-native'}
+              onPress={() => {
+                removalStarted ? close(true) : setRemovalStarted(true);
+              }}
+              height={50}
+              buttonType={'button'}
+              buttonStyle={removalStarted ? 'danger' : 'primary'}>
+              {removalStarted ? t('Confirm') : t('Remove Address')}
+            </Button>
+          </ActionContainer>
+          <ActionContainer>
+            <Button
+              touchableLibrary={'react-native'}
+              onPress={() => close()}
+              buttonStyle={'secondary'}
+              height={50}>
+              {t('Close')}
+            </Button>
+          </ActionContainer>
+        </ModalContainer>
+      </Modal>
     </View>
   );
 };

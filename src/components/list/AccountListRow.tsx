@@ -22,6 +22,7 @@ import {ProgressBlue} from '../../styles/colors';
 import Blockie from '../blockie/Blockie';
 import {WalletRowProps} from './WalletRow';
 import {SearchableItem} from '../chain-search/ChainSearch';
+import Animated, {FadeIn} from 'react-native-reanimated';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -33,6 +34,9 @@ const SpinnerContainer = styled.View`
 
 const BalanceColumn = styled(Column)`
   align-items: flex-end;
+`;
+
+const ListCointainer = styled(Animated.View)`
 `;
 
 export interface AccountRowListBase extends SearchableItem {}
@@ -144,96 +148,98 @@ const AccountListRow = ({
   }, []);
 
   return (
-    <RowContainer
-      activeOpacity={ActiveOpacity}
-      onPress={onPress}
-      style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}>
-      {!hideIcon ? (
-        <CurrencyImageContainer>
-          {isMultiNetworkSupported ? (
-            isBlockieReady ? (
-              <Blockie size={40} seed={receiveAddress} />
+    <ListCointainer entering={FadeIn.duration(800)}>
+      <RowContainer
+        activeOpacity={ActiveOpacity}
+        onPress={onPress}
+        style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}>
+        {!hideIcon ? (
+          <CurrencyImageContainer>
+            {isMultiNetworkSupported ? (
+              isBlockieReady ? (
+                <Blockie size={40} seed={receiveAddress} />
+              ) : (
+                <></>
+              )
             ) : (
-              <></>
-            )
-          ) : (
-            <CurrencyImage
-              img={wallets[0].img}
-              badgeUri={wallets[0].badgeImg}
-              size={40}
-            />
-          )}
-        </CurrencyImageContainer>
-      ) : null}
-      {isMultiNetworkSupported ? (
-        <Column>
-          <H5 ellipsizeMode={'tail'} numberOfLines={1}>
-            {accountName}
-          </H5>
-        </Column>
-      ) : (
-        <Column>
-          <Row>
-            <H5 ellipsizeMode="tail" numberOfLines={1}>
+              <CurrencyImage
+                img={wallets[0].img}
+                badgeUri={wallets[0].badgeImg}
+                size={40}
+              />
+            )}
+          </CurrencyImageContainer>
+        ) : null}
+        {isMultiNetworkSupported ? (
+          <Column>
+            <H5 ellipsizeMode={'tail'} numberOfLines={1}>
               {accountName}
             </H5>
-          </Row>
-          <Row style={{alignItems: 'center'}}>
-            <ListItemSubText
-              ellipsizeMode="tail"
-              numberOfLines={1}
-              style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-              {`${_currencyAbbreviation} ${multisig ? multisig : ''}`}
-            </ListItemSubText>
-            <View
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginLeft: 5,
-                marginTop: 2,
-              }}>
-              {buildTestBadge(network, chain, isToken)}
-              {buildUncompleteBadge(isComplete)}
-            </View>
-          </Row>
-        </Column>
-      )}
-      {isMultiNetworkSupported ? (
-        <BalanceColumn>
-          {!hideBalance ? (
-            <H5 numberOfLines={1} ellipsizeMode="tail">
-              {fiatBalanceFormat}
-            </H5>
-          ) : (
-            <H5 style={{marginTop: 8}}>****</H5>
-          )}
-        </BalanceColumn>
-      ) : !isScanning ? (
-        <BalanceColumn>
-          {!hideBalance ? (
-            <>
-              <H5 numberOfLines={1} ellipsizeMode="tail">
-                {cryptoBalance}
+          </Column>
+        ) : (
+          <Column>
+            <Row>
+              <H5 ellipsizeMode="tail" numberOfLines={1}>
+                {accountName}
               </H5>
-              {showFiatBalance && (
-                <ListItemSubText textAlign={'right'}>
-                  {network === 'testnet'
-                    ? 'Test - No Value'
-                    : fiatBalanceFormat}
-                </ListItemSubText>
-              )}
-            </>
-          ) : (
-            <H5 style={{marginTop: 8}}>****</H5>
-          )}
-        </BalanceColumn>
-      ) : (
-        <SpinnerContainer>
-          <ActivityIndicator color={ProgressBlue} />
-        </SpinnerContainer>
-      )}
-    </RowContainer>
+            </Row>
+            <Row style={{alignItems: 'center'}}>
+              <ListItemSubText
+                ellipsizeMode="tail"
+                numberOfLines={1}
+                style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+                {`${_currencyAbbreviation} ${multisig ? multisig : ''}`}
+              </ListItemSubText>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginLeft: 5,
+                  marginTop: 2,
+                }}>
+                {buildTestBadge(network, chain, isToken)}
+                {buildUncompleteBadge(isComplete)}
+              </View>
+            </Row>
+          </Column>
+        )}
+        {isMultiNetworkSupported ? (
+          <BalanceColumn>
+            {!hideBalance ? (
+              <H5 numberOfLines={1} ellipsizeMode="tail">
+                {fiatBalanceFormat}
+              </H5>
+            ) : (
+              <H5 style={{marginTop: 8}}>****</H5>
+            )}
+          </BalanceColumn>
+        ) : !isScanning ? (
+          <BalanceColumn>
+            {!hideBalance ? (
+              <>
+                <H5 numberOfLines={1} ellipsizeMode="tail">
+                  {cryptoBalance}
+                </H5>
+                {showFiatBalance && (
+                  <ListItemSubText textAlign={'right'}>
+                    {network === 'testnet'
+                      ? 'Test - No Value'
+                      : fiatBalanceFormat}
+                  </ListItemSubText>
+                )}
+              </>
+            ) : (
+              <H5 style={{marginTop: 8}}>****</H5>
+            )}
+          </BalanceColumn>
+        ) : (
+          <SpinnerContainer>
+            <ActivityIndicator color={ProgressBlue} />
+          </SpinnerContainer>
+        )}
+      </RowContainer>
+    </ListCointainer>
   );
 };
 
