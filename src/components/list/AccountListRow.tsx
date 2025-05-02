@@ -36,8 +36,7 @@ const BalanceColumn = styled(Column)`
   align-items: flex-end;
 `;
 
-const ListCointainer = styled(Animated.View)`
-`;
+const ListContainer = styled(Animated.View)``;
 
 export interface AccountRowListBase extends SearchableItem {}
 
@@ -148,7 +147,7 @@ const AccountListRow = ({
   }, []);
 
   return (
-    <ListCointainer entering={FadeIn.duration(800)}>
+    <ListContainer entering={FadeIn.duration(800)}>
       <RowContainer
         activeOpacity={ActiveOpacity}
         onPress={onPress}
@@ -239,7 +238,7 @@ const AccountListRow = ({
           </SpinnerContainer>
         )}
       </RowContainer>
-    </ListCointainer>
+    </ListContainer>
   );
 };
 

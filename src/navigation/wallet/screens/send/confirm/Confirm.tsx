@@ -29,7 +29,6 @@ import {
   showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
-import PaymentSent from '../../../components/PaymentSent';
 import {
   formatCurrencyAbbreviation,
   formatFiatAmount,
@@ -117,6 +116,7 @@ import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {CommonActions} from '@react-navigation/native';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {RootStacks} from '../../../../../Root';
+import {AppActions} from '../../../../../store/app';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -177,7 +177,6 @@ const Confirm = () => {
   const {isoCode} = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const key = allKeys[wallet?.keyId!];
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
   const [showSendingERC20Modal, setShowSendingERC20Modal] = useState(true);
@@ -390,6 +389,13 @@ const Confirm = () => {
     }
   };
 
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
+  };
+
   const startSendingPayment = async ({
     transport,
   }: {transport?: Transport} = {}) => {
@@ -433,8 +439,70 @@ const Confirm = () => {
           coin: currencyAbbreviation || '',
         }),
       );
-      await sleep(500);
-      setShowPaymentSentModal(true);
+
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            wallet.credentials.n > 1
+              ? t('Proposal created')
+              : t('Payment Sent'),
+        }),
+      );
+
+      await sleep(1000);
+      if (recipient.type === 'coinbase') {
+        navigation.dispatch(StackActions.popToTop());
+        navigation.dispatch(StackActions.push('CoinbaseRoot'));
+      } else {
+        if (IsEVMChain(wallet.chain) && wallet.receiveAddress) {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 2,
+              routes: [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
+                },
+                {
+                  name: WalletScreens.ACCOUNT_DETAILS,
+                  params: {
+                    keyId: wallet.keyId,
+                    selectedAccountAddress: wallet.receiveAddress,
+                  },
+                },
+                {
+                  name: WalletScreens.WALLET_DETAILS,
+                  params: {
+                    walletId: wallet!.id,
+                    key,
+                  },
+                },
+              ],
+            }),
+          );
+        } else {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 1,
+              routes: [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
+                },
+                {
+                  name: WalletScreens.WALLET_DETAILS,
+                  params: {
+                    walletId: wallet!.id,
+                    key,
+                  },
+                },
+              ],
+            }),
+          );
+        }
+      }
     } catch (err) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
@@ -729,71 +797,6 @@ const Confirm = () => {
             />
           </DetailsList>
 
-          <PaymentSent
-            isVisible={showPaymentSentModal}
-            title={
-              wallet.credentials.n > 1
-                ? t('Proposal created')
-                : t('Payment Sent')
-            }
-            onCloseModal={async () => {
-              if (recipient.type === 'coinbase') {
-                await sleep(500);
-                navigation.dispatch(StackActions.popToTop());
-                navigation.dispatch(StackActions.push('CoinbaseRoot'));
-              } else {
-                await sleep(500);
-                if (IsEVMChain(wallet.chain) && wallet.receiveAddress) {
-                  navigation.dispatch(
-                    CommonActions.reset({
-                      index: 2,
-                      routes: [
-                        {
-                          name: RootStacks.TABS,
-                          params: {screen: TabsScreens.HOME},
-                        },
-                        {
-                          name: WalletScreens.ACCOUNT_DETAILS,
-                          params: {
-                            keyId: wallet.keyId,
-                            selectedAccountAddress: wallet.receiveAddress,
-                          },
-                        },
-                        {
-                          name: WalletScreens.WALLET_DETAILS,
-                          params: {
-                            walletId: wallet!.id,
-                            key,
-                          },
-                        },
-                      ],
-                    }),
-                  );
-                } else {
-                  navigation.dispatch(
-                    CommonActions.reset({
-                      index: 1,
-                      routes: [
-                        {
-                          name: RootStacks.TABS,
-                          params: {screen: TabsScreens.HOME},
-                        },
-                        {
-                          name: WalletScreens.WALLET_DETAILS,
-                          params: {
-                            walletId: wallet!.id,
-                            key,
-                          },
-                        },
-                      ],
-                    }),
-                  );
-                }
-                await sleep(1000);
-                setShowPaymentSentModal(false);
-              }
-            }}
-          />
           {isTxLevelAvailable() ? (
             <TransactionLevel
               feeLevel={fee?.feeLevel || 'normal'}

@@ -18,6 +18,7 @@ import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
+import {PaymentSentModalConfig} from '../../navigation/wallet/components/PaymentSent';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -95,6 +96,9 @@ export enum AppActionTypes {
   IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
   SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
+  SHOW_PAYMENT_SENT_MODAL = 'APP/SHOW_PAYMENT_SENT_MODAL',
+  DISMISS_PAYMENT_SENT_MODAL = 'APP/DISMISS_PAYMENT_SENT_MODAL',
+  CLEAR_PAYMENT_SENT_MODAL_OPTIONS = 'APP/CLEAR_PAYMENT_SENT_MODAL_OPTIONS',
 }
 
 interface ImportLedgerModalToggled {
@@ -433,6 +437,19 @@ interface ShowArchaxBanner {
   payload: boolean;
 }
 
+interface ShowPaymentSentModal {
+  type: typeof AppActionTypes.SHOW_PAYMENT_SENT_MODAL;
+  payload: PaymentSentModalConfig;
+}
+
+interface DismissPaymentSentModal {
+  type: typeof AppActionTypes.DISMISS_PAYMENT_SENT_MODAL;
+}
+
+interface ClearPaymentSentModalOptions {
+  type: typeof AppActionTypes.CLEAR_PAYMENT_SENT_MODAL_OPTIONS;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -506,4 +523,7 @@ export type AppActionType =
   | ClearChainSelectorModalOptions
   | ShowWalletConnectStartModal
   | DismissWalletConnectStartModal
-  | ShowArchaxBanner;
+  | ShowArchaxBanner
+  | ShowPaymentSentModal
+  | DismissPaymentSentModal
+  | ClearPaymentSentModalOptions;

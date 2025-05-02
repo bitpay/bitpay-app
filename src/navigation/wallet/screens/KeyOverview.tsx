@@ -670,7 +670,7 @@ const KeyOverview = () => {
             searchFullList={memorizedAccountList}
             context={'keyoverview'}
           />
-        </View>
+          </View>
       </WalletListHeader>
     );
   }, [key, hideAllBalances]);
@@ -698,12 +698,10 @@ const KeyOverview = () => {
     () =>
       !isLoadingInitial ? (
         <EmptyListContainer>
-        <H5>{t("It's a ghost town in here")}</H5>
-        <GhostSvg style={{marginTop: 20}} />
-      </EmptyListContainer>
-      ) : (
-        null
-      ),
+          <H5>{t("It's a ghost town in here")}</H5>
+          <GhostSvg style={{marginTop: 20}} />
+        </EmptyListContainer>
+      ) : null,
     [t, isLoadingInitial],
   );
 
@@ -732,7 +730,7 @@ const KeyOverview = () => {
         </TouchableOpacity>
       </BalanceContainer>
 
-     <FlashList<AccountRowProps>
+      <FlashList<AccountRowProps>
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
