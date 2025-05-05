@@ -297,9 +297,16 @@ const SearchComponent = <T extends SearchableItem>({
         }
         let chains = SUPPORTED_EVM_COINS;
         if (searchFullList.length > 0) {
-          chains = [
-            ...new Set(searchFullList.flatMap(data => data.chains || [])),
-          ];
+          const extractedChains = searchFullList
+            .flatMap(data => {
+              const transactions = data.data as TransactionProposal[];
+              return transactions.map(tx => tx.chain);
+            })
+            .filter(Boolean);
+
+          if (extractedChains.length > 0) {
+            chains = [...new Set(extractedChains)];
+          }
         }
         setChainsOptions(chains);
       } else if (
