@@ -663,14 +663,14 @@ const KeyOverview = () => {
             searchVal={searchVal}
             setSearchVal={setSearchVal}
             searchResults={searchResults}
-            setSearchResults={(searchResults)=>{
+            setSearchResults={searchResults => {
               setSearchResults(searchResults);
               setIsLoadingInitial(false);
             }}
             searchFullList={memorizedAccountList}
             context={'keyoverview'}
           />
-          </View>
+        </View>
       </WalletListHeader>
     );
   }, [key, hideAllBalances]);

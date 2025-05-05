@@ -444,9 +444,7 @@ const SearchComponent = <T extends SearchableItem>({
     return (
       <SearchFilterContainer
         onPress={() => {
-          dispatch(
-            AppActions.showChainSelectorModal({context, chainsOptions}),
-          );
+          dispatch(AppActions.showChainSelectorModal({context, chainsOptions}));
         }}>
         <RowFilterContainer>
           {selectedChainFilterOption && currencyInfo ? (
