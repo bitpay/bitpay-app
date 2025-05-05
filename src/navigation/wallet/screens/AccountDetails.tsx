@@ -1358,27 +1358,29 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               <H5>{t('Activity')}</H5>
             </WalletListHeader>
           </HeaderListContainer>
-          <SearchComponent<
-            GroupedHistoryProps | Partial<AssetsByChainListProps>
-          >
-            searchVal={searchVal}
-            setSearchVal={setSearchVal}
-            searchResults={
-              !showActivityTab ? searchResultsAssets : searchResultsHistory
-            }
-            //@ts-ignore
-            setSearchResults={
-              !showActivityTab
-                ? setSearchResultsAssets
-                : setSearchResultsHistory
-            }
-            searchFullList={
-              !showActivityTab ? memorizedAssetsByChainList : groupedHistory
-            }
-            context={
-              !showActivityTab ? 'accountassetsview' : 'accounthistoryview'
-            }
-          />
+          <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
+            <SearchComponent<
+              GroupedHistoryProps | Partial<AssetsByChainListProps>
+            >
+              searchVal={searchVal}
+              setSearchVal={setSearchVal}
+              searchResults={
+                !showActivityTab ? searchResultsAssets : searchResultsHistory
+              }
+              //@ts-ignore
+              setSearchResults={
+                !showActivityTab
+                  ? setSearchResultsAssets
+                  : setSearchResultsHistory
+              }
+              searchFullList={
+                !showActivityTab ? memorizedAssetsByChainList : groupedHistory
+              }
+              context={
+                !showActivityTab ? 'accountassetsview' : 'accounthistoryview'
+              }
+            />
+          </View>
         </AssetsDataContainer>
       </>
     );

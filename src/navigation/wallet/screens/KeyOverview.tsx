@@ -13,7 +13,7 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
-import {LogBox, RefreshControl} from 'react-native';
+import {LogBox, RefreshControl, View} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -653,17 +653,24 @@ const KeyOverview = () => {
     return (
       <WalletListHeader>
         <H5>{t('My Wallets')}</H5>
-        <SearchComponent<AccountRowProps>
-          searchVal={searchVal}
-          setSearchVal={setSearchVal}
-          searchResults={searchResults}
-          setSearchResults={(searchResults)=>{
-            setSearchResults(searchResults);
-            setIsLoadingInitial(false);
-          }}
-          searchFullList={memorizedAccountList}
-          context={'keyoverview'}
-        />
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            marginRight: -10,
+          }}>
+          <SearchComponent<AccountRowProps>
+            searchVal={searchVal}
+            setSearchVal={setSearchVal}
+            searchResults={searchResults}
+            setSearchResults={(searchResults)=>{
+              setSearchResults(searchResults);
+              setIsLoadingInitial(false);
+            }}
+            searchFullList={memorizedAccountList}
+            context={'keyoverview'}
+          />
+        </View>
       </WalletListHeader>
     );
   }, [key, hideAllBalances]);
