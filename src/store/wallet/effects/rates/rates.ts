@@ -332,7 +332,11 @@ export const fetchHistoricalRates =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
-        RATE: {ratesHistoricalCacheKey, ratesByDateRange: cachedRates},
+        RATE: {
+          ratesHistoricalCacheKey,
+          ratesByDateRange: cachedRates,
+          cachedValuesFiatCode,
+        },
       } = getState();
 
       const cachedRatesByCoin =
@@ -345,9 +349,14 @@ export const fetchHistoricalRates =
           ratesHistoricalCacheKey[dateRange],
           HISTORIC_RATES_CACHE_DURATION,
         ) &&
-        cachedRatesByCoin.length > 0
+        cachedRatesByCoin.length > 0 &&
+        cachedValuesFiatCode?.toUpperCase() === fiatIsoCode?.toUpperCase()
       ) {
-        dispatch(LogActions.info('[rates]: using cached rates'));
+        dispatch(
+          LogActions.info(
+            `[rates]: using cached rates. currencyAbbreviation: ${currencyAbbreviation} | fiatIsoCode: ${fiatIsoCode}`,
+          ),
+        );
         return resolve(cachedRatesByCoin);
       }
 
@@ -368,7 +377,11 @@ export const fetchHistoricalRates =
         const url = `${BASE_BWS_URL}/v2/fiatrates/${fiatIsoCode}?ts=${firstDateTs}`;
         const {data: rates} = await axios.get(url);
         dispatch(
-          successGetHistoricalRates({ratesByDateRange: rates, dateRange}),
+          successGetHistoricalRates({
+            ratesByDateRange: rates,
+            dateRange,
+            fiatCode: fiatIsoCode,
+          }),
         );
         dispatch(
           LogActions.info('[rates]: fetched historical rates successfully'),
