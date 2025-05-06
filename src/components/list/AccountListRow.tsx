@@ -36,8 +36,7 @@ const BalanceColumn = styled(Column)`
   align-items: flex-end;
 `;
 
-const ListCointainer = styled(Animated.View)`
-`;
+const ListCointainer = styled(Animated.View)``;
 
 export interface AccountRowListBase extends SearchableItem {}
 

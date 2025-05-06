@@ -615,12 +615,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   };
 
   const loadHistory = useCallback(
-    async (refresh?: boolean) => {
+    async (
+      _selectedChainFilterOption: string | undefined,
+      refresh?: boolean,
+    ) => {
       if (!loadMore && !refresh) {
         return;
       }
       try {
-        setIsLoading(!refresh);
+        setIsLoading(true);
         setErrorLoadingTxs(false);
 
         const [transactionHistory] = await Promise.all([
@@ -632,6 +635,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               limit: TX_HISTORY_LIMIT * loadMoreIndex,
               contactList,
               refresh,
+              selectedChainFilterOption: _selectedChainFilterOption,
             }),
           ),
         ]);
@@ -647,6 +651,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             setHistory(_history);
             const grouped = GroupTransactionHistory(_history);
             setGroupedHistory(grouped);
+          } else {
+            setGroupedHistory([]);
           }
 
           const hasLoadMore = Object.values(accountTransactionsHistory).some(
@@ -655,6 +661,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           setLoadMore(hasLoadMore);
         }
 
+        await sleep(1000);
         setIsLoading(false);
       } catch (e) {
         setLoadMore(false);
@@ -667,10 +674,16 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [history],
   );
 
-  const debouncedLoadHistory = useMemo(
-    () => debounce(loadHistory, 300, {leading: true}),
-    [loadHistory],
-  );
+  const debouncedLoadHistory = useMemo(() => {
+    const debounced = debounce(
+      (_selectedChainFilterOption: string | undefined, refresh?: boolean) => {
+        loadHistory(_selectedChainFilterOption, refresh);
+      },
+      300,
+      {leading: true},
+    );
+    return debounced;
+  }, [loadHistory]);
 
   const loadHistoryRef = useRef(debouncedLoadHistory);
 
@@ -696,8 +709,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     setNeedActionTxps(pendingTxps);
     const subscription = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.WALLET_LOAD_HISTORY,
-      () => {
-        loadHistoryRef.current(true);
+      (_selectedChainFilterOption?: string | undefined) => {
+        const selected =
+          _selectedChainFilterOption ?? selectedChainFilterOption;
+        loadHistoryRef.current(selected, true);
         setNeedActionTxps(pendingTxps);
       },
     );
@@ -720,14 +735,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [],
   );
 
-  const listFooterComponentTxsTab = () => {
+  const listFooterComponentTxsTab = useCallback(() => {
     return (
       <>
-        {!groupedHistory?.length ? null : (
-          <View style={{marginBottom: 20}}>
-            <BorderBottom />
-          </View>
-        )}
         {isLoading || isLoading === undefined ? (
           <SkeletonContainer>
             <WalletTransactionSkeletonRow />
@@ -735,7 +745,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         ) : null}
       </>
     );
-  };
+  }, [isLoading, groupedHistory]);
 
   const listFooterComponentAssetsTab = () => {
     return (
@@ -869,7 +879,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   };
 
   const goToTransactionDetails = (transaction: any) => {
-    const onMemoChange = () => debouncedLoadHistory(true);
+    const onMemoChange = () =>
+      debouncedLoadHistory(selectedChainFilterOption, true);
     const fullWalletObj = findWalletById(
       keyFullWalletObjs,
       transaction.walletId,
@@ -1169,7 +1180,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     try {
       await dispatch(startGetRates({}));
       showActivityTab
-        ? await debouncedLoadHistory(true)
+        ? await debouncedLoadHistory(selectedChainFilterOption, true)
         : await startUpdateAllWalletStatusForKey({
             key,
             accountAddress: accountItem?.receiveAddress,
@@ -1186,15 +1197,18 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
-  const listEmptyComponent = () => {
+  const listEmptyComponent = useCallback(() => {
     return (
       <>
-        {!isLoading && isLoading !== undefined && !errorLoadingTxs && (
-          <EmptyListContainer>
-            <H5>{t("It's a ghost town in here")}</H5>
-            <GhostSvg style={{marginTop: 20}} />
-          </EmptyListContainer>
-        )}
+        {!isLoading &&
+          isLoading !== undefined &&
+          !errorLoadingTxs &&
+          !groupedHistory?.length && (
+            <EmptyListContainer>
+              <H5>{t("It's a ghost town in here")}</H5>
+              <GhostSvg style={{marginTop: 20}} />
+            </EmptyListContainer>
+          )}
 
         {!isLoading && isLoading !== undefined && errorLoadingTxs && (
           <EmptyListContainer>
@@ -1204,7 +1218,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         )}
       </>
     );
-  };
+  }, [isLoading, errorLoadingTxs, groupedHistory]);
 
   const memorizedAssetsByChainList = useMemo(() => {
     return buildAssetsByChainList(accountItem, defaultAltCurrency.isoCode);
@@ -1353,7 +1367,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               onPress={async () => {
                 setShowActivityTab(true);
                 await sleep(200);
-                debouncedLoadHistory();
+                debouncedLoadHistory(selectedChainFilterOption);
               }}>
               <H5>{t('Activity')}</H5>
             </WalletListHeader>
@@ -1441,7 +1455,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           onMomentumScrollEnd: () => setIsScrolling(false),
           onEndReached: () => {
             if (isScrolling) {
-              debouncedLoadHistory();
+              debouncedLoadHistory(selectedChainFilterOption);
             }
           },
           onEndReachedThreshold: 0.3,

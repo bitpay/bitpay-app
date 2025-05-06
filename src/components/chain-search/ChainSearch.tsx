@@ -289,10 +289,7 @@ const SearchComponent = <T extends SearchableItem>({
             return acc;
           }, []);
         }
-        const chains = [
-          ...new Set(searchFullList.flatMap(data => data.chains || [])),
-        ];
-        setChainsOptions(chains);
+        setChainsOptions(SUPPORTED_EVM_COINS);
       } else if (['accounthistoryview'].includes(context)) {
         if (selectedChainFilterOption) {
           results = results
@@ -306,13 +303,7 @@ const SearchComponent = <T extends SearchableItem>({
             })
             .filter(result => result.data.length > 0);
         }
-        let chains = SUPPORTED_EVM_COINS;
-        if (searchFullList.length > 0) {
-          chains = [
-            ...new Set(searchFullList.flatMap(data => data.chains || [])),
-          ];
-        }
-        setChainsOptions(chains);
+        setChainsOptions(SUPPORTED_EVM_COINS);
       } else if (
         ['sell', 'send', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
           context,
@@ -444,9 +435,7 @@ const SearchComponent = <T extends SearchableItem>({
     return (
       <SearchFilterContainer
         onPress={() => {
-          dispatch(
-            AppActions.showChainSelectorModal({context, chainsOptions}),
-          );
+          dispatch(AppActions.showChainSelectorModal({context, chainsOptions}));
         }}>
         <RowFilterContainer>
           {selectedChainFilterOption && currencyInfo ? (
