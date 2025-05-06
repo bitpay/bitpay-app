@@ -1,11 +1,9 @@
 import {t} from 'i18next';
-import {
-  BanxaBlockchainKey,
-  BanxaPaymentMethod,
-} from '../../../../store/buy-crypto/buy-crypto.models';
+import {BanxaPaymentMethod} from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
+import cloneDeep from 'lodash.clonedeep';
 
 export const banxaEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -50,47 +48,97 @@ export const banxaSupportedFiatCurrencies = [
 ];
 
 export const banxaSupportedCoins = [
+  'bch',
   'btc',
   'eth',
+  'eth_arb',
+  'eth_base',
+  'eth_op',
   'doge',
   'ltc',
   'matic', // POL // backward compatibility
   'pol',
+  'sol',
   'xrp',
 ];
 
 export const banxaSupportedErc20Tokens = [
   'aave',
   'ape',
+  'audd',
+  'avt',
+  'axs',
   'bat',
-  'busd',
+  'boba',
+  'bzr',
+  'caga',
   'chz',
   'comp',
   'cvc',
-  'enj',
+  'dai',
   'euroc',
+  'eurq',
+  'eurr',
+  'ftm',
   'grt',
   'imx',
+  'kcs',
   'link',
   'looks',
+  'lrc',
   'mana',
   'mkr',
+  'mnt',
+  'neiro',
   'omg',
+  'omusd',
+  'one',
+  'order',
   'pax', // backward compatibility
+  'perc',
+  'pol',
+  'propc',
   'pstake',
+  'qrdo',
+  'rlusd',
   'sand',
   'snx',
-  'susd',
   'sushi',
   'uni',
+  'usd0',
   'usdc',
   'usdp',
+  'usdq',
+  'usdr',
   'usdt',
+  'verse',
   'wbtc',
+  'wolf',
   'yfi',
+  'zchf',
 ];
 
-export const banxaSupportedMaticTokens = [];
+export const banxaSupportedMaticTokens = [
+  'dai',
+  'usdc',
+  'usdt',
+  'verse',
+  'wombat',
+];
+
+export const banxaSupportedArbitrumTokens = ['gmx', 'grt', 'usdc', 'usdt'];
+
+export const banxaSupportedBaseTokens = ['brett', 'dai', 'eurc', 'usdc'];
+
+export const banxaSupportedOptimismTokens = ['usdc'];
+
+export const banxaSupportedSolanaTokens = [
+  'barsik',
+  'melania',
+  'trump',
+  'usdc',
+  'usdt',
+];
 
 export const getBanxaSupportedCurrencies = (): string[] => {
   const banxaSupportedCurrencies = [
@@ -100,6 +148,18 @@ export const getBanxaSupportedCurrencies = (): string[] => {
     ),
     ...banxaSupportedMaticTokens.flatMap(maticToken =>
       getCurrencyAbbreviation(maticToken, 'matic'),
+    ),
+    ...banxaSupportedArbitrumTokens.flatMap(arbitrumToken =>
+      getCurrencyAbbreviation(arbitrumToken, 'arb'),
+    ),
+    ...banxaSupportedBaseTokens.flatMap(baseToken =>
+      getCurrencyAbbreviation(baseToken, 'base'),
+    ),
+    ...banxaSupportedOptimismTokens.flatMap(optimismToken =>
+      getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+    ...banxaSupportedSolanaTokens.flatMap(solanaToken =>
+      getCurrencyAbbreviation(solanaToken, 'sol'),
     ),
   ];
 
@@ -193,37 +253,19 @@ export const getBanxaSelectedPaymentMethodData = (
   return selectedBanxaPMData;
 };
 
-export const getBanxaChainFormat = (
-  chain: string,
-): BanxaBlockchainKey | undefined => {
+export const getBanxaChainFormat = (chain: string): string | undefined => {
   if (!chain) {
     return undefined;
   }
-  let formattedChain: BanxaBlockchainKey | undefined;
-  switch (chain.toLowerCase()) {
-    case 'btc':
-      formattedChain = 'BTC';
-      break;
-    case 'eth':
-      formattedChain = 'ETH';
-      break;
-    case 'doge':
-      formattedChain = 'DOGE';
-      break;
-    case 'ltc':
-      formattedChain = 'LTC';
-      break;
-    case 'matic':
-      formattedChain = 'MATIC';
-      break;
-    case 'xrp':
-      formattedChain = 'XRP';
-      break;
+
+  let formattedChain: string | undefined = cloneDeep(chain)?.toUpperCase();
+
+  switch (formattedChain) {
+    case 'OP':
+      return 'OPTIMISM'; // Banxa's docs use 'OPTIMISM' instead of 'OP'. Test this
     default:
-      formattedChain = undefined;
-      break;
+      return formattedChain;
   }
-  return formattedChain;
 };
 
 export const getBanxaFiatAmountLimits = () => {

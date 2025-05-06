@@ -72,6 +72,7 @@ export const simplexSupportedCoins = [
   'ltc',
   'matic', // POL // backward compatibility
   'pol',
+  'sol',
   'xrp',
 ];
 
@@ -181,6 +182,23 @@ export const simplexSupportedOptimismTokens = [
   'usdt', // USDT-OPTIMISM
 ];
 
+export const simplexSupportedSolanaTokens = [
+  'bonk',
+  'bome',
+  'drift',
+  'jup',
+  'kin',
+  'melania',
+  'mew',
+  'mog',
+  'pnut',
+  'popcat',
+  'trump',
+  'usdc', // USDC-SOL
+  'usdt', // USDT-SOL
+  'wif',
+];
+
 export const simplexErc20TokensWithSuffix = [
   'aag', // AAG-ERC20
   'axs', // AXS-ERC20
@@ -220,6 +238,11 @@ export const simplexOptimismTokensWithSuffix = [
   'usdt', // USDT-OPTIMISM
 ];
 
+export const simplexSolanaTokensWithSuffix = [
+  'usdc', // USDC-SOL
+  'usdt', // USDT-SOL
+];
+
 export const getSimplexSupportedCurrencies = (): string[] => {
   const simplexSupportedCurrencies = [
     ...simplexSupportedCoins,
@@ -237,6 +260,9 @@ export const getSimplexSupportedCurrencies = (): string[] => {
     ),
     ...simplexSupportedOptimismTokens.flatMap(optimismToken =>
       getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+    ...simplexSupportedSolanaTokens.flatMap(solanaToken =>
+      getCurrencyAbbreviation(solanaToken, 'sol'),
     ),
   ];
 
@@ -277,6 +303,11 @@ export const getSimplexCoinFormat = (coin: string, chain: string): string => {
     case 'op':
       if (simplexOptimismTokensWithSuffix.includes(coin.toLowerCase())) {
         formattedCoin = `${coin.toUpperCase()}-OPTIMISM`;
+      }
+      break;
+    case 'sol':
+      if (simplexSolanaTokensWithSuffix.includes(coin.toLowerCase())) {
+        formattedCoin = `${coin.toUpperCase()}-SOL`;
       }
       break;
     default:
