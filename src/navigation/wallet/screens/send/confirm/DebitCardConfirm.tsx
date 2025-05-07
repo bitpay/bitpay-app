@@ -43,7 +43,6 @@ import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {CardEffects} from '../../../../../store/card';
-import PaymentSent from '../../../components/PaymentSent';
 import {Card} from '../../../../../store/card/card.models';
 import styled from 'styled-components/native';
 import {Br} from '../../../../../components/styled/Containers';
@@ -115,7 +114,6 @@ const Confirm = () => {
   const [invoice, setInvoice] = useState<Invoice>();
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [txp, updateTxp] = useState(_txp);
   const {fee, networkCost, sendingFrom, total, subTotal} = txDetails || {};
   const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
@@ -266,7 +264,28 @@ const Confirm = () => {
         );
     dispatch(dismissOnGoingProcessModal());
     await sleep(400);
-    setShowPaymentSentModal(true);
+
+    dispatch(
+      AppActions.showPaymentSentModal({
+        isVisible: true,
+        onCloseModal,
+        title:
+          wallet?.credentials?.n > 1
+            ? t('Payment Sent')
+            : t('Payment Accepted'),
+      }),
+    );
+
+    await sleep(1200);
+    navigation.dispatch(StackActions.popToTop());
+    navigation.dispatch(StackActions.pop(3));
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
   };
 
   const showError = ({
@@ -375,7 +394,7 @@ const Confirm = () => {
               />
             ) : null}
             {memoizedKeysAndWalletsList.keyWallets.length === 1 &&
-            memoizedKeysAndWalletsList.keyWallets[0].wallets.length === 1 ? (
+            memoizedKeysAndWalletsList.keyWallets[0].wallets?.length === 1 ? (
               <SendingFrom sender={sendingFrom!} hr />
             ) : (
               <SendingFrom
@@ -477,16 +496,6 @@ const Confirm = () => {
             await sleep(100);
             navigation.goBack();
           }
-        }}
-      />
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          navigation.dispatch(StackActions.popToTop());
-          navigation.dispatch(StackActions.pop(3));
-          await sleep(0);
-          setShowPaymentSentModal(false);
         }}
       />
     </ConfirmContainer>
