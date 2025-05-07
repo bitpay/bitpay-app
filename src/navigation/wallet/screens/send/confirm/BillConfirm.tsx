@@ -66,7 +66,6 @@ import Button from '../../../../../components/button/Button';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import BillAlert from '../../../../tabs/shop/bill/components/BillAlert';
-import PaymentSent from '../../../components/PaymentSent';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParamsForMultipleBills} from '../../../../tabs/shop/bill/utils';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
@@ -121,7 +120,6 @@ const BillConfirm: React.FC<
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
   const [wallet, setWallet] = useState(_wallet);
   const [coinbaseAccount, setCoinbaseAccount] =
@@ -416,7 +414,16 @@ const BillConfirm: React.FC<
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
     await sleep(400);
-    setShowPaymentSentModal(true);
+    dispatch(
+      AppActions.showPaymentSentModal({
+        isVisible: true,
+        onCloseModal,
+        title:
+          wallet?.credentials?.n > 1
+            ? t('Payment Sent')
+            : t('Payment Accepted'),
+      }),
+    );
     dispatch(ShopEffects.startFindBillPayments()).catch(_ => {});
     dispatch(
       Analytics.track('Bill Pay - Successful Bill Paid', {
@@ -424,6 +431,17 @@ const BillConfirm: React.FC<
         network: appNetwork,
       }),
     );
+
+    await sleep(1200);
+    navigation.dispatch(StackActions.popToTop());
+    navigator.navigate(BillScreens.PAYMENTS, {});
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
   };
 
   const showError = ({
@@ -681,16 +699,6 @@ const BillConfirm: React.FC<
             await sleep(100);
             navigation.goBack();
           }
-        }}
-      />
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          await sleep(500);
-          navigation.dispatch(StackActions.popToTop());
-          navigator.navigate(BillScreens.PAYMENTS, {});
         }}
       />
 
