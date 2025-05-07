@@ -21,7 +21,6 @@ import RampSellCheckoutSkeleton from './RampSellCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
-import PaymentSent from '../../../wallet/components/PaymentSent';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
 import {H5, H7} from '../../../../components/styled/Text';
@@ -119,6 +118,7 @@ import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {rampGetSellTransactionDetails} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {CryptoOffer} from './SellCryptoOffers';
+import {AppActions} from '../../../../store/app';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -182,7 +182,6 @@ const RampSellCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[wallet.keyId],
   );
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<RampSellTransactionDetails>();
 
@@ -526,7 +525,42 @@ const RampSellCheckout: React.FC = () => {
       updateRampTx(txData!, broadcastedTx as Partial<TransactionProposal>);
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
-      setShowPaymentSentModal(true);
+
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            wallet?.credentials?.n > 1
+              ? t('Payment Sent')
+              : t('Payment Accepted'),
+        }),
+      );
+
+      await sleep(1200);
+      const rampSettingsParams: RampSettingsProps = {
+        incomingPaymentRequest: {
+          rampExternalId: sellCryptoExternalId,
+          status: 'bitpayTxSent',
+          flow: 'sell',
+        },
+      };
+
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            {
+              name: RootStacks.TABS,
+              params: {screen: TabsScreens.HOME},
+            },
+            {
+              name: ExternalServicesSettingsScreens.RAMP_SETTINGS,
+              params: rampSettingsParams,
+            },
+          ],
+        }),
+      );
     } catch (err: any) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
@@ -556,6 +590,13 @@ const RampSellCheckout: React.FC = () => {
           showError(msg, reason);
       }
     }
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -1040,38 +1081,6 @@ const RampSellCheckout: React.FC = () => {
           )}
         </>
       ) : null}
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          await sleep(600);
-
-          const rampSettingsParams: RampSettingsProps = {
-            incomingPaymentRequest: {
-              rampExternalId: sellCryptoExternalId,
-              status: 'bitpayTxSent',
-              flow: 'sell',
-            },
-          };
-
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: ExternalServicesSettingsScreens.RAMP_SETTINGS,
-                  params: rampSettingsParams,
-                },
-              ],
-            }),
-          );
-        }}
-      />
     </SellCheckoutContainer>
   );
 };
