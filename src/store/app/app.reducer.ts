@@ -27,6 +27,7 @@ import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
+import {PaymentSentModalConfig} from '../../navigation/wallet/components/PaymentSent';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'activeModalId',
@@ -43,6 +44,7 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'showBiometricModal',
   'showBottomNotificationModal',
   'showChainSelectorModal',
+  'chainSelectorModalConfig',
   'showDecryptPasswordModal',
   'showInAppNotification',
   'showOnGoingProcessModal',
@@ -52,6 +54,8 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'tokensDataLoaded',
   'isImportLedgerModalVisible',
   'showArchaxBanner',
+  'showPaymentSentModal',
+  'paymentSentModalConfig',
 ];
 
 export type ModalId =
@@ -166,6 +170,8 @@ export interface AppState {
   inAppBrowserOpen: boolean;
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
+  showPaymentSentModal: boolean;
+  paymentSentModalConfig: PaymentSentModalConfig | undefined;
 }
 
 const initialState: AppState = {
@@ -263,6 +269,8 @@ const initialState: AppState = {
   inAppBrowserOpen: false,
   tokensDataLoaded: false,
   showArchaxBanner: false,
+  showPaymentSentModal: false,
+  paymentSentModalConfig: undefined,
 };
 
 export const appReducer = (
@@ -781,6 +789,25 @@ export const appReducer = (
       return {
         ...state,
         showArchaxBanner: action.payload,
+      };
+
+    case AppActionTypes.SHOW_PAYMENT_SENT_MODAL:
+      return {
+        ...state,
+        showPaymentSentModal: true,
+        paymentSentModalConfig: action.payload,
+      };
+
+    case AppActionTypes.DISMISS_PAYMENT_SENT_MODAL:
+      return {
+        ...state,
+        showPaymentSentModal: false,
+      };
+
+    case AppActionTypes.CLEAR_PAYMENT_SENT_MODAL_OPTIONS:
+      return {
+        ...state,
+        paymentSentModalConfig: undefined,
       };
 
     default:
