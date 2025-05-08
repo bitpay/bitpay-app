@@ -6,7 +6,6 @@ import {useTheme} from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
 import styled, {css} from 'styled-components/native';
 import {useDispatch, useSelector} from 'react-redux';
-import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, H4, TextAlign} from '../../styled/Text';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
@@ -50,6 +49,7 @@ import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
 import {sleep} from '../../../utils/helper-methods';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import BaseModal from '../../modal/base/BaseModal';
 
 export const ignoreGlobalListContextList = [
   'sell',
@@ -290,8 +290,14 @@ const ChainSelectorModal = () => {
   }, 300);
 
   return (
-    <SheetModal
+    <BaseModal
+      accessibilityLabel="network-selector"
+      id={'sheetModal'}
       isVisible={isVisible}
+      backdropTransitionOutTiming={0}
+      hideModalContentWhileAnimating
+      backdropOpacity={0.4}
+      backdropColor={theme.dark ? SlateDark : Slate}
       onBackdropPress={async () => {
         dispatch(AppActions.dismissChainSelectorModal());
         await sleep(1000);
@@ -301,6 +307,15 @@ const ChainSelectorModal = () => {
         if (onBackdropDismiss) {
           onBackdropDismiss();
         }
+      }}
+      animationIn={'slideInUp'}
+      animationOut={'slideOutDown'}
+      useNativeDriverForBackdrop={true}
+      useNativeDriver={false}
+      style={{
+        position: 'relative',
+        justifyContent: 'flex-end',
+        margin: 0,
       }}>
       <KeyBoardAvoidingViewWrapper
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -367,7 +382,7 @@ const ChainSelectorModal = () => {
           </HideableView>
         </View>
       </KeyBoardAvoidingViewWrapper>
-    </SheetModal>
+    </BaseModal>
   );
 };
 
