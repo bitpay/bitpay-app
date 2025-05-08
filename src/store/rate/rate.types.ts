@@ -22,6 +22,7 @@ interface successGetHistoricalRates {
   payload: {
     ratesByDateRange?: RatesByDateRange;
     dateRange?: DateRanges;
+    fiatCode?: string;
   };
 }
 

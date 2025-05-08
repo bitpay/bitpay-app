@@ -12,6 +12,7 @@ export interface RateState {
   balanceCacheKey: {[key in string]: number | undefined};
   ratesCacheKey: {[key in number]: DateRanges | undefined};
   ratesHistoricalCacheKey: {[key in number]: DateRanges | undefined};
+  cachedValuesFiatCode: string | undefined;
 }
 
 const initialState: RateState = {
@@ -25,6 +26,7 @@ const initialState: RateState = {
   balanceCacheKey: {},
   ratesCacheKey: {},
   ratesHistoricalCacheKey: {},
+  cachedValuesFiatCode: undefined,
 };
 
 export const rateReducer = (
@@ -46,7 +48,11 @@ export const rateReducer = (
     }
 
     case RateActionTypes.SUCCESS_GET_HISTORICAL_RATES: {
-      const {ratesByDateRange, dateRange = DEFAULT_DATE_RANGE} = action.payload;
+      const {
+        ratesByDateRange,
+        dateRange = DEFAULT_DATE_RANGE,
+        fiatCode,
+      } = action.payload;
       return {
         ...state,
         ratesByDateRange: {
@@ -57,6 +63,7 @@ export const rateReducer = (
           ...state.ratesHistoricalCacheKey,
           [dateRange]: Date.now(),
         },
+        cachedValuesFiatCode: fiatCode,
       };
     }
 

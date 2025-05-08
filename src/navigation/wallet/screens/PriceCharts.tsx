@@ -36,7 +36,7 @@ import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {BitpaySupportedCoins} from '../../../constants/currencies';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
 import {fetchHistoricalRates} from '../../../store/wallet/effects';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -281,6 +281,7 @@ const PriceCharts = () => {
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const theme = useTheme();
   const {
     params: {item},
@@ -352,7 +353,15 @@ const PriceCharts = () => {
   ) => {
     const maxPoints = 45; // If this is too large, animations stop working.
     try {
-      const historicFiatRates = await rateFetchPromises[dateRange]!;
+      const historicFiatRates: Rate[] | undefined = await rateFetchPromises[
+        dateRange
+      ];
+      if (!historicFiatRates || !historicFiatRates[0]?.ts) {
+        logger.debug('[PriceCharts] No historicFiatRates. Throwing error');
+        throw new Error(
+          t('We were not able to obtain the rates at this moment.'),
+        );
+      }
       const formattedRates = getFormattedData(
         historicFiatRates.sort((a, b) => a.ts - b.ts),
         Math.min(maxPoints, targetLength || historicFiatRates.length),
@@ -371,7 +380,7 @@ const PriceCharts = () => {
     [DateRanges.Day, DateRanges.Month, DateRanges.Week].forEach(dateRange =>
       fetchRates(dateRange),
     );
-    const dayRates = await rateFetchPromises[DateRanges.Day]!;
+    const dayRates = await rateFetchPromises[DateRanges.Day];
     const targetLength = dayRates?.length;
     [DateRanges.Day, DateRanges.Month, DateRanges.Week].forEach(
       async dateRange => {
@@ -382,7 +391,11 @@ const PriceCharts = () => {
 
   const fetchRates = async (dateRange: DateRanges) => {
     rateFetchPromises[dateRange] = dispatch(
-      fetchHistoricalRates(dateRange, currencyAbbreviation),
+      fetchHistoricalRates(
+        dateRange,
+        currencyAbbreviation,
+        defaultAltCurrency.isoCode,
+      ),
     );
     const rates = await rateFetchPromises[dateRange];
     return rates;
@@ -394,7 +407,8 @@ const PriceCharts = () => {
   };
 
   const redrawChart = async (dateRange: DateRanges) => {
-    if (cachedRates[dateRange].data.length) {
+    if (cachedRates[dateRange]?.data?.length) {
+      logger.debug('[PriceCharts] Loading cached rates');
       setNewDisplayData(cachedRates[dateRange]);
     } else {
       try {
@@ -405,9 +419,11 @@ const PriceCharts = () => {
         dispatch(dismissOnGoingProcessModal());
         await sleep(500);
         setShowRageDateSelector(false);
+        const err = BWCErrorMessage(e);
+        logger.debug(`[PriceCharts] redrawChart Error: ${err}`);
         await showErrorMessage(
           CustomErrorMessage({
-            errMsg: BWCErrorMessage(e),
+            errMsg: err,
             title: t('Uh oh, something went wrong'),
           }),
         );
