@@ -165,6 +165,10 @@ export const WALLET_CONNECT_SUPPORTED_CHAINS: {
     chain: 'base',
     network: Network.mainnet,
   },
+  'eip155:501': {
+    chain: 'sol',
+    network: Network.mainnet,
+  },
   'eip155:11155420': {
     chain: 'op',
     network: Network.testnet,
