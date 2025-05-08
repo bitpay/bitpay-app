@@ -18,7 +18,6 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {WalletConnectGroupParamList} from '../WalletConnectGroup';
-import PaymentSent from '../../wallet/components/PaymentSent';
 import Button from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
@@ -77,6 +76,7 @@ import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyM
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {EIP155_SIGNING_METHODS} from '../../../constants/WalletConnectV2';
 import {formatJsonRpcResult} from '@json-rpc-tools/utils';
+import {AppActions} from '../../../store/app';
 
 const HeaderRightContainer = styled.View``;
 
@@ -113,7 +113,6 @@ const WalletConnectConfirm = () => {
     selectedAccountAddress,
   } = route.params;
   const peerIcon = icons && icons[0];
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [clipboardObj, setClipboardObj] = useState({copied: false, type: ''});
   const [showVerifyContextBottomModal, setShowVerifyContextBottomModal] =
@@ -221,7 +220,16 @@ const WalletConnectConfirm = () => {
           coin: wallet?.currencyAbbreviation || '',
         }),
       );
-      setShowPaymentSentModal(true);
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            wallet?.credentials.n > 1
+              ? t('Proposal created')
+              : t('Payment Sent'),
+        }),
+      );
     } catch (err) {
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
@@ -381,6 +389,13 @@ const WalletConnectConfirm = () => {
     );
   };
 
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
+  };
+
   useEffect(() => {
     if (!sessionV2) {
       setAccountDisconnected(true);
@@ -400,9 +415,13 @@ const WalletConnectConfirm = () => {
   }, [requestV2]);
 
   useEffect(() => {
-    if (requestDismissed) {
-      navigation.goBack();
-    }
+    const handleRequestDismiss = async () => {
+      if (requestDismissed) {
+        await sleep(2000); // if request is dismissed, wait for 2 seconds - probably was approved
+        navigation.goBack();
+      }
+    };
+    handleRequestDismiss();
   }, [requestDismissed]);
 
   return (
@@ -534,14 +553,6 @@ const WalletConnectConfirm = () => {
         title={t('Slide to approve')}
         onSwipeComplete={approveCallRequest}
         forceReset={resetSwipeButton}
-      />
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={() => {
-          setShowPaymentSentModal(false);
-          navigation.goBack();
-        }}
       />
 
       <VerifyContextModal

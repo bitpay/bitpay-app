@@ -28,7 +28,6 @@ import {
   showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
-import PaymentSent from '../../../components/PaymentSent';
 import {sleep, toggleThenUntoggle} from '../../../../../utils/helper-methods';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {
@@ -138,7 +137,6 @@ const PayProConfirm = () => {
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
   const [txp, updateTxp] = useState(_txp);
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const {fee, sendingFrom, subTotal, total} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
@@ -387,9 +385,76 @@ const PayProConfirm = () => {
           coin: wallet?.currencyAbbreviation || '',
         }),
       );
-      await sleep(400);
-      setShowPaymentSentModal(true);
-    } catch (err) {
+
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            wallet?.credentials.n > 1
+              ? t('Proposal created')
+              : t('Payment Sent'),
+        }),
+      );
+
+      await sleep(1000);
+
+      if (coinbaseAccount) {
+        navigation.dispatch(StackActions.popToTop());
+        navigation.dispatch(StackActions.pop(3));
+        navigation.navigate('CoinbaseAccount', {
+          accountId: coinbaseAccount.id,
+          refresh: true,
+        });
+      } else {
+        if (IsEVMChain(wallet!.chain) && wallet!.receiveAddress) {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 2,
+              routes: [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
+                },
+                {
+                  name: WalletScreens.ACCOUNT_DETAILS,
+                  params: {
+                    keyId: wallet!.keyId,
+                    selectedAccountAddress: wallet!.receiveAddress,
+                  },
+                },
+                {
+                  name: WalletScreens.WALLET_DETAILS,
+                  params: {
+                    walletId: wallet!.id,
+                    key,
+                  },
+                },
+              ],
+            }),
+          );
+        } else {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 1,
+              routes: [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
+                },
+                {
+                  name: WalletScreens.WALLET_DETAILS,
+                  params: {
+                    walletId: wallet!.id,
+                    key,
+                  },
+                },
+              ],
+            }),
+          );
+        }
+      }
+    } catch (err: any) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -525,6 +590,13 @@ const PayProConfirm = () => {
     }
   };
 
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
+  };
+
   useEffect(() => {
     if (!resetSwipeButton) {
       return;
@@ -653,69 +725,6 @@ const PayProConfirm = () => {
             if (!wallet && !coinbaseAccount) {
               await sleep(100);
               navigation.goBack();
-            }
-          }}
-        />
-
-        <PaymentSent
-          isVisible={showPaymentSentModal}
-          onCloseModal={async () => {
-            setShowPaymentSentModal(false);
-            await sleep(500);
-            if (coinbaseAccount) {
-              navigation.dispatch(StackActions.popToTop());
-              navigation.dispatch(StackActions.pop(3));
-              navigation.navigate('CoinbaseAccount', {
-                accountId: coinbaseAccount.id,
-                refresh: true,
-              });
-            } else {
-              if (IsEVMChain(wallet!.chain) && wallet!.receiveAddress) {
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 2,
-                    routes: [
-                      {
-                        name: RootStacks.TABS,
-                        params: {screen: TabsScreens.HOME},
-                      },
-                      {
-                        name: WalletScreens.ACCOUNT_DETAILS,
-                        params: {
-                          keyId: wallet!.keyId,
-                          selectedAccountAddress: wallet!.receiveAddress,
-                        },
-                      },
-                      {
-                        name: WalletScreens.WALLET_DETAILS,
-                        params: {
-                          walletId: wallet!.id,
-                          key,
-                        },
-                      },
-                    ],
-                  }),
-                );
-              } else {
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 1,
-                    routes: [
-                      {
-                        name: RootStacks.TABS,
-                        params: {screen: TabsScreens.HOME},
-                      },
-                      {
-                        name: WalletScreens.WALLET_DETAILS,
-                        params: {
-                          walletId: wallet!.id,
-                          key,
-                        },
-                      },
-                    ],
-                  }),
-                );
-              }
             }
           }}
         />

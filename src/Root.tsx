@@ -148,6 +148,7 @@ import {
 import {BrazeWrapper} from './lib/Braze';
 import {selectSettingsNotificationState} from './store/app/app.selectors';
 import {HeaderShownContext} from '@react-navigation/elements';
+import PaymentSent from './navigation/wallet/components/PaymentSent';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
@@ -806,6 +807,7 @@ export default () => {
                   {/* <ImportLedgerWalletModal /> */}
                   <WalletConnectStartModal />
                   <ChainSelectorModal />
+                  <PaymentSent />
                 </NavigationContainer>
               </HeaderShownContext.Provider>
             </SafeAreaView>
