@@ -152,7 +152,6 @@ export const FormatAmount =
           minDecimals: 2,
         },
       };
-
       return transformAmount(satoshis, opts);
     } catch (e) {
       throw e;

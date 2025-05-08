@@ -3,7 +3,7 @@ import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
 import {ReactElement} from 'react';
-import {IsERCToken, IsEVMChain} from '../store/wallet/utils/currency';
+import {IsERCToken, IsEVMChain, IsSVMChain} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
@@ -11,7 +11,7 @@ import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
 import {
-  getBaseAccountCreationCoinsAndTokens,
+  getBaseEVMAccountCreationCoinsAndTokens,
   BitpaySupportedCoins,
   SUPPORTED_EVM_COINS,
 } from '../constants/currencies';
@@ -46,6 +46,7 @@ export const suffixChainMap: {[suffix: string]: string} = {
   arb: 'arb',
   base: 'base',
   op: 'op',
+  sol: 'sol',
 };
 
 export const sleep = (duration: number) =>
@@ -157,6 +158,9 @@ export const isValidDerivationPath = (path: string, chain: string): boolean => {
     case 'op':
       isValid = ["60'", "0'", "1'"].indexOf(coinCode) > -1;
       break;
+    case 'sol':
+      isValid = ["501'", "0'", "1'"].indexOf(coinCode) > -1;
+    break;
     case 'xrp':
       isValid = ["144'", "0'", "1'"].indexOf(coinCode) > -1;
       break;
@@ -445,6 +449,8 @@ export const getEVMFeeCurrency = (chain: string): string => {
       return 'eth';
     case 'op':
       return 'eth';
+    case 'sol':
+      return 'sol';
     default:
       return 'eth';
   }
@@ -462,6 +468,8 @@ export const getCWCChain = (chain: string): string => {
       return 'BASEERC20';
     case 'op':
       return 'OPERC20';
+    case 'sol':
+      return 'SPL';
     default:
       return 'ETHERC20';
   }
@@ -479,6 +487,8 @@ export const getChainUsingSuffix = (symbol: string) => {
       return 'arb';
     case 'op':
       return 'op';
+    case 'sol':
+      return 'sol';
     default:
       return 'eth';
   }
@@ -631,7 +641,7 @@ export const createWalletsForAccounts = async (
           const newWallets = (await dispatch(
             createMultipleWallets({
               key: key as KeyMethods,
-              currencies: getBaseAccountCreationCoinsAndTokens(),
+              currencies: getBaseEVMAccountCreationCoinsAndTokens(),
               options: {
                 password,
                 account,
@@ -660,6 +670,14 @@ export const getEvmGasWallets = (wallets: Wallet[]) => {
   return wallets.filter(
     wallet =>
       IsEVMChain(wallet.credentials.chain) &&
+      !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
+  );
+};
+
+export const getSvmGasWallets = (wallets: Wallet[]) => {
+  return wallets.filter(
+    wallet =>
+      IsSVMChain(wallet.credentials.chain) &&
       !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
   );
 };

@@ -76,6 +76,15 @@ export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
   },
 };
 
+export const BitpaySupportedSolTokenOptsByAddress: TokenOptsType = {
+  'epjfwdd5aufqssqem2qn1xzybapc8g4weggkzwytdt1v_sol': {
+    name: 'USDC',
+    symbol: 'usdc',
+    decimals: 6,
+    address: 'epjfwdd5aufqssqem2qn1xzybapc8g4weggkzwytdt1v',
+  },
+};
+
 export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
   '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359_m': {
     name: 'USDC',
