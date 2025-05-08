@@ -1,6 +1,6 @@
 import React, {useCallback, useMemo, memo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Platform, View} from 'react-native';
+import {DeviceEventEmitter, Platform, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTheme} from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
@@ -49,6 +49,7 @@ import AllNetworkSvg from '../../../../assets/img/all-networks.svg';
 import debounce from 'lodash.debounce';
 import {SearchIconContainer} from '../../chain-search/ChainSearch';
 import {sleep} from '../../../utils/helper-methods';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 
 export const ignoreGlobalListContextList = [
   'sell',
@@ -174,6 +175,12 @@ const ChainSelectorModal = () => {
                 dispatch(setLocalDefaultChainFilterOption(option));
               } else {
                 dispatch(setDefaultChainFilterOption(option));
+              }
+              if (context === 'accounthistoryview') {
+                DeviceEventEmitter.emit(
+                  DeviceEmitterEvents.WALLET_LOAD_HISTORY,
+                  option || '',
+                );
               }
               setSearchVal('');
             }}>

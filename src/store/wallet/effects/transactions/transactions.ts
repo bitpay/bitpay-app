@@ -622,6 +622,7 @@ export const GetAccountTransactionHistory =
     limit = TX_HISTORY_LIMIT,
     refresh = false,
     contactList = [],
+    selectedChainFilterOption,
   }: {
     wallets: Wallet[];
     accountTransactionsHistory: {
@@ -635,6 +636,7 @@ export const GetAccountTransactionHistory =
     limit: number;
     refresh?: boolean;
     contactList?: any[];
+    selectedChainFilterOption?: string;
   }): Effect<
     Promise<{
       accountTransactionsHistory: {
@@ -689,7 +691,7 @@ export const GetAccountTransactionHistory =
       const results = await Promise.all(transactionPromises);
 
       // filter transactions by txid, but prioritize the one that isERC20 when is not Received
-      const transactionsWithoutRepeated = results
+      let transactionsWithoutRepeated = results
         .flat()
         .reduce((acc, transaction) => {
           const existingTransaction = acc.find(
@@ -705,6 +707,12 @@ export const GetAccountTransactionHistory =
 
           return acc;
         }, []);
+
+      if (selectedChainFilterOption) {
+        transactionsWithoutRepeated = transactionsWithoutRepeated.filter(tx => {
+          return tx.chain === selectedChainFilterOption;
+        });
+      }
 
       allTransactions = transactionsWithoutRepeated.sort(
         (a, b) =>
