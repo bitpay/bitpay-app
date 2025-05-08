@@ -24,7 +24,6 @@ import SimplexSellCheckoutSkeleton from './SimplexSellCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
-import PaymentSent from '../../../wallet/components/PaymentSent';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
 import {H5, H7} from '../../../../components/styled/Text';
@@ -116,6 +115,7 @@ import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/addres
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
 import {CryptoOffer} from './SellCryptoOffers';
 import {SellBalanceContainer} from '../styled/SellCryptoCard';
+import {AppActions} from '../../../../store/app';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -205,9 +205,7 @@ const SimplexSellCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[wallet.keyId],
   );
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
-
   const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
     useState(false);
   const [hardwareWalletTransport, setHardwareWalletTransport] =
@@ -554,7 +552,42 @@ const SimplexSellCheckout: React.FC = () => {
 
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
-      setShowPaymentSentModal(true);
+
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            wallet?.credentials?.n > 1
+              ? t('Payment Sent')
+              : t('Payment Accepted'),
+        }),
+      );
+
+      await sleep(1200);
+      const simplexSettingsParams: SimplexSettingsProps = {
+        incomingPaymentRequest: {
+          externalId: externalId,
+          transactionId: simplexTxId,
+          flow: 'sell',
+        },
+      };
+
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            {
+              name: RootStacks.TABS,
+              params: {screen: TabsScreens.HOME},
+            },
+            {
+              name: ExternalServicesSettingsScreens.SIMPLEX_SETTINGS,
+              params: simplexSettingsParams,
+            },
+          ],
+        }),
+      );
     } catch (err: any) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
@@ -584,6 +617,13 @@ const SimplexSellCheckout: React.FC = () => {
           showError(msg, reason);
       }
     }
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -1116,38 +1156,6 @@ const SimplexSellCheckout: React.FC = () => {
           )}
         </>
       ) : null}
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          await sleep(600);
-
-          const simplexSettingsParams: SimplexSettingsProps = {
-            incomingPaymentRequest: {
-              externalId: externalId,
-              transactionId: simplexTxId,
-              flow: 'sell',
-            },
-          };
-
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: ExternalServicesSettingsScreens.SIMPLEX_SETTINGS,
-                  params: simplexSettingsParams,
-                },
-              ],
-            }),
-          );
-        }}
-      />
     </SellCheckoutContainer>
   );
 };

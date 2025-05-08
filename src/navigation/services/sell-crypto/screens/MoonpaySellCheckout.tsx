@@ -21,7 +21,6 @@ import MoonpaySellCheckoutSkeleton from './MoonpaySellCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
-import PaymentSent from '../../../wallet/components/PaymentSent';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
 import {H5, H7} from '../../../../components/styled/Text';
@@ -118,6 +117,7 @@ import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
+import {AppActions} from '../../../../store/app';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -177,7 +177,6 @@ const MoonpaySellCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[wallet.keyId],
   );
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<MoonpaySellTransactionDetails>();
 
@@ -573,7 +572,43 @@ const MoonpaySellCheckout: React.FC = () => {
       updateMoonpayTx(txData!, broadcastedTx as Partial<TransactionProposal>);
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
-      setShowPaymentSentModal(true);
+
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            wallet?.credentials?.n > 1
+              ? t('Payment Sent')
+              : t('Payment Accepted'),
+        }),
+      );
+
+      await sleep(1200);
+      const moonpaySettingsParams: MoonpaySettingsProps = {
+        incomingPaymentRequest: {
+          externalId: sellCryptoExternalId,
+          transactionId: sellOrder?.transaction_id,
+          status,
+          flow: 'sell',
+        },
+      };
+
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            {
+              name: RootStacks.TABS,
+              params: {screen: TabsScreens.HOME},
+            },
+            {
+              name: ExternalServicesSettingsScreens.MOONPAY_SETTINGS,
+              params: moonpaySettingsParams,
+            },
+          ],
+        }),
+      );
     } catch (err: any) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
@@ -603,6 +638,13 @@ const MoonpaySellCheckout: React.FC = () => {
           showError(msg, reason);
       }
     }
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -1137,39 +1179,6 @@ const MoonpaySellCheckout: React.FC = () => {
           )}
         </>
       ) : null}
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          await sleep(600);
-
-          const moonpaySettingsParams: MoonpaySettingsProps = {
-            incomingPaymentRequest: {
-              externalId: sellCryptoExternalId,
-              transactionId: sellOrder?.transaction_id,
-              status,
-              flow: 'sell',
-            },
-          };
-
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: ExternalServicesSettingsScreens.MOONPAY_SETTINGS,
-                  params: moonpaySettingsParams,
-                },
-              ],
-            }),
-          );
-        }}
-      />
     </SellCheckoutContainer>
   );
 };

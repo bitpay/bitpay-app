@@ -22,7 +22,6 @@ import SwapCheckoutSkeleton from './SwapCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
-import PaymentSent from '../../../wallet/components/PaymentSent';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
 import {H5, H7} from '../../../../components/styled/Text';
@@ -137,6 +136,7 @@ import {
   THORSWAP_DEFAULT_SLIPPAGE,
 } from '../constants/ThorswapConstants';
 import {ExchangeConfig} from '../../../../store/external-services/external-services.types';
+import {AppActions} from '../../../../store/app';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -198,8 +198,6 @@ const ThorswapCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[fromWalletSelected.keyId],
   );
-
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<any>();
 
@@ -888,7 +886,33 @@ const ThorswapCheckout: React.FC = () => {
       saveThorswapTx(broadcastedTx, swapTx);
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
-      setShowPaymentSentModal(true);
+
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            fromWalletSelected?.credentials?.n > 1
+              ? t('Payment Sent')
+              : t('Payment Accepted'),
+        }),
+      );
+
+      await sleep(1200);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            {
+              name: RootStacks.TABS,
+              params: {screen: TabsScreens.HOME},
+            },
+            {
+              name: ExternalServicesSettingsScreens.THORSWAP_SETTINGS,
+            },
+          ],
+        }),
+      );
     } catch (err) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
@@ -915,6 +939,13 @@ const ThorswapCheckout: React.FC = () => {
           showError(msg, reason);
       }
     }
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -1330,28 +1361,6 @@ const ThorswapCheckout: React.FC = () => {
           )}
         </>
       ) : null}
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          await sleep(600);
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: ExternalServicesSettingsScreens.THORSWAP_SETTINGS,
-                },
-              ],
-            }),
-          );
-        }}
-      />
     </SwapCheckoutContainer>
   );
 };
