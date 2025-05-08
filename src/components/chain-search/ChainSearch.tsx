@@ -24,6 +24,7 @@ import {View} from 'react-native';
 import {
   BitpaySupportedCoins,
   CurrencyOpts,
+  SUPPORTED_COINS,
   SUPPORTED_EVM_COINS,
 } from '../../constants/currencies';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
@@ -289,7 +290,11 @@ const SearchComponent = <T extends SearchableItem>({
             return acc;
           }, []);
         }
-        setChainsOptions(SUPPORTED_EVM_COINS);
+        setChainsOptions(
+          context === 'accountassetsview'
+            ? SUPPORTED_EVM_COINS
+            : SUPPORTED_COINS,
+        );
       } else if (['accounthistoryview'].includes(context)) {
         if (selectedChainFilterOption) {
           results = results
