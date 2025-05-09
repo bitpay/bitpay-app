@@ -1,4 +1,4 @@
-import {Wallet} from '../../wallet.models';
+import {KeyMethods, Wallet} from '../../wallet.models';
 import {ValidateCoinAddress} from '../../utils/validations';
 import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
@@ -43,12 +43,12 @@ export const createWalletAddress =
     newAddress?: boolean;
     skipDispatch?: boolean;
   }): Effect<Promise<string>> =>
-  async dispatch => {
-    return new Promise((resolve, reject) => {
+    async dispatch => {
+      return new Promise((resolve, reject) => {
       if (!wallet) {
         return reject();
       }
-
+    
       if (!newAddress && wallet.receiveAddress) {
         dispatch(LogActions.info('returned cached wallet address'));
         return resolve(wallet.receiveAddress);
@@ -90,6 +90,7 @@ export const createWalletAddress =
                       }),
                     );
                   }
+
 
                   return resolve(receiveAddress);
                 },

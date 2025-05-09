@@ -82,6 +82,7 @@ import {
   IsERCToken,
   IsEVMChain,
   IsSegwitCoin,
+  IsSVMChain,
   IsUtxoChain,
 } from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
@@ -2116,7 +2117,7 @@ const processInsufficientFundsForFee = (
     toShowAmount,
   );
 
-  const title = IsEVMChain(wallet.chain)
+  const title = IsEVMChain(wallet.chain) || IsSVMChain(wallet.chain)
     ? t('Not enough gas for transaction')
     : t('Insufficient funds for fee.');
   const body = IsERCToken(wallet.currencyAbbreviation, wallet.chain)
