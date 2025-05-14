@@ -297,7 +297,6 @@ const ChainSelectorModal = () => {
       backdropTransitionOutTiming={0}
       hideModalContentWhileAnimating
       backdropOpacity={0.4}
-      backdropColor={theme.dark ? SlateDark : Slate}
       onBackdropPress={async () => {
         dispatch(AppActions.dismissChainSelectorModal());
         await sleep(1000);
