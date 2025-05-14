@@ -266,10 +266,7 @@ const WalletConnectConfirm = () => {
   const rejectCallRequest = useCallback(async () => {
     haptic('impactLight');
     try {
-      dispatch(startOnGoingProcessModal('REJECTING_CALL_REQUEST'));
       await dispatch(walletConnectV2RejectCallRequest(request));
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(1000);
       navigation.goBack();
     } catch (err) {
       dispatch(dismissOnGoingProcessModal());
@@ -350,12 +347,10 @@ const WalletConnectConfirm = () => {
           {
             text: t('DELETE'),
             action: async () => {
+              dispatch(dismissBottomNotificationModal());
+              await sleep(600);
               try {
                 if (sessionV2) {
-                  dispatch(dismissBottomNotificationModal());
-                  await sleep(600);
-                  dispatch(startOnGoingProcessModal('LOADING'));
-                  await sleep(600);
                   await dispatch(
                     walletConnectV2OnUpdateSession({
                       session: sessionV2,
@@ -363,13 +358,9 @@ const WalletConnectConfirm = () => {
                       action: 'disconnect',
                     }),
                   );
-                  dispatch(dismissOnGoingProcessModal());
-                  await sleep(600);
                   setAccountDisconnected(true);
                 }
               } catch (err) {
-                dispatch(dismissOnGoingProcessModal());
-                await sleep(500);
                 await showErrorMessage(
                   CustomErrorMessage({
                     errMsg: BWCErrorMessage(err),

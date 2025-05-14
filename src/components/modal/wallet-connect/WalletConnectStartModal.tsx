@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../button/Button';
 import {H6, H3, BaseText, Paragraph, Link, H7} from '../../styled/Text';
@@ -70,7 +70,6 @@ import AccountWCV2RowModal from './AccountWCV2RowModal';
 import WCErrorBottomNotification from './WCErrorBottomNotification';
 import WarningBrownSvg from '../../../../assets/img/warning-brown.svg';
 import {getNavigationTabName, RootStacks} from '../../../Root';
-import {SettingsScreens} from '../../../navigation/tabs/settings/SettingsGroup';
 import {SvgProps} from 'react-native-svg';
 
 export type WalletConnectStartParamList = {
@@ -297,14 +296,11 @@ export const WalletConnectStartModal = () => {
       dispatch(Analytics.track('WalletConnect Session Request Approved', {}));
       navigation.dispatch(
         CommonActions.reset({
-          index: 2,
+          index: 1,
           routes: [
             {
               name: RootStacks.TABS,
               params: {screen: getNavigationTabName()},
-            },
-            {
-              name: SettingsScreens.SETTINGS_HOME,
             },
             {
               name: WalletConnectScreens.WC_CONNECTIONS,
