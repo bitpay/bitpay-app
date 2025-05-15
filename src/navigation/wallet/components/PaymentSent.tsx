@@ -1,5 +1,4 @@
 import React, {useState} from 'react';
-import Modal from 'react-native-modal';
 import styled from 'styled-components/native';
 import {Success, White} from '../../../styles/colors';
 import {
@@ -21,17 +20,12 @@ import Animated, {
   interpolateColor,
 } from 'react-native-reanimated';
 import {useEffect} from 'react';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 
 const AnimatedContainer = Animated.createAnimatedComponent(styled.View`
   flex: 1;
   width: ${WIDTH}px;
 `);
-
-const PaymentSentContainer = styled.View`
-  flex: 1;
-  background-color: ${Success};
-  width: ${WIDTH}px;
-`;
 
 const PaymentSentHero = styled.View`
   flex: 1;
@@ -77,9 +71,9 @@ const PaymentSent = ({
   title: _title,
 }: PaymentSentModal) => {
   const {t} = useTranslation();
-  const isVisible = useSelector(
-    ({APP}: RootState) => APP.showPaymentSentModal || _isVisible,
-  );
+  const isVisible =
+    useSelector(({APP}: RootState) => APP.showPaymentSentModal || _isVisible) ||
+    false;
   const config = useSelector(({APP}: RootState) => APP.paymentSentModalConfig);
 
   const {onCloseModal, title} = config || {
@@ -142,7 +136,7 @@ const PaymentSent = ({
           damping: 10,
           stiffness: 100,
         });
-      }, 1200);
+      }, 900);
 
       footerTimer = setTimeout(() => {
         footerOpacity.value = withTiming(1, {duration: 400});
@@ -150,7 +144,7 @@ const PaymentSent = ({
           damping: 10,
           stiffness: 100,
         });
-      }, 2000);
+      }, 900);
     } else {
       heroOpacity.value = 0;
       heroScale.value = 0.1;
@@ -180,61 +174,41 @@ const PaymentSent = ({
   });
 
   return (
-    <View style={{backgroundColor: Success}}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: -1,
-          },
-          animatedBackdropStyle,
-        ]}
-      />
-      <Modal
-        isVisible={isVisible}
-        backdropOpacity={0}
-        animationIn={'fadeInUp'}
-        animationOut={'fadeOutDown'}
-        hideModalContentWhileAnimating={true}
-        useNativeDriverForBackdrop={true}
-        useNativeDriver={true}
-        style={{margin: 0, justifyContent: 'center'}}>
-        <AnimatedContainer style={animatedContainerStyle}>
-          {showContent && (
-            <>
-              <Animated.View
-                style={[
-                  {flex: 1, justifyContent: 'center', alignItems: 'center'},
-                  animatedHeroStyle,
-                ]}>
-                <PaymentSentHero>
-                  <PaymentCompleteSvg />
-                  <Title>{title || t('Payment Sent')}</Title>
-                </PaymentSentHero>
-              </Animated.View>
+    <SheetModal
+      modalLibrary={'bottom-sheet'}
+      isVisible={isVisible}
+      fullscreen={true}
+      onBackdropPress={onCloseModal}>
+      <AnimatedContainer style={animatedContainerStyle}>
+        {showContent && (
+          <>
+            <Animated.View
+              style={[
+                {flex: 1, justifyContent: 'center', alignItems: 'center'},
+                animatedHeroStyle,
+              ]}>
+              <PaymentSentHero>
+                <PaymentCompleteSvg />
+                <Title>{title || t('Payment Sent')}</Title>
+              </PaymentSentHero>
+            </Animated.View>
 
-              <Animated.View style={animatedFooterStyle}>
-                <PaymentSentFooter>
-                  <CloseButtonContainer
-                    style={{paddingBottom: 20, marginTop: 25}}
-                    onPress={() => {
-                      haptic('impactLight');
-                      onCloseModal();
-                    }}>
-                    <CloseText>{t('CLOSE')}</CloseText>
-                  </CloseButtonContainer>
-                </PaymentSentFooter>
-              </Animated.View>
-            </>
-          )}
-        </AnimatedContainer>
-      </Modal>
-    </View>
+            <Animated.View style={animatedFooterStyle}>
+              <PaymentSentFooter>
+                <CloseButtonContainer
+                  style={{paddingBottom: 20, marginTop: 25}}
+                  onPress={() => {
+                    haptic('impactLight');
+                    onCloseModal();
+                  }}>
+                  <CloseText>{t('CLOSE')}</CloseText>
+                </CloseButtonContainer>
+              </PaymentSentFooter>
+            </Animated.View>
+          </>
+        )}
+      </AnimatedContainer>
+    </SheetModal>
   );
 };
 
