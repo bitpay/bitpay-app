@@ -44,6 +44,7 @@ export const APP_CRYPTO_PREFIX = [
   'arb',
   'base',
   'op',
+  'sol',
   'dogecoin',
   'litecoin',
 ];
@@ -70,6 +71,10 @@ export const EVM_BLOCKCHAIN_ID: {[key in string]: number} = {
   op: 10,
 };
 
+export const SVM_BLOCKCHAIN_ID: {[key in string]: number} = {
+  sol: 501,
+};
+
 export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'etherscan.io/',
@@ -93,6 +98,13 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   },
 };
 
+export const SVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
+  sol: {
+    [Network.mainnet]: 'https://solscan.io',
+    [Network.testnet]: 'https://solscan.io/?cluster=testnet',
+  },
+};
+
 export const METHOD_ENVS = {
   [Network.mainnet]: 'production',
   [Network.testnet]: 'dev',
@@ -102,6 +114,10 @@ export const METHOD_ENVS = {
 export const PROTOCOL_NAME: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'Ethereum Mainnet',
+    [Network.testnet]: 'Sepolia',
+  },
+  sol: {
+    [Network.mainnet]: 'Solana',
     [Network.testnet]: 'Sepolia',
   },
   matic: {

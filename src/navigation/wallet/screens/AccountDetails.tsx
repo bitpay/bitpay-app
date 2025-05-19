@@ -159,7 +159,7 @@ import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Settings from '../../../components/settings/Settings';
 import {
   BitpaySupportedEvmCoins,
-  getBaseAccountCreationCoinsAndTokens,
+  getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -534,7 +534,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         const wallets = await dispatch(
           createMultipleWallets({
             key: _key,
-            currencies: getBaseAccountCreationCoinsAndTokens(),
+            currencies: getBaseEVMAccountCreationCoinsAndTokens(),
             options: {
               network,
               password,

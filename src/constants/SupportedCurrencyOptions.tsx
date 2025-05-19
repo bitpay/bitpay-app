@@ -2,6 +2,7 @@ import React, {ReactElement} from 'react';
 import BtcIcon from '../../assets/img/currencies/btc.svg';
 import BchIcon from '../../assets/img/currencies/bch.svg';
 import EthIcon from '../../assets/img/currencies/eth.svg';
+import SolIcon from '../../assets/img/currencies/sol.svg';
 import DogeIcon from '../../assets/img/currencies/doge.svg';
 import LtcIcon from '../../assets/img/currencies/ltc.svg';
 import XrpIcon from '../../assets/img/currencies/xrp.svg';
@@ -56,6 +57,7 @@ export const CurrencyListIcons: {
   btc: props => <BtcIcon {...props} />,
   bch: props => <BchIcon {...props} />,
   eth: props => <EthIcon {...props} />,
+  sol: props => <SolIcon {...props} />,
   matic: props => <MaticIcon {...props} />,
   pol: props => <MaticIcon {...props} />,
   eth_arb: props => <EthIcon {...props} />,
@@ -88,6 +90,7 @@ export const CurrencyListIcons: {
   shib_m: props => <ShibIcon {...props} />,
   ape_m: props => <ApeIcon {...props} />,
   euroc_m: props => <EurocIcon {...props} />,
+  usdc_sol: props => <UsdcIcon {...props} />,
   usdc_arb: props => <UsdcIcon {...props} />,
   usdc_base: props => <UsdcIcon {...props} />,
   usdc_op: props => <UsdcIcon {...props} />,
@@ -316,6 +319,19 @@ export const SupportedEvmCurrencyOptions: Array<SupportedCurrencyOption> = [
   },
 ];
 
+export const SupportedSvmCurrencyOptions: Array<SupportedCurrencyOption> = [
+  {
+    id: Math.random().toString(),
+    priority: 5,
+    img: CurrencyListIcons.sol,
+    currencyName: 'Solana',
+    currencyAbbreviation: 'sol',
+    chain: 'sol',
+    chainName: 'Solana',
+    hasMultisig: false,
+    imgSrc: require('../../assets/img/currencies/png/ETH.png'),
+  },
+];
 export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   {
     id: Math.random().toString(),
@@ -694,12 +710,26 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
     badgeUri: CurrencyListIcons.op,
     tokenAddress: '0x4200000000000000000000000000000000000006',
   },
+  {
+    id: Math.random().toString(),
+    img: CurrencyListIcons.usdc_m,
+    currencyName: 'USDC',
+    currencyAbbreviation: 'usdc',
+    chain: 'sol',
+    chainName: 'Solana',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/USDC.png'),
+    badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
+    badgeUri: CurrencyListIcons.eth,
+    tokenAddress: 'epjfwdd5aufqssqem2qn1xzybapc8g4weggkzwytdt1v',
+  },
 ];
 
 export const SupportedCoinsOptions: Array<SupportedCurrencyOption> = orderBy(
   [
     ...SupportedUtxoCurrencyOptions,
     ...SupportedEvmCurrencyOptions,
+    ...SupportedSvmCurrencyOptions,
     ...OtherSupportedCurrencyOptions,
   ],
   'priority',

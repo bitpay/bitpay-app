@@ -64,6 +64,7 @@ export const initialState: WalletState = {
     arb: FeeLevels.NORMAL,
     base: FeeLevels.NORMAL,
     op: FeeLevels.NORMAL,
+    sol: FeeLevels.NORMAL,
   },
   useUnconfirmedFunds: false,
   customizeNonce: false,
