@@ -43,11 +43,7 @@ import {
   CustomErrorMessage,
   WrongPasswordError,
 } from '../../navigation/wallet/components/ErrorMessages';
-import {
-  WCV2RequestType,
-  WCV2SessionType,
-  WCV2Wallet,
-} from './wallet-connect-v2.models';
+import {WCV2RequestType, WCV2SessionType} from './wallet-connect-v2.models';
 import {ethers, providers} from 'ethers';
 import {Core} from '@walletconnect/core';
 import {WalletKit, IWalletKit, WalletKitTypes} from '@reown/walletkit';
@@ -263,13 +259,11 @@ export const walletConnectV2SubscribeToEvents =
     const handleAutoApproval = async (
       event: WalletKitTypes.EventArguments['session_request'],
     ) => {
-      const newChainId = event?.params?.request?.params?.[0]?.chainId;
+      const chainId = event?.params?.chainId;
 
-      if (!newChainId) {
+      if (!chainId) {
         return;
       }
-
-      const eip155ChainId = parseAndFormatChainId(newChainId);
 
       await web3wallet.respondSessionRequest({
         topic: event.topic,
@@ -277,12 +271,10 @@ export const walletConnectV2SubscribeToEvents =
       });
 
       try {
-        if (EIP155_CHAINS[eip155ChainId as TEIP155Chain]) {
-          await emitSessionEvents(event, eip155ChainId);
+        if (EIP155_CHAINS[chainId as TEIP155Chain]) {
+          await emitSessionEvents(event, chainId);
         } else {
-          throw new Error(
-            `The requested chain (${eip155ChainId}) is not supported.`,
-          );
+          throw new Error(`The requested chain (${chainId}) is not supported.`);
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
