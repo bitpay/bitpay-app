@@ -49,13 +49,10 @@ import {
   BanxaQuoteData,
   BuyCryptoLimits,
   MoonpayGetCurrencyLimitsRequestData,
+  MoonpayGetSignedPaymentUrlData,
+  MoonpayGetSignedPaymentUrlReqData,
   MoonpayPaymentData,
-  RampGetAssetsData,
-  RampGetAssetsRequestData,
-  RampPaymentData,
-  RampPaymentUrlConfigParams,
-  RampQuoteRequestData,
-  RampQuoteResultForPaymentMethod,
+  MoonpayPaymentType,
   SardineGetAuthTokenRequestData,
   SardineGetQuoteRequestData,
   SardinePaymentUrlConfigParams,
@@ -101,6 +98,7 @@ import {
 } from '../utils/banxa-utils';
 import {
   getMoonpayFixedCurrencyAbbreviation,
+  getMoonpayPaymentMethodFormat,
   moonpayEnv,
 } from '../utils/moonpay-utils';
 import {
@@ -109,6 +107,9 @@ import {
   rampEnv,
   getChainFromRampChainFormat,
   getRampChainFormat,
+  getCoinFromRampCoinFormat,
+  getRampPaymentMethodDataFromQuoteData,
+  getRampPaymentMethodFormat,
 } from '../utils/ramp-utils';
 import BanxaTerms from '../components/terms/banxaTerms';
 import MoonpayTerms from '../components/terms/MoonpayTerms';
@@ -116,7 +117,11 @@ import RampTerms from '../components/terms/RampTerms';
 import SardineTerms from '../components/terms/SardineTerms';
 import SimplexTerms from '../components/terms/SimplexTerms';
 import TransakTerms from '../components/terms/TransakTerms';
-import {TermsContainer, TermsText} from '../styled/BuyCryptoTerms';
+import {
+  TermsContainer,
+  TermsContainerOffer,
+  TermsText,
+} from '../styled/BuyCryptoTerms';
 import {BuyCryptoConfig} from '../../../../store/external-services/external-services.types';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {AppActions} from '../../../../store/app';
@@ -142,6 +147,16 @@ import {
   getTransakSelectedPaymentMethodData,
   transakEnv,
 } from '../utils/transak-utils';
+import ArchaxFooter from '../../../../components/archax/archax-footer';
+import {
+  RampGetAssetsData,
+  RampGetAssetsRequestData,
+  RampGetSellSignedPaymentUrlData,
+  RampPaymentData,
+  RampPaymentUrlConfigParams,
+  RampQuoteRequestData,
+  RampQuoteResultForPaymentMethod,
+} from '../../../../store/buy-crypto/models/ramp.models';
 
 export type BuyCryptoOffersScreenParams = {
   amount: number;
@@ -184,6 +199,7 @@ export type CryptoOffer = {
 
 const BuyCryptoOffersContainer = styled.SafeAreaView`
   flex: 1;
+  margin-bottom: 40px;
 `;
 
 const SummaryRow = styled.View`
@@ -194,6 +210,11 @@ const SummaryRow = styled.View`
   height: 60px;
   margin-top: 20px;
   padding: 0px 14px;
+`;
+
+const SummaryNote = styled.View`
+  margin-top: 5px;
+  padding: 0 14px;
 `;
 
 const SummaryItemContainer = styled.View`
@@ -443,6 +464,7 @@ const BuyCryptoOffers: React.FC = () => {
   const logger = useLogger();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -537,7 +559,7 @@ const BuyCryptoOffers: React.FC = () => {
         const msg = t(
           'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
           {
-            coin: coin.toUpperCase(),
+            coin: getBanxaCoinFormat(coin)?.toUpperCase(),
             fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
             paymentMethod: paymentMethod.label,
           },
@@ -558,7 +580,7 @@ const BuyCryptoOffers: React.FC = () => {
         const msg = t(
           'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
           {
-            coin: coin.toUpperCase(),
+            coin: getBanxaCoinFormat(coin)?.toUpperCase(),
             fiatCurrency: offers.banxa.fiatCurrency.toUpperCase(),
             paymentMethod: paymentMethod.label,
           },
@@ -727,23 +749,12 @@ const BuyCryptoOffers: React.FC = () => {
       return;
     }
 
-    let _paymentMethod: string | undefined;
-    switch (paymentMethod.method) {
-      case 'debitCard':
-      case 'creditCard':
-        _paymentMethod = 'credit_debit_card';
-        break;
-      case 'sepaBankTransfer':
-        _paymentMethod = 'sepa_bank_transfer';
-        // Moonpay only accepts EUR as a base currency for SEPA payments
-        offers.moonpay.fiatCurrency = 'EUR';
-        break;
-      case 'applePay':
-        _paymentMethod = 'mobile_wallet';
-        break;
-      default:
-        _paymentMethod = undefined;
-        break;
+    let _paymentMethod: MoonpayPaymentType | undefined =
+      getMoonpayPaymentMethodFormat(paymentMethod.method);
+
+    if (_paymentMethod === 'sepa_bank_transfer') {
+      // Moonpay only accepts EUR as a base currency for SEPA payments
+      offers.moonpay.fiatCurrency = 'EUR';
     }
 
     offers.moonpay.fiatAmount =
@@ -937,6 +948,19 @@ const BuyCryptoOffers: React.FC = () => {
       return;
     }
 
+    switch (paymentMethod.method) {
+      case 'pix':
+        // Ramp only accepts BRL as a base currency for Pix payments
+        offers.ramp.fiatCurrency = 'BRL';
+        break;
+      case 'pisp':
+        // Ramp only accepts EUR | GBP as a base currency for PISP payments
+        offers.ramp.fiatCurrency = 'EUR';
+        break;
+      default:
+        break;
+    }
+
     offers.ramp.fiatAmount =
       offers.ramp.fiatCurrency === fiatCurrency
         ? amount
@@ -958,7 +982,7 @@ const BuyCryptoOffers: React.FC = () => {
         const selectedAssetData = assetsData.assets.filter(asset => {
           return (
             getRampCoinFormat(
-              asset.symbol,
+              getCoinFromRampCoinFormat(asset.symbol),
               getChainFromRampChainFormat(asset.chain),
             ) === getRampCoinFormat(coin, chain)
           );
@@ -994,26 +1018,10 @@ const BuyCryptoOffers: React.FC = () => {
 
       let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
       if (data?.asset) {
-        switch (paymentMethod.method) {
-          case 'sepaBankTransfer':
-            if (data.MANUAL_BANK_TRANSFER) {
-              paymentMethodData = data.MANUAL_BANK_TRANSFER;
-            }
-            break;
-          case 'applePay':
-            if (data.APPLE_PAY) {
-              paymentMethodData = data.APPLE_PAY;
-            }
-            break;
-          case 'debitCard':
-          case 'creditCard':
-            if (data.CARD_PAYMENT) {
-              paymentMethodData = data.CARD_PAYMENT;
-            }
-            break;
-          default:
-            paymentMethodData = getRampDefaultOfferData(data);
-        }
+        paymentMethodData = getRampPaymentMethodDataFromQuoteData(
+          paymentMethod.method,
+          data,
+        );
 
         if (!paymentMethodData?.fiatValue) {
           logger.error('rampGetQuote Error: No fiat value provided from Ramp');
@@ -1843,7 +1851,7 @@ const BuyCryptoOffers: React.FC = () => {
       }),
     );
 
-    const quoteData = {
+    const quoteData: MoonpayGetSignedPaymentUrlReqData = {
       currencyCode: getMoonpayFixedCurrencyAbbreviation(
         coin.toLowerCase(),
         destinationChain,
@@ -1859,9 +1867,17 @@ const BuyCryptoOffers: React.FC = () => {
       showWalletAddressForm: false,
     };
 
-    let data;
+    let _paymentMethod: MoonpayPaymentType | undefined =
+      getMoonpayPaymentMethodFormat(paymentMethod.method);
+    if (_paymentMethod) {
+      quoteData.paymentMethod = _paymentMethod;
+    }
+
+    let data: MoonpayGetSignedPaymentUrlData;
     try {
-      data = await selectedWallet.moonpayGetSignedPaymentUrl(quoteData);
+      data = (await selectedWallet.moonpayGetSignedPaymentUrl(
+        quoteData,
+      )) as MoonpayGetSignedPaymentUrlData;
     } catch (err) {
       const reason = 'moonpayGetSignedPaymentUrl Error';
       showMoonpayError(err, reason);
@@ -1943,15 +1959,16 @@ const BuyCryptoOffers: React.FC = () => {
       swapAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
       swapAmount: offers.ramp.amountReceivingUnit!,
       fiatCurrency: offers.ramp.fiatCurrency,
-      enabledFlows: 'ONRAMP',
+      enabledFlows: ['ONRAMP'],
       defaultFlow: 'ONRAMP',
       userAddress: address,
       selectedCountryCode: country,
       defaultAsset: getRampCoinFormat(coin, getRampChainFormat(chain)),
       finalUrl: redirectUrl,
+      paymentMethodType: getRampPaymentMethodFormat(paymentMethod.method),
     };
 
-    let data;
+    let data: RampGetSellSignedPaymentUrlData;
     try {
       data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
     } catch (err) {
@@ -2010,7 +2027,7 @@ const BuyCryptoOffers: React.FC = () => {
           default:
             getSardinePaymentMethodFormat(paymentMethod.method, country) ??
             'debit',
-          enabled: ['ach', 'card'],
+          enabled: ['ach', 'apple_pay', 'card'],
         },
       };
       authTokenData = await selectedWallet.sardineGetToken(quoteData);
@@ -2431,6 +2448,11 @@ const BuyCryptoOffers: React.FC = () => {
             </Button>
           </SummaryCtaContainer>
         </SummaryRow>
+        {showArchaxBanner && (
+          <SummaryNote>
+            <SummaryTitle>Additional third-party fees may apply</SummaryTitle>
+          </SummaryNote>
+        )}
 
         {Object.values(offers)
           .sort(
@@ -2474,7 +2496,7 @@ const BuyCryptoOffers: React.FC = () => {
                           <BestOfferTagContainer>
                             <BestOfferTag>
                               <BestOfferTagText>
-                                {t('Best Offer')}
+                                {t('Our Best Offer')}
                               </BestOfferTagText>
                             </BestOfferTag>
                           </BestOfferTagContainer>
@@ -2500,8 +2522,9 @@ const BuyCryptoOffers: React.FC = () => {
                         ) : null}
                       </>
                     ) : null}
-                    <OfferDataInfoContainer testID={offer.key}>
-                      <OfferDataInfoLabel>
+                    <OfferDataInfoContainer>
+                      <OfferDataInfoLabel
+                        accessibilityLabel={'Provided By ' + offer.key}>
                         {t('Provided By')}
                       </OfferDataInfoLabel>
                       {offer.logo}
@@ -2532,7 +2555,7 @@ const BuyCryptoOffers: React.FC = () => {
                   ) : null}
                 </OfferRow>
 
-                {offer.expanded ? (
+                {offer.expanded || showArchaxBanner ? (
                   <>
                     <ItemDivisor style={{marginTop: 20}} />
                     <OfferExpandibleItem>
@@ -2567,7 +2590,9 @@ const BuyCryptoOffers: React.FC = () => {
                         {formatFiatAmount(
                           Number(offer.amountCost),
                           offer.fiatCurrency,
-                          {customPrecision: 'minimal'},
+                          {
+                            customPrecision: 'minimal',
+                          },
                         )}
                       </OfferDataInfoTotal>
                     </OfferExpandibleItem>
@@ -2603,18 +2628,30 @@ const BuyCryptoOffers: React.FC = () => {
                     ) : null}
                   </>
                 ) : null}
+                {showArchaxBanner && (
+                  <TermsContainerOffer>
+                    <TermsText>
+                      {t(
+                        'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
+                      )}
+                    </TermsText>
+                  </TermsContainerOffer>
+                )}
               </BuyCryptoExpandibleCard>
             ) : null;
           })}
 
-        <TermsContainer>
-          <TermsText>
-            {t(
-              'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
-            )}
-          </TermsText>
-          <TermsText>{t('Additional third-party fees may apply.')}</TermsText>
-        </TermsContainer>
+        {!showArchaxBanner && (
+          <TermsContainer>
+            <TermsText>
+              {t(
+                'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
+              )}
+            </TermsText>
+            <TermsText>{t('Additional third-party fees may apply.')}</TermsText>
+          </TermsContainer>
+        )}
+        {showArchaxBanner && <ArchaxFooter />}
       </ScrollView>
     </BuyCryptoOffersContainer>
   );

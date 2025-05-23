@@ -18,6 +18,7 @@ import {
   ZenLedgerKey,
   ZenLedgerWalletObj,
 } from '../../../store/zenledger/zenledger.models';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -62,7 +63,7 @@ const CheckBoxContainer = styled.View`
   margin-right: 12px;
 `;
 
-const KeyContainer = styled.TouchableOpacity`
+const KeyContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   display: flex;
@@ -70,7 +71,7 @@ const KeyContainer = styled.TouchableOpacity`
   padding: 16px 0 16px 4px;
 `;
 
-const DropdownButton = styled.TouchableOpacity``;
+const DropdownButton = styled(TouchableOpacity)``;
 
 const KeyBox = ({keyId, onPress, checked}: Props) => {
   const acknowledge = (): void => {

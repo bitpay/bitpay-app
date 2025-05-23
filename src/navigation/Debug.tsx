@@ -1,8 +1,8 @@
 import React from 'react';
-import {Alert} from 'react-native';
+import {Alert, Platform} from 'react-native';
 import Mailer from 'react-native-mail';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useAppSelector} from '../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../utils/hooks';
 import {LogLevel} from '../store/log/log.models';
 import {RootStackParamList} from '../Root';
 import {RootState} from '../store';
@@ -10,6 +10,11 @@ import {BaseText} from '../components/styled/Text';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White} from '../styles/colors';
 import Button from '../components/button/Button';
+import {isAndroidStoragePermissionGranted} from '../utils/helper-methods';
+import RNFS from 'react-native-fs';
+import Share, {ShareOptions} from 'react-native-share';
+import DeviceInfo from 'react-native-device-info';
+const IS_DESKTOP = DeviceInfo.getDeviceType();
 
 export enum DebugScreens {
   DEBUG = 'Debug',
@@ -54,6 +59,7 @@ const LogError = styled(BaseText)`
 const DebugScreen: React.FC<
   NativeStackScreenProps<RootStackParamList, 'Debug'>
 > = ({route}) => {
+  const dispatch = useAppDispatch();
   const logs = useAppSelector(({LOG}: RootState) => LOG.logs);
   const {name} = route.params || {};
 
@@ -70,6 +76,49 @@ const DebugScreen: React.FC<
       logStr += output;
       return output;
     });
+
+  const shareFile = async (data: string) => {
+    try {
+      if (Platform.OS === 'android' && Platform.Version < 30) {
+        await isAndroidStoragePermissionGranted(dispatch);
+      }
+
+      const rootPath =
+        Platform.OS === 'ios'
+          ? RNFS.LibraryDirectoryPath
+          : RNFS.TemporaryDirectoryPath;
+      const txtFilename = 'App-logs';
+      let filePath = `${rootPath}/${txtFilename}`;
+
+      await RNFS.mkdir(filePath);
+
+      filePath += '.txt';
+      const opts: ShareOptions = {
+        title: txtFilename,
+        url: `file://${filePath}`,
+        subject: 'App Logs',
+      };
+
+      await RNFS.writeFile(filePath, data, 'utf8');
+      await Share.open(opts);
+    } catch (error: any) {
+      Alert.alert(
+        'Error',
+        error.message,
+        [
+          {
+            text: 'Ok',
+            onPress: () => console.log('OK: Email Error Response'),
+          },
+          {
+            text: 'Cancel',
+            onPress: () => console.log('CANCEL: Email Error Response'),
+          },
+        ],
+        {cancelable: true},
+      );
+    }
+  };
 
   const handleEmail = (data: string) => {
     Mailer.mail(
@@ -98,11 +147,26 @@ const DebugScreen: React.FC<
     );
   };
 
-  const showDisclaimer = (data: string) => {
+  const showDisclaimer = (data: string, option: 'email' | 'share') => {
     Alert.alert(
       'Warning',
       'Be careful, this could contain sensitive private data.',
-      [{text: 'Continue', onPress: () => handleEmail(data)}, {text: 'Cancel'}],
+      [
+        {
+          text: 'Continue',
+          onPress: () => {
+            switch (option) {
+              case 'share':
+                shareFile(data);
+                break;
+              case 'email':
+                handleEmail(data);
+                break;
+            }
+          },
+        },
+        {text: 'Cancel'},
+      ],
       {cancelable: true},
     );
   };
@@ -115,10 +179,17 @@ const DebugScreen: React.FC<
         <LogError>{filteredLogs}</LogError>
       </ScrollView>
       <ButtonContainer>
-        <Button onPress={() => showDisclaimer(logStr)}>
-          Send Logs By Email
+        <Button onPress={() => showDisclaimer(logStr, 'share')}>
+          Share Logs
         </Button>
       </ButtonContainer>
+      {!IS_DESKTOP && (
+        <ButtonContainer>
+          <Button onPress={() => showDisclaimer(logStr, 'email')}>
+            Send Logs By Email
+          </Button>
+        </ButtonContainer>
+      )}
     </DebugContainer>
   );
 };

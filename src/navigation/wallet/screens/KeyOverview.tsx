@@ -12,17 +12,13 @@ import {
   useRoute,
   useTheme,
 } from '@react-navigation/native';
-import {
-  FlatList,
-  LogBox,
-  RefreshControl,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {FlashList} from '@shopify/flash-list';
+import {LogBox, RefreshControl, View} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
-import WalletRow, {WalletRowProps} from '../../../components/list/WalletRow';
 import {
+  Balance,
   BaseText,
   H2,
   H5,
@@ -31,20 +27,26 @@ import {
 } from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
 import {
-  Hr,
   ActiveOpacity,
   ScreenGutter,
   HeaderRightContainer as _HeaderRightContainer,
   ProposalBadgeContainer,
+  EmptyListContainer,
+  ChevronContainer,
 } from '../../../components/styled/Containers';
+import {RootState} from '../../../store';
 import {
   showBottomNotificationModal,
   toggleHideAllBalances,
+  dismissOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
-import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {Wallet, Status} from '../../../store/wallet/wallet.models';
-import {Rates} from '../../../store/rate/rate.models';
+import {
+  successAddWallet,
+  updatePortfolioBalance,
+  syncWallets,
+} from '../../../store/wallet/wallet.actions';
+import {KeyMethods, Status, Wallet} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
   NeutralSlate,
@@ -52,30 +54,36 @@ import {
   White,
 } from '../../../styles/colors';
 import {
-  convertToFiat,
-  formatCurrencyAbbreviation,
+  createWalletsForAccounts,
   formatFiatAmount,
+  getEvmGasWallets,
   shouldScale,
   sleep,
+  fixWalletAddresses,
 } from '../../../utils/helper-methods';
-import {BalanceUpdateError} from '../components/ErrorMessages';
+import {
+  BalanceUpdateError,
+  CustomErrorMessage,
+} from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
 import {WalletGroupParamList} from '../WalletGroup';
-import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
-import {
-  AppDispatch,
-  useAppDispatch,
-  useAppSelector,
-  useLogger,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import KeyDropdownOption from '../components/KeyDropdownOption';
-import {startGetRates} from '../../../store/wallet/effects';
+import {
+  getDecryptPassword,
+  startGetRates,
+  normalizeMnemonic,
+  serverAssistedImport,
+} from '../../../store/wallet/effects';
 import EncryptPasswordImg from '../../../../assets/img/tinyicon-encrypt.svg';
 import EncryptPasswordDarkModeImg from '../../../../assets/img/tinyicon-encrypt-darkmode.svg';
 import {useTranslation} from 'react-i18next';
-import {toFiat} from '../../../store/wallet/utils/wallet';
+import {
+  buildAccountList,
+  mapAbbreviationAndName,
+  buildWalletObj,
+} from '../../../store/wallet/utils/wallet';
 import {each} from 'lodash';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
@@ -84,59 +92,31 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
+import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import AccountListRow, {
+  AccountRowProps,
+} from '../../../components/list/AccountListRow';
+import _ from 'lodash';
+import DropdownOption from '../components/DropdownOption';
+import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
+import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
+import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
+import {BitpaySupportedEvmCoins} from '../../../constants/currencies';
+import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {BWCErrorMessage} from '../../../constants/BWCError';
+import ArchaxFooter from '../../../components/archax/archax-footer';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
 
-const Row = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-end;
-`;
-
-const OverviewContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
-const BalanceContainer = styled.View`
-  height: 15%;
-  margin-top: 20px;
-  padding: 10px 15px;
-`;
-
-const Balance = styled(BaseText)<{scale: boolean}>`
-  font-size: ${({scale}) => (scale ? 25 : 35)}px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 53px;
-  letter-spacing: 0;
-  text-align: center;
-`;
-
-const WalletListHeader = styled.View`
-  padding: 10px;
-  margin-top: 10px;
-`;
-
-const WalletListFooter = styled.TouchableOpacity`
-  padding: 10px 10px 100px 10px;
-  margin-top: 15px;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const WalletListFooterText = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  margin-left: 10px;
-`;
-
 export const KeyToggle = styled(TouchableOpacity)`
+  display: flex;
   align-items: center;
-  flex-direction: column;
+  justify-content: center;
+  flex-direction: row;
+  gap: 5px;
 `;
 
 export const KeyDropdown = styled.SafeAreaView`
@@ -150,13 +130,51 @@ export const KeyDropdownOptionsContainer = styled.ScrollView`
   padding: 0 ${ScreenGutter};
 `;
 
-const CogIconContainer = styled.TouchableOpacity`
+export const CogIconContainer = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 50px;
   justify-content: center;
   align-items: center;
   height: 40px;
   width: 40px;
+`;
+
+const OverviewContainer = styled.SafeAreaView`
+  flex: 1;
+`;
+
+const BalanceContainer = styled.View`
+  height: 15%;
+  margin-top: 20px;
+  padding: 10px 15px;
+  align-items: center;
+`;
+
+const WalletListHeader = styled.View`
+  padding: 10px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const WalletListFooterContainer = styled.View`
+  padding: 10px 10px 100px 10px;
+  margin-top: 15px;
+`;
+
+const WalletListFooter = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+`;
+
+const WalletListFooterText = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  margin-left: 10px;
 `;
 
 const HeaderTitleContainer = styled.View`
@@ -169,208 +187,6 @@ const HeaderRightContainer = styled(_HeaderRightContainer)`
   align-items: center;
 `;
 
-const SearchComponentContainer = styled.View`
-  padding-right: 15px;
-  padding-left: 15px;
-  margin-top: 16px;
-`;
-
-export const buildUIFormattedWallet: (
-  wallet: Wallet,
-  defaultAltCurrencyIsoCode: string,
-  rates: Rates,
-  dispatch: AppDispatch,
-  currencyDisplay?: 'symbol',
-) => WalletRowProps = (
-  {
-    id,
-    img,
-    badgeImg,
-    currencyName,
-    currencyAbbreviation,
-    chain,
-    tokenAddress,
-    network,
-    walletName,
-    balance,
-    credentials,
-    keyId,
-    isRefreshing,
-    isScanning,
-    hideWallet,
-    hideBalance,
-    pendingTxps,
-    receiveAddress,
-  },
-  defaultAltCurrencyIsoCode,
-  rates,
-  dispatch,
-  currencyDisplay,
-) => ({
-  id,
-  keyId,
-  img,
-  badgeImg,
-  currencyName,
-  currencyAbbreviation: formatCurrencyAbbreviation(currencyAbbreviation),
-  chain,
-  walletName: walletName || credentials.walletName,
-  cryptoBalance: balance.crypto,
-  cryptoLockedBalance: balance.cryptoLocked,
-  cryptoConfirmedLockedBalance: balance.cryptoConfirmedLocked,
-  cryptoSpendableBalance: balance.cryptoSpendable,
-  cryptoPendingBalance: balance.cryptoPending,
-  fiatBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.sat,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
-    defaultAltCurrencyIsoCode,
-    {
-      currencyDisplay,
-    },
-  ),
-  fiatLockedBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.satLocked,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
-    defaultAltCurrencyIsoCode,
-    {
-      currencyDisplay,
-    },
-  ),
-  fiatConfirmedLockedBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.satConfirmedLocked,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
-    defaultAltCurrencyIsoCode,
-    {
-      currencyDisplay,
-    },
-  ),
-  fiatSpendableBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.satSpendable,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
-    defaultAltCurrencyIsoCode,
-    {
-      currencyDisplay,
-    },
-  ),
-  fiatPendingBalance: formatFiatAmount(
-    convertToFiat(
-      dispatch(
-        toFiat(
-          balance.satPending,
-          defaultAltCurrencyIsoCode,
-          currencyAbbreviation,
-          chain,
-          rates,
-          tokenAddress,
-        ),
-      ),
-      hideWallet,
-      network,
-    ),
-    defaultAltCurrencyIsoCode,
-    {
-      currencyDisplay,
-    },
-  ),
-  network: network,
-  isRefreshing,
-  isScanning,
-  hideWallet,
-  hideBalance,
-  pendingTxps,
-  multisig:
-    credentials.n > 1
-      ? `- Multisig ${credentials.m}/${credentials.n}`
-      : undefined,
-  isComplete: credentials.isComplete(),
-  receiveAddress,
-  account: credentials.account,
-});
-
-// Key overview list builder
-export const buildNestedWalletList = (
-  coins: Wallet[],
-  tokens: Wallet[],
-  defaultAltCurrencyIso: string,
-  rates: Rates,
-  dispatch: AppDispatch,
-) => {
-  const walletList = [] as Array<WalletRowProps>;
-
-  coins.forEach(coin => {
-    walletList.push({
-      ...buildUIFormattedWallet(coin, defaultAltCurrencyIso, rates, dispatch),
-    });
-    // eth wallet with tokens -> for every token wallet ID grab full wallet from _tokens and add it to the list
-    if (coin.tokens) {
-      coin.tokens.forEach(id => {
-        const tokenWallet = tokens.find(token => token.id === id);
-        if (tokenWallet) {
-          walletList.push({
-            ...buildUIFormattedWallet(
-              tokenWallet,
-              defaultAltCurrencyIso,
-              rates,
-              dispatch,
-            ),
-            isToken: true,
-          });
-        }
-      });
-    }
-  });
-
-  return walletList;
-};
-
 const KeyOverview = () => {
   const {t} = useTranslation();
   const {
@@ -380,6 +196,7 @@ const KeyOverview = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const theme = useTheme();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
@@ -398,8 +215,10 @@ const KeyOverview = () => {
       pendingTxps = pendingTxps.concat(x.pendingTxps);
     }
   });
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [searchVal, setSearchVal] = useState('');
-  const [searchResults, setSearchResults] = useState([] as WalletRowProps[]);
+  const [isViewUpdating, setIsViewUpdating] = useState(false);
+  const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
@@ -407,6 +226,11 @@ const KeyOverview = () => {
     if (!key) {
       return;
     }
+    const missingChainsAccounts = memorizedAccountList.filter(
+      ({chains}) =>
+        IsEVMChain(chains[0]) &&
+        chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
+    );
 
     navigation.setOptions({
       headerTitle: () => {
@@ -426,10 +250,16 @@ const KeyOverview = () => {
               <HeaderTitle style={{textAlign: 'center'}}>
                 {key?.keyName}
               </HeaderTitle>
-              {(hasMultipleKeys || linkedCoinbase) && (
-                <ChevronDownSvg style={{marginLeft: 10}} />
-              )}
             </HeaderTitleContainer>
+            {(hasMultipleKeys || linkedCoinbase) && (
+              <ChevronContainer>
+                {!theme.dark ? (
+                  <ChevronDownSvgLight width={8} height={8} />
+                ) : (
+                  <ChevronDownSvgDark width={8} height={8} />
+                )}
+              </ChevronContainer>
+            )}
           </KeyToggle>
         );
       },
@@ -439,12 +269,14 @@ const KeyOverview = () => {
             <HeaderRightContainer>
               {pendingTxps.length ? (
                 <ProposalBadgeContainer
+                  touchableLibrary={'react-native-gesture-handler'}
                   style={{marginRight: 10}}
                   onPress={onPressTxpBadge}>
                   <ProposalBadge>{pendingTxps.length}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              {key?.methods?.isPrivKeyEncrypted() ? (
+              {key?.methods?.isPrivKeyEncrypted() &&
+              missingChainsAccounts.length === 0 ? (
                 <CogIconContainer
                   onPress={async () => {
                     await sleep(500);
@@ -493,76 +325,225 @@ const KeyOverview = () => {
 
   useEffect(() => {
     dispatch(Analytics.track('View Key'));
+    updateStatusForKey(false);
   }, []);
 
   const {wallets = [], totalBalance} =
     useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
-  const memorizedWalletList = useMemo(() => {
-    const coins = wallets.filter(
-      wallet => !wallet.credentials.token && !wallet.hideWallet,
-    );
-    const tokens = wallets.filter(
-      wallet => wallet.credentials.token && !wallet.hideWallet,
-    );
+  const memorizedAccountList = useMemo(() => {
+    return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
+      filterByHideWallet: true,
+    });
+  }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
 
-    return buildNestedWalletList(
-      coins,
-      tokens,
-      defaultAltCurrency.isoCode,
-      rates,
+  const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
+    return {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...WALLET.tokenOptionsByAddress,
+      ...WALLET.customTokenOptionsByAddress,
+    };
+  });
+
+  const startSyncWallets = async (mnemonic: string) => {
+    if (key.isPrivKeyEncrypted) {
+      // To close decrypt modal
+      await sleep(500);
+    }
+    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
+    const opts = {
+      words: normalizeMnemonic(mnemonic),
+      mnemonic,
+    };
+    try {
+      let {key: _syncKey, wallets: _syncWallets} = await serverAssistedImport(
+        opts,
+      );
+
+      if (_syncKey.fingerPrint === key.properties!.fingerPrint) {
+        // Filter for new wallets
+        _syncWallets = _syncWallets
+          .filter(
+            sw =>
+              sw.isComplete() &&
+              !key.wallets.some(ew => ew.id === sw.credentials.walletId),
+          )
+          .map(syncWallet => {
+            // update to keyId
+            syncWallet.credentials.keyId = key.properties!.id;
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                syncWallet.credentials.coin,
+                syncWallet.credentials.chain,
+                syncWallet.credentials.token?.address,
+              ),
+            );
+            return _.merge(
+              syncWallet,
+              buildWalletObj(
+                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                _tokenOptionsByAddress,
+              ),
+            );
+          });
+
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: _syncWallets,
+        });
+
+        let message;
+
+        const syncWalletsLength = _syncWallets.length;
+        if (syncWalletsLength) {
+          message =
+            syncWalletsLength === 1
+              ? t('New wallet found')
+              : t('wallets found', {syncWalletsLength});
+          dispatch(syncWallets({keyId: key.id, wallets: _syncWallets}));
+        } else {
+          message = t('Your key is already synced');
+        }
+
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'success',
+            title: t('Sync wallet'),
+            message,
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+      } else {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        await dispatch(
+          showBottomNotificationModal(
+            CustomErrorMessage({
+              errMsg: t('Failed to Sync wallets'),
+            }),
+          ),
+        );
+      }
+    } catch (e) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: BWCErrorMessage(e),
+            title: t('Error'),
+          }),
+        ),
+      );
+    }
+  };
+
+  const handleAddEvmChain = async () => {
+    haptic('impactLight');
+    await sleep(500);
+
+    let password;
+    if (key.isPrivKeyEncrypted) {
+      password = await dispatch(getDecryptPassword(Object.assign({}, key)));
+    }
+
+    const evmWallets = getEvmGasWallets(key.wallets);
+    const accountsArray = [
+      ...new Set(evmWallets.map(wallet => wallet.credentials.account)),
+    ];
+
+    const wallets = await createWalletsForAccounts(
       dispatch,
+      accountsArray,
+      key.methods as KeyMethods,
+      password,
     );
-  }, [dispatch, wallets, defaultAltCurrency.isoCode, rates]);
 
+    if (_.isEmpty(wallets)) {
+      if (!key.isPrivKeyEncrypted) {
+        await startSyncWallets(key.properties!.mnemonic);
+      } else {
+        const mnemonic = key.methods!.get(password).mnemonic;
+        await startSyncWallets(mnemonic);
+      }
+    } else {
+      key.wallets.push(...(wallets as Wallet[]));
+      dispatch(successAddWallet({key}));
+    }
+  };
+
+  const missingChainsAccounts = memorizedAccountList.filter(
+    ({chains}) =>
+      IsEVMChain(chains[0]) &&
+      chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
+  );
   const keyOptions: Array<Option> = [];
 
-  if (!key?.methods?.isPrivKeyEncrypted()) {
+  keyOptions.push({
+    img: <Icons.Wallet width="15" height="15" />,
+    title: t('Add Wallet'),
+    description: t(
+      'Choose another currency you would like to add to your key.',
+    ),
+    onPress: async () => {
+      haptic('impactLight');
+      await sleep(500);
+      navigation.navigate('AddingOptions', {
+        key,
+      });
+    },
+  });
+
+  if (missingChainsAccounts.length > 0) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
-      title: t('Add Wallet'),
+      title: t('Add EVM Chain'),
+      description: t('Add all supported chains to your accounts for this key.'),
+      onPress: async () => {
+        await handleAddEvmChain();
+      },
+    });
+  }
+
+  if (!key?.isReadOnly && !key?.methods?.isPrivKeyEncrypted()) {
+    keyOptions.push({
+      img: <Icons.Encrypt />,
+      title: t('Encrypt your Key'),
       description: t(
-        'Choose another currency you would like to add to your key.',
+        'Prevent an unauthorized user from sending funds out of your wallet.',
       ),
       onPress: async () => {
         haptic('impactLight');
         await sleep(500);
-        navigation.navigate('AddingOptions', {
-          key,
-        });
-      },
-    });
-
-    if (!key?.isReadOnly) {
-      keyOptions.push({
-        img: <Icons.Encrypt />,
-        title: t('Encrypt your Key'),
-        description: t(
-          'Prevent an unauthorized user from sending funds out of your wallet.',
-        ),
-        onPress: async () => {
-          haptic('impactLight');
-          await sleep(500);
-          navigation.navigate('CreateEncryptPassword', {
-            key,
-          });
-        },
-      });
-    }
-
-    keyOptions.push({
-      img: <Icons.Settings />,
-      title: t('Key Settings'),
-      description: t('View all the ways to manage and configure your key.'),
-      onPress: async () => {
-        haptic('impactLight');
-        await sleep(500);
-        navigation.navigate('KeySettings', {
+        navigation.navigate('CreateEncryptPassword', {
           key,
         });
       },
     });
   }
+
+  keyOptions.push({
+    img: <Icons.Settings />,
+    title: t('Key Settings'),
+    description: t('View all the ways to manage and configure your key.'),
+    onPress: async () => {
+      haptic('impactLight');
+      await sleep(500);
+      navigation.navigate('KeySettings', {
+        key,
+      });
+    },
+  });
 
   const onPressTxpBadge = useMemo(
     () => () => {
@@ -571,68 +552,164 @@ const KeyOverview = () => {
     [],
   );
 
-  const onRefresh = async () => {
-    setRefreshing(true);
+  const updateStatusForKey = async (forceUpdate?: boolean) => {
+    if (isViewUpdating) {
+      logger.debug('KeyOverview is updating. Do not start forced updateAll...');
+      return;
+    }
+
     try {
+      setIsViewUpdating(true);
       await dispatch(startGetRates({}));
       await Promise.all([
-        dispatch(startUpdateAllWalletStatusForKey({key, force: true})),
+        dispatch(
+          startUpdateAllWalletStatusForKey({
+            key,
+            force: forceUpdate,
+            createTokenWalletWithFunds: forceUpdate,
+          }),
+        ),
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
+      setIsViewUpdating(false);
     } catch (err) {
+      setIsViewUpdating(false);
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await updateStatusForKey(true);
     setRefreshing(false);
   };
 
-  const memoizedRenderItem = useCallback(
-    ({item}: {item: WalletRowProps}) => {
-      return (
-        <WalletRow
-          id={item.id}
-          wallet={item}
-          hideBalance={hideAllBalances}
-          onPress={() => {
-            haptic('impactLight');
-            const fullWalletObj = key.wallets.find(k => k.id === item.id)!;
-            if (!fullWalletObj.isComplete()) {
-              fullWalletObj.getStatus(
-                {network: fullWalletObj.network},
-                (err: any, status: Status) => {
-                  if (err) {
-                    const errStr =
-                      err instanceof Error ? err.message : JSON.stringify(err);
-                    logger.error(`error [getStatus]: ${errStr}`);
-                  } else {
-                    if (status?.wallet?.status === 'complete') {
-                      fullWalletObj.openWallet({}, () => {
-                        navigation.navigate('WalletDetails', {
-                          walletId: item.id,
-                          key,
-                        });
-                      });
-                      return;
-                    }
-                    navigation.navigate('Copayers', {
-                      wallet: fullWalletObj,
-                      status: status?.wallet,
-                    });
-                  }
-                },
-              );
-            } else {
-              navigation.navigate('WalletDetails', {
-                key,
-                walletId: item.id,
+  const onPressItem = (item: AccountRowProps) => {
+    haptic('impactLight');
+
+    if (IsEVMChain(item.chains[0])) {
+      navigation.navigate('AccountDetails', {
+        keyId: item.keyId,
+        selectedAccountAddress: item.receiveAddress,
+      });
+      return;
+    }
+    const fullWalletObj = key.wallets.find(
+      k =>
+        k.id === item.wallets[0].id &&
+        (!item.copayerId || k.credentials?.copayerId === item.copayerId),
+    )!;
+    if (!fullWalletObj.isComplete()) {
+      fullWalletObj.getStatus(
+        {network: fullWalletObj.network},
+        (err: any, status: Status) => {
+          if (err) {
+            const errStr =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            logger.error(`error [getStatus]: ${errStr}`);
+          } else {
+            if (status?.wallet?.status === 'complete') {
+              fullWalletObj.openWallet({}, () => {
+                navigation.navigate('WalletDetails', {
+                  walletId: fullWalletObj.credentials.walletId,
+                  key,
+                  copayerId: item.copayerId,
+                });
               });
+              return;
             }
-          }}
+            navigation.navigate('Copayers', {
+              wallet: fullWalletObj,
+              status: status?.wallet,
+            });
+          }
+        },
+      );
+    } else {
+      navigation.navigate('WalletDetails', {
+        key,
+        walletId: fullWalletObj.credentials.walletId,
+        copayerId: fullWalletObj.credentials.copayerId,
+      });
+    }
+  };
+
+  const memoizedRenderItem = useCallback(
+    ({item}: {item: AccountRowProps}) => {
+      return (
+        <AccountListRow
+          id={item.id}
+          accountItem={item}
+          hideBalance={hideAllBalances}
+          onPress={() => onPressItem(item)}
         />
       );
     },
-    [key, navigation, hideAllBalances],
+    [key, hideAllBalances],
   );
+
+  const renderListHeaderComponent = useCallback(() => {
+    return (
+      <WalletListHeader>
+        <H5>{t('My Wallets')}</H5>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            marginRight: -10,
+          }}>
+          <SearchComponent<AccountRowProps>
+            searchVal={searchVal}
+            setSearchVal={setSearchVal}
+            searchResults={searchResults}
+            setSearchResults={searchResults => {
+              setSearchResults(searchResults);
+              setIsLoadingInitial(false);
+            }}
+            searchFullList={memorizedAccountList}
+            context={'keyoverview'}
+          />
+        </View>
+      </WalletListHeader>
+    );
+  }, [key, hideAllBalances]);
+
+  const renderListFooterComponent = useCallback(() => {
+    return (
+      <WalletListFooterContainer>
+        <WalletListFooter
+          activeOpacity={ActiveOpacity}
+          onPress={async () => {
+            haptic('impactLight');
+            navigation.navigate('AddingOptions', {
+              key,
+            });
+          }}>
+          <Icons.Add />
+          <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
+        </WalletListFooter>
+        {showArchaxBanner && <ArchaxFooter />}
+      </WalletListFooterContainer>
+    );
+  }, []);
+
+  const listEmptyComponent = useMemo(
+    () =>
+      !isLoadingInitial ? (
+        <EmptyListContainer>
+          <H5>{t("It's a ghost town in here")}</H5>
+          <GhostSvg style={{marginTop: 20}} />
+        </EmptyListContainer>
+      ) : null,
+    [t, isLoadingInitial],
+  );
+
+  const renderDataComponent = useMemo(() => {
+    return !searchVal && !selectedChainFilterOption
+      ? memorizedAccountList
+      : searchResults;
+  }, [searchResults, selectedChainFilterOption, key]);
 
   return (
     <OverviewContainer>
@@ -641,34 +718,19 @@ const KeyOverview = () => {
           onLongPress={() => {
             dispatch(toggleHideAllBalances());
           }}>
-          <Row>
-            {!hideAllBalances ? (
-              <Balance scale={shouldScale(totalBalance)}>
-                {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
-                  currencyDisplay: 'symbol',
-                })}
-              </Balance>
-            ) : (
-              <H2>****</H2>
-            )}
-          </Row>
+          {!hideAllBalances ? (
+            <Balance scale={shouldScale(totalBalance)}>
+              {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+                currencyDisplay: 'symbol',
+              })}
+            </Balance>
+          ) : (
+            <H2>****</H2>
+          )}
         </TouchableOpacity>
       </BalanceContainer>
 
-      <Hr />
-
-      <SearchComponentContainer>
-        <SearchComponent<WalletRowProps>
-          searchVal={searchVal}
-          setSearchVal={setSearchVal}
-          searchResults={searchResults}
-          setSearchResults={setSearchResults}
-          searchFullList={memorizedWalletList}
-          context={'keyoverview'}
-        />
-      </SearchComponentContainer>
-
-      <FlatList<WalletRowProps>
+      <FlashList<AccountRowProps>
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -676,34 +738,12 @@ const KeyOverview = () => {
             onRefresh={() => onRefresh()}
           />
         }
-        ListHeaderComponent={() => {
-          return (
-            <WalletListHeader>
-              <H5>{t('My Wallets')}</H5>
-            </WalletListHeader>
-          );
-        }}
-        ListFooterComponent={() => {
-          return (
-            <WalletListFooter
-              activeOpacity={ActiveOpacity}
-              onPress={async () => {
-                haptic('impactLight');
-                navigation.navigate('AddingOptions', {
-                  key,
-                });
-              }}>
-              <Icons.Add />
-              <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
-            </WalletListFooter>
-          );
-        }}
-        data={
-          !searchVal && !selectedChainFilterOption
-            ? memorizedWalletList
-            : searchResults
-        }
+        ListHeaderComponent={renderListHeaderComponent}
+        ListFooterComponent={renderListFooterComponent}
+        data={renderDataComponent}
         renderItem={memoizedRenderItem}
+        ListEmptyComponent={listEmptyComponent}
+        estimatedItemSize={70}
       />
 
       {keyOptions.length > 0 ? (
@@ -725,10 +765,10 @@ const KeyOverview = () => {
             {Object.values(keys)
               .filter(_key => _key.backupComplete && _key.id !== id)
               .map(_key => (
-                <KeyDropdownOption
+                <DropdownOption
                   key={_key.id}
-                  keyId={_key.id}
-                  keyName={_key.keyName}
+                  optionId={_key.id}
+                  optionName={_key.keyName}
                   wallets={_key.wallets}
                   totalBalance={_key.totalBalance}
                   onPress={keyId => {

@@ -1,7 +1,6 @@
 import React from 'react';
 import {NativeStackNavigationOptions} from '@react-navigation/native-stack';
 import Back from '../components/back/Back';
-import {HeaderBackButtonProps} from '@react-navigation/elements';
 import {Platform} from 'react-native';
 import {WIDTH} from '../components/styled/Containers';
 import {StackNavigationOptions} from '@react-navigation/stack';
@@ -11,16 +10,11 @@ export const baseNavigatorOptions: NativeStackNavigationOptions = {
   headerBackTitleVisible: false,
   headerTitleAlign: 'center',
   headerShown: true,
-  headerTransparent: Platform.OS === 'ios' ? true : false,
+  headerTransparent: Platform.OS === 'ios',
   headerShadowVisible: false,
   headerBackButtonMenuEnabled: false,
   headerBackVisible: false,
-  animation: Platform.OS === 'android' ? 'slide_from_right' : 'default',
-};
-
-export const baseNativeHeaderBackButtonProps: HeaderBackButtonProps = {
-  labelVisible: false,
-  backImage: () => <Back opacity={1} />,
+  animation: 'default',
 };
 
 export const oldBaseNavigatorOptions: StackNavigationOptions = {

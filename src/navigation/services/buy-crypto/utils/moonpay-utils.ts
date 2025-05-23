@@ -1,6 +1,9 @@
 import {t} from 'i18next';
 import cloneDeep from 'lodash.clonedeep';
+import {MoonpayPaymentType} from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
+import {PaymentMethodKey} from '../constants/BuyCryptoConstants';
 
 export const moonpayEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -58,7 +61,8 @@ export const moonpaySupportedCoins = [
   'eth_op', // eth_optimism in Moonpay
   'ltc',
   'doge',
-  'matic', // matic_polygon in Moonpay
+  'matic', // pol_polygon in Moonpay // backward compatibility
+  'pol', // pol_polygon in Moonpay
 ];
 
 export const nonUSMoonpaySupportedCoins = ['xrp'];
@@ -69,10 +73,17 @@ export const moonpaySupportedErc20Tokens = [
   'gods',
   'imx',
   'link',
-  'matic',
+  'mana',
+  'matic', // backward compatibility
+  'pixel',
+  'pol',
+  'pyusd',
+  'steth',
   'shib',
+  'uni',
   'usdc',
   'usdt',
+  'venom',
   'zrx',
 ];
 
@@ -165,7 +176,9 @@ export const getMoonpayFixedCurrencyAbbreviation = (
   currency: string,
   chain: string,
 ): string => {
-  const coin = cloneDeep(currency).toLowerCase();
+  let coin = cloneDeep(currency).toLowerCase();
+  coin = externalServicesCoinMapping(coin);
+
   switch (chain) {
     case 'matic':
       return coin + '_polygon';
@@ -180,10 +193,40 @@ export const getMoonpayFixedCurrencyAbbreviation = (
   }
 };
 
+export const getMoonpayPaymentMethodFormat = (
+  method: PaymentMethodKey,
+): MoonpayPaymentType | undefined => {
+  let moonpayPaymentMethod: MoonpayPaymentType | undefined;
+  if (method) {
+    switch (method) {
+      case 'debitCard':
+      case 'creditCard':
+        moonpayPaymentMethod = 'credit_debit_card';
+        break;
+      case 'sepaBankTransfer':
+        moonpayPaymentMethod = 'sepa_bank_transfer';
+        break;
+      case 'applePay':
+        moonpayPaymentMethod = 'mobile_wallet';
+        break;
+      case 'paypal':
+        moonpayPaymentMethod = 'paypal';
+        break;
+      case 'venmo':
+        moonpayPaymentMethod = 'venmo';
+        break;
+      default:
+        moonpayPaymentMethod = undefined;
+        break;
+    }
+  }
+  return moonpayPaymentMethod;
+};
+
 export const getMoonpayFiatAmountLimits = () => {
   return {
     min: 30,
-    max: 12000,
+    max: 30000,
   };
 };
 

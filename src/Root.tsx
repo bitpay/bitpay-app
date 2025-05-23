@@ -6,7 +6,7 @@ import {
 } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import debounce from 'lodash.debounce';
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   Appearance,
@@ -19,14 +19,16 @@ import {
   StatusBar,
 } from 'react-native';
 import 'react-native-gesture-handler';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {ThemeProvider} from 'styled-components/native';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import BottomNotificationModal from './components/modal/bottom-notification/BottomNotification';
 import OnGoingProcessModal from './components/modal/ongoing-process/OngoingProcess';
 import {DeviceEmitterEvents} from './constants/device-emitter-events';
 import {baseNavigatorOptions} from './constants/NavigationOptions';
 import {LOCK_AUTHORIZED_TIME} from './constants/Lock';
 import BiometricModal from './components/modal/biometric/BiometricModal';
+import ArchaxBanner from './components/archax/archax-banner';
 import {AppEffects, AppActions} from './store/app';
 import {BitPayDarkTheme, BitPayLightTheme} from './themes/bitpay';
 import {LogActions} from './store/log';
@@ -86,6 +88,7 @@ import WalletConnectGroup, {
 import GiftCardGroup, {
   GiftCardGroupParamList,
 } from './navigation/tabs/shop/gift-card/GiftCardGroup';
+import ChainSelectorModal from './components/modal/chain-selector/ChainSelector';
 import DecryptEnterPasswordModal from './navigation/wallet/components/DecryptEnterPasswordModal';
 import MerchantGroup, {
   MerchantGroupParamList,
@@ -103,9 +106,19 @@ import DebugScreen, {
 import CardActivationGroup, {
   CardActivationGroupParamList,
 } from './navigation/card-activation/CardActivationGroup';
-import {sleep} from './utils/helper-methods';
+import {
+  createWalletsForAccounts,
+  fixWalletAddresses,
+  getEvmGasWallets,
+  sleep,
+} from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
-import {handleBwsEvent, shortcutListener} from './store/app/app.effects';
+import {
+  checkNotificationsPermissions,
+  handleBwsEvent,
+  shortcutListener,
+  startOnGoingProcessModal,
+} from './store/app/app.effects';
 import NotificationsSettingsGroup, {
   NotificationsSettingsGroupParamsList,
 } from './navigation/tabs/settings/notifications/NotificationsGroup';
@@ -121,12 +134,24 @@ import BillGroup, {
 } from './navigation/tabs/shop/bill/BillGroup';
 import InAppNotification from './components/modal/in-app-notification/InAppNotification';
 import RNBootSplash from 'react-native-bootsplash';
-import {showBlur} from './store/app/app.actions';
-import InAppMessage from './components/modal/in-app-message/InAppMessage';
+import {dismissOnGoingProcessModal, showBlur} from './store/app/app.actions';
 import SettingsGroup, {
   SettingsGroupParamList,
 } from './navigation/tabs/settings/SettingsGroup';
-import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
+//import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
+import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletConnectStartModal';
+import {KeyMethods} from './store/wallet/wallet.models';
+import {
+  setAccountEVMCreationMigrationComplete,
+  successAddWallet,
+} from './store/wallet/wallet.actions';
+import {BrazeWrapper} from './lib/Braze';
+import {selectSettingsNotificationState} from './store/app/app.selectors';
+import {HeaderShownContext} from '@react-navigation/elements';
+import PaymentSent from './navigation/wallet/components/PaymentSent';
+import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
+
+const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
@@ -194,7 +219,7 @@ declare global {
   }
 }
 
-export type SilentPushEvent = {
+export type SilentPushEventObj = {
   b_use_webview?: number;
   multisigContractAddress?: string | null;
   ab_uri?: string;
@@ -204,6 +229,7 @@ export type SilentPushEvent = {
   notification_type?: string;
   ab?: any;
   tokenAddress?: string | null;
+  chain?: string;
   coin?: string;
   network?: string;
 };
@@ -224,6 +250,7 @@ export const getNavigationTabName = () => {
     TabsScreens.SHOP,
     TabsScreens.TRANSACT_BUTTON,
     TabsScreens.CARD,
+    TabsScreens.SETTINGS,
   ];
   const navigationState = navigationRef.getState();
   const navigationTabIndex = navigationState?.routes?.[0]?.state?.index;
@@ -257,6 +284,13 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
+  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const accountEvmCreationMigrationComplete = useAppSelector(
+    ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
+  );
+  const notificationsState = useAppSelector(selectSettingsNotificationState);
+  const currentLocation = useAppSelector(({LOCATION}) => LOCATION.locationData);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   const blurScreenList: string[] = [
     OnboardingScreens.IMPORT,
@@ -270,6 +304,7 @@ export default () => {
     WalletScreens.EXPORT_WALLET,
     WalletScreens.JOIN_MULTISIG,
     WalletScreens.KEY_OVERVIEW,
+    WalletScreens.ACCOUNT_DETAILS,
     WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS,
     WalletScreens.WALLET_DETAILS,
   ];
@@ -327,6 +362,48 @@ export default () => {
     }
   }, [appLanguage]);
 
+  // LOCATION
+  useEffect(() => {
+    if (currentLocation) {
+      if (currentLocation.countryShortCode.toUpperCase() === 'GB') {
+        dispatch(AppActions.showArchaxBanner(true));
+      } else {
+        dispatch(AppActions.showArchaxBanner(false));
+      }
+    }
+  }, [dispatch, currentLocation]);
+
+  // CHECK NOTIFICATIONS SETTINGS
+  useEffect(() => {
+    const _checkNotificationsPermissions = async () => {
+      const {announcements, confirmedTx, pushNotifications} =
+        notificationsState;
+      const systemEnabled = await checkNotificationsPermissions();
+      if (
+        !systemEnabled &&
+        (announcements || confirmedTx || pushNotifications)
+      ) {
+        dispatch(AppEffects.setNotifications(false));
+        dispatch(AppEffects.setConfirmTxNotifications(false));
+        dispatch(AppEffects.setAnnouncementsNotifications(false));
+      }
+    };
+
+    const onAppStateChange = (status: AppStateStatus) => {
+      if (status === 'active') {
+        _checkNotificationsPermissions();
+      }
+    };
+
+    _checkNotificationsPermissions();
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+
+    return () => subscriptionAppStateChange.remove();
+  }, []);
+
   // CHECK PIN || BIOMETRIC
   useEffect(() => {
     async function onAppStateChange(status: AppStateStatus) {
@@ -350,14 +427,14 @@ export default () => {
           dispatch(AppActions.showBlur(false));
         } else if (status === 'active' && !failedAppInit) {
           if (lockAuthorizedUntil) {
-            const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+            const timeSinceBoot = await Timer.getRelativeTime();
             const totalSecs =
               Number(lockAuthorizedUntil) - Number(timeSinceBoot);
             if (totalSecs < 0) {
               dispatch(AppActions.lockAuthorizedUntil(undefined));
               showLockOption();
             } else {
-              const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
+              const timeSinceBoot = await Timer.getRelativeTime();
               const authorizedUntil =
                 Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
               dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
@@ -403,7 +480,7 @@ export default () => {
 
   // Silent Push Notifications
   useEffect(() => {
-    function onMessageReceived(response: SilentPushEvent) {
+    function onMessageReceived(response: SilentPushEventObj) {
       dispatch(
         LogActions.debug(
           '[Root] Silent Push Notification',
@@ -412,10 +489,67 @@ export default () => {
       );
       dispatch(handleBwsEvent(response));
     }
-    const eventEmitter = new NativeEventEmitter(NativeModules.SilentPushEvent);
+    const eventEmitter = new NativeEventEmitter(SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
   }, [dispatch]);
+
+  // IAM handler
+  useEffect(() => {
+    function onAppStateChange(status: AppStateStatus) {
+      // App should be ready to show IAM (after PIN or Biometric)
+      if (status === 'active') {
+        if (pinLockActive || biometricLockActive) {
+          const _subscriptionToPinModalDismissed =
+            DeviceEventEmitter.addListener(
+              DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+              async () => {
+                _subscriptionToPinModalDismissed.remove();
+                InAppMessageModule.notifyReactNativeAppLoaded();
+              },
+            );
+        } else if (!onboardingCompleted) {
+          const _subscriptionToOnboardingCompleted =
+            DeviceEventEmitter.addListener(
+              DeviceEmitterEvents.APP_ONBOARDING_COMPLETED,
+              async () => {
+                _subscriptionToOnboardingCompleted.remove();
+                InAppMessageModule.notifyReactNativeAppLoaded();
+              },
+            );
+        } else {
+          InAppMessageModule.notifyReactNativeAppLoaded();
+        }
+      } else {
+        InAppMessageModule.notifyReactNativeAppPaused();
+      }
+    }
+
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+
+    return () => subscriptionAppStateChange.remove();
+  }, [pinLockActive, biometricLockActive]);
+
+  useEffect(() => {
+    const eventBrazeListener = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
+      async eid => {
+        // Wait for a few seconds to ensure the user is deleted
+        await sleep(20000);
+        LogActions.info('Deleting old user EID: ', eid);
+        await BrazeWrapper.delete(eid);
+        await sleep(3000);
+        BrazeWrapper.endMergingUser();
+      },
+    );
+
+    return () => {
+      eventBrazeListener.remove();
+    };
+  }, []);
 
   // THEME
   useEffect(() => {
@@ -446,7 +580,7 @@ export default () => {
     : IntroScreens.START;
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{backgroundColor: theme.colors.background}}>
       <StatusBar
         animated={true}
         barStyle={theme.dark ? 'light-content' : 'dark-content'}
@@ -455,130 +589,230 @@ export default () => {
       />
 
       <ThemeProvider theme={theme}>
-        <NavigationContainer
-          ref={navigationRef}
-          theme={theme}
-          linking={linking}
-          onReady={async () => {
-            DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
+        <GestureHandlerRootView style={{flex: 1}}>
+          <BottomSheetModalProvider>
+            <SafeAreaView style={{flex: 1}}>
+              {showArchaxBanner && <ArchaxBanner />}
+              {/* https://github.com/react-navigation/react-navigation/issues/11353#issuecomment-1548114655 */}
+              <HeaderShownContext.Provider value>
+                <NavigationContainer
+                  ref={navigationRef}
+                  theme={theme}
+                  linking={linking}
+                  onReady={async () => {
+                    DeviceEventEmitter.emit(
+                      DeviceEmitterEvents.APP_NAVIGATION_READY,
+                    );
 
-            dispatch(showBlur(pinLockActive || biometricLockActive));
-            await RNBootSplash.hide({fade: true});
-            // avoid splash conflicting with modal in iOS
-            // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
-            dispatch(
-              LogActions.debug(
-                `Biometric Lock Active: ${biometricLockActive} | Pin Lock Active: ${pinLockActive}`,
-              ),
-            );
-            if (pinLockActive) {
-              await sleep(500);
-              dispatch(AppActions.showPinModal({type: 'check'}));
-            } else if (biometricLockActive) {
-              await sleep(500);
-              dispatch(AppActions.showBiometricModal({}));
-            }
+                    dispatch(showBlur(pinLockActive || biometricLockActive));
+                    await RNBootSplash.hide({fade: true});
+                    // avoid splash conflicting with modal in iOS
+                    // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
+                    dispatch(
+                      LogActions.debug(
+                        `Biometric Lock Active: ${biometricLockActive} | Pin Lock Active: ${pinLockActive}`,
+                      ),
+                    );
+                    if (pinLockActive) {
+                      await sleep(500);
+                      dispatch(AppActions.showPinModal({type: 'check'}));
+                    } else if (biometricLockActive) {
+                      await sleep(500);
+                      dispatch(AppActions.showBiometricModal({}));
+                    }
 
-            const urlHandler = async () => {
-              if (onboardingCompleted) {
-                const getBrazeInitialUrl = async (): Promise<string> =>
-                  new Promise(resolve =>
-                    Braze.getInitialURL(deepLink => resolve(deepLink)),
-                  );
-                const [url, brazeUrl] = await Promise.all([
-                  Linking.getInitialURL(),
-                  getBrazeInitialUrl(),
-                ]);
-                await sleep(10);
-                urlEventHandler({url: url || brazeUrl});
-              }
-            };
+                    const urlHandler = async () => {
+                      if (onboardingCompleted) {
+                        const getBrazeInitialUrl = async (): Promise<string> =>
+                          new Promise(resolve =>
+                            Braze.getInitialURL(deepLink => resolve(deepLink)),
+                          );
+                        const [url, brazeUrl] = await Promise.all([
+                          Linking.getInitialURL(),
+                          getBrazeInitialUrl(),
+                        ]);
+                        await sleep(10);
+                        urlEventHandler({url: url || brazeUrl});
+                      }
+                    };
 
-            if (pinLockActive || biometricLockActive) {
-              const subscriptionToPinModalDismissed =
-                DeviceEventEmitter.addListener(
-                  DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
-                  () => {
-                    subscriptionToPinModalDismissed.remove();
-                    urlHandler();
-                  },
-                );
-            } else {
-              urlHandler();
-            }
+                    // we need to ensure that each wallet has a receive address before we can create the account list.
+                    const runAddressFix = async () => {
+                      const walletsToFix = Object.values(keys).flatMap(key =>
+                        key.wallets.filter(
+                          wallet =>
+                            !wallet.receiveAddress &&
+                            wallet?.credentials?.isComplete(),
+                        ),
+                      );
+                      if (walletsToFix.length > 0) {
+                        dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+                        await sleep(1000); // give the modal time to show
+                        await fixWalletAddresses({
+                          appDispatch: dispatch,
+                          wallets: walletsToFix,
+                          skipDispatch: false,
+                        });
+                        dispatch(LogActions.info('success [runAddressFix]'));
+                        dispatch(dismissOnGoingProcessModal());
+                      }
+                    };
 
-            dispatch(LogActions.info('QuickActions Initialized'));
-            QuickActions.popInitialAction()
-              .then(item =>
-                dispatch(shortcutListener(item, navigationRef as any)),
-              )
-              .catch(console.error);
-            DeviceEventEmitter.addListener(
-              'quickActionShortcut',
-              (item: ShortcutItem) => {
-                dispatch(shortcutListener(item, navigationRef as any));
-              },
-            );
-          }}
-          onStateChange={debouncedOnStateChange}>
-          <Root.Navigator
-            screenOptions={{
-              ...baseNavigatorOptions,
-              headerShown: false,
-              headerStyle: {
-                backgroundColor: theme.colors.background,
-              },
-            }}
-            initialRouteName={initialRoute}>
-            <Root.Screen
-              name={DebugScreens.DEBUG}
-              component={DebugScreen}
-              options={{
-                ...baseNavigatorOptions,
-                gestureEnabled: false,
-              }}
-            />
-            <Root.Screen
-              name={RootStacks.TABS}
-              component={TabsStack}
-              options={{
-                gestureEnabled: false,
-              }}
-            />
-            {AuthGroup({Auth: Root})}
-            {IntroGroup({Intro: Root})}
-            {OnboardingGroup({Onboarding: Root})}
-            {SettingsGroup({Settings: Root})}
-            {BitpayIdGroup({BitpayId: Root})}
-            {WalletGroup({Wallet: Root})}
-            {CardActivationGroup({CardActivation: Root})}
-            {ScanGroup({Scan: Root})}
-            {GiftCardGroup({GiftCard: Root})}
-            {MerchantGroup({Merchant: Root})}
-            {BillGroup({Bill: Root})}
-            {GeneralSettingsGroup({GeneralSettings: Root})}
-            {ContactsGroup({Contacts: Root})}
-            {ExternalServicesSettingsGroup({ExternalServicesSettings: Root})}
-            {NotificationsSettingsGroup({Notifications: Root})}
-            {NetworkFeePolicySettingsGroup({NetworkFeePolicySettings: Root})}
-            {AboutGroup({About: Root})}
-            {CoinbaseGroup({Coinbase: Root})}
-            {BuyCryptoGroup({BuyCrypto: Root})}
-            {SellCryptoGroup({SellCrypto: Root})}
-            {SwapCryptoGroup({SwapCrypto: Root})}
-            {WalletConnectGroup({WalletConnect: Root})}
-            {ZenLedgerGroup({ZenLedger: Root})}
-          </Root.Navigator>
-          <OnGoingProcessModal />
-          <InAppNotification />
-          <InAppMessage />
-          <BottomNotificationModal />
-          <DecryptEnterPasswordModal />
-          <BlurContainer />
-          <PinModal />
-          <BiometricModal />
-          <ImportLedgerWalletModal />
-        </NavigationContainer>
+                    // we need to ensure that each evm account has all supported wallets attached.
+                    const runCompleteEvmWalletsAccountFix = async () => {
+                      try {
+                        if (Object.keys(keys).length === 0) {
+                          dispatch(setAccountEVMCreationMigrationComplete());
+                          return;
+                        }
+                        dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+                        await sleep(1000); // give the modal time to show
+                        await Promise.all(
+                          Object.values(keys).map(async key => {
+                            const evmWallets = getEvmGasWallets(key.wallets);
+                            const accountsArray = [
+                              ...new Set(
+                                evmWallets.map(
+                                  wallet => wallet.credentials.account,
+                                ),
+                              ),
+                            ];
+                            const wallets = await createWalletsForAccounts(
+                              dispatch,
+                              accountsArray,
+                              key.methods as KeyMethods,
+                            );
+                            key.wallets.push(...wallets);
+                            dispatch(successAddWallet({key}));
+                          }),
+                        );
+                        dispatch(
+                          LogActions.info(
+                            'success [runCompleteEvmWalletsAccountFix]',
+                          ),
+                        );
+                        dispatch(setAccountEVMCreationMigrationComplete());
+                        dispatch(dismissOnGoingProcessModal());
+                      } catch (error) {
+                        const errMsg =
+                          error instanceof Error
+                            ? error.message
+                            : JSON.stringify(error);
+                        dispatch(
+                          LogActions.error(
+                            `Error in [runCompleteEvmWalletsAccountFix]: ${errMsg}`,
+                          ),
+                        );
+                        dispatch(setAccountEVMCreationMigrationComplete());
+                        dispatch(dismissOnGoingProcessModal());
+                      }
+                    };
+
+                    if (pinLockActive || biometricLockActive) {
+                      const subscriptionToPinModalDismissed =
+                        DeviceEventEmitter.addListener(
+                          DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+                          async () => {
+                            subscriptionToPinModalDismissed.remove();
+                            await runAddressFix();
+                            if (!accountEvmCreationMigrationComplete) {
+                              await sleep(1000);
+                              await runCompleteEvmWalletsAccountFix();
+                            }
+                            urlHandler();
+                          },
+                        );
+                    } else {
+                      await runAddressFix();
+                      if (!accountEvmCreationMigrationComplete) {
+                        await sleep(1000);
+                        await runCompleteEvmWalletsAccountFix();
+                      }
+                      urlHandler();
+                    }
+
+                    dispatch(LogActions.info('QuickActions Initialized'));
+                    QuickActions.popInitialAction()
+                      .then(item =>
+                        dispatch(shortcutListener(item, navigationRef as any)),
+                      )
+                      .catch(console.error);
+                    DeviceEventEmitter.addListener(
+                      'quickActionShortcut',
+                      (item: ShortcutItem) => {
+                        dispatch(shortcutListener(item, navigationRef as any));
+                      },
+                    );
+                  }}
+                  onStateChange={debouncedOnStateChange}>
+                  <Root.Navigator
+                    screenOptions={{
+                      ...baseNavigatorOptions,
+                      headerShown: false,
+                      headerStyle: {
+                        backgroundColor: theme.colors.background,
+                      },
+                    }}
+                    initialRouteName={initialRoute}>
+                    <Root.Screen
+                      name={DebugScreens.DEBUG}
+                      component={DebugScreen}
+                      options={{
+                        ...baseNavigatorOptions,
+                        gestureEnabled: false,
+                      }}
+                    />
+                    <Root.Screen
+                      name={RootStacks.TABS}
+                      component={TabsStack}
+                      options={{
+                        gestureEnabled: false,
+                      }}
+                    />
+                    {AuthGroup({Auth: Root})}
+                    {IntroGroup({Intro: Root})}
+                    {OnboardingGroup({Onboarding: Root})}
+                    {SettingsGroup({Settings: Root})}
+                    {BitpayIdGroup({BitpayId: Root})}
+                    {WalletGroup({Wallet: Root})}
+                    {CardActivationGroup({CardActivation: Root})}
+                    {ScanGroup({Scan: Root})}
+                    {GiftCardGroup({GiftCard: Root})}
+                    {MerchantGroup({Merchant: Root})}
+                    {BillGroup({Bill: Root})}
+                    {GeneralSettingsGroup({GeneralSettings: Root})}
+                    {ContactsGroup({Contacts: Root})}
+                    {ExternalServicesSettingsGroup({
+                      ExternalServicesSettings: Root,
+                    })}
+                    {NotificationsSettingsGroup({Notifications: Root})}
+                    {NetworkFeePolicySettingsGroup({
+                      NetworkFeePolicySettings: Root,
+                    })}
+                    {AboutGroup({About: Root})}
+                    {CoinbaseGroup({Coinbase: Root})}
+                    {BuyCryptoGroup({BuyCrypto: Root})}
+                    {SellCryptoGroup({SellCrypto: Root})}
+                    {SwapCryptoGroup({SwapCrypto: Root})}
+                    {WalletConnectGroup({WalletConnect: Root})}
+                    {ZenLedgerGroup({ZenLedger: Root})}
+                  </Root.Navigator>
+                  <OnGoingProcessModal />
+                  <InAppNotification />
+                  <BottomNotificationModal />
+                  <DecryptEnterPasswordModal />
+                  <BlurContainer />
+                  <PinModal />
+                  <BiometricModal />
+                  {/* <ImportLedgerWalletModal /> */}
+                  <WalletConnectStartModal />
+                  <ChainSelectorModal />
+                  <PaymentSent />
+                </NavigationContainer>
+              </HeaderShownContext.Provider>
+            </SafeAreaView>
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
       </ThemeProvider>
     </SafeAreaProvider>
   );

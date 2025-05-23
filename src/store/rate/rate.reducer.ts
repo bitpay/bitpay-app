@@ -12,6 +12,7 @@ export interface RateState {
   balanceCacheKey: {[key in string]: number | undefined};
   ratesCacheKey: {[key in number]: DateRanges | undefined};
   ratesHistoricalCacheKey: {[key in number]: DateRanges | undefined};
+  cachedValuesFiatCode: string | undefined;
 }
 
 const initialState: RateState = {
@@ -25,6 +26,7 @@ const initialState: RateState = {
   balanceCacheKey: {},
   ratesCacheKey: {},
   ratesHistoricalCacheKey: {},
+  cachedValuesFiatCode: undefined,
 };
 
 export const rateReducer = (
@@ -34,21 +36,23 @@ export const rateReducer = (
   switch (action.type) {
     case RateActionTypes.SUCCESS_GET_RATES: {
       const {rates, lastDayRates} = action.payload;
-
       return {
         ...state,
-        rates: {...state.rates, ...rates},
+        rates: {...initialState.rates, ...rates},
         ratesCacheKey: {
-          ...state.ratesCacheKey,
+          ...initialState.ratesCacheKey,
           [DEFAULT_DATE_RANGE]: Date.now(),
         },
-        lastDayRates: {...state.lastDayRates, ...lastDayRates},
+        lastDayRates: {...initialState.lastDayRates, ...lastDayRates},
       };
     }
 
     case RateActionTypes.SUCCESS_GET_HISTORICAL_RATES: {
-      const {ratesByDateRange, dateRange = DEFAULT_DATE_RANGE} = action.payload;
-
+      const {
+        ratesByDateRange,
+        dateRange = DEFAULT_DATE_RANGE,
+        fiatCode,
+      } = action.payload;
       return {
         ...state,
         ratesByDateRange: {
@@ -59,6 +63,7 @@ export const rateReducer = (
           ...state.ratesHistoricalCacheKey,
           [dateRange]: Date.now(),
         },
+        cachedValuesFiatCode: fiatCode,
       };
     }
 
@@ -66,7 +71,7 @@ export const rateReducer = (
       const {cacheKey, dateRange = DEFAULT_DATE_RANGE} = action.payload;
       return {
         ...state,
-        [cacheKey]: {...state.ratesCacheKey, [dateRange]: Date.now()},
+        [cacheKey]: {...initialState.ratesCacheKey, [dateRange]: Date.now()},
       };
     }
 
@@ -74,7 +79,10 @@ export const rateReducer = (
       const {cacheKey, dateRange = DEFAULT_DATE_RANGE} = action.payload;
       return {
         ...state,
-        [cacheKey]: {...state.ratesHistoricalCacheKey, [dateRange]: Date.now()},
+        [cacheKey]: {
+          ...initialState.ratesHistoricalCacheKey,
+          [dateRange]: Date.now(),
+        },
       };
     }
 

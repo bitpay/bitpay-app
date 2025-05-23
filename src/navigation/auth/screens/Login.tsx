@@ -48,7 +48,7 @@ interface LoginFormFieldValues {
   password: string;
 }
 
-const LoginScreen: React.VFC<LoginScreenProps> = ({navigation, route}) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {

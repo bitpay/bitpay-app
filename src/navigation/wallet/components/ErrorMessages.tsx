@@ -4,6 +4,7 @@ import styled from 'styled-components/native';
 import {BaseText} from '../../../components/styled/Text';
 import {FlatList} from 'react-native';
 import {t} from 'i18next';
+import {RootStacks, navigationRef} from '../../../Root';
 
 interface BottomNotificationListType {
   key: number;
@@ -116,25 +117,34 @@ export const WrongPasswordError = (): BottomNotificationConfig => {
 export const CustomErrorMessage = ({
   errMsg,
   action = () => null,
+  cta,
   title,
+  code,
 }: {
   errMsg: string;
+  code?: string;
   title?: string;
   action?: () => void;
+  cta?: {text: string; action: () => void; primary: boolean}[];
 }): BottomNotificationConfig => {
-  return {
-    type: 'error',
-    title: title || t('Something went wrong'),
-    message: errMsg,
-    enableBackdropDismiss: true,
-    onBackdropDismiss: action,
-    actions: [
+  if (!cta) {
+    // set CTA with action if default
+    cta = [
       {
         text: t('OK'),
         action,
         primary: true,
       },
-    ],
+    ];
+  }
+  return {
+    type: 'error',
+    title: title || t('Something went wrong'),
+    code: code || undefined,
+    message: errMsg,
+    enableBackdropDismiss: true,
+    onBackdropDismiss: action,
+    actions: cta,
   };
 };
 

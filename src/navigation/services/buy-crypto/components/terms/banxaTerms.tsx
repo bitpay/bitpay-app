@@ -1,6 +1,6 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ExchangeTermsContainer,
   ExchangeTermsText,
@@ -48,36 +48,34 @@ const BanxaTerms: React.FC<{
         {t(
           'Banxa also charges a service fee, which is included in the unit price for the transaction, based the cost of each payment method.',
         )}
-        <TouchableOpacity
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                'https://support.banxa.com/en/support/solutions/articles/44002465167-how-does-banxa-set-the-price-of-cryptocurrency-',
-              ),
-            );
-          }}>
-          <Link style={{fontSize: 12, marginLeft: 2, top: 2}}>
-            {t('Read more')}
-          </Link>
-        </TouchableOpacity>
       </ExchangeTermsText>
-      <ExchangeTermsText style={{marginTop: 4}}>
+      <TouchableOpacity
+        onPress={() => {
+          haptic('impactLight');
+          dispatch(
+            openUrlWithInAppBrowser(
+              'https://support.banxa.com/en/support/solutions/articles/44002465167-how-does-banxa-set-the-price-of-cryptocurrency-',
+            ),
+          );
+        }}>
+        <Link style={{fontSize: 12}}>{t('Read more')}</Link>
+      </TouchableOpacity>
+      <ExchangeTermsText style={{marginTop: 6}}>
         {t(
           'This service is provided by a third party, and you are subject to their',
         )}
-        <TouchableOpacity
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                'https://banxa.com/wp-content/uploads/2023/06/Customer-Terms-and-Conditions-19-June-2023.pdf',
-              ),
-            );
-          }}>
-          <Link style={{fontSize: 12, top: 2}}>{t('Terms of use')}</Link>
-        </TouchableOpacity>
       </ExchangeTermsText>
+      <TouchableOpacity
+        onPress={() => {
+          haptic('impactLight');
+          dispatch(
+            openUrlWithInAppBrowser(
+              'https://banxa.com/wp-content/uploads/2023/06/Customer-Terms-and-Conditions-19-June-2023.pdf',
+            ),
+          );
+        }}>
+        <Link style={{fontSize: 12}}>{t('Terms of use')}</Link>
+      </TouchableOpacity>
     </ExchangeTermsContainer>
   );
 };

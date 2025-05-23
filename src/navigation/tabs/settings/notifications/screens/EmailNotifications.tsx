@@ -21,7 +21,7 @@ import A from '../../../../../components/anchor/Anchor';
 import Button from '../../../../../components/button/Button';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {setEmailNotifications} from '../../../../../store/app/app.effects';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import {
   Hr,
   ScreenGutter,
@@ -235,23 +235,25 @@ const EmailNotifications = () => {
         </EmailNotificationsContainer>
       ) : (
         <SettingsContainer>
-          <Settings>
-            <Hr />
+          <SettingsComponent>
+            <ScrollView>
+              <Hr />
 
-            <Setting onPress={onPress}>
-              <SettingTitle>{t('Enable Email Notifications')}</SettingTitle>
+              <Setting onPress={onPress}>
+                <SettingTitle>{t('Enable Email Notifications')}</SettingTitle>
 
-              <Checkbox
-                radio={true}
-                onPress={onPress}
-                checked={notificationsAccepted}
-              />
-            </Setting>
-            {user && user.email ? (
-              <EmailFromUser>{user.email}</EmailFromUser>
-            ) : null}
-            <Hr />
-          </Settings>
+                <Checkbox
+                  radio={true}
+                  onPress={onPress}
+                  checked={notificationsAccepted}
+                />
+              </Setting>
+              {user && user.email ? (
+                <EmailFromUser>{user.email}</EmailFromUser>
+              ) : null}
+              <Hr />
+            </ScrollView>
+          </SettingsComponent>
         </SettingsContainer>
       )}
     </>

@@ -18,14 +18,14 @@ import {
 import Percentage from '../../../../components/percentage/Percentage';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
   align-items: center;
 `;
 
-const PortfolioBalanceHeader = styled.TouchableOpacity`
+const PortfolioBalanceHeader = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;

@@ -1,6 +1,8 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {Platform, ScrollView, View, TouchableOpacity} from 'react-native';
+import {Platform, ScrollView, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
 import {GiftCardScreens, GiftCardGroupParamList} from '../GiftCardGroup';
@@ -8,6 +10,7 @@ import TagsSvg from '../../../../../../assets/img/tags-stack.svg';
 import {
   BaseText,
   fontFamily,
+  Paragraph,
   TextAlign,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
@@ -21,7 +24,15 @@ import {
   getMastheadGradient,
   horizontalPadding,
 } from '../../components/styled/ShopTabComponents';
-import {Feather, SlateDark, White} from '../../../../../styles/colors';
+import {BoostSvg} from '../../components/svg/ShopTabSvgs';
+import {
+  Black,
+  Feather,
+  LightBlack,
+  Slate30,
+  SlateDark,
+  White,
+} from '../../../../../styles/colors';
 import Button from '../../../../../components/button/Button';
 import GiftCardDenomSelector from '../../components/GiftCardDenomSelector';
 import GiftCardDenoms, {
@@ -29,9 +40,11 @@ import GiftCardDenoms, {
 } from '../../components/GiftCardDenoms';
 import {
   getActivationFee,
+  getBoostedAmount,
   getCardImage,
-  getVisibleDiscount,
-  isSupportedDiscountType,
+  getVisibleCoupon,
+  hasVisibleBoost,
+  hasVisibleDiscount,
 } from '../../../../../lib/gift-cards/gift-card';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {AppActions} from '../../../../../store/app';
@@ -45,6 +58,16 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import GiftCardImage from '../../components/GiftCardImage';
 import {WalletScreens} from '../../../../../navigation/wallet/WalletGroup';
 
+const AmountSublabel = styled.View`
+  padding: 7px 18px;
+  border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate30)};
+  border-radius: 35px;
+`;
+
+const AmountSublabelText = styled(Paragraph)`
+  font-size: 14px;
+`;
+
 const BuyGiftCardContainer = styled.SafeAreaView`
   flex: 1;
 `;
@@ -52,14 +75,14 @@ const BuyGiftCardContainer = styled.SafeAreaView`
 const GradientBox = styled(LinearGradient)`
   width: ${WIDTH}px;
   align-items: center;
-  padding-top: 40px;
-  flex-grow: 1;
+  flex: 1;
   justify-content: center;
 `;
 
 const AmountContainer = styled.View`
   flex-grow: 1;
   display: flex;
+  align-items: center;
   justify-content: center;
 `;
 
@@ -88,7 +111,7 @@ const DescriptionBox = styled.View`
   width: ${WIDTH}px;
   background-color: ${({theme}) =>
     theme.dark ? theme.colors.background : 'transparent'};
-  padding: 20px ${horizontalPadding}px 100px;
+  padding: 20px ${horizontalPadding}px ${Platform.OS === 'android' ? 75 : 50}px;
 `;
 
 const FooterButton = styled(CtaContainerAbsolute)`
@@ -110,6 +133,18 @@ const SupportedAmountsLabel = styled(GiftCardDenomText)`
   margin-bottom: 2px;
 `;
 
+const BoostPill = styled.View`
+  align-items: center;
+  align-self: center;
+  justify-self: center;
+  background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
+  border-radius: 30px;
+  flex-direction: row;
+  gap: 7px;
+  margin: -10px 0 30px;
+  padding: 8px 9px 8px 10px;
+`;
+
 const getMiddleIndex = (arr: number[]) => arr && Math.floor(arr.length / 2);
 
 const BuyGiftCard = ({
@@ -117,6 +152,7 @@ const BuyGiftCard = ({
   navigation,
 }: NativeStackScreenProps<GiftCardGroupParamList, 'BuyGiftCard'>) => {
   const {t} = useTranslation();
+  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
   const theme = useTheme();
@@ -136,6 +172,7 @@ const BuyGiftCard = ({
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
   );
+  const visibleCoupon = getVisibleCoupon(cardConfig);
   const [cardImage, setCardImage] = useState(
     getCardImage(
       cardConfig,
@@ -147,16 +184,19 @@ const BuyGiftCard = ({
   );
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: t('BuyGiftCard', {displayName: cardConfig.displayName}),
+      headerTitle: t('BuyGiftCard', {
+        displayName: cardConfig.displayName.replace(' Gift Card', ''),
+      }),
     });
   });
   useEffect(() => {
     dispatch(
       Analytics.track('Viewed Gift Card', {
         giftCardBrand: cardConfig.name,
+        ...(visibleCoupon && {visibleCoupon}),
       }),
     );
-  }, [cardConfig.name, dispatch]);
+  }, [cardConfig, cardConfig.name, dispatch]);
 
   const showActivationFeeSheet = (
     activationFee: number,
@@ -189,17 +229,42 @@ const BuyGiftCard = ({
   };
 
   const goToConfirmScreen = async (amount: number) => {
-    const discount = getVisibleDiscount(cardConfig);
+    const coupon = getVisibleCoupon(cardConfig);
     navigation.navigate(GiftCardScreens.GIFT_CARD_CONFIRM, {
       amount,
       cardConfig,
-      discounts: discount ? [discount] : [],
+      coupons: coupon ? [coupon] : [],
     });
+  };
+  const getCustomAmountSublabel = () => {
+    // eslint-disable-next-line react/no-unstable-nested-components
+    return (amount: number) => {
+      const hasBoost = hasVisibleBoost(cardConfig);
+      return hasBoost && amount > 0 ? (
+        <AmountSublabel>
+          <AmountSublabelText>
+            <AmountSublabelText style={{fontWeight: '400'}}>
+              {formatFiatAmount(
+                getBoostedAmount(cardConfig, amount),
+                cardConfig.currency,
+                {
+                  customPrecision: 'minimal',
+                },
+              )}{' '}
+              with <GiftCardDiscountText cardConfig={cardConfig} />
+            </AmountSublabelText>
+          </AmountSublabelText>
+        </AmountSublabel>
+      ) : (
+        <></>
+      );
+    };
   };
 
   const goToAmountScreen = (phone?: string) => {
     navigator.navigate(WalletScreens.AMOUNT, {
       fiatCurrencyAbbreviation: cardConfig.currency,
+      customAmountSublabel: getCustomAmountSublabel(),
       onAmountSelected: selectedAmount =>
         onAmountScreenSubmit(+selectedAmount, phone),
     });
@@ -208,7 +273,8 @@ const BuyGiftCard = ({
   const onAmountScreenSubmit = (amount: number, phone?: string) => {
     const minAmount = cardConfig.minAmount as number;
     const maxAmount = cardConfig.maxAmount as number;
-    if (amount < minAmount) {
+    const boostedAmount = getBoostedAmount(cardConfig, amount);
+    if (boostedAmount < minAmount) {
       dispatch(
         AppActions.showBottomNotificationModal(
           CustomErrorMessage({
@@ -227,7 +293,7 @@ const BuyGiftCard = ({
       );
       return;
     }
-    if (amount > maxAmount) {
+    if (boostedAmount > maxAmount) {
       dispatch(
         AppActions.showBottomNotificationModal(
           CustomErrorMessage({
@@ -293,6 +359,7 @@ const BuyGiftCard = ({
     dispatch(
       Analytics.track('Started Gift Card Purchase', {
         giftCardBrand: cardConfig.name,
+        ...(visibleCoupon && {visibleCoupon}),
       }),
     );
     const selectedAmount = (cardConfig.supportedAmounts || [])[
@@ -309,11 +376,12 @@ const BuyGiftCard = ({
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
-          minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 110),
+          minHeight: HEIGHT - (Platform.OS === 'android' ? 80 : 125),
         }}>
         <GradientBox colors={getMastheadGradient(theme)}>
           <View
             style={{
+              paddingTop: '30',
               shadowColor: '#000',
               shadowOffset: {width: 0, height: 12},
               shadowOpacity: 0.08,
@@ -361,11 +429,20 @@ const BuyGiftCard = ({
                 </Amount>
               </TouchableOpacity>
             )}
+            {hasVisibleBoost(cardConfig) ? (
+              <BoostPill>
+                <BoostSvg />
+                <GiftCardDiscountText
+                  cardConfig={cardConfig}
+                  color={theme.dark ? White : Black}
+                  fontWeight={400}
+                />
+              </BoostPill>
+            ) : null}
           </AmountContainer>
         </GradientBox>
-        <DescriptionContainer>
-          {cardConfig.discounts &&
-          isSupportedDiscountType(cardConfig.discounts[0].type) ? (
+        <DescriptionContainer style={{paddingBottom: insets.bottom + 30}}>
+          {hasVisibleDiscount(cardConfig) ? (
             <DiscountContainer>
               <TagsSvg style={{marginRight: 12}} />
               <GiftCardDiscountText

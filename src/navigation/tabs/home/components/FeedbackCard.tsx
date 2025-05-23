@@ -14,6 +14,7 @@ import Close from '../../../../../assets/img/settings/feedback/close.svg';
 import {useTranslation} from 'react-i18next';
 import {saveUserFeedback} from '../../../../store/app/app.effects';
 import {APP_VERSION} from '../../../../constants/config';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const FeedbackContainer = styled.View`
   margin: 20px 16px 0 16px;
@@ -44,7 +45,7 @@ const FeedbackTitleContainer = styled.View`
   justify-content: flex-start;
 `;
 
-const FeedbackCloseContainer = styled.TouchableOpacity`
+const FeedbackCloseContainer = styled(TouchableOpacity)`
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -77,7 +78,7 @@ const EmojiActionContainer = styled.View`
   justify-content: space-between;
 `;
 
-const EmojiAction = styled.TouchableOpacity`
+const EmojiAction = styled(TouchableOpacity)`
   width: 44px;
   height: 44px;
 `;

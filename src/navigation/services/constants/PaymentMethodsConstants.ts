@@ -47,3 +47,7 @@ export const countriesWithGBPTransfer = [
   'JE', // Jersey
   'GG', // Guernsey
 ];
+
+export const countriesWithPIX = [
+  'BR', // Brazil
+];

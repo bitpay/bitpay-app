@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Platform} from 'react-native';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {
@@ -9,6 +8,7 @@ import {
   Info,
 } from '../../../components/styled/Containers';
 import {
+  BaseText,
   H7,
   InfoDescription,
   InfoHeader,
@@ -16,6 +16,7 @@ import {
 } from '../../../components/styled/Text';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import {
+  IconContainer,
   ItemContainer,
   ItemTitleContainer,
   ScrollView,
@@ -41,6 +42,9 @@ import {
   walletConnectV2RejectCallRequest,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
+import {View} from 'react-native';
+import Blockie from '../../../components/blockie/Blockie';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export type WalletConnectRequestDetailsParamList = {
   request: any;
@@ -60,22 +64,20 @@ const AddressContainer = styled.View`
   padding: 16px 0;
 `;
 
-const AddressTextContainer = styled.TouchableOpacity`
+const AddressTextContainer = styled(TouchableOpacity)`
   background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 40px;
   height: 37px;
-  width: 103px;
+  width: 150px;
+  margin-left: 2px;
   justify-content: center;
-  padding-right: 13px;
-  padding-left: 17px;
-  padding-top: ${Platform.OS === 'ios' ? '4px' : 0};
   flex-direction: row;
   align-items: center;
-  margin-left: 2px;
+  padding: 10px 20px;
 `;
 
 const MessageTitleContainer = styled.View`
-  flex-direction: row;
+  flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
   padding: 16px 0;
@@ -87,7 +89,7 @@ const MessageNoteContainer = styled.View`
   justify-content: flex-end;
 `;
 
-const MessageTextContainer = styled.TouchableOpacity`
+const MessageTextContainer = styled(TouchableOpacity)`
   align-items: flex-start;
   max-width: 242px;
   justify-content: center;
@@ -203,9 +205,11 @@ const WalletConnectRequestDetails = () => {
 
   const goToWalletConnectHome = async (newLinkedWallet?: Wallet) => {
     await sleep(500);
+    const _wallet = newLinkedWallet || wallet;
     navigation.navigate('WalletConnectHome', {
       topic,
-      wallet: newLinkedWallet || wallet,
+      selectedAccountAddress: _wallet.receiveAddress!,
+      keyId: _wallet.keyId,
     });
   };
 
@@ -279,6 +283,47 @@ const WalletConnectRequestDetails = () => {
     [dispatch],
   );
 
+  const parseAndDisplayMessage = (messageObj: any) => {
+    const renderObject = (obj: any, indent = 0) => {
+      return Object.keys(obj).map(key => {
+        const value = obj[key];
+        if (typeof value === 'object' && value !== null) {
+          return (
+            <View key={key} style={{paddingLeft: indent * 10}}>
+              <BaseText style={{paddingVertical: 5}}>
+                <BaseText style={{fontWeight: 'bold'}}>{key}:</BaseText>
+              </BaseText>
+              {renderObject(value, indent + 1)}
+            </View>
+          );
+        } else {
+          return (
+            <BaseText
+              key={key}
+              style={{paddingLeft: indent * 10, paddingVertical: 5}}>
+              <BaseText style={{fontWeight: 'bold'}}>{key}:</BaseText>{' '}
+              {value.toString()}
+            </BaseText>
+          );
+        }
+      });
+    };
+
+    return <View>{renderObject(messageObj)}</View>;
+  };
+
+  const renderMessage = (message: string) => {
+    try {
+      const parsedMessage = JSON.parse(message);
+      if (parsedMessage?.message) {
+        return parseAndDisplayMessage(parsedMessage.message);
+      }
+      return message;
+    } catch (error) {
+      return <BaseText style={{paddingVertical: 5}}>{message}</BaseText>;
+    }
+  };
+
   return (
     <WalletConnectContainer>
       <ScrollView>
@@ -303,7 +348,13 @@ const WalletConnectRequestDetails = () => {
                         onPress={() => {
                           copyToClipboard(address, 'address');
                         }}>
-                        <H7 numberOfLines={1} ellipsizeMode={'middle'}>
+                        <IconContainer>
+                          <Blockie size={19} seed={address} />
+                        </IconContainer>
+                        <H7
+                          numberOfLines={1}
+                          ellipsizeMode={'middle'}
+                          style={{marginLeft: 10}}>
                           {address}
                         </H7>
                       </AddressTextContainer>
@@ -316,23 +367,7 @@ const WalletConnectRequestDetails = () => {
                 <ItemTitleContainer>
                   <H7>{t('Message')}</H7>
                 </ItemTitleContainer>
-                <MessageNoteContainer>
-                  {clipboardObj.copied && clipboardObj.type === 'message' ? (
-                    <CopiedSvg width={17} />
-                  ) : null}
-                  <MessageTextContainer
-                    disabled={clipboardObj.copied}
-                    onPress={() => {
-                      copyToClipboard(message, 'message');
-                    }}>
-                    <H7
-                      numberOfLines={3}
-                      ellipsizeMode={'tail'}
-                      style={{textAlign: 'right'}}>
-                      {message}
-                    </H7>
-                  </MessageTextContainer>
-                </MessageNoteContainer>
+                {renderMessage(message)}
               </MessageTitleContainer>
             </>
           ) : (

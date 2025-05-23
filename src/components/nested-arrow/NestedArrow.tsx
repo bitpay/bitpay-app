@@ -3,7 +3,7 @@ import {Path, Svg} from 'react-native-svg';
 import {useTheme} from 'styled-components/native';
 import {LuckySevens, Slate30} from '../../styles/colors';
 
-const NestedArrowIcon: React.VFC = () => {
+const NestedArrowIcon: React.FC = () => {
   const theme = useTheme();
 
   return (

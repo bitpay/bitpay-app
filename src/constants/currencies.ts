@@ -80,7 +80,12 @@ export interface CurrencyOpts {
   };
   paymentInfo: {
     paymentCode: string;
-    protocolPrefix: {livenet: string; testnet: string; regtest: string};
+    protocolPrefix: {
+      livenet: string;
+      testnet: string;
+      testnet4?: string;
+      regtest: string;
+    };
     // Urls
     ratesApi: string;
     blockExplorerUrls: string;
@@ -827,7 +832,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_arb`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -861,7 +870,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/wbtc_m`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -895,7 +908,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdt_arb`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -929,7 +946,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/weth_m`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -1037,7 +1058,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_op`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
@@ -1071,7 +1096,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/wbtc_m`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
@@ -1105,7 +1134,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdt_op`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
@@ -1139,7 +1172,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/weth_m`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
@@ -1222,6 +1259,7 @@ export const BitpaySupportedUtxoCoins: {[key in string]: CurrencyOpts} = {
       protocolPrefix: {
         livenet: 'bitcoincash',
         testnet: 'bchtest',
+        testnet4: 'bchtest',
         regtest: 'bchreg',
       },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/bch`,
@@ -1417,14 +1455,14 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
   matic: {
     name: 'Polygon',
     chain: 'matic',
-    coin: 'matic',
-    feeCurrency: 'matic',
+    coin: 'pol',
+    feeCurrency: 'pol',
     img: CurrencyListIcons.matic,
     unitInfo: {
-      unitName: 'Matic',
+      unitName: 'Polygon',
       unitToSatoshi: 1e18,
       unitDecimals: 18,
-      unitCode: 'matic',
+      unitCode: 'pol',
     },
     properties: {
       hasMultiSig: true,
@@ -1454,7 +1492,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
   },
   arb: {
-    name: 'Ethereum Arbitrum',
+    name: 'Arbitrum',
     chain: 'arb',
     coin: 'eth',
     feeCurrency: 'eth',
@@ -1475,7 +1513,11 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681',
-      protocolPrefix: {livenet: 'arb', testnet: 'arb', regtest: 'arb'},
+      protocolPrefix: {
+        livenet: 'arbitrum',
+        testnet: 'arbitrum',
+        regtest: 'arbitrum',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/arb`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.arb.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.arb.testnet,
@@ -1493,7 +1535,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
   },
   base: {
-    name: 'Ethereum Base',
+    name: 'Base',
     chain: 'base',
     coin: 'eth',
     feeCurrency: 'eth',
@@ -1532,7 +1574,7 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
   },
   op: {
-    name: 'Ethereum Optimism',
+    name: 'Optimism',
     chain: 'op',
     coin: 'eth',
     feeCurrency: 'eth',
@@ -1553,7 +1595,11 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681',
-      protocolPrefix: {livenet: 'op', testnet: 'op', regtest: 'op'},
+      protocolPrefix: {
+        livenet: 'optimism',
+        testnet: 'optimism',
+        regtest: 'optimism',
+      },
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/op`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.op.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.op.testnet,
@@ -1623,4 +1669,60 @@ export const EVM_SUPPORTED_TOKENS_LENGTH = {
   arb: SUPPORTED_ARB_TOKENS.length,
   base: SUPPORTED_BASE_TOKENS.length,
   op: SUPPORTED_OP_TOKENS.length,
+};
+
+export const getBaseKeyCreationCoinsAndTokens = () => {
+  const selectedCurrencies: Array<{
+    chain: string;
+    currencyAbbreviation: string;
+    isToken: boolean;
+    tokenAddress?: string;
+  }> = [];
+  Object.values(BitpaySupportedCoins).forEach(
+    ({chain, coin: currencyAbbreviation}) => {
+      selectedCurrencies.push({
+        chain,
+        currencyAbbreviation,
+        isToken: false,
+      });
+    },
+  );
+  // TODO ?? probably we should add bitpay supported tokens to base creation coins
+  // Object.values(BitpaySupportedTokens).forEach(({chain, coin: currencyAbbreviation, address: tokenAddress}) => {
+  //   selectedCurrencies.push({
+  //     chain,
+  //     currencyAbbreviation,
+  //     isToken: true,
+  //     tokenAddress,
+  //   });
+  // });
+  return selectedCurrencies;
+};
+
+export const getBaseAccountCreationCoinsAndTokens = () => {
+  const selectedCurrencies: Array<{
+    chain: string;
+    currencyAbbreviation: string;
+    isToken: boolean;
+    tokenAddress?: string;
+  }> = [];
+  Object.values(BitpaySupportedEvmCoins).forEach(
+    ({chain, coin: currencyAbbreviation}) => {
+      selectedCurrencies.push({
+        chain,
+        currencyAbbreviation,
+        isToken: false,
+      });
+    },
+  );
+  // TODO ?? probably we should add bitpay supported tokens to base creation coins
+  // Object.values(BitpaySupportedTokens).forEach(({chain, coin: currencyAbbreviation, address: tokenAddress}) => {
+  //   selectedCurrencies.push({
+  //     chain,
+  //     currencyAbbreviation,
+  //     isToken: true,
+  //     tokenAddress,
+  //   });
+  // });
+  return selectedCurrencies;
 };

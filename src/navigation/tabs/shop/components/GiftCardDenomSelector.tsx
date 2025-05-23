@@ -1,5 +1,5 @@
 import React from 'react';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import MinusSvg from '../../../../../assets/img/minus.svg';
 import PlusSvg from '../../../../../assets/img/plus.svg';

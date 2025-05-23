@@ -3,7 +3,7 @@ import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
-import {ScreenGutter} from '../../components/styled/Containers';
+import {HEIGHT, ScreenGutter} from '../../components/styled/Containers';
 import {BaseText} from '../../components/styled/Text';
 import SwapButton, {
   ButtonText,
@@ -25,28 +25,29 @@ import CurrencySymbol from '../icons/currency-symbol/CurrencySymbol';
 import {useLogger} from '../../utils/hooks/useLogger';
 import {getBuyCryptoFiatLimits} from '../../store/buy-crypto/buy-crypto.effects';
 import KeyEvent from 'react-native-keyevent';
+import ArchaxFooter from '../archax/archax-footer';
+import {View} from 'react-native';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const CtaContainer = styled.View`
+const CtaContainer = styled.View<{isSmallScreen?: boolean}>`
   width: 100%;
-  margin-top: 20px;
+  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
   flex-direction: row;
   justify-content: space-between;
 `;
 
-export const AmountHeroContainer = styled.View`
+export const AmountHeroContainer = styled.View<{isSmallScreen: boolean}>`
   flex-direction: column;
   align-items: center;
-  margin-top: 20px;
+  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
   padding: 0 ${ScreenGutter};
 `;
 
 const ActionContainer = styled.View<{isModal?: boolean}>`
-  position: absolute;
-  bottom: 15px;
+  margin-bottom: 15px;
   width: 100%;
 `;
 
@@ -56,6 +57,9 @@ const ButtonContainer = styled.View`
 
 const ViewContainer = styled.View`
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 `;
 
 const VirtualKeyboardContainer = styled.View`
@@ -95,9 +99,8 @@ const CurrencySuperScript = styled.View`
   top: 10px;
   right: -20px;
 `;
-
-const CurrencyText = styled(BaseText)`
-  font-size: 20px;
+const CurrencyText = styled(BaseText)<{bigAmount?: boolean}>`
+  font-size: ${({bigAmount}) => (bigAmount ? '12px' : '20px')};
   color: ${({theme}) => theme.colors.text};
   position: absolute;
 `;
@@ -121,9 +124,11 @@ export interface AmountProps {
   tokenAddress?: string;
   chain?: string;
   context?: string;
+  reduceTopGap?: boolean;
   buttonState?: ButtonState;
   limitsOpts?: LimitsOpts;
-  customAmountSublabel?: any;
+  isModal?: boolean;
+  customAmountSublabel?: (amount: number) => void;
   onSendMaxPressed?: () => any;
 
   /**
@@ -132,14 +137,16 @@ export interface AmountProps {
   onSubmit: (amount: number) => void;
 }
 
-const Amount: React.VFC<AmountProps> = ({
+const Amount: React.FC<AmountProps> = ({
   cryptoCurrencyAbbreviation,
   fiatCurrencyAbbreviation,
   chain,
   tokenAddress,
   context,
+  reduceTopGap,
   buttonState,
   limitsOpts,
+  isModal,
   customAmountSublabel,
   onSendMaxPressed,
   onSubmit,
@@ -150,6 +157,8 @@ const Amount: React.VFC<AmountProps> = ({
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const curValRef = useRef('');
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
 
   const fiatCurrency = useMemo(() => {
     if (fiatCurrencyAbbreviation) {
@@ -161,7 +170,7 @@ const Amount: React.VFC<AmountProps> = ({
         ? defaultAltCurrency.isoCode
         : 'USD';
     } else if (context === 'sellCrypto') {
-      return getAvailableSellCryptoFiatCurrencies('moonpay').includes(
+      return getAvailableSellCryptoFiatCurrencies().includes(
         defaultAltCurrency.isoCode,
       )
         ? defaultAltCurrency.isoCode
@@ -285,11 +294,9 @@ const Amount: React.VFC<AmountProps> = ({
     logger.debug(
       `Handling swapCryptoSendMax with: ${JSON.stringify(limitsOpts)}`,
     );
-    if (!limitsOpts?.limits || !limitsOpts?.maxWalletAmount) {
-      return;
-    }
-    if (limitsOpts.limits.maxAmount) {
-      let sendMaxAmount: string;
+
+    let sendMaxAmount: string;
+    if (limitsOpts?.limits?.maxAmount && limitsOpts?.maxWalletAmount) {
       if (limitsOpts.limits.maxAmount >= Number(limitsOpts.maxWalletAmount)) {
         sendMaxAmount = limitsOpts.maxWalletAmount;
         if (primaryIsFiat && rate) {
@@ -305,6 +312,14 @@ const Amount: React.VFC<AmountProps> = ({
         updateAmountRef.current(sendMaxAmount);
         setUseSendMax(false);
       }
+      curValRef.current = sendMaxAmount;
+      updateAmountRef.current(sendMaxAmount);
+    } else if (limitsOpts?.maxWalletAmount) {
+      sendMaxAmount = limitsOpts.maxWalletAmount;
+      if (primaryIsFiat && rate) {
+        sendMaxAmount = (+limitsOpts.maxWalletAmount * rate).toFixed(2);
+      }
+      setUseSendMax(true);
       curValRef.current = sendMaxAmount;
       updateAmountRef.current(sendMaxAmount);
     } else {
@@ -352,10 +367,9 @@ const Amount: React.VFC<AmountProps> = ({
           });
         }
       } else if (
-        limits.min &&
+        (!limits?.min || (limits.min && +amount >= limits.min)) &&
         limitsOpts?.maxWalletAmount &&
-        +amount > Number(limitsOpts.maxWalletAmount) &&
-        +amount >= limits.min
+        +amount > Number(limitsOpts.maxWalletAmount)
       ) {
         msg = t('Not enough funds');
       } else if (limits.max && +amount > limits.max) {
@@ -386,11 +400,24 @@ const Amount: React.VFC<AmountProps> = ({
       !primaryIsFiat &&
       getRateByCurrencyName(allRates, currency.toLowerCase(), chain!)
     ) {
-      const fiatRate = getRateByCurrencyName(
+      const rateByCurrencyName = getRateByCurrencyName(
         allRates,
         currency.toLowerCase(),
         chain!,
-      ).find(r => r.code === fiatCurrency)!.rate;
+      );
+      const fiatRateData = rateByCurrencyName.find(
+        r => r.code === fiatCurrency,
+      );
+
+      if (!fiatRateData) {
+        logger.warn(
+          `There is no fiatRateData for: ${currency.toLowerCase()} (${chain}) and ${fiatCurrency}. Setting rate to 0.`,
+        );
+        setRate(0);
+        return;
+      }
+
+      const fiatRate = fiatRateData.rate;
       setRate(fiatRate);
     }
   };
@@ -409,7 +436,12 @@ const Amount: React.VFC<AmountProps> = ({
   };
 
   useEffect(() => {
-    initRef.current();
+    try {
+      initRef.current();
+    } catch (err: any) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`[Amount] could not initialize view: ${errStr}`);
+    }
     initLimits();
   }, []);
 
@@ -434,23 +466,33 @@ const Amount: React.VFC<AmountProps> = ({
 
   return (
     <AmountContainer>
-      <ViewContainer>
-        <AmountHeroContainer>
+      <ViewContainer
+        style={{
+          marginTop: _isSmallScreen
+            ? reduceTopGap && isModal
+              ? -40
+              : 0
+            : reduceTopGap && isModal
+            ? -10
+            : 0,
+        }}>
+        <AmountHeroContainer isSmallScreen={_isSmallScreen}>
           <Row>
             <AmountText
               numberOfLines={1}
               ellipsizeMode={'tail'}
-              bigAmount={displayAmount?.length > 8}>
+              bigAmount={_isSmallScreen ? true : displayAmount?.length > 8}>
               {displayAmount || 0}
             </AmountText>
             <CurrencySuperScript>
-              <CurrencyText>
+              <CurrencyText
+                bigAmount={_isSmallScreen ? true : displayAmount?.length > 8}>
                 {formatCurrencyAbbreviation(currency) || 'USD'}
               </CurrencyText>
             </CurrencySuperScript>
           </Row>
           {customAmountSublabel ? (
-            <>{customAmountSublabel()}</>
+            <>{customAmountSublabel(+amount)}</>
           ) : cryptoCurrencyAbbreviation ? (
             <Row>
               <AmountEquivText>
@@ -460,12 +502,26 @@ const Amount: React.VFC<AmountProps> = ({
               </AmountEquivText>
             </Row>
           ) : null}
-          <Row>{getWarnMsg}</Row>
-          <CtaContainer>
-            {limitsOpts?.limits.maxAmount && limitsOpts?.maxWalletAmount ? (
-              <SwapButtonContainer onPress={() => swapCryptoSendMax()}>
+          <View
+            style={{
+              position: 'absolute',
+              top: _isSmallScreen
+                ? !context || !['sellCrypto', 'swapCrypto'].includes(context)
+                  ? 40
+                  : 70
+                : 100,
+            }}>
+            {getWarnMsg}
+          </View>
+          <CtaContainer isSmallScreen={_isSmallScreen}>
+            {context &&
+            ['sellCrypto', 'swapCrypto'].includes(context) &&
+            limitsOpts?.maxWalletAmount ? (
+              <SwapButtonContainer
+                isSmallScreen={_isSmallScreen}
+                onPress={() => swapCryptoSendMax()}>
                 <CurrencySymbol />
-                <ButtonText>MAX</ButtonText>
+                <ButtonText isSmallScreen={_isSmallScreen}>MAX</ButtonText>
               </SwapButtonContainer>
             ) : (
               <Row />
@@ -512,6 +568,7 @@ const Amount: React.VFC<AmountProps> = ({
               {t('Continue')}
             </Button>
           </ButtonContainer>
+          {showArchaxBanner && <ArchaxFooter isSmallScreen={_isSmallScreen} />}
         </ActionContainer>
       </ViewContainer>
     </AmountContainer>

@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
   useRoute,
@@ -12,7 +12,7 @@ import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
 import {RootState} from '../../../../../store';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {MoonpayPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
@@ -30,8 +30,8 @@ import {
 } from '../styled/ExternalServicesSettings';
 import {useTranslation} from 'react-i18next';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import {ScreenOptions} from '../../../../../styles/tabNavigator';
-import {MoonpaySellOrderData} from '../../../../../store/sell-crypto/sell-crypto.models';
+import {MoonpaySellOrderData} from '../../../../../store/sell-crypto/models/moonpay-sell.models';
+import CustomTabBar from '../../../../../components/custom-tab-bar/CustomTabBar';
 
 export interface MoonpaySettingsProps {
   incomingPaymentRequest?: {
@@ -69,8 +69,8 @@ const MoonpaySettings: React.FC = () => {
 
   const memoizedBuyCryptoHistory = useCallback(
     () => (
-      <Settings style={{marginTop: 10, paddingBottom: 500}}>
-        {paymentRequests && paymentRequests.length > 0 && (
+      <SettingsComponent style={{marginTop: 10, paddingBottom: 500}}>
+        {!!paymentRequests?.length && (
           <PrTitle>{t('Payment Requests')}</PrTitle>
         )}
         {paymentRequests &&
@@ -132,17 +132,15 @@ const MoonpaySettings: React.FC = () => {
             {t('There are currently no transactions with Moonpay')}
           </NoPrMsg>
         )}
-      </Settings>
+      </SettingsComponent>
     ),
     [paymentRequests],
   );
 
   const memoizedSellCryptoHistory = useCallback(
     () => (
-      <Settings style={{marginTop: 10, paddingBottom: 500}}>
-        {sellOrders && sellOrders.length > 0 && (
-          <PrTitle>{t('Sell Orders')}</PrTitle>
-        )}
+      <SettingsComponent style={{marginTop: 10, paddingBottom: 500}}>
+        {!!sellOrders?.length && <PrTitle>{t('Sell Orders')}</PrTitle>}
         {sellOrders &&
           sellOrders.length > 0 &&
           sellOrders
@@ -206,7 +204,7 @@ const MoonpaySettings: React.FC = () => {
             {t('There are currently no transactions with Moonpay')}
           </NoPrMsg>
         )}
-      </Settings>
+      </SettingsComponent>
     ),
     [sellOrders],
   );
@@ -260,7 +258,7 @@ const MoonpaySettings: React.FC = () => {
               ? TabTitle.sell
               : TabTitle.buy
           }
-          screenOptions={{...ScreenOptions()}}>
+          tabBar={props => <CustomTabBar {...props} />}>
           <Tab.Screen
             name={TabTitle.buy}
             initialParams={route.params}

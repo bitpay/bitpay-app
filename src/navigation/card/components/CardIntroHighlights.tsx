@@ -11,6 +11,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useAppDispatch} from '../../../utils/hooks';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface CardHighlight {
   icon: React.FC<SvgProps>;
@@ -26,7 +27,7 @@ const HighlightContainer = styled.View`
   margin-top: 16px;
 `;
 
-const Highlight = styled.TouchableOpacity`
+const Highlight = styled(TouchableOpacity)`
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;

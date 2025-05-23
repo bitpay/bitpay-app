@@ -5,11 +5,13 @@ import {
   BitpaySupportedEvmCoins,
   BitpaySupportedTokens,
   BitpaySupportedUtxoCoins,
+  OtherBitpaySupportedCoins,
 } from '../../../constants/currencies';
 import {
   getCurrencyAbbreviation,
   isL2NoSideChainNetwork,
 } from '../../../utils/helper-methods';
+import cloneDeep from 'lodash.clonedeep';
 
 export const GetProtocolPrefix = (
   network: string = 'livenet',
@@ -44,30 +46,41 @@ export const GetPrecision =
       ...customTokenDataByAddress,
       ...BitpaySupportedTokens,
     };
-    const currencyName = getCurrencyAbbreviation(
-      tokenAddress ? tokenAddress : currencyAbbreviation,
-      chain,
-    );
-    return (
-      BitpaySupportedCoins[currencyName]?.unitInfo ||
-      tokens[currencyName]?.unitInfo
-    );
+    if (tokenAddress) {
+      const currencyName = getCurrencyAbbreviation(
+        tokenAddress ? tokenAddress : currencyAbbreviation,
+        chain,
+      );
+      return tokens[currencyName]?.unitInfo;
+    } else {
+      return BitpaySupportedCoins[chain]?.unitInfo;
+    }
   };
 
 export const IsSegwitCoin = (currencyAbbreviation: string = ''): boolean => {
   return ['btc', 'ltc'].includes(currencyAbbreviation.toLowerCase());
 };
 
-export const IsUtxoCoin = (currencyAbbreviation: string): boolean => {
-  return Object.keys(BitpaySupportedUtxoCoins).includes(
-    currencyAbbreviation.toLowerCase(),
-  );
+export const IsTaprootCoin = (currencyAbbreviation: string = ''): boolean => {
+  return ['btc'].includes(currencyAbbreviation.toLowerCase());
 };
 
-export const IsEVMCoin = (currencyAbbreviation: string): boolean => {
-  return Object.keys(BitpaySupportedEvmCoins).includes(
-    currencyAbbreviation.toLowerCase(),
-  );
+export const IsUtxoChain = (chain: string): boolean => {
+  const _chain = cloneDeep(chain).toLowerCase();
+
+  return Object.keys(BitpaySupportedUtxoCoins).includes(_chain);
+};
+
+export const IsOtherChain = (chain: string): boolean => {
+  const _chain = cloneDeep(chain).toLowerCase();
+
+  return Object.keys(OtherBitpaySupportedCoins).includes(_chain);
+};
+
+export const IsEVMChain = (chain: string): boolean => {
+  const _chain = cloneDeep(chain).toLowerCase();
+
+  return Object.keys(BitpaySupportedEvmCoins).includes(_chain);
 };
 
 export const IsCustomERCToken = (
@@ -85,10 +98,16 @@ export const IsERCToken = (
   currencyAbbreviation: string,
   chain: string,
 ): boolean => {
+  const _currencyAbbreviation = currencyAbbreviation.toLowerCase();
+  const _chain = chain.toLowerCase();
+
+  if (_currencyAbbreviation === 'pol' && _chain === 'matic') {
+    return false;
+  }
+
   return (
-    currencyAbbreviation.toLowerCase() !== chain.toLowerCase() &&
-    (currencyAbbreviation.toLowerCase() !== 'eth' ||
-      !isL2NoSideChainNetwork(chain)) // workaround for L2 eth
+    (_currencyAbbreviation !== _chain && _currencyAbbreviation !== 'eth') ||
+    (isL2NoSideChainNetwork(_chain) && _currencyAbbreviation === _chain)
   );
 };
 
@@ -139,25 +158,18 @@ export const GetName =
       ...customTokenDataByAddress,
       ...BitpaySupportedTokens,
     };
-    const currencyName = getCurrencyAbbreviation(
-      tokenAddress ? tokenAddress : currencyAbbreviation,
-      chain,
-    );
-
-    if (currencyAbbreviation.toLowerCase() === 'eth') {
-      // workaround for L2 eth
-      const found = SupportedCoinsOptions.find(
-        ({currencyAbbreviation: _currencyAbbreviation, chain: _chain}) => {
-          return (
-            currencyAbbreviation === _currencyAbbreviation && chain === _chain
-          );
-        },
-      )!;
-      return found.currencyName;
+    if (tokenAddress) {
+      const currencyName = getCurrencyAbbreviation(
+        tokenAddress ? tokenAddress : currencyAbbreviation,
+        chain,
+      );
+      return tokens[currencyName]?.name;
+    } else {
+      const coin = SupportedCoinsOptions.find(
+        ({chain: _chain}) => _chain === chain,
+      );
+      return coin?.currencyName || BitpaySupportedCoins[chain]?.name;
     }
-    return (
-      BitpaySupportedCoins[currencyName]?.name || tokens[currencyName]?.name
-    );
   };
 
 export const isSingleAddressChain = (chain: string): boolean => {

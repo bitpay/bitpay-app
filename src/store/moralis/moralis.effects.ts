@@ -9,10 +9,17 @@ import {LogActions} from '../log';
 import {Effect} from '..';
 import axios from 'axios';
 import {MORALIS_API_KEY} from '@env';
+import {
+  MoralisErc20TokenBalanceByWalletData,
+  MoralisWalletApprovalsData,
+} from './moralis.types';
 
 const MORALIS_EVM_CHAIN: {[key in string]: any} = {
+  arb: EvmChain.ARBITRUM,
+  base: EvmChain.BASE,
   eth: EvmChain.ETHEREUM,
   matic: EvmChain.POLYGON,
+  op: EvmChain.OPTIMISM,
 };
 
 // ------- MORALIS API ------- //
@@ -183,6 +190,43 @@ export const getDecodedTransactionsByWallet =
     }
   };
 
+export const getDecodedTransactionsByHash =
+  ({
+    transactionHash,
+    chain,
+  }: {
+    transactionHash: string;
+    chain: string;
+  }): Effect<Promise<any>> =>
+  async dispatch => {
+    try {
+      const response = await Moralis.EvmApi.transaction.getTransactionVerbose({
+        transactionHash,
+        chain: MORALIS_EVM_CHAIN[chain],
+      });
+
+      dispatch(
+        LogActions.info(
+          '[moralis/getDecodedTransactionsByHash]: get transactions successfully',
+        ),
+      );
+      return response?.toJSON();
+    } catch (e) {
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(
+        LogActions.error(
+          `[moralis/getDecodedTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
+        ),
+      );
+      throw e;
+    }
+  };
+
 export const getInternalTransactionsByHash =
   ({
     transactionHash,
@@ -193,21 +237,19 @@ export const getInternalTransactionsByHash =
   }): Effect<Promise<any>> =>
   async dispatch => {
     try {
-      const headers = {
-        accept: 'application/json',
-        'X-API-Key': MORALIS_API_KEY,
-      };
-      const {data} = await axios.get(
-        `https://deep-index.moralis.io/api/v2/transaction/${transactionHash}/internal-transactions?chain=${chain}`,
-        {headers},
+      const response = await Moralis.EvmApi.transaction.getInternalTransactions(
+        {
+          transactionHash,
+          chain: MORALIS_EVM_CHAIN[chain],
+        },
       );
+
       dispatch(
         LogActions.info(
           '[moralis/getInternalTransactionsByHash]: get transactions successfully',
         ),
       );
-
-      return data;
+      return response?.toJSON();
     } catch (e) {
       let errorStr;
       if (e instanceof Error) {
@@ -255,46 +297,6 @@ export const getTransactionsByHash =
       dispatch(
         LogActions.error(
           `[moralis/getTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
-        ),
-      );
-      throw e;
-    }
-  };
-
-export const getDecodedTransactionsByHash =
-  ({
-    transactionHash,
-    chain,
-  }: {
-    transactionHash: string;
-    chain: string;
-  }): Effect<Promise<any>> =>
-  async dispatch => {
-    try {
-      const headers = {
-        accept: 'application/json',
-        'X-API-Key': MORALIS_API_KEY,
-      };
-      const {data} = await axios.get(
-        `https://deep-index.moralis.io/api/v2/transaction/${transactionHash}/verbose?chain=${chain}`,
-        {headers},
-      );
-      dispatch(
-        LogActions.info(
-          '[moralis/getDecodedTransactionsByHash]: get transactions successfully',
-        ),
-      );
-      return data;
-    } catch (e) {
-      let errorStr;
-      if (e instanceof Error) {
-        errorStr = e.message;
-      } else {
-        errorStr = JSON.stringify(e);
-      }
-      dispatch(
-        LogActions.error(
-          `[moralis/getDecodedTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
         ),
       );
       throw e;
@@ -443,13 +445,23 @@ export const getMultipleTokenPrices =
   };
 
 export const getERC20TokenBalanceByWallet =
-  ({address, chain}: {address: string; chain: string}): Effect<Promise<any>> =>
+  ({
+    address,
+    chain,
+  }: {
+    address: string;
+    chain: string;
+  }): Effect<Promise<MoralisErc20TokenBalanceByWalletData[]>> =>
   async dispatch => {
     try {
-      const {raw} = await Moralis.EvmApi.token.getWalletTokenBalances({
-        address,
-        chain: MORALIS_EVM_CHAIN[chain],
-      });
+      if (!MORALIS_EVM_CHAIN[chain]) {
+        return [];
+      }
+      const {raw}: {raw: MoralisErc20TokenBalanceByWalletData[]} =
+        await Moralis.EvmApi.token.getWalletTokenBalances({
+          address,
+          chain: MORALIS_EVM_CHAIN[chain],
+        });
 
       dispatch(
         LogActions.info(
@@ -542,6 +554,71 @@ export const getERC20TokenMetadataBySymbol =
       dispatch(
         LogActions.error(
           `[moralis/getERC20TokenMetadataBySymbol]: an error occurred while getting ERC20 token metadata: ${errorStr}`,
+        ),
+      );
+      throw e;
+    }
+  };
+
+export const getERC20TokenAllowance =
+  ({
+    chain,
+    ownerAddress,
+    limit,
+    cursor,
+  }: {
+    chain: string;
+    ownerAddress: string;
+    limit?: number;
+    cursor?: string | null;
+  }): Effect<Promise<MoralisWalletApprovalsData>> =>
+  async dispatch => {
+    try {
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Api-Key': MORALIS_API_KEY,
+        'Cache-Control': 'no-cache',
+      };
+      let qs = [];
+
+      const _chain =
+        MORALIS_EVM_CHAIN[chain]?.apiHex ||
+        MORALIS_EVM_CHAIN[chain]?.hex ||
+        MORALIS_EVM_CHAIN[chain]?.decimal ||
+        chain;
+
+      qs.push('chain=' + _chain);
+      if (limit) {
+        qs.push('limit=' + limit);
+      }
+      if (cursor) {
+        qs.push('cursor=' + cursor);
+      }
+      qs.push('timestamp=' + new Date().getTime());
+
+      const query = qs.join('&');
+      const URL = `https://deep-index.moralis.io/api/v2.2/wallets/${ownerAddress}/approvals?${query}`;
+
+      const {data}: {data: MoralisWalletApprovalsData} = await axios.get(URL, {
+        headers,
+      });
+      dispatch(
+        LogActions.info(
+          '[moralis/getERC20TokenAllowance]: get ERC20 token allowance successfully',
+        ),
+      );
+      return data;
+    } catch (e) {
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(
+        LogActions.error(
+          `[moralis/getERC20TokenAllowance]: an error occurred while getting ERC20 token allowance: ${errorStr}`,
         ),
       );
       throw e;

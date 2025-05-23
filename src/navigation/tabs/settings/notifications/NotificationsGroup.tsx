@@ -4,11 +4,8 @@ import {HeaderTitle} from '../../../../components/styled/Text';
 import PushNotifications from './screens/PushNotifications';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 
 interface NotificationsProps {
   Notifications: typeof Root;
@@ -31,16 +28,9 @@ const NotificationsSettingsGroup: React.FC<NotificationsProps> = ({
 
   return (
     <Notifications.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Notifications.Screen
         name={NotificationsSettingsScreens.EMAIL_NOTIFICATIONS}

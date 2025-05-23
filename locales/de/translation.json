@@ -973,7 +973,7 @@
   "All of your wallet balance may not be available for immediate spending.": "Ihr gesamtes Guthaben in der {{currencyName}}-Wallet ist möglicherweise nicht für sofortige Ausgaben verfügbar.",
   "XRP Locked Balance": "XRP Gesperrter Saldo",
   "Test Only - No Value": "Nur Test - kein Wert",
-  "The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.": "The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.",
+  "The XRP ledger requires that all wallets maintain a minimum balance of XRP. This non-refundable XRP will remain permanently locked in your wallet.": "The XRP ledger requires that all wallets maintain a minimum balance of {{lockedBalance}} XRP. This non-refundable {{lockedBalance}} XRP will remain permanently locked in your wallet.",
   "The total amount of stored in this wallet.": "Der Gesamtbetrag von {{wallet}}, der in dieser Wallet gespeichert ist.",
   "Not including locked funds required for activation.": "Ohne die für die Aktivierung erforderlichen Sperrmittel.",
   "Available": "Verfügbar",

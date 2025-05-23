@@ -31,7 +31,7 @@ const SlideContainer = styled.View`
   margin-top: 20px;
 `;
 
-export const OnboardingSlide: React.VFC<OnboardingSlideProps> = ({item}) => {
+export const OnboardingSlide: React.FC<OnboardingSlideProps> = ({item}) => {
   const {title, text, subText, img} = item;
   const theme = useTheme();
   const themedText = {color: theme.colors.text};

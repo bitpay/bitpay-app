@@ -2,7 +2,8 @@ import {useNavigation} from '@react-navigation/native';
 import debounce from 'lodash.debounce';
 import React, {useMemo, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
-import {View, TouchableOpacity} from 'react-native';
+import {View} from 'react-native';
+import {TouchableOpacity} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import {BaseText, Paragraph} from '../../../../components/styled/Text';
@@ -70,8 +71,9 @@ const FullIntegrationsList = ({
         const categoryHasDiscount = category.integrations.some(
           merchant => !!merchant.discount,
         );
+        const itemHeight = categoryHasDiscount ? 206 : 174;
         return (
-          <View key={category.displayName}>
+          <View key={category.displayName} style={{height: itemHeight + 73}}>
             <SectionContainer>
               <SectionHeaderContainer>
                 <SectionHeader>{category.displayName}</SectionHeader>
@@ -88,7 +90,7 @@ const FullIntegrationsList = ({
               </SectionHeaderContainer>
             </SectionContainer>
             <ShopCarouselList
-              itemHeight={categoryHasDiscount ? 206 : 174}
+              itemHeight={itemHeight}
               items={category.integrations.slice(0, maxItemsPerRow)}
               itemComponent={getItemComponent(categoryHasDiscount)}
               itemWidth={itemWidth}

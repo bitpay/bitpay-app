@@ -15,7 +15,7 @@ import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {Key, Wallet, Status} from '../../../../store/wallet/wallet.models';
 import {
   GetPrecision,
-  IsUtxoCoin,
+  IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
 import {View} from 'react-native';
 import WalletInformationSkeleton from './WalletInformationSkeleton';
@@ -27,6 +27,7 @@ import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const InfoContainer = styled.SafeAreaView`
   flex: 1;
@@ -64,7 +65,7 @@ const CopyImgContainerRight = styled.View`
   margin-left: 5px;
 `;
 
-const CopyRow = styled.TouchableOpacity`
+const CopyRow = styled(TouchableOpacity)`
   flex-direction: row;
 `;
 
@@ -275,7 +276,7 @@ const WalletInformation = () => {
             </InfoSettingsRow>
             <Hr />
 
-            {IsUtxoCoin(currencyAbbreviation) ? (
+            {IsUtxoChain(chain) ? (
               <>
                 <InfoSettingsRow>
                   <SettingTitle>{t('Address Type')}</SettingTitle>

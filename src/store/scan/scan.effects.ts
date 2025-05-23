@@ -42,6 +42,7 @@ import {
   isValidBanxaUri,
   IsValidPrivateKey,
   isValidSwapCryptoUri,
+  IsValidAddKeyPath,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -50,13 +51,13 @@ import {
   BanxaIncomingData,
   BanxaStatusKey,
   MoonpayIncomingData,
-  RampIncomingData,
   SardineIncomingData,
   SardinePaymentData,
   SimplexIncomingData,
   TransakIncomingData,
   TransakStatusKey,
 } from '../buy-crypto/buy-crypto.models';
+import {RampIncomingData} from '../buy-crypto/models/ramp.models';
 import {LogActions} from '../log';
 import {startOnGoingProcessModal} from '../app/app.effects';
 import {
@@ -92,16 +93,20 @@ import {Analytics} from '../analytics/analytics.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
 import {calculateUsdToAltFiat} from '../buy-crypto/buy-crypto.effects';
-import {IsUtxoCoin} from '../wallet/utils/currency';
+import {IsUtxoChain} from '../wallet/utils/currency';
 import {BWCErrorMessage} from '../../constants/BWCError';
 import {walletConnectV2OnSessionProposal} from '../wallet-connect-v2/wallet-connect-v2.effects';
-import {MoonpaySellIncomingData} from '../sell-crypto/sell-crypto.models';
+import {MoonpaySellIncomingData} from '../sell-crypto/models/moonpay-sell.models';
 import {findWalletById} from '../wallet/utils/wallet';
 import {MoonpaySellCheckoutProps} from '../../navigation/services/sell-crypto/screens/MoonpaySellCheckout';
 import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-services/screens/MoonpaySettings';
+import {RampSettingsProps} from '../../navigation/tabs/settings/external-services/screens/RampSettings';
+import {SimplexSettingsProps} from '../../navigation/tabs/settings/external-services/screens/SimplexSettings';
 import {getMoonpaySellFixedCurrencyAbbreviation} from '../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
 import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
+import {SimplexSellIncomingData} from '../sell-crypto/models/simplex-sell.models';
+import {ExternalServicesSettingsScreens} from '../../navigation/tabs/settings/external-services/ExternalServicesGroup';
 
 export const incomingData =
   (
@@ -223,7 +228,10 @@ export const incomingData =
       } else if (IsValidPrivateKey(data)) {
         dispatch(handlePrivateKey(data));
         return true;
-        // Import Private Key
+        // Go to Add Key
+      } else if (IsValidAddKeyPath(data)) {
+        dispatch(goToAddKey(data));
+        // Import private key
       } else if (IsValidImportPrivateKey(data)) {
         dispatch(goToImport(data));
         // Join multisig wallet
@@ -554,6 +562,7 @@ const goToConfirm =
     } catch (err: any) {
       if (setButtonState) {
         setButtonState('failed');
+        sleep(1000).then(() => setButtonState?.(null));
       } else {
         dispatch(dismissOnGoingProcessModal());
       }
@@ -564,17 +573,6 @@ const goToConfirm =
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
-          actions: [
-            {
-              text: 'OK',
-              action: () => {
-                if (setButtonState) {
-                  setButtonState(undefined);
-                }
-              },
-            },
-          ],
         }),
       );
     }
@@ -648,6 +646,30 @@ const handlePrivateKey =
     dispatch(LogActions.info('[scan] Incoming-data: private key'));
     navigationRef.navigate(WalletScreens.PAPER_WALLET, {
       scannedPrivateKey,
+    });
+  };
+
+const goToAddKey =
+  (data?: string): Effect<void> =>
+  dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: Go to Add key path', data));
+    dispatch(
+      Analytics.track('Clicked create, import or join', {
+        context: 'DeepLink',
+      }),
+    );
+
+    navigationRef.reset({
+      index: 1,
+      routes: [
+        {
+          name: 'Tabs',
+          params: {screen: 'Home'},
+        },
+        {
+          name: 'CreationOptions',
+        },
+      ],
     });
   };
 
@@ -882,7 +904,7 @@ const handleMaticUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Matic URI'));
-    const coin = 'matic';
+    const coin = 'pol';
     const chain = 'matic';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -921,7 +943,7 @@ const handleArbUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Arb URI'));
-    const coin = 'arb';
+    const coin = 'eth';
     const chain = 'arb';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -960,7 +982,7 @@ const handleBaseUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Base URI'));
-    const coin = 'base';
+    const coin = 'eth';
     const chain = 'base';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -999,7 +1021,7 @@ const handleOpUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Op URI'));
-    const coin = 'op';
+    const coin = 'eth';
     const chain = 'op';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
     const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
@@ -1154,7 +1176,7 @@ const handleBuyCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoCoin(coin)) {
+      if (IsUtxoChain(coin)) {
         chain = coin;
       } else {
         coin = undefined;
@@ -1215,7 +1237,7 @@ const handleSellCryptoUri =
     }
 
     if (coin && !chain) {
-      if (IsUtxoCoin(coin)) {
+      if (IsUtxoChain(coin)) {
         chain = coin;
       } else {
         coin = undefined;
@@ -1244,6 +1266,7 @@ const handleSellCryptoUri =
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
+            fromDeeplink: true,
           },
         },
       ],
@@ -1274,7 +1297,7 @@ const handleSwapCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: SwapCryptoScreens.SWAPCRYPTO_ROOT,
+          name: SwapCryptoScreens.SWAP_CRYPTO_ROOT,
           params: {
             partner,
           },
@@ -1627,8 +1650,8 @@ const handleMoonpayUri =
       }
 
       const sellCheckoutParams: MoonpaySellCheckoutProps = {
-        sellCrpytoExternalId: externalId,
-        wallet: fullWalletObj,
+        sellCryptoExternalId: externalId,
+        wallet: fullWalletObj as Wallet,
         toAddress: depositWalletAddress,
         amount: Number(baseCurrencyAmount) ?? Number(order?.crypto_amount),
         useSendMax: order?.send_max,
@@ -1742,6 +1765,15 @@ const handleRampUri =
       }),
     );
 
+    const rampSettingsParams: RampSettingsProps = {
+      incomingPaymentRequest: {
+        flow: 'buy',
+        rampExternalId,
+        walletId,
+        status,
+      },
+    };
+
     navigationRef.reset({
       index: 2,
       routes: [
@@ -1751,7 +1783,7 @@ const handleRampUri =
         },
         {
           name: 'RampSettings',
-          params: {incomingPaymentRequest: stateParams},
+          params: {incomingPaymentRequest: rampSettingsParams},
         },
       ],
     });
@@ -1844,59 +1876,144 @@ const handleSardineUri =
 
 const handleSimplexUri =
   (data: string): Effect<void> =>
-  (dispatch, getState) => {
+  async (dispatch, getState) => {
     dispatch(LogActions.info('Incoming-data (redirect): Simplex URL: ' + data));
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
-    const paymentId = getParameterByName('paymentId', res);
-    if (!paymentId) {
-      dispatch(LogActions.warn('No paymentId present. Do not redir'));
-      return;
+
+    const simplexFlow = getParameterByName('flow', res);
+
+    if (simplexFlow === 'sell') {
+      // Simplex Sell Crypto Flow
+      const externalId = getParameterByName('externalId', res);
+      if (!externalId) {
+        dispatch(LogActions.warn('No externalId present. Do not redir'));
+        return;
+      }
+
+      const success = getParameterByName('success', res);
+      const sendMax = getParameterByName('sendMax', res);
+
+      dispatch(
+        LogActions.debug(
+          `Return from Simplex checkout page for Sell Order with externalId: ${externalId} | success: ${success} | sendMax: ${sendMax}`,
+        ),
+      );
+
+      const {SELL_CRYPTO} = getState();
+      const order = SELL_CRYPTO.simplex[externalId];
+
+      if (!order) {
+        dispatch(
+          LogActions.warn(
+            `No sell order found for externalId: ${externalId}. Do not redir`,
+          ),
+        );
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('Something went wrong'),
+            message: t(
+              'It seems that the order id: {{externalId}} was not created from this wallet or has been deleted.',
+              {externalId},
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
+      }
+
+      const stateParams: SimplexSellIncomingData = {
+        simplexExternalId: externalId,
+        status: 'bitpayFromCheckout', // We cannot currently know whether it comes from a success or a fail process
+      };
+
+      dispatch(
+        SellCryptoActions.updateSellOrderSimplex({
+          simplexSellIncomingData: stateParams,
+        }),
+      );
+
+      const simplexSettingsParams: SimplexSettingsProps = {
+        incomingPaymentRequest: {
+          externalId,
+          flow: 'sell',
+        },
+      };
+
+      navigationRef.reset({
+        index: 2,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
+          },
+          {
+            name: ExternalServicesSettingsScreens.SIMPLEX_SETTINGS,
+            params: simplexSettingsParams,
+          },
+        ],
+      });
+    } else {
+      // Simplex Buy Crypto Flow
+      const paymentId = getParameterByName('paymentId', res);
+      if (!paymentId) {
+        dispatch(LogActions.warn('No paymentId present. Do not redir'));
+        return;
+      }
+
+      const success = getParameterByName('success', res);
+      const quoteId = getParameterByName('quoteId', res);
+      const userId = getParameterByName('userId', res);
+
+      const stateParams: SimplexIncomingData = {
+        success,
+        paymentId,
+        quoteId,
+        userId,
+      };
+
+      dispatch(
+        BuyCryptoActions.updatePaymentRequestSimplex({
+          simplexIncomingData: stateParams,
+        }),
+      );
+
+      const {BUY_CRYPTO} = getState();
+      const order = BUY_CRYPTO.simplex[paymentId];
+
+      dispatch(
+        Analytics.track('Purchased Buy Crypto', {
+          exchange: 'simplex',
+          fiatAmount: order?.fiat_total_amount || '',
+          fiatCurrency: order?.fiat_total_amount_currency || '',
+          coin: order?.coin?.toLowerCase() || '',
+          chain: order?.chain?.toLowerCase() || '',
+        }),
+      );
+
+      navigationRef.reset({
+        index: 2,
+        routes: [
+          {
+            name: 'Tabs',
+            params: {screen: 'Home'},
+          },
+          {
+            name: 'SimplexSettings',
+            params: {incomingPaymentRequest: {...stateParams, flow: 'buy'}},
+          },
+        ],
+      });
     }
-
-    const success = getParameterByName('success', res);
-    const quoteId = getParameterByName('quoteId', res);
-    const userId = getParameterByName('userId', res);
-
-    const stateParams: SimplexIncomingData = {
-      success,
-      paymentId,
-      quoteId,
-      userId,
-    };
-
-    dispatch(
-      BuyCryptoActions.updatePaymentRequestSimplex({
-        simplexIncomingData: stateParams,
-      }),
-    );
-
-    const {BUY_CRYPTO} = getState();
-    const order = BUY_CRYPTO.simplex[paymentId];
-
-    dispatch(
-      Analytics.track('Purchased Buy Crypto', {
-        exchange: 'simplex',
-        fiatAmount: order?.fiat_total_amount || '',
-        fiatCurrency: order?.fiat_total_amount_currency || '',
-        coin: order?.coin?.toLowerCase() || '',
-        chain: order?.chain?.toLowerCase() || '',
-      }),
-    );
-
-    navigationRef.reset({
-      index: 2,
-      routes: [
-        {
-          name: 'Tabs',
-          params: {screen: 'Home'},
-        },
-        {
-          name: 'SimplexSettings',
-          params: {incomingPaymentRequest: stateParams},
-        },
-      ],
-    });
   };
 
 const handleTransakUri =
@@ -1971,7 +2088,19 @@ const handleWalletConnectUri =
           );
           throw errMsg;
         } else {
-          await dispatch(walletConnectV2OnSessionProposal(data));
+          let decodedUri: string;
+          try {
+            const url = new URL(data);
+            const rawUri = url.searchParams.get('uri');
+            try {
+              decodedUri = rawUri ? decodeURIComponent(rawUri) : data;
+            } catch {
+              decodedUri = rawUri || data;
+            }
+            await dispatch(walletConnectV2OnSessionProposal(decodedUri));
+          } catch {
+            await dispatch(walletConnectV2OnSessionProposal(data));
+          }
           navigationRef.navigate('WalletConnectRoot', {});
         }
       } else {
@@ -1981,12 +2110,24 @@ const handleWalletConnectUri =
     } catch (e: any) {
       const proposal = getState().WALLET_CONNECT_V2.proposal;
       if (
-        proposal &&
         typeof e === 'object' &&
         e !== null &&
         e.message?.includes('Pairing already exists:')
       ) {
-        navigationRef.navigate('WalletConnectRoot', {uri: data});
+        if (proposal) {
+          navigationRef.navigate('WalletConnectRoot', {uri: data});
+        } else {
+          dispatch(
+            showBottomNotificationModal(
+              CustomErrorMessage({
+                errMsg: t(
+                  'Pairing already exists. Please try refreshing the QR code by reloading the website.',
+                ),
+                title: t('Uh oh, something went wrong'),
+              }),
+            ),
+          );
+        }
       } else {
         dispatch(
           showBottomNotificationModal(

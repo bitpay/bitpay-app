@@ -4,18 +4,20 @@ import {
   NeutralSlate,
   SlateDark,
   White,
+  Slate30,
 } from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-export const BuyCryptoItemCard = styled.TouchableOpacity`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
+export const BuyCryptoItemCard = styled(TouchableOpacity)`
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   border-radius: 9px;
   margin: 8px 16px;
   padding: 14px;
 `;
 
-export const BuyCryptoExpandibleCard = styled.TouchableOpacity`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
+export const BuyCryptoExpandibleCard = styled(TouchableOpacity)`
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   border-radius: 9px;
   margin: 20px 15px 0px 15px;
   padding: 18px 14px;
@@ -66,7 +68,7 @@ export const CoinIconContainer = styled.View`
 `;
 
 export const ItemDivisor = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ebecee')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   border-bottom-width: 1px;
 `;
 

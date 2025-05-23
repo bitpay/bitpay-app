@@ -1,11 +1,23 @@
-import React from 'react';
+import React, {useCallback, useEffect, useRef} from 'react';
 import {ActivityIndicator} from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import styled from 'styled-components/native';
+import {
+  BottomSheetBackdrop,
+  BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
 import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
+import {HEIGHT, WIDTH} from '../../styled/Containers';
 
 export type OnGoingProcessMessages =
   | 'GENERAL_AWAITING'
@@ -16,8 +28,11 @@ export type OnGoingProcessMessages =
   | 'CREATING_ACCOUNT'
   | 'UPDATING_ACCOUNT'
   | 'IMPORTING'
+  | 'IMPORT_SCANNING_FUNDS'
   | 'DELETING_KEY'
   | 'ADDING_WALLET'
+  | 'ADDING_ACCOUNT'
+  | 'ADDING_CHAINS'
   | 'LOADING'
   | 'FETCHING_PAYMENT_OPTIONS'
   | 'FETCHING_PAYMENT_INFO'
@@ -44,17 +59,13 @@ export type OnGoingProcessMessages =
   | 'SCANNING_FUNDS'
   | 'SCANNING_FUNDS_WITH_PASSPHRASE';
 
-const OnGoingProcessContainer = styled.View`
-  max-width: 60%;
-  justify-content: center;
-  align-items: center;
-`;
-
 const Row = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
   border-radius: 10px;
   flex-direction: row;
   padding: 20px;
+  max-width: 60%;
+  padding-right: 47px;
 `;
 
 const ActivityIndicatorContainer = styled.View`
@@ -62,7 +73,6 @@ const ActivityIndicatorContainer = styled.View`
   justify-content: center;
   align-items: center;
   margin-right: 15px;
-  transform: scale(1.1);
 `;
 
 const Message = styled(BaseText)`
@@ -70,26 +80,116 @@ const Message = styled(BaseText)`
   flex-wrap: wrap;
 `;
 
+const ModalWrapper = styled.View`
+  height: ${HEIGHT}px;
+  width: ${WIDTH}px;
+  align-items: center;
+  justify-content: center;
+  margin-left: -20px;
+`;
+
 const OnGoingProcessModal: React.FC = () => {
   const message = useAppSelector(({APP}) => APP.onGoingProcessModalMessage);
   const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
 
-  return (
+  const modalLibrary: 'bottom-sheet' | 'modal' = 'bottom-sheet';
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const opacityFadeDuration = 200;
+  const opacity = useSharedValue(0);
+  const animatedStyles = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+      height: HEIGHT,
+      width: WIDTH,
+      alignItems: 'center',
+      justifyContent: 'center',
+    };
+  });
+  useEffect(() => {
+    let dismissTimeout: NodeJS.Timeout;
+    let opacityTimeout: NodeJS.Timeout;
+
+    if (isVisible && appWasInit) {
+      bottomSheetModalRef.current?.present();
+      opacityTimeout = setTimeout(() => {
+        opacity.value = withTiming(1, {duration: opacityFadeDuration});
+      }, 300);
+    } else {
+      opacity.value = withTiming(0, {duration: opacityFadeDuration});
+      dismissTimeout = setTimeout(() => {
+        if (bottomSheetModalRef.current) {
+          bottomSheetModalRef.current.dismiss();
+        }
+      }, opacityFadeDuration);
+    }
+
+    return () => {
+      if (dismissTimeout) {
+        clearTimeout(dismissTimeout);
+      }
+      if (opacityTimeout) {
+        clearTimeout(opacityTimeout);
+      }
+    };
+  }, [appWasInit, isVisible, opacity, opacityFadeDuration]);
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        opacity={0.4}
+        pressBehavior={'none'}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+      />
+    ),
+    [],
+  );
+
+  return modalLibrary === 'bottom-sheet' ? (
+    <BottomSheetModal
+      detached={true}
+      bottomInset={0}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{borderRadius: 18}}
+      enableDismissOnClose={true}
+      enableDynamicSizing={false}
+      enableOverDrag={false}
+      enablePanDownToClose={false}
+      handleComponent={null}
+      animateOnMount={true}
+      backgroundComponent={null}
+      snapPoints={['100%']}
+      index={0}
+      ref={bottomSheetModalRef}>
+      <BottomSheetView>
+        <Animated.View style={[animatedStyles]}>
+          <Row>
+            <ActivityIndicatorContainer>
+              <ActivityIndicator color={SlateDark} />
+            </ActivityIndicatorContainer>
+            <Message>{message}</Message>
+            <BlurContainer />
+          </Row>
+        </Animated.View>
+      </BottomSheetView>
+    </BottomSheetModal>
+  ) : (
     <BaseModal
       id={'ongoingProcess'}
+      deviceHeight={HEIGHT}
+      deviceWidth={WIDTH}
+      presentationStyle="overFullScreen"
       isVisible={appWasInit && isVisible}
       backdropOpacity={0.4}
+      coverScreen={true}
       animationIn={'fadeInRight'}
       animationOut={'fadeOutLeft'}
       backdropTransitionOutTiming={0}
       hideModalContentWhileAnimating={true}
       useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
-      style={{
-        alignItems: 'center',
-      }}>
-      <OnGoingProcessContainer>
+      useNativeDriver={true}>
+      <ModalWrapper>
         <Row>
           <ActivityIndicatorContainer>
             <ActivityIndicator color={SlateDark} />
@@ -97,7 +197,7 @@ const OnGoingProcessModal: React.FC = () => {
           <Message>{message}</Message>
           <BlurContainer />
         </Row>
-      </OnGoingProcessContainer>
+      </ModalWrapper>
     </BaseModal>
   );
 };

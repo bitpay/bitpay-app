@@ -1,5 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {FlashList} from '@shopify/flash-list';
 import React, {
   useEffect,
   useLayoutEffect,
@@ -15,18 +16,14 @@ import {
   useMount,
 } from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {
-  RefreshControl,
-  SectionList,
-  View,
-  TouchableOpacity,
-} from 'react-native';
+import {RefreshControl, View, Platform} from 'react-native';
 import {find} from 'lodash';
 import moment from 'moment';
 import {
   getCurrencyAbbreviation,
   getProtocolName,
   sleep,
+  getBadgeImg,
 } from '../../../utils/helper-methods';
 import {formatFiatAmount, shouldScale} from '../../../utils/helper-methods';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -37,11 +34,14 @@ import {
   LuckySevens,
   SlateDark,
   White,
+  Black,
 } from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
-import TransactionRow from '../../../components/list/TransactionRow';
+import TransactionRow, {
+  TRANSACTION_ROW_HEIGHT,
+} from '../../../components/list/TransactionRow';
 
 import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {
@@ -74,9 +74,6 @@ import {
   OtherBitpaySupportedCoins,
 } from '../../../constants/currencies';
 import {IsValidBitcoinCashAddress} from '../../../store/wallet/utils/validations';
-import ToWalletSelectorModal, {
-  ToWalletSelectorCustomCurrency,
-} from '../../services/components/ToWalletSelectorModal';
 import {
   addWallet,
   AddWalletData,
@@ -89,6 +86,10 @@ import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transactions/transactions';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {BitpaySupportedTokens} from '../../../constants/currencies';
+import GlobalSelect, {
+  ToWalletSelectorCustomCurrency,
+} from '../../wallet/screens/GlobalSelect';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 
 const AccountContainer = styled.SafeAreaView`
   flex: 1;
@@ -130,11 +131,6 @@ const Type = styled(BaseText)`
   border-radius: 3px;
   margin-top: 5px;
   margin-bottom: 10px;
-`;
-
-const TransactionListHeader = styled.View`
-  padding: 10px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F6F7')};
 `;
 
 const BorderBottom = styled.View`
@@ -179,9 +175,35 @@ export const WalletSelectMenuHeaderContainer = styled.View`
   padding: 50px 0;
 `;
 
+const GlobalSelectContainer = styled.View`
+  flex: 1;
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+`;
+
 export type CoinbaseAccountScreenParamList = {
   accountId: string;
   refresh?: boolean;
+};
+
+const capitalize = (text: string) => {
+  return text
+    .replace(/_/g, ' ')
+    .replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+};
+
+export const parseTransactionTitle = (
+  data: CoinbaseTransactionProps,
+): string => {
+  if (data.type === 'send') {
+    const num = parseFloat(data.amount.amount);
+    if (!isNaN(num) && num < 0) {
+      return 'Sent';
+    } else {
+      return 'Received';
+    }
+  } else {
+    return capitalize(data.type);
+  }
 };
 
 const CoinbaseAccount = ({
@@ -206,9 +228,7 @@ const CoinbaseAccount = ({
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [fiatAmount, setFiatAmount] = useState(0);
   const [cryptoAmount, setCryptoAmount] = useState('0');
-  const [groupedTransactions, setGroupedTransactions] = useState<
-    {title: string; data: CoinbaseTransactionProps[]}[]
-  >([]);
+  const [groupedTransactions, setGroupedTransactions] = useState<any[]>([]);
 
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
 
@@ -274,8 +294,7 @@ const CoinbaseAccount = ({
     ({item}) => (
       <TransactionRow
         icon={getIcon(item)}
-        description={item.details.title}
-        details={item.details.subtitle}
+        description={parseTransactionTitle(item)}
         time={parseTime(item.created_at)}
         value={parseAmount(item.amount.amount, item.amount.currency)}
         onPressTransaction={() => onPressTransaction(item)}
@@ -292,7 +311,7 @@ const CoinbaseAccount = ({
             <BorderBottom />
           </View>
         )}
-        {isLoading || initialLoad ? (
+        {isLoading && initialLoad ? (
           <SkeletonContainer>
             <WalletTransactionSkeletonRow />
           </SkeletonContainer>
@@ -380,9 +399,10 @@ const CoinbaseAccount = ({
       availableWallets = availableWallets.filter(
         wallet =>
           !wallet.hideWallet &&
+          !wallet.hideWalletByAccount &&
           wallet.network === 'livenet' &&
-          wallet.credentials.coin === _currencyAbbreviation.toLowerCase() &&
-          wallet.credentials.chain === _chain &&
+          wallet.currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
+          wallet.chain === _chain &&
           wallet.isComplete(),
       );
 
@@ -414,10 +434,11 @@ const CoinbaseAccount = ({
 
       const _currency: ToWalletSelectorCustomCurrency = {
         currencyAbbreviation: _currencyAbbreviation,
-        symbol: getCurrencyAbbreviation(account.currency.code, chain),
+        symbol: getCurrencyAbbreviation(account.currency.code, _chain),
         chain: _chain,
         name: account.currency.name,
-        logoUri: getLogoUri(account.currency.code, chain),
+        logoUri: getLogoUri(account.currency.code, _chain),
+        badgeUri: getBadgeImg(account.currency.code, _chain),
       };
 
       setCustomSupportedCurrencies([_currency]);
@@ -441,7 +462,15 @@ const CoinbaseAccount = ({
       const _nextStartingAfter =
         transactions[accountId].pagination.next_starting_after;
       const _groupedTxs = GroupCoinbaseTransactions(_transactions);
-      setGroupedTransactions(_groupedTxs);
+      const flattenedGroups = _groupedTxs.reduce(
+        (allTransactions, section) => [
+          ...allTransactions,
+          section.title,
+          ...section.data,
+        ],
+        [] as any[],
+      );
+      setGroupedTransactions(flattenedGroups);
       setNextStartingAfter(_nextStartingAfter);
     }
 
@@ -496,7 +525,7 @@ const CoinbaseAccount = ({
         }
         await sleep(400);
         navigation.navigate('GlobalSelect', {
-          context: 'coinbase',
+          context: 'coinbaseDeposit',
           recipient: {
             name: account.name || 'Coinbase',
             currency: currencyAbbreviation.toLowerCase(),
@@ -537,8 +566,9 @@ const CoinbaseAccount = ({
     }
   };
 
-  const onEnteredAmount = (newAmount?: number) => {
+  const onEnteredAmount = async (newAmount?: number) => {
     setAmountModalVisible(false);
+    await sleep(600);
     if (newAmount && selectedWallet) {
       navigation.navigate('CoinbaseWithdraw', {
         accountId,
@@ -590,11 +620,69 @@ const CoinbaseAccount = ({
     }
   });
 
-  const keyExtractor = useCallback(item => item.id, []);
+  const onDismiss = async (
+    newWallet?: Wallet,
+    createNewWalletData?: AddWalletData,
+  ) => {
+    setWalletModalVisible(false);
+    if (newWallet?.currencyAbbreviation) {
+      onSelectedWallet(newWallet);
+    } else if (createNewWalletData) {
+      try {
+        if (
+          createNewWalletData.key.isPrivKeyEncrypted &&
+          !(
+            createNewWalletData.currency?.isToken &&
+            createNewWalletData.associatedWallet
+          )
+        ) {
+          logger.debug('Key is Encrypted. Trying to decrypt...');
+          await sleep(500);
+          const password = await dispatch(
+            getDecryptPassword(createNewWalletData.key),
+          );
+          createNewWalletData.options.password = password;
+        } else {
+          logger.debug(
+            'Key is Encrypted, but not neccessary for tokens. Trying to create wallet...',
+          );
+        }
+
+        await sleep(500);
+        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        const createdToWallet = await dispatch(addWallet(createNewWalletData));
+        logger.debug(
+          `Added ${createdToWallet?.currencyAbbreviation} wallet from Coinbase`,
+        );
+        dispatch(
+          Analytics.track('Created Basic Wallet', {
+            coin: createNewWalletData.currency.currencyAbbreviation,
+            chain: createNewWalletData.currency.chain,
+            isErc20Token: createNewWalletData.currency.isToken,
+            context: 'coinbase',
+          }),
+        );
+        onSelectedWallet(createdToWallet);
+        await sleep(300);
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+      } catch (err: any) {
+        dispatch(dismissOnGoingProcessModal());
+        await sleep(500);
+        if (err.message === 'invalid password') {
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        } else {
+          showError(err.message);
+        }
+      }
+    }
+  };
+
+  const keyExtractor = useCallback((item, index) => index.toString(), []);
 
   return (
     <AccountContainer>
-      <SectionList
+      <FlashList
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -650,86 +738,63 @@ const CoinbaseAccount = ({
             </>
           );
         }}
-        sections={groupedTransactions}
-        stickyHeaderIndices={[groupedTransactions?.length]}
-        stickySectionHeadersEnabled={true}
+        data={groupedTransactions}
+        estimatedItemSize={TRANSACTION_ROW_HEIGHT}
+        stickyHeaderIndices={
+          groupedTransactions
+            .map((item, index) => {
+              if (typeof item === 'string') {
+                return index;
+              } else {
+                return null;
+              }
+            })
+            .filter(item => item !== null) as number[]
+        }
         keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        renderSectionHeader={({section: {title}}) => {
-          return (
-            <TouchableOpacity>
+        renderItem={({item}) => {
+          if (typeof item === 'string') {
+            return (
               <TransactionSectionHeaderContainer>
-                <H5>{title}</H5>
+                <H5>{item}</H5>
               </TransactionSectionHeaderContainer>
-            </TouchableOpacity>
-          );
+            );
+          } else {
+            return renderItem({item});
+          }
         }}
+        getItemType={item =>
+          typeof item === 'string' ? 'sectionHeader' : 'row'
+        }
         ItemSeparatorComponent={() => <BorderBottom />}
         ListEmptyComponent={listEmptyComponent}
         ListFooterComponent={listFooterComponent}
         onEndReached={() => loadTransactions()}
       />
 
-      <ToWalletSelectorModal
+      <SheetModal
+        modalLibrary="bottom-sheet"
         isVisible={walletModalVisible}
-        modalContext={'coinbase'}
-        disabledChain={undefined}
-        customSupportedCurrencies={customSupportedCurrencies}
-        livenetOnly={true}
-        modalTitle={t('Select Destination')}
-        onDismiss={async (
-          newWallet?: Wallet,
-          createNewWalletData?: AddWalletData,
-        ) => {
-          setWalletModalVisible(false);
-          if (newWallet?.currencyAbbreviation) {
-            onSelectedWallet(newWallet);
-          } else if (createNewWalletData) {
-            try {
-              if (createNewWalletData.key.isPrivKeyEncrypted) {
-                logger.debug('Key is Encrypted. Trying to decrypt...');
-                await sleep(500);
-                const password = await dispatch(
-                  getDecryptPassword(createNewWalletData.key),
-                );
-                createNewWalletData.options.password = password;
-              }
-
-              await sleep(500);
-              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
-              const createdToWallet = await dispatch(
-                addWallet(createNewWalletData),
-              );
-              logger.debug(
-                `Added ${createdToWallet?.currencyAbbreviation} wallet from Coinbase`,
-              );
-              dispatch(
-                Analytics.track('Created Basic Wallet', {
-                  coin: createNewWalletData.currency.currencyAbbreviation,
-                  chain: createNewWalletData.currency.chain,
-                  isErc20Token: createNewWalletData.currency.isToken,
-                  context: 'coinbase',
-                }),
-              );
-              onSelectedWallet(createdToWallet);
-              await sleep(300);
-              dispatch(dismissOnGoingProcessModal());
-              await sleep(500);
-            } catch (err: any) {
-              dispatch(dismissOnGoingProcessModal());
-              await sleep(500);
-              if (err.message === 'invalid password') {
-                dispatch(showBottomNotificationModal(WrongPasswordError()));
-              } else {
-                showError(err.message);
-              }
-            }
-          }
-        }}
-      />
+        onBackdropPress={() => onDismiss()}
+        fullscreen>
+        <GlobalSelectContainer>
+          <GlobalSelect
+            route={route}
+            navigation={navigation}
+            modalContext={'coinbase'}
+            customSupportedCurrencies={customSupportedCurrencies}
+            livenetOnly={true}
+            modalTitle={t('Select Destination')}
+            useAsModal={true}
+            globalSelectOnDismiss={onDismiss}
+          />
+        </GlobalSelectContainer>
+      </SheetModal>
 
       <AmountModal
         isVisible={amountModalVisible}
+        modalTitle={'Coinbase Withdraw'}
+        context={'coinbase'}
         cryptoCurrencyAbbreviation={currencyAbbreviation}
         fiatCurrencyAbbreviation={defaultAltCurrency.isoCode}
         chain={chain}

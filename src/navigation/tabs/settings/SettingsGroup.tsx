@@ -2,23 +2,28 @@ import React from 'react';
 import {HeaderTitle} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../constants/NavigationOptions';
-import SettingsHome, {SettingsHomeParamList} from './SettingsRoot';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../components/back/HeaderBackButton';
+import SettingsHome, {SettingsHomeProps} from './SettingsRoot';
+import SettingsDetails, {SettingsDetailsParamList} from './SettingsDetails';
 
 interface SettingsProps {
   Settings: typeof Root;
 }
 
 export type SettingsGroupParamList = {
-  SettingsHome: SettingsHomeParamList;
-};
+  SettingsHome: {
+    redirectTo?: string;
+  };
+  SettingsDetails: {
+    initialRoute?: keyof SettingsDetailsParamList;
+    redirectTo?: string;
+  };
+} & SettingsDetailsParamList;
 
 export enum SettingsScreens {
   SETTINGS_HOME = 'SettingsHome',
+  SETTINGS_DETAILS = 'SettingsDetails',
 }
 
 const SettingsGroup: React.FC<SettingsProps> = ({Settings}) => {
@@ -26,16 +31,9 @@ const SettingsGroup: React.FC<SettingsProps> = ({Settings}) => {
 
   return (
     <Settings.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Settings.Screen
         name={SettingsScreens.SETTINGS_HOME}
@@ -43,6 +41,14 @@ const SettingsGroup: React.FC<SettingsProps> = ({Settings}) => {
         options={{
           animation: 'slide_from_bottom',
           headerTitle: () => <HeaderTitle>{t('Settings')}</HeaderTitle>,
+        }}
+      />
+      <Settings.Screen
+        name={SettingsScreens.SETTINGS_DETAILS}
+        component={SettingsDetails}
+        options={{
+          // animation: 'slide_from_right',
+          headerShown: false,
         }}
       />
     </Settings.Group>

@@ -6,6 +6,14 @@ export const WALLETCONNECT_V2_METADATA = {
   icons: ['https://bitpay.com/resources/content/images/2019/10/bitpay.png'],
 };
 
+export const WC_EVENTS = [
+  'chainChanged',
+  'accountsChanged',
+  'message',
+  'disconnect',
+  'connect',
+];
+
 export const CHAIN_NAME_MAPPING: {[key: string]: string} = {
   // ETHEREUM
   '1': 'Ethereum Mainnet',
@@ -126,58 +134,47 @@ export const EIP155_METHODS_NOT_INTERACTION_NEEDED = [
 export const WALLET_CONNECT_SUPPORTED_CHAINS: {
   [key in string]: {
     chain: string;
-    currencyAbbreviation: string;
     network: string;
   };
 } = {
   'eip155:1': {
     chain: 'eth',
-    currencyAbbreviation: 'eth',
     network: Network.mainnet,
   },
   'eip155:137': {
     chain: 'matic',
-    currencyAbbreviation: 'matic',
     network: Network.mainnet,
   },
   'eip155:11155111': {
     chain: 'eth',
-    currencyAbbreviation: 'eth',
     network: Network.testnet,
   },
   'eip155:80002': {
     chain: 'matic',
-    currencyAbbreviation: 'matic',
     network: Network.testnet,
   },
   'eip155:10': {
     chain: 'op',
-    currencyAbbreviation: 'eth',
     network: Network.mainnet,
   },
   'eip155:42161': {
     chain: 'arb',
-    currencyAbbreviation: 'eth',
     network: Network.mainnet,
   },
   'eip155:8453': {
     chain: 'base',
-    currencyAbbreviation: 'eth',
     network: Network.mainnet,
   },
   'eip155:11155420': {
     chain: 'op',
-    currencyAbbreviation: 'eth',
     network: Network.testnet,
   },
   'eip155:421614': {
     chain: 'arb',
-    currencyAbbreviation: 'eth',
     network: Network.testnet,
   },
   'eip155:84532': {
     chain: 'base',
-    currencyAbbreviation: 'eth',
     network: Network.testnet,
   },
 };

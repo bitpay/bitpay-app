@@ -1,6 +1,7 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ScrollView, TouchableOpacity} from 'react-native';
+import {ScrollView} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   useTheme,
   RouteProp,
@@ -15,11 +16,10 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../utils/hooks';
-import ChangellyCheckoutSkeleton from './ChangellyCheckoutSkeleton';
+import SwapCheckoutSkeleton from './SwapCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
-import PaymentSent from '../../../wallet/components/PaymentSent';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
 import {H5, H7} from '../../../../components/styled/Text';
@@ -85,6 +85,7 @@ import {
 } from '../../../../store/app/app.actions';
 import {
   createTxProposal,
+  handleCreateTxProposalError,
   publishAndSign,
 } from '../../../../store/wallet/effects/send/send';
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
@@ -109,6 +110,7 @@ import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
+import {AppActions} from '../../../../store/app';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -125,7 +127,7 @@ export interface ChangellyCheckoutProps {
   sendMaxInfo?: SendMaxInfo;
 }
 
-let countDown: NodeJS.Timer | undefined;
+let countDown: NodeJS.Timeout | undefined;
 
 const ChangellyCheckout: React.FC = () => {
   let {
@@ -164,8 +166,6 @@ const ChangellyCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[fromWalletSelected.keyId],
   );
-
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<any>();
 
@@ -373,7 +373,7 @@ const ChangellyCheckout: React.FC = () => {
 
         try {
           const rates = await dispatch(startGetRates({}));
-          const presicion = dispatch(
+          const precision = dispatch(
             GetPrecision(
               toWalletSelected.currencyAbbreviation,
               toWalletSelected.chain,
@@ -382,7 +382,7 @@ const ChangellyCheckout: React.FC = () => {
           );
           const newFiatAmountTo = dispatch(
             toFiat(
-              Number(data.result.amountExpectedTo) * presicion!.unitToSatoshi,
+              Number(data.result.amountExpectedTo) * precision!.unitToSatoshi,
               alternativeIsoCode,
               toWalletSelected.currencyAbbreviation.toLowerCase(),
               toWalletSelected.chain,
@@ -397,7 +397,7 @@ const ChangellyCheckout: React.FC = () => {
 
         paymentTimeControl(data.result.payTill);
 
-        const presicion = dispatch(
+        const precision = dispatch(
           GetPrecision(
             fromWalletSelected.currencyAbbreviation,
             fromWalletSelected.chain,
@@ -406,45 +406,57 @@ const ChangellyCheckout: React.FC = () => {
         );
         // To Sat
         const depositSat = Number(
-          (amountExpectedFrom * presicion!.unitToSatoshi).toFixed(0),
+          (amountExpectedFrom * precision!.unitToSatoshi).toFixed(0),
         );
 
-        createTx(fromWalletSelected, payinAddress, depositSat, payinExtraId)
-          .then(async ctxp => {
-            setCtxp(ctxp);
-            setFee(ctxp.fee);
+        try {
+          const ctxp = await createTx(
+            fromWalletSelected,
+            payinAddress,
+            depositSat,
+            payinExtraId,
+          );
+          setCtxp(ctxp);
+          setFee(ctxp.fee);
 
-            const _txData = {
-              addressFrom,
-              addressTo,
-              payinExtraId,
-              status,
-              payinAddress,
-            };
-            setTxData(_txData);
+          const _txData = {
+            addressFrom,
+            addressTo,
+            payinExtraId,
+            status,
+            payinAddress,
+          };
+          setTxData(_txData);
 
-            setIsLoading(false);
-            dispatch(dismissOnGoingProcessModal());
-            await sleep(400);
+          setIsLoading(false);
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(400);
 
-            if (useSendMax) {
-              showSendMaxWarning(
-                ctxp.coin,
-                ctxp.chain,
-                fromWalletSelected.tokenAddress,
-              );
-            }
+          if (useSendMax) {
+            showSendMaxWarning(
+              ctxp.coin,
+              ctxp.chain,
+              fromWalletSelected.tokenAddress,
+            );
+          }
+          return;
+        } catch (err: any) {
+          const reason = 'createTx Error';
+          if (err.code) {
+            showError(err.message, reason, err.code, err.title, err.actions);
             return;
-          })
-          .catch(err => {
-            let msg = t('Error creating transaction');
-            if (typeof err?.message === 'string') {
-              msg = msg + `: ${err.message}`;
-            }
-            const reason = 'createTx Error';
-            showError(msg, reason);
-            return;
-          });
+          }
+
+          let msg = t('Error creating transaction');
+          let errorMsgLog;
+          if (typeof err?.message === 'string') {
+            msg = msg + `: ${err.message}`;
+            errorMsgLog = err.message;
+          }
+
+          showError(msg, reason, errorMsgLog);
+          return;
+        }
       })
       .catch(err => {
         logger.error(
@@ -470,7 +482,7 @@ const ChangellyCheckout: React.FC = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timer,
+    countDown?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
@@ -487,8 +499,11 @@ const ChangellyCheckout: React.FC = () => {
           context: 'ChangellyCheckout',
           reasonForFailure: 'Time to make the payment expired',
           amountFrom: amountFrom || '',
-          fromCoin: fromWalletSelected.currencyAbbreviation || '',
-          toCoin: toWalletSelected.currencyAbbreviation || '',
+          fromCoin:
+            fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+          fromChain: fromWalletSelected.chain?.toLowerCase() || '',
+          toCoin: toWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+          toChain: toWalletSelected.chain?.toLowerCase() || '',
         }),
       );
       return;
@@ -545,7 +560,7 @@ const ChangellyCheckout: React.FC = () => {
     payinAddress: string,
     depositSat: number,
     destTag?: string,
-  ) => {
+  ): Promise<TransactionProposal> => {
     try {
       const message =
         fromWalletSelected.currencyAbbreviation.toUpperCase() +
@@ -610,16 +625,21 @@ const ChangellyCheckout: React.FC = () => {
         txp.destinationTag = Number(destTag);
       }
 
-      const ctxp = await createTxProposal(wallet, txp);
+      const ctxp = await dispatch(createTxProposal(wallet, txp));
       return Promise.resolve(ctxp);
     } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      const log = `createTxProposal error: ${errStr}`;
+      const errStr =
+        err instanceof Error
+          ? err.message
+          : err?.err?.message ?? JSON.stringify(err);
+      const log = `changellyCheckout createTxProposal error: ${errStr}`;
       logger.error(log);
-      return Promise.reject({
-        title: t('Could not create transaction'),
-        message: BWCErrorMessage(err),
-      });
+
+      const [errorMessageConfig] = await Promise.all([
+        dispatch(handleCreateTxProposalError(err, undefined, 'swap')),
+        sleep(400),
+      ]);
+      return Promise.reject(errorMessageConfig);
     }
   };
 
@@ -667,7 +687,33 @@ const ChangellyCheckout: React.FC = () => {
       saveChangellyTx();
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
-      setShowPaymentSentModal(true);
+
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            fromWalletSelected?.credentials?.n > 1
+              ? t('Payment Sent')
+              : t('Payment Accepted'),
+        }),
+      );
+
+      await sleep(1200);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            {
+              name: RootStacks.TABS,
+              params: {screen: TabsScreens.HOME},
+            },
+            {
+              name: ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
+            },
+          ],
+        }),
+      );
     } catch (err: any) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
@@ -697,6 +743,13 @@ const ChangellyCheckout: React.FC = () => {
           showError(msg, reason);
       }
     }
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -818,7 +871,13 @@ const ChangellyCheckout: React.FC = () => {
     );
   };
 
-  const showError = async (msg?: string, reason?: string) => {
+  const showError = async (
+    msg?: string,
+    reason?: string,
+    errorMsgLog?: string,
+    title?: string,
+    actions?: any[],
+  ) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
     await sleep(1000);
@@ -827,18 +886,21 @@ const ChangellyCheckout: React.FC = () => {
         exchange: 'changelly',
         context: 'ChangellyCheckout',
         reasonForFailure: reason || 'unknown',
+        errorMsg: errorMsgLog || 'unknown',
         amountFrom: amountFrom || '',
-        fromCoin: fromWalletSelected.currencyAbbreviation || '',
-        toCoin: toWalletSelected.currencyAbbreviation || '',
+        fromCoin: fromWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+        fromChain: fromWalletSelected.chain?.toLowerCase() || '',
+        toCoin: toWalletSelected.currencyAbbreviation?.toLowerCase() || '',
+        toChain: toWalletSelected.chain?.toLowerCase() || '',
       }),
     );
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: t('Error'),
-        message: msg ? msg : t('Unknown Error'),
+        title: title ?? t('Error'),
+        message: msg ?? t('Unknown Error'),
         enableBackdropDismiss: false,
-        actions: [
+        actions: actions ?? [
           {
             text: t('OK'),
             action: async () => {
@@ -883,7 +945,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         <RowDataContainer>
-          <RowLabel>{t('Selling')}</RowLabel>
+          <RowLabel>{t('Swapping')}</RowLabel>
           <SelectedOptionContainer>
             <SelectedOptionCol>
               <CoinIconContainer>
@@ -935,7 +997,7 @@ const ChangellyCheckout: React.FC = () => {
         </RowDataContainer>
         <ItemDivisor />
         {isLoading ? (
-          <ChangellyCheckoutSkeleton />
+          <SwapCheckoutSkeleton />
         ) : (
           <>
             <RowDataContainer>
@@ -1063,48 +1125,34 @@ const ChangellyCheckout: React.FC = () => {
       ) : null}
 
       {!paymentExpired && !!exchangeTxId ? (
-        <TouchableOpacity
-          onPress={() => {
-            if (!termsAccepted) {
-              scrollViewRef?.current?.scrollToEnd({animated: true});
-            }
-            setShowCheckTermsMsg(!termsAccepted);
-          }}>
-          <SwipeButton
-            title={'Slide to send'}
-            disabled={!termsAccepted}
-            onSwipeComplete={onSwipeComplete}
-            forceReset={resetSwipeButton}
-          />
-        </TouchableOpacity>
+        <>
+          {!termsAccepted ? (
+            <TouchableOpacity
+              onPress={() => {
+                scrollViewRef?.current?.scrollToEnd({animated: true});
+                setShowCheckTermsMsg(true);
+              }}>
+              <SwipeButton
+                title={'Slide to send'}
+                disabled={true}
+                onSwipeComplete={() => {}}
+              />
+            </TouchableOpacity>
+          ) : (
+            <SwipeButton
+              title={'Slide to send'}
+              disabled={false}
+              onSwipeComplete={onSwipeComplete}
+              forceReset={resetSwipeButton}
+            />
+          )}
+        </>
       ) : null}
 
       <ChangellyPoliciesModal
         isVisible={changellyPoliciesModalVisible}
         onDismiss={() => {
           setChangellyPoliciesModalVisible(false);
-        }}
-      />
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          await sleep(600);
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: ExternalServicesSettingsScreens.CHANGELLY_SETTINGS,
-                },
-              ],
-            }),
-          );
         }}
       />
     </SwapCheckoutContainer>

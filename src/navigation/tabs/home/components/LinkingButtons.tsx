@@ -1,10 +1,10 @@
 import React, {ReactNode} from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {Action, White} from '../../../../styles/colors';
+import {Action, Midnight, White} from '../../../../styles/colors';
 import Haptic from '../../../../components/haptic-feedback/haptic';
 import {BaseText} from '../../../../components/styled/Text';
 import {titleCasing} from '../../../../utils/helper-methods';
-import {useAppDispatch} from '../../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useNavigation} from '@react-navigation/native';
 import {Path, Rect, Svg} from 'react-native-svg';
@@ -12,6 +12,7 @@ import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequire
 import {useTranslation} from 'react-i18next';
 import {WalletScreens} from '../../../wallet/WalletGroup';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const ButtonsRow = styled.View`
   justify-content: center;
@@ -31,13 +32,14 @@ const ButtonText = styled(BaseText)`
   margin-top: 5px;
 `;
 
-const LinkButton = styled.TouchableOpacity`
+const LinkButton = styled(TouchableOpacity)`
   height: 43px;
   width: 43px;
   border-radius: 11px;
   align-items: center;
   justify-content: center;
-  background: ${({theme: {dark}}) => (dark ? '#0C204E' : Action)};
+  background: ${({theme: {dark}, disabled}) =>
+    disabled ? (dark ? '#223358' : '#546acb') : dark ? Midnight : Action};
   margin: 11px 0 8px;
 `;
 
@@ -59,12 +61,7 @@ const SellSvg = () => {
   const theme = useTheme();
   return (
     <Svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-      <Rect
-        width="44"
-        height="44"
-        rx="11"
-        fill={theme.dark ? '#0C204E' : '#2240C4'}
-      />
+      <Rect width="44" height="44" rx="11" />
       <Path
         d="M23.8871 12C23.0221 12 22.1765 12.2565 21.4573 12.7371C20.738 13.2176 20.1775 13.9007 19.8465 14.6998C19.5154 15.499 19.4288 16.3784 19.5976 17.2267C19.7663 18.0751 20.1829 18.8544 20.7945 19.466C21.4062 20.0777 22.1855 20.4942 23.0338 20.663C23.8822 20.8317 24.7616 20.7451 25.5607 20.4141C26.3599 20.0831 27.0429 19.5225 27.5235 18.8033C28.0041 18.0841 28.2606 17.2385 28.2606 16.3735C28.2594 15.2139 27.7983 14.1022 26.9783 13.2822C26.1584 12.4623 25.0466 12.0012 23.8871 12ZM24.5081 18.2541H23.2573V14.5016H24.5081V18.2541Z"
         fill={theme.dark ? '#4989FF' : White}
@@ -122,6 +119,7 @@ const SendSvg = () => {
 };
 
 interface ButtonListProps {
+  key: 'buy' | 'sell' | 'swap' | 'receive' | 'send';
   label: string;
   img: ReactNode;
   cta: () => void;
@@ -157,6 +155,8 @@ const LinkingButtons = ({buy, sell, receive, send, swap}: Props) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
+  const tokensDataLoaded = useAppSelector(({APP}) => APP.tokensDataLoaded);
 
   const buyCryptoCta = useRequireKeyAndWalletRedirect(
     buy && buy.cta
@@ -203,30 +203,35 @@ const LinkingButtons = ({buy, sell, receive, send, swap}: Props) => {
   );
   const buttonsList: Array<ButtonListProps> = [
     {
+      key: 'buy',
       label: t('buy'),
       img: <BuySvg />,
       cta: buyCryptoCta,
       hide: !!buy?.hide,
     },
     {
+      key: 'sell',
       label: t('sell'),
       img: <SellSvg />,
       cta: sellCryptoCta,
       hide: !!sell?.hide,
     },
     {
+      key: 'swap',
       label: t('swap'),
       img: <SwapSvg />,
       cta: swapCryptoCta,
       hide: !!swap?.hide,
     },
     {
+      key: 'receive',
       label: receive.label || t('receive'),
       img: <ReceiveSvg />,
       cta: receive.cta,
       hide: !!receive?.hide,
     },
     {
+      key: 'send',
       label: send.label || t('send'),
       img: <SendSvg />,
       cta: send.cta,
@@ -235,11 +240,15 @@ const LinkingButtons = ({buy, sell, receive, send, swap}: Props) => {
   ];
   return (
     <ButtonsRow>
-      {buttonsList.map(({label, cta, img, hide}: ButtonListProps) =>
+      {buttonsList.map(({key, label, cta, img, hide}: ButtonListProps) =>
         hide ? null : (
-          <ButtonContainer key={label}>
+          <ButtonContainer key={key}>
             <LinkButton
               activeOpacity={ActiveOpacity}
+              disabled={
+                ['buy', 'sell', 'swap'].includes(key) &&
+                (!appWasInit || !tokensDataLoaded)
+              }
               onPress={() => {
                 Haptic('impactLight');
                 cta();

@@ -42,7 +42,7 @@ const createErrorConfig = (
   ],
 });
 
-const UpdateCardNameScreen: React.VFC<
+const UpdateCardNameScreen: React.FC<
   NativeStackScreenProps<CardStackParamList, CardScreens.UPDATE_CARD_NAME>
 > = ({navigation, route}) => {
   const {card} = route.params;

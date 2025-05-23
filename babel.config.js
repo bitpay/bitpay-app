@@ -19,6 +19,16 @@ const plugins = [
       allowUndefined: true,
     },
   ],
+  [
+    'module-resolver',
+    {
+      root: ['./src'],
+      extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
+      alias: {
+        '@components': './src/components',
+      },
+    },
+  ],
 ];
 
 if (prod) {
@@ -27,7 +37,7 @@ if (prod) {
 
 module.exports = {
   presets: [
-    'module:metro-react-native-babel-preset',
+    'module:@react-native/babel-preset',
     'module:@babel/preset-typescript',
   ],
   plugins,

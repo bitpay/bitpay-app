@@ -10,12 +10,13 @@ import {
 import {Platform, Image, ImageSourcePropType} from 'react-native';
 import {Action, Black, Slate, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const OptionsTitleContainer = styled.View`
   margin-bottom: 25px;
 `;
 
-const OptionContainer = styled.TouchableOpacity<SheetParams>`
+const OptionContainer = styled(TouchableOpacity)<SheetParams>`
   flex-direction: row;
   align-items: stretch;
   padding-${({placement}) => placement}: 31px;
@@ -58,12 +59,14 @@ export interface Option {
   optionElement?: any;
 }
 
+type SheetPlacement = 'top' | 'bottom';
+
 interface Props extends SheetParams {
   isVisible: boolean;
   closeModal: () => void;
   title?: string;
   options: Array<Option>;
-  placement?: 'top' | 'bottom';
+  placement?: SheetPlacement;
   paddingHorizontal?: number;
 }
 
@@ -71,16 +74,16 @@ const OptionsSheet = ({
   isVisible,
   closeModal,
   title,
-  placement,
   options,
   paddingHorizontal,
 }: Props) => {
-  const sheetPlacement = placement || 'bottom';
+  const sheetPlacement = 'bottom' as SheetPlacement;
   const topStyles = {
     paddingTop: Platform.OS === 'android' ? 0 : 31,
   };
   return (
     <SheetModal
+      modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={closeModal}
       placement={sheetPlacement}>
@@ -108,7 +111,7 @@ const OptionsSheet = ({
           ) => {
             return (
               <OptionContainer
-                style={index === 0 && placement === 'top' && topStyles}
+                style={index === 0 && sheetPlacement === 'top' && topStyles}
                 placement={sheetPlacement}
                 key={index}
                 activeOpacity={ActiveOpacity}

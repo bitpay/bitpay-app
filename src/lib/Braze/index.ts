@@ -1,4 +1,6 @@
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
+import axios from 'axios';
+import {BRAZE_MERGE_AND_DELETE_API_KEY, BRAZE_REST_API_ENDPOINT} from '@env';
 
 const nonCustomAttributes = [
   'country',
@@ -11,6 +13,14 @@ const nonCustomAttributes = [
   'lastName',
   'phoneNumber',
 ] as const;
+
+const safeSet = (fn: () => void, attributeName: string) => {
+  try {
+    fn();
+  } catch (error) {
+    console.error(`Error setting ${attributeName}:`, error);
+  }
+};
 
 const setUserAttributes = (attributes: BrazeUserAttributes) => {
   const {
@@ -27,7 +37,7 @@ const setUserAttributes = (attributes: BrazeUserAttributes) => {
   } = attributes;
 
   if (typeof country !== 'undefined') {
-    Braze.setCountry(country);
+    safeSet(() => Braze.setCountry(country), 'country');
   }
 
   if (typeof dateOfBirth !== 'undefined') {
@@ -35,50 +45,101 @@ const setUserAttributes = (attributes: BrazeUserAttributes) => {
     const year = asDate.getFullYear();
     const month = (asDate.getMonth() + 1) as Braze.MonthsAsNumber;
     const day = asDate.getDate();
-
-    Braze.setDateOfBirth(year, month, day);
+    safeSet(() => Braze.setDateOfBirth(year, month, day), 'dateOfBirth');
   }
 
-  if (typeof email !== 'undefined') {
-    Braze.setEmail(email);
+  if (email) {
+    safeSet(() => Braze.setEmail(email), 'email');
   }
 
-  if (typeof firstName !== 'undefined') {
-    Braze.setFirstName(firstName);
+  if (firstName) {
+    safeSet(() => Braze.setFirstName(firstName), 'firstName');
   }
 
-  if (typeof gender !== 'undefined') {
+  if (gender) {
     const supportedGenders = ['m', 'f', 'n', 'o', 'p', 'u'];
     const isSupported = supportedGenders.indexOf(gender) > -1;
 
     if (isSupported) {
-      Braze.setGender(gender as Braze.GenderTypes[keyof Braze.GenderTypes]);
+      safeSet(
+        () =>
+          Braze.setGender(gender as Braze.GenderTypes[keyof Braze.GenderTypes]),
+        'gender',
+      );
     }
   }
 
-  if (typeof homeCity !== 'undefined') {
-    Braze.setHomeCity(homeCity);
+  if (homeCity) {
+    safeSet(() => Braze.setHomeCity(homeCity), 'homeCity');
   }
 
-  if (typeof language !== 'undefined') {
-    Braze.setLanguage(language);
+  if (language) {
+    safeSet(() => Braze.setLanguage(language), 'language');
   }
 
-  if (typeof lastName !== 'undefined') {
-    Braze.setLastName(lastName);
+  if (lastName) {
+    safeSet(() => Braze.setLastName(lastName), 'lastName');
   }
 
-  if (typeof phoneNumber !== 'undefined') {
-    Braze.setPhoneNumber(phoneNumber);
+  if (phoneNumber) {
+    safeSet(() => Braze.setPhoneNumber(phoneNumber), 'phoneNumber');
   }
 
   Object.entries(customAttributes).forEach(([k, v]) => {
     const isValidCustomAttribute = nonCustomAttributes.indexOf(k as any) < 0;
-
     if (isValidCustomAttribute) {
-      Braze.setCustomUserAttribute(k, v);
+      safeSet(
+        () => Braze.setCustomUserAttribute(k, v),
+        `custom attribute ${k}`,
+      );
     }
   });
+};
+
+const mergeUsers = async (
+  user_to_merge: string,
+  user_to_keep: string,
+): Promise<any> => {
+  const url = 'https://' + BRAZE_REST_API_ENDPOINT + '/users/merge';
+  const body = {
+    merge_updates: [
+      {
+        identifier_to_merge: {
+          external_id: user_to_merge,
+        },
+        identifier_to_keep: {
+          external_id: user_to_keep,
+        },
+      },
+    ],
+  };
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer ' + BRAZE_MERGE_AND_DELETE_API_KEY,
+  };
+  try {
+    const {data} = await axios.post(url, body, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
+};
+
+const deleteUser = async (eid: string): Promise<any> => {
+  const url = 'https://' + BRAZE_REST_API_ENDPOINT + '/users/delete';
+  const body = {
+    external_ids: [eid],
+  };
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer ' + BRAZE_MERGE_AND_DELETE_API_KEY,
+  };
+  try {
+    const {data} = await axios.post(url, body, {headers});
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
 };
 
 export type BrazeUserAttributes = {
@@ -90,6 +151,7 @@ export const BrazeWrapper = (() => {
     userId?: string;
     attributes?: BrazeUserAttributes;
   } = {};
+  let mergingUser = false;
 
   return {
     init() {
@@ -100,6 +162,9 @@ export const BrazeWrapper = (() => {
       userId: string | undefined,
       attributes?: BrazeUserAttributes | undefined,
     ) {
+      if (mergingUser) {
+        return;
+      }
       if (!lastSeenIdentity) {
         lastSeenIdentity = {};
       }
@@ -127,14 +192,34 @@ export const BrazeWrapper = (() => {
       };
     },
 
+    startMergingUser() {
+      mergingUser = true;
+    },
+
+    endMergingUser() {
+      mergingUser = false;
+    },
+
+    merge(userToMerge: string, userToKeep: string) {
+      return mergeUsers(userToMerge, userToKeep);
+    },
+
+    delete(eid: string) {
+      return deleteUser(eid);
+    },
+
     screen(name: string, properties: Record<string, any> = {}) {
       const screenName = `Viewed ${name} Screen`;
 
-      Braze.logCustomEvent(screenName, properties);
+      if (!mergingUser) {
+        Braze.logCustomEvent(screenName, properties);
+      }
     },
 
     track(eventName: string, properties: Record<string, any> = {}) {
-      Braze.logCustomEvent(eventName, properties);
+      if (!mergingUser) {
+        Braze.logCustomEvent(eventName, properties);
+      }
     },
   };
 })();

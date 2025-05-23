@@ -5,10 +5,12 @@ export const CoinbaseIcon = (coinbaseTx: CoinbaseTransactionProps) => {
   let txIcon;
   switch (coinbaseTx.type) {
     case 'send':
-      if (coinbaseTx.from) {
-        txIcon = TransactionIcons.received;
-      } else {
+      if (coinbaseTx.status !== 'completed') {
+        txIcon = TransactionIcons.confirming;
+      } else if (coinbaseTx.to) {
         txIcon = TransactionIcons.sent;
+      } else {
+        txIcon = TransactionIcons.received;
       }
       break;
     case 'trade':

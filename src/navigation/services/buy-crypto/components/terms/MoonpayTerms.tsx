@@ -1,6 +1,6 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ExchangeTermsContainer,
   ExchangeTermsText,
@@ -48,38 +48,36 @@ const MoonpayTerms: React.FC<{
         {t(
           'Moonpay also charges a dynamic network fee on all BTC, ETH and ERC20 tokens purchases, based on the blockchain network conditions.',
         )}
-        <TouchableOpacity
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                'https://support.moonpay.com/customers/docs/moonpay-fees',
-              ),
-            );
-          }}>
-          <Link style={{fontSize: 12, marginLeft: 2, top: 2}}>
-            {t('Read more')}
-          </Link>
-        </TouchableOpacity>
       </ExchangeTermsText>
-      <ExchangeTermsText style={{marginTop: 4}}>
+      <TouchableOpacity
+        onPress={() => {
+          haptic('impactLight');
+          dispatch(
+            openUrlWithInAppBrowser(
+              'https://support.moonpay.com/customers/docs/moonpay-fees',
+            ),
+          );
+        }}>
+        <Link style={{fontSize: 12}}>{t('Read more')}</Link>
+      </TouchableOpacity>
+      <ExchangeTermsText style={{marginTop: 6}}>
         {t(
           'This service is provided by a third party, and you are subject to their',
         )}
-        <TouchableOpacity
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                country == 'US'
-                  ? 'https://www.moonpay.com/legal/terms_of_use_usa'
-                  : 'https://www.moonpay.com/legal/terms_of_use',
-              ),
-            );
-          }}>
-          <Link style={{fontSize: 12, top: 2}}>{t('Terms of use')}</Link>
-        </TouchableOpacity>
       </ExchangeTermsText>
+      <TouchableOpacity
+        onPress={() => {
+          haptic('impactLight');
+          dispatch(
+            openUrlWithInAppBrowser(
+              country == 'US'
+                ? 'https://www.moonpay.com/legal/terms_of_use_usa'
+                : 'https://www.moonpay.com/legal/terms_of_use',
+            ),
+          );
+        }}>
+        <Link style={{fontSize: 12}}>{t('Terms of use')}</Link>
+      </TouchableOpacity>
     </ExchangeTermsContainer>
   );
 };

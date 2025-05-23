@@ -11,6 +11,7 @@ import {useAppDispatch} from '../../../../utils/hooks';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CloseModal from '../../../../../assets/img/close-modal-icon.svg';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const ChangellyPoliciesContainer = styled.SafeAreaView`
   flex: 1;
@@ -22,7 +23,7 @@ const ModalHeader = styled.View`
   margin-right: 10px;
 `;
 
-const CloseModalButton = styled.TouchableOpacity`
+const CloseModalButton = styled(TouchableOpacity)`
   margin: 15px;
   padding: 5px;
   height: 41px;
@@ -34,7 +35,7 @@ const CloseModalButton = styled.TouchableOpacity`
   align-items: center;
 `;
 
-const PoliciesContainer = styled.TouchableOpacity`
+const PoliciesContainer = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: space-between;
   margin: 15px;

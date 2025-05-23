@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ExchangeTermsContainer,
   ExchangeTermsText,
@@ -40,7 +40,7 @@ const SardineTerms: React.FC<{
       <ExchangeTermsText>
         {t('What service fees am I paying?')}
       </ExchangeTermsText>
-      <ExchangeTermsText>
+      <ExchangeTermsText style={{maxWidth: '80%'}}>
         {t('SardineTermsFeeInfo', {
           networkFee,
           transactionFee,
@@ -51,20 +51,18 @@ const SardineTerms: React.FC<{
           'The network fee is paid to crypto miners to ensure that the transaction is processed on the crypto network.',
         )}
       </ExchangeTermsText>
-      <ExchangeTermsText style={{marginTop: 4}}>
+      <ExchangeTermsText style={{marginTop: 6}}>
         {t(
           'This service is provided by a third party, and you are subject to their',
         )}
-        <TouchableOpacity
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser('https://crypto.sardine.ai/terms'),
-            );
-          }}>
-          <Link style={{fontSize: 12, top: 2}}>{t('Terms of service')}</Link>
-        </TouchableOpacity>
       </ExchangeTermsText>
+      <TouchableOpacity
+        onPress={() => {
+          haptic('impactLight');
+          dispatch(openUrlWithInAppBrowser('https://crypto.sardine.ai/terms'));
+        }}>
+        <Link style={{fontSize: 12}}>{t('Terms of service')}</Link>
+      </TouchableOpacity>
     </ExchangeTermsContainer>
   );
 };

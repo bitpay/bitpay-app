@@ -1,5 +1,4 @@
 import React, {useEffect} from 'react';
-import Modal from 'react-native-modal';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import styled from 'styled-components/native';
@@ -16,12 +15,14 @@ import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
 import {HeaderTitle, Paragraph} from '../../../components/styled/Text';
-import {Keyboard} from 'react-native';
+import {Keyboard, Platform} from 'react-native';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
+import BaseModal from '../../../components/modal/base/BaseModal';
 
 const DecryptFormContainer = styled.View`
   justify-content: center;
+  align-self: center;
   width: ${WIDTH - 16}px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-radius: 10px;
@@ -99,19 +100,16 @@ const DecryptEnterPasswordModal = () => {
   };
 
   return (
-    <Modal
+    <BaseModal
+      accessibilityLabel="enter-encryption-password"
+      id={'enterEncryptionPassword'}
       isVisible={isVisible}
       backdropOpacity={0.4}
       animationIn={'fadeInUp'}
       animationOut={'fadeOutDown'}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating={true}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
       onBackdropPress={dismissModal}
-      style={{
-        alignItems: 'center',
-      }}>
+      useNativeDriverForBackdrop={true}
+      useNativeDriver={Platform.OS === 'ios'}>
       <DecryptFormContainer>
         <PasswordFormContainer>
           <HeaderTitle>{t('Enter encryption password')}</HeaderTitle>
@@ -138,16 +136,23 @@ const DecryptEnterPasswordModal = () => {
           </PasswordInputContainer>
 
           <ActionContainer>
-            <Button onPress={handleSubmit(onSubmit)}>{t('Continue')}</Button>
+            <Button
+              touchableLibrary={'react-native'}
+              onPress={handleSubmit(onSubmit)}>
+              {t('Continue')}
+            </Button>
           </ActionContainer>
           <ActionContainer>
-            <Button onPress={dismissModal} buttonStyle={'secondary'}>
+            <Button
+              touchableLibrary={'react-native'}
+              onPress={dismissModal}
+              buttonStyle={'secondary'}>
               {t('Cancel')}
             </Button>
           </ActionContainer>
         </PasswordFormContainer>
       </DecryptFormContainer>
-    </Modal>
+    </BaseModal>
   );
 };
 

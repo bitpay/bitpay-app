@@ -6,9 +6,9 @@ import {
   RefreshControl,
   Image,
   DeviceEventEmitter,
-  TouchableOpacity,
   Platform,
 } from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import RNPrint from 'react-native-print';
 import RenderHtml from 'react-native-render-html';
 import TimeAgo from 'react-native-timeago';
@@ -51,7 +51,7 @@ import {
 } from '../../components/svg/ShopTabSvgs';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
 import {BASE_BITPAY_URLS} from '../../../../../constants/config';
-import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
+import {formatFiatAmount} from '../../../../../utils/helper-methods';
 import {AppActions} from '../../../../../store/app';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {
@@ -276,7 +276,9 @@ const GiftCardDetails = ({
       cardConfig.redeemInstructions ||
       t(
         'Paste this code on . This gift card cannot be recovered if your claim code is lost.',
-        {website: cardConfig.website},
+        {
+          website: cardConfig.website,
+        },
       );
     const containsHtml =
       redeemInstructions.includes('</') || redeemInstructions.includes('/>');
@@ -292,6 +294,7 @@ const GiftCardDetails = ({
     return AppActions.showBottomNotificationModal({
       type: 'success',
       title: t('Copied: ', {copiedValue}),
+      modalLibrary: 'modal',
       message: '',
       message2: (
         <ScrollableBottomNotificationMessageContainer
@@ -343,7 +346,6 @@ const GiftCardDetails = ({
       img: <ExternalLinkSvg theme={theme} />,
       description: t('Share Claim Code'),
       onPress: async () => {
-        await sleep(500);
         const dataToShare =
           Platform.OS === 'ios' && giftCard.claimLink
             ? {url: giftCard.claimLink}
@@ -357,7 +359,6 @@ const GiftCardDetails = ({
             img: <PrintSvg theme={theme} />,
             description: t('Print'),
             onPress: async () => {
-              await sleep(600); // Wait for options sheet to close on iOS
               await RNPrint.print({
                 html: generateGiftCardPrintHtml(
                   cardConfig,
@@ -383,8 +384,12 @@ const GiftCardDetails = ({
         network: appNetwork,
       }),
     );
-    giftCard.archived = !giftCard.archived;
-    if (giftCard.archived) {
+    const newArchivedStatus = !giftCard.archived;
+    setGiftCard({
+      ...giftCard,
+      archived: newArchivedStatus,
+    });
+    if (newArchivedStatus) {
       navigation.pop();
     }
   };

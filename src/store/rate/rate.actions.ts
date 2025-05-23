@@ -12,6 +12,7 @@ export const successGetRates = (payload: {
 export const successGetHistoricalRates = (payload: {
   ratesByDateRange: RatesByDateRange;
   dateRange: number;
+  fiatCode: string;
 }): RateActionType => ({
   type: RateActionTypes.SUCCESS_GET_HISTORICAL_RATES,
   payload,

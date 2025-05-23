@@ -12,6 +12,7 @@ import {ActiveOpacity} from '../../../components/styled/Containers';
 import {titleCasing} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {DateRanges} from '../../../store/rate/rate.models';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface Props {
   onPress: (dateRange: DateRanges) => void;
@@ -44,7 +45,7 @@ const ButtonText = styled(BaseText)<{isActive: string; label: string}>`
       : LightBlack};
 `;
 
-const LinkButton = styled.TouchableOpacity<{isActive: string; label: string}>`
+const LinkButton = styled(TouchableOpacity)<{isActive: string; label: string}>`
   height: 40px;
   width: 50px;
   border-radius: 18px;
@@ -57,13 +58,16 @@ const LinkButton = styled.TouchableOpacity<{isActive: string; label: string}>`
 const RangeDateSelector = ({onPress}: Props) => {
   const [activeOption, setActiveOption] = useState<DateRanges>(DateRanges.Day);
   const updateOptions: Array<{label: string; dateRange: DateRanges}> = [
-    {label: '1D', dateRange: DateRanges.Day},
-    {label: '1W', dateRange: DateRanges.Week},
     {label: '1M', dateRange: DateRanges.Month},
+    {label: '1W', dateRange: DateRanges.Week},
+    {label: '1D', dateRange: DateRanges.Day},
   ];
   const isActive = updateOptions.find(
     opt => opt.dateRange === activeOption,
-  ) as {label: string; dateRange: DateRanges};
+  ) as {
+    label: string;
+    dateRange: DateRanges;
+  };
 
   return (
     <ButtonsRow>

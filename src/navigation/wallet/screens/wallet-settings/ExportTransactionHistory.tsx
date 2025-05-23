@@ -20,6 +20,7 @@ import Papa from 'papaparse';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 import {
   formatCurrencyAbbreviation,
+  isAndroidStoragePermissionGranted,
   sleep,
 } from '../../../../utils/helper-methods';
 import {
@@ -33,6 +34,7 @@ import {LogActions} from '../../../../store/log';
 import {Paragraph} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import Mailer from 'react-native-mail';
+import {IS_DESKTOP} from '../../../../constants';
 
 const ExportTransactionHistoryContainer = styled.SafeAreaView`
   flex: 1;
@@ -70,39 +72,6 @@ const ExportTransactionHistory = () => {
       return '';
     }
     return dateObj.toJSON();
-  };
-
-  const isAndroidStoragePermissionGranted = (): Promise<boolean> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        ]);
-        if (
-          granted['android.permission.READ_EXTERNAL_STORAGE'] ===
-            PermissionsAndroid.RESULTS.GRANTED &&
-          granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
-            PermissionsAndroid.RESULTS.GRANTED
-        ) {
-          dispatch(
-            LogActions.info(
-              '[isAndroidStoragePermissionGranted]: Storage permission granted',
-            ),
-          );
-          resolve(true);
-        } else {
-          dispatch(
-            LogActions.warn(
-              '[isAndroidStoragePermissionGranted]: Storage permission denied',
-            ),
-          );
-          throw new Error('Storage permission denied');
-        }
-      } catch (e) {
-        reject(e);
-      }
-    });
   };
 
   const buildCVSFile = async () => {
@@ -237,7 +206,7 @@ const ExportTransactionHistory = () => {
   const shareFile = async (csv: any, option: string) => {
     try {
       if (Platform.OS === 'android' && Platform.Version < 30) {
-        await isAndroidStoragePermissionGranted();
+        await isAndroidStoragePermissionGranted(dispatch);
       }
       const rootPath =
         Platform.OS === 'ios'
@@ -313,11 +282,13 @@ const ExportTransactionHistory = () => {
           </Button>
         </ButtonContainer>
 
-        <ButtonContainer>
-          <Button onPress={() => onSubmit('email')} buttonStyle={'secondary'}>
-            {t('Send by Email')}
-          </Button>
-        </ButtonContainer>
+        {!IS_DESKTOP && (
+          <ButtonContainer>
+            <Button onPress={() => onSubmit('email')} buttonStyle={'secondary'}>
+              {t('Send by Email')}
+            </Button>
+          </ButtonContainer>
+        )}
       </ScrollView>
     </ExportTransactionHistoryContainer>
   );

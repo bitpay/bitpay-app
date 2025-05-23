@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White, Action, Slate} from '../../../styles/colors';
 import {
@@ -135,7 +135,7 @@ const RoundButton = styled.View`
   border: 1px solid ${({theme: {dark}}) => (dark ? White : Action)};
 `;
 
-const RemoveButton = styled.TouchableOpacity`
+const RemoveButton = styled(TouchableOpacity)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,7 +145,7 @@ const RemoveButton = styled.TouchableOpacity`
   border: 1px solid ${Slate};
 `;
 
-export const AddButton = styled.TouchableOpacity`
+export const AddButton = styled(TouchableOpacity)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +161,7 @@ const CounterNumber = styled.Text`
   font-size: 16px;
 `;
 
-const RowContainer = styled.TouchableOpacity`
+const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   padding: 18px;
@@ -188,6 +188,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const segwitSupported = IsSegwitCoin(currency);
   const [showOptions, setShowOptions] = useState(false);
   const [testnetEnabled, setTestnetEnabled] = useState(false);
+  const [regtestEnabled, setRegtestEnabled] = useState(false);
   const [options, setOptions] = useState({
     useNativeSegwit: segwitSupported,
     networkName: 'livenet',
@@ -239,6 +240,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     opts.networkName = options.networkName;
     opts.singleAddress = options.singleAddress;
     opts.coin = currency?.toLowerCase();
+    opts.chain = opts.coin;
 
     CreateMultisigWallet(opts);
   };
@@ -356,9 +358,20 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const toggleTestnet = () => {
     const _testnetEnabled = !testnetEnabled;
     setTestnetEnabled(_testnetEnabled);
+    setRegtestEnabled(false);
     setOptions({
       ...options,
       networkName: _testnetEnabled ? 'testnet' : 'livenet',
+    });
+  };
+
+  const toggleRegtest = () => {
+    const _regtestEnabled = !regtestEnabled;
+    setRegtestEnabled(_regtestEnabled);
+    setTestnetEnabled(false);
+    setOptions({
+      ...options,
+      networkName: _regtestEnabled ? 'regtest' : 'livenet',
     });
   };
 
@@ -545,13 +558,17 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
             )}
             {showOptions && (
               <AdvancedOptions>
-                <RowContainer onPress={toggleTestnet}>
+                <RowContainer
+                  onPress={toggleTestnet}
+                  onLongPress={toggleRegtest}>
                   <Column>
-                    <OptionTitle>Testnet</OptionTitle>
+                    <OptionTitle>
+                      {regtestEnabled ? 'Regtest' : 'Testnet'}
+                    </OptionTitle>
                   </Column>
                   <CheckBoxContainer>
                     <Checkbox
-                      checked={testnetEnabled}
+                      checked={testnetEnabled || regtestEnabled}
                       onPress={toggleTestnet}
                     />
                   </CheckBoxContainer>

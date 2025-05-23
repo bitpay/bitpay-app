@@ -1,6 +1,6 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ExchangeTermsContainer,
   ExchangeTermsText,
@@ -50,38 +50,36 @@ const TransakTerms: React.FC<{
         {t(
           'Transak also charges a dynamic network fee based on the blockchain network conditions, and a partner margin when purchasing crypto within their apps.',
         )}
-        <TouchableOpacity
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                'https://support.transak.com/en/articles/7845942-how-does-transak-calculate-prices-and-fees',
-              ),
-            );
-          }}>
-          <Link style={{fontSize: 12, marginLeft: 2, top: 2}}>
-            {t('Read more')}
-          </Link>
-        </TouchableOpacity>
       </ExchangeTermsText>
-      <ExchangeTermsText style={{marginTop: 4}}>
+      <TouchableOpacity
+        onPress={() => {
+          haptic('impactLight');
+          dispatch(
+            openUrlWithInAppBrowser(
+              'https://support.transak.com/en/articles/7845942-how-does-transak-calculate-prices-and-fees',
+            ),
+          );
+        }}>
+        <Link style={{fontSize: 12}}>{t('Read more')}</Link>
+      </TouchableOpacity>
+      <ExchangeTermsText style={{marginTop: 6}}>
         {t(
           'This service is provided by a third party, and you are subject to their',
         )}
-        <TouchableOpacity
-          onPress={() => {
-            haptic('impactLight');
-            dispatch(
-              openUrlWithInAppBrowser(
-                country === 'US'
-                  ? 'https://transak.com/terms-of-service-us'
-                  : 'https://transak.com/terms-of-service',
-              ),
-            );
-          }}>
-          <Link style={{fontSize: 12, top: 2}}>{t('Terms of service')}</Link>
-        </TouchableOpacity>
       </ExchangeTermsText>
+      <TouchableOpacity
+        onPress={() => {
+          haptic('impactLight');
+          dispatch(
+            openUrlWithInAppBrowser(
+              country === 'US'
+                ? 'https://transak.com/terms-of-service-us'
+                : 'https://transak.com/terms-of-service',
+            ),
+          );
+        }}>
+        <Link style={{fontSize: 12}}>{t('Terms of service')}</Link>
+      </TouchableOpacity>
     </ExchangeTermsContainer>
   );
 };

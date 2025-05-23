@@ -2,9 +2,14 @@ import axios from 'axios';
 import {LocationActions} from '.';
 import {Effect} from '..';
 import {EUCountries} from './location.constants';
+import cloneDeep from 'lodash.clonedeep';
+import {LogActions} from '../log';
 
-export const isEuCountry = (countryShortCode: string) => {
-  return EUCountries.includes(countryShortCode);
+export const isEuCountry = (countryShortCode: string | undefined): boolean => {
+  if (!countryShortCode) {
+    return false;
+  }
+  return EUCountries.includes(cloneDeep(countryShortCode).toUpperCase());
 };
 
 export const getLocationData = (): Effect => async dispatch => {
@@ -18,6 +23,7 @@ export const getLocationData = (): Effect => async dispatch => {
       },
     );
 
+    LogActions.info('getLocationData', locationData.country);
     await dispatch(
       LocationActions.successGetLocation({
         locationData: {
@@ -30,6 +36,7 @@ export const getLocationData = (): Effect => async dispatch => {
       }),
     );
   } catch (err) {
-    console.log(err);
+    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+    LogActions.error('getLocationData', errStr);
   }
 };

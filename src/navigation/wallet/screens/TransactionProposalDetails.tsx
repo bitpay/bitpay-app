@@ -4,6 +4,7 @@ import {
   H6,
   HeaderTitle,
   H2,
+  H4,
 } from '../../../components/styled/Text';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -15,7 +16,7 @@ import {
   getDetailsTitle,
   IsMultisigEthInfo,
   IsReceived,
-  NotZeroAmountEVM,
+  TxForPaymentFeeEVM,
   TxActions,
   RemoveTxProposal,
   RejectTxProposal,
@@ -39,7 +40,11 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import Banner from '../../../components/banner/Banner';
 import Info from '../../../components/icons/info/Info';
 import TransactionDetailSkeleton from '../components/TransactionDetailSkeleton';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  getBadgeImg,
+  getCurrencyAbbreviation,
+  sleep,
+} from '../../../utils/helper-methods';
 import {GetAmFormatDate, GetAmTimeAgo} from '../../../store/wallet/utils/time';
 import SendToPill from '../components/SendToPill';
 import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
@@ -54,7 +59,6 @@ import {
   broadcastTx,
   publishAndSign,
 } from '../../../store/wallet/effects/send/send';
-import PaymentSent from '../components/PaymentSent';
 import {
   CustomErrorMessage,
   WrongPasswordError,
@@ -82,6 +86,8 @@ import {
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {LogActions} from '../../../store/log';
 import {GetPayProDetails} from '../../../store/wallet/effects/paypro/paypro';
+import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
+import {AppActions} from '../../../store/app';
 
 const TxpDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -198,7 +204,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
   );
 };
 
-let countDown: NodeJS.Timer | undefined;
+let countDown: NodeJS.Timeout | undefined;
 
 const TransactionProposalDetails = () => {
   const {t} = useTranslation();
@@ -218,9 +224,9 @@ const TransactionProposalDetails = () => {
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [payproIsLoading, setPayproIsLoading] = useState(true);
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [lastSigner, setLastSigner] = useState(false);
+  const [isForFee, setIsForFee] = useState(false);
 
   const title = getDetailsTitle(transaction, wallet);
   let {currencyAbbreviation, chain, network, tokenAddress} = wallet;
@@ -248,9 +254,21 @@ const TransactionProposalDetails = () => {
         }),
       );
       setTxp(_transaction);
-      setLastSigner(
-        _transaction.actions.filter((a: any) => a?.type === 'accept').length ===
-          _transaction.requiredSignatures - 1,
+      if (_transaction.actions) {
+        setLastSigner(
+          _transaction.actions.filter((a: any) => a?.type === 'accept')
+            .length ===
+            (_transaction.requiredSignatures as number) - 1,
+        );
+      }
+      setIsForFee(
+        _transaction.action !== 'received' &&
+          TxForPaymentFeeEVM(
+            wallet.currencyAbbreviation,
+            transaction.coin,
+            transaction.chain,
+            transaction.amount,
+          ),
       );
       await sleep(500);
       setIsLoading(false);
@@ -315,7 +333,7 @@ const TransactionProposalDetails = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timer,
+    countDown?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
@@ -335,8 +353,13 @@ const TransactionProposalDetails = () => {
   };
 
   const getIcon = () => {
-    return SUPPORTED_CURRENCIES.includes(wallet.currencyAbbreviation) ? (
-      CurrencyListIcons[wallet.currencyAbbreviation]({width: 18, height: 18})
+    const _currencyAbbreviation = getCurrencyAbbreviation(
+      wallet.currencyAbbreviation,
+      wallet.chain,
+    );
+
+    return CurrencyListIcons[_currencyAbbreviation] ? (
+      CurrencyListIcons[_currencyAbbreviation]({width: 18, height: 18})
     ) : (
       <DefaultSvg width={18} height={18} />
     );
@@ -364,8 +387,15 @@ const TransactionProposalDetails = () => {
       );
       await sleep(1000);
       dispatch(dismissOnGoingProcessModal());
-      await sleep(600);
-      setShowPaymentSentModal(true);
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
+        }),
+      );
+      await sleep(1000);
+      navigation.goBack();
     } catch (err: any) {
       logger.error(
         `Could not broadcast Txp. Coin: ${txp.coin} - Chain: ${txp.chain} - Network: ${wallet.network} - Raw: ${txp.raw}`,
@@ -450,6 +480,65 @@ const TransactionProposalDetails = () => {
     }
   };
 
+  const onSwipeComplete = async () => {
+    try {
+      dispatch(
+        startOnGoingProcessModal(
+          lastSigner ? 'SENDING_PAYMENT' : 'ACCEPTING_PAYMENT',
+        ),
+      );
+      await sleep(400);
+      await dispatch(publishAndSign({txp, key, wallet}));
+      await sleep(400);
+      dispatch(dismissOnGoingProcessModal());
+      dispatch(
+        Analytics.track('Sent Crypto', {
+          context: 'Transaction Proposal Details',
+          coin: currencyAbbreviation || '',
+        }),
+      );
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
+        }),
+      );
+      await sleep(1000);
+      navigation.goBack();
+    } catch (err) {
+      await sleep(500);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      setResetSwipeButton(true);
+      switch (err) {
+        case 'invalid password':
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+          break;
+        case 'password canceled':
+          break;
+        case 'biometric check failed':
+          break;
+        case 'user denied transaction':
+          break;
+        default:
+          await showErrorMessage(
+            CustomErrorMessage({
+              errMsg: BWCErrorMessage(err),
+              title: t('Uh oh, something went wrong'),
+            }),
+          );
+      }
+    }
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
+  };
+
   useEffect(() => {
     init();
   }, [transaction, wallet]);
@@ -494,11 +583,9 @@ const TransactionProposalDetails = () => {
       ) : txp ? (
         <ScrollView>
           <>
-            {NotZeroAmountEVM(txp.amount, chain) ? (
-              <H2 medium={true}>{txp.amountStr}</H2>
-            ) : null}
+            {!isForFee ? <H2 medium={true}>{txp.amountStr}</H2> : null}
 
-            {!IsCustomERCToken(tokenAddress, chain) ? (
+            {!IsCustomERCToken(tokenAddress, chain) && !isForFee ? (
               <SubTitle>
                 {!txp.fiatRateStr
                   ? '...'
@@ -508,9 +595,7 @@ const TransactionProposalDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEVM(txp.amount, chain) ? (
-              <SubTitle>{t('Interaction with contract')}</SubTitle>
-            ) : null}
+            {isForFee ? <H4>{t('Interaction with contract')}</H4> : null}
           </>
 
           {txp.removed ? (
@@ -673,8 +758,22 @@ const TransactionProposalDetails = () => {
                 <H7>{t('Sending from')}</H7>
                 <SendToPillContainer>
                   <SendToPill
-                    icon={getIcon()}
-                    description={wallet.credentials.walletName}
+                    icon={
+                      <CurrencyImage
+                        img={wallet.img}
+                        size={18}
+                        badgeUri={getBadgeImg(
+                          getCurrencyAbbreviation(
+                            wallet.currencyAbbreviation,
+                            wallet.chain,
+                          ),
+                          wallet.chain,
+                        )}
+                      />
+                    }
+                    description={
+                      wallet.walletName || wallet.credentials.walletName
+                    }
                   />
                 </SendToPillContainer>
               </DetailRow>
@@ -781,61 +880,9 @@ const TransactionProposalDetails = () => {
         <SwipeButton
           title={lastSigner ? t('Slide to send') : t('Slide to accept')}
           forceReset={resetSwipeButton}
-          onSwipeComplete={async () => {
-            try {
-              dispatch(
-                startOnGoingProcessModal(
-                  lastSigner ? 'SENDING_PAYMENT' : 'ACCEPTING_PAYMENT',
-                ),
-              );
-              await sleep(400);
-              await dispatch(publishAndSign({txp, key, wallet}));
-              dispatch(dismissOnGoingProcessModal());
-              dispatch(
-                Analytics.track('Sent Crypto', {
-                  context: 'Transaction Proposal Details',
-                  coin: currencyAbbreviation || '',
-                }),
-              );
-              await sleep(400);
-              setShowPaymentSentModal(true);
-            } catch (err) {
-              await sleep(500);
-              dispatch(dismissOnGoingProcessModal());
-              await sleep(500);
-              setResetSwipeButton(true);
-              switch (err) {
-                case 'invalid password':
-                  dispatch(showBottomNotificationModal(WrongPasswordError()));
-                  break;
-                case 'password canceled':
-                  break;
-                case 'biometric check failed':
-                  break;
-                case 'user denied transaction':
-                  break;
-                default:
-                  await showErrorMessage(
-                    CustomErrorMessage({
-                      errMsg: BWCErrorMessage(err),
-                      title: t('Uh oh, something went wrong'),
-                    }),
-                  );
-              }
-            }
-          }}
+          onSwipeComplete={onSwipeComplete}
         />
       ) : null}
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        title={lastSigner ? t('Payment Sent') : t('Payment Accepted')}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          await sleep(300);
-          navigation.goBack();
-        }}
-      />
     </TxpDetailsContainer>
   );
 };

@@ -1,3 +1,4 @@
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import {BaseText, H7} from '../../../../components/styled/Text';
 import {
@@ -14,7 +15,14 @@ export const CtaContainer = styled.View`
 export const SwapCryptoCard = styled.View`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
   border-radius: 9px;
-  margin: 20px 15px;
+  margin: 15px;
+  padding: 14px;
+`;
+
+export const AmountCryptoCard = styled.View`
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
+  border-radius: 9px;
+  margin: 0px 15px;
   padding: 14px;
 `;
 
@@ -42,15 +50,18 @@ export const ActionsContainer = styled.View<{alignEnd?: boolean}>`
   align-items: center;
 `;
 
-export const SelectedOptionContainer = styled.TouchableOpacity`
+export const SelectedOptionContainer = styled(TouchableOpacity)<{
+  noBackground?: boolean;
+}>`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   height: 40px;
   padding: 0px 14px;
-  background: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  border-radius: 52px;
+  background: ${({theme: {dark}, noBackground}) =>
+    noBackground ? 'transparent' : dark ? LightBlack : NeutralSlate};
+  border-radius: 12px;
   opacity: ${({disabled}) => (disabled ? 0.2 : 1)};
 `;
 
@@ -80,6 +91,14 @@ export const DataText = styled(BaseText)`
   font-size: 18px;
 `;
 
+export const AmountText = styled(BaseText)`
+  font-size: 38px;
+  font-weight: 500;
+  text-align: center;
+  color: ${({theme}) => theme.colors.text};
+  height: 50px;
+`;
+
 export const BottomDataText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 14px;
@@ -103,6 +122,13 @@ export const SpinnerContainer = styled.View`
   flex-direction: column;
   justify-content: center;
   align-items: center;
+`;
+
+export const WalletTextContainer = styled.View`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin-left: 10px;
 `;
 
 export const BalanceContainer = styled.View`

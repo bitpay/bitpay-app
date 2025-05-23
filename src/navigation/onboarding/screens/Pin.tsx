@@ -16,7 +16,7 @@ import {
 } from '../../../components/styled/Containers';
 import {H3, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {BiometricErrorNotification} from '../../../constants/BiometricError';
-import {AppActions} from '../../../store/app';
+import {AppActions, AppEffects} from '../../../store/app';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   useAppDispatch,
@@ -96,20 +96,26 @@ const PinScreen = ({
         allowDeviceCredentials: true,
       });
       const {available, biometryType} = await rnBiometrics.isSensorAvailable();
+      if (biometryType === BiometryTypes.FaceID) {
+        await AppEffects.checkFaceIdPermissions();
+      }
       if (available) {
-        logger.debug(`${biometryType} is supported`);
+        logger.debug(`[Biometrics] ${biometryType} is supported`);
         dispatch(AppActions.biometricLockActive(true));
         askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
       } else {
-        logger.debug('Biometrics not supported');
         dispatch(
           showBottomNotificationModal(
-            BiometricErrorNotification('Biometrics not supported'),
+            BiometricErrorNotification(
+              'Biometric method is not available on this device: ' +
+                biometryType,
+            ),
           ),
         );
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`[Biometrics] failed with error: ${errMsg}`);
       dispatch(showBottomNotificationModal(BiometricErrorNotification(errMsg)));
     }
   };

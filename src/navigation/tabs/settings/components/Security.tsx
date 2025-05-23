@@ -16,6 +16,7 @@ import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
 import {LOCK_AUTHORIZED_TIME} from '../../../../constants/Lock';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {checkFaceIdPermissions} from '../../../../store/app/app.effects';
 import FingerprintImg from '../../../../../assets/img/fingerprint.svg';
 import FingerprintDarkModeImg from '../../../../../assets/img/fingerprint-darkmode.svg';
 import FaceImg from '../../../../../assets/img/face.svg';
@@ -29,6 +30,7 @@ import {useTranslation} from 'react-i18next';
 import {sleep} from '../../../../utils/helper-methods';
 import {LogActions} from '../../../../store/log';
 import {useLogger} from '../../../../utils/hooks';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const FingerprintSvg = {
   light: <FingerprintImg />,
@@ -45,7 +47,7 @@ const PinSvg = {
   dark: <PinDarkModeImg />,
 };
 
-const ImgContainer = styled.TouchableOpacity`
+const ImgContainer = styled(TouchableOpacity)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,23 +108,28 @@ const Security = () => {
         allowDeviceCredentials: true,
       });
       const {available, biometryType} = await rnBiometrics.isSensorAvailable();
+      if (biometryType === BiometryTypes.FaceID) {
+        await checkFaceIdPermissions();
+      }
       if (available) {
-        logger.debug(`${biometryType} is supported`);
+        logger.debug(`[Biometrics] ${biometryType} is supported`);
         const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
         const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
         dispatch(AppActions.lockAuthorizedUntil(authorizedUntil));
         dispatch(AppActions.biometricLockActive(true));
       } else {
-        logger.debug('Biometrics not supported');
         dispatch(
           showBottomNotificationModal(
-            BiometricErrorNotification('Biometrics not supported'),
+            BiometricErrorNotification(
+              'Biometric method is not available on this device: ' +
+                biometryType,
+            ),
           ),
         );
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error(`setBiometric failed with error: ${errMsg}`));
+      logger.error(`[Biometrics] failed with error: ${errMsg}`);
       dispatch(
         showBottomNotificationModal(
           BiometricErrorNotification(errMsg, async () => {
@@ -195,7 +202,10 @@ const Security = () => {
           </Button>
         </Setting>
       </SettingsComponent>
-      <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
+      <SheetModal
+        modalLibrary={'bottom-sheet'}
+        isVisible={modalVisible}
+        onBackdropPress={hideModal}>
         <SheetContainer>
           <Header>
             <Title>{t('Enable Lock')}</Title>

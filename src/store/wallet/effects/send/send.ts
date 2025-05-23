@@ -25,6 +25,7 @@ import {
   TransactionOptionsContext,
   BitcoreUtxoTransactionLike,
   BitcoreEvmTransactionLike,
+  ProposalErrorHandlerContext,
 } from '../../wallet.models';
 import {
   FormatAmount,
@@ -45,6 +46,7 @@ import {
   formatCurrencyAbbreviation,
   formatFiatAmount,
   getCWCChain,
+  getFullLinkedWallet,
   getRateByCurrencyName,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -60,7 +62,11 @@ import {
   GeneralError,
   WrongPasswordError,
 } from '../../../../navigation/wallet/components/ErrorMessages';
-import {BWCErrorMessage, getErrorName} from '../../../../constants/BWCError';
+import {
+  BWCErrorMessage,
+  BWCErrorName,
+  getErrorName,
+} from '../../../../constants/BWCError';
 import {Invoice} from '../../../shop/shop.models';
 import {GetPayProDetails, HandlePayPro, PayProOptions} from '../paypro/paypro';
 import {
@@ -74,8 +80,9 @@ import {
 import {
   GetPrecision,
   IsERCToken,
+  IsEVMChain,
   IsSegwitCoin,
-  IsUtxoCoin,
+  IsUtxoChain,
 } from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -103,7 +110,6 @@ import {Analytics} from '../../../analytics/analytics.effects';
 import {AppActions} from '../../../app';
 import {Network, URL} from '../../../../constants';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
-import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../../constants/WalletConnectV2';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {SupportedTokenOptions} from '../../../../constants/SupportedCurrencyOptions';
 import {
@@ -111,6 +117,7 @@ import {
   currencyConfigs,
 } from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -137,6 +144,7 @@ export const createProposalAndBuildTxDetails =
           dryRun = true,
           destinationTag,
           payProDetails,
+          request,
         } = tx;
 
         let {credentials, currencyAbbreviation, network, tokenAddress} = wallet;
@@ -155,7 +163,7 @@ export const createProposalAndBuildTxDetails =
           },
         } = getState();
 
-        if (wallet.isHardwareWallet && credentials.coin === 'bch') {
+        if (wallet.isHardwareWallet && credentials.chain === 'bch') {
           tx.signingMethod = 'ecdsa';
         }
 
@@ -197,12 +205,8 @@ export const createProposalAndBuildTxDetails =
           }
         }
 
-        const tokenFeeLevel = token ? cachedFeeLevel.eth : undefined;
         const feeLevel =
-          customFeeLevel ||
-          cachedFeeLevel[currencyAbbreviation] ||
-          tokenFeeLevel ||
-          FeeLevels.NORMAL;
+          customFeeLevel || cachedFeeLevel[chain] || FeeLevels.NORMAL;
         if (!feePerKb && tx.sendMax) {
           feePerKb = await getFeeRatePerKb({
             wallet,
@@ -226,6 +230,7 @@ export const createProposalAndBuildTxDetails =
               feePerKb,
               feeLevel,
               useUnconfirmedFunds,
+              request,
             }),
           )),
           dryRun,
@@ -250,6 +255,7 @@ export const createProposalAndBuildTxDetails =
                   invoice,
                   context,
                   feeLevel,
+                  request,
                 }),
               );
               txp.id = proposal.id;
@@ -454,27 +460,28 @@ export const buildTxDetails =
         chain,
         amount,
         fee,
-        tokenAddress;
+        tokenAddress,
+        data;
 
       if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
         tokenAddress =
           wallet.tokenAddress || getTokenAddressForOffchainWallet(wallet);
       }
-
       if (context === 'walletConnect' && request) {
-        const {params} = request.params.request;
-        gasPrice = params[0].gasPrice
+        const {swapFromChain, swapFromCurrencyAbbreviation, swapAmount} =
+          request;
+        const {params} = request?.params?.request;
+        gasPrice = params[0]?.gasPrice
           ? parseInt(params[0]?.gasPrice, 16)
           : feePerKb!;
-        nonce = params[0].nonce && parseInt(params[0]?.nonce, 16);
-        chain = WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]?.chain;
-        coin =
-          WALLET_CONNECT_SUPPORTED_CHAINS[request.params.chainId]
-            ?.currencyAbbreviation;
-        amount = parseInt(params[0]?.value, 16) || 0;
+        nonce = params[0]?.nonce && parseInt(params[0]?.nonce, 16);
+        data = params[0]?.data;
+        chain = swapFromChain;
+        coin = swapFromCurrencyAbbreviation;
+        amount = Number(swapAmount) || 0;
         gasLimit =
-          (params[0].gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
-          (params[0].gas && parseInt(params[0]?.gas, 16)) ||
+          (params[0]?.gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
+          (params[0]?.gas && parseInt(params[0]?.gas, 16)) ||
           (await getEstimateGas({
             wallet: wallet as Wallet,
             network: wallet.network,
@@ -482,11 +489,10 @@ export const buildTxDetails =
             from: params[0].from,
             to: params[0].to,
             data: params[0].data,
-            chain,
+            chain: swapFromChain!,
           }));
         fee = gasLimit * gasPrice;
       }
-
       if (proposal) {
         gasPrice = proposal.gasPrice;
         gasLimit = proposal.gasLimit;
@@ -502,7 +508,6 @@ export const buildTxDetails =
         wallet.currencyAbbreviation,
         wallet.chain,
       );
-
       const isOffChain = !proposal;
       if (invoice) {
         amount = isOffChain
@@ -517,7 +522,6 @@ export const buildTxDetails =
           fee = 0;
         }
       }
-
       if (!coin || !chain) {
         throw new Error('Invalid coin or chain');
       }
@@ -541,7 +545,7 @@ export const buildTxDetails =
         coin,
         chain,
       };
-      const rateStr = getRateStr(opts);
+      const rateStr = await dispatch(getRateStr(opts));
       const networkCost =
         !isOffChain &&
         selectedTransactionCurrency &&
@@ -585,6 +589,8 @@ export const buildTxDetails =
           img: wallet.img,
           recipientFullAddress: address,
           recipientChain: chain,
+          recipientCoin: coin,
+          badgeImg: wallet.badgeImg,
         },
         ...(fee !== 0 && {
           fee: {
@@ -639,12 +645,7 @@ export const buildTxDetails =
         subTotal: {
           cryptoAmount: dispatch(
             // @ts-ignore
-            FormatAmountStr(
-              BitpaySupportedCoins[chain]?.feeCurrency,
-              chain,
-              tokenAddress,
-              amount,
-            ),
+            FormatAmountStr(coin, chain, tokenAddress, amount),
           ),
           fiatAmount: formatFiatAmount(amountToFiat, defaultAltCurrencyIsoCode),
         },
@@ -674,30 +675,62 @@ export const buildTxDetails =
         nonce,
         destinationTag,
         rateStr,
+        data,
       };
       return resolve(tx);
     });
   };
 
-const getRateStr = (opts: {
-  effectiveRate: number | undefined;
-  rates: Rates;
-  defaultAltCurrencyIsoCode: string;
-  coin: string;
-  chain: string;
-}): string | undefined => {
-  const fiatRate = !opts.effectiveRate
-    ? getRateByCurrencyName(
+const getRateStr =
+  (opts: {
+    effectiveRate: number | undefined;
+    rates: Rates;
+    defaultAltCurrencyIsoCode: string;
+    coin: string;
+    chain: string;
+    contractAddress?: string;
+  }): Effect<Promise<string | undefined>> =>
+  async (dispatch): Promise<string | undefined> => {
+    let fiatRate = opts.effectiveRate;
+
+    if (!fiatRate) {
+      const rate = getRateByCurrencyName(
         opts.rates,
         opts.coin.toLowerCase(),
         opts.chain,
-      ).find(r => r.code === opts.defaultAltCurrencyIsoCode)!.rate
-    : opts.effectiveRate;
-  return `1 ${formatCurrencyAbbreviation(opts.coin)} @ ${formatFiatAmount(
-    parseFloat(fiatRate.toFixed(2)),
-    opts.defaultAltCurrencyIsoCode,
-  )}`;
-};
+      );
+
+      if (rate) {
+        fiatRate = rate.find(
+          r => r.code === opts.defaultAltCurrencyIsoCode,
+        )?.rate;
+      }
+
+      if (!fiatRate && opts.contractAddress) {
+        const senderTokenPrice = (
+          await dispatch(
+            getERC20TokenPrice({
+              address: opts.contractAddress,
+              chain: opts.chain,
+            }),
+          )
+        ).usdPrice;
+        fiatRate = senderTokenPrice;
+      }
+    }
+
+    if (!fiatRate) {
+      return Promise.resolve(undefined);
+    }
+
+    return Promise.resolve(
+      `1 ${formatCurrencyAbbreviation(opts.coin)} @ ${formatFiatAmount(
+        parseFloat(fiatRate.toFixed(2)),
+        opts.defaultAltCurrencyIsoCode,
+      )}`,
+    );
+  };
+
 /*
  * txp options object for wallet.createTxProposal
  * */
@@ -718,6 +751,8 @@ const buildTransactionProposal =
           wallet,
           inputs,
           recipientList,
+          request,
+          context,
         } = tx;
         let {customData} = tx;
 
@@ -733,6 +768,10 @@ const buildTransactionProposal =
           } else if (tx.recipient?.email) {
             customData = {
               recipientEmail: tx.recipient.email,
+            };
+          } else if (context === 'walletConnect') {
+            customData = {
+              service: 'walletConnect',
             };
           }
         }
@@ -860,7 +899,6 @@ const buildTransactionProposal =
           }
         }
 
-        const {context} = tx;
         // outputs
         txp.outputs = [];
         switch (context) {
@@ -975,6 +1013,41 @@ const buildTransactionProposal =
               message: tx.description,
               data: tx.data,
             });
+            break;
+          case 'walletConnect':
+            if (request) {
+              const {swapFromChain, swapFromCurrencyAbbreviation, swapAmount} =
+                request;
+              const {params} = request?.params?.request;
+              const gasPrice = params[0]?.gasPrice
+                ? parseInt(params[0]?.gasPrice, 16)
+                : feePerKb!;
+              txp.nonce = params[0]?.nonce && parseInt(params[0]?.nonce, 16);
+              txp.chain = swapFromChain;
+              txp.coin = swapFromCurrencyAbbreviation;
+              txp.amount = Number(swapAmount) || 0;
+              const gasLimit =
+                (params[0]?.gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
+                (params[0]?.gas && parseInt(params[0]?.gas, 16)) ||
+                (await getEstimateGas({
+                  wallet: wallet as Wallet,
+                  network: (wallet as Wallet).network,
+                  value: txp.amount,
+                  from: params[0].from,
+                  to: params[0].to,
+                  data: params[0].data,
+                  chain: swapFromChain!,
+                }));
+              txp.fee = gasLimit * gasPrice;
+              txp.feeLevel = undefined;
+              txp.outputs.push({
+                toAddress: tx.toAddress,
+                amount: Number(swapAmount) || 0,
+                message: tx.description,
+                data: params[0]?.data,
+                gasLimit,
+              });
+            }
             break;
           default:
             txp.outputs.push({
@@ -1355,23 +1428,30 @@ export const publishAndSignMultipleProposals =
     });
   };
 
-export const createTxProposal = (
-  wallet: Wallet,
-  txp: Partial<TransactionProposal>,
-): Promise<TransactionProposal> => {
-  return new Promise((resolve, reject) => {
-    wallet.createTxProposal(
-      txp,
-      (err: Error, createdTxp: TransactionProposal) => {
-        if (err) {
-          return reject(err);
-        }
-        return resolve(createdTxp);
-      },
-      null,
-    );
-  });
-};
+export const createTxProposal =
+  (
+    wallet: Wallet,
+    txp: Partial<TransactionProposal>,
+  ): Effect<Promise<TransactionProposal>> =>
+  (dispatch, getState) => {
+    return new Promise((resolve, reject) => {
+      wallet.createTxProposal(
+        txp,
+        (err: Error, createdTxp: TransactionProposal) => {
+          if (err) {
+            return reject({
+              err,
+              tx: {wallet, amount: txp?.amount},
+              txp,
+              getState,
+            });
+          }
+          return resolve(createdTxp);
+        },
+        null,
+      );
+    });
+  };
 
 export const publishTx = (
   wallet: Wallet,
@@ -1737,7 +1817,7 @@ const getSignaturesFromLedger = (
   txp: TransactionProposal,
 ) => {
   const {chain: currency, network, chain} = wallet.credentials;
-  if (IsUtxoCoin(currency)) {
+  if (IsUtxoChain(chain)) {
     const configFn = currencyConfigs[chain];
     const params = configFn(network);
     return getUtxoSignaturesFromLedger(
@@ -1851,58 +1931,292 @@ export const removeTxp = (wallet: Wallet, txp: TransactionProposal) => {
   });
 };
 
+const formatAmounts = (
+  dispatch: any,
+  wallet: any,
+  amount: number,
+): {formatAvailableAmount: string; formatRequiredAmount: string} => {
+  const hasMoreThanSixDecimalDigits = (value: number): boolean => {
+    const decimalPart = value.toString().split('.')[1];
+    return !!decimalPart && decimalPart.length > 6;
+  };
+
+  const _formatAvailableAmount = dispatch(
+    FormatAmountStr(
+      wallet.currencyAbbreviation,
+      wallet.chain,
+      wallet.tokenAddress,
+      Number(wallet.balance.satSpendable),
+      false,
+    ),
+  );
+
+  const _formatRequiredAmount = dispatch(
+    FormatAmountStr(
+      wallet.currencyAbbreviation,
+      wallet.chain,
+      wallet.tokenAddress,
+      amount,
+      false,
+    ),
+  );
+
+  const formatAvailableAmount = hasMoreThanSixDecimalDigits(
+    Number(wallet.balance.satSpendable),
+  )
+    ? `~${_formatAvailableAmount}`
+    : _formatAvailableAmount;
+
+  const formatRequiredAmount = hasMoreThanSixDecimalDigits(amount)
+    ? `~${_formatRequiredAmount}`
+    : _formatRequiredAmount;
+
+  return {formatAvailableAmount, formatRequiredAmount};
+};
+
+const generateInsufficientFundsError = (
+  dispatch: any,
+  wallet: Wallet,
+  amount: number,
+  onDismiss?: () => void,
+) => {
+  const {formatAvailableAmount, formatRequiredAmount} = formatAmounts(
+    dispatch,
+    wallet,
+    amount,
+  );
+  let errMsg = IsEVMChain(wallet.chain)
+    ? t(
+        'You are trying to send more funds than you have available.\n\nTrying to send:\nAvailable to send:',
+        {
+          formatRequiredAmount,
+          formatAvailableAmount,
+        },
+      )
+    : t(
+        'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals.\n\nTrying to send:\nAvailable to send:',
+        {
+          formatRequiredAmount,
+          formatAvailableAmount,
+        },
+      );
+  return CustomErrorMessage({
+    title: t('Insufficient funds'),
+    code: BWCErrorName.INSUFFICIENT_FUNDS,
+    errMsg: errMsg,
+    action: onDismiss,
+    cta: [
+      {
+        text: t('Buy Crypto'),
+        action: () => {
+          dispatch(
+            Analytics.track('Clicked Buy Crypto', {
+              context: 'errorBottomNotification',
+            }),
+          );
+          navigationRef.navigate('BuyCryptoRoot', {
+            amount: 100,
+            fromWallet: wallet,
+          });
+        },
+        primary: true,
+      },
+    ],
+  });
+};
+
+const generateInsufficientConfirmedFundsError = (onDismiss?: () => void) => {
+  return CustomErrorMessage({
+    code: BWCErrorName.INSUFFICIENT_FUNDS,
+    title: t('Insufficient confirmed funds'),
+    errMsg: t(
+      'You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable "Use unconfirmed funds" in Advanced Settings.',
+    ),
+    action: onDismiss,
+    cta: [
+      {
+        text: t('APP SETTINGS'),
+        action: () => {
+          navigationRef.navigate('SettingsHome');
+        },
+        primary: true,
+      },
+    ],
+  });
+};
+
+const processInsufficientFunds = async (
+  proposalErrorProps: ProposalErrorHandlerProps,
+  dispatch: any,
+  onDismiss?: () => void,
+) => {
+  const {tx, txp, getState} = proposalErrorProps;
+
+  if (!tx || !txp || !getState) {
+    return GeneralError();
+  }
+
+  const {wallet, amount} = tx;
+  const {feeLevel} = txp;
+
+  const feeRatePerKb = await getFeeRatePerKb({
+    wallet,
+    feeLevel: feeLevel || FeeLevels.NORMAL,
+  });
+
+  const useConfirmedFunds = !getState().WALLET.useUnconfirmedFunds;
+  const amountSat = dispatch(
+    ParseAmount(
+      amount,
+      wallet.currencyAbbreviation,
+      wallet.chain,
+      wallet.tokenAddress,
+    ),
+  ).amountSat;
+  if (useConfirmedFunds && wallet.balance.sat >= amountSat + feeRatePerKb) {
+    return generateInsufficientConfirmedFundsError(onDismiss);
+  } else {
+    return generateInsufficientFundsError(
+      dispatch,
+      wallet,
+      amountSat,
+      onDismiss,
+    );
+  }
+};
+
+const processInsufficientFundsForFee = (
+  proposalErrorProps: ProposalErrorHandlerProps,
+  dispatch: any,
+  onDismiss?: () => void,
+  errorCode?: string | Error,
+  context?: ProposalErrorHandlerContext,
+) => {
+  const {err, tx, txp, getState} = proposalErrorProps;
+
+  if (!tx || !txp || !getState) {
+    return GeneralError();
+  }
+
+  const keys = getState().WALLET.keys;
+  const {wallet, amount} = tx;
+  let toShowAmount = amount;
+  let linkedWallet: Wallet | undefined;
+  if (IsERCToken(wallet.currencyAbbreviation, wallet.chain) && err.message) {
+    const match = err.message.match(/RequiredFee:\s*([0-9]+)/);
+    if (match && match[1]) {
+      toShowAmount = Number(match[1]);
+      linkedWallet = getFullLinkedWallet(keys[wallet.keyId], wallet);
+    }
+  }
+
+  const {formatAvailableAmount, formatRequiredAmount} = formatAmounts(
+    dispatch,
+    linkedWallet ? linkedWallet : wallet,
+    toShowAmount,
+  );
+
+  const title = IsEVMChain(wallet.chain)
+    ? t('Not enough gas for transaction')
+    : t('Insufficient funds for fee.');
+  const body = IsERCToken(wallet.currencyAbbreviation, wallet.chain)
+    ? t(
+        'Insufficient funds in your linked wallet to cover the transaction fee.\n\nRequired Gas:\nLinked Wallet Balance:',
+        {
+          linkedWalletAbbreviation:
+            wallet.chain === 'matic' ? 'POL' : wallet.chain.toUpperCase(),
+          formatRequiredAmount,
+          formatAvailableAmount,
+        },
+      )
+    : t(
+        'You have enough funds to make this payment, but your wallet doesn’t have enough to cover the network fees.',
+      );
+
+  const ctaAction = [
+    {
+      text: t('Buy Crypto'),
+      action: () => {
+        const goToBuyCrypto = async () => {
+          dispatch(
+            Analytics.track('Clicked Buy Crypto', {
+              context: 'errorBottomNotification',
+            }),
+          );
+          if (context && ['sell', 'swap'].includes(context)) {
+            navigationRef.goBack();
+            await sleep(100);
+          }
+          navigationRef.navigate('BuyCryptoRoot', {
+            amount: 100,
+            fromWallet: IsERCToken(wallet.currencyAbbreviation, wallet.chain)
+              ? linkedWallet
+              : wallet,
+          });
+        };
+        goToBuyCrypto();
+      },
+      primary: true,
+    },
+  ];
+
+  if (context && ['sell', 'swap'].includes(context)) {
+    ctaAction.push({
+      text: t('GO BACK'),
+      action: () => {
+        const goBack = async () => {
+          navigationRef.goBack();
+          await sleep(100);
+        };
+        goBack();
+      },
+      primary: false,
+    });
+  }
+
+  return CustomErrorMessage({
+    title,
+    code: typeof errorCode === 'string' ? errorCode : undefined,
+    errMsg: body,
+    action: onDismiss,
+    cta: ctaAction,
+  });
+};
+
 export const handleCreateTxProposalError =
-  (proposalErrorProps: ProposalErrorHandlerProps): Effect<Promise<any>> =>
+  (
+    proposalErrorProps: ProposalErrorHandlerProps,
+    onDismiss?: () => void,
+    context?: ProposalErrorHandlerContext,
+  ): Effect<Promise<any>> =>
   async dispatch => {
     try {
       const {err} = proposalErrorProps;
-
-      switch (getErrorName(err)) {
-        case 'INSUFFICIENT_FUNDS':
-          const {tx, txp, getState} = proposalErrorProps;
-
-          if (!tx || !txp || !getState) {
-            return GeneralError();
-          }
-
-          const {wallet, amount} = tx;
-          const {feeLevel} = txp;
-
-          const feeRatePerKb = await getFeeRatePerKb({
-            wallet,
-            feeLevel: feeLevel || FeeLevels.NORMAL,
-          });
-
-          if (
-            !getState().WALLET.useUnconfirmedFunds &&
-            wallet.balance.sat >=
-              dispatch(
-                ParseAmount(
-                  amount,
-                  wallet.currencyAbbreviation,
-                  wallet.chain,
-                  wallet.tokenAddress,
-                ),
-              ).amountSat +
-                feeRatePerKb
-          ) {
-            return CustomErrorMessage({
-              title: t('Insufficient confirmed funds'),
-              errMsg: t(
-                'You do not have enough confirmed funds to make this payment. Wait for your pending transactions to confirm or enable "Use unconfirmed funds" in Advanced Settings.',
-              ),
-            });
-          } else {
-            return CustomErrorMessage({
-              title: t('Insufficient funds'),
-              errMsg: BWCErrorMessage(err),
-            });
-          }
-
+      const errorName = getErrorName(err);
+      switch (errorName) {
+        case BWCErrorName.INSUFFICIENT_FUNDS:
+          return await processInsufficientFunds(
+            proposalErrorProps,
+            dispatch,
+            onDismiss,
+          );
+        case BWCErrorName.INSUFFICIENT_FUNDS_FOR_FEE:
+        case BWCErrorName.INSUFFICIENT_ETH_FEE:
+        case BWCErrorName.INSUFFICIENT_MATIC_FEE:
+        case BWCErrorName.INSUFFICIENT_ARB_FEE:
+        case BWCErrorName.INSUFFICIENT_OP_FEE:
+        case BWCErrorName.INSUFFICIENT_BASE_FEE:
+          return processInsufficientFundsForFee(
+            proposalErrorProps,
+            dispatch,
+            onDismiss,
+            errorName,
+            context,
+          );
         default:
           return CustomErrorMessage({
-            title: t('Error'),
             errMsg: BWCErrorMessage(err),
+            title: t('Uh oh, something went wrong'),
           });
       }
     } catch (err2) {
@@ -2221,7 +2535,12 @@ export const sendCrypto =
     const walletsWithBalance = Object.values(keys)
       .filter(key => key.backupComplete)
       .flatMap(key => key.wallets)
-      .filter(wallet => !wallet.hideWallet && wallet.isComplete())
+      .filter(
+        wallet =>
+          !wallet.hideWallet &&
+          !wallet.hideWalletByAccount &&
+          wallet.isComplete(),
+      )
       .filter(wallet => wallet.balance.sat > 0);
 
     if (!walletsWithBalance.length) {

@@ -1,9 +1,18 @@
-import {useNavigation} from '@react-navigation/native';
-import React, {useCallback, useLayoutEffect, useState} from 'react';
+import {useNavigation, useTheme} from '@react-navigation/native';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
-import {BaseText, H5} from '../../../components/styled/Text';
-import {SlateDark, White} from '../../../styles/colors';
+import {
+  BaseText,
+  H4,
+  H5,
+  H6,
+  InfoDescription,
+  InfoHeader,
+  InfoTitle,
+  TextAlign,
+} from '../../../components/styled/Text';
+import {NeutralSlate, SlateDark} from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import AddConnection from '../../../components/add/Add';
 import {HeaderTitle} from '../styled/WalletConnectText';
@@ -11,14 +20,11 @@ import {
   IconContainer,
   ItemContainer,
   ItemNoteContainer,
-  ItemNoteTouchableContainer,
   ItemTitleContainer,
 } from '../styled/WalletConnectContainers';
-import {Platform, ScrollView, View} from 'react-native';
-import Connections from '../components/Connections';
+import {ScrollView, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import FastImage from 'react-native-fast-image';
-import TrashIcon from '../../../../assets/img/wallet-connect/trash-icon.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
@@ -31,31 +37,42 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {
+  getAddressFrom,
   walletConnectV2OnDeleteSession,
-  walletConnectV2OnUpdateSession,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import WCV2WalletSelector from '../components/WCV2WalletSelector';
 import {WCV2SessionType} from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
-import PlusIcon from '../../../components/plus/Plus';
-import {AddButton} from '../../wallet/screens/CreateMultisig';
-import SearchComponent from '../../../components/chain-search/ChainSearch';
+import {SearchIconContainer} from '../../../components/chain-search/ChainSearch';
 import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
+import {
+  ActionContainer,
+  ActiveOpacity,
+  Column,
+  CtaContainerAbsolute,
+  Info,
+  InfoImageContainer,
+  InfoTriangle,
+  SearchRoundContainer,
+  SearchRoundInput,
+  SheetContainer,
+  WIDTH,
+} from '../../../components/styled/Containers';
+import BoxInput from '../../../components/form/BoxInput';
+import SearchSvg from '../../../../assets/img/search.svg';
+import {buildAccountList} from '../../../store/wallet/utils/wallet';
+import {AccountRowProps} from '../../../components/list/AccountListRow';
+import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
+import Blockie from '../../../components/blockie/Blockie';
+import Settings from '../../../components/settings/Settings';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import Button from '../../../components/button/Button';
+import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
+import InfoSvg from '../../../../assets/img/info.svg';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const WalletConnectConnectionsContainer = styled.SafeAreaView`
   flex: 1;
 `;
-
-const DappTitleText = styled(BaseText)`
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 14px;
-  color: ${({theme}) => (theme.dark ? White : SlateDark)};
-  padding-right: 12px;
-  padding-left: 6px;
-  padding-top: ${Platform.OS === 'ios' ? '4px' : '8px'};
-`;
-
-const AddConnectionContainer = styled.TouchableOpacity``;
+const AddConnectionContainer = styled(TouchableOpacity)``;
 
 const EmptyListContainer = styled.View`
   justify-content: space-between;
@@ -63,117 +80,106 @@ const EmptyListContainer = styled.View`
   margin-top: 50px;
 `;
 
+const horizontalPadding = 20;
+
+const SearchBox = styled(BoxInput)`
+  width: ${WIDTH - horizontalPadding * 2}px;
+  font-size: 16px;
+  position: relative;
+`;
+
+const AccountSettingsContainer = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+  display: flex;
+  padding: 8px 10px;
+  gap: 8px;
+  border-radius: 50px;
+  background-color: ${({theme}) => (theme.dark ? SlateDark : NeutralSlate)};
+`;
+
+const Badge = styled.View`
+  position: absolute;
+  border-radius: 8px;
+  width: 10px;
+  height: 10px;
+  right: 0px;
+  top: 1px;
+  background: #ff647c;
+`;
+
 const WalletConnectConnections = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-
-  // version 2
+  const theme = useTheme();
+  const [showSessionOptions, setShowSessionOptions] = useState(false);
+  const [imageError, setImageError] = useState({});
   const sessions: WCV2SessionType[] = useAppSelector(
     ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.sessions,
   );
+  const requests = useAppSelector(
+    ({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2.requests,
+  );
+  const [selectedSession, setSelectedSession] = useState<
+    WCV2SessionType | undefined
+  >();
+  const {rates} = useAppSelector(({RATE}) => RATE);
+  const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
 
   const [searchVal, setSearchVal] = useState('');
-  const [searchResults, setSearchResults] = useState([] as WCV2SessionType[]);
+  const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
+
   const selectedChainFilterOption = useAppSelector(({APP}) =>
     ignoreGlobalListContextList.includes('walletconnect')
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
 
-  const [dappProposal, setDappProposal] = useState<any>();
-  const [sessionToUpdate, setSessionToUpdate] = useState<WCV2SessionType>();
-  const [walletSelectorV2ModalVisible, setWalletSelectorV2ModalVisible] =
-    useState(false);
-  const showWalletSelectorV2 = () => setWalletSelectorV2ModalVisible(true);
-  const hideWalletSelectorV2 = () => setWalletSelectorV2ModalVisible(false);
-
   const dispatch = useAppDispatch();
-  const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
-  const accountRegex = /0x[a-fA-F0-9]{40}/;
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
 
   const ConnectionItem = ({
     peerName,
     peerIcon,
+    peerUrl,
     session,
   }: {
     peerName: string;
     peerIcon: string;
+    peerUrl: string;
     session?: WCV2SessionType;
   }) => {
+    // @ts-ignore
+    const imgError = imageError[peerUrl];
     return (
-      <ItemContainer style={{minHeight: 20}}>
+      <ItemContainer>
         <ItemTitleContainer>
           <IconContainer>
-            <FastImage
-              source={{uri: peerIcon}}
-              style={{width: 18, height: 18}}
-            />
+            {peerIcon && !imgError ? (
+              <FastImage
+                source={{uri: peerIcon}}
+                style={{width: 40, height: 40}}
+                onError={() => {
+                  setImageError({...imageError, [peerUrl]: true});
+                }}
+              />
+            ) : (
+              <DefaultImage width={40} height={40} />
+            )}
           </IconContainer>
-          <DappTitleText>{peerName}</DappTitleText>
+          <Column style={{marginLeft: 16}}>
+            <H6>{peerName}</H6>
+            <BaseText>{peerUrl}</BaseText>
+          </Column>
         </ItemTitleContainer>
         <ItemNoteContainer>
-          {session ? (
-            <AddButton
-              style={{marginRight: 10}}
-              onPress={async () => {
-                setSessionToUpdate(session);
-                showWalletSelectorV2();
-              }}>
-              <PlusIcon />
-            </AddButton>
-          ) : null}
-          <ItemNoteTouchableContainer
+          <Settings
             onPress={() => {
-              haptic('impactLight');
-              dispatch(
-                showBottomNotificationModal({
-                  type: 'question',
-                  title: t('Confirm delete'),
-                  message: t(
-                    'Are you sure you want to delete this connection?',
-                  ),
-                  enableBackdropDismiss: true,
-                  actions: [
-                    {
-                      text: t('DELETE'),
-                      action: async () => {
-                        try {
-                          dispatch(dismissBottomNotificationModal());
-                          await sleep(500);
-                          dispatch(startOnGoingProcessModal('LOADING'));
-                          const {topic, pairingTopic} = session || {};
-                          if (topic && pairingTopic) {
-                            await dispatch(
-                              walletConnectV2OnDeleteSession(
-                                topic,
-                                pairingTopic,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          await showErrorMessage(
-                            CustomErrorMessage({
-                              errMsg: BWCErrorMessage(e),
-                              title: t('Uh oh, something went wrong'),
-                            }),
-                          );
-                        } finally {
-                          dispatch(dismissOnGoingProcessModal());
-                          await sleep(500);
-                        }
-                      },
-                      primary: true,
-                    },
-                    {
-                      text: t('GO BACK'),
-                      action: () => {},
-                    },
-                  ],
-                }),
-              );
-            }}>
-            <TrashIcon />
-          </ItemNoteTouchableContainer>
+              setShowSessionOptions(true);
+              setSelectedSession(session);
+            }}
+          />
         </ItemNoteContainer>
       </ItemContainer>
     );
@@ -183,6 +189,7 @@ const WalletConnectConnections = () => {
       headerRight: () => {
         return (
           <AddConnectionContainer
+            touchableLibrary={'react-native-gesture-handler'}
             onPress={() => {
               navigation.navigate('WalletConnectRoot', {});
             }}>
@@ -205,35 +212,63 @@ const WalletConnectConnections = () => {
     return (
       <>
         {sessions.map((session, index) => {
-          const {peer, namespaces, accounts} = session;
+          const {peer} = session;
+          const sessionsAddresses = session.accounts.map(account => {
+            const index = account.indexOf(':', account.indexOf(':') + 1);
+            const address = account.substring(index + 1);
+            return address;
+          });
           return (
             <View style={{marginVertical: 15}} key={index.toString()}>
               <ConnectionItem
                 peerIcon={peer.metadata.icons[0]}
                 peerName={peer.metadata.name}
+                peerUrl={peer.metadata.url}
                 session={session}
               />
-              {Object.keys(namespaces).length
-                ? Object.keys(namespaces).map(key => {
-                    return namespaces[key].accounts
-                      .sort((a, b) => {
-                        const getAddress = (str: string) =>
-                          str.match(accountRegex)?.[0];
-                        return (getAddress(a) || '').localeCompare(
-                          getAddress(b) || '',
-                        );
-                      })
-                      .filter(account => accounts.includes(account))
-                      .map((account, subIndex) => (
-                        <Connections
-                          keys={allKeys}
-                          account={account}
-                          session={session}
-                          key={subIndex.toString()}
-                        />
-                      ));
-                  })
-                : null}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  marginLeft: 52,
+                }}>
+                {allKeys?.map((key: KeyWalletsRowProps) =>
+                  key.accounts.map((account: AccountRowProps) => {
+                    if (!sessionsAddresses.includes(account.receiveAddress)) {
+                      return;
+                    }
+
+                    const filteredRequests = requests.filter(request => {
+                      const requestAddress =
+                        getAddressFrom(request).toLowerCase();
+                      return (
+                        request.topic === session.topic &&
+                        requestAddress === account.receiveAddress.toLowerCase()
+                      );
+                    });
+                    return (
+                      <AccountSettingsContainer
+                        key={account.receiveAddress}
+                        activeOpacity={ActiveOpacity}
+                        onPress={() => {
+                          navigation.navigate('WalletConnectHome', {
+                            topic: session?.topic,
+                            selectedAccountAddress: account.receiveAddress,
+                            keyId: key.key,
+                          });
+                        }}>
+                        <Blockie size={16} seed={account.receiveAddress} />
+                        {filteredRequests && filteredRequests.length ? (
+                          <Badge />
+                        ) : null}
+                        <BaseText ellipsizeMode="tail" numberOfLines={1}>
+                          {account.accountName}
+                        </BaseText>
+                      </AccountSettingsContainer>
+                    );
+                  }),
+                )}
+              </View>
             </View>
           );
         })}
@@ -241,25 +276,187 @@ const WalletConnectConnections = () => {
     );
   };
 
+  const _setAllKeysAndSelectedWallets = () => {
+    const sessionsAddresses = sessions
+      .map(session =>
+        session.accounts.map(account => {
+          const index = account.indexOf(':', account.indexOf(':') + 1);
+          const address = account.substring(index + 1);
+          return address;
+        }),
+      )
+      .flat();
+
+    const formattedKeys = Object.values(keys)
+      .map(key => {
+        const accountList = buildAccountList(
+          key,
+          defaultAltCurrency.isoCode,
+          rates,
+          dispatch,
+          {
+            filterByCustomWallets: key.wallets.filter(({receiveAddress}) => {
+              return sessionsAddresses.includes(receiveAddress!);
+            }),
+            skipFiatCalculations: true,
+          },
+        ) as AccountRowProps[];
+
+        if (accountList.length === 0) {
+          return null;
+        }
+        return {
+          key: key.id,
+          keyName: key.keyName || 'My Key',
+          backupComplete: key.backupComplete,
+          accounts: accountList,
+        };
+      })
+      .filter(item => item !== null) as KeyWalletsRowProps[];
+    setAllkeys(formattedKeys);
+  };
+
+  useEffect(() => {
+    _setAllKeysAndSelectedWallets();
+  }, []);
+
+  const disconnectAccount = async (session: WCV2SessionType) => {
+    haptic('impactLight');
+    dispatch(
+      showBottomNotificationModal({
+        type: 'question',
+        title: t('Confirm delete'),
+        message: t('Are you sure you want to delete this session?'),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('DELETE'),
+            action: async () => {
+              try {
+                dispatch(dismissBottomNotificationModal());
+                await sleep(600);
+                dispatch(startOnGoingProcessModal('LOADING'));
+                await sleep(600);
+                await dispatch(
+                  walletConnectV2OnDeleteSession(
+                    session.topic,
+                    session.pairingTopic,
+                  ),
+                );
+                dispatch(dismissOnGoingProcessModal());
+              } catch (err) {
+                dispatch(dismissOnGoingProcessModal());
+                await sleep(500);
+                await showErrorMessage(
+                  CustomErrorMessage({
+                    errMsg: BWCErrorMessage(err),
+                    title: t('Uh oh, something went wrong'),
+                  }),
+                );
+              }
+            },
+            primary: true,
+          },
+          {
+            text: t('GO BACK'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
+  };
+
+  const disconnectAccounts = async () => {
+    haptic('impactLight');
+    dispatch(
+      showBottomNotificationModal({
+        type: 'question',
+        title: t('Confirm delete'),
+        message: t('Are you sure you want to delete all sessions?'),
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('DELETE'),
+            action: async () => {
+              try {
+                dispatch(dismissBottomNotificationModal());
+                await sleep(600);
+                dispatch(startOnGoingProcessModal('LOADING'));
+                await sleep(600);
+                for (const session of sessions) {
+                  await dispatch(
+                    walletConnectV2OnDeleteSession(
+                      session.topic,
+                      session.pairingTopic,
+                    ),
+                  );
+                }
+                dispatch(dismissOnGoingProcessModal());
+              } catch (err) {
+                dispatch(dismissOnGoingProcessModal());
+                await sleep(500);
+                await showErrorMessage(
+                  CustomErrorMessage({
+                    errMsg: BWCErrorMessage(err),
+                    title: t('Uh oh, something went wrong'),
+                  }),
+                );
+              }
+            },
+            primary: true,
+          },
+          {
+            text: t('GO BACK'),
+            action: () => {},
+          },
+        ],
+      }),
+    );
+  };
+
   return (
     <WalletConnectConnectionsContainer>
       <ScrollView>
-        <View style={{marginTop: 20, padding: 16}}>
+        <View style={{marginTop: 20, padding: 16, marginBottom: 100}}>
           <HeaderTitle>{t('Connections')}</HeaderTitle>
-          <SearchComponent<WCV2SessionType>
-            searchVal={searchVal}
-            setSearchVal={setSearchVal}
-            searchResults={searchResults}
-            setSearchResults={setSearchResults}
-            searchFullList={sessions}
-            context={'walletconnect'}
-          />
+          <SearchRoundContainer>
+            <SearchIconContainer>
+              <SearchSvg height={16} width={16} />
+            </SearchIconContainer>
+            <SearchRoundInput
+              placeholder={t('Search')}
+              placeholderTextColor={placeHolderTextColor}
+              onChangeText={(text: string) => {
+                setSearchVal(text);
+              }}
+            />
+          </SearchRoundContainer>
+          {requests && requests.length > 0 ? (
+            <Info style={{marginHorizontal: 10, marginTop: 20}}>
+              <InfoHeader>
+                <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                  <InfoSvg />
+                </InfoImageContainer>
+
+                <InfoTitle>{t('Pending request')}</InfoTitle>
+              </InfoHeader>
+              <InfoDescription>
+                {t(
+                  'Complete or clear pending requests to allow new ones to come in',
+                )}
+              </InfoDescription>
+            </Info>
+          ) : null}
           {sessions.length ? (
             <SessionList
               sessions={
                 !searchVal && !selectedChainFilterOption
                   ? sessions
-                  : searchResults
+                  : [...sessions].filter(session => {
+                      return session.peer.metadata.name
+                        .toLowerCase()
+                        .includes(searchVal.toLowerCase());
+                    })
               }
             />
           ) : null}
@@ -269,55 +466,59 @@ const WalletConnectConnections = () => {
               <GhostSvg style={{marginTop: 20}} />
             </EmptyListContainer>
           ) : null}
-
-          {dappProposal || sessionToUpdate ? (
-            <WCV2WalletSelector
-              isVisible={walletSelectorV2ModalVisible}
-              proposal={dappProposal}
-              session={sessionToUpdate}
-              onBackdropPress={async (
-                selectedWallets?: {
-                  chain: string;
-                  address: string;
-                  network: string;
-                  supportedChain: string;
-                }[],
-                session?: WCV2SessionType,
-              ) => {
-                hideWalletSelectorV2();
-                await sleep(500);
-                if (selectedWallets && selectedWallets.length > 0 && session) {
-                  try {
-                    dispatch(startOnGoingProcessModal('LOADING'));
-                    await sleep(500);
-                    await dispatch(
-                      walletConnectV2OnUpdateSession({
-                        session,
-                        selectedWallets,
-                        action: 'add_accounts',
-                      }),
-                    );
-                    dispatch(dismissOnGoingProcessModal());
-                    await sleep(500);
-                  } catch (err) {
-                    dispatch(dismissOnGoingProcessModal());
-                    await sleep(500);
-                    await showErrorMessage(
-                      CustomErrorMessage({
-                        errMsg: BWCErrorMessage(err),
-                        title: t('Uh oh, something went wrong'),
-                      }),
-                    );
-                  } finally {
-                    setDappProposal(undefined);
-                    setSessionToUpdate(undefined);
-                  }
-                }
-              }}
-            />
-          ) : null}
         </View>
       </ScrollView>
+      {sessions.length > 0 ? (
+        <CtaContainerAbsolute
+          background={true}
+          style={{
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 4},
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 5,
+            bottom: 20,
+          }}>
+          <Button
+            buttonStyle="danger"
+            buttonOutline={true}
+            onPress={async () => {
+              haptic('impactLight');
+              disconnectAccounts();
+            }}>
+            {t('Disconnect All')}
+          </Button>
+        </CtaContainerAbsolute>
+      ) : null}
+
+      {selectedSession ? (
+        <SheetModal
+          isVisible={showSessionOptions}
+          onBackdropPress={() => {
+            setShowSessionOptions(false);
+          }}
+          placement={'bottom'}>
+          <SheetContainer placement={'bottom'} paddingHorizontal={200}>
+            <TextAlign align={'center'}>
+              <H4>{selectedSession.peer.metadata.name}</H4>
+            </TextAlign>
+            <ActionContainer>
+              <Button
+                buttonStyle="danger"
+                buttonOutline={true}
+                touchableLibrary={'react-native'}
+                onPress={async () => {
+                  haptic('impactLight');
+                  setShowSessionOptions(false);
+                  await sleep(1000);
+                  disconnectAccount(selectedSession);
+                }}>
+                {t('Disconnect')}
+              </Button>
+            </ActionContainer>
+          </SheetContainer>
+        </SheetModal>
+      ) : null}
     </WalletConnectConnectionsContainer>
   );
 };

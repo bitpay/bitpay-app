@@ -10,13 +10,17 @@ import {
   Slate,
   NotificationPrimary,
   Action,
+  LuckySevens,
+  Slate30,
 } from '../../styles/colors';
 import {BaseText} from './Text';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
+export {ActiveOpacity} from '@components/base/TouchableOpacity';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
+export const isNotMobile = HEIGHT / WIDTH < 1.6;
 
 export const ScreenGutter = '15px';
-export const ActiveOpacity = 0.75;
 // Nav
 export const HeaderRightContainer = styled.View`
   height: 40px;
@@ -62,7 +66,8 @@ export const CtaContainer = styled.View`
 export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
   padding: 15px;
   position: absolute;
-  bottom: 10px;
+  padding-bottom: 10px;
+  bottom: 0;
   left: 0;
   right: 0;
   border-top-left-radius: 20px;
@@ -101,7 +106,7 @@ interface RowContainerProps {
   noBorder?: boolean;
 }
 
-export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
+export const RowContainer = styled(TouchableOpacity)<RowContainerProps>`
   flex-direction: row;
   align-items: center;
   padding: 10px 4px;
@@ -111,7 +116,9 @@ export const RowContainer = styled.TouchableOpacity<RowContainerProps>`
     isLast || noBorder ? 0 : 1}px;
 `;
 
-export const RowContainerWithoutBorders = styled.TouchableOpacity<RowContainerProps>`
+export const RowContainerWithoutBorders = styled(
+  TouchableOpacity,
+)<RowContainerProps>`
   flex-direction: row;
   align-items: center;
   padding: 10px 0px;
@@ -167,11 +174,13 @@ export const SheetContainer = styled.View<SheetParams>`
 `;
 
 // Settings List
-export const Setting = styled.TouchableOpacity`
+export const Setting = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: row;
   flex-wrap: nowrap;
   height: 58px;
+  padding-left: 15px;
+  padding-right: 15px;
 `;
 
 export const SettingTitle = styled(BaseText)`
@@ -248,7 +257,7 @@ export const AdvancedOptionsContainer = styled.View`
   margin-bottom: 20px;
 `;
 
-export const AdvancedOptionsButton = styled.TouchableOpacity`
+export const AdvancedOptionsButton = styled(TouchableOpacity)`
   height: 60px;
   background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   padding: 18px;
@@ -291,7 +300,7 @@ export const InfoImageContainer = styled.View<{infoMargin: string}>`
   margin: ${({infoMargin}) => infoMargin};
 `;
 
-export const ScanContainer = styled.TouchableOpacity`
+export const ScanContainer = styled(TouchableOpacity)`
   height: 25px;
   width: 25px;
   align-items: center;
@@ -316,9 +325,9 @@ export const OptionListContainer = styled.View`
   margin-top: 30px;
 `;
 
-export const OptionList = styled.TouchableOpacity`
+export const OptionList = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Feather)};
-  height: 100px;
+  height: auto;
   border-radius: 12px;
   margin-bottom: ${ScreenGutter};
   flex-direction: row;
@@ -356,6 +365,8 @@ export const SearchInput = styled.TextInput`
 // Search Round
 export const SearchRoundContainer = styled.View`
   flex-direction: row;
+  display: flex;
+  justify-content: space-between;
   border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : '#e1e4e7')};
   border-radius: 100px;
   align-items: center;
@@ -380,7 +391,7 @@ export const HiddenContainer = styled.View`
 
 // Copy to Clipboard
 
-export const CopyToClipboardContainer = styled.TouchableOpacity`
+export const CopyToClipboardContainer = styled(TouchableOpacity)`
   border: 1px solid #9ba3ae;
   border-radius: 4px;
   padding: 0 10px;
@@ -415,7 +426,7 @@ export const NoResultsDescription = styled(BaseText)`
   font-size: 16px;
 `;
 
-export const ProposalBadgeContainer = styled.TouchableOpacity`
+export const ProposalBadgeContainer = styled(TouchableOpacity)`
   background: ${Action};
   border-radius: 10px;
   height: 30px;
@@ -423,6 +434,79 @@ export const ProposalBadgeContainer = styled.TouchableOpacity`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+export const BadgeContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
+  padding: 4px;
+  border-radius: 2.4px;
+  gap: 4px;
+  height: 20px;
+`;
+
+export const BadgeContainerTouchable = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
+  padding: 4px;
+  border-radius: 2.4px;
+  gap: 4px;
+  height: 20px;
+`;
+
+export const EmptyListContainer = styled.View`
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 50px;
+`;
+
+export const ChevronContainerTouchable = styled(TouchableOpacity)`
+  border-radius: 50px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({theme: {dark}}) => (dark ? SlateDark : NeutralSlate)};
+  margin-left: 2px;
+  height: 20px;
+  width: 20px;
+`;
+
+export const ChevronContainer = styled.View`
+  border-radius: 50px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+  margin-left: 2px;
+  height: 20px;
+  width: 20px;
+`;
+
+export const ExternalServicesTitleContainer = styled(Row)`
+  margin-top: 8px;
+  margin-left: 16px;
+  margin-right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-content: center;
+`;
+
+export const ExternalServicesItemTopTitle = styled.Text`
+  color: ${({theme: {dark}}) => (dark ? White : '#434d5a')};
+  line-height: 18px;
+`;
+
+export const AccountChainsContainer = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  border-radius: 50px;
+  padding: 5px 10px;
+  max-width: 250px;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 
 interface SellTxIconProps {
@@ -446,4 +530,20 @@ export const SellTxIconBadge = styled.View`
   position: absolute;
   right: 0px;
   bottom: 0px;
+`;
+
+export const CloseButtonContainer = styled(TouchableOpacity)`
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+export const ArchaxBannerContainer = styled.View<{
+  inset: any;
+  isSmallScreen?: boolean;
+}>`
+  background: ${({theme}) => (theme.dark ? '#a25718' : '#ffedc9')};
+  overflow: hidden;
+  padding: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '16px')};
 `;

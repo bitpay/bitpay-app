@@ -4,6 +4,7 @@ import {
   TxDetailsFee,
   TxDetailsSendingFrom,
   TxDetailsSendingTo,
+  Wallet,
 } from '../../../../../store/wallet/wallet.models';
 import {H4, H5, H6, H7} from '../../../../../components/styled/Text';
 import SendToPill from '../../../components/SendToPill';
@@ -15,7 +16,8 @@ import {
 } from '../../../../../components/styled/Containers';
 import React, {ReactChild, useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
-import {Pressable, ScrollView, TouchableOpacity, View} from 'react-native';
+import {Pressable, ScrollView, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
 import InfoSvg from '../../../../../../assets/img/info.svg';
@@ -23,8 +25,12 @@ import {
   getBadgeImg,
   getCurrencyAbbreviation,
   sleep,
+  formatCryptoAddress,
 } from '../../../../../utils/helper-methods';
-import {WalletsAndAccounts} from '../../../../../store/wallet/utils/wallet';
+import {
+  findWalletById,
+  WalletsAndAccounts,
+} from '../../../../../store/wallet/utils/wallet';
 import {
   buildTestBadge,
   WalletRowProps,
@@ -50,9 +56,14 @@ import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import AddressCard from '../../../components/AddressCard';
 import {LuckySevens} from '../../../../../styles/colors';
-import {IsERCToken} from '../../../../../store/wallet/utils/currency';
+import {
+  IsERCToken,
+  IsUtxoChain,
+} from '../../../../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
+import CoinbaseSvg from '../../../../../../assets/img/wallet/transactions/coinbase.svg';
+import {IS_ANDROID} from '../../../../../constants';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -81,7 +92,9 @@ export const DetailContainer = styled.View<DetailContainerParams>`
   ${({height}) => (height ? `height: ${height}px;` : '')}
 `;
 
-export const PressableDetailContainer = styled.TouchableOpacity<DetailContainerParams>`
+export const PressableDetailContainer = styled(
+  TouchableOpacity,
+)<DetailContainerParams>`
   min-height: 60px;
   padding: 20px 0;
   justify-content: center;
@@ -139,7 +152,7 @@ interface SendingToProps {
   hr?: boolean;
 }
 
-export const SendingTo: React.VFC<SendingToProps> = ({
+export const SendingTo: React.FC<SendingToProps> = ({
   recipient,
   recipientList,
   hr,
@@ -174,7 +187,7 @@ export const SendingTo: React.VFC<SendingToProps> = ({
     recipientType,
   } = recipient;
 
-  let badgeImg;
+  let {badgeImg} = recipient;
 
   if (
     recipientCoin &&
@@ -201,7 +214,12 @@ export const SendingTo: React.VFC<SendingToProps> = ({
       ' ' +
       (recipientList.length === 1 ? t('Recipient') : t('Recipients'));
   } else {
-    description = recipientName || recipientEmail || recipientAddress || '';
+    description =
+      recipientName ||
+      recipientEmail ||
+      formatCryptoAddress(
+        (recipientFullAddress || '').replace('bitcoincash:', ''),
+      );
   }
 
   return (
@@ -220,6 +238,9 @@ export const SendingTo: React.VFC<SendingToProps> = ({
                 <CopiedSvg width={18} />
               ) : recipientType === 'contact' || recipientEmail ? (
                 <ContactIcon name={description} size={20} />
+              ) : recipientType === 'coinbase' ||
+                recipientType === 'coinbaseDeposit' ? (
+                <CoinbaseSvg width={18} height={18} />
               ) : (
                 <CurrencyImage img={img} size={18} badgeUri={badgeImg} />
               )
@@ -298,7 +319,7 @@ interface SendingFromProps {
   hr?: boolean;
 }
 
-export const SendingFrom: React.VFC<SendingFromProps> = ({
+export const SendingFrom: React.FC<SendingFromProps> = ({
   sender,
   onPress,
   hr,
@@ -500,7 +521,7 @@ export const WalletSelector = ({
   chain,
 }: {
   walletsAndAccounts: WalletsAndAccounts;
-  onWalletSelect: (wallet: KeyWallet) => void;
+  onWalletSelect: (wallet: Wallet) => void;
   onCoinbaseAccountSelect: (account: WalletRowProps) => void;
   onBackdropPress: () => void;
   isVisible: boolean;
@@ -513,6 +534,7 @@ export const WalletSelector = ({
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const {hideAllBalances} = useAppSelector(({APP}) => APP);
+  const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [autoSelectSingleWallet, setAutoSelectSingleWallet] = useState(
     typeof autoSelectIfOnlyOneWallet === 'undefined'
@@ -534,23 +556,29 @@ export const WalletSelector = ({
   );
 
   const showSelector = useCallback(
-    async autoSelect => {
+    async (autoSelect: boolean) => {
       const {keyWallets, coinbaseWallets} = walletsAndAccounts;
       if (keyWallets.length || coinbaseWallets.length) {
         if (autoSelect) {
           if (
             keyWallets.length === 1 &&
-            keyWallets[0].wallets.length === 1 &&
+            keyWallets[0].accounts.length === 1 &&
+            keyWallets[0].accounts[0].wallets.length === 1 &&
             coinbaseWallets.length === 0
           ) {
-            return selectOption(() => onWalletSelect(keyWallets[0].wallets[0]));
+            const wallet = keyWallets[0].accounts[0].wallets[0];
+            const fullWalletObj = findWalletById(
+              keys[wallet.keyId].wallets,
+              wallet.id,
+            ) as Wallet;
+            return selectOption(() => onWalletSelect(fullWalletObj));
           } else if (
             coinbaseWallets.length === 1 &&
-            coinbaseWallets[0].wallets.length === 1 &&
+            coinbaseWallets[0]?.coinbaseAccounts?.length === 1 &&
             keyWallets.length === 0
           ) {
             return selectOption(() =>
-              onCoinbaseAccountSelect(coinbaseWallets[0].wallets[0]),
+              onCoinbaseAccountSelect(coinbaseWallets[0].coinbaseAccounts[0]),
             );
           }
         }
@@ -576,12 +604,20 @@ export const WalletSelector = ({
 
     const {keyWallets, coinbaseWallets} = wa;
     for (const keyWallet of keyWallets) {
-      if (keyWallet.wallets.length > 0) {
+      const accountWallets = keyWallet.accounts.map(account => account.wallets);
+      const utxoAndEvmWallets = Object.values(
+        keyWallet.mergedUtxoAndEvmAccounts,
+      );
+      if (accountWallets.length > 0 || utxoAndEvmWallets.length > 0) {
         hasWallets = true;
         break;
       }
     }
-    if (coinbaseWallets.length > 0 && coinbaseWallets[0].wallets.length > 0) {
+    if (
+      coinbaseWallets.length > 0 &&
+      coinbaseWallets[0].coinbaseAccounts &&
+      coinbaseWallets[0].coinbaseAccounts.length > 0
+    ) {
       hasCoinbase = true;
     }
 
@@ -615,12 +651,12 @@ export const WalletSelector = ({
         <WalletSelectMenuBodyContainer>
           <KeyWalletsRow<KeyWallet>
             currency={currency}
-            keyWallets={walletsAndAccounts.keyWallets}
+            keyAccounts={walletsAndAccounts.keyWallets}
             hideBalance={hideAllBalances}
             onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
           />
           <KeyWalletsRow<WalletRowProps>
-            keyWallets={walletsAndAccounts.coinbaseWallets}
+            keyAccounts={walletsAndAccounts.coinbaseWallets}
             keySvg={CoinbaseSmall}
             hideBalance={hideAllBalances}
             onPress={account =>
@@ -649,9 +685,7 @@ export const CurrencyIconAndBadge = ({
   size: number;
 }) => {
   const fullCurrencyAbbreviation = getCurrencyAbbreviation(coin, chain);
-  const badgeImg = IsERCToken(coin, chain)
-    ? getBadgeImg(coin, chain)
-    : undefined;
+  const badgeImg = getBadgeImg(coin, chain);
   const CurrencyIcon =
     CurrencyListIcons[fullCurrencyAbbreviation.toLowerCase()];
 

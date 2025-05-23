@@ -13,6 +13,7 @@ import {ScreenContainer} from '../../components/styled/ShopTabComponents';
 
 const BillListContainer = styled.View`
   padding: 15px 16px 0;
+  flex: 1;
 `;
 
 const Payments = ({

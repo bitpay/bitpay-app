@@ -121,10 +121,10 @@ export const PROTOCOL_NAME: {[key in string]: any} = {
     [Network.testnet]: 'Sepolia',
   },
   btc: {
-    [Network.testnet]: 'Testnet3',
+    [Network.testnet]: 'Testnet4',
   },
   bch: {
-    [Network.testnet]: 'Testnet3',
+    [Network.testnet]: 'Testnet4',
   },
   doge: {
     [Network.testnet]: 'Testnet3',

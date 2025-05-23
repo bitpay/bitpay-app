@@ -1,6 +1,10 @@
 import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
-import {RampGetAssetsRequestData} from '../../buy-crypto.models';
+import {RampGetAssetsRequestData} from '../../models/ramp.models';
+import {
+  RampSellTransactionDetails,
+  RampGetSellTransactionDetailsRequestData,
+} from '../../../sell-crypto/models/ramp-sell.models';
 
 const bwsUri = BASE_BWS_URL;
 
@@ -14,17 +18,31 @@ export const rampGetAssets = async (
       },
     };
 
-    const body = {
-      env: requestData.env,
-      currencyCode: requestData.currencyCode,
-      withDisabled: requestData.withDisabled,
-      withHidden: requestData.withHidden,
-      useIp: requestData.useIp,
+    const {data} = await axios.post(
+      BASE_BWS_URL + '/v1/service/ramp/assets',
+      requestData,
+      config,
+    );
+
+    return Promise.resolve(data);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};
+
+export const rampGetSellTransactionDetails = async (
+  requestData: RampGetSellTransactionDetailsRequestData,
+): Promise<RampSellTransactionDetails> => {
+  try {
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
     };
 
     const {data} = await axios.post(
-      bwsUri + '/v1/service/ramp/assets',
-      body,
+      bwsUri + '/v1/service/ramp/sellTransactionDetails',
+      requestData,
       config,
     );
 

@@ -2,13 +2,8 @@ import {useNavigation} from '@react-navigation/native';
 import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {
-  Animated,
-  DeviceEventEmitter,
-  TouchableOpacity,
-  View,
-  NativeModules,
-} from 'react-native';
+import {Animated, DeviceEventEmitter, View, NativeModules} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {useTheme} from 'styled-components/native';
@@ -327,7 +322,7 @@ const Pin = gestureHandlerRootHOC(() => {
   return (
     <PinContainer>
       {showBackButton ? (
-        <SheetHeaderContainer style={{marginTop: insets.top, marginLeft: 15}}>
+        <SheetHeaderContainer style={{marginTop: insets.top, paddingLeft: 25}}>
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
             onPress={() => {
@@ -374,7 +369,6 @@ const PinModal: React.FC = () => {
       accessibilityLabel="pin-view"
       id={'pin'}
       isVisible={isVisible}
-      coverScreen={true}
       backdropTransitionOutTiming={0}
       hideModalContentWhileAnimating
       backdropOpacity={1}
@@ -382,7 +376,7 @@ const PinModal: React.FC = () => {
       animationIn={'fadeIn'}
       animationOut={'fadeOut'}
       useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
+      useNativeDriver={false}
       style={{margin: 0}}>
       <Pin />
     </BaseModal>

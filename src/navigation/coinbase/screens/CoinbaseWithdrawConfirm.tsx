@@ -4,7 +4,6 @@ import {RouteProp} from '@react-navigation/core';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
-import PaymentSent from '../../wallet/components/PaymentSent';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -32,6 +31,7 @@ import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import prompt from 'react-native-prompt-android';
+import {AppActions} from '../../../store/app';
 
 export interface CoinbaseWithdrawConfirmParamList {
   accountId: string;
@@ -46,7 +46,6 @@ const CoinbaseWithdrawConfirm = () => {
   const route =
     useRoute<RouteProp<CoinbaseGroupParamList, 'CoinbaseWithdraw'>>();
   const {accountId, wallet, amount} = route.params;
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
 
   const [receiveAddress, setReceiveAddress] = useState('');
@@ -90,6 +89,13 @@ const CoinbaseWithdrawConfirm = () => {
     fiatAmount: fiatAmountValue.toFixed(2) + ' USD',
   };
 
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
+  };
+
   useEffect(() => {
     if (!resetSwipeButton) {
       return;
@@ -105,7 +111,7 @@ const CoinbaseWithdrawConfirm = () => {
     async (code?: string) => {
       const buildTx = {
         to: receiveAddress,
-        amount: amount,
+        amount: amount.toString(),
         currency: currency,
       };
       dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
@@ -200,7 +206,16 @@ const CoinbaseWithdrawConfirm = () => {
       if (!apiLoading && sendStatus === 'success') {
         dispatch(dismissOnGoingProcessModal());
         await sleep(1000);
-        setShowPaymentSentModal(true);
+        dispatch(
+          AppActions.showPaymentSentModal({
+            isVisible: true,
+            onCloseModal,
+            title: t('Payment Sent'),
+          }),
+        );
+        await sleep(1200);
+        dispatch(coinbaseClearSendTransactionStatus());
+        navigation.goBack();
       }
 
       if (wallet && wallet.receiveAddress) {
@@ -233,15 +248,6 @@ const CoinbaseWithdrawConfirm = () => {
         title={t('Slide to withdraw')}
         forceReset={resetSwipeButton}
         onSwipeComplete={sendTransaction}
-      />
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          dispatch(coinbaseClearSendTransactionStatus());
-          setShowPaymentSentModal(false);
-          navigation.goBack();
-        }}
       />
     </ConfirmContainer>
   );

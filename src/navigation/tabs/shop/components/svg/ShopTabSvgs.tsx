@@ -85,7 +85,7 @@ export const CloseSvg = ({theme}: {theme: Theme}) => {
 
 export const AddSvg = ({theme}: {theme: Theme}) => {
   const circleColor = theme.dark ? Midnight : '#ECEFFD';
-  const plusColor = theme.dark ? White : '#2240C4';
+  const plusColor = theme.dark ? White : Action;
   return (
     <Svg width="40" height="40" viewBox="0 0 40 40" fill="none">
       <Circle cx="20" cy="20" r="20" fill={circleColor} />
@@ -162,6 +162,17 @@ export const InfoSvg = ({theme}: {theme: Theme}) => {
         stroke-linejoin="round"
       />
       <Circle cx="8.29961" cy="11.9" r="0.7" fill={color} />
+    </Svg>
+  );
+};
+
+export const BoostSvg = () => {
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M11.625 18.175L15.525 10.75H12.525V5.85L8.45 13.25H11.625V18.175ZM12 22C10.6333 22 9.34167 21.7375 8.125 21.2125C6.90833 20.6875 5.84583 19.9708 4.9375 19.0625C4.02917 18.1542 3.3125 17.0917 2.7875 15.875C2.2625 14.6583 2 13.3667 2 12C2 10.6167 2.2625 9.31667 2.7875 8.1C3.3125 6.88333 4.02917 5.825 4.9375 4.925C5.84583 4.025 6.90833 3.3125 8.125 2.7875C9.34167 2.2625 10.6333 2 12 2C13.3833 2 14.6833 2.2625 15.9 2.7875C17.1167 3.3125 18.175 4.025 19.075 4.925C19.975 5.825 20.6875 6.88333 21.2125 8.1C21.7375 9.31667 22 10.6167 22 12C22 13.3667 21.7375 14.6583 21.2125 15.875C20.6875 17.0917 19.975 18.1542 19.075 19.0625C18.175 19.9708 17.1167 20.6875 15.9 21.2125C14.6833 21.7375 13.3833 22 12 22Z"
+        fill="#2FCFA4"
+      />
     </Svg>
   );
 };

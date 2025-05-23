@@ -1,5 +1,5 @@
 import {ColorSchemeName, EventSubscription} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+import {ContentCard} from '@braze/react-native-sdk';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {PinModalConfig} from '../../components/modal/pin/PinModal';
 import {Network} from '../../constants';
@@ -14,25 +14,29 @@ import {SettingsListType} from '../../navigation/tabs/settings/SettingsRoot';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {FeedbackType, ModalId} from './app.reducer';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
+import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
+import {PaymentSentModalConfig} from '../../navigation/wallet/components/PaymentSent';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
   SUCCESS_APP_INIT = 'APP/SUCCESS_APP_INIT',
   APP_INIT_COMPLETE = 'APP/APP_INIT_COMPLETE',
   FAILED_APP_INIT = 'APP/FAILED_APP_INIT',
+  APP_TOKENS_DATA_LOADED = 'APP/APP_TOKENS_DATA_LOADED',
   APP_READY_FOR_DEEPLINKING = 'APP/READY_FOR_DEEPLINKING',
   APP_OPENING_WAS_TRACKED = 'APP/OPENING_WAS_TRACKED',
   SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
   SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
+  SET_APP_INSTALLED = 'APP/SET_INSTALLED_COMPLETED',
   SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
   DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
-  SHOW_IN_APP_MESSAGE = 'APP/SHOW_IN_APP_MESSAGE',
-  DISMISS_IN_APP_MESSAGE = 'APP/DISMISS_IN_APP_MESSAGE',
+  SHOW_WALLET_CONNECT_START_MODAL = 'APP/SHOW_WALLET_CONNECT_START_MODAL',
+  DISMISS_WALLET_CONNECT_START_MODAL = 'APP/DISMISS_WALLET_CONNECT_START_MODAL',
   SHOW_IN_APP_NOTIFICATION = 'APP/SHOW_IN_APP_NOTIFICATION',
   DISMISS_IN_APP_NOTIFICATION = 'APP/DISMISS_IN_APP_NOTIFICATION',
   SHOW_BOTTOM_NOTIFICATION_MODAL = 'APP/SHOW_BOTTOM_NOTIFICATION_MODAL',
@@ -40,6 +44,7 @@ export enum AppActionTypes {
   RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG = 'APP/RESET_BOTTOM_NOTIFICATION_MODAL_CONFIG',
   SHOW_CHAIN_SELECTOR_MODAL = 'APP/SHOW_CHAIN_SELECTOR_MODAL',
   DISMISS_CHAIN_SELECTOR_MODAL = 'APP/DISMISS_CHAIN_SELECTOR_MODAL',
+  CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS = 'APP/CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS',
   SET_COLOR_SCHEME = 'APP/SET_COLOR_SCHEME',
   SET_CURRENT_ROUTE = 'APP/SET_CURRENT_ROUTE',
   SUCCESS_GENERATE_APP_IDENTITY = 'APP/SUCCESS_GENERATE_APP_IDENTITY',
@@ -76,7 +81,7 @@ export enum AppActionTypes {
   SET_DEFAULT_ALT_CURRENCY = 'APP/SET_DEFAULT_ALT_CURRENCY',
   SET_DEFAULT_CHAIN_FILTER_OPTION = 'APP/SET_DEFAULT_CHAIN_FILTER_OPTION',
   SET_LOCAL_CHAIN_FILTER_OPTION = 'APP/SET_LOCAL_CHAIN_FILTER_OPTION',
-  SET_SELECTED_NETWORK_FOR_DEPOSIT = 'APP/SET_SELECTED_NETWORK_FOR_DEPOSIT',
+  SET_LOCAL_ASSETS_DROPDOWN = 'APP/SET_LOCAL_ASSETS_DROPDOWN',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_MIGRATION_MMKV_STORAGE_COMPLETE = 'APP/SET_MIGRATION_MMKV_STORAGE_COMPLETE',
@@ -90,6 +95,10 @@ export enum AppActionTypes {
   USER_FEEDBACK = 'APP/USER_FEEDBACK',
   IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
+  SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
+  SHOW_PAYMENT_SENT_MODAL = 'APP/SHOW_PAYMENT_SENT_MODAL',
+  DISMISS_PAYMENT_SENT_MODAL = 'APP/DISMISS_PAYMENT_SENT_MODAL',
+  CLEAR_PAYMENT_SENT_MODAL_OPTIONS = 'APP/CLEAR_PAYMENT_SENT_MODAL_OPTIONS',
 }
 
 interface ImportLedgerModalToggled {
@@ -115,6 +124,10 @@ interface FailedAppInit {
   payload: boolean;
 }
 
+interface AppTokensDataLoaded {
+  type: typeof AppActionTypes.APP_TOKENS_DATA_LOADED;
+}
+
 interface AppIsReadyForDeeplinking {
   type: typeof AppActionTypes.APP_READY_FOR_DEEPLINKING;
 }
@@ -136,6 +149,10 @@ interface SetOnboardingCompleted {
   type: typeof AppActionTypes.SET_ONBOARDING_COMPLETED;
 }
 
+interface setAppInstalled {
+  type: typeof AppActionTypes.SET_APP_INSTALLED;
+}
+
 interface ShowOnGoingProcessModal {
   type: typeof AppActionTypes.SHOW_ONGOING_PROCESS_MODAL;
   payload: string;
@@ -145,20 +162,19 @@ interface DismissOnGoingProcessModal {
   type: typeof AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL;
 }
 
-interface ShowInAppMessage {
-  type: typeof AppActionTypes.SHOW_IN_APP_MESSAGE;
-  payload: string;
+interface ShowWalletConnectStartModal {
+  type: typeof AppActionTypes.SHOW_WALLET_CONNECT_START_MODAL;
 }
 
-interface DismissInAppMessage {
-  type: typeof AppActionTypes.DISMISS_IN_APP_MESSAGE;
+interface DismissWalletConnectStartModal {
+  type: typeof AppActionTypes.DISMISS_WALLET_CONNECT_START_MODAL;
 }
 
 interface ShowInAppNotification {
   type: typeof AppActionTypes.SHOW_IN_APP_NOTIFICATION;
   payload: {
     message: string;
-    request: Web3WalletTypes.EventArguments['session_request'];
+    request: WalletKitTypes.EventArguments['session_request'];
     context: InAppNotificationContextType;
   };
 }
@@ -187,6 +203,10 @@ interface ShowChainSelectorModal {
 
 interface DismissChainSelectorModal {
   type: typeof AppActionTypes.DISMISS_CHAIN_SELECTOR_MODAL;
+}
+
+interface ClearChainSelectorModalOptions {
+  type: typeof AppActionTypes.CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS;
 }
 
 interface SetColorScheme {
@@ -354,10 +374,11 @@ interface SetLocalDefaultChainFilterOption {
   selectedLocalChainFilterOption: SupportedChains | undefined;
 }
 
-interface SetSelectedNetworkForDeposit {
-  type: typeof AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT;
-  selectedNetworkForDeposit: SupportedChains | undefined;
+interface SetLocalAssetsDropdown {
+  type: typeof AppActionTypes.SET_LOCAL_ASSETS_DROPDOWN;
+  selectedLocalAssetsDropdown: LocalAssetsDropdown | undefined;
 }
+
 interface SetMigrationComplete {
   type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
 }
@@ -411,21 +432,39 @@ interface InAppBrowserOpen {
   payload: boolean;
 }
 
+interface ShowArchaxBanner {
+  type: typeof AppActionTypes.SHOW_ARCHAX_BANNER;
+  payload: boolean;
+}
+
+interface ShowPaymentSentModal {
+  type: typeof AppActionTypes.SHOW_PAYMENT_SENT_MODAL;
+  payload: PaymentSentModalConfig;
+}
+
+interface DismissPaymentSentModal {
+  type: typeof AppActionTypes.DISMISS_PAYMENT_SENT_MODAL;
+}
+
+interface ClearPaymentSentModalOptions {
+  type: typeof AppActionTypes.CLEAR_PAYMENT_SENT_MODAL_OPTIONS;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
   | AppInitComplete
   | FailedAppInit
+  | AppTokensDataLoaded
   | AppIsReadyForDeeplinking
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
   | setUserFeedback
   | SetIntroCompleted
   | SetOnboardingCompleted
+  | setAppInstalled
   | ShowOnGoingProcessModal
   | DismissOnGoingProcessModal
-  | ShowInAppMessage
-  | DismissInAppMessage
   | ShowInAppNotification
   | DismissInAppNotification
   | ShowBottomNotificationModal
@@ -478,6 +517,13 @@ export type AppActionType =
   | ImportLedgerModalToggled
   | SetDefaultChainFilterOption
   | SetLocalDefaultChainFilterOption
-  | SetSelectedNetworkForDeposit
+  | SetLocalAssetsDropdown
   | ShowChainSelectorModal
-  | DismissChainSelectorModal;
+  | DismissChainSelectorModal
+  | ClearChainSelectorModalOptions
+  | ShowWalletConnectStartModal
+  | DismissWalletConnectStartModal
+  | ShowArchaxBanner
+  | ShowPaymentSentModal
+  | DismissPaymentSentModal
+  | ClearPaymentSentModalOptions;

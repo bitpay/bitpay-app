@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {RefreshControl, Text, TouchableOpacity} from 'react-native';
+import {Platform, RefreshControl, Text} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   RouteProp,
   useRoute,
@@ -9,7 +10,7 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import MoonpayLogo from '../../../../../components/icons/external-services/moonpay/moonpay-logo';
 import {
@@ -58,7 +59,7 @@ import {
   MoonpaySellOrderData,
   MoonpaySellOrderStatus,
   MoonpaySellTransactionDetails,
-} from '../../../../../store/sell-crypto/sell-crypto.models';
+} from '../../../../../store/sell-crypto/models/moonpay-sell.models';
 import {RootState} from '../../../../../store';
 import {Wallet} from '../../../../../store/wallet/wallet.models';
 
@@ -270,7 +271,7 @@ const MoonpaySellDetails: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <Settings
+      <SettingsComponent
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -449,7 +450,7 @@ const MoonpaySellDetails: React.FC = () => {
                   {sellOrder.tx_sent_id}
                 </ColumnData>
                 <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedTransactionId ? <CopiedSvg width={17} /> : null}
+                  {copiedTransactionSentId ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainerRight>
               </CopiedContainer>
             </TouchableOpacity>
@@ -477,7 +478,8 @@ const MoonpaySellDetails: React.FC = () => {
         )}
 
         {sellOrder.external_id && (__DEV__ || !sellOrder.transaction_id) ? (
-          <ColumnDataContainer>
+          <ColumnDataContainer
+            style={{marginBottom: Platform.OS === 'android' ? 20 : 0}}>
             <TouchableOpacity
               onPress={() => {
                 copyText(sellOrder.external_id);
@@ -625,7 +627,7 @@ const MoonpaySellDetails: React.FC = () => {
             <Text style={{color: 'red'}}>{t('Remove')}</Text>
           </RemoveCta>
         ) : null}
-      </Settings>
+      </SettingsComponent>
     </SettingsContainer>
   );
 };

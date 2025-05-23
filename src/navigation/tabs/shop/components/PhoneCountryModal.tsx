@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import {Modal, TouchableOpacity, FlatList} from 'react-native';
+import {Modal, FlatList} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled, {useTheme} from 'styled-components/native';
 import {BaseText} from '../../../../components/styled/Text';
 import {PhoneCountryCode} from '../../../../lib/gift-cards/gift-card';

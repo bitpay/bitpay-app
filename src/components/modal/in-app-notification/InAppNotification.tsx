@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {Action, LightBlack} from '../../../styles/colors';
+import {Action, Black, LightBlack, White} from '../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';
@@ -12,12 +12,14 @@ import haptic from '../../haptic-feedback/haptic';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
 import {WIDTH} from '../../styled/Containers';
 import {useNavigation} from '@react-navigation/native';
-import {getWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
+import {getGasWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {sleep} from '../../../utils/helper-methods';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useTheme} from '@react-navigation/native';
 
 export type InAppNotificationMessages = 'NEW_PENDING_REQUEST';
 
-const InAppContainer = styled.TouchableOpacity`
+const InAppContainer = styled(TouchableOpacity)`
   justify-content: center;
   align-items: center;
 `;
@@ -50,7 +52,7 @@ const CloseModalContainer = styled.View`
   justify-content: flex-end;
   align-items: flex-end;
 `;
-const CloseModalButton = styled.TouchableOpacity``;
+const CloseModalButton = styled(TouchableOpacity)``;
 
 const MessageContainer = styled.View`
   flex-direction: row;
@@ -65,6 +67,7 @@ const InAppNotification: React.FC = () => {
   const inAppNotificationData = useAppSelector(
     ({APP}) => APP.inAppNotificationData,
   );
+  const theme = useTheme();
   const {context, message, request} = inAppNotificationData || {};
 
   const onBackdropPress = () => {
@@ -84,14 +87,16 @@ const InAppNotification: React.FC = () => {
 
     await sleep(0);
 
-    const wallet = request && dispatch(getWalletByRequest(request));
-    if (!wallet) {
+    const wallet = request && dispatch(getGasWalletByRequest(request));
+    if (!wallet || !wallet.receiveAddress) {
       return;
     }
 
     navigation.navigate('WalletConnectHome', {
       topic: request?.topic,
-      wallet,
+      selectedAccountAddress: wallet.receiveAddress,
+      notificationRequestId: request.id,
+      keyId: wallet.keyId,
       context: 'notification',
     });
   };
@@ -125,7 +130,13 @@ const InAppNotification: React.FC = () => {
           </MessageContainer>
           <CloseModalContainer>
             <CloseModalButton onPress={onBackdropPress}>
-              <CloseModal width={20} height={20} />
+              <CloseModal
+                {...{
+                  width: 20,
+                  height: 20,
+                  color: theme.dark ? White : Black,
+                }}
+              />
             </CloseModalButton>
           </CloseModalContainer>
           <BlurContainer />

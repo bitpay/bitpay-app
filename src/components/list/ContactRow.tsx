@@ -40,6 +40,7 @@ export interface ContactRowProps {
   destinationTag?: number;
   email?: string;
   tokenAddress?: string;
+  notes?: string;
 }
 
 interface Props {
@@ -61,11 +62,14 @@ const ContactRow = ({contact, onPress}: Props) => {
             coin={coin}
             size={45}
             chain={chain}
+            address={address}
             tokenAddress={tokenAddress}
           />
         </ContactImageContainer>
         <ContactColumn>
-          <H5>{name}</H5>
+          <H5 numberOfLines={2} ellipsizeMode={'tail'}>
+            {name}
+          </H5>
           <ListItemSubText numberOfLines={1} ellipsizeMode={'tail'}>
             {email ? email : address}
           </ListItemSubText>

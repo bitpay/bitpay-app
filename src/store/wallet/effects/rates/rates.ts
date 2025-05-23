@@ -32,21 +32,31 @@ import {
   EvmErc20PriceJSON,
 } from '@moralisweb3/common-evm-utils';
 import {calculateUsdToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
+import {IsERCToken} from '../../utils/currency';
+import {UpdateAllKeyAndWalletStatusContext} from '../status/status';
 
 export const startGetRates =
-  ({init, force}: {init?: boolean; force?: boolean}): Effect<Promise<Rates>> =>
+  ({
+    context,
+    force,
+  }: {
+    context?: UpdateAllKeyAndWalletStatusContext;
+    force?: boolean;
+  }): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
     return new Promise(async resolve => {
       dispatch(LogActions.info('startGetRates: starting...'));
       const {
         RATE: {ratesCacheKey, rates: cachedRates},
+        APP: {altCurrencyList},
       } = getState();
       if (
         !isCacheKeyStale(
           ratesCacheKey[DEFAULT_DATE_RANGE],
           RATES_CACHE_DURATION,
         ) &&
-        !force
+        !force &&
+        altCurrencyList.length > 0
       ) {
         dispatch(
           LogActions.info('startGetRates: success (using cached rates)'),
@@ -81,7 +91,7 @@ export const startGetRates =
           LogActions.info('startGetRates: success get request (yesterday)'),
         );
 
-        if (init) {
+        if (context === 'init' || altCurrencyList.length === 0) {
           dispatch(
             LogActions.info('startGetRates: setting alternative currency list'),
           );
@@ -142,7 +152,10 @@ export const getContractAddresses =
 
     Object.values(keys).forEach(key => {
       key.wallets.forEach(wallet => {
-        if (wallet.currencyAbbreviation === chain && wallet.tokens) {
+        if (
+          !IsERCToken(wallet.currencyAbbreviation, wallet.chain) &&
+          wallet.tokens
+        ) {
           // workaround to get linked wallets
           const tokenAddresses = wallet.tokens.map(t =>
             t.replace(`${wallet.id}-`, ''),
@@ -152,7 +165,8 @@ export const getContractAddresses =
       });
     });
     dispatch(LogActions.info('getContractAddresses: success'));
-    return allTokenAddresses;
+    const uniqueTokenAddresses = [...new Set(allTokenAddresses)];
+    return uniqueTokenAddresses;
   };
 
 export const getTokenRates =
@@ -314,28 +328,35 @@ export const fetchHistoricalRates =
     dateRange: DateRanges = DateRanges.Day,
     currencyAbbreviation?: string,
     fiatIsoCode: string = 'USD',
-  ): Effect<Promise<Array<number>>> =>
+  ): Effect<Promise<Array<Rate>>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       const {
-        RATE: {ratesHistoricalCacheKey, ratesByDateRange: cachedRates},
+        RATE: {
+          ratesHistoricalCacheKey,
+          ratesByDateRange: cachedRates,
+          cachedValuesFiatCode,
+        },
       } = getState();
+
+      const cachedRatesByCoin =
+        (currencyAbbreviation &&
+          cachedRates[dateRange][currencyAbbreviation.toLowerCase()]) ||
+        [];
 
       if (
         !isCacheKeyStale(
           ratesHistoricalCacheKey[dateRange],
           HISTORIC_RATES_CACHE_DURATION,
-        )
+        ) &&
+        cachedRatesByCoin.length > 0 &&
+        cachedValuesFiatCode?.toUpperCase() === fiatIsoCode?.toUpperCase()
       ) {
-        dispatch(LogActions.info('[rates]: using cached rates'));
-        const cachedRatesByCoin: Array<number> = currencyAbbreviation
-          ? cachedRates[dateRange][currencyAbbreviation.toLowerCase()].map(
-              (r: Rate) => {
-                return r.rate;
-              },
-            )
-          : [];
-
+        dispatch(
+          LogActions.info(
+            `[rates]: using cached rates. currencyAbbreviation: ${currencyAbbreviation} | fiatIsoCode: ${fiatIsoCode}`,
+          ),
+        );
         return resolve(cachedRatesByCoin);
       }
 
@@ -356,16 +377,18 @@ export const fetchHistoricalRates =
         const url = `${BASE_BWS_URL}/v2/fiatrates/${fiatIsoCode}?ts=${firstDateTs}`;
         const {data: rates} = await axios.get(url);
         dispatch(
-          successGetHistoricalRates({ratesByDateRange: rates, dateRange}),
+          successGetHistoricalRates({
+            ratesByDateRange: rates,
+            dateRange,
+            fiatCode: fiatIsoCode,
+          }),
         );
         dispatch(
           LogActions.info('[rates]: fetched historical rates successfully'),
         );
 
-        const ratesByCoin: Array<number> = currencyAbbreviation
-          ? rates[currencyAbbreviation.toLowerCase()].map((r: Rate) => {
-              return r.rate;
-            })
+        const ratesByCoin = currencyAbbreviation
+          ? rates[currencyAbbreviation.toLowerCase()]
           : [];
         resolve(ratesByCoin);
       } catch (e) {

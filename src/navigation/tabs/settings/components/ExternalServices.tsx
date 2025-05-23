@@ -15,6 +15,7 @@ import MoonpayLogo from '../../../../components/icons/external-services/moonpay/
 import RampLogo from '../../../../components/icons/external-services/ramp/ramp-logo';
 import SardineLogo from '../../../../components/icons/external-services/sardine/sardine-logo';
 import SimplexLogo from '../../../../components/icons/external-services/simplex/simplex-logo';
+import ThorswapLogo from '../../../../components/icons/external-services/thorswap/thorswap-logo';
 import TransakLogo from '../../../../components/icons/external-services/transak/transak-logo';
 import WyreLogo from '../../../../components/icons/external-services/wyre/wyre-logo';
 import {useAppSelector} from '../../../../utils/hooks';
@@ -34,10 +35,16 @@ const ExternalServicesIconContainer = styled.View`
 
 const ExternalServices = () => {
   const navigation = useNavigation();
+  const thorswapHistory = useAppSelector(
+    ({SWAP_CRYPTO}: RootState) => SWAP_CRYPTO.thorswap,
+  );
   const wyreHistory = useAppSelector(
     ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.wyre,
   );
-  const [wyrePaymentRequests, setTransactions] = useState(
+  const [thorswapTxData, setThorswapTxData] = useState(
+    Object.values(thorswapHistory),
+  );
+  const [wyrePaymentRequests, setWyrePaymentRequests] = useState(
     [] as WyrePaymentData[],
   );
 
@@ -45,7 +52,7 @@ const ExternalServices = () => {
     const _wyrePaymentRequests = Object.values(wyreHistory).filter(
       pr => pr.env === (__DEV__ ? 'dev' : 'prod'),
     );
-    setTransactions(_wyrePaymentRequests);
+    setWyrePaymentRequests(_wyrePaymentRequests);
   }, []);
 
   return (
@@ -101,7 +108,7 @@ const ExternalServices = () => {
           <ExternalServicesIconContainer>
             <RampLogo iconOnly={true} width={30} height={30} />
           </ExternalServicesIconContainer>
-          <SettingTitle>Ramp</SettingTitle>
+          <SettingTitle>Ramp Network</SettingTitle>
         </ExternalServicesItemContainer>
         <AngleRight />
       </Setting>
@@ -133,6 +140,24 @@ const ExternalServices = () => {
         </ExternalServicesItemContainer>
         <AngleRight />
       </Setting>
+      {thorswapTxData?.length > 0 ? (
+        <>
+          <Hr />
+          <Setting
+            onPress={() => {
+              haptic('impactLight');
+              navigation.navigate('ThorswapSettings');
+            }}>
+            <ExternalServicesItemContainer>
+              <ExternalServicesIconContainer>
+                <ThorswapLogo iconOnly={true} widthIcon={30} heightIcon={22} />
+              </ExternalServicesIconContainer>
+              <SettingTitle>THORSwap</SettingTitle>
+            </ExternalServicesItemContainer>
+            <AngleRight />
+          </Setting>
+        </>
+      ) : null}
       <Hr />
       <Setting
         onPress={() => {

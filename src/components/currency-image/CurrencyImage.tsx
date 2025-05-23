@@ -1,5 +1,5 @@
 // renders svg if supported currency or cached png if custom token
-import React, {ReactElement, useMemo} from 'react';
+import React, {ReactElement, useMemo, useState} from 'react';
 import {StyleSheet} from 'react-native';
 import {ImageRequireSource} from 'react-native';
 import FastImage from 'react-native-fast-image';
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const CurrencyImage: React.VFC<CurrencyImageProps> = ({
+export const CurrencyImage: React.FC<CurrencyImageProps> = ({
   img,
   imgSrc,
   badgeUri,
@@ -43,6 +43,7 @@ export const CurrencyImage: React.VFC<CurrencyImageProps> = ({
   size = 40,
 }) => {
   const style = {width: size, height: size};
+  const [imageError, setImageError] = useState(false);
 
   const badge = useMemo(
     () =>
@@ -75,13 +76,14 @@ export const CurrencyImage: React.VFC<CurrencyImageProps> = ({
 
   return (
     <CurrencyImageContainer>
-      {!img && !imgSrc ? (
+      {(!img && !imgSrc) || imageError ? (
         <DefaultImage {...style} />
       ) : imgSrc ? (
         <FastImage
           style={style}
           source={imgSrc}
           resizeMode={FastImage.resizeMode.cover}
+          onError={() => setImageError(true)}
         />
       ) : typeof img === 'string' ? (
         img === 'coinbase' ? (
@@ -96,6 +98,7 @@ export const CurrencyImage: React.VFC<CurrencyImageProps> = ({
               priority: FastImage.priority.normal,
             }}
             resizeMode={FastImage.resizeMode.contain}
+            onError={() => setImageError(true)}
           />
         )
       ) : (

@@ -1,6 +1,7 @@
-import React, {useCallback, useEffect, useRef} from 'react';
-import {useNavigation, useScrollToTop} from '@react-navigation/native';
+import React, {useCallback, useEffect} from 'react';
+import {useNavigation} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {FlashList} from '@shopify/flash-list';
 import {
   ScreenContainer,
   SectionContainer,
@@ -8,7 +9,7 @@ import {
 import {GiftCardGroupParamList, GiftCardScreens} from '../GiftCardGroup';
 import {GiftCard} from '../../../../../store/shop/shop.models';
 import GiftCardCreditsItem from '../../components/GiftCardCreditsItem';
-import {FlatList, TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {sortByDescendingDate} from '../../../../../lib/gift-cards/gift-card';
 
@@ -57,17 +58,14 @@ const ArchivedGiftCards = ({
     [navigator, supportedGiftCardMap],
   );
 
-  const flatListRef = useRef<FlatList>(null);
-  useScrollToTop(flatListRef);
-
   return (
     <ScreenContainer>
-      <SectionContainer>
-        <FlatList
+      <SectionContainer style={{flex: 1}}>
+        <FlashList
           data={giftCards}
           renderItem={renderItem}
+          estimatedItemSize={65}
           keyExtractor={item => item.invoiceId}
-          ref={flatListRef}
         />
       </SectionContainer>
     </ScreenContainer>

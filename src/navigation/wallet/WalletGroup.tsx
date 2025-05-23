@@ -10,10 +10,14 @@ import CurrencySelection, {
 import KeyOverview from './screens/KeyOverview';
 import KeyExplanation from './screens/KeyExplanation';
 import KeySettings from './screens/KeySettings';
+import AccountDetails, {
+  AccountDetailsScreenParamList,
+} from './screens/AccountDetails';
 import WalletDetails, {
   WalletDetailsScreenParamList,
 } from './screens/WalletDetails';
 import WalletSettings from './screens/WalletSettings';
+import AccountSettings from './screens/AccountSettings';
 import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
 import {HeaderTitle} from '../../components/styled/Text';
@@ -30,6 +34,9 @@ import TermsOfUse, {
   TermsOfUseParamList,
 } from '../onboarding/screens/TermsOfUse';
 import AddWallet, {AddWalletParamList} from './screens/AddWallet';
+import AddCustomToken, {
+  AddCustomTokenParamList,
+} from './screens/AddCustomToken';
 import AmountScreen, {AmountScreenParamList} from './screens/AmountScreen';
 import SendTo from './screens/send/SendTo';
 import Confirm, {ConfirmParamList} from './screens/send/confirm/Confirm';
@@ -70,9 +77,6 @@ import PayProConfirmTwoFactor, {
 import {useTranslation} from 'react-i18next';
 import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
 import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
-import CurrencyTokenSelectionScreen, {
-  CurrencyTokenSelectionScreenParamList,
-} from './screens/CurrencyTokenSelection';
 import EnterBuyerProvidedEmail from './screens/send/EnterBuyerProvidedEmail';
 import ExportTransactionHistory from './screens/wallet-settings/ExportTransactionHistory';
 import ClearTransactionHistoryCache from './screens/wallet-settings/ClearTransactionHistoryCache';
@@ -81,11 +85,8 @@ import BackupOnboarding, {
   BackupOnboardingParamList,
 } from './screens/BackupOnboarding';
 import {Root} from '../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
+import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface WalletProps {
   Wallet: typeof Root;
@@ -93,8 +94,8 @@ interface WalletProps {
 
 export type WalletGroupParamList = {
   CurrencySelection: CurrencySelectionParamList;
-  WalletCurrencyTokenSelectionScreen: CurrencyTokenSelectionScreenParamList;
   AddWallet: AddWalletParamList;
+  AddCustomToken: AddCustomTokenParamList;
   BackupKey: BackupParamList;
   BackupOnboarding: BackupOnboardingParamList;
   RecoveryPhrase: RecoveryPhraseParamList;
@@ -106,10 +107,17 @@ export type WalletGroupParamList = {
   UpdateKeyOrWalletName: {
     key: Key;
     wallet?: {walletId: string; walletName: string | undefined};
-    context: 'key' | 'wallet';
+    accountItem?: AccountRowProps;
+    context: 'key' | 'wallet' | 'account';
   };
+  AccountDetails: AccountDetailsScreenParamList;
   WalletDetails: WalletDetailsScreenParamList;
-  WalletSettings: {walletId: string; key: Key};
+  WalletSettings: {walletId: string; key: Key; copayerId?: string};
+  AccountSettings: {
+    key: Key;
+    selectedAccountAddress: string;
+    context: 'keySettings' | 'accountDetails';
+  };
   CreationOptions: undefined;
   Import: ImportParamList;
   CreateEncryptPassword: {key: Key};
@@ -138,11 +146,16 @@ export type WalletGroupParamList = {
     walletId: string;
     transactionId: string;
     keyId: string;
+    copayerId?: string;
   };
-  TransactionProposalNotifications: {walletId?: string; keyId?: string};
+  TransactionProposalNotifications: {
+    walletId?: string;
+    keyId?: string;
+    copayerId?: string;
+  };
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
-  WalletInformation: {wallet: WalletModel};
+  WalletInformation: {wallet?: WalletModel; accountItem?: AccountRowProps};
   ExportWallet: {
     wallet: WalletModel;
     keyObj: {
@@ -165,8 +178,8 @@ export type WalletGroupParamList = {
 
 export enum WalletScreens {
   CURRENCY_SELECTION = 'CurrencySelection',
-  CURRENCY_TOKEN_SELECTION = 'WalletCurrencyTokenSelectionScreen',
   ADD_WALLET = 'AddWallet',
+  ADD_CUSTOM_TOKEN = 'AddCustomToken',
   BACKUP_KEY = 'BackupKey',
   BACKUP_ONBOARDING = 'BackupOnboarding',
   RECOVERY_PHRASE = 'RecoveryPhrase',
@@ -176,6 +189,8 @@ export enum WalletScreens {
   KEY_EXPLANATION = 'KeyExplanation',
   KEY_SETTINGS = 'KeySettings',
   UPDATE_KEY_OR_WALLET_NAME = 'UpdateKeyOrWalletName',
+  ACCOUNT_DETAILS = 'AccountDetails',
+  ACCOUNT_SETTINGS = 'AccountSettings',
   WALLET_DETAILS = 'WalletDetails',
   WALLET_SETTINGS = 'WalletSettings',
   CREATION_OPTIONS = 'CreationOptions',
@@ -219,16 +234,9 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
   const {t} = useTranslation();
   return (
     <Wallet.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Wallet.Screen
         options={{
@@ -239,11 +247,11 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
         name={WalletScreens.CURRENCY_SELECTION}
         component={CurrencySelection}
       />
-      <Wallet.Screen
-        name={WalletScreens.CURRENCY_TOKEN_SELECTION}
-        component={CurrencyTokenSelectionScreen}
-      />
       <Wallet.Screen name={WalletScreens.ADD_WALLET} component={AddWallet} />
+      <Wallet.Screen
+        name={WalletScreens.ADD_CUSTOM_TOKEN}
+        component={AddCustomToken}
+      />
       <Wallet.Screen
         options={{
           gestureEnabled: false,
@@ -281,6 +289,14 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
         component={UpdateKeyOrWalletName}
       />
       <Wallet.Screen
+        name={WalletScreens.ACCOUNT_DETAILS}
+        component={AccountDetails}
+      />
+      <Wallet.Screen
+        name={WalletScreens.ACCOUNT_SETTINGS}
+        component={AccountSettings}
+      />
+      <Wallet.Screen
         name={WalletScreens.WALLET_DETAILS}
         component={WalletDetails}
       />
@@ -313,6 +329,7 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
       />
       <Wallet.Screen
         options={{
+          gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Add Funds')}</HeaderTitle>,
         }}
         name={WalletScreens.DEBIT_CARD_CONFIRM}
@@ -320,6 +337,7 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
       />
       <Wallet.Screen
         options={{
+          gestureEnabled: false,
           headerTitle: () => <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>,
         }}
         name={WalletScreens.PAY_PRO_CONFIRM}
@@ -327,6 +345,7 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
       />
       <Wallet.Screen
         options={{
+          gestureEnabled: false,
           headerTitle: () => (
             <HeaderTitle>{t('Two-Step Verification')}</HeaderTitle>
           ),

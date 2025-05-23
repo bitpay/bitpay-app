@@ -1,8 +1,9 @@
 import React from 'react';
-import {Image, View, TouchableOpacity} from 'react-native';
+import {Image, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
-import {H6, Paragraph} from '../../../../../components/styled/Text';
+import {BaseText, H6, Paragraph} from '../../../../../components/styled/Text';
 import {
   Action,
   LightBlack,
@@ -13,7 +14,6 @@ import {
   White,
 } from '../../../../../styles/colors';
 import {formatFiatAmount, sleep} from '../../../../../utils/helper-methods';
-import {BaseText} from '../../../../wallet/components/KeyDropdownOption';
 import BillStatus from './BillStatus';
 import {
   BillPayAccount,

@@ -1,6 +1,7 @@
 import styled from 'styled-components/native';
 import FastImage from 'react-native-fast-image';
 import {BaseText} from '../../../../../components/styled/Text';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const RowDataContainer = styled.View`
   display: flex;
@@ -90,7 +91,7 @@ export const CopiedContainer = styled.View`
   justify-content: flex-start;
 `;
 
-export const RemoveCta = styled.TouchableOpacity`
+export const RemoveCta = styled(TouchableOpacity)`
   display: flex;
   flex-direction: row;
   justify-content: center;

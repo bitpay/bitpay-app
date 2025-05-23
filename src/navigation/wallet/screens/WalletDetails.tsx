@@ -1,5 +1,6 @@
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {FlashList} from '@shopify/flash-list';
 import i18next from 'i18next';
 import _ from 'lodash';
 import React, {
@@ -14,15 +15,13 @@ import React, {
 import {useTranslation} from 'react-i18next';
 import {
   DeviceEventEmitter,
-  FlatList,
   Linking,
   RefreshControl,
-  SectionList,
   Share,
   Text,
   View,
-  TouchableOpacity,
 } from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import Settings from '../../../components/settings/Settings';
 import {
@@ -31,6 +30,7 @@ import {
   H2,
   H5,
   HeaderTitle,
+  Link,
   Paragraph,
   ProposalBadge,
   Small,
@@ -41,7 +41,12 @@ import {
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
-import {findWalletById, isSegwit} from '../../../store/wallet/utils/wallet';
+import {
+  buildUIFormattedWallet,
+  findWalletById,
+  isSegwit,
+  isTaproot,
+} from '../../../store/wallet/utils/wallet';
 import {
   setWalletScanning,
   updatePortfolioBalance,
@@ -81,7 +86,6 @@ import ReceiveAddress from '../components/ReceiveAddress';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
 import Icons from '../components/WalletIcons';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
-import {buildUIFormattedWallet} from './KeyOverview';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
@@ -109,7 +113,7 @@ import {IsERCToken} from '../../../store/wallet/utils/currency';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {isCoinSupportedToBuy} from '../../services/buy-crypto/utils/buy-crypto-utils';
 import {isCoinSupportedToSell} from '../../services/sell-crypto/utils/sell-crypto-utils';
-import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/changelly-utils';
+import {isCoinSupportedToSwap} from '../../services/swap-crypto/utils/swap-crypto-utils';
 import {
   buildBtcSpeedupTx,
   buildEthERCTokenSpeedupTx,
@@ -133,11 +137,13 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
 import {BillPayAccount} from '../../../store/shop/shop.models';
 import debounce from 'lodash.debounce';
+import ArchaxFooter from '../../../components/archax/archax-footer';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
   key?: Key;
   skipInitializeHistory?: boolean;
+  copayerId?: string;
 };
 
 type WalletDetailsScreenProps = NativeStackScreenProps<
@@ -159,7 +165,7 @@ const Row = styled.View`
   align-items: flex-end;
 `;
 
-const TouchableRow = styled.TouchableOpacity`
+const TouchableRow = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: center;
   align-items: center;
@@ -197,7 +203,7 @@ const EmptyListContainer = styled.View`
   margin-top: 50px;
 `;
 
-const LockedBalanceContainer = styled.TouchableOpacity`
+const LockedBalanceContainer = styled(TouchableOpacity)`
   flex-direction: row;
   padding: ${ScreenGutter};
   justify-content: center;
@@ -207,7 +213,6 @@ const LockedBalanceContainer = styled.TouchableOpacity`
 
 const Description = styled(BaseText)`
   overflow: hidden;
-  margin-right: 175px;
   font-size: 16px;
 `;
 
@@ -259,6 +264,12 @@ const TypeText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
 `;
 
+const LinkText = styled(Link)`
+  font-weight: 500;
+  font-size: 18px;
+  text-align: center;
+`;
+
 const getWalletType = (
   key: Key,
   wallet: Wallet,
@@ -281,6 +292,10 @@ const getWalletType = (
   if (isSegwit(addressType)) {
     return {title: 'Segwit'};
   }
+
+  if (isTaproot(addressType)) {
+    return {title: 'Taproot'};
+  }
   return;
 };
 
@@ -291,10 +306,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {walletId, skipInitializeHistory} = route.params;
+  const {walletId, skipInitializeHistory, copayerId} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const supportedCardMap = useAppSelector(({SHOP}) => SHOP.supportedCardMap);
+  const supportedCardMap = useAppSelector(
+    ({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap,
+  );
 
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
 
@@ -302,7 +319,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
-  const fullWalletObj = findWalletById(wallets, walletId) as Wallet;
+  const fullWalletObj = findWalletById(wallets, walletId, copayerId) as Wallet;
   const key = keys[fullWalletObj.keyId];
   const uiFormattedWallet = buildUIFormattedWallet(
     fullWalletObj,
@@ -318,6 +335,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     useState(false);
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -384,7 +402,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const createViewOnBlockchainOption = () => {
     if (
       ['eth', 'matic', 'xrp', 'arb', 'base', 'op'].includes(
-        fullWalletObj.currencyAbbreviation.toLowerCase(),
+        fullWalletObj.chain.toLowerCase(),
       ) ||
       IsERCToken(
         fullWalletObj.currencyAbbreviation.toLowerCase(),
@@ -495,9 +513,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     cryptoBalance,
     cryptoLockedBalance,
     cryptoSpendableBalance,
-    fiatBalance,
-    fiatLockedBalance,
-    fiatSpendableBalance,
+    fiatBalanceFormat,
+    fiatLockedBalanceFormat,
+    fiatSpendableBalanceFormat,
     currencyAbbreviation,
     chain,
     tokenAddress,
@@ -511,9 +529,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     network !== Network.testnet;
 
   const [history, setHistory] = useState<any[]>([]);
-  const [groupedHistory, setGroupedHistory] = useState<
-    {title: string; data: any[]; time: number}[]
-  >([]);
+  const [groupedHistory, setGroupedHistory] = useState<any[]>([]);
   const [loadMore, setLoadMore] = useState(true);
   const [isLoading, setIsLoading] = useState<boolean>();
   const [errorLoadingTxs, setErrorLoadingTxs] = useState<boolean>();
@@ -530,6 +546,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       chain,
       [],
       tokenAddress,
+      walletId,
     );
     formattedPendingTxps.forEach((txp: any) => {
       const action: any = _.find(txp.actions, {
@@ -580,8 +597,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
           if (_history?.length) {
             setHistory(_history);
-            const grouped = GroupTransactionHistory(_history);
-            setGroupedHistory(grouped);
+            const transactionGroups = GroupTransactionHistory(_history);
+            const flattenedGroups = transactionGroups.reduce(
+              (allTransactions, section) => [
+                ...allTransactions,
+                section.title,
+                ...section.data,
+              ],
+              [] as any[],
+            );
+            setGroupedHistory(flattenedGroups);
           }
 
           setLoadMore(_loadMore);
@@ -769,12 +794,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         showBottomNotificationModal({
           ...errorMessageConfig,
           enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
         }),
       );
     }
@@ -792,7 +811,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     const chain = fullWalletObj.chain.toLowerCase();
 
     if (
-      ['eth', 'matic', 'xrp', 'arb', 'base', 'op'].includes(coin) ||
+      ['eth', 'matic', 'xrp', 'arb', 'base', 'op'].includes(chain) ||
       IsERCToken(coin, chain)
     ) {
       let address;
@@ -951,18 +970,9 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     }
   };
 
-  const renderSectionHeader = useCallback(({section: {title, time}}) => {
-    return (
-      <TransactionSectionHeaderContainer key={time}>
-        <H5>{title}</H5>
-      </TransactionSectionHeaderContainer>
-    );
-  }, []);
-
   const renderTransaction = useCallback(({item}) => {
     return (
       <TransactionRow
-        key={item.id}
         icon={
           item.customData?.recipientEmail ? (
             <ContactIcon
@@ -987,34 +997,41 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
   }, []);
 
-  const renderTxp = useCallback(({item}) => {
-    return (
-      <TransactionProposalRow
-        key={item.id}
-        icon={TransactionIcons[item.uiIcon]}
-        creator={item.uiCreator}
-        time={item.uiTime}
-        value={item.uiValue}
-        message={item.message}
-        onPressTransaction={() => onPressTxp(item)}
-        recipientCount={item.recipientCount}
-        toAddress={item.toAddress}
-        tokenAddress={item.tokenAddress}
-        chain={item.chain}
-        contactList={contactList}
-      />
-    );
-  }, []);
+  const renderTxp = useCallback(
+    (items: any[]) => {
+      return (
+        <View style={{paddingTop: 20}}>
+          {items.slice(0, 5).map((item, index) => (
+            <TransactionProposalRow
+              key={`${item.id}-${index}`}
+              icon={TransactionIcons[item.uiIcon]}
+              creator={item.uiCreator}
+              time={item.uiTime}
+              value={item.uiValue}
+              message={item.message}
+              onPressTransaction={() => onPressTxp(item)}
+              recipientCount={item.recipientCount}
+              toAddress={item.toAddress}
+              tokenAddress={item.tokenAddress}
+              chain={item.chain}
+              contactList={contactList}
+            />
+          ))}
+          {items.length > 5 && (
+            <TouchableOpacity
+              style={{paddingTop: 10}}
+              onPress={onPressTxpBadge}>
+              <LinkText>{t('Show more')}</LinkText>
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    },
+    [needActionPendingTxps, needActionUnsentTxps],
+  );
 
-  const keyExtractor = useCallback(item => item.txid, []);
-  const pendingTxpsKeyExtractor = useCallback(item => item.id, []);
-
-  const getItemLayout = useCallback(
-    (data, index) => ({
-      length: TRANSACTION_ROW_HEIGHT,
-      offset: TRANSACTION_ROW_HEIGHT * index,
-      index,
-    }),
+  const keyExtractor = useCallback(
+    (item, index: number) => index.toString(),
     [],
   );
 
@@ -1022,7 +1039,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   return (
     <WalletDetailsContainer>
-      <SectionList
+      <FlashList
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -1064,7 +1081,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       {showFiatBalance &&
                         !hideAllBalances &&
                         !fullWalletObj.isScanning && (
-                          <Paragraph>{fiatBalance}</Paragraph>
+                          <Paragraph>{fiatBalanceFormat}</Paragraph>
                         )}
                     </Row>
                   </TouchableOpacity>
@@ -1082,7 +1099,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           {formatCurrencyAbbreviation(currencyAbbreviation)}
                         </Text>
                         {showFiatBalance && (
-                          <Text> ({fiatSpendableBalance})</Text>
+                          <Text> ({fiatSpendableBalanceFormat})</Text>
                         )}
                       </Small>
                     </TouchableRow>
@@ -1241,27 +1258,12 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                       <ProposalBadge>{pendingTxps.length}</ProposalBadge>
                     </ProposalBadgeContainer>
                   </TransactionSectionHeaderContainer>
-                  {fullWalletObj.credentials.n > 1 ? (
-                    <FlatList
-                      contentContainerStyle={{
-                        paddingTop: 20,
-                        paddingBottom: 20,
-                      }}
-                      data={needActionPendingTxps}
-                      keyExtractor={pendingTxpsKeyExtractor}
-                      renderItem={renderTxp}
-                    />
-                  ) : (
-                    <FlatList
-                      contentContainerStyle={{
-                        paddingTop: 20,
-                        paddingBottom: 20,
-                      }}
-                      data={needActionUnsentTxps}
-                      keyExtractor={pendingTxpsKeyExtractor}
-                      renderItem={renderTxp}
-                    />
-                  )}
+                  {fullWalletObj.credentials.n > 1 &&
+                  needActionPendingTxps.length > 0
+                    ? renderTxp(needActionPendingTxps)
+                    : needActionUnsentTxps.length > 0
+                    ? renderTxp(needActionUnsentTxps)
+                    : null}
                 </>
               ) : null}
 
@@ -1282,7 +1284,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                     <Fiat>
                       {network === 'testnet'
                         ? t('Test Only - No Value')
-                        : fiatLockedBalance}
+                        : fiatLockedBalanceFormat}
                     </Fiat>
                   </TailContainer>
                 </LockedBalanceContainer>
@@ -1290,12 +1292,19 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             </>
           );
         }}
-        sections={groupedHistory}
-        stickyHeaderIndices={[groupedHistory?.length]}
-        stickySectionHeadersEnabled={true}
+        data={groupedHistory}
         keyExtractor={keyExtractor}
-        renderItem={renderTransaction}
-        renderSectionHeader={renderSectionHeader}
+        renderItem={({item}) => {
+          if (typeof item === 'string') {
+            return (
+              <TransactionSectionHeaderContainer>
+                <H5>{item}</H5>
+              </TransactionSectionHeaderContainer>
+            );
+          } else {
+            return renderTransaction({item});
+          }
+        }}
         ItemSeparatorComponent={itemSeparatorComponent}
         ListFooterComponent={listFooterComponent}
         onMomentumScrollBegin={() => setIsScrolling(true)}
@@ -1305,10 +1314,23 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             debouncedLoadHistory();
           }
         }}
+        stickyHeaderIndices={
+          groupedHistory
+            .map((item, index) => {
+              if (typeof item === 'string') {
+                return index;
+              } else {
+                return null;
+              }
+            })
+            .filter(item => item !== null) as number[]
+        }
+        getItemType={item =>
+          typeof item === 'string' ? 'sectionHeader' : 'row'
+        }
         onEndReachedThreshold={0.3}
         ListEmptyComponent={listEmptyComponent}
-        maxToRenderPerBatch={15}
-        getItemLayout={getItemLayout}
+        estimatedItemSize={TRANSACTION_ROW_HEIGHT}
       />
 
       <OptionsSheet
@@ -1333,6 +1355,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
           wallet={fullWalletObj}
         />
       ) : null}
+      {showArchaxBanner && <ArchaxFooter />}
     </WalletDetailsContainer>
   );
 };

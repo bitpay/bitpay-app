@@ -3,7 +3,7 @@ import {useNavigation, useIsFocused} from '@react-navigation/native';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../../store';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {WyrePaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
 import {
@@ -70,8 +70,8 @@ const WyreSettings: React.FC = () => {
   return (
     <>
       <SettingsContainer>
-        <Settings style={{paddingBottom: 500}}>
-          {paymentRequests && paymentRequests.length > 0 && (
+        <SettingsComponent style={{paddingBottom: 500}}>
+          {!!paymentRequests?.length && (
             <PrTitle>{t('Payment Requests')}</PrTitle>
           )}
           {paymentRequests &&
@@ -122,7 +122,7 @@ const WyreSettings: React.FC = () => {
               {t('There are currently no transactions with Wyre')}
             </NoPrMsg>
           )}
-        </Settings>
+        </SettingsComponent>
       </SettingsContainer>
     </>
   );

@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {useTheme} from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
+import {FlashList} from '@shopify/flash-list';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import NoPaymentsSvg from '../../../../../../assets/img/bills/no-payments.svg';
 import BillItem from './BillItem';
@@ -17,12 +18,8 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import {
-  FlatList,
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import {RefreshControl, ScrollView} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {ShopEffects} from '../../../../../store/shop';
 import {AppActions} from '../../../../../store/app';
@@ -190,17 +187,16 @@ export const PaymentList = ({
   return (
     <>
       {displayablePayments.length ? (
-        <>
-          <FlatList
-            refreshControl={Refresher}
-            contentContainerStyle={{paddingBottom: 200}}
-            data={displayablePayments}
-            keyExtractor={keyExtractor}
-            renderItem={renderItem}
-            onEndReachedThreshold={0.3}
-            onEndReached={() => fetchMore()}
-          />
-        </>
+        <FlashList
+          refreshControl={Refresher}
+          contentContainerStyle={{paddingBottom: 200}}
+          data={displayablePayments}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          estimatedItemSize={88}
+          onEndReachedThreshold={0.3}
+          onEndReached={() => fetchMore()}
+        />
       ) : (
         <ScrollView refreshControl={Refresher}>
           <ZeroStateContainer>

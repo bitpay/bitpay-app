@@ -51,6 +51,7 @@ export enum CoinbaseActionTypes {
   PAY_INVOICE_SUCCESS = 'Coinbase/PAY_INVOICE_SUCCESS',
   PAY_INVOICE_FAILED = 'Coinbase/PAY_INVOICE_FAILED',
   BLOCKCHAIN_NETWORK = 'Coinbase/BLOCKCHAIN_NETWORK',
+  FIAT_CURRENCY = 'Coinbase/FIAT_CURRENCY',
 }
 
 // ------- Exchange Rate -------- //
@@ -220,6 +221,11 @@ interface SetBlockchainNetwork {
   payload: EVM_CHAINS;
 }
 
+interface fiatCurrency {
+  type: typeof CoinbaseActionTypes.FIAT_CURRENCY;
+  payload: string;
+}
+
 export type CoinbaseActionType =
   | ExchangeRatesPending
   | ExchangeRatesSuccess
@@ -251,4 +257,5 @@ export type CoinbaseActionType =
   | PayInvoiceSuccess
   | PayInvoiceFailed
   | ClearErrorStatus
-  | SetBlockchainNetwork;
+  | SetBlockchainNetwork
+  | fiatCurrency;

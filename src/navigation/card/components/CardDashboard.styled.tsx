@@ -8,6 +8,7 @@ import {
   Slate,
   SlateDark,
 } from '../../../styles/colors';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const TransactionListHeader = styled.View`
 background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
@@ -23,7 +24,7 @@ export const TransactionListHeaderTitle = styled(H5)`
   flex: 1;
 `;
 
-export const TransactionListHeaderIcon = styled.TouchableOpacity`
+export const TransactionListHeaderIcon = styled(TouchableOpacity)`
   flex-grow: 0;
   margin-left: ${ScreenGutter};
 `;

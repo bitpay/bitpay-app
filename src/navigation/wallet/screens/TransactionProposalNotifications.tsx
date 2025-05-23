@@ -28,6 +28,7 @@ import React, {
   useState,
 } from 'react';
 import _ from 'lodash';
+import {useLogger} from '../../../utils/hooks/useLogger';
 import {
   Key,
   TransactionProposal,
@@ -56,7 +57,6 @@ import {
   WrongPasswordError,
 } from '../components/ErrorMessages';
 import Checkbox from '../../../components/checkbox/Checkbox';
-import PaymentSent from '../components/PaymentSent';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
@@ -64,6 +64,9 @@ import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {AppActions} from '../../../store/app';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -90,21 +93,26 @@ const BorderBottom = styled.View`
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Air)};
 `;
 
-const ProposalsContainer = styled.TouchableOpacity`
+const ProposalsContainer = styled(TouchableOpacity)`
+  display: flex;
   flex-direction: row;
   align-items: center;
 `;
 
-const ProposalsInfoContainer = styled.View`
-  flex: 1;
+const CheckBoxContainer = styled.View`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 80px;
+  padding-right: 10px;
 `;
 
-const CheckBoxContainer = styled.View`
-  flex-direction: column;
-  justify-content: center;
-  margin-left: 5px;
-  margin-right: 15px;
-`;
+type GroupedTxpsByWallet = {
+  id: number;
+  walletId: string;
+  txps: TransactionProposal[];
+  needSign: boolean;
+};
 
 const TransactionProposalNotifications = () => {
   const {
@@ -117,20 +125,19 @@ const TransactionProposalNotifications = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const logger = useLogger();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const wallets = keyId
     ? keys[keyId].wallets
     : Object.values(keys).flatMap(k => k.wallets);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
-  const [paymentSendModalTitle, setPaymentSendModalTitle] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [allTxps, setAllTxps] = useState(
     [] as {
       title: string;
       type: string;
-      data: any[];
+      data: GroupedTxpsByWallet[];
     }[],
   );
   const [selectingProposalsWalletId, setSelectingProposalsWalletId] =
@@ -143,12 +150,7 @@ const TransactionProposalNotifications = () => {
   );
   const [selectAll, setSelectAll] = useState(false);
 
-  let pendingTxps: TransactionProposal[] = [];
-  _.each(wallets, x => {
-    if (x.pendingTxps.length > 0) {
-      pendingTxps = pendingTxps.concat(x.pendingTxps);
-    }
-  });
+  let pendingTxps: TransactionProposal[] = wallets.flatMap(w => w.pendingTxps);
 
   if (walletId) {
     pendingTxps = _.filter(pendingTxps, txp => {
@@ -205,14 +207,16 @@ const TransactionProposalNotifications = () => {
   ): number => {
     let i = 0;
     txpsPerWallet.forEach(txp => {
-      if (txp.statusForUs === 'pending' && canBeSigned) {
+      if (txp.statusForUs === 'pending' && canBeSigned && txp.amountStr) {
         i = i + 1;
       }
     });
     return i;
   };
 
-  const groupByWallets = (txps: TransactionProposal[]): any[] => {
+  const groupByWallets = (
+    txps: TransactionProposal[],
+  ): GroupedTxpsByWallet[] => {
     const walletIdGetter = (txp: TransactionProposal) => txp.walletId;
     const map = new Map();
     const txpsByWallet: any[] = [];
@@ -379,10 +383,11 @@ const TransactionProposalNotifications = () => {
   );
 
   const renderTxpByWallet = useCallback(
-    ({item}) => {
+    ({item}: {item: GroupedTxpsByWallet}) => {
       const fullWalletObj = findWalletById(wallets, item.walletId) as Wallet;
       const {
         img,
+        badgeImg,
         currencyAbbreviation,
         currencyName,
         keyId,
@@ -392,7 +397,7 @@ const TransactionProposalNotifications = () => {
         <>
           <RowContainer disabled={true} style={{opacity: 1}}>
             <CurrencyImageContainer>
-              <CurrencyImage img={img} size={45} />
+              <CurrencyImage img={img} size={45} badgeUri={badgeImg} />
             </CurrencyImageContainer>
             <CurrencyColumn>
               <Row>
@@ -407,41 +412,49 @@ const TransactionProposalNotifications = () => {
               </ListItemSubText>
             </CurrencyColumn>
             {item.needSign && item.txps.length > 1 ? (
-              <Link
+              <TouchableOpacity
                 onPress={() => {
+                  haptic('impactLight');
                   txpSelectAll(item.txps, _walletId);
                 }}>
-                {t('Select All')}
-              </Link>
+                <Link>{t('Select All')}</Link>
+              </TouchableOpacity>
             ) : null}
           </RowContainer>
           {item?.txps[0]
             ? item.txps.map((txp: any) => (
                 <ProposalsContainer key={txp.id}>
-                  <ProposalsInfoContainer>
-                    <TransactionProposalRow
-                      icon={TransactionIcons[txp.uiIcon]}
-                      creator={txp.uiCreator}
-                      time={txp.uiTime}
-                      value={txp.uiValue}
-                      message={txp.message}
-                      onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
-                      hideIcon={true}
-                      recipientCount={txp.recipientCount}
-                      toAddress={txp.toAddress}
-                      tokenAddress={txp.tokenAddress}
-                      chain={txp.chain}
-                      contactList={contactList}
-                    />
-                  </ProposalsInfoContainer>
+                  <TransactionProposalRow
+                    icon={TransactionIcons[txp.uiIcon]}
+                    creator={txp.uiCreator}
+                    time={txp.uiTime}
+                    value={txp.uiValue || txp.feeStr}
+                    message={txp.message}
+                    onPressTransaction={() => onPressTxp(txp, fullWalletObj)}
+                    hideIcon={true}
+                    recipientCount={txp.recipientCount}
+                    toAddress={txp.toAddress}
+                    tokenAddress={txp.tokenAddress}
+                    chain={txp.chain}
+                    contactList={contactList}
+                    withCheckBox={item.needSign}
+                  />
                   {item.needSign ? (
                     <CheckBoxContainer>
-                      <Checkbox
-                        checked={!!txpChecked[txp.id]}
+                      <TouchableOpacity
+                        touchableLibrary={'react-native-gesture-handler'}
                         onPress={() => {
                           txpSelectionChange(txp, _walletId);
-                        }}
-                      />
+                        }}>
+                        <Checkbox
+                          checked={!!txpChecked[txp.id]}
+                          onPress={() => {
+                            logger.debug(
+                              'Tx Proposal Notifications: checkbox clicked',
+                            );
+                          }}
+                        />
+                      </TouchableOpacity>
                     </CheckBoxContainer>
                   ) : null}
                 </ProposalsContainer>
@@ -459,10 +472,13 @@ const TransactionProposalNotifications = () => {
     ],
   );
 
-  const keyExtractor = useCallback(item => item.id, []);
+  const keyExtractor = useCallback(
+    (item: GroupedTxpsByWallet) => item.id.toString(),
+    [],
+  );
 
   const getItemLayout = useCallback(
-    (data, index) => ({
+    (data: any, index: number) => ({
       length: TRANSACTION_ROW_HEIGHT,
       offset: TRANSACTION_ROW_HEIGHT * index,
       index,
@@ -484,9 +500,9 @@ const TransactionProposalNotifications = () => {
 
   const updateWalletsWithProposals = async () => {
     const walletIdsWithProposals = _.uniq(pendingTxps.map(txp => txp.walletId));
-    const keyIdsWithProposals: string[] = walletIdsWithProposals.map(
-      walletIdString => findWalletById(wallets, walletIdString)!.keyId,
-    );
+    const keyIdsWithProposals: string[] = walletIdsWithProposals
+      .map(walletId => findWalletById(wallets, walletId)?.keyId)
+      .filter((keyId): keyId is string => !!keyId);
     const keyIds = _.uniq(keyIdsWithProposals);
     const keysWithProposals: Key[] = keyIds.map(
       (keyIdString: string) => keys[keyIdString],
@@ -528,6 +544,13 @@ const TransactionProposalNotifications = () => {
     return count;
   };
 
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
+  };
+
   useEffect(() => {
     updatePendingProposals();
   }, [keys]);
@@ -557,7 +580,6 @@ const TransactionProposalNotifications = () => {
           return <ListHeaderPadding />;
         }}
         sections={allTxps}
-        stickyHeaderIndices={[allTxps?.length]}
         stickySectionHeadersEnabled={true}
         keyExtractor={keyExtractor}
         renderItem={renderTxpByWallet}
@@ -628,9 +650,13 @@ const TransactionProposalNotifications = () => {
                   count.success > 1
                     ? t('proposals signed', {sucess: count.success})
                     : t('Proposal signed');
-                setPaymentSendModalTitle(title);
-                await sleep(400);
-                setShowPaymentSentModal(true);
+                dispatch(
+                  AppActions.showPaymentSentModal({
+                    isVisible: true,
+                    onCloseModal,
+                    title,
+                  }),
+                );
               }
               setSelectingProposalsWalletId('');
               setTxpsToSign([]);
@@ -658,15 +684,6 @@ const TransactionProposalNotifications = () => {
           }}
         />
       ) : null}
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          await sleep(300);
-        }}
-        title={paymentSendModalTitle}
-      />
     </NotificationsContainer>
   );
 };

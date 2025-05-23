@@ -1,19 +1,21 @@
 import React from 'react';
 import {H6, Link} from '../../../../components/styled/Text';
 import {RootState} from '../../../../store';
+import Icons from '../../../wallet/components/WalletIcons';
 import {useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
-import {useNavigation} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   ActiveOpacity,
   Hr,
+  ScreenGutter,
   Setting,
 } from '../../../../components/styled/Containers';
 import {View} from 'react-native';
 import styled from 'styled-components/native';
-import Icons from '../../../wallet/components/WalletIcons';
 import {useTranslation} from 'react-i18next';
 import ContactRow from '../../../../components/list/ContactRow';
+import {SettingsDetailsParamList} from '../SettingsDetails';
 
 const SeeAllLink = styled(Link)`
   font-weight: 500;
@@ -24,25 +26,33 @@ const PlusIconContainer = styled.View`
   margin-right: 15px;
 `;
 
-const Contacts = () => {
+const ContactsContainer = styled.SafeAreaView`
+  margin: ${ScreenGutter};
+`;
+
+type Props = NativeStackScreenProps<SettingsDetailsParamList, 'Contacts'>;
+
+const Contacts: React.FC<Props> = ({navigation}) => {
   const {t} = useTranslation();
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
-  const navigation = useNavigation();
+
   return (
     <SettingsComponent>
-      {contacts.length
-        ? contacts.slice(0, 2).map((item, index) => (
-            <View key={index}>
-              <ContactRow
-                contact={item}
-                onPress={() => {
-                  navigation.navigate('ContactsDetails', {contact: item});
-                }}
-              />
-              <Hr />
-            </View>
-          ))
-        : null}
+      <ContactsContainer>
+        {contacts.length
+          ? contacts.slice(0, 6).map((item, index) => (
+              <View key={index}>
+                <ContactRow
+                  contact={item}
+                  onPress={() => {
+                    navigation.navigate('ContactsDetails', {contact: item});
+                  }}
+                />
+                <Hr />
+              </View>
+            ))
+          : null}
+      </ContactsContainer>
 
       <Setting
         activeOpacity={ActiveOpacity}
@@ -56,7 +66,7 @@ const Contacts = () => {
         <H6 medium={true}>{t('Add Contact')}</H6>
       </Setting>
 
-      {contacts.length > 2 ? (
+      {contacts.length > 6 ? (
         <Setting
           style={{justifyContent: 'center'}}
           onPress={() => navigation.navigate('ContactsRoot')}

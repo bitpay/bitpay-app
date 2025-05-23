@@ -43,7 +43,7 @@ interface CreateAccountFieldValues {
   agreedToMarketingCommunications: boolean;
 }
 
-const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
+const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   navigation,
 }) => {
   const {t} = useTranslation();
@@ -69,7 +69,13 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
     givenName: yup.string().required().trim(),
     familyName: yup.string().required().trim(),
     email: yup.string().email().required().trim(),
-    password: yup.string().required(),
+    password: yup
+      .string()
+      .required()
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/,
+        'Must Contain 8 Characters, One Uppercase, One Lowercase, One Number and One Special Case Character',
+      ),
     agreedToTOSandPP: yup.boolean().oneOf([true], t('Required')),
     agreedToMarketingCommunications: yup.boolean(),
   });
@@ -292,7 +298,11 @@ const CreateAccountScreen: React.VFC<CreateAccountScreenProps> = ({
               <>
                 <CheckboxControl accessibilityLabel="agreed-terms-of-use-checkbox">
                   <Checkbox
-                    onPress={() => setValue('agreedToTOSandPP', !field.value)}
+                    onPress={() =>
+                      setValue('agreedToTOSandPP', !field.value, {
+                        shouldValidate: true,
+                      })
+                    }
                     checked={field.value}
                   />
 

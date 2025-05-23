@@ -8,7 +8,7 @@ import {
   Platform,
   Share,
 } from 'react-native';
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
 import RNBootSplash from 'react-native-bootsplash';
 import InAppReview from 'react-native-in-app-review';
 import InAppBrowser, {
@@ -17,7 +17,10 @@ import InAppBrowser, {
 import {
   checkNotifications,
   requestNotifications,
+  check,
+  request,
   RESULTS,
+  PERMISSIONS,
 } from 'react-native-permissions';
 import uuid from 'react-native-uuid';
 import {AppActions} from '.';
@@ -52,6 +55,7 @@ import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
   setAppFirstOpenEventDate,
+  setAppInstalled,
   setBrazeEid,
   setConfirmedTxAccepted,
   setEmailNotificationsAccepted,
@@ -66,7 +70,7 @@ import {
   findWalletByIdHashed,
   getAllWalletClients,
 } from '../wallet/utils/wallet';
-import {navigationRef, RootStacks, SilentPushEvent} from '../../Root';
+import {navigationRef, RootStacks, SilentPushEventObj} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
   startUpdateWalletStatus,
@@ -77,6 +81,7 @@ import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
   APP_DEEPLINK_PREFIX,
   APP_NAME,
+  APP_VERSION,
   BASE_BITPAY_URLS,
   DOWNLOAD_BITPAY_URL,
 } from '../../constants/config';
@@ -84,22 +89,26 @@ import {
   updatePortfolioBalance,
   setCustomTokensMigrationComplete,
   setWalletScanning,
+  setPolygonMigrationComplete,
 } from '../wallet/wallet.actions';
 import {
   setContactMigrationComplete,
   setContactTokenAddressMigrationComplete,
   setContactBridgeUsdcMigrationComplete,
+  setContactMigrationCompleteV2,
 } from '../contact/contact.actions';
 import {
   startContactBridgeUsdcMigration,
   startContactMigration,
+  startContactPolMigration,
   startContactTokenAddressMigration,
+  startContactV2Migration,
 } from '../contact/contact.effects';
 import {getStateFromPath, NavigationProp} from '@react-navigation/native';
 import {
   getAvailableGiftCards,
   getCategoriesWithIntegrations,
-} from '../shop/shop.selectors';
+} from '../shop-catalog';
 import {MerchantScreens} from '../../navigation/tabs/shop/merchant/MerchantGroup';
 import {ShopTabs} from '../../navigation/tabs/shop/ShopHome';
 import {ShopScreens} from '../../navigation/tabs/shop/ShopStack';
@@ -117,10 +126,20 @@ import {InAppNotificationMessages} from '../../components/modal/in-app-notificat
 import axios from 'axios';
 import AuthApi from '../../api/auth';
 import {ShopActions} from '../shop';
-import {startCustomTokensMigration} from '../wallet/effects/currencies/currencies';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {
+  successFetchCatalog,
+  setShopMigrationComplete,
+} from '../shop-catalog/shop-catalog.actions';
+import {clearedShopCatalogFields} from '../shop/shop.actions';
+import {
+  startCustomTokensMigration,
+  startPolMigration,
+} from '../wallet/effects/currencies/currencies';
+import {WalletKitTypes} from '@reown/walletkit';
 import {Key, Wallet} from '../wallet/wallet.models';
 import {AppDispatch} from '../../utils/hooks';
+import {isNotMobile} from '../../components/styled/Containers';
+import {SettingsScreens} from '../../navigation/tabs/settings/SettingsGroup';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -138,6 +157,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
         `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
       ),
     );
+    dispatch(LogActions.info(`Current App Version: ${APP_VERSION}`));
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
@@ -150,7 +170,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
     const {migrationComplete} = APP;
-    const {customTokensMigrationComplete} = WALLET;
+    const {customTokensMigrationComplete, polygonMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
 
@@ -158,6 +178,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     const {
       contactMigrationComplete,
+      contactMigrationCompleteV2,
       contactTokenAddressMigrationComplete,
       contactBridgeUsdcMigrationComplete,
     } = CONTACT;
@@ -187,11 +208,26 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(LogActions.info('success [setCustomTokensMigrationComplete]'));
     }
 
+    if (!contactMigrationCompleteV2) {
+      await dispatch(startContactV2Migration());
+      dispatch(setContactMigrationCompleteV2());
+      dispatch(LogActions.info('success [setContactMigrationCompleteV2]'));
+    }
+
     if (!migrationComplete) {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
       dispatch(LogActions.info('success [setMigrationComplete]'));
     }
+
+    if (!polygonMigrationComplete) {
+      await dispatch(startPolMigration());
+      await dispatch(startContactPolMigration());
+      dispatch(setPolygonMigrationComplete());
+      dispatch(LogActions.info('success [setPolygonMigrationComplete]'));
+    }
+
+    dispatch(migrateShopCatalog());
 
     const identity = dispatch(initializeAppIdentity());
 
@@ -239,12 +275,16 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
 const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
   const {APP} = getState();
-  const {appFirstOpenData, onboardingCompleted} = APP;
+  const {appFirstOpenData, appInstalled, onboardingCompleted} = APP;
 
   if (onboardingCompleted) {
-    await dispatch(Analytics.initialize());
     QuickActions.clearShortcutItems();
     QuickActions.setShortcutItems(ShortcutList);
+  }
+  await dispatch(Analytics.initialize());
+
+  if (!appInstalled) {
+    dispatch(trackAppInstalled(Math.floor(Date.now() / 1000)));
   }
 
   if (!appFirstOpenData?.firstOpenDate) {
@@ -415,11 +455,6 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       contentCardSubscription = null;
     }
 
-    Braze.subscribeToInAppMessage(false, (event: any) => {
-      LogActions.debug('InAppMessage Event Received');
-      dispatch(AppActions.showInAppMessage(event.inAppMessage));
-    });
-
     // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
     const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
     const MAX_RETRIES = 3;
@@ -427,7 +462,8 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
 
     contentCardSubscription = Braze.addListener(
       Braze.Events.CONTENT_CARDS_UPDATED,
-      async () => {
+      async (update: Braze.ContentCardsUpdatedEvent) => {
+        const contentCards = update.cards;
         const isInitializing = currentRetry < MAX_RETRIES;
 
         dispatch(
@@ -439,8 +475,6 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
                 'Braze content cards updated, fetching latest content cards...',
               ),
         );
-
-        const contentCards = await Braze.getContentCards();
 
         if (contentCards.length) {
           currentRetry = MAX_RETRIES;
@@ -469,15 +503,12 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       },
     );
 
+    // Create a Braze EID for all users
     let eid = APP.brazeEid;
-
     if (!eid) {
-      dispatch(LogActions.debug('Generating EID for anonymous user...'));
-      eid = uuid.v4().toString();
-      dispatch(setBrazeEid(eid));
+      eid = dispatch(createBrazeEid());
     }
-
-    // TODO: we should only identify logged in users, but identifying anonymous users is currently baked into some bitcore stuff, will need to refactor
+    dispatch(LogActions.debug('Braze EID: ', eid));
     dispatch(Analytics.identify(eid));
 
     dispatch(LogActions.info('Successfully initialized Braze.'));
@@ -493,6 +524,28 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
     );
   } finally {
     dispatch(LogActions.info('Initializing Braze content complete.'));
+  }
+};
+
+const createBrazeEid = (): Effect<string | undefined> => dispatch => {
+  try {
+    dispatch(LogActions.info('Generating EID for BWS user...'));
+
+    const eid = uuid.v4().toString();
+    dispatch(setBrazeEid(eid));
+    dispatch(Analytics.identify(eid));
+
+    dispatch(LogActions.info('Generated EID for BWS user.'));
+    return eid;
+  } catch (err) {
+    const errMsg = 'Something went wrong while generating EID for BWS user.';
+
+    dispatch(LogActions.error(errMsg));
+    dispatch(
+      LogActions.error(
+        err instanceof Error ? err.message : JSON.stringify(err),
+      ),
+    );
   }
 };
 
@@ -524,15 +577,22 @@ export const startOnGoingProcessModal =
 
     const translations: Record<OnGoingProcessMessages, string> = {
       GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
-      CREATING_KEY: i18n.t('Creating Key'),
+      CREATING_KEY: i18n.t(
+        "Creating Key... just a second, we're setting a few things up",
+      ),
       LOGGING_IN: i18n.t('Logging In'),
       LOGGING_OUT: i18n.t('Logging Out'),
       PAIRING: i18n.t('Pairing'),
       CREATING_ACCOUNT: i18n.t('Creating Account'),
       UPDATING_ACCOUNT: i18n.t('Updating Account'),
-      IMPORTING: i18n.t('Importing'),
+      IMPORTING: i18n.t('Importing... this process may take a few minutes'),
+      IMPORT_SCANNING_FUNDS: i18n.t(
+        'Scanning Funds... this process may take a few minutes',
+      ),
       DELETING_KEY: i18n.t('Deleting Key'),
       ADDING_WALLET: i18n.t('Adding Wallet'),
+      ADDING_ACCOUNT: i18n.t('Adding Account-Based Wallet'),
+      ADDING_CHAINS: i18n.t('Adding EVM Chains'),
       LOADING: i18n.t('Loading'),
       FETCHING_PAYMENT_OPTIONS: i18n.t('Fetching payment options...'),
       FETCHING_PAYMENT_INFO: i18n.t('Fetching payment information...'),
@@ -558,7 +618,7 @@ export const startOnGoingProcessModal =
       SWEEPING_WALLET: i18n.t('Sweeping Wallet...'),
       SCANNING_FUNDS: i18n.t('Scanning Funds...'),
       SCANNING_FUNDS_WITH_PASSPHRASE: i18n.t(
-        'Scanning Funds... This process may take a few minutes',
+        'Scanning Funds... this process may take a few minutes',
       ),
     };
 
@@ -573,19 +633,22 @@ export const startOnGoingProcessModal =
 
     dispatch(AppActions.showOnGoingProcessModal(_message));
 
-    // After 30 seconds, check if the modal is active. If so, dismiss it.
+    // After 60 seconds, check if the modal is active. If so, dismiss it.
     setTimeout(async () => {
       const currentStore = getState();
       if (
         currentStore.APP.showOnGoingProcessModal &&
-        currentStore.APP.onGoingProcessModalMessage !== i18n.t('Importing') &&
         currentStore.APP.onGoingProcessModalMessage !==
-          i18n.t('Scanning Funds... This process may take a few minutes')
+          i18n.t('Importing... this process may take a few minutes') &&
+        currentStore.APP.onGoingProcessModalMessage !==
+          i18n.t('Scanning Funds... this process may take a few minutes') &&
+        currentStore.APP.onGoingProcessModalMessage !==
+          i18n.t("Creating Key... just a second, we're setting a few things up")
       ) {
         dispatch(AppActions.dismissOnGoingProcessModal());
         await sleep(500);
       }
-    }, 30000);
+    }, 60000);
 
     return sleep(100);
   };
@@ -593,7 +656,7 @@ export const startOnGoingProcessModal =
 export const startInAppNotification =
   (
     key: InAppNotificationMessages,
-    request: Web3WalletTypes.EventArguments['session_request'],
+    request: WalletKitTypes.EventArguments['session_request'],
     context: InAppNotificationContextType,
   ): Effect<Promise<void>> =>
   async (dispatch, getState: () => RootState) => {
@@ -694,6 +757,16 @@ const trackFirstOpenEvent =
     );
   };
 
+const trackAppInstalled =
+  (date: number): Effect =>
+  dispatch => {
+    dispatch(
+      Analytics.installedApp({date}, () => {
+        dispatch(setAppInstalled());
+      }),
+    );
+  };
+
 export const subscribePushNotifications =
   (walletClient: any, eid: string): Effect =>
   dispatch => {
@@ -789,8 +862,7 @@ export const unSubscribeEmailNotifications =
 
 export const checkNotificationsPermissions = async (): Promise<boolean> => {
   const {status} = await checkNotifications().catch(() => ({status: null}));
-
-  return status === RESULTS.GRANTED;
+  return status?.toLowerCase() === RESULTS.GRANTED;
 };
 
 export const renewSubscription = (): Effect => (dispatch, getState) => {
@@ -799,11 +871,24 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
     APP,
   } = getState();
 
-  getAllWalletClients(keys).then(walletClients => {
-    walletClients.forEach(walletClient => {
-      dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
+  if (!APP.notificationsAccepted) {
+    return;
+  }
+
+  LogActions.debug('Renewing Push Notifications...');
+
+  let eid = APP.brazeEid;
+  if (!eid) {
+    eid = dispatch(createBrazeEid());
+  }
+
+  if (eid) {
+    getAllWalletClients(keys).then(walletClients => {
+      walletClients.forEach(walletClient => {
+        dispatch(subscribePushNotifications(walletClient, eid!));
+      });
     });
-  });
+  }
 };
 
 export const requestNotificationsPermissions = async (): Promise<boolean> => {
@@ -811,9 +896,11 @@ export const requestNotificationsPermissions = async (): Promise<boolean> => {
     'alert',
     'badge',
     'sound',
-  ]).catch(() => ({status: null}));
+  ]).catch(() => ({
+    status: null,
+  }));
 
-  return status === RESULTS.GRANTED;
+  return status?.toLowerCase() === RESULTS.GRANTED;
 };
 
 export const setNotifications =
@@ -821,7 +908,7 @@ export const setNotifications =
   (dispatch, getState) => {
     dispatch(setNotificationsAccepted(accepted));
     const value = accepted
-      ? Braze.NotificationSubscriptionTypes.SUBSCRIBED
+      ? Braze.NotificationSubscriptionTypes.OPTED_IN
       : Braze.NotificationSubscriptionTypes.UNSUBSCRIBED;
 
     Braze.setPushNotificationSubscriptionType(value);
@@ -830,18 +917,24 @@ export const setNotifications =
       APP,
     } = getState();
 
-    getAllWalletClients(keys).then(walletClients => {
-      if (accepted) {
-        walletClients.forEach(walletClient => {
-          dispatch(subscribePushNotifications(walletClient, APP.brazeEid!));
-        });
-      } else {
-        walletClients.forEach(walletClient => {
-          dispatch(unSubscribePushNotifications(walletClient, APP.brazeEid!));
-        });
-      }
-      dispatch(LogActions.info('Push Notifications: ' + value));
-    });
+    let eid = APP.brazeEid;
+    if (!eid && accepted) {
+      eid = dispatch(createBrazeEid());
+    }
+    if (eid) {
+      getAllWalletClients(keys).then(walletClients => {
+        if (accepted) {
+          walletClients.forEach(walletClient => {
+            dispatch(subscribePushNotifications(walletClient, eid!));
+          });
+        } else {
+          walletClients.forEach(walletClient => {
+            dispatch(unSubscribePushNotifications(walletClient, eid!));
+          });
+        }
+        dispatch(LogActions.info('Push Notifications: ' + value));
+      });
+    }
   };
 
 export const setConfirmTxNotifications =
@@ -907,8 +1000,16 @@ export const setEmailNotifications =
   };
 
 const _startUpdateAllKeyAndWalletStatus = debounce(
-  async dispatch => {
-    dispatch(startUpdateAllKeyAndWalletStatus({force: true}));
+  async (dispatch, chain, tokenAddress) => {
+    dispatch(
+      startUpdateAllKeyAndWalletStatus({
+        context: 'newBlockEvent',
+        force: true,
+        createTokenWalletWithFunds: false,
+        chain,
+        tokenAddress,
+      }),
+    );
     DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
   },
   5000,
@@ -952,7 +1053,7 @@ const _setScanFinishedForWallet = async (
 };
 
 export const handleBwsEvent =
-  (response: SilentPushEvent): Effect =>
+  (response: SilentPushEventObj): Effect =>
   async (dispatch, getState) => {
     const {
       WALLET: {keys},
@@ -992,7 +1093,12 @@ export const handleBwsEvent =
           break;
         case 'NewBlock':
           if (response.network && response.network === 'livenet') {
-            _startUpdateAllKeyAndWalletStatus(dispatch);
+            // Chain and tokenAddress are passed to check if a new token received funds on that network and create the wallet if necessary
+            _startUpdateAllKeyAndWalletStatus(
+              dispatch,
+              response.chain,
+              response.tokenAddress,
+            );
           }
           break;
         case 'TxProposalAcceptedBy':
@@ -1050,11 +1156,13 @@ export const getRouteParam = (url: string, param: string) => {
 export const incomingShopLink =
   (url: string): Effect<{merchantName: string} | undefined> =>
   (_, getState) => {
-    const {SHOP} = getState();
-    const availableGiftCards = getAvailableGiftCards(SHOP.availableCardMap);
-    const integrations = Object.values(SHOP.integrations);
+    const {SHOP_CATALOG} = getState();
+    const availableGiftCards = getAvailableGiftCards(
+      SHOP_CATALOG.availableCardMap,
+    );
+    const integrations = Object.values(SHOP_CATALOG.integrations);
     const categories = getCategoriesWithIntegrations(
-      Object.values(SHOP.categoriesAndCurations.categories),
+      Object.values(SHOP_CATALOG.categoriesAndCurations.categories),
       integrations,
     );
 
@@ -1163,8 +1271,15 @@ export const incomingLink =
     } else if (pathSegments[0] === 'connections') {
       const redirectTo = pathSegments[1];
 
-      handler = () => {
-        navigationRef.navigate('SettingsHome', {redirectTo: redirectTo as any});
+      handler = async () => {
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.SETTINGS,
+        });
+        await sleep(800);
+        navigationRef.navigate(SettingsScreens.SETTINGS_DETAILS, {
+          initialRoute: 'Connections',
+          redirectTo,
+        });
       };
     } else if (pathSegments[0] === 'wallet') {
       if (pathSegments[1] === 'create') {
@@ -1212,18 +1327,6 @@ export const incomingLink =
 
           dispatch(CardEffects.startOpenDosh());
         });
-      } else if (cardPath === 'referral') {
-        handler = createCardHandler(cards => {
-          navigationRef.navigate(RootStacks.TABS, {
-            screen: TabsScreens.CARD,
-            params: {
-              screen: CardScreens.REFERRAL,
-              params: {
-                card: cards[0],
-              },
-            },
-          });
-        });
       }
     }
 
@@ -1268,6 +1371,40 @@ export const shareApp = (): Effect<Promise<void>> => async dispatch => {
       errorStr = JSON.stringify(err);
     }
     dispatch(LogActions.error(`failed [shareApp]: ${errorStr}`));
+  }
+};
+
+export const checkFaceIdPermissions = async () => {
+  // only supported by iOS
+  if (Platform.OS !== 'ios') {
+    return;
+  }
+  // Workaround for Desktop App (Apple Silicon)
+  if (isNotMobile) {
+    return;
+  }
+  const status = await check(PERMISSIONS.IOS.FACE_ID).catch(() => ({
+    status: null,
+  }));
+
+  if (status === RESULTS.GRANTED) {
+    return;
+  }
+  const requestStatus = await request(PERMISSIONS.IOS.FACE_ID).catch(() => ({
+    status: null,
+  }));
+  switch (requestStatus) {
+    case RESULTS.UNAVAILABLE:
+      throw new Error('Biometric is not available on this device');
+    case RESULTS.BLOCKED:
+      throw new Error('Biometric is blocked on this device');
+    case RESULTS.LIMITED:
+      throw new Error('Biometric is limited on this device');
+    case RESULTS.DENIED:
+      throw new Error('Biometric is denied on this device');
+    case RESULTS.GRANTED:
+    default:
+      return;
   }
 };
 
@@ -1427,3 +1564,33 @@ export const joinWaitlist =
       throw err;
     }
   };
+
+export const migrateShopCatalog = (): Effect => (dispatch, getState) => {
+  try {
+    const {SHOP_CATALOG, SHOP} = getState();
+    if (!SHOP_CATALOG.shopMigrationComplete && SHOP.supportedCardMap) {
+      dispatch(
+        successFetchCatalog({
+          availableCardMap: SHOP.availableCardMap,
+          supportedCardMap: SHOP.supportedCardMap,
+          categoriesAndCurations: SHOP.categoriesAndCurations,
+          integrations: SHOP.integrations,
+        }),
+      );
+      dispatch(clearedShopCatalogFields());
+      dispatch(setShopMigrationComplete());
+      dispatch(
+        LogActions.info(
+          'Migrated shop tab catalog fields from SHOP store to SHOP_CATALOG store.',
+        ),
+      );
+    }
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+    dispatch(
+      LogActions.error(
+        `Error migrating shop tab catalog fields from SHOP store to SHOP_CATALOG store: ${errorMsg}`,
+      ),
+    );
+  }
+};

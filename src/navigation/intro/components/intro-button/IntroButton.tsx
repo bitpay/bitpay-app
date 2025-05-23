@@ -5,8 +5,9 @@ import ArrowRightSvg from '../../../../../assets/img/intro/arrow-right.svg';
 import {Action} from '../../../../styles/colors';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const IntroButtonContainer = styled.TouchableOpacity`
+const IntroButtonContainer = styled(TouchableOpacity)`
   background: ${Action};
   border-radius: 50px;
 `;

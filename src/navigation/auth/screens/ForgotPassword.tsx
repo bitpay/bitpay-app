@@ -32,7 +32,7 @@ interface ResetPasswordFormFieldValues {
   email: string;
 }
 
-const ForgotPasswordScreen: React.VFC<
+const ForgotPasswordScreen: React.FC<
   NativeStackScreenProps<AuthGroupParamList, AuthScreens.FORGOT_PASSWORD>
 > = () => {
   const {t} = useTranslation();

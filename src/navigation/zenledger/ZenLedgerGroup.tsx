@@ -4,11 +4,8 @@ import {HeaderTitle} from '../../components/styled/Text';
 import ZenLedgerImport from './screens/ZenLedgerImport';
 import ZenLedgerIntro from './screens/ZenLedgerIntro';
 import {Root} from '../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
+import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface ZenLedgerProps {
   ZenLedger: typeof Root;
@@ -28,16 +25,9 @@ const ZenLedgerGroup: React.FC<ZenLedgerProps> = ({ZenLedger}) => {
   const {t} = useTranslation();
   return (
     <ZenLedger.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <ZenLedger.Screen
         name={ZenLedgerScreens.ROOT}

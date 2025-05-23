@@ -116,6 +116,7 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             <ModalHeaderText>{t('Spendable balance')}</ModalHeaderText>
             <ModalHeaderRight>
               <Button
+                touchableLibrary={'react-native'}
                 buttonType={'pill'}
                 buttonStyle={'cancel'}
                 onPress={closeModal}>
@@ -128,7 +129,9 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
               <LabelTipText>
                 {t(
                   'All of your wallet balance may not be available for immediate spending.',
-                  {currencyName: wallet.currencyName},
+                  {
+                    currencyName: wallet.currencyName,
+                  },
                 )}
               </LabelTipText>
             </LabelTip>
@@ -154,7 +157,10 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <LabelTip type="info">
                   <LabelTipText>
                     {t(
-                      'The XRP ledger requires that all wallets maintain a minimum balance of 10 XRP. This non-refundable 10 XRP will remain permanently locked in your wallet.',
+                      'The XRP ledger requires that all wallets maintain a minimum balance of XRP. This non-refundable XRP will remain permanently locked in your wallet.',
+                      {
+                        lockedBalance: wallet.cryptoConfirmedLockedBalance,
+                      },
                     )}
                   </LabelTipText>
                 </LabelTip>

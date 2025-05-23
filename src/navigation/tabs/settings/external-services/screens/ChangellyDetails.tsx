@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {RefreshControl, Text, TouchableOpacity} from 'react-native';
+import {RefreshControl, Text} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useTheme} from '@react-navigation/native';
 import moment from 'moment';
 import {Br} from '../../../../../components/styled/Containers';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import {changellyTxData} from '../../../../../store/swap-crypto/swap-crypto.models';
 import {changellyGetStatus} from '../../../../../store/swap-crypto/effects/changelly/changelly';
@@ -171,7 +172,7 @@ const ChangellyDetails: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <Settings
+      <SettingsComponent
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -412,7 +413,7 @@ const ChangellyDetails: React.FC = () => {
           }}>
           <Text style={{color: 'red'}}>{t('Remove')}</Text>
         </RemoveCta>
-      </Settings>
+      </SettingsComponent>
     </SettingsContainer>
   );
 };

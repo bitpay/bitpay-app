@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useLayoutEffect} from 'react';
+import React, {useEffect, useState, useLayoutEffect, useMemo} from 'react';
 import Button from '../../../../components/button/Button';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ToggleSwitch from '../../../../components/toggle-switch/ToggleSwitch';
@@ -6,37 +6,42 @@ import {AppActions} from '../../../../store/app';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {resetAllSettings} from '../../../../store/app/app.effects';
 import {sleep} from '../../../../utils/helper-methods';
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useTheme} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {RootState} from '../../../../store';
 import {useAppDispatch} from '../../../../utils/hooks/useAppDispatch';
 import {useTranslation} from 'react-i18next';
-import {SettingsComponent} from '../SettingsRoot';
 import {LanguageList} from '../../../../constants/LanguageSelectionList';
 import {
   ActiveOpacity,
   Hr,
   Setting,
   SettingTitle,
-  HeaderRightContainer,
 } from '../../../../components/styled/Containers';
 import styled from 'styled-components/native';
-import CloseModal from '../../../../../assets/img/close-modal-icon.svg';
-import {White, SlateDark} from '../../../../styles/colors';
+import HeaderBackButton from '../../../../components/back/HeaderBackButton';
+import {SettingsDetailsParamList} from '../SettingsDetails';
+import {FlashList} from '@shopify/flash-list';
+import {View} from 'react-native';
 
-const CloseModalButton = styled.TouchableOpacity`
-  padding: 5px;
-  height: 41px;
-  width: 41px;
-  border-radius: 50px;
-  background-color: #9ba3ae33;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+const SettingsComponent = styled.View`
+  flex: 1;
+  padding: 10px 0;
 `;
 
-const General = () => {
-  const navigation = useNavigation();
+type Props = NativeStackScreenProps<SettingsDetailsParamList, 'General'>;
+
+type SettingItem = {
+  id: string;
+  title: string;
+  type: 'navigation' | 'toggle' | 'button' | 'reset';
+  value?: string | boolean;
+  onPress?: () => void;
+  navigationTarget?: keyof SettingsDetailsParamList;
+};
+
+const General: React.FC<Props> = ({navigation}) => {
   const colorScheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
   const theme = useTheme();
   const showPortfolioValue = useAppSelector(
@@ -64,93 +69,65 @@ const General = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerLeft: () => (
-        <HeaderRightContainer>
-          <CloseModalButton onPress={() => navigation.goBack()}>
-            <CloseModal
-              {...{
-                width: 20,
-                height: 20,
-                color: theme.dark ? White : SlateDark,
-              }}
-            />
-          </CloseModalButton>
-        </HeaderRightContainer>
-      ),
+      headerLeft: () => <HeaderBackButton />,
     });
   }, [navigation, theme, t]);
 
-  return (
-    <SettingsComponent>
-      <Setting
-        activeOpacity={ActiveOpacity}
-        onPress={() => navigation.navigate('Theme')}>
-        <SettingTitle>{t('Theme')}</SettingTitle>
-        <Button
-          buttonType={'pill'}
-          onPress={() => navigation.navigate('Theme')}>
-          {colorScheme === 'light'
+  const settingsData = useMemo(() => {
+    return [
+      {
+        id: 'theme',
+        title: t('Theme'),
+        type: 'button' as const,
+        value:
+          colorScheme === 'light'
             ? t('Light Mode')
             : colorScheme === 'dark'
             ? t('Dark Mode')
-            : t('System Default')}
-        </Button>
-      </Setting>
-      <Hr />
-      {/*----------------------------------------------------------------------*/}
-      <Setting
-        activeOpacity={ActiveOpacity}
-        onPress={() => navigation.navigate('CustomizeHomeSettings')}>
-        <SettingTitle>{t('Customize Home')}</SettingTitle>
-        <AngleRight />
-      </Setting>
-      <Hr />
-      {/*----------------------------------------------------------------------*/}
-      <Setting activeOpacity={1}>
-        <SettingTitle>{t('Show Portfolio')}</SettingTitle>
-        <ToggleSwitch
-          onChange={value => dispatch(AppActions.showPortfolioValue(value))}
-          isEnabled={showPortfolioValue}
-        />
-      </Setting>
-      <Hr />
-      {/*----------------------------------------------------------------------*/}
-      <Setting activeOpacity={1}>
-        <SettingTitle>{t('Hide All Balances')}</SettingTitle>
-        <ToggleSwitch
-          onChange={value => dispatch(AppActions.toggleHideAllBalances(value))}
-          isEnabled={hideAllBalances}
-        />
-      </Setting>
-      <Hr />
-      {/*----------------------------------------------------------------------*/}
-      <Setting
-        activeOpacity={ActiveOpacity}
-        onPress={() => navigation.navigate('AltCurrencySettings')}>
-        <SettingTitle>{t('Display Currency')}</SettingTitle>
-        <Button
-          buttonType={'pill'}
-          onPress={() => navigation.navigate('AltCurrencySettings')}>
-          {selectedAltCurrency.name}
-        </Button>
-      </Setting>
-      <Hr />
-      {/*----------------------------------------------------------------------*/}
-      <Setting
-        activeOpacity={ActiveOpacity}
-        onPress={() => navigation.navigate('LanguageSettings')}>
-        <SettingTitle>{t('Language')}</SettingTitle>
-        <Button
-          buttonType={'pill'}
-          onPress={() => navigation.navigate('LanguageSettings')}>
-          {appLanguageName}
-        </Button>
-      </Setting>
-      <Hr />
-      {/*----------------------------------------------------------------------*/}
-      <Setting
-        activeOpacity={ActiveOpacity}
-        onPress={() =>
+            : t('System Default'),
+        navigationTarget: 'Theme',
+      },
+      {
+        id: 'customizeHome',
+        title: t('Customize Home'),
+        type: 'navigation' as const,
+        navigationTarget: 'Customize Home',
+      },
+      {
+        id: 'showPortfolio',
+        title: t('Show Portfolio'),
+        type: 'toggle' as const,
+        value: showPortfolioValue,
+        onPress: (value: boolean) =>
+          dispatch(AppActions.showPortfolioValue(value)),
+      },
+      {
+        id: 'hideBalances',
+        title: t('Hide All Balances'),
+        type: 'toggle' as const,
+        value: hideAllBalances,
+        onPress: (value: boolean) =>
+          dispatch(AppActions.toggleHideAllBalances(value)),
+      },
+      {
+        id: 'displayCurrency',
+        title: t('Display Currency'),
+        type: 'button' as const,
+        value: selectedAltCurrency.name,
+        navigationTarget: 'Display Currency',
+      },
+      {
+        id: 'language',
+        title: t('Language'),
+        type: 'button' as const,
+        value: appLanguageName,
+        navigationTarget: 'Language',
+      },
+      {
+        id: 'resetSettings',
+        title: t('Reset All Settings'),
+        type: 'reset' as const,
+        onPress: () =>
           dispatch(
             showBottomNotificationModal({
               type: 'warning',
@@ -188,10 +165,64 @@ const General = () => {
                 },
               ],
             }),
-          )
-        }>
-        <SettingTitle>{t('Reset All Settings')}</SettingTitle>
-      </Setting>
+          ),
+      },
+    ];
+  }, [
+    t,
+    colorScheme,
+    showPortfolioValue,
+    hideAllBalances,
+    selectedAltCurrency.name,
+    appLanguageName,
+    dispatch,
+  ]);
+
+  const renderItem = ({item}: {item: SettingItem}) => {
+    return (
+      <View>
+        <Setting
+          activeOpacity={item.type === 'toggle' ? 1 : ActiveOpacity}
+          onPress={() => {
+            if (item.type === 'navigation' || item.type === 'button') {
+              item.navigationTarget &&
+                navigation.navigate(item.navigationTarget);
+            } else if (item.type === 'reset' && item.onPress) {
+              item.onPress();
+            }
+          }}>
+          <SettingTitle>{item.title}</SettingTitle>
+          {item.type === 'navigation' && <AngleRight />}
+          {item.type === 'toggle' && (
+            <ToggleSwitch
+              onChange={value => item.onPress?.(value)}
+              isEnabled={item.value as boolean}
+            />
+          )}
+          {item.type === 'button' && (
+            <Button
+              buttonType={'pill'}
+              onPress={() =>
+                item.navigationTarget &&
+                navigation.navigate(item.navigationTarget)
+              }>
+              {item.value as string}
+            </Button>
+          )}
+        </Setting>
+        <Hr />
+      </View>
+    );
+  };
+
+  return (
+    <SettingsComponent>
+      <FlashList
+        data={settingsData}
+        renderItem={renderItem}
+        estimatedItemSize={56}
+        keyExtractor={item => item.id}
+      />
     </SettingsComponent>
   );
 };

@@ -128,7 +128,7 @@ export const HandlePayPro =
     if (payProDetails.requiredFeeRate) {
       requiredFeeRate = !BitpaySupportedCoins[chain.toLowerCase()].properties
         .isUtxo
-        ? parseInt((payProDetails.requiredFeeRate * 1.1).toFixed(0), 10) // Workaround to avoid gas price supplied is lower than requested error
+        ? payProDetails.requiredFeeRate
         : Math.ceil(payProDetails.requiredFeeRate * 1000);
     }
 
@@ -181,6 +181,8 @@ export const GetInvoiceCurrency = (c: string) => {
   switch (c.toUpperCase()) {
     case 'USDP':
       return 'PAX'; // TODO workaround. Remove this when usdp is accepted as an option
+    case 'POL':
+      return 'MATIC'; // TODO workaround. Remove this when POL is accepted as an option
     default:
       return c;
   }

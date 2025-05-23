@@ -1,57 +1,54 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-  useEffect,
-  ReactElement,
-} from 'react';
+import React, {useCallback, useMemo, useState, useEffect} from 'react';
 import styled from 'styled-components/native';
+import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
+import {NavigationProp, RouteProp} from '@react-navigation/native';
+import {FlashList} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   BitpaySupportedCoins,
   BitpaySupportedEvmCoins,
   BitpaySupportedTokens,
   SUPPORTED_COINS,
-  SUPPORTED_EVM_COINS,
   SUPPORTED_TOKENS,
-  SupportedChains,
 } from '../../../constants/currencies';
 import {Wallet, Key} from '../../../store/wallet/wallet.models';
 import {
-  convertToFiat,
-  formatFiatAmount,
-  getBadgeImg,
   getChainFromTokenByAddressKey,
   getCurrencyAbbreviation,
-  keyExtractor,
   sleep,
 } from '../../../utils/helper-methods';
-import {
-  ActivityIndicator,
-  Platform,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import {Platform, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
-  RowContainer,
+  ActiveOpacity,
+  HEIGHT,
+  Hr,
+  ImageContainer,
+  Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import _ from 'lodash';
-import KeyWalletsRow, {
-  KeyWallet,
-  KeyWalletsRowProps,
-} from '../../../components/list/KeyWalletsRow';
-import merge from 'lodash.merge';
-import cloneDeep from 'lodash.clonedeep';
-import {LightBlack, SlateDark, White} from '../../../styles/colors';
-import {H4, TextAlign, BaseText, H5} from '../../../components/styled/Text';
+import {groupBy, unionBy, uniqueId} from 'lodash';
+import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
+import {
+  Action,
+  Black,
+  LightBlack,
+  LinkBlue,
+  SlateDark,
+  White,
+} from '../../../styles/colors';
+import {
+  H4,
+  TextAlign,
+  BaseText,
+  Paragraph,
+} from '../../../components/styled/Text';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
-import {RouteProp, useRoute} from '@react-navigation/core';
-import {useNavigation, useTheme} from '@react-navigation/native';
 import ReceiveAddress from '../components/ReceiveAddress';
-import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+import CloseIcon from '../../../components/modal/close/Close';
+import KeySvg from '../../../../assets/img/key.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {
   createProposalAndBuildTxDetails,
@@ -59,7 +56,6 @@ import {
 } from '../../../store/wallet/effects/send/send';
 import {
   dismissOnGoingProcessModal,
-  setSelectedNetworkForDeposit,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {Effect} from '../../../store';
@@ -67,10 +63,14 @@ import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
-import {findWalletById, toFiat} from '../../../store/wallet/utils/wallet';
+import {
+  buildAccountList,
+  buildAssetsByChain,
+  findWalletById,
+} from '../../../store/wallet/utils/wallet';
 import {
   IsERCToken,
-  IsEVMCoin,
+  IsEVMChain,
   IsSegwitCoin,
 } from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log';
@@ -79,20 +79,33 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import SearchComponent, {
   SearchableItem,
 } from '../../../components/chain-search/ChainSearch';
-import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
+import {
+  ignoreGlobalListContextList,
+  NetworkName,
+} from '../../../components/modal/chain-selector/ChainSelector';
 import uniqBy from 'lodash.uniqby';
 import {CreateOptions} from '../../../store/wallet/effects';
-import {ToWalletSelectorCustomCurrency} from '../../services/components/ToWalletSelectorModal';
-import {SupportedCoinsOptions} from '../../../constants/SupportedCurrencyOptions';
-import {AppActions} from '../../../store/app';
+import {
+  SupportedChainOption,
+  SupportedChainsOptions,
+  SupportedCoinsOptions,
+} from '../../../constants/SupportedCurrencyOptions';
 import {
   createHomeCardList,
   keyBackupRequired,
 } from '../../tabs/home/components/Crypto';
 import {Network} from '../../../constants';
 import {SwapCryptoCoin} from '../../services/swap-crypto/screens/SwapCryptoRoot';
-import Icons from '../../wallet/components/WalletIcons';
 import Animated, {FadeIn} from 'react-native-reanimated';
+import AccountListRow, {
+  AccountRowProps,
+} from '../../../components/list/AccountListRow';
+import {AssetsByChainData} from './AccountDetails';
+import AssetsByChainRow from '../../../components/list/AssetsByChainRow';
+import Blockie from '../../../components/blockie/Blockie';
+import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
+import {getExternalServiceSymbol} from '../../services/utils/external-services-utils';
+import {Keys} from '../../../store/wallet/wallet.reducer';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -110,7 +123,7 @@ const CloseModalButtonContainer = styled.View`
   left: 0;
 `;
 
-const CloseModalButton = styled.TouchableOpacity`
+const CloseModalButton = styled(TouchableOpacity)`
   padding: 5px;
   height: 41px;
   width: 41px;
@@ -144,19 +157,31 @@ export const WalletSelectMenuContainer = styled.View`
   padding-bottom: 20px;
 `;
 
+export interface ToWalletSelectorCustomCurrency {
+  currencyAbbreviation: string;
+  symbol: string;
+  chain: string;
+  name: string;
+  logoUri: any;
+  badgeUri: any;
+  tokenAddress?: string;
+}
+
 export interface WalletSelectMenuHeaderContainerParams {
   currency?: string;
 }
 
 export const WalletSelectMenuHeaderContainer = styled.View<WalletSelectMenuHeaderContainerParams>`
+  flex-direction: row;
   padding: 16px;
   padding-bottom: ${({currency}) => (currency ? 14 : 0)}px;
+  padding-left: 5;
   justify-content: ${({currency}) => (currency ? 'flex-start' : 'center')};
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
   border-bottom-width: ${({currency}) => (currency ? 1 : 0)}px;
 `;
 
-export const WalletSelectBottomContainer = styled.TouchableOpacity`
+export const WalletSelectBottomContainer = styled(TouchableOpacity)`
   padding: 16px;
 `;
 
@@ -174,39 +199,60 @@ const NoWalletsMsg = styled(BaseText)`
   margin-top: 20px;
 `;
 
-const PlusIconContainer = styled.View`
-  margin-right: 15px;
-`;
-
 const SearchComponentContainer = styled.View`
   margin-bottom: 16px;
 `;
 
-interface ToWalletSelectorCoinObj {
-  id: string;
-  chain: string;
-  currencyAbbreviation: string;
-  currencyName: string;
-  tokenAddress?: string;
-  img?: string | ((props?: any) => ReactElement);
-  total: number;
-  availableWalletsByKey: {
-    [key in string]: Wallet[];
-  };
-}
-interface ToWalletSelectorChainObj extends ToWalletSelectorCoinObj {
-  tokens?: ToWalletSelectorCoinObj[];
-}
+const TitleNameContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ECEFFD')};
+  border-bottom-width: 1px;
+  margin-top: 20px;
+  padding-bottom: 10px;
+`;
+
+const TitleName = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  margin-left: 10px;
+`;
+
+const CloseButton = styled(TouchableOpacity)`
+  margin-right: 10px;
+`;
+
+const CloseButtonText = styled(Paragraph)`
+  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
+`;
+
+const NetworkChainContainer = styled(TouchableOpacity)`
+  margin-left: 12px;
+`;
+
+const NetworkRowContainer = styled.View`
+  flex-direction: row;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px;
+`;
+
+const FlashListCointainer = styled(Animated.View)`
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+  height: ${HEIGHT - 100}px;
+`;
 
 export type GlobalSelectModalContext =
   | 'send'
   | 'receive'
   | 'coinbase'
+  | 'coinbaseDeposit'
   | 'contact'
   | 'scanner'
   | 'sell'
   | 'buy'
-  | 'swap'
+  | 'swapFrom'
+  | 'swapTo'
   | 'paperwallet';
 
 export type GlobalSelectParamList = {
@@ -227,6 +273,7 @@ export type GlobalSelectParamList = {
     };
   };
   amount?: number;
+  selectedAccountAddress?: string;
 };
 
 export interface GlobalSelectObj extends SearchableItem {
@@ -289,7 +336,7 @@ const buildSelectableCurrenciesList = (
       );
 
       const coinEntry = coins[currencyAbbreviation] || {
-        id: _.uniqueId('coin_'),
+        id: uniqueId('coin_'),
         currencyName: name,
         currencyAbbreviation,
         chainsImg: {},
@@ -300,13 +347,13 @@ const buildSelectableCurrenciesList = (
         availableWalletsByKey: {},
       };
 
-      coinEntry.availableWallets = _.unionBy(
+      coinEntry.availableWallets = unionBy(
         [...coinEntry.availableWallets, ...filteredWallets],
         c => c.id,
       );
 
       coinEntry.total = coinEntry.availableWallets.length;
-      coinEntry.availableWalletsByKey = _.groupBy(
+      coinEntry.availableWalletsByKey = groupBy(
         coinEntry.availableWallets,
         'keyId',
       );
@@ -314,8 +361,7 @@ const buildSelectableCurrenciesList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
       coinEntry.chainsImg[chain] = {
-        badgeUri:
-          IsEVMCoin(currencyAbbreviation) && !badgeUri ? logoUri : badgeUri,
+        badgeUri: IsEVMChain(chain) && !badgeUri ? logoUri : badgeUri,
         priority,
       };
       if (!coinEntry.chains.includes(chain)) {
@@ -336,21 +382,44 @@ const buildSelectableCurrenciesList = (
 const buildSelectableWalletList = (
   categories: string[],
   wallets: Wallet[],
+  context?: GlobalSelectModalContext,
 ): GlobalSelectObjByKey => {
   const coins: GlobalSelectObjByKey = {};
 
   categories.forEach(category => {
-    const filteredWallets = wallets.filter(
-      wallet =>
-        getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
-        category,
-    );
+    const filteredWallets = wallets.filter(wallet => {
+      if (
+        context &&
+        ['sell', 'swapFrom', 'swapTo'].includes(context) &&
+        ['eth', 'eth_arb', 'eth_base', 'eth_op'].includes(category)
+      ) {
+        // Workaround to differentiate eth in evm chains from external services
+        const conditions: {[key: string]: {currency: string; chain: string}} = {
+          eth: {currency: 'eth', chain: 'eth'},
+          eth_arb: {currency: 'eth', chain: 'arb'},
+          eth_base: {currency: 'eth', chain: 'base'},
+          eth_op: {currency: 'eth', chain: 'op'},
+        };
+
+        const condition = conditions[category];
+        return (
+          condition &&
+          wallet.currencyAbbreviation === condition.currency &&
+          wallet.chain === condition.chain
+        );
+      } else {
+        return (
+          getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
+          category
+        );
+      }
+    });
     if (filteredWallets.length > 0) {
       const {currencyAbbreviation, chain, currencyName, img} =
         filteredWallets[0];
 
       const coinEntry = coins[currencyAbbreviation] || {
-        id: _.uniqueId('coin_'),
+        id: uniqueId('coin_'),
         currencyName,
         currencyAbbreviation,
         chainsImg: {},
@@ -370,7 +439,7 @@ const buildSelectableWalletList = (
         ...Array.from(new Set(filteredWallets.map(w => w.chain))),
       ];
       coinEntry.total = coinEntry.availableWallets.length;
-      coinEntry.availableWalletsByKey = _.groupBy(
+      coinEntry.availableWalletsByKey = groupBy(
         coinEntry.availableWallets,
         'keyId',
       );
@@ -386,7 +455,7 @@ const buildSelectableWalletList = (
         }
         coinEntry.chainsImg[chain] = {
           badgeUri:
-            IsEVMCoin(currencyAbbreviation) && !wallet.badgeImg
+            IsEVMChain(chain) && !wallet.badgeImg
               ? wallet.img
               : wallet.badgeImg,
           priority,
@@ -420,164 +489,9 @@ const createTokenAddresses = (
   );
 };
 
-const filterByChain = (
-  selectObj: GlobalSelectObj,
-  selectedNetworkForDeposit: string,
-) => {
-  const newSelectObj = _.cloneDeep({...selectObj});
-
-  Object.entries(newSelectObj.availableWalletsByKey).forEach(
-    ([key, wallets]) => {
-      const filteredWallets = wallets.filter(
-        wallet => wallet.credentials.chain === selectedNetworkForDeposit,
-      );
-      if (filteredWallets.length > 0) {
-        newSelectObj.availableWalletsByKey[key] = filteredWallets;
-      } else {
-        delete newSelectObj.availableWalletsByKey[key]; // Remove keys with no matching wallets
-      }
-    },
-  );
-
-  // Filter availableWallets
-  newSelectObj.availableWallets = newSelectObj.availableWallets.filter(
-    wallet => wallet.credentials.chain === selectedNetworkForDeposit,
-  );
-
-  // Filter chains
-  newSelectObj.chains = newSelectObj.chains.filter(
-    chain => chain === selectedNetworkForDeposit,
-  );
-
-  // Filter token addresses
-  newSelectObj.chains = newSelectObj.chains.filter(
-    chain => chain === selectedNetworkForDeposit,
-  );
-
-  // Filter chainsImg
-  const filteredChainsImg = {};
-  Object.entries(newSelectObj.chainsImg).forEach(([chain, value]) => {
-    if (chain === selectedNetworkForDeposit) {
-      // @ts-ignore
-      filteredChainsImg[chain] = value;
-    }
-  });
-  newSelectObj.chainsImg = filteredChainsImg;
-
-  return newSelectObj;
-};
-
-const handleLinkedChainSelection = (
-  linkedChain: any,
-  selectedNetworkForDeposit: any,
-  filteredSelectedObj: any,
-  setAddTokenToLinkedWallet: (obj: any) => void,
-  openWalletSelector: (obj: any) => void,
-  openKeySelector: (obj: any) => void,
-) => {
-  const filteredLinkedChain = filterByChain(
-    linkedChain,
-    selectedNetworkForDeposit,
-  );
-  if (Object.keys(filteredLinkedChain?.availableWalletsByKey).length > 0) {
-    setAddTokenToLinkedWallet(filteredSelectedObj);
-    openWalletSelector(filteredLinkedChain);
-  } else {
-    openKeySelector(filteredSelectedObj);
-  }
-};
-
-const handleTokenWalletSelection = (
-  chain: string,
-  currencyAbbreviation: string,
-  filteredSelectedObj: any,
-  selectedNetworkForDeposit: any,
-  currenciesSupportedList: any[],
-  setAddTokenToLinkedWallet: (obj: any) => void,
-  openWalletSelector: (obj: any) => void,
-  openKeySelector: (obj: any) => void,
-) => {
-  const linkedChain = currenciesSupportedList.find(
-    coin =>
-      BitpaySupportedCoins[coin.currencyAbbreviation] &&
-      coin.chains.includes(chain),
-  );
-  if (linkedChain) {
-    handleLinkedChainSelection(
-      linkedChain,
-      selectedNetworkForDeposit,
-      filteredSelectedObj,
-      setAddTokenToLinkedWallet,
-      openWalletSelector,
-      openKeySelector,
-    );
-  } else {
-    openKeySelector(filteredSelectedObj);
-  }
-};
-
-const isChainDisabled = (
-  disabledChain: string | undefined,
-  currencySymbol: string,
-): boolean => {
-  // disabledChain to prevent show chain selected as source, but show the available tokens
-  return (
-    !!disabledChain &&
-    SUPPORTED_EVM_COINS.includes(disabledChain) &&
-    disabledChain === currencySymbol.toLowerCase()
-  );
-};
-
-const handleWalletSelection = (
-  filteredSelectedObj: any,
-  selectedNetworkForDeposit: any,
-  currenciesSupportedList: any[],
-  setAddTokenToLinkedWallet: (obj: any) => void,
-  openWalletSelector: (obj: any) => void,
-  openKeySelector: (obj: any) => void,
-  onWalletSelect: (wallet: any) => void,
-  disabledChain: string | undefined,
-  logger: any,
-) => {
-  const {chains, currencyAbbreviation} = filteredSelectedObj;
-  const chain = chains[0];
-  if (
-    isChainDisabled(
-      disabledChain,
-      getCurrencyAbbreviation(currencyAbbreviation, chain),
-    )
-  ) {
-    logger.warn(
-      `${disabledChain} is disabled, since it is the source of the Swap. Showing available tokens anyways`,
-    );
-    return;
-  }
-  const wallets = Object.values(
-    filteredSelectedObj.availableWalletsByKey,
-  ).flat();
-  if (wallets.length === 0) {
-    if (IsERCToken(currencyAbbreviation, chain)) {
-      handleTokenWalletSelection(
-        chain,
-        currencyAbbreviation,
-        filteredSelectedObj,
-        selectedNetworkForDeposit,
-        currenciesSupportedList,
-        setAddTokenToLinkedWallet,
-        openWalletSelector,
-        openKeySelector,
-      );
-    } else {
-      openKeySelector(filteredSelectedObj);
-    }
-  } else {
-    openWalletSelector(filteredSelectedObj);
-  }
-};
-
 interface GlobalSelectProps {
   useAsModal?: boolean;
-  modalTitle?: any;
+  modalTitle?: string;
   customSupportedCurrencies?: any[];
   customToSelectCurrencies?:
     | ToWalletSelectorCustomCurrency[]
@@ -586,11 +500,11 @@ interface GlobalSelectProps {
     newWallet?: any,
     createNewWalletData?: AddWalletData,
   ) => void;
-  modalContext?: any;
-  livenetOnly?: any;
-  disabledChain?: string | undefined;
+  modalContext?: GlobalSelectModalContext;
+  livenetOnly?: boolean;
   onHelpPress?: () => void;
-  selectingNetworkForDeposit?: boolean;
+  navigation: NavigationProp<any>;
+  route: RouteProp<WalletGroupParamList, any>;
 }
 
 type GlobalSelectScreenProps = NativeStackScreenProps<
@@ -598,6 +512,16 @@ type GlobalSelectScreenProps = NativeStackScreenProps<
   WalletScreens.GLOBAL_SELECT
 > &
   GlobalSelectProps;
+
+const FlashListComponent: FlashList<any> | typeof BottomSheetFlashList = (
+  props: any,
+) => {
+  const Container = useMemo(
+    () => (props.inModal ? BottomSheetFlashList : FlashList),
+    [props.inModal],
+  );
+  return <Container {...props}>{props.children}</Container>;
+};
 
 const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useAsModal,
@@ -607,67 +531,65 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   globalSelectOnDismiss,
   modalContext,
   livenetOnly,
-  disabledChain,
   onHelpPress,
-  selectingNetworkForDeposit,
+  navigation,
+  route,
 }) => {
   const {t} = useTranslation();
-  const route = useRoute<RouteProp<WalletGroupParamList, 'GlobalSelect'>>();
-  let {context, recipient, amount} = route.params || {};
+  let {context, recipient, amount, selectedAccountAddress} = route.params || {};
   if (useAsModal && modalContext) {
     context = modalContext;
   }
-  const theme = useTheme();
   const logger = useLogger();
   const dispatch = useAppDispatch();
-  const {keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
-    useAppSelector(({WALLET}) => WALLET);
+  const {
+    keys: _keys,
+    tokenOptionsByAddress,
+    customTokenOptionsByAddress,
+  } = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const allTokensByAddress = {
     ...BitpaySupportedTokenOptsByAddress,
     ...tokenOptionsByAddress,
     ...customTokenOptionsByAddress,
   };
-  const chainSelectorIsVisible = useAppSelector(
-    ({APP}) => APP.showChainSelectorModal,
-  );
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [dataToDisplay, setDataToDisplay] = useState<GlobalSelectObj[]>([]);
+  const [dataToDisplay, setDataToDisplay] = useState<
+    GlobalSelectObj[] | KeyWalletsRowProps[]
+  >([]);
   const [showInitiallyHiddenComponents, setShowInitiallyHiddenComponents] =
     useState(false);
   const [mountSheetModals, setMountSheetModals] = useState(false);
-  const [chainSelectorModalIsVisible, setChainSelectorModalIsVisible] =
-    useState(false);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
   const [receiveWallet, setReceiveWallet] = useState<Wallet>();
-  const navigation = useNavigation();
-  const [walletSelectModalVisible, setWalletSelectModalVisible] =
+  const [cryptoSelectModalVisible, setCryptoSelectModalVisible] =
     useState(false);
-  const [selectedObj, setSelectedObj] = useState({} as GlobalSelectObj);
   const [searchVal, setSearchVal] = useState('');
-  const [searchResults, setSearchResults] = useState([] as GlobalSelectObj[]);
+  const [searchResults, setSearchResults] = useState<
+    (GlobalSelectObj | KeyWalletsRowProps | AssetsByChainData)[]
+  >([]);
+  const [selectedEVMAccount, setSelectedEVMAccount] = useState(
+    {} as Partial<AccountRowProps> & {assetsByChain?: AssetsByChainData[]},
+  );
+  const [selectedAssetsFromAccount, setSelectedAssetsFromAccount] = useState(
+    [] as AssetsByChainData[],
+  );
+  const [hideCloseButton, setHideCloseButton] = useState(false);
   const selectedChainFilterOption = useAppSelector(({APP}) =>
     ignoreGlobalListContextList.includes(context)
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
-  const selectedNetworkForDeposit = useAppSelector(
-    ({APP}) => APP.selectedNetworkForDeposit,
-  );
-  const [keySelectorModalVisible, setKeySelectorModalVisible] =
-    useState<boolean>(false);
+
   const [cardsList, setCardsList] = useState<any>();
+  const [accountsCardsList, setAccountsCardsList] = useState<any>();
+  const [networkCardsList, setNetworkCardsList] = useState<any>();
+  const [cryptoSelectContext, setCryptoSelectContext] = useState({
+    status: 'key-selection',
+    title: 'Select Key to Deposit to',
+  });
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
-  const [addTokenToLinkedWallet, setAddTokenToLinkedWallet] =
-    useState<GlobalSelectObj>();
-  const [filteredSelectedObj, setFilteredSelectedObj] =
-    useState<GlobalSelectObj>();
-  // object to pass to select modal
-  const [keyWallets, setKeysWallets] =
-    useState<KeyWalletsRowProps<KeyWallet>[]>();
 
   useEffect(() => {
     const mountComponents = async () => {
@@ -694,26 +616,65 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         .filter((currency): currency is string => currency !== undefined),
     ),
   );
+
+  const filterCompleteWallets = (keys: Keys) => {
+    return Object.fromEntries(
+      Object.entries(keys).filter(([_, keys]) =>
+        keys.wallets.some(wallet => wallet.isComplete()),
+      ),
+    );
+  };
+
+  // Filter keys with only incomplete wallets
+  const keys = filterCompleteWallets(_keys);
+
   // all wallets
   let wallets = Object.values(keys).flatMap(key => key.wallets);
   // Filter hidden wallets
-  wallets = wallets.filter(wallet => !wallet.hideWallet);
+  wallets = wallets.filter(
+    wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
+  );
 
   // only show wallets with funds
+  // only show selected account address wallets if selectedAccountAddress is provided
   if (
-    ['send', 'sell', 'swap', 'coinbase', 'contact', 'scanner'].includes(context)
+    [
+      'send',
+      'sell',
+      'swapFrom',
+      'coinbaseDeposit',
+      'contact',
+      'scanner',
+    ].includes(context)
   ) {
-    wallets = wallets.filter(wallet => wallet.balance.sat > 0);
+    wallets = wallets.filter(
+      wallet =>
+        wallet.balance.sat > 0 &&
+        (!selectedAccountAddress ||
+          wallet.receiveAddress === selectedAccountAddress),
+    );
   }
 
-  if (recipient && ['coinbase', 'contact', 'scanner'].includes(context)) {
+  // only show selected account address wallets if selectedAccountAddress is provided
+  if (['receive'].includes(context) && selectedAccountAddress) {
+    wallets = wallets.filter(wallet =>
+      selectedAccountAddress
+        ? wallet.receiveAddress === selectedAccountAddress
+        : false,
+    );
+  }
+
+  if (
+    recipient &&
+    ['coinbaseDeposit', 'contact', 'scanner'].includes(context)
+  ) {
     if (recipient.currency && recipient.chain) {
       wallets = wallets.filter(
         wallet =>
           (wallet.currencyAbbreviation === recipient?.currency &&
             wallet.chain === recipient?.chain) ||
           (recipient?.opts?.showEVMWalletsAndTokens &&
-            BitpaySupportedEvmCoins[wallet.currencyAbbreviation]),
+            BitpaySupportedEvmCoins[wallet.chain]),
       );
     }
     if (recipient?.network) {
@@ -723,6 +684,19 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   if (livenetOnly) {
     wallets = wallets.filter(wallet => wallet.network === 'livenet');
+  }
+
+  if (context === 'coinbase' && useAsModal && customSupportedCurrencies) {
+    const supportedCurrencies = [
+      ...new Set(
+        customSupportedCurrencies.map(item =>
+          item.currencyAbbreviation.toLowerCase(),
+        ),
+      ),
+    ];
+    wallets = wallets.filter(wallet =>
+      supportedCurrencies.includes(wallet.currencyAbbreviation),
+    );
   }
 
   const currenciesSupportedList = useMemo(() => {
@@ -737,9 +711,111 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       [...coins, ...tokens, ...nonBitpayTokens],
       c => c,
     );
-    const allCurrencyData = buildSelectableWalletList(allCurrencies, wallets);
-    setDataToDisplay(Object.values(allCurrencyData).splice(0, 20));
-    return Object.values(allCurrencyData);
+    let allCurrencyData = {} as KeyWalletsRowProps[] | GlobalSelectObjByKey;
+    if (
+      [
+        'send',
+        'sell',
+        'swapFrom',
+        'coinbase',
+        'coinbaseDeposit',
+        'contact',
+        'scanner',
+      ].includes(context)
+    ) {
+      const getFilterByCustomWallets = (key: Key): Wallet[] => {
+        let _filterByCustomWallets: Wallet[] = [];
+        if (['sell', 'swapFrom'].includes(context)) {
+          // Workaround to differentiate eth in evm chains from external services
+          _filterByCustomWallets = wallets.filter(
+            w =>
+              allCurrencies.includes(
+                getExternalServiceSymbol(w.currencyAbbreviation, w.chain),
+              ) && w.keyId === key.id,
+          );
+        } else {
+          _filterByCustomWallets = wallets.filter(w => {
+            const isContextValid =
+              !['coinbaseDeposit'].includes(context) ||
+              allCurrencies.includes(
+                getCurrencyAbbreviation(w.currencyAbbreviation, w.chain),
+              );
+
+            return isContextValid && w.keyId === key.id;
+          });
+        }
+        return _filterByCustomWallets;
+      };
+
+      allCurrencyData = Object.values(keys)
+        .map(key => {
+          const accountList = buildAccountList(
+            key,
+            defaultAltCurrency.isoCode,
+            rates,
+            dispatch,
+            {
+              filterByCustomWallets: getFilterByCustomWallets(key),
+              filterByHideWallet: true,
+            },
+          );
+
+          const accounts = accountList.map(account => {
+            if (IsEVMChain(account.chains[0])) {
+              const assetsByChain = buildAssetsByChain(
+                account,
+                defaultAltCurrency.isoCode,
+              );
+              return {...account, assetsByChain};
+            }
+            return account;
+          }) as (AccountRowProps & {assetsByChain?: AssetsByChainData[]})[];
+
+          if (accounts.length === 0) {
+            return null;
+          }
+
+          return {
+            key: key.id,
+            keyName: key.keyName || 'My Key',
+            backupComplete: key.backupComplete,
+            accounts,
+          };
+        })
+        .filter(item => item !== null) as KeyWalletsRowProps[];
+      setDataToDisplay(allCurrencyData);
+      const keyWalletsArray = allCurrencyData as KeyWalletsRowProps[];
+      if (
+        keyWalletsArray.length === 1 &&
+        keyWalletsArray[0]?.accounts?.length === 1 &&
+        IsEVMChain(keyWalletsArray[0].accounts[0].chains[0])
+      ) {
+        // if only one account and is evm show assets directly
+        const selectedAccount = keyWalletsArray[0].accounts[0];
+        setSelectedEVMAccount({
+          keyId: selectedAccount.keyId,
+          chains: selectedAccount.chains,
+          accountName: selectedAccount.accountName,
+          accountNumber: selectedAccount.accountNumber,
+          receiveAddress: selectedAccount.receiveAddress,
+        });
+        setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
+        setSearchVal('');
+        setSearchResults([]);
+        setHideCloseButton(true);
+      }
+      return allCurrencyData;
+    } else if (!customToSelectCurrencies) {
+      allCurrencyData = buildSelectableWalletList(
+        allCurrencies,
+        wallets,
+        context,
+      );
+      setDataToDisplay(Object.values(allCurrencyData));
+      return Object.values(allCurrencyData);
+    } else {
+      return [];
+    }
   }, []);
 
   const customCurrenciesSupportedList = useMemo(() => {
@@ -749,7 +825,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         selectedChainFilterOption,
         wallets,
       );
-      setDataToDisplay(Object.values(allCurrencyData).splice(0, 20));
+      setDataToDisplay(Object.values(allCurrencyData));
       return Object.values(allCurrencyData);
     } else {
       return [];
@@ -786,92 +862,35 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   };
 
-  const openWalletSelector = useCallback(
-    async (selectObj: GlobalSelectObj) => {
-      setKeysWallets(
-        Object.keys(selectObj.availableWalletsByKey).map(keyId => {
-          const key = keys[keyId];
-          return {
-            key: keyId,
-            keyName: key.keyName || 'My Key',
-            backupComplete: key.backupComplete,
-            wallets: selectObj.availableWalletsByKey[keyId]
-              .filter(wallet => !wallet.hideWallet)
-              .map(wallet => {
-                const {
-                  balance,
-                  hideWallet,
-                  currencyAbbreviation,
-                  tokenAddress,
-                  network,
-                  chain,
-                  credentials: {walletName: fallbackName},
-                  walletName,
-                } = wallet;
-                return merge(cloneDeep(wallet), {
-                  cryptoBalance: balance.crypto,
-                  cryptoLockedBalance: balance.cryptoLocked,
-                  fiatBalance: formatFiatAmount(
-                    convertToFiat(
-                      dispatch(
-                        toFiat(
-                          balance.sat,
-                          defaultAltCurrency.isoCode,
-                          currencyAbbreviation,
-                          chain,
-                          rates,
-                          tokenAddress,
-                        ),
-                      ),
-                      hideWallet,
-                      network,
-                    ),
-                    defaultAltCurrency.isoCode,
-                  ),
-                  fiatLockedBalance: formatFiatAmount(
-                    convertToFiat(
-                      dispatch(
-                        toFiat(
-                          balance.satLocked,
-                          defaultAltCurrency.isoCode,
-                          currencyAbbreviation,
-                          chain,
-                          rates,
-                          tokenAddress,
-                        ),
-                      ),
-                      hideWallet,
-                      network,
-                    ),
-                    defaultAltCurrency.isoCode,
-                  ),
-                  currencyAbbreviation: currencyAbbreviation.toUpperCase(),
-                  network,
-                  walletName: walletName || fallbackName,
-                });
-              }),
-          };
-        }),
-      );
-      setWalletSelectModalVisible(true);
-    },
-    [keys],
-  );
+  const openCryptoSelector = useCallback(async (selectObj: GlobalSelectObj) => {
+    setCryptoSelectModalVisible(true);
+    const availableKeys = Object.values(keys);
+    if (availableKeys.length > 1) {
+      // has more than 1 key created -> choose key
+      openKeySelector(selectObj);
+    } else {
+      // only 1 key created -> choose account if evm / select wallet if utxo
+      const selectedKey = availableKeys[0];
+      if (IsEVMChain(selectObj.chains[0])) {
+        openAccountSelector(selectObj, selectedKey);
+      } else {
+        openAccountUtxoSelector(selectObj, selectedKey);
+      }
+    }
+  }, []);
 
   const onWalletSelect = useCallback(
     async (wallet: Wallet | undefined, addWalletData?: AddWalletData) => {
       if (useAsModal && globalSelectOnDismiss) {
-        setWalletSelectModalVisible(false);
-        await sleep(500);
         globalSelectOnDismiss(wallet, addWalletData);
         return;
       }
       if (!wallet) {
         return;
       }
-      if (['coinbase', 'contact', 'scanner'].includes(context)) {
-        setWalletSelectModalVisible(false);
-        await sleep(500);
+      if (
+        ['coinbase', 'coinbaseDeposit', 'contact', 'scanner'].includes(context)
+      ) {
         const {name, address, type, destinationTag, opts} = recipient!;
         if (!address) {
           return;
@@ -887,6 +906,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
           if (!amount) {
             navigation.navigate(WalletScreens.AMOUNT, {
+              wallet,
+              sendTo,
               sendMaxEnabled: ['contact', 'scanner'].includes(context),
               cryptoCurrencyAbbreviation:
                 wallet.currencyAbbreviation.toUpperCase(),
@@ -920,60 +941,13 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         }
       } else if (context === 'send') {
-        setWalletSelectModalVisible(false);
-        await sleep(1000);
         navigation.navigate('SendTo', {wallet});
       } else {
         setReceiveWallet(wallet);
-        setShowReceiveAddressBottomModal(true);
       }
     },
     [context, navigation, globalSelectOnDismiss, recipient, useAsModal],
   );
-
-  const onLinkedWalletSelect = async (linkedWallet: Wallet) => {
-    if (!addTokenToLinkedWallet) {
-      logger.warn('No Token data provided. Aborting token wallet creation');
-      onWalletSelect(undefined, undefined);
-      return;
-    }
-    logger.debug(
-      `Linked wallet selected. Adding ${addTokenToLinkedWallet.currencyAbbreviation} wallet.`,
-    );
-
-    const chain = addTokenToLinkedWallet?.chains[0];
-    const tokenAddress =
-      addTokenToLinkedWallet?.tokenAddresses?.[chain]?.tokenAddress;
-    const currencyAbbreviation =
-      addTokenToLinkedWallet?.currencyAbbreviation?.toLowerCase();
-
-    // Needed to prevent pointer issues
-    const associatedWallet = findWalletById(
-      keys[linkedWallet.keyId].wallets,
-      linkedWallet.id,
-    ) as Wallet;
-
-    const addWalletData: AddWalletData = {
-      key: keys[linkedWallet.keyId],
-      associatedWallet: associatedWallet,
-      currency: {
-        currencyAbbreviation,
-        isToken: true,
-        chain,
-        tokenAddress,
-      },
-      options: {
-        network: Network.mainnet,
-        useNativeSegwit: undefined,
-        singleAddress: false,
-        walletName: undefined,
-      },
-    };
-
-    if (addWalletData) {
-      onWalletSelect(undefined, addWalletData);
-    }
-  };
 
   const _createProposalAndBuildTxDetails =
     ({
@@ -1028,6 +1002,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         dispatch(LogActions.error('[GlobalSelect] ' + errStr));
         if (setButtonState) {
           setButtonState('failed');
+          sleep(1000).then(() => setButtonState?.(null));
         } else {
           dispatch(dismissOnGoingProcessModal());
         }
@@ -1039,77 +1014,108 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           showBottomNotificationModal({
             ...errorMessageConfig,
             enableBackdropDismiss: false,
-            actions: [
-              {
-                text: t('OK'),
-                action: () => {
-                  if (setButtonState) {
-                    setButtonState(undefined);
-                  }
-                },
-              },
-            ],
           }),
         );
       }
     };
 
+  const memoizedRenderAssetsItem = useCallback(
+    ({item, index}: {item: AssetsByChainData; index: number}) => {
+      return (
+        <View style={{marginLeft: -10}}>
+          <AssetsByChainRow
+            id={item.id}
+            accountItem={item}
+            hideBalance={hideAllBalances}
+            onPress={(walletId, copayerId) => {
+              const keyFullWalletObjs = keys[selectedEVMAccount.keyId!].wallets;
+              const fullWalletObj = findWalletById(
+                keyFullWalletObjs,
+                walletId,
+                copayerId,
+              ) as Wallet;
+              onWalletSelect(fullWalletObj);
+            }}
+            showChainAssetsByDefault={true}
+          />
+        </View>
+      );
+    },
+    [selectedChainFilterOption, selectedEVMAccount, selectedAssetsFromAccount],
+  );
+
   const renderItem = useCallback(
-    ({item}: {item: GlobalSelectObj}) => {
+    ({item}: {item: GlobalSelectObj | KeyWalletsRowProps}) => {
+      if (
+        [
+          'sell',
+          'swapFrom',
+          'send',
+          'coinbase',
+          'coinbaseDeposit',
+          'contact',
+          'scanner',
+        ].includes(context)
+      ) {
+        const keyWallets = item as KeyWalletsRowProps;
+        return (
+          <View>
+            <TitleNameContainer>
+              <KeySvg />
+              <TitleName>{keyWallets.keyName || 'My Key'}</TitleName>
+            </TitleNameContainer>
+            {keyWallets.accounts.map(
+              (
+                account: AccountRowProps & {
+                  assetsByChain?: AssetsByChainData[];
+                },
+                index,
+              ) => (
+                <View key={index.toString()} style={{marginLeft: -10}}>
+                  <AccountListRow
+                    key={account.id}
+                    id={account.id}
+                    accountItem={account}
+                    hideBalance={hideAllBalances}
+                    onPress={() => {
+                      if (IsEVMChain(account.chains[0])) {
+                        setSearchVal('');
+                        setSearchResults([]);
+                        setSelectedEVMAccount({
+                          keyId: account.keyId,
+                          chains: account.chains,
+                          accountName: account.accountName,
+                          accountNumber: account.accountNumber,
+                          receiveAddress: account.receiveAddress,
+                        });
+                        setSelectedAssetsFromAccount(account.assetsByChain!);
+                      } else {
+                        const keyFullWalletObjs = keys[account.keyId].wallets;
+                        const fullWalletObj = findWalletById(
+                          keyFullWalletObjs,
+                          account.wallets[0].id,
+                          account.wallets[0].copayerId,
+                        ) as Wallet;
+                        onWalletSelect(fullWalletObj);
+                      }
+                    }}
+                  />
+                </View>
+              ),
+            )}
+          </View>
+        );
+      }
+
+      const selectableObj = item as GlobalSelectObj;
       return (
         <GlobalSelectRow
-          item={item}
-          context={context}
+          item={selectableObj}
           hasSelectedChainFilterOption={!!selectedChainFilterOption}
           emit={(selectObj: GlobalSelectObj) => {
-            // if only one chain available for the token - skip chain selector
-            const hasMultipleChainAvailable = selectObj.chains.length > 1;
-            if (
-              ['buy', 'swap'].includes(context) &&
-              IsEVMCoin(selectObj.chains[0]) &&
-              selectingNetworkForDeposit &&
-              !selectedChainFilterOption &&
-              hasMultipleChainAvailable
-            ) {
-              setSelectedObj(selectObj);
-              dispatch(
-                AppActions.showChainSelectorModal({
-                  context,
-                  customChains: selectObj.chains as SupportedChains[],
-                  selectingNetworkForDeposit,
-                }),
-              );
-              return;
-            }
-            setFilteredSelectedObj(selectObj);
-            // if only one wallet - skip wallet selector
-            const wallets = Object.values(
-              selectObj.availableWalletsByKey,
-            ).flat();
-            if (wallets.length === 0) {
-              const {chains, currencyAbbreviation} = selectObj;
-              const chain = chains[0];
-              if (IsERCToken(currencyAbbreviation, chain)) {
-                handleTokenWalletSelection(
-                  chain,
-                  currencyAbbreviation,
-                  selectObj,
-                  chain, // as selectedNetworkForDeposit
-                  currenciesSupportedList,
-                  setAddTokenToLinkedWallet,
-                  openWalletSelector,
-                  openKeySelector,
-                );
-              } else {
-                openKeySelector(selectObj);
-              }
-            } else if (wallets.length === 1 && !selectingNetworkForDeposit) {
-              onWalletSelect(wallets[0]);
-            } else {
-              openWalletSelector(selectObj);
-            }
+            openCryptoSelector(selectObj);
           }}
-          key={item.id}
+          key={selectableObj.id}
         />
       );
     },
@@ -1118,13 +1124,16 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   const closeModal = () => {
     setShowReceiveAddressBottomModal(false);
+    setReceiveWallet(undefined);
   };
 
   const handleBasicWalletCreation = async (
     selectedCurrency: GlobalSelectObj,
     key: Key,
+    selectedNetwork: string,
+    associatedWallet?: Wallet,
   ) => {
-    const chain = selectedCurrency?.chains[0];
+    const chain = selectedNetwork;
     const tokenAddress =
       selectedCurrency?.tokenAddresses?.[chain]?.tokenAddress;
     const currencyAbbreviation =
@@ -1137,7 +1146,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     // adds wallet and binds to key obj - creates eth wallet if needed
     const addWalletData: AddWalletData = {
       key,
-      associatedWallet: undefined,
+      associatedWallet,
       currency: {
         currencyAbbreviation: currencyAbbreviation,
         isToken: currencyAbbreviation !== chain,
@@ -1161,17 +1170,19 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     selectedCurrency: GlobalSelectObj,
     selectedKey: Key,
   ) => {
-    setKeySelectorModalVisible(false);
     if (selectedKey.backupComplete) {
-      logger.debug(
-        `Key selected. Adding ${selectedCurrency.currencyAbbreviation} wallet.`,
-      );
-      handleBasicWalletCreation(selectedCurrency, selectedKey);
+      if (IsEVMChain(selectedCurrency.chains[0])) {
+        openAccountSelector(selectedCurrency, selectedKey);
+      } else {
+        openAccountUtxoSelector(selectedCurrency, selectedKey);
+      }
     } else {
       logger.debug('Key selected. Needs backup.');
       if (globalSelectOnDismiss) {
         globalSelectOnDismiss();
       }
+      await sleep(1000);
+      setCryptoSelectModalVisible(false);
       await sleep(1000);
       dispatch(
         showBottomNotificationModal(
@@ -1196,26 +1207,200 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         currency: selectObj,
       }),
     );
+    setCryptoSelectContext({
+      title: 'Select Key to Deposit to',
+      status: 'key-selection',
+    });
+  };
+
+  const onAccountSelected = async (
+    selectedAccount: AccountRowProps,
+    selectedCurrency: GlobalSelectObj,
+    selectedKey: Key,
+  ) => {
+    openNetworkSelector(selectedAccount, selectedCurrency, selectedKey);
+  };
+
+  const onNetworkSelected = async (
+    selectedAccount: AccountRowProps,
+    selectedKey: Key,
+    selectedCurrency: GlobalSelectObj,
+    selectedNetwork: string,
+  ) => {
+    setCryptoSelectModalVisible(false);
     await sleep(1000);
-    setKeySelectorModalVisible(true);
+
+    if (!selectedAccount) {
+      handleBasicWalletCreation(selectedCurrency, selectedKey, selectedNetwork);
+      return;
+    }
+
+    const {keyId, wallets} = selectedAccount;
+    const wallet = wallets.find(
+      w =>
+        w.currencyAbbreviation.toLowerCase() ===
+          selectedCurrency.currencyAbbreviation.toLowerCase() &&
+        w.chain.toLowerCase() === selectedNetwork.toLowerCase(),
+    );
+    const handleWalletSelection = (walletId: string, copayerId?: string) => {
+      const walletFullObject = findWalletById(
+        keys[keyId].wallets,
+        walletId,
+        copayerId,
+      ) as Wallet;
+      onWalletSelect(walletFullObject, undefined);
+    };
+
+    const handleERC20WalletCreation = () => {
+      const associatedWallet = wallets.find(
+        w =>
+          w.chain === selectedNetwork &&
+          !IsERCToken(w.currencyAbbreviation, w.chain),
+      )!; // search for associated wallet before creation
+      let associatedWalletFullObject;
+      if (associatedWallet) {
+        associatedWalletFullObject = findWalletById(
+          keys[keyId].wallets,
+          associatedWallet.id,
+          associatedWallet.copayerId,
+        ) as Wallet;
+      }
+      handleBasicWalletCreation(
+        selectedCurrency,
+        selectedKey,
+        selectedNetwork,
+        associatedWalletFullObject,
+      );
+    };
+    if (IsERCToken(selectedCurrency.currencyAbbreviation, selectedNetwork)) {
+      wallet
+        ? handleWalletSelection(wallet.id, wallet.copayerId)
+        : handleERC20WalletCreation();
+    } else if (wallet) {
+      handleWalletSelection(wallet.id, wallet.copayerId);
+    }
   };
 
-  const onChainSelectorModalHide = () => {
-    setChainSelectorModalIsVisible(false);
+  const openAccountUtxoSelector = async (
+    selectedCurrency: GlobalSelectObj,
+    selectedKey: Key,
+  ) => {
+    const accountList = buildAccountList(
+      selectedKey,
+      defaultAltCurrency.isoCode,
+      rates,
+      dispatch,
+      {
+        filterByHideWallet: true,
+        skipFiatCalculations: true,
+        filterWalletsByChain: true,
+        filterByComplete: true,
+        chain: selectedCurrency.chains[0],
+      },
+    ).filter(account => !IsEVMChain(account.chains[0]));
+    if (accountList.length > 1) {
+      // has more than 1 account created -> choose account
+      setAccountsCardsList({
+        accounts: accountList,
+        currency: selectedCurrency,
+        key: selectedKey,
+      });
+      setCryptoSelectContext({
+        title: 'Select Wallet to Deposit to',
+        status: 'account-selection',
+      });
+    } else {
+      // ony 1 account created -> choose network
+      const selectedAccount = accountList[0];
+      openNetworkSelector(selectedAccount, selectedCurrency, selectedKey);
+    }
   };
 
-  useEffect(() => {
-    // If a chain filter was selected after a network was selected, clear the network selection.
-    if (selectedChainFilterOption && selectedNetworkForDeposit) {
-      dispatch(setSelectedNetworkForDeposit(undefined));
+  const openAccountSelector = async (
+    selectedCurrency: GlobalSelectObj,
+    selectedKey: Key,
+  ) => {
+    const accountList = buildAccountList(
+      selectedKey,
+      defaultAltCurrency.isoCode,
+      rates,
+      dispatch,
+      {
+        filterByHideWallet: true,
+        skipFiatCalculations: true,
+      },
+    ).filter(account => IsEVMChain(account.chains[0]));
+    if (accountList.length > 1) {
+      // has more than 1 account created -> choose account
+      setAccountsCardsList({
+        accounts: accountList,
+        currency: selectedCurrency,
+        key: selectedKey,
+      });
+      setCryptoSelectContext({
+        title: 'Select Account to Deposit to',
+        status: 'account-selection',
+      });
+    } else {
+      // ony 1 account created -> choose network
+      const selectedAccount = accountList[0];
+      openNetworkSelector(selectedAccount, selectedCurrency, selectedKey);
     }
-  }, [selectedChainFilterOption]);
+  };
 
-  useEffect(() => {
-    if (chainSelectorIsVisible) {
-      setChainSelectorModalIsVisible(true);
+  const openNetworkSelector = async (
+    selectedAccount: AccountRowProps,
+    selectedCurrency: GlobalSelectObj,
+    selectedKey: Key,
+  ) => {
+    if (selectedChainFilterOption) {
+      const selectedNetwork = SupportedChainsOptions.find(
+        network => network.chain === selectedChainFilterOption,
+      )!;
+      onNetworkSelected(
+        selectedAccount,
+        selectedKey,
+        selectedCurrency,
+        selectedNetwork.chain,
+      );
+      return;
     }
-  }, [chainSelectorIsVisible]);
+    let networks = SupportedChainsOptions.filter(network =>
+      selectedCurrency.chains.includes(network.chain),
+    );
+    if (context === 'receive') {
+      // user is selecting address to receive funds if context === receive
+      setCryptoSelectModalVisible(false);
+      await sleep(1000);
+      const {keyId, wallets} = selectedAccount;
+      const walletFullObject = findWalletById(
+        keys[keyId].wallets,
+        wallets[0].id,
+        wallets[0].copayerId,
+      ) as Wallet;
+      onWalletSelect(walletFullObject, undefined);
+      return;
+    }
+    if (networks.length === 1) {
+      onNetworkSelected(
+        selectedAccount,
+        selectedKey,
+        selectedCurrency,
+        networks[0].chain,
+      );
+      return;
+    }
+    setNetworkCardsList({
+      networks,
+      account: selectedAccount,
+      currency: selectedCurrency,
+      key: selectedKey,
+    });
+    setCryptoSelectContext({
+      title: 'Select Network',
+      status: 'network-selection',
+    });
+  };
 
   useEffect(() => {
     if (!wallets[0]) {
@@ -1223,85 +1408,54 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       // TODO: show warning
       if (useAsModal) {
         closeModal();
-      } else if (navigation.canGoBack()) {
-        navigation.goBack();
       }
     }
   }, [navigation, wallets, useAsModal]);
 
   useEffect(() => {
-    if (
-      !chainSelectorModalIsVisible &&
-      selectedNetworkForDeposit &&
-      selectingNetworkForDeposit &&
-      selectedObj.availableWalletsByKey
-    ) {
-      const filteredSelectedObj = filterByChain(
-        selectedObj,
-        selectedNetworkForDeposit,
-      );
-      setFilteredSelectedObj(filteredSelectedObj);
-      handleWalletSelection(
-        filteredSelectedObj,
-        selectedNetworkForDeposit,
-        currenciesSupportedList,
-        setAddTokenToLinkedWallet,
-        openWalletSelector,
-        openKeySelector,
-        onWalletSelect,
-        disabledChain,
-        logger,
-      );
-    }
-  }, [
-    navigation,
-    chainSelectorModalIsVisible,
-    selectedNetworkForDeposit,
-    selectingNetworkForDeposit,
-    selectedObj,
-  ]);
+    if (selectedEVMAccount) {
+      const data =
+        !searchVal && !selectedChainFilterOption
+          ? dataToDisplay
+          : searchResults;
+      const selectedAccount = data
+        // @ts-ignore
+        .flatMap(({accounts}) => accounts || [])
+        .find(
+          account =>
+            // @ts-ignore
+            account.receiveAddress === selectedEVMAccount.receiveAddress,
+        ) as AccountRowProps & {assetsByChain?: AssetsByChainData[]};
 
-  const onEndReached = async () => {
-    if (isLoading) {
-      return;
-    }
-    const remainingCustomCurrencies =
-      customCurrenciesSupportedList.length - dataToDisplay.length;
-    const remainingCurrencies =
-      currenciesSupportedList.length - dataToDisplay.length;
-
-    if (remainingCustomCurrencies <= 0 && remainingCurrencies <= 0) {
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    await sleep(1000);
-    const startIndex = currentPage + 20;
-    const endIndex = startIndex + 20;
-    if (!searchVal && !selectedChainFilterOption) {
-      if (
-        selectingNetworkForDeposit &&
-        customCurrenciesSupportedList.length > 0
-      ) {
-        const itemsToAdd = customCurrenciesSupportedList.slice(
-          startIndex,
-          endIndex,
-        );
-
-        setDataToDisplay(prevData => [...prevData, ...itemsToAdd]);
-      } else {
-        const itemsToAdd = currenciesSupportedList.slice(startIndex, endIndex);
-        setDataToDisplay(prevData => [...prevData, ...itemsToAdd]);
+      if (selectedAccount) {
+        setSearchVal('');
+        setSearchResults([]);
+        setSelectedEVMAccount({
+          keyId: selectedAccount.keyId,
+          chains: selectedAccount.chains,
+          accountName: selectedAccount.accountName,
+          accountNumber: selectedAccount.accountNumber,
+          receiveAddress: selectedAccount.receiveAddress,
+        });
+        setSelectedAssetsFromAccount(selectedAccount.assetsByChain!);
       }
     }
-    setCurrentPage(prevPage => prevPage + 20);
-    setIsLoading(false);
-  };
+  }, [selectedChainFilterOption]);
+
+  useEffect(() => {
+    if (receiveWallet) {
+      const showReceiveModal = async () => {
+        await sleep(1000);
+        setShowReceiveAddressBottomModal(true);
+      };
+      showReceiveModal();
+    }
+  }, [receiveWallet]);
 
   return (
     <SafeAreaView>
       {useAsModal && (
-        <ModalHeader>
+        <ModalHeader style={{marginTop: Platform.OS === 'android' ? 20 : 0}}>
           <CloseModalButtonContainer>
             <CloseModalButton
               onPress={() => {
@@ -1309,13 +1463,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                   globalSelectOnDismiss(undefined);
                 }
               }}>
-              <CloseModal
-                {...{
-                  width: 20,
-                  height: 20,
-                  color: theme.dark ? 'white' : 'black',
-                }}
-              />
+              <CloseIcon />
             </CloseModalButton>
           </CloseModalButtonContainer>
           {!!modalTitle && (
@@ -1337,68 +1485,95 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         </ModalHeader>
       )}
       <GlobalSelectContainer>
-        {(currenciesSupportedList?.length > 0 ||
-          customCurrenciesSupportedList.length > 0) && (
-          <SearchComponentContainer>
-            <SearchComponent<GlobalSelectObj>
-              searchVal={searchVal}
-              setSearchVal={setSearchVal}
-              searchResults={searchResults}
-              setSearchResults={setSearchResults}
-              searchFullList={
-                customCurrenciesSupportedList.length > 0
-                  ? customCurrenciesSupportedList
-                  : currenciesSupportedList
-              }
-              context={context}
-              onModalHide={onChainSelectorModalHide}
-            />
-          </SearchComponentContainer>
-        )}
+        <SearchComponentContainer>
+          <SearchComponent<
+            GlobalSelectObj | KeyWalletsRowProps | AssetsByChainData
+          >
+            searchVal={searchVal}
+            setSearchVal={setSearchVal}
+            searchResults={searchResults}
+            setSearchResults={setSearchResults}
+            searchFullList={
+              selectedAssetsFromAccount.length > 0
+                ? selectedAssetsFromAccount
+                : customCurrenciesSupportedList.length > 0
+                ? customCurrenciesSupportedList
+                : currenciesSupportedList
+            }
+            context={context}
+          />
+        </SearchComponentContainer>
         {(currenciesSupportedList?.length > 0 ||
           customCurrenciesSupportedList.length > 0) &&
-          showInitiallyHiddenComponents && (
-            <Animated.FlatList
-              entering={FadeIn.duration(Platform.OS === 'android' ? 800 : 300)}
-              contentContainerStyle={{paddingBottom: 150}}
-              data={
-                !searchVal && !selectedChainFilterOption
-                  ? dataToDisplay
-                  : searchResults
-              }
-              keyExtractor={keyExtractor}
-              renderItem={renderItem}
-              getItemLayout={(data, index) => ({
-                length: 75,
-                offset: 75 * index,
-                index,
-              })}
-              initialNumToRender={20}
-              maxToRenderPerBatch={20}
-              windowSize={21}
-              onEndReached={onEndReached}
-              onEndReachedThreshold={0.3}
-              ListFooterComponent={() =>
-                !searchVal && !selectedChainFilterOption ? (
-                  isLoading ? (
-                    <View style={{flex: 1}}>
-                      <ActivityIndicator
-                        style={{
-                          paddingVertical: 20,
-                          alignItems: 'center',
-                          height: 60,
-                        }}
-                        size="large"
-                        color={SlateDark}
-                      />
-                    </View>
-                  ) : (
-                    <View style={{flex: 1, height: 60}} />
-                  )
-                ) : null
-              }
-            />
+          selectedAssetsFromAccount.length === 0 && (
+            <>
+              {showInitiallyHiddenComponents && (
+                <FlashListCointainer entering={FadeIn.duration(800)}>
+                  <FlashListComponent
+                    inModal={useAsModal}
+                    contentContainerStyle={{paddingBottom: 150}}
+                    data={
+                      !searchVal && !selectedChainFilterOption
+                        ? dataToDisplay
+                        : (searchResults as (
+                            | GlobalSelectObj
+                            | KeyWalletsRowProps
+                          )[])
+                    }
+                    keyExtractor={(_, index: number) => index.toString()}
+                    renderItem={renderItem}
+                    estimatedItemSize={90}
+                    onEndReachedThreshold={0.3}
+                  />
+                </FlashListCointainer>
+              )}
+            </>
           )}
+
+        {selectedAssetsFromAccount.length > 0 && (
+          <>
+            <View>
+              <TitleNameContainer>
+                <Row style={{alignItems: 'center'}}>
+                  <Blockie size={19} seed={selectedEVMAccount.receiveAddress} />
+                  <View style={{maxWidth: 250}}>
+                    <TitleName ellipsizeMode="tail" numberOfLines={1}>
+                      {selectedEVMAccount.accountName}
+                    </TitleName>
+                  </View>
+                </Row>
+                {!hideCloseButton ? (
+                  <CloseButton
+                    onPress={() => {
+                      setSearchVal('');
+                      setSearchResults([]);
+                      setSelectedAssetsFromAccount([]);
+                      setSelectedEVMAccount({} as Partial<AccountRowProps>);
+                    }}>
+                    <CloseButtonText>{t('CLOSE')}</CloseButtonText>
+                  </CloseButton>
+                ) : null}
+              </TitleNameContainer>
+              <FlashListCointainer
+                entering={FadeIn.duration(500)}
+                style={{height: HEIGHT - 235}}>
+                <FlashListComponent
+                  inModal={useAsModal}
+                  estimatedItemSize={90}
+                  contentContainerStyle={{paddingBottom: 300}}
+                  data={
+                    !searchVal && !selectedChainFilterOption
+                      ? selectedAssetsFromAccount
+                      : (searchResults as AssetsByChainData[])
+                  }
+                  keyExtractor={(_, index: number) => index.toString()}
+                  renderItem={memoizedRenderAssetsItem}
+                />
+              </FlashListCointainer>
+            </View>
+          </>
+        )}
+
         {currenciesSupportedList.length === 0 &&
         customCurrenciesSupportedList.length === 0 ? (
           <>
@@ -1418,7 +1593,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               </NoWalletsMsg>
             ) : null}
 
-            {context === 'swap' ? (
+            {context === 'swapFrom' ? (
               <NoWalletsMsg>
                 {t(
                   'Your wallet balance is too low to swap crypto. Add funds now and start swapping.',
@@ -1426,7 +1601,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
               </NoWalletsMsg>
             ) : null}
 
-            {['sell', 'swap'].includes(context) ? (
+            {['sell', 'swapFrom'].includes(context) ? (
               <Button
                 style={{marginTop: 20}}
                 onPress={goToBuyCrypto}
@@ -1437,95 +1612,97 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           </>
         ) : null}
 
-        {mountSheetModals && (
+        {cryptoSelectContext && mountSheetModals ? (
           <SheetModal
-            isVisible={walletSelectModalVisible}
+            isVisible={cryptoSelectModalVisible}
             onBackdropPress={() => {
-              dispatch(setSelectedNetworkForDeposit(undefined));
-              setAddTokenToLinkedWallet(undefined);
-              setWalletSelectModalVisible(false);
+              setCryptoSelectModalVisible(false);
             }}>
-            <WalletSelectMenuContainer>
-              <WalletSelectMenuHeaderContainer>
+            <WalletSelectMenuContainer
+              style={{minHeight: 300, paddingBottom: 80}}>
+              <WalletSelectMenuHeaderContainer style={{marginBottom: 10}}>
                 <TextAlign align={'center'}>
-                  <H4>{t('Select a wallet')}</H4>
+                  <H4>{cryptoSelectContext?.title}</H4>
                 </TextAlign>
               </WalletSelectMenuHeaderContainer>
-              <WalletSelectMenuBodyContainer>
-                <KeyWalletsRow
-                  keyWallets={keyWallets!}
-                  hideBalance={hideAllBalances}
-                  onPress={
-                    addTokenToLinkedWallet?.currencyAbbreviation
-                      ? onLinkedWalletSelect
-                      : onWalletSelect
-                  }
-                />
-              </WalletSelectMenuBodyContainer>
-              {filteredSelectedObj && selectingNetworkForDeposit ? (
-                <RowContainer
-                  noBorder={true}
-                  style={{marginTop: 20, marginLeft: 10}}
-                  onPress={() => {
-                    setAddTokenToLinkedWallet(undefined);
-                    setWalletSelectModalVisible(false);
-                    openKeySelector(filteredSelectedObj);
-                  }}>
-                  <PlusIconContainer>
-                    <Icons.Add />
-                  </PlusIconContainer>
-                  <H5 style={{fontWeight: '400'}}>
-                    {IsEVMCoin(filteredSelectedObj.chains[0])
-                      ? t('Add as New Account')
-                      : t('Add as New Wallet')}
-                  </H5>
-                </RowContainer>
-              ) : null}
-              {/*Nested receive modal*/}
-              {receiveWallet && (
-                <ReceiveAddress
-                  isVisible={showReceiveAddressBottomModal}
-                  closeModal={closeModal}
-                  wallet={receiveWallet}
-                />
+
+              {cryptoSelectContext.status === 'key-selection' && (
+                <Animated.View entering={FadeIn.duration(300)}>
+                  <WalletSelectMenuBodyContainer>
+                    {cardsList?.list.map((data: any) => (
+                      <View key={data.id}>{data.component}</View>
+                    ))}
+                  </WalletSelectMenuBodyContainer>
+                </Animated.View>
+              )}
+
+              {cryptoSelectContext.status === 'account-selection' && (
+                <Animated.View entering={FadeIn.duration(300)}>
+                  <WalletSelectMenuBodyContainer>
+                    {accountsCardsList?.accounts?.map(
+                      (item: AccountRowProps) => (
+                        <AccountListRow
+                          key={item.id}
+                          id={item.id}
+                          accountItem={item}
+                          hideBalance={hideAllBalances}
+                          onPress={() =>
+                            onAccountSelected(
+                              item,
+                              accountsCardsList.currency,
+                              accountsCardsList.key,
+                            )
+                          }
+                        />
+                      ),
+                    )}
+                  </WalletSelectMenuBodyContainer>
+                </Animated.View>
+              )}
+
+              {cryptoSelectContext.status === 'network-selection' && (
+                <Animated.View entering={FadeIn.duration(300)}>
+                  <WalletSelectMenuBodyContainer>
+                    {networkCardsList?.networks?.map(
+                      (item: SupportedChainOption, index: number) => (
+                        <View key={index.toString()}>
+                          <NetworkChainContainer
+                            activeOpacity={ActiveOpacity}
+                            onPress={() =>
+                              onNetworkSelected(
+                                networkCardsList.account,
+                                networkCardsList.key,
+                                networkCardsList.currency,
+                                item.chain,
+                              )
+                            }>
+                            <NetworkRowContainer>
+                              <ImageContainer>
+                                <CurrencyImage img={item.img} size={32} />
+                              </ImageContainer>
+                              <NetworkName>{item.chainName}</NetworkName>
+                            </NetworkRowContainer>
+                          </NetworkChainContainer>
+                          {networkCardsList?.networks?.length - 1 > index ? (
+                            <Hr />
+                          ) : null}
+                        </View>
+                      ),
+                    )}
+                  </WalletSelectMenuBodyContainer>
+                </Animated.View>
               )}
             </WalletSelectMenuContainer>
           </SheetModal>
-        )}
-        {/*Receive modal if one wallet*/}
-        {receiveWallet && !walletSelectModalVisible && (
+        ) : null}
+
+        {receiveWallet && (
           <ReceiveAddress
             isVisible={showReceiveAddressBottomModal}
             closeModal={closeModal}
             wallet={receiveWallet}
+            context={'globalselect'}
           />
-        )}
-        {mountSheetModals && (
-          <SheetModal
-            isVisible={keySelectorModalVisible}
-            onBackdropPress={() => setKeySelectorModalVisible(false)}>
-            <WalletSelectMenuContainer>
-              <WalletSelectMenuHeaderContainer>
-                <TextAlign align={'center'}>
-                  <H4>
-                    {context === 'swap'
-                      ? t('Swap to')
-                      : t('Select Destination')}
-                  </H4>
-                </TextAlign>
-                <NoWalletsMsg>
-                  {context === 'swap'
-                    ? t('Choose a key you would like to swap the funds to')
-                    : t('Choose a key you would like to deposit the funds to')}
-                </NoWalletsMsg>
-              </WalletSelectMenuHeaderContainer>
-              <WalletSelectMenuBodyContainer>
-                {cardsList?.list.map((data: any) => {
-                  return <View key={data.id}>{data.component}</View>;
-                })}
-              </WalletSelectMenuBodyContainer>
-            </WalletSelectMenuContainer>
-          </SheetModal>
         )}
       </GlobalSelectContainer>
     </SafeAreaView>

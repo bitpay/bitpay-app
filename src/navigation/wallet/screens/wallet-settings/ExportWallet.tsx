@@ -27,10 +27,19 @@ import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../../WalletGroup';
 import {BwcProvider} from '../../../../lib/bwc';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {sleep} from '../../../../utils/helper-methods';
+import {
+  isAndroidStoragePermissionGranted,
+  sleep,
+} from '../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../store/log';
 import Mailer from 'react-native-mail';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {IS_DESKTOP} from '../../../../constants';
+import {Platform} from 'react-native';
+import Share, {ShareOptions} from 'react-native-share';
+import RNFS from 'react-native-fs';
+import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 
 const BWC = BwcProvider.getInstance();
 
@@ -69,7 +78,7 @@ interface ExportWalletPasswordFieldValues {
   confirmPassword: string;
 }
 
-const RowContainer = styled.TouchableOpacity`
+const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   padding: 18px;
@@ -171,6 +180,56 @@ const ExportWallet = () => {
       setCopyButtonState('failed');
       await sleep(500);
       setCopyButtonState(undefined);
+    }
+  };
+
+  const shareFile = async ({password}: {password: string}) => {
+    try {
+      if (Platform.OS === 'android' && Platform.Version < 30) {
+        await isAndroidStoragePermissionGranted(dispatch);
+      }
+
+      const _sendWallet = walletExport(password);
+      const {
+        credentials: {walletName: cWalletName, walletId},
+        walletName,
+      } = wallet;
+      let name = walletName || cWalletName || walletId;
+
+      if (dontIncludePrivateKey) {
+        name = name + ' ' + t('(No Private Key)');
+      }
+
+      const txt = t(
+        'Here is the encrypted backup of the wallet : \n\n \n\nTo import this backup, copy all text between {...}, including the symbols {}',
+        {name, sendWallet: _sendWallet},
+      );
+
+      const rootPath =
+        Platform.OS === 'ios'
+          ? RNFS.LibraryDirectoryPath
+          : RNFS.TemporaryDirectoryPath;
+      const txtFilename = `${APP_NAME_UPPERCASE}-${walletName}`;
+      let filePath = `${rootPath}/${txtFilename}`;
+
+      await RNFS.mkdir(filePath);
+
+      filePath += '.txt';
+      const opts: ShareOptions = {
+        title: txtFilename,
+        url: `file://${filePath}`,
+        subject: `${walletName} Encrypted Backup`,
+      };
+
+      await RNFS.writeFile(filePath, txt, 'utf8');
+      await Share.open(opts);
+    } catch (err: any) {
+      dispatch(LogActions.debug(`[shareFile]: ${err.message}`));
+      if (err && err.message === 'User did not share') {
+        return;
+      } else {
+        throw err;
+      }
     }
   };
 
@@ -333,13 +392,19 @@ const ExportWallet = () => {
           </PasswordActionContainer>
 
           <PasswordActionContainer>
-            <Button
-              onPress={handleSubmit(onSendByEmail)}
-              state={sendButtonState}
-              buttonStyle={'secondary'}>
-              {t('Send by Email')}
-            </Button>
+            <Button onPress={handleSubmit(shareFile)}>{t('Share File')}</Button>
           </PasswordActionContainer>
+
+          {!IS_DESKTOP && (
+            <PasswordActionContainer>
+              <Button
+                onPress={handleSubmit(onSendByEmail)}
+                state={sendButtonState}
+                buttonStyle={'secondary'}>
+                {t('Send by Email')}
+              </Button>
+            </PasswordActionContainer>
+          )}
         </PasswordFormContainer>
       </ScrollView>
     </ExportWalletContainer>

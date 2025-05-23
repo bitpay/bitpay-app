@@ -1,6 +1,7 @@
 import {Platform} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {ScreenGutter} from '../../../components/styled/Containers';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const WalletConnectContainer = styled.SafeAreaView`
   flex: 1;
@@ -18,7 +19,7 @@ export const ItemContainer = styled.View`
   min-height: 71px;
 `;
 
-export const ItemTouchableContainer = styled.TouchableOpacity`
+export const ItemTouchableContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -32,7 +33,7 @@ export const ItemTitleContainer = styled.View`
   max-width: 250px;
 `;
 
-export const ItemTitleTouchableContainer = styled.TouchableOpacity`
+export const ItemTitleTouchableContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
@@ -45,7 +46,7 @@ export const ItemNoteContainer = styled.View`
   justify-content: flex-end;
 `;
 
-export const ItemNoteTouchableContainer = styled.TouchableOpacity`
+export const ItemNoteTouchableContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;

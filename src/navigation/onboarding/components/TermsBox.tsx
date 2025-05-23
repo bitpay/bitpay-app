@@ -4,6 +4,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {LightBlack, NeutralSlate} from '../../../styles/colors';
 import {TermsOfUseModel} from '../screens/TermsOfUse';
+
 interface Props {
   emit: (id: number) => void;
   term: TermsOfUseModel;

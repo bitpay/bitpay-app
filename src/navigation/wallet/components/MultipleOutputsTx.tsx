@@ -40,12 +40,14 @@ import {
   SendToPillContainer,
 } from '../screens/send/confirm/Shared';
 import {RootState} from '../../../store';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {View} from 'react-native';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
 `;
 
-const MultiOptionsContainer = styled.TouchableOpacity`
+const MultiOptionsContainer = styled(View)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 10px;
   margin-bottom: 5px;
@@ -54,8 +56,8 @@ const MultiOptionsContainer = styled.TouchableOpacity`
 `;
 
 const MultiOptionsText = styled(H7)`
-  max-width: 50%;
   margin: 0 5px;
+  width: 50%;
 `;
 
 const MultiOptionsMessageContainer = styled.View`
@@ -66,8 +68,21 @@ const MultiOptionsMessage = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const ContactsIconContainer = styled.TouchableOpacity`
+const ContactsIconContainer = styled(TouchableOpacity)`
   margin-left: 5px;
+`;
+
+const RecipientsContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+`;
+
+const DetailsContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 `;
 
 const MultipleOutputsTx = ({
@@ -148,25 +163,20 @@ const MultipleOutputsTx = ({
       tx.customData?.recipientEmail ||
       tx.customData?.toWalletName ||
       (tx.outputs[0].addressToShow
-        ? formatCryptoAddress(tx.outputs[0].addressToShow)
+        ? formatCryptoAddress(
+            tx.outputs[0].toAddress || tx.outputs[0].addressToShow,
+          )
         : formatCryptoAddress(tx.outputs[0].address))
     );
   };
 
-  const [showMultiOptions, setShowMultiOptions] = useState(false);
+  const [showMultiOptions, setShowMultiOptions] = useState(true);
 
-  const getIcon = () => {
-    const existsContact = findContact(
-      contactList,
-      tx.outputs[0].address,
-      tx.coin,
-      network,
-      tx.chain,
-      tokenAddress,
-    );
+  const getIcon = (address: string) => {
+    const existsContact = findContact(contactList, address);
 
     const coin = getCurrencyAbbreviation(tx.coin, tx.chain);
-    const img = SUPPORTED_CURRENCIES.includes(coin)
+    const img = CurrencyListIcons[coin]
       ? CurrencyListIcons[coin]
       : foundToken &&
         // @ts-ignore
@@ -176,9 +186,21 @@ const MultipleOutputsTx = ({
       : '';
     const badgeImg = getBadgeImg(coin, chain);
     const icon = tx.customData?.recipientEmail ? (
-      <ContactIcon name={tx.customData?.recipientEmail} size={18} />
+      <ContactIcon
+        name={tx.customData?.recipientEmail}
+        coin={coin}
+        chain={chain}
+        address={address}
+        size={18}
+      />
     ) : existsContact ? (
-      <ContactIcon name={getDesc()} size={18} />
+      <ContactIcon
+        name={getDesc()}
+        coin={coin}
+        chain={chain}
+        address={address}
+        size={18}
+      />
     ) : (
       <CurrencyImage img={img} size={18} badgeUri={badgeImg} />
     );
@@ -237,7 +259,11 @@ const MultipleOutputsTx = ({
                     />
                   ) : (
                     <SendToPill
-                      icon={getIcon()}
+                      icon={getIcon(
+                        tx.outputs[0].addressToShow
+                          ? tx.outputs[0].addressToShow
+                          : tx.outputs[0].address,
+                      )}
                       description={getDesc()}
                       onPress={() =>
                         copyText(
@@ -271,7 +297,11 @@ const MultipleOutputsTx = ({
               <DetailRow>
                 <SendToPillContainer>
                   <SendToPill
-                    icon={getIcon()}
+                    icon={getIcon(
+                      tx.outputs[0].addressToShow ||
+                        tx.outputs[0].address ||
+                        tx.outputs[0].toAddress,
+                    )}
                     description={`${tx.recipientCount} Recipients`}
                     onPress={() => setShowMultiOptions(!showMultiOptions)}
                     dropDown={true}
@@ -285,13 +315,13 @@ const MultipleOutputsTx = ({
 
       {tx.hasMultiplesOutputs && showMultiOptions
         ? tx.outputs.map((output: any, i: number) => (
-            <DetailRow key={i}>
-              <MultiOptionsContainer
-                activeOpacity={ActiveOpacity}
-                onPress={() => copyText(output.toAddress || output.address)}>
-                <DetailRow>
-                  {getIcon()}
-                  <MultiOptionsText numberOfLines={1} ellipsizeMode={'tail'}>
+            <RecipientsContainer key={i}>
+              <MultiOptionsContainer>
+                <DetailsContainer>
+                  {getIcon(
+                    output.toAddress || output.address || output.addressToShow,
+                  )}
+                  <MultiOptionsText numberOfLines={1} ellipsizeMode={'middle'}>
                     {output.contactName ||
                       output.addressToShow ||
                       output.toAddress ||
@@ -310,7 +340,7 @@ const MultipleOutputsTx = ({
                       <H7>{output.alternativeAmountStr}</H7>
                     ) : null}
                   </DetailColumn>
-                </DetailRow>
+                </DetailsContainer>
 
                 {output.message ? (
                   <MultiOptionsMessageContainer>
@@ -334,7 +364,7 @@ const MultipleOutputsTx = ({
                   <AddContactIcon />
                 </ContactsIconContainer>
               ) : null}
-            </DetailRow>
+            </RecipientsContainer>
           ))
         : null}
 

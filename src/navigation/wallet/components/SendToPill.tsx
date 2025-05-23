@@ -1,6 +1,6 @@
 import React, {ReactElement, useState} from 'react';
 import styled from 'styled-components/native';
-import {BitPay, NeutralSlate, SlateDark} from '../../../styles/colors';
+import {BitPay, LightBlack, NeutralSlate} from '../../../styles/colors';
 import {H7} from '../../../components/styled/Text';
 import ArrowDownSvg from '../../../../assets/img/chevron-down.svg';
 import ArrowUpSvg from '../../../../assets/img/chevron-up.svg';
@@ -21,14 +21,14 @@ interface StyleProps {
 
 export const PillContainer = styled.Pressable<StyleProps>`
   background-color: ${({theme: {dark}, accent}) =>
-    dark ? SlateDark : accent === 'action' ? '#ECEFFD' : NeutralSlate};
+    dark ? LightBlack : accent === 'action' ? '#ECEFFD' : NeutralSlate};
   flex-direction: row;
   border-radius: 40px;
   align-items: center;
   justify-content: center;
   padding: 0 11px;
   height: ${({height}) => (height ? height : '100%')};
-  max-width: 200px;
+  max-width: 202px;
 `;
 
 const IconContainer = styled.View`
@@ -68,7 +68,7 @@ const SendToPill = ({
       accent={accent}
       height={height}>
       <IconContainer>{icon}</IconContainer>
-      <PillText numberOfLines={1} ellipsizeMode={'tail'} accent={accent}>
+      <PillText numberOfLines={1} ellipsizeMode={'middle'} accent={accent}>
         {description}
       </PillText>
 

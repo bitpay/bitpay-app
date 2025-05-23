@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, {css} from 'styled-components/native';
-import {TouchableHighlight} from 'react-native-gesture-handler';
+import {TouchableHighlight} from 'react-native';
 import Carousel from 'react-native-reanimated-carousel';
 import {
   CardConfig,
@@ -82,6 +82,10 @@ export default ({
 
   return (
     <Carousel
+      onConfigurePanGesture={gestureChain => {
+        gestureChain.activeOffsetX([-10, 10]);
+        gestureChain.failOffsetY([-10, 10]);
+      }}
       loop={false}
       autoFillData={false}
       vertical={false}
@@ -92,9 +96,6 @@ export default ({
       data={slides}
       windowSize={windowSize}
       scrollAnimationDuration={1000}
-      panGestureHandlerProps={{
-        activeOffsetX: [-10, 10],
-      }}
       enabled={!isSingleSlide}
       renderItem={({
         item,

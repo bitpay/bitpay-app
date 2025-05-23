@@ -1,4 +1,6 @@
 import {Platform} from 'react-native';
+import DeviceInfo from 'react-native-device-info';
+const isDesktop = DeviceInfo.getDeviceType();
 
 export enum Network {
   mainnet = 'livenet',
@@ -8,6 +10,7 @@ export enum Network {
 
 export const IS_ANDROID = Platform.OS === 'android';
 export const IS_IOS = Platform.OS === 'ios';
+export const IS_DESKTOP = isDesktop === 'Desktop';
 
 export const URL = {
   /**

@@ -21,7 +21,8 @@ import {
   Slate,
   SlateDark,
 } from '../../../styles/colors';
-import {Platform, TouchableOpacity} from 'react-native';
+import {Platform} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -134,24 +135,26 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const renderWordPairs = () => {
     const wordPairs = [];
 
-    for (let i = 0; i < words.length - 6; i++) {
+    for (let i = 0; i < words.length; i += 2) {
       const word1 = words[i];
-      const word2 = words[i + 6];
+      const word2 = words[i + 1];
+      const index1 = i + 1;
+      const index2 = i + 2;
 
-      const pair = (
+      wordPairs.push(
         <WordPairLine key={i}>
           <WordPairColumn>
-            <WordTextIndex>{i + 1}.</WordTextIndex>
+            <WordTextIndex>{index1}.</WordTextIndex>
             <WordText>{word1}</WordText>
           </WordPairColumn>
-          <WordPairColumn>
-            <WordTextIndex>{i + 7}.</WordTextIndex>
-            <WordText>{word2}</WordText>
-          </WordPairColumn>
-        </WordPairLine>
+          {word2 && (
+            <WordPairColumn>
+              <WordTextIndex>{index2}.</WordTextIndex>
+              <WordText>{word2}</WordText>
+            </WordPairColumn>
+          )}
+        </WordPairLine>,
       );
-
-      wordPairs.push(pair);
     }
 
     return wordPairs;
@@ -199,6 +202,8 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const headerLeft = useMemo(() => {
     return () => (
       <TouchableOpacity
+        touchableLibrary={'react-native-gesture-handler'}
+        accessibilityLabel="cancel-button"
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}
         onPress={onPressHeaderCancelRef.current}>

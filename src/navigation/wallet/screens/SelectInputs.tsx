@@ -7,11 +7,11 @@ import React, {
 } from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
+import {FlashList} from '@shopify/flash-list';
 import styled from 'styled-components/native';
 import {
   Recipient,
   TransactionOptionsContext,
-  TxDetailsSendingTo,
   Utxo,
   Wallet,
 } from '../../../store/wallet/wallet.models';
@@ -39,7 +39,8 @@ import InputSelectionRow from '../../../components/list/InputsRow';
 import {GetPrecision} from '../../../store/wallet/utils/currency';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Button from '../../../components/button/Button';
-import {FlatList, LayoutAnimation, TouchableOpacity} from 'react-native';
+import {LayoutAnimation} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -57,12 +58,14 @@ import {
 import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
 import _ from 'lodash';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {toFiat} from '../../../store/wallet/utils/wallet';
+import {
+  buildUIFormattedWallet,
+  toFiat,
+} from '../../../store/wallet/utils/wallet';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import Question from '../../../../assets/img/settings/feedback/question.svg';
 import {ScrollView} from 'react-native-gesture-handler';
-import {buildUIFormattedWallet} from './KeyOverview';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
 
@@ -79,11 +82,6 @@ const ItemRowContainer = styled.View`
   flex-direction: row;
   justify-content: space-between;
   height: 55px;
-`;
-
-const RecipientContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
 `;
 
 const SelectInputsContainer = styled.SafeAreaView`
@@ -107,7 +105,7 @@ const CtaContainer = styled(_CtaContainer)`
   padding: 0px 16px 10px 16px;
 `;
 
-const DropdownRow = styled.TouchableOpacity`
+const DropdownRow = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: row;
   justify-content: space-between;
@@ -120,7 +118,7 @@ const DropdownTitle = styled.View`
   justify-content: flex-start;
 `;
 
-export const InputTouchableContainer = styled.TouchableOpacity`
+export const InputTouchableContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -194,6 +192,7 @@ const SelectInputs = () => {
               ),
             ),
             false,
+            false,
             network,
           ),
           defaultAltCurrency.isoCode,
@@ -236,6 +235,7 @@ const SelectInputs = () => {
               tokenAddress,
             ),
           ),
+          false,
           false,
           network,
         ),
@@ -300,7 +300,6 @@ const SelectInputs = () => {
         <InputSelectionRow
           item={item}
           emit={inputToggled}
-          key={index}
           unitCode={precision?.unitCode}
           index={index}
         />
@@ -364,12 +363,6 @@ const SelectInputs = () => {
         showBottomNotificationModal({
           ...errorMessageConfig,
           enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
         }),
       );
     }
@@ -478,8 +471,9 @@ const SelectInputs = () => {
         ) : null}
       </SelectInputsDetailsContainer>
       {inputs && inputs.length ? (
-        <FlatList
+        <FlashList
           contentContainerStyle={{paddingBottom: 20}}
+          estimatedItemSize={94}
           data={inputs}
           keyExtractor={(_item, index) => index.toString()}
           renderItem={({item, index}: {item: Utxo; index: number}) =>

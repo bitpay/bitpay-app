@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {FlatList, RefreshControl, View} from 'react-native';
+import {FlashList} from '@shopify/flash-list';
+import {RefreshControl, View} from 'react-native';
 import styled from 'styled-components/native';
 import WalletRow from '../../../components/list/WalletRow';
 import {BaseText, H2, H5, HeaderTitle} from '../../../components/styled/Text';
@@ -37,11 +38,11 @@ import {
   KeyDropdownOptionsContainer,
   KeyToggle,
 } from '../../wallet/screens/KeyOverview';
-import KeyDropdownOption from '../../wallet/components/KeyDropdownOption';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
+import DropdownOption from '../../wallet/components/DropdownOption';
 
 const OverviewContainer = styled.SafeAreaView`
   flex: 1;
@@ -181,7 +182,7 @@ const CoinbaseDashboard = () => {
   );
 
   const showError = useCallback(
-    (error: CoinbaseErrorsProps) => {
+    (error: CoinbaseErrorsProps | string) => {
       const errMsg = coinbaseParseErrorToString(error);
       if (errMsg === 'Network Error') {
         return;
@@ -267,29 +268,31 @@ const CoinbaseDashboard = () => {
         )}
       </BalanceContainer>
       <Hr />
-      <FlatList
-        contentContainerStyle={{
-          paddingBottom: 50,
-          marginTop: 5,
-        }}
-        refreshControl={
-          <RefreshControl
-            tintColor={theme.dark ? White : SlateDark}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }
-        ListHeaderComponent={() => {
-          return (
-            <WalletListHeader>
-              <H5>{t('My Wallets')}</H5>
-            </WalletListHeader>
-          );
-        }}
-        data={accounts}
-        renderItem={renderItem}
-        ListFooterComponent={listFooterComponent}
-      />
+      {accounts && accounts.length > 0 ? (
+        <FlashList
+          contentContainerStyle={{
+            paddingBottom: 50,
+          }}
+          refreshControl={
+            <RefreshControl
+              tintColor={theme.dark ? White : SlateDark}
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+            />
+          }
+          ListHeaderComponent={() => {
+            return (
+              <WalletListHeader>
+                <H5>{t('My Wallets')}</H5>
+              </WalletListHeader>
+            );
+          }}
+          data={accounts}
+          renderItem={renderItem}
+          estimatedItemSize={70}
+          ListFooterComponent={listFooterComponent}
+        />
+      ) : null}
       <SheetModal
         isVisible={showKeyDropdown}
         placement={'top'}
@@ -300,10 +303,10 @@ const CoinbaseDashboard = () => {
             {Object.values(keys)
               .filter(_key => _key.backupComplete)
               .map(_key => (
-                <KeyDropdownOption
+                <DropdownOption
                   key={_key.id}
-                  keyId={_key.id}
-                  keyName={_key.keyName}
+                  optionId={_key.id}
+                  optionName={_key.keyName}
                   wallets={_key.wallets}
                   totalBalance={_key.totalBalance}
                   onPress={keyId => {

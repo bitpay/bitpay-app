@@ -15,6 +15,7 @@ import {ScreenGutter} from '../../../components/styled/Containers';
 import {
   updateKeyName,
   updateWalletName,
+  updateAccountName,
 } from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 
@@ -50,7 +51,7 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const {key, wallet, context} = route.params;
+  const {key, wallet, accountItem, context} = route.params;
   const {walletName, walletId} = wallet || {};
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -68,13 +69,34 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
     formState: {errors},
   } = useForm<{name: string}>({resolver: yupResolver(schema)});
 
-  const placeholder = context === 'key' ? key.keyName : walletName;
+  const setPlaceholderName = (context: string) => {
+    switch (context) {
+      case 'key':
+        return key.keyName;
+      case 'wallet':
+        return walletName;
+      case 'account':
+        return accountItem?.accountName;
+      default:
+        return '';
+    }
+  };
+
+  const placeholder = setPlaceholderName(context);
 
   const updateName = ({name}: {name: string}) => {
     if (context === 'key') {
       dispatch(updateKeyName({keyId: key.id, name}));
-    } else {
+    } else if (context === 'wallet') {
       walletId && dispatch(updateWalletName({keyId: key.id, walletId, name}));
+    } else if (context === 'account' && accountItem?.receiveAddress) {
+      dispatch(
+        updateAccountName({
+          keyId: key.id,
+          name,
+          accountAddress: accountItem.receiveAddress,
+        }),
+      );
     }
     navigation.goBack();
   };
@@ -87,7 +109,13 @@ const UpdateKeyOrWalletName: React.FC<UpdateKeyOrWalletNameScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                placeholder={context === 'key' ? t('My Key') : t('My Wallet')}
+                placeholder={
+                  context === 'key'
+                    ? t('My Key')
+                    : context === 'wallet'
+                    ? t('My Wallet')
+                    : t('My Account')
+                }
                 label={context.toUpperCase() + t(' NAME')}
                 onBlur={onBlur}
                 onChangeText={onChange}

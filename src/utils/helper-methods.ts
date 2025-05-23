@@ -1,15 +1,44 @@
-import {Key, Wallet} from '../store/wallet/wallet.models';
+import {Key, KeyMethods, Token, Wallet} from '../store/wallet/wallet.models';
 import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
 import {ReactElement} from 'react';
-import {IsERCToken} from '../store/wallet/utils/currency';
+import {IsERCToken, IsEVMChain} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
 import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
+import {
+  getBaseAccountCreationCoinsAndTokens,
+  BitpaySupportedCoins,
+  SUPPORTED_EVM_COINS,
+} from '../constants/currencies';
+import {LogActions} from '../store/log';
+import {createMultipleWallets} from '../store/wallet/effects';
+import {toFiat} from '../store/wallet/utils/wallet';
+import {FormatAmount} from '../store/wallet/effects/amount/amount';
+import {getERC20TokenPrice} from '../store/moralis/moralis.effects';
+import {ethers} from 'ethers';
+import EtherscanAPI from '../api/etherscan';
+import {
+  EIP155_CHAINS,
+  WALLET_CONNECT_SUPPORTED_CHAINS,
+} from '../constants/WalletConnectV2';
+import {BitpaySupportedTokenOptsByAddress} from '../constants/tokens';
+import {Effect} from '../store';
+import {WalletKitTypes} from '@reown/walletkit';
+import {
+  abiERC20,
+  abiERC721,
+  abiERC1155,
+  abiFiatTokenV2,
+  InvoiceAbi,
+} from '../navigation/wallet-connect/constants/abis';
+import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
+import {Keys} from '../store/wallet/wallet.reducer';
+import {PermissionsAndroid} from 'react-native';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -105,10 +134,7 @@ export const getAccount = (path: string): number | undefined => {
   return +match[1];
 };
 
-export const isValidDerivationPathCoin = (
-  path: string,
-  coin: string,
-): boolean => {
+export const isValidDerivationPath = (path: string, chain: string): boolean => {
   let isValid: boolean = false;
   const coinCode = parsePath(path).coinCode;
 
@@ -117,7 +143,7 @@ export const isValidDerivationPathCoin = (
     return true;
   }
 
-  switch (coin) {
+  switch (chain) {
     case 'btc':
       isValid = ["0'", "1'"].indexOf(coinCode) > -1;
       break;
@@ -156,7 +182,7 @@ export const getSignificantDigits = (currencyAbbreviation?: string) => {
     : undefined;
 };
 
-const getFormatter = (
+const getFormatterOptions = (
   amount: number,
   currency: string = 'USD',
   opts: {
@@ -164,16 +190,11 @@ const getFormatter = (
     currencyAbbreviation?: string;
     currencyDisplay?: 'symbol' | 'code';
   } = {},
-) =>
-  new Intl.NumberFormat('en-US', {
-    minimumSignificantDigits:
-      amount === 0
-        ? undefined
-        : getSignificantDigits(opts.currencyAbbreviation),
-    maximumSignificantDigits:
-      amount === 0
-        ? undefined
-        : getSignificantDigits(opts.currencyAbbreviation),
+): Intl.NumberFormatOptions => {
+  const significantDigits = getSignificantDigits(opts.currencyAbbreviation);
+  const formatterOptions: Intl.NumberFormatOptions = {
+    minimumSignificantDigits: amount === 0 ? undefined : significantDigits,
+    maximumSignificantDigits: amount === 0 ? undefined : significantDigits,
     style: 'currency',
     currency: currency.toLowerCase(),
     ...(opts.customPrecision === 'minimal' &&
@@ -182,7 +203,9 @@ const getFormatter = (
         minimumFractionDigits: 0,
       }),
     currencyDisplay: opts.currencyDisplay,
-  });
+  };
+  return formatterOptions;
+};
 
 export const formatFiatAmount = (
   amount: number,
@@ -193,46 +216,51 @@ export const formatFiatAmount = (
     currencyDisplay?: 'symbol' | 'code';
   } = {},
 ) => {
+  const formatterOptions = getFormatterOptions(amount, currency, opts);
   const currencyDisplay = opts.currencyDisplay || 'symbol';
-  const formatter = getFormatter(amount, currency, {...opts, currencyDisplay});
 
   if (currencyDisplay === 'symbol') {
-    return formatter.format(amount);
+    return amount.toLocaleString('en-US', formatterOptions);
   }
 
-  let code;
-  let numberString = formatter
-    .formatToParts(amount)
-    .map(({type, value}) => {
-      switch (type) {
-        case 'currency':
-          code = value;
-          return '';
-        default:
-          return value;
-      }
+  let code: string | undefined;
+  let numberString = amount
+    .toLocaleString('en-US', {
+      ...formatterOptions,
+      currencyDisplay: 'code',
     })
-    .reduce((string, part) => string + part);
-  return `${numberString} ${code}`;
+    .split('')
+    .map(char => {
+      if (char.match(/[A-Za-z]/)) {
+        code = (code || '') + char;
+        return '';
+      }
+      return char;
+    })
+    .join('');
+
+  return `${numberString.trim()} ${code || currency}`;
 };
+
+type FormatFiatOptions = {
+  fiatAmount: number;
+  defaultAltCurrencyIsoCode: string;
+  currencyDisplay?: 'symbol' | 'code';
+};
+
+export const formatFiat = ({
+  fiatAmount,
+  defaultAltCurrencyIsoCode,
+  currencyDisplay,
+}: FormatFiatOptions) =>
+  formatFiatAmount(fiatAmount, defaultAltCurrencyIsoCode, {currencyDisplay});
 
 export const findContact = (
   contactList: ContactRowProps[],
   address: string,
-  coin: string,
-  network: string,
-  chain: string,
-  tokenAddress: string | undefined,
 ) => {
   const foundContacts = contactList.filter((contact: ContactRowProps) => {
-    return (
-      contact.address === address &&
-      contact.coin === coin &&
-      contact.network === network &&
-      contact.chain === chain &&
-      (!contact.tokenAddress ||
-        contact.tokenAddress.toLowerCase() === tokenAddress)
-    );
+    return contact.address === address;
   });
   return !!foundContacts.length;
 };
@@ -277,7 +305,7 @@ export const formatCryptoAddress = (address: string) => {
     return '--';
   }
   return (
-    address.substring(0, 4) + '....' + address.substring(address.length - 4)
+    address.substring(0, 6) + '....' + address.substring(address.length - 6)
   );
 };
 
@@ -300,33 +328,41 @@ export const formatFiatAmountObj = (
   } = {},
 ): {amount: string; code?: string} => {
   const currencyDisplay = opts.currencyDisplay || 'symbol';
-  const formatter = getFormatter(amount, currency, {...opts, currencyDisplay});
+  const formatterOptions = getFormatterOptions(amount, currency, {
+    ...opts,
+    currencyDisplay,
+  });
 
   if (currencyDisplay === 'symbol') {
-    return {amount: formatter.format(amount)};
+    return {amount: amount.toLocaleString('en-US', formatterOptions)};
   }
 
-  let code;
-  let numberString = formatter
-    .formatToParts(amount)
-    .map(({type, value}) => {
-      switch (type) {
-        case 'currency':
-          code = value;
-          return '';
-        default:
-          return value;
-      }
+  let code: string | undefined;
+  let numberString = amount
+    .toLocaleString('en-US', {
+      ...formatterOptions,
+      currencyDisplay: 'code',
     })
-    .reduce((string, part) => string + part);
-  return {amount: numberString, code};
+    .split('')
+    .map(char => {
+      if (char.match(/[A-Za-z]/)) {
+        code = (code || '') + char;
+        return '';
+      }
+      return char;
+    })
+    .join('');
+
+  return {amount: numberString.trim(), code: code || currency};
 };
 
 export const convertToFiat = (
   fiat: number,
   hideWallet: boolean | undefined,
+  hideWalletByAccount: boolean | undefined,
   network: Network,
-) => (network === Network.mainnet && !hideWallet ? fiat : 0);
+) =>
+  network === Network.mainnet && !hideWallet && !hideWalletByAccount ? fiat : 0;
 
 export const getErrorString = (err: any): string => {
   return err instanceof Error ? err.message : JSON.stringify(err);
@@ -336,7 +372,8 @@ export const getBadgeImg = (
   currencyAbbreviation: string,
   chain: string,
 ): string | ((props?: any) => ReactElement) => {
-  return currencyAbbreviation?.toLowerCase() !== chain.toLowerCase()
+  return IsERCToken(currencyAbbreviation, chain) ||
+    isL2NoSideChainNetwork(chain)
     ? CurrencyListIcons[chain]
     : '';
 };
@@ -347,6 +384,9 @@ export const getRateByCurrencyName = (
   chain: string,
 ): Rate[] => {
   const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+  if (currencyAbbreviation === 'pol' && rates.matic && rates.matic.length > 0) {
+    return rates.matic;
+  }
   return rates[currencyName] || rates[currencyAbbreviation];
 };
 
@@ -366,7 +406,7 @@ export const formatCurrencyAbbreviation = (currencyAbbreviation: string) => {
 };
 
 export const getCurrencyAbbreviation = (name: string, chain: string) => {
-  return IsERCToken(name.toLowerCase(), chain.toLowerCase())
+  return IsERCToken(name.toLowerCase(), chain.toLowerCase()) // if name is contract address this returns true
     ? addTokenChainSuffix(name, chain)
     : name.toLowerCase();
 };
@@ -385,6 +425,12 @@ export const getProtocolName = (
   return PROTOCOL_NAME[_chain]?.[_network]
     ? PROTOCOL_NAME[_chain][_network]
     : PROTOCOL_NAME.default[_network];
+};
+
+export const getProtocolsName = (): string | undefined => {
+  return SUPPORTED_EVM_COINS.map(
+    chain => PROTOCOL_NAME[chain][Network.mainnet],
+  ).join(', ');
 };
 
 export const getEVMFeeCurrency = (chain: string): string => {
@@ -422,8 +468,7 @@ export const getCWCChain = (chain: string): string => {
 };
 
 export const getChainUsingSuffix = (symbol: string) => {
-  const suffix = symbol.charAt(symbol.length - 1);
-  switch (suffix) {
+  switch (symbol) {
     case 'e':
       return 'eth';
     case 'm':
@@ -546,18 +591,600 @@ export const popToScreen = (
 export const fixWalletAddresses = async ({
   appDispatch,
   wallets,
+  skipDispatch = true, // Avoid dispatching when fixing addresses, as the store will be updated directly after fixWalletAddresses
 }: {
   appDispatch: AppDispatch;
   wallets: Wallet[];
+  skipDispatch?: boolean;
 }) => {
   await Promise.all(
     wallets.map(async wallet => {
-      if (!wallet.receiveAddress) {
-        const walletAddress = (await appDispatch<any>(
-          createWalletAddress({wallet, newAddress: false}),
-        )) as string;
-        wallet.receiveAddress = walletAddress;
+      try {
+        if (!wallet.receiveAddress && wallet?.credentials?.isComplete()) {
+          const walletAddress = (await appDispatch<any>(
+            createWalletAddress({wallet, newAddress: false, skipDispatch}),
+          )) as string;
+          wallet.receiveAddress = walletAddress;
+        }
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        appDispatch(
+          LogActions.error(
+            `Error creating address for wallet ${wallet?.id}-${wallet?.chain}-${wallet?.walletName}: ${errMsg}`,
+          ),
+        );
       }
     }),
   );
+};
+
+export const createWalletsForAccounts = async (
+  dispatch: any,
+  accountsArray: number[],
+  key: KeyMethods,
+  password?: string,
+) => {
+  return (
+    await Promise.all(
+      accountsArray.flatMap(async account => {
+        try {
+          const newWallets = (await dispatch(
+            createMultipleWallets({
+              key: key as KeyMethods,
+              currencies: getBaseAccountCreationCoinsAndTokens(),
+              options: {
+                password,
+                account,
+                customAccount: true,
+              },
+            }),
+          )) as Wallet[];
+          return newWallets;
+        } catch (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(
+            LogActions.debug(
+              `Error creating wallet - continue anyway: ${errMsg}`,
+            ),
+          );
+        }
+      }),
+    )
+  )
+    .flat()
+    .filter(Boolean) as Wallet[];
+};
+
+export const getEvmGasWallets = (wallets: Wallet[]) => {
+  return wallets.filter(
+    wallet =>
+      IsEVMChain(wallet.credentials.chain) &&
+      !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
+  );
+};
+
+export const splitInputsToChunks = (inputsArray: any[]) => {
+  const chunksArray = inputsArray.map(input => {
+    const hexString = input.startsWith('0x') ? input.slice(2) : input;
+    return hexString.match(/.{1,64}/g);
+  });
+  return chunksArray;
+};
+
+export const extractAddresses = (hex: string) => {
+  const senderContractAddress = '0x' + hex.slice(0, 40);
+  const recipientAddress = '0x' + hex.slice(46, 86);
+  return {senderContractAddress, recipientAddress};
+};
+
+export const removeTrailingZeros = (hexString: string) => {
+  const trimmedHex = hexString.replace(/0+$/, '');
+  return trimmedHex;
+};
+
+interface RequestUiValues {
+  transactionDataName: string;
+  senderAddress: string;
+  swapFromChain: string;
+  senderContractAddress?: string;
+  swapAmount?: string;
+  swapFormatAmount?: string;
+  swapFiatAmount?: string;
+  swapFromCurrencyAbbreviation?: string;
+  receiveAmount?: string;
+  recipientAddress?: string;
+  senderTokenPrice?: number;
+}
+
+export const processOtherMethodsRequest =
+  (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
+  async (dispatch, getState) => {
+    dispatch(LogActions.debug('processing other method transaction'));
+    const {
+      WALLET: {keys},
+    } = getState();
+    const {params} = event;
+    const {chainId, request} = params;
+    const {method} = params.request;
+    const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+    let senderAddress = '';
+    switch (method) {
+      case 'eth_signTypedData':
+      case 'eth_signTypedData_v1':
+      case 'eth_signTypedData_v3':
+      case 'eth_signTypedData_v4':
+      case 'eth_sign':
+        senderAddress = request.params[0];
+        break;
+      case 'personal_sign':
+        senderAddress = request.params[1];
+        break;
+      case 'eth_signTransaction':
+        senderAddress = request.params[0].from;
+        break;
+    }
+    try {
+      const wallet = Object.values(keys).flatMap(key =>
+        key.wallets.filter(
+          wallet =>
+            wallet.receiveAddress?.toLowerCase() ===
+              senderAddress.toLowerCase() && wallet.chain === swapFromChain,
+        ),
+      )[0];
+      const {currencyAbbreviation} = wallet; // this is the "gas" wallet
+      return {
+        transactionDataName: 'SIGN REQUEST',
+        swapFromChain,
+        senderAddress,
+        swapFromCurrencyAbbreviation: currencyAbbreviation,
+      };
+    } catch (error) {
+      dispatch(
+        LogActions.error(`Error processing ${method} request: ${error}`),
+      );
+      throw error;
+    }
+  };
+
+const parseStandardTokenTransactionData = (data?: string) => {
+  if (!data) {
+    return {};
+  }
+  const ERC20Interface = new ethers.utils.Interface(abiERC20);
+  const ERC721Interface = new ethers.utils.Interface(abiERC721);
+  const ERC1155Interface = new ethers.utils.Interface(abiERC1155);
+  const USDCInterface = new ethers.utils.Interface(abiFiatTokenV2);
+  const InvoiceInterface = new ethers.utils.Interface(InvoiceAbi);
+
+  try {
+    return {
+      transactionData: ERC20Interface.parseTransaction({data}),
+      abi: abiERC20,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: ERC721Interface.parseTransaction({data}),
+      abi: abiERC721,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: ERC1155Interface.parseTransaction({data}),
+      abi: abiERC1155,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: USDCInterface.parseTransaction({data}),
+      abi: abiFiatTokenV2,
+    };
+  } catch {}
+
+  try {
+    return {
+      transactionData: InvoiceInterface.parseTransaction({data}),
+      abi: InvoiceAbi,
+    };
+  } catch {}
+
+  return {};
+};
+
+export const processSwapRequest =
+  (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
+  async (dispatch, getState) => {
+    const {
+      WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress, keys},
+      APP: {defaultAltCurrency},
+      RATE: {rates: allRates},
+    } = getState();
+
+    const tokenOptions = {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...tokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
+    };
+
+    const {params} = event;
+    const {chainId} = params;
+    const {method} = params.request;
+
+    const {to, data, from} = params.request.params[0];
+    const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+
+    if (data === '0x') {
+      return handleDefaultTransaction(
+        keys,
+        swapFromChain,
+        from,
+        method,
+        dispatch,
+      );
+    }
+
+    try {
+      let {transactionData, abi} = parseStandardTokenTransactionData(data);
+      if (!transactionData && !abi) {
+        dispatch(
+          LogActions.debug('Continue anyway building a default transaction'),
+        );
+        return handleDefaultTransaction(
+          keys,
+          swapFromChain,
+          from,
+          method,
+          dispatch,
+        );
+        // dispatch(
+        //   LogActions.debug(
+        //     'No standard token data - fetching contract ABI from Etherscan',
+        //   ),
+        // );
+        // const _chainId = EIP155_CHAINS[chainId]?.chainId?.toString();
+        // abi = await fetchContractAbi(dispatch, _chainId, to);
+        // dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
+        // const contractInterface = new ethers.utils.Interface(abi!);
+        // transactionData = contractInterface.parseTransaction({data});
+      }
+      dispatch(
+        LogActions.debug(
+          'Decoded transaction data: ' + JSON.stringify(transactionData),
+        ),
+      );
+      const transactionDataName = transactionData!.name;
+      if (transactionDataName === 'execute') {
+        const transaction = await handleExecuteTransaction(
+          dispatch,
+          keys,
+          transactionData!,
+          tokenOptions,
+          swapFromChain,
+          defaultAltCurrency,
+          allRates,
+          from,
+        );
+        return transaction;
+      } else if (transactionDataName === 'pay') {
+        const transaction = await handlePayTransaction(
+          dispatch,
+          keys,
+          transactionData!,
+          tokenOptions,
+          swapFromChain,
+          defaultAltCurrency,
+          allRates,
+          from,
+        );
+        return transaction;
+      }
+      return handleDefaultTransaction(
+        keys,
+        swapFromChain,
+        from,
+        transactionDataName,
+        dispatch,
+      );
+    } catch (error) {
+      dispatch(LogActions.error(`Error processing swap request: ${error}`));
+      dispatch(
+        LogActions.debug('Continue anyway building a default transaction'),
+      );
+      return handleDefaultTransaction(
+        keys,
+        swapFromChain,
+        from,
+        method,
+        dispatch,
+      );
+    }
+  };
+
+const fetchContractAbi = async (
+  dispatch: any,
+  chainId: string,
+  address: string,
+) => {
+  const getAbiFromAddress = async (address: string): Promise<any> => {
+    const abi = await dispatch(EtherscanAPI.getContractAbi(chainId, address));
+    if (!abi || abi === 'Contract source code not verified') {
+      throw new Error('No ABI found');
+    }
+    try {
+      return JSON.parse(abi);
+    } catch {
+      throw new Error('Failed to parse ABI');
+    }
+  };
+
+  let parsedAbi = await getAbiFromAddress(address);
+
+  const isProxyContract = parsedAbi.some(
+    (item: any) => item.name === 'implementation',
+  );
+
+  if (isProxyContract) {
+    dispatch(LogActions.debug('Detected EIP-1967 proxy contract'));
+
+    // EIP-1967 implementation slot
+    const implementationSlot =
+      '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+
+    // Retrieve the address at the implementation slot
+    const paddedImplementationAddress = await EtherscanAPI.getStorageAt(
+      chainId,
+      address,
+      implementationSlot,
+    );
+    const implementationAddress = `0x${paddedImplementationAddress.slice(-40)}`;
+
+    // Fetch and parse the ABI from the implementation contract
+    parsedAbi = await getAbiFromAddress(implementationAddress);
+  }
+
+  return parsedAbi;
+};
+
+const handleDefaultTransaction = async (
+  keys: Keys,
+  chain: string,
+  senderAddress: string,
+  transactionDataName: string,
+  dispatch: any,
+) => {
+  dispatch(LogActions.debug(`processing ${transactionDataName} transaction`));
+  const wallet = Object.values(keys).flatMap(key =>
+    key.wallets.filter(
+      wallet =>
+        wallet.receiveAddress?.toLowerCase() === senderAddress.toLowerCase() &&
+        wallet.chain === chain,
+    ),
+  )[0];
+  const {currencyAbbreviation} = wallet; // this is the "gas" wallet
+  return {
+    transactionDataName: camelCaseToUpperWords(transactionDataName),
+    swapFromChain: chain,
+    senderAddress,
+    swapFromCurrencyAbbreviation: currencyAbbreviation,
+  };
+};
+
+const handlePayTransaction = async (
+  dispatch: any,
+  keys: Keys,
+  transactionData: ethers.utils.TransactionDescription,
+  tokenOptions: {
+    [x: string]: Token;
+  },
+  chain: string,
+  defaultAltCurrency: AltCurrenciesRowProps,
+  allRates: Rates,
+  senderAddress: string,
+) => {
+  dispatch(LogActions.debug('processing pay transaction'));
+
+  const [
+    valueBN,
+    gasPriceBN,
+    expirationBN,
+    payload,
+    hash,
+    v,
+    r,
+    s,
+    tokenContract,
+  ] = transactionData.args;
+
+  const swapAmount = valueBN.toString();
+  const senderContractAddress = tokenContract;
+  const recipientAddress = senderAddress;
+
+  const senderTokenPrice = (
+    await dispatch(getERC20TokenPrice({address: senderContractAddress, chain}))
+  ).usdPrice;
+
+  const formattedTokenAddress = addTokenChainSuffix(
+    senderContractAddress.toLowerCase(),
+    chain,
+  );
+
+  const swapFromCurrencyAbbreviation =
+    tokenOptions[formattedTokenAddress]?.symbol.toLowerCase() ||
+    BitpaySupportedCoins[chain].coin.toLowerCase();
+
+  const swapFormatAmount = await dispatch(
+    FormatAmount(
+      swapFromCurrencyAbbreviation,
+      chain,
+      senderContractAddress,
+      Number(swapAmount),
+    ),
+  );
+
+  const toFiatAmount = await dispatch(
+    toFiat(
+      Number(swapAmount),
+      defaultAltCurrency.isoCode,
+      swapFromCurrencyAbbreviation,
+      chain,
+      allRates,
+      senderContractAddress,
+      senderTokenPrice,
+    ),
+  );
+
+  const swapFiatAmount = formatFiatAmount(
+    toFiatAmount,
+    defaultAltCurrency.isoCode,
+  );
+
+  return {
+    transactionDataName: camelCaseToUpperWords(transactionData.name),
+    swapAmount,
+    swapFormatAmount,
+    swapFiatAmount,
+    swapFromChain: chain,
+    swapFromCurrencyAbbreviation,
+    senderAddress,
+    senderContractAddress,
+    recipientAddress,
+    senderTokenPrice,
+  };
+};
+
+const handleExecuteTransaction = async (
+  dispatch: any,
+  keys: Keys,
+  transactionData: ethers.utils.TransactionDescription,
+  tokenOptions: {
+    [x: string]: Token;
+  },
+  chain: string,
+  defaultAltCurrency: AltCurrenciesRowProps,
+  allRates: Rates,
+  senderAddress: string,
+) => {
+  dispatch(LogActions.debug('processing execute transaction'));
+  const inputArgs = transactionData.args[1];
+  const inputChunks = splitInputsToChunks(inputArgs);
+  const relevantChunk = inputChunks.find(chunk => chunk.length === 8);
+
+  const swapAmount = ethers.BigNumber.from('0x' + relevantChunk[1]).toString();
+  const receiveAmount = ethers.BigNumber.from(
+    '0x' + relevantChunk[2],
+  ).toString();
+  const combinedHex = relevantChunk[6] + relevantChunk[7];
+  const {senderContractAddress, recipientAddress} =
+    extractAddresses(combinedHex);
+
+  const senderTokenPrice = (
+    await dispatch(getERC20TokenPrice({address: senderContractAddress, chain}))
+  ).usdPrice;
+  const formattedTokenAddress = addTokenChainSuffix(
+    senderContractAddress.toLowerCase(),
+    chain,
+  );
+  const swapFromCurrencyAbbreviation =
+    tokenOptions[formattedTokenAddress]?.symbol.toLowerCase() ||
+    BitpaySupportedCoins[chain].coin.toLowerCase();
+
+  const swapFormatAmount = await dispatch(
+    FormatAmount(
+      swapFromCurrencyAbbreviation,
+      chain,
+      senderContractAddress,
+      Number(swapAmount),
+    ),
+  );
+
+  const toFiatAmount = await dispatch(
+    toFiat(
+      Number(swapAmount),
+      defaultAltCurrency.isoCode,
+      swapFromCurrencyAbbreviation,
+      chain,
+      allRates,
+      senderContractAddress,
+      senderTokenPrice,
+    ),
+  );
+
+  const swapFiatAmount = formatFiatAmount(
+    toFiatAmount,
+    defaultAltCurrency.isoCode,
+  );
+
+  return {
+    transactionDataName: camelCaseToUpperWords(transactionData.name),
+    swapAmount,
+    swapFormatAmount,
+    swapFiatAmount,
+    swapFromChain: chain,
+    swapFromCurrencyAbbreviation,
+    receiveAmount,
+    senderAddress,
+    senderContractAddress,
+    recipientAddress,
+    senderTokenPrice,
+  };
+};
+
+export const camelCaseToUpperWords = (input: string) => {
+  return input
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .toUpperCase();
+};
+
+export const getFullLinkedWallet = (key: Key, wallet: Wallet) => {
+  const {
+    credentials: {token, walletId},
+  } = wallet;
+  if (token) {
+    const linkedWallet = key.wallets.find(({tokens}) =>
+      tokens?.includes(walletId),
+    );
+    return linkedWallet;
+  }
+
+  return;
+};
+
+export const isAndroidStoragePermissionGranted = (
+  dispatch: AppDispatch,
+): Promise<boolean> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ]);
+      if (
+        granted['android.permission.READ_EXTERNAL_STORAGE'] ===
+          PermissionsAndroid.RESULTS.GRANTED &&
+        granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
+          PermissionsAndroid.RESULTS.GRANTED
+      ) {
+        dispatch(
+          LogActions.info(
+            '[isAndroidStoragePermissionGranted]: Storage permission granted',
+          ),
+        );
+        resolve(true);
+      } else {
+        dispatch(
+          LogActions.warn(
+            '[isAndroidStoragePermissionGranted]: Storage permission denied',
+          ),
+        );
+        throw new Error('Storage permission denied');
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
 };

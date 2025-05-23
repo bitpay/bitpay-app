@@ -27,12 +27,12 @@ import {WalletGroupParamList} from '../WalletGroup';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
-import {sleep} from '../../../utils/helper-methods';
+import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {ScrollView} from 'react-native';
+import {ScrollView, Keyboard} from 'react-native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 
@@ -88,13 +88,27 @@ const FileOrText = () => {
     opts: Partial<KeyOptions>,
   ) => {
     try {
-      await dispatch(startOnGoingProcessModal('IMPORTING'));
+      dispatch(startOnGoingProcessModal('IMPORTING'));
+      await sleep(1000);
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
-
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(1000);
       try {
+        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
         await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: key.wallets,
+        });
+        await dispatch(
+          startUpdateAllWalletStatusForKey({
+            key,
+            force: true,
+            createTokenWalletWithFunds: true,
+          }),
+        );
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
       } catch (error) {
@@ -118,9 +132,8 @@ const FileOrText = () => {
     } catch (e: any) {
       logger.error(e.message);
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
+      await sleep(1000);
       showErrorModal(e.message);
-      return;
     }
   };
 
@@ -144,6 +157,8 @@ const FileOrText = () => {
 
   const onSubmit = handleSubmit(formData => {
     const {text, password} = formData;
+
+    Keyboard.dismiss();
 
     let opts: Partial<KeyOptions> = {};
     if (route.params?.keyId) {
@@ -180,6 +195,10 @@ const FileOrText = () => {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 value={value}
+                autoCapitalize={'none'}
+                autoCorrect={false}
+                spellCheck={false}
+                autoComplete="off"
               />
             )}
             name="text"

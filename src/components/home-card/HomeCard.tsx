@@ -16,6 +16,7 @@ import {BaseText, H3} from '../styled/Text';
 import * as Svg from 'react-native-svg';
 import {shouldScale} from '../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const Arrow = ({isDark}: {isDark: boolean}) => {
   return (
@@ -87,7 +88,7 @@ const CardPillText = styled(BaseText)`
   color: ${SlateDark};
 `;
 
-const FooterArrow = styled.TouchableOpacity`
+const FooterArrow = styled(TouchableOpacity)`
   width: 35px;
   height: 35px;
   align-self: flex-end;
@@ -97,7 +98,7 @@ const FooterArrow = styled.TouchableOpacity`
   justify-content: center;
 `;
 
-const CardContainer = styled.TouchableOpacity`
+const CardContainer = styled(TouchableOpacity)`
   left: ${ScreenGutter};
 `;
 

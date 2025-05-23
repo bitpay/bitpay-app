@@ -1,6 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement, useState} from 'react';
-import {FlatList, TouchableOpacity, View} from 'react-native';
+import {FlatList, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
 import {
@@ -10,7 +11,7 @@ import {
   Disabled,
   DisabledDark,
 } from '../../../styles/colors';
-import {ActiveOpacity, SheetContainer} from '../../styled/Containers';
+import {ActiveOpacity, HEIGHT, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
@@ -31,7 +32,7 @@ const ModalContainer = styled(SheetContainer)`
   background: ${({theme}) => (theme.dark ? '#101010' : White)};
 `;
 
-const TransactItemContainer = styled.TouchableOpacity`
+const TransactItemContainer = styled(TouchableOpacity)`
   flex-direction: row;
   padding-bottom: 31px;
   align-items: stretch;
@@ -67,7 +68,7 @@ const ItemDescriptionText = styled(BaseText)`
   line-height: 19px;
 `;
 
-const ScanButtonContainer = styled.TouchableOpacity`
+const ScanButtonContainer = styled(TouchableOpacity)`
   background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
   flex-direction: row;
   align-self: center;
@@ -84,7 +85,7 @@ const ScanButtonText = styled(BaseText)`
   color: ${White};
 `;
 
-const CloseButtonContainer = styled.TouchableOpacity`
+const CloseButtonContainer = styled(TouchableOpacity)`
   align-self: center;
 `;
 
@@ -108,7 +109,10 @@ const TransactModal = () => {
     .flatMap(key => key.wallets)
     .filter(
       wallet =>
-        !wallet.hideWallet && wallet.isComplete() && wallet.balance.sat > 0,
+        !wallet.hideWallet &&
+        !wallet.hideWalletByAccount &&
+        wallet.isComplete() &&
+        wallet.balance.sat > 0,
     );
   const disabledSendingOptions = availableWallets.length === 0;
   const dispatch = useAppDispatch();
@@ -249,11 +253,14 @@ const TransactModal = () => {
           <TransactButtonIcon />
         </TouchableOpacity>
       </TransactButton>
-      <SheetModal isVisible={modalVisible} onBackdropPress={hideModal}>
+      <SheetModal
+        modalLibrary={'bottom-sheet'}
+        isVisible={modalVisible}
+        onBackdropPress={hideModal}>
         <ModalContainer>
           <FlatList
             data={TransactMenuList}
-            scrollEnabled={false}
+            scrollEnabled={HEIGHT < 700}
             renderItem={renderItem}
           />
 

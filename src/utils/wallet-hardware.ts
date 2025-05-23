@@ -100,7 +100,7 @@ export const credentialsFromExtendedPublicKey = (
     name,
     copayerName: 'me',
     coin,
-    chain, // chain === coin for stored wallets. NOT TRUE ANYMORE
+    chain,
     keyId: hwKeyId,
     xPubKey,
     network,

@@ -1,7 +1,7 @@
 import React, {useLayoutEffect, useState} from 'react';
 import {HeaderTitle, H5, Paragraph} from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {RouteProp} from '@react-navigation/core';
+import {CommonActions, RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
 import styled from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -24,6 +24,8 @@ import {
 } from '../../../store/app/app.effects';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 
 const DeleteKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -98,7 +100,17 @@ const DeleteKey = () => {
     await sleep(1000);
     dispatch(updatePortfolioBalance());
     dispatch(AppActions.dismissOnGoingProcessModal());
-    navigation.navigate('Tabs', {screen: 'Home'});
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: RootStacks.TABS,
+            params: {screen: TabsScreens.HOME},
+          },
+        ],
+      }),
+    );
   };
 
   return (

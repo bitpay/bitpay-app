@@ -21,6 +21,14 @@ export const successFetchCatalog = (payload: {
   payload,
 });
 
+export const hidGiftCardCoupon = (payload: {
+  giftCardBrand: string;
+  couponCode: string;
+}): ShopActionType => ({
+  type: ShopActionTypes.HID_GIFT_CARD_COUPON,
+  payload,
+});
+
 export const failedFetchCatalog = (): ShopActionType => ({
   type: ShopActionTypes.FAILED_FETCH_CATALOG,
 });
@@ -135,6 +143,10 @@ export const updatedPhone = (payload: {
 
 export const clearedGiftCards = (): ShopActionType => ({
   type: ShopActionTypes.CLEARED_GIFT_CARDS,
+});
+
+export const clearedShopCatalogFields = (): ShopActionType => ({
+  type: ShopActionTypes.CLEARED_SHOP_CATALOG_FIELDS,
 });
 
 export const isJoinedWaitlist = (

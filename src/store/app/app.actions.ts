@@ -1,5 +1,5 @@
 import {ColorSchemeName, EventSubscription} from 'react-native';
-import {ContentCard} from 'react-native-appboy-sdk';
+import {ContentCard} from '@braze/react-native-sdk';
 import {AltCurrenciesRowProps} from '../../components/list/AltCurrenciesRow';
 import {BiometricModalConfig} from '../../components/modal/biometric/BiometricModal';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
@@ -15,9 +15,11 @@ import {
 } from './app.models';
 import {ModalId, FeedbackType} from './app.reducer';
 import {AppActionType, AppActionTypes} from './app.types';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
+import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
+import {PaymentSentModalConfig} from '../../navigation/wallet/components/PaymentSent';
 
 export const importLedgerModalToggled = (show: boolean): AppActionType => ({
   type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
@@ -42,6 +44,10 @@ export const failedAppInit = (): AppActionType => ({
   payload: true,
 });
 
+export const appTokensDataLoaded = (): AppActionType => ({
+  type: AppActionTypes.APP_TOKENS_DATA_LOADED,
+});
+
 export const appIsReadyForDeeplinking = (): AppActionType => ({
   type: AppActionTypes.APP_READY_FOR_DEEPLINKING,
 });
@@ -53,6 +59,10 @@ export const setAppFirstOpenEventComplete = (): AppActionType => ({
 export const setAppFirstOpenEventDate = (date: number): AppActionType => ({
   type: AppActionTypes.SET_APP_FIRST_OPEN_DATE,
   payload: date,
+});
+
+export const setAppInstalled = (): AppActionType => ({
+  type: AppActionTypes.SET_APP_INSTALLED,
 });
 
 export const setIntroCompleted = (): AppActionType => ({
@@ -72,19 +82,18 @@ export const dismissOnGoingProcessModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL,
 });
 
-export const showInAppMessage = (message: string): AppActionType => ({
-  type: AppActionTypes.SHOW_IN_APP_MESSAGE,
-  payload: message,
+export const showWalletConnectStartModal = (): AppActionType => ({
+  type: AppActionTypes.SHOW_WALLET_CONNECT_START_MODAL,
 });
 
-export const dismissInAppMessage = (): AppActionType => ({
-  type: AppActionTypes.DISMISS_IN_APP_MESSAGE,
+export const dismissWalletConnectStartModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_WALLET_CONNECT_START_MODAL,
 });
 
 export const showInAppNotification = (
   context: InAppNotificationContextType,
   message: string,
-  request: Web3WalletTypes.EventArguments['session_request'],
+  request: WalletKitTypes.EventArguments['session_request'],
 ): AppActionType => ({
   type: AppActionTypes.SHOW_IN_APP_NOTIFICATION,
   payload: {context, message, request},
@@ -111,6 +120,10 @@ export const resetBottomNotificationModalConfig = (): AppActionType => ({
 
 export const dismissChainSelectorModal = (): AppActionType => ({
   type: AppActionTypes.DISMISS_CHAIN_SELECTOR_MODAL,
+});
+
+export const clearChainSelectorModalOptions = (): AppActionType => ({
+  type: AppActionTypes.CLEAR_CHAIN_SELECTOR_MODAL_OPTIONS,
 });
 
 export const showChainSelectorModal = (
@@ -326,11 +339,11 @@ export const setLocalDefaultChainFilterOption = (
   selectedLocalChainFilterOption,
 });
 
-export const setSelectedNetworkForDeposit = (
-  selectedNetworkForDeposit: SupportedChains | undefined,
+export const setLocalAssetsDropdown = (
+  selectedLocalAssetsDropdown: LocalAssetsDropdown | undefined,
 ): AppActionType => ({
-  type: AppActionTypes.SET_SELECTED_NETWORK_FOR_DEPOSIT,
-  selectedNetworkForDeposit,
+  type: AppActionTypes.SET_LOCAL_ASSETS_DROPDOWN,
+  selectedLocalAssetsDropdown,
 });
 
 export const setMigrationComplete = (): AppActionType => ({
@@ -388,4 +401,24 @@ export const setUserFeedback = (feedBack: FeedbackType): AppActionType => ({
 export const setInAppBrowserOpen = (payload: boolean): AppActionType => ({
   type: AppActionTypes.IN_APP_BROWSER_OPEN,
   payload,
+});
+
+export const showArchaxBanner = (payload: boolean): AppActionType => ({
+  type: AppActionTypes.SHOW_ARCHAX_BANNER,
+  payload,
+});
+
+export const dismissPaymentSentModal = (): AppActionType => ({
+  type: AppActionTypes.DISMISS_PAYMENT_SENT_MODAL,
+});
+
+export const clearPaymentSentModalOptions = (): AppActionType => ({
+  type: AppActionTypes.CLEAR_PAYMENT_SENT_MODAL_OPTIONS,
+});
+
+export const showPaymentSentModal = (
+  config: PaymentSentModalConfig,
+): AppActionType => ({
+  type: AppActionTypes.SHOW_PAYMENT_SENT_MODAL,
+  payload: config,
 });

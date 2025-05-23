@@ -1,7 +1,7 @@
 import React, {useLayoutEffect, useState} from 'react';
+import {Keyboard} from 'react-native';
 import styled from 'styled-components/native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import {ScreenOptions} from '../../../styles/tabNavigator';
 import {H5, H7, HeaderTitle} from '../../../components/styled/Text';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -16,7 +16,7 @@ import {
 } from '../../../store/wallet/wallet.models';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import WalletIcons from '../components/WalletIcons';
 import _ from 'lodash';
 import AmountModal from '../../../components/amount/AmountModal';
@@ -31,11 +31,18 @@ import {
 } from '../../../store/app/app.actions';
 import {useAppDispatch} from '../../../utils/hooks';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import CustomTabBar from '../../../components/custom-tab-bar/CustomTabBar';
 
 export type SendToOptionsParamList = {
   title: string;
   wallet: Wallet;
   context: string;
+  sendTo?: {
+    name: string | undefined;
+    type: string;
+    address: string;
+    destinationTag: number | undefined;
+  };
 };
 
 export const RecipientRowContainer = styled.View`
@@ -149,6 +156,12 @@ interface SendToOptionsContextProps {
   ) => void;
   goToConfirmView: () => void;
   goToSelectInputsView: (recipient: Recipient) => void;
+  sendTo?: {
+    name: string | undefined;
+    type: string;
+    address: string;
+    destinationTag: number | undefined;
+  };
 }
 
 export const SendToOptionsContext =
@@ -162,7 +175,7 @@ const SendToOptions = () => {
   const Tab = createMaterialTopTabNavigator();
   const navigation = useNavigation();
   const {params} = useRoute<RouteProp<WalletGroupParamList, 'SendToOptions'>>();
-  const {wallet} = params;
+  const {wallet, sendTo} = params;
   const [recipientList, setRecipientList] = useState<Recipient[]>([]);
   const [recipientAmount, setRecipientAmount] = useState<{
     showModal: boolean;
@@ -197,6 +210,7 @@ const SendToOptions = () => {
     if (recipient.amount && !updateRecipient) {
       setRecipientListContext(recipient);
     } else {
+      Keyboard.dismiss();
       setRecipientAmount({showModal: true, recipient, index, updateRecipient});
     }
   };
@@ -238,12 +252,6 @@ const SendToOptions = () => {
         showBottomNotificationModal({
           ...errorMessageConfig,
           enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
         }),
       );
     }
@@ -266,6 +274,7 @@ const SendToOptions = () => {
   return (
     <SendToOptionsContext.Provider
       value={{
+        sendTo,
         recipientList,
         setRecipientListContext,
         setRecipientAmountContext,
@@ -273,7 +282,7 @@ const SendToOptions = () => {
         goToSelectInputsView,
       }}>
       <ImportContainer>
-        <Tab.Navigator screenOptions={{...ScreenOptions()}}>
+        <Tab.Navigator tabBar={props => <CustomTabBar {...props} />}>
           <Tab.Screen
             name={t('Addresses')}
             component={SendToAddress}

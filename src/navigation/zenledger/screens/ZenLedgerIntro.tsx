@@ -8,7 +8,8 @@ import {Black, LightBlack, SlateDark, White} from '../../../styles/colors';
 import Button from '../../../components/button/Button';
 import {H4, Link, Paragraph, TextAlign} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {Platform, TouchableOpacity, View} from 'react-native';
+import {Platform, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useAppDispatch} from '../../../utils/hooks';
 import {
   dismissBottomNotificationModal,
@@ -67,12 +68,12 @@ const ZenLedgerBackground = styled(LinearGradient).attrs(({theme}) => ({
   flex: 1;
 `;
 
-const LinkCointainer = styled.TouchableOpacity`
+const LinkCointainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   justify-content: center;
 `;
-const ZenLedgerIntro: React.VFC = () => {
+const ZenLedgerIntro: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -115,6 +116,7 @@ const ZenLedgerIntro: React.VFC = () => {
       },
       headerLeft: () => (
         <TouchableOpacity
+          touchableLibrary={'react-native-gesture-handler'}
           style={{marginLeft: Platform.OS === 'android' ? 10 : 0}}
           activeOpacity={ActiveOpacity}
           onPress={() => {

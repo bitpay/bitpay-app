@@ -9,18 +9,27 @@ import {
   LightBlack,
   NeutralSlate,
   Success,
+  Warning25,
+  Caution25,
+  Success25,
+  Black,
 } from '../../styles/colors';
 import {H7, Link} from '../styled/Text';
 import {ActionContainer, ActiveOpacity, Row} from '../styled/Containers';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {SvgProps} from 'react-native-svg';
 
 const BANNER_HEIGHT = 80;
 
-const BannerContainer = styled.View<{height?: number}>`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
+const BannerContainer = styled.View<{
+  height?: number;
+  containerBgColor?: string;
+}>`
+  background-color: ${({theme: {dark}, containerBgColor}) =>
+    containerBgColor ? containerBgColor : dark ? LightBlack : NeutralSlate};
   border-radius: 10px;
-  margin: 15px 0;
-  padding: 10px;
+  margin: 10px 0;
+  padding: 10px 12px;
   align-items: flex-start;
   justify-content: space-between;
   min-height: ${({height}) => height || BANNER_HEIGHT}px;
@@ -42,6 +51,8 @@ interface BannerProps {
   link?: {onPress: () => void; text: string};
   transComponent?: JSX.Element;
   height?: number;
+  hasBackgroundColor?: boolean;
+  icon?: React.FC<SvgProps> | null;
 }
 
 const getBgColor = (type: string) => {
@@ -53,11 +64,27 @@ const getBgColor = (type: string) => {
     case 'error':
       return Caution;
     case 'success':
-      return Success;
+      return '#0B754A';
     default:
       return Slate;
   }
 };
+
+const getContainerBgColor = (type: string) => {
+  switch (type) {
+    case 'info':
+      return NotificationPrimary;
+    case 'warning':
+      return Warning25;
+    case 'error':
+      return Caution25;
+    case 'success':
+      return Success25;
+    default:
+      return Slate;
+  }
+};
+
 const Banner = ({
   title,
   description,
@@ -65,17 +92,31 @@ const Banner = ({
   link,
   transComponent,
   height,
+  hasBackgroundColor,
+  icon,
 }: BannerProps) => {
   const bgColor = getBgColor(type);
+  const containerBgColor = hasBackgroundColor
+    ? getContainerBgColor(type)
+    : undefined;
 
   return (
-    <BannerContainer height={height}>
+    <BannerContainer height={height} containerBgColor={containerBgColor}>
       <BannerRow>
-        <Info bgColor={bgColor} />
-
+        {icon ? React.createElement(icon) : <Info bgColor={bgColor} />}
         <Description>
-          {title ? <H7 medium={true}>{title}</H7> : null}
-          {description ? <H7>{description}</H7> : null}
+          {title ? (
+            <H7
+              style={containerBgColor ? {color: getBgColor(type)} : {}}
+              medium={true}>
+              {title}
+            </H7>
+          ) : null}
+          {description ? (
+            <H7 style={containerBgColor ? {color: Black} : {}}>
+              {description}
+            </H7>
+          ) : null}
           {transComponent ? <H7>{transComponent}</H7> : null}
           {link ? (
             <ActionContainer>

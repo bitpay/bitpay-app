@@ -2,15 +2,17 @@ import styled from 'styled-components/native';
 import {BaseText, H7} from '../../../../components/styled/Text';
 import {
   SlateDark,
+  Slate30,
   White,
   LightBlack,
   NeutralSlate,
   LinkBlue,
   Slate,
 } from '../../../../styles/colors';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const ItemDivisor = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ebecee')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   border-bottom-width: 1px;
 `;
 
@@ -46,7 +48,7 @@ export const FiatAmount = styled(BaseText)`
   color: #667;
 `;
 
-export const SelectedOptionContainer = styled.TouchableOpacity`
+export const SelectedOptionContainer = styled(TouchableOpacity)`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -99,7 +101,7 @@ export const CheckboxText = styled(BaseText)`
   margin: 0 20px;
 `;
 
-export const PoliciesContainer = styled.TouchableOpacity`
+export const PoliciesContainer = styled(TouchableOpacity)`
   margin: 16px 0 0 20px;
 `;
 

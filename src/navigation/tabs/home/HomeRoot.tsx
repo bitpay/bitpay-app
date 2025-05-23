@@ -3,10 +3,10 @@ import {
   useScrollToTop,
   useTheme,
 } from '@react-navigation/native';
-import {each} from 'lodash';
+import {each, filter} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {RefreshControl, ScrollView, TouchableOpacity} from 'react-native';
+import {RefreshControl, ScrollView} from 'react-native';
 import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
@@ -20,8 +20,7 @@ import {
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
 import {selectCardGroups} from '../../../store/card/card.selectors';
-import {startGetRates} from '../../../store/wallet/effects';
-import {startUpdateAllKeyAndWalletStatus} from '../../../store/wallet/effects/status/status';
+import {getAndDispatchUpdatedWalletBalances} from '../../../store/wallet/effects/status/statusv2';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {
@@ -59,9 +58,9 @@ import {
   sendCrypto,
 } from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import Icons from '../../wallet/components/WalletIcons';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
+import ArchaxFooter from '../../../components/archax/archax-footer';
 
 const HomeRoot = () => {
   const {t} = useTranslation();
@@ -75,12 +74,7 @@ const HomeRoot = () => {
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const wallets = Object.values(keys).flatMap(k => k.wallets);
-  let pendingTxps: any = [];
-  each(wallets, x => {
-    if (x.pendingTxps) {
-      pendingTxps = pendingTxps.concat(x.pendingTxps);
-    }
-  });
+  const pendingTxps = wallets.flatMap(w => w.pendingTxps);
   const appIsLoading = useAppSelector(({APP}) => APP.appIsLoading);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const keyMigrationFailure = useAppSelector(
@@ -94,6 +88,8 @@ const HomeRoot = () => {
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups.length > 0;
   useBrazeRefreshOnFocus();
+
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
@@ -187,13 +183,17 @@ const HomeRoot = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await dispatch(startGetRates({}));
       await Promise.all([
-        dispatch(startUpdateAllKeyAndWalletStatus({force: true})),
+        dispatch(
+          getAndDispatchUpdatedWalletBalances({
+            context: 'homeRootOnRefresh',
+            createTokenWalletWithFunds: true,
+          }),
+        ),
         dispatch(requestBrazeContentRefresh()),
         sleep(1000),
       ]);
-      dispatch(updatePortfolioBalance());
+      await sleep(2000);
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
     }
@@ -221,12 +221,7 @@ const HomeRoot = () => {
       {appIsLoading ? null : (
         <>
           <HeaderContainer>
-            <HeaderLeftContainer>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('SettingsHome')}>
-                <Icons.HomeSettings />
-              </TouchableOpacity>
-            </HeaderLeftContainer>
+            <HeaderLeftContainer />
             {pendingTxps.length ? (
               <ProposalBadgeContainer onPress={onPressTxpBadge}>
                 <ProposalBadge>{pendingTxps.length}</ProposalBadge>
@@ -310,6 +305,7 @@ const HomeRoot = () => {
                 <QuickLinksCarousel contentCards={memoizedQuickLinks} />
               </HomeSection>
             ) : null}
+            {showArchaxBanner && <ArchaxFooter />}
           </ScrollView>
         </>
       )}
@@ -318,4 +314,4 @@ const HomeRoot = () => {
   );
 };
 
-export default withErrorFallback(HomeRoot);
+export default withErrorFallback(HomeRoot, {includeHeader: true});

@@ -2,7 +2,10 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText, Paragraph} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {SheetContainer} from '../../../components/styled/Containers';
+import {
+  CloseButtonContainer,
+  SheetContainer,
+} from '../../../components/styled/Containers';
 import {
   Action,
   Black,
@@ -27,10 +30,6 @@ import {Effect} from '../../../store';
 import {useAppDispatch} from '../../../utils/hooks';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
-
-const CloseButton = styled.TouchableOpacity`
-  margin: auto;
-`;
 
 const CloseButtonText = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? White : Action)};
@@ -123,10 +122,10 @@ interface Props {
 }
 
 export const viewOnBlockchain =
-  (wallet: Wallet): Effect =>
+  (wallet: Wallet, address?: string): Effect =>
   async dispatch => {
     const chain = wallet.chain.toLowerCase();
-    const tokenAddress = wallet.credentials.token?.address;
+    const tokenAddress = address ?? wallet.credentials.token?.address;
     const url =
       wallet.network === 'livenet'
         ? `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrls}address/${tokenAddress}`
@@ -184,9 +183,9 @@ const SendingToERC20Warning = ({isVisible, closeModal, wallet}: Props) => {
             {wallet.credentials.token?.address}
           </ContractAddressText>
         </SendingInfoContainer>
-        <CloseButton onPress={closeModal}>
+        <CloseButtonContainer onPress={closeModal}>
           <CloseButtonText>{t('CLOSE')}</CloseButtonText>
-        </CloseButton>
+        </CloseButtonContainer>
       </SheetContainer>
     </SheetModal>
   );

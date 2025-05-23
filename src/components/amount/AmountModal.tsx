@@ -8,24 +8,22 @@ import {BaseText} from '../../components/styled/Text';
 import {Black, White} from '../../styles/colors';
 import SheetModal from '../modal/base/sheet/SheetModal';
 import Amount, {AmountProps, LimitsOpts} from './Amount';
+import {Platform} from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {useAppSelector} from '../../utils/hooks';
+import ArchaxBanner from '../archax/archax-banner';
+import {HEIGHT} from '../styled/Containers';
 
 const ModalHeaderText = styled(BaseText)`
   font-size: 18px;
   font-weight: bold;
+  text-align: center;
 `;
 const ModalHeader = styled.View`
-  height: 50px;
   margin: 10px 10px 10px 10px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  position: relative;
 `;
 
-const CloseModalButton = styled.TouchableOpacity`
-  position: absolute;
-  left: 10px;
+const CloseModalButton = styled(TouchableOpacity)`
   height: 41px;
   width: 41px;
   border-radius: 50px;
@@ -40,10 +38,10 @@ const ModalHeaderRight = styled(BaseText)`
   right: 5px;
 `;
 
-const StyledAmountModalContainer = styled.SafeAreaView`
+const StyledAmountModalContainer = styled.SafeAreaView<{platform: string}>`
   background-color: ${({theme}) => (theme.dark ? Black : White)};
   flex: 1;
-  padding-bottom: 45px;
+  margin-bottom: ${({platform}) => (platform === 'ios' ? 25 : 10)}px;
 `;
 
 type AmountModalProps = AmountProps & {
@@ -56,7 +54,9 @@ type AmountModalProps = AmountProps & {
 
 const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
   return (
-    <StyledAmountModalContainer>{props.children}</StyledAmountModalContainer>
+    <StyledAmountModalContainer platform={Platform.OS}>
+      {props.children}
+    </StyledAmountModalContainer>
   );
 });
 
@@ -70,10 +70,17 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
     ...amountProps
   } = props;
   const theme = useTheme();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const isSmallScreen = HEIGHT < 700;
 
   return (
-    <SheetModal isVisible={isVisible} onBackdropPress={onClose}>
+    <SheetModal
+      modalLibrary={'bottom-sheet'}
+      isVisible={isVisible}
+      onBackdropPress={onClose}
+      fullscreen>
       <AmountModalContainerHOC>
+        {showArchaxBanner && <ArchaxBanner isSmallScreen={isSmallScreen} />}
         <ModalHeader>
           <CloseModalButton
             onPress={() => {
@@ -87,8 +94,12 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
               }}
             />
           </CloseModalButton>
-          {modalTitle ? <ModalHeaderText>{modalTitle}</ModalHeaderText> : null}
-          {onSendMaxPressed && !limitsOpts?.limits.maxAmount ? (
+          {modalTitle && !showArchaxBanner ? (
+            <ModalHeaderText>{modalTitle}</ModalHeaderText>
+          ) : null}
+          {onSendMaxPressed &&
+          (!props.context ||
+            !['sellCrypto', 'swapCrypto'].includes(props.context)) ? (
             <ModalHeaderRight>
               <Button
                 buttonType="pill"
@@ -103,6 +114,8 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
         <Amount
           {...amountProps}
           limitsOpts={limitsOpts}
+          isModal={true}
+          reduceTopGap={showArchaxBanner}
           onSendMaxPressed={onSendMaxPressed}
         />
       </AmountModalContainerHOC>

@@ -1,12 +1,14 @@
 import React, {useState} from 'react';
+import {Platform} from 'react-native';
+import {useTranslation} from 'react-i18next';
+import {ScrollView} from 'react-native-gesture-handler';
+import styled, {css} from 'styled-components/native';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import {BaseText, H4, TextAlign} from '../../../../components/styled/Text';
-import styled, {css} from 'styled-components/native';
 import {
   SheetContainer,
   SheetParams,
 } from '../../../../components/styled/Containers';
-import {Platform, ScrollView} from 'react-native';
 import {Action, LightBlack, LinkBlue, White} from '../../../../styles/colors';
 import {horizontalPadding} from './styled/ShopTabComponents';
 import {sleep} from '../../../../utils/helper-methods';
@@ -14,7 +16,6 @@ import {
   BottomNotificationCta,
   BottomNotificationHr,
 } from '../../../../components/modal/bottom-notification/BottomNotification';
-import {useTranslation} from 'react-i18next';
 
 const SheetTitleContainer = styled.View`
   margin-bottom: 25px;
@@ -89,6 +90,7 @@ const FilterSheet = ({
   const [categoryMap, setCategoryMap] = useState(categories);
   return (
     <SheetModal
+      modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={() => {
         setCategoryMap(initialCategoryMap);

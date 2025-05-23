@@ -16,11 +16,8 @@ import PayAllBills from './screens/PayAllBills';
 import BillSettings from './screens/BillSettings';
 import ConnectBillsOptions from './screens/ConnectBillsOptions';
 import {Root} from '../../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import BillsHome from './screens/BillsHome';
 
 interface BillProps {
@@ -57,16 +54,9 @@ const BillGroup: React.FC<BillProps> = ({Bill}) => {
   const {t} = useTranslation();
   return (
     <Bill.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Bill.Screen
         options={{

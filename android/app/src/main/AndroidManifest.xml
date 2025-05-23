@@ -12,12 +12,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <!-- bluetooth used for hardware wallet -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
-          
+    <!-- enable push notification for Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <permission
         android:name="com.bitpay.wallet.permission.C2D_MESSAGE"
         android:protectionLevel="signature" />
@@ -41,7 +38,7 @@
               <category android:name="android.intent.category.LAUNCHER" />
           </intent-filter>
         </activity>
-      
+
        <receiver
             android:name=".CustomBroadcastReceiver"
             android:exported="false">

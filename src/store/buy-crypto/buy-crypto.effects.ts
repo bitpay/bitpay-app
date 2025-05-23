@@ -87,6 +87,45 @@ export const calculateUsdToAltFiat =
     }
   };
 
+export const calculateAnyFiatToAltFiat =
+  (
+    fromFiatAmount: number,
+    fromFiatCurrency: string,
+    toFiatCurrency: string,
+  ): Effect<number | undefined> =>
+  (dispatch, getState) => {
+    const state = getState();
+    const allRates = state.RATE.rates;
+
+    if (fromFiatCurrency.toUpperCase() === toFiatCurrency.toUpperCase()) {
+      return fromFiatAmount;
+    }
+    const rateBtcFromFiat = allRates.btc.find(r => {
+      return r.code === fromFiatCurrency.toUpperCase();
+    });
+    const rateBtcToFiat = allRates.btc.find(r => {
+      return r.code === toFiatCurrency.toUpperCase();
+    });
+
+    if (rateBtcToFiat && rateBtcFromFiat?.rate && rateBtcFromFiat.rate > 0) {
+      const newRate = rateBtcToFiat.rate / rateBtcFromFiat.rate;
+      const equivalentAmount = +(fromFiatAmount * newRate).toFixed(2);
+      dispatch(
+        LogActions.debug(
+          `${fromFiatAmount} ${fromFiatCurrency} => ${equivalentAmount} ${toFiatCurrency}`,
+        ),
+      );
+      return equivalentAmount;
+    } else {
+      dispatch(
+        LogActions.warn(
+          `There are no rates for : ${rateBtcFromFiat}-${rateBtcToFiat}`,
+        ),
+      );
+      return undefined;
+    }
+  };
+
 export const getBuyCryptoFiatLimits =
   (
     exchange?: BuyCryptoExchangeKey,

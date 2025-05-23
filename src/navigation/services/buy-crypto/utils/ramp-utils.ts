@@ -1,10 +1,13 @@
 import {t} from 'i18next';
 import cloneDeep from 'lodash.clonedeep';
+import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {
+  RampPaymentMethodType,
   RampQuoteRequestData,
   RampQuoteResultForPaymentMethod,
-} from '../../../../store/buy-crypto/buy-crypto.models';
-import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+} from '../../../../store/buy-crypto/models/ramp.models';
+import {PaymentMethodKey} from '../constants/BuyCryptoConstants';
 
 export const rampEnv = __DEV__ ? 'sandbox' : 'production';
 
@@ -70,11 +73,14 @@ export const rampSupportedCoins = [
   'eth_op',
   'doge',
   'ltc',
-  'matic',
+  'matic', // pol // backward compatibility
+  'pol',
   'xrp',
 ];
 
 export const rampSupportedErc20Tokens = [
+  '1inch',
+  'arkm',
   'bat',
   'dai',
   'ens',
@@ -87,6 +93,7 @@ export const rampSupportedErc20Tokens = [
   'usda',
   'usdc',
   'usdt',
+  'xaut',
 ];
 
 export const rampSupportedMaticTokens = [
@@ -97,28 +104,29 @@ export const rampSupportedMaticTokens = [
   'ovr',
   'sand',
   'usdc',
-  'usdce', // Bridged USD Coin (0x2791bca1f2de4661ed88a30c99a7a9449aa84174) USDC.e
+  'usdc.e', // usdce in Ramp - Bridged USD Coin (0x2791bca1f2de4661ed88a30c99a7a9449aa84174) USDC.e
   'usdt',
+  'weth', // MATIC-ETH in Ramp - (They call it ETH but use the WETH contract: 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619)
   'wmatic',
 ];
 
 export const rampSupportedArbitrumTokens = [
   'usda',
   'usdc',
-  'usdce', // Bridged USD Coin (0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8) USDC.e
+  'usdc.e', // usdce in Ramp - Bridged USD Coin (0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8) USDC.e
   'usdt',
 ];
 
 export const rampSupportedBaseTokens = [
   'usdc',
-  'usdce', // Bridged USD Coin (0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA) USDC.e
+  'usdc.e', // usdce in Ramp - Bridged USD Coin (0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA) USDC.e
 ];
 
 export const rampSupportedOptimismTokens = [
   'dai',
   'usda',
   'usdc',
-  'usdce', // Bridged USD Coin (0x7F5c764cBc14f9669B88837ca1490cCa17c31607) USDC.e
+  'usdc.e', // usdce in Ramp - Bridged USD Coin (0x7F5c764cBc14f9669B88837ca1490cCa17c31607) USDC.e
   'usdt',
   'wld',
 ];
@@ -146,12 +154,35 @@ export const getRampSupportedCurrencies = (): string[] => {
   return rampSupportedCurrencies;
 };
 
+export const rampCoinMapping = (coin: string): string => {
+  let _coin = cloneDeep(coin);
+
+  if (_coin?.toLowerCase() === 'usdc.e') {
+    _coin = 'usdce';
+  }
+  return _coin;
+};
+
+export const getCoinFromRampCoinFormat = (coin: string): string => {
+  let _coin = cloneDeep(coin);
+
+  if (_coin?.toLowerCase() === 'usdce') {
+    _coin = 'usdc.e';
+  }
+  return _coin;
+};
+
 export const getRampCoinFormat = (
   coin: string | undefined,
   chain: string | undefined,
 ): string => {
+  coin = coin ? rampCoinMapping(externalServicesCoinMapping(coin)) : undefined;
   const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
   const _chain = chain ? cloneDeep(chain).toUpperCase() : undefined;
+
+  if (_coin === 'WETH' && _chain === 'MATIC') {
+    return 'MATIC_ETH';
+  }
 
   let formattedCoin: string = `${_chain}_${_coin}`;
   return formattedCoin;
@@ -202,6 +233,73 @@ export const getRampDefaultOfferData = (
   data: RampQuoteRequestData,
 ): RampQuoteResultForPaymentMethod => {
   return data.CARD_PAYMENT;
+};
+
+export const getRampPaymentMethodDataFromQuoteData = (
+  paymentMethod: PaymentMethodKey,
+  quoteData: RampQuoteRequestData,
+) => {
+  let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
+  switch (paymentMethod) {
+    case 'sepaBankTransfer':
+      if (quoteData.MANUAL_BANK_TRANSFER) {
+        paymentMethodData = quoteData.MANUAL_BANK_TRANSFER;
+      }
+      break;
+    case 'applePay':
+      if (quoteData.APPLE_PAY) {
+        paymentMethodData = quoteData.APPLE_PAY;
+      }
+      break;
+    case 'googlePay':
+      if (quoteData.GOOGLE_PAY) {
+        paymentMethodData = quoteData.GOOGLE_PAY;
+      }
+      break;
+    case 'pisp':
+      if (quoteData.OPEN_BANKING) {
+        paymentMethodData = quoteData.OPEN_BANKING;
+      } else if (quoteData.AUTO_BANK_TRANSFER) {
+        paymentMethodData = quoteData.AUTO_BANK_TRANSFER;
+      }
+      break;
+    case 'pix':
+      if (quoteData.PIX) {
+        paymentMethodData = quoteData.PIX;
+      }
+      break;
+    case 'debitCard':
+    case 'creditCard':
+      if (quoteData.CARD_PAYMENT) {
+        paymentMethodData = quoteData.CARD_PAYMENT;
+      }
+      break;
+    default:
+      paymentMethodData = getRampDefaultOfferData(quoteData);
+  }
+  return paymentMethodData;
+};
+
+export const getRampPaymentMethodFormat = (
+  paymentMethod: PaymentMethodKey,
+): RampPaymentMethodType => {
+  switch (paymentMethod) {
+    case 'sepaBankTransfer':
+      return 'SEPA';
+    case 'applePay':
+      return 'APPLEPAY';
+    case 'googlePay':
+      return 'GOOGLEPAY';
+    case 'pisp':
+      return 'PISP';
+    case 'pix':
+      return 'PIX';
+    case 'debitCard':
+    case 'creditCard':
+      return 'CARD';
+    default:
+      return 'CARD';
+  }
 };
 
 export interface RampStatus {

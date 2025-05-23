@@ -1,6 +1,12 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {View} from 'react-native';
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from '@react-navigation/native';
+import styled from 'styled-components/native';
 import {Hr} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
 import {
@@ -8,7 +14,7 @@ import {
   useAppSelector,
   useLogger,
 } from '../../../../../utils/hooks';
-import {H4} from '../../../../../components/styled/Text';
+import {BaseText, H4} from '../../../../../components/styled/Text';
 import {
   Key,
   Recipient,
@@ -55,7 +61,7 @@ import {BASE_BITPAY_URLS} from '../../../../../constants/config';
 import {URL} from '../../../../../constants';
 import {
   CardConfig,
-  GiftCardDiscount,
+  GiftCardCoupon,
   Invoice,
 } from '../../../../../store/shop/shop.models';
 import {WalletRowProps} from '../../../../../components/list/WalletRow';
@@ -85,14 +91,31 @@ import {
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
+import {
+  getBoostAmount,
+  getBoostedAmount,
+  getVisibleCoupon,
+  hasVisibleBoost,
+} from '../../../../../lib/gift-cards/gift-card';
+import GiftCardDiscountText from '../../../../../navigation/tabs/shop/components/GiftCardDiscountText';
+
 export interface GiftCardConfirmParamList {
   amount: number;
   cardConfig: CardConfig;
-  discounts: GiftCardDiscount[];
+  coupons: GiftCardCoupon[];
   wallet?: Wallet;
   recipient?: Recipient;
   txp?: TransactionProposal;
   txDetails?: TxDetails;
+}
+
+const BoostAppliedText = styled(BaseText)`
+  margin-left: 10px;
+`;
+
+enum GiftCardInvoiceCreationErrors {
+  couponExpired = 'This promotion is no longer available.',
+  atLeast1USD = 'Invoice price must be at least $1 USD',
 }
 
 const GiftCardHeader = ({
@@ -103,6 +126,7 @@ const GiftCardHeader = ({
   cardConfig: CardConfig;
 }): JSX.Element | null => {
   const {t} = useTranslation();
+  const boostedAmount = getBoostedAmount(cardConfig, amount);
   return (
     <>
       <Header hr>
@@ -110,7 +134,22 @@ const GiftCardHeader = ({
       </Header>
       <DetailContainer height={73}>
         <DetailRow>
-          <H4>{formatFiatAmount(amount, cardConfig.currency)}</H4>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <H4>{formatFiatAmount(boostedAmount, cardConfig.currency)}</H4>
+            <BoostAppliedText>
+              {hasVisibleBoost(cardConfig) ? (
+                <>
+                  <GiftCardDiscountText
+                    cardConfig={cardConfig}
+                    short={true}
+                    applied={true}
+                    fontWeight={400}
+                    fontSize={16}
+                  />
+                </>
+              ) : null}
+            </BoostAppliedText>
+          </View>
           <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
         </DetailRow>
       </DetailContainer>
@@ -129,7 +168,7 @@ const Confirm = () => {
   const {
     amount,
     cardConfig,
-    discounts,
+    coupons,
     wallet: _wallet,
     recipient: _recipient,
     txDetails: _txDetails,
@@ -138,6 +177,7 @@ const Confirm = () => {
   const appNetwork = useAppSelector(({APP}) => APP.network);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[appNetwork]);
+  const boostedAmount = getBoostedAmount(cardConfig, amount);
 
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
@@ -249,21 +289,29 @@ const Confirm = () => {
     dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
     dispatch(ShopActions.deletedUnsoldGiftCards({network: appNetwork}));
     const invoiceCreationParams = {
-      amount,
+      amount: boostedAmount,
       brand: cardConfig.name,
       currency: cardConfig.currency,
       clientId,
-      discounts: discounts.map(d => d.code) || [],
+      coupons: coupons.map(c => c.code) || [],
       transactionCurrency,
     };
     return dispatch(
       ShopEffects.startCreateGiftCardInvoice(cardConfig, invoiceCreationParams),
     ).catch(err => {
-      if (err.message === 'Invoice price must be at least $1 USD') {
+      if (err.message === GiftCardInvoiceCreationErrors.atLeast1USD) {
         return dispatch(
           ShopEffects.startCreateGiftCardInvoice(cardConfig, {
             ...invoiceCreationParams,
-            discounts: [],
+            coupons: [],
+          }),
+        );
+      }
+      if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
+        dispatch(
+          ShopActions.hidGiftCardCoupon({
+            giftCardBrand: cardConfig.name,
+            couponCode: invoiceCreationParams.coupons[0],
           }),
         );
       }
@@ -271,18 +319,31 @@ const Confirm = () => {
     });
   };
 
+  const popToShopHome = async () => {
+    navigation.dispatch(StackActions.popToTop());
+    navigation.dispatch(StackActions.pop());
+  };
+
   const handleCreateGiftCardInvoiceOrTxpError = async (err: any) => {
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
+    const onDismiss = () => {
+      if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
+        return popToShopHome();
+      }
+      return openWalletSelector(400);
+    };
     const [errorConfig] = await Promise.all([
-      dispatch(handleCreateTxProposalError(err)),
+      dispatch(handleCreateTxProposalError(err, onDismiss)),
       sleep(500),
     ]);
-    showError({
-      defaultErrorMessage:
-        err.response?.data?.message || err.message || errorConfig.message,
-      onDismiss: () => openWalletSelector(400),
-    });
+    dispatch(
+      AppActions.showBottomNotificationModal({
+        ...errorConfig,
+        errMsg:
+          err.response?.data?.message || err.message || errorConfig.message,
+      }),
+    );
   };
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
@@ -332,7 +393,10 @@ const Confirm = () => {
           paymentUrl,
           invoice: newInvoice,
           invoiceID: invoiceId,
-          message: `${formatFiatAmount(amount, cardConfig.currency)} Gift Card`,
+          message: `${formatFiatAmount(
+            boostedAmount,
+            cardConfig.currency,
+          )} Gift Card`,
           customData: {
             giftCardName: cardConfig.name,
             service: 'giftcards',
@@ -431,7 +495,6 @@ const Confirm = () => {
   };
 
   const redeemGiftCardAndNavigateToGiftCardDetails = async () => {
-    dispatch(startOnGoingProcessModal('GENERATING_GIFT_CARD'));
     const giftCard = await dispatch(
       ShopEffects.startRedeemGiftCard(invoice!.id),
     );
@@ -441,8 +504,7 @@ const Confirm = () => {
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
-    navigation.dispatch(StackActions.popToTop());
-    navigation.dispatch(StackActions.pop());
+    popToShopHome();
     navigation.navigate('GiftCardDetails', {
       giftCard,
       cardConfig,
@@ -451,12 +513,14 @@ const Confirm = () => {
       giftCard.status === 'FAILURE'
         ? 'Failed Gift Card'
         : 'Purchased Gift Card';
+    const visibleCoupon = getVisibleCoupon(cardConfig);
     dispatch(
       Analytics.track(purchaseEventName, {
         giftCardAmount: amount,
         giftCardBrand: cardConfig.name,
         giftCardCurrency: cardConfig.currency,
         coin: getTransactionCurrency(),
+        ...(visibleCoupon && {visibleCoupon}),
       }),
     );
   };
@@ -535,7 +599,7 @@ const Confirm = () => {
 
   const onSwipeComplete = async () => {
     logger.debug('Swipe completed. Making payment...');
-    if (key.hardwareSource) {
+    if (key?.hardwareSource) {
       onSwipeCompleteHardwareWallet(key);
     } else {
       sendPaymentAndRedeemGiftCard({});
@@ -568,9 +632,11 @@ const Confirm = () => {
     return () => clearTimeout(timer);
   }, [resetSwipeButton]);
 
-  useEffect(() => {
-    openWalletSelector(100);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      openWalletSelector(100);
+    }, []),
+  );
 
   return (
     <ConfirmContainer>
@@ -591,18 +657,30 @@ const Confirm = () => {
               />
             ) : null}
             {unsoldGiftCard && unsoldGiftCard.totalDiscount ? (
-              <Amount
-                description={'Discount'}
-                amount={{
-                  fiatAmount: `— ${formatFiatAmount(
-                    unsoldGiftCard.totalDiscount,
-                    cardConfig.currency,
-                  )}`,
-                  cryptoAmount: '',
-                }}
-                fiatOnly
-                hr
-              />
+              getBoostAmount(cardConfig, amount) ? (
+                <Amount
+                  description={'Subtotal'}
+                  amount={{
+                    fiatAmount: formatFiatAmount(amount, cardConfig.currency),
+                    cryptoAmount: '',
+                  }}
+                  fiatOnly
+                  hr
+                />
+              ) : (
+                <Amount
+                  description={'Discount'}
+                  amount={{
+                    fiatAmount: `— ${formatFiatAmount(
+                      unsoldGiftCard.totalDiscount,
+                      cardConfig.currency,
+                    )}`,
+                    cryptoAmount: '',
+                  }}
+                  fiatOnly
+                  hr
+                />
+              )
             ) : null}
             <Amount
               description={t('Network Cost')}

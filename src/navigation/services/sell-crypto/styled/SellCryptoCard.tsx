@@ -1,6 +1,14 @@
 import styled from 'styled-components/native';
-import {SlateDark, White} from '../../../../styles/colors';
+import {LightBlack, SlateDark, White, Slate30} from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
+
+export const SellCryptoExpandibleCard = styled(TouchableOpacity)`
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+  border-radius: 9px;
+  margin: 20px 15px 0px 15px;
+  padding: 18px 14px;
+`;
 
 export const SellCryptoOfferLine = styled.View`
   width: 100%;
@@ -36,4 +44,9 @@ export const SellBalanceContainer = styled.View`
 export const SellBottomDataText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 14px;
+`;
+
+export const ItemDivisor = styled.View`
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+  border-bottom-width: 1px;
 `;

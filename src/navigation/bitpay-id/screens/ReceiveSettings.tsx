@@ -1,15 +1,18 @@
 import React, {useEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import _ from 'lodash';
+import uniqBy from 'lodash.uniqby';
 import styled from 'styled-components/native';
 import {useNavigation, useTheme} from '@react-navigation/native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ActiveOpacity,
   Br,
   CtaContainerAbsolute,
 } from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
-import {H3, H5, Paragraph} from '../../../components/styled/Text';
-import {BaseText} from '../../wallet/components/KeyDropdownOption';
+import {BaseText, H3, H5, Paragraph} from '../../../components/styled/Text';
 import {
   LightBlack,
   Slate,
@@ -19,7 +22,6 @@ import {
 } from '../../../styles/colors';
 import AddSvg from '../../../../assets/img/add.svg';
 import AddWhiteSvg from '../../../../assets/img/add-white.svg';
-import {TouchableOpacity} from 'react-native';
 import Button from '../../../components/button/Button';
 import ChevronRight from '../components/ChevronRight';
 import SendToPill from '../../wallet/components/SendToPill';
@@ -46,15 +48,14 @@ import {ReceivingAddress} from '../../../store/bitpay-id/bitpay-id.models';
 import {WalletScreens} from '../../wallet/WalletGroup';
 import AddressModal from '../components/AddressModal';
 import {keyBackupRequired} from '../../tabs/home/components/Crypto';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import TwoFactorRequiredModal from '../components/TwoFactorRequiredModal';
 import {getCurrencyCodeFromCoinAndChain} from '../utils/bitpay-id-utils';
 import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
 } from '../../../constants/currencies';
+import {IsEVMChain} from '../../../store/wallet/utils/currency';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
-import {useTranslation} from 'react-i18next';
 
 const ReceiveSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -88,6 +89,7 @@ const AddressItem = styled.View`
 
 const AddressItemText = styled(Paragraph)`
   flex-grow: 1;
+  flex-shrink: 1;
   margin-left: 1px;
 `;
 
@@ -140,6 +142,30 @@ const createAddressMap = (receivingAddresses: ReceivingAddress[]) => {
   return _.keyBy(receivingAddresses, ({coin, chain}) =>
     getReceivingAddressKey(coin, chain),
   );
+};
+
+const matchesChainAndCurrency = (
+  wallet: Wallet,
+  chain: string,
+  currencyAbbreviation: string,
+) => {
+  return (
+    wallet.currencyAbbreviation?.toLowerCase() ===
+      currencyAbbreviation?.toLowerCase() && wallet.chain === chain
+  );
+};
+
+const hasAccountOrWalletsMatchChainAndCurrency = (
+  chain: string,
+  currencyAbbreviation: string,
+) => {
+  return account => {
+    return account.currencyAbbreviation
+      ? matchesChainAndCurrency(account, chain, currencyAbbreviation)
+      : account.wallets?.some(wallet =>
+          matchesChainAndCurrency(wallet, chain, currencyAbbreviation),
+        );
+  };
 };
 
 type ReceiveSettingsProps = NativeStackScreenProps<
@@ -199,7 +225,10 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
           wallet.currencyAbbreviation === coin && wallet.chain === chain,
       ),
   );
-  const inactiveCurrencyOptions = SupportedCurrencyOptions.filter(
+  const inactiveCurrencyOptions = uniqBy(
+    SupportedCurrencyOptions,
+    currencyOption => currencyOption.currencyAbbreviation,
+  ).filter(
     currencyOption =>
       !uniqueActiveCurrencies.includes(
         currencyOption.currencyAbbreviation.toLowerCase(),
@@ -209,6 +238,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
     keys,
     network: Network.mainnet,
     defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+    filterWalletsByBalance: false,
     rates,
     dispatch,
   });
@@ -217,15 +247,38 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
     (keyWalletMap, {currencyAbbreviation, chain}) => ({
       ...keyWalletMap,
       [getReceivingAddressKey(currencyAbbreviation, chain)]: keyWallets
-        .map(keyWallet => ({
-          ...keyWallet,
-          wallets: keyWallet.wallets.filter(
-            wallet =>
-              wallet.currencyAbbreviation === walletSelectorCurrency &&
-              wallet.chain === walletSelectorChain,
+        .filter(keyWallet =>
+          keyWallet.mergedUtxoAndEvmAccounts?.some(
+            hasAccountOrWalletsMatchChainAndCurrency(
+              chain,
+              currencyAbbreviation,
+            ),
           ),
-        }))
-        .filter(keyWallet => keyWallet.wallets.length),
+        )
+        .map(keyWallet => {
+          return {
+            ...keyWallet,
+            mergedUtxoAndEvmAccounts: keyWallet.mergedUtxoAndEvmAccounts
+              ?.filter(
+                hasAccountOrWalletsMatchChainAndCurrency(
+                  chain,
+                  currencyAbbreviation,
+                ),
+              )
+              .map(account => ({
+                ...account,
+                wallets: account.wallets?.filter(wallet =>
+                  matchesChainAndCurrency(wallet, chain, currencyAbbreviation),
+                ),
+                assetsByChain: account.assetsByChain?.map(chainAssets => ({
+                  ...chainAssets,
+                  chainAssetsList: chainAssets.chainAssetsList.filter(asset =>
+                    matchesChainAndCurrency(asset, chain, currencyAbbreviation),
+                  ),
+                })),
+              })),
+          };
+        }),
     }),
     {} as {[key: string]: any[]},
   );
@@ -378,7 +431,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
             <>
               <SectionHeader>{t('Receiving Addresses')}</SectionHeader>
               {unusedActiveWallets.map(
-                ({currencyAbbreviation: coin, chain}) => {
+                ({currencyAbbreviation: coin, chain, chainName}) => {
                   return (
                     <TouchableOpacity
                       activeOpacity={ActiveOpacity}
@@ -394,9 +447,14 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
                           chain={chain}
                           size={25}
                         />
-                        <AddressItemText>
+                        <AddressItemText
+                          ellipsizeMode={'tail'}
+                          numberOfLines={1}>
                           Select a{' '}
-                          <WalletName>{coin.toUpperCase()} Wallet</WalletName>
+                          <WalletName>
+                            {coin.toUpperCase()} Wallet
+                            {IsEVMChain(chain) ? ` (${chainName})` : ''}
+                          </WalletName>
                         </AddressItemText>
                         <ChevronRight />
                       </AddressItem>
@@ -512,6 +570,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
           shadowOpacity: 0.1,
           shadowRadius: 12,
           elevation: 5,
+          marginBottom: -10,
         }}>
         <Button
           onPress={() =>

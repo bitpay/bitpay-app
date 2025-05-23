@@ -32,7 +32,6 @@ const getTrackingAuthorizedByUser =
 export const Analytics = (() => {
   let _preInitQueue: Array<() => void> = [];
   let _isInitialized = false;
-  let _isTrackingAuthorized = false;
 
   const guard = (cb: () => void) => {
     if (!APP_ANALYTICS_ENABLED) {
@@ -60,7 +59,7 @@ export const Analytics = (() => {
       }
 
       if (APP_ANALYTICS_ENABLED) {
-        _isTrackingAuthorized = await dispatch(getTrackingAuthorizedByUser());
+        await dispatch(getTrackingAuthorizedByUser());
 
         await BrazeWrapper.init()
           .then(() => {
@@ -77,7 +76,7 @@ export const Analytics = (() => {
 
         // Force App Version
         const superProperties = {app_version_string: APP_VERSION};
-        await MixpanelWrapper.init(!_isTrackingAuthorized, superProperties)
+        await MixpanelWrapper.init(false, superProperties)
           .then(() => {
             dispatch(
               LogActions.debug('Successfully initialized Mixpanel SDK.'),
@@ -127,13 +126,8 @@ export const Analytics = (() => {
         traits?: Record<string, any> | undefined,
       ): Effect<void> =>
       () => {
-        if (_isTrackingAuthorized) {
-          BrazeWrapper.identify(userEid, traits);
-          MixpanelWrapper.identify(userEid);
-        } else {
-          // require EID for functionality
-          BrazeWrapper.identify(userEid);
-        }
+        BrazeWrapper.identify(userEid, traits);
+        MixpanelWrapper.identify(userEid);
       },
 
     /**
@@ -151,11 +145,9 @@ export const Analytics = (() => {
       ): Effect<any> =>
       () => {
         guard(async () => {
-          if (_isTrackingAuthorized) {
-            BrazeWrapper.screen(name, properties);
-            MixpanelWrapper.screen(name, properties);
-            AppsFlyerWrapper.track(name, properties);
-          }
+          BrazeWrapper.screen(name, properties);
+          MixpanelWrapper.screen(name, properties);
+          AppsFlyerWrapper.track(name, properties);
 
           onComplete?.();
         });
@@ -178,11 +170,31 @@ export const Analytics = (() => {
         guard(async () => {
           const eventName = `BitPay App - ${event}`;
 
-          if (_isTrackingAuthorized) {
-            BrazeWrapper.track(eventName, properties);
-            MixpanelWrapper.track(eventName, properties);
-            AppsFlyerWrapper.track(eventName, properties);
-          }
+          BrazeWrapper.track(eventName, properties);
+          MixpanelWrapper.track(eventName, properties);
+          AppsFlyerWrapper.track(eventName, properties);
+
+          onComplete?.();
+        });
+      },
+
+    /**
+     * Installed Application Event
+     *
+     * @param properties An object of properties for the screen view event.
+     * @param onComplete A function to run once the screen event has been successfully sent.
+     */
+    installedApp:
+      (
+        properties: Record<string, any> = {},
+        onComplete?: () => void,
+      ): Effect<any> =>
+      () => {
+        guard(async () => {
+          const eventName = 'Application Installed';
+          BrazeWrapper.track(eventName, properties);
+          MixpanelWrapper.track(eventName, properties);
+          AppsFlyerWrapper.track(eventName, properties);
 
           onComplete?.();
         });

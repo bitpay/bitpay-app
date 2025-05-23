@@ -31,7 +31,8 @@ import {
 } from '../../../../components/styled/Containers';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Back from '../../../../components/back/Back';
-import {TouchableOpacity, View} from 'react-native';
+import {View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {DetailsList} from './confirm/Shared';
 import Button from '../../../../components/button/Button';
 import {
@@ -48,6 +49,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
 
 const CIRCLE_SIZE = 20;
+const CIRCLE_ACTIVE_SIZE = 26;
 
 export type TransactionSpeedParamList = {
   feeLevel: string;
@@ -107,6 +109,9 @@ export const FeeLevelStepContainer = styled.View<{length: number}>`
 
 export const FeeLevelStep = styled.View<{isLast?: boolean}>`
   flex-direction: row;
+  align-items: center;
+  display: flex;
+  height: 40px;
 `;
 
 export const FeeLevelStepCircle = styled.Pressable<{
@@ -115,12 +120,13 @@ export const FeeLevelStepCircle = styled.Pressable<{
   isDisabled?: boolean;
 }>`
   background-color: ${({backgroundColor}) => backgroundColor};
-  width: ${CIRCLE_SIZE}px;
-  height: ${CIRCLE_SIZE}px;
+  width: ${({isActive}) =>
+    isActive ? `${CIRCLE_ACTIVE_SIZE}px` : `${CIRCLE_SIZE}px`};
+  height: ${({isActive}) =>
+    isActive ? `${CIRCLE_ACTIVE_SIZE}px` : `${CIRCLE_SIZE}px`};
   border-width: ${({isActive}) => (isActive ? '3px' : 0)};
   border-color: ${White};
   border-radius: 50px;
-  transform: ${({isActive}) => (isActive ? 'scale(1.3)' : 'scale(1)')};
   z-index: 1;
   opacity: ${({isDisabled}) => (isDisabled ? 0.7 : 1)};
 `;
@@ -638,7 +644,10 @@ const TransactionLevel = ({
                 </DetailsList>
 
                 <CtaContainer>
-                  <Button onPress={() => onApply()} disabled={disableApply}>
+                  <Button
+                    touchableLibrary={'react-native'}
+                    onPress={() => onApply()}
+                    disabled={disableApply}>
                     {t('Apply')}
                   </Button>
                 </CtaContainer>

@@ -15,11 +15,8 @@ import Confirm, {
 } from '../../../wallet/screens/send/confirm/GiftCardConfirm';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import GiftCardDeeplinkScreen, {
   GiftCardDeeplinkScreenParamList,
 } from './GiftCardDeeplink';
@@ -72,16 +69,9 @@ const GiftCardGroup: React.FC<GiftCardProps> = ({GiftCard}) => {
   const {t} = useTranslation();
   return (
     <GiftCard.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <GiftCard.Screen
         name={GiftCardScreens.BUY_GIFT_CARD}

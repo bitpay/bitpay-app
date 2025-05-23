@@ -1,7 +1,8 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {ScrollView, TouchableOpacity, View} from 'react-native';
+import {ScrollView, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {Color, SvgProps} from 'react-native-svg';
 import {useDispatch, useSelector} from 'react-redux';
 import BitPayBIcon from '../../../../../assets/img/logos/bitpay-b-blue.svg';

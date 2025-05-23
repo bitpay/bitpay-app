@@ -19,7 +19,7 @@ const TabsHeader = styled.View`
   padding-right: ${ScreenGutter};
 `;
 
-const Tabs: React.VFC<TabsProps> = props => {
+const Tabs: React.FC<TabsProps> = props => {
   const {tabs} = props;
   const [activeTabIdx, setActiveIdx] = useState(0);
   const defaultLanguage = useAppSelector(({APP}) => APP.defaultLanguage);

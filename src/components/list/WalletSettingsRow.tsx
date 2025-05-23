@@ -1,86 +1,69 @@
 import React, {memo, ReactElement} from 'react';
-import styled, {useTheme} from 'styled-components/native';
-import {BaseText, H7} from '../styled/Text';
-import {StyleProp, TextStyle} from 'react-native';
+import styled from 'styled-components/native';
+import {H5, H7} from '../styled/Text';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {buildTestBadge, buildUncompleteBadge} from './WalletRow';
-import {Column, HiddenContainer} from '../styled/Containers';
-import NestedArrowIcon from '../nested-arrow/NestedArrow';
+import {
+  ActiveOpacity,
+  Column,
+  CurrencyImageContainer,
+  HiddenContainer,
+} from '../styled/Containers';
 import {useTranslation} from 'react-i18next';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export interface WalletSettingsRowProps {
-  id: string;
-  key: string;
   img: string | ((props: any) => ReactElement);
   badgeImg: string | ((props: any) => ReactElement) | undefined;
   currencyName: string;
-  chain: string;
   isToken?: boolean;
-  network: string;
   hideWallet?: boolean;
+  hideWalletByAccount?: boolean;
   walletName?: string;
-  isComplete?: boolean;
+  onPress: () => void;
 }
-
-const Row = styled.View`
-  flex-direction: row;
-  padding: 8px 0;
-  align-items: center;
-`;
-
-const CurrencyName = styled(BaseText)`
-  font-weight: 500;
-  font-size: 18px;
-  margin-left: 15px;
-`;
-
-const NestedArrowContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-`;
 
 const HiddenColumn = styled(Column)`
   align-items: flex-end;
+`;
+
+const WalletSettingsContainer = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+  display: flex;
+  padding: 8px 0px;
+  gap: 8px;
 `;
 
 const WalletSettingsRow = ({
   img,
   badgeImg,
   currencyName,
-  chain,
   isToken,
-  network,
   hideWallet,
+  hideWalletByAccount,
   walletName,
-  isComplete,
+  onPress,
 }: WalletSettingsRowProps) => {
   const {t} = useTranslation();
-  const theme = useTheme();
-  const textStyle: StyleProp<TextStyle> = {color: theme.colors.text};
   return (
-    <Row>
-      {isToken && (
-        <NestedArrowContainer>
-          <NestedArrowIcon />
-        </NestedArrowContainer>
-      )}
-      <CurrencyImage img={img} badgeUri={badgeImg} size={40} />
-      <CurrencyName style={textStyle}>
+    <WalletSettingsContainer
+      onPress={() => onPress()}
+      activeOpacity={ActiveOpacity}>
+      <CurrencyImageContainer style={{height: 40, width: 40}}>
+        <CurrencyImage img={img} badgeUri={badgeImg} size={40} />
+      </CurrencyImageContainer>
+      <H5 ellipsizeMode="tail" numberOfLines={1}>
         {walletName || currencyName} {isToken}
-      </CurrencyName>
-      {buildTestBadge(network, chain, isToken)}
+      </H5>
 
-      {buildUncompleteBadge(isComplete)}
-
-      {hideWallet ? (
+      {hideWallet || hideWalletByAccount ? (
         <HiddenColumn>
           <HiddenContainer>
             <H7>{t('Hidden')}</H7>
           </HiddenContainer>
         </HiddenColumn>
       ) : null}
-    </Row>
+    </WalletSettingsContainer>
   );
 };
 

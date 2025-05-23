@@ -1,10 +1,13 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import moment from 'moment';
 import styled from 'styled-components/native';
 import {CoinbaseTransactionProps} from '../../../api/coinbase/coinbase.types';
-import {ScreenGutter} from '../../../components/styled/Containers';
+import {
+  ScreenGutter,
+  ActiveOpacity,
+} from '../../../components/styled/Containers';
 import {BaseText, TextAlign} from '../../../components/styled/Text';
-import {SlateDark, White} from '../../../styles/colors';
+import {SlateDark, White, NeutralSlate} from '../../../styles/colors';
 import {Hr} from '../../../components/styled/Containers';
 
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -13,6 +16,12 @@ import CoinbaseIcon from '../components/CoinbaseIcon';
 import {View} from 'react-native';
 import {formatCryptoAddress} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
+import CopySvg from '../../../../assets/img/copy.svg';
+import CopiedSvg from '../../../../assets/img/copied-success.svg';
+import haptic from '../../../components/haptic-feedback/haptic';
+import Clipboard from '@react-native-clipboard/clipboard';
+import {parseTransactionTitle} from './CoinbaseAccount';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const TransactionContainer = styled.SafeAreaView`
   flex: 1;
@@ -34,12 +43,7 @@ const HeaderTitle = styled.Text`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-size: 24px;
   font-weight: bold;
-`;
-
-const HeaderSubtitle = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 16px;
-  margin-top: 8px;
+  text-transform: capitalize;
 `;
 
 const HeaderIcon = styled.View`
@@ -67,6 +71,12 @@ const DetailInfo = styled(TextAlign)`
   font-weight: 400;
 `;
 
+const HashText = styled(BaseText)`
+  font-size: 16px;
+  color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
+  padding: 0 20px 0 10px;
+`;
+
 const Item = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
@@ -85,6 +95,16 @@ const Title = styled(BaseText)`
   border-bottom-width: 2px;
 `;
 
+const CopyToClipboard = styled(TouchableOpacity)`
+  width: 80%;
+  padding: 0 10px;
+  flex-direction: row;
+`;
+
+const CopyImgContainer = styled.View`
+  justify-content: center;
+`;
+
 export type CoinbaseTransactionScreenParamList = {
   tx: CoinbaseTransactionProps;
 };
@@ -94,6 +114,7 @@ const CoinbaseTransaction = ({
 }: NativeStackScreenProps<CoinbaseGroupParamList, 'CoinbaseTransaction'>) => {
   const {t} = useTranslation();
   const {tx} = route.params;
+  const [copied, setCopied] = useState(false);
 
   const parseTime = (timestamp?: string) => {
     if (!timestamp) {
@@ -106,18 +127,31 @@ const CoinbaseTransaction = ({
     return CoinbaseIcon(tx);
   };
 
+  const copyToClipboard = (data: string) => {
+    haptic('impactLight');
+    if (!copied) {
+      Clipboard.setString(data);
+      setCopied(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   return (
     <TransactionContainer>
       <TransactionScrollContainer>
         <HeaderContainer>
           <View>
-            <HeaderTitle>{tx.details.title}</HeaderTitle>
-            <HeaderSubtitle
-              numberOfLines={1}
-              style={{width: '90%'}}
-              ellipsizeMode={'tail'}>
-              {tx.details.subtitle}
-            </HeaderSubtitle>
+            <HeaderTitle>{parseTransactionTitle(tx)}</HeaderTitle>
           </View>
           <HeaderIcon>{getIcon()}</HeaderIcon>
         </HeaderContainer>
@@ -149,6 +183,28 @@ const CoinbaseTransaction = ({
               <DetailInfo align="right">{parseTime(tx.created_at)}</DetailInfo>
             </Detail>
             <Hr />
+            {tx.network?.hash ? (
+              <>
+                <Detail>
+                  <Item>{t('Hash')}</Item>
+                  <CopyToClipboard
+                    onPress={() => copyToClipboard(tx.network.hash)}
+                    activeOpacity={ActiveOpacity}>
+                    <HashText numberOfLines={1} ellipsizeMode={'tail'}>
+                      {tx.network.hash}
+                    </HashText>
+                    <CopyImgContainer>
+                      {!copied ? (
+                        <CopySvg width={17} />
+                      ) : (
+                        <CopiedSvg width={17} />
+                      )}
+                    </CopyImgContainer>
+                  </CopyToClipboard>
+                </Detail>
+                <Hr />
+              </>
+            ) : null}
             {tx.to && tx.to.address ? (
               <>
                 <Detail>

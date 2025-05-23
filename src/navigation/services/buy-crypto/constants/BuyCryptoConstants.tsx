@@ -1,13 +1,9 @@
 import React from 'react';
 import {Platform} from 'react-native';
-
-// Images
-import ApplePayIcon from '../../../../../assets/img/services/payment-methods/apple-pay-logo.svg';
-import BankIcon from '../../../../../assets/img/services/payment-methods/icon-bank.svg';
-import CreditCardIcon from '../../../../../assets/img/services/payment-methods/icon-creditcard.svg';
-import DebitCardIcon from '../../../../../assets/img/services/payment-methods/icon-debitcard.svg';
+import PaymentMethodIcon from '../../../../components/icons/payment-methods/payment-methods';
 import {
   countriesWithACH,
+  countriesWithPIX,
   countriesWithSEPA,
 } from '../../constants/PaymentMethodsConstants';
 import {BuyCryptoExchangeKey} from '../utils/buy-crypto-utils';
@@ -17,14 +13,20 @@ export type PaymentMethodKey =
   | 'applePay'
   | 'creditCard'
   | 'debitCard'
+  | 'googlePay'
   | 'sepaBankTransfer'
-  | 'other';
+  | 'other'
+  | 'paypal'
+  | 'pisp'
+  | 'pix'
+  | 'venmo';
 
 export type PaymentMethods = {
   [key in PaymentMethodKey]: PaymentMethod;
 };
 
 export interface PaymentMethod {
+  order: number;
   label: string;
   method: PaymentMethodKey;
   imgSrc: JSX.Element;
@@ -37,9 +39,10 @@ export interface PaymentMethod {
 
 export const PaymentMethodsAvailable: PaymentMethods = {
   ach: {
+    order: 6,
     label: 'ACH Bank Transfer',
     method: 'ach',
-    imgSrc: <BankIcon width={40} height={40} />,
+    imgSrc: <PaymentMethodIcon paymentMethodId="ach" width={40} height={40} />,
     supportedExchanges: {
       banxa: false,
       moonpay: false,
@@ -52,23 +55,29 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   applePay: {
+    order: 2,
     label: 'Apple Pay',
     method: 'applePay',
-    imgSrc: <ApplePayIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="applePay" width={40} height={40} />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,
       ramp: true,
-      sardine: false,
+      sardine: true,
       simplex: true,
       transak: true,
     },
     enabled: Platform.OS === 'ios',
   },
   creditCard: {
+    order: 5,
     label: 'Credit Card',
     method: 'creditCard',
-    imgSrc: <CreditCardIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="creditCard" width={40} height={40} />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,
@@ -80,9 +89,12 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   debitCard: {
+    order: 1,
     label: 'Debit Card',
     method: 'debitCard',
-    imgSrc: <DebitCardIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="debitCard" width={40} height={40} />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,
@@ -93,10 +105,34 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     },
     enabled: true,
   },
+  googlePay: {
+    order: 8,
+    label: 'Google Pay',
+    method: 'googlePay',
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="googlePay" width={60} height={60} />
+    ),
+    supportedExchanges: {
+      banxa: false,
+      moonpay: false,
+      ramp: false,
+      sardine: false,
+      simplex: false,
+      transak: false,
+    },
+    enabled: false,
+  },
   sepaBankTransfer: {
+    order: 7,
     label: 'SEPA Bank Transfer',
     method: 'sepaBankTransfer',
-    imgSrc: <BankIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon
+        paymentMethodId="sepaBankTransfer"
+        width={40}
+        height={40}
+      />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,
@@ -109,9 +145,12 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     enabled: true,
   },
   other: {
+    order: 11,
     label: 'Other',
     method: 'other',
-    imgSrc: <CreditCardIcon width={40} height={40} />,
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="other" width={40} height={40} />
+    ),
     supportedExchanges: {
       banxa: true,
       moonpay: true,
@@ -119,6 +158,74 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       sardine: true,
       simplex: true,
       transak: true,
+    },
+    enabled: true,
+  },
+  paypal: {
+    order: 3,
+    label: 'PayPal',
+    method: 'paypal',
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="paypal" width={80} height={80} />
+    ),
+    supportedExchanges: {
+      banxa: false,
+      moonpay: true,
+      ramp: false,
+      sardine: false,
+      simplex: false,
+      transak: false,
+    },
+    enabled: true,
+  },
+  pisp: {
+    order: 9,
+    label: 'PISP',
+    method: 'pisp',
+    imgSrc: <PaymentMethodIcon paymentMethodId="pisp" width={40} height={40} />,
+    supportedExchanges: {
+      banxa: false,
+      moonpay: false,
+      ramp: true,
+      sardine: false,
+      simplex: false,
+      transak: false,
+    },
+    supportedCountries: countriesWithSEPA, // same as SEPA
+    enabled: true, // Only if fiatCurrency === GBP | EUR
+  },
+  pix: {
+    order: 10,
+    label: 'Pix',
+    method: 'pix',
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="pix" width={100} height={100} />
+    ),
+    supportedExchanges: {
+      banxa: false,
+      moonpay: false,
+      ramp: true,
+      sardine: false,
+      simplex: false,
+      transak: false,
+    },
+    supportedCountries: countriesWithPIX,
+    enabled: true, // Only if fiatCurrency === BRL
+  },
+  venmo: {
+    order: 4,
+    label: 'Venmo',
+    method: 'venmo',
+    imgSrc: (
+      <PaymentMethodIcon paymentMethodId="venmo" width={80} height={80} />
+    ),
+    supportedExchanges: {
+      banxa: false,
+      moonpay: true,
+      ramp: false,
+      sardine: false,
+      simplex: false,
+      transak: false,
     },
     enabled: true,
   },

@@ -15,9 +15,19 @@ import {
 import haptic from '../../../components/haptic-feedback/haptic';
 import MultisigOptions from './MultisigOptions';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {startCreateKey} from '../../../store/wallet/effects';
+import {
+  dismissOnGoingProcessModal,
+  setHomeCarouselConfig,
+  showBottomNotificationModal,
+} from '../../../store/app/app.actions';
+import {sleep} from '../../../utils/helper-methods';
+import {getBaseKeyCreationCoinsAndTokens} from '../../../constants/currencies';
+import {LogActions} from '../../../store/log';
 
 type CreationOptionsScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -35,6 +45,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
@@ -50,22 +61,40 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       id: 'basic',
       title: t('New Key'),
       description: t(
-        'Add coins like Bitcoin and Dogecoin and also tokens like USDC and APE',
+        'Create a fresh key with a 12-word passphrase to secure your wallets and accounts',
       ),
-      cta: () => {
-        dispatch(
-          Analytics.track('Clicked Create New Key', {
-            context: 'CreationOptions',
-          }),
-        );
-        navigation.navigate('CurrencySelection', {context: 'createNewKey'});
+      cta: async () => {
+        try {
+          const context = 'createNewKey';
+          dispatch(
+            Analytics.track('Clicked Create New Key', {
+              context: 'CreationOptions',
+            }),
+          );
+          await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+          const createdKey = await dispatch(
+            startCreateKey(getBaseKeyCreationCoinsAndTokens()),
+          );
+
+          dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
+
+          navigation.navigate('BackupKey', {context, key: createdKey});
+          dispatch(dismissOnGoingProcessModal());
+        } catch (err: any) {
+          const errstring =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(LogActions.error(`Error creating key: ${errstring}`));
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(500);
+          showErrorModal(errstring);
+        }
       },
     },
     {
       id: 'import',
       title: t('Import Key'),
       description: t(
-        'Use an existing recovery phrase to import an existing wallet',
+        'Recover an existing key by entering your 12-word passphrase to access your wallets and accounts',
       ),
       cta: () => {
         dispatch(
@@ -85,6 +114,25 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       cta: () => setShowMultisigOptions(true),
     },
   ];
+
+  const showErrorModal = (e: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Something went wrong'),
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('OK'),
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
   return (
     <>
       <OptionContainer>

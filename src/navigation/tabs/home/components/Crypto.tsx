@@ -36,7 +36,8 @@ import {
   HomeSectionTitle,
   SectionHeaderContainer,
 } from './Styled';
-import {TouchableOpacity, View} from 'react-native';
+import {View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {Feather} from '../../../../styles/colors';
@@ -47,7 +48,7 @@ import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
+//import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 import {AppActions} from '../../../../store/app';
 
 const CryptoContainer = styled.View`
@@ -178,7 +179,9 @@ export const createHomeCardList = ({
         totalBalanceLastDay,
       );
 
-      wallets = wallets.filter(wallet => !wallet.hideWallet);
+      wallets = wallets.filter(
+        wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
+      );
 
       return {
         id: key.id,
@@ -221,7 +224,7 @@ export const createHomeCardList = ({
 
   defaults.push({id: 'createWallet', component: <CreateWallet />});
 
-  defaults.push({id: 'connectLedger', component: <ConnectLedgerNanoXCard />});
+  // defaults.push({id: 'connectLedger', component: <ConnectLedgerNanoXCard />});
 
   if (hasCoinbase) {
     list.push({
@@ -338,13 +341,13 @@ const Crypto = () => {
                   ? 'Coinbase'
                   : t('Connect your Coinbase account')}
               </Button>
-              <Button
+              {/*<Button
                 buttonStyle={'secondary'}
                 onPress={() => {
                   dispatch(AppActions.importLedgerModalToggled(true));
                 }}>
                 {t('Connect your Ledger Nano X')}
-              </Button>
+                </Button> */}
             </ButtonContainer>
           </Column>
         </SectionHeaderContainer>

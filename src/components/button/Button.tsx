@@ -13,6 +13,8 @@ import {
   Action,
   Air,
   Caution,
+  Caution50,
+  Caution60,
   Disabled,
   DisabledDark,
   DisabledText,
@@ -31,6 +33,10 @@ import * as Icons from './ButtonIcons';
 import ButtonOverlay from './ButtonOverlay';
 import ButtonSpinner from './ButtonSpinner';
 import {StyleProp, ViewStyle} from 'react-native';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
 export type ButtonStyle =
@@ -46,6 +52,7 @@ interface ButtonProps extends BaseButtonProps {
   buttonType?: ButtonType;
   buttonOutline?: boolean;
   onPress?: () => any;
+  onPressDisabled?: () => any;
   disabled?: boolean;
   debounceTime?: number;
   height?: number;
@@ -53,6 +60,7 @@ interface ButtonProps extends BaseButtonProps {
   style?: StyleProp<ViewStyle>;
   action?: boolean;
   accessibilityLabel?: string;
+  touchableLibrary?: TouchableOpacityProps['touchableLibrary'];
 }
 
 interface ButtonOptionProps {
@@ -77,7 +85,7 @@ const ButtonBaseText = styled(BaseText)`
   text-align: center;
 `;
 
-const ButtonContainer = styled.TouchableOpacity<ButtonProps>`
+const ButtonContainer = styled(TouchableOpacity)<ButtonProps>`
   border-radius: ${({buttonType}) =>
     buttonType === 'link'
       ? LINK_RADIUS
@@ -89,23 +97,27 @@ const ButtonContainer = styled.TouchableOpacity<ButtonProps>`
 `;
 
 const ButtonContent = styled.View<ButtonOptionProps>`
-  background: ${({danger, disabled, theme, secondary}) => {
-    if (secondary) {
-      return 'transparent';
-    }
-
+  background: ${({disabled, theme, outline, danger, secondary}) => {
     if (disabled) {
       return theme.dark ? DisabledDark : Disabled;
     }
 
+    if (secondary) {
+      return 'transparent';
+    }
+
     if (danger) {
-      return theme.dark ? '#8B1C1C' : '#FFCDCD';
+      if (outline) {
+        return 'transparent';
+      } else {
+        return theme.dark ? Caution50 : Caution60;
+      }
     }
 
     return Action;
   }};
   border: 2px solid
-    ${({danger, disabled, secondary, theme}) => {
+    ${({danger, disabled, secondary, outline, theme}) => {
       if (disabled) {
         return theme.dark ? DisabledDark : Disabled;
       }
@@ -115,7 +127,11 @@ const ButtonContent = styled.View<ButtonOptionProps>`
       }
 
       if (danger) {
-        return theme.dark ? '#8B1C1C' : '#FFCDCD';
+        if (outline) {
+          return theme.dark ? Caution50 : Caution60;
+        } else {
+          return 'transparent';
+        }
       }
 
       return Action;
@@ -129,7 +145,7 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
   font-size: 18px;
   font-weight: 500;
 
-  color: ${({danger, disabled, secondary, theme}) => {
+  color: ${({danger, disabled, secondary, outline, theme}) => {
     if (disabled) {
       return theme.dark ? DisabledTextDark : DisabledText;
     }
@@ -139,7 +155,11 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
     }
 
     if (danger) {
-      return theme.dark ? White : '#8B1C1C';
+      if (outline) {
+        return theme.dark ? Caution50 : Caution60;
+      } else {
+        return theme.dark ? Caution60 : White;
+      }
     }
 
     return White;
@@ -147,30 +167,62 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
 `;
 
 const PillContent = styled.View<ButtonOptionProps>`
-  background: ${({secondary, cancel, theme, action}) => {
+  background: ${({
+    secondary,
+    cancel,
+    theme,
+    action,
+    outline,
+    danger,
+    disabled,
+  }) => {
     if (secondary) {
-      return 'transparent';
+      if (outline) {
+        return 'transparent';
+      } else {
+        return theme?.dark ? Midnight : Air;
+      }
     }
 
     if (cancel) {
       return theme?.dark ? LightBlack : NeutralSlate;
     }
 
+    if (danger) {
+      if (outline) {
+        return 'transparent';
+      } else {
+        return theme.dark ? Caution50 : Caution60;
+      }
+    }
+
     if (action) {
-      return Action;
+      if (disabled) {
+        return theme.dark ? DisabledDark : Disabled;
+      } else {
+        return Action;
+      }
     }
 
     return theme?.dark ? Midnight : Air;
   }};
   border-style: solid;
   border-width: 1px;
-  border-color: ${({secondary, outline, cancel, theme}) => {
-    if (outline) {
-      return theme?.dark ? White : Action;
+  border-color: ${({secondary, outline, cancel, danger, theme}) => {
+    if (danger) {
+      if (outline) {
+        return theme.dark ? Caution50 : Caution60;
+      } else {
+        return 'transparent';
+      }
     }
 
     if (secondary) {
-      return 'transparent';
+      if (outline) {
+        return theme?.dark ? White : Action;
+      } else {
+        return 'transparent';
+      }
     }
 
     if (cancel) {
@@ -189,9 +241,9 @@ const PillText = styled(BaseText)<ButtonOptionProps>`
   line-height: 22.03px;
   text-align: center;
 
-  color: ${({disabled, cancel, theme, action}) => {
+  color: ${({disabled, cancel, theme, danger, outline, action}) => {
     if (disabled) {
-      return DisabledDark;
+      return theme.dark ? DisabledTextDark : DisabledText;
     }
 
     if (cancel) {
@@ -200,6 +252,14 @@ const PillText = styled(BaseText)<ButtonOptionProps>`
 
     if (action) {
       return White;
+    }
+
+    if (danger) {
+      if (outline) {
+        return theme.dark ? Caution50 : Caution60;
+      } else {
+        return theme.dark ? Caution60 : White;
+      }
     }
 
     return theme?.dark ? White : Action;
@@ -216,12 +276,12 @@ const LinkText = styled(ButtonBaseText)<ButtonOptionProps>`
       return DisabledDark;
     }
 
-    if (theme?.dark) {
-      return theme.colors.text;
+    if (danger) {
+      return theme.dark ? Caution50 : Caution60;
     }
 
-    if (danger) {
-      return Caution;
+    if (theme?.dark) {
+      return theme.colors.text;
     }
 
     return Action;
@@ -233,6 +293,7 @@ const LinkText = styled(ButtonBaseText)<ButtonOptionProps>`
 const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
   const {
     onPress,
+    onPressDisabled,
     buttonStyle = 'primary',
     buttonType = 'button',
     buttonOutline,
@@ -244,6 +305,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     style,
     action,
     accessibilityLabel,
+    touchableLibrary,
   } = props;
   const secondary = buttonStyle === 'secondary';
   const outline = buttonOutline;
@@ -288,8 +350,16 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     Haptic('impactLight');
     onPress();
   };
-  const onPressRef = useRef(_onPress);
-  onPressRef.current = _onPress;
+  const _onPressDisabled = () => {
+    if (!onPressDisabled) {
+      return;
+    }
+
+    Haptic('impactLight');
+    onPressDisabled();
+  };
+  const onPressRef = useRef(disabled ? _onPressDisabled : _onPress);
+  onPressRef.current = disabled ? _onPressDisabled : _onPress;
 
   const debouncedOnPress = useMemo(
     () =>
@@ -308,6 +378,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
 
   return (
     <ButtonContainer
+      touchableLibrary={touchableLibrary || 'react-native-gesture-handler'}
       accessibilityLabel={accessibilityLabel}
       style={style as any}
       buttonType={buttonType}
@@ -328,6 +399,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
             cancel={cancel}
             danger={danger}
             disabled={disabled}
+            outline={outline}
             action={action}>
             {children}
           </ButtonTypeText>

@@ -8,6 +8,7 @@ import {
   useRoute,
   useTheme,
 } from '@react-navigation/native';
+import {StackActions} from '@react-navigation/core';
 import {sleep} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
@@ -165,7 +166,7 @@ const CoinbaseSettings = () => {
     await dispatch(coinbaseDisconnectAccount());
     dispatch(Analytics.track('Coinbase Disconnected', {}));
     if (fromScreen === 'CoinbaseDashboard') {
-      navigation.navigate('Tabs', {screen: 'Home'});
+      navigation.dispatch(StackActions.popToTop());
     } else {
       // From Settings Tab
       navigation.goBack();
@@ -273,7 +274,10 @@ const CoinbaseSettings = () => {
         </Details>
       </SettingsScrollContainer>
       <ButtonContainer>
-        <Button onPress={() => confirmDelete()} buttonStyle={'secondary'}>
+        <Button
+          onPress={() => confirmDelete()}
+          buttonStyle={'danger'}
+          buttonOutline={true}>
           {t('Sign out')}
         </Button>
       </ButtonContainer>

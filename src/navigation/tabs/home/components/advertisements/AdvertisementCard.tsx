@@ -1,7 +1,7 @@
 import {useFocusEffect, useLinkTo} from '@react-navigation/native';
 import React from 'react';
 import {ImageStyle, Linking, StyleProp} from 'react-native';
-import Braze, {ContentCard} from 'react-native-appboy-sdk';
+import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import {SvgProps} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
@@ -24,6 +24,7 @@ import {
 } from '../../../../../utils/braze';
 import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface AdvertisementCardProps {
   contentCard: ContentCard;
@@ -34,7 +35,7 @@ const isSvgComponent = (src: any): src is React.FC<SvgProps> => {
   return src && typeof src === 'function';
 };
 
-const AdvertisementCardContainer = styled.TouchableOpacity`
+const AdvertisementCardContainer = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
   border-radius: 12px;
   flex-direction: column;

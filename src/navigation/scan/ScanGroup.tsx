@@ -1,11 +1,8 @@
 import React from 'react';
 import ScanRoot from './screens/Scan';
 import {Root} from '../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
+import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface ScanProps {
   Scan: typeof Root;
@@ -21,16 +18,9 @@ export type ScanGroupParamList = {
 const ScanGroup: React.FC<ScanProps> = ({Scan}) => {
   return (
     <Scan.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Scan.Screen name={ScanScreens.Root} component={ScanRoot} />
     </Scan.Group>

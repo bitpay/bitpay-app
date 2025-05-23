@@ -6,11 +6,8 @@ import ContactsAdd from './screens/ContactsAdd';
 import {ContactRowProps} from '../../../components/list/ContactRow';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
+import HeaderBackButton from '../../../components/back/HeaderBackButton';
 
 interface ContactsProps {
   Contacts: typeof Root;
@@ -38,16 +35,9 @@ const ContactsGroup: React.FC<ContactsProps> = ({Contacts}) => {
   const {t} = useTranslation();
   return (
     <Contacts.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <Contacts.Screen name={ContactsScreens.ROOT} component={ContactsRoot} />
       <Contacts.Screen

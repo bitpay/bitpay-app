@@ -29,6 +29,7 @@ import {useTranslation} from 'react-i18next';
 import {APP_VERSION} from '../../../../../constants/config';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {AboutScreens, AboutStackParamList} from '../AboutGroup';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export type FeedbackRateType = 'love' | 'ok' | 'disappointed' | 'default';
 
@@ -81,7 +82,7 @@ const EmojiActionContainer = styled.View`
   justify-content: space-between;
 `;
 
-const EmojiAction = styled.TouchableOpacity`
+const EmojiAction = styled(TouchableOpacity)`
   width: 44px;
   height: 44px;
 `;

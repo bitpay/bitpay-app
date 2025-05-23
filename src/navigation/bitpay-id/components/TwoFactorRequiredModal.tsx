@@ -12,6 +12,7 @@ import {
 import {useTranslation} from 'react-i18next';
 import {H4, Paragraph, TextAlign} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
+import {View} from 'react-native';
 
 const ModalContainer = styled.View`
   justify-content: center;
@@ -48,40 +49,45 @@ const TwoFactorRequiredModal = ({
   };
 
   return (
-    <Modal
-      isVisible={isVisible}
-      backdropOpacity={theme.dark ? 0.8 : 0.6}
-      backdropColor={theme.dark ? LightBlack : Black}
-      animationIn={'fadeInUp'}
-      animationOut={'fadeOutDown'}
-      backdropTransitionOutTiming={0}
-      hideModalContentWhileAnimating={true}
-      useNativeDriverForBackdrop={true}
-      useNativeDriver={true}
-      onBackdropPress={() => close()}
-      style={{
-        alignItems: 'center',
-      }}>
-      <ModalContainer>
-        <TextAlign align="center">
-          <H4>{t('Enable Two-Factor Authentication')}</H4>
-        </TextAlign>
-        <Description>
-          {t(
-            'Two-Factor Authentication must be enabled before you can receive crypto to your email address.',
-          )}
-        </Description>
-        <Button onPress={() => onClose(true)}>
-          {t('Set Up Two-Factor Authentication')}
-        </Button>
-        <SecondaryAction
-          buttonType={'link'}
-          onPress={() => onClose()}
-          height={40}>
-          {t('Do this later')}
-        </SecondaryAction>
-      </ModalContainer>
-    </Modal>
+    <View>
+      <Modal
+        isVisible={isVisible}
+        backdropOpacity={theme.dark ? 0.8 : 0.6}
+        backdropColor={theme.dark ? LightBlack : Black}
+        animationIn={'fadeInUp'}
+        animationOut={'fadeOutDown'}
+        backdropTransitionOutTiming={0}
+        hideModalContentWhileAnimating={true}
+        useNativeDriverForBackdrop={true}
+        useNativeDriver={true}
+        onBackdropPress={() => close()}
+        style={{
+          alignItems: 'center',
+        }}>
+        <ModalContainer>
+          <TextAlign align="center">
+            <H4>{t('Enable Two-Factor Authentication')}</H4>
+          </TextAlign>
+          <Description>
+            {t(
+              'Two-Factor Authentication must be enabled before you can receive crypto to your email address.',
+            )}
+          </Description>
+          <Button
+            touchableLibrary={'react-native'}
+            onPress={() => onClose(true)}>
+            {t('Set Up Two-Factor Authentication')}
+          </Button>
+          <SecondaryAction
+            touchableLibrary={'react-native'}
+            buttonType={'link'}
+            onPress={() => onClose()}
+            height={40}>
+            {t('Do this later')}
+          </SecondaryAction>
+        </ModalContainer>
+      </Modal>
+    </View>
   );
 };
 

@@ -150,7 +150,7 @@ const AltCurrencySettings = () => {
   };
 
   const renderItem = useCallback(
-    ({item}) => {
+    ({item}: {item: AltCurrenciesRowProps}) => {
       const selected = selectedAltCurrency.isoCode === item.isoCode;
       return (
         <>

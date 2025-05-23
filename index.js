@@ -1,10 +1,11 @@
 import 'react-native-get-random-values'; // must import before @ethersproject/shims
 import '@ethersproject/shims';
+import 'fast-text-encoding';
 import './shim';
 import '@walletconnect/react-native-compat';
 import {AppRegistry, Alert} from 'react-native';
 import Root from './src/Root';
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import './i18n';
 import {
   setJSExceptionHandler,
@@ -21,9 +22,12 @@ import {Analytics} from './src/store/analytics/analytics.effects';
 import {APP_VERSION} from './src/constants/config';
 import {GIT_COMMIT_HASH} from '@env';
 import {LogActions} from './src/store/log';
-enableFreeze(true);
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from 'react-native-reanimated';
 
-const {store, persistor} = getStore();
+enableFreeze(true);
 
 const errorHandler = (e, isFatal) => {
   if (isFatal) {
@@ -62,19 +66,40 @@ const exceptionHandler = () => {
 setJSExceptionHandler(errorHandler, true);
 setNativeExceptionHandler(exceptionHandler);
 
+
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
+
+
 const ReduxProvider = () => {
+  const [storeReady, setStoreReady] = useState(false);
+  const [{store, persistor}, setStore] = useState({store: null, persistor: null});
+
+  useEffect(() => {
+    getStore().then(store => {
+      setStore(store);
+      setStoreReady(true);
+    });
+  }, []);
+
   return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        {storeRehydrated =>
-          storeRehydrated ? (
-            <AppInitialization>
-              <Root />
-            </AppInitialization>
-          ) : null
-        }
-      </PersistGate>
-    </Provider>
+    <>
+      {storeReady ? (
+        <Provider store={store}>
+          <PersistGate loading={null} persistor={persistor}>
+            {storeRehydrated =>
+              storeRehydrated ? (
+                <AppInitialization>
+                  <Root />
+                </AppInitialization>
+              ) : null
+            }
+          </PersistGate>
+        </Provider>
+      ) : null}
+    </>
   );
 };
 

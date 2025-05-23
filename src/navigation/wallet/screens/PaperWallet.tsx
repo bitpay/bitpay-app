@@ -45,15 +45,16 @@ import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {StackActions} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Platform} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const PAPER_WALLET_SUPPORTED_COINS = ['btc', 'bch'];
+const PAPER_WALLET_SUPPORTED_COINS = ['btc', 'bch', 'doge', 'ltc'];
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
   background-color: ${({theme: {dark}}) => (dark ? Black : White)};
 `;
 
-const PaperWalletItemCard = styled.TouchableOpacity`
+const PaperWalletItemCard = styled(TouchableOpacity)`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
   border-radius: 9px;
   margin: 20px 15px;
@@ -138,7 +139,6 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
-  const insets = useSafeAreaInsets();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const [buttonState, setButtonState] = useState<ButtonState>();
   const [balances, setBalances] = useState<
@@ -150,7 +150,12 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
   const _walletsAvailable = Object.values(keys)
     .filter(key => key.backupComplete)
     .flatMap(key => key.wallets)
-    .filter(wallet => !wallet.hideWallet && wallet.isComplete());
+    .filter(
+      wallet =>
+        !wallet.hideWallet &&
+        !wallet.hideWalletByAccount &&
+        wallet.isComplete(),
+    );
 
   const [walletsAvailable, setWalletsAvailable] = useState<Wallet[]>([]);
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
@@ -174,7 +179,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     // If the user wishes to sweep funds to a different wallet, they will need to rescan for funds.
     // TODO: Consider whether this rescan requirement is fine or if there's a more user-friendly approach.
     const balanceToSweep = balances.find(
-      b => b.coin === selectedWallet.credentials.coin,
+      b => b.coin === selectedWallet.currencyAbbreviation,
     );
     if (!balanceToSweep) {
       throw new Error('Balance not found for the selected wallet');
@@ -195,7 +200,17 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     });
     logger.debug(`Swiping funds with feePerKb: ${feePerKb}...`);
 
-    let opts: {coin: string; fee?: number} = {coin: balanceToSweep.coin};
+    const DEFAULT_FEE = {
+      btc: 10000,
+      bch: 10000,
+      doge: 10000000,
+      ltc: 100000,
+    };
+    // @ts-ignore
+    let opts: {coin: string; fee: number} = {
+      coin: balanceToSweep.coin,
+      fee: DEFAULT_FEE[balanceToSweep.coin],
+    };
 
     try {
       const testTx: any = await buildTransaction(
@@ -205,7 +220,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
         opts,
       );
       let rawTxLength = testTx.serialize().length;
-      opts.fee = Math.round((feePerKb * rawTxLength) / 2000);
+      opts.fee = Math.round((feePerKb * rawTxLength) / 1000);
 
       const tx = await buildTransaction(
         selectedWallet,
@@ -319,13 +334,21 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
     privateKey: string,
   ): string => {
     const networks = ['livenet', 'testnet'];
+    const providers = [
+      {name: 'Bitcore', getProvider: () => BWC.getBitcore()},
+      {name: 'BitcoreCash', getProvider: () => BWC.getBitcoreCash()},
+      {name: 'BitcoreLtc', getProvider: () => BWC.getBitcoreLtc()},
+      {name: 'BitcoreDoge', getProvider: () => BWC.getBitcoreDoge()},
+    ];
 
     for (const network of networks) {
-      try {
-        BWC.getBitcore().PrivateKey(privateKey, network);
-        return network;
-      } catch (err) {
-        // Continue to the next iteration if an error occurs
+      for (const provider of providers) {
+        try {
+          provider.getProvider().PrivateKey(privateKey, network);
+          return network;
+        } catch (err) {
+          // Continue to the next iteration if an error occurs
+        }
       }
     }
 
@@ -357,7 +380,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
             // this is used just for scanning funds
             const wallet = _walletsAvailable.filter(
               w =>
-                w.credentials.coin === coin &&
+                w.currencyAbbreviation === coin &&
                 w.credentials.network === network,
             )[0];
             // const bwcClient = BWC.getClient(); // unfortunately, we need to create a new client for each coin with credentials. Check getBalanceFromPrivateKey implementation in bwc
@@ -430,7 +453,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
 
       const availableCoins = new Set(_balances.map(d => d.coin));
       const walletsAvailable = _walletsAvailable.filter(w =>
-        availableCoins.has(w.credentials.coin),
+        availableCoins.has(w.currencyAbbreviation),
       );
 
       setWalletsAvailable(walletsAvailable);
@@ -609,16 +632,19 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
           )}
         </PaperWalletItemCard>
         <SheetModal
+          modalLibrary="bottom-sheet"
           isVisible={walletSelectorVisible}
-          onBackdropPress={() => onDismiss(undefined)}>
-          <GlobalSelectContainer
-            style={Platform.OS === 'ios' ? {paddingTop: insets.top} : {}}>
+          onBackdropPress={() => onDismiss(undefined)}
+          fullscreen>
+          <GlobalSelectContainer>
             <GlobalSelect
+              route={route}
+              navigation={navigation}
               modalContext={'paperwallet'}
               useAsModal={true}
               modalTitle={t('Select Destination')}
               customSupportedCurrencies={[
-                ...new Set(walletsAvailable.map(w => w.credentials.coin)),
+                ...new Set(walletsAvailable.map(w => w.currencyAbbreviation)),
               ]}
               globalSelectOnDismiss={onDismiss}
             />

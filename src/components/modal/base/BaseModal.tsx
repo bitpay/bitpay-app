@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {View} from 'react-native';
 import Modal, {ModalProps, ReactNativeModal} from 'react-native-modal';
 import {AppActions} from '../../../store/app';
 import {ModalId} from '../../../store/app/app.reducer';
@@ -38,18 +39,20 @@ const BaseModal: React.FC<BaseModalProps> = props => {
   }, [activeModalId, id, isVisible]);
 
   return (
-    <Modal
-      isVisible={isVisibleSafe}
-      onModalHide={() => {
-        dispatch(AppActions.activeModalUpdated(null));
-        onModalHide?.();
-      }}
-      onModalWillShow={() => {
-        dispatch(AppActions.activeModalUpdated(id));
-        onModalWillShow?.();
-      }}
-      {...restModalProps}
-    />
+    <View>
+      <Modal
+        isVisible={isVisibleSafe}
+        onModalHide={() => {
+          dispatch(AppActions.activeModalUpdated(null));
+          onModalHide?.();
+        }}
+        onModalWillShow={() => {
+          dispatch(AppActions.activeModalUpdated(id));
+          onModalWillShow?.();
+        }}
+        {...restModalProps}
+      />
+    </View>
   );
 };
 

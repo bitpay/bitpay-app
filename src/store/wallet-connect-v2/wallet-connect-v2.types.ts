@@ -1,5 +1,5 @@
 import {WCV2RequestType, WCV2SessionType} from './wallet-connect-v2.models';
-import {Web3WalletTypes} from '@walletconnect/web3wallet';
+import {WalletKitTypes} from '@reown/walletkit';
 
 export enum WalletConnectV2ActionTypes {
   SESSION_PROPOSAL = 'WALLET_CONNECT_V2/SESSION_PROPOSAL',
@@ -8,12 +8,13 @@ export enum WalletConnectV2ActionTypes {
   SESSION_REQUEST = 'WALLET_CONNECT_V2/SESSION_REQUEST',
   UPDATE_REQUESTS = 'WALLET_CONNECT_V2/UPDATE_REQUESTS',
   UPDATE_SESSIONS = 'WALLET_CONNECT_V2/UPDATE_SESSIONS',
+  CONTRACT_ABI = 'WALLET_CONNECT_V2/CONTRACT_ABI',
 }
 
 interface SessionProposal {
   type: typeof WalletConnectV2ActionTypes.SESSION_PROPOSAL;
   payload: {
-    proposal?: Web3WalletTypes.EventArguments['session_proposal'];
+    proposal?: WalletKitTypes.EventArguments['session_proposal'];
   };
 }
 
@@ -49,10 +50,19 @@ interface UpdateSessions {
   };
 }
 
+interface ContractAbi {
+  type: typeof WalletConnectV2ActionTypes.CONTRACT_ABI;
+  payload: {
+    contractAbi: string;
+    contractAddress: string;
+  };
+}
+
 export type WalletConnectV2ActionType =
   | SessionProposal
   | ApproveSessionProposal
   | RejectSessionProposal
   | SessionRequest
   | UpdateRequests
-  | UpdateSessions;
+  | UpdateSessions
+  | ContractAbi;

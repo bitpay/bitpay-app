@@ -32,9 +32,8 @@ const GiftCardItem = styled(LinearGradient)<GiftCardCreditsItemProps>`
   ${({logoBackgroundColor, theme}) =>
     css`
       overflow: hidden;
-      border-radius: 50px;
-      border-width: 1px;
-      padding-right: 20px;
+      border-radius: 30px;
+      border-width: 0.4px;
       margin-top: 10px;
       margin-bottom: 0px;
       display: flex;
@@ -62,6 +61,7 @@ const GiftCardAmount = styled(BaseText)<GiftCardCreditsItemProps>`
       font-size: 18px;
       font-weight: 700;
       flex-grow: 1;
+      margin-right: 20px;
       text-align: right;
       color: ${hasWhiteBg(logoBackgroundColor) ? 'black' : 'white'};
     `}

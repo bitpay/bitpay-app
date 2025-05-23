@@ -8,6 +8,7 @@ import {
 import {LightBlack, White} from '../../../../../styles/colors';
 import {BoxShadow} from '../Styled';
 import haptic from '../../../../../components/haptic-feedback/haptic';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 interface LinkCardProps {
   image?: any;
   description: string;
@@ -15,7 +16,7 @@ interface LinkCardProps {
   disabled?: boolean;
 }
 
-const LinkCardContainer = styled.TouchableOpacity`
+const LinkCardContainer = styled(TouchableOpacity)`
   flex-direction: row;
   justify-content: center;
   align-items: center;

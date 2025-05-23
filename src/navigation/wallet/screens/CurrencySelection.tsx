@@ -31,10 +31,12 @@ import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle, Link} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
-  SupportedCoinsOptions,
+  OtherSupportedCurrencyOptions,
   SupportedCurrencyOption,
   SupportedCurrencyOptions,
+  SupportedEvmCurrencyOptions,
   SupportedTokenOptions,
+  SupportedUtxoCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {
@@ -49,14 +51,14 @@ import {useLogger} from '../../../utils/hooks/useLogger';
 import {useAppSelector, useAppDispatch} from '../../../utils/hooks';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {useTranslation} from 'react-i18next';
-import CurrencySelectionSearchInput from '../components/CurrencySelectionSearchInput';
-import CurrencySelectionNoResults from '../components/CurrencySelectionNoResults';
 import {orderBy} from 'lodash';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import SearchComponent, {
   SearchableItem,
 } from '../../../components/chain-search/ChainSearch';
 import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
+import cloneDeep from 'lodash.clonedeep';
+import {LogActions} from '../../../store/log';
 
 type CurrencySelectionScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -64,15 +66,20 @@ type CurrencySelectionScreenProps = NativeStackScreenProps<
 >;
 
 type CurrencySelectionContextWithoutKey = 'onboarding' | 'createNewKey';
-type CurrencySelectionContextWithKey = 'addWallet' | 'addWalletMultisig';
+type CurrencySelectionContextWithKey =
+  | 'addUtxoWallet'
+  | 'addEVMWallet'
+  | 'addWalletMultisig';
 export type CurrencySelectionParamList =
   | {
       context: CurrencySelectionContextWithoutKey;
       key?: undefined;
+      selectedAccountAddress?: string;
     }
   | {
       context: CurrencySelectionContextWithKey;
       key: Key;
+      selectedAccountAddress?: string;
     };
 
 type CurrencySelectionListItem = SearchableItem &
@@ -87,6 +94,7 @@ type CurrencySelectionListItem = SearchableItem &
      * Using a separate property instead of deriving due to performance reasons.
      */
     popularTokens: CurrencySelectionItem[];
+    filteredTokens?: CurrencySelectionItem[];
   };
 
 export type CurrencySelectionMode = 'single' | 'multi';
@@ -168,7 +176,7 @@ const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
 const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const {context, key} = route.params;
+  const {context, key, selectedAccountAddress} = route.params;
   const logger = useLogger();
   const dispatch = useAppDispatch();
   const [searchVal, setSearchVal] = useState('');
@@ -180,7 +188,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
-
   const appTokenOptionsByAddress = useAppSelector(
     ({WALLET}) => WALLET.tokenOptionsByAddress,
   );
@@ -219,80 +226,48 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   const allListItemsRef = useRef(allListItems);
   allListItemsRef.current = allListItems;
 
-  /**
-   * Derived from allListItems, but with search filter applied.
-   */
-  const filteredListItems = useMemo(() => {
-    // If no filter, return reference to allListItems.
-    if (!searchVal && !selectedChainFilterOption) {
-      return allListItems;
-    }
-
-    if (selectedChainFilterOption && !searchVal) {
-      return allListItems.filter(
-        item => item.currency.chain === selectedChainFilterOption,
-      );
-    }
-
-    // Else return a new array to trigger a rerender.
-    return allListItems.reduce<CurrencySelectionListItem[]>((accum, item) => {
-      if (
-        selectedChainFilterOption &&
-        item.currency.chain !== selectedChainFilterOption
-      ) {
-        return accum;
-      }
-
-      const isCurrencyMatch =
-        item.currency.currencyAbbreviation.toLowerCase().includes(searchVal) ||
-        item.currency.currencyName.toLowerCase().includes(searchVal);
-
-      const matchingTokens = item.popularTokens.filter(
-        token =>
-          token.currencyAbbreviation.toLowerCase().includes(searchVal) ||
-          token.currencyName.toLowerCase().includes(searchVal),
-      );
-
-      // Display the item if the currency itself matches the filter or one of its tokens matches
-      if (isCurrencyMatch || matchingTokens.length) {
-        accum.push({
-          ...item,
-          popularTokens: matchingTokens,
-        });
-      }
-
-      return accum;
-    }, []);
-  }, [searchVal, selectedChainFilterOption, allListItems]);
-
   // Initialize supported currencies and tokens into row item format.
   // Resets if tokenOptions or tokenData updates.
   useEffect(() => {
-    if (context === 'addWalletMultisig') {
-      const items = SupportedMultisigCurrencyOptions.map(currency => {
-        const item: CurrencySelectionListItem = {
-          currency: {
-            ...currency,
-            imgSrc: undefined,
-            selected: false,
-            disabled: false,
-            chain: currency.currencyAbbreviation,
-          },
-          tokens: [],
-          popularTokens: [],
-        };
-
-        return item;
-      });
-
-      setAllListItems(items);
-      return;
-    }
-
     const chainMap: Record<string, CurrencySelectionListItem> = {};
+    let _supportedCoinsOptions: Array<SupportedCurrencyOption> = [];
+    switch (context) {
+      case 'addWalletMultisig':
+        const items = SupportedMultisigCurrencyOptions.map(currency => {
+          const item: CurrencySelectionListItem = {
+            // @ts-ignore
+            currency: {
+              ...currency,
+              imgSrc: undefined,
+              selected: false,
+              disabled: false,
+              chain: currency.currencyAbbreviation,
+            },
+            tokens: [],
+            popularTokens: [],
+          };
+          return item;
+        });
 
+        setAllListItems(items);
+        return;
+
+      case 'addEVMWallet':
+        _supportedCoinsOptions = orderBy(
+          SupportedEvmCurrencyOptions,
+          'priority',
+        );
+        break;
+
+      case 'addUtxoWallet':
+        _supportedCoinsOptions = orderBy(
+          [...SupportedUtxoCurrencyOptions, ...OtherSupportedCurrencyOptions],
+          'priority',
+        );
+        break;
+    }
     // Add all chain currencies to list
-    const list: CurrencySelectionListItem[] = SupportedCoinsOptions.map(
+    const list: CurrencySelectionListItem[] = _supportedCoinsOptions.map(
       ({
         id,
         chain,
@@ -304,6 +279,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       }) => {
         const _chain = chain.toLowerCase();
         const item: CurrencySelectionListItem = {
+          // @ts-ignore
           currency: {
             id,
             currencyAbbreviation,
@@ -318,7 +294,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
           },
           tokens: [],
           popularTokens: [],
-          description: DESCRIPTIONS[chain] || '',
         };
 
         chainMap[chain] = item;
@@ -327,6 +302,10 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       },
     );
 
+    if (context === 'addUtxoWallet' || context === 'addEVMWallet') {
+      setAllListItems(list);
+      return;
+    }
     // For each token, add it to the token list for its parent chain object
     const tokenOptionsByAddress: Record<string, Token> = {
       ...BitpaySupportedTokenOptsByAddress,
@@ -389,6 +368,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       } else {
         // Parent chain currency not found, just push to the main list.
         list.push({
+          // @ts-ignore
           currency: token,
           tokens: [],
           popularTokens: [],
@@ -485,18 +465,21 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
                 }),
               );
               dispatch(dismissOnGoingProcessModal());
-            } catch (e: any) {
-              logger.error(e.message);
+            } catch (err: any) {
+              const errstring =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              dispatch(LogActions.error(`Error creating key: ${errstring}`));
               dispatch(dismissOnGoingProcessModal());
               await sleep(500);
-              showErrorModal(e.message);
+              showErrorModal(errstring);
             }
           },
           selectedCurrencies,
         };
       }
 
-      case 'addWallet': {
+      case 'addUtxoWallet':
+      case 'addEVMWallet': {
         return {
           selectionMode: 'single',
           headerTitle: t('Select Currency'),
@@ -569,9 +552,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
               key,
               currencyAbbreviation: currency.currencyAbbreviation.toLowerCase(),
               currencyName: currency.currencyName,
-              isToken: !!currency.isToken,
-              chain: currency.chain,
-              tokenAddress: currency.tokenAddress,
             });
           },
           selectedCurrencies,
@@ -826,7 +806,12 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
         <CurrencySelectionRow
           key={item.currency.id}
           currency={item.currency}
-          tokens={item.popularTokens}
+          tokens={
+            !searchVal && !selectedChainFilterOption
+              ? item.popularTokens
+              : item.tokens
+          }
+          filterSelected={!!searchVal || !!selectedChainFilterOption}
           description={item.description}
           selectionMode={selectionMode}
           onToggle={memoizedOnToggle}
@@ -835,52 +820,121 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
         />
       );
     },
-    [memoizedOnToggle, memoizedOnViewAllPressed, selectionMode],
+    [
+      memoizedOnToggle,
+      memoizedOnViewAllPressed,
+      selectionMode,
+      searchVal,
+      selectedChainFilterOption,
+    ],
   );
+
+  const filterAndSortTokens = (
+    tokens: CurrencySelectionItem[],
+    searchVal: string,
+  ): CurrencySelectionItem[] => {
+    const filteredTokens = tokens.filter(
+      item =>
+        item.currencyAbbreviation.toLowerCase().includes(searchVal) ||
+        item.currencyName.toLowerCase().includes(searchVal) ||
+        item.tokenAddress?.toLowerCase().includes(searchVal),
+    );
+    return filteredTokens.sort((a, b) => {
+      const aStarts = a.currencyAbbreviation
+        .toLowerCase()
+        .startsWith(searchVal);
+      const bStarts = b.currencyAbbreviation
+        .toLowerCase()
+        .startsWith(searchVal);
+      if (aStarts && bStarts) {
+        return a.currencyAbbreviation.localeCompare(b.currencyAbbreviation);
+      }
+      if (aStarts && !bStarts) {
+        return -1;
+      }
+      if (!aStarts && bStarts) {
+        return 1;
+      }
+      return a.currencyAbbreviation.localeCompare(b.currencyAbbreviation);
+    });
+  };
+
+  const filteredItems = useMemo(() => {
+    const _allListItems = cloneDeep(allListItems);
+    if (!selectedChainFilterOption && !searchVal) {
+      return _allListItems;
+    }
+    if (selectedChainFilterOption && !searchVal) {
+      return _allListItems.filter(
+        item => item.currency.chain === selectedChainFilterOption,
+      );
+    }
+
+    return _allListItems
+      .map(allListItem => {
+        if (
+          selectedChainFilterOption &&
+          selectedChainFilterOption !== allListItem.currency.chain
+        ) {
+          return null;
+        }
+        const searchValLowerCase = searchVal.toLowerCase();
+        const currency = allListItem.currency;
+        const matchesSearch = [
+          currency.currencyAbbreviation,
+          currency.chain,
+          currency.chainName,
+          currency.currencyName,
+        ].some((property: string | undefined) =>
+          property?.toLowerCase()?.includes(searchValLowerCase),
+        );
+        if (allListItem.tokens.length > 0) {
+          allListItem.tokens = filterAndSortTokens(
+            allListItem.tokens,
+            searchValLowerCase,
+          );
+          return allListItem.tokens.length > 0 || matchesSearch
+            ? allListItem
+            : null;
+        } else {
+          return matchesSearch ? allListItem : null;
+        }
+      })
+      .filter(Boolean) as CurrencySelectionListItem[];
+  }, [searchVal, selectedChainFilterOption, allListItems]);
 
   return (
     <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
-      {context !== 'addWalletMultisig' ? (
+      {context !== 'addWalletMultisig' && allListItems.length > 0 ? (
         <SearchComponentContainer>
           <SearchComponent<CurrencySelectionListItem>
             searchVal={searchVal}
             setSearchVal={setSearchVal}
             searchResults={searchResults}
             setSearchResults={setSearchResults}
-            searchFullList={filteredListItems}
+            searchFullList={allListItems}
             context={context}
           />
         </SearchComponentContainer>
       ) : null}
 
-      {filteredListItems.length ? (
+      {allListItems.length > 0 || filteredItems.length > 0 ? (
         <ListContainer>
           <FlatList<CurrencySelectionListItem>
-            data={filteredListItems}
+            contentContainerStyle={
+              context === 'addWalletMultisig' ? {marginTop: 20} : undefined
+            }
+            data={
+              !searchVal && !selectedChainFilterOption
+                ? allListItems
+                : filteredItems
+            }
             keyExtractor={keyExtractor}
             renderItem={renderItem}
-            ListFooterComponent={() => {
-              return searchVal && key ? (
-                <LinkContainer>
-                  <Link
-                    accessibilityLabel="add-custom-token-button"
-                    onPress={() => {
-                      haptic('soft');
-                      navigation.navigate('AddWallet', {
-                        key,
-                        isCustomToken: true,
-                        isToken: true,
-                      });
-                    }}>
-                    {t('Add Custom Token')}
-                  </Link>
-                </LinkContainer>
-              ) : null;
-            }}
           />
         </ListContainer>
       ) : (
-        <CurrencySelectionNoResults query={searchVal} walletKey={key} />
+        <></>
       )}
 
       {onCtaPress && selectedCurrencies.length > 0 ? (

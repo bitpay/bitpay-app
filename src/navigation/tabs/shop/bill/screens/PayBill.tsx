@@ -5,7 +5,8 @@ import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {H5, Paragraph} from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
-import {Linking, ScrollView, TouchableOpacity, View} from 'react-native';
+import {Linking, ScrollView, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   LightBlack,
   LuckySevens,
@@ -317,7 +318,9 @@ const PayBill = ({
                     {formatFiatAmount(
                       account[account.type].nextPaymentMinimumAmount,
                       'USD',
-                      {customPrecision: 'minimal'},
+                      {
+                        customPrecision: 'minimal',
+                      },
                     )}
                   </BillPayOptionAmount>
                 </BillPayOption>
@@ -344,7 +347,9 @@ const PayBill = ({
                     {formatFiatAmount(
                       account[account.type].lastStatementBalance!,
                       'USD',
-                      {customPrecision: 'minimal'},
+                      {
+                        customPrecision: 'minimal',
+                      },
                     )}
                   </BillPayOptionAmount>
                 </BillPayOption>

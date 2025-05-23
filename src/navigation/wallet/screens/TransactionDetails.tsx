@@ -5,12 +5,13 @@ import {
   HeaderTitle,
   Link,
   H2,
+  H4,
 } from '../../../components/styled/Text';
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   buildTransactionDetails,
   EditTxNote,
@@ -20,7 +21,7 @@ import {
   IsReceived,
   IsSent,
   IsShared,
-  NotZeroAmountEVM,
+  TxForPaymentFeeEVM,
   TxActions,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
@@ -33,7 +34,7 @@ import {
   GetBlockExplorerUrl,
   IsCustomERCToken,
 } from '../../../store/wallet/utils/currency';
-import {TouchableOpacity} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import Button from '../../../components/button/Button';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
@@ -63,6 +64,7 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {FormatAmount} from '../../../store/wallet/effects/amount/amount';
 import {
   Recipient,
+  TransactionDetailsBuilt,
   TransactionOptionsContext,
 } from '../../../store/wallet/wallet.models';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
@@ -72,6 +74,11 @@ import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
 import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
 import {LogActions} from '../../../store/log';
 import {RootState} from '../../../store';
+import {getDecodedTransactionsByHash} from '../../../store/moralis/moralis.effects';
+import {
+  LabelTip,
+  LabelTipText,
+} from '../../tabs/settings/external-services/styled/ExternalServicesDetails';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -144,7 +151,7 @@ const CopyImgContainer = styled.View`
   margin-right: 5px;
 `;
 
-const CopyTransactionId = styled.TouchableOpacity`
+const CopyTransactionId = styled(TouchableOpacity)`
   flex-direction: row;
 `;
 
@@ -200,6 +207,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 };
 
 const TransactionDetails = () => {
+  const logger = useLogger();
   const {
     params: {transaction, wallet, onMemoChange},
   } = useRoute<RouteProp<WalletGroupParamList, 'TransactionDetails'>>();
@@ -208,9 +216,17 @@ const TransactionDetails = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const [txs, setTxs] = useState<any>();
+  const [txs, setTxs] = useState<TransactionDetailsBuilt>();
   const [memo, setMemo] = useState<string>();
+  const [isForFee, setIsForFee] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [failStatus, setFailStatus] = useState<{
+    showFailStatus: boolean;
+    failStatusMsg: string | undefined;
+  }>({
+    showFailStatus: false,
+    failStatusMsg: undefined,
+  });
   const title = getDetailsTitle(transaction, wallet);
   let {
     currencyAbbreviation,
@@ -238,8 +254,65 @@ const TransactionDetails = () => {
           defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
         }),
       );
+
+      if (
+        _transaction.customData?.service === 'thorswap' &&
+        !!_transaction.confirmations &&
+        _transaction.confirmations > 0
+      ) {
+        try {
+          if (_transaction.txid && chain) {
+            logger.debug(
+              'Trying to getDecodedTransactionsByHash with: ' +
+                JSON.stringify({
+                  chain: chain,
+                  transactionHash: _transaction.txid,
+                }),
+            );
+            const decodedTxDetails: any = await dispatch(
+              getDecodedTransactionsByHash({
+                chain: chain,
+                transactionHash: _transaction.txid,
+              }),
+            );
+
+            if (decodedTxDetails?.logs && decodedTxDetails.logs.length === 0) {
+              const description = t(
+                'The internal transaction failed, probably due to an error in the execution of the contract.',
+              );
+              setFailStatus({
+                showFailStatus: true,
+                failStatusMsg: `${
+                  decodedTxDetails.to_address_label
+                    ? decodedTxDetails.to_address_label + ': '
+                    : ''
+                }${description}`,
+              });
+            }
+          }
+        } catch (err: any) {
+          const error =
+            err?.message && typeof err.message === 'string'
+              ? err.message
+              : JSON.stringify(err);
+          logger.debug(
+            'Error trying to getDecodedTransactionsByHash. Continue anyways. Error: ' +
+              error,
+          );
+        }
+      }
+
       setTxs(_transaction);
       setMemo(_transaction.detailsMemo);
+      setIsForFee(
+        transaction.action !== 'received' &&
+          TxForPaymentFeeEVM(
+            wallet.currencyAbbreviation,
+            transaction.coin,
+            transaction.chain,
+            transaction.amount,
+          ),
+      );
       await sleep(500);
       setIsLoading(false);
     } catch (err) {
@@ -340,12 +413,6 @@ const TransactionDetails = () => {
         showBottomNotificationModal({
           ...errorMessageConfig,
           enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
         }),
       );
     }
@@ -377,17 +444,22 @@ const TransactionDetails = () => {
       case 'doge':
         url =
           network === 'livenet'
-            ? `https://${url}dogecoin/transaction/${txs.txid}`
-            : `https://${url}tx/DOGETEST/${txs.txid}`;
+            ? `https://${url}dogecoin/transaction/${txs?.txid}`
+            : `https://${url}tx/DOGETEST/${txs?.txid}`;
         break;
       default:
-        url = `https://${url}tx/${txs.txid}`;
+        url = `https://${url}tx/${txs?.txid}`;
     }
 
     dispatch(openUrlWithInAppBrowser(url));
   };
 
   const saveMemo = async (newMemo: string) => {
+    if (!txs?.txid) {
+      dispatch(LogActions.error('[EditTxNote] There is no txid present'));
+      return;
+    }
+
     try {
       await EditTxNote(wallet, {txid: txs.txid, body: newMemo});
       transaction.note = {
@@ -411,11 +483,9 @@ const TransactionDetails = () => {
           keyboardShouldPersistTaps={'handled'}
           extraScrollHeight={80}>
           <>
-            {NotZeroAmountEVM(txs.amount, chain) ? (
-              <H2 medium={true}>{txs.amountStr}</H2>
-            ) : null}
+            {!isForFee ? <H2 medium={true}>{txs.amountStr}</H2> : null}
 
-            {!IsCustomERCToken(tokenAddress, chain) ? (
+            {!IsCustomERCToken(tokenAddress, chain) && !isForFee ? (
               <SubTitle>
                 {!txs.fiatRateStr
                   ? '...'
@@ -425,9 +495,7 @@ const TransactionDetails = () => {
               </SubTitle>
             ) : null}
 
-            {!NotZeroAmountEVM(txs.amount, chain) ? (
-              <SubTitle>{t('Interaction with contract')}</SubTitle>
-            ) : null}
+            {isForFee ? <H4>{t('Interaction with contract')}</H4> : null}
           </>
 
           {/* --------- Info ----------------*/}
@@ -460,6 +528,8 @@ const TransactionDetails = () => {
           ) : null}
 
           {currencyAbbreviation === 'btc' &&
+          (!txs.customData?.service ||
+            !['changelly', 'thorswap'].includes(txs.customData.service)) && // It is not advisable to accelerate transactions that involve Swap operations.
           (IsSent(txs.action) || IsMoved(txs.action)) &&
           (!txs.confirmations || txs.confirmations === 0) ? (
             <Banner
@@ -539,14 +609,18 @@ const TransactionDetails = () => {
             </>
           ) : null}
 
-          <DetailContainer>
-            <DetailRow>
-              <H7>{t('Date')}</H7>
-              <H7>
-                {GetAmFormatDate((txs.ts || txs.createdOn || txs.time) * 1000)}
-              </H7>
-            </DetailRow>
-          </DetailContainer>
+          {txs.ts || txs.createdOn || txs.time ? (
+            <DetailContainer>
+              <DetailRow>
+                <H7>{t('Date')}</H7>
+                <H7>
+                  {GetAmFormatDate(
+                    (txs.ts || txs.createdOn || txs.time)! * 1000,
+                  )}
+                </H7>
+              </DetailRow>
+            </DetailContainer>
+          ) : null}
 
           <Hr />
 
@@ -587,11 +661,30 @@ const TransactionDetails = () => {
 
           <Hr />
 
+          {!!txs.confirmations && failStatus.showFailStatus ? (
+            <>
+              <DetailContainer>
+                <DetailRow>
+                  <H7>{t('Status')}</H7>
+                  <DetailColumn>
+                    <H7 style={{color: Caution}}>{'Fail'}</H7>
+                  </DetailColumn>
+                </DetailRow>
+
+                <LabelTip type="warn" style={{marginTop: 20}}>
+                  <LabelTipText>{failStatus.failStatusMsg}</LabelTipText>
+                </LabelTip>
+              </DetailContainer>
+
+              <Hr />
+            </>
+          ) : null}
+
           <DetailContainer>
             <DetailRow>
               <H7>{t('Transaction ID')}</H7>
 
-              <CopyTransactionId onPress={() => copyText(txs.txid)}>
+              <CopyTransactionId onPress={() => copyText(txs.txid!)}>
                 <CopyImgContainer>
                   {copied ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainer>

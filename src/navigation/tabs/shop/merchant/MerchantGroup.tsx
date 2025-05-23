@@ -6,11 +6,7 @@ import {
 import MerchantDetails from './screens/MerchantDetails';
 import MerchantCategory from './screens/MerchantCategory';
 import {Root} from '../../../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
 
 interface MerchantProps {
   Merchant: typeof Root;
@@ -32,16 +28,8 @@ export enum MerchantScreens {
 const MerchantGroup: React.FC<MerchantProps> = ({Merchant}) => {
   return (
     <Merchant.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
       })}>
       <Merchant.Screen
         name={MerchantScreens.MERCHANT_CATEGORY}

@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {Text, TouchableOpacity} from 'react-native';
+import {Text} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {RouteProp, useRoute, useNavigation} from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';
-import {Settings, SettingsContainer} from '../../SettingsRoot';
+import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import SimplexLogo from '../../../../../components/icons/external-services/simplex/simplex-logo';
 import {SimplexPaymentData} from '../../../../../store/buy-crypto/buy-crypto.models';
@@ -78,7 +79,7 @@ const SimplexDetails: React.FC = () => {
 
   return (
     <SettingsContainer>
-      <Settings>
+      <SettingsComponent>
         <RowDataContainer>
           <CryptoAmountContainer>
             <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
@@ -172,7 +173,7 @@ const SimplexDetails: React.FC = () => {
         <ColumnDataContainer>
           <TouchableOpacity
             onPress={() => {
-              copyText(paymentRequest.address);
+              copyText(paymentRequest.address || '');
               setCopiedDepositAddress(true);
             }}>
             <RowLabel>{t('Deposit address')}</RowLabel>
@@ -260,7 +261,7 @@ const SimplexDetails: React.FC = () => {
           }}>
           <Text style={{color: 'red'}}>{t('Remove')}</Text>
         </RemoveCta>
-      </Settings>
+      </SettingsComponent>
     </SettingsContainer>
   );
 };

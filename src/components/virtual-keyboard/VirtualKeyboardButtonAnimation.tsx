@@ -1,5 +1,5 @@
 import React from 'react';
-import {View} from 'react-native';
+import {PixelRatio, View} from 'react-native';
 import {
   LongPressGestureHandler,
   TapGestureHandler,
@@ -13,12 +13,12 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import {VIRTUAL_KEYBOARD_BUTTON_SIZE} from './VirtualKeyboard';
 
 interface RippleProps {
   onPress: () => void;
   backgroundColor?: string;
   onLongPress?: () => void;
+  isSmallScreen?: boolean;
   children: React.ReactNode;
 }
 
@@ -26,8 +26,10 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
   onPress,
   backgroundColor,
   onLongPress,
+  isSmallScreen,
   children,
 }) => {
+  const virtualKeyboardButtonSize = isSmallScreen ? 60 : 85;
   onLongPress = onLongPress || onPress;
   const centerX = useSharedValue(0);
   const centerY = useSharedValue(0);
@@ -38,8 +40,8 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
   const tapGestureEvent =
     useAnimatedGestureHandler<TapGestureHandlerGestureEvent>({
       onStart: tapEvent => {
-        centerX.value = VIRTUAL_KEYBOARD_BUTTON_SIZE / 2;
-        centerY.value = VIRTUAL_KEYBOARD_BUTTON_SIZE / 2;
+        centerX.value = virtualKeyboardButtonSize / 2;
+        centerY.value = virtualKeyboardButtonSize / 2;
 
         rippleOpacity.value = 1;
         scale.value = 0;
@@ -56,7 +58,7 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
     });
 
   const rStyle = useAnimatedStyle(() => {
-    const circleRadius = Math.sqrt(VIRTUAL_KEYBOARD_BUTTON_SIZE ** 3.2 * 2);
+    const circleRadius = Math.sqrt(virtualKeyboardButtonSize ** 3.2 * 2);
 
     const translateX = centerX.value - circleRadius;
     const translateY = centerY.value - circleRadius;
@@ -94,8 +96,8 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
             style={[
               {
                 overflow: 'hidden',
-                height: VIRTUAL_KEYBOARD_BUTTON_SIZE,
-                width: VIRTUAL_KEYBOARD_BUTTON_SIZE,
+                height: virtualKeyboardButtonSize,
+                width: virtualKeyboardButtonSize,
                 borderRadius: 50,
                 alignItems: 'center',
                 justifyContent: 'center',

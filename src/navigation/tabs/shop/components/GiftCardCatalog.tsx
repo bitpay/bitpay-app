@@ -1,13 +1,18 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import debounce from 'lodash.debounce';
-import {useTheme} from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import pickBy from 'lodash.pickby';
 import uniqBy from 'lodash.uniqby';
-import {Platform, View, TouchableOpacity} from 'react-native';
+import {Platform, View} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useForm, Controller} from 'react-hook-form';
 import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';
-import {BaseText, Paragraph} from '../../../../components/styled/Text';
+import {
+  BaseText,
+  Paragraph,
+  TextAlign,
+} from '../../../../components/styled/Text';
 import GiftCardItem from './GiftCardItem';
 import {
   CardConfig,
@@ -30,7 +35,7 @@ import {
   SectionHeaderContainer,
   SectionSpacer,
 } from './styled/ShopTabComponents';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {GiftCardScreens} from '../gift-card/GiftCardGroup';
 import MyGiftCards from './MyGiftCards';
 import FilterSheet, {initializeCategoryMap} from './FilterSheet';
@@ -40,6 +45,13 @@ import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {isGiftCardDisplayable} from '../../../../lib/gift-cards/gift-card';
 
+const ZeroState = styled.View`
+  justify-content: center;
+  align-items: center;
+  padding: 100px 50px 0;
+  text-align: center;
+`;
+
 const Curations = ({
   curations,
   underlayColor,
@@ -48,10 +60,20 @@ const Curations = ({
   underlayColor: string;
 }) => {
   const navigation = useNavigation();
+  const itemHeight = 85;
+  const maxItemsPerColumn = 3;
+  const getNumRows = (giftCards: CardConfig[]) => {
+    if (giftCards.length > maxItemsPerColumn) {
+      return maxItemsPerColumn;
+    }
+    return giftCards.length;
+  };
   return (
     <>
       {curations.map(curation => (
-        <View key={curation.displayName}>
+        <View
+          key={curation.displayName}
+          style={{height: itemHeight * getNumRows(curation.giftCards) + 70}}>
           <SectionContainer>
             <SectionHeader>{curation.displayName}</SectionHeader>
           </SectionContainer>
@@ -62,10 +84,10 @@ const Curations = ({
             )}
             itemUnderlayColor={underlayColor}
             itemWidthInLastSlide={WIDTH}
-            itemHeight={85}
-            maxItemsPerColumn={3}
+            itemHeight={itemHeight}
+            maxItemsPerColumn={maxItemsPerColumn}
             screenWidth={WIDTH}
-            windowSize={3}
+            windowSize={maxItemsPerColumn}
             onItemPress={item => {
               navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
                 cardConfig: item as CardConfig,
@@ -136,6 +158,7 @@ export default ({
   const [searchResults, setSearchResults] = useState([] as CardConfig[]);
   const [isFilterSheetShown, setIsFilterSheetShown] = useState(false);
   const [purchasedGiftCards, setPurchasedGiftCards] = useState<GiftCard[]>([]);
+  const [isScreenFocused, setIsScreenFocused] = useState(false);
   const [selectedCategoryMap, setSelectedCategoryMap] = useState(
     initializeCategoryMap(categories.map(category => category.displayName)),
   );
@@ -148,6 +171,15 @@ export default ({
   );
   const numActiveGiftCards = activeGiftCards.length;
   const activeGiftCardsHeight = numActiveGiftCards * 62 + 215;
+
+  useFocusEffect(
+    useCallback(() => {
+      setIsScreenFocused(true);
+      return () => {
+        setIsScreenFocused(false);
+      };
+    }, []),
+  );
 
   const updateSearchResults = useMemo(
     () =>
@@ -214,103 +246,129 @@ export default ({
         {purchasedGiftCards.length ? (
           <>
             <MyGiftCards supportedGiftCards={supportedGiftCards} />
-            <SectionDivider />
+            {availableGiftCards.length ? <SectionDivider /> : null}
             <SectionSpacer height={20} />
           </>
         ) : (
           <SectionSpacer height={40} />
         )}
-        <SectionContainer>
-          <Controller
-            control={control}
-            render={({field: {onChange, onBlur, value}}) => (
-              <SearchBox
-                placeholder={t('Search Gift Cards')}
-                theme={theme}
-                onBlur={onBlur}
-                onFocus={() => {
-                  scrollViewRef &&
-                    scrollViewRef.current &&
-                    scrollViewRef.current.scrollTo({
-                      x: 0,
-                      y: getYPos(),
-                      animated: Platform.select({
-                        ios: true,
-                        android: !numActiveGiftCards,
-                      }),
-                    });
-                }}
-                onChangeText={(text: string) => {
-                  onChange(text);
-                  updateSearchResults(text);
-                }}
-                value={value}
-                type={'search'}
+        {availableGiftCards.length ? (
+          <>
+            <SectionContainer>
+              <Controller
+                control={control}
+                render={({field: {onChange, onBlur, value}}) => (
+                  <SearchBox
+                    placeholder={t('Search Gift Cards')}
+                    theme={theme}
+                    onBlur={onBlur}
+                    onFocus={() => {
+                      scrollViewRef &&
+                        scrollViewRef.current &&
+                        scrollViewRef.current.scrollTo({
+                          x: 0,
+                          y: getYPos(),
+                          animated: Platform.select({
+                            ios: true,
+                            android: !numActiveGiftCards,
+                          }),
+                        });
+                    }}
+                    onChangeText={(text: string) => {
+                      onChange(text);
+                      updateSearchResults(text);
+                    }}
+                    value={value}
+                    type={'search'}
+                  />
+                )}
+                name="search"
               />
-            )}
-            name="search"
-          />
-        </SectionContainer>
-        <HideableView show={!!searchVal}>
-          {searchResults.length ? (
-            <SearchResults>
-              <SectionSpacer height={20} />
-              {searchResults.map((cardConfig: CardConfig) => (
-                <ListItemTouchableHighlight
-                  key={cardConfig.name}
-                  onPress={() => {
-                    navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
-                      cardConfig,
-                    });
-                  }}
-                  underlayColor={underlayColor}>
-                  <GiftCardItem cardConfig={cardConfig} />
-                </ListItemTouchableHighlight>
-              ))}
-            </SearchResults>
-          ) : (
-            <NoResultsContainer>
-              <NoResultsImgContainer>
-                <GhostSvg />
-              </NoResultsImgContainer>
+            </SectionContainer>
+            <HideableView show={!!searchVal}>
+              {searchResults.length ? (
+                <SearchResults>
+                  <SectionSpacer height={20} />
+                  {searchResults.map((cardConfig: CardConfig) => (
+                    <ListItemTouchableHighlight
+                      key={cardConfig.name}
+                      onPress={() => {
+                        navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
+                          cardConfig,
+                        });
+                      }}
+                      underlayColor={underlayColor}>
+                      <GiftCardItem cardConfig={cardConfig} />
+                    </ListItemTouchableHighlight>
+                  ))}
+                </SearchResults>
+              ) : (
+                <NoResultsContainer>
+                  <NoResultsImgContainer>
+                    <GhostSvg />
+                  </NoResultsImgContainer>
+                  <Paragraph>
+                    {t("We couldn't find a match for ")}
+                    <BaseText style={{fontWeight: 'bold'}}>
+                      {searchVal}
+                    </BaseText>
+                    .
+                  </Paragraph>
+                  <Paragraph>
+                    {t('Please try searching something else.')}
+                  </Paragraph>
+                </NoResultsContainer>
+              )}
+            </HideableView>
+            <HideableView show={!searchVal}>
+              {memoizedCurations}
+              <SectionContainer>
+                <SectionHeaderContainer>
+                  <SectionHeader>{t('All Gift Cards')}</SectionHeader>
+                  <TouchableOpacity
+                    activeOpacity={ActiveOpacity}
+                    onPress={() => {
+                      if (!isScreenFocused) {
+                        return;
+                      }
+                      setIsFilterSheetShown(!isFilterSheetShown);
+                    }}>
+                    <SectionHeaderButton>
+                      {t('Filter')}
+                      {numSelectedCategories
+                        ? ` (${numSelectedCategories})`
+                        : null}
+                    </SectionHeaderButton>
+                  </TouchableOpacity>
+                </SectionHeaderContainer>
+              </SectionContainer>
+              <SearchResults>
+                {selectedGiftCards.map((cardConfig: CardConfig) => (
+                  <ListItemTouchableHighlight
+                    key={cardConfig.name}
+                    onPress={() => {
+                      navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
+                        cardConfig,
+                      });
+                    }}
+                    underlayColor={underlayColor}>
+                    <GiftCardItem cardConfig={cardConfig} />
+                  </ListItemTouchableHighlight>
+                ))}
+              </SearchResults>
+            </HideableView>
+          </>
+        ) : (
+          <ZeroState>
+            <TextAlign align={'center'}>
               <Paragraph>
-                {t("We couldn't find a match for ")}
-                <BaseText style={{fontWeight: 'bold'}}>{searchVal}</BaseText>.
+                {t(
+                  'No gift cards are currently available for purchase in your region. Please check back later.',
+                )}
               </Paragraph>
-              <Paragraph>{t('Please try searching something else.')}</Paragraph>
-            </NoResultsContainer>
-          )}
-        </HideableView>
-        <HideableView show={!searchVal}>
-          {memoizedCurations}
-          <SectionContainer>
-            <SectionHeaderContainer>
-              <SectionHeader>{t('All Gift Cards')}</SectionHeader>
-              <TouchableOpacity
-                activeOpacity={ActiveOpacity}
-                onPress={() => setIsFilterSheetShown(!isFilterSheetShown)}>
-                <SectionHeaderButton>
-                  {t('Filter')}
-                  {numSelectedCategories ? ` (${numSelectedCategories})` : null}
-                </SectionHeaderButton>
-              </TouchableOpacity>
-            </SectionHeaderContainer>
-          </SectionContainer>
-          <SearchResults>
-            {selectedGiftCards.map((cardConfig: CardConfig) => (
-              <ListItemTouchableHighlight
-                key={cardConfig.name}
-                onPress={() => {
-                  navigation.navigate(GiftCardScreens.BUY_GIFT_CARD, {
-                    cardConfig,
-                  });
-                }}
-                underlayColor={underlayColor}>
-                <GiftCardItem cardConfig={cardConfig} />
-              </ListItemTouchableHighlight>
-            ))}
-          </SearchResults>
-        </HideableView>
+            </TextAlign>
+          </ZeroState>
+        )}
       </View>
     </>
   );

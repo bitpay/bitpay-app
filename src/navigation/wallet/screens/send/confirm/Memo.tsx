@@ -1,7 +1,8 @@
 import {useTheme} from '@react-navigation/native';
 import React, {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {TextInput, TouchableOpacity} from 'react-native';
+import {TextInput} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import {Hr, ImportTextInput} from '../../../../../components/styled/Containers';
 import {H7} from '../../../../../components/styled/Text';
@@ -157,7 +158,7 @@ const MemoOuterButtonContainer = styled.View<MemoInputContainerParams>`
   align-items: center;
 `;
 
-const MemoOuterButton = styled.TouchableOpacity`
+const MemoOuterButton = styled(TouchableOpacity)`
   height: ${memoOuterButtonHeight}px;
   width: 39px;
   justify-content: center;

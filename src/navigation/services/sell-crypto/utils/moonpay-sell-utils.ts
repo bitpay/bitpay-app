@@ -2,10 +2,10 @@ import {
   MoonpayCurrency,
   MoonpayPayoutMethodType,
   MoonpaySellOrderStatus,
-} from '../../../../store/sell-crypto/sell-crypto.models';
+} from '../../../../store/sell-crypto/models/moonpay-sell.models';
 import {t} from 'i18next';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
-import {PaymentMethodKey} from '../constants/SellCryptoConstants';
+import {WithdrawalMethodKey} from '../constants/SellCryptoConstants';
 import cloneDeep from 'lodash.clonedeep';
 
 export const moonpaySellEnv = __DEV__ ? 'sandbox' : 'production';
@@ -44,12 +44,21 @@ export const moonpaySellSupportedCoins = [
   'bch',
   'eth',
   'eth_arb', // eth_arbitrum in MoonpaySell
+  'eth_base',
   'ltc',
   'doge',
-  'matic', // matic_polygon in Moonpay
+  'matic', // pol_polygon in Moonpay // backward compatibility
+  'pol', // pol_polygon in Moonpay
+  'xrp',
 ];
 
-export const moonpaySellSupportedErc20Tokens = ['axs', 'usdc', 'usdt'];
+export const moonpaySellSupportedErc20Tokens = [
+  'axs',
+  'pol',
+  'usdc',
+  'usdt',
+  'wld',
+];
 
 export const moonpaySellSupportedMaticTokens = [
   'usdc', // usdc_polygon in MoonpaySell
@@ -57,10 +66,13 @@ export const moonpaySellSupportedMaticTokens = [
 ];
 
 export const moonpaySellSupportedArbitrumTokens = [];
+export const moonpaySellSupportedBaseTokens = [
+  'usdc', // usdc_base in MoonpaySell
+];
 
-// Currently unsupported
-// export const moonpaySellSupportedBaseTokens = [];
-// export const moonpaySellSupportedOptimismTokens = [];
+export const moonpaySellSupportedOptimismTokens = [
+  'wld', // wld_optimism
+];
 
 export const getMoonpaySellSupportedCurrencies = (
   country?: string,
@@ -76,6 +88,12 @@ export const getMoonpaySellSupportedCurrencies = (
     ...moonpaySellSupportedArbitrumTokens.flatMap(arbitrumToken =>
       getCurrencyAbbreviation(arbitrumToken, 'arb'),
     ),
+    ...moonpaySellSupportedBaseTokens.flatMap(baseToken =>
+      getCurrencyAbbreviation(baseToken, 'base'),
+    ),
+    ...moonpaySellSupportedOptimismTokens.flatMap(optimismToken =>
+      getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
   ];
 
   return moonpaySellSupportedCurrencies;
@@ -89,12 +107,20 @@ export const getMoonpaySellFixedCurrencyAbbreviation = (
     [key: string]: {[key: string]: string};
   } = {
     matic: {
-      matic: 'matic_polygon',
+      matic: 'pol_polygon',
+      pol: 'pol_polygon',
       eth: 'eth_polygon',
       usdc: 'usdc_polygon',
     },
     arb: {
       eth: 'eth_arbitrum',
+    },
+    base: {
+      eth: 'eth_base',
+      usdc: 'usdc_base',
+    },
+    op: {
+      wld: 'wld_optimism',
     },
   };
 
@@ -115,7 +141,9 @@ export const getChainFromMoonpayNetworkCode = (
   const networkCodeMapping: {[key: string]: string} = {
     ethereum: 'eth',
     arbitrum: 'arb',
-    polygon: 'matic',
+    base: 'base',
+    optimism: 'op',
+    polygon: 'pol',
   };
 
   if (!networkCode) {
@@ -151,6 +179,12 @@ export const getMoonpaySellCurrenciesFixedProps = (
       networkCode: 'polygon',
       contractAddress: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
     },
+    usdc_base: {
+      code: 'usdc',
+      name: 'USD Coin',
+      networkCode: 'base',
+      contractAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+    },
     usdc: {
       code: 'usdc',
       name: 'USD Coin',
@@ -163,8 +197,16 @@ export const getMoonpaySellCurrenciesFixedProps = (
       networkCode: 'ethereum',
       contractAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
     },
-    matic_polygon: {code: 'matic', name: 'Polygon', networkCode: 'polygon'},
+    wld_optimism: {
+      code: 'wld',
+      name: 'Worldcoin',
+      networkCode: 'optimism',
+      contractAddress: '0xdc6ff44d5d932cbd77b52e5612ba0529dc6226f1',
+    },
+    matic_polygon: {code: 'pol', name: 'Polygon', networkCode: 'polygon'},
+    pol_polygon: {code: 'pol', name: 'Polygon', networkCode: 'polygon'},
     eth_arbitrum: {code: 'eth', name: 'Ethereum', networkCode: 'arbitrum'},
+    eth_base: {code: 'eth', name: 'Ethereum', networkCode: 'base'},
   };
 
   moonpayCurrenciesData.forEach((currency: MoonpayCurrency) => {
@@ -176,7 +218,9 @@ export const getMoonpaySellCurrenciesFixedProps = (
       mapping.networkCode?.toLowerCase() ===
         currency.metadata?.networkCode?.toLowerCase() &&
       (!mapping.contractAddress ||
-        mapping.contractAddress === currency.metadata?.contractAddress)
+        (currency.metadata?.contractAddress &&
+          mapping.contractAddress ===
+            currency.metadata.contractAddress.toLowerCase()))
     ) {
       currency.code = mapping.code;
       currency.name = mapping.name;
@@ -187,7 +231,7 @@ export const getMoonpaySellCurrenciesFixedProps = (
 };
 
 export const getMoonpaySellPayoutMethodFormat = (
-  method: PaymentMethodKey,
+  method: WithdrawalMethodKey,
 ): MoonpayPayoutMethodType | undefined => {
   if (!method) {
     return undefined;
@@ -207,6 +251,12 @@ export const getMoonpaySellPayoutMethodFormat = (
     case 'gbpBankTransfer':
       formattedPaymentMethod = 'gbp_bank_transfer';
       break;
+    case 'paypal':
+      formattedPaymentMethod = 'paypal';
+      break;
+    case 'venmo':
+      formattedPaymentMethod = 'venmo';
+      break;
     default:
       formattedPaymentMethod = undefined;
       break;
@@ -216,11 +266,11 @@ export const getMoonpaySellPayoutMethodFormat = (
 
 export const getPayoutMethodKeyFromMoonpayType = (
   method: MoonpayPayoutMethodType | undefined,
-): PaymentMethodKey | undefined => {
+): WithdrawalMethodKey | undefined => {
   if (!method) {
     return undefined;
   }
-  let formattedPaymentMethod: PaymentMethodKey | undefined;
+  let formattedPaymentMethod: WithdrawalMethodKey | undefined;
   switch (method) {
     case 'ach_bank_transfer':
       formattedPaymentMethod = 'ach';
@@ -242,18 +292,17 @@ export const getPayoutMethodKeyFromMoonpayType = (
 };
 
 export const getMoonpayFiatListByPayoutMethod = (
-  method: PaymentMethodKey,
-): string[] | undefined => {
-  if (!method) {
-    return undefined;
-  }
-  let fiatList: string[] | undefined;
+  method: WithdrawalMethodKey,
+): string[] => {
+  let fiatList: string[];
   switch (method) {
     case 'ach':
       fiatList = ['USD'];
       break;
     case 'creditCard':
     case 'debitCard':
+    case 'paypal':
+    case 'venmo':
       const debitCardSupportedFiat = cloneDeep(
         moonpaySellSupportedFiatCurrencies,
       );
@@ -276,6 +325,14 @@ export const getMoonpayFiatListByPayoutMethod = (
       break;
   }
   return fiatList;
+};
+
+export const adjustMoonpaySellAmount = (amount: number, precision?: number) => {
+  if (!precision) {
+    return amount;
+  }
+  const factor = Math.pow(10, precision);
+  return Math.trunc(amount * factor) / factor;
 };
 
 export interface MoonpaySellStatus {

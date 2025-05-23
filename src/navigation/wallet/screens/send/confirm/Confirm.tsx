@@ -6,9 +6,9 @@ import React, {
   useLayoutEffect,
   useRef,
 } from 'react';
-import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp, StackActions} from '@react-navigation/core';
-import {WalletGroupParamList} from '../../../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../../../WalletGroup';
 import {
   useAppDispatch,
   useAppSelector,
@@ -29,7 +29,6 @@ import {
   showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
-import PaymentSent from '../../../components/PaymentSent';
 import {
   formatCurrencyAbbreviation,
   formatFiatAmount,
@@ -47,7 +46,7 @@ import {
   Amount,
   ConfirmContainer,
   ConfirmScrollView,
-  DetailsListNoScroll,
+  DetailsList,
   ExchangeRate,
   Fee,
   Header,
@@ -60,7 +59,7 @@ import {
   CustomErrorMessage,
   WrongPasswordError,
 } from '../../../components/ErrorMessages';
-import {URL} from '../../../../../constants';
+import {IS_ANDROID, URL} from '../../../../../constants';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
 import {
@@ -72,7 +71,6 @@ import {
   Link,
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
-import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 import {useTranslation} from 'react-i18next';
 import {
   ActiveOpacity,
@@ -82,7 +80,8 @@ import {
   InfoTriangle,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import {Platform, TouchableOpacity} from 'react-native';
+import {Platform} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   GetFeeOptions,
   getFeeRatePerKb,
@@ -94,15 +93,13 @@ import {
   GetFeeUnits,
   GetPrecision,
   IsERCToken,
+  IsEVMChain,
 } from '../../../../../store/wallet/utils/currency';
 import prompt from 'react-native-prompt-android';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
 import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
 import WarningSvg from '../../../../../../assets/img/warning.svg';
-import {CoinbaseScreens} from '../../../../../navigation/coinbase/CoinbaseGroup';
-import {RootStacks} from '../../../../../Root';
-import {TabsScreens} from '../../../../../navigation/tabs/TabsStack';
 import {
   ConfirmHardwareWalletModal,
   SimpleConfirmPaymentState,
@@ -116,6 +113,10 @@ import {currencyConfigs} from '../../../../../components/modal/import-ledger-wal
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
+import {CommonActions} from '@react-navigation/native';
+import {TabsScreens} from '../../../../tabs/TabsStack';
+import {RootStacks} from '../../../../../Root';
+import {AppActions} from '../../../../../store/app';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -133,7 +134,7 @@ export interface ConfirmParamList {
   message?: string | undefined;
 }
 
-export const Setting = styled.TouchableOpacity`
+export const Setting = styled(TouchableOpacity)`
   align-items: center;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -171,15 +172,11 @@ const Confirm = () => {
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
-  const enableReplaceByFee = useAppSelector(
-    ({WALLET}) => WALLET.enableReplaceByFee,
-  );
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const {isoCode} = useAppSelector(({APP}) => APP.defaultAltCurrency);
 
   const key = allKeys[wallet?.keyId!];
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [showTransactionLevel, setShowTransactionLevel] = useState(false);
   const [showSendingERC20Modal, setShowSendingERC20Modal] = useState(true);
@@ -286,10 +283,10 @@ const Confirm = () => {
   }, []);
 
   const isTxLevelAvailable = () => {
-    const includedCurrencies = ['btc', 'eth', 'matic', 'arb', 'base', 'op'];
+    const includedChains = ['btc', 'eth', 'matic', 'arb', 'base', 'op'];
     // TODO: exclude paypro, coinbase, usingMerchantFee txs,
     // const {payProUrl} = txDetails;
-    return includedCurrencies.includes(currencyAbbreviation.toLowerCase());
+    return includedChains.includes(chain.toLowerCase());
   };
 
   const onCloseTxLevelModal = async (
@@ -387,15 +384,16 @@ const Confirm = () => {
         showBottomNotificationModal({
           ...errorMessageConfig,
           enableBackdropDismiss: false,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
         }),
       );
     }
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
   };
 
   const startSendingPayment = async ({
@@ -441,8 +439,70 @@ const Confirm = () => {
           coin: currencyAbbreviation || '',
         }),
       );
-      await sleep(500);
-      setShowPaymentSentModal(true);
+
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            wallet.credentials.n > 1
+              ? t('Proposal created')
+              : t('Payment Sent'),
+        }),
+      );
+
+      await sleep(1000);
+      if (recipient.type === 'coinbase') {
+        navigation.dispatch(StackActions.popToTop());
+        navigation.dispatch(StackActions.push('CoinbaseRoot'));
+      } else {
+        if (IsEVMChain(wallet.chain) && wallet.receiveAddress) {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 2,
+              routes: [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
+                },
+                {
+                  name: WalletScreens.ACCOUNT_DETAILS,
+                  params: {
+                    keyId: wallet.keyId,
+                    selectedAccountAddress: wallet.receiveAddress,
+                  },
+                },
+                {
+                  name: WalletScreens.WALLET_DETAILS,
+                  params: {
+                    walletId: wallet!.id,
+                    key,
+                  },
+                },
+              ],
+            }),
+          );
+        } else {
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 1,
+              routes: [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
+                },
+                {
+                  name: WalletScreens.WALLET_DETAILS,
+                  params: {
+                    walletId: wallet!.id,
+                    key,
+                  },
+                },
+              ],
+            }),
+          );
+        }
+      }
     } catch (err) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
@@ -603,7 +663,7 @@ const Confirm = () => {
           extraScrollHeight={50}
           contentContainerStyle={{paddingBottom: 50}}
           keyboardShouldPersistTaps={'handled'}>
-          <DetailsListNoScroll>
+          <DetailsList keyboardShouldPersistTaps={'handled'}>
             <Header>Summary</Header>
             <SendingTo
               recipient={recipientData}
@@ -708,7 +768,7 @@ const Confirm = () => {
                 </Info>
               </>
             ) : null}
-            {txp && currencyAbbreviation !== 'xrp' ? (
+            {txp ? (
               <Memo
                 memo={txp.message || message || ''}
                 onChange={message => setTxp({...txp, message})}
@@ -735,45 +795,8 @@ const Confirm = () => {
                 dispatch(showConfirmAmountInfoSheet('total'));
               }}
             />
-          </DetailsListNoScroll>
+          </DetailsList>
 
-          <PaymentSent
-            isVisible={showPaymentSentModal}
-            title={
-              wallet.credentials.n > 1
-                ? t('Proposal created')
-                : t('Payment Sent')
-            }
-            onCloseModal={async () => {
-              setShowPaymentSentModal(false);
-              if (recipient.type === 'coinbase') {
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 1,
-                    routes: [
-                      {
-                        name: RootStacks.TABS,
-                        params: {screen: TabsScreens.HOME},
-                      },
-                      {
-                        name: CoinbaseScreens.ROOT,
-                        params: {},
-                      },
-                    ],
-                  }),
-                );
-              } else {
-                await sleep(500);
-                navigation.dispatch(StackActions.popToTop());
-                navigation.dispatch(
-                  StackActions.push('WalletDetails', {
-                    walletId: wallet!.id,
-                    key,
-                  }),
-                );
-              }
-            }}
-          />
           {isTxLevelAvailable() ? (
             <TransactionLevel
               feeLevel={fee?.feeLevel || 'normal'}

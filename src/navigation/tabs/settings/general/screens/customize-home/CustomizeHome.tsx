@@ -10,7 +10,7 @@ import {
 import {H7} from '../../../../../../components/styled/Text';
 import HamburgerSvg from '../../../../../../../assets/img/hamburger.svg';
 import Button from '../../../../../../components/button/Button';
-import {FlatList} from 'react-native';
+import {FlashList} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector} from '../../../../../../utils/hooks';
 import {
   dismissOnGoingProcessModal,
@@ -18,11 +18,10 @@ import {
   setHomeCarouselLayoutType,
 } from '../../../../../../store/app/app.actions';
 import {useNavigation} from '@react-navigation/native';
+import {useTheme} from '@react-navigation/native';
 import {sleep} from '../../../../../../utils/helper-methods';
 import haptic from '../../../../../../components/haptic-feedback/haptic';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import {ScreenOptions} from '../../../../../../styles/tabNavigator';
-import {useTheme} from 'styled-components/native';
 import {
   CarouselSvg,
   createCustomizeCardList,
@@ -41,6 +40,7 @@ import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../../../../store/app/app.effects';
 import {Analytics} from '../../../../../../store/analytics/analytics.effects';
+import CustomTabBar from '../../../../../../components/custom-tab-bar/CustomTabBar';
 
 // Layout selector
 const Noop = () => null;
@@ -113,7 +113,7 @@ const CustomizeHomeSettings = () => {
     return (
       <ListFooterButtonContainer>
         <Button
-          disabled={!dirty}
+          disabled={!dirty && defaultLayoutType === layoutType}
           onPress={async () => {
             dispatch(startOnGoingProcessModal('SAVING_LAYOUT'));
             await sleep(1000);
@@ -141,9 +141,11 @@ const CustomizeHomeSettings = () => {
 
   const memoizedFooterList = useMemo(() => {
     return (
-      <FlatList
+      <FlashList
         ListHeaderComponent={() => {
-          return hiddenList.length ? <ListHeader>Hidden</ListHeader> : null;
+          return hiddenList.length ? (
+            <ListHeader>{t('Hidden')}</ListHeader>
+          ) : null;
         }}
         contentContainerStyle={{paddingBottom: 250}}
         data={hiddenList}
@@ -166,21 +168,11 @@ const CustomizeHomeSettings = () => {
         <Tab.Navigator
           initialRouteName={layoutType}
           style={{marginTop: 20}}
-          screenOptions={{
-            ...ScreenOptions(),
-            tabBarShowLabel: true,
-            tabBarItemStyle: {
-              flexDirection: 'row',
-            },
-            tabBarIconStyle: {
-              justifyContent: 'center',
-            },
-          }}
+          tabBar={props => <CustomTabBar {...props} />}
           screenListeners={{
             tabPress: tab => {
               haptic('soft');
               if (tab.target) {
-                setDirty(true);
                 const _layoutType = tab.target.split('-')[0] as
                   | 'carousel'
                   | 'listView';

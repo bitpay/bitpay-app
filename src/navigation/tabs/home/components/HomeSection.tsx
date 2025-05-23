@@ -1,10 +1,10 @@
 import React from 'react';
 import {
   StyleProp,
-  TouchableOpacity,
   TouchableWithoutFeedbackProps,
   ViewStyle,
 } from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,

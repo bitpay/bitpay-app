@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import React, {useCallback, useEffect} from 'react';
 import {Image} from 'react-native';
 import styled from 'styled-components/native';
@@ -16,12 +16,9 @@ import {
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {SettingsComponent} from '../SettingsRoot';
+import {SettingsDetailsParamList} from '../SettingsDetails';
 
 const MethodIcon = require('../../../../../assets/img/logos/method.png');
-
-interface ConnectionsProps {
-  redirectTo?: string;
-}
 
 const ConnectionItemContainer = styled.View`
   justify-content: flex-start;
@@ -34,8 +31,9 @@ const ConnectionIconContainer = styled.View`
   margin-right: 5px;
 `;
 
-const Connections: React.VFC<ConnectionsProps> = props => {
-  const {redirectTo} = props;
+const Connections = () => {
+  const route = useRoute<RouteProp<SettingsDetailsParamList, 'Connections'>>();
+  const {redirectTo} = route.params || {};
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const sessions = useAppSelector(

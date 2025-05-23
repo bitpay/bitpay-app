@@ -6,11 +6,16 @@ import {
   TEIP155Chain,
   WALLETCONNECT_V2_METADATA,
   WALLET_CONNECT_SUPPORTED_CHAINS,
+  WC_EVENTS,
 } from '../../constants/WalletConnectV2';
 import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
-import {ProposalTypes, SessionTypes} from '@walletconnect/types';
-import {sleep} from '../../utils/helper-methods';
+import {ProposalTypes, SessionTypes, Verify} from '@walletconnect/types';
+import {
+  processOtherMethodsRequest,
+  processSwapRequest,
+  sleep,
+} from '../../utils/helper-methods';
 import {BuildApprovedNamespacesParams, getSdkError} from '@walletconnect/utils';
 import {WalletConnectV2Actions} from '.';
 import {utils} from 'ethers';
@@ -20,9 +25,13 @@ import {
   JsonRpcResult,
 } from '@json-rpc-tools/utils';
 import {Key, Wallet} from '../wallet/wallet.models';
-import {checkBiometricForSending} from '../wallet/effects/send/send';
+import {
+  checkBiometricForSending,
+  getEstimateGas,
+} from '../wallet/effects/send/send';
 import {
   dismissDecryptPasswordModal,
+  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../app/app.actions';
@@ -30,7 +39,10 @@ import {
   checkEncryptPassword,
   findWalletByAddress,
 } from '../wallet/utils/wallet';
-import {WrongPasswordError} from '../../navigation/wallet/components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../../navigation/wallet/components/ErrorMessages';
 import {
   WCV2RequestType,
   WCV2SessionType,
@@ -38,28 +50,38 @@ import {
 } from './wallet-connect-v2.models';
 import {ethers, providers} from 'ethers';
 import {Core} from '@walletconnect/core';
-import {
-  Web3Wallet,
-  IWeb3Wallet,
-  Web3WalletTypes,
-} from '@walletconnect/web3wallet';
+import {WalletKit, IWalletKit, WalletKitTypes} from '@reown/walletkit';
 import {WALLET_CONNECT_V2_PROJECT_ID} from '@env';
 import {startInAppNotification} from '../app/app.effects';
 import {navigationRef} from '../../Root';
 import {sessionProposal} from './wallet-connect-v2.actions';
 import {buildApprovedNamespaces} from '@walletconnect/utils';
 import {getFeeLevelsUsingBwcClient} from '../wallet/effects/fee/fee';
+import {AppActions} from '../app';
+import {t} from 'i18next';
+import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 
 const BWC = BwcProvider.getInstance();
 
 let core = new Core({
   projectId: WALLET_CONNECT_V2_PROJECT_ID,
 });
-let web3wallet: IWeb3Wallet;
+let web3wallet: IWalletKit;
+
+const checkCredentials = () => {
+  return WALLET_CONNECT_V2_PROJECT_ID && WALLETCONNECT_V2_METADATA;
+};
 
 export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
   try {
-    web3wallet = await Web3Wallet.init({
+    dispatch(LogActions.info('walletConnectV2Init: starting...'));
+
+    if (!checkCredentials()) {
+      dispatch(LogActions.error('walletConnectV2Init: credentials not found'));
+      return;
+    }
+
+    web3wallet = await WalletKit.init({
       core,
       metadata: WALLETCONNECT_V2_METADATA,
     });
@@ -99,12 +121,12 @@ export const walletConnectV2OnSessionProposal =
     return new Promise(async (resolve, reject) => {
       try {
         if (!web3wallet) {
-          web3wallet = await Web3Wallet.init({
+          web3wallet = await WalletKit.init({
             core,
             metadata: WALLETCONNECT_V2_METADATA,
           });
         }
-        await web3wallet.core.pairing.pair({uri});
+        await web3wallet.pair({uri});
         resolve();
       } catch (e) {
         dispatch(
@@ -124,6 +146,7 @@ export const walletConnectV2ApproveSessionProposal =
     proposalParams: ProposalTypes.Struct,
     accounts: string[],
     chains: string[],
+    verifyContext: Verify.Context | undefined,
   ): Effect<Promise<void>> =>
   dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -140,6 +163,7 @@ export const walletConnectV2ApproveSessionProposal =
             proposalParams,
             accounts,
             chains,
+            verifyContext,
           }),
         );
         dispatch(sessionProposal());
@@ -149,11 +173,10 @@ export const walletConnectV2ApproveSessionProposal =
           id,
           reason: getSdkError('USER_REJECTED'),
         });
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.error(
-            `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${errMsg}`,
           ),
         );
         reject(err);
@@ -188,8 +211,9 @@ export const walletConnectV2SubscribeToEvents =
   (): Effect => (dispatch, getState) => {
     web3wallet.on(
       'session_proposal',
-      (proposal: Web3WalletTypes.EventArguments['session_proposal']) => {
+      (proposal: WalletKitTypes.EventArguments['session_proposal']) => {
         dispatch(WalletConnectV2Actions.sessionProposal(proposal));
+        dispatch(AppActions.showWalletConnectStartModal());
         dispatch(
           LogActions.info(
             `[WC-V2/walletConnectV2OnSessionProposal]: session proposal: ${JSON.stringify(
@@ -201,7 +225,7 @@ export const walletConnectV2SubscribeToEvents =
     );
     web3wallet.on(
       'session_request',
-      async (event: Web3WalletTypes.EventArguments['session_request']) => {
+      async (event: WalletKitTypes.EventArguments['session_request']) => {
         dispatch(
           LogActions.info(
             `[WC-V2/walletConnectV2SubscribeToEvents]: new pending request: ${JSON.stringify(
@@ -209,59 +233,152 @@ export const walletConnectV2SubscribeToEvents =
             )}`,
           ),
         );
+
+        const isChainSupported = Object.keys(
+          WALLET_CONNECT_SUPPORTED_CHAINS,
+        ).includes(event.params.chainId);
+        const isMethodSupported = Object.values(
+          EIP155_SIGNING_METHODS,
+        ).includes(event.params.request.method);
+
+        if (!isChainSupported || !isMethodSupported) {
+          return;
+        }
+
+        // If method doesn't require user interaction, auto-approve
         if (
-          Object.keys(WALLET_CONNECT_SUPPORTED_CHAINS).includes(
-            event.params.chainId,
-          ) &&
-          Object.values(EIP155_SIGNING_METHODS).includes(
+          EIP155_METHODS_NOT_INTERACTION_NEEDED.includes(
             event.params.request.method,
           )
         ) {
-          const {name, params} =
-            (navigationRef.current?.getCurrentRoute() as any) || {};
-          const wallet = dispatch(getWalletByRequest(event));
-
-          // events that needs to be approved automatically without user interaction
-          if (
-            EIP155_METHODS_NOT_INTERACTION_NEEDED.includes(
-              event.params.request.method,
-            )
-          ) {
-            await web3wallet.respondSessionRequest({
-              topic: event.topic,
-              response: formatJsonRpcResult(event.id, null),
-            });
-            return;
-          }
-
-          if (
-            name !== 'WalletConnectHome' ||
-            (name === 'WalletConnectHome' &&
-              (params?.wallet?.receiveAddress !== wallet?.receiveAddress ||
-                params?.wallet?.network !== wallet?.network ||
-                params?.wallet?.chain !== wallet?.chain))
-          ) {
-            dispatch(
-              startInAppNotification(
-                'NEW_PENDING_REQUEST',
-                event,
-                'notification',
-              ),
-            );
-          }
-
-          dispatch(
-            WalletConnectV2Actions.sessionRequest({
-              ...event,
-              createdOn: Date.now(),
-            }),
-          );
+          await handleAutoApproval(event);
+          return;
         }
+
+        // Process the request that requires user interaction
+        await handleUserInteraction(event);
       },
     );
+
+    const handleAutoApproval = async (
+      event: WalletKitTypes.EventArguments['session_request'],
+    ) => {
+      const newChainId = event?.params?.request?.params?.[0]?.chainId;
+
+      if (!newChainId) {
+        return;
+      }
+
+      const eip155ChainId = parseAndFormatChainId(newChainId);
+
+      await web3wallet.respondSessionRequest({
+        topic: event.topic,
+        response: formatJsonRpcResult(event.id, null),
+      });
+
+      try {
+        if (EIP155_CHAINS[eip155ChainId as TEIP155Chain]) {
+          await emitSessionEvents(event, eip155ChainId);
+        } else {
+          throw new Error(
+            `The requested chain (${eip155ChainId}) is not supported.`,
+          );
+        }
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.error(
+            `[WC-V2/handleAutoApproval]: an error occurred while emiting session event: ${errMsg}`,
+          ),
+        );
+        const bottomNotificationConfig: BottomNotificationConfig =
+          CustomErrorMessage({
+            errMsg: `An error occurred while emiting session event: ${errMsg}`,
+            title: t('Uh oh, something went wrong'),
+          });
+        dispatch(showBottomNotificationModal(bottomNotificationConfig));
+      }
+    };
+
+    const handleUserInteraction = async (
+      event: WalletKitTypes.EventArguments['session_request'],
+    ) => {
+      const {name: currentRouteName} =
+        (navigationRef.current?.getCurrentRoute() as any) || {};
+
+      try {
+        let processedRequestData = {};
+
+        if (event.params.request.method === 'eth_sendTransaction') {
+          processedRequestData = await dispatch(processSwapRequest(event));
+        } else {
+          processedRequestData = await dispatch(
+            processOtherMethodsRequest(event),
+          );
+        }
+
+        dispatch(
+          WalletConnectV2Actions.sessionRequest({
+            ...event,
+            ...processedRequestData,
+            createdOn: Date.now(),
+          }),
+        );
+
+        if (currentRouteName !== 'WalletConnectHome') {
+          await sleep(1000);
+          dispatch(
+            startInAppNotification(
+              'NEW_PENDING_REQUEST',
+              event,
+              'notification',
+            ),
+          );
+        }
+      } catch (error) {
+        console.error(`Error processing request ID ${event.id}:`, error);
+      }
+    };
+
+    const parseAndFormatChainId = (chainId: string) => {
+      const parsedChainId = chainId.startsWith('0x')
+        ? parseInt(chainId, 16)
+        : parseInt(chainId, 10);
+      return `eip155:${parsedChainId}`;
+    };
+
+    const emitSessionEvents = async (
+      event: WalletKitTypes.EventArguments['session_request'],
+      eip155ChainId: string,
+    ) => {
+      const chainChanged = {
+        topic: event.topic,
+        event: {
+          name: 'chainChanged',
+          data: parseInt(eip155ChainId.split(':')[1], 10),
+        },
+        chainId: eip155ChainId,
+      };
+
+      const session: WCV2SessionType | undefined =
+        getState().WALLET_CONNECT_V2.sessions.find(
+          (session: WCV2SessionType) => session.topic === event.topic,
+        );
+
+      const address = session?.accounts[0].split(':')[2];
+      const accountsChanged = {
+        topic: event.topic,
+        event: {name: 'accountsChanged', data: [`${eip155ChainId}:${address}`]},
+        chainId: eip155ChainId,
+      };
+
+      await web3wallet.emitSessionEvent(chainChanged);
+      await web3wallet.emitSessionEvent(accountsChanged);
+    };
+
     web3wallet.on(
       'session_delete',
-      async (data: Web3WalletTypes.EventArguments['session_delete']) => {
+      async (data: WalletKitTypes.EventArguments['session_delete']) => {
         try {
           const {topic} = data;
           const session: WCV2SessionType | undefined =
@@ -282,19 +399,19 @@ export const walletConnectV2SubscribeToEvents =
             ),
           );
         } catch (err) {
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
           dispatch(
             LogActions.error(
-              `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${JSON.stringify(
-                err,
-              )}`,
+              `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${errMsg}`,
             ),
           );
         }
       },
     );
     web3wallet.on(
-      'auth_request',
-      async (data: Web3WalletTypes.EventArguments['auth_request']) => {
+      'session_authenticate',
+      async (data: WalletKitTypes.EventArguments['session_authenticate']) => {
         // TODO Handle auth_request
         try {
           dispatch(
@@ -307,15 +424,43 @@ export const walletConnectV2SubscribeToEvents =
         } catch (error) {}
       },
     );
+    web3wallet.on(
+      'session_request_expire',
+      async (
+        event: WalletKitTypes.EventArguments['session_request_expire'],
+      ) => {
+        try {
+          dispatch(
+            LogActions.info(
+              `[WC-V2/walletConnectV2SubscribeToEvents] session_request_expire: ${JSON.stringify(
+                event,
+              )}`,
+            ),
+          );
+          const requests: WCV2RequestType[] | undefined =
+            getState().WALLET_CONNECT_V2.requests;
+          const request = requests.find(({id}) => id === event.id);
+          if (request) {
+            await dispatch(walletConnectV2RejectCallRequest(request));
+          }
+        } catch (error) {}
+      },
+    );
   };
 
 export const walletConnectV2ApproveCallRequest =
-  (request: WCV2RequestType, wallet: Wallet): Effect<Promise<void>> =>
+  (
+    request: WCV2RequestType,
+    wallet: Wallet,
+    response?: JsonRpcResult<string>,
+  ): Effect<Promise<void>> =>
   dispatch => {
     return new Promise(async (resolve, reject) => {
       const {topic, id} = request;
       try {
-        const response = await dispatch(approveEIP155Request(request, wallet));
+        if (!response) {
+          response = await dispatch(approveEIP155Request(request, wallet));
+        }
         await web3wallet.respondSessionRequest({
           topic,
           response,
@@ -330,11 +475,10 @@ export const walletConnectV2ApproveCallRequest =
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2UpdateRequests({id}));
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.error(
-            `[WC-V2/walletConnectV2ApproveCallRequest]: an error occurred while approving call request: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/walletConnectV2ApproveCallRequest]: an error occurred while approving call request: ${errMsg}`,
           ),
         );
         reject(err);
@@ -365,11 +509,10 @@ export const walletConnectV2RejectCallRequest =
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2UpdateRequests({id}));
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.error(
-            `[WC-V2/walletConnectV2RejectCallRequest]: an error occurred while rejecting call request: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/walletConnectV2RejectCallRequest]: an error occurred while rejecting call request: ${errMsg}`,
           ),
         );
         reject(err);
@@ -383,7 +526,7 @@ export const walletConnectV2OnDeleteSession =
     return new Promise(async resolve => {
       try {
         if (!web3wallet) {
-          web3wallet = await Web3Wallet.init({
+          web3wallet = await WalletKit.init({
             core,
             metadata: WALLETCONNECT_V2_METADATA,
           });
@@ -408,11 +551,10 @@ export const walletConnectV2OnDeleteSession =
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2DeleteSessions(topic));
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.warn(
-            `[WC-V2/walletConnectV2OnDeleteSession]: an error occurred while deleting session: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/walletConnectV2OnDeleteSession]: an error occurred while deleting session: ${errMsg}`,
           ),
         );
         resolve();
@@ -440,7 +582,7 @@ export const walletConnectV2OnUpdateSession =
   async dispatch => {
     try {
       if (!web3wallet) {
-        web3wallet = await Web3Wallet.init({
+        web3wallet = await WalletKit.init({
           core,
           metadata: WALLETCONNECT_V2_METADATA,
         });
@@ -483,7 +625,7 @@ export const walletConnectV2OnUpdateSession =
             eip155: {
               chains,
               methods: Object.values(EIP155_SIGNING_METHODS),
-              events: ['chainChanged', 'accountsChanged'],
+              events: WC_EVENTS,
               accounts,
             },
           },
@@ -516,7 +658,7 @@ export const walletConnectV2OnUpdateSession =
             eip155: {
               chains: [...new Set([..._chains, ...chains])],
               methods: Object.values(EIP155_SIGNING_METHODS),
-              events: ['chainChanged', 'accountsChanged'],
+              events: WC_EVENTS,
               accounts: [...new Set([..._accounts, ...accounts])],
             },
           },
@@ -545,14 +687,21 @@ export const walletConnectV2OnUpdateSession =
         Promise.resolve();
       }
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(
         LogActions.error(
-          `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${JSON.stringify(
-            err,
-          )}`,
+          `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${errMsg}`,
         ),
       );
-      Promise.reject(err);
+      if (
+        errMsg.includes('No accounts provided for chain') ||
+        errMsg.includes('Non conforming namespaces')
+      ) {
+        throw new Error(
+          "Removing this account will invalidate the session's required namespaces. Please disconnect the entire session and reconnect.",
+        );
+      }
+      throw err;
     }
   };
 
@@ -588,6 +737,7 @@ const approveEIP155Request =
             delete types.EIP712Domain;
             const signedData = await signer._signTypedData(domain, types, data);
             resolve(formatJsonRpcResult(id, signedData));
+          // deprecated - using bws for sending transaction
           case EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION:
             const provider = new providers.JsonRpcProvider(
               EIP155_CHAINS[chainId as TEIP155Chain].rpc,
@@ -597,20 +747,50 @@ const approveEIP155Request =
               sendTransaction.gasLimit = sendTransaction.gas;
               delete sendTransaction.gas;
             }
+            if (!sendTransaction.gasLimit) {
+              sendTransaction.gasLimit = await getEstimateGas({
+                wallet: wallet as Wallet,
+                network: wallet.network,
+                value: sendTransaction.amount || 0,
+                from: sendTransaction.from,
+                to: sendTransaction.to,
+                data: sendTransaction.data,
+                chain: WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain,
+              });
+            }
             if (sendTransaction.chainId) {
               delete sendTransaction.chainId;
             }
-            // workaround for bad gas price estimation ONLY matic
-            if (chainId.includes('eip155:137')) {
-              const feeLevels = await getFeeLevelsUsingBwcClient(
-                'matic',
-                'livenet',
-              );
-              const urgentFee = feeLevels.find(({level}) => level === 'urgent');
-              if (urgentFee?.feePerKb) {
-                sendTransaction.gasPrice = urgentFee?.feePerKb;
-              }
+            if (sendTransaction.type) {
+              delete sendTransaction.type;
             }
+
+            if (
+              !sendTransaction.maxFeePerGas &&
+              !sendTransaction.maxPriorityFeePerGas
+            ) {
+              if (!sendTransaction.gasPrice) {
+                const feeLevels = await getFeeLevelsUsingBwcClient(
+                  WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain,
+                  wallet.network,
+                );
+                const urgentFee = feeLevels.find(
+                  ({level}) => level === 'urgent',
+                );
+                if (urgentFee?.feePerKb) {
+                  sendTransaction.gasPrice = urgentFee?.feePerKb;
+                }
+              }
+            } else {
+              sendTransaction.type = 2;
+            }
+            dispatch(
+              LogActions.info(
+                `[WC-V2/approveEIP155Request]: ETH_SEND_TRANSACTION: ${JSON.stringify(
+                  sendTransaction,
+                )}`,
+              ),
+            );
             const connectedWallet = signer.connect(provider);
             const {hash} = await connectedWallet.sendTransaction(
               sendTransaction,
@@ -652,6 +832,10 @@ export const getAddressFrom = (request: WCV2RequestType): string => {
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
         addressFrom = params[0];
         break;
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
+        addressFrom = params[0];
+        break;
+
       default:
         break;
     }
@@ -679,27 +863,35 @@ const getPrivKey =
         }
 
         if (key.isPrivKeyEncrypted) {
-          password = await new Promise<string>((_resolve, _reject) => {
-            dispatch(
-              showDecryptPasswordModal({
-                onSubmitHandler: async (_password: string) => {
-                  if (checkEncryptPassword(key, _password)) {
-                    dispatch(dismissDecryptPasswordModal());
-                    await sleep(500);
-                    _resolve(_password);
-                  } else {
-                    dispatch(dismissDecryptPasswordModal());
-                    await sleep(500);
-                    dispatch(showBottomNotificationModal(WrongPasswordError()));
-                    _reject('invalid password');
-                  }
-                },
-                onCancelHandler: () => {
-                  _reject('password canceled');
-                },
-              }),
-            );
-          });
+          try {
+            password = await new Promise<string>(async (_resolve, _reject) => {
+              dispatch(dismissOnGoingProcessModal()); // dismiss any previous modal
+              await sleep(500);
+              dispatch(
+                showDecryptPasswordModal({
+                  onSubmitHandler: async (_password: string) => {
+                    if (checkEncryptPassword(key, _password)) {
+                      dispatch(dismissDecryptPasswordModal());
+                      await sleep(500);
+                      _resolve(_password);
+                    } else {
+                      dispatch(dismissDecryptPasswordModal());
+                      await sleep(500);
+                      dispatch(
+                        showBottomNotificationModal(WrongPasswordError()),
+                      );
+                      _reject('invalid password');
+                    }
+                  },
+                  onCancelHandler: () => {
+                    _reject('password canceled');
+                  },
+                }),
+              );
+            });
+          } catch (error) {
+            return reject(error);
+          }
         }
 
         const xPrivKey = password
@@ -717,11 +909,10 @@ const getPrivKey =
         );
         resolve(priv);
       } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.error(
-            `[WC-V2/getPrivKey]: an error occurred while getting private key: ${JSON.stringify(
-              err,
-            )}`,
+            `[WC-V2/getPrivKey]: an error occurred while getting private key: ${errMsg}`,
           ),
         );
         reject(err);
@@ -786,9 +977,9 @@ const WalletConnectV2UpdateSession =
     dispatch(WalletConnectV2Actions.updateSessions([...new Set(allSessions)]));
   };
 
-export const getWalletByRequest =
+export const getGasWalletByRequest =
   (
-    request: Web3WalletTypes.EventArguments['session_request'],
+    request: WalletKitTypes.EventArguments['session_request'],
   ): Effect<Wallet | undefined> =>
   (_dispatch, getState) => {
     const sessionV2: WCV2SessionType | undefined =

@@ -23,7 +23,6 @@ import {
   Row,
   ScreenGutter,
 } from '../../../../components/styled/Containers';
-import {Balance, KeyName} from '../../../wallet/components/KeyDropdownOption';
 import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
 import {BoxShadow} from './Styled';
 import {View} from 'react-native';
@@ -31,6 +30,8 @@ import Percentage from '../../../../components/percentage/Percentage';
 import {useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import AngleRightSvg from '../../../../../assets/img/angle-right.svg';
+import {Balance, OptionName} from '../../../wallet/components/DropdownOption';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
@@ -50,7 +51,7 @@ export const HeaderImg = styled.View`
   flex-direction: row;
 `;
 
-export const ListCard = styled.TouchableOpacity<{outlineStyle?: boolean}>`
+export const ListCard = styled(TouchableOpacity)<{outlineStyle?: boolean}>`
   border: ${({outlineStyle, theme}) =>
     outlineStyle ? `1px solid ${theme.dark ? SlateDark : Slate30}` : 'none'};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
@@ -155,7 +156,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         <Row style={{alignItems: 'center', justifyContent: 'center'}}>
           <Column>
             {HeaderComponent}
-            <KeyName>{keyName}</KeyName>
+            <OptionName>{keyName}</OptionName>
           </Column>
           <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
             {needsBackup ? (

@@ -2,14 +2,22 @@ import React from 'react';
 import {useTheme} from 'styled-components/native';
 import {Path, Svg, G} from 'react-native-svg';
 import {NotificationPrimary, White} from '../../../styles/colors';
+import useAppSelector from '../../../utils/hooks/useAppSelector';
+import {HEIGHT} from '../../styled/Containers';
 
 interface CurrencySymbolProps {
   isDark: boolean;
+  isSmallScreen?: boolean;
 }
 
-const CurrencySymbolSvg: React.FC<CurrencySymbolProps> = ({isDark}) => {
+const CurrencySymbolSvg: React.FC<CurrencySymbolProps> = ({
+  isDark,
+  isSmallScreen,
+}) => {
+  const width = isSmallScreen ? 12 : 20;
+  const height = isSmallScreen ? 12 : 20;
   return (
-    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <Svg width={width} height={height} viewBox="0 0 20 20" fill="none">
       <G opacity="0.5">
         <Path
           fill-rule="evenodd"
@@ -23,8 +31,12 @@ const CurrencySymbolSvg: React.FC<CurrencySymbolProps> = ({isDark}) => {
 };
 const CurrencySymbol = () => {
   const theme = useTheme();
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
 
-  return <CurrencySymbolSvg isDark={theme.dark} />;
+  return (
+    <CurrencySymbolSvg isDark={theme.dark} isSmallScreen={_isSmallScreen} />
+  );
 };
 
 export default CurrencySymbol;

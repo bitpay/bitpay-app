@@ -9,7 +9,8 @@ import {
 } from '../../../../../components/styled/Text';
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
-import {Linking, ScrollView, TouchableOpacity} from 'react-native';
+import {Linking, ScrollView} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   LightBlack,
   LuckySevens,
@@ -413,7 +414,9 @@ const PayAllBills = ({
                             {formatFiatAmount(
                               account[account.type].lastStatementBalance!,
                               'USD',
-                              {customPrecision: 'minimal'},
+                              {
+                                customPrecision: 'minimal',
+                              },
                             )}
                           </BillPayOptionAmount>
                         </BillPayOption>

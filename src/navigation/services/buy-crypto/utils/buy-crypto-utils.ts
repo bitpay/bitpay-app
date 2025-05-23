@@ -58,15 +58,16 @@ export const getBuyEnabledPaymentMethods = (
   if (!currency || !coin || !chain) {
     return {};
   }
-  PaymentMethodsAvailable.sepaBankTransfer.enabled = !!(
-    country &&
-    PaymentMethodsAvailable.sepaBankTransfer.supportedCountries?.includes(
-      country,
-    )
-  );
-  PaymentMethodsAvailable.ach.enabled = !!(
-    country && PaymentMethodsAvailable.ach.supportedCountries?.includes(country)
-  );
+  Object.values(PaymentMethodsAvailable).forEach(pm => {
+    if (
+      pm.enabled &&
+      pm.supportedCountries &&
+      pm.supportedCountries.length > 0
+    ) {
+      pm.enabled = !!(country && pm.supportedCountries.includes(country));
+    }
+  });
+
   const EnabledPaymentMethods = pickBy(PaymentMethodsAvailable, method => {
     return exchange && BuyCryptoSupportedExchanges.includes(exchange)
       ? method.enabled &&

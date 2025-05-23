@@ -24,8 +24,9 @@ import {
 } from '../../../../../styles/colors';
 import {View} from 'react-native';
 import {useAppSelector} from '../../../../../utils/hooks';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
-const RowContainer = styled.TouchableOpacity`
+const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   margin: 10px 0;

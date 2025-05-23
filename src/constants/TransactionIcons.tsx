@@ -2,7 +2,7 @@ import React, {ReactElement} from 'react';
 import {ColorValue} from 'react-native';
 import AmazonSvg from '../../assets/img/wallet/transactions/amazon.svg';
 import ShapeShiftSvg from '../../assets/img/wallet/transactions/shapeshift.svg';
-import ChangellySvg from '../../assets/img/wallet/transactions/changelly.svg';
+import SwapTxIconSvg from '../components/icons/transaction-history-icons/swapTxIcon';
 import OneInchSvg from '../../assets/img/wallet/transactions/1inch.svg';
 import MercadolivreSvg from '../../assets/img/wallet/transactions/mercadolivre.svg';
 import CoinbaseSvg from '../../assets/img/wallet/transactions/coinbase.svg';
@@ -360,7 +360,13 @@ export const TransactionIcons: {[index in string]: ReactElement} = {
     />
   ),
   changelly: (
-    <ChangellySvg
+    <SwapTxIconSvg
+      width={TRANSACTION_ICON_SIZE}
+      height={TRANSACTION_ICON_SIZE}
+    />
+  ),
+  thorswap: (
+    <SwapTxIconSvg
       width={TRANSACTION_ICON_SIZE}
       height={TRANSACTION_ICON_SIZE}
     />

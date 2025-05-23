@@ -4,6 +4,7 @@ import {
   BanxaPaymentMethod,
 } from '../../../../store/buy-crypto/buy-crypto.models';
 import {getCurrencyAbbreviation} from '../../../../utils/helper-methods';
+import {externalServicesCoinMapping} from '../../utils/external-services-utils';
 import {PaymentMethod} from '../constants/BuyCryptoConstants';
 
 export const banxaEnv = __DEV__ ? 'sandbox' : 'production';
@@ -53,7 +54,8 @@ export const banxaSupportedCoins = [
   'eth',
   'doge',
   'ltc',
-  'matic',
+  'matic', // POL // backward compatibility
+  'pol',
   'xrp',
 ];
 
@@ -105,6 +107,7 @@ export const getBanxaSupportedCurrencies = (): string[] => {
 };
 
 export const getBanxaCoinFormat = (coin: string): string => {
+  coin = externalServicesCoinMapping(coin);
   let formattedCoin: string = `${coin.toUpperCase()}`;
   return formattedCoin;
 };
@@ -118,10 +121,14 @@ export const getBanxaSelectedPaymentMethodData = (
   switch (selectedPaymentMethod.method) {
     // "ach" | "applePay" | "creditCard" | "debitCard" | "sepaBankTransfer" | "other"
     case 'applePay':
-      // Prioritize WORLDPAYAPPLE, if it is not included, look for cards type
+      // Prioritize PRIMERAP or WORLDPAYAPPLE, if it is not included, look for cards type
       selectedBanxaPMData = banxaPaymentMethods.find(
         (banxaPaymentMethod: BanxaPaymentMethod) => {
-          if (['WORLDPAYAPPLE'].includes(banxaPaymentMethod.paymentType)) {
+          if (
+            ['PRIMERAP', 'WORLDPAYAPPLE'].includes(
+              banxaPaymentMethod.paymentType,
+            )
+          ) {
             return true;
           }
         },

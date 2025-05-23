@@ -1,6 +1,7 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ScrollView, TouchableOpacity} from 'react-native';
+import {ScrollView} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   useTheme,
   RouteProp,
@@ -20,7 +21,6 @@ import MoonpaySellCheckoutSkeleton from './MoonpaySellCheckoutSkeleton';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {Black, White, Caution} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
-import PaymentSent from '../../../wallet/components/PaymentSent';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import SwipeButton from '../../../../components/swipe-button/SwipeButton';
 import {H5, H7} from '../../../../components/styled/Text';
@@ -76,6 +76,7 @@ import {
 } from '../../../../store/app/app.actions';
 import {
   createTxProposal,
+  handleCreateTxProposalError,
   publishAndSign,
 } from '../../../../store/wallet/effects/send/send';
 import {useTranslation} from 'react-i18next';
@@ -89,7 +90,7 @@ import {
   MoonpaySellIncomingData,
   MoonpaySellOrderData,
   MoonpaySellTransactionDetails,
-} from '../../../../store/sell-crypto/sell-crypto.models';
+} from '../../../../store/sell-crypto/models/moonpay-sell.models';
 import {
   getMoonpaySellFixedCurrencyAbbreviation,
   getMoonpaySellPayoutMethodFormat,
@@ -101,7 +102,7 @@ import {MoonpaySettingsProps} from '../../../../navigation/tabs/settings/externa
 import SendToPill from '../../../../navigation/wallet/components/SendToPill';
 import {SellCryptoActions} from '../../../../store/sell-crypto';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {PaymentMethodsAvailable} from '../constants/SellCryptoConstants';
+import {WithdrawalMethodsAvailable} from '../constants/SellCryptoConstants';
 import {getSendMaxData} from '../../utils/external-services-utils';
 import {
   ConfirmHardwareWalletModal,
@@ -116,6 +117,7 @@ import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
+import {AppActions} from '../../../../store/app';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -124,7 +126,7 @@ export const SellCheckoutContainer = styled.SafeAreaView`
 `;
 
 export interface MoonpaySellCheckoutProps {
-  sellCrpytoExternalId: string;
+  sellCryptoExternalId: string;
   wallet: Wallet;
   toAddress: string;
   amount: number;
@@ -132,12 +134,12 @@ export interface MoonpaySellCheckoutProps {
   sendMaxInfo?: SendMaxInfo;
 }
 
-let countDown: NodeJS.Timer | undefined;
+let countDown: NodeJS.Timeout | undefined;
 
 const MoonpaySellCheckout: React.FC = () => {
   let {
     params: {
-      sellCrpytoExternalId,
+      sellCryptoExternalId,
       wallet,
       toAddress,
       amount,
@@ -154,7 +156,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const sellOrder: MoonpaySellOrderData = useAppSelector(
-    ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.moonpay[sellCrpytoExternalId],
+    ({SELL_CRYPTO}: RootState) => SELL_CRYPTO.moonpay[sellCryptoExternalId],
   );
   const [isToken, setIsToken] = useState(
     IsERCToken(wallet.currencyAbbreviation, wallet.chain),
@@ -175,7 +177,6 @@ const MoonpaySellCheckout: React.FC = () => {
   const key = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys[wallet.keyId],
   );
-  const [showPaymentSentModal, setShowPaymentSentModal] = useState(false);
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<MoonpaySellTransactionDetails>();
 
@@ -251,7 +252,7 @@ const MoonpaySellCheckout: React.FC = () => {
 
   const setExpirationTime = (
     expirationTime: number,
-    countDown?: NodeJS.Timer,
+    countDown?: NodeJS.Timeout,
   ): void => {
     const now = Math.floor(Date.now() / 1000);
 
@@ -389,7 +390,7 @@ const MoonpaySellCheckout: React.FC = () => {
       Number(sellTxDetails.feeAmount) + Number(sellTxDetails.extraFeeAmount);
     setTotalExchangeFee(_totalExchangeFee);
 
-    const presicion = dispatch(
+    const precision = dispatch(
       GetPrecision(
         wallet.currencyAbbreviation,
         wallet.chain,
@@ -398,7 +399,7 @@ const MoonpaySellCheckout: React.FC = () => {
     );
     // To Sat
     const depositSat = Number(
-      (amountExpected * presicion!.unitToSatoshi).toFixed(0),
+      (amountExpected * precision!.unitToSatoshi).toFixed(0),
     );
 
     if (
@@ -431,12 +432,19 @@ const MoonpaySellCheckout: React.FC = () => {
         return;
       })
       .catch(err => {
+        const reason = 'createTx Error';
+        if (err.code) {
+          showError(err.message, reason, err.code, err.title, err.actions);
+          return;
+        }
+
         let msg = t('Error creating transaction');
+        let errorMsgLog;
         if (typeof err?.message === 'string') {
           msg = msg + `: ${err.message}`;
+          errorMsgLog = err.message;
         }
-        const reason = 'createTx Error';
-        showError(msg, reason);
+        showError(msg, reason, errorMsgLog);
         return;
       });
   };
@@ -446,7 +454,7 @@ const MoonpaySellCheckout: React.FC = () => {
     toAddress: string,
     depositSat: number,
     destTag?: string,
-  ) => {
+  ): Promise<TransactionProposal> => {
     try {
       const message = `Sold ${wallet.currencyAbbreviation.toUpperCase()}`;
       let outputs = [];
@@ -501,16 +509,21 @@ const MoonpaySellCheckout: React.FC = () => {
         txp.destinationTag = Number(destTag);
       }
 
-      const ctxp = await createTxProposal(wallet, txp);
+      const ctxp = await dispatch(createTxProposal(wallet, txp));
       return Promise.resolve(ctxp);
     } catch (err: any) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      const log = `createTxProposal error: ${errStr}`;
+      const errStr =
+        err instanceof Error
+          ? err.message
+          : err?.err?.message ?? JSON.stringify(err);
+      const log = `moonpaySellCheckout createTxProposal error: ${errStr}`;
       logger.error(log);
-      return Promise.reject({
-        title: t('Could not create transaction'),
-        message: BWCErrorMessage(err),
-      });
+
+      const [errorMessageConfig] = await Promise.all([
+        dispatch(handleCreateTxProposalError(err, undefined, 'sell')),
+        sleep(400),
+      ]);
+      return Promise.reject(errorMessageConfig);
     }
   };
 
@@ -559,7 +572,43 @@ const MoonpaySellCheckout: React.FC = () => {
       updateMoonpayTx(txData!, broadcastedTx as Partial<TransactionProposal>);
       dispatch(dismissOnGoingProcessModal());
       await sleep(400);
-      setShowPaymentSentModal(true);
+
+      dispatch(
+        AppActions.showPaymentSentModal({
+          isVisible: true,
+          onCloseModal,
+          title:
+            wallet?.credentials?.n > 1
+              ? t('Payment Sent')
+              : t('Payment Accepted'),
+        }),
+      );
+
+      await sleep(1200);
+      const moonpaySettingsParams: MoonpaySettingsProps = {
+        incomingPaymentRequest: {
+          externalId: sellCryptoExternalId,
+          transactionId: sellOrder?.transaction_id,
+          status,
+          flow: 'sell',
+        },
+      };
+
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            {
+              name: RootStacks.TABS,
+              params: {screen: TabsScreens.HOME},
+            },
+            {
+              name: ExternalServicesSettingsScreens.MOONPAY_SETTINGS,
+              params: moonpaySettingsParams,
+            },
+          ],
+        }),
+      );
     } catch (err: any) {
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
@@ -589,6 +638,13 @@ const MoonpaySellCheckout: React.FC = () => {
           showError(msg, reason);
       }
     }
+  };
+
+  const onCloseModal = async () => {
+    await sleep(1000);
+    dispatch(AppActions.dismissPaymentSentModal());
+    await sleep(1000);
+    dispatch(AppActions.clearPaymentSentModalOptions());
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -639,7 +695,7 @@ const MoonpaySellCheckout: React.FC = () => {
     broadcastedTx?: Partial<TransactionProposal>,
   ) => {
     const dataToUpdate: MoonpaySellIncomingData = {
-      externalId: sellCrpytoExternalId!,
+      externalId: sellCryptoExternalId!,
       txSentOn: Date.now(),
       txSentId: broadcastedTx?.txid,
       status: 'bitpayTxSent',
@@ -698,7 +754,7 @@ const MoonpaySellCheckout: React.FC = () => {
     );
     if (realMaxAmount && realMaxAmount > amountExpected) {
       try {
-        const presicion = dispatch(
+        const precision = dispatch(
           GetPrecision(
             wallet.currencyAbbreviation,
             wallet.chain,
@@ -706,7 +762,7 @@ const MoonpaySellCheckout: React.FC = () => {
           ),
         );
         const amountBelowMoonpayMinUnit = Number(
-          (realMaxAmount - amountExpected).toFixed(presicion?.unitDecimals),
+          (realMaxAmount - amountExpected).toFixed(precision?.unitDecimals),
         );
         const message = `A total of ${amountBelowMoonpayMinUnit} ${coin.toUpperCase()} were excluded. These funds are not enough to cover the minimum Moonpay purchase unit.`;
         warningMsg = warningMsg + `\n${message}`;
@@ -759,7 +815,13 @@ const MoonpaySellCheckout: React.FC = () => {
     return msg;
   };
 
-  const showError = async (err?: any, reason?: string) => {
+  const showError = async (
+    err?: any,
+    reason?: string,
+    errorMsgLog?: string,
+    title?: string,
+    actions?: any[],
+  ) => {
     setIsLoading(false);
     dispatch(dismissOnGoingProcessModal());
 
@@ -772,8 +834,10 @@ const MoonpaySellCheckout: React.FC = () => {
         exchange: 'moonpay',
         context: 'MoonpaySellCheckout',
         reasonForFailure: reason || 'unknown',
+        errorMsg: errorMsgLog || 'unknown',
         amountFrom: amountExpected || '',
         fromCoin: wallet.currencyAbbreviation.toLowerCase() || '',
+        fromChain: wallet.chain?.toLowerCase() || '',
         fiatAmount: sellOrder?.fiat_receiving_amount || '',
         fiatCurrency: sellOrder?.fiat_currency?.toLowerCase() || '',
       }),
@@ -783,10 +847,10 @@ const MoonpaySellCheckout: React.FC = () => {
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: t('Error'),
-        message: msg ? msg : t('Unknown Error'),
+        title: title ?? t('Error'),
+        message: msg ?? t('Unknown Error'),
         enableBackdropDismiss: false,
-        actions: [
+        actions: actions ?? [
           {
             text: t('OK'),
             action: async () => {
@@ -924,7 +988,7 @@ const MoonpaySellCheckout: React.FC = () => {
         ) : (
           <>
             {getPayoutMethodKeyFromMoonpayType(txData?.payoutMethod) &&
-            PaymentMethodsAvailable[
+            WithdrawalMethodsAvailable[
               getPayoutMethodKeyFromMoonpayType(txData?.payoutMethod)!
             ] ? (
               <>
@@ -935,7 +999,7 @@ const MoonpaySellCheckout: React.FC = () => {
                       numberOfLines={1}
                       ellipsizeMode={'tail'}>
                       {
-                        PaymentMethodsAvailable[
+                        WithdrawalMethodsAvailable[
                           getPayoutMethodKeyFromMoonpayType(
                             txData?.payoutMethod,
                           )!
@@ -946,9 +1010,9 @@ const MoonpaySellCheckout: React.FC = () => {
                 </RowDataContainer>
                 <ItemDivisor />
               </>
-            ) : PaymentMethodsAvailable &&
+            ) : WithdrawalMethodsAvailable &&
               sellOrder.payment_method &&
-              PaymentMethodsAvailable[sellOrder.payment_method] ? (
+              WithdrawalMethodsAvailable[sellOrder.payment_method] ? (
               <>
                 <RowDataContainer>
                   <RowLabel>{t('Withdrawing Method')}</RowLabel>
@@ -956,7 +1020,10 @@ const MoonpaySellCheckout: React.FC = () => {
                     <SelectedOptionText
                       numberOfLines={1}
                       ellipsizeMode={'tail'}>
-                      {PaymentMethodsAvailable[sellOrder.payment_method].label}
+                      {
+                        WithdrawalMethodsAvailable[sellOrder.payment_method]
+                          .label
+                      }
                     </SelectedOptionText>
                   </SelectedOptionContainer>
                 </RowDataContainer>
@@ -1089,54 +1156,29 @@ const MoonpaySellCheckout: React.FC = () => {
       ) : null}
 
       {!paymentExpired ? (
-        <TouchableOpacity
-          onPress={() => {
-            if (!termsAccepted) {
-              scrollViewRef?.current?.scrollToEnd({animated: true});
-            }
-            setShowCheckTermsMsg(!termsAccepted);
-          }}>
-          <SwipeButton
-            title={'Slide to sell'}
-            disabled={!termsAccepted}
-            onSwipeComplete={onSwipeComplete}
-            forceReset={resetSwipeButton}
-          />
-        </TouchableOpacity>
+        <>
+          {!termsAccepted ? (
+            <TouchableOpacity
+              onPress={() => {
+                scrollViewRef?.current?.scrollToEnd({animated: true});
+                setShowCheckTermsMsg(true);
+              }}>
+              <SwipeButton
+                title={'Slide to sell'}
+                disabled={true}
+                onSwipeComplete={() => {}}
+              />
+            </TouchableOpacity>
+          ) : (
+            <SwipeButton
+              title={'Slide to sell'}
+              disabled={false}
+              onSwipeComplete={onSwipeComplete}
+              forceReset={resetSwipeButton}
+            />
+          )}
+        </>
       ) : null}
-
-      <PaymentSent
-        isVisible={showPaymentSentModal}
-        onCloseModal={async () => {
-          setShowPaymentSentModal(false);
-          await sleep(600);
-
-          const moonpaySettingsParams: MoonpaySettingsProps = {
-            incomingPaymentRequest: {
-              externalId: sellCrpytoExternalId,
-              transactionId: sellOrder?.transaction_id,
-              status,
-              flow: 'sell',
-            },
-          };
-
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 1,
-              routes: [
-                {
-                  name: RootStacks.TABS,
-                  params: {screen: TabsScreens.HOME},
-                },
-                {
-                  name: ExternalServicesSettingsScreens.MOONPAY_SETTINGS,
-                  params: moonpaySettingsParams,
-                },
-              ],
-            }),
-          );
-        }}
-      />
     </SellCheckoutContainer>
   );
 };

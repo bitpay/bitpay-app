@@ -1,6 +1,5 @@
 // Coinbase API
 import axios from 'axios';
-import {Platform} from 'react-native';
 
 import {
   CoinbaseAccountsProps,
@@ -12,6 +11,8 @@ import {
   CoinbaseCreateAddressProps,
   CoinbaseTransactionsProps,
   CoinbaseTransactionProps,
+  CoinbaseFiatCurrenciesProps,
+  CoinbaseCryptoCurrenciesProps,
 } from './coinbase.types';
 
 import {
@@ -24,10 +25,7 @@ import {
 } from './coinbase.constants';
 
 // Redirect URI
-const COINBASE_REDIRECT_URI =
-  Platform.OS !== 'android'
-    ? COINBASE_CONFIG_API.redirect_uri.mobile
-    : 'https://bitpay.com/oauth/coinbase/redirect';
+const COINBASE_REDIRECT_URI = COINBASE_CONFIG_API.redirect_uri.mobile;
 
 // OAuth
 let oauthStateCode: string = ''; // Random
@@ -95,7 +93,6 @@ const getRefreshToken = async (
     grant_type: 'refresh_token',
     client_id: CREDENTIALS.client_id,
     client_secret: CREDENTIALS.client_secret,
-    redirect_uri: COINBASE_REDIRECT_URI,
     refresh_token: token.refresh_token,
   };
   const headers = {
@@ -107,7 +104,7 @@ const getRefreshToken = async (
     const {data} = await axios.post(url, body, {headers});
     return data;
   } catch (error: any) {
-    throw error.response.data;
+    throw error.response.data || error;
   }
 };
 
@@ -128,7 +125,7 @@ const getAccessToken = async (code: string): Promise<CoinbaseTokenProps> => {
     const {data} = await axios.post(url, body, {headers});
     return data;
   } catch (error: any) {
-    throw error.response.data;
+    throw error.response.data || error;
   }
 };
 
@@ -142,6 +139,8 @@ const revokeToken = async (
   const url = CREDENTIALS.host + '/oauth/revoke';
   const body = {
     token: token.access_token,
+    client_id: CREDENTIALS.client_id,
+    client_secret: CREDENTIALS.client_secret,
   };
   const headers = {
     'Content-Type': 'application/json',
@@ -153,7 +152,7 @@ const revokeToken = async (
     const {data} = await axios.post(url, body, {headers});
     return data;
   } catch (error: any) {
-    throw error.response.data;
+    throw error.response.data || error;
   }
 };
 
@@ -235,7 +234,8 @@ const getTransactions = async (
     '/v2/accounts/' +
     accountId +
     '/transactions?order=desc&limit=' +
-    TRANSACTIONS_LIMIT;
+    TRANSACTIONS_LIMIT +
+    '&new_version_opt_in=true';
   if (nextStartingAfter) {
     url = url + '&starting_after=' + nextStartingAfter;
   }
@@ -351,6 +351,27 @@ const getExchangeRates = async (
   }
 };
 
+const getFiatCurrencies = async (): Promise<CoinbaseFiatCurrenciesProps> => {
+  const url = CREDENTIALS.api_url + '/v2/currencies';
+  try {
+    const {data} = await axios.get(url);
+    return data;
+  } catch (error: any) {
+    throw error.response.data;
+  }
+};
+
+const getCryptoCurrencies =
+  async (): Promise<CoinbaseCryptoCurrenciesProps> => {
+    const url = CREDENTIALS.api_url + '/v2/currencies/crypto';
+    try {
+      const {data} = await axios.get(url);
+      return data;
+    } catch (error: any) {
+      throw error.response.data;
+    }
+  };
+
 const CoinbaseAPI = {
   revokeToken,
   getAccessToken,
@@ -365,6 +386,8 @@ const CoinbaseAPI = {
   payInvoice,
   getOAuthUrl,
   getOauthStateCode,
+  getFiatCurrencies,
+  getCryptoCurrencies,
 };
 
 export default CoinbaseAPI;

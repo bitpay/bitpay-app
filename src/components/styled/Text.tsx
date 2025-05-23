@@ -196,11 +196,9 @@ export const Badge = styled(BaseText)`
   font-style: normal;
   font-weight: 400;
   text-align: center;
-  padding: 1px 2px;
-  border-radius: 2.4px;
-  border: 1px solid;
-  border-color: ${({theme: {dark}}) => (dark ? LuckySevens : Slate30)};
+  line-height: 12px;
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  padding-top: 1px;
 `;
 
 export const ProposalBadge = styled(BaseText)`
@@ -259,4 +257,15 @@ export const CopyToClipboardText = styled(BaseText)`
   font-size: 16px;
   color: ${({theme: {dark}}) => (dark ? NeutralSlate : '#6F7782')};
   padding: 0 20px 0 10px;
+`;
+
+export const ArchaxBannerText = styled(H7)<{isSmallScreen?: boolean}>`
+  color: ${({theme}) => theme.colors.text};
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? '10px' : '14px')};
+`;
+
+export const ArchaxBannerLink = styled(BaseText)<{isSmallScreen?: boolean}>`
+  color: ${({theme}) => (theme.dark ? '#ffffff' : theme.colors.link)};
+  text-decoration: underline;
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? '11px' : '14px')};
 `;

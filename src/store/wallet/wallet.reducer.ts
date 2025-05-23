@@ -37,6 +37,8 @@ export interface WalletState {
   enableReplaceByFee: boolean;
   initLogs: AddLog[];
   customTokensMigrationComplete: boolean;
+  polygonMigrationComplete: boolean;
+  accountEvmCreationMigrationComplete: boolean;
 }
 
 export const initialState: WalletState = {
@@ -69,6 +71,8 @@ export const initialState: WalletState = {
   enableReplaceByFee: false,
   initLogs: [], // keep init logs at the end (order is important)
   customTokensMigrationComplete: false,
+  polygonMigrationComplete: false,
+  accountEvmCreationMigrationComplete: false,
 };
 
 export const walletReducer = (
@@ -361,6 +365,28 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.UPDATE_ACCOUNT_NAME: {
+      const {keyId, name, accountAddress} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      keyToUpdate.evmAccountsInfo ??= {};
+      keyToUpdate.evmAccountsInfo[accountAddress] = {
+        ...keyToUpdate.evmAccountsInfo[accountAddress],
+        name,
+      };
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     case WalletActionTypes.SET_WALLET_REFRESHING: {
       const {keyId, walletId, isRefreshing} = action.payload;
       const keyToUpdate = state.keys[keyId];
@@ -418,6 +444,30 @@ export const walletReducer = (
       keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
         if (wallet.id === walletId) {
           wallet.transactionHistory = transactionHistory;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
+    case WalletActionTypes.UPDATE_ACCOUNT_TX_HISTORY: {
+      const {keyId, accountTransactionsHistory} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (accountTransactionsHistory[wallet.id]) {
+          wallet.transactionHistory = accountTransactionsHistory[wallet.id];
         }
         return wallet;
       });
@@ -506,6 +556,38 @@ export const walletReducer = (
       };
     }
 
+    case WalletActionTypes.TOGGLE_HIDE_ACCOUNT: {
+      const {keyId, accountAddress, accountToggleSelected} = action.payload;
+      const keyToUpdate = state.keys[keyId];
+      if (!keyToUpdate) {
+        return state;
+      }
+      const accountInfo = (keyToUpdate.evmAccountsInfo ??= {});
+      const hideAccount = !accountInfo[accountAddress]?.hideAccount;
+      keyToUpdate.evmAccountsInfo[accountAddress] = {
+        ...keyToUpdate.evmAccountsInfo[accountAddress],
+        hideAccount: hideAccount,
+        accountToggleSelected,
+      };
+
+      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
+        if (wallet.receiveAddress === accountAddress) {
+          wallet.hideWalletByAccount = hideAccount;
+        }
+        return wallet;
+      });
+
+      return {
+        ...state,
+        keys: {
+          ...state.keys,
+          [keyId]: {
+            ...keyToUpdate,
+          },
+        },
+      };
+    }
+
     case WalletActionTypes.UPDATE_CACHE_FEE_LEVEL: {
       return {
         ...state,
@@ -521,6 +603,72 @@ export const walletReducer = (
         ...state,
         customTokensMigrationComplete: true,
       };
+
+    case WalletActionTypes.SET_POLYGON_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        polygonMigrationComplete: true,
+      };
+
+    case WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        accountEvmCreationMigrationComplete: true,
+      };
+
+    case WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS: {
+      const {keyBalances, walletBalances} = action.payload;
+      const updatedKeys = {...state.keys};
+
+      // Update key balances
+      keyBalances.forEach(({keyId, totalBalance, totalBalanceLastDay}) => {
+        if (updatedKeys[keyId]) {
+          updatedKeys[keyId] = {
+            ...updatedKeys[keyId],
+            totalBalance,
+            totalBalanceLastDay,
+          };
+        }
+      });
+
+      // Update wallet statuses
+      walletBalances.forEach(({keyId, walletId, status}) => {
+        if (updatedKeys[keyId]?.wallets?.length > 0) {
+          updatedKeys[keyId].wallets = updatedKeys[keyId].wallets.map(
+            wallet => {
+              if (wallet.id === walletId) {
+                wallet.balance = status.balance;
+                wallet.pendingTxps = status.pendingTxps;
+                wallet.isRefreshing = false;
+                wallet.singleAddress = status.singleAddress;
+              }
+              return wallet;
+            },
+          );
+        }
+      });
+
+      // Calculate and update portfolio balance
+      const currentPortfolioBalance = Object.values(updatedKeys).reduce(
+        (total, key) => total + (key.totalBalance || 0),
+        0,
+      );
+
+      const lastDayPortfolioBalance = Object.values(updatedKeys).reduce(
+        (total, key) => total + (key.totalBalanceLastDay || 0),
+        0,
+      );
+
+      return {
+        ...state,
+        keys: updatedKeys,
+        portfolioBalance: {
+          current: currentPortfolioBalance,
+          lastDay: lastDayPortfolioBalance,
+          previous: state.portfolioBalance.current,
+        },
+      };
+    }
 
     default:
       return state;

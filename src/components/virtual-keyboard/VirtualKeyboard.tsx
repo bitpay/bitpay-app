@@ -3,22 +3,23 @@ import styled, {css, useTheme} from 'styled-components/native';
 import {SlateDark, White} from '../../styles/colors';
 import {BaseText} from '../styled/Text';
 import DeleteIcon from '../icons/delete/Delete';
-import {PixelRatio} from 'react-native';
 import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
-const PIXEL_DENSITY_LIMIT = 3;
-export const VIRTUAL_KEYBOARD_BUTTON_SIZE =
-  PixelRatio.get() < PIXEL_DENSITY_LIMIT ? 70 : 85;
+import useAppSelector from '../../utils/hooks/useAppSelector';
+import {HEIGHT} from '../styled/Containers';
+export const PIXEL_DENSITY_LIMIT = 2.5;
 
 interface SymbolContainerProps {
   showLetters?: boolean;
 }
 
-const KeyboardContainer = styled.View`
-  margin: 10px 0;
+const KeyboardContainer = styled.View<{isSmallScreen?: boolean}>`
+  margin: ${({isSmallScreen}) => (isSmallScreen ? 5 : 10)}px 0;
 `;
 
-const RowContainer = styled.View`
+const RowContainer = styled.View<{isSmallScreen?: boolean}>`
   flex-direction: row;
+  align-items: center;
+  margin: 0;
 `;
 
 const CellContainer = styled.View`
@@ -31,11 +32,11 @@ const CellValue = styled(BaseText)<{
   darkModeOnly?: boolean;
   isSmallScreen?: boolean;
 }>`
-  font-size: ${({isSmallScreen}) => (isSmallScreen ? 26 : 32.08)}px;
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? 22 : 32.08)}px;
   font-weight: 500;
   color: ${({theme, darkModeOnly}) =>
     darkModeOnly ? White : theme.colors.text};
-  line-height: ${({isSmallScreen}) => (isSmallScreen ? 50 : 65)}px;
+  line-height: ${({isSmallScreen}) => (isSmallScreen ? 35 : 65)}px;
 `;
 
 const CellLetter = styled(BaseText)`
@@ -79,16 +80,17 @@ const Cell: React.FC<CellProps> = ({
   backgroundColor,
   darkModeOnly,
 }) => {
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
   const accessibilityLabel = `${value}-button`;
   return (
     <CellContainer accessibilityLabel={accessibilityLabel}>
       <VirtualKeyboardButtonAnimation
+        isSmallScreen={_isSmallScreen}
         onPress={() => onCellPress?.(value)}
         backgroundColor={backgroundColor}>
         <>
-          <CellValue
-            darkModeOnly={darkModeOnly}
-            isSmallScreen={PixelRatio.get() < PIXEL_DENSITY_LIMIT}>
+          <CellValue darkModeOnly={darkModeOnly} isSmallScreen={_isSmallScreen}>
             {value}
           </CellValue>
           {letters ? <CellLetter>{letters}</CellLetter> : null}
@@ -142,8 +144,10 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
       ? 'rgba(255, 255, 255, 0.2)'
       : 'rgba(0, 0, 0, 0.1)';
   const bgColor = darkModeOnly || theme.dark ? White : '#4A4A4A';
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
   return (
-    <KeyboardContainer>
+    <KeyboardContainer isSmallScreen={_isSmallScreen}>
       <Row
         numArray={[
           {
@@ -205,13 +209,16 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         darkModeOnly={darkModeOnly}
       />
 
-      <RowContainer>
+      <RowContainer isSmallScreen={_isSmallScreen}>
         <CellContainer>
           {showDot ? (
             <VirtualKeyboardButtonAnimation
               onPress={() => onCellPress?.('.')}
+              isSmallScreen={_isSmallScreen}
               backgroundColor={backgroundColor}>
-              <CellValue style={{lineHeight: 30}} darkModeOnly={darkModeOnly}>
+              <CellValue
+                darkModeOnly={darkModeOnly}
+                isSmallScreen={_isSmallScreen}>
                 .
               </CellValue>
             </VirtualKeyboardButtonAnimation>
@@ -228,6 +235,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
         <CellContainer>
           <VirtualKeyboardButtonAnimation
             backgroundColor={backgroundColor}
+            isSmallScreen={_isSmallScreen}
             onLongPress={() => onCellPress?.('reset')}
             onPress={() => onCellPress?.('backspace')}>
             <SymbolContainer showLetters={showLetters}>

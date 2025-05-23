@@ -24,6 +24,7 @@ import {
 } from '../../../../../components/styled/Text';
 import {useTheme} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+import HeaderBackButton from '../../../../../components/back/HeaderBackButton';
 
 const MerchantDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -64,6 +65,7 @@ const MerchantDetails = ({
   const iconHeight = 70;
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerLeft: () => <HeaderBackButton />,
       headerTitle: () => (
         <HeaderTitle>{directIntegration.displayName}</HeaderTitle>
       ),

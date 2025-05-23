@@ -10,13 +10,17 @@ import {
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
 import {getUniqueId} from 'react-native-device-info';
+import * as Keychain from 'react-native-keychain';
 import {createTransform, persistStore, persistReducer} from 'redux-persist'; // https://github.com/rt2zz/redux-persist
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
-import {bindWalletKeys, transformContacts} from './transforms/transforms';
-
+import {
+  bindWalletKeys,
+  transformContacts,
+  encryptSpecificFields,
+} from './transforms/transforms';
 import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
 import {
   bitPayIdReducer,
@@ -37,6 +41,7 @@ import {
 } from './location/location.reducer';
 import {logReducer, logReduxPersistBlackList} from './log/log.reducer';
 import {shopReducer, shopReduxPersistBlackList} from './shop/shop.reducer';
+import {shopCatalogReducer} from './shop-catalog/shop-catalog.reducer';
 import {
   swapCryptoReducer,
   swapCryptoReduxPersistBlackList,
@@ -100,6 +105,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   LOG: logReduxPersistBlackList,
   SELL_CRYPTO: sellCryptoReduxPersistBlackList,
   SHOP: shopReduxPersistBlackList,
+  SHOP_CATALOG: [],
   SWAP_CRYPTO: swapCryptoReduxPersistBlackList,
   WALLET: walletReduxPersistBlackList,
   RATE: rateReduxPersistBlackList,
@@ -124,6 +130,7 @@ const reducers = {
   LOG: logReducer,
   SELL_CRYPTO: sellCryptoReducer,
   SHOP: shopReducer,
+  SHOP_CATALOG: shopCatalogReducer,
   SWAP_CRYPTO: swapCryptoReducer,
   WALLET: walletReducer,
   RATE: rateReducer,
@@ -158,6 +165,13 @@ const logger = createLogger({
         integrations: null,
         supportedCardMap: null,
       },
+      SHOP_CATALOG: {
+        ...state.SHOP_CATALOG,
+        availableCardMap: null,
+        categoriesAndCurations: null,
+        integrations: null,
+        supportedCardMap: null,
+      },
       BITPAY_ID: {
         ...state.BITPAY_ID,
         doshToken: null,
@@ -167,7 +181,7 @@ const logger = createLogger({
   },
 });
 
-const getStore = () => {
+const getStore = async () => {
   const middlewares = [thunkMiddleware];
 
   if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {
@@ -182,6 +196,8 @@ const getStore = () => {
       middlewareEnhancers,
     );
   }
+
+  const secretKey = await getEncryptionKey().catch(() => getUniqueId());
 
   const rootPersistConfig = {
     ...basePersistConfig,
@@ -203,8 +219,9 @@ const getStore = () => {
 
         return inboundState;
       }),
+      encryptSpecificFields(secretKey),
       encryptTransform({
-        secretKey: getUniqueId(),
+        secretKey,
         onError: err => {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
@@ -215,6 +232,7 @@ const getStore = () => {
             ),
           );
         },
+        unencryptedStores: ['APP', 'RATE', 'SHOP', 'SHOP_CATALOG', 'WALLET'],
       }),
     ],
   };
@@ -257,4 +275,24 @@ export function configureTestStore(initialState: any) {
   return store as Store<RootState, AnyAction> & {
     dispatch: AppDispatch;
   };
+}
+
+export async function getEncryptionKey(): Promise<string> {
+  const encryptionKeyId = 'bitpay-app-encryption-key';
+
+  const existingKey = await Keychain.getGenericPassword({
+    service: encryptionKeyId,
+  });
+
+  if (existingKey && existingKey.password) {
+    return existingKey.password;
+  }
+
+  const newKey = getUniqueId();
+  // Save to keychain
+  await Keychain.setGenericPassword(encryptionKeyId, newKey, {
+    service: encryptionKeyId,
+  });
+
+  return newKey;
 }

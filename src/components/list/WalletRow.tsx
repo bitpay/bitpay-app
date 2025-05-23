@@ -6,21 +6,26 @@ import {
   Row,
   ActiveOpacity,
   RowContainer,
+  BadgeContainer,
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {Network} from '../../constants';
+import {BitpaySupportedEvmCoins} from '../../constants/currencies';
 import {TransactionProposal} from '../../store/wallet/wallet.models';
 import {CoinbaseAccountProps} from '../../api/coinbase/coinbase.types';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {
+  formatCryptoAddress,
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
 import {ActivityIndicator, Platform} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {SearchableItem} from '../chain-search/ChainSearch';
+import {IsERCToken, IsEVMChain} from '../../store/wallet/utils/currency';
+import GasTokenSvg from '../../../assets/img/gas-token.svg';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -28,11 +33,6 @@ const SpinnerContainer = styled.View`
   justify-content: center;
   align-items: center;
   padding-right: 10px;
-`;
-
-const BadgeContainer = styled.View`
-  margin-left: 3px;
-  margin-bottom: -2px;
 `;
 
 const BalanceColumn = styled(Column)`
@@ -47,28 +47,37 @@ const NestedArrowContainer = styled.View`
 
 export interface WalletRowProps extends SearchableItem {
   id: string;
+  keyId?: string;
+  copayerId?: string;
   img: string | ((props: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);
   currencyName: string;
   currencyAbbreviation: string;
   tokenAddress?: string;
   chain: string;
+  chainName?: string;
   walletName?: string;
   cryptoBalance: string;
-  cryptoLockedBalance?: string;
-  cryptoConfirmedLockedBalance?: string;
-  cryptoSpendableBalance?: string;
-  cryptoPendingBalance?: string;
-  fiatBalance: string;
-  fiatLockedBalance?: string;
-  fiatConfirmedLockedBalance?: string;
-  fiatSpendableBalance?: string;
-  fiatPendingBalance?: string;
+  cryptoLockedBalance: string;
+  cryptoConfirmedLockedBalance: string;
+  cryptoSpendableBalance: string;
+  cryptoPendingBalance: string;
+  fiatBalance?: number;
+  fiatLockedBalance?: number;
+  fiatConfirmedLockedBalance?: number;
+  fiatSpendableBalance?: number;
+  fiatPendingBalance?: number;
+  fiatBalanceFormat?: string;
+  fiatLockedBalanceFormat?: string;
+  fiatConfirmedLockedBalanceFormat?: string;
+  fiatSpendableBalanceFormat?: string;
+  fiatPendingBalanceFormat?: string;
   isToken?: boolean;
   network: Network;
   isRefreshing?: boolean;
   isScanning?: boolean;
   hideWallet?: boolean;
+  hideWalletByAccount?: boolean;
   hideBalance?: boolean;
   pendingTxps: TransactionProposal[];
   coinbaseAccount?: CoinbaseAccountProps;
@@ -83,9 +92,29 @@ interface Props {
   wallet: WalletRowProps;
   hideIcon?: boolean;
   isLast?: boolean;
+  noBorder?: boolean;
   onPress: () => void;
   hideBalance: boolean;
 }
+
+export const buildPreviewAddress = (
+  chain: string,
+  isComplete: boolean | undefined,
+  multisig: string | undefined,
+  receiveAddress: string | undefined,
+  isToken: boolean | undefined,
+): ReactElement | undefined => {
+  const canHaveTokens = !!BitpaySupportedEvmCoins[chain];
+  if (!isComplete || multisig || !receiveAddress || isToken || !canHaveTokens) {
+    return;
+  }
+
+  return (
+    <BadgeContainer>
+      <Badge>{formatCryptoAddress(receiveAddress)}</Badge>
+    </BadgeContainer>
+  );
+};
 
 export const buildTestBadge = (
   network: string,
@@ -121,7 +150,30 @@ export const buildUncompleteBadge = (
   );
 };
 
-const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
+export const buildGasTokenBadge = (
+  isEVMChain: boolean | undefined,
+): ReactElement | undefined => {
+  if (!isEVMChain) {
+    return;
+  }
+  const badgeLabel = 'Gas Token';
+
+  return (
+    <BadgeContainer>
+      <GasTokenSvg />
+      <Badge>{badgeLabel}</Badge>
+    </BadgeContainer>
+  );
+};
+
+const WalletRow = ({
+  wallet,
+  hideIcon,
+  onPress,
+  isLast,
+  hideBalance,
+  noBorder,
+}: Props) => {
   const {
     currencyName,
     currencyAbbreviation,
@@ -130,7 +182,7 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
     img,
     badgeImg,
     cryptoBalance,
-    fiatBalance,
+    fiatBalanceFormat,
     isToken,
     network,
     multisig,
@@ -147,7 +199,8 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
     <RowContainer
       activeOpacity={ActiveOpacity}
       onPress={onPress}
-      style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}>
+      style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}
+      noBorder={noBorder}>
       {isToken && (
         <NestedArrowContainer>
           <NestedArrowIcon />
@@ -171,8 +224,13 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
             style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
             {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
           </ListItemSubText>
-          {buildTestBadge(network, chain, isToken)}
-          {buildUncompleteBadge(isComplete)}
+          <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
+            {buildGasTokenBadge(
+              !IsERCToken(currencyAbbreviation, chain) && IsEVMChain(chain),
+            )}
+            {buildTestBadge(network, chain, isToken)}
+            {buildUncompleteBadge(isComplete)}
+          </Row>
         </Row>
       </CurrencyColumn>
       {!isScanning ? (
@@ -184,7 +242,9 @@ const WalletRow = ({wallet, hideIcon, onPress, isLast, hideBalance}: Props) => {
               </H5>
               {showFiatBalance && (
                 <ListItemSubText textAlign={'right'}>
-                  {network === 'testnet' ? 'Test - No Value' : fiatBalance}
+                  {network === 'testnet'
+                    ? 'Test - No Value'
+                    : fiatBalanceFormat}
                 </ListItemSubText>
               )}
             </>

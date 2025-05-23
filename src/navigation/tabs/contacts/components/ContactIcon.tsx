@@ -13,8 +13,12 @@ import {Token} from '../../../../store/wallet/wallet.models';
 import {
   addTokenChainSuffix,
   getBadgeImg,
-  getCurrencyAbbreviation,
 } from '../../../../utils/helper-methods';
+import {
+  IsEVMChain,
+  IsOtherChain,
+} from '../../../../store/wallet/utils/currency';
+import Blockie from '../../../../components/blockie/Blockie';
 
 interface ContactIconProps {
   size?: number;
@@ -23,6 +27,7 @@ interface ContactIconProps {
   chain?: string;
   badge?: JSX.Element;
   tokenAddress?: string;
+  address?: string;
 }
 
 interface BadgeProps {
@@ -35,19 +40,12 @@ const ContactIconContainer = styled.View`
   position: relative;
 `;
 
-const CoinBadgeContainer = styled.View`
+const CoinBadgeContainer = styled.View<{size: number}>`
   position: absolute;
-  right: -13px;
+  right: ${({size}) =>
+    size <= 20 ? '-1' : size === 45 || size === 30 ? '-13' : '-1'}px;
   bottom: -1px;
 `;
-
-const CoinBadge: React.FC<BadgeProps> = ({size = 20, img, badgeImg}) => {
-  return (
-    <CoinBadgeContainer>
-      <CurrencyImage img={img} badgeUri={badgeImg} size={size} />
-    </CoinBadgeContainer>
-  );
-};
 
 const ContactIcon: React.FC<ContactIconProps> = ({
   coin,
@@ -56,6 +54,7 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   size = 50,
   name,
   badge,
+  address,
 }) => {
   const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
@@ -74,18 +73,25 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   const img =
     coin &&
     chain &&
-    (SUPPORTED_CURRENCIES.includes(coin)
+    (!IsEVMChain(chain) || IsOtherChain(chain)) &&
+    (CurrencyListIcons[coin]
       ? CurrencyListIcons[coin]
       : foundToken && foundToken?.logoURI
-      ? (foundToken.logoURI as string)
+      ? (foundToken?.logoURI as string)
       : '');
 
   const coinBadge = img ? (
-    <CoinBadge
-      size={size / 2.5}
-      img={img}
-      badgeImg={getBadgeImg(coin, chain)}
-    />
+    <CoinBadgeContainer size={size}>
+      <CurrencyImage
+        img={img}
+        badgeUri={getBadgeImg(coin, chain)}
+        size={size / 2.5}
+      />
+    </CoinBadgeContainer>
+  ) : chain && IsEVMChain(chain) ? (
+    <CoinBadgeContainer size={size}>
+      <Blockie size={size / 2.5} seed={address} />
+    </CoinBadgeContainer>
   ) : null;
 
   const initials = name

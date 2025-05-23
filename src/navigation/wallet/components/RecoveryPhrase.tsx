@@ -65,7 +65,7 @@ import {
   getAccount,
   getDerivationStrategy,
   getNetworkName,
-  isValidDerivationPathCoin,
+  isValidDerivationPath,
   keyExtractor,
   parsePath,
   sleep,
@@ -76,7 +76,7 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {FlatList, ScrollView} from 'react-native';
+import {FlatList, View} from 'react-native';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {
@@ -88,6 +88,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {IS_ANDROID, IS_IOS} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -142,7 +143,7 @@ const CurrencySelectorContainer = styled.View`
   position: relative;
 `;
 
-const CurrencyContainer = styled.TouchableOpacity`
+const CurrencyContainer = styled(TouchableOpacity)`
   background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   padding: 0 20px;
   height: 55px;
@@ -168,7 +169,7 @@ const CurrencyOptions = SupportedCurrencyOptions.filter(
   currency => !currency.isToken,
 );
 
-const RowContainer = styled.TouchableOpacity`
+const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   padding: 18px;
@@ -201,7 +202,7 @@ const RecoveryPhrase = () => {
   const [advancedOptions, setAdvancedOptions] = useState({
     derivationPath: DefaultDerivationPath.defaultBTC as string,
     coin: CurrencyOptions[0].currencyAbbreviation,
-    chain: CurrencyOptions[0].chain, // chain = currency for all currencies if tokens not included. NOT TRUE ANYMORE
+    chain: CurrencyOptions[0].chain,
     passphrase: undefined as string | undefined,
     isMultisig: false,
   });
@@ -216,38 +217,8 @@ const RecoveryPhrase = () => {
 
   const showErrorModal = (e: Error) => {
     if (e && e.message === 'WALLET_DOES_NOT_EXIST') {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: t("We couldn't find your wallet"),
-          message: t(
-            'There are no records of your wallet on our servers. If you are importing a BIP44 compatible wallet from a 3rd party you can continue to recreate it. If you wallet is not BIP44 compatible, you will not be able to access its funds.',
-          ),
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: t('Continue'),
-              action: async () => {
-                await sleep(500);
-                if (derivationPathEnabled) {
-                  const {text} = getValues();
-                  setOptsAndCreate(text, advancedOptions);
-                } else {
-                  // select coin to create
-                  setRecreateWallet(true);
-                  setCurrencyModalVisible(true);
-                }
-              },
-              primary: true,
-            },
-            {
-              text: t('Go Back'),
-              action: () => {},
-              primary: false,
-            },
-          ],
-        }),
-      );
+      const {text} = getValues();
+      setOptsAndCreate(text, advancedOptions);
     } else {
       dispatch(
         showBottomNotificationModal({
@@ -368,9 +339,7 @@ const RecoveryPhrase = () => {
         throw new Error(t('Invalid derivation path'));
       }
 
-      if (
-        !isValidDerivationPathCoin(advancedOpts.derivationPath, keyOpts.coin)
-      ) {
+      if (!isValidDerivationPath(advancedOpts.derivationPath, keyOpts.chain)) {
         throw new Error(t('Invalid derivation path for selected coin'));
       }
     }
@@ -418,16 +387,25 @@ const RecoveryPhrase = () => {
         : ((await dispatch<any>(
             startImportWithDerivationPath(importData, opts),
           )) as Key);
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(1000);
       try {
+        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
         await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
-        await sleep(1000);
-        await dispatch(updatePortfolioBalance());
         // workaround for fixing wallets without receive address
         await fixWalletAddresses({
           appDispatch: dispatch,
           wallets: key.wallets,
         });
+        await dispatch(
+          startUpdateAllWalletStatusForKey({
+            key,
+            force: true,
+            createTokenWalletWithFunds: true,
+          }),
+        );
+        await sleep(1000);
+        await dispatch(updatePortfolioBalance());
       } catch (error) {
         // ignore error
       }
@@ -493,9 +471,23 @@ const RecoveryPhrase = () => {
       await dispatch(startOnGoingProcessModal('CREATING_KEY'));
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(1000);
       try {
+        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
         await dispatch(startGetRates({force: true}));
-        await dispatch(startUpdateAllWalletStatusForKey({key, force: true}));
+        // workaround for fixing wallets without receive address
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: key.wallets,
+        });
+        await dispatch(
+          startUpdateAllWalletStatusForKey({
+            key,
+            force: true,
+            createTokenWalletWithFunds: true,
+          }),
+        );
         await sleep(1000);
         await dispatch(updatePortfolioBalance());
       } catch (error) {
@@ -534,7 +526,7 @@ const RecoveryPhrase = () => {
         );
         const currencyAbbreviation = _selectedCurrency[0].currencyAbbreviation;
         const chain = _selectedCurrency[0].chain;
-        const defaultCoin = `default${currencyAbbreviation.toUpperCase()}`;
+        const defaultCoin = `default${chain.toUpperCase()}`;
         // @ts-ignore
         const derivationPath = DefaultDerivationPath[defaultCoin];
         setSelectedCurrency(_selectedCurrency[0]);
@@ -542,16 +534,10 @@ const RecoveryPhrase = () => {
         const advancedOpts = {
           ...advancedOptions,
           coin: currencyAbbreviation,
-          chain, // chain = currency for all currencies if tokens not included. NOT TRUE ANYMORE
+          chain,
           derivationPath,
         };
         setAdvancedOptions(advancedOpts);
-
-        // is trying to create wallet in bws
-        if (recreateWallet) {
-          const {text} = getValues();
-          setOptsAndCreate(text, advancedOpts);
-        }
       };
 
       return (
@@ -746,7 +732,13 @@ const RecoveryPhrase = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                       }}>
-                      <Row>
+                      <View
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}>
                         <CurrencyImage
                           img={selectedCurrency.img}
                           badgeUri={selectedCurrency.badgeUri}
@@ -755,7 +747,7 @@ const RecoveryPhrase = () => {
                         <CurrencyName>
                           {selectedCurrency?.currencyAbbreviation?.toUpperCase()}
                         </CurrencyName>
-                      </Row>
+                      </View>
                       <Icons.DownToggle />
                     </Row>
                   </CurrencyContainer>

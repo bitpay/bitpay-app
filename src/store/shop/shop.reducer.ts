@@ -12,14 +12,14 @@ import {
 } from './shop.models';
 import {ShopActionType, ShopActionTypes} from './shop.types';
 
-type ShopReduxPersistBlackList = [];
+type ShopReduxPersistBlackList = string[];
 export const shopReduxPersistBlackList: ShopReduxPersistBlackList = [];
 
 export interface ShopState {
-  availableCardMap: CardConfigMap;
-  supportedCardMap: CardConfigMap;
-  categoriesAndCurations: CategoriesAndCurations;
-  integrations: DirectIntegrationMap;
+  availableCardMap: CardConfigMap; // Legacy field that should now be empty after being moved to the SHOP_CATALOG store
+  supportedCardMap: CardConfigMap; // Legacy field that should now be empty after being moved to the SHOP_CATALOG store
+  categoriesAndCurations: CategoriesAndCurations; // Legacy field that should now be empty after being moved to the SHOP_CATALOG store
+  integrations: DirectIntegrationMap; // Legacy field that should now be empty after being moved to the SHOP_CATALOG store
   email: string;
   phone: string;
   phoneCountryInfo: PhoneCountryInfo;
@@ -84,6 +84,26 @@ export const shopReducer = (
         supportedCardMap,
         categoriesAndCurations,
         integrations,
+      };
+    case ShopActionTypes.HID_GIFT_CARD_COUPON:
+      const {giftCardBrand, couponCode} = action.payload;
+      const currentCardConfig = state.availableCardMap[giftCardBrand];
+      const currentCoupons = state.availableCardMap[giftCardBrand].coupons;
+      const newCardConfig = {
+        ...currentCardConfig,
+        coupons: currentCoupons
+          ? currentCoupons.map(coupon => ({
+              ...coupon,
+              hidden: coupon.code === couponCode,
+            }))
+          : [],
+      };
+      return {
+        ...state,
+        availableCardMap: {
+          ...state.availableCardMap,
+          [giftCardBrand]: newCardConfig,
+        },
       };
     case ShopActionTypes.INITIALIZED_UNSOLD_GIFT_CARD:
       const {giftCard} = action.payload;
@@ -222,6 +242,16 @@ export const shopReducer = (
           [Network.regtest]: [],
         },
       };
+
+    case ShopActionTypes.CLEARED_SHOP_CATALOG_FIELDS:
+      return {
+        ...state,
+        supportedCardMap: {},
+        availableCardMap: {},
+        categoriesAndCurations: {curated: {}, categories: {}},
+        integrations: {},
+      };
+
     case ShopActionTypes.IS_JOINED_WAITLIST:
       return {
         ...state,

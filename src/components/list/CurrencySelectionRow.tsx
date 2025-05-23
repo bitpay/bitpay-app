@@ -22,6 +22,7 @@ import haptic from '../haptic-feedback/haptic';
 import NestedArrowIcon from '../nested-arrow/NestedArrow';
 import {ScreenGutter} from '../styled/Containers';
 import {BaseText, H6, H7} from '../styled/Text';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export type CurrencySelectionItem = Pick<
   SupportedCurrencyOption,
@@ -43,6 +44,7 @@ export type CurrencySelectionItem = Pick<
 export type CurrencySelectionRowProps = {
   currency: CurrencySelectionItem;
   tokens?: CurrencySelectionItem[];
+  filterSelected?: boolean;
   description?: string;
   hideCheckbox?: boolean;
   disableCheckbox?: boolean;
@@ -66,7 +68,7 @@ export const CurrencySelectionRowContainer = styled.View`
   padding: 16px;
 `;
 
-const FlexRow = styled.TouchableOpacity`
+const FlexRow = styled(TouchableOpacity)`
   flex-direction: row;
 `;
 
@@ -112,7 +114,7 @@ const ViewAllLink = styled(H6)`
   text-align: center;
 `;
 
-interface ChainSelectionRowProps {
+interface FeeCurrencySelectionRowProps {
   currency: CurrencySelectionItem;
   hideCheckbox?: boolean;
   disableCheckbox?: boolean;
@@ -120,8 +122,8 @@ interface ChainSelectionRowProps {
   onToggle?: (currencyAbbreviation: string, chain: string) => any;
 }
 
-export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
-  props => {
+export const FeeCurrencySelectionRow: React.FC<FeeCurrencySelectionRowProps> =
+  memo(props => {
     const {onToggle, currency, hideCheckbox, selectionMode, disableCheckbox} =
       props;
     const {
@@ -167,8 +169,7 @@ export const ChainSelectionRow: React.VFC<ChainSelectionRowProps> = memo(
         )}
       </FlexRow>
     );
-  },
-);
+  });
 
 interface TokenSelectionRowProps {
   token: CurrencySelectionItem;
@@ -183,7 +184,7 @@ interface TokenSelectionRowProps {
   badgeUri?: string | ((props?: any) => ReactElement);
 }
 
-export const TokenSelectionRow: React.VFC<TokenSelectionRowProps> = memo(
+export const TokenSelectionRow: React.FC<TokenSelectionRowProps> = memo(
   props => {
     const {
       token,
@@ -261,10 +262,11 @@ export const DescriptionRow: React.FC = ({children}) => {
   );
 };
 
-const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
+const CurrencySelectionRow: React.FC<CurrencySelectionRowProps> = ({
   currency,
   description,
   tokens,
+  filterSelected,
   hideCheckbox,
   disableCheckbox,
   selectionMode,
@@ -287,7 +289,7 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
 
   return (
     <CurrencySelectionRowContainer accessibilityLabel="currency-selection-container">
-      <ChainSelectionRow
+      <FeeCurrencySelectionRow
         currency={currency}
         onToggle={() => onPress(currency.currencyAbbreviation, currency.chain)}
         hideCheckbox={hideCheckbox}
@@ -299,11 +301,19 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
 
       {tokens?.length ? (
         <>
-          <TokensHeading>
-            {t('Popular {{currency}} Tokens', {
-              currency: chainName ? chainName : currencyName,
-            })}
-          </TokensHeading>
+          {!filterSelected ? (
+            <TokensHeading>
+              {t('Popular {{currency}} Tokens', {
+                currency: chainName ? chainName : currencyName,
+              })}
+            </TokensHeading>
+          ) : (
+            <TokensHeading>
+              {t('{{currency}} Tokens', {
+                currency: chainName ? chainName : currencyName,
+              })}
+            </TokensHeading>
+          )}
 
           {tokens.map(token => (
             <TokenSelectionRow
@@ -321,15 +331,17 @@ const CurrencySelectionRow: React.VFC<CurrencySelectionRowProps> = ({
             />
           ))}
 
-          <TokensFooter>
-            <ViewAllLink
-              accessibilityLabel="view-all-tokens-button"
-              onPress={() => {
-                onViewAllTokensPressed?.(currency, tokens);
-              }}>
-              {t('View all {{currency}} tokens', {currency: t(chainName)})}
-            </ViewAllLink>
-          </TokensFooter>
+          {!filterSelected ? (
+            <TokensFooter>
+              <ViewAllLink
+                accessibilityLabel="view-all-tokens-button"
+                onPress={() => {
+                  onViewAllTokensPressed?.(currency, tokens);
+                }}>
+                {t('View all {{currency}} tokens', {currency: t(chainName)})}
+              </ViewAllLink>
+            </TokensFooter>
+          ) : null}
         </>
       ) : null}
     </CurrencySelectionRowContainer>

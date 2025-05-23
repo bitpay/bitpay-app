@@ -14,7 +14,7 @@ import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppEffects} from '../app/';
 import {Analytics} from '../analytics/analytics.effects';
-import {renewSubscription, startOnGoingProcessModal} from '../app/app.effects';
+import {startOnGoingProcessModal} from '../app/app.effects';
 import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -26,9 +26,10 @@ import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
-import Braze from 'react-native-appboy-sdk';
+import Braze from '@braze/react-native-sdk';
 import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
-import uuid from 'react-native-uuid';
+import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
+import {DeviceEventEmitter} from 'react-native';
 
 interface StartLoginParams {
   email: string;
@@ -36,14 +37,12 @@ interface StartLoginParams {
   gCaptchaResponse?: string;
 }
 
-export const startBitPayIdStoreInit =
-  (initialData: InitialUserData): Effect<void> =>
-  (dispatch, getState) => {
+export const startBitPayIdAnalyticsInit =
+  (user: BasicUserInfo): Effect<void> =>
+  async (dispatch, getState) => {
     const {APP} = getState();
-    const {basicInfo: user} = initialData;
-
     if (user) {
-      const {eid, name, referralCode} = user;
+      const {eid, name} = user;
       let {email, givenName, familyName} = user;
 
       if (email) {
@@ -60,19 +59,41 @@ export const startBitPayIdStoreInit =
         }
       }
 
+      // Check if Braze EID exists and different
+      if (APP.brazeEid && APP.brazeEid !== eid) {
+        BrazeWrapper.startMergingUser();
+        // Should migrate the user to the new EID
+        LogActions.info('Merging current user to new EID: ', eid);
+        await BrazeWrapper.merge(APP.brazeEid, eid);
+        // Emit an event that delete the user
+        DeviceEventEmitter.emit(
+          DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
+          APP.brazeEid,
+        );
+      }
+
       dispatch(setBrazeEid(eid));
       dispatch(
         Analytics.identify(eid, {
           email,
           firstName: givenName,
           lastName: familyName,
-          'Cardholder Unique Referral Code': referralCode,
         }),
       );
+    }
+  };
 
-      dispatch(
-        BitPayIdActions.successInitializeStore(APP.network, initialData),
-      );
+export const startBitPayIdStoreInit =
+  (initialData: InitialUserData): Effect<void> =>
+  async (dispatch, getState) => {
+    const {APP} = getState();
+    const {basicInfo: user} = initialData;
+    dispatch(BitPayIdActions.successInitializeStore(APP.network, initialData));
+    try {
+      await dispatch(startBitPayIdAnalyticsInit(user));
+    } catch (err) {
+      dispatch(LogActions.error('Failed init user analytics'));
+      dispatch(LogActions.error(JSON.stringify(err)));
     }
   };
 
@@ -441,7 +462,7 @@ const startPairAndLoadUser =
         );
       }
 
-      dispatch(startBitPayIdStoreInit(data.user));
+      await dispatch(startBitPayIdStoreInit(data.user));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>
@@ -474,6 +495,7 @@ export const startDisconnectBitPayId =
 
       if (isAuthenticated && csrfToken) {
         await AuthApi.logout(APP.network, csrfToken);
+        dispatch(Analytics.track('Log Out User success', {}));
       }
     } catch (err) {
       // log but swallow this error
@@ -508,19 +530,11 @@ export const startDisconnectBitPayId =
       dispatch(LogActions.debug(JSON.stringify(err)));
     }
 
-    try {
-      dispatch(LogActions.debug('Generating EID for anonymous user...'));
-      const eid = uuid.v4().toString();
-      dispatch(setBrazeEid(eid));
-      dispatch(Analytics.identify(eid));
-      dispatch(renewSubscription());
-    } catch (err) {
-      dispatch(LogActions.debug('An error occured while clearing Braze user.'));
-      dispatch(LogActions.debug(JSON.stringify(err)));
-    }
+    // Braze doesn't recommend changeUser to a new EID
+    // Keep tracking current EID as part of logout
+    // until login with a different user or uninstall the app
 
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
-    dispatch(Analytics.track('Log Out User success', {}));
     dispatch(CardActions.isJoinedWaitlist(false));
     dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
     dispatch(ShopActions.clearedBillPayPayments({network: APP.network}));

@@ -1,5 +1,6 @@
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../../components/styled/Text';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const NoPrMsg = styled(BaseText)`
   font-size: 15px;
@@ -11,7 +12,7 @@ export const PrTitle = styled(BaseText)`
   font-weight: 500;
 `;
 
-export const PrRow = styled.TouchableOpacity`
+export const PrRow = styled(TouchableOpacity)`
   display: flex;
   flex-direction: row;
   justify-content: space-between;

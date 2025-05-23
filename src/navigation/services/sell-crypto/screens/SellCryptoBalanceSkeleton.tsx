@@ -10,7 +10,7 @@ const SellCryptoLoadingWalletSkeleton = () => {
     <SkeletonPlaceholder
       backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}
       highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
-      <SkeletonPlaceholder.Item width={220} height={12} marginTop={20} />
+      <SkeletonPlaceholder.Item width={220} height={15} marginTop={20} />
     </SkeletonPlaceholder>
   );
 };

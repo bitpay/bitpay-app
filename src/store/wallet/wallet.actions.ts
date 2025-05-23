@@ -6,6 +6,7 @@ import {
   Token,
   TransactionProposal,
   Wallet,
+  WalletStatus,
 } from './wallet.models';
 import {CurrencyOpts} from '../../constants/currencies';
 
@@ -97,11 +98,7 @@ export const setWalletTermsAccepted = (): WalletActionType => ({
 export const successUpdateWalletStatus = (payload: {
   keyId: string;
   walletId: string;
-  status: {
-    balance: CryptoBalance;
-    pendingTxps: TransactionProposal[];
-    singleAddress: boolean;
-  };
+  status: WalletStatus;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_UPDATE_WALLET_STATUS,
   payload,
@@ -159,6 +156,15 @@ export const updateWalletName = (payload: {
   payload,
 });
 
+export const updateAccountName = (payload: {
+  keyId: string;
+  name: string;
+  accountAddress: string;
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_ACCOUNT_NAME,
+  payload,
+});
+
 export const setWalletRefreshing = (payload: {
   keyId: string;
   walletId: string;
@@ -199,6 +205,20 @@ export const updateWalletTxHistory = (payload: {
   payload,
 });
 
+export const updateAccountTxHistory = (payload: {
+  keyId: string;
+  accountTransactionsHistory: {
+    [key: string]: {
+      transactions: any[];
+      loadMore: boolean;
+      hasConfirmingTxs: boolean;
+    };
+  };
+}): WalletActionType => ({
+  type: WalletActionTypes.UPDATE_ACCOUNT_TX_HISTORY,
+  payload,
+});
+
 export const setUseUnconfirmedFunds = (payload: boolean): WalletActionType => ({
   type: WalletActionTypes.SET_USE_UNCONFIRMED_FUNDS,
   payload,
@@ -234,6 +254,15 @@ export const toggleHideWallet = (payload: {
   payload,
 });
 
+export const toggleHideAccount = (payload: {
+  accountAddress: string;
+  keyId: string;
+  accountToggleSelected?: boolean;
+}): WalletActionType => ({
+  type: WalletActionTypes.TOGGLE_HIDE_ACCOUNT,
+  payload,
+});
+
 export const updateCacheFeeLevel = (
   payload: CacheFeeLevel,
 ): WalletActionType => ({
@@ -243,4 +272,32 @@ export const updateCacheFeeLevel = (
 
 export const setCustomTokensMigrationComplete = (): WalletActionType => ({
   type: WalletActionTypes.SET_CUSTOM_TOKENS_MIGRATION_COMPLETE,
+});
+
+export const setPolygonMigrationComplete = (): WalletActionType => ({
+  type: WalletActionTypes.SET_POLYGON_MIGRATION_COMPLETE,
+});
+
+export const setAccountEVMCreationMigrationComplete = (): WalletActionType => ({
+  type: WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE,
+});
+
+export const successUpdateWalletBalancesAndStatus = (payload: {
+  keyBalances: {
+    keyId: string;
+    totalBalance: number;
+    totalBalanceLastDay: number;
+  }[];
+  walletBalances: Array<{
+    keyId: string;
+    walletId: string;
+    status: {
+      balance: CryptoBalance;
+      pendingTxps: TransactionProposal[];
+      singleAddress: boolean;
+    };
+  }>;
+}): WalletActionType => ({
+  type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
+  payload,
 });

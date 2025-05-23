@@ -1,7 +1,7 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef} from 'react';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {selectAvailableGiftCards} from '../../../../store/shop/shop.selectors';
+import {selectAvailableGiftCards} from '../../../../store/shop-catalog/shop-catalog.selectors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {GiftCardGroupParamList} from './GiftCardGroup';
 

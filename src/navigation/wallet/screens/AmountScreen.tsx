@@ -8,6 +8,15 @@ import {HeaderRightContainer} from '../../../components/styled/Containers';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import type {HeaderTitleProps} from '@react-navigation/elements';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
+import {Wallet} from '../../../store/wallet/wallet.models';
+import {IsUtxoChain} from '../../../store/wallet/utils/currency';
+import OptionsSheet, {
+  Option,
+} from '../../../navigation/wallet/components/OptionsSheet';
+import WalletIcons from '../../../navigation/wallet/components/WalletIcons';
+import Settings from '../../../components/settings/Settings';
+import {sleep} from '../../../utils/helper-methods';
+import {useAppSelector} from '../../../utils/hooks';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
@@ -40,19 +49,29 @@ export interface AmountScreenParamList {
     | string
     | ((props: HeaderTitleProps) => React.ReactNode)
     | undefined;
+  wallet?: Wallet;
+  sendTo?: {
+    name: string | undefined;
+    type: string;
+    address: string;
+    destinationTag: number | undefined;
+  };
 }
 
 const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
   return <>{props.children}</>;
 });
 
-const AmountScreen: React.VFC<
+const AmountScreen: React.FC<
   NativeStackScreenProps<WalletGroupParamList, WalletScreens.AMOUNT>
 > = ({navigation, route}) => {
   const {t} = useTranslation();
   const [buttonState, setButtonState] = useState<ButtonState>();
+  const [showWalletOptions, setShowWalletOptions] = useState(false);
 
   const {
+    wallet,
+    sendTo,
     onAmountSelected,
     sendMaxEnabled,
     cryptoCurrencyAbbreviation,
@@ -70,21 +89,51 @@ const AmountScreen: React.VFC<
   const onSendMaxPressedRef = useRef(onSendMaxPressed);
   onSendMaxPressedRef.current = onSendMaxPressed;
 
+  const getHeaderRight = () => (
+    <HeaderContainer style={{flexDirection: 'row'}}>
+      <Button
+        buttonType="pill"
+        buttonStyle="cancel"
+        onPress={() => onSendMaxPressedRef.current()}
+        style={{marginRight: chain && IsUtxoChain(chain) && wallet ? 10 : 0}}>
+        {t('Send Max')}
+      </Button>
+      {chain && IsUtxoChain(chain) && wallet && sendTo?.address && (
+        <Settings
+          onPress={() => {
+            setShowWalletOptions(true);
+          }}
+        />
+      )}
+    </HeaderContainer>
+  );
+
+  const assetOptions: Array<Option> =
+    chain && IsUtxoChain(chain) && wallet && sendTo?.address
+      ? [
+          {
+            img: <WalletIcons.SelectInputs />,
+            title: t('Select Inputs for this Transaction'),
+            description: t(
+              "Choose which inputs you'd like to use to send crypto.",
+            ),
+            onPress: async () => {
+              await sleep(500);
+              navigation.navigate('SendToOptions', {
+                title: t('Select Inputs'),
+                wallet,
+                sendTo,
+                context: 'selectInputs',
+              });
+            },
+          },
+        ]
+      : [];
+
   useLayoutEffect(() => {
     navigation.setOptions({
       ...(headerTitle && {headerTitle}),
-      headerRight: sendMaxEnabled
-        ? () => (
-            <HeaderContainer>
-              <Button
-                buttonType="pill"
-                buttonStyle="cancel"
-                onPress={() => onSendMaxPressedRef.current()}>
-                {t('Send Max')}
-              </Button>
-            </HeaderContainer>
-          )
-        : undefined,
+      headerRight: sendMaxEnabled ? getHeaderRight : undefined,
     });
   }, [navigation, t, sendMaxEnabled, headerTitle]);
 
@@ -102,6 +151,11 @@ const AmountScreen: React.VFC<
           onSubmit={amt => {
             onAmountSelected?.(amt.toString(), setButtonState);
           }}
+        />
+        <OptionsSheet
+          isVisible={showWalletOptions}
+          closeModal={() => setShowWalletOptions(false)}
+          options={assetOptions}
         />
       </WalletScreenContainer>
     </AmountModalContainerHOC>

@@ -8,11 +8,8 @@ import CompleteScreen, {
   CompleteScreenParamList,
 } from './screens/CompleteScreen';
 import {Root} from '../../Root';
-import {
-  baseNativeHeaderBackButtonProps,
-  baseNavigatorOptions,
-} from '../../constants/NavigationOptions';
-import {HeaderBackButton} from '@react-navigation/elements';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
+import HeaderBackButton from '../../components/back/HeaderBackButton';
 
 interface CardActivationProps {
   CardActivation: typeof Root;
@@ -34,16 +31,9 @@ const CardActivationGroup: React.FC<CardActivationProps> = ({
   const {t} = useTranslation();
   return (
     <CardActivation.Group
-      screenOptions={({navigation}) => ({
+      screenOptions={() => ({
         ...baseNavigatorOptions,
-        headerLeft: () => (
-          <HeaderBackButton
-            onPress={() => {
-              navigation.goBack();
-            }}
-            {...baseNativeHeaderBackButtonProps}
-          />
-        ),
+        headerLeft: () => <HeaderBackButton />,
       })}>
       <CardActivation.Screen
         name={CardActivationScreens.ACTIVATE}

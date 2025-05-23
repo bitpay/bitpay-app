@@ -3,7 +3,8 @@ import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import {BillGroupParamList} from '../BillGroup';
-import {ScrollView, TouchableOpacity} from 'react-native';
+import {ScrollView} from 'react-native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {LightBlack, LinkBlue, Slate10} from '../../../../../styles/colors';
 import {BaseText} from '../../../../../components/styled/Text';
 import {

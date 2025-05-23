@@ -42,6 +42,7 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {setWalletScanning} from '../../../../store/wallet/wallet.actions';
 import {isSingleAddressChain} from '../../../../store/wallet/utils/currency';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const ADDRESS_LIMIT = 5;
 
@@ -59,7 +60,7 @@ const AddressesParagraph = styled(Paragraph)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const AllAddressesLink = styled.TouchableOpacity`
+const AllAddressesLink = styled(TouchableOpacity)`
   margin: 25px 0 10px;
 `;
 
@@ -82,7 +83,7 @@ const SubText = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
-const CopyRow = styled.TouchableOpacity`
+const CopyRow = styled(TouchableOpacity)`
   flex-direction: row;
 `;
 

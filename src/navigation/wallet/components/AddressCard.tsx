@@ -10,12 +10,13 @@ import {
 import {TxDetailsSendingTo} from '../../../store/wallet/wallet.models';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface AddressCardComponentProps {
   recipient: TxDetailsSendingTo;
 }
 
-const ListCard = styled.TouchableOpacity`
+const ListCard = styled(TouchableOpacity)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 12px;
   margin: 6px 0;

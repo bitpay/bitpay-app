@@ -31,12 +31,13 @@ import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {ProcessPendingTxps} from '../transactions/transactions';
 import {FormatAmount} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
-import {IsUtxoCoin} from '../../utils/currency';
+import {IsERCToken, IsUtxoChain} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
 import {LogActions} from '../../../log';
 import _ from 'lodash';
 import {createWalletAddress} from '../address/address';
+import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
 
 /*
  * post broadcasting of payment
@@ -200,7 +201,7 @@ export const startUpdateWalletStatus =
 
         if (network === Network.mainnet) {
           const wallets = getState().WALLET.keys[key.id].wallets.filter(
-            w => !w.hideWallet,
+            w => !w.hideWallet && !w.hideWalletByAccount,
           );
 
           const totalFiatBalance = wallets.reduce(
@@ -218,6 +219,7 @@ export const startUpdateWalletStatus =
                   ),
                 ),
                 false, // already filtered by hideWallet
+                false,
                 wallets[index].network,
               ),
             0,
@@ -237,6 +239,7 @@ export const startUpdateWalletStatus =
                   ),
                 ),
                 false, // already filtered by hideWallet
+                false,
                 wallets[index].network,
               );
               return fiatLastDay ? acc + fiatLastDay : acc;
@@ -269,7 +272,7 @@ export const startUpdateWalletStatus =
     });
   };
 
-const getBulkStatus = (
+export const getBulkStatus = (
   bulkClient: any,
   credentials: any,
   walletOptions: Record<
@@ -298,16 +301,30 @@ const getBulkStatus = (
   });
 };
 
-const updateKeyStatus =
-  (
-    key: Key,
-    force: boolean | undefined,
-  ): Effect<
+export const updateKeyStatus =
+  ({
+    key,
+    accountAddress,
+    force,
+    dataOnly,
+  }: {
+    key: Key;
+    force: boolean | undefined;
+    accountAddress?: string;
+    dataOnly?: boolean;
+  }): Effect<
     Promise<
       | {
           keyId: string;
           totalBalance: number;
           totalBalanceLastDay: number;
+          walletUpdates: Array<{
+            walletId: string;
+            balance: any;
+            pendingTxps: any[];
+            isRefreshing: boolean;
+            singleAddress: boolean;
+          }>;
         }
       | undefined
     >
@@ -318,6 +335,7 @@ const updateKeyStatus =
       const {defaultAltCurrency} = APP;
       const {balanceCacheKey} = WALLET;
       const {rates, lastDayRates} = RATE;
+
       if (
         !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION) &&
         !force
@@ -333,6 +351,11 @@ const updateKeyStatus =
         }
       >;
 
+      if (accountAddress) {
+        key.wallets = key.wallets.filter(
+          wallet => wallet.receiveAddress === accountAddress,
+        );
+      }
       // remote token wallets from getStatusAll
       const noTokenWallets = key.wallets.filter(wallet => {
         return (
@@ -366,6 +389,15 @@ const updateKeyStatus =
           credentials,
           walletOptions,
         )) as BulkStatus[];
+
+        const walletUpdates: Array<{
+          walletId: string;
+          balance: any;
+          pendingTxps: any[];
+          isRefreshing: boolean;
+          singleAddress: boolean;
+        }> = [];
+
         const balances = key.wallets.map(wallet => {
           const {balance: cachedBalance, pendingTxps} = wallet;
 
@@ -397,12 +429,13 @@ const updateKeyStatus =
             }) || {};
 
           const amountHasChanged =
-            status?.balance.availableAmount !== cachedBalance?.satAvailable;
+            status?.balance?.availableAmount !== cachedBalance?.satAvailable;
           const hasNewPendingTxps =
             status?.pendingTxps && status?.pendingTxps.length > 0;
           const hasPendingTxps = pendingTxps?.length > 0;
           const shouldUpdateStatus =
             amountHasChanged || hasNewPendingTxps || hasPendingTxps;
+
           if (status && success && shouldUpdateStatus) {
             const cryptoBalance = dispatch(
               buildBalance({
@@ -426,11 +459,22 @@ const updateKeyStatus =
 
             const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
 
-            // properties to update
-            wallet.balance = cryptoBalance;
-            wallet.pendingTxps = newPendingTxps;
-            wallet.isRefreshing = false;
-            wallet.singleAddress = status.wallet?.singleAddress;
+            // Collect wallet updates instead of applying them
+            walletUpdates.push({
+              walletId: wallet.id,
+              balance: cryptoBalance,
+              pendingTxps: newPendingTxps,
+              isRefreshing: false,
+              singleAddress: status.wallet?.singleAddress,
+            });
+
+            if (!dataOnly) {
+              // properties to update
+              wallet.balance = cryptoBalance;
+              wallet.pendingTxps = newPendingTxps;
+              wallet.isRefreshing = false;
+              wallet.singleAddress = status.wallet?.singleAddress;
+            }
 
             dispatch(
               LogActions.info(
@@ -457,15 +501,19 @@ const updateKeyStatus =
 
         dispatch(LogActions.info(`Key: ${key.id} - status updated`));
 
-        dispatch(
-          successUpdateKey({
-            key,
-          }),
-        );
+        if (!dataOnly) {
+          dispatch(
+            successUpdateKey({
+              key,
+            }),
+          );
+        }
+
         return resolve({
           keyId: key.id,
           totalBalance: getTotalFiatBalance(balances),
           totalBalanceLastDay: getTotalFiatLastDayBalance(balances),
+          walletUpdates,
         });
       } catch (err) {
         if (err) {
@@ -487,7 +535,15 @@ const updateKeyStatus =
   };
 
 export const startUpdateAllWalletStatusForKeys =
-  ({keys, force}: {keys: Key[]; force?: boolean}): Effect<Promise<void>> =>
+  ({
+    keys,
+    accountAddress,
+    force,
+  }: {
+    keys: Key[];
+    accountAddress?: string;
+    force?: boolean;
+  }): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -495,7 +551,7 @@ export const startUpdateAllWalletStatusForKeys =
           LogActions.info('starting [startUpdateAllWalletStatusForKeys]'),
         );
         const keyUpdatesPromises = keys.map(key =>
-          dispatch(updateKeyStatus(key, force)),
+          dispatch(updateKeyStatus({key, accountAddress, force})),
         );
         const keyUpdates = (await Promise.all(keyUpdatesPromises)).filter(
           Boolean,
@@ -568,12 +624,36 @@ export const startUpdateAllWalletStatusForReadOnlyKeys =
   };
 
 export const startUpdateAllWalletStatusForKey =
-  ({key, force}: {key: Key; force?: boolean}): Effect<Promise<void>> =>
-  dispatch => {
+  ({
+    key,
+    accountAddress,
+    force,
+    createTokenWalletWithFunds,
+  }: {
+    key: Key;
+    accountAddress?: string;
+    force?: boolean;
+    createTokenWalletWithFunds?: boolean;
+  }): Effect<Promise<void>> =>
+  async dispatch => {
     const keys = [key];
 
+    if (createTokenWalletWithFunds) {
+      try {
+        await dispatch(detectAndCreateTokensForEachEvmWallet({key}));
+      } catch (error) {
+        dispatch(
+          LogActions.info(
+            'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
+          ),
+        );
+      }
+    }
+
     return !key.isReadOnly
-      ? dispatch(startUpdateAllWalletStatusForKeys({keys, force}))
+      ? dispatch(
+          startUpdateAllWalletStatusForKeys({keys, accountAddress, force}),
+        )
       : dispatch(
           startUpdateAllWalletStatusForReadOnlyKeys({
             readOnlyKeys: keys,
@@ -582,13 +662,36 @@ export const startUpdateAllWalletStatusForKey =
         );
   };
 
+export type UpdateAllKeyAndWalletStatusContext =
+  | 'homeRootOnRefresh'
+  | 'importLedger'
+  | 'importWallet'
+  | 'init'
+  | 'appEffectsDebounced'
+  | 'newBlockEvent'
+  | 'startMigration';
+
 export const startUpdateAllKeyAndWalletStatus =
-  ({force}: {force?: boolean}): Effect =>
+  ({
+    context,
+    force,
+    createTokenWalletWithFunds,
+    chain,
+    tokenAddress,
+  }: {
+    context?: UpdateAllKeyAndWalletStatusContext;
+    force?: boolean;
+    createTokenWalletWithFunds?: boolean;
+    chain?: string;
+    tokenAddress?: string;
+  }): Effect =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
         dispatch(
-          LogActions.info('starting [startUpdateAllKeyAndWalletStatus]'),
+          LogActions.info(
+            `Starting [startUpdateAllKeyAndWalletStatus]. Context: ${context}`,
+          ),
         );
         const {
           WALLET: {keys: _keys, balanceCacheKey},
@@ -606,6 +709,32 @@ export const startUpdateAllKeyAndWalletStatus =
 
         const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
 
+        if (createTokenWalletWithFunds) {
+          LogActions.debug(
+            `Checking for new token with funds.${
+              context ? ' Context: ' + context + '. ' : ''
+            }${chain ? ' Chain: ' + chain + '. ' : ''}${
+              tokenAddress ? ' Contract address: ' + tokenAddress + '. ' : ''
+            }`,
+          );
+          for (const [index, k] of keys.entries()) {
+            try {
+              await dispatch(
+                detectAndCreateTokensForEachEvmWallet({
+                  key: k,
+                  chain,
+                  tokenAddress,
+                }),
+              );
+            } catch (error) {
+              dispatch(
+                LogActions.info(
+                  'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
+                ),
+              );
+            }
+          }
+        }
         await Promise.all([
           dispatch(startUpdateAllWalletStatusForKeys({keys, force})),
           dispatch(
@@ -635,7 +764,7 @@ export const startUpdateAllKeyAndWalletStatus =
     });
   };
 
-const updateWalletStatus =
+export const updateWalletStatus =
   ({
     wallet,
     defaultAltCurrencyIsoCode,
@@ -725,9 +854,6 @@ const updateWalletStatus =
 
             const newPendingTxps = dispatch(buildPendingTxps({wallet, status}));
             const singleAddress = status.wallet?.singleAddress;
-            console.log('[updateWalletStatus] wallet obj', wallet);
-            console.log('[updateWalletStatus] newBalance', newBalance);
-            console.log('[updateWalletStatus] newPendingTxps', newPendingTxps);
 
             resolve({
               balance: newBalance,
@@ -757,7 +883,7 @@ const updateWalletStatus =
     });
   };
 
-const buildBalance =
+export const buildBalance =
   ({wallet, status}: {wallet: Wallet; status: Status}): Effect<CryptoBalance> =>
   (dispatch, getState) => {
     const {currencyAbbreviation, chain, tokenAddress} = wallet;
@@ -778,7 +904,7 @@ const buildBalance =
     let satTotalAmount = totalAmount;
     let satLockedAmount = lockedAmount;
 
-    if (['xrp'].includes(currencyAbbreviation)) {
+    if (['xrp'].includes(chain)) {
       satLockedAmount = lockedAmount - lockedConfirmedAmount;
       satTotalAmount = totalAmount - lockedConfirmedAmount;
     }
@@ -788,7 +914,7 @@ const buildBalance =
       : totalConfirmedAmount - lockedAmount;
 
     const pendingAmount =
-      useUnconfirmedFunds && IsUtxoCoin(currencyAbbreviation)
+      useUnconfirmedFunds && IsUtxoChain(chain)
         ? 0
         : totalAmount - totalConfirmedAmount;
 
@@ -844,7 +970,7 @@ const buildBalance =
     };
   };
 
-const buildFiatBalance =
+export const buildFiatBalance =
   ({
     wallet,
     defaultAltCurrencyIsoCode,
@@ -859,8 +985,14 @@ const buildFiatBalance =
     cryptoBalance: CryptoBalance;
   }): Effect<FiatBalance> =>
   dispatch => {
-    const {currencyAbbreviation, network, chain, hideWallet, tokenAddress} =
-      wallet;
+    const {
+      currencyAbbreviation,
+      network,
+      chain,
+      hideWallet,
+      hideWalletByAccount,
+      tokenAddress,
+    } = wallet;
 
     let {sat, satLocked, satConfirmedLocked, satSpendable, satPending} =
       cryptoBalance;
@@ -878,6 +1010,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatLocked: convertToFiat(
@@ -892,6 +1025,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatConfirmedLocked: convertToFiat(
@@ -906,6 +1040,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatSpendable: convertToFiat(
@@ -920,6 +1055,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatPending: convertToFiat(
@@ -934,6 +1070,7 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
       fiatLastDay: convertToFiat(
@@ -948,12 +1085,13 @@ const buildFiatBalance =
           ),
         ),
         hideWallet,
+        hideWalletByAccount,
         network,
       ),
     };
   };
 
-const buildPendingTxps =
+export const buildPendingTxps =
   ({
     wallet,
     status,
@@ -962,6 +1100,10 @@ const buildPendingTxps =
     status: Status;
   }): Effect<TransactionProposal[]> =>
   dispatch => {
+    // skip erc20 pending proposals since those need to be signed with the associated wallet
+    if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
+      return [];
+    }
     let newPendingTxps = [];
     try {
       if (status.pendingTxps?.length > 0) {
@@ -1041,6 +1183,7 @@ export const startFormatBalanceAllWalletsForKey =
             network,
             chain,
             hideWallet,
+            hideWalletByAccount,
             tokenAddress,
           } = wallet;
           try {
@@ -1070,6 +1213,7 @@ export const startFormatBalanceAllWalletsForKey =
                   ),
                 ),
                 hideWallet,
+                hideWalletByAccount,
                 network,
               ),
               fiatLocked: convertToFiat(
@@ -1084,6 +1228,7 @@ export const startFormatBalanceAllWalletsForKey =
                   ),
                 ),
                 hideWallet,
+                hideWalletByAccount,
                 network,
               ),
               fiatLastDay: convertToFiat(
@@ -1098,6 +1243,7 @@ export const startFormatBalanceAllWalletsForKey =
                   ),
                 ),
                 hideWallet,
+                hideWalletByAccount,
                 network,
               ),
             };

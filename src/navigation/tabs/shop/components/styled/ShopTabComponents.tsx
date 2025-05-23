@@ -20,6 +20,7 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export const horizontalPadding = 20;
 
@@ -109,10 +110,9 @@ export const NoResultsHeader = styled(H4)`
   font-size: 17px;
 `;
 
-export const NavIconButtonContainer = styled.TouchableOpacity`
+export const NavIconButtonContainer = styled(TouchableOpacity)`
   align-items: center;
   justify-content: center;
-  transform: scale(1.1);
   background-color: ${({theme}) => (theme.dark ? '#252525' : NeutralSlate)};
   border-radius: 50px;
   height: 40px;
