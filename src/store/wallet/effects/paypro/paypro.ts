@@ -48,6 +48,7 @@ export const GetPayProOptions =
         throw err;
       }
     });
+    payOpts.paymentOptions.forEach((o)=>{o.network = 'livenet'});
     dispatch(
       LogActions.info('PayPro Options: SUCCESS', JSON.stringify(payOpts)),
     );
@@ -98,6 +99,7 @@ export const GetPayProDetails =
           throw err;
         }
       });
+      payDetails.network = 'livenet';
     dispatch(
       LogActions.info('PayPro Details: SUCCESS', JSON.stringify(payDetails)),
     );

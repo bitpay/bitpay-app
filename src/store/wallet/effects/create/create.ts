@@ -386,6 +386,7 @@ export const createMultipleWallets =
             },
           }),
         )) as Wallet;
+
         const receiveAddress = (await dispatch<any>(
           createWalletAddress({wallet, newAddress: true}),
         )) as string;
@@ -605,6 +606,7 @@ const createTokenWallet =
           opTokenAddresses: [],
           arbTokenAddresses: [],
           baseTokenAddresses: [],
+          solTokenAddresses: [],
         };
 
         switch (associatedWallet.credentials.chain) {
@@ -634,6 +636,12 @@ const createTokenWallet =
             break;
           case 'arb':
             associatedWallet.preferences.arbTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+          case 'sol':
+            associatedWallet.preferences.solTokenAddresses?.push(
               // @ts-ignore
               tokenCredentials.token?.address,
             );

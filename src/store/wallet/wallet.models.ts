@@ -123,6 +123,7 @@ export interface WalletObj {
     opTokenAddresses?: [];
     arbTokenAddresses?: [];
     baseTokenAddresses?: [];
+    solTokenAddresses?: [];
   };
   img: string | ((props?: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);
@@ -508,7 +509,7 @@ export interface SendMaxInfo {
 }
 
 export interface CacheFeeLevel {
-  currency: 'eth' | 'btc' | 'matic' | 'arb' | 'base' | 'op';
+  currency: 'eth' | 'btc' | 'matic' | 'arb' | 'base' | 'op' | 'sol';
   feeLevel: FeeLevels;
 }
 
