@@ -1002,10 +1002,24 @@ const handlePayTransaction = async (
   const swapAmount = valueBN.toString();
   const senderContractAddress = tokenContract;
   const recipientAddress = senderAddress;
+  const isMainChainAddress =
+    senderContractAddress === ethers.constants.AddressZero;
+  let senderTokenPrice;
 
-  const senderTokenPrice = (
-    await dispatch(getERC20TokenPrice({address: senderContractAddress, chain}))
-  ).usdPrice;
+  if (isMainChainAddress) {
+    // Special case for native transfer
+    senderTokenPrice = getRateByCurrencyName(
+      allRates,
+      chain.toLowerCase(),
+      chain,
+    )[0].rate;
+  } else {
+    senderTokenPrice = (
+      await dispatch(
+        getERC20TokenPrice({address: senderContractAddress, chain}),
+      )
+    ).usdPrice;
+  }
 
   const formattedTokenAddress = addTokenChainSuffix(
     senderContractAddress.toLowerCase(),
@@ -1020,7 +1034,7 @@ const handlePayTransaction = async (
     FormatAmount(
       swapFromCurrencyAbbreviation,
       chain,
-      senderContractAddress,
+      isMainChainAddress ? undefined : senderContractAddress,
       Number(swapAmount),
     ),
   );
@@ -1032,7 +1046,7 @@ const handlePayTransaction = async (
       swapFromCurrencyAbbreviation,
       chain,
       allRates,
-      senderContractAddress,
+      isMainChainAddress ? undefined : senderContractAddress,
       senderTokenPrice,
     ),
   );
