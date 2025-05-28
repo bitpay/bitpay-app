@@ -9,7 +9,6 @@ import PaymentCompleteSvg from '../../../../assets/img/wallet/payment-complete.s
 import {BaseText} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import Animated, {
@@ -17,7 +16,6 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withSpring,
-  interpolateColor,
 } from 'react-native-reanimated';
 import {useEffect} from 'react';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
@@ -100,17 +98,6 @@ const PaymentSent = ({
     }
   }, [isVisible]);
 
-  const animatedBackdropStyle = useAnimatedStyle(() => {
-    return {
-      backgroundColor: interpolateColor(
-        backdropColor.value,
-        [0, 1],
-        ['#FFFFFF', Success],
-      ),
-      opacity: backdropOpacity.value,
-    };
-  });
-
   const animatedHeroStyle = useAnimatedStyle(() => ({
     opacity: heroOpacity.value,
     transform: [{scale: heroScale.value}],
@@ -123,40 +110,34 @@ const PaymentSent = ({
 
   useEffect(() => {
     // @ts-ignore
-    let bgTimer, heroTimer, footerTimer;
+    let heroTimer, footerTimer;
     if (isVisible) {
       setShowContent(true);
-      bgTimer = setTimeout(() => {
-        bgProgress.value = withTiming(1, {duration: 500});
-      }, 300);
 
       heroTimer = setTimeout(() => {
         heroOpacity.value = withTiming(1, {duration: 0});
         heroScale.value = withSpring(1, {
-          damping: 10,
+          damping: 17,
           stiffness: 100,
         });
-      }, 900);
+      }, 100);
 
       footerTimer = setTimeout(() => {
         footerOpacity.value = withTiming(1, {duration: 400});
         footerTranslateY.value = withSpring(0, {
-          damping: 10,
+          damping: 12,
           stiffness: 100,
         });
-      }, 900);
+      }, 100);
     } else {
       heroOpacity.value = 0;
       heroScale.value = 0.1;
       footerTranslateY.value = 100;
       footerOpacity.value = 0;
-      bgProgress.value = 0;
       setShowContent(false);
     }
 
     return () => {
-      // @ts-ignore
-      clearTimeout(bgTimer);
       // @ts-ignore
       clearTimeout(heroTimer);
       // @ts-ignore
@@ -165,12 +146,7 @@ const PaymentSent = ({
   }, [isVisible]);
 
   const animatedContainerStyle = useAnimatedStyle(() => {
-    const backgroundColor = interpolateColor(
-      bgProgress.value,
-      [0, 1],
-      ['#FFFFFF', Success],
-    );
-    return {backgroundColor};
+    return {backgroundColor: Success};
   });
 
   return (
