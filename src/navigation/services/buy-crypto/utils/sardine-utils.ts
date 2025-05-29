@@ -60,6 +60,7 @@ export const sardineSupportedCoins = [
   'ltc',
   'matic', // backward compatibility
   'pol',
+  'sol',
   'xrp',
 ];
 
@@ -96,6 +97,8 @@ export const sardineSupportedMaticTokens = ['usdc'];
 
 export const sardineSupportedArbitrumTokens = ['usdc'];
 
+export const sardineSupportedSolanaTokens = ['usdc'];
+
 export const getSardineSupportedCurrencies = (): string[] => {
   const sardineSupportedCurrencies = [
     ...sardineSupportedCoins,
@@ -107,6 +110,9 @@ export const getSardineSupportedCurrencies = (): string[] => {
     ),
     ...sardineSupportedArbitrumTokens.flatMap(arbitrumToken =>
       getCurrencyAbbreviation(arbitrumToken, 'arb'),
+    ),
+    ...sardineSupportedSolanaTokens.flatMap(solanaToken =>
+      getCurrencyAbbreviation(solanaToken, 'sol'),
     ),
   ];
 
@@ -123,37 +129,20 @@ export const getSardineChainFormat = (chain: string): string | undefined => {
   if (!chain) {
     return undefined;
   }
-  let formattedChain: string | undefined;
-  switch (chain.toLowerCase()) {
-    case 'arb':
-      formattedChain = 'arbitrum';
-      break;
-    case 'btc':
-      formattedChain = 'bitcoin';
-      break;
-    case 'bch':
-      formattedChain = 'bitcoin_cash';
-      break;
-    case 'eth':
-      formattedChain = 'ethereum';
-      break;
-    case 'doge':
-      formattedChain = 'dogecoin';
-      break;
-    case 'ltc':
-      formattedChain = 'litecoin';
-      break;
-    case 'matic':
-      formattedChain = 'polygon';
-      break;
-    case 'xrp':
-      formattedChain = 'ripple';
-      break;
-    default:
-      formattedChain = undefined;
-      break;
-  }
-  return formattedChain;
+
+  const chainMap: Record<string, string> = {
+    arb: 'arbitrum',
+    btc: 'bitcoin',
+    bch: 'bitcoin_cash',
+    eth: 'ethereum',
+    doge: 'dogecoin',
+    ltc: 'litecoin',
+    matic: 'polygon',
+    sol: 'solana',
+    xrp: 'ripple',
+  };
+
+  return chainMap[chain.toLowerCase()];
 };
 
 export const getSardinePaymentMethodFormat = (
