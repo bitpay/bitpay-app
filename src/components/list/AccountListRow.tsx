@@ -2,7 +2,6 @@ import React, {memo, ReactElement, useEffect, useState} from 'react';
 import {
   Column,
   CurrencyImageContainer,
-  CurrencyColumn,
   Row,
   ActiveOpacity,
   RowContainer,
@@ -11,18 +10,17 @@ import {
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
-import {BitpaySupportedEvmCoins} from '../../constants/currencies';
 import {
-  formatCryptoAddress,
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
 import {ActivityIndicator, Platform, View} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
-import Blockie from '../blockie/Blockie';
 import {WalletRowProps} from './WalletRow';
 import {SearchableItem} from '../chain-search/ChainSearch';
 import Animated, {FadeIn} from 'react-native-reanimated';
+import {IsSVMChain} from '../../store/wallet/utils/currency';
+import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -156,7 +154,15 @@ const AccountListRow = ({
           <CurrencyImageContainer>
             {isMultiNetworkSupported ? (
               isBlockieReady ? (
-                <Blockie size={40} seed={receiveAddress} />
+                <CurrencyImage
+                  blockie={{
+                    seed: receiveAddress,
+                  }}
+                  badgeUri={
+                    IsSVMChain(chain) ? CurrencyListIcons[chain] : undefined
+                  }
+                  size={40}
+                />
               ) : (
                 <></>
               )
