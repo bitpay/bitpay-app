@@ -5,7 +5,7 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import React, {useCallback, useState} from 'react';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
 import {Link, Paragraph} from '../../../components/styled/Text';

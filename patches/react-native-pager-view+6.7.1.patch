@@ -1,0 +1,17 @@
+diff --git a/node_modules/react-native-pager-view/ios/Fabric/RNCPagerViewComponentView.mm b/node_modules/react-native-pager-view/ios/Fabric/RNCPagerViewComponentView.mm
+index 652a5c1..c70e8ca 100644
+--- a/node_modules/react-native-pager-view/ios/Fabric/RNCPagerViewComponentView.mm
++++ b/node_modules/react-native-pager-view/ios/Fabric/RNCPagerViewComponentView.mm
+@@ -439,6 +439,12 @@ - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecogni
+         
+         return YES;
+     }
++
++    // Allow nested scroll views to scroll simultaneously with the pager
++    if ([otherGestureRecognizer.view isKindOfClass: UIScrollView.class]) {
++        return YES;
++    }
++
+     const auto &viewProps = *std::static_pointer_cast<const RNCViewPagerProps>(_props);
+     scrollView.panGestureRecognizer.enabled = viewProps.scrollEnabled;
+     return NO;

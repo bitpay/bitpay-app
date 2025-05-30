@@ -37,7 +37,7 @@ import ShareIcon from '../../../../../../assets/img/share-icon.svg';
 import ShareIconWhite from '../../../../../../assets/img/share-icon-white.svg';
 import {ListHeader} from '../../general/screens/customize-home/Shared';
 import {storage} from '../../../../../store';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {isAndroidStoragePermissionGranted} from '../../../../../utils/helper-methods';
 import Share, {ShareOptions} from 'react-native-share';
 import RNFS from 'react-native-fs';

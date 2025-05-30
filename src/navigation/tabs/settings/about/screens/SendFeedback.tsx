@@ -29,7 +29,7 @@ import {useTranslation} from 'react-i18next';
 import {APP_VERSION} from '../../../../../constants/config';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {AboutScreens, AboutStackParamList} from '../AboutGroup';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export type FeedbackRateType = 'love' | 'ok' | 'disappointed' | 'default';
 

@@ -81,7 +81,7 @@ import {
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
 import {Platform} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   GetFeeOptions,
   getFeeRatePerKb,

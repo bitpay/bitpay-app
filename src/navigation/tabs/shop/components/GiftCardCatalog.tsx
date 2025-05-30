@@ -4,7 +4,7 @@ import styled, {useTheme} from 'styled-components/native';
 import pickBy from 'lodash.pickby';
 import uniqBy from 'lodash.uniqby';
 import {Platform, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useForm, Controller} from 'react-hook-form';
 import {ActiveOpacity, WIDTH} from '../../../../components/styled/Containers';
 import ShopCarouselList, {ShopCarouselItem} from './ShopCarouselList';

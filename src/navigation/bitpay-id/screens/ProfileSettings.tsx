@@ -27,7 +27,7 @@ import {
   SlateDark,
 } from '../../../styles/colors';
 import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
 import ChevronRight from '../components/ChevronRight';
 import {BitPayIdEffects} from '../../../store/bitpay-id';

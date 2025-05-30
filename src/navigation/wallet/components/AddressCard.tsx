@@ -10,7 +10,7 @@ import {
 import {TxDetailsSendingTo} from '../../../store/wallet/wallet.models';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface AddressCardComponentProps {
   recipient: TxDetailsSendingTo;
