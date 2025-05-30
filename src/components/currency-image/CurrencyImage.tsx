@@ -7,13 +7,18 @@ import styled from 'styled-components/native';
 import DefaultImage from '../../../assets/img/currencies/default.svg';
 import CoinbaseSvg from '../../../assets/img/logos/coinbase.svg';
 import ProfileIcon from '../avatar/ProfileIcon';
+import Blockie from '../blockie/Blockie';
 
 interface CurrencyImageProps {
-  img: string | ((props?: any) => ReactElement);
+  img?: string | ((props?: any) => ReactElement);
   imgSrc?: ImageRequireSource;
   size?: number;
   badgeUri?: string | ((props?: any) => ReactElement);
   badgeSrc?: ImageRequireSource;
+  blockie?: {
+    size?: number;
+    seed?: string;
+  };
 }
 
 const CurrencyImageContainer = styled.View`
@@ -41,6 +46,7 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
   badgeUri,
   badgeSrc,
   size = 40,
+  blockie,
 }) => {
   const style = {width: size, height: size};
   const [imageError, setImageError] = useState(false);
@@ -76,7 +82,9 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
 
   return (
     <CurrencyImageContainer>
-      {(!img && !imgSrc) || imageError ? (
+      {blockie ? (
+        <Blockie size={size ?? blockie.size} seed={blockie.seed ?? 'random'} />
+      ) : (!img && !imgSrc) || imageError ? (
         <DefaultImage {...style} />
       ) : imgSrc ? (
         <FastImage
@@ -102,7 +110,7 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
           />
         )
       ) : (
-        img(style)
+        img!(style)
       )}
 
       {badge}
