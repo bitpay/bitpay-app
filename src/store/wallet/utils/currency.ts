@@ -78,9 +78,14 @@ export const IsOtherChain = (chain: string): boolean => {
   return Object.keys(OtherBitpaySupportedCoins).includes(_chain);
 };
 
+export const IsTokensSupportedChain = (chain: string): boolean => {
+  const _chain = cloneDeep(chain).toLowerCase();
+  return Object.keys(BitpaySupportedEvmCoins).concat(Object.keys(BitpaySupportedSvmCoins)).includes(_chain); // TODO: review all IsEVMChain and see if we should use IsTokensSupportedChain or IsSVMChain
+};
+
 export const IsEVMChain = (chain: string): boolean => {
   const _chain = cloneDeep(chain).toLowerCase();
-  return Object.keys(BitpaySupportedEvmCoins).concat(Object.keys(BitpaySupportedSvmCoins)).includes(_chain); // TODO: use is SVMCHAIN ????
+  return Object.keys(BitpaySupportedEvmCoins).concat(Object.keys(BitpaySupportedSvmCoins)).includes(_chain); // TODO: remove concat(Object.keys(BitpaySupportedSvmCoins))
 };
 
 export const IsSVMChain = (chain: string): boolean => {
