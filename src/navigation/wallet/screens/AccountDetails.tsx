@@ -32,7 +32,7 @@ import {
   SectionList,
   View,
 } from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   Badge,
   Balance,
@@ -822,7 +822,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               }}>
               {pendingProposalsCount ? (
                 <ProposalBadgeContainer
-                  touchableLibrary={'react-native-gesture-handler'}
                   style={{marginRight: 10}}
                   onPress={onPressTxpBadge}>
                   <ProposalBadge>{pendingProposalsCount}</ProposalBadge>
@@ -830,7 +829,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               ) : null}
               {hasAllChains ? (
                 <TouchableOpacity
-                  touchableLibrary={'react-native-gesture-handler'}
                   onPress={() =>
                     navigation.navigate('AccountSettings', {
                       key,

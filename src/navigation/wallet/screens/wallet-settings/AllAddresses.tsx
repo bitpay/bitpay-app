@@ -24,7 +24,7 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {LogActions} from '../../../../store/log';
 import {FlashList} from '@shopify/flash-list';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export type AllAddressesParamList = {
   walletName: string;

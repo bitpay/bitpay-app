@@ -31,7 +31,7 @@ import {
 } from '../../../../store/wallet/effects/amount/amount';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const SpecificAmtQRContainer = styled.SafeAreaView`
   flex: 1;

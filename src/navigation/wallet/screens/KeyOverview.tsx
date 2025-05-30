@@ -269,7 +269,6 @@ const KeyOverview = () => {
             <HeaderRightContainer>
               {pendingTxps.length ? (
                 <ProposalBadgeContainer
-                  touchableLibrary={'react-native-gesture-handler'}
                   style={{marginRight: 10}}
                   onPress={onPressTxpBadge}>
                   <ProposalBadge>{pendingTxps.length}</ProposalBadge>

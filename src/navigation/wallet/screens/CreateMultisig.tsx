@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White, Action, Slate} from '../../../styles/colors';
 import {

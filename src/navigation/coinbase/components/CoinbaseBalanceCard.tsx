@@ -24,7 +24,7 @@ import {
   BalanceCodeContainer,
 } from '../../tabs/home/components/Wallet';
 import {Balance, OptionName} from '../../wallet/components/DropdownOption';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface CoinbaseCardComponentProps {
   layout: HomeCarouselLayoutType;
