@@ -30,10 +30,17 @@ import {
   createMultipleWallets,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {getBaseEVMAccountCreationCoinsAndTokens, getBaseSVMAccountCreationCoinsAndTokens} from '../../../constants/currencies';
+import {
+  getBaseEVMAccountCreationCoinsAndTokens,
+  getBaseSVMAccountCreationCoinsAndTokens,
+} from '../../../constants/currencies';
 import {successAddWallet} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
-import {getEvmGasWallets, getSvmGasWallets, sleep} from '../../../utils/helper-methods';
+import {
+  getEvmGasWallets,
+  getSvmGasWallets,
+  sleep,
+} from '../../../utils/helper-methods';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -98,7 +105,7 @@ const AddingOptions: React.FC = () => {
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
-          await dispatch(startOnGoingProcessModal('ADDING_CHAINS'));
+          await dispatch(startOnGoingProcessModal('ADDING_EVM_CHAINS'));
           const wallets = await dispatch(
             createMultipleWallets({
               key: _key,
@@ -127,10 +134,10 @@ const AddingOptions: React.FC = () => {
       },
     },
     {
-      id: 'spl-compatible-wallet',
-      title: t('SPL-Compatible Wallet'),
+      id: 'solana-wallet',
+      title: t('Solana Wallet'),
       description: t(
-        'An account for Solana and SPL-compatible networks like Solana. This account type supports Smart Contracts, Dapps and DeFi.',
+        'An account for the Solana network. This account type supports Smart Contracts, Dapps, DeFi and SPL tokens.',
       ),
       cta: async () => {
         try {
@@ -146,12 +153,12 @@ const AddingOptions: React.FC = () => {
               getDecryptPassword(Object.assign({}, key)),
             );
           }
-          const evmWallets = getSvmGasWallets(key.wallets);
-          const accounts = evmWallets.map(
+          const svmWallets = getSvmGasWallets(key.wallets);
+          const accounts = svmWallets.map(
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
-          await dispatch(startOnGoingProcessModal('ADDING_CHAINS'));
+          await dispatch(startOnGoingProcessModal('ADDING_SPL_CHAINS'));
           const wallets = await dispatch(
             createMultipleWallets({
               key: _key,

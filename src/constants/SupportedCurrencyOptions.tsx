@@ -100,6 +100,7 @@ export const CurrencyListIcons: {
   weth_arb: props => <WethIcon {...props} />,
   weth_base: props => <WethIcon {...props} />,
   weth_op: props => <WethIcon {...props} />,
+  usdt_sol: props => <UsdtIcon {...props} />,
   usdt_arb: props => <UsdtIcon {...props} />,
   usdt_base: props => <UsdtIcon {...props} />,
   usdt_op: props => <UsdtIcon {...props} />,
@@ -195,6 +196,15 @@ export const SupportedChainsOptions: Array<SupportedChainOption> = [
     chain: 'op',
     hasMultisig: false,
     imgSrc: require('../../assets/img/currencies/png/OP.png'),
+  },
+  {
+    id: Math.random().toString(),
+    img: CurrencyListIcons.sol,
+    priority: 5,
+    chainName: 'Solana',
+    chain: 'sol',
+    hasMultisig: false,
+    imgSrc: require('../../assets/img/currencies/png/SOL.png'),
   },
 ];
 
@@ -712,16 +722,29 @@ export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
   },
   {
     id: Math.random().toString(),
-    img: CurrencyListIcons.usdc_m,
+    img: CurrencyListIcons.usdc_sol,
     currencyName: 'USDC',
     currencyAbbreviation: 'usdc',
     chain: 'sol',
     chainName: 'Solana',
     isToken: true,
     imgSrc: require('../../assets/img/currencies/png/USDC.png'),
-    badgeSrc: require('../../assets/img/currencies/png/ETH.png'),
-    badgeUri: CurrencyListIcons.eth,
-    tokenAddress: 'epjfwdd5aufqssqem2qn1xzybapc8g4weggkzwytdt1v',
+    badgeSrc: require('../../assets/img/currencies/png/SOL.png'),
+    badgeUri: CurrencyListIcons.sol,
+    tokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // Solana is case sensitive
+  },
+  {
+    id: Math.random().toString(),
+    img: CurrencyListIcons.usdt_sol,
+    currencyName: 'USDT',
+    currencyAbbreviation: 'usdt',
+    chain: 'sol',
+    chainName: 'Solana',
+    isToken: true,
+    imgSrc: require('../../assets/img/currencies/png/USDT.png'),
+    badgeSrc: require('../../assets/img/currencies/png/SOL.png'),
+    badgeUri: CurrencyListIcons.sol,
+    tokenAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // Solana is case sensitive
   },
 ];
 

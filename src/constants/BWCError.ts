@@ -169,10 +169,10 @@ const _getErrorMessage = (err: Error) => {
       return t(
         'Your ETH linked wallet funds are locked by pending spend proposals',
       );
-      case BWCErrorName.LOCKED_SOL_FEE:
-        return t(
-          'Your SOL linked wallet funds are locked by pending spend proposals',
-        );
+    case BWCErrorName.LOCKED_SOL_FEE:
+      return t(
+        'Your SOL linked wallet funds are locked by pending spend proposals',
+      );
     case BWCErrorName.LOCKED_FUNDS:
       return t('Funds are locked by pending spend proposals');
     case BWCErrorName.LOCKED_MATIC_FEE:

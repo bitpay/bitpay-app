@@ -23,6 +23,7 @@ export const BASE_BITCORE_URL = {
   bch: 'https://api.bitcore.io/api',
   doge: 'https://api.bitcore.io/api',
   eth: 'https://api-eth.bitcore.io/api',
+  sol: 'https://api-sol.bitcore.io/api',
   matic: 'https://api-matic.bitcore.io/api',
   xrp: 'https://api-xrp.bitcore.io/api',
   arb: 'https://api-eth.bitcore.io/api',
@@ -100,8 +101,8 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
 
 export const SVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   sol: {
-    [Network.mainnet]: 'https://solscan.io',
-    [Network.testnet]: 'https://solscan.io/?cluster=testnet',
+    [Network.mainnet]: 'solscan.io/',
+    [Network.testnet]: 'solscan.io/', // For testnet we have to add ?cluster=testnet => https://solscan.io/?cluster=testnet
   },
 };
 
