@@ -1,6 +1,10 @@
 import {ReactElement} from 'react';
 import {CurrencyListIcons} from './SupportedCurrencyOptions';
-import {EVM_BLOCKCHAIN_EXPLORERS, BASE_BWS_URL, SVM_BLOCKCHAIN_EXPLORERS} from './config';
+import {
+  EVM_BLOCKCHAIN_EXPLORERS,
+  BASE_BWS_URL,
+  SVM_BLOCKCHAIN_EXPLORERS,
+} from './config';
 
 export type SupportedChains =
   | 'btc'
@@ -51,10 +55,12 @@ export type SupportedOpTokens =
   | '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58_op' // 'usdt_op'
   | '0x4200000000000000000000000000000000000006_op'; // 'weth_op'
 
-export type SupportedSolTokens =
- | 'epjfwdd5aufqssqem2qn1xzybapc8g4weggkzwytdt1v_sol' // 'usdc_sol'
+export type SupportedSolTokens = // Solana is case sensitive
 
-export type EVM_CHAINS = 'eth'| 'matic';
+    | 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v_sol' // 'usdc_sol'
+    | 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB_sol'; // 'usdt_sol'
+
+export type EVM_CHAINS = 'eth' | 'matic';
 export type UTXO_CHAINS = 'btc' | 'bch' | 'doge' | 'ltc';
 export type SVM_CHAINS = 'sol';
 export interface CurrencyOpts {
@@ -814,12 +820,12 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
 };
 
 export const BitpaySupportedSolTokens: {[key in string]: CurrencyOpts} = {
-  'epjfwdd5aufqssqem2qn1xzybapc8g4weggkzwytdt1v_sol': {
+  EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v_sol: {
     name: 'USDC',
     chain: 'sol',
     coin: 'usdc',
     feeCurrency: 'sol',
-    address: 'epjfwdd5aufqssqem2qn1xzybapc8g4weggkzwytdt1v',
+    address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     unitInfo: {
       unitName: 'USDC',
       unitToSatoshi: 1e6,
@@ -837,7 +843,42 @@ export const BitpaySupportedSolTokens: {[key in string]: CurrencyOpts} = {
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {livenet: 'sol', testnet: 'sol', regtest: 'sol'},
-      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_m`,
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_sol`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB_sol: {
+    // Solana is case sensitive
+    name: 'USDT',
+    chain: 'sol',
+    coin: 'usdt',
+    feeCurrency: 'sol',
+    address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+    unitInfo: {
+      unitName: 'USDT',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'usdt',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'sol', testnet: 'sol', regtest: 'sol'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdt_sol`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
     },
@@ -1659,14 +1700,13 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
   },
 };
 
-
 export const BitpaySupportedSvmCoins: {[key in string]: CurrencyOpts} = {
   sol: {
     name: 'Solana',
     chain: 'sol',
     coin: 'sol',
     feeCurrency: 'sol',
-    img: CurrencyListIcons.eth,
+    img: CurrencyListIcons.sol,
     unitInfo: {
       unitName: 'SOL',
       unitToSatoshi: 1e9,
@@ -1708,6 +1748,7 @@ export const BitpaySupportedSvmCoins: {[key in string]: CurrencyOpts} = {
 
 export const BitpaySupportedTokens: {[key in string]: CurrencyOpts} = {
   ...BitpaySupportedEthereumTokens,
+  ...BitpaySupportedSolTokens,
   ...BitpaySupportedMaticTokens,
   ...BitpaySupportedArbTokens,
   ...BitpaySupportedBaseTokens,
@@ -1722,16 +1763,16 @@ export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
 };
 
 export const SUPPORTED_EVM_COINS = Object.keys(BitpaySupportedEvmCoins);
-export const SUPPORTED_SVM_COIN = Object.keys(BitpaySupportedSvmCoins);
+export const SUPPORTED_SVM_COINS = Object.keys(BitpaySupportedSvmCoins);
 export const SUPPORTED_ETHEREUM_TOKENS = Object.values(
   BitpaySupportedEthereumTokens,
 ).map(token => `${token.coin}_e`);
 export const SUPPORTED_MATIC_TOKENS = Object.values(
   BitpaySupportedMaticTokens,
 ).map(token => `${token.coin}_m`);
-export const SUPPORTED_SOL_TOKENS = Object.values(
-  BitpaySupportedSolTokens,
-).map(token => `${token.coin}_sol`);
+export const SUPPORTED_SOL_TOKENS = Object.values(BitpaySupportedSolTokens).map(
+  token => `${token.coin}_sol`,
+);
 export const SUPPORTED_ARB_TOKENS = Object.values(BitpaySupportedArbTokens).map(
   token => `${token.coin}_arb`,
 );

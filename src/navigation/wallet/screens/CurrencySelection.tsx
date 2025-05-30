@@ -170,7 +170,9 @@ const POPULAR_TOKENS: Record<string, string[]> = {
     '0x4200000000000000000000000000000000000006_op', // weth_op
   ],
   sol: [
-    'epjfwdd5aufqssqem2qn1xzybapc8g4weggkzwytdt1v_sol', // usdc_sol
+    // Solana is case sensitive
+    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v_sol', // usdc_sol
+    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB_sol', // usdt_sol
   ],
 };
 

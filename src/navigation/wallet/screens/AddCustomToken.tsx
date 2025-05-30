@@ -41,7 +41,9 @@ import {
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {
   CurrencyListIcons,
+  SupportedCurrencyOption,
   SupportedEvmCurrencyOptions,
+  SupportedSvmCurrencyOptions,
 } from '../../../constants/SupportedCurrencyOptions';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {FlatList, Keyboard, View} from 'react-native';
@@ -69,7 +71,7 @@ import {addCustomTokenOption} from '../../../store/wallet/effects/currencies/cur
 import {BitpaySupportedCoins} from '../../../constants/currencies';
 import {useTranslation} from 'react-i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
-import {IsERCToken} from '../../../store/wallet/utils/currency';
+import {IsERCToken, IsSVMChain} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
 import {CommonActions} from '@react-navigation/native';
@@ -205,6 +207,9 @@ const AddCustomToken = ({
   const [isRegtest, setIsRegtest] = useState(false);
   const network = useAppSelector(({APP}) => APP.network);
   const [chain, setChain] = useState(selectedChain);
+  const SupportedChainCurrencyOptions = IsSVMChain(selectedChain)
+    ? SupportedSvmCurrencyOptions
+    : SupportedEvmCurrencyOptions;
   const [associatedWallet, setAssociatedWallet] = useState<
     Wallet | undefined
   >();
@@ -218,6 +223,7 @@ const AddCustomToken = ({
 
   const DESCRIPTIONS: Record<string, string> = {
     eth: t('TokensOnEthereumNetworkDescription'),
+    sol: t('TokensOnSolanaNetworkDescription'),
     matic: t('TokensOnPolygonNetworkDescription'),
     arb: t('TokensOnArbNetworkDescription'),
     base: t('TokensOnBaseNetworkDescription'),
@@ -457,7 +463,7 @@ const AddCustomToken = ({
   };
 
   const renderChain = useCallback(
-    ({item}) => (
+    ({item}: {item: SupportedCurrencyOption}) => (
       <ChainSelectionRow
         chainObj={BitpaySupportedCoins[item.chain]}
         onToggle={async (currencyAbbreviation, chain) => {
@@ -514,7 +520,9 @@ const AddCustomToken = ({
           name: tokenContractInfo.name,
           symbol: tokenContractInfo.symbol?.toLowerCase(),
           decimals: Number(tokenContractInfo.decimals),
-          address: tokenAddress?.toLowerCase(),
+          address: IsSVMChain(chain)
+            ? tokenAddress
+            : tokenAddress?.toLowerCase(), // Solana addresses are case sensitive
         };
         dispatch(addCustomTokenOption(customToken, chain));
       }
@@ -566,8 +574,8 @@ const AddCustomToken = ({
                 <CurrencyImage img={CurrencyListIcons[chain]} size={30} />
                 <AssociateWalletName>
                   {
-                    SupportedEvmCurrencyOptions.find(
-                      evmOpts => evmOpts.chain === chain,
+                    SupportedChainCurrencyOptions.find(
+                      opts => opts.chain === chain,
                     )?.chainName
                   }
                 </AssociateWalletName>
@@ -639,7 +647,7 @@ const AddCustomToken = ({
             </TextAlign>
             <FlatList
               contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-              data={SupportedEvmCurrencyOptions}
+              data={SupportedChainCurrencyOptions}
               keyExtractor={keyExtractor}
               renderItem={renderChain}
             />
