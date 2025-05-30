@@ -14,6 +14,7 @@ import {
   getBaseEVMAccountCreationCoinsAndTokens,
   BitpaySupportedCoins,
   SUPPORTED_EVM_COINS,
+  SUPPORTED_SVM_COINS,
 } from '../constants/currencies';
 import {LogActions} from '../store/log';
 import {createMultipleWallets} from '../store/wallet/effects';
@@ -431,10 +432,16 @@ export const getProtocolName = (
     : PROTOCOL_NAME.default[_network];
 };
 
-export const getProtocolsName = (): string | undefined => {
-  return SUPPORTED_EVM_COINS.map(
-    chain => PROTOCOL_NAME[chain][Network.mainnet],
-  ).join(', ');
+export const getProtocolsName = (chain: string): string | undefined => {
+  if (IsSVMChain(chain)) {
+    return SUPPORTED_SVM_COINS.map(
+      chain => PROTOCOL_NAME[chain][Network.mainnet],
+    ).join(', ');
+  } else {
+    return SUPPORTED_EVM_COINS.map(
+      chain => PROTOCOL_NAME[chain][Network.mainnet],
+    ).join(', ');
+  }
 };
 
 export const getEVMFeeCurrency = (chain: string): string => {
