@@ -167,15 +167,15 @@ const WalletInformation = () => {
     return () => clearTimeout(timer);
   }, [copiedAddress]);
 
-  const {unitToSatoshi} = dispatch(
+  const precision = dispatch(
     GetPrecision(currencyAbbreviation, chain, tokenAddress),
-  )!;
+  );
 
   const [copayers, setCopayers] = useState<any[]>();
   const [balanceByAddress, setBalanceByAddress] = useState<any[]>();
 
   useEffect(() => {
-    wallet.getStatus(
+    wallet?.getStatus(
       {
         tokenAddress: token ? token.address : null,
         network: wallet.network,
@@ -416,12 +416,14 @@ const WalletInformation = () => {
                         </CopyRow>
                       </View>
 
-                      <InfoLabel>
-                        <H7>
-                          {(a.amount / unitToSatoshi).toFixed(8)}{' '}
-                          {formatCurrencyAbbreviation(currencyAbbreviation)}
-                        </H7>
-                      </InfoLabel>
+                      {precision?.unitToSatoshi ? (
+                        <InfoLabel>
+                          <H7>
+                            {(a.amount / precision.unitToSatoshi).toFixed(8)}{' '}
+                            {formatCurrencyAbbreviation(currencyAbbreviation)}
+                          </H7>
+                        </InfoLabel>
+                      ) : null}
                     </InfoSettingsRow>
                   </View>
                 ))}
