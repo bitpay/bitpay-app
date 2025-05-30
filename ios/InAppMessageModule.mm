@@ -6,7 +6,7 @@
 //
 
 #import "InAppMessageModule.h"
-#import "AppDelegate.h"
+#import "BitPayApp-Swift.h"
 @implementation InAppMessageModule
 
 RCT_EXPORT_METHOD(notifyReactNativeAppLoaded) {

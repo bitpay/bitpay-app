@@ -116,6 +116,7 @@ const DescriptionBox = styled.View`
 
 const FooterButton = styled(CtaContainerAbsolute)`
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  padding-bottom: 10px;
 `;
 
 const DenomSelectionContainer = styled.View`
@@ -473,7 +474,6 @@ const BuyGiftCard = ({
           shadowOpacity: 0.1,
           shadowRadius: 12,
           elevation: 5,
-          marginBottom: -10,
         }}>
         <Button onPress={() => buyGiftCard()} buttonStyle={'primary'}>
           {cardConfig.supportedAmounts ? t('Continue') : t('Buy Gift Card')}
