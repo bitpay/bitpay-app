@@ -396,7 +396,7 @@ export const getRateByCurrencyName = (
 };
 
 export const addTokenChainSuffix = (name: string, chain: string) => {
-  return `${name.toLowerCase()}_${suffixChainMap[chain]}`;
+  return `${IsSVMChain(chain) ? name : name.toLowerCase()}_${suffixChainMap[chain]}`;
 };
 
 export const formatCurrencyAbbreviation = (currencyAbbreviation: string) => {
