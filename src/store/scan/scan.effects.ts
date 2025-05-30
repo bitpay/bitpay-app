@@ -150,7 +150,7 @@ export const incomingData =
       } else if (IsValidEVMAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts)); // using eth for simplicity
         // SVM Address (Sol/SLP)
-      }else if (IsValidSVMAddress(data)) {
+      } else if (IsValidSVMAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'sol', chain || 'sol', opts)); // using sol for simplicity
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
@@ -190,7 +190,7 @@ export const incomingData =
       } // SOL URI
       else if (IsValidSolUri(data)) {
         dispatch(handleSolUri(data, opts?.wallet));
-          // Ripple URI
+        // Ripple URI
       } else if (IsValidRippleUri(data)) {
         dispatch(handleRippleUri(data, opts?.wallet));
         // Dogecoin URI
@@ -1064,7 +1064,7 @@ const handleOpUri =
     }
   };
 
-  const handleSolUri =
+const handleSolUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
     dispatch(LogActions.info('[scan] Incoming-data: Sol URI'));

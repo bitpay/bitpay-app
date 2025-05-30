@@ -3,7 +3,11 @@ import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
 import {ReactElement} from 'react';
-import {IsERCToken, IsEVMChain, IsSVMChain} from '../store/wallet/utils/currency';
+import {
+  IsERCToken,
+  IsEVMChain,
+  IsSVMChain,
+} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
@@ -161,7 +165,7 @@ export const isValidDerivationPath = (path: string, chain: string): boolean => {
       break;
     case 'sol':
       isValid = ["501'", "0'", "1'"].indexOf(coinCode) > -1;
-    break;
+      break;
     case 'xrp':
       isValid = ["144'", "0'", "1'"].indexOf(coinCode) > -1;
       break;
@@ -396,7 +400,9 @@ export const getRateByCurrencyName = (
 };
 
 export const addTokenChainSuffix = (name: string, chain: string) => {
-  return `${IsSVMChain(chain) ? name : name.toLowerCase()}_${suffixChainMap[chain]}`;
+  return `${IsSVMChain(chain) ? name : name.toLowerCase()}_${
+    suffixChainMap[chain]
+  }`;
 };
 
 export const formatCurrencyAbbreviation = (currencyAbbreviation: string) => {

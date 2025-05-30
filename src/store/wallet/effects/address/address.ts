@@ -43,12 +43,12 @@ export const createWalletAddress =
     newAddress?: boolean;
     skipDispatch?: boolean;
   }): Effect<Promise<string>> =>
-    async dispatch => {
-      return new Promise((resolve, reject) => {
+  async dispatch => {
+    return new Promise((resolve, reject) => {
       if (!wallet) {
         return reject();
       }
-    
+
       if (!newAddress && wallet.receiveAddress) {
         dispatch(LogActions.info('returned cached wallet address'));
         return resolve(wallet.receiveAddress);
@@ -90,7 +90,6 @@ export const createWalletAddress =
                       }),
                     );
                   }
-
 
                   return resolve(receiveAddress);
                 },
@@ -141,7 +140,7 @@ export const GetAddressNetwork = (address: string, coin: keyof BitcoreLibs) => {
 export const GetCoinAndNetwork = (
   str: string,
   network: string = 'livenet',
-  evmChain?: string,
+  tokenChain?: string,
 ): CoinNetwork | null => {
   const address = ExtractCoinNetworkAddress(str);
   try {
@@ -152,12 +151,12 @@ export const GetCoinAndNetwork = (
     } catch (bchErr) {
       try {
         const isValidEthAddress = Core.Validation.validateAddress(
-          evmChain?.toUpperCase() || 'ETH',
+          tokenChain?.toUpperCase() || 'ETH',
           network,
           address,
         );
         if (isValidEthAddress) {
-          return {coin: evmChain?.toLowerCase() || 'eth', network};
+          return {coin: tokenChain?.toLowerCase() || 'eth', network};
         } else {
           throw isValidEthAddress;
         }

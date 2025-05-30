@@ -2117,9 +2117,10 @@ const processInsufficientFundsForFee = (
     toShowAmount,
   );
 
-  const title = IsEVMChain(wallet.chain) || IsSVMChain(wallet.chain)
-    ? t('Not enough gas for transaction')
-    : t('Insufficient funds for fee.');
+  const title =
+    IsEVMChain(wallet.chain) || IsSVMChain(wallet.chain)
+      ? t('Not enough gas for transaction')
+      : t('Insufficient funds for fee.');
   const body = IsERCToken(wallet.currencyAbbreviation, wallet.chain)
     ? t(
         'Insufficient funds in your linked wallet to cover the transaction fee.\n\nRequired Gas:\nLinked Wallet Balance:',

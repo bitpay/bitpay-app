@@ -24,6 +24,8 @@ import {
   GetProtocolPrefix,
   IsERCToken,
   IsEVMChain,
+  IsSVMChain,
+  IsTokensSupportedChain,
 } from './currency';
 import {
   addTokenChainSuffix,
@@ -1199,7 +1201,8 @@ export const buildAccountList = (
       accountKey = walletId;
     }
 
-    const isEVMChain = IsEVMChain(chain);
+    const isSVMChain = IsSVMChain(chain);
+    const isTokensSupportedChain = IsTokensSupportedChain(chain);
     const name = key.evmAccountsInfo?.[accountKey!]?.name;
     const existingAccount = accountMap[accountKey!];
     const hideAccount = key.evmAccountsInfo?.[accountKey!]?.hideAccount;
@@ -1213,13 +1216,16 @@ export const buildAccountList = (
         id: _.uniqueId('account_'),
         keyId,
         chains: [chain],
-        accountName: isEVMChain
-          ? name || `EVM Account${Number(account) === 0 ? '' : ` (${account})`}`
+        accountName: isTokensSupportedChain
+          ? name ||
+            `${isSVMChain ? 'Solana Account' : 'EVM Account'}${
+              Number(account) === 0 ? '' : ` (${account})`
+            }`
           : uiFormattedWallet.walletName,
         wallets: [uiFormattedWallet],
         accountNumber: account,
         receiveAddress,
-        isMultiNetworkSupported: isEVMChain,
+        isMultiNetworkSupported: IsTokensSupportedChain(chain),
         fiatBalance: uiFormattedWallet.fiatBalance ?? 0,
         fiatLockedBalance: uiFormattedWallet.fiatLockedBalance ?? 0,
         fiatConfirmedLockedBalance:
