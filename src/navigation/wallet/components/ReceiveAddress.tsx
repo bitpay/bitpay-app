@@ -41,7 +41,8 @@ import {
 } from '../../../store/wallet/effects/address/address';
 import {
   GetProtocolPrefix,
-  IsEVMChain,
+  IsSVMChain,
+  IsTokensSupportedChain,
   IsUtxoChain,
 } from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
@@ -367,19 +368,30 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
 
         {context &&
         ['accountdetails', 'globalselect'].includes(context) &&
-        IsEVMChain(wallet.chain) ? (
+        IsTokensSupportedChain(wallet.chain) ? (
           <WarningContainer>
             <WarningHeader>
               <WarningSvg />
               <WarningDescription isToken={wallet.credentials.token?.address}>
                 <WarningTitle>{t('Warning!')}</WarningTitle>
                 {'\n'}
-                {t(
-                  'Only receive tokens on PROTOCOLNAMES networks to avoid losing funds',
-                  {
-                    protocolNames: titleCasing(getProtocolsName()!),
-                  },
-                )}
+                {IsSVMChain(wallet.chain)
+                  ? t(
+                      'Only receive tokens on PROTOCOLNAMES Network to avoid losing funds.',
+                      {
+                        protocolNames: titleCasing(
+                          getProtocolsName(wallet.chain)!,
+                        ),
+                      },
+                    )
+                  : t(
+                      'Only receive tokens on PROTOCOLNAMES networks to avoid losing funds.',
+                      {
+                        protocolNames: titleCasing(
+                          getProtocolsName(wallet.chain)!,
+                        ),
+                      },
+                    )}
               </WarningDescription>
             </WarningHeader>
           </WarningContainer>
