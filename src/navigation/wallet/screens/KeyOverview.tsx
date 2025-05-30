@@ -92,7 +92,11 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
-import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {
+  IsEVMChain,
+  IsSVMChain,
+  IsTokensSupportedChain,
+} from '../../../store/wallet/utils/currency';
 import AccountListRow, {
   AccountRowProps,
 } from '../../../components/list/AccountListRow';
@@ -588,10 +592,11 @@ const KeyOverview = () => {
   const onPressItem = (item: AccountRowProps) => {
     haptic('impactLight');
 
-    if (IsEVMChain(item.chains[0])) {
+    if (IsTokensSupportedChain(item.chains[0])) {
       navigation.navigate('AccountDetails', {
         keyId: item.keyId,
         selectedAccountAddress: item.receiveAddress,
+        isSvmAccount: IsSVMChain(item.chains[0]),
       });
       return;
     }
