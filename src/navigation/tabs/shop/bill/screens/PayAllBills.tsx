@@ -142,7 +142,8 @@ const PayAllBills = ({
 }: NativeStackScreenProps<BillGroupParamList, 'PayAllBills'>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
-  const {accounts} = route.params;
+  const {accounts: allAccounts} = route.params;
+  const accounts = allAccounts.filter(acct => acct.isPayable);
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [amountModalAccountAndIndex, setAmountModalAccountAndIndex] = useState({
@@ -293,7 +294,6 @@ const PayAllBills = ({
         <SectionContainer
           style={{flexGrow: 1, paddingLeft: 15, paddingRight: 15}}>
           {accounts
-            .filter(account => account.isPayable)
             .map((account, accountIndex) => (
               <AccountContainer key={accountIndex}>
                 <TouchableOpacity
