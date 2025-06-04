@@ -56,10 +56,10 @@ import {
 import {
   createWalletsForAccounts,
   formatFiatAmount,
-  getEvmGasWallets,
   shouldScale,
   sleep,
   fixWalletAddresses,
+  getVMGasWallets,
 } from '../../../utils/helper-methods';
 import {
   BalanceUpdateError,
@@ -105,7 +105,7 @@ import DropdownOption from '../components/DropdownOption';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
-import {BitpaySupportedEvmCoins} from '../../../constants/currencies';
+import {BitpaySupportedEvmCoins, BitpaySupportedSvmCoins, getBaseVMAccountCreationCoinsAndTokens} from '../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -452,7 +452,7 @@ const KeyOverview = () => {
     }
   };
 
-  const handleAddEvmChain = async () => {
+  const handleAddVMChain = async () => {
     haptic('impactLight');
     await sleep(500);
 
@@ -461,15 +461,16 @@ const KeyOverview = () => {
       password = await dispatch(getDecryptPassword(Object.assign({}, key)));
     }
 
-    const evmWallets = getEvmGasWallets(key.wallets);
+    const vmWallets = getVMGasWallets(key.wallets);
     const accountsArray = [
-      ...new Set(evmWallets.map(wallet => wallet.credentials.account)),
+      ...new Set(vmWallets.map(wallet => wallet.credentials.account)),
     ];
 
     const wallets = await createWalletsForAccounts(
       dispatch,
       accountsArray,
       key.methods as KeyMethods,
+      getBaseVMAccountCreationCoinsAndTokens(),
       password,
     );
 
@@ -486,9 +487,9 @@ const KeyOverview = () => {
     }
   };
 
-  const missingChainsAccounts = memorizedAccountList.filter(
+  const missingVMChainsAccounts = memorizedAccountList.filter(
     ({chains}) =>
-      IsEVMChain(chains[0]) &&
+     (IsEVMChain(chains[0]) || IsSVMChain(chains[0])) &&
       chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
   );
   const keyOptions: Array<Option> = [];
@@ -508,13 +509,13 @@ const KeyOverview = () => {
     },
   });
 
-  if (missingChainsAccounts.length > 0) {
+  if (missingVMChainsAccounts.length > 0) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
-      title: t('Add EVM Chain'),
+      title: t('Add VM Chain'),
       description: t('Add all supported chains to your accounts for this key.'),
       onPress: async () => {
-        await handleAddEvmChain();
+        await handleAddVMChain();
       },
     });
   }
