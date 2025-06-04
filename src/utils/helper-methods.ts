@@ -15,7 +15,6 @@ import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
 import {
-  getBaseEVMAccountCreationCoinsAndTokens,
   BitpaySupportedCoins,
   SUPPORTED_EVM_COINS,
   SUPPORTED_SVM_COINS,
@@ -648,6 +647,12 @@ export const createWalletsForAccounts = async (
   dispatch: any,
   accountsArray: number[],
   key: KeyMethods,
+  currencies : {
+    chain: string;
+    currencyAbbreviation: string;
+    isToken: boolean;
+    tokenAddress?: string;
+  }[],
   password?: string,
 ) => {
   return (
@@ -657,7 +662,7 @@ export const createWalletsForAccounts = async (
           const newWallets = (await dispatch(
             createMultipleWallets({
               key: key as KeyMethods,
-              currencies: getBaseEVMAccountCreationCoinsAndTokens(),
+              currencies,
               options: {
                 password,
                 account,
@@ -680,6 +685,14 @@ export const createWalletsForAccounts = async (
   )
     .flat()
     .filter(Boolean) as Wallet[];
+};
+
+export const getVMGasWallets = (wallets: Wallet[]) => {
+  return wallets.filter(
+    wallet =>
+      (IsEVMChain(wallet.credentials.chain) || IsSVMChain(wallet.credentials.chain)) &&
+      !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
+  );
 };
 
 export const getEvmGasWallets = (wallets: Wallet[]) => {

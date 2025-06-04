@@ -110,6 +110,7 @@ import {
   createWalletsForAccounts,
   fixWalletAddresses,
   getEvmGasWallets,
+  getSvmGasWallets,
   sleep,
 } from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
@@ -143,6 +144,7 @@ import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletC
 import {KeyMethods} from './store/wallet/wallet.models';
 import {
   setAccountEVMCreationMigrationComplete,
+  setAccountSVMCreationMigrationComplete,
   successAddWallet,
 } from './store/wallet/wallet.actions';
 import {BrazeWrapper} from './lib/Braze';
@@ -150,6 +152,7 @@ import {selectSettingsNotificationState} from './store/app/app.selectors';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
+import { getBaseEVMAccountCreationCoinsAndTokens, getBaseSVMAccountCreationCoinsAndTokens } from './constants/currencies';
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
@@ -287,6 +290,9 @@ export default () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const accountEvmCreationMigrationComplete = useAppSelector(
     ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
+  );
+  const accountSvmCreationMigrationComplete = useAppSelector(
+    ({WALLET}) => WALLET.accountSvmCreationMigrationComplete,
   );
   const notificationsState = useAppSelector(selectSettingsNotificationState);
   const currentLocation = useAppSelector(({LOCATION}) => LOCATION.locationData);
@@ -681,6 +687,7 @@ export default () => {
                               dispatch,
                               accountsArray,
                               key.methods as KeyMethods,
+                              getBaseEVMAccountCreationCoinsAndTokens(),
                             );
                             key.wallets.push(...wallets);
                             dispatch(successAddWallet({key}));
@@ -708,6 +715,57 @@ export default () => {
                       }
                     };
 
+                      // we need to ensure that each svm account has all supported wallets attached.
+                      const runCompleteSvmWalletsAccountFix = async () => {
+                        try {
+                          if (Object.keys(keys).length === 0) {
+                            dispatch(setAccountSVMCreationMigrationComplete());
+                            return;
+                          }
+                          dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+                          await sleep(1000); // give the modal time to show
+                          await Promise.all(
+                            Object.values(keys).map(async key => {
+                              const svmWallets = getSvmGasWallets(key.wallets);
+                              const accountsArray = [
+                                ...new Set(
+                                  svmWallets.map(
+                                    wallet => wallet.credentials.account,
+                                  ),
+                                ),
+                              ];
+                              const wallets = await createWalletsForAccounts(
+                                dispatch,
+                                accountsArray,
+                                key.methods as KeyMethods,
+                                getBaseSVMAccountCreationCoinsAndTokens(),
+                              );
+                              key.wallets.push(...wallets);
+                              dispatch(successAddWallet({key}));
+                            }),
+                          );
+                          dispatch(
+                            LogActions.info(
+                              'success [runCompleteSvmWalletsAccountFix]',
+                            ),
+                          );
+                          dispatch(setAccountSVMCreationMigrationComplete());
+                          dispatch(dismissOnGoingProcessModal());
+                        } catch (error) {
+                          const errMsg =
+                            error instanceof Error
+                              ? error.message
+                              : JSON.stringify(error);
+                          dispatch(
+                            LogActions.error(
+                              `Error in [runCompleteSvmWalletsAccountFix]: ${errMsg}`,
+                            ),
+                          );
+                          dispatch(setAccountSVMCreationMigrationComplete());
+                          dispatch(dismissOnGoingProcessModal());
+                        }
+                      };
+
                     if (pinLockActive || biometricLockActive) {
                       const subscriptionToPinModalDismissed =
                         DeviceEventEmitter.addListener(
@@ -719,6 +777,10 @@ export default () => {
                               await sleep(1000);
                               await runCompleteEvmWalletsAccountFix();
                             }
+                            if (!accountSvmCreationMigrationComplete) {
+                              await sleep(1000);
+                              await runCompleteSvmWalletsAccountFix();
+                            }
                             urlHandler();
                           },
                         );
@@ -727,6 +789,10 @@ export default () => {
                       if (!accountEvmCreationMigrationComplete) {
                         await sleep(1000);
                         await runCompleteEvmWalletsAccountFix();
+                      }
+                      if (!accountSvmCreationMigrationComplete) {
+                        await sleep(1000);
+                        await runCompleteSvmWalletsAccountFix();
                       }
                       urlHandler();
                     }
