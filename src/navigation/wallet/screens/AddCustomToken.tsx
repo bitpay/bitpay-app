@@ -86,6 +86,7 @@ import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
 import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import cloneDeep from 'lodash.clonedeep';
 
 export type AddCustomTokenParamList = {
   key: Key;
@@ -358,11 +359,13 @@ const AddCustomToken = ({
         // check tokens within associated wallet and see if token already exist
         const {tokens} = associatedWallet;
 
+        const _tokenAddress = cloneDeep(tokenAddress); // Necessary to avoid saving tokenAddress in lowercase
+
         for (const token of tokens) {
           if (
             key?.wallets
               .find(wallet => wallet.id === token)
-              ?.tokenAddress?.toLowerCase() === tokenAddress?.toLowerCase()
+              ?.tokenAddress?.toLowerCase() === _tokenAddress?.toLowerCase()
           ) {
             dispatch(
               showBottomNotificationModal({

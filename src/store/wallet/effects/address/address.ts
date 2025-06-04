@@ -150,15 +150,15 @@ export const GetCoinAndNetwork = (
       return {coin: 'bch', network: GetAddressNetwork(address, 'bch')};
     } catch (bchErr) {
       try {
-        const isValidEthAddress = Core.Validation.validateAddress(
-          tokenChain?.toUpperCase() || 'ETH',
+        const isValidTokenAddress = Core.Validation.validateAddress(
+          tokenChain?.toUpperCase() || 'ETH', // SOL | ETH
           network,
           address,
         );
-        if (isValidEthAddress) {
+        if (isValidTokenAddress) {
           return {coin: tokenChain?.toLowerCase() || 'eth', network};
         } else {
-          throw isValidEthAddress;
+          throw isValidTokenAddress;
         }
       } catch (ethErr) {
         try {

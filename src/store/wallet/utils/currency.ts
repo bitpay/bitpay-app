@@ -114,7 +114,7 @@ export const IsERCToken = (
   currencyAbbreviation: string,
   chain: string,
 ): boolean => {
-  const _currencyAbbreviation = currencyAbbreviation.toLowerCase();
+  const _currencyAbbreviation = cloneDeep(currencyAbbreviation)?.toLowerCase();
   const _chain = chain.toLowerCase();
 
   if (_currencyAbbreviation === 'pol' && _chain === 'matic') {
