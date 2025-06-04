@@ -26,4 +26,5 @@ declare module '@env' {
   export const ARBISCAN_API_KEY: string;
   export const OPSCAN_API_KEY: string;
   export const BASESCAN_API_KEY: string;
+  export const TEST_MODE_NETWORK: string;
 }

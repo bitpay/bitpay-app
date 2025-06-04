@@ -39,7 +39,7 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
     setClickCount(_clickCount);
     if (_clickCount >= 10) {
       const changeNetwork =
-        network === Network.mainnet ? testModeNetwork : Network.mainnet;
+        (network === Network.mainnet ? testModeNetwork : Network.mainnet) as Network;
 
       dispatch(
         showBottomNotificationModal({

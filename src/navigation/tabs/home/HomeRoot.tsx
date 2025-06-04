@@ -86,7 +86,7 @@ const HomeRoot = () => {
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
-  const hasCards = cardGroups.length > 0;
+  const hasCards = cardGroups?.length > 0;
   useBrazeRefreshOnFocus();
 
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);

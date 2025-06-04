@@ -74,7 +74,7 @@ export const selectCards: AppSelector<Card[]> = ({APP, CARD}) =>
  * Sort order is determined by galileo before firstView, then virtual before physical.
  */
 export const selectSortedCards = createSelector([selectCards], cards => {
-  const sortedCards = cards.sort((a, b) => {
+  const sortedCards = cards?.sort((a, b) => {
     if (
       a.provider === CardProvider.galileo &&
       b.provider === CardProvider.firstView
@@ -103,7 +103,7 @@ export const selectSortedCards = createSelector([selectCards], cards => {
 export const selectCardGroups = createSelector(
   [selectSortedCards],
   sortedCards => {
-    const groups = sortedCards.reduce((groupList, card) => {
+    const groups = sortedCards?.reduce((groupList, card) => {
       if (!ProviderConfig[card.provider].groupEnabled) {
         groupList.push(new CardGroup(card));
 
@@ -121,7 +121,7 @@ export const selectCardGroups = createSelector(
       return groupList;
     }, [] as CardGroup[]);
 
-    return groups.map(g => g.cards);
+    return groups?.map(g => g.cards);
   },
 );
 
