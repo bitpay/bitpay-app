@@ -121,6 +121,9 @@ export const getNetworkName = (path: string): string => {
     case "2'": // for LTC
       networkName = 'livenet';
       break;
+    case "501'": // for SOL
+      networkName = 'livenet';
+      break;
   }
   return networkName;
 };

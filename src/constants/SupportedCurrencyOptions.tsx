@@ -339,7 +339,7 @@ export const SupportedSvmCurrencyOptions: Array<SupportedCurrencyOption> = [
     chain: 'sol',
     chainName: 'Solana',
     hasMultisig: false,
-    imgSrc: require('../../assets/img/currencies/png/ETH.png'),
+    imgSrc: require('../../assets/img/currencies/png/SOL.png'),
   },
 ];
 export const SupportedTokenOptions: Array<SupportedCurrencyOption> = [
