@@ -80,7 +80,7 @@ import {
 import {
   GetPrecision,
   IsERCToken,
-  IsEVMChain,
+  IsVMChain,
   IsSegwitCoin,
   IsSVMChain,
   IsUtxoChain,
@@ -1986,7 +1986,7 @@ const generateInsufficientFundsError = (
     wallet,
     amount,
   );
-  let errMsg = IsEVMChain(wallet.chain)
+  let errMsg = IsVMChain(wallet.chain)
     ? t(
         'You are trying to send more funds than you have available.\n\nTrying to send:\nAvailable to send:',
         {
@@ -2118,7 +2118,7 @@ const processInsufficientFundsForFee = (
   );
 
   const title =
-    IsEVMChain(wallet.chain) || IsSVMChain(wallet.chain)
+    IsVMChain(wallet.chain) || IsSVMChain(wallet.chain)
       ? t('Not enough gas for transaction')
       : t('Insufficient funds for fee.');
   const body = IsERCToken(wallet.currencyAbbreviation, wallet.chain)

@@ -26,7 +26,7 @@ import {AccountRowProps} from './AccountListRow';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 import {formatCryptoAddress} from '../../utils/helper-methods';
 import Blockie from '../blockie/Blockie';
-import {IsEVMChain} from '../../store/wallet/utils/currency';
+import {IsVMChain} from '../../store/wallet/utils/currency';
 import {findWalletById} from '../../store/wallet/utils/wallet';
 import {useAppSelector} from '../../utils/hooks';
 import {BitpaySupportedCoins} from '../../constants/currencies';
@@ -203,7 +203,7 @@ const KeyWalletsRow = ({
           )}
           {key?.mergedUtxoAndEvmAccounts?.map((account, index) => {
             const chain = account?.chain ?? account?.chains?.[0] ?? '';
-            if (IsEVMChain(chain)) {
+            if (IsVMChain(chain)) {
               let evmAccount = account as AccountRowProps & {
                 assetsByChain?: AssetsByChainData[];
               };

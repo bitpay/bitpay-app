@@ -93,9 +93,8 @@ import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {
-  IsEVMChain,
   IsSVMChain,
-  IsTokensSupportedChain,
+  IsVMChain,
 } from '../../../store/wallet/utils/currency';
 import AccountListRow, {
   AccountRowProps,
@@ -232,7 +231,7 @@ const KeyOverview = () => {
     }
     const missingChainsAccounts = memorizedAccountList.filter(
       ({chains}) =>
-        IsEVMChain(chains[0]) &&
+        IsVMChain(chains[0]) &&
         chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
     );
 
@@ -489,7 +488,7 @@ const KeyOverview = () => {
 
   const missingVMChainsAccounts = memorizedAccountList.filter(
     ({chains}) =>
-     (IsEVMChain(chains[0]) || IsSVMChain(chains[0])) &&
+     (IsVMChain(chains[0]) || IsSVMChain(chains[0])) &&
       chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
   );
   const keyOptions: Array<Option> = [];
@@ -593,7 +592,7 @@ const KeyOverview = () => {
   const onPressItem = (item: AccountRowProps) => {
     haptic('impactLight');
 
-    if (IsTokensSupportedChain(item.chains[0])) {
+    if (IsVMChain(item.chains[0])) {
       navigation.navigate('AccountDetails', {
         keyId: item.keyId,
         selectedAccountAddress: item.receiveAddress,

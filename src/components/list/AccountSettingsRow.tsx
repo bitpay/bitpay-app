@@ -11,7 +11,7 @@ import Blockie from '../blockie/Blockie';
 import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
 import {AccountRowProps} from './AccountListRow';
-import {IsEVMChain} from '../../store/wallet/utils/currency';
+import {IsVMChain} from '../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface Props {
@@ -39,7 +39,7 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
   const {t} = useTranslation();
 
   const hideAccount = accountInfo?.[accountItem.receiveAddress]?.hideAccount;
-  const isHidden = IsEVMChain(wallets[0].chain)
+  const isHidden = IsVMChain(wallets[0].chain)
     ? hideAccount
     : wallets[0].hideWallet;
 

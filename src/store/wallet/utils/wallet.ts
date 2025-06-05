@@ -23,9 +23,8 @@ import {
   GetPrecision,
   GetProtocolPrefix,
   IsERCToken,
-  IsEVMChain,
   IsSVMChain,
-  IsTokensSupportedChain,
+  IsVMChain,
 } from './currency';
 import {
   addTokenChainSuffix,
@@ -613,7 +612,7 @@ export const BuildKeysAndWalletsList = ({
     );
     const mergedAccounts = accountList
       .map(account => {
-        if (IsEVMChain(account.chains[0])) {
+        if (IsVMChain(account.chains[0])) {
           const assetsByChain = buildAssetsByChain(
             account,
             defaultAltCurrencyIsoCode,
@@ -648,8 +647,8 @@ export const BuildKeysAndWalletsList = ({
     const mergedUtxoAndEvmAccounts = flatMergedAccounts.sort((a, b) => {
       const chainA = a.chains?.[0] ?? a.chain ?? '';
       const chainB = b.chains?.[0] ?? b.chain ?? '';
-      const isEVMA = IsEVMChain(chainA);
-      const isEVMB = IsEVMChain(chainB);
+      const isEVMA = IsVMChain(chainA);
+      const isEVMB = IsVMChain(chainB);
 
       const walletA = isEVMA
         ? getMaxFiatBalanceWallet(
@@ -1199,7 +1198,7 @@ export const buildAccountList = (
     }
 
     const isSVMChain = IsSVMChain(chain);
-    const isTokensSupportedChain = IsTokensSupportedChain(chain);
+    const isTokensSupportedChain =  IsVMChain(chain);
     const name = key.evmAccountsInfo?.[accountKey!]?.name;
     const existingAccount = accountMap[accountKey!];
     const hideAccount = key.evmAccountsInfo?.[accountKey!]?.hideAccount;
@@ -1222,7 +1221,7 @@ export const buildAccountList = (
         wallets: [uiFormattedWallet],
         accountNumber: account,
         receiveAddress,
-        isMultiNetworkSupported: IsTokensSupportedChain(chain),
+        isMultiNetworkSupported: IsVMChain(chain),
         fiatBalance: uiFormattedWallet.fiatBalance ?? 0,
         fiatLockedBalance: uiFormattedWallet.fiatLockedBalance ?? 0,
         fiatConfirmedLockedBalance:
@@ -1271,9 +1270,9 @@ export const buildAccountList = (
     }
     account.wallets = account.wallets.sort((a, b) => {
       const isANonGasToken =
-        !IsERCToken(a.currencyAbbreviation, a.chain) && IsEVMChain(a.chain);
+        !IsERCToken(a.currencyAbbreviation, a.chain) && IsVMChain(a.chain);
       const isBNonGasToken =
-        !IsERCToken(b.currencyAbbreviation, b.chain) && IsEVMChain(b.chain);
+        !IsERCToken(b.currencyAbbreviation, b.chain) && IsVMChain(b.chain);
 
       if (isANonGasToken && !isBNonGasToken) {
         return -1;

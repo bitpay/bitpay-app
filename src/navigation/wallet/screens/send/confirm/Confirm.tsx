@@ -93,7 +93,7 @@ import {
   GetFeeUnits,
   GetPrecision,
   IsERCToken,
-  IsEVMChain,
+  IsVMChain,
 } from '../../../../../store/wallet/utils/currency';
 import prompt from 'react-native-prompt-android';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
@@ -456,7 +456,7 @@ const Confirm = () => {
         navigation.dispatch(StackActions.popToTop());
         navigation.dispatch(StackActions.push('CoinbaseRoot'));
       } else {
-        if (IsEVMChain(wallet.chain) && wallet.receiveAddress) {
+        if (IsVMChain(wallet.chain) && wallet.receiveAddress) {
           navigation.dispatch(
             CommonActions.reset({
               index: 2,
