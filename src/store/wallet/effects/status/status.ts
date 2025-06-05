@@ -351,13 +351,14 @@ export const updateKeyStatus =
         }
       >;
 
+      let walletsToUpdate = [...key.wallets];
       if (accountAddress) {
-        key.wallets = key.wallets.filter(
+        walletsToUpdate = walletsToUpdate.filter(
           wallet => wallet.receiveAddress === accountAddress,
         );
       }
       // remote token wallets from getStatusAll
-      const noTokenWallets = key.wallets.filter(wallet => {
+      const noTokenWallets = walletsToUpdate.filter(wallet => {
         return (
           !wallet.credentials.token &&
           !wallet.credentials.multisigEthInfo &&
