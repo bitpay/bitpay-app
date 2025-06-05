@@ -7,6 +7,7 @@ import {
   IsERCToken,
   IsVMChain,
   IsSVMChain,
+  IsEVMChain,
 } from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
@@ -698,7 +699,7 @@ export const getVMGasWallets = (wallets: Wallet[]) => {
 export const getEvmGasWallets = (wallets: Wallet[]) => {
   return wallets.filter(
     wallet =>
-      IsVMChain(wallet.credentials.chain) &&
+      IsEVMChain(wallet.credentials.chain) &&
       !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
   );
 };
