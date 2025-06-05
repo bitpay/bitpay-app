@@ -32,7 +32,6 @@ import NetworkPolicyPlaceholder from '../../components/NetworkPolicyPlaceholder'
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {updateCacheFeeLevel} from '../../../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
-import i18next from 'i18next';
 import {SUPPORTED_EVM_COINS} from '../../../../../constants/currencies';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
@@ -123,9 +122,7 @@ const FeeOptions = ({
           <CurrencyImageContainer>
             <CurrencyImage img={CurrencyListIcons[chain]} size={20} />
           </CurrencyImageContainer>
-          <H4>
-            {chainName} {i18next.t('Network Fee Policy')}
-          </H4>
+          <H4>{chainName}</H4>
         </FeeLevelStepsHeader>
 
         <FeeLevelStepsHeaderSubTitle>
@@ -207,7 +204,6 @@ const NetworkFeePolicy = () => {
   const [opFeeOptions, setOpFeeOptions] = useState<any[]>();
   const [btcFeeOptions, setBtcFeeOptions] = useState<any[]>();
   const [isLoading, setIsLoading] = useState(true);
-  const dispatch = useAppDispatch();
 
   const initFeeLevel = async (currencyAbbreviation: string, chain: string) => {
     let feeOptions: any[] = [];
@@ -226,10 +222,13 @@ const NetworkFeePolicy = () => {
           // @ts-ignore
           uiLevel: GetFeeOptions(chain)[level],
         };
-        feeOption.feePerSatByte = (feePerKb / feeUnitAmount).toFixed();
-        feeOption.uiFeePerSatByte = `${feeOption.feePerSatByte} ${
-          currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
-        }`;
+        const _feePerSatByte = feePerKb / feeUnitAmount;
+        feeOption.feePerSatByte = parseFloat(_feePerSatByte.toFixed(2));
+        feeOption.uiFeePerSatByte = !isNaN(feeOption.feePerSatByte)
+          ? `${feeOption.feePerSatByte} ${
+              currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
+            }`
+          : t('Confirmation');
 
         if (SUPPORTED_EVM_COINS.includes(chain)) {
           // @ts-ignore
