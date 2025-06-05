@@ -152,7 +152,7 @@ import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.s
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
 import KeySvg from '../../../../assets/img/key.svg';
 import ReceiveAddress from '../components/ReceiveAddress';
-import {IsTokensSupportedChain} from '../../../store/wallet/utils/currency';
+import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log/';
 import uniqBy from 'lodash.uniqby';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
@@ -390,7 +390,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return (
       buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
         filterByHideWallet: true,
-      }).filter(({chains}) => IsTokensSupportedChain(chains[0])) || {}
+      }).filter(({chains}) => IsVMChain(chains[0])) || {}
     );
   }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
 

@@ -42,7 +42,7 @@ import {
 import {
   GetProtocolPrefix,
   IsSVMChain,
-  IsTokensSupportedChain,
+  IsVMChain,
   IsUtxoChain,
 } from '../../../store/wallet/utils/currency';
 import {useTranslation} from 'react-i18next';
@@ -368,7 +368,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
 
         {context &&
         ['accountdetails', 'globalselect'].includes(context) &&
-        IsTokensSupportedChain(wallet.chain) ? (
+        IsVMChain(wallet.chain) ? (
           <WarningContainer>
             <WarningHeader>
               <WarningSvg />

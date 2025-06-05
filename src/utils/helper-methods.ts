@@ -5,7 +5,7 @@ import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
 import {ReactElement} from 'react';
 import {
   IsERCToken,
-  IsEVMChain,
+  IsVMChain,
   IsSVMChain,
 } from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
@@ -690,7 +690,7 @@ export const createWalletsForAccounts = async (
 export const getVMGasWallets = (wallets: Wallet[]) => {
   return wallets.filter(
     wallet =>
-      (IsEVMChain(wallet.credentials.chain) || IsSVMChain(wallet.credentials.chain)) &&
+      (IsVMChain(wallet.credentials.chain) || IsSVMChain(wallet.credentials.chain)) &&
       !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
   );
 };
@@ -698,7 +698,7 @@ export const getVMGasWallets = (wallets: Wallet[]) => {
 export const getEvmGasWallets = (wallets: Wallet[]) => {
   return wallets.filter(
     wallet =>
-      IsEVMChain(wallet.credentials.chain) &&
+      IsVMChain(wallet.credentials.chain) &&
       !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
   );
 };

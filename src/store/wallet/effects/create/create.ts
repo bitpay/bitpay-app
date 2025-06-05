@@ -41,7 +41,7 @@ import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {
   IsERCToken,
-  IsEVMChain,
+  IsVMChain,
   IsSegwitCoin,
   IsSVMChain,
 } from '../../utils/currency';
@@ -841,7 +841,7 @@ export const detectAndCreateTokensForEachEvmWallet =
       );
 
       const evmWalletsToCheck = key.wallets.filter(w => {
-        const isEVMChain = IsEVMChain(w.chain);
+        const IsVMChain = IsVMChain(w.chain);
         const isNotERCToken = !IsERCToken(w.currencyAbbreviation, w.chain);
         const matchesChain =
           !chain || (w.chain && chain.toLowerCase() === w.chain.toLowerCase());
@@ -851,7 +851,7 @@ export const detectAndCreateTokensForEachEvmWallet =
           !cloneDeep(w.tokens).some(t =>
             t?.toLowerCase().includes(tokenAddress.toLowerCase()),
           );
-        return isEVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
+        return IsVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
       });
 
       dispatch(
