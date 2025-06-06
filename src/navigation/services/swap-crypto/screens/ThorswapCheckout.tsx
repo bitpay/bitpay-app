@@ -43,7 +43,7 @@ import {
   GetName,
   GetPrecision,
   IsERCToken,
-  IsEVMChain,
+  IsVMChain,
   IsUtxoChain,
 } from '../../../../store/wallet/utils/currency';
 import {
@@ -638,7 +638,7 @@ const ThorswapCheckout: React.FC = () => {
       let calldata: string | undefined;
       let gasLimit: number | undefined;
 
-      if (IsEVMChain(wallet.chain)) {
+      if (IsVMChain(wallet.chain)) {
         logger.debug('WalletFrom is EVM Chain: building EVM Chain txp');
 
         if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {

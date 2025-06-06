@@ -62,7 +62,7 @@ import {useLogger} from '../../../../utils/hooks/useLogger';
 import {
   GetPrecision,
   IsERCToken,
-  IsEVMChain,
+  IsVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
 import {Wallet, SendMaxInfo} from '../../../../store/wallet/wallet.models';
@@ -1446,7 +1446,7 @@ const SwapCryptoRoot: React.FC = () => {
               <ExternalServicesItemTopTitle>
                 {t('Swap from')}
               </ExternalServicesItemTopTitle>
-              {IsEVMChain(fromWalletSelected.chain) ? (
+              {IsVMChain(fromWalletSelected.chain) ? (
                 <AccountChainsContainer>
                   <Blockie size={19} seed={fromWalletSelected.receiveAddress} />
                   <H7
@@ -1646,7 +1646,7 @@ const SwapCryptoRoot: React.FC = () => {
               <ExternalServicesItemTopTitle>
                 {t('Swap to')}
               </ExternalServicesItemTopTitle>
-              {IsEVMChain(toWalletSelected.chain) ? (
+              {IsVMChain(toWalletSelected.chain) ? (
                 <AccountChainsContainer>
                   <Blockie size={19} seed={toWalletSelected.receiveAddress} />
                   <H7

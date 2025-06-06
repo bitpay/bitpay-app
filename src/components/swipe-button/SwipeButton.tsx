@@ -13,6 +13,7 @@ export interface SwipeButtonConfig {
   onSwipeComplete: () => void;
   forceReset?: boolean;
   disabled?: boolean;
+  onSwipeFail?: () => void;
 }
 
 const buttonHeight = 77;
@@ -51,6 +52,7 @@ const SwipeButton = ({
   onSwipeComplete,
   forceReset,
   disabled = false,
+  onSwipeFail,
 }: SwipeButtonConfig) => {
   const theme = useTheme();
   return (
@@ -64,6 +66,7 @@ const SwipeButton = ({
             height: buttonHeight,
           }}
           height={buttonHeight}
+          onSwipeFail={onSwipeFail}
           onSwipeStart={() => haptic('longPress')}
           onSwipeSuccess={onSwipeComplete}
           swipeSuccessThreshold={75}

@@ -152,14 +152,14 @@ import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.s
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
 import KeySvg from '../../../../assets/img/key.svg';
 import ReceiveAddress from '../components/ReceiveAddress';
-import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log/';
 import uniqBy from 'lodash.uniqby';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Settings from '../../../components/settings/Settings';
 import {
   BitpaySupportedEvmCoins,
-  getBaseAccountCreationCoinsAndTokens,
+  getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -169,6 +169,7 @@ export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
   keyId: string;
   skipInitializeHistory?: boolean;
+  isSvmAccount?: boolean;
 };
 
 type AccountDetailsScreenProps = NativeStackScreenProps<
@@ -322,7 +323,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {t} = useTranslation();
-  const {selectedAccountAddress, keyId} = route.params;
+  const {selectedAccountAddress, keyId, isSvmAccount} = route.params;
   const [refreshing, setRefreshing] = useState(false);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [copied, setCopied] = useState(false);
@@ -389,7 +390,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return (
       buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
         filterByHideWallet: true,
-      }).filter(({chains}) => IsEVMChain(chains[0])) || {}
+      }).filter(({chains}) => IsVMChain(chains[0])) || {}
     );
   }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
 
@@ -517,7 +518,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const keyOptions: Array<Option> = [];
   const hasAllChains =
     accountItem?.chains?.length === Object.keys(BitpaySupportedEvmCoins).length;
-  if (!hasAllChains) {
+  if (!isSvmAccount && !hasAllChains) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
       title: t('Add EVM Chain'),
@@ -530,11 +531,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         if (key.isPrivKeyEncrypted) {
           password = await dispatch(getDecryptPassword(Object.assign({}, key)));
         }
-        await dispatch(startOnGoingProcessModal('ADDING_CHAINS'));
+        await dispatch(startOnGoingProcessModal('ADDING_EVM_CHAINS'));
         const wallets = await dispatch(
           createMultipleWallets({
             key: _key,
-            currencies: getBaseAccountCreationCoinsAndTokens(),
+            currencies: getBaseEVMAccountCreationCoinsAndTokens(),
             options: {
               network,
               password,
@@ -1372,29 +1373,31 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               <H5>{t('Activity')}</H5>
             </WalletListHeader>
           </HeaderListContainer>
-          <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
-            <SearchComponent<
-              GroupedHistoryProps | Partial<AssetsByChainListProps>
-            >
-              searchVal={searchVal}
-              setSearchVal={setSearchVal}
-              searchResults={
-                !showActivityTab ? searchResultsAssets : searchResultsHistory
-              }
-              //@ts-ignore
-              setSearchResults={
-                !showActivityTab
-                  ? setSearchResultsAssets
-                  : setSearchResultsHistory
-              }
-              searchFullList={
-                !showActivityTab ? memorizedAssetsByChainList : groupedHistory
-              }
-              context={
-                !showActivityTab ? 'accountassetsview' : 'accounthistoryview'
-              }
-            />
-          </View>
+          {isSvmAccount ? null : (
+            <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
+              <SearchComponent<
+                GroupedHistoryProps | Partial<AssetsByChainListProps>
+              >
+                searchVal={searchVal}
+                setSearchVal={setSearchVal}
+                searchResults={
+                  !showActivityTab ? searchResultsAssets : searchResultsHistory
+                }
+                //@ts-ignore
+                setSearchResults={
+                  !showActivityTab
+                    ? setSearchResultsAssets
+                    : setSearchResultsHistory
+                }
+                searchFullList={
+                  !showActivityTab ? memorizedAssetsByChainList : groupedHistory
+                }
+                context={
+                  !showActivityTab ? 'accountassetsview' : 'accounthistoryview'
+                }
+              />
+            </View>
+          )}
         </AssetsDataContainer>
       </>
     );

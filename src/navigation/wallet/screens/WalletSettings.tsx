@@ -40,7 +40,7 @@ import {
   startUpdateWalletStatus,
 } from '../../../store/wallet/effects/status/status';
 import {useTranslation} from 'react-i18next';
-import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const WalletSettingsContainer = styled.SafeAreaView`
@@ -92,7 +92,7 @@ const WalletSettings = () => {
   );
   const wallet = findWalletById(wallets, walletId, copayerId) as Wallet;
   const [hadVisibleWallet, setHadVisibleWallet] = useState(() =>
-    wallets.some(w => w.hideWallet === false && IsEVMChain(w.chain)),
+    wallets.some(w => w.hideWallet === false && IsVMChain(w.chain)),
   );
 
   const [hideAccount, setHideAccount] = useState(() =>
@@ -108,9 +108,7 @@ const WalletSettings = () => {
   );
 
   useEffect(() => {
-    setHadVisibleWallet(
-      wallets.some(w => !w.hideWallet && IsEVMChain(w.chain)),
-    );
+    setHadVisibleWallet(wallets.some(w => !w.hideWallet && IsVMChain(w.chain)));
   }, [wallets]);
 
   useEffect(() => {
@@ -211,9 +209,9 @@ const WalletSettings = () => {
                 onChange={async () => {
                   dispatch(toggleHideWallet({wallet}));
                   dispatch(startUpdateWalletStatus({key, wallet, force: true}));
-                  if (IsEVMChain(wallet.chain)) {
+                  if (IsVMChain(wallet.chain)) {
                     const hasVisibleWallet = key.wallets.some(
-                      w => w.hideWallet === false && IsEVMChain(w.chain),
+                      w => w.hideWallet === false && IsVMChain(w.chain),
                     );
                     if (wallet.receiveAddress) {
                       const accountAddress = wallet.receiveAddress;

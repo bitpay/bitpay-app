@@ -71,7 +71,7 @@ import {
 } from '../../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {
-  IsEVMChain,
+  IsVMChain,
   IsUtxoChain,
   IsOtherChain,
 } from '../../../../store/wallet/utils/currency';
@@ -197,7 +197,7 @@ export const BuildKeyAccountRow = (
 
         const mergedAccounts = accountList
           .map(account => {
-            if (IsEVMChain(account.chains[0])) {
+            if (IsVMChain(account.chains[0])) {
               const assetsByChain = buildAssetsByChain(
                 account,
                 defaultAltCurrencyIsoCode,
@@ -232,8 +232,8 @@ export const BuildKeyAccountRow = (
         const mergedUtxoAndEvmAccounts = flatMergedAccounts.sort((a, b) => {
           const chainA = a.chains?.[0] ?? a.chain ?? '';
           const chainB = b.chains?.[0] ?? b.chain ?? '';
-          const isEVMA = IsEVMChain(chainA);
-          const isEVMB = IsEVMChain(chainB);
+          const isEVMA = IsVMChain(chainA);
+          const isEVMB = IsVMChain(chainB);
 
           const walletA = isEVMA
             ? getMaxFiatBalanceWallet(
@@ -432,7 +432,7 @@ const SendTo = () => {
     } else {
       return allContacts.filter(
         contact =>
-          IsEVMChain(contact.chain) &&
+          IsVMChain(contact.chain) &&
           contact.network === network &&
           (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
             contact.email?.toLowerCase().includes(searchInput.toLowerCase())),

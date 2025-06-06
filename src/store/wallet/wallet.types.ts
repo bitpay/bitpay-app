@@ -55,6 +55,7 @@ export enum WalletActionTypes {
   SET_CUSTOM_TOKENS_MIGRATION_COMPLETE = 'APP/SET_CUSTOM_TOKENS_MIGRATION_COMPLETE',
   SET_POLYGON_MIGRATION_COMPLETE = 'APP/SET_POLYGON_MIGRATION_COMPLETE',
   SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE = 'APP/SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE',
+  SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE = 'APP/SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE',
   SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS',
 }
 
@@ -337,6 +338,10 @@ interface setAccountEVMCreationMigrationComplete {
   type: typeof WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE;
 }
 
+interface setAccountSVMCreationMigrationComplete {
+  type: typeof WalletActionTypes.SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE;
+}
+
 interface successUpdateWalletBalancesAndStatus {
   type: typeof WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS;
   payload: {
@@ -401,4 +406,5 @@ export type WalletActionType =
   | SetCustomTokensMigrationComplete
   | setPolygonMigrationComplete
   | setAccountEVMCreationMigrationComplete
+  | setAccountSVMCreationMigrationComplete
   | successUpdateWalletBalancesAndStatus;

@@ -37,7 +37,7 @@ import {TabsScreens} from '../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
 import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
-import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -124,7 +124,7 @@ const AccountSettings = () => {
       _key.evmAccountsInfo?.[accountItem.receiveAddress]?.hideAccount ?? false,
   );
   const hasVisibleWallet = useMemo(
-    () => _key.wallets.some(w => !w.hideWallet && IsEVMChain(w.chain)),
+    () => _key.wallets.some(w => !w.hideWallet && IsVMChain(w.chain)),
     [_key],
   );
   useEffect(() => {

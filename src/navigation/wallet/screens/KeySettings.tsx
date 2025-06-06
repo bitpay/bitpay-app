@@ -72,7 +72,7 @@ import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
-import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {IsVMChain} from '../../../store/wallet/utils/currency';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -299,7 +299,7 @@ const KeySettings = () => {
 
   const onPressItem = (item: AccountRowProps) => {
     haptic('impactLight');
-    if (IsEVMChain(item.chains[0])) {
+    if (IsVMChain(item.chains[0])) {
       navigation.navigate('AccountSettings', {
         key: _key,
         selectedAccountAddress: item.receiveAddress,

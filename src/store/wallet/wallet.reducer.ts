@@ -39,6 +39,7 @@ export interface WalletState {
   customTokensMigrationComplete: boolean;
   polygonMigrationComplete: boolean;
   accountEvmCreationMigrationComplete: boolean;
+  accountSvmCreationMigrationComplete: boolean;
 }
 
 export const initialState: WalletState = {
@@ -64,6 +65,7 @@ export const initialState: WalletState = {
     arb: FeeLevels.NORMAL,
     base: FeeLevels.NORMAL,
     op: FeeLevels.NORMAL,
+    sol: FeeLevels.NORMAL,
   },
   useUnconfirmedFunds: false,
   customizeNonce: false,
@@ -73,6 +75,7 @@ export const initialState: WalletState = {
   customTokensMigrationComplete: false,
   polygonMigrationComplete: false,
   accountEvmCreationMigrationComplete: false,
+  accountSvmCreationMigrationComplete: false,
 };
 
 export const walletReducer = (
@@ -614,6 +617,12 @@ export const walletReducer = (
       return {
         ...state,
         accountEvmCreationMigrationComplete: true,
+      };
+
+    case WalletActionTypes.SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        accountSvmCreationMigrationComplete: true,
       };
 
     case WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS: {

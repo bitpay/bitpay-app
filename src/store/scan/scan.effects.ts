@@ -18,11 +18,13 @@ import {
   IsValidDogecoinAddress,
   IsValidDogecoinUri,
   IsValidEVMAddress,
+  IsValidSVMAddress,
   IsValidEthereumUri,
   IsValidMaticUri,
   IsValidBaseUri,
   IsValidArbUri,
   IsValidOpUri,
+  IsValidSolUri,
   isValidBuyCryptoUri,
   isValidSellCryptoUri,
   isValidMoonpayUri,
@@ -147,6 +149,9 @@ export const incomingData =
         // EVM Address (Ethereum/Matic)
       } else if (IsValidEVMAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'eth', chain || 'eth', opts)); // using eth for simplicity
+        // SVM Address (Sol/SLP)
+      } else if (IsValidSVMAddress(data)) {
+        dispatch(handlePlainAddress(data, coin || 'sol', chain || 'sol', opts)); // using sol for simplicity
         // Address (Ripple)
       } else if (IsValidRippleAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'xrp', chain || 'xrp', opts));
@@ -182,6 +187,9 @@ export const incomingData =
         // Op URI
       } else if (IsValidOpUri(data)) {
         dispatch(handleOpUri(data, opts?.wallet));
+      } // SOL URI
+      else if (IsValidSolUri(data)) {
+        dispatch(handleSolUri(data, opts?.wallet));
         // Ripple URI
       } else if (IsValidRippleUri(data)) {
         dispatch(handleRippleUri(data, opts?.wallet));
@@ -1055,6 +1063,46 @@ const handleOpUri =
       );
     }
   };
+
+const handleSolUri =
+  (data: string, wallet?: Wallet): Effect<void> =>
+  dispatch => {
+    dispatch(LogActions.info('[scan] Incoming-data: Sol URI'));
+    const coin = 'sol';
+    const chain = 'sol';
+    const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
+    const gasPrice = /[\?\&]gasPrice=(\d+([\,\.]\d+)?)/i;
+    let feePerKb;
+    if (gasPrice.exec(data)) {
+      feePerKb = Number(gasPrice.exec(data)![1]);
+    }
+    const address = ExtractBitPayUriAddress(data);
+    const recipient = {
+      type: 'address',
+      currency: coin,
+      chain,
+      address,
+    };
+    if (!value.exec(data)) {
+      dispatch(goToAmount({coin, chain, recipient, wallet, opts: {feePerKb}}));
+    } else {
+      const parsedAmount = value.exec(data)![1];
+      const amount = Number(
+        dispatch(
+          FormatAmount(coin, chain, undefined, Number(parsedAmount), true),
+        ),
+      );
+      dispatch(
+        goToConfirm({
+          recipient,
+          amount,
+          wallet,
+          opts: {feePerKb},
+        }),
+      );
+    }
+  };
+
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {

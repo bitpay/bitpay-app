@@ -82,7 +82,7 @@ const FeeOptions = ({
   chainName,
 }: {
   feeOptions: any[];
-  chain: 'btc' | 'eth' | 'matic' | 'arb' | 'base' | 'op';
+  chain: 'btc' | 'eth' | 'matic' | 'arb' | 'base' | 'op' | 'sol';
   chainName: string;
 }) => {
   const dispatch = useAppDispatch();
@@ -205,6 +205,7 @@ const NetworkFeePolicy = () => {
   const [arbFeeOptions, setArbFeeOptions] = useState<any[]>();
   const [baseFeeOptions, setBaseFeeOptions] = useState<any[]>();
   const [opFeeOptions, setOpFeeOptions] = useState<any[]>();
+  const [solFeeOptions, setSolFeeOptions] = useState<any[]>();
   const [btcFeeOptions, setBtcFeeOptions] = useState<any[]>();
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useAppDispatch();
@@ -263,13 +264,15 @@ const NetworkFeePolicy = () => {
         setBaseFeeOptions(feeOptions);
       } else if (currencyAbbreviation === 'op') {
         setOpFeeOptions(feeOptions);
+      } else if (currencyAbbreviation === 'sol') {
+        setSolFeeOptions(feeOptions);
       }
     } catch (e) {
       return;
     }
   };
   const init = async () => {
-    ['btc', 'eth', 'matic', 'arb', 'base', 'op'].forEach((ca: string) =>
+    ['btc', 'eth', 'matic', 'arb', 'base', 'op', 'sol'].forEach((ca: string) =>
       initFeeLevel(ca, ca),
     );
     await sleep(500);
@@ -349,6 +352,16 @@ const NetworkFeePolicy = () => {
                   feeOptions={opFeeOptions}
                   chain={'op'}
                   chainName={'Optimism'}
+                />
+              ) : null}
+            </View>
+
+            <View>
+              {solFeeOptions && solFeeOptions.length > 0 ? (
+                <FeeOptions
+                  feeOptions={solFeeOptions}
+                  chain={'sol'}
+                  chainName={'Solana'}
                 />
               ) : null}
             </View>

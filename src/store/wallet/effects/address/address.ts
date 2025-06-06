@@ -1,4 +1,4 @@
-import {Wallet} from '../../wallet.models';
+import {KeyMethods, Wallet} from '../../wallet.models';
 import {ValidateCoinAddress} from '../../utils/validations';
 import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
@@ -140,7 +140,7 @@ export const GetAddressNetwork = (address: string, coin: keyof BitcoreLibs) => {
 export const GetCoinAndNetwork = (
   str: string,
   network: string = 'livenet',
-  evmChain?: string,
+  tokenChain?: string,
 ): CoinNetwork | null => {
   const address = ExtractCoinNetworkAddress(str);
   try {
@@ -150,15 +150,15 @@ export const GetCoinAndNetwork = (
       return {coin: 'bch', network: GetAddressNetwork(address, 'bch')};
     } catch (bchErr) {
       try {
-        const isValidEthAddress = Core.Validation.validateAddress(
-          evmChain?.toUpperCase() || 'ETH',
+        const isValidTokenAddress = Core.Validation.validateAddress(
+          tokenChain?.toUpperCase() || 'ETH', // SOL | ETH
           network,
           address,
         );
-        if (isValidEthAddress) {
-          return {coin: evmChain?.toLowerCase() || 'eth', network};
+        if (isValidTokenAddress) {
+          return {coin: tokenChain?.toLowerCase() || 'eth', network};
         } else {
-          throw isValidEthAddress;
+          throw isValidTokenAddress;
         }
       } catch (ethErr) {
         try {

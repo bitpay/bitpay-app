@@ -290,11 +290,10 @@ const SearchComponent = <T extends SearchableItem>({
             return acc;
           }, []);
         }
-        setChainsOptions(
-          context === 'accountassetsview'
-            ? SUPPORTED_EVM_COINS
-            : SUPPORTED_COINS,
-        );
+        const chains = [
+          ...new Set(searchFullList.flatMap(data => data.chains || [])),
+        ];
+        setChainsOptions(chains);
       } else if (['accounthistoryview'].includes(context)) {
         if (selectedChainFilterOption) {
           results = results
@@ -308,7 +307,13 @@ const SearchComponent = <T extends SearchableItem>({
             })
             .filter(result => result.data.length > 0);
         }
-        setChainsOptions(SUPPORTED_EVM_COINS);
+        let chains = SUPPORTED_EVM_COINS;
+        if (searchFullList.length > 0) {
+          chains = [
+            ...new Set(searchFullList.flatMap(data => data.chains || [])),
+          ];
+        }
+        setChainsOptions(chains);
       } else if (
         ['sell', 'send', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
           context,

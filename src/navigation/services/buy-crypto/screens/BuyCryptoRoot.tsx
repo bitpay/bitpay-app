@@ -39,7 +39,7 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
-import {IsERCToken, IsEVMChain} from '../../../../store/wallet/utils/currency';
+import {IsERCToken, IsVMChain} from '../../../../store/wallet/utils/currency';
 import {
   BuyCryptoExchangeKey,
   BuyCryptoSupportedExchanges,
@@ -879,7 +879,7 @@ const BuyCryptoRoot = ({
             <ExternalServicesItemTopTitle>
               {t('Deposit to')}
             </ExternalServicesItemTopTitle>
-            {IsEVMChain(selectedWallet.chain) ? (
+            {IsVMChain(selectedWallet.chain) ? (
               <AccountChainsContainer>
                 <Blockie size={19} seed={selectedWallet.receiveAddress} />
                 <H7

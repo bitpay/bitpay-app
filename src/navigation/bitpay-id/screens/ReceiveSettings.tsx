@@ -54,7 +54,7 @@ import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
 } from '../../../constants/currencies';
-import {IsEVMChain} from '../../../store/wallet/utils/currency';
+import {IsVMChain} from '../../../store/wallet/utils/currency';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
 
 const ReceiveSettingsContainer = styled.SafeAreaView`
@@ -453,7 +453,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
                           Select a{' '}
                           <WalletName>
                             {coin.toUpperCase()} Wallet
-                            {IsEVMChain(chain) ? ` (${chainName})` : ''}
+                            {IsVMChain(chain) ? ` (${chainName})` : ''}
                           </WalletName>
                         </AddressItemText>
                         <ChevronRight />

@@ -22,12 +22,16 @@ import {
 import {useTranslation} from 'react-i18next';
 import InfoSvg from '../../../../assets/img/info.svg';
 import LinkIcon from '../../../components/icons/link-icon/LinkIcon';
-import {BitpaySupportedEvmCoins} from '../../../constants/currencies';
+import {
+  BitpaySupportedEvmCoins,
+  BitpaySupportedSvmCoins,
+} from '../../../constants/currencies';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {Effect} from '../../../store';
 import {useAppDispatch} from '../../../utils/hooks';
+import {IsSVMChain} from '../../../store/wallet/utils/currency';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 
@@ -126,10 +130,28 @@ export const viewOnBlockchain =
   async dispatch => {
     const chain = wallet.chain.toLowerCase();
     const tokenAddress = address ?? wallet.credentials.token?.address;
-    const url =
-      wallet.network === 'livenet'
-        ? `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrls}address/${tokenAddress}`
-        : `https://${BitpaySupportedEvmCoins[chain]?.paymentInfo.blockExplorerUrlsTestnet}address/${tokenAddress}`;
+    let url: string;
+    if (IsSVMChain(chain)) {
+      // SVM
+      url = `https://${
+        BitpaySupportedSvmCoins[chain]?.paymentInfo[
+          wallet.network === 'livenet'
+            ? 'blockExplorerUrls'
+            : 'blockExplorerUrlsTestnet'
+        ]
+      }token/${tokenAddress}${
+        wallet.network === 'testnet' ? '?cluster=testnet' : ''
+      }`;
+    } else {
+      // EVM
+      url = `https://${
+        BitpaySupportedEvmCoins[chain]?.paymentInfo[
+          wallet.network === 'livenet'
+            ? 'blockExplorerUrls'
+            : 'blockExplorerUrlsTestnet'
+        ]
+      }address/${tokenAddress}`;
+    }
     dispatch(openUrlWithInAppBrowser(url));
   };
 

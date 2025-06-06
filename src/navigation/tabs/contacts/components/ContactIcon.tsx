@@ -14,10 +14,7 @@ import {
   addTokenChainSuffix,
   getBadgeImg,
 } from '../../../../utils/helper-methods';
-import {
-  IsEVMChain,
-  IsOtherChain,
-} from '../../../../store/wallet/utils/currency';
+import {IsVMChain, IsOtherChain} from '../../../../store/wallet/utils/currency';
 import Blockie from '../../../../components/blockie/Blockie';
 
 interface ContactIconProps {
@@ -73,7 +70,7 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   const img =
     coin &&
     chain &&
-    (!IsEVMChain(chain) || IsOtherChain(chain)) &&
+    (!IsVMChain(chain) || IsOtherChain(chain)) &&
     (CurrencyListIcons[coin]
       ? CurrencyListIcons[coin]
       : foundToken && foundToken?.logoURI
@@ -88,7 +85,7 @@ const ContactIcon: React.FC<ContactIconProps> = ({
         size={size / 2.5}
       />
     </CoinBadgeContainer>
-  ) : chain && IsEVMChain(chain) ? (
+  ) : chain && IsVMChain(chain) ? (
     <CoinBadgeContainer size={size}>
       <Blockie size={size / 2.5} seed={address} />
     </CoinBadgeContainer>

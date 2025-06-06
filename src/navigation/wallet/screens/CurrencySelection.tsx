@@ -169,6 +169,11 @@ const POPULAR_TOKENS: Record<string, string[]> = {
     '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58_op', // usdt_op
     '0x4200000000000000000000000000000000000006_op', // weth_op
   ],
+  sol: [
+    // Solana is case sensitive
+    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v_sol', // usdc_sol
+    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB_sol', // usdt_sol
+  ],
 };
 
 const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;

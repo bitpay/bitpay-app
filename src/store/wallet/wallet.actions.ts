@@ -282,6 +282,10 @@ export const setAccountEVMCreationMigrationComplete = (): WalletActionType => ({
   type: WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE,
 });
 
+export const setAccountSVMCreationMigrationComplete = (): WalletActionType => ({
+  type: WalletActionTypes.SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE,
+});
+
 export const successUpdateWalletBalancesAndStatus = (payload: {
   keyBalances: {
     keyId: string;

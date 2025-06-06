@@ -40,6 +40,7 @@
 				<string>bitcoin</string>
 				<string>bitcoincash</string>
 				<string>ethereum</string>
+				<string>sol</string>
 				<string>matic</string>
 				<string>arb</string>
 				<string>base</string>

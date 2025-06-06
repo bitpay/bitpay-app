@@ -76,6 +76,22 @@ export const BitpaySupportedEthereumTokenOptsByAddress: TokenOptsType = {
   },
 };
 
+export const BitpaySupportedSolTokenOptsByAddress: TokenOptsType = {
+  // Solana is case sensitive
+  EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v_sol: {
+    name: 'USDC',
+    symbol: 'usdc',
+    decimals: 6,
+    address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  },
+  Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB_sol: {
+    name: 'USDT',
+    symbol: 'usdt',
+    decimals: 6,
+    address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  },
+};
+
 export const BitpaySupportedMaticTokenOptsByAddress: TokenOptsType = {
   '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359_m': {
     name: 'USDC',
@@ -198,6 +214,7 @@ export const BitpaySupportedOpTokenOptsByAddress: TokenOptsType = {
 
 export const BitpaySupportedTokenOptsByAddress: TokenOptsType = {
   ...BitpaySupportedEthereumTokenOptsByAddress,
+  ...BitpaySupportedSolTokenOptsByAddress,
   ...BitpaySupportedMaticTokenOptsByAddress,
   ...BitpaySupportedBaseTokenOptsByAddress,
   ...BitpaySupportedOpTokenOptsByAddress,

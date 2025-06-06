@@ -87,6 +87,7 @@ import BackupOnboarding, {
 import {Root} from '../../Root';
 import {baseNavigatorOptions} from '../../constants/NavigationOptions';
 import HeaderBackButton from '../../components/back/HeaderBackButton';
+import {AccountRowProps} from '../../components/list/AccountListRow';
 
 interface WalletProps {
   Wallet: typeof Root;
@@ -155,7 +156,7 @@ export type WalletGroupParamList = {
   };
   GlobalSelect: GlobalSelectParamList;
   KeyGlobalSelect: KeyGlobalSelectParamList;
-  WalletInformation: {wallet?: WalletModel; accountItem?: AccountRowProps};
+  WalletInformation: {wallet: WalletModel; accountItem?: AccountRowProps};
   ExportWallet: {
     wallet: WalletModel;
     keyObj: {

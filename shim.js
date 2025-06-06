@@ -1,3 +1,6 @@
+import { Crypto } from '@peculiar/webcrypto';
+import { install as installEd25519 } from '@solana/webcrypto-ed25519-polyfill';
+
 if (typeof __dirname === 'undefined') {
   global.__dirname = '/';
 }
@@ -14,6 +17,18 @@ if (typeof process === 'undefined') {
     }
   }
 }
+
+if (typeof global.crypto === 'undefined') {
+  global.crypto = {};
+}
+
+if (!global.crypto.subtle) {
+  const webcrypto = new Crypto();
+  global.crypto.subtle = webcrypto.subtle;
+}
+
+installEd25519();
+
 if (typeof BigInt === 'undefined') {
   global.BigInt = require('big-integer');
 }

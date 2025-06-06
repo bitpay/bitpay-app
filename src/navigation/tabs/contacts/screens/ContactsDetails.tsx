@@ -32,7 +32,7 @@ import {ToCashAddress} from '../../../../store/wallet/effects/address/address';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
-import {IsEVMChain} from '../../../../store/wallet/utils/currency';
+import {IsVMChain} from '../../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
@@ -350,7 +350,7 @@ const ContactsDetails = ({
               </Detail>
             </>
           ) : null}
-          {contact.coin && contact.chain && !IsEVMChain(contact.chain) ? (
+          {contact.coin && contact.chain && !IsVMChain(contact.chain) ? (
             <>
               <Hr />
               <Detail>
@@ -372,7 +372,7 @@ const ContactsDetails = ({
               </Detail>
             </>
           ) : null}
-          {contact.notes && IsEVMChain(contact.chain) ? (
+          {contact.notes && IsVMChain(contact.chain) ? (
             <>
               <Hr />
               <Notes>

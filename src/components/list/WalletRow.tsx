@@ -24,7 +24,7 @@ import {
 import {ActivityIndicator, Platform} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {SearchableItem} from '../chain-search/ChainSearch';
-import {IsERCToken, IsEVMChain} from '../../store/wallet/utils/currency';
+import {IsERCToken, IsVMChain} from '../../store/wallet/utils/currency';
 import GasTokenSvg from '../../../assets/img/gas-token.svg';
 
 const SpinnerContainer = styled.View`
@@ -151,9 +151,9 @@ export const buildUncompleteBadge = (
 };
 
 export const buildGasTokenBadge = (
-  isEVMChain: boolean | undefined,
+  IsVMChain: boolean | undefined,
 ): ReactElement | undefined => {
-  if (!isEVMChain) {
+  if (!IsVMChain) {
     return;
   }
   const badgeLabel = 'Gas Token';
@@ -226,7 +226,7 @@ const WalletRow = ({
           </ListItemSubText>
           <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
             {buildGasTokenBadge(
-              !IsERCToken(currencyAbbreviation, chain) && IsEVMChain(chain),
+              !IsERCToken(currencyAbbreviation, chain) && IsVMChain(chain),
             )}
             {buildTestBadge(network, chain, isToken)}
             {buildUncompleteBadge(isComplete)}
