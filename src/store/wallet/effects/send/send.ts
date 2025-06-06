@@ -26,6 +26,7 @@ import {
   BitcoreUtxoTransactionLike,
   BitcoreEvmTransactionLike,
   ProposalErrorHandlerContext,
+  KeyMethods,
 } from '../../wallet.models';
 import {
   FormatAmount,
@@ -1476,8 +1477,26 @@ export const signTx = (
 ): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     try {
+
+      const promisifiedSign = (keyMethods: KeyMethods | undefined, rootPath: string, txp: any, password: string | undefined) => {
+        return new Promise((resolve, reject) => {
+          try {
+            const result = keyMethods?.sign(rootPath, txp, password, (err: any, signatures: string[]) => {
+              if (err) {return reject(err);}
+              resolve(signatures);
+            });
+
+            if (result && Array.isArray(result)) {
+              return resolve(result);
+            }
+          } catch (err) {
+            reject(err);
+          }
+        });
+      };
+
       const rootPath = wallet.getRootPath();
-      const signatures = key.methods!.sign(rootPath, txp, password);
+      const signatures = await promisifiedSign(key.methods, rootPath, txp, password);
       wallet.pushSignatures(
         txp,
         signatures,
