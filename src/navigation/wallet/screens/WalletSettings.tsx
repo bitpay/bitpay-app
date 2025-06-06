@@ -108,9 +108,7 @@ const WalletSettings = () => {
   );
 
   useEffect(() => {
-    setHadVisibleWallet(
-      wallets.some(w => !w.hideWallet && IsVMChain(w.chain)),
-    );
+    setHadVisibleWallet(wallets.some(w => !w.hideWallet && IsVMChain(w.chain)));
   }, [wallets]);
 
   useEffect(() => {

@@ -152,7 +152,10 @@ import {selectSettingsNotificationState} from './store/app/app.selectors';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
-import { getBaseEVMAccountCreationCoinsAndTokens, getBaseSVMAccountCreationCoinsAndTokens } from './constants/currencies';
+import {
+  getBaseEVMAccountCreationCoinsAndTokens,
+  getBaseSVMAccountCreationCoinsAndTokens,
+} from './constants/currencies';
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
@@ -715,56 +718,56 @@ export default () => {
                       }
                     };
 
-                      // we need to ensure that each svm account has all supported wallets attached.
-                      const runCompleteSvmWalletsAccountFix = async () => {
-                        try {
-                          if (Object.keys(keys).length === 0) {
-                            dispatch(setAccountSVMCreationMigrationComplete());
-                            return;
-                          }
-                          dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
-                          await sleep(1000); // give the modal time to show
-                          await Promise.all(
-                            Object.values(keys).map(async key => {
-                              const svmWallets = getSvmGasWallets(key.wallets);
-                              const accountsArray = [
-                                ...new Set(
-                                  svmWallets.map(
-                                    wallet => wallet.credentials.account,
-                                  ),
-                                ),
-                              ];
-                              const wallets = await createWalletsForAccounts(
-                                dispatch,
-                                accountsArray,
-                                key.methods as KeyMethods,
-                                getBaseSVMAccountCreationCoinsAndTokens(),
-                              );
-                              key.wallets.push(...wallets);
-                              dispatch(successAddWallet({key}));
-                            }),
-                          );
-                          dispatch(
-                            LogActions.info(
-                              'success [runCompleteSvmWalletsAccountFix]',
-                            ),
-                          );
+                    // we need to ensure that each svm account has all supported wallets attached.
+                    const runCompleteSvmWalletsAccountFix = async () => {
+                      try {
+                        if (Object.keys(keys).length === 0) {
                           dispatch(setAccountSVMCreationMigrationComplete());
-                          dispatch(dismissOnGoingProcessModal());
-                        } catch (error) {
-                          const errMsg =
-                            error instanceof Error
-                              ? error.message
-                              : JSON.stringify(error);
-                          dispatch(
-                            LogActions.error(
-                              `Error in [runCompleteSvmWalletsAccountFix]: ${errMsg}`,
-                            ),
-                          );
-                          dispatch(setAccountSVMCreationMigrationComplete());
-                          dispatch(dismissOnGoingProcessModal());
+                          return;
                         }
-                      };
+                        dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+                        await sleep(1000); // give the modal time to show
+                        await Promise.all(
+                          Object.values(keys).map(async key => {
+                            const svmWallets = getSvmGasWallets(key.wallets);
+                            const accountsArray = [
+                              ...new Set(
+                                svmWallets.map(
+                                  wallet => wallet.credentials.account,
+                                ),
+                              ),
+                            ];
+                            const wallets = await createWalletsForAccounts(
+                              dispatch,
+                              accountsArray,
+                              key.methods as KeyMethods,
+                              getBaseSVMAccountCreationCoinsAndTokens(),
+                            );
+                            key.wallets.push(...wallets);
+                            dispatch(successAddWallet({key}));
+                          }),
+                        );
+                        dispatch(
+                          LogActions.info(
+                            'success [runCompleteSvmWalletsAccountFix]',
+                          ),
+                        );
+                        dispatch(setAccountSVMCreationMigrationComplete());
+                        dispatch(dismissOnGoingProcessModal());
+                      } catch (error) {
+                        const errMsg =
+                          error instanceof Error
+                            ? error.message
+                            : JSON.stringify(error);
+                        dispatch(
+                          LogActions.error(
+                            `Error in [runCompleteSvmWalletsAccountFix]: ${errMsg}`,
+                          ),
+                        );
+                        dispatch(setAccountSVMCreationMigrationComplete());
+                        dispatch(dismissOnGoingProcessModal());
+                      }
+                    };
 
                     if (pinLockActive || biometricLockActive) {
                       const subscriptionToPinModalDismissed =

@@ -14,10 +14,7 @@ import {
   addTokenChainSuffix,
   getBadgeImg,
 } from '../../../../utils/helper-methods';
-import {
-  IsVMChain,
-  IsOtherChain,
-} from '../../../../store/wallet/utils/currency';
+import {IsVMChain, IsOtherChain} from '../../../../store/wallet/utils/currency';
 import Blockie from '../../../../components/blockie/Blockie';
 
 interface ContactIconProps {

@@ -1477,14 +1477,25 @@ export const signTx = (
 ): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     try {
-
-      const promisifiedSign = (keyMethods: KeyMethods | undefined, rootPath: string, txp: any, password: string | undefined) => {
+      const promisifiedSign = (
+        keyMethods: KeyMethods | undefined,
+        rootPath: string,
+        txp: any,
+        password: string | undefined,
+      ) => {
         return new Promise((resolve, reject) => {
           try {
-            const result = keyMethods?.sign(rootPath, txp, password, (err: any, signatures: string[]) => {
-              if (err) {return reject(err);}
-              resolve(signatures);
-            });
+            const result = keyMethods?.sign(
+              rootPath,
+              txp,
+              password,
+              (err: any, signatures: string[]) => {
+                if (err) {
+                  return reject(err);
+                }
+                resolve(signatures);
+              },
+            );
 
             if (result && Array.isArray(result)) {
               return resolve(result);
@@ -1496,7 +1507,12 @@ export const signTx = (
       };
 
       const rootPath = wallet.getRootPath();
-      const signatures = await promisifiedSign(key.methods, rootPath, txp, password);
+      const signatures = await promisifiedSign(
+        key.methods,
+        rootPath,
+        txp,
+        password,
+      );
       wallet.pushSignatures(
         txp,
         signatures,

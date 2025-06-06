@@ -1198,7 +1198,7 @@ export const buildAccountList = (
     }
 
     const isSVMChain = IsSVMChain(chain);
-    const isTokensSupportedChain =  IsVMChain(chain);
+    const isTokensSupportedChain = IsVMChain(chain);
     const name = key.evmAccountsInfo?.[accountKey!]?.name;
     const existingAccount = accountMap[accountKey!];
     const hideAccount = key.evmAccountsInfo?.[accountKey!]?.hideAccount;

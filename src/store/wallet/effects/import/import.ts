@@ -93,7 +93,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart';
 import uniqBy from 'lodash.uniqby';
 import {credentialsFromExtendedPublicKey} from '../../../../utils/wallet-hardware';
-import {BitpaySupportedCoins, getBaseVMAccountCreationCoinsAndTokens} from '../../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  getBaseVMAccountCreationCoinsAndTokens,
+} from '../../../../constants/currencies';
 import {
   GetName,
   IsSegwitCoin,

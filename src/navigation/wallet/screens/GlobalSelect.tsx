@@ -457,9 +457,7 @@ const buildSelectableWalletList = (
         }
         coinEntry.chainsImg[chain] = {
           badgeUri:
-          IsVMChain(chain) && !wallet.badgeImg
-              ? wallet.img
-              : wallet.badgeImg,
+            IsVMChain(chain) && !wallet.badgeImg ? wallet.img : wallet.badgeImg,
           priority,
         };
       });
@@ -1333,8 +1331,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       },
     );
 
-    const evmAccounts = accountList.filter(account => IsEVMChain(account.chains[0]));
-    const svmAccounts = accountList.filter(account => IsSVMChain(account.chains[0]));
+    const evmAccounts = accountList.filter(account =>
+      IsEVMChain(account.chains[0]),
+    );
+    const svmAccounts = accountList.filter(account =>
+      IsSVMChain(account.chains[0]),
+    );
 
     const multiEvm = evmAccounts.length > 1;
     const multiSvm = svmAccounts.length > 1;
@@ -1351,12 +1353,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       });
       return;
     } else {
-     // Only 1 account available
-     const selectedAccount = evmAccounts[0] || svmAccounts[0];
-     if (selectedAccount) {
-       openNetworkSelector(selectedAccount, selectedCurrency, selectedKey);
-     }
-   }
+      // Only 1 account available
+      const selectedAccount = evmAccounts[0] || svmAccounts[0];
+      if (selectedAccount) {
+        openNetworkSelector(selectedAccount, selectedCurrency, selectedKey);
+      }
+    }
   };
 
   const openNetworkSelector = async (

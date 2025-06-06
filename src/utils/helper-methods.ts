@@ -648,7 +648,7 @@ export const createWalletsForAccounts = async (
   dispatch: any,
   accountsArray: number[],
   key: KeyMethods,
-  currencies : {
+  currencies: {
     chain: string;
     currencyAbbreviation: string;
     isToken: boolean;
@@ -691,7 +691,8 @@ export const createWalletsForAccounts = async (
 export const getVMGasWallets = (wallets: Wallet[]) => {
   return wallets.filter(
     wallet =>
-      (IsVMChain(wallet.credentials.chain) || IsSVMChain(wallet.credentials.chain)) &&
+      (IsVMChain(wallet.credentials.chain) ||
+        IsSVMChain(wallet.credentials.chain)) &&
       !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
   );
 };

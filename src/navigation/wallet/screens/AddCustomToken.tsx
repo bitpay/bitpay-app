@@ -536,9 +536,13 @@ const AddCustomToken = ({
       Keyboard.dismiss();
       setTokenAddress(undefined);
       await sleep(200);
-      const err = t(
-        'Could not find any ERC20 contract attached to the provided address. Recheck the contract address and network of the associated wallet.',
-      );
+      const err = IsSVMChain(chain)
+        ? t(
+            'Could not find any SPL contract attached to the provided address. Recheck the contract address and network of the associated wallet.',
+          )
+        : t(
+            'Could not find any ERC20 contract attached to the provided address. Recheck the contract address and network of the associated wallet.',
+          );
       showErrorModal(err);
     }
   };

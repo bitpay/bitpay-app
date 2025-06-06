@@ -92,10 +92,7 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
-import {
-  IsSVMChain,
-  IsVMChain,
-} from '../../../store/wallet/utils/currency';
+import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
 import AccountListRow, {
   AccountRowProps,
 } from '../../../components/list/AccountListRow';
@@ -104,7 +101,11 @@ import DropdownOption from '../components/DropdownOption';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
-import {BitpaySupportedEvmCoins, BitpaySupportedSvmCoins, getBaseVMAccountCreationCoinsAndTokens} from '../../../constants/currencies';
+import {
+  BitpaySupportedEvmCoins,
+  BitpaySupportedSvmCoins,
+  getBaseVMAccountCreationCoinsAndTokens,
+} from '../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -488,7 +489,7 @@ const KeyOverview = () => {
 
   const missingVMChainsAccounts = memorizedAccountList.filter(
     ({chains}) =>
-     (IsVMChain(chains[0]) || IsSVMChain(chains[0])) &&
+      (IsVMChain(chains[0]) || IsSVMChain(chains[0])) &&
       chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
   );
   const keyOptions: Array<Option> = [];
