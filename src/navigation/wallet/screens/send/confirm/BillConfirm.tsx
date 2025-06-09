@@ -282,7 +282,7 @@ const BillConfirm: React.FC<
     dispatch(
       AppActions.showBottomNotificationModal({
         ...errorConfig,
-        errMsg:
+        message:
           err.response?.data?.message || err.message || errorConfig.message,
       }),
     );
