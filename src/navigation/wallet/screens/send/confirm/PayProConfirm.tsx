@@ -255,7 +255,7 @@ const PayProConfirm = () => {
       dispatch(
         AppActions.showBottomNotificationModal({
           ...errorConfig,
-          errMsg:
+          message:
             err.response?.data?.message || err.message || errorConfig.message,
         }),
       );
@@ -285,7 +285,7 @@ const PayProConfirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal({
         ...errorConfig,
-        errMsg:
+        message:
           err.response?.data?.message || err.message || errorConfig.message,
       }),
     );
