@@ -130,7 +130,7 @@ export const waitForTargetAmountAndUpdateWallet =
                     await dispatch(
                       startUpdateWalletStatus({
                         key: recipientKey,
-                        wallet: recipientWallet,
+                        wallet: recipientWallet as Wallet,
                         force: true,
                       }),
                     );
@@ -828,7 +828,7 @@ export const updateWalletStatus =
                 ),
               },
               pendingTxps: cachedPendingTxps,
-              singleAddress: cachedSingleAddress,
+              singleAddress: !!cachedSingleAddress,
             });
           }
           try {
@@ -875,7 +875,7 @@ export const updateWalletStatus =
                 ),
               },
               pendingTxps: cachedPendingTxps,
-              singleAddress: cachedSingleAddress,
+              singleAddress: !!cachedSingleAddress,
             });
           }
         },

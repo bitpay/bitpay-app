@@ -21,6 +21,7 @@ export enum BWCErrorName {
   INSUFFICIENT_ETH_FEE = 'INSUFFICIENT_ETH_FEE',
   INSUFFICIENT_FUNDS = 'INSUFFICIENT_FUNDS',
   INSUFFICIENT_FUNDS_FOR_FEE = 'INSUFFICIENT_FUNDS_FOR_FEE',
+  INSUFFICIENT_SOL_FEE = 'INSUFFICIENT_SOL_FEE',
   INSUFFICIENT_MATIC_FEE = 'INSUFFICIENT_MATIC_FEE',
   INSUFFICIENT_OP_FEE = 'INSUFFICIENT_OP_FEE',
   INPUT_NOT_FOUND = 'INPUT_NOT_FOUND',
@@ -30,6 +31,7 @@ export enum BWCErrorName {
   INVALID_TX_FORMAT = 'INVALID_TX_FORMAT',
   INVOICE_EXPIRED = 'INVOICE_EXPIRED',
   INVOICE_NOT_AVAILABLE = 'INVOICE_NOT_AVAILABLE',
+  LOCKED_SOL_FEE = 'LOCKED_SOL_FEE',
   LOCKED_ARB_FEE = 'LOCKED_ARB_FEE',
   LOCKED_BASE_FEE = 'LOCKED_BASE_FEE',
   LOCKED_ETH_FEE = 'LOCKED_ETH_FEE',
@@ -135,6 +137,10 @@ const _getErrorMessage = (err: Error) => {
       return t(
         'Insufficient funds in your linked MATIC wallet to cover the transaction fee.',
       );
+    case BWCErrorName.INSUFFICIENT_SOL_FEE:
+      return t(
+        'Insufficient funds in your linked SOL wallet to cover the transaction fee.',
+      );
     case BWCErrorName.INSUFFICIENT_OP_FEE:
       return t(
         'Insufficient funds in your linked OP wallet to cover the transaction fee.',
@@ -162,6 +168,10 @@ const _getErrorMessage = (err: Error) => {
     case BWCErrorName.LOCKED_ETH_FEE:
       return t(
         'Your ETH linked wallet funds are locked by pending spend proposals',
+      );
+    case BWCErrorName.LOCKED_SOL_FEE:
+      return t(
+        'Your SOL linked wallet funds are locked by pending spend proposals',
       );
     case BWCErrorName.LOCKED_FUNDS:
       return t('Funds are locked by pending spend proposals');

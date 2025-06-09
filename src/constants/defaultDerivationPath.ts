@@ -6,6 +6,7 @@ export enum DefaultDerivationPath {
   defaultDOGE = "m/44'/3'/0'",
   defaultLTC = "m/44'/2'/0'",
   defaultMATIC = "m/44'/60'/0'",
+  defaultSOL = "m/44'/501'/0'",
   defaultARB = "m/44'/60'/0'",
   defaultBASE = "m/44'/60'/0'",
   defaultOP = "m/44'/60'/0'",

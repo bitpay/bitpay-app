@@ -39,7 +39,12 @@ import {
 } from '../../../../utils/helper-methods';
 import {t} from 'i18next';
 import {LogActions} from '../../../log';
-import {IsERCToken, IsEVMChain, IsSegwitCoin} from '../../utils/currency';
+import {
+  IsERCToken,
+  IsVMChain,
+  IsSegwitCoin,
+  IsSVMChain,
+} from '../../utils/currency';
 import {createWalletAddress} from '../address/address';
 import cloneDeep from 'lodash.clonedeep';
 import {MoralisErc20TokenBalanceByWalletData} from '../../../moralis/moralis.types';
@@ -192,8 +197,10 @@ export const addWallet =
           }
 
           if (currency.tokenAddress && currency.chain) {
-            LogActions.debug(
-              `Checking if tokenAddress: ${currency.tokenAddress} is present in tokenOptsByAddress...`,
+            dispatch(
+              LogActions.debug(
+                `Checking if tokenAddress: ${currency.tokenAddress} is present in tokenOptsByAddress...`,
+              ),
             );
             const tokenChain = cloneDeep(currency.chain).toLowerCase();
             const tokenAdressWithChain = addTokenChainSuffix(
@@ -204,12 +211,14 @@ export const addWallet =
 
             if (!currentTokenOpts) {
               // Workaround to add a token that is not present in our tokenOptsByAddress as a custom token
-              LogActions.debug(
-                `Token not present in tokenOptsByAddress. ${
-                  enableCustomTokens
-                    ? 'Creating custom token wallet...'
-                    : 'Avoiding token creation.'
-                }`,
+              dispatch(
+                LogActions.debug(
+                  `Token not present in tokenOptsByAddress. ${
+                    enableCustomTokens
+                      ? 'Creating custom token wallet...'
+                      : 'Avoiding token creation.'
+                  }`,
+                ),
               );
               if (enableCustomTokens) {
                 const opts = {
@@ -224,10 +233,12 @@ export const addWallet =
                     opts,
                   );
                 } catch (err) {
-                  LogActions.debug(
-                    `Error in getTokenContractInfo for opts: ${JSON.stringify(
-                      opts,
-                    )}. Continue anyway...`,
+                  dispatch(
+                    LogActions.debug(
+                      `Error in getTokenContractInfo for opts: ${JSON.stringify(
+                        opts,
+                      )}. Continue anyway...`,
+                    ),
                   );
                 }
 
@@ -241,7 +252,9 @@ export const addWallet =
                   decimals: tokenContractInfo?.decimals
                     ? Number(tokenContractInfo.decimals)
                     : cloneDeep(Number(currency.decimals)),
-                  address: cloneDeep(currency.tokenAddress.toLowerCase()),
+                  address: IsSVMChain(tokenChain)
+                    ? cloneDeep(currency.tokenAddress)
+                    : cloneDeep(currency.tokenAddress)?.toLowerCase(), // Solana addresses are case sensitive
                 };
 
                 tokenOptsByAddress[tokenAdressWithChain] = customToken;
@@ -259,6 +272,10 @@ export const addWallet =
             ),
           )) as Wallet;
           newWallet.receiveAddress = associatedWallet?.receiveAddress;
+          newWallet.tokenAddress =
+            currency.chain && IsSVMChain(currency.chain)
+              ? cloneDeep(currency.tokenAddress)
+              : cloneDeep(currency.tokenAddress)?.toLowerCase();
         } else {
           newWallet = (await dispatch(
             createWallet({
@@ -386,6 +403,7 @@ export const createMultipleWallets =
             },
           }),
         )) as Wallet;
+
         const receiveAddress = (await dispatch<any>(
           createWalletAddress({wallet, newAddress: true}),
         )) as string;
@@ -605,6 +623,7 @@ const createTokenWallet =
           opTokenAddresses: [],
           arbTokenAddresses: [],
           baseTokenAddresses: [],
+          solTokenAddresses: [],
         };
 
         switch (associatedWallet.credentials.chain) {
@@ -634,6 +653,12 @@ const createTokenWallet =
             break;
           case 'arb':
             associatedWallet.preferences.arbTokenAddresses?.push(
+              // @ts-ignore
+              tokenCredentials.token?.address,
+            );
+            break;
+          case 'sol':
+            associatedWallet.preferences.solTokenAddresses?.push(
               // @ts-ignore
               tokenCredentials.token?.address,
             );
@@ -816,7 +841,7 @@ export const detectAndCreateTokensForEachEvmWallet =
       );
 
       const evmWalletsToCheck = key.wallets.filter(w => {
-        const isEVMChain = IsEVMChain(w.chain);
+        const IsVMChain = IsVMChain(w.chain);
         const isNotERCToken = !IsERCToken(w.currencyAbbreviation, w.chain);
         const matchesChain =
           !chain || (w.chain && chain.toLowerCase() === w.chain.toLowerCase());
@@ -826,7 +851,7 @@ export const detectAndCreateTokensForEachEvmWallet =
           !cloneDeep(w.tokens).some(t =>
             t?.toLowerCase().includes(tokenAddress.toLowerCase()),
           );
-        return isEVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
+        return IsVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
       });
 
       dispatch(

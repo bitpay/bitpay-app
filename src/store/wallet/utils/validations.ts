@@ -24,6 +24,7 @@ export const ValidDataTypes: string[] = [
   'BitcoinAddress',
   'BitcoinCashAddress',
   'EVMAddress',
+  'SVMAddress',
   'RippleAddress',
   'DogecoinAddress',
   'LitecoinAddress',
@@ -35,6 +36,7 @@ export const ValidDataTypes: string[] = [
   'ArbUri',
   'BaseUri',
   'OpUri',
+  'SolUri',
   'DogecoinUri',
   'LitecoinUri',
   'BitPayUri',
@@ -54,7 +56,7 @@ export const IsValidBitPayInvoice = (data: string): boolean => {
 
 export const IsValidPayPro = (data: string): boolean => {
   data = SanitizeUri(data);
-  return !!/^(bitpay|bitcoin|bitcoincash|bchtest|bchreg|ethereum|ripple|matic|arb|base|op|dogecoin|litecoin)?:\?r=[\w+]/.exec(
+  return !!/^(bitpay|bitcoin|bitcoincash|bchtest|bchreg|ethereum|ripple|matic|arb|base|op|solana|dogecoin|litecoin)?:\?r=[\w+]/.exec(
     data,
   );
 };
@@ -165,6 +167,11 @@ export const IsValidOpUri = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateUri('OP', data);
 };
 
+export const IsValidSolUri = (data: string): boolean => {
+  data = SanitizeUri(data);
+  return !!BWC.getCore().Validation.validateUri('SOL', data);
+};
+
 export const IsValidRippleUri = (data: string): boolean => {
   data = SanitizeUri(data);
   return !!BWC.getCore().Validation.validateUri('XRP', data);
@@ -208,6 +215,10 @@ export const IsValidEVMAddress = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateAddress('ETH', 'livenet', data); // using ETH for simplicity
 };
 
+export const IsValidSVMAddress = (data: string): boolean => {
+  return !!BWC.getCore().Validation.validateAddress('SOL', 'livenet', data); // using SOL for simplicity
+};
+
 export const IsValidEthereumAddress = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateAddress('ETH', 'livenet', data);
 };
@@ -226,6 +237,10 @@ export const IsValidBaseAddress = (data: string): boolean => {
 
 export const IsValidOpAddress = (data: string): boolean => {
   return !!BWC.getCore().Validation.validateAddress('OP', 'livenet', data);
+};
+
+export const IsValidSolAddress = (data: string): boolean => {
+  return !!BWC.getCore().Validation.validateAddress('SOL', 'livenet', data);
 };
 
 export const IsValidRippleAddress = (data: string): boolean => {
@@ -376,6 +391,14 @@ export const ValidateURI = (data: string): any => {
     };
   }
 
+  if (IsValidSolUri(data)) {
+    return {
+      data,
+      type: 'SolUri',
+      title: 'Sol URI',
+    };
+  }
+
   if (IsValidRippleUri(data)) {
     return {
       data,
@@ -429,6 +452,14 @@ export const ValidateURI = (data: string): any => {
       data,
       type: 'EVMAddress',
       title: 'EVM Address',
+    };
+  }
+
+  if (IsValidSVMAddress(data)) {
+    return {
+      data,
+      type: 'SVMAddress',
+      title: 'SVM Address',
     };
   }
 
@@ -496,6 +527,7 @@ export const ValidateCoinAddress = (
     case 'arb':
     case 'base':
     case 'op':
+    case 'sol':
       const {Validation} = BWC.getCore();
       const addr = extractAddress(str);
       return !!Validation.validateAddress(coin.toUpperCase(), network, addr);

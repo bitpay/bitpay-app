@@ -3,7 +3,12 @@ import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
 import {ReactElement} from 'react';
-import {IsERCToken, IsEVMChain} from '../store/wallet/utils/currency';
+import {
+  IsERCToken,
+  IsVMChain,
+  IsSVMChain,
+  IsEVMChain,
+} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
@@ -11,9 +16,9 @@ import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
 import {
-  getBaseAccountCreationCoinsAndTokens,
   BitpaySupportedCoins,
   SUPPORTED_EVM_COINS,
+  SUPPORTED_SVM_COINS,
 } from '../constants/currencies';
 import {LogActions} from '../store/log';
 import {createMultipleWallets} from '../store/wallet/effects';
@@ -46,6 +51,7 @@ export const suffixChainMap: {[suffix: string]: string} = {
   arb: 'arb',
   base: 'base',
   op: 'op',
+  sol: 'sol',
 };
 
 export const sleep = (duration: number) =>
@@ -115,6 +121,9 @@ export const getNetworkName = (path: string): string => {
     case "2'": // for LTC
       networkName = 'livenet';
       break;
+    case "501'": // for SOL
+      networkName = 'livenet';
+      break;
   }
   return networkName;
 };
@@ -156,6 +165,9 @@ export const isValidDerivationPath = (path: string, chain: string): boolean => {
     case 'base':
     case 'op':
       isValid = ["60'", "0'", "1'"].indexOf(coinCode) > -1;
+      break;
+    case 'sol':
+      isValid = ["501'", "0'", "1'"].indexOf(coinCode) > -1;
       break;
     case 'xrp':
       isValid = ["144'", "0'", "1'"].indexOf(coinCode) > -1;
@@ -391,7 +403,9 @@ export const getRateByCurrencyName = (
 };
 
 export const addTokenChainSuffix = (name: string, chain: string) => {
-  return `${name.toLowerCase()}_${suffixChainMap[chain]}`;
+  return `${IsSVMChain(chain) ? name : name.toLowerCase()}_${
+    suffixChainMap[chain]
+  }`;
 };
 
 export const formatCurrencyAbbreviation = (currencyAbbreviation: string) => {
@@ -427,10 +441,16 @@ export const getProtocolName = (
     : PROTOCOL_NAME.default[_network];
 };
 
-export const getProtocolsName = (): string | undefined => {
-  return SUPPORTED_EVM_COINS.map(
-    chain => PROTOCOL_NAME[chain][Network.mainnet],
-  ).join(', ');
+export const getProtocolsName = (chain: string): string | undefined => {
+  if (IsSVMChain(chain)) {
+    return SUPPORTED_SVM_COINS.map(
+      chain => PROTOCOL_NAME[chain][Network.mainnet],
+    ).join(', ');
+  } else {
+    return SUPPORTED_EVM_COINS.map(
+      chain => PROTOCOL_NAME[chain][Network.mainnet],
+    ).join(', ');
+  }
 };
 
 export const getEVMFeeCurrency = (chain: string): string => {
@@ -445,6 +465,8 @@ export const getEVMFeeCurrency = (chain: string): string => {
       return 'eth';
     case 'op':
       return 'eth';
+    case 'sol':
+      return 'sol';
     default:
       return 'eth';
   }
@@ -462,6 +484,8 @@ export const getCWCChain = (chain: string): string => {
       return 'BASEERC20';
     case 'op':
       return 'OPERC20';
+    case 'sol':
+      return 'SPL';
     default:
       return 'ETHERC20';
   }
@@ -479,6 +503,8 @@ export const getChainUsingSuffix = (symbol: string) => {
       return 'arb';
     case 'op':
       return 'op';
+    case 'sol':
+      return 'sol';
     default:
       return 'eth';
   }
@@ -622,6 +648,12 @@ export const createWalletsForAccounts = async (
   dispatch: any,
   accountsArray: number[],
   key: KeyMethods,
+  currencies: {
+    chain: string;
+    currencyAbbreviation: string;
+    isToken: boolean;
+    tokenAddress?: string;
+  }[],
   password?: string,
 ) => {
   return (
@@ -631,7 +663,7 @@ export const createWalletsForAccounts = async (
           const newWallets = (await dispatch(
             createMultipleWallets({
               key: key as KeyMethods,
-              currencies: getBaseAccountCreationCoinsAndTokens(),
+              currencies,
               options: {
                 password,
                 account,
@@ -656,10 +688,27 @@ export const createWalletsForAccounts = async (
     .filter(Boolean) as Wallet[];
 };
 
+export const getVMGasWallets = (wallets: Wallet[]) => {
+  return wallets.filter(
+    wallet =>
+      (IsVMChain(wallet.credentials.chain) ||
+        IsSVMChain(wallet.credentials.chain)) &&
+      !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
+  );
+};
+
 export const getEvmGasWallets = (wallets: Wallet[]) => {
   return wallets.filter(
     wallet =>
       IsEVMChain(wallet.credentials.chain) &&
+      !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
+  );
+};
+
+export const getSvmGasWallets = (wallets: Wallet[]) => {
+  return wallets.filter(
+    wallet =>
+      IsSVMChain(wallet.credentials.chain) &&
       !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
   );
 };

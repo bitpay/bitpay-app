@@ -51,7 +51,7 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
-import {IsERCToken, IsEVMChain} from '../../../../store/wallet/utils/currency';
+import {IsERCToken, IsVMChain} from '../../../../store/wallet/utils/currency';
 import {
   SellCryptoSupportedExchanges,
   getAvailableSellCryptoFiatCurrencies,
@@ -1636,7 +1636,7 @@ const SellCryptoRoot = ({
             <ExternalServicesItemTopTitle>
               {t('Sell from')}
             </ExternalServicesItemTopTitle>
-            {IsEVMChain(selectedWallet.chain) ? (
+            {IsVMChain(selectedWallet.chain) ? (
               <AccountChainsContainer>
                 <Blockie size={19} seed={selectedWallet.receiveAddress} />
                 <H7

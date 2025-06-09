@@ -93,7 +93,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart';
 import uniqBy from 'lodash.uniqby';
 import {credentialsFromExtendedPublicKey} from '../../../../utils/wallet-hardware';
-import {BitpaySupportedCoins} from '../../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  getBaseVMAccountCreationCoinsAndTokens,
+} from '../../../../constants/currencies';
 import {
   GetName,
   IsSegwitCoin,
@@ -102,7 +105,7 @@ import {
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {
   createWalletsForAccounts,
-  getEvmGasWallets,
+  getVMGasWallets,
 } from '../../../../utils/helper-methods';
 
 const BWC = BwcProvider.getInstance();
@@ -852,15 +855,16 @@ export const startImportMnemonic =
         opts.xPrivKey = xPrivKey;
 
         const data = await serverAssistedImport(opts);
-        // we need to ensure that each evm account has all supported wallets attached.
-        const evmWallets = getEvmGasWallets(data.wallets);
+        // we need to ensure that each evm/svm account has all supported wallets attached.
+        const vmWallets = getVMGasWallets(data.wallets);
         const accountsArray = [
-          ...new Set(evmWallets.map(wallet => wallet.credentials.account)),
+          ...new Set(vmWallets.map(wallet => wallet.credentials.account)),
         ];
         const _wallets = await createWalletsForAccounts(
           dispatch,
           accountsArray,
           data.key as KeyMethods,
+          getBaseVMAccountCreationCoinsAndTokens(),
         );
         if (_wallets.length > 0) {
           data.wallets.push(..._wallets);
