@@ -32,7 +32,7 @@ import NetworkPolicyPlaceholder from '../../components/NetworkPolicyPlaceholder'
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {updateCacheFeeLevel} from '../../../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
-import {SUPPORTED_EVM_COINS} from '../../../../../constants/currencies';
+import {SUPPORTED_VM_TOKENS} from '../../../../../constants/currencies';
 
 const NetworkFeePolicyContainer = styled.SafeAreaView`
   flex: 1;
@@ -231,7 +231,7 @@ const NetworkFeePolicy = () => {
             }`
           : t('Confirmation');
 
-        if (SUPPORTED_EVM_COINS.includes(chain)) {
+        if (SUPPORTED_VM_TOKENS.includes(chain)) {
           // @ts-ignore
           feeOption.avgConfirmationTime = evmAvgTime[level];
         }

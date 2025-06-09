@@ -35,7 +35,7 @@ import {LogActions} from '../../../log';
 import {partition} from 'lodash';
 import {
   BitpaySupportedCoins,
-  SUPPORTED_EVM_COINS,
+  SUPPORTED_VM_TOKENS,
 } from '../../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 
@@ -940,7 +940,7 @@ export const IsInvalid = (action: string | undefined): boolean => {
 };
 
 export const IsZeroAmountEVM = (amount: number, chain: string): boolean => {
-  return amount === 0 && SUPPORTED_EVM_COINS.includes(chain);
+  return amount === 0 && SUPPORTED_VM_TOKENS.includes(chain);
 };
 
 export const TxForPaymentFeeEVM = (
@@ -1217,7 +1217,7 @@ export const getDetailsTitle = (transaction: any, wallet: Wallet) => {
   const {chain} = wallet;
 
   if (!IsInvalid(action)) {
-    if (SUPPORTED_EVM_COINS.includes(chain) && error) {
+    if (SUPPORTED_VM_TOKENS.includes(chain) && error) {
       return t('Failed');
     } else if (IsSent(action)) {
       return t('Sent');

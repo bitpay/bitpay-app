@@ -50,7 +50,7 @@ import {WalletConnectScreens} from '../../../navigation/wallet-connect/WalletCon
 import SheetModal from '../base/sheet/SheetModal';
 import {KeyWalletsRowProps} from '../../list/KeyWalletsRow';
 import {buildAccountList} from '../../../store/wallet/utils/wallet';
-import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
+import {SUPPORTED_VM_TOKENS} from '../../../constants/currencies';
 import {AccountRowProps} from '../../list/AccountListRow';
 import {WalletRowProps} from '../../list/WalletRow';
 import {CurrencyImage} from '../../currency-image/CurrencyImage';
@@ -371,7 +371,7 @@ export const WalletConnectStartModal = () => {
           {
             filterByCustomWallets: key.wallets.filter(
               ({chain, currencyAbbreviation}) =>
-                SUPPORTED_EVM_COINS.includes(chain) &&
+                SUPPORTED_VM_TOKENS.includes(chain) &&
                 !IsERCToken(currencyAbbreviation, chain),
             ),
             skipFiatCalculations: true,

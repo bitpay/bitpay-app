@@ -4,7 +4,7 @@ import {GetEstimatedTxSize} from '../../utils/wallet';
 import {BwcProvider} from '../../../../lib/bwc';
 const BWC = BwcProvider.getInstance();
 import {t} from 'i18next';
-import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+import {SUPPORTED_VM_TOKENS} from '../../../../constants/currencies';
 
 export enum FeeLevels {
   URGENT = 'urgent',
@@ -21,7 +21,7 @@ export interface Fee {
 }
 
 export const GetFeeOptions = (chain: string): FeeOptions => {
-  const isEvmOrToken = SUPPORTED_EVM_COINS.includes(chain);
+  const isEvmOrToken = SUPPORTED_VM_TOKENS.includes(chain);
   return {
     urgent: isEvmOrToken ? t('High') : t('Urgent'),
     priority: isEvmOrToken ? t('Average') : t('Priority'),
@@ -85,7 +85,7 @@ export const getFeeLevels = ({
           }
 
           if (
-            SUPPORTED_EVM_COINS.includes(wallet.chain) ||
+            SUPPORTED_VM_TOKENS.includes(wallet.chain) ||
             !!wallet.credentials.token
           ) {
             feeLevels = removeLowFeeLevels(feeLevels);
@@ -146,7 +146,7 @@ export const getFeeLevelsUsingBwcClient = (
           return reject(t('Could not get dynamic fee'));
         }
 
-        if (SUPPORTED_EVM_COINS.includes(chain.toLowerCase())) {
+        if (SUPPORTED_VM_TOKENS.includes(chain.toLowerCase())) {
           feeLevels = removeLowFeeLevels(feeLevels);
         }
 
