@@ -689,11 +689,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const loadHistoryRef = useRef(debouncedLoadHistory);
 
   const updateWalletStatusAndProfileBalance = async () => {
-    await dispatch(startUpdateAllWalletStatusForKey({
-      key,
-      accountAddress: accountItem?.receiveAddress,
-      force: true,
-    }));
+    await dispatch(
+      startUpdateAllWalletStatusForKey({
+        key,
+        accountAddress: accountItem?.receiveAddress,
+        force: true,
+      }),
+    );
     dispatch(updatePortfolioBalance());
   };
 
@@ -1182,12 +1184,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       await dispatch(startGetRates({}));
       showActivityTab
         ? await debouncedLoadHistory(selectedChainFilterOption, true)
-        : await dispatch(startUpdateAllWalletStatusForKey({
-            key,
-            accountAddress: accountItem?.receiveAddress,
-            force: true,
-            createTokenWalletWithFunds: true,
-          }));
+        : await dispatch(
+            startUpdateAllWalletStatusForKey({
+              key,
+              accountAddress: accountItem?.receiveAddress,
+              force: true,
+              createTokenWalletWithFunds: true,
+            }),
+          );
       dispatch(updatePortfolioBalance());
       setNeedActionTxps(pendingTxps);
     } catch (err) {

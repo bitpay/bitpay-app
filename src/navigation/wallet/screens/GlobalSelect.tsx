@@ -1328,6 +1328,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       {
         filterByHideWallet: true,
         skipFiatCalculations: true,
+        filterByCurrencyAbbreviation: true,
+        currencyAbbreviation: selectedCurrency.currencyAbbreviation,
       },
     );
 
@@ -1338,12 +1340,13 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       IsSVMChain(account.chains[0]),
     );
 
-    const multiEvm = evmAccounts.length > 1;
-    const multiSvm = svmAccounts.length > 1;
+    const hasMultipleAccounts =
+      evmAccounts.length > 1 || svmAccounts.length > 1;
+    const hasBothVmTypes = evmAccounts.length > 0 && svmAccounts.length > 0;
 
-    if (multiEvm || multiSvm) {
+    if (hasMultipleAccounts || hasBothVmTypes) {
       setAccountsCardsList({
-        accounts: multiEvm ? evmAccounts : svmAccounts,
+        accounts: [...evmAccounts, ...svmAccounts],
         currency: selectedCurrency,
         key: selectedKey,
       });
