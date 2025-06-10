@@ -840,8 +840,8 @@ export const detectAndCreateTokensForEachEvmWallet =
         ),
       );
 
-      const evmWalletsToCheck = key.wallets.filter(w => {
-        const IsVMChain = IsVMChain(w.chain);
+      const vmWalletsToCheck = key.wallets.filter(w => {
+        const _IsVMChain = IsVMChain(w.chain);
         const isNotERCToken = !IsERCToken(w.currencyAbbreviation, w.chain);
         const matchesChain =
           !chain || (w.chain && chain.toLowerCase() === w.chain.toLowerCase());
@@ -851,16 +851,16 @@ export const detectAndCreateTokensForEachEvmWallet =
           !cloneDeep(w.tokens).some(t =>
             t?.toLowerCase().includes(tokenAddress.toLowerCase()),
           );
-        return IsVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
+        return _IsVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
       });
 
       dispatch(
         LogActions.debug(
-          'Number of EVM wallets to check: ' + evmWalletsToCheck?.length,
+          'Number of EVM wallets to check: ' + vmWalletsToCheck?.length,
         ),
       );
 
-      for (const [index, w] of evmWalletsToCheck.entries()) {
+      for (const [index, w] of vmWalletsToCheck.entries()) {
         if (w.chain && w.receiveAddress) {
           const erc20WithBalanceData: MoralisErc20TokenBalanceByWalletData[] =
             await dispatch(

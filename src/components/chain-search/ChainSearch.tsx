@@ -24,8 +24,7 @@ import {View} from 'react-native';
 import {
   BitpaySupportedCoins,
   CurrencyOpts,
-  SUPPORTED_COINS,
-  SUPPORTED_EVM_COINS,
+  SUPPORTED_VM_TOKENS,
 } from '../../constants/currencies';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 import {AccountRowProps} from '../list/AccountListRow';
@@ -307,7 +306,7 @@ const SearchComponent = <T extends SearchableItem>({
             })
             .filter(result => result.data.length > 0);
         }
-        let chains = SUPPORTED_EVM_COINS;
+        let chains = SUPPORTED_VM_TOKENS;
         if (searchFullList.length > 0) {
           chains = [
             ...new Set(searchFullList.flatMap(data => data.chains || [])),

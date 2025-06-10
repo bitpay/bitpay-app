@@ -1088,6 +1088,7 @@ export const buildAccountList = (
     filterWalletsByPaymentOptions?: boolean;
     filterByWalletOptions?: boolean;
     filterByComplete?: boolean;
+    filterByCurrencyAbbreviation?: boolean;
     paymentOptions?: PayProPaymentOption[] | undefined;
     network?: Network | undefined;
     chain?: string | undefined;
@@ -1169,8 +1170,18 @@ export const buildAccountList = (
         return;
       }
     }
+
     if (opts?.filterByComplete) {
       if (!wallet.credentials.isComplete()) {
+        return;
+      }
+    }
+
+    if (opts?.filterByCurrencyAbbreviation) {
+      if (
+        wallet.currencyAbbreviation.toLowerCase() !==
+        opts?.currencyAbbreviation?.toLowerCase()
+      ) {
         return;
       }
     }

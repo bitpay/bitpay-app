@@ -46,7 +46,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import BoxInput from '../../../../components/form/BoxInput';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+import {SUPPORTED_VM_TOKENS} from '../../../../constants/currencies';
 
 const CIRCLE_SIZE = 20;
 const CIRCLE_ACTIVE_SIZE = 26;
@@ -265,7 +265,7 @@ const TransactionLevel = ({
         currencyAbbreviation === 'btc' ? t('Satoshis per byte') : feeUnit
       }`;
 
-      if (SUPPORTED_EVM_COINS.includes(chain)) {
+      if (SUPPORTED_VM_TOKENS.includes(chain)) {
         // @ts-ignore
         feeOption.avgConfirmationTime = evmAvgTime[level];
       } else {

@@ -1762,6 +1762,10 @@ export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
   ...OtherBitpaySupportedCoins,
 };
 
+export const SUPPORTED_VM_TOKENS = [
+  ...Object.keys(BitpaySupportedEvmCoins),
+  ...Object.keys(BitpaySupportedSvmCoins),
+];
 export const SUPPORTED_EVM_COINS = Object.keys(BitpaySupportedEvmCoins);
 export const SUPPORTED_SVM_COINS = Object.keys(BitpaySupportedSvmCoins);
 export const SUPPORTED_ETHEREUM_TOKENS = Object.values(

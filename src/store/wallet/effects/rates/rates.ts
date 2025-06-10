@@ -1,7 +1,7 @@
 import {Effect} from '../../../index';
 import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
-import {SUPPORTED_EVM_COINS} from '../../../../constants/currencies';
+import {SUPPORTED_VM_TOKENS} from '../../../../constants/currencies';
 import {DateRanges, HistoricRate, Rate, Rates} from '../../../rate/rate.models';
 import {isCacheKeyStale} from '../../utils/wallet';
 import {
@@ -208,7 +208,7 @@ export const getTokenRates =
           return chunked_arr;
         };
 
-        for (const chain of SUPPORTED_EVM_COINS) {
+        for (const chain of SUPPORTED_VM_TOKENS) {
           const contractAddresses = dispatch(getContractAddresses(chain));
           if (contractAddresses?.length > 0) {
             const formattedAddresses = contractAddresses.map(address => ({

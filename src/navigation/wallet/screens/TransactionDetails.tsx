@@ -70,7 +70,7 @@ import {
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
 import {Memo} from './send/confirm/Memo';
-import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
+import {SUPPORTED_VM_TOKENS} from '../../../constants/currencies';
 import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
 import {LogActions} from '../../../store/log';
 import {RootState} from '../../../store';
@@ -499,7 +499,7 @@ const TransactionDetails = () => {
           </>
 
           {/* --------- Info ----------------*/}
-          {SUPPORTED_EVM_COINS.includes(chain) && txs.error ? (
+          {SUPPORTED_VM_TOKENS.includes(chain) && txs.error ? (
             <Banner
               type={'error'}
               title={t('Warning!')}
