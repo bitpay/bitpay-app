@@ -11,8 +11,10 @@ import axios from 'axios';
 import {MORALIS_API_KEY} from '@env';
 import {
   MoralisErc20TokenBalanceByWalletData,
+  MoralisSVMTokenBalanceByWalletData,
   MoralisWalletApprovalsData,
 } from './moralis.types';
+import {IsSVMChain} from '../../store/wallet/utils/currency';
 
 const MORALIS_EVM_CHAIN: {[key in string]: any} = {
   arb: EvmChain.ARBITRUM,
@@ -438,6 +440,48 @@ export const getMultipleTokenPrices =
       dispatch(
         LogActions.error(
           `[moralis/getMultipleTokenPrices]: an error occurred while getting ERC20 token price: ${errorStr}`,
+        ),
+      );
+      throw e;
+    }
+  };
+
+export const getSVMTokenBalanceByWallet =
+  ({
+    address,
+    chain,
+    network,
+  }: {
+    address: string;
+    chain: string;
+    network: string;
+  }): Effect<Promise<MoralisSVMTokenBalanceByWalletData[]>> =>
+  async dispatch => {
+    try {
+      if (!IsSVMChain(chain)) {
+        throw new Error('Unsupported chain for SVM token balance');
+      }
+      const {raw} = await Moralis.SolApi.account.getPortfolio({
+        address: address,
+        network: network,
+      });
+
+      dispatch(
+        LogActions.info(
+          '[moralis/getSVMTokenBalanceByWallet]: get SVM token balance successfully',
+        ),
+      );
+      return raw.tokens;
+    } catch (e) {
+      let errorStr;
+      if (e instanceof Error) {
+        errorStr = e.message;
+      } else {
+        errorStr = JSON.stringify(e);
+      }
+      dispatch(
+        LogActions.error(
+          `[moralis/getSVMTokenBalanceByWallet]: an error occurred while getting SVM token balance: ${errorStr}`,
         ),
       );
       throw e;

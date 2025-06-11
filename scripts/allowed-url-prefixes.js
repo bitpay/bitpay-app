@@ -72,6 +72,7 @@ const allowedUrlPrefixes = [
   'https://verify.walletconnect.com/',
   'https://verify.walletconnect.org/',
   'https://api.etherscan.io/v2/api',
+  'https://solana-gateway.moralis.io/account/',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');

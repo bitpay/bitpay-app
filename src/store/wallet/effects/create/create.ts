@@ -41,14 +41,20 @@ import {t} from 'i18next';
 import {LogActions} from '../../../log';
 import {
   IsERCToken,
-  IsVMChain,
   IsSegwitCoin,
   IsSVMChain,
+  IsVMChain,
 } from '../../utils/currency';
 import {createWalletAddress} from '../address/address';
 import cloneDeep from 'lodash.clonedeep';
-import {MoralisErc20TokenBalanceByWalletData} from '../../../moralis/moralis.types';
-import {getERC20TokenBalanceByWallet} from '../../../moralis/moralis.effects';
+import {
+  MoralisErc20TokenBalanceByWalletData,
+  MoralisSVMTokenBalanceByWalletData,
+} from '../../../moralis/moralis.types';
+import {
+  getERC20TokenBalanceByWallet,
+  getSVMTokenBalanceByWallet,
+} from '../../../moralis/moralis.effects';
 import {getTokenContractInfo, startUpdateWalletStatus} from '../status/status';
 import {addCustomTokenOption} from '../currencies/currencies';
 import {uniq} from 'lodash';
@@ -862,30 +868,64 @@ export const detectAndCreateTokensForEachEvmWallet =
 
       for (const [index, w] of vmWalletsToCheck.entries()) {
         if (w.chain && w.receiveAddress) {
-          const erc20WithBalanceData: MoralisErc20TokenBalanceByWalletData[] =
-            await dispatch(
-              getERC20TokenBalanceByWallet({
-                chain: w.chain,
-                address: w.receiveAddress,
-              }),
-            );
+          dispatch(
+            LogActions.debug(
+              `Checking tokens for wallet[${index}]: ${w.id} - ${w.receiveAddress}`,
+            ),
+          );
+          let filteredTokens;
+          if (IsSVMChain(w.chain)) {
+            const moralisSVMWithBalanceData: MoralisSVMTokenBalanceByWalletData[] =
+              await dispatch(
+                getSVMTokenBalanceByWallet({
+                  chain: w.chain,
+                  address: w.receiveAddress,
+                  network: w.network === Network.mainnet ? 'mainnet' : 'devnet',
+                }),
+              );
 
-          let filteredTokens = erc20WithBalanceData.filter(erc20Token => {
-            // Filter by: token already created in the key (present in w.tokens), possible spam and significant balance
-            return (
-              (!w.tokens ||
-                !cloneDeep(w.tokens).some(token =>
-                  token.includes(erc20Token.token_address),
-                )) &&
-              !erc20Token.possible_spam &&
-              erc20Token.verified_contract &&
-              erc20Token.balance &&
-              erc20Token.decimals &&
-              parseFloat(erc20Token.balance) /
-                Math.pow(10, erc20Token.decimals) >=
-                1e-7
-            );
-          });
+            filteredTokens = moralisSVMWithBalanceData.filter(svmToken => {
+              return (
+                (!w.tokens ||
+                  !cloneDeep(w.tokens).some(token =>
+                    token.includes(svmToken.mint),
+                  )) &&
+                svmToken.amount &&
+                svmToken.decimals &&
+                parseFloat(svmToken.amount) / Math.pow(10, svmToken.decimals) >=
+                  1e-7
+              );
+            });
+            filteredTokens = filteredTokens.map(token => ({
+              ...token,
+              token_address: token.mint,
+            }));
+          } else {
+            const erc20WithBalanceData: MoralisErc20TokenBalanceByWalletData[] =
+              await dispatch(
+                getERC20TokenBalanceByWallet({
+                  chain: w.chain,
+                  address: w.receiveAddress,
+                }),
+              );
+
+            filteredTokens = erc20WithBalanceData.filter(erc20Token => {
+              // Filter by: token already created in the key (present in w.tokens), possible spam and significant balance
+              return (
+                (!w.tokens ||
+                  !cloneDeep(w.tokens).some(token =>
+                    token.includes(erc20Token.token_address),
+                  )) &&
+                !erc20Token.possible_spam &&
+                erc20Token.verified_contract &&
+                erc20Token.balance &&
+                erc20Token.decimals &&
+                parseFloat(erc20Token.balance) /
+                  Math.pow(10, erc20Token.decimals) >=
+                  1e-7
+              );
+            });
+          }
 
           dispatch(
             LogActions.debug(
