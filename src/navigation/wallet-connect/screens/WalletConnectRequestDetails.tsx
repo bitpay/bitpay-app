@@ -162,6 +162,25 @@ const WalletConnectRequestDetails = () => {
         setMessage(t('WCSwitchEthereumChainMsg', {peerName}));
         break;
 
+      case 'solana_signMessage':
+        setAddress(request.params.pubkey);
+        setMessage(request.params.message);
+        setIsMethodSupported(true);
+        break;
+
+      case 'solana_signTransaction':
+        const senderData = request.params.instructions[0].keys.find(
+          (instruction: {
+            pubkey: string;
+            isSigner: boolean;
+            isWritable: boolean;
+          }) => instruction.isSigner,
+        );
+        setAddress(senderData.pubkey);
+        setMessage(request.params.transaction);
+        setIsMethodSupported(true);
+        break;
+
       default:
         const defaultErrorMsg = t(
           'Sorry, we currently do not support this method.',

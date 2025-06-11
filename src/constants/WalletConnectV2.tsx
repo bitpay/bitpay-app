@@ -39,7 +39,7 @@ export const CHAIN_NAME_MAPPING: {[key: string]: string} = {
   // Add more mappings for other chain codes as needed
 };
 
-export const EIP155_MAINNET_CHAINS: {[key in string]: any} = {
+export const MAINNET_CHAINS: {[key in string]: any} = {
   'eip155:1': {
     chainId: 1,
     name: 'Ethereum',
@@ -75,9 +75,23 @@ export const EIP155_MAINNET_CHAINS: {[key in string]: any} = {
     rpc: 'https://mainnet.base.org/',
     network: Network.mainnet,
   },
+  'solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ': {
+    chainId: 501,
+    name: 'Solana',
+    chainName: 'sol',
+    rpc: 'https://api.mainnet-beta.solana.com',
+    network: Network.mainnet,
+  },
+  'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': {
+    chainId: 501,
+    name: 'Solana',
+    chainName: 'sol',
+    rpc: 'https://api.mainnet-beta.solana.com',
+    network: Network.mainnet,
+  },
 };
 
-export const EIP155_TEST_CHAINS = {
+export const TEST_CHAINS = {
   'eip155:11155111': {
     chainId: 11155111,
     name: 'Ethereum Sepolia',
@@ -113,6 +127,20 @@ export const EIP155_TEST_CHAINS = {
     rpc: 'https://sepolia.base.org',
     network: Network.testnet,
   },
+  'solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K': {
+    chainId: 502,
+    name: 'Solana Devnet',
+    chainName: 'sol',
+    rpc: 'https://api.devnet.solana.com',
+    network: Network.testnet,
+  },
+  'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1': {
+    chainId: 502,
+    name: 'Solana Devnet',
+    chainName: 'sol',
+    rpc: 'https://api.devnet.solana.com',
+    network: Network.testnet,
+  },
 };
 
 export const EIP155_SIGNING_METHODS = {
@@ -125,6 +153,13 @@ export const EIP155_SIGNING_METHODS = {
   ETH_SEND_RAW_TRANSACTION: 'eth_sendRawTransaction',
   ETH_SEND_TRANSACTION: 'eth_sendTransaction',
   WALLET_ADD_ETHEREUM_CHAIN: 'wallet_addEthereumChain',
+};
+
+export const SOLANA_SIGNING_METHODS = {
+  SIGN_TRANSACTION: 'solana_signTransaction',
+  SIGN_MESSAGE: 'solana_signMessage',
+  // SIGN_AND_SEND_TRANSACTION: 'solana_signAndSendTransaction',
+  // SING_ALL_TRANSACTIONS: "solana_signAllTransactions",
 };
 
 export const EIP155_METHODS_NOT_INTERACTION_NEEDED = [
@@ -165,9 +200,21 @@ export const WALLET_CONNECT_SUPPORTED_CHAINS: {
     chain: 'base',
     network: Network.mainnet,
   },
-  'eip155:501': {
+  'solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ': {
     chain: 'sol',
     network: Network.mainnet,
+  },
+  'solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K': {
+    chain: 'sol',
+    network: Network.testnet,
+  },
+  'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': {
+    chain: 'sol',
+    network: Network.mainnet,
+  },
+  'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1': {
+    chain: 'sol',
+    network: Network.testnet,
   },
   'eip155:11155420': {
     chain: 'op',
@@ -183,9 +230,9 @@ export const WALLET_CONNECT_SUPPORTED_CHAINS: {
   },
 };
 
-export type TEIP155Chain = keyof typeof EIP155_CHAINS;
+export type WcSupportedChain = keyof typeof WC_SUPPORTED_CHAINS;
 
-export const EIP155_CHAINS: {[key in string]: any} = {
-  ...EIP155_MAINNET_CHAINS,
-  ...EIP155_TEST_CHAINS,
+export const WC_SUPPORTED_CHAINS: {[key in string]: any} = {
+  ...MAINNET_CHAINS,
+  ...TEST_CHAINS,
 };

@@ -14,7 +14,7 @@ import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
 import debounce from 'lodash.debounce';
 import {AppActions} from '../../store/app';
 import {useTranslation} from 'react-i18next';
-import {EIP155_CHAINS} from '../../constants/WalletConnectV2';
+import {WC_SUPPORTED_CHAINS} from '../../constants/WalletConnectV2';
 import cloneDeep from 'lodash.clonedeep';
 import {TransactionProposal, Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
@@ -145,8 +145,10 @@ const SearchComponent = <T extends SearchableItem>({
     accounts.filter(account => {
       const index = account.indexOf(':', account.indexOf(':') + 1);
       const protocolChainName = account.substring(0, index);
-      const chain = normalizeText(EIP155_CHAINS[protocolChainName]?.chainName);
-      const name = normalizeText(EIP155_CHAINS[protocolChainName]?.name);
+      const chain = normalizeText(
+        WC_SUPPORTED_CHAINS[protocolChainName]?.chainName,
+      );
+      const name = normalizeText(WC_SUPPORTED_CHAINS[protocolChainName]?.name);
       chains.push(chain);
       return (
         (chain.includes(normalizedText) ||
