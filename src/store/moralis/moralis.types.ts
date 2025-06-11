@@ -13,6 +13,16 @@ export type MoralisErc20TokenBalanceByWalletData = {
   verified_contract?: boolean | undefined;
 };
 
+export type MoralisSVMTokenBalanceByWalletData = {
+  associatedTokenAddress: string;
+  mint: string;
+  name: string;
+  symbol: string;
+  amount: string;
+  amountRaw: string;
+  decimals: number;
+};
+
 export type MoralisWalletApprovalsDataResultObject = {
   block_number: string;
   block_timestamp: string;
