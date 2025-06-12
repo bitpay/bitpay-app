@@ -169,14 +169,14 @@ const WalletConnectRequestDetails = () => {
         break;
 
       case 'solana_signTransaction':
-        const senderData = request.params.instructions[0].keys.find(
+        const senderData = request.params?.instructions?.[0].keys?.find(
           (instruction: {
             pubkey: string;
             isSigner: boolean;
             isWritable: boolean;
           }) => instruction.isSigner,
         );
-        setAddress(senderData.pubkey);
+        setAddress(senderData?.pubkey);
         setMessage(request.params.transaction);
         setIsMethodSupported(true);
         break;

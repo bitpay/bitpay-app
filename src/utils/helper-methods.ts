@@ -761,26 +761,26 @@ export const processOtherMethodsRequest =
       case 'eth_signTypedData_v3':
       case 'eth_signTypedData_v4':
       case 'eth_sign':
-        senderAddress = request.params[0];
+        senderAddress = request.params?.[0];
         break;
       case 'personal_sign':
-        senderAddress = request.params[1];
+        senderAddress = request.params?.[1];
         break;
       case 'eth_signTransaction':
-        senderAddress = request.params[0].from;
+        senderAddress = request.params?.[0]?.from;
         break;
       case 'solana_signMessage':
-        senderAddress = request.params.pubkey;
+        senderAddress = request.params?.pubkey;
         break;
       case 'solana_signTransaction':
-        const senderData = request.params.instructions[0].keys.find(
+        const senderData = request?.params?.instructions?.[0].keys.find(
           (instruction: {
             pubkey: string;
             isSigner: boolean;
             isWritable: boolean;
           }) => instruction.isSigner,
         );
-        senderAddress = senderData.pubkey;
+        senderAddress = senderData?.pubkey || '';
         break;
     }
     try {
@@ -788,15 +788,17 @@ export const processOtherMethodsRequest =
         key.wallets.filter(
           wallet =>
             wallet.receiveAddress?.toLowerCase() ===
-              senderAddress.toLowerCase() && wallet.chain === swapFromChain,
+              senderAddress?.toLowerCase() && wallet.chain === swapFromChain,
         ),
       )[0];
-      const {currencyAbbreviation} = wallet; // this is the "gas" wallet
+
       return {
         transactionDataName: 'SIGN REQUEST',
         swapFromChain,
         senderAddress,
-        swapFromCurrencyAbbreviation: currencyAbbreviation,
+        swapFromCurrencyAbbreviation: wallet
+          ? wallet.currencyAbbreviation
+          : swapFromChain,
       };
     } catch (error) {
       dispatch(

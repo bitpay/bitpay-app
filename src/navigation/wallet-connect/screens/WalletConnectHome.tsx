@@ -145,11 +145,7 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
   if (!wallet) {
     wallet = Object.values(keys)
       .flatMap(key => key.wallets)
-      .find(
-        wallet =>
-          wallet.receiveAddress?.toLowerCase() ===
-            senderAddress!.toLowerCase() && wallet.chain === swapFromChain,
-      );
+      .find(wallet => wallet.chain === swapFromChain);
 
     _swapFromCurrencyAbbreviation =
       // @ts-ignore
