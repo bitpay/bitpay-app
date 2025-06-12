@@ -875,6 +875,8 @@ const SwapCryptoRoot: React.FC = () => {
     const changellySupportedChains = getChangellySupportedChains() ?? [];
     const changellySupportedEvmChains =
       getChangellySupportedChains('evm') ?? [];
+    const changellySupportedSvmChains =
+      getChangellySupportedChains('svm') ?? [];
     const currencyBlockchain = currency.blockchain
       ? cloneDeep(currency.blockchain).toLowerCase()
       : undefined;
@@ -887,6 +889,15 @@ const SwapCryptoRoot: React.FC = () => {
       // If currency is not EVM => return true
       // If currency is EVM => check tokens
       (!changellySupportedEvmChains.includes(currencyBlockchain) ||
+        allSupportedTokens.includes(
+          getExternalServiceSymbol(
+            currency.name,
+            getChainFromChangellyBlockchain(currency.name, currency.blockchain),
+          ),
+        )) &&
+      // If currency is not SVM => return true
+      // If currency is SVM => check tokens
+      (!changellySupportedSvmChains.includes(currencyBlockchain) ||
         allSupportedTokens.includes(
           getExternalServiceSymbol(
             currency.name,
