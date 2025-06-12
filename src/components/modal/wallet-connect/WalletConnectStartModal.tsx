@@ -136,6 +136,7 @@ const DescriptionItemContainer = styled.View`
 
 const DescriptionItem = styled(Paragraph)`
   padding-left: 9px;
+  padding-right: 9px;
   padding-top: 2px;
   color: ${props => props.theme.colors.text};
 `;
@@ -369,7 +370,14 @@ export const WalletConnectStartModal = () => {
     setButtonState(undefined);
   };
 
-  const _setAllKeysAndSelectedWallets = () => {
+  const _setAllKeysAndSelectedWallets = (
+    chainsSelected:
+      | {
+          chain: string;
+          network: string;
+        }[]
+      | undefined,
+  ) => {
     const formattedKeys = Object.values(keys)
       .map((key, keyIndex) => {
         const accountList = buildAccountList(
@@ -380,7 +388,7 @@ export const WalletConnectStartModal = () => {
           {
             filterByCustomWallets: key.wallets.filter(
               ({chain, currencyAbbreviation}) =>
-                SUPPORTED_VM_TOKENS.includes(chain) &&
+                chainsSelected?.map(chain => chain.chain).includes(chain) &&
                 !IsERCToken(currencyAbbreviation, chain),
             ),
             skipFiatCalculations: true,
@@ -415,7 +423,7 @@ export const WalletConnectStartModal = () => {
 
   useEffect(() => {
     if (showWalletConnectStartModal) {
-      _setAllKeysAndSelectedWallets();
+      _setAllKeysAndSelectedWallets(chainsSelected);
     }
   }, [chainsSelected, showWalletConnectStartModal]);
 
@@ -697,7 +705,9 @@ export const WalletConnectStartModal = () => {
                       <DescriptionItemContainer>
                         <WarningBrownSvg />
                         <DescriptionItem>
-                          {t('No accounts found')}
+                          {t(
+                            "No compatible accounts found for the DApp's supported networks",
+                          )}
                         </DescriptionItem>
                       </DescriptionItemContainer>
                     )}
