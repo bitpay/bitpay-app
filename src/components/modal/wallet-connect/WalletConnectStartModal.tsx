@@ -41,6 +41,7 @@ import {buildApprovedNamespaces} from '@walletconnect/utils';
 import {
   CHAIN_NAME_MAPPING,
   EIP155_SIGNING_METHODS,
+  SOLANA_SIGNING_METHODS,
   WALLET_CONNECT_SUPPORTED_CHAINS,
   WC_EVENTS,
 } from '../../../constants/WalletConnectV2';
@@ -192,7 +193,7 @@ export const WalletConnectStartModal = () => {
       chain: string;
       address: string;
       network: string;
-      supportedChain: string;
+      supportedChain: string[];
     }[]
   >([]);
   const [chainsSelected, setChainsSelected] =
@@ -259,10 +260,10 @@ export const WalletConnectStartModal = () => {
         const accounts: string[] = [];
         const chains: string[] = [];
         selectedWallets.forEach(selectedWallet => {
-          accounts.push(
-            `${selectedWallet.supportedChain}:${selectedWallet.address}`,
-          );
-          chains.push(selectedWallet.supportedChain);
+          selectedWallet.supportedChain.forEach(chain => {
+            accounts.push(`${chain}:${selectedWallet.address}`);
+            chains.push(chain);
+          });
         });
         // Remove duplicate values from chains array
         const uniqueChains = [...new Set(chains)];
@@ -272,6 +273,12 @@ export const WalletConnectStartModal = () => {
             eip155: {
               chains: uniqueChains,
               methods: Object.values(EIP155_SIGNING_METHODS),
+              events: WC_EVENTS,
+              accounts,
+            },
+            solana: {
+              chains: uniqueChains,
+              methods: Object.values(SOLANA_SIGNING_METHODS),
               events: WC_EVENTS,
               accounts,
             },
@@ -329,7 +336,7 @@ export const WalletConnectStartModal = () => {
       chain: string;
       address: string;
       network: string;
-      supportedChain: string;
+      supportedChain: string[];
     }[] = [];
     _allKeys &&
       _allKeys.forEach((key: KeyWalletsRowProps) => {
@@ -338,18 +345,20 @@ export const WalletConnectStartModal = () => {
             account.wallets.forEach((wallet: WalletRowProps) => {
               const {checked} = account;
               const {receiveAddress, chain, network} = wallet;
-              let _supportedChain: [string, {chain: string; network: string}];
               if (checked && receiveAddress) {
-                _supportedChain = Object.entries(
+                const _supportedChains: string[] = Object.entries(
                   WALLET_CONNECT_SUPPORTED_CHAINS,
-                ).find(
-                  ([_, {chain: c, network: n}]) => c === chain && n === network,
-                )! as [string, {chain: string; network: string}];
+                )
+                  .filter(
+                    ([, value]) =>
+                      value.chain === chain && value.network === network,
+                  )
+                  .map(([key]) => key);
                 selectedWallets.push({
                   address: receiveAddress,
                   chain,
                   network,
-                  supportedChain: _supportedChain[0],
+                  supportedChain: _supportedChains,
                 });
               }
             });

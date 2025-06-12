@@ -27,10 +27,7 @@ import {FormatAmount} from '../store/wallet/effects/amount/amount';
 import {getERC20TokenPrice} from '../store/moralis/moralis.effects';
 import {ethers} from 'ethers';
 import EtherscanAPI from '../api/etherscan';
-import {
-  EIP155_CHAINS,
-  WALLET_CONNECT_SUPPORTED_CHAINS,
-} from '../constants/WalletConnectV2';
+import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../constants/WalletConnectV2';
 import {BitpaySupportedTokenOptsByAddress} from '../constants/tokens';
 import {Effect} from '../store';
 import {WalletKitTypes} from '@reown/walletkit';
@@ -485,7 +482,7 @@ export const getCWCChain = (chain: string): string => {
     case 'op':
       return 'OPERC20';
     case 'sol':
-      return 'SPL';
+      return 'SOLSPL';
     default:
       return 'ETHERC20';
   }
@@ -772,6 +769,19 @@ export const processOtherMethodsRequest =
       case 'eth_signTransaction':
         senderAddress = request.params[0].from;
         break;
+      case 'solana_signMessage':
+        senderAddress = request.params.pubkey;
+        break;
+      case 'solana_signTransaction':
+        const senderData = request.params.instructions[0].keys.find(
+          (instruction: {
+            pubkey: string;
+            isSigner: boolean;
+            isWritable: boolean;
+          }) => instruction.isSigner,
+        );
+        senderAddress = senderData.pubkey;
+        break;
     }
     try {
       const wallet = Object.values(keys).flatMap(key =>
@@ -894,7 +904,7 @@ export const processSwapRequest =
         //     'No standard token data - fetching contract ABI from Etherscan',
         //   ),
         // );
-        // const _chainId = EIP155_CHAINS[chainId]?.chainId?.toString();
+        // const _chainId = WC_SUPPORTED_CHAINS[chainId]?.chainId?.toString();
         // abi = await fetchContractAbi(dispatch, _chainId, to);
         // dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
         // const contractInterface = new ethers.utils.Interface(abi!);

@@ -183,22 +183,23 @@ const BottomNotification = () => {
         {message2 ? message2 : null}
         <BottomNotificationHr />
         <CtaContainer platform={Platform.OS}>
-          {actions?.map(({primary, action, text}, index) => {
-            return (
-              <BottomNotificationCta
-                key={index}
-                suppressHighlighting={true}
-                primary={primary}
-                onPress={async () => {
-                  haptic('impactLight');
-                  dispatch(AppActions.dismissBottomNotificationModal());
-                  await sleep(0);
-                  action(rootState);
-                }}>
-                {text.toUpperCase()}
-              </BottomNotificationCta>
-            );
-          })}
+          {actions?.length &&
+            actions?.map(({primary, action, text}, index) => {
+              return (
+                <BottomNotificationCta
+                  key={index}
+                  suppressHighlighting={true}
+                  primary={primary}
+                  onPress={async () => {
+                    haptic('impactLight');
+                    dispatch(AppActions.dismissBottomNotificationModal());
+                    await sleep(0);
+                    action(rootState);
+                  }}>
+                  {text.toUpperCase()}
+                </BottomNotificationCta>
+              );
+            })}
         </CtaContainer>
       </BottomNotificationContainer>
     </SheetModal>

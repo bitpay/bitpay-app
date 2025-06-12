@@ -42,7 +42,9 @@ export interface KeyProperties {
   mnemonicHasPassphrase: boolean;
   version: number;
   xPrivKey: string;
+  xPrivKeyEDDSA: string;
   xPrivKeyEncrypted?: string;
+  xPrivKeyEDDSAEncrypted?: string;
   mnemonicEncrypted?: string;
 }
 
