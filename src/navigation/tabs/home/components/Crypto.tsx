@@ -37,7 +37,7 @@ import {
   SectionHeaderContainer,
 } from './Styled';
 import {View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {Feather} from '../../../../styles/colors';

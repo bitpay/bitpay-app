@@ -31,7 +31,7 @@ import {findWalletById} from '../../store/wallet/utils/wallet';
 import {useAppSelector} from '../../utils/hooks';
 import {BitpaySupportedCoins} from '../../constants/currencies';
 import {SearchableItem} from '../chain-search/ChainSearch';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;

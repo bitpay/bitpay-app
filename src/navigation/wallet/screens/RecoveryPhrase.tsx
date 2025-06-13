@@ -22,7 +22,7 @@ import {
   SlateDark,
 } from '../../../styles/colors';
 import {Platform} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useDispatch} from 'react-redux';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -202,7 +202,6 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
   const headerLeft = useMemo(() => {
     return () => (
       <TouchableOpacity
-        touchableLibrary={'react-native-gesture-handler'}
         accessibilityLabel="cancel-button"
         style={{marginLeft: IS_ANDROID ? 10 : 0}}
         activeOpacity={ActiveOpacity}

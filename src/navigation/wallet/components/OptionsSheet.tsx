@@ -10,7 +10,7 @@ import {
 import {Platform, Image, ImageSourcePropType} from 'react-native';
 import {Action, Black, Slate, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const OptionsTitleContainer = styled.View`
   margin-bottom: 25px;

@@ -116,7 +116,6 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
             <ModalHeaderText>{t('Spendable balance')}</ModalHeaderText>
             <ModalHeaderRight>
               <Button
-                touchableLibrary={'react-native'}
                 buttonType={'pill'}
                 buttonStyle={'cancel'}
                 onPress={closeModal}>
