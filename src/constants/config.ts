@@ -119,7 +119,7 @@ export const PROTOCOL_NAME: {[key in string]: any} = {
   },
   sol: {
     [Network.mainnet]: 'Solana',
-    [Network.testnet]: 'Sepolia',
+    [Network.testnet]: 'Devnet',
   },
   matic: {
     [Network.mainnet]: 'Polygon',
