@@ -271,18 +271,22 @@ export const WalletConnectStartModal = () => {
         const namespaces: SessionTypes.Namespaces = buildApprovedNamespaces({
           proposal: proposal.params,
           supportedNamespaces: {
-            eip155: {
-              chains: uniqueChains,
-              methods: Object.values(EIP155_SIGNING_METHODS),
-              events: WC_EVENTS,
-              accounts,
-            },
-            solana: {
-              chains: uniqueChains,
-              methods: Object.values(SOLANA_SIGNING_METHODS),
-              events: WC_EVENTS,
-              accounts,
-            },
+            ...(uniqueChains.some(chain => chain.startsWith('eip155')) && {
+              eip155: {
+                chains: uniqueChains,
+                methods: Object.values(EIP155_SIGNING_METHODS),
+                events: WC_EVENTS,
+                accounts,
+              },
+            }),
+            ...(uniqueChains.some(chain => chain.startsWith('solana')) && {
+              solana: {
+                chains: uniqueChains,
+                methods: Object.values(SOLANA_SIGNING_METHODS),
+                events: WC_EVENTS,
+                accounts,
+              },
+            }),
           },
         });
         if (id && relays) {
@@ -388,8 +392,9 @@ export const WalletConnectStartModal = () => {
           {
             filterByCustomWallets: key.wallets.filter(
               ({chain, currencyAbbreviation}) =>
-                chainsSelected?.map(selected => selected.chain).includes(chain) &&
-                !IsERCToken(currencyAbbreviation, chain),
+                chainsSelected
+                  ?.map(selected => selected.chain)
+                  .includes(chain) && !IsERCToken(currencyAbbreviation, chain),
             ),
             skipFiatCalculations: true,
           },
