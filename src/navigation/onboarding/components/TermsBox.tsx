@@ -40,7 +40,7 @@ const TermsBox = ({term, emit}: Props) => {
     }
   };
   return (
-    <TermsBoxContainer activeOpacity={1.0} onPress={acknowledge}>
+    <TermsBoxContainer activeOpacity={1.0} onPressIn={acknowledge}>
       <CheckBoxContainer>
         <Checkbox checked={checked} onPress={acknowledge} />
       </CheckBoxContainer>
