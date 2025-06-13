@@ -11,7 +11,7 @@ import {useAppDispatch} from '../../../../utils/hooks';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CloseModal from '../../../../../assets/img/close-modal-icon.svg';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ChangellyPoliciesContainer = styled.SafeAreaView`
   flex: 1;

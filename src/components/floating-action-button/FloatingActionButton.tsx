@@ -4,7 +4,7 @@ import styled from 'styled-components/native';
 import {Action, Disabled, DisabledDark, White} from '../../styles/colors';
 import {ActiveOpacity} from '../styled/Containers';
 import {H5} from '../styled/Text';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 type hAlign = 'left' | 'right' | 'center' | null | undefined;
 type vAlign = 'top' | 'bottom' | 'center' | null | undefined;

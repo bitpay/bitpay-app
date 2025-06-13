@@ -40,7 +40,7 @@ import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;

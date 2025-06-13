@@ -27,7 +27,7 @@ import {useAppDispatch, useLogger} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const InfoContainer = styled.SafeAreaView`
   flex: 1;

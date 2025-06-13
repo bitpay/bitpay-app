@@ -33,7 +33,7 @@ import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {ContactRowProps} from '../../../../components/list/ContactRow';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;

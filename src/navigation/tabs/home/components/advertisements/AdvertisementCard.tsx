@@ -24,7 +24,7 @@ import {
 } from '../../../../../utils/braze';
 import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface AdvertisementCardProps {
   contentCard: ContentCard;
