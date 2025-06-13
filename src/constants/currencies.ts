@@ -842,7 +842,7 @@ export const BitpaySupportedSolTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'sol', testnet: 'sol', regtest: 'sol'},
+      protocolPrefix: {livenet: 'solana', testnet: 'solana', regtest: 'solana'},
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_sol`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
@@ -877,7 +877,7 @@ export const BitpaySupportedSolTokens: {[key in string]: CurrencyOpts} = {
     },
     paymentInfo: {
       paymentCode: 'EIP681b',
-      protocolPrefix: {livenet: 'sol', testnet: 'sol', regtest: 'sol'},
+      protocolPrefix: {livenet: 'solana', testnet: 'solana', regtest: 'solana'},
       ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdt_sol`,
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
       blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,

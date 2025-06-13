@@ -388,8 +388,9 @@ export const WalletConnectStartModal = () => {
           {
             filterByCustomWallets: key.wallets.filter(
               ({chain, currencyAbbreviation}) =>
-                chainsSelected?.map(selected => selected.chain).includes(chain) &&
-                !IsERCToken(currencyAbbreviation, chain),
+                chainsSelected
+                  ?.map(selected => selected.chain)
+                  .includes(chain) && !IsERCToken(currencyAbbreviation, chain),
             ),
             skipFiatCalculations: true,
           },
