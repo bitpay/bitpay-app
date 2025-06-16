@@ -1,4 +1,4 @@
-import React, {memo, useCallback, useEffect, useRef, useState} from 'react';
+import React, {memo, useCallback, useState} from 'react';
 import {
   ActiveOpacity,
   ChevronContainer,
@@ -7,7 +7,7 @@ import {
   RowContainer,
 } from '../styled/Containers';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
-import {Animated, View} from 'react-native';
+import {View} from 'react-native';
 import {FlashList} from '@shopify/flash-list';
 import {H5} from '../styled/Text';
 import WalletRow, {WalletRowProps} from './WalletRow';
@@ -74,15 +74,6 @@ const AssetsByChainRow = ({
     [key: string]: boolean;
   }>(initialSelected);
   const theme = useTheme();
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(opacity, {
-      toValue: showChainAssets[chain] ? 1 : 0,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
-  }, [showChainAssets[chain]]);
 
   const memoizedRenderItem = useCallback(
     ({item}: {item: WalletRowProps}) => {
@@ -149,14 +140,14 @@ const AssetsByChainRow = ({
           </ChainAssetsContainer>
         </Column>
       </RowContainer>
-      <Animated.View style={{opacity, flex: 1}}>
+      {showChainAssets[chain] ? (
         <FlashList<WalletRowProps>
-          estimatedItemSize={70}
-          data={showChainAssets[chain] ? chainAssetsList : []}
+          estimatedItemSize={90}
+          data={chainAssetsList}
           renderItem={memoizedRenderItem}
           extraData={hideBalance}
         />
-      </Animated.View>
+      ) : null}
     </View>
   );
 };
