@@ -93,6 +93,7 @@ const AssetsByChainRow = ({
     setShowChainAssets({[chain]: !showChainAssets[chain]});
     dispatch(
       setLocalAssetsDropdown({
+        ...selectedLocalAssetsDropdown,
         [accountItem.accountAddress]: {
           ...selectedLocalAssetsDropdown?.[accountItem.accountAddress],
           [chain]: !showChainAssets[chain],
