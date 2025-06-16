@@ -936,7 +936,12 @@ export const getAddressFrom = (request: WCV2RequestType): string => {
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
         addressFrom = params[0];
         break;
-
+      case SOLANA_SIGNING_METHODS.SIGN_MESSAGE:
+        addressFrom = params?.pubkey;
+        break;
+      case SOLANA_SIGNING_METHODS.SIGN_TRANSACTION:
+        addressFrom = params?.feePayer || params?.pubkey;
+        break;
       default:
         break;
     }
