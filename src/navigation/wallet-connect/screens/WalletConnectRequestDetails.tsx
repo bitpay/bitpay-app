@@ -339,7 +339,15 @@ const WalletConnectRequestDetails = () => {
       }
       return message;
     } catch (error) {
-      return <BaseText style={{paddingVertical: 5}}>{message}</BaseText>;
+      return (
+        <TouchableOpacity
+          disabled={clipboardObj.copied}
+          onPress={() => {
+            copyToClipboard(message, 'message');
+          }}>
+          <BaseText style={{paddingVertical: 5}}>{message}</BaseText>
+        </TouchableOpacity>
+      );
     }
   };
 
@@ -385,6 +393,11 @@ const WalletConnectRequestDetails = () => {
               <MessageTitleContainer>
                 <ItemTitleContainer>
                   <H7>{t('Message')}</H7>
+                  <View style={{paddingLeft: 10}}>
+                    {clipboardObj.copied && clipboardObj.type === 'message' ? (
+                      <CopiedSvg width={17} />
+                    ) : null}
+                  </View>
                 </ItemTitleContainer>
                 {renderMessage(message)}
               </MessageTitleContainer>
