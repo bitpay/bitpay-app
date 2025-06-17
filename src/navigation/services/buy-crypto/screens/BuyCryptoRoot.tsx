@@ -39,7 +39,11 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
-import {IsERCToken, IsVMChain} from '../../../../store/wallet/utils/currency';
+import {
+  IsERCToken,
+  IsSVMChain,
+  IsVMChain,
+} from '../../../../store/wallet/utils/currency';
 import {
   BuyCryptoExchangeKey,
   BuyCryptoSupportedExchanges,
@@ -922,7 +926,11 @@ const BuyCryptoRoot = ({
                   style={{flexShrink: 1}}>
                   {getEVMAccountName(selectedWallet)
                     ? getEVMAccountName(selectedWallet)
-                    : `EVM Account${
+                    : `${
+                        IsSVMChain(selectedWallet.chain)
+                          ? 'Solana Account'
+                          : 'EVM Account'
+                      }${
                         Number(selectedWallet.credentials.account) === 0
                           ? ''
                           : ` (${selectedWallet.credentials.account})`

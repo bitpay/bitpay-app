@@ -62,6 +62,7 @@ import {useLogger} from '../../../../utils/hooks/useLogger';
 import {
   GetPrecision,
   IsERCToken,
+  IsSVMChain,
   IsVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
@@ -1466,7 +1467,11 @@ const SwapCryptoRoot: React.FC = () => {
                     style={{flexShrink: 1}}>
                     {getEVMAccountName(fromWalletSelected)
                       ? getEVMAccountName(fromWalletSelected)
-                      : `EVM Account${
+                      : `${
+                          IsSVMChain(fromWalletSelected.chain)
+                            ? 'Solana Account'
+                            : 'EVM Account'
+                        }${
                           Number(fromWalletSelected.credentials.account) === 0
                             ? ''
                             : ` (${fromWalletSelected.credentials.account})`
@@ -1666,7 +1671,11 @@ const SwapCryptoRoot: React.FC = () => {
                     style={{flexShrink: 1}}>
                     {getEVMAccountName(toWalletSelected)
                       ? getEVMAccountName(toWalletSelected)
-                      : `EVM Account${
+                      : `${
+                          IsSVMChain(toWalletSelected.chain)
+                            ? 'Solana Account'
+                            : 'EVM Account'
+                        }${
                           Number(toWalletSelected.credentials.account) === 0
                             ? ''
                             : ` (${toWalletSelected.credentials.account})`
