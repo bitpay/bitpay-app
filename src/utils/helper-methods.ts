@@ -780,7 +780,7 @@ export const processOtherMethodsRequest =
             isWritable: boolean;
           }) => instruction.isSigner,
         );
-        senderAddress = senderData?.pubkey || '';
+        senderAddress = senderData?.pubkey || request?.params?.pubkey;
         break;
     }
     try {

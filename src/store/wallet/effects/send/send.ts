@@ -488,9 +488,9 @@ export const buildTxDetails =
             wallet: wallet as Wallet,
             network: wallet.network,
             value: amount,
-            from: params[0].from,
-            to: params[0].to,
-            data: params[0].data,
+            from: params[0]?.from,
+            to: params[0]?.to,
+            data: params[0]?.data,
             chain: swapFromChain!,
           }));
         fee = gasLimit * gasPrice;
@@ -1035,9 +1035,9 @@ const buildTransactionProposal =
                   wallet: wallet as Wallet,
                   network: (wallet as Wallet).network,
                   value: txp.amount,
-                  from: params[0].from,
-                  to: params[0].to,
-                  data: params[0].data,
+                  from: params[0]?.from,
+                  to: params[0]?.to,
+                  data: params[0]?.data,
                   chain: swapFromChain!,
                 }));
               txp.fee = gasLimit * gasPrice;
