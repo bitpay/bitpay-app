@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../button/Button';
 import {H6, H3, BaseText, Paragraph, Link, H7} from '../../styled/Text';
@@ -41,6 +41,7 @@ import {buildApprovedNamespaces} from '@walletconnect/utils';
 import {
   CHAIN_NAME_MAPPING,
   EIP155_SIGNING_METHODS,
+  SOLANA_SIGNING_METHODS,
   WALLET_CONNECT_SUPPORTED_CHAINS,
   WC_EVENTS,
 } from '../../../constants/WalletConnectV2';
@@ -50,7 +51,7 @@ import {WalletConnectScreens} from '../../../navigation/wallet-connect/WalletCon
 import SheetModal from '../base/sheet/SheetModal';
 import {KeyWalletsRowProps} from '../../list/KeyWalletsRow';
 import {buildAccountList} from '../../../store/wallet/utils/wallet';
-import {SUPPORTED_EVM_COINS} from '../../../constants/currencies';
+import {SUPPORTED_VM_TOKENS} from '../../../constants/currencies';
 import {AccountRowProps} from '../../list/AccountListRow';
 import {WalletRowProps} from '../../list/WalletRow';
 import {CurrencyImage} from '../../currency-image/CurrencyImage';
@@ -70,7 +71,6 @@ import AccountWCV2RowModal from './AccountWCV2RowModal';
 import WCErrorBottomNotification from './WCErrorBottomNotification';
 import WarningBrownSvg from '../../../../assets/img/warning-brown.svg';
 import {getNavigationTabName, RootStacks} from '../../../Root';
-import {SettingsScreens} from '../../../navigation/tabs/settings/SettingsGroup';
 import {SvgProps} from 'react-native-svg';
 
 export type WalletConnectStartParamList = {
@@ -136,6 +136,7 @@ const DescriptionItemContainer = styled.View`
 
 const DescriptionItem = styled(Paragraph)`
   padding-left: 9px;
+  padding-right: 9px;
   padding-top: 2px;
   color: ${props => props.theme.colors.text};
 `;
@@ -193,7 +194,7 @@ export const WalletConnectStartModal = () => {
       chain: string;
       address: string;
       network: string;
-      supportedChain: string;
+      supportedChain: string[];
     }[]
   >([]);
   const [chainsSelected, setChainsSelected] =
@@ -260,22 +261,32 @@ export const WalletConnectStartModal = () => {
         const accounts: string[] = [];
         const chains: string[] = [];
         selectedWallets.forEach(selectedWallet => {
-          accounts.push(
-            `${selectedWallet.supportedChain}:${selectedWallet.address}`,
-          );
-          chains.push(selectedWallet.supportedChain);
+          selectedWallet.supportedChain.forEach(chain => {
+            accounts.push(`${chain}:${selectedWallet.address}`);
+            chains.push(chain);
+          });
         });
         // Remove duplicate values from chains array
         const uniqueChains = [...new Set(chains)];
         const namespaces: SessionTypes.Namespaces = buildApprovedNamespaces({
           proposal: proposal.params,
           supportedNamespaces: {
-            eip155: {
-              chains: uniqueChains,
-              methods: Object.values(EIP155_SIGNING_METHODS),
-              events: WC_EVENTS,
-              accounts,
-            },
+            ...(uniqueChains.some(chain => chain.startsWith('eip155')) && {
+              eip155: {
+                chains: uniqueChains,
+                methods: Object.values(EIP155_SIGNING_METHODS),
+                events: WC_EVENTS,
+                accounts,
+              },
+            }),
+            ...(uniqueChains.some(chain => chain.startsWith('solana')) && {
+              solana: {
+                chains: uniqueChains,
+                methods: Object.values(SOLANA_SIGNING_METHODS),
+                events: WC_EVENTS,
+                accounts,
+              },
+            }),
           },
         });
         if (id && relays) {
@@ -297,14 +308,11 @@ export const WalletConnectStartModal = () => {
       dispatch(Analytics.track('WalletConnect Session Request Approved', {}));
       navigation.dispatch(
         CommonActions.reset({
-          index: 2,
+          index: 1,
           routes: [
             {
               name: RootStacks.TABS,
               params: {screen: getNavigationTabName()},
-            },
-            {
-              name: SettingsScreens.SETTINGS_HOME,
             },
             {
               name: WalletConnectScreens.WC_CONNECTIONS,
@@ -333,7 +341,7 @@ export const WalletConnectStartModal = () => {
       chain: string;
       address: string;
       network: string;
-      supportedChain: string;
+      supportedChain: string[];
     }[] = [];
     _allKeys &&
       _allKeys.forEach((key: KeyWalletsRowProps) => {
@@ -342,18 +350,20 @@ export const WalletConnectStartModal = () => {
             account.wallets.forEach((wallet: WalletRowProps) => {
               const {checked} = account;
               const {receiveAddress, chain, network} = wallet;
-              let _supportedChain: [string, {chain: string; network: string}];
               if (checked && receiveAddress) {
-                _supportedChain = Object.entries(
+                const _supportedChains: string[] = Object.entries(
                   WALLET_CONNECT_SUPPORTED_CHAINS,
-                ).find(
-                  ([_, {chain: c, network: n}]) => c === chain && n === network,
-                )! as [string, {chain: string; network: string}];
+                )
+                  .filter(
+                    ([, value]) =>
+                      value.chain === chain && value.network === network,
+                  )
+                  .map(([key]) => key);
                 selectedWallets.push({
                   address: receiveAddress,
                   chain,
                   network,
-                  supportedChain: _supportedChain[0],
+                  supportedChain: _supportedChains,
                 });
               }
             });
@@ -364,7 +374,14 @@ export const WalletConnectStartModal = () => {
     setButtonState(undefined);
   };
 
-  const _setAllKeysAndSelectedWallets = () => {
+  const _setAllKeysAndSelectedWallets = (
+    chainsSelected:
+      | {
+          chain: string;
+          network: string;
+        }[]
+      | undefined,
+  ) => {
     const formattedKeys = Object.values(keys)
       .map((key, keyIndex) => {
         const accountList = buildAccountList(
@@ -375,8 +392,9 @@ export const WalletConnectStartModal = () => {
           {
             filterByCustomWallets: key.wallets.filter(
               ({chain, currencyAbbreviation}) =>
-                SUPPORTED_EVM_COINS.includes(chain) &&
-                !IsERCToken(currencyAbbreviation, chain),
+                chainsSelected
+                  ?.map(selected => selected.chain)
+                  .includes(chain) && !IsERCToken(currencyAbbreviation, chain),
             ),
             skipFiatCalculations: true,
           },
@@ -410,7 +428,7 @@ export const WalletConnectStartModal = () => {
 
   useEffect(() => {
     if (showWalletConnectStartModal) {
-      _setAllKeysAndSelectedWallets();
+      _setAllKeysAndSelectedWallets(chainsSelected);
     }
   }, [chainsSelected, showWalletConnectStartModal]);
 
@@ -692,7 +710,9 @@ export const WalletConnectStartModal = () => {
                       <DescriptionItemContainer>
                         <WarningBrownSvg />
                         <DescriptionItem>
-                          {t('No accounts found')}
+                          {t(
+                            "No compatible accounts found for the DApp's supported networks",
+                          )}
                         </DescriptionItem>
                       </DescriptionItemContainer>
                     )}

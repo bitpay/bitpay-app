@@ -81,3 +81,7 @@ crowdin-credentials.yml
 
 # Ruby
 vendor/
+
+#yalc
+.yalc/
+yalc.lock

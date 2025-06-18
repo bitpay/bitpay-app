@@ -10,7 +10,7 @@ import {
 import {
   BitpaySupportedTokens,
   CurrencyOpts,
-  SUPPORTED_EVM_COINS,
+  SUPPORTED_VM_TOKENS,
 } from '../../../../constants/currencies';
 import {LogActions} from '../../../log';
 import {
@@ -34,7 +34,7 @@ export const startGetTokenOptions =
       dispatch(LogActions.info('starting [startGetTokenOptions]'));
       let tokenOptionsByAddress: {[key in string]: Token} = {};
       let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
-      for await (const chain of SUPPORTED_EVM_COINS) {
+      for await (const chain of SUPPORTED_VM_TOKENS) {
         let {data: tokens} = await axios.get<{[key in string]: Token}>(
           `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
         );
@@ -140,9 +140,9 @@ const populateTokenInfo = ({
     paymentInfo: {
       paymentCode: 'EIP681b',
       protocolPrefix: {
-        livenet: GetProtocolPrefix(chain, 'livenet'),
-        testnet: GetProtocolPrefix(chain, 'testnet'),
-        regtest: GetProtocolPrefix(chain, 'regtest'),
+        livenet: GetProtocolPrefix('livenet', chain),
+        testnet: GetProtocolPrefix('testnet', chain),
+        regtest: GetProtocolPrefix('regtest', chain),
       },
       ratesApi: '',
       blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS[chain].livenet,

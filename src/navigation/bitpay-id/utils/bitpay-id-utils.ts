@@ -2,6 +2,7 @@ import {SUPPORTED_COINS} from '../../../constants/currencies';
 
 export const chainSuffixMap: {[suffix: string]: string} = {
   e: 'eth',
+  sol: 'sol',
   m: 'matic',
   arb: 'arb',
   base: 'base',

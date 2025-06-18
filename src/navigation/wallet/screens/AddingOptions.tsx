@@ -30,10 +30,17 @@ import {
   createMultipleWallets,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {getBaseAccountCreationCoinsAndTokens} from '../../../constants/currencies';
+import {
+  getBaseEVMAccountCreationCoinsAndTokens,
+  getBaseSVMAccountCreationCoinsAndTokens,
+} from '../../../constants/currencies';
 import {successAddWallet} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
-import {getEvmGasWallets, sleep} from '../../../utils/helper-methods';
+import {
+  getEvmGasWallets,
+  getSvmGasWallets,
+  sleep,
+} from '../../../utils/helper-methods';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -74,15 +81,15 @@ const AddingOptions: React.FC = () => {
       },
     },
     {
-      id: 'account-based-wallet',
-      title: t('Account-Based Wallet'),
+      id: 'evm-compatible-wallet',
+      title: t('EVM-Compatible Wallet'),
       description: t(
-        'An account for Ethereum and EVM-compatible networks like Ethereum, Polygon, Base and more. This account type supports Smart Contracts, Dapps and DeFi',
+        'An account for Ethereum and EVM-compatible networks like Ethereum, Polygon, Base and more. This account type supports Smart Contracts, Dapps and DeFi.',
       ),
       cta: async () => {
         try {
           dispatch(
-            Analytics.track('Clicked Create Basic Wallet', {
+            Analytics.track('Clicked Create EVM Compatible Wallet', {
               context: 'AddingOptions',
             }),
           );
@@ -98,11 +105,64 @@ const AddingOptions: React.FC = () => {
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
-          await dispatch(startOnGoingProcessModal('ADDING_CHAINS'));
+          await dispatch(startOnGoingProcessModal('ADDING_EVM_CHAINS'));
           const wallets = await dispatch(
             createMultipleWallets({
               key: _key,
-              currencies: getBaseAccountCreationCoinsAndTokens(),
+              currencies: getBaseEVMAccountCreationCoinsAndTokens(),
+              options: {
+                network,
+                password,
+                account,
+                customAccount: true,
+              },
+            }),
+          );
+          key.wallets.push(...(wallets as Wallet[]));
+
+          dispatch(successAddWallet({key}));
+          dispatch(dismissOnGoingProcessModal());
+          navigation.goBack();
+        } catch (err) {
+          const errstring =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(LogActions.error(`Error adding account: ${errstring}`));
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(1000);
+          showErrorModal(errstring);
+        }
+      },
+    },
+    {
+      id: 'solana-wallet',
+      title: t('Solana Wallet'),
+      description: t(
+        'An account for the Solana network. This account type supports Smart Contracts, Dapps, DeFi and SPL tokens.',
+      ),
+      cta: async () => {
+        try {
+          dispatch(
+            Analytics.track('Clicked Create SPL Compatible Wallet', {
+              context: 'AddingOptions',
+            }),
+          );
+          const _key = key.methods as KeyMethods;
+          let password: string | undefined;
+          if (key.isPrivKeyEncrypted) {
+            password = await dispatch(
+              getDecryptPassword(Object.assign({}, key)),
+            );
+          }
+          const svmWallets = getSvmGasWallets(key.wallets);
+          const accounts = svmWallets.map(
+            ({credentials}) => credentials.account,
+          );
+          const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
+          await dispatch(startOnGoingProcessModal('ADDING_SPL_CHAINS'));
+          const wallets = await dispatch(
+            createMultipleWallets({
+              key: _key,
+              currencies: getBaseSVMAccountCreationCoinsAndTokens(),
               options: {
                 network,
                 password,

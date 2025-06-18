@@ -142,7 +142,8 @@ const PayAllBills = ({
 }: NativeStackScreenProps<BillGroupParamList, 'PayAllBills'>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
-  const {accounts} = route.params;
+  const {accounts: allAccounts} = route.params;
+  const accounts = allAccounts.filter(acct => acct.isPayable);
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
   const [amountModalVisible, setAmountModalVisible] = useState(false);
   const [amountModalAccountAndIndex, setAmountModalAccountAndIndex] = useState({
@@ -292,243 +293,232 @@ const PayAllBills = ({
         }}>
         <SectionContainer
           style={{flexGrow: 1, paddingLeft: 15, paddingRight: 15}}>
-          {accounts
-            .filter(account => account.isPayable)
-            .map((account, accountIndex) => (
-              <AccountContainer key={accountIndex}>
-                <TouchableOpacity
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    setAccountsState(
-                      accountsState.map((accountState, index) => ({
-                        ...accountState,
-                        expanded:
-                          index === accountIndex
-                            ? !accountState.expanded
-                            : accountState.expanded,
-                      })),
-                    );
-                  }}>
-                  <AccountHeader>
-                    <BillItem
-                      account={account}
-                      variation={'header'}
-                      expanded={accountsState[accountIndex].expanded}
-                      selectedAmount={
-                        accountsState[accountIndex].selectedAmount
-                      }
-                    />
-                  </AccountHeader>
-                </TouchableOpacity>
-                {accountsState[accountIndex].expanded ? (
-                  <BillPayOptions>
-                    {account[account.type].nextPaymentMinimumAmount ? (
-                      <TouchableOpacity
-                        activeOpacity={ActiveOpacity}
-                        onPress={() =>
-                          selectPaymentOption(
-                            account,
-                            accountIndex,
-                            'nextPaymentMinimumAmount',
-                          )
-                        }>
-                        <BillPayOption noBorder={true}>
-                          <CheckboxContainer>
-                            <Checkbox
-                              radioHeight={25}
-                              checkHeight={10}
-                              checked={
-                                accountsState[accountIndex]
-                                  .selectedAmountField ===
-                                'nextPaymentMinimumAmount'
-                              }
-                              radio={true}
-                              onPress={() =>
-                                selectPaymentOption(
-                                  account,
-                                  accountIndex,
-                                  'nextPaymentMinimumAmount',
-                                )
-                              }
-                            />
-                          </CheckboxContainer>
-                          <LineItemLabelContainer>
-                            <Paragraph>Minimum Payment Due</Paragraph>
-                            <LineItemSublabel>
-                              Due{' '}
-                              {moment(
-                                new Date(
-                                  account[
-                                    account.type
-                                  ].paddedNextPaymentDueDate!,
-                                ),
-                              )
-                                .utc()
-                                .format('MMMM D, YYYY')}
-                            </LineItemSublabel>
-                          </LineItemLabelContainer>
-                          <BillPayOptionAmount>
-                            {formatFiatAmount(
-                              account[account.type].nextPaymentMinimumAmount,
-                              'USD',
-                              {customPrecision: 'minimal'},
-                            )}
-                          </BillPayOptionAmount>
-                        </BillPayOption>
-                      </TouchableOpacity>
-                    ) : null}
-                    {account[account.type].lastStatementBalance ? (
-                      <TouchableOpacity
-                        activeOpacity={ActiveOpacity}
-                        onPress={() => {
-                          selectPaymentOption(
-                            account,
-                            accountIndex,
-                            'lastStatementBalance',
-                          );
-                        }}>
-                        <BillPayOption noBorder={true}>
-                          <CheckboxContainer>
-                            <Checkbox
-                              radioHeight={25}
-                              checkHeight={10}
-                              checked={
-                                accountsState[accountIndex]
-                                  .selectedAmountField ===
-                                'lastStatementBalance'
-                              }
-                              radio={true}
-                              onPress={() =>
-                                selectPaymentOption(
-                                  account,
-                                  accountIndex,
-                                  'lastStatementBalance',
-                                )
-                              }
-                            />
-                          </CheckboxContainer>
-                          <LineItemLabelContainer>
-                            <Paragraph>Last statement balance</Paragraph>
-                          </LineItemLabelContainer>
-                          <BillPayOptionAmount>
-                            {formatFiatAmount(
-                              account[account.type].lastStatementBalance!,
-                              'USD',
-                              {
-                                customPrecision: 'minimal',
-                              },
-                            )}
-                          </BillPayOptionAmount>
-                        </BillPayOption>
-                      </TouchableOpacity>
-                    ) : null}
-                    {account[account.type].balance ? (
-                      <TouchableOpacity
-                        activeOpacity={ActiveOpacity}
-                        onPress={() =>
-                          selectPaymentOption(account, accountIndex, 'balance')
-                        }>
-                        <BillPayOption noBorder={true}>
-                          <CheckboxContainer>
-                            <Checkbox
-                              radioHeight={25}
-                              checkHeight={10}
-                              checked={
-                                accountsState[accountIndex]
-                                  .selectedAmountField === 'balance'
-                              }
-                              radio={true}
-                              onPress={() =>
-                                selectPaymentOption(
-                                  account,
-                                  accountIndex,
-                                  'balance',
-                                )
-                              }
-                            />
-                          </CheckboxContainer>
-                          <LineItemLabelContainer>
-                            <Paragraph>Current Balance</Paragraph>
-                          </LineItemLabelContainer>
-                          <BillPayOptionAmount>
-                            {formatFiatAmount(
-                              account[account.type].balance,
-                              'USD',
-                              {
-                                customPrecision: 'minimal',
-                              },
-                            )}
-                          </BillPayOptionAmount>
-                        </BillPayOption>
-                      </TouchableOpacity>
-                    ) : null}
+          {accounts.map((account, accountIndex) => (
+            <AccountContainer key={accountIndex}>
+              <TouchableOpacity
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  setAccountsState(
+                    accountsState.map((accountState, index) => ({
+                      ...accountState,
+                      expanded:
+                        index === accountIndex
+                          ? !accountState.expanded
+                          : accountState.expanded,
+                    })),
+                  );
+                }}>
+                <AccountHeader>
+                  <BillItem
+                    account={account}
+                    variation={'header'}
+                    expanded={accountsState[accountIndex].expanded}
+                    selectedAmount={accountsState[accountIndex].selectedAmount}
+                  />
+                </AccountHeader>
+              </TouchableOpacity>
+              {accountsState[accountIndex].expanded ? (
+                <BillPayOptions>
+                  {account[account.type].nextPaymentMinimumAmount ? (
                     <TouchableOpacity
                       activeOpacity={ActiveOpacity}
                       onPress={() =>
-                        selectPaymentOption(account, accountIndex, 'other')
+                        selectPaymentOption(
+                          account,
+                          accountIndex,
+                          'nextPaymentMinimumAmount',
+                        )
                       }>
-                      <BillPayOption noBorder={true} style={{paddingTop: 4}}>
+                      <BillPayOption noBorder={true}>
                         <CheckboxContainer>
                           <Checkbox
                             radioHeight={25}
                             checkHeight={10}
                             checked={
                               accountsState[accountIndex]
-                                .selectedAmountField === 'other'
+                                .selectedAmountField ===
+                              'nextPaymentMinimumAmount'
                             }
                             radio={true}
                             onPress={() =>
                               selectPaymentOption(
                                 account,
                                 accountIndex,
-                                'other',
+                                'nextPaymentMinimumAmount',
                               )
                             }
                           />
                         </CheckboxContainer>
                         <LineItemLabelContainer>
-                          <Paragraph>
-                            {account[account.type].balance ||
-                            account[account.type].lastStatementBalance ||
-                            account[account.type].nextPaymentMinimumAmount
-                              ? 'Other Amount'
-                              : 'Amount'}
-                          </Paragraph>
+                          <Paragraph>Minimum Payment Due</Paragraph>
+                          <LineItemSublabel>
+                            Due{' '}
+                            {moment(
+                              new Date(
+                                account[account.type].paddedNextPaymentDueDate!,
+                              ),
+                            )
+                              .utc()
+                              .format('MMMM D, YYYY')}
+                          </LineItemSublabel>
                         </LineItemLabelContainer>
-                        <Field
-                          style={{
-                            height: 20,
-                            minWidth: 100,
-                          }}>
-                          <FieldValue style={{textAlign: 'right'}}>
-                            {accountsState[accountIndex].selectedAmountField ===
-                              'other' &&
-                            accountsState[accountIndex].selectedAmount
-                              ? formatFiatAmount(
-                                  accountsState[accountIndex].selectedAmount,
-                                  'USD',
-                                  {customPrecision: 'minimal'},
-                                )
-                              : ''}
-                          </FieldValue>
-                        </Field>
+                        <BillPayOptionAmount>
+                          {formatFiatAmount(
+                            account[account.type].nextPaymentMinimumAmount,
+                            'USD',
+                            {customPrecision: 'minimal'},
+                          )}
+                        </BillPayOptionAmount>
                       </BillPayOption>
                     </TouchableOpacity>
-                  </BillPayOptions>
-                ) : null}
-                {accountsState[accountIndex].expanded ? (
-                  <AccountFooter>
-                    <AccountFooterText>
-                      {account[account.type].lastSuccessfulSync
-                        ? `Balance as of ${moment(
-                            new Date(account[account.type].lastSuccessfulSync!),
-                          ).format('l, h:mm a')}`
-                        : 'Balance may be out of date'}
-                    </AccountFooterText>
-                  </AccountFooter>
-                ) : null}
-              </AccountContainer>
-            ))}
+                  ) : null}
+                  {account[account.type].lastStatementBalance ? (
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
+                      onPress={() => {
+                        selectPaymentOption(
+                          account,
+                          accountIndex,
+                          'lastStatementBalance',
+                        );
+                      }}>
+                      <BillPayOption noBorder={true}>
+                        <CheckboxContainer>
+                          <Checkbox
+                            radioHeight={25}
+                            checkHeight={10}
+                            checked={
+                              accountsState[accountIndex]
+                                .selectedAmountField === 'lastStatementBalance'
+                            }
+                            radio={true}
+                            onPress={() =>
+                              selectPaymentOption(
+                                account,
+                                accountIndex,
+                                'lastStatementBalance',
+                              )
+                            }
+                          />
+                        </CheckboxContainer>
+                        <LineItemLabelContainer>
+                          <Paragraph>Last statement balance</Paragraph>
+                        </LineItemLabelContainer>
+                        <BillPayOptionAmount>
+                          {formatFiatAmount(
+                            account[account.type].lastStatementBalance!,
+                            'USD',
+                            {
+                              customPrecision: 'minimal',
+                            },
+                          )}
+                        </BillPayOptionAmount>
+                      </BillPayOption>
+                    </TouchableOpacity>
+                  ) : null}
+                  {account[account.type].balance ? (
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
+                      onPress={() =>
+                        selectPaymentOption(account, accountIndex, 'balance')
+                      }>
+                      <BillPayOption noBorder={true}>
+                        <CheckboxContainer>
+                          <Checkbox
+                            radioHeight={25}
+                            checkHeight={10}
+                            checked={
+                              accountsState[accountIndex]
+                                .selectedAmountField === 'balance'
+                            }
+                            radio={true}
+                            onPress={() =>
+                              selectPaymentOption(
+                                account,
+                                accountIndex,
+                                'balance',
+                              )
+                            }
+                          />
+                        </CheckboxContainer>
+                        <LineItemLabelContainer>
+                          <Paragraph>Current Balance</Paragraph>
+                        </LineItemLabelContainer>
+                        <BillPayOptionAmount>
+                          {formatFiatAmount(
+                            account[account.type].balance,
+                            'USD',
+                            {
+                              customPrecision: 'minimal',
+                            },
+                          )}
+                        </BillPayOptionAmount>
+                      </BillPayOption>
+                    </TouchableOpacity>
+                  ) : null}
+                  <TouchableOpacity
+                    activeOpacity={ActiveOpacity}
+                    onPress={() =>
+                      selectPaymentOption(account, accountIndex, 'other')
+                    }>
+                    <BillPayOption noBorder={true} style={{paddingTop: 4}}>
+                      <CheckboxContainer>
+                        <Checkbox
+                          radioHeight={25}
+                          checkHeight={10}
+                          checked={
+                            accountsState[accountIndex].selectedAmountField ===
+                            'other'
+                          }
+                          radio={true}
+                          onPress={() =>
+                            selectPaymentOption(account, accountIndex, 'other')
+                          }
+                        />
+                      </CheckboxContainer>
+                      <LineItemLabelContainer>
+                        <Paragraph>
+                          {account[account.type].balance ||
+                          account[account.type].lastStatementBalance ||
+                          account[account.type].nextPaymentMinimumAmount
+                            ? 'Other Amount'
+                            : 'Amount'}
+                        </Paragraph>
+                      </LineItemLabelContainer>
+                      <Field
+                        style={{
+                          height: 20,
+                          minWidth: 100,
+                        }}>
+                        <FieldValue style={{textAlign: 'right'}}>
+                          {accountsState[accountIndex].selectedAmountField ===
+                            'other' &&
+                          accountsState[accountIndex].selectedAmount
+                            ? formatFiatAmount(
+                                accountsState[accountIndex].selectedAmount,
+                                'USD',
+                                {customPrecision: 'minimal'},
+                              )
+                            : ''}
+                        </FieldValue>
+                      </Field>
+                    </BillPayOption>
+                  </TouchableOpacity>
+                </BillPayOptions>
+              ) : null}
+              {accountsState[accountIndex].expanded ? (
+                <AccountFooter>
+                  <AccountFooterText>
+                    {account[account.type].lastSuccessfulSync
+                      ? `Balance as of ${moment(
+                          new Date(account[account.type].lastSuccessfulSync!),
+                        ).format('l, h:mm a')}`
+                      : 'Balance may be out of date'}
+                  </AccountFooterText>
+                </AccountFooter>
+              ) : null}
+            </AccountContainer>
+          ))}
         </SectionContainer>
       </ScrollView>
       <FooterButton

@@ -28,10 +28,8 @@ import FastImage from 'react-native-fast-image';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
@@ -50,13 +48,10 @@ import {
   CtaContainerAbsolute,
   Info,
   InfoImageContainer,
-  InfoTriangle,
   SearchRoundContainer,
   SearchRoundInput,
   SheetContainer,
-  WIDTH,
 } from '../../../components/styled/Containers';
-import BoxInput from '../../../components/form/BoxInput';
 import SearchSvg from '../../../../assets/img/search.svg';
 import {buildAccountList} from '../../../store/wallet/utils/wallet';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
@@ -78,14 +73,6 @@ const EmptyListContainer = styled.View`
   justify-content: space-between;
   align-items: center;
   margin-top: 50px;
-`;
-
-const horizontalPadding = 20;
-
-const SearchBox = styled(BoxInput)`
-  width: ${WIDTH - horizontalPadding * 2}px;
-  font-size: 16px;
-  position: relative;
 `;
 
 const AccountSettingsContainer = styled(TouchableOpacity)`
@@ -332,21 +319,16 @@ const WalletConnectConnections = () => {
           {
             text: t('DELETE'),
             action: async () => {
+              dispatch(dismissBottomNotificationModal());
+              await sleep(600);
               try {
-                dispatch(dismissBottomNotificationModal());
-                await sleep(600);
-                dispatch(startOnGoingProcessModal('LOADING'));
-                await sleep(600);
                 await dispatch(
                   walletConnectV2OnDeleteSession(
                     session.topic,
                     session.pairingTopic,
                   ),
                 );
-                dispatch(dismissOnGoingProcessModal());
               } catch (err) {
-                dispatch(dismissOnGoingProcessModal());
-                await sleep(500);
                 await showErrorMessage(
                   CustomErrorMessage({
                     errMsg: BWCErrorMessage(err),
@@ -378,11 +360,9 @@ const WalletConnectConnections = () => {
           {
             text: t('DELETE'),
             action: async () => {
+              dispatch(dismissBottomNotificationModal());
+              await sleep(600);
               try {
-                dispatch(dismissBottomNotificationModal());
-                await sleep(600);
-                dispatch(startOnGoingProcessModal('LOADING'));
-                await sleep(600);
                 for (const session of sessions) {
                   await dispatch(
                     walletConnectV2OnDeleteSession(
@@ -391,10 +371,7 @@ const WalletConnectConnections = () => {
                     ),
                   );
                 }
-                dispatch(dismissOnGoingProcessModal());
               } catch (err) {
-                dispatch(dismissOnGoingProcessModal());
-                await sleep(500);
                 await showErrorMessage(
                   CustomErrorMessage({
                     errMsg: BWCErrorMessage(err),
@@ -469,16 +446,7 @@ const WalletConnectConnections = () => {
         </View>
       </ScrollView>
       {sessions.length > 0 ? (
-        <CtaContainerAbsolute
-          background={true}
-          style={{
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 4},
-            shadowOpacity: 0.1,
-            shadowRadius: 12,
-            elevation: 5,
-            bottom: 20,
-          }}>
+        <CtaContainerAbsolute background={true}>
           <Button
             buttonStyle="danger"
             buttonOutline={true}
@@ -493,6 +461,7 @@ const WalletConnectConnections = () => {
 
       {selectedSession ? (
         <SheetModal
+          modalLibrary={'modal'}
           isVisible={showSessionOptions}
           onBackdropPress={() => {
             setShowSessionOptions(false);

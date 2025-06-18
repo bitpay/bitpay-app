@@ -26,6 +26,7 @@ import {
   BitcoreUtxoTransactionLike,
   BitcoreEvmTransactionLike,
   ProposalErrorHandlerContext,
+  KeyMethods,
 } from '../../wallet.models';
 import {
   FormatAmount,
@@ -80,8 +81,9 @@ import {
 import {
   GetPrecision,
   IsERCToken,
-  IsEVMChain,
+  IsVMChain,
   IsSegwitCoin,
+  IsSVMChain,
   IsUtxoChain,
 } from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
@@ -1475,8 +1477,42 @@ export const signTx = (
 ): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     try {
+      const promisifiedSign = (
+        keyMethods: KeyMethods | undefined,
+        rootPath: string,
+        txp: any,
+        password: string | undefined,
+      ) => {
+        return new Promise((resolve, reject) => {
+          try {
+            const result = keyMethods?.sign(
+              rootPath,
+              txp,
+              password,
+              (err: any, signatures: string[]) => {
+                if (err) {
+                  return reject(err);
+                }
+                resolve(signatures);
+              },
+            );
+
+            if (result && Array.isArray(result)) {
+              return resolve(result);
+            }
+          } catch (err) {
+            reject(err);
+          }
+        });
+      };
+
       const rootPath = wallet.getRootPath();
-      const signatures = key.methods!.sign(rootPath, txp, password);
+      const signatures = await promisifiedSign(
+        key.methods,
+        rootPath,
+        txp,
+        password,
+      );
       wallet.pushSignatures(
         txp,
         signatures,
@@ -1985,7 +2021,7 @@ const generateInsufficientFundsError = (
     wallet,
     amount,
   );
-  let errMsg = IsEVMChain(wallet.chain)
+  let errMsg = IsVMChain(wallet.chain)
     ? t(
         'You are trying to send more funds than you have available.\n\nTrying to send:\nAvailable to send:',
         {
@@ -2116,9 +2152,10 @@ const processInsufficientFundsForFee = (
     toShowAmount,
   );
 
-  const title = IsEVMChain(wallet.chain)
-    ? t('Not enough gas for transaction')
-    : t('Insufficient funds for fee.');
+  const title =
+    IsVMChain(wallet.chain) || IsSVMChain(wallet.chain)
+      ? t('Not enough gas for transaction')
+      : t('Insufficient funds for fee.');
   const body = IsERCToken(wallet.currencyAbbreviation, wallet.chain)
     ? t(
         'Insufficient funds in your linked wallet to cover the transaction fee.\n\nRequired Gas:\nLinked Wallet Balance:',

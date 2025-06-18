@@ -38,7 +38,7 @@ import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/w
 import {
   GetFeeUnits,
   IsERCToken,
-  IsEVMChain,
+  IsVMChain,
 } from '../../../../../store/wallet/utils/currency';
 import {
   InfoDescription,
@@ -255,7 +255,7 @@ const PayProConfirm = () => {
       dispatch(
         AppActions.showBottomNotificationModal({
           ...errorConfig,
-          errMsg:
+          message:
             err.response?.data?.message || err.message || errorConfig.message,
         }),
       );
@@ -285,7 +285,7 @@ const PayProConfirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal({
         ...errorConfig,
-        errMsg:
+        message:
           err.response?.data?.message || err.message || errorConfig.message,
       }),
     );
@@ -407,7 +407,7 @@ const PayProConfirm = () => {
           refresh: true,
         });
       } else {
-        if (IsEVMChain(wallet!.chain) && wallet!.receiveAddress) {
+        if (IsVMChain(wallet!.chain) && wallet!.receiveAddress) {
           navigation.dispatch(
             CommonActions.reset({
               index: 2,

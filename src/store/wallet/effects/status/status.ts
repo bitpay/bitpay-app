@@ -130,7 +130,7 @@ export const waitForTargetAmountAndUpdateWallet =
                     await dispatch(
                       startUpdateWalletStatus({
                         key: recipientKey,
-                        wallet: recipientWallet,
+                        wallet: recipientWallet as Wallet,
                         force: true,
                       }),
                     );
@@ -351,13 +351,14 @@ export const updateKeyStatus =
         }
       >;
 
+      let walletsToUpdate = [...key.wallets];
       if (accountAddress) {
-        key.wallets = key.wallets.filter(
+        walletsToUpdate = walletsToUpdate.filter(
           wallet => wallet.receiveAddress === accountAddress,
         );
       }
       // remote token wallets from getStatusAll
-      const noTokenWallets = key.wallets.filter(wallet => {
+      const noTokenWallets = walletsToUpdate.filter(wallet => {
         return (
           !wallet.credentials.token &&
           !wallet.credentials.multisigEthInfo &&
@@ -828,7 +829,7 @@ export const updateWalletStatus =
                 ),
               },
               pendingTxps: cachedPendingTxps,
-              singleAddress: cachedSingleAddress,
+              singleAddress: !!cachedSingleAddress,
             });
           }
           try {
@@ -875,7 +876,7 @@ export const updateWalletStatus =
                 ),
               },
               pendingTxps: cachedPendingTxps,
-              singleAddress: cachedSingleAddress,
+              singleAddress: !!cachedSingleAddress,
             });
           }
         },

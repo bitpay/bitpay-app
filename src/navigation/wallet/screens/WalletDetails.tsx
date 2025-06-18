@@ -125,7 +125,7 @@ import TimerSvg from '../../../../assets/img/timer.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import {
   BitpaySupportedCoins,
-  SUPPORTED_EVM_COINS,
+  SUPPORTED_VM_TOKENS,
 } from '../../../constants/currencies';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
 import {
@@ -401,7 +401,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const createViewOnBlockchainOption = () => {
     if (
-      ['eth', 'matic', 'xrp', 'arb', 'base', 'op'].includes(
+      ['eth', 'matic', 'xrp', 'arb', 'base', 'op', 'sol'].includes(
         fullWalletObj.chain.toLowerCase(),
       ) ||
       IsERCToken(
@@ -811,7 +811,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     const chain = fullWalletObj.chain.toLowerCase();
 
     if (
-      ['eth', 'matic', 'xrp', 'arb', 'base', 'op'].includes(chain) ||
+      ['eth', 'matic', 'xrp', 'arb', 'base', 'op', 'sol'].includes(chain) ||
       IsERCToken(coin, chain)
     ) {
       let address;
@@ -830,7 +830,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             ? `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrls}account/${address}`
             : `https://${BitpaySupportedCoins.xrp.paymentInfo.blockExplorerUrlsTestnet}account/${address}`;
       }
-      if (SUPPORTED_EVM_COINS.includes(chain)) {
+      if (SUPPORTED_VM_TOKENS.includes(chain)) {
         url =
           fullWalletObj.network === 'livenet'
             ? `https://${BitpaySupportedCoins[chain].paymentInfo.blockExplorerUrls}address/${address}`

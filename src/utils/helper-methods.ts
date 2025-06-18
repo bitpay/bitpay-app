@@ -3,7 +3,12 @@ import {ContactRowProps} from '../components/list/ContactRow';
 import {Network} from '../constants';
 import {CurrencyListIcons} from '../constants/SupportedCurrencyOptions';
 import {ReactElement} from 'react';
-import {IsERCToken, IsEVMChain} from '../store/wallet/utils/currency';
+import {
+  IsERCToken,
+  IsVMChain,
+  IsSVMChain,
+  IsEVMChain,
+} from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
 import {PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
@@ -11,9 +16,9 @@ import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
 import {createWalletAddress} from '../store/wallet/effects/address/address';
 import {
-  getBaseAccountCreationCoinsAndTokens,
   BitpaySupportedCoins,
   SUPPORTED_EVM_COINS,
+  SUPPORTED_SVM_COINS,
 } from '../constants/currencies';
 import {LogActions} from '../store/log';
 import {createMultipleWallets} from '../store/wallet/effects';
@@ -22,10 +27,7 @@ import {FormatAmount} from '../store/wallet/effects/amount/amount';
 import {getERC20TokenPrice} from '../store/moralis/moralis.effects';
 import {ethers} from 'ethers';
 import EtherscanAPI from '../api/etherscan';
-import {
-  EIP155_CHAINS,
-  WALLET_CONNECT_SUPPORTED_CHAINS,
-} from '../constants/WalletConnectV2';
+import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../constants/WalletConnectV2';
 import {BitpaySupportedTokenOptsByAddress} from '../constants/tokens';
 import {Effect} from '../store';
 import {WalletKitTypes} from '@reown/walletkit';
@@ -46,6 +48,7 @@ export const suffixChainMap: {[suffix: string]: string} = {
   arb: 'arb',
   base: 'base',
   op: 'op',
+  sol: 'sol',
 };
 
 export const sleep = (duration: number) =>
@@ -115,6 +118,9 @@ export const getNetworkName = (path: string): string => {
     case "2'": // for LTC
       networkName = 'livenet';
       break;
+    case "501'": // for SOL
+      networkName = 'livenet';
+      break;
   }
   return networkName;
 };
@@ -156,6 +162,9 @@ export const isValidDerivationPath = (path: string, chain: string): boolean => {
     case 'base':
     case 'op':
       isValid = ["60'", "0'", "1'"].indexOf(coinCode) > -1;
+      break;
+    case 'sol':
+      isValid = ["501'", "0'", "1'"].indexOf(coinCode) > -1;
       break;
     case 'xrp':
       isValid = ["144'", "0'", "1'"].indexOf(coinCode) > -1;
@@ -391,7 +400,9 @@ export const getRateByCurrencyName = (
 };
 
 export const addTokenChainSuffix = (name: string, chain: string) => {
-  return `${name.toLowerCase()}_${suffixChainMap[chain]}`;
+  return `${IsSVMChain(chain) ? name : name.toLowerCase()}_${
+    suffixChainMap[chain]
+  }`;
 };
 
 export const formatCurrencyAbbreviation = (currencyAbbreviation: string) => {
@@ -427,10 +438,16 @@ export const getProtocolName = (
     : PROTOCOL_NAME.default[_network];
 };
 
-export const getProtocolsName = (): string | undefined => {
-  return SUPPORTED_EVM_COINS.map(
-    chain => PROTOCOL_NAME[chain][Network.mainnet],
-  ).join(', ');
+export const getProtocolsName = (chain: string): string | undefined => {
+  if (IsSVMChain(chain)) {
+    return SUPPORTED_SVM_COINS.map(
+      chain => PROTOCOL_NAME[chain][Network.mainnet],
+    ).join(', ');
+  } else {
+    return SUPPORTED_EVM_COINS.map(
+      chain => PROTOCOL_NAME[chain][Network.mainnet],
+    ).join(', ');
+  }
 };
 
 export const getEVMFeeCurrency = (chain: string): string => {
@@ -445,6 +462,8 @@ export const getEVMFeeCurrency = (chain: string): string => {
       return 'eth';
     case 'op':
       return 'eth';
+    case 'sol':
+      return 'sol';
     default:
       return 'eth';
   }
@@ -462,6 +481,8 @@ export const getCWCChain = (chain: string): string => {
       return 'BASEERC20';
     case 'op':
       return 'OPERC20';
+    case 'sol':
+      return 'SOLSPL';
     default:
       return 'ETHERC20';
   }
@@ -479,6 +500,8 @@ export const getChainUsingSuffix = (symbol: string) => {
       return 'arb';
     case 'op':
       return 'op';
+    case 'sol':
+      return 'sol';
     default:
       return 'eth';
   }
@@ -622,6 +645,12 @@ export const createWalletsForAccounts = async (
   dispatch: any,
   accountsArray: number[],
   key: KeyMethods,
+  currencies: {
+    chain: string;
+    currencyAbbreviation: string;
+    isToken: boolean;
+    tokenAddress?: string;
+  }[],
   password?: string,
 ) => {
   return (
@@ -631,7 +660,7 @@ export const createWalletsForAccounts = async (
           const newWallets = (await dispatch(
             createMultipleWallets({
               key: key as KeyMethods,
-              currencies: getBaseAccountCreationCoinsAndTokens(),
+              currencies,
               options: {
                 password,
                 account,
@@ -656,10 +685,27 @@ export const createWalletsForAccounts = async (
     .filter(Boolean) as Wallet[];
 };
 
+export const getVMGasWallets = (wallets: Wallet[]) => {
+  return wallets.filter(
+    wallet =>
+      (IsVMChain(wallet.credentials.chain) ||
+        IsSVMChain(wallet.credentials.chain)) &&
+      !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
+  );
+};
+
 export const getEvmGasWallets = (wallets: Wallet[]) => {
   return wallets.filter(
     wallet =>
       IsEVMChain(wallet.credentials.chain) &&
+      !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
+  );
+};
+
+export const getSvmGasWallets = (wallets: Wallet[]) => {
+  return wallets.filter(
+    wallet =>
+      IsSVMChain(wallet.credentials.chain) &&
       !IsERCToken(wallet.credentials.coin, wallet.credentials.chain),
   );
 };
@@ -715,13 +761,26 @@ export const processOtherMethodsRequest =
       case 'eth_signTypedData_v3':
       case 'eth_signTypedData_v4':
       case 'eth_sign':
-        senderAddress = request.params[0];
+        senderAddress = request.params?.[0];
         break;
       case 'personal_sign':
-        senderAddress = request.params[1];
+        senderAddress = request.params?.[1];
         break;
       case 'eth_signTransaction':
-        senderAddress = request.params[0].from;
+        senderAddress = request.params?.[0]?.from;
+        break;
+      case 'solana_signMessage':
+        senderAddress = request.params?.pubkey;
+        break;
+      case 'solana_signTransaction':
+        const senderData = request?.params?.instructions?.[0].keys.find(
+          (instruction: {
+            pubkey: string;
+            isSigner: boolean;
+            isWritable: boolean;
+          }) => instruction.isSigner,
+        );
+        senderAddress = senderData?.pubkey || '';
         break;
     }
     try {
@@ -729,15 +788,17 @@ export const processOtherMethodsRequest =
         key.wallets.filter(
           wallet =>
             wallet.receiveAddress?.toLowerCase() ===
-              senderAddress.toLowerCase() && wallet.chain === swapFromChain,
+              senderAddress?.toLowerCase() && wallet.chain === swapFromChain,
         ),
       )[0];
-      const {currencyAbbreviation} = wallet; // this is the "gas" wallet
+
       return {
         transactionDataName: 'SIGN REQUEST',
         swapFromChain,
         senderAddress,
-        swapFromCurrencyAbbreviation: currencyAbbreviation,
+        swapFromCurrencyAbbreviation: wallet
+          ? wallet.currencyAbbreviation
+          : swapFromChain,
       };
     } catch (error) {
       dispatch(
@@ -845,7 +906,7 @@ export const processSwapRequest =
         //     'No standard token data - fetching contract ABI from Etherscan',
         //   ),
         // );
-        // const _chainId = EIP155_CHAINS[chainId]?.chainId?.toString();
+        // const _chainId = WC_SUPPORTED_CHAINS[chainId]?.chainId?.toString();
         // abi = await fetchContractAbi(dispatch, _chainId, to);
         // dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
         // const contractInterface = new ethers.utils.Interface(abi!);
@@ -1002,10 +1063,24 @@ const handlePayTransaction = async (
   const swapAmount = valueBN.toString();
   const senderContractAddress = tokenContract;
   const recipientAddress = senderAddress;
+  const isMainChainAddress =
+    senderContractAddress === ethers.constants.AddressZero;
+  let senderTokenPrice;
 
-  const senderTokenPrice = (
-    await dispatch(getERC20TokenPrice({address: senderContractAddress, chain}))
-  ).usdPrice;
+  if (isMainChainAddress) {
+    // Special case for native transfer
+    senderTokenPrice = getRateByCurrencyName(
+      allRates,
+      chain.toLowerCase(),
+      chain,
+    )[0].rate;
+  } else {
+    senderTokenPrice = (
+      await dispatch(
+        getERC20TokenPrice({address: senderContractAddress, chain}),
+      )
+    ).usdPrice;
+  }
 
   const formattedTokenAddress = addTokenChainSuffix(
     senderContractAddress.toLowerCase(),
@@ -1020,7 +1095,7 @@ const handlePayTransaction = async (
     FormatAmount(
       swapFromCurrencyAbbreviation,
       chain,
-      senderContractAddress,
+      isMainChainAddress ? undefined : senderContractAddress,
       Number(swapAmount),
     ),
   );
@@ -1032,7 +1107,7 @@ const handlePayTransaction = async (
       swapFromCurrencyAbbreviation,
       chain,
       allRates,
-      senderContractAddress,
+      isMainChainAddress ? undefined : senderContractAddress,
       senderTokenPrice,
     ),
   );

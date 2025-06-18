@@ -24,7 +24,6 @@ import {
   CurrencyImageContainer,
   Hr,
   Info,
-  InfoTriangle,
   Row,
   RowContainer,
 } from '../../../components/styled/Containers';
@@ -33,9 +32,10 @@ import {
   IconContainer,
   ItemContainer,
   ItemTitleContainer,
+  ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {FlatList, Platform, View} from 'react-native';
+import {FlatList, Platform} from 'react-native';
 import FastImage from 'react-native-fast-image';
 import {sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -48,7 +48,6 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {useTranslation} from 'react-i18next';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {
   getAddressFrom,
   walletConnectV2OnDeleteSession,
@@ -68,7 +67,6 @@ import Blockie from '../../../components/blockie/Blockie';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import Button from '../../../components/button/Button';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {useTheme} from '@react-navigation/native';
 import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
@@ -147,11 +145,7 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
   if (!wallet) {
     wallet = Object.values(keys)
       .flatMap(key => key.wallets)
-      .find(
-        wallet =>
-          wallet.receiveAddress?.toLowerCase() ===
-            senderAddress!.toLowerCase() && wallet.chain === swapFromChain,
-      );
+      .find(wallet => wallet.chain === swapFromChain);
 
     _swapFromCurrencyAbbreviation =
       // @ts-ignore
@@ -171,7 +165,6 @@ const processRequest = (request: WCV2RequestType, keys: Keys) => {
 const WalletConnectHome = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const theme = useTheme();
   const dispatch = useAppDispatch();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [accountDisconnected, setAccountDisconnected] = useState(false);
@@ -275,7 +268,7 @@ const WalletConnectHome = () => {
     [dispatch],
   );
 
-  const disconnectAccount = async () => {
+  const disconnectAccount = useCallback(async () => {
     if (!sessionV2) {
       return;
     }
@@ -290,21 +283,16 @@ const WalletConnectHome = () => {
           {
             text: t('DELETE'),
             action: async () => {
+              dispatch(dismissBottomNotificationModal());
+              await sleep(600);
               try {
-                dispatch(dismissBottomNotificationModal());
-                await sleep(600);
-                dispatch(startOnGoingProcessModal('LOADING'));
-                await sleep(600);
                 await dispatch(
                   walletConnectV2OnDeleteSession(
                     sessionV2.topic,
                     sessionV2.pairingTopic,
                   ),
                 );
-                dispatch(dismissOnGoingProcessModal());
               } catch (err) {
-                dispatch(dismissOnGoingProcessModal());
-                await sleep(500);
                 await showErrorMessage(
                   CustomErrorMessage({
                     errMsg: BWCErrorMessage(err),
@@ -322,7 +310,7 @@ const WalletConnectHome = () => {
         ],
       }),
     );
-  };
+  }, [dispatch, sessionV2]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -558,7 +546,7 @@ const WalletConnectHome = () => {
 
   return (
     <WalletConnectContainer>
-      <View style={{marginTop: 20, padding: 16, flex: 1}}>
+      <ScrollView>
         <SummaryContainer hasRequest={requestsV2 && requestsV2.length > 0}>
           <HeaderTitle>{t('Summary')}</HeaderTitle>
           <Hr />
@@ -655,17 +643,8 @@ const WalletConnectHome = () => {
             </ItemContainer>
           )}
         </PRContainer>
-      </View>
-      <CtaContainerAbsolute
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-          bottom: 20,
-        }}>
+      </ScrollView>
+      <CtaContainerAbsolute background={true}>
         <Button
           buttonStyle="danger"
           buttonOutline={true}

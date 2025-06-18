@@ -1,6 +1,10 @@
 import {ReactElement} from 'react';
 import {CurrencyListIcons} from './SupportedCurrencyOptions';
-import {EVM_BLOCKCHAIN_EXPLORERS, BASE_BWS_URL} from './config';
+import {
+  EVM_BLOCKCHAIN_EXPLORERS,
+  BASE_BWS_URL,
+  SVM_BLOCKCHAIN_EXPLORERS,
+} from './config';
 
 export type SupportedChains =
   | 'btc'
@@ -11,7 +15,8 @@ export type SupportedChains =
   | 'matic'
   | 'op'
   | 'base'
-  | 'arb';
+  | 'arb'
+  | 'sol';
 export type SupportedEthereumTokens =
   | '0x4fabb145d64652a948d72533023f6e7a623c7c53_e' // 'busd_e'
   | '0x8e870d67f660d95d5be530380d0ec0bd388289e1_e' // 'usdp_e'
@@ -50,9 +55,14 @@ export type SupportedOpTokens =
   | '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58_op' // 'usdt_op'
   | '0x4200000000000000000000000000000000000006_op'; // 'weth_op'
 
+export type SupportedSolTokens = // Solana is case sensitive
+
+    | 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v_sol' // 'usdc_sol'
+    | 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB_sol'; // 'usdt_sol'
+
 export type EVM_CHAINS = 'eth' | 'matic';
 export type UTXO_CHAINS = 'btc' | 'bch' | 'doge' | 'ltc';
-
+export type SVM_CHAINS = 'sol';
 export interface CurrencyOpts {
   // Bitcore-node
   name: string;
@@ -803,6 +813,78 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
     feeInfo: {
       feeUnit: 'Gwei',
       feeUnitAmount: 1000000000,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+};
+
+export const BitpaySupportedSolTokens: {[key in string]: CurrencyOpts} = {
+  EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v_sol: {
+    name: 'USDC',
+    chain: 'sol',
+    coin: 'usdc',
+    feeCurrency: 'sol',
+    address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    unitInfo: {
+      unitName: 'USDC',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'usdc',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'solana', testnet: 'solana', regtest: 'solana'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdc_sol`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+  },
+  Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB_sol: {
+    // Solana is case sensitive
+    name: 'USDT',
+    chain: 'sol',
+    coin: 'usdt',
+    feeCurrency: 'sol',
+    address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+    unitInfo: {
+      unitName: 'USDT',
+      unitToSatoshi: 1e6,
+      unitDecimals: 6,
+      unitCode: 'usdt',
+    },
+    properties: {
+      hasMultiSig: false,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: true,
+      isStableCoin: true,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681b',
+      protocolPrefix: {livenet: 'solana', testnet: 'solana', regtest: 'solana'},
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/usdt_sol`,
+      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS.matic.livenet,
+      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS.matic.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
@@ -1618,8 +1700,55 @@ export const BitpaySupportedEvmCoins: {[key in string]: CurrencyOpts} = {
   },
 };
 
+export const BitpaySupportedSvmCoins: {[key in string]: CurrencyOpts} = {
+  sol: {
+    name: 'Solana',
+    chain: 'sol',
+    coin: 'sol',
+    feeCurrency: 'sol',
+    img: CurrencyListIcons.sol,
+    unitInfo: {
+      unitName: 'SOL',
+      unitToSatoshi: 1e9,
+      unitDecimals: 9,
+      unitCode: 'sol',
+    },
+    properties: {
+      hasMultiSig: true,
+      hasMultiSend: false,
+      isUtxo: false,
+      isERCToken: false,
+      isStableCoin: false,
+      singleAddress: true,
+    },
+    paymentInfo: {
+      paymentCode: 'EIP681',
+      protocolPrefix: {
+        livenet: 'solana',
+        testnet: 'solana',
+        regtest: 'solana',
+      },
+      ratesApi: `${BASE_BWS_URL}/v3/fiatrates/sol`,
+      blockExplorerUrls: SVM_BLOCKCHAIN_EXPLORERS.sol.livenet,
+      blockExplorerUrlsTestnet: SVM_BLOCKCHAIN_EXPLORERS.sol.testnet,
+    },
+    feeInfo: {
+      feeUnit: 'Gwei',
+      feeUnitAmount: 1e9,
+      blockTime: 0.2,
+      maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#6b71d6',
+      backgroundColor: '#6b71d6',
+      gradientBackgroundColor: '#6b71d6',
+    },
+  },
+};
+
 export const BitpaySupportedTokens: {[key in string]: CurrencyOpts} = {
   ...BitpaySupportedEthereumTokens,
+  ...BitpaySupportedSolTokens,
   ...BitpaySupportedMaticTokens,
   ...BitpaySupportedArbTokens,
   ...BitpaySupportedBaseTokens,
@@ -1629,16 +1758,25 @@ export const BitpaySupportedTokens: {[key in string]: CurrencyOpts} = {
 export const BitpaySupportedCoins: {[key in string]: CurrencyOpts} = {
   ...BitpaySupportedUtxoCoins,
   ...BitpaySupportedEvmCoins,
+  ...BitpaySupportedSvmCoins,
   ...OtherBitpaySupportedCoins,
 };
 
+export const SUPPORTED_VM_TOKENS = [
+  ...Object.keys(BitpaySupportedEvmCoins),
+  ...Object.keys(BitpaySupportedSvmCoins),
+];
 export const SUPPORTED_EVM_COINS = Object.keys(BitpaySupportedEvmCoins);
+export const SUPPORTED_SVM_COINS = Object.keys(BitpaySupportedSvmCoins);
 export const SUPPORTED_ETHEREUM_TOKENS = Object.values(
   BitpaySupportedEthereumTokens,
 ).map(token => `${token.coin}_e`);
 export const SUPPORTED_MATIC_TOKENS = Object.values(
   BitpaySupportedMaticTokens,
 ).map(token => `${token.coin}_m`);
+export const SUPPORTED_SOL_TOKENS = Object.values(BitpaySupportedSolTokens).map(
+  token => `${token.coin}_sol`,
+);
 export const SUPPORTED_ARB_TOKENS = Object.values(BitpaySupportedArbTokens).map(
   token => `${token.coin}_arb`,
 );
@@ -1652,6 +1790,7 @@ export const SUPPORTED_UTXO_COINS = Object.keys(BitpaySupportedUtxoCoins);
 
 export const SUPPORTED_TOKENS = [
   ...SUPPORTED_ETHEREUM_TOKENS,
+  ...SUPPORTED_SOL_TOKENS,
   ...SUPPORTED_MATIC_TOKENS,
   ...SUPPORTED_ARB_TOKENS,
   ...SUPPORTED_BASE_TOKENS,
@@ -1670,7 +1809,9 @@ export const EVM_SUPPORTED_TOKENS_LENGTH = {
   base: SUPPORTED_BASE_TOKENS.length,
   op: SUPPORTED_OP_TOKENS.length,
 };
-
+export const SVM_SUPPORTED_TOKENS_LENGTH = {
+  sol: SUPPORTED_SOL_TOKENS.length,
+};
 export const getBaseKeyCreationCoinsAndTokens = () => {
   const selectedCurrencies: Array<{
     chain: string;
@@ -1699,7 +1840,7 @@ export const getBaseKeyCreationCoinsAndTokens = () => {
   return selectedCurrencies;
 };
 
-export const getBaseAccountCreationCoinsAndTokens = () => {
+export const getBaseEVMAccountCreationCoinsAndTokens = () => {
   const selectedCurrencies: Array<{
     chain: string;
     currencyAbbreviation: string;
@@ -1715,6 +1856,63 @@ export const getBaseAccountCreationCoinsAndTokens = () => {
       });
     },
   );
+  // TODO ?? probably we should add bitpay supported tokens to base creation coins
+  // Object.values(BitpaySupportedTokens).forEach(({chain, coin: currencyAbbreviation, address: tokenAddress}) => {
+  //   selectedCurrencies.push({
+  //     chain,
+  //     currencyAbbreviation,
+  //     isToken: true,
+  //     tokenAddress,
+  //   });
+  // });
+  return selectedCurrencies;
+};
+
+export const getBaseSVMAccountCreationCoinsAndTokens = () => {
+  const selectedCurrencies: Array<{
+    chain: string;
+    currencyAbbreviation: string;
+    isToken: boolean;
+    tokenAddress?: string;
+  }> = [];
+  Object.values(BitpaySupportedSvmCoins).forEach(
+    ({chain, coin: currencyAbbreviation}) => {
+      selectedCurrencies.push({
+        chain,
+        currencyAbbreviation,
+        isToken: false,
+      });
+    },
+  );
+  // TODO ?? probably we should add bitpay supported tokens to base creation coins
+  // Object.values(BitpaySupportedTokens).forEach(({chain, coin: currencyAbbreviation, address: tokenAddress}) => {
+  //   selectedCurrencies.push({
+  //     chain,
+  //     currencyAbbreviation,
+  //     isToken: true,
+  //     tokenAddress,
+  //   });
+  // });
+  return selectedCurrencies;
+};
+
+export const getBaseVMAccountCreationCoinsAndTokens = () => {
+  const selectedCurrencies: Array<{
+    chain: string;
+    currencyAbbreviation: string;
+    isToken: boolean;
+    tokenAddress?: string;
+  }> = [];
+  [
+    ...Object.values(BitpaySupportedEvmCoins),
+    ...Object.values(BitpaySupportedSvmCoins),
+  ].forEach(({chain, coin: currencyAbbreviation}) => {
+    selectedCurrencies.push({
+      chain,
+      currencyAbbreviation,
+      isToken: false,
+    });
+  });
   // TODO ?? probably we should add bitpay supported tokens to base creation coins
   // Object.values(BitpaySupportedTokens).forEach(({chain, coin: currencyAbbreviation, address: tokenAddress}) => {
   //   selectedCurrencies.push({

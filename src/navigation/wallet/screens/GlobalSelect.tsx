@@ -69,9 +69,11 @@ import {
   findWalletById,
 } from '../../../store/wallet/utils/wallet';
 import {
+  IsVMChain,
   IsERCToken,
   IsEVMChain,
   IsSegwitCoin,
+  IsSVMChain,
 } from '../../../store/wallet/utils/currency';
 import {LogActions} from '../../../store/log';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -361,7 +363,7 @@ const buildSelectableCurrenciesList = (
         ({chain: _chain}) => _chain === chain,
       )?.priority;
       coinEntry.chainsImg[chain] = {
-        badgeUri: IsEVMChain(chain) && !badgeUri ? logoUri : badgeUri,
+        badgeUri: IsVMChain(chain) && !badgeUri ? logoUri : badgeUri,
         priority,
       };
       if (!coinEntry.chains.includes(chain)) {
@@ -455,9 +457,7 @@ const buildSelectableWalletList = (
         }
         coinEntry.chainsImg[chain] = {
           badgeUri:
-            IsEVMChain(chain) && !wallet.badgeImg
-              ? wallet.img
-              : wallet.badgeImg,
+            IsVMChain(chain) && !wallet.badgeImg ? wallet.img : wallet.badgeImg,
           priority,
         };
       });
@@ -761,7 +761,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           );
 
           const accounts = accountList.map(account => {
-            if (IsEVMChain(account.chains[0])) {
+            if (IsVMChain(account.chains[0])) {
               const assetsByChain = buildAssetsByChain(
                 account,
                 defaultAltCurrency.isoCode,
@@ -788,7 +788,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       if (
         keyWalletsArray.length === 1 &&
         keyWalletsArray[0]?.accounts?.length === 1 &&
-        IsEVMChain(keyWalletsArray[0].accounts[0].chains[0])
+        IsVMChain(keyWalletsArray[0].accounts[0].chains[0])
       ) {
         // if only one account and is evm show assets directly
         const selectedAccount = keyWalletsArray[0].accounts[0];
@@ -871,7 +871,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     } else {
       // only 1 key created -> choose account if evm / select wallet if utxo
       const selectedKey = availableKeys[0];
-      if (IsEVMChain(selectObj.chains[0])) {
+      if (IsVMChain(selectObj.chains[0])) {
         openAccountSelector(selectObj, selectedKey);
       } else {
         openAccountUtxoSelector(selectObj, selectedKey);
@@ -1078,7 +1078,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
                     accountItem={account}
                     hideBalance={hideAllBalances}
                     onPress={() => {
-                      if (IsEVMChain(account.chains[0])) {
+                      if (IsVMChain(account.chains[0])) {
                         setSearchVal('');
                         setSearchResults([]);
                         setSelectedEVMAccount({
@@ -1171,7 +1171,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     selectedKey: Key,
   ) => {
     if (selectedKey.backupComplete) {
-      if (IsEVMChain(selectedCurrency.chains[0])) {
+      if (IsVMChain(selectedCurrency.chains[0])) {
         openAccountSelector(selectedCurrency, selectedKey);
       } else {
         openAccountUtxoSelector(selectedCurrency, selectedKey);
@@ -1297,7 +1297,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         filterByComplete: true,
         chain: selectedCurrency.chains[0],
       },
-    ).filter(account => !IsEVMChain(account.chains[0]));
+    ).filter(account => !IsVMChain(account.chains[0]));
     if (accountList.length > 1) {
       // has more than 1 account created -> choose account
       setAccountsCardsList({
@@ -1328,12 +1328,25 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       {
         filterByHideWallet: true,
         skipFiatCalculations: true,
+        filterByCurrencyAbbreviation: true,
+        currencyAbbreviation: selectedCurrency.currencyAbbreviation,
       },
-    ).filter(account => IsEVMChain(account.chains[0]));
-    if (accountList.length > 1) {
-      // has more than 1 account created -> choose account
+    );
+
+    const evmAccounts = accountList.filter(account =>
+      IsEVMChain(account.chains[0]),
+    );
+    const svmAccounts = accountList.filter(account =>
+      IsSVMChain(account.chains[0]),
+    );
+
+    const hasMultipleAccounts =
+      evmAccounts.length > 1 || svmAccounts.length > 1;
+    const hasBothVmTypes = evmAccounts.length > 0 && svmAccounts.length > 0;
+
+    if (hasMultipleAccounts || hasBothVmTypes) {
       setAccountsCardsList({
-        accounts: accountList,
+        accounts: [...evmAccounts, ...svmAccounts],
         currency: selectedCurrency,
         key: selectedKey,
       });
@@ -1341,10 +1354,13 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         title: 'Select Account to Deposit to',
         status: 'account-selection',
       });
+      return;
     } else {
-      // ony 1 account created -> choose network
-      const selectedAccount = accountList[0];
-      openNetworkSelector(selectedAccount, selectedCurrency, selectedKey);
+      // Only 1 account available
+      const selectedAccount = evmAccounts[0] || svmAccounts[0];
+      if (selectedAccount) {
+        openNetworkSelector(selectedAccount, selectedCurrency, selectedKey);
+      }
     }
   };
 

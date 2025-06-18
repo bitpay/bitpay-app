@@ -22,7 +22,7 @@ const CardHomeContainer = styled.SafeAreaView`
 `;
 const CardHome: React.FC<CardHomeScreenProps> = ({navigation, route}) => {
   const cardGroups = useAppSelector(selectCardGroups);
-  const hasCards = cardGroups.length > 0;
+  const hasCards = cardGroups?.length > 0;
 
   if (hasCards) {
     const id = route.params?.id || cardGroups[0][0].id;

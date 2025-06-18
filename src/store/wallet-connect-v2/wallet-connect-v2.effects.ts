@@ -1,12 +1,13 @@
 import {Effect} from '..';
 import {
-  EIP155_CHAINS,
+  WC_SUPPORTED_CHAINS,
   EIP155_SIGNING_METHODS,
   EIP155_METHODS_NOT_INTERACTION_NEEDED,
-  TEIP155Chain,
+  WcSupportedChain,
   WALLETCONNECT_V2_METADATA,
   WALLET_CONNECT_SUPPORTED_CHAINS,
   WC_EVENTS,
+  SOLANA_SIGNING_METHODS,
 } from '../../constants/WalletConnectV2';
 import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
@@ -43,11 +44,7 @@ import {
   CustomErrorMessage,
   WrongPasswordError,
 } from '../../navigation/wallet/components/ErrorMessages';
-import {
-  WCV2RequestType,
-  WCV2SessionType,
-  WCV2Wallet,
-} from './wallet-connect-v2.models';
+import {WCV2RequestType, WCV2SessionType} from './wallet-connect-v2.models';
 import {ethers, providers} from 'ethers';
 import {Core} from '@walletconnect/core';
 import {WalletKit, IWalletKit, WalletKitTypes} from '@reown/walletkit';
@@ -60,6 +57,10 @@ import {getFeeLevelsUsingBwcClient} from '../wallet/effects/fee/fee';
 import {AppActions} from '../app';
 import {t} from 'i18next';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
+import nacl from 'tweetnacl';
+import {Keypair, VersionedTransaction} from '@solana/web3.js';
+import bs58 from 'bs58';
+import {IsSVMChain} from '../wallet/utils/currency';
 
 const BWC = BwcProvider.getInstance();
 
@@ -237,9 +238,10 @@ export const walletConnectV2SubscribeToEvents =
         const isChainSupported = Object.keys(
           WALLET_CONNECT_SUPPORTED_CHAINS,
         ).includes(event.params.chainId);
-        const isMethodSupported = Object.values(
-          EIP155_SIGNING_METHODS,
-        ).includes(event.params.request.method);
+        const isMethodSupported = Object.values({
+          ...EIP155_SIGNING_METHODS,
+          ...SOLANA_SIGNING_METHODS,
+        }).includes(event.params.request.method);
 
         if (!isChainSupported || !isMethodSupported) {
           return;
@@ -263,13 +265,11 @@ export const walletConnectV2SubscribeToEvents =
     const handleAutoApproval = async (
       event: WalletKitTypes.EventArguments['session_request'],
     ) => {
-      const newChainId = event?.params?.request?.params?.[0]?.chainId;
+      const chainId = event?.params?.chainId;
 
-      if (!newChainId) {
+      if (!chainId) {
         return;
       }
-
-      const eip155ChainId = parseAndFormatChainId(newChainId);
 
       await web3wallet.respondSessionRequest({
         topic: event.topic,
@@ -277,12 +277,10 @@ export const walletConnectV2SubscribeToEvents =
       });
 
       try {
-        if (EIP155_CHAINS[eip155ChainId as TEIP155Chain]) {
-          await emitSessionEvents(event, eip155ChainId);
+        if (WC_SUPPORTED_CHAINS[chainId as WcSupportedChain]) {
+          await emitSessionEvents(event, chainId);
         } else {
-          throw new Error(
-            `The requested chain (${eip155ChainId}) is not supported.`,
-          );
+          throw new Error(`The requested chain (${chainId}) is not supported.`);
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
@@ -459,7 +457,14 @@ export const walletConnectV2ApproveCallRequest =
       const {topic, id} = request;
       try {
         if (!response) {
-          response = await dispatch(approveEIP155Request(request, wallet));
+          response = await dispatch(approveWCRequest(request, wallet));
+          dispatch(
+            LogActions.info(
+              `[WC-V2/walletConnectV2ApproveCallRequest]: approve response: ${JSON.stringify(
+                response,
+              )}`,
+            ),
+          );
         }
         await web3wallet.respondSessionRequest({
           topic,
@@ -705,7 +710,7 @@ export const walletConnectV2OnUpdateSession =
     }
   };
 
-const approveEIP155Request =
+const approveWCRequest =
   (
     requestEvent: WCV2RequestType,
     wallet: Wallet,
@@ -713,18 +718,17 @@ const approveEIP155Request =
   dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
-        const privKey = (await dispatch<any>(getPrivKey(wallet))) as any;
-        const signer = new ethers.Wallet(
-          Buffer.from(privKey.toString(), 'hex'),
-        );
+        const privKey = (await dispatch<any>(getPrivKey(wallet))) as string;
+        const privKeyBuffer = Buffer.from(privKey, 'hex');
+        const signer = new ethers.Wallet(privKeyBuffer);
         const {params, id} = requestEvent;
         const {chainId, request} = params;
         switch (request.method) {
           case EIP155_SIGNING_METHODS.PERSONAL_SIGN:
           case EIP155_SIGNING_METHODS.ETH_SIGN:
-            const message = getSignParamsMessage(request.params);
-            const signedMessage = await signer.signMessage(message);
-            resolve(formatJsonRpcResult(id, signedMessage));
+            const eth_message = getSignParamsMessage(request.params);
+            const eth_signedMessage = await signer.signMessage(eth_message);
+            resolve(formatJsonRpcResult(id, eth_signedMessage));
           case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
           case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V3:
           case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
@@ -737,10 +741,11 @@ const approveEIP155Request =
             delete types.EIP712Domain;
             const signedData = await signer._signTypedData(domain, types, data);
             resolve(formatJsonRpcResult(id, signedData));
+            break;
           // deprecated - using bws for sending transaction
           case EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION:
             const provider = new providers.JsonRpcProvider(
-              EIP155_CHAINS[chainId as TEIP155Chain].rpc,
+              WC_SUPPORTED_CHAINS[chainId as WcSupportedChain].rpc,
             );
             const sendTransaction = request.params[0];
             if (sendTransaction.gas) {
@@ -786,7 +791,7 @@ const approveEIP155Request =
             }
             dispatch(
               LogActions.info(
-                `[WC-V2/approveEIP155Request]: ETH_SEND_TRANSACTION: ${JSON.stringify(
+                `[WC-V2/approveWCRequest]: ETH_SEND_TRANSACTION: ${JSON.stringify(
                   sendTransaction,
                 )}`,
               ),
@@ -796,11 +801,38 @@ const approveEIP155Request =
               sendTransaction,
             );
             resolve(formatJsonRpcResult(id, hash));
+            break;
 
           case EIP155_SIGNING_METHODS.ETH_SIGN_TRANSACTION:
             const signTransaction = request.params[0];
             const signature = await signer.signTransaction(signTransaction);
             resolve(formatJsonRpcResult(id, signature));
+            break;
+
+          case SOLANA_SIGNING_METHODS.SIGN_MESSAGE:
+            const sol_signedMessage = signSolanaMessage(
+              privKeyBuffer,
+              request.params.message,
+            );
+            resolve(formatJsonRpcResult<any>(id, sol_signedMessage));
+            break;
+
+          case SOLANA_SIGNING_METHODS.SIGN_TRANSACTION:
+            const signedTxBase64 = await BWC.getCore()
+              .Transactions.get({chain: 'SOL'})
+              .sign({
+                tx: request.params.transaction,
+                key: {privKey: bs58.encode(privKeyBuffer)},
+              });
+
+            const signedTransaction = deserialize(signedTxBase64);
+            resolve(
+              formatJsonRpcResult<any>(id, {
+                transaction: signedTransaction.serialize(),
+                signature: bs58.encode(signedTransaction.signatures[0]),
+              }),
+            );
+            break;
 
           default:
             throw new Error(getSdkError('INVALID_METHOD').message);
@@ -844,7 +876,7 @@ export const getAddressFrom = (request: WCV2RequestType): string => {
 };
 
 const getPrivKey =
-  (wallet: Wallet): Effect<Promise<any>> =>
+  (wallet: Wallet): Effect<Promise<string>> =>
   (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -894,14 +926,33 @@ const getPrivKey =
           }
         }
 
-        const xPrivKey = password
-          ? key.methods!.get(password).xPrivKey
-          : key.properties!.xPrivKey;
+        let xPrivKeyHex: string | undefined;
+        let priv: any;
         const bitcore = BWC.getBitcore();
-        const xpriv = new bitcore.HDPrivateKey(xPrivKey, wallet.network);
-        const priv = xpriv.deriveChild(
-          `${wallet.getRootPath()}/0/0`,
-        ).privateKey;
+        if (IsSVMChain(wallet.chain)) {
+          xPrivKeyHex = password
+            ? key.methods!.get(password).xPrivKeyEDDSA
+            : key.properties!.xPrivKeyEDDSA;
+          const keyPair = BWC.getCore().Deriver.derivePrivateKeyWithPath(
+            wallet.chain,
+            wallet.network,
+            xPrivKeyHex,
+            wallet.getRootPath(),
+            '',
+          );
+          const privKeyHex = Buffer.from(
+            bs58.decode(keyPair.privKey!),
+          ).toString('hex');
+          priv = privKeyHex;
+        } else {
+          xPrivKeyHex = password
+            ? key.methods!.get(password).xPrivKey
+            : key.properties!.xPrivKey;
+          const xpriv = new bitcore.HDPrivateKey(xPrivKeyHex, wallet.network);
+          priv = xpriv
+            .deriveChild(`${wallet.getRootPath()}/0/0`)
+            .privateKey.toString();
+        }
         dispatch(
           LogActions.info(
             '[WC-V2/getPrivKey]: got the private key successfully',
@@ -932,6 +983,33 @@ const getSignParamsMessage = (params: string[]) => {
   const message = params.filter(p => !utils.isAddress(p))[0];
 
   return convertHexToUtf8(message);
+};
+
+const serialize = (transaction: VersionedTransaction): string => {
+  return Buffer.from(transaction.serialize()).toString('base64');
+};
+
+const deserialize = (transaction: string): VersionedTransaction => {
+  let bytes: Uint8Array;
+  try {
+    bytes = bs58.decode(transaction);
+  } catch {
+    const buffer = Buffer.from(transaction, 'base64');
+    bytes = new Uint8Array(buffer);
+  }
+
+  return VersionedTransaction.deserialize(bytes);
+};
+
+const signSolanaMessage = (
+  privKey: Buffer<ArrayBuffer>,
+  message: string,
+): {signature: string} => {
+  const naclKeypair = nacl.sign.keyPair.fromSeed(privKey);
+  const keypair = Keypair.fromSecretKey(naclKeypair.secretKey);
+  const signature = nacl.sign.detached(bs58.decode(message), keypair.secretKey);
+  const bs58Signature = bs58.encode(signature);
+  return {signature: bs58Signature};
 };
 
 const getSignTypedDataParamsData = (params: string[]) => {
@@ -999,10 +1077,10 @@ export const getGasWalletByRequest =
           const address = account.substring(index + 1);
           const chain =
             request?.params.chainId &&
-            EIP155_CHAINS[request.params.chainId]?.chainName;
+            WC_SUPPORTED_CHAINS[request.params.chainId]?.chainName;
           const network =
             request?.params.chainId &&
-            EIP155_CHAINS[request.params.chainId]?.network;
+            WC_SUPPORTED_CHAINS[request.params.chainId]?.network;
           wallet = findWalletByAddress(address, chain, network, keys);
           if (wallet) {
             return wallet;

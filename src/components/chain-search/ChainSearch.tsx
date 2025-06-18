@@ -14,7 +14,7 @@ import ChevronDownSvgDark from '../../../assets/img/chevron-down-darkmode.svg';
 import debounce from 'lodash.debounce';
 import {AppActions} from '../../store/app';
 import {useTranslation} from 'react-i18next';
-import {EIP155_CHAINS} from '../../constants/WalletConnectV2';
+import {WC_SUPPORTED_CHAINS} from '../../constants/WalletConnectV2';
 import cloneDeep from 'lodash.clonedeep';
 import {TransactionProposal, Wallet} from '../../store/wallet/wallet.models';
 import {useTheme} from 'styled-components/native';
@@ -24,8 +24,7 @@ import {View} from 'react-native';
 import {
   BitpaySupportedCoins,
   CurrencyOpts,
-  SUPPORTED_COINS,
-  SUPPORTED_EVM_COINS,
+  SUPPORTED_VM_TOKENS,
 } from '../../constants/currencies';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 import {AccountRowProps} from '../list/AccountListRow';
@@ -146,8 +145,10 @@ const SearchComponent = <T extends SearchableItem>({
     accounts.filter(account => {
       const index = account.indexOf(':', account.indexOf(':') + 1);
       const protocolChainName = account.substring(0, index);
-      const chain = normalizeText(EIP155_CHAINS[protocolChainName]?.chainName);
-      const name = normalizeText(EIP155_CHAINS[protocolChainName]?.name);
+      const chain = normalizeText(
+        WC_SUPPORTED_CHAINS[protocolChainName]?.chainName,
+      );
+      const name = normalizeText(WC_SUPPORTED_CHAINS[protocolChainName]?.name);
       chains.push(chain);
       return (
         (chain.includes(normalizedText) ||
@@ -290,11 +291,10 @@ const SearchComponent = <T extends SearchableItem>({
             return acc;
           }, []);
         }
-        setChainsOptions(
-          context === 'accountassetsview'
-            ? SUPPORTED_EVM_COINS
-            : SUPPORTED_COINS,
-        );
+        const chains = [
+          ...new Set(searchFullList.flatMap(data => data.chains || [])),
+        ];
+        setChainsOptions(chains);
       } else if (['accounthistoryview'].includes(context)) {
         if (selectedChainFilterOption) {
           results = results
@@ -308,7 +308,13 @@ const SearchComponent = <T extends SearchableItem>({
             })
             .filter(result => result.data.length > 0);
         }
-        setChainsOptions(SUPPORTED_EVM_COINS);
+        let chains = SUPPORTED_VM_TOKENS;
+        if (searchFullList.length > 0) {
+          chains = [
+            ...new Set(searchFullList.flatMap(data => data.chains || [])),
+          ];
+        }
+        setChainsOptions(chains);
       } else if (
         ['sell', 'send', 'swapFrom', 'coinbase', 'contact', 'scanner'].includes(
           context,
