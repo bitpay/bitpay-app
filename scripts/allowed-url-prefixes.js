@@ -59,6 +59,7 @@ const allowedUrlPrefixes = [
   'https://api-base.bitcore.io/api',
   'https://api-op.bitcore.io/api',
   'https://api-xrp.bitcore.io/api',
+  'https://api-sol.bitcore.io/api',
   'https://portal.polygon.technology/bridge',
   'https://bridge.arbitrum.io/',
   'https://bridge.base.org/',

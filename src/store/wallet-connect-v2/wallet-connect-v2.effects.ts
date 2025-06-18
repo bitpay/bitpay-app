@@ -163,6 +163,13 @@ export const walletConnectV2ApproveSessionProposal =
   dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
+        dispatch(
+          LogActions.debug(
+            `[WC-V2/walletConnectV2ApproveSessionProposal]: approving session with namesapces: ${JSON.stringify(
+              namespaces,
+            )}`,
+          ),
+        );
         const session = await web3wallet.approveSession({
           id,
           relayProtocol,

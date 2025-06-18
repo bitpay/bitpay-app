@@ -269,7 +269,6 @@ const WalletConnectConfirm = () => {
       await dispatch(walletConnectV2RejectCallRequest(request));
       navigation.goBack();
     } catch (err) {
-      dispatch(dismissOnGoingProcessModal());
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(err),
