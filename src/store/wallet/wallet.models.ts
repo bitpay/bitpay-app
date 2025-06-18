@@ -391,6 +391,7 @@ export interface TransactionProposal {
   toAddress: string;
   tokenAddress?: string;
   txid?: string;
+  refreshOnPublish?: boolean;
   walletId: string;
   receipt?: {
     blockHash: string;
