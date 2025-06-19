@@ -1055,7 +1055,7 @@ const buildTransactionProposal =
             break;
           default:
             let ataAddress: string | undefined;
-            if (IsSVMChain(chain)) {
+            if (IsSVMChain(chain) && tx.tokenAddress) {
               ataAddress = (
                 await getSolanaTokens(tx.toAddress!, wallet?.network)
               ).find(
@@ -1064,7 +1064,8 @@ const buildTransactionProposal =
               )?.ataAddress;
             }
 
-            const toAddress = IsSVMChain(txp.chain!)
+            const toAddress =
+              IsSVMChain(txp.chain!) && tx.tokenAddress
               ? ataAddress
               : tx.toAddress!;
 
