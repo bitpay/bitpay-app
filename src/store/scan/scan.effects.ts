@@ -90,7 +90,7 @@ import {
   GeneralError,
 } from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
-import {BitpaySupportedEvmCoins} from '../../constants/currencies';
+import {BitpaySupportedEvmCoins, BitpaySupportedSvmCoins} from '../../constants/currencies';
 import {Analytics} from '../analytics/analytics.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
@@ -527,6 +527,8 @@ const goToConfirm =
               opts: {
                 showEVMWalletsAndTokens:
                   !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
+                showSVMWalletsAndTokens:
+                  !!BitpaySupportedSvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if SVM address show all svm wallets and tokens in next view
                 message: opts?.message || '',
                 feePerKb: opts?.feePerKb,
               },
@@ -621,6 +623,8 @@ export const goToAmount =
             opts: {
               showEVMWalletsAndTokens:
                 !!BitpaySupportedEvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if EVM address show all evm wallets and tokens in next view
+              showSVMWalletsAndTokens:
+                !!BitpaySupportedSvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if SVM address show all svm wallets and tokens in next view
               message: opts?.message || '',
               feePerKb: opts?.feePerKb,
             },

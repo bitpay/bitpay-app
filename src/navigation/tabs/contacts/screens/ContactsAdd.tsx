@@ -25,6 +25,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {
   IsValidEVMAddress,
+  IsValidSVMAddress,
   ValidateCoinAddress,
 } from '../../../../store/wallet/utils/validations';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
@@ -375,6 +376,10 @@ const ContactsAdd = ({
 
     if (IsValidEVMAddress(addressValue)) {
       contact.notes = 'EVM compatible address\n';
+    }
+
+    if (IsValidSVMAddress(addressValue)) {
+      contact.notes = 'Solana address\n';
     }
 
     dispatch(createContact(contact));
