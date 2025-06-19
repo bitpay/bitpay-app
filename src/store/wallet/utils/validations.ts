@@ -1,3 +1,4 @@
+import {PublicKey} from '@solana/web3.js';
 import {BwcProvider} from '../../../lib/bwc';
 import {ExtractBitPayUriAddress} from './decode-uri';
 
@@ -59,6 +60,28 @@ export const IsValidPayPro = (data: string): boolean => {
   return !!/^(bitpay|bitcoin|bitcoincash|bchtest|bchreg|ethereum|ripple|matic|arb|base|op|solana|dogecoin|litecoin)?:\?r=[\w+]/.exec(
     data,
   );
+};
+
+export const IsValidSolanaPay = (data: string): boolean => {
+  // solana:<recipient>?amount=<amount>&spl-token=<spl-token>&reference=<reference>&label=<label>&message=<message>&memo=<memo>
+  try {
+    if (!data.startsWith('solana:')) {
+      return false;
+    }
+
+    const withoutPrefix = data.replace('solana:', '');
+    const [recipientPart] = withoutPrefix.split('?');
+    if (!recipientPart) {
+      return false;
+    }
+
+    // Try creating a PublicKey with recipientPart to make sure it's a valid Solana address.
+    new PublicKey(recipientPart); // throws if it is not valid
+
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
 export const isValidWalletConnectUri = (data: string): boolean => {
