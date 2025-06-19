@@ -13,10 +13,7 @@ import {
   SUPPORTED_VM_TOKENS,
 } from '../../../../constants/currencies';
 import {LogActions} from '../../../log';
-import {
-  BASE_BWS_URL,
-  EVM_BLOCKCHAIN_EXPLORERS,
-} from '../../../../constants/config';
+import {BASE_BWS_URL, BLOCKCHAIN_EXPLORERS} from '../../../../constants/config';
 import {
   addTokenChainSuffix,
   getCurrencyAbbreviation,
@@ -35,9 +32,17 @@ export const startGetTokenOptions =
       let tokenOptionsByAddress: {[key in string]: Token} = {};
       let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
       for await (const chain of SUPPORTED_VM_TOKENS) {
-        let {data: tokens} = await axios.get<{[key in string]: Token}>(
-          `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
-        );
+        let tokens = {} as {[key in string]: Token};
+        try {
+          const {data} = await axios.get<{[key in string]: Token}>(
+            `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
+          );
+          tokens = data;
+        } catch (error) {
+          dispatch(
+            LogActions.info('failed - continue anyway [startGetTokenOptions]'),
+          );
+        }
         Object.values(tokens).forEach(token => {
           if (
             BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
@@ -145,8 +150,8 @@ const populateTokenInfo = ({
         regtest: GetProtocolPrefix('regtest', chain),
       },
       ratesApi: '',
-      blockExplorerUrls: EVM_BLOCKCHAIN_EXPLORERS[chain].livenet,
-      blockExplorerUrlsTestnet: EVM_BLOCKCHAIN_EXPLORERS[chain].testnet,
+      blockExplorerUrls: BLOCKCHAIN_EXPLORERS[chain].livenet,
+      blockExplorerUrlsTestnet: BLOCKCHAIN_EXPLORERS[chain].testnet,
     },
     feeInfo: {
       feeUnit: 'Gwei',

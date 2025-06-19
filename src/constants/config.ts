@@ -76,7 +76,7 @@ export const SVM_BLOCKCHAIN_ID: {[key in string]: number} = {
   sol: 501,
 };
 
-export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
+export const BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'etherscan.io/',
     [Network.testnet]: 'sepolia.etherscan.io/',
@@ -97,9 +97,6 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
     [Network.mainnet]: 'optimistic.etherscan.io/',
     [Network.testnet]: 'sepolia-optimism.etherscan.io/',
   },
-};
-
-export const SVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   sol: {
     [Network.mainnet]: 'solscan.io/',
     [Network.testnet]: 'solscan.io/', // For testnet we have to add ?cluster=testnet => https://solscan.io/?cluster=testnet
