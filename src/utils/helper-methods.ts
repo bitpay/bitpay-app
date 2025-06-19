@@ -10,7 +10,7 @@ import {
   IsEVMChain,
 } from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
-import {PROTOCOL_NAME} from '../constants/config';
+import {BASE_BITCORE_URL, PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
 import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
@@ -41,6 +41,7 @@ import {
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
 import {PermissionsAndroid} from 'react-native';
+import axios from 'axios';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -1262,4 +1263,27 @@ export const isAndroidStoragePermissionGranted = (
       reject(e);
     }
   });
+};
+
+export const getSolanaTokenInfo = async (
+  splTokenAddress: string,
+  network: string = 'mainnet',
+): Promise<{
+  name: string;
+  symbol: string;
+  decimals: number;
+}> => {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/token/${splTokenAddress}`;
+  try {
+    const apiResponse = await axios.get(url);
+    if (!apiResponse?.data) {
+      throw new Error(
+        `No solana tokens found for splTokenAddress: ${splTokenAddress}`,
+      );
+    }
+    return apiResponse.data;
+  } catch (err) {
+    throw err;
+  }
 };
