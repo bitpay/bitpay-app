@@ -108,6 +108,7 @@ import Blockie from '../../../components/blockie/Blockie';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {getExternalServiceSymbol} from '../../services/utils/external-services-utils';
 import {Keys} from '../../../store/wallet/wallet.reducer';
+import {SolanaPayOpts} from './send/confirm/Confirm';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -272,6 +273,7 @@ export type GlobalSelectParamList = {
       message?: string;
       feePerKb?: number;
       showEVMWalletsAndTokens?: boolean;
+      solanaPayOpts?: SolanaPayOpts;
     };
   };
   amount?: number;
@@ -996,6 +998,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           txDetails,
           amount,
           message: opts?.message,
+          solanaPayOpts: opts?.solanaPayOpts,
         });
       } catch (err: any) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
