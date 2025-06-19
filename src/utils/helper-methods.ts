@@ -1477,3 +1477,26 @@ export const getSolanaTokens = async (
     throw err;
   }
 };
+
+export const getSolanaTokenInfo = async (
+  splTokenAddress: string,
+  network: string = 'mainnet',
+): Promise<{
+  name: string;
+  symbol: string;
+  decimals: number;
+}> => {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/token/${splTokenAddress}`;
+  try {
+    const apiResponse = await axios.get(url);
+    if (!apiResponse?.data) {
+      throw new Error(
+        `No solana tokens found for splTokenAddress: ${splTokenAddress}`,
+      );
+    }
+    return apiResponse.data;
+  } catch (err) {
+    throw err;
+  }
+};

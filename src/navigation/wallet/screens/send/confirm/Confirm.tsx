@@ -121,6 +121,14 @@ import {AppActions} from '../../../../../store/app';
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
 `;
+
+export interface SolanaPayOpts {
+  reference?: string | null;
+  memo?: string | null;
+  label?: string | null;
+  message?: string | null;
+}
+
 export interface ConfirmParamList {
   wallet: Wallet;
   recipient: Recipient;
@@ -132,6 +140,7 @@ export interface ConfirmParamList {
   sendMax?: boolean;
   inputs?: Utxo[];
   message?: string | undefined;
+  solanaPayOpts?: SolanaPayOpts;
 }
 
 export const Setting = styled(TouchableOpacity)`
@@ -169,6 +178,7 @@ const Confirm = () => {
     sendMax,
     inputs,
     message,
+    solanaPayOpts,
   } = route.params;
   const [txp, setTxp] = useState(_txp);
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -664,7 +674,26 @@ const Confirm = () => {
           contentContainerStyle={{paddingBottom: 50}}
           keyboardShouldPersistTaps={'handled'}>
           <DetailsList keyboardShouldPersistTaps={'handled'}>
-            <Header>Summary</Header>
+            <Header>{solanaPayOpts ? 'SolanaPay Summary' : 'Summary'}</Header>
+            {solanaPayOpts?.label ? (
+              <SharedDetailRow
+                description={t('Pay to')}
+                value={solanaPayOpts.label}
+              />
+            ) : null}
+            {solanaPayOpts?.memo ? (
+              <SharedDetailRow
+                description={t('SolanaPay memo')}
+                value={solanaPayOpts.memo}
+                hr
+              />
+            ) : null}
+            {solanaPayOpts?.reference ? (
+              <SharedDetailRow
+                description={t('SolanaPay reference')}
+                value={solanaPayOpts.reference}
+              />
+            ) : null}
             <SendingTo
               recipient={recipientData}
               recipientList={recipientListData}
