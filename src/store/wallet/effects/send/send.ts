@@ -49,6 +49,7 @@ import {
   getCWCChain,
   getFullLinkedWallet,
   getRateByCurrencyName,
+  getSolanaTokens,
   sleep,
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
@@ -85,6 +86,7 @@ import {
   IsSegwitCoin,
   IsSVMChain,
   IsUtxoChain,
+  IsEVMChain,
 } from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -488,9 +490,9 @@ export const buildTxDetails =
             wallet: wallet as Wallet,
             network: wallet.network,
             value: amount,
-            from: params[0].from,
-            to: params[0].to,
-            data: params[0].data,
+            from: params[0]?.from,
+            to: params[0]?.to,
+            data: params[0]?.data,
             chain: swapFromChain!,
           }));
         fee = gasLimit * gasPrice;
@@ -1035,9 +1037,9 @@ const buildTransactionProposal =
                   wallet: wallet as Wallet,
                   network: (wallet as Wallet).network,
                   value: txp.amount,
-                  from: params[0].from,
-                  to: params[0].to,
-                  data: params[0].data,
+                  from: params[0]?.from,
+                  to: params[0]?.to,
+                  data: params[0]?.data,
                   chain: swapFromChain!,
                 }));
               txp.fee = gasLimit * gasPrice;
@@ -1052,8 +1054,23 @@ const buildTransactionProposal =
             }
             break;
           default:
+            let ataAddress: string | undefined;
+            if (IsSVMChain(chain) && tx.tokenAddress) {
+              ataAddress = (
+                await getSolanaTokens(tx.toAddress!, wallet?.network)
+              ).find(
+                (item: {mintAddress: string}) =>
+                  item.mintAddress === tx.tokenAddress,
+              )?.ataAddress;
+            }
+
+            const toAddress =
+              IsSVMChain(txp.chain!) && tx.tokenAddress
+              ? ataAddress
+              : tx.toAddress!;
+
             txp.outputs.push({
-              toAddress: tx.toAddress,
+              toAddress: toAddress,
               amount: tx.amount!,
               message: tx.description,
               data: tx.data,
@@ -1063,7 +1080,7 @@ const buildTransactionProposal =
 
         if (tx.tokenAddress) {
           txp.tokenAddress = tx.tokenAddress;
-          if (tx.context !== 'paypro') {
+          if (tx.context !== 'paypro' && IsEVMChain(txp.chain!)) {
             for (const output of txp.outputs) {
               if (output.amount) {
                 output.amount = parseAmountToStringIfBN(output.amount);
@@ -1080,6 +1097,16 @@ const buildTransactionProposal =
                   });
               }
             }
+          } else {
+            const fromSolanaTokens = await getSolanaTokens(
+              wallet?.receiveAddress!,
+              wallet?.network,
+            );
+            const fromAta = fromSolanaTokens.find((item: any) => {
+              return item.mintAddress === tx.tokenAddress;
+            });
+            txp.fromAta = fromAta?.ataAddress;
+            txp.decimals = fromAta?.decimals;
           }
         }
 

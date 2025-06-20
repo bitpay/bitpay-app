@@ -359,12 +359,14 @@ export const WalletConnectStartModal = () => {
                       value.chain === chain && value.network === network,
                   )
                   .map(([key]) => key);
-                selectedWallets.push({
-                  address: receiveAddress,
-                  chain,
-                  network,
-                  supportedChain: _supportedChains,
-                });
+                if (_supportedChains.length > 0) {
+                  selectedWallets.push({
+                    address: receiveAddress,
+                    chain,
+                    network,
+                    supportedChain: _supportedChains,
+                  });
+                }
               }
             });
           },
@@ -391,10 +393,13 @@ export const WalletConnectStartModal = () => {
           dispatch,
           {
             filterByCustomWallets: key.wallets.filter(
-              ({chain, currencyAbbreviation}) =>
-                chainsSelected
-                  ?.map(selected => selected.chain)
-                  .includes(chain) && !IsERCToken(currencyAbbreviation, chain),
+              ({chain, currencyAbbreviation, network}) =>
+                chainsSelected?.some(
+                  (selected: {chain: string; network: string}) =>
+                    chain === selected.chain &&
+                    network === selected.network &&
+                    !IsERCToken(currencyAbbreviation, chain),
+                ),
             ),
             skipFiatCalculations: true,
           },

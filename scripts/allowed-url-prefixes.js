@@ -59,6 +59,7 @@ const allowedUrlPrefixes = [
   'https://api-base.bitcore.io/api',
   'https://api-op.bitcore.io/api',
   'https://api-xrp.bitcore.io/api',
+  'https://api-sol.bitcore.io/api',
   'https://portal.polygon.technology/bridge',
   'https://bridge.arbitrum.io/',
   'https://bridge.base.org/',
@@ -73,6 +74,7 @@ const allowedUrlPrefixes = [
   'https://verify.walletconnect.org/',
   'https://api.etherscan.io/v2/api',
   'https://solana-gateway.moralis.io/account/',
+  'https://tokens-data.1inch.io/images/501/',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');

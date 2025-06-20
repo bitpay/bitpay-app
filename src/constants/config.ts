@@ -23,12 +23,12 @@ export const BASE_BITCORE_URL = {
   bch: 'https://api.bitcore.io/api',
   doge: 'https://api.bitcore.io/api',
   eth: 'https://api-eth.bitcore.io/api',
-  sol: 'https://api-sol.bitcore.io/api',
   matic: 'https://api-matic.bitcore.io/api',
   xrp: 'https://api-xrp.bitcore.io/api',
   arb: 'https://api-eth.bitcore.io/api',
   base: 'https://api-eth.bitcore.io/api',
   op: 'https://api-eth.bitcore.io/api',
+  sol: 'https://api-sol.bitcore.io/api',
 };
 
 export const APP_DEEPLINK_PREFIX = 'bitpay://';
@@ -76,7 +76,7 @@ export const SVM_BLOCKCHAIN_ID: {[key in string]: number} = {
   sol: 501,
 };
 
-export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
+export const BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   eth: {
     [Network.mainnet]: 'etherscan.io/',
     [Network.testnet]: 'sepolia.etherscan.io/',
@@ -97,9 +97,6 @@ export const EVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
     [Network.mainnet]: 'optimistic.etherscan.io/',
     [Network.testnet]: 'sepolia-optimism.etherscan.io/',
   },
-};
-
-export const SVM_BLOCKCHAIN_EXPLORERS: {[key in string]: any} = {
   sol: {
     [Network.mainnet]: 'solscan.io/',
     [Network.testnet]: 'solscan.io/', // For testnet we have to add ?cluster=testnet => https://solscan.io/?cluster=testnet

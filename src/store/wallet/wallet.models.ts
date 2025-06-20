@@ -408,6 +408,9 @@ export interface TransactionProposal {
     transactionIndex: number;
     type: string;
   };
+  refreshOnPublish?: boolean;
+  fromAta: string; // spl tokens
+  decimals: number; // spl tokens
 }
 
 export interface TransactionDetailsBuilt extends TransactionProposal {

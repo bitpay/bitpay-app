@@ -134,7 +134,7 @@ const InAppNotification: React.FC = () => {
                 {...{
                   width: 20,
                   height: 20,
-                  color: theme.dark ? White : Black,
+                  color: White,
                 }}
               />
             </CloseModalButton>

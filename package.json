@@ -70,7 +70,6 @@
     "@reown/walletkit": "1.1.1",
     "@shopify/flash-list": "1.7.2",
     "@shopify/react-native-skia": "1.6.0",
-    "@solana/web3.js": "1.98.2",
     "@solana/webcrypto-ed25519-polyfill": "2.1.1",
     "@tradle/react-native-http": "2.0.1",
     "@walletconnect/jsonrpc-types": "1.0.2",
@@ -182,7 +181,6 @@
     "safe-json-utils": "1.1.1",
     "stream-browserify": "1.0.0",
     "styled-components": "5.3.3",
-    "tweetnacl": "1.0.3",
     "url": "0.10.3",
     "yup": "0.32.11"
   },

@@ -227,7 +227,7 @@ const WalletConnectConnections = () => {
 
                     const filteredRequests = requests.filter(request => {
                       const requestAddress =
-                        getAddressFrom(request).toLowerCase();
+                        getAddressFrom(request)?.toLowerCase();
                       return (
                         request.topic === session.topic &&
                         requestAddress === account.receiveAddress.toLowerCase()

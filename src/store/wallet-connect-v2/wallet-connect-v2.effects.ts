@@ -57,10 +57,21 @@ import {getFeeLevelsUsingBwcClient} from '../wallet/effects/fee/fee';
 import {AppActions} from '../app';
 import {t} from 'i18next';
 import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
-import nacl from 'tweetnacl';
-import {Keypair, VersionedTransaction} from '@solana/web3.js';
 import bs58 from 'bs58';
 import {IsSVMChain} from '../wallet/utils/currency';
+import {
+  getBase64Encoder,
+  getTransactionDecoder,
+  getCompiledTransactionMessageDecoder,
+  getBase58Encoder,
+  createKeyPairFromPrivateKeyBytes,
+  signTransaction,
+  getBase64EncodedWireTransaction,
+  partiallySignTransaction,
+  signBytes,
+  getBase58Decoder,
+  ReadonlyUint8Array,
+} from '@solana/kit';
 
 const BWC = BwcProvider.getInstance();
 
@@ -152,6 +163,13 @@ export const walletConnectV2ApproveSessionProposal =
   dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
+        dispatch(
+          LogActions.debug(
+            `[WC-V2/walletConnectV2ApproveSessionProposal]: approving session with namesapces: ${JSON.stringify(
+              namespaces,
+            )}`,
+          ),
+        );
         const session = await web3wallet.approveSession({
           id,
           relayProtocol,
@@ -723,6 +741,10 @@ const approveWCRequest =
         const signer = new ethers.Wallet(privKeyBuffer);
         const {params, id} = requestEvent;
         const {chainId, request} = params;
+        // TODO use cwc for solana methods
+        const cwcSolTransaction = await BWC.getCore().Transactions.get({
+          chain: 'SOL',
+        });
         switch (request.method) {
           case EIP155_SIGNING_METHODS.PERSONAL_SIGN:
           case EIP155_SIGNING_METHODS.ETH_SIGN:
@@ -810,26 +832,40 @@ const approveWCRequest =
             break;
 
           case SOLANA_SIGNING_METHODS.SIGN_MESSAGE:
-            const sol_signedMessage = signSolanaMessage(
-              privKeyBuffer,
-              request.params.message,
+            const sol_signedMessage = await signMessage({
+              messageBytes: bs58.decode(request.params.message),
+              key: {privKey: bs58.encode(privKeyBuffer)},
+            });
+            resolve(
+              formatJsonRpcResult<any>(id, {signature: sol_signedMessage}),
             );
-            resolve(formatJsonRpcResult<any>(id, sol_signedMessage));
             break;
 
           case SOLANA_SIGNING_METHODS.SIGN_TRANSACTION:
-            const signedTxBase64 = await BWC.getCore()
-              .Transactions.get({chain: 'SOL'})
-              .sign({
-                tx: request.params.transaction,
-                key: {privKey: bs58.encode(privKeyBuffer)},
-              });
-
-            const signedTransaction = deserialize(signedTxBase64);
+            const {transaction: base64Tx} = request.params;
+            const versionedTx = getTransactionDecoder().decode(
+              getBase64Encoder().encode(base64Tx),
+            );
+            const decodedMessage =
+              getCompiledTransactionMessageDecoder().decode(
+                versionedTx.messageBytes,
+              );
+            const signerCount = decodedMessage?.header?.numSignerAccounts ?? 1;
+            const signMethod = signerCount > 1 ? signPartially : sign;
+            const signedTxBase64 = await signMethod({
+              tx: base64Tx,
+              key: {privKey: bs58.encode(privKeyBuffer)},
+            });
+            const signedTransaction = getTransactionDecoder().decode(
+              getBase64Encoder().encode(signedTxBase64),
+            );
             resolve(
               formatJsonRpcResult<any>(id, {
-                transaction: signedTransaction.serialize(),
-                signature: bs58.encode(signedTransaction.signatures[0]),
+                transaction: signedTxBase64,
+                signature: bs58.encode(
+                  // @ts-ignore
+                  signedTransaction.signatures[wallet.receiveAddress],
+                ),
               }),
             );
             break;
@@ -842,6 +878,46 @@ const approveWCRequest =
       }
     });
   };
+
+interface SignParams {
+  tx: string;
+  key: {privKey: string};
+}
+
+const sign = async (params: SignParams) => {
+  const {tx, key} = params;
+  const uint8ArrayTx = getBase64Encoder().encode(tx);
+  const decodedTx = getTransactionDecoder().decode(uint8ArrayTx);
+  const privKeyBytes = getBase58Encoder().encode(key.privKey);
+  const keypair = await createKeyPairFromPrivateKeyBytes(privKeyBytes);
+  const signedTransaciton = await signTransaction([keypair], decodedTx);
+  return getBase64EncodedWireTransaction(signedTransaciton);
+};
+const signPartially = async (params: SignParams) => {
+  const {tx, key} = params;
+  const uint8ArrayTx = getBase64Encoder().encode(tx);
+  const decodedTx = getTransactionDecoder().decode(uint8ArrayTx);
+  const privKeyBytes = getBase58Encoder().encode(key.privKey);
+  const keypair = await createKeyPairFromPrivateKeyBytes(privKeyBytes);
+  const signedTransaciton = await partiallySignTransaction(
+    [keypair],
+    decodedTx,
+  );
+  return getBase64EncodedWireTransaction(signedTransaciton);
+};
+
+interface SignMessageParams {
+  messageBytes: ReadonlyUint8Array;
+  key: {privKey: string};
+}
+
+const signMessage = async (params: SignMessageParams) => {
+  const {key, messageBytes} = params;
+  const privKeyBytes = getBase58Encoder().encode(key.privKey);
+  const keypair = await createKeyPairFromPrivateKeyBytes(privKeyBytes);
+  const signedBytes = await signBytes(keypair.privateKey, messageBytes);
+  return getBase58Decoder().decode(signedBytes);
+};
 
 export const getAddressFrom = (request: WCV2RequestType): string => {
   let addressFrom: string = '';
@@ -867,7 +943,12 @@ export const getAddressFrom = (request: WCV2RequestType): string => {
       case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
         addressFrom = params[0];
         break;
-
+      case SOLANA_SIGNING_METHODS.SIGN_MESSAGE:
+        addressFrom = params?.pubkey;
+        break;
+      case SOLANA_SIGNING_METHODS.SIGN_TRANSACTION:
+        addressFrom = params?.feePayer || params?.pubkey;
+        break;
       default:
         break;
     }
@@ -983,33 +1064,6 @@ const getSignParamsMessage = (params: string[]) => {
   const message = params.filter(p => !utils.isAddress(p))[0];
 
   return convertHexToUtf8(message);
-};
-
-const serialize = (transaction: VersionedTransaction): string => {
-  return Buffer.from(transaction.serialize()).toString('base64');
-};
-
-const deserialize = (transaction: string): VersionedTransaction => {
-  let bytes: Uint8Array;
-  try {
-    bytes = bs58.decode(transaction);
-  } catch {
-    const buffer = Buffer.from(transaction, 'base64');
-    bytes = new Uint8Array(buffer);
-  }
-
-  return VersionedTransaction.deserialize(bytes);
-};
-
-const signSolanaMessage = (
-  privKey: Buffer<ArrayBuffer>,
-  message: string,
-): {signature: string} => {
-  const naclKeypair = nacl.sign.keyPair.fromSeed(privKey);
-  const keypair = Keypair.fromSecretKey(naclKeypair.secretKey);
-  const signature = nacl.sign.detached(bs58.decode(message), keypair.secretKey);
-  const bs58Signature = bs58.encode(signature);
-  return {signature: bs58Signature};
 };
 
 const getSignTypedDataParamsData = (params: string[]) => {

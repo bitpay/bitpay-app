@@ -10,7 +10,7 @@ import {
   IsEVMChain,
 } from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
-import {PROTOCOL_NAME} from '../constants/config';
+import {BASE_BITCORE_URL, PROTOCOL_NAME} from '../constants/config';
 import _ from 'lodash';
 import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
@@ -41,6 +41,7 @@ import {
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
 import {PermissionsAndroid} from 'react-native';
+import axios from 'axios';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -773,14 +774,7 @@ export const processOtherMethodsRequest =
         senderAddress = request.params?.pubkey;
         break;
       case 'solana_signTransaction':
-        const senderData = request?.params?.instructions?.[0].keys.find(
-          (instruction: {
-            pubkey: string;
-            isSigner: boolean;
-            isWritable: boolean;
-          }) => instruction.isSigner,
-        );
-        senderAddress = senderData?.pubkey || '';
+        senderAddress = request?.params?.feePayer || request?.params?.pubkey;
         break;
     }
     try {
@@ -1262,4 +1256,30 @@ export const isAndroidStoragePermissionGranted = (
       reject(e);
     }
   });
+};
+
+export const getSolanaTokens = async (
+  address: string,
+  network: string = 'mainnet',
+): Promise<
+  {
+    mintAddress: string;
+    ataAddress: string;
+    decimals: number;
+  }[]
+> => {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${
+    // @ts-ignore
+    BASE_BITCORE_URL.sol
+  }/SOL/${_network}/ata/${address}`;
+  try {
+    const apiResponse = await axios.get<any>(url);
+    if (!apiResponse?.data?.length) {
+      throw new Error(`No solana tokens found for address: ${address}`);
+    }
+    return apiResponse.data;
+  } catch (err) {
+    throw err;
+  }
 };
