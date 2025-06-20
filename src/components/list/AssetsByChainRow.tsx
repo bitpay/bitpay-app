@@ -76,20 +76,6 @@ const AssetsByChainRow = ({
   }>(initialSelected);
   const theme = useTheme();
 
-  const memoizedRenderItem = useCallback(
-    ({item}: {item: WalletRowProps}) => {
-      return (
-        <WalletRow
-          id={item.id}
-          hideBalance={hideBalance}
-          onPress={() => onPress(item.id, item.copayerId)}
-          wallet={item}
-        />
-      );
-    },
-    [hideBalance],
-  );
-
   const onHide = () => {
     setShowChainAssets({[chain]: !showChainAssets[chain]});
     dispatch(
@@ -144,8 +130,16 @@ const AssetsByChainRow = ({
           </Column>
         </RowContainer>
       ) : null}
-      {Object.values(chainAssetsList).map(item => {
-        return showChainAssets[chain] ? memoizedRenderItem({item}) : null;
+      {Object.values(chainAssetsList).map((item: WalletRowProps) => {
+        return showChainAssets[chain] ? (
+          <WalletRow
+            key={item.id}
+            id={item.id}
+            hideBalance={hideBalance}
+            onPress={() => onPress(item.id, item.copayerId)}
+            wallet={item}
+          />
+        ) : null;
       })}
     </View>
   );
