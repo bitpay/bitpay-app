@@ -41,7 +41,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import {NeutralSlate, SlateDark, White} from '../../../styles/colors';
 import {View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {getProtocolName, sleep} from '../../../utils/helper-methods';
 import Haptic from '../../../components/haptic-feedback/haptic';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';

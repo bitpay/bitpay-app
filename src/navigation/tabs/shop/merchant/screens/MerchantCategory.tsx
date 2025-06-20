@@ -1,6 +1,6 @@
 import React, {useLayoutEffect} from 'react';
 import {ScrollView} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import styled from 'styled-components/native';
 import {MerchantScreens, MerchantGroupParamList} from '../MerchantGroup';

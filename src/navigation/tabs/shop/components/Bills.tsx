@@ -3,7 +3,7 @@ import React, {useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Trans, useTranslation} from 'react-i18next';
 import {Linking, Platform, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import Button, {ButtonState} from '../../../../components/button/Button';
 import {
   ActiveOpacity,
@@ -180,7 +180,7 @@ export const Bills = () => {
         title: t('Confirm Your Info'),
         message: '',
         message2: <UserInfo />,
-        modalLibrary: 'modal',
+        modalLibrary: 'bottom-sheet',
         enableBackdropDismiss: true,
         onBackdropDismiss: () => {},
         actions: [

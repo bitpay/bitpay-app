@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useNavigation, useIsFocused} from '@react-navigation/native';
 import moment from 'moment';
 import {Link} from '../../../../../components/styled/Text';

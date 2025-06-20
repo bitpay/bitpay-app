@@ -64,7 +64,7 @@ import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {publishAndSignMultipleProposals} from '../../../store/wallet/effects/send/send';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {AppActions} from '../../../store/app';
 
@@ -442,7 +442,6 @@ const TransactionProposalNotifications = () => {
                   {item.needSign ? (
                     <CheckBoxContainer>
                       <TouchableOpacity
-                        touchableLibrary={'react-native-gesture-handler'}
                         onPress={() => {
                           txpSelectionChange(txp, _walletId);
                         }}>

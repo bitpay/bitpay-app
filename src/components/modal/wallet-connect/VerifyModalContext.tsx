@@ -26,7 +26,7 @@ import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import {View} from 'react-native';
 import {BottomNotificationCta} from '../bottom-notification/BottomNotification';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const CloseModalButton = styled(TouchableOpacity)`
   height: 40px;

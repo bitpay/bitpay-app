@@ -17,7 +17,7 @@ import {
 import React, {ReactChild, useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Pressable, ScrollView, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {CurrencyImage} from '../../../../../components/currency-image/CurrencyImage';
 import ChevronRightSvg from '../../../../../../assets/img/angle-right.svg';
 import InfoSvg from '../../../../../../assets/img/info.svg';

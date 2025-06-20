@@ -85,8 +85,8 @@ import {PillText} from '../components/SendToPill';
 import {ChainSelectionRow} from '../../../components/list/ChainSelectionRow';
 import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import cloneDeep from 'lodash.clonedeep';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export type AddCustomTokenParamList = {
   key: Key;

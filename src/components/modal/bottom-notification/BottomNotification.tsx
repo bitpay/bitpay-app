@@ -1,4 +1,6 @@
 import React, {ReactChild, useEffect} from 'react';
+import {Platform} from 'react-native';
+import {ScrollView} from 'react-native-gesture-handler';
 import SheetModal from '../base/sheet/SheetModal';
 import {BaseText, fontFamily, H4} from '../../styled/Text';
 import styled, {css} from 'styled-components/native';
@@ -15,7 +17,6 @@ import {
   White,
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
-import {Platform} from 'react-native';
 import SuccessSvg from '../../../../assets/img/success.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
 import WarningSvg from '../../../../assets/img/warning.svg';
@@ -113,7 +114,7 @@ export const BottomNotificationCta = styled(BaseText)`
       : Black};
 `;
 
-export const ScrollableBottomNotificationMessageContainer = styled.ScrollView`
+export const ScrollableBottomNotificationMessageContainer = styled(ScrollView)`
   padding-top: 15px;
 `;
 

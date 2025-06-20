@@ -16,7 +16,7 @@ import {BaseText, H3} from '../styled/Text';
 import * as Svg from 'react-native-svg';
 import {shouldScale} from '../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const Arrow = ({isDark}: {isDark: boolean}) => {
   return (
