@@ -59,11 +59,12 @@ import {
   CustomErrorMessage,
   WrongPasswordError,
 } from '../../../components/ErrorMessages';
-import {IS_ANDROID, URL} from '../../../../../constants';
+import {URL} from '../../../../../constants';
 import {BWCErrorMessage} from '../../../../../constants/BWCError';
 import TransactionLevel from '../TransactionLevel';
 import {
   BaseText,
+  H6,
   HeaderTitle,
   InfoDescription,
   InfoHeader,
@@ -674,25 +675,46 @@ const Confirm = () => {
           contentContainerStyle={{paddingBottom: 50}}
           keyboardShouldPersistTaps={'handled'}>
           <DetailsList keyboardShouldPersistTaps={'handled'}>
-            <Header>{solanaPayOpts ? 'SolanaPay Summary' : 'Summary'}</Header>
-            {solanaPayOpts?.label ? (
-              <SharedDetailRow
-                description={t('Pay to')}
-                value={solanaPayOpts.label}
-              />
-            ) : null}
-            {solanaPayOpts?.memo ? (
-              <SharedDetailRow
-                description={t('SolanaPay memo')}
-                value={solanaPayOpts.memo}
-                hr
-              />
-            ) : null}
-            {solanaPayOpts?.reference ? (
-              <SharedDetailRow
-                description={t('SolanaPay reference')}
-                value={solanaPayOpts.reference}
-              />
+            <Header>{t('Summary')}</Header>
+            {solanaPayOpts ? (
+              <>
+                <Hr style={{marginBottom: 15}} />
+                <H6>{'SolanaPay Data'}</H6>
+                {solanaPayOpts?.label ? (
+                  <SharedDetailRow
+                    height={40}
+                    minHeight={40}
+                    description={t('Pay to')}
+                    value={solanaPayOpts.label}
+                  />
+                ) : null}
+                {solanaPayOpts?.memo ? (
+                  <SharedDetailRow
+                    height={40}
+                    minHeight={40}
+                    description={t('Memo')}
+                    value={solanaPayOpts.memo}
+                  />
+                ) : null}
+                {solanaPayOpts?.message ? (
+                  <SharedDetailRow
+                    height={40}
+                    minHeight={40}
+                    description={t('Message')}
+                    value={solanaPayOpts.message}
+                  />
+                ) : null}
+                {solanaPayOpts?.reference ? (
+                  <SharedDetailRow
+                    height={40}
+                    minHeight={40}
+                    description={t('Reference')}
+                    value={solanaPayOpts.reference}
+                    secondary
+                  />
+                ) : null}
+                <Hr style={{marginTop: 15}} />
+              </>
             ) : null}
             <SendingTo
               recipient={recipientData}
