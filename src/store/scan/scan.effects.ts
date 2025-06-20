@@ -90,7 +90,10 @@ import {
   GeneralError,
 } from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
-import {BitpaySupportedEvmCoins, BitpaySupportedSvmCoins} from '../../constants/currencies';
+import {
+  BitpaySupportedEvmCoins,
+  BitpaySupportedSvmCoins,
+} from '../../constants/currencies';
 import {Analytics} from '../analytics/analytics.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';

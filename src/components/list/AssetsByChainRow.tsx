@@ -126,19 +126,21 @@ const AssetsByChainRow = ({
             ) : (
               <H5 style={{marginTop: 8}}>****</H5>
             )}
-            { showChevron ? <ChevronContainer>
-              {showChainAssets[chain] ? (
-                theme.dark ? (
-                  <ChevronUpSvgDark width={10} height={6} />
+            {showChevron ? (
+              <ChevronContainer>
+                {showChainAssets[chain] ? (
+                  theme.dark ? (
+                    <ChevronUpSvgDark width={10} height={6} />
+                  ) : (
+                    <ChevronUpSvgLight width={10} height={6} />
+                  )
+                ) : theme.dark ? (
+                  <ChevronDownSvgDark width={10} height={6} />
                 ) : (
-                  <ChevronUpSvgLight width={10} height={6} />
-                )
-              ) : theme.dark ? (
-                <ChevronDownSvgDark width={10} height={6} />
-              ) : (
-                <ChevronDownSvgLight width={10} height={6} />
-              )}
-            </ChevronContainer> : null }
+                  <ChevronDownSvgLight width={10} height={6} />
+                )}
+              </ChevronContainer>
+            ) : null}
           </ChainAssetsContainer>
         </Column>
       </RowContainer>
