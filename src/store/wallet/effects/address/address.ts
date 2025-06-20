@@ -150,13 +150,21 @@ export const GetCoinAndNetwork = (
       return {coin: 'bch', network: GetAddressNetwork(address, 'bch')};
     } catch (bchErr) {
       try {
-        const isValidTokenAddress = Core.Validation.validateAddress(
-          tokenChain?.toUpperCase() || 'ETH', // SOL | ETH
-          network,
-          address,
-        );
+        let isValidTokenAddress = false;
+        let validCoin = '';
+        for (const coin of ['eth', 'sol']) {
+          isValidTokenAddress = Core.Validation.validateAddress(
+            tokenChain?.toUpperCase() || coin.toUpperCase(), // SOL | ETH
+            network,
+            address,
+          );
+          if (isValidTokenAddress) {
+            validCoin = tokenChain?.toLowerCase() || coin;
+            break;
+          }
+        }
         if (isValidTokenAddress) {
-          return {coin: tokenChain?.toLowerCase() || 'eth', network};
+          return {coin: tokenChain?.toLowerCase() || validCoin, network};
         } else {
           throw isValidTokenAddress;
         }

@@ -7,6 +7,7 @@ import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {
   BitpaySupportedCoins,
   BitpaySupportedEvmCoins,
+  BitpaySupportedSvmCoins,
   BitpaySupportedTokens,
   SUPPORTED_COINS,
   SUPPORTED_TOKENS,
@@ -272,6 +273,7 @@ export type GlobalSelectParamList = {
       message?: string;
       feePerKb?: number;
       showEVMWalletsAndTokens?: boolean;
+      showSVMWalletsAndTokens?: boolean;
     };
   };
   amount?: number;
@@ -674,7 +676,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           (wallet.currencyAbbreviation === recipient?.currency &&
             wallet.chain === recipient?.chain) ||
           (recipient?.opts?.showEVMWalletsAndTokens &&
-            BitpaySupportedEvmCoins[wallet.chain]),
+            BitpaySupportedEvmCoins[wallet.chain]) ||
+          (recipient?.opts?.showSVMWalletsAndTokens &&
+            BitpaySupportedSvmCoins[wallet.chain]),
       );
     }
     if (recipient?.network) {
