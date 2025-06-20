@@ -1163,7 +1163,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           hideBalance={hideAllBalances}
           onPress={walletId => onPressItem(walletId)}
           showChainAssetsByDefault={memorizedAssetsByChainList.length === 1}
-          showChevron={memorizedAssetsByChainList.length > 1}
+          showNetworkHeader={memorizedAssetsByChainList.length > 1}
         />
       );
     },

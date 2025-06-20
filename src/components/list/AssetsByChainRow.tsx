@@ -50,7 +50,7 @@ interface Props {
   onPress: (walletId: string, copayerId?: string) => void;
   hideBalance: boolean;
   showChainAssetsByDefault?: boolean;
-  showChevron?: boolean;
+  showNetworkHeader?: boolean;
 }
 
 const AssetsByChainRow = ({
@@ -60,7 +60,7 @@ const AssetsByChainRow = ({
   isLast,
   hideBalance,
   showChainAssetsByDefault = false,
-  showChevron = true,
+  showNetworkHeader = true,
 }: Props) => {
   const {chain, chainName, fiatBalanceFormat, chainAssetsList, chainImg} =
     accountItem;
@@ -105,28 +105,28 @@ const AssetsByChainRow = ({
 
   return (
     <View>
-      <RowContainer
-        activeOpacity={ActiveOpacity}
-        onPress={onHide}
-        style={{borderBottomWidth: 0, paddingBottom: 0}}>
-        <CurrencyImageContainer>
-          <CurrencyImage img={chainImg} size={20} />
-        </CurrencyImageContainer>
-        <Column>
-          <H5 ellipsizeMode="tail" numberOfLines={1}>
-            {chainName}
-          </H5>
-        </Column>
-        <Column style={{alignItems: 'flex-end'}}>
-          <ChainAssetsContainer>
-            {!hideBalance ? (
-              <H5 numberOfLines={1} ellipsizeMode="tail">
-                {fiatBalanceFormat}
-              </H5>
-            ) : (
-              <H5 style={{marginTop: 8}}>****</H5>
-            )}
-            {showChevron ? (
+      {showNetworkHeader ? (
+        <RowContainer
+          activeOpacity={ActiveOpacity}
+          onPress={onHide}
+          style={{borderBottomWidth: 0, paddingBottom: 0}}>
+          <CurrencyImageContainer>
+            <CurrencyImage img={chainImg} size={20} />
+          </CurrencyImageContainer>
+          <Column>
+            <H5 ellipsizeMode="tail" numberOfLines={1}>
+              {chainName}
+            </H5>
+          </Column>
+          <Column style={{alignItems: 'flex-end'}}>
+            <ChainAssetsContainer>
+              {!hideBalance ? (
+                <H5 numberOfLines={1} ellipsizeMode="tail">
+                  {fiatBalanceFormat}
+                </H5>
+              ) : (
+                <H5 style={{marginTop: 8}}>****</H5>
+              )}
               <ChevronContainer>
                 {showChainAssets[chain] ? (
                   theme.dark ? (
@@ -140,10 +140,10 @@ const AssetsByChainRow = ({
                   <ChevronDownSvgLight width={10} height={6} />
                 )}
               </ChevronContainer>
-            ) : null}
-          </ChainAssetsContainer>
-        </Column>
-      </RowContainer>
+            </ChainAssetsContainer>
+          </Column>
+        </RowContainer>
+      ) : null}
       {Object.values(chainAssetsList).map(item => {
         return showChainAssets[chain] ? memoizedRenderItem({item}) : null;
       })}
