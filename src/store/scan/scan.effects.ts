@@ -2210,8 +2210,11 @@ const handlePlainAddress =
     },
   ): Effect<void> =>
   dispatch => {
-    let _coin = coin === 'eth' ? 'EVM' : coin;
-    dispatch(LogActions.info(`[scan] Incoming-data: ${_coin} plain address`));
+    dispatch(
+      LogActions.info(
+        `[scan] Incoming-data: ${coin.toUpperCase()} chain plain address`,
+      ),
+    );
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
       : undefined; // There is no way to tell if an evm address is testnet or livenet so let's skip the network filter

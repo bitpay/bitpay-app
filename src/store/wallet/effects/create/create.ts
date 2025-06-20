@@ -862,7 +862,7 @@ export const detectAndCreateTokensForEachEvmWallet =
 
       dispatch(
         LogActions.debug(
-          'Number of EVM wallets to check: ' + vmWalletsToCheck?.length,
+          'Number of VM wallets to check: ' + vmWalletsToCheck?.length,
         ),
       );
 
