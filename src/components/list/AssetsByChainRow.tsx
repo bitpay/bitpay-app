@@ -50,6 +50,7 @@ interface Props {
   onPress: (walletId: string, copayerId?: string) => void;
   hideBalance: boolean;
   showChainAssetsByDefault?: boolean;
+  showChevron?: boolean;
 }
 
 const AssetsByChainRow = ({
@@ -59,6 +60,7 @@ const AssetsByChainRow = ({
   isLast,
   hideBalance,
   showChainAssetsByDefault = false,
+  showChevron = true,
 }: Props) => {
   const {chain, chainName, fiatBalanceFormat, chainAssetsList, chainImg} =
     accountItem;
@@ -124,7 +126,7 @@ const AssetsByChainRow = ({
             ) : (
               <H5 style={{marginTop: 8}}>****</H5>
             )}
-            <ChevronContainer>
+            { showChevron ? <ChevronContainer>
               {showChainAssets[chain] ? (
                 theme.dark ? (
                   <ChevronUpSvgDark width={10} height={6} />
@@ -136,7 +138,7 @@ const AssetsByChainRow = ({
               ) : (
                 <ChevronDownSvgLight width={10} height={6} />
               )}
-            </ChevronContainer>
+            </ChevronContainer> : null }
           </ChainAssetsContainer>
         </Column>
       </RowContainer>
