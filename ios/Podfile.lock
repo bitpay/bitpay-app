@@ -1444,29 +1444,7 @@ PODS:
     - Yoga
   - react-native-netinfo (11.3.2):
     - React-Core
-  - react-native-pager-view (6.5.1):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.10.14.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - react-native-pager-view/common (= 6.5.1)
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
-  - react-native-pager-view/common (6.5.1):
+  - react-native-pager-view (6.7.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2717,7 +2695,7 @@ SPEC CHECKSUMS:
   react-native-mail: 8fdcd3aef007c33a6877a18eb4cf7447a1d4ce4a
   react-native-mmkv: bd95bdb1e353e00826c27a40de1ca316d688965f
   react-native-netinfo: 076df4f9b07f6670acf4ce9a75aac8d34c2e2ccc
-  react-native-pager-view: 1a11036e8d45060cb5109fe13bed25feea1dbaf4
+  react-native-pager-view: 3bcbdc4751b90bc546fd567dcdf8074c0d6333bd
   react-native-print: f704aef52d931bfce6d1d84351dbb5232d7ecb89
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-render-html: 984dfe2294163d04bf5fe25d7c9f122e60e05ebe
