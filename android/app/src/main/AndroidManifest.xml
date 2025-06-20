@@ -84,6 +84,8 @@
                 <data android:scheme="bitcoin" />
                 <data android:scheme="bitcoincash" />
                 <data android:scheme="ethereum" />
+                <data android:scheme="sol" />
+                <data android:scheme="solana" />
                 <data android:scheme="matic" />
                 <data android:scheme="dogecoin" />
                 <data android:scheme="litecoin" />

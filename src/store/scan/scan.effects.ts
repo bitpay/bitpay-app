@@ -810,9 +810,19 @@ const handleSolanaPay =
         addrData?.coin.toLowerCase() && network === addrData?.network;
 
       if (!isValid) {
-        dispatch(LogActions.info('[SolanaPay] Invalid SPL tokenAddress'));
+        dispatch(
+          LogActions.warn(
+            `[SolanaPay] Invalid SPL tokenAddress: ${splTokenAddress}`,
+          ),
+        );
         return;
       }
+
+      dispatch(
+        LogActions.debug(
+          `[SolanaPay] Valid SPL tokenAddress: ${splTokenAddress}. Getting tokenContractInfo`,
+        ),
+      );
 
       tokenContractInfo =
         tokenOptionsByAddress?.[
@@ -821,7 +831,7 @@ const handleSolanaPay =
       if (!tokenContractInfo) {
         dispatch(
           LogActions.debug(
-            'contract info not present in token options - consulting bitcore',
+            '[SolanaPay] Contract info not present in token options - consulting bitcore',
           ),
         );
 
@@ -829,6 +839,13 @@ const handleSolanaPay =
           const contractInfo = await getSolanaTokenInfo(
             splTokenAddress,
             'livenet',
+          );
+
+          dispatch(
+            LogActions.debug(
+              '[SolanaPay] Contract info from bitcore: ' +
+                JSON.stringify(contractInfo),
+            ),
           );
 
           if (!contractInfo) {
@@ -919,7 +936,7 @@ const handleSolanaPay =
         }),
       );
     } else {
-      dispatch(LogActions.warn('[SolanaPay] Validating amount...'));
+      dispatch(LogActions.debug('[SolanaPay] Validating amount...'));
       const isValidSolanaPayAmount = (
         amount: string | null | undefined,
       ): boolean => {
@@ -947,7 +964,7 @@ const handleSolanaPay =
       };
 
       if (isValidSolanaPayAmount(amount)) {
-        dispatch(LogActions.warn('[SolanaPay] Valid amount. Go to confirm.'));
+        dispatch(LogActions.debug('[SolanaPay] Valid amount. Go to confirm.'));
         dispatch(
           goToConfirm({
             recipient,
