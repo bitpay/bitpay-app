@@ -83,11 +83,13 @@ export const HeaderTitle = styled(H6)`
 
 export interface DetailContainerParams {
   height?: number;
+  minHeight?: number;
 }
 
 export const DetailContainer = styled.View<DetailContainerParams>`
-  min-height: 60px;
-  padding: 20px 0;
+  ${({minHeight}) =>
+    minHeight ? `min-height: ${minHeight}px;` : 'min-height: 60px'}
+  ${({minHeight}) => (minHeight ? 'padding: 0;' : 'padding: 20px 0;')}
   justify-content: center;
   ${({height}) => (height ? `height: ${height}px;` : '')}
 `;
@@ -426,31 +428,41 @@ export const SharedDetailRow = ({
   description,
   value,
   height,
+  minHeight,
   hr,
+  secondary,
   onPress,
 }: {
   description: string;
-  value: number | string;
+  value?: number | string;
   height?: number;
+  minHeight?: number;
   hr?: boolean;
+  secondary?: boolean;
   onPress?: () => void;
 }): JSX.Element | null => {
   return (
     <>
       {onPress ? (
-        <PressableDetailContainer onPress={onPress}>
-          <DetailRow>
-            <H7>{description}</H7>
-            <H7>{value}</H7>
-          </DetailRow>
-        </PressableDetailContainer>
+        <>
+          <PressableDetailContainer onPress={onPress}>
+            <DetailRow>
+              <H7>{description}</H7>
+              {!secondary ? <H7>{value}</H7> : null}
+            </DetailRow>
+          </PressableDetailContainer>
+          {secondary ? <ConfirmSubText>{value}</ConfirmSubText> : null}
+        </>
       ) : (
-        <DetailContainer height={height}>
-          <DetailRow>
-            <H7>{description}</H7>
-            <H7>{value}</H7>
-          </DetailRow>
-        </DetailContainer>
+        <>
+          <DetailContainer height={height} minHeight={minHeight}>
+            <DetailRow>
+              <H7>{description}</H7>
+              {!secondary ? <H7>{value}</H7> : null}
+            </DetailRow>
+          </DetailContainer>
+          {secondary ? <ConfirmSubText>{value}</ConfirmSubText> : null}
+        </>
       )}
       {hr && <Hr />}
     </>
