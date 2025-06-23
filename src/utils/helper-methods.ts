@@ -41,7 +41,16 @@ import {
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
 import {PermissionsAndroid} from 'react-native';
+import {
+  getBase64Encoder,
+  getTransactionDecoder,
+  getCompiledTransactionMessageDecoder,
+} from '@solana/kit';
 import axios from 'axios';
+import {
+  parseInstructions,
+  TransferSolInstruction,
+} from './sol-transaction-parser';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -850,6 +859,119 @@ const parseStandardTokenTransactionData = (data?: string) => {
   return {};
 };
 
+export const processSolanaSwapRequest =
+  (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
+  async (dispatch, getState) => {
+    dispatch(LogActions.debug('processing other method transaction'));
+    const {
+      APP: {defaultAltCurrency},
+      RATE: {rates: allRates},
+    } = getState();
+    const {params} = event;
+    const {chainId, request} = params;
+    const {method} = params.request;
+    const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+    const senderAddress = request?.params?.feePayer || request?.params?.pubkey;
+    const transactionDecoder = getTransactionDecoder();
+    const compiledTransactionMessageDecoder =
+      getCompiledTransactionMessageDecoder();
+    const decodedTransaction = transactionDecoder.decode(
+      getBase64Encoder().encode(request?.params?.transaction),
+    );
+    const compiledTransactionMessage = compiledTransactionMessageDecoder.decode(
+      decodedTransaction.messageBytes,
+    );
+    const {
+      staticAccounts,
+      header,
+      instructions: compiledTransactionInstructions,
+    } = compiledTransactionMessage;
+    const accountsWithRoles = staticAccounts.map((address, index) => {
+      const {
+        numSignerAccounts,
+        numReadonlySignerAccounts,
+        numReadonlyNonSignerAccounts,
+      } = header;
+      let role: 'signer' | 'writable' | 'readonly';
+      if (index < numSignerAccounts) {
+        role =
+          index < numSignerAccounts - numReadonlySignerAccounts
+            ? 'signer'
+            : 'readonly';
+      } else {
+        const nonSignerIndex = index - numSignerAccounts;
+        role =
+          nonSignerIndex <
+          staticAccounts.length -
+            numSignerAccounts -
+            numReadonlyNonSignerAccounts
+            ? 'writable'
+            : 'readonly';
+      }
+      return {address, role};
+    });
+    const _instructions = compiledTransactionInstructions.map(ix => {
+      return {
+        programAddress: staticAccounts[ix.programAddressIndex],
+        accounts: ix?.accountIndices?.map(index => accountsWithRoles[index]),
+        data: ix.data,
+      };
+    });
+    const instructions = parseInstructions(_instructions);
+    const firstInstruction = Object.values(
+      instructions,
+    ).flat()?.[0] as TransferSolInstruction;
+    if (!firstInstruction || !firstInstruction.currency) {
+      // not supported PROGRAM ID found.
+      return dispatch(processOtherMethodsRequest(event));
+    }
+    const swapFromCurrencyAbbreviation =
+      firstInstruction.currency.toLowerCase();
+    const swapAmount = firstInstruction.amount.toString();
+    const swapFormatAmount = await dispatch(
+      FormatAmount(
+        swapFromCurrencyAbbreviation,
+        swapFromChain,
+        undefined,
+        Number(swapAmount),
+      ),
+    );
+
+    const toFiatAmount = await dispatch(
+      toFiat(
+        Number(swapAmount),
+        defaultAltCurrency.isoCode,
+        swapFromCurrencyAbbreviation,
+        swapFromChain,
+        allRates,
+        undefined,
+      ),
+    );
+
+    const swapFiatAmount = formatFiatAmount(
+      toFiatAmount,
+      defaultAltCurrency.isoCode,
+    );
+
+    try {
+      return {
+        transactionDataName: 'SIGN REQUEST',
+        swapAmount,
+        swapFiatAmount,
+        swapFormatAmount,
+        swapFromChain,
+        senderAddress,
+        swapFromCurrencyAbbreviation,
+        recipientAddress: firstInstruction.destination,
+      };
+    } catch (error) {
+      dispatch(
+        LogActions.error(`Error processing ${method} request: ${error}`),
+      );
+      throw error;
+    }
+  };
+
 export const processSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
@@ -1260,7 +1382,7 @@ export const isAndroidStoragePermissionGranted = (
 
 export const getSolanaTokens = async (
   address: string,
-  network: string = 'mainnet',
+  network: string = 'livenet',
 ): Promise<
   {
     mintAddress: string;

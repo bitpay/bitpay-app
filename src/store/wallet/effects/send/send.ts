@@ -483,19 +483,23 @@ export const buildTxDetails =
         chain = swapFromChain;
         coin = swapFromCurrencyAbbreviation;
         amount = Number(swapAmount) || 0;
-        gasLimit =
-          (params[0]?.gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
-          (params[0]?.gas && parseInt(params[0]?.gas, 16)) ||
-          (await getEstimateGas({
-            wallet: wallet as Wallet,
-            network: wallet.network,
-            value: amount,
-            from: params[0]?.from,
-            to: params[0]?.to,
-            data: params[0]?.data,
-            chain: swapFromChain!,
-          }));
-        fee = gasLimit * gasPrice;
+        if (!IsSVMChain(swapFromChain!)) {
+          gasLimit =
+            (params[0]?.gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
+            (params[0]?.gas && parseInt(params[0]?.gas, 16)) ||
+            (await getEstimateGas({
+              wallet: wallet as Wallet,
+              network: wallet.network,
+              value: amount,
+              from: params[0]?.from,
+              to: params[0]?.to,
+              data: params[0]?.data,
+              chain: swapFromChain!,
+            }));
+          fee = gasLimit * gasPrice;
+        } else {
+          fee = 0.000005 * 1e9; // 0.000005 SOL in lamports default low fee
+        }
       }
       if (proposal) {
         gasPrice = proposal.gasPrice;
@@ -1030,19 +1034,24 @@ const buildTransactionProposal =
               txp.chain = swapFromChain;
               txp.coin = swapFromCurrencyAbbreviation;
               txp.amount = Number(swapAmount) || 0;
-              const gasLimit =
-                (params[0]?.gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
-                (params[0]?.gas && parseInt(params[0]?.gas, 16)) ||
-                (await getEstimateGas({
-                  wallet: wallet as Wallet,
-                  network: (wallet as Wallet).network,
-                  value: txp.amount,
-                  from: params[0]?.from,
-                  to: params[0]?.to,
-                  data: params[0]?.data,
-                  chain: swapFromChain!,
-                }));
-              txp.fee = gasLimit * gasPrice;
+              let gasLimit;
+              if (!IsSVMChain(swapFromChain!)) {
+                gasLimit =
+                  (params[0]?.gasLimit && parseInt(params[0]?.gasLimit, 16)) ||
+                  (params[0]?.gas && parseInt(params[0]?.gas, 16)) ||
+                  (await getEstimateGas({
+                    wallet: wallet as Wallet,
+                    network: (wallet as Wallet).network,
+                    value: txp.amount,
+                    from: params[0]?.from,
+                    to: params[0]?.to,
+                    data: params[0]?.data,
+                    chain: swapFromChain!,
+                  }));
+                txp.fee = gasLimit * gasPrice || undefined;
+              } else {
+                txp.fee = 0.000005 * 1e9; // 0.000005 SOL in lamports default low fee
+              }
               txp.feeLevel = undefined;
               txp.outputs.push({
                 toAddress: tx.toAddress,
@@ -1066,8 +1075,8 @@ const buildTransactionProposal =
 
             const toAddress =
               IsSVMChain(txp.chain!) && tx.tokenAddress
-              ? ataAddress
-              : tx.toAddress!;
+                ? ataAddress
+                : tx.toAddress!;
 
             txp.outputs.push({
               toAddress: toAddress,

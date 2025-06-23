@@ -14,6 +14,7 @@ import {LogActions} from '../log';
 import {ProposalTypes, SessionTypes, Verify} from '@walletconnect/types';
 import {
   processOtherMethodsRequest,
+  processSolanaSwapRequest,
   processSwapRequest,
   sleep,
 } from '../../utils/helper-methods';
@@ -327,6 +328,13 @@ export const walletConnectV2SubscribeToEvents =
 
         if (event.params.request.method === 'eth_sendTransaction') {
           processedRequestData = await dispatch(processSwapRequest(event));
+        } else if (
+          event.params.request.method ===
+          SOLANA_SIGNING_METHODS.SIGN_TRANSACTION
+        ) {
+          processedRequestData = await dispatch(
+            processSolanaSwapRequest(event),
+          );
         } else {
           processedRequestData = await dispatch(
             processOtherMethodsRequest(event),
@@ -741,7 +749,6 @@ const approveWCRequest =
         const signer = new ethers.Wallet(privKeyBuffer);
         const {params, id} = requestEvent;
         const {chainId, request} = params;
-        // TODO use cwc for solana methods
         const cwcSolTransaction = await BWC.getCore().Transactions.get({
           chain: 'SOL',
         });

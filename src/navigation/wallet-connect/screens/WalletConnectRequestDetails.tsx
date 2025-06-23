@@ -53,9 +53,7 @@ export type WalletConnectRequestDetailsParamList = {
   topic?: string;
 };
 
-const RequestDetailsContainer = styled.View`
-  padding-bottom: 60px;
-`;
+const RequestDetailsContainer = styled.View``;
 
 const AddressContainer = styled.View`
   flex-direction: row;

@@ -57,7 +57,10 @@ import {
   WCV2RequestType,
   WCV2SessionType,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
-import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../../../constants/WalletConnectV2';
+import {
+  SOLANA_SIGNING_METHODS,
+  WALLET_CONNECT_SUPPORTED_CHAINS,
+} from '../../../constants/WalletConnectV2';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -323,11 +326,21 @@ const WalletConnectHome = () => {
       dispatch(dismissBottomNotificationModal());
       await sleep(500);
 
-      const {to: toAddress} = request.params.request.params[0];
+      const {to: toAddress} = request?.params?.request?.params?.[0] ?? {};
 
       const recipient = {
-        address: toAddress,
+        address: toAddress || request.recipientAddress,
       };
+
+      if (!recipient.address) {
+        navigation.navigate('WalletConnectRequestDetails', {
+          request,
+          wallet,
+          peerName,
+          topic,
+        });
+        return;
+      }
 
       navigation.navigate('WalletConnectConfirm', {
         wallet: wallet,
@@ -363,7 +376,9 @@ const WalletConnectHome = () => {
 
   const handleRequestMethod = (request: WCV2RequestType, wallet: Wallet) => {
     const {method} = request.params.request;
-    method !== 'eth_sendTransaction' && method !== 'eth_signTransaction'
+    method !== 'eth_sendTransaction' &&
+    method !== 'eth_signTransaction' &&
+    method !== SOLANA_SIGNING_METHODS.SIGN_TRANSACTION
       ? navigation.navigate('WalletConnectRequestDetails', {
           request,
           wallet,
