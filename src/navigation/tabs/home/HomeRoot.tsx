@@ -7,7 +7,10 @@ import {each, filter} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {RefreshControl, ScrollView} from 'react-native';
-import {STATIC_CONTENT_CARDS_ENABLED} from '../../../constants/config';
+import {
+  EXCHANGE_RATES_SORT_ORDER,
+  STATIC_CONTENT_CARDS_ENABLED,
+} from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {
   setShowKeyMigrationFailureModal,
@@ -114,9 +117,9 @@ const HomeRoot = () => {
   // Exchange Rates
   const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates);
   const rates = useAppSelector(({RATE}) => RATE.rates);
-  const memoizedExchangeRates: Array<ExchangeRateItemProps> = useMemo(
-    () =>
-      Object.entries(lastDayRates).reduce((ratesList, [key, lastDayRate]) => {
+  const memoizedExchangeRates: Array<ExchangeRateItemProps> = useMemo(() => {
+    const result = Object.entries(lastDayRates).reduce(
+      (ratesList, [key, lastDayRate]) => {
         const lastDayRateForDefaultCurrency = lastDayRate.find(
           ({code}) => code === defaultAltCurrency.isoCode,
         );
@@ -159,9 +162,30 @@ const HomeRoot = () => {
           });
         }
         return ratesList;
-      }, [] as ExchangeRateItemProps[]),
-    [lastDayRates, rates, defaultAltCurrency],
-  );
+      },
+      [] as ExchangeRateItemProps[],
+    );
+
+    return result.sort((a, b) => {
+      const indexA = EXCHANGE_RATES_SORT_ORDER.indexOf(
+        a.currencyAbbreviation.toLowerCase(),
+      );
+      const indexB = EXCHANGE_RATES_SORT_ORDER.indexOf(
+        b.currencyAbbreviation.toLowerCase(),
+      );
+
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      if (indexA !== -1) {
+        return -1;
+      }
+      if (indexB !== -1) {
+        return 1;
+      }
+      return a.currencyName.localeCompare(b.currencyName);
+    });
+  }, [lastDayRates, rates, defaultAltCurrency]);
 
   // Quick Links
   const memoizedQuickLinks = useMemo(() => {

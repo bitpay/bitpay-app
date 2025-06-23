@@ -164,3 +164,17 @@ export const OPEN_TIMEOUT = 3000;
  * How long to wait to find a device.
  */
 export const LISTEN_TIMEOUT = 10000;
+
+// HOME EXCHANGE RATES
+export const EXCHANGE_RATES_SORT_ORDER = [
+  'btc',
+  'eth',
+  'usdt', // not available from the endpoint
+  'xrp',
+  'sol',
+  'usdc', // not available from the endpoint
+  'doge',
+  'bch',
+  'shib',
+  'matic',
+];
