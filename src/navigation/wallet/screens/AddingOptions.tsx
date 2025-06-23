@@ -36,11 +36,7 @@ import {
 } from '../../../constants/currencies';
 import {successAddWallet} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
-import {
-  getEvmGasWallets,
-  getSvmGasWallets,
-  sleep,
-} from '../../../utils/helper-methods';
+import {getVMGasWallets, sleep} from '../../../utils/helper-methods';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -100,8 +96,8 @@ const AddingOptions: React.FC = () => {
               getDecryptPassword(Object.assign({}, key)),
             );
           }
-          const evmWallets = getEvmGasWallets(key.wallets);
-          const accounts = evmWallets.map(
+          const vmWallets = getVMGasWallets(key.wallets);
+          const accounts = vmWallets.map(
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
@@ -153,8 +149,8 @@ const AddingOptions: React.FC = () => {
               getDecryptPassword(Object.assign({}, key)),
             );
           }
-          const svmWallets = getSvmGasWallets(key.wallets);
-          const accounts = svmWallets.map(
+          const vmWallets = getVMGasWallets(key.wallets);
+          const accounts = vmWallets.map(
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
