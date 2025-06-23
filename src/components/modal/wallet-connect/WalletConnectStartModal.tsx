@@ -384,8 +384,9 @@ export const WalletConnectStartModal = () => {
         }[]
       | undefined,
   ) => {
+    let accountChecked = false;
     const formattedKeys = Object.values(keys)
-      .map((key, keyIndex) => {
+      .map(key => {
         const accountList = buildAccountList(
           key,
           defaultAltCurrency.isoCode,
@@ -404,15 +405,15 @@ export const WalletConnectStartModal = () => {
             skipFiatCalculations: true,
           },
         ) as AccountRowProps[];
-
         const accounts = accountList.map((account, accountListIndex) => ({
           ...account,
-          checked: accountListIndex === 0 && keyIndex === 0,
+          checked: accountListIndex === 0 && !accountChecked,
         })) as (AccountRowProps & {checked?: boolean})[];
 
         if (accounts.length === 0) {
           return null;
         }
+        accountChecked = true;
         return {
           key: key.id,
           keyName: key.keyName || 'My Key',
