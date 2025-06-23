@@ -110,7 +110,7 @@ import {
   createWalletsForAccounts,
   fixWalletAddresses,
   getEvmGasWallets,
-  getSvmGasWallets,
+  getVMGasWallets,
   sleep,
 } from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
@@ -718,7 +718,7 @@ export default () => {
                       }
                     };
 
-                    // we need to ensure that each svm account has all supported wallets attached.
+                    // we need to ensure that for each evm account we have equal supported svm wallets attached.
                     const runCompleteSvmWalletsAccountFix = async () => {
                       try {
                         if (Object.keys(keys).length === 0) {
@@ -729,10 +729,10 @@ export default () => {
                         await sleep(1000); // give the modal time to show
                         await Promise.all(
                           Object.values(keys).map(async key => {
-                            const svmWallets = getSvmGasWallets(key.wallets);
+                            const vmWallets = getVMGasWallets(key.wallets);
                             const accountsArray = [
                               ...new Set(
-                                svmWallets.map(
+                                vmWallets.map(
                                   wallet => wallet.credentials.account,
                                 ),
                               ),
