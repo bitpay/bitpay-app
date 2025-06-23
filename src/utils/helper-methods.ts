@@ -48,7 +48,9 @@ import {
 } from '@solana/kit';
 import axios from 'axios';
 import {
+  instructionKeys,
   parseInstructions,
+  TransferCheckedTokenInstruction,
   TransferSolInstruction,
 } from './sol-transaction-parser';
 
@@ -862,7 +864,7 @@ const parseStandardTokenTransactionData = (data?: string) => {
 export const processSolanaSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
-    dispatch(LogActions.debug('processing other method transaction'));
+    dispatch(LogActions.debug('processing Solana transaction'));
     const {
       APP: {defaultAltCurrency},
       RATE: {rates: allRates},
@@ -918,16 +920,86 @@ export const processSolanaSwapRequest =
       };
     });
     const instructions = parseInstructions(_instructions);
-    const firstInstruction = Object.values(
-      instructions,
-    ).flat()?.[0] as TransferSolInstruction;
-    if (!firstInstruction || !firstInstruction.currency) {
+    dispatch(
+      LogActions.debug(
+        `Parsed instructions for ${method} request: ${JSON.stringify(
+          instructions,
+        )}`,
+      ),
+    );
+    const recipientAddresses = new Set();
+    let mainToAddress = null;
+    let amount = 0;
+    let currency = null;
+    let tokenAddress: string | undefined;
+    // @ts-ignore
+    if (instructions?.[instructionKeys.TRANSFER_SOL]?.length > 0) {
+      // @ts-ignorex
+      const solTransfers = instructions[
+        instructionKeys.TRANSFER_SOL
+      ] as TransferSolInstruction[];
+      mainToAddress =
+        solTransfers.find(transfer => transfer.destination !== senderAddress)
+          ?.destination || null;
+      for (const transfer of solTransfers) {
+        if (transfer.destination !== senderAddress) {
+          recipientAddresses.add(transfer.destination);
+        }
+      }
+      if (!tokenAddress) {
+        amount = solTransfers.reduce(
+          (sum, transfer) => sum + Number(transfer.amount),
+          0,
+        );
+        currency = 'sol';
+      }
+    }
+    // @ts-ignore
+    if (instructions?.[instructionKeys.TRANSFER_CHECKED_TOKEN]?.length > 0) {
+      // @ts-ignore
+      const allTransfers = instructions[
+        instructionKeys.TRANSFER_CHECKED_TOKEN
+      ] as TransferCheckedTokenInstruction[];
+      const tokenTransfers = tokenAddress
+        ? allTransfers.filter(
+            transfer =>
+              tokenAddress.toLowerCase() === transfer.mint.toLowerCase(),
+          )
+        : allTransfers;
+      if (tokenAddress || !mainToAddress) {
+        mainToAddress =
+          tokenTransfers.find(
+            transfer => transfer.destination !== senderAddress,
+          )?.destination || null;
+      }
+      for (const transfer of tokenTransfers) {
+        if (transfer.destination !== senderAddress) {
+          recipientAddresses.add(transfer.destination);
+        }
+      }
+      if (tokenAddress) {
+        amount = tokenTransfers.reduce(
+          (sum, transfer) => sum + Number(transfer.amount),
+          0,
+        );
+        // currency = ??; TODO
+      }
+    }
+
+    dispatch(
+      LogActions.debug(
+        `amount: ${amount}, recipientAddresses: ${Array.from(
+          recipientAddresses,
+        ).join(', ')}, mainToAddress: ${mainToAddress}`,
+      ),
+    );
+
+    if (!mainToAddress || !currency) {
       // not supported PROGRAM ID found.
       return dispatch(processOtherMethodsRequest(event));
     }
-    const swapFromCurrencyAbbreviation =
-      firstInstruction.currency.toLowerCase();
-    const swapAmount = firstInstruction.amount.toString();
+    const swapFromCurrencyAbbreviation = currency.toLowerCase();
+    const swapAmount = amount.toString();
     const swapFormatAmount = await dispatch(
       FormatAmount(
         swapFromCurrencyAbbreviation,
@@ -962,7 +1034,7 @@ export const processSolanaSwapRequest =
         swapFromChain,
         senderAddress,
         swapFromCurrencyAbbreviation,
-        recipientAddress: firstInstruction.destination,
+        recipientAddress: mainToAddress,
       };
     } catch (error) {
       dispatch(
