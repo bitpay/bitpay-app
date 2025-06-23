@@ -521,8 +521,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   if (!isSvmAccount && !hasAllChains) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
-      title: t('Add EVM Chain'),
-      description: t('Add all supported chains to this account.'),
+      title: t('Add Ethereum Networks'),
+      description: t('Add all the supported networks to this account.'),
       onPress: async () => {
         haptic('impactLight');
         await sleep(500);
@@ -562,9 +562,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   keyOptions.push({
     img: <Icons.Settings />,
     title: t('Account Settings'),
-    description: t(
-      'View all the ways to manage and configure your EVM account.',
-    ),
+    description: t('View all the ways to manage and configure your account.'),
     onPress: async () => {
       haptic('impactLight');
       await sleep(500);
@@ -1164,6 +1162,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           accountItem={item}
           hideBalance={hideAllBalances}
           onPress={walletId => onPressItem(walletId)}
+          showChainAssetsByDefault={memorizedAssetsByChainList.length === 1}
+          showNetworkHeader={memorizedAssetsByChainList.length > 1}
         />
       );
     },

@@ -71,12 +71,12 @@ const Crypto = () => {
       <Setting
         activeOpacity={1}
         onPress={() => setShowInfoCustomizeEvm(!showInfoCustomizeEvm)}>
-        <SettingTitle>{t('Customize EVM Nonce')}</SettingTitle>
+        <SettingTitle>{t('Customize Nonce')}</SettingTitle>
         <ToggleSwitch
           onChange={value => {
             dispatch(WalletActions.setCustomizeNonce(value));
             dispatch(
-              Analytics.track('Set Customize EVM Nonce', {
+              Analytics.track('Set Customize Nonce', {
                 value,
               }),
             );
