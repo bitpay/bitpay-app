@@ -487,7 +487,7 @@ const KeySettings = () => {
             </>
           ) : null}
 
-          {_key && !_key.isReadOnly ? (
+          {/* {_key && !_key.isReadOnly ? (
             <>
               <Setting
                 activeOpacity={ActiveOpacity}
@@ -517,9 +517,9 @@ const KeySettings = () => {
 
               <Hr />
             </>
-          ) : null}
+          ) : null} */}
 
-          {_key && !_key.isReadOnly ? (
+          {/* {_key && !_key.isReadOnly ? (
             <>
               <Setting
                 activeOpacity={ActiveOpacity}
@@ -546,7 +546,7 @@ const KeySettings = () => {
 
               <Hr />
             </>
-          ) : null}
+          ) : null} */}
 
           <Setting
             activeOpacity={ActiveOpacity}

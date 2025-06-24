@@ -462,7 +462,7 @@ export const getMultipleTokenPrices =
         data = response.map((item: any) => ({
           tokenAddress: item.tokenAddress,
           usdPrice: item.usdPrice,
-          '24hrPercentChange': item['usdPrice24hrPercentChange'],
+          '24hrPercentChange': item.usdPrice24hrPercentChange,
         }));
       } else {
         const response = await getMultipleEvmTokenPrices(
@@ -479,7 +479,7 @@ export const getMultipleTokenPrices =
         data = response.map((item: any) => ({
           tokenAddress: item.tokenAddress,
           usdPrice: item.usdPrice,
-          '24hrPercentChange': item['usdPrice24hrPercentChange'],
+          '24hrPercentChange': item.usdPrice24hrPercentChange,
         }));
       }
       return data;
