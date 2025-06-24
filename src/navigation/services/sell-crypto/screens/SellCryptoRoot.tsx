@@ -910,6 +910,7 @@ const SellCryptoRoot = ({
           allRates,
           selectedCoin.currencyAbbreviation?.toLowerCase(),
           selectedCoin.chain?.toLowerCase(),
+          selectedCoin.tokenAddress,
         );
         const rateForCoinAndFiat = rateByCurrency?.find(
           r => r.code === simplexSellFiatLimits.fiatCurrency,
