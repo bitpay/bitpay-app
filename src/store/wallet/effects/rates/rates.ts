@@ -224,7 +224,7 @@ export const getTokenRates =
                 } = tokenInfo;
                 const lastUpdate = Date.now();
 
-                if (!usdPrice || !tokenAddress || !percentChange) {
+                if (!usdPrice || !tokenAddress || percentChange == null) {
                   return;
                 }
                 const formattedTokenAddress = addTokenChainSuffix(
