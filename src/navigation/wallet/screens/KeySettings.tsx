@@ -33,12 +33,12 @@ import {
 } from '../../../components/styled/Containers';
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {SlateDark, White} from '../../../styles/colors';
+import {Slate, SlateDark, White} from '../../../styles/colors';
 import {
   openUrlWithInAppBrowser,
   startOnGoingProcessModal,
 } from '../../../store/app/app.effects';
-import InfoSvg from '../../../../assets/img/info.svg';
+import InfoIcon from '../../../components/icons/info/Info';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {URL} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -73,6 +73,7 @@ import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
+import {useTheme} from 'styled-components/native';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -128,6 +129,7 @@ const KeySettings = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const theme = useTheme();
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const [searchVal, setSearchVal] = useState('');
@@ -349,7 +351,7 @@ const KeySettings = () => {
                 haptic('impactLight');
                 navigation.navigate('KeyExplanation');
               }}>
-              <InfoSvg />
+              <InfoIcon bgColor={theme.dark ? Slate : undefined} />
             </TouchableOpacity>
           </InfoImageContainer>
         </WalletHeaderContainer>
@@ -398,7 +400,7 @@ const KeySettings = () => {
 
             <Hr />
 
-            <SettingView>
+            <SettingView style={{paddingLeft: 15, paddingRight: 15}}>
               <WalletSettingsTitle>
                 {t('Request Encrypt Password')}
               </WalletSettingsTitle>
@@ -411,7 +413,7 @@ const KeySettings = () => {
 
               <InfoHeader>
                 <InfoImageContainer infoMargin={'0 8px 0 0'}>
-                  <InfoSvg />
+                  <InfoIcon bgColor={theme.dark ? Slate : undefined} />
                 </InfoImageContainer>
 
                 <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
