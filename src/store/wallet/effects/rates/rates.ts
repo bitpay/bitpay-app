@@ -26,13 +26,12 @@ import {
   getCurrencyAbbreviation,
   addTokenChainSuffix,
 } from '../../../../utils/helper-methods';
-import {getMultipleTokenPrices} from '../../../../store/moralis/moralis.effects';
 import {
-  EvmTokenPriceItemInput,
-  EvmErc20PriceJSON,
-} from '@moralisweb3/common-evm-utils';
+  getMultipleTokenPrices,
+  UnifiedTokenPriceObj,
+} from '../../../../store/moralis/moralis.effects';
 import {calculateUsdToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
-import {IsERCToken} from '../../utils/currency';
+import {IsERCToken, IsSVMChain} from '../../utils/currency';
 import {UpdateAllKeyAndWalletStatusContext} from '../status/status';
 
 export const startGetRates =
@@ -153,6 +152,7 @@ export const getContractAddresses =
     Object.values(keys).forEach(key => {
       key.wallets.forEach(wallet => {
         if (
+          chain === wallet.chain &&
           !IsERCToken(wallet.currencyAbbreviation, wallet.chain) &&
           wallet.tokens
         ) {
@@ -200,7 +200,7 @@ export const getTokenRates =
         const altCurrencies = altCurrencyList.map(altCurrency =>
           altCurrency.isoCode.toLowerCase(),
         );
-        const chunkArray = (array: EvmTokenPriceItemInput[], size: number) => {
+        const chunkArray = (array: string[], size: number) => {
           const chunked_arr = [];
           for (let i = 0; i < array.length; i += size) {
             chunked_arr.push(array.slice(i, i + size));
@@ -211,15 +211,12 @@ export const getTokenRates =
         for (const chain of SUPPORTED_VM_TOKENS) {
           const contractAddresses = dispatch(getContractAddresses(chain));
           if (contractAddresses?.length > 0) {
-            const formattedAddresses = contractAddresses.map(address => ({
-              tokenAddress: address,
-            })) as EvmTokenPriceItemInput[]; // format addresses for Moralis
-            const chunks = chunkArray(formattedAddresses, 25);
+            const chunks = chunkArray(contractAddresses, 25);
             for (const chunk of chunks) {
               const data = await dispatch(
                 getMultipleTokenPrices({addresses: chunk, chain}),
               );
-              data.forEach((tokenInfo: EvmErc20PriceJSON) => {
+              data.forEach((tokenInfo: UnifiedTokenPriceObj) => {
                 const {
                   usdPrice,
                   tokenAddress,
@@ -231,7 +228,7 @@ export const getTokenRates =
                   return;
                 }
                 const formattedTokenAddress = addTokenChainSuffix(
-                  tokenAddress.toLowerCase(),
+                  tokenAddress,
                   chain,
                 );
                 // only save token rates if exist in tokens list
