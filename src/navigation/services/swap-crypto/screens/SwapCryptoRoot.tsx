@@ -896,9 +896,10 @@ const SwapCryptoRoot: React.FC = () => {
             getChainFromChangellyBlockchain(currency.name, currency.blockchain),
           ),
         )) &&
-      // If currency is not SVM => return true
-      // If currency is SVM => check tokens
-      (!changellySupportedSvmChains.includes(currencyBlockchain) ||
+      ((currencyBlockchain === 'solana' && currency.ticker === 'sol') ||
+        // If currency is not SVM => return true
+        // If currency is SVM => check tokens
+        !changellySupportedSvmChains.includes(currencyBlockchain) ||
         allSupportedTokens.includes(
           getExternalServiceSymbol(
             currency.name,
