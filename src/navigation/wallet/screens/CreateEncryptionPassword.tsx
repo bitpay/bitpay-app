@@ -97,8 +97,13 @@ const CreateEncryptionPassword = () => {
               `Encrypting private key for: ${key.keyName} - with algo: ${algo}`,
             );
             key.methods!.encrypt(password, undefined, algo);
-          } catch (error) {
-            logger.debug(`error encrypting with ${algo}: ${error}`);
+          } catch (err) {
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            if (errMsg && errMsg.includes('Could not encrypt')) {
+              throw err;
+            }
+            logger.debug(`error decrypting with ${algo}: ${errMsg}`);
           }
         });
         dispatch(WalletActions.successEncryptOrDecryptPassword({key}));

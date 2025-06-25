@@ -41,8 +41,13 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
               `Decrypting private key for: ${key.keyName} - with algo: ${algo}`,
             );
             key.methods!.decrypt(password, algo);
-          } catch (error) {
-            logger.debug(`error decrypting with ${algo}: ${error}`);
+          } catch (err) {
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            if (errMsg && errMsg.includes('Could not decrypt')) {
+              throw err;
+            }
+            logger.debug(`error decrypting with ${algo}: ${errMsg}`);
           }
         });
         logger.debug('Key Decrypted');
