@@ -72,7 +72,7 @@ import {useTranslation} from 'react-i18next';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
-import {IsVMChain} from '../../../store/wallet/utils/currency';
+import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -304,6 +304,7 @@ const KeySettings = () => {
         key: _key,
         selectedAccountAddress: item.receiveAddress,
         context: 'keySettings',
+        isSvmAccount: IsSVMChain(item.chains[0]),
       });
     } else {
       const fullWalletObj = key.wallets.find(k => k.id === item.wallets[0].id)!;

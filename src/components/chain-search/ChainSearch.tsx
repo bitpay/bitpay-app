@@ -111,6 +111,7 @@ interface SearchComponentProps<T extends SearchableItem> {
   setSearchResults: (val: T[]) => void;
   searchFullList: T[];
   context: string;
+  hideFilter?: boolean;
 }
 
 const SearchComponent = <T extends SearchableItem>({
@@ -120,6 +121,7 @@ const SearchComponent = <T extends SearchableItem>({
   setSearchResults,
   searchFullList,
   context,
+  hideFilter,
 }: SearchComponentProps<T>) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
@@ -496,7 +498,7 @@ const SearchComponent = <T extends SearchableItem>({
               />
             </View>
           </LeftSideContainer>
-          {_SearchFilterContainer()}
+          {hideFilter ? null : _SearchFilterContainer()}
         </SearchRoundContainer>
       )}
     </>

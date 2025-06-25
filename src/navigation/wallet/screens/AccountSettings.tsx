@@ -87,7 +87,7 @@ const AssetsHeaderContainer = styled.View`
 const AccountSettings = () => {
   const {t} = useTranslation();
   const {
-    params: {key, selectedAccountAddress, context},
+    params: {key, selectedAccountAddress, context, isSvmAccount},
   } = useRoute<RouteProp<WalletGroupParamList, 'AccountSettings'>>();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -296,6 +296,7 @@ const AccountSettings = () => {
             setSearchResults={setSearchResults}
             searchFullList={accountItem.wallets}
             context={'accountsettings'}
+            hideFilter={isSvmAccount}
           />
         </SearchComponentContainer>
 
