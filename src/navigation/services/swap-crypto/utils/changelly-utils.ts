@@ -443,6 +443,7 @@ export const getChangellyFixedCurrencyAbbreviation = (
       arb: 'usdtarb',
       op: 'usdtop',
       matic: 'usdtpolygon',
+      sol: 'usdtsol',
     },
     matic: {
       dai: 'daipolygon',
