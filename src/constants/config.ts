@@ -46,6 +46,7 @@ export const APP_CRYPTO_PREFIX = [
   'base',
   'op',
   'sol',
+  'solana',
   'dogecoin',
   'litecoin',
 ];

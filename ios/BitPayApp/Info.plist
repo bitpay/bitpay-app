@@ -41,6 +41,7 @@
 				<string>bitcoincash</string>
 				<string>ethereum</string>
 				<string>sol</string>
+				<string>solana</string>
 				<string>matic</string>
 				<string>arb</string>
 				<string>base</string>
