@@ -706,6 +706,7 @@ const getRateStr =
         opts.rates,
         opts.coin.toLowerCase(),
         opts.chain,
+        opts.contractAddress,
       );
 
       if (rate) {
@@ -761,6 +762,7 @@ const buildTransactionProposal =
           recipientList,
           request,
           context,
+          solanaPayOpts,
         } = tx;
         let {customData} = tx;
 
@@ -1116,6 +1118,9 @@ const buildTransactionProposal =
             });
             txp.fromAta = fromAta?.ataAddress;
             txp.decimals = fromAta?.decimals;
+            if (solanaPayOpts?.memo) {
+              txp.memo = solanaPayOpts.memo;
+            }
           }
         }
 

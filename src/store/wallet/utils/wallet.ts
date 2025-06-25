@@ -325,6 +325,7 @@ export const toFiat =
       rates,
       currencyAbbreviation,
       chain,
+      tokenAddress,
     );
 
     if (!ratesPerCurrency) {

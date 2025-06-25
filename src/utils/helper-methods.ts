@@ -403,8 +403,9 @@ export const getRateByCurrencyName = (
   rates: Rates,
   currencyAbbreviation: string,
   chain: string,
+  tokenAddress?: string,
 ): Rate[] => {
-  const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+  const currencyName = getCurrencyAbbreviation(tokenAddress ?? currencyAbbreviation, chain);
   if (currencyAbbreviation === 'pol' && rates.matic && rates.matic.length > 0) {
     return rates.matic;
   }
@@ -1471,6 +1472,29 @@ export const getSolanaTokens = async (
     const apiResponse = await axios.get<any>(url);
     if (!apiResponse?.data?.length) {
       throw new Error(`No solana tokens found for address: ${address}`);
+    }
+    return apiResponse.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSolanaTokenInfo = async (
+  splTokenAddress: string,
+  network: string = 'mainnet',
+): Promise<{
+  name: string;
+  symbol: string;
+  decimals: number;
+}> => {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/token/${splTokenAddress}`;
+  try {
+    const apiResponse = await axios.get(url);
+    if (!apiResponse?.data) {
+      throw new Error(
+        `No solana tokens found for splTokenAddress: ${splTokenAddress}`,
+      );
     }
     return apiResponse.data;
   } catch (err) {

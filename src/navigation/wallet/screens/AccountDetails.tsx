@@ -159,6 +159,7 @@ import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Settings from '../../../components/settings/Settings';
 import {
   BitpaySupportedEvmCoins,
+  BitpaySupportedSvmCoins,
   getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
@@ -517,7 +518,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
   const keyOptions: Array<Option> = [];
   const hasAllChains =
-    accountItem?.chains?.length === Object.keys(BitpaySupportedEvmCoins).length;
+    accountItem?.chains?.length ===
+    Object.keys(
+      isSvmAccount ? BitpaySupportedSvmCoins : BitpaySupportedEvmCoins,
+    ).length;
   if (!isSvmAccount && !hasAllChains) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
@@ -570,6 +574,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         key,
         selectedAccountAddress: accountItem?.receiveAddress,
         context: 'accountDetails',
+        isSvmAccount,
       });
     },
   });
@@ -837,6 +842,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                       key,
                       selectedAccountAddress: accountItem?.receiveAddress,
                       context: 'accountDetails',
+                      isSvmAccount,
                     })
                   }>
                   <Icons.AccountSettings />

@@ -118,6 +118,7 @@ export type WalletGroupParamList = {
     key: Key;
     selectedAccountAddress: string;
     context: 'keySettings' | 'accountDetails';
+    isSvmAccount?: boolean;
   };
   CreationOptions: undefined;
   Import: ImportParamList;

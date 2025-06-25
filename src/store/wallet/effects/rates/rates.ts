@@ -224,7 +224,7 @@ export const getTokenRates =
                 } = tokenInfo;
                 const lastUpdate = Date.now();
 
-                if (!usdPrice || !tokenAddress || !percentChange) {
+                if (!usdPrice || !tokenAddress || percentChange == null) {
                   return;
                 }
                 const formattedTokenAddress = addTokenChainSuffix(
@@ -233,12 +233,8 @@ export const getTokenRates =
                 );
                 // only save token rates if exist in tokens list
                 if (tokensOptsByAddress[formattedTokenAddress]) {
-                  const tokenName = getCurrencyAbbreviation(
-                    tokensOptsByAddress[formattedTokenAddress]?.symbol,
-                    chain,
-                  );
-                  tokenRates[tokenName] = [];
-                  tokenLastDayRates[tokenName] = [];
+                  tokenRates[formattedTokenAddress] = [];
+                  tokenLastDayRates[formattedTokenAddress] = [];
 
                   altCurrencies.forEach(altCurrency => {
                     const rate =
@@ -250,7 +246,7 @@ export const getTokenRates =
                           shouldSkipLogging,
                         ),
                       ) || 0;
-                    tokenRates[tokenName].push({
+                    tokenRates[formattedTokenAddress].push({
                       code: altCurrency.toUpperCase(),
                       fetchedOn: lastUpdate,
                       name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
@@ -265,7 +261,7 @@ export const getTokenRates =
                       .unix(lastUpdate)
                       .subtract(1, 'days')
                       .unix();
-                    tokenLastDayRates[tokenName].push({
+                    tokenLastDayRates[formattedTokenAddress].push({
                       code: altCurrency.toUpperCase(),
                       fetchedOn: yesterday,
                       name: tokensOptsByAddress[formattedTokenAddress]?.symbol,
