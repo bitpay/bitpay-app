@@ -27,6 +27,7 @@ import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {checkBiometricForSending} from '../../../store/wallet/effects/send/send';
+import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
 
 export type BackupOnboardingParamList = {
   key: Key;
@@ -186,7 +187,7 @@ const BackupOnboarding: React.FC = () => {
             buttonStyle={'primary'}
             onPress={async () => {
               haptic('impactLight');
-              if (!key.methods?.isPrivKeyEncrypted()) {
+              if (!checkPrivateKeyEncrypted(key)) {
                 if (biometricLockActive) {
                   await dispatch(checkBiometricForSending());
                 }

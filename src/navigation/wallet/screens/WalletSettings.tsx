@@ -21,7 +21,10 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {findWalletById} from '../../../store/wallet/utils/wallet';
+import {
+  checkPrivateKeyEncrypted,
+  findWalletById,
+} from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
@@ -294,7 +297,7 @@ const WalletSettings = () => {
                     use0forBCH,
                     use44forMultisig,
                   };
-                  if (key.methods!.isPrivKeyEncrypted()) {
+                  if (checkPrivateKeyEncrypted(key)) {
                     dispatch(
                       showDecryptPasswordModal(
                         buildEncryptModalConfig(async decryptedKey => {

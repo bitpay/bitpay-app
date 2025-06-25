@@ -14,6 +14,7 @@ import {DecryptError, WrongPasswordError} from './ErrorMessages';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
+import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
 
 const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const {t} = useTranslation();
@@ -22,12 +23,12 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const logger = useLogger();
 
   const [passwordToggle, setPasswordToggle] = useState(
-    !!key.methods!.isPrivKeyEncrypted(),
+    !!checkPrivateKeyEncrypted(key),
   );
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
-      setPasswordToggle(!!key.methods!.isPrivKeyEncrypted());
+      setPasswordToggle(!!checkPrivateKeyEncrypted(key));
     });
   }, [navigation, key.methods]);
 
@@ -36,9 +37,12 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
       try {
         Object.values(Constants.ALGOS).forEach(algo => {
           try {
+            logger.debug(
+              `Decrypting private key for: ${key.keyName} - with algo: ${algo}`,
+            );
             key.methods!.decrypt(password, algo);
           } catch (error) {
-            console.log(`error decrypting with ${algo}`, error);
+            logger.debug(`error decrypting with ${algo}: ${error}`);
           }
         });
         logger.debug('Key Decrypted');
