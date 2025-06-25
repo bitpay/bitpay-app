@@ -63,6 +63,8 @@ const transformWalletStore = (
       'mnemonicEncrypted',
       'xPrivKey',
       'xPrivKeyEncrypted',
+      'xPrivKeyEDDSA',
+      'xPrivKeyEDDSAEncrypted',
     ];
     const updatedProperties = fieldsToTransform.reduce(
       (latestProperties, field) => {
