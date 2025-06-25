@@ -1,12 +1,10 @@
 import {
-  useNavigation,
   useScrollToTop,
   useTheme,
 } from '@react-navigation/native';
-import {each, filter} from 'lodash';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {RefreshControl, ScrollView} from 'react-native';
+import {AppState, AppStateStatus, RefreshControl, ScrollView} from 'react-native';
 import {
   EXCHANGE_RATES_SORT_ORDER,
   STATIC_CONTENT_CARDS_ENABLED,
@@ -64,11 +62,18 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
 import ArchaxFooter from '../../../components/archax/archax-footer';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {TabsScreens, TabsStackParamList} from '../TabsStack';
 
-const HomeRoot = () => {
+export type HomeScreenProps = NativeStackScreenProps<
+  TabsStackParamList,
+  TabsScreens.HOME
+>;
+
+const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const navigation = useNavigation();
+  const {currencyAbbreviation} = route.params || {};
   const theme = useTheme();
   const themeType = useThemeType();
   const [refreshing, setRefreshing] = useState(false);
@@ -239,6 +244,30 @@ const HomeRoot = () => {
 
   const scrollViewRef = useRef<ScrollView>(null);
   useScrollToTop(scrollViewRef);
+
+  useEffect(() => {
+    function onAppStateChange(status: AppStateStatus) {
+      if (status === 'active' && currencyAbbreviation) {
+        navigation.setParams({
+          currencyAbbreviation: undefined
+        });
+        const exchangeRatesSection = memoizedExchangeRates.find(
+          ({currencyAbbreviation: abbr}) =>
+            abbr.toLowerCase() === currencyAbbreviation.toLowerCase(),
+        );
+        if (exchangeRatesSection) {
+          navigation.navigate('PriceCharts', {item: exchangeRatesSection});
+        }
+      }
+    }
+
+    const subscriptionAppStateChange = AppState.addEventListener(
+      'change',
+      onAppStateChange,
+    );
+
+    return () => subscriptionAppStateChange.remove();
+  }, [currencyAbbreviation]);
 
   return (
     <TabContainer>
