@@ -706,6 +706,7 @@ const getRateStr =
         opts.rates,
         opts.coin.toLowerCase(),
         opts.chain,
+        opts.contractAddress,
       );
 
       if (rate) {
