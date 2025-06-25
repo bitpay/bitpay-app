@@ -405,7 +405,10 @@ export const getRateByCurrencyName = (
   chain: string,
   tokenAddress?: string,
 ): Rate[] => {
-  const currencyName = getCurrencyAbbreviation(tokenAddress ?? currencyAbbreviation, chain);
+  const currencyName = getCurrencyAbbreviation(
+    tokenAddress ?? currencyAbbreviation,
+    chain,
+  );
   if (currencyAbbreviation === 'pol' && rates.matic && rates.matic.length > 0) {
     return rates.matic;
   }

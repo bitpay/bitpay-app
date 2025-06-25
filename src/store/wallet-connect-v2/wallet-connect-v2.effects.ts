@@ -861,9 +861,9 @@ const approveWCRequest =
             let signedTxBase64: string;
             if (signerCount > 1) {
               signedTxBase64 = await cwcSolTransaction.signPartially({
-              tx: base64Tx,
-              key: {privKey: bs58.encode(privKeyBuffer)},
-            });
+                tx: base64Tx,
+                key: {privKey: bs58.encode(privKeyBuffer)},
+              });
             } else {
               signedTxBase64 = await cwcSolTransaction.sign({
                 tx: base64Tx,
@@ -891,7 +891,7 @@ const approveWCRequest =
         reject(err);
       }
     });
-};
+  };
 
 export const getAddressFrom = (request: WCV2RequestType): string => {
   let addressFrom: string = '';

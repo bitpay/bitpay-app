@@ -20,6 +20,7 @@ import {
 } from '../../../store/app/app.actions';
 import {TextInput} from 'react-native';
 import {useTranslation} from 'react-i18next';
+import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
 
 const EncryptPasswordContainer = styled.SafeAreaView`
   flex: 1;
@@ -90,8 +91,13 @@ const CreateEncryptionPassword = () => {
     try {
       if (key) {
         logger.debug(`Encrypting private key for: ${key.keyName}`);
-
-        key.methods!.encrypt(password);
+        Object.values(Constants.ALGOS).forEach(algo => {
+          try {
+            key.methods!.encrypt(password, undefined, algo);
+          } catch (error) {
+            console.log(`error encrypting with ${algo}`, error);
+          }
+        });
         dispatch(WalletActions.successEncryptOrDecryptPassword({key}));
         key.isPrivKeyEncrypted = key.methods!.isPrivKeyEncrypted();
         navigation.goBack();

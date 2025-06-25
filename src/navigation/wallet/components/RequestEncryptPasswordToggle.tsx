@@ -13,6 +13,7 @@ import {useLogger} from '../../../utils/hooks/useLogger';
 import {DecryptError, WrongPasswordError} from './ErrorMessages';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
+import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
 
 const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const {t} = useTranslation();
@@ -33,7 +34,13 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const onSubmitPassword = async (password: string) => {
     if (key) {
       try {
-        key.methods!.decrypt(password);
+        Object.values(Constants.ALGOS).forEach(algo => {
+          try {
+            key.methods!.decrypt(password, algo);
+          } catch (error) {
+            console.log(`error decrypting with ${algo}`, error);
+          }
+        });
         logger.debug('Key Decrypted');
         dispatch(
           WalletActions.successEncryptOrDecryptPassword({
