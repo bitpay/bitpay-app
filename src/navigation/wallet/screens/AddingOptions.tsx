@@ -36,7 +36,11 @@ import {
 } from '../../../constants/currencies';
 import {successAddWallet} from '../../../store/wallet/wallet.actions';
 import {LogActions} from '../../../store/log';
-import {getVMGasWallets, sleep} from '../../../utils/helper-methods';
+import {
+  getEvmGasWallets,
+  getSvmGasWallets,
+  sleep,
+} from '../../../utils/helper-methods';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -96,7 +100,7 @@ const AddingOptions: React.FC = () => {
               getDecryptPassword(Object.assign({}, key)),
             );
           }
-          const vmWallets = getVMGasWallets(key.wallets);
+          const vmWallets = getEvmGasWallets(key.wallets);
           const accounts = vmWallets.map(
             ({credentials}) => credentials.account,
           );
@@ -149,8 +153,22 @@ const AddingOptions: React.FC = () => {
               getDecryptPassword(Object.assign({}, key)),
             );
           }
-          const vmWallets = getVMGasWallets(key.wallets);
-          const accounts = vmWallets.map(
+          if (
+            !key?.properties?.xPrivKeyEDDSA &&
+            !key.properties?.xPrivKeyEDDSAEncrypted
+          ) {
+            try {
+              key.methods!.addKeyByAlgorithm('EDDSA', {password});
+            } catch (err) {
+              const errstring =
+                err instanceof Error ? err.message : JSON.stringify(err);
+              dispatch(LogActions.error(`Error EDDSA key: ${errstring}`));
+              showErrorModal(errstring);
+              return;
+            }
+          }
+          const svmWallets = getSvmGasWallets(key.wallets);
+          const accounts = svmWallets.map(
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;

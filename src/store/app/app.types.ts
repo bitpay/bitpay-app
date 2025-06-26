@@ -83,6 +83,7 @@ export enum AppActionTypes {
   SET_LOCAL_CHAIN_FILTER_OPTION = 'APP/SET_LOCAL_CHAIN_FILTER_OPTION',
   SET_LOCAL_ASSETS_DROPDOWN = 'APP/SET_LOCAL_ASSETS_DROPDOWN',
   SET_MIGRATION_COMPLETE = 'APP/SET_MIGRATION_COMPLETE',
+  SET_EDDSA_KEY_MIGRATION_COMPLETE = 'APP/SET_EDDSA_KEY_MIGRATION_COMPLETE',
   SET_KEY_MIGRATION_FAILURE = 'APP/SET_KEY_MIGRATION_FAILURE',
   SET_MIGRATION_MMKV_STORAGE_COMPLETE = 'APP/SET_MIGRATION_MMKV_STORAGE_COMPLETE',
   SET_KEY_MIGRATION_MMKV_STORAGE_FAILURE = 'APP/SET_KEY_MIGRATION_MMKV_STORAGE_FAILURE',
@@ -383,6 +384,10 @@ interface SetMigrationComplete {
   type: typeof AppActionTypes.SET_MIGRATION_COMPLETE;
 }
 
+interface SetEDDSAKeyMigrationComplete {
+  type: typeof AppActionTypes.SET_EDDSA_KEY_MIGRATION_COMPLETE;
+}
+
 interface SetKeyMigrationFailure {
   type: typeof AppActionTypes.SET_KEY_MIGRATION_FAILURE;
 }
@@ -503,6 +508,7 @@ export type AppActionType =
   | updateSettingsListConfigType
   | AddAltCurrencyList
   | SetMigrationComplete
+  | SetEDDSAKeyMigrationComplete
   | SetKeyMigrationFailure
   | SetMigrationMMKVStorageComplete
   | SetKeyMigrationMMKVStorageFailure
