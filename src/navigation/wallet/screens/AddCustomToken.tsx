@@ -312,7 +312,7 @@ const AddCustomToken = ({
                 : isRegtest
                 ? Network.regtest
                 : network,
-              walletName: currencyName,
+              walletName: walletNameValue,
               ...(account !== undefined && {
                 account,
                 customAccount: true,

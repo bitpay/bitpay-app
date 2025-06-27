@@ -1337,6 +1337,13 @@ export const incomingLink =
           dispatch(CardEffects.startOpenDosh());
         });
       }
+    } else if (pathSegments[0] === 'exchange-rate') {
+      handler = () => {
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.HOME,
+          params,
+        });
+      };
     }
 
     if (handler) {

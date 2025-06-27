@@ -146,6 +146,7 @@ import {
   findWalletById,
   buildWalletObj,
   mapAbbreviationAndName,
+  checkPrivateKeyEncrypted,
 } from '../../../store/wallet/utils/wallet';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.svg';
@@ -791,7 +792,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 <CenteredText>{key?.keyName}</CenteredText>
               </Row>
               <Row style={{alignItems: 'center', gap: 5}}>
-                {key.methods?.isPrivKeyEncrypted() ? (
+                {checkPrivateKeyEncrypted(key) ? (
                   <View style={{marginRight: 5}}>
                     {theme.dark ? (
                       <EncryptPasswordDarkModeImg />

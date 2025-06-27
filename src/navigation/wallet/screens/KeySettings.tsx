@@ -55,6 +55,7 @@ import {
 import {
   buildAccountList,
   buildWalletObj,
+  checkPrivateKeyEncrypted,
   generateKeyExportCode,
   mapAbbreviationAndName,
 } from '../../../store/wallet/utils/wallet';
@@ -441,7 +442,7 @@ const KeySettings = () => {
 
             <Hr />
 
-            {_key?.methods?.isPrivKeyEncrypted() ? (
+            {checkPrivateKeyEncrypted(_key) ? (
               <>
                 <SettingView>
                   <Setting

@@ -67,7 +67,9 @@ export enum TabsScreens {
 }
 
 export type TabsStackParamList = {
-  Home: undefined;
+  Home: {
+    currencyAbbreviation?: string;
+  } | undefined;
   Shop: NavigatorScreenParams<ShopStackParamList> | undefined;
   TransactButton: undefined;
   Bills: undefined;
