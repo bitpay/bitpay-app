@@ -36,6 +36,7 @@ import {
   GetName,
   GetPrecision,
   IsERCToken,
+  IsEVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {
   FormatAmountStr,
@@ -48,6 +49,7 @@ import {
   getBadgeImg,
   getCurrencyAbbreviation,
   getCWCChain,
+  getSolanaTokens,
   sleep,
 } from '../../../../utils/helper-methods';
 import {
@@ -434,22 +436,34 @@ const RampSellCheckout: React.FC = () => {
       if (isToken) {
         if (wallet.tokenAddress) {
           txp.tokenAddress = wallet.tokenAddress;
-          if (txp.outputs) {
-            for (const output of txp.outputs) {
-              if (output.amount) {
-                output.amount = parseAmountToStringIfBN(output.amount);
-              }
-              if (!output.data) {
-                output.data = BWC.getCore()
-                  .Transactions.get({chain: getCWCChain(wallet.chain)})
-                  .encodeData({
-                    recipients: [
-                      {address: output.toAddress, amount: output.amount},
-                    ],
-                    tokenAddress: wallet.tokenAddress,
-                  });
+          if (IsEVMChain(txp.chain!)) {
+            if (txp.outputs) {
+              for (const output of txp.outputs) {
+                if (output.amount) {
+                  output.amount = parseAmountToStringIfBN(output.amount);
+                }
+                if (!output.data) {
+                  output.data = BWC.getCore()
+                    .Transactions.get({chain: getCWCChain(wallet.chain)})
+                    .encodeData({
+                      recipients: [
+                        {address: output.toAddress, amount: output.amount},
+                      ],
+                      tokenAddress: wallet.tokenAddress,
+                    });
+                }
               }
             }
+          } else {
+            const fromSolanaTokens = await getSolanaTokens(
+              wallet?.receiveAddress!,
+              wallet?.network,
+            );
+            const fromAta = fromSolanaTokens.find((item: any) => {
+              return item.mintAddress === txp.tokenAddress;
+            });
+            txp.fromAta = fromAta?.ataAddress;
+            txp.decimals = fromAta?.decimals;
           }
         }
       }

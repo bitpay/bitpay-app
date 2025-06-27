@@ -25,6 +25,11 @@ export const changellySupportedEvmChains = [
   'polygon',
 ];
 
+export const changellySupportedSvmChains = [
+  // SVM
+  'solana',
+];
+
 export const changellySupportedOtherChains = [
   // Ohters
   'ripple',
@@ -35,23 +40,25 @@ export const changellySupportedCoins = [
   'bch',
   'eth',
   'eth_arb', // etharb in Changelly
+  'eth_base', // ethbase in Changelly
   'eth_op', // ethop in Changelly
   'doge',
   'ltc',
-  'matic', // maticpolygon in Changelly
+  'matic', // maticpolygon in Changelly | POL // backward compatibility
+  'pol',
+  'sol',
   'xrp',
 ];
 
 export const changellySupportedEthErc20Tokens = [
   '1inch',
   'aave',
+  'abt',
   'aevo',
   'agi',
-  'agix',
   'aioz',
-  'alcx',
+  'aios',
   'alice',
-  'alpha',
   'alt',
   'amp',
   'ankr',
@@ -59,45 +66,37 @@ export const changellySupportedEthErc20Tokens = [
   'api3',
   'arkm',
   'ast',
-  'audio',
   'axs',
-  'bal',
   'band',
   'bat',
-  'bnt',
-  'blur',
   'blz',
+  'blur',
   'bone',
-  'celr',
-  'chz',
-  'comp',
   'combo',
-  'coval',
+  'comp',
+  'coti',
+  'cow',
   'crv',
-  'cvc',
   'cvx',
+  'cvc',
   'dai',
   'dao',
+  'dent',
   'dia',
   'dodo',
-  'dydx',
+  'eigen',
   'elon',
-  'ens',
   'ena',
-  'eth',
+  'ens',
   'ethfi',
   'eurs',
-  'eurt',
-  'forth',
-  'ftm',
   'fun',
-  'fxs',
   'gala',
-  'gno',
   'glm',
+  'gno',
   'grt',
+  'gt',
   'hot',
-  'ht',
   'id',
   'ilv',
   'imx',
@@ -105,21 +104,18 @@ export const changellySupportedEthErc20Tokens = [
   'knc',
   'ldo',
   'link',
-  'lina',
-  'lpt',
   'looks',
+  'lpt',
   'lqty',
   'lrc',
   'mana',
-  'matic', // erc20
   'metis',
   'mkr',
-  'mtl',
+  'mnt',
   'nexo',
   'nmr',
-  'noia',
-  'ocean',
   'ogn',
+  'okb',
   'omg',
   'omni',
   'ondo',
@@ -127,35 +123,31 @@ export const changellySupportedEthErc20Tokens = [
   'pepe',
   'pendle',
   'perp',
-  'pixel',
   'pond',
   'powr',
   'pyusd',
   'qnt',
-  'rad',
   'radar',
   'rari',
-  'reef',
-  'ren',
   'req',
   'rez',
   'rlc',
-  'rndr',
   'rpl',
   'rsr',
+  'rss3',
   'sand',
   'shib',
   'sis',
-  'skl',
   'slp',
   'snt',
   'snx',
   'steth',
   'stg',
-  'stmx',
   'storj',
   'sushi',
+  'swftc',
   'syn',
+  'tel',
   'tower',
   'trb',
   'tru',
@@ -163,51 +155,122 @@ export const changellySupportedEthErc20Tokens = [
   'uma',
   'uni',
   'usdc',
+  'usde',
   'usdp',
   'usdt', // usdt20 in Changelly
   'vra',
   'wbtc',
-  'wnxm',
   'woo',
   'xaut',
   'yfi',
   'ygg',
+  'zent',
+  'zro',
   'zrx',
 ];
 
 export const changellySupportedMaticErc20Tokens = [
-  'gns',
-  'ipmb',
-  'quick',
+  'dai', // daipolygon in Changelly
+  'far',
   'usdc', // usdcmatic in Changelly
+  'usdt', // usdtpolygon in Changelly
 ];
 
 export const changellySupportedArbitrumTokens = [
   'aeur',
   'aidoge',
+  'aptr',
   'arb',
   'dpx',
   'magic',
   'rdnt',
   'spa',
+  'sqd',
   'usdc', // usdcarb in Changelly
+  'usdt', // usdtarb in Changelly
+  'uxlink',
   'vela',
   'vrtx',
   'xai',
+  'zroarb',
 ];
 
 export const changellySupportedBaseTokens = [
   'aero',
+  'aixbt',
+  'b3',
   'base',
   'brett',
+  'carv',
   'degen',
+  'kaito',
+  'toshi',
   'usdc', // usdcbase in Changelly
+  'virtual',
+  'zora',
+  'zrobase',
 ];
 
 export const changellySupportedOptimismTokens = [
   'op',
   'usdc', // usdcop in Changelly
+  'usdt', // usdtop in Changelly
+  'wct',
   'wld',
+];
+
+export const changellySupportedSolanaTokens = [
+  'act',
+  'ai16z',
+  'beer',
+  'bome',
+  'bonk',
+  'buzz',
+  'chillguy',
+  'daddy',
+  'fartcoin',
+  'fida',
+  'goat',
+  'gmt',
+  'grass',
+  'griffain',
+  'hnt',
+  'io',
+  'jto',
+  'jup',
+  'kmno',
+  'layer',
+  'me',
+  'melania',
+  'mew',
+  'mobile',
+  'mnt',
+  'moodeng',
+  'myro',
+  'neiro',
+  'nyan',
+  'orca',
+  'pengu',
+  'pnut',
+  'ponke',
+  'popcat',
+  'prcl',
+  'pundu',
+  'pyth',
+  'ray',
+  'render',
+  'saros',
+  'slerf',
+  'swarms',
+  'tnsr',
+  'trump',
+  'usdt', // usdtsol in Changelly
+  'usdc', // usdcsol in Changelly
+  'vine',
+  'w',
+  'wen',
+  'wif',
+  'zeus',
 ];
 
 const supportedTokensByChain: {[key: string]: string[]} = {
@@ -216,6 +279,7 @@ const supportedTokensByChain: {[key: string]: string[]} = {
   arb: changellySupportedArbitrumTokens,
   base: changellySupportedBaseTokens,
   op: changellySupportedOptimismTokens,
+  sol: changellySupportedSolanaTokens,
 };
 
 const blockchainMapping: {[key: string]: string} = {
@@ -229,6 +293,7 @@ const blockchainMapping: {[key: string]: string} = {
   base: 'base',
   optimism: 'op',
   ripple: 'xrp',
+  solana: 'sol',
 };
 
 export const generateMessageId = (walletId?: string) => {
@@ -241,19 +306,22 @@ export const generateMessageId = (walletId?: string) => {
 };
 
 export const getChangellySupportedChains = (
-  chainType?: 'utxo' | 'evm' | 'other',
+  chainType?: 'utxo' | 'evm' | 'svm' | 'other',
 ) => {
   switch (chainType) {
     case 'utxo':
       return changellySupportedUtxoChains;
     case 'evm':
       return changellySupportedEvmChains;
+    case 'svm':
+      return changellySupportedSvmChains;
     case 'other':
       return changellySupportedOtherChains;
     default:
       return [
         ...changellySupportedUtxoChains,
         ...changellySupportedEvmChains,
+        ...changellySupportedSvmChains,
         ...changellySupportedOtherChains,
       ];
   }
@@ -282,12 +350,19 @@ export const getChangellyCurrenciesFixedProps = (
       blockchain: 'ethereum',
       contractAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
     },
+    daipolygon: {name: 'dai', blockchain: 'polygon'},
     maticpolygon: {name: 'matic', blockchain: 'polygon'},
     usdcmatic: {
       name: 'usdc',
       fullName: 'USD Coin',
       blockchain: 'polygon',
       contractAddress: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
+    },
+    usdtpolygon: {
+      name: 'usdt',
+      fullName: 'Tether USD',
+      blockchain: 'polygon',
+      contractAddress: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
     },
     etharb: {name: 'eth', fullName: 'Ethereum', blockchain: 'arbitrum'},
     usdcarb: {
@@ -296,6 +371,13 @@ export const getChangellyCurrenciesFixedProps = (
       blockchain: 'arbitrum',
       contractAddress: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
     },
+    usdtarb: {
+      name: 'usdt',
+      fullName: 'Tether USD',
+      blockchain: 'arbitrum',
+      contractAddress: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
+    },
+    ethbase: {name: 'eth', fullName: 'Ethereum', blockchain: 'base'},
     usdcbase: {
       name: 'usdc',
       fullName: 'USD Coin',
@@ -308,6 +390,24 @@ export const getChangellyCurrenciesFixedProps = (
       fullName: 'USD Coin',
       blockchain: 'optimism',
       contractAddress: '0x0b2c639c533813f4aa9d7837caf62653d097ff85',
+    },
+    usdtop: {
+      name: 'usdt',
+      fullName: 'Tether USD',
+      blockchain: 'optimism',
+      contractAddress: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58',
+    },
+    usdcsol: {
+      name: 'usdc',
+      fullName: 'USD Coin',
+      blockchain: 'solana',
+      contractAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    },
+    usdtsol: {
+      name: 'usdt',
+      fullName: 'Tether USD',
+      blockchain: 'solana',
+      contractAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
     },
   };
 
@@ -338,10 +438,20 @@ export const getChangellyFixedCurrencyAbbreviation = (
   chain: string,
 ): string => {
   const mapping: {[key: string]: {[key: string]: string}} = {
-    usdt: {eth: 'usdt20'},
-    matic: {matic: 'maticpolygon'},
+    usdt: {
+      eth: 'usdt20',
+      arb: 'usdtarb',
+      op: 'usdtop',
+      matic: 'usdtpolygon',
+      sol: 'usdtsol',
+    },
+    matic: {
+      dai: 'daipolygon',
+      matic: 'maticpolygon',
+    },
     eth: {
       arb: 'etharb',
+      base: 'ethbase',
       op: 'ethop',
     },
     usdc: {
@@ -349,6 +459,7 @@ export const getChangellyFixedCurrencyAbbreviation = (
       arb: 'usdcarb',
       base: 'usdcbase',
       op: 'usdcop',
+      sol: 'usdcsol',
     },
   };
 
