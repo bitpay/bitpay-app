@@ -33,6 +33,7 @@ export interface KeyMethods {
   toObj: Function;
   use0forBCH: any;
   use44forMultisig: any;
+  addKeyByAlgorithm: Function;
 }
 
 export interface KeyProperties {
