@@ -3,6 +3,7 @@ import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {CurrencyOpts} from '../../constants/currencies';
 import {AddLog} from '../log/log.types';
+import {checkPrivateKeyEncrypted} from './utils/wallet';
 
 type WalletReduxPersistBlackList = string[];
 export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
@@ -231,7 +232,7 @@ export const walletReducer = (
       if (!keyToUpdate) {
         return state;
       }
-      keyToUpdate.isPrivKeyEncrypted = !!key.methods!.isPrivKeyEncrypted();
+      keyToUpdate.isPrivKeyEncrypted = !!checkPrivateKeyEncrypted(key);
       return {
         ...state,
         keys: {

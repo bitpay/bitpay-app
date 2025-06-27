@@ -13,6 +13,8 @@ import {useLogger} from '../../../utils/hooks/useLogger';
 import {DecryptError, WrongPasswordError} from './ErrorMessages';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
+import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
+import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
 
 const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const {t} = useTranslation();
@@ -21,19 +23,33 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const logger = useLogger();
 
   const [passwordToggle, setPasswordToggle] = useState(
-    !!key.methods!.isPrivKeyEncrypted(),
+    !!checkPrivateKeyEncrypted(key),
   );
 
   useEffect(() => {
     return navigation.addListener('focus', () => {
-      setPasswordToggle(!!key.methods!.isPrivKeyEncrypted());
+      setPasswordToggle(!!checkPrivateKeyEncrypted(key));
     });
   }, [navigation, key.methods]);
 
   const onSubmitPassword = async (password: string) => {
     if (key) {
       try {
-        key.methods!.decrypt(password);
+        Object.values(Constants.ALGOS).forEach(algo => {
+          try {
+            logger.debug(
+              `Decrypting private key for: ${key.keyName} - with algo: ${algo}`,
+            );
+            key.methods!.decrypt(password, algo);
+          } catch (err) {
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            if (errMsg && errMsg.includes('Could not decrypt')) {
+              throw err;
+            }
+            logger.debug(`error decrypting with ${algo}: ${errMsg}`);
+          }
+        });
         logger.debug('Key Decrypted');
         dispatch(
           WalletActions.successEncryptOrDecryptPassword({

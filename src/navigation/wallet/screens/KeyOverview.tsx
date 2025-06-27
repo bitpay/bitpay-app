@@ -83,6 +83,7 @@ import {
   buildAccountList,
   mapAbbreviationAndName,
   buildWalletObj,
+  checkPrivateKeyEncrypted,
 } from '../../../store/wallet/utils/wallet';
 import {each} from 'lodash';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
@@ -246,7 +247,7 @@ const KeyOverview = () => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys && !linkedCoinbase}
             onPress={() => setShowKeyDropdown(true)}>
-            {key.methods?.isPrivKeyEncrypted() ? (
+            {checkPrivateKeyEncrypted(key) ? (
               theme.dark ? (
                 <EncryptPasswordDarkModeImg />
               ) : (
@@ -282,7 +283,7 @@ const KeyOverview = () => {
                   <ProposalBadge>{pendingTxps.length}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              {key?.methods?.isPrivKeyEncrypted() &&
+              {checkPrivateKeyEncrypted(key) &&
               missingChainsAccounts.length === 0 ? (
                 <CogIconContainer
                   onPress={async () => {
@@ -523,7 +524,7 @@ const KeyOverview = () => {
     });
   }
 
-  if (!key?.isReadOnly && !key?.methods?.isPrivKeyEncrypted()) {
+  if (!key?.isReadOnly && !checkPrivateKeyEncrypted(key)) {
     keyOptions.push({
       img: <Icons.Encrypt />,
       title: t('Encrypt your Key'),
