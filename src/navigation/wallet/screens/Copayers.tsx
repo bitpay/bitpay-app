@@ -5,7 +5,7 @@ import {RouteProp, useRoute} from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
 import styled, {useTheme} from 'styled-components/native';
 import {Image, ScrollView, RefreshControl, Share} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   Paragraph,
   BaseText,

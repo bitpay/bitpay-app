@@ -4,7 +4,7 @@ import debounce from 'lodash.debounce';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {useTheme} from 'styled-components/native';
 import {FlatList, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useSelector} from 'react-redux';
 import {useForm, Controller} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/core';

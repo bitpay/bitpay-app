@@ -7,7 +7,8 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
+import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
 import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
@@ -21,6 +22,14 @@ interface Props extends SheetParams {
   onModalHide?: () => void;
   children?: any;
   modalLibrary?: 'bottom-sheet' | 'modal';
+  backdropOpacity?: number;
+  backgroundColor?: string;
+  borderRadius?: number;
+  disableAnimations?: boolean;
+  height?: number;
+  paddingTop?: number;
+  snapPoints?: string[];
+  stackBehavior?: 'push' | 'replace';
 }
 
 type SheetModalProps = React.PropsWithChildren<Props>;
@@ -34,6 +43,14 @@ const SheetModal: React.FC<SheetModalProps> = ({
   onModalHide,
   placement,
   modalLibrary = 'modal',
+  backdropOpacity,
+  backgroundColor,
+  borderRadius,
+  disableAnimations = false,
+  height,
+  paddingTop,
+  snapPoints,
+  stackBehavior,
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
@@ -70,37 +87,47 @@ const SheetModal: React.FC<SheetModalProps> = ({
         pressBehavior={enableBackdropDismiss === false ? 'none' : 'close'}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
+        opacity={backdropOpacity}
       />
     ),
     [enableBackdropDismiss, onBackdropPress],
   );
 
+  const bottomSheetViewStyles = {
+    backgroundColor: backgroundColor ?? (theme.dark ? Black : White),
+    borderTopLeftRadius: borderRadius,
+    borderTopRightRadius: borderRadius,
+  };
   return modalLibrary === 'bottom-sheet' ? (
     <View testID={'modalBackdrop'}>
       <BottomSheetModal
+        stackBehavior={stackBehavior || undefined}
         backdropComponent={renderBackdrop}
-        backgroundStyle={{borderRadius: 20}}
-        snapPoints={fullscreen ? ['100%'] : undefined}
+        backgroundStyle={{backgroundColor: 'transparent'}}
+        snapPoints={fullscreen ? ['100%'] : (snapPoints || undefined)}
         enableDismissOnClose={true}
-        enableDynamicSizing={!fullscreen}
+        enableDynamicSizing={!fullscreen && !snapPoints}
         enableOverDrag={false}
         enablePanDownToClose={false}
         handleComponent={null}
         index={0}
+        {...disableAnimations && {animationConfigs: {duration: 1}}}
         accessibilityLabel={'modalBackdrop'}
         ref={bottomSheetModalRef}>
-        <BottomSheetView
-          style={
-            fullscreen
-              ? {
-                  backgroundColor: theme.dark ? Black : White,
-                  height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
-                  paddingTop: insets.top,
-                }
-              : {}
-          }>
-          {children}
-        </BottomSheetView>
+        <NavigationThemeContext.Provider value={theme as any}>
+          <BottomSheetView
+            style={
+              fullscreen
+                ? {
+                    ...bottomSheetViewStyles,
+                    height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
+                    paddingTop: paddingTop ?? insets.top,
+                  }
+                : { ...bottomSheetViewStyles, height }
+            }>
+            {children}
+          </BottomSheetView>
+        </NavigationThemeContext.Provider>
       </BottomSheetModal>
     </View>
   ) : (

@@ -12,7 +12,7 @@ import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequire
 import {useTranslation} from 'react-i18next';
 import {WalletScreens} from '../../../wallet/WalletGroup';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ButtonsRow = styled.View`
   justify-content: center;

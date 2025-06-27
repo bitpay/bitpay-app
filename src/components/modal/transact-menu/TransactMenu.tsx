@@ -1,7 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement, useState} from 'react';
 import {FlatList, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
 import {
@@ -20,7 +20,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {sleep} from '../../../utils/helper-methods';
-import {css} from 'styled-components';
+import {css} from 'styled-components/native';
 
 const TransactButton = styled.View`
   justify-content: center;

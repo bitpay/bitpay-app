@@ -8,7 +8,7 @@ import {
 import {LightBlack, White} from '../../../../../styles/colors';
 import {BoxShadow} from '../Styled';
 import haptic from '../../../../../components/haptic-feedback/haptic';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 interface LinkCardProps {
   image?: any;
   description: string;

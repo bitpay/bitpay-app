@@ -19,7 +19,7 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import {Platform, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import GlobalSelectRow from '../../../components/list/GlobalSelectRow';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {

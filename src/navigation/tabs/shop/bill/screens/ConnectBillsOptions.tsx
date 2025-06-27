@@ -3,7 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {Linking, ScrollView} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   ScreenContainer,
   horizontalPadding,
@@ -151,7 +151,7 @@ const ConnectBillsOptions = ({
         title: t('Confirm Your Info'),
         message: '',
         message2: <UserInfo />,
-        modalLibrary: 'modal',
+        modalLibrary: 'bottom-sheet',
         enableBackdropDismiss: true,
         onBackdropDismiss: () => {},
         actions: [
