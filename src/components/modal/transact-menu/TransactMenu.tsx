@@ -1,7 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement, useState} from 'react';
 import {FlatList, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
 import {

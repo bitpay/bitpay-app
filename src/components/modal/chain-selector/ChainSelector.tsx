@@ -1,7 +1,7 @@
 import React, {useCallback, useMemo, memo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {DeviceEventEmitter, Platform, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useTheme} from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
 import styled, {css} from 'styled-components/native';

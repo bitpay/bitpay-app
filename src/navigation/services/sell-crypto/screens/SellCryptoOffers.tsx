@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Linking, ScrollView, Text, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import uuid from 'react-native-uuid';
 import styled from 'styled-components/native';
 import {

@@ -1,7 +1,7 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import styled, {useTheme} from 'styled-components/native';

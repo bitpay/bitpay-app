@@ -45,7 +45,7 @@ import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {StackActions} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Platform} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const PAPER_WALLET_SUPPORTED_COINS = ['btc', 'bch', 'doge', 'ltc'];
 

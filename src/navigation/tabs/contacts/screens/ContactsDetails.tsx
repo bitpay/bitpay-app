@@ -37,7 +37,7 @@ import {
   IsSVMChain,
   IsVMChain,
 } from '../../../../store/wallet/utils/currency';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ContactsDetailsContainer = styled.SafeAreaView`
   flex: 1;

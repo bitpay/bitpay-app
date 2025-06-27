@@ -10,7 +10,7 @@ import QRCode from 'react-native-qrcode-svg';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import {View, Keyboard} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import yup from '../../../lib/yup';
 import {yupResolver} from '@hookform/resolvers/yup';
 import {Controller, useForm} from 'react-hook-form';

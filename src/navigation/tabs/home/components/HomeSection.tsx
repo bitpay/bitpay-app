@@ -4,7 +4,7 @@ import {
   TouchableWithoutFeedbackProps,
   ViewStyle,
 } from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
