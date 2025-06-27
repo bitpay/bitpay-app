@@ -22,8 +22,10 @@ interface Props extends SheetParams {
   onModalHide?: () => void;
   children?: any;
   modalLibrary?: 'bottom-sheet' | 'modal';
+  backdropOpacity?: number;
   backgroundColor?: string;
   disableAnimations?: boolean;
+  paddingTop?: number;
 }
 
 type SheetModalProps = React.PropsWithChildren<Props>;
@@ -37,8 +39,10 @@ const SheetModal: React.FC<SheetModalProps> = ({
   onModalHide,
   placement,
   modalLibrary = 'modal',
+  backdropOpacity,
   backgroundColor,
   disableAnimations = false,
+  paddingTop,
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
@@ -75,6 +79,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
         pressBehavior={enableBackdropDismiss === false ? 'none' : 'close'}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
+        opacity={backdropOpacity}
       />
     ),
     [enableBackdropDismiss, onBackdropPress],
@@ -84,7 +89,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
     <View testID={'modalBackdrop'}>
       <BottomSheetModal
         backdropComponent={renderBackdrop}
-        backgroundStyle={{borderRadius: 20}}
+        backgroundStyle={{borderRadius: 20, backgroundColor: 'transparent'}}
         snapPoints={fullscreen ? ['100%'] : undefined}
         enableDismissOnClose={true}
         enableDynamicSizing={!fullscreen}
@@ -102,7 +107,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
                 ? {
                     backgroundColor: backgroundColor ?? (theme.dark ? Black : White),
                     height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
-                    paddingTop: insets.top,
+                    paddingTop: paddingTop ?? insets.top,
                   }
                 : {}
             }>
