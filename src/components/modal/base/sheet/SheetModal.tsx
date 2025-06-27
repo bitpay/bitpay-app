@@ -22,6 +22,8 @@ interface Props extends SheetParams {
   onModalHide?: () => void;
   children?: any;
   modalLibrary?: 'bottom-sheet' | 'modal';
+  backgroundColor?: string;
+  disableAnimations?: boolean;
 }
 
 type SheetModalProps = React.PropsWithChildren<Props>;
@@ -35,6 +37,8 @@ const SheetModal: React.FC<SheetModalProps> = ({
   onModalHide,
   placement,
   modalLibrary = 'modal',
+  backgroundColor,
+  disableAnimations = false,
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
@@ -88,6 +92,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
         enablePanDownToClose={false}
         handleComponent={null}
         index={0}
+        {...disableAnimations && {animationConfigs: {duration: 1}}}
         accessibilityLabel={'modalBackdrop'}
         ref={bottomSheetModalRef}>
         <NavigationThemeContext.Provider value={theme as any}>
@@ -95,7 +100,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
             style={
               fullscreen
                 ? {
-                    backgroundColor: theme.dark ? Black : White,
+                    backgroundColor: backgroundColor ?? (theme.dark ? Black : White),
                     height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
                     paddingTop: insets.top,
                   }
