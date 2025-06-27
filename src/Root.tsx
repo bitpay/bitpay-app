@@ -729,6 +729,9 @@ export default () => {
                         await sleep(1000); // give the modal time to show
                         await Promise.all(
                           Object.values(keys).map(async key => {
+                            if (!key?.properties?.xPrivKeyEDDSA) {
+                              return;
+                            }
                             const wallets = await createWalletsForAccounts(
                               dispatch,
                               [0],

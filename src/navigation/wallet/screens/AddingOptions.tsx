@@ -155,7 +155,7 @@ const AddingOptions: React.FC = () => {
           }
           if (
             !key?.properties?.xPrivKeyEDDSA &&
-            !key.properties?.xPrivKeyEDDSAEncrypted
+            !key?.properties?.xPrivKeyEDDSAEncrypted
           ) {
             try {
               key.methods!.addKeyByAlgorithm('EDDSA', {password});
