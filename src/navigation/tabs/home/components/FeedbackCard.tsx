@@ -14,7 +14,7 @@ import Close from '../../../../../assets/img/settings/feedback/close.svg';
 import {useTranslation} from 'react-i18next';
 import {saveUserFeedback} from '../../../../store/app/app.effects';
 import {APP_VERSION} from '../../../../constants/config';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const FeedbackContainer = styled.View`
   margin: 20px 16px 0 16px;

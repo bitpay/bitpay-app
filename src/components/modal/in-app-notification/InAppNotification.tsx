@@ -14,7 +14,7 @@ import {WIDTH} from '../../styled/Containers';
 import {useNavigation} from '@react-navigation/native';
 import {getGasWalletByRequest} from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
 import {sleep} from '../../../utils/helper-methods';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useTheme} from '@react-navigation/native';
 
 export type InAppNotificationMessages = 'NEW_PENDING_REQUEST';

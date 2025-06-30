@@ -11,7 +11,7 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useAppDispatch} from '../../../utils/hooks';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface CardHighlight {
   icon: React.FC<SvgProps>;

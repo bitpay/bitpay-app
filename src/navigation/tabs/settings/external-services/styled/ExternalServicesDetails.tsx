@@ -1,7 +1,7 @@
 import styled from 'styled-components/native';
 import FastImage from 'react-native-fast-image';
 import {BaseText} from '../../../../../components/styled/Text';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const RowDataContainer = styled.View`
   display: flex;

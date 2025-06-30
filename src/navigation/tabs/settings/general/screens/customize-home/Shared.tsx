@@ -5,7 +5,7 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {H7} from '../../../../../../components/styled/Text';
 import {ScreenGutter} from '../../../../../../components/styled/Containers';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {Key, Wallet} from '../../../../../../store/wallet/wallet.models';
 import {HomeCarouselConfig} from '../../../../../../store/app/app.models';
 import _ from 'lodash';

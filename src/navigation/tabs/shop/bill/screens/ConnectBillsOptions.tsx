@@ -3,7 +3,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {BillScreens, BillGroupParamList} from '../BillGroup';
 import {Linking, ScrollView} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   ScreenContainer,
   horizontalPadding,

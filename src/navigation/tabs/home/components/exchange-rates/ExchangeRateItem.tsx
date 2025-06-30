@@ -24,7 +24,7 @@ import {
 } from '../../../../../styles/colors';
 import {View} from 'react-native';
 import {useAppSelector} from '../../../../../utils/hooks';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;

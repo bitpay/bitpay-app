@@ -88,7 +88,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {IS_ANDROID, IS_IOS} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;

@@ -16,7 +16,7 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {Image, ScrollView} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import _ from 'lodash';
 import cloneDeep from 'lodash.clonedeep';
 import {TextAlign, SubText, BaseText} from '../../../../components/styled/Text';

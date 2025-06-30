@@ -34,7 +34,7 @@ import {
 import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../store/log';
 import Mailer from 'react-native-mail';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {IS_DESKTOP} from '../../../../constants';
 import {Platform} from 'react-native';
 import Share, {ShareOptions} from 'react-native-share';

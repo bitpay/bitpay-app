@@ -1,6 +1,6 @@
 import {useNavigation} from '@react-navigation/native';
 import React from 'react';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useSelector} from 'react-redux';
 import Avatar from '../../../../components/avatar/BitPayIdAvatar';
 import {RootState} from '../../../../store';

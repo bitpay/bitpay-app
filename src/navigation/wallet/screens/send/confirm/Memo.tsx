@@ -2,7 +2,7 @@ import {useTheme} from '@react-navigation/native';
 import React, {useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {TextInput} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import {Hr, ImportTextInput} from '../../../../../components/styled/Containers';
 import {H7} from '../../../../../components/styled/Text';

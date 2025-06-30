@@ -1,7 +1,7 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {ScrollView} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {
   useTheme,

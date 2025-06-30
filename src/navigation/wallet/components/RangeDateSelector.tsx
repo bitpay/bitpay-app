@@ -12,7 +12,7 @@ import {ActiveOpacity} from '../../../components/styled/Containers';
 import {titleCasing} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {DateRanges} from '../../../store/rate/rate.models';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface Props {
   onPress: (dateRange: DateRanges) => void;

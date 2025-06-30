@@ -56,7 +56,7 @@ import {
   TitleContainer,
   viewOnBlockchain,
 } from './SendingToERC20Warning';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const BchAddressTypes = ['Cash Address', 'Legacy'];
 

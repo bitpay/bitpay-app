@@ -1,6 +1,6 @@
 import styled, {useTheme} from 'styled-components/native';
 import {TouchableOpacityProps} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {BaseButtonProps} from 'react-native-gesture-handler';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {Action, White} from '../../../../styles/colors';

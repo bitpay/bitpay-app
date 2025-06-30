@@ -1,5 +1,5 @@
 import React from 'react';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {HeaderTitle} from '../../../components/styled/Text';
 import SwapCryptoRoot, {
   SwapCryptoRootScreenParams,

@@ -8,7 +8,7 @@ import {
   Slate,
   SlateDark,
 } from '../../../styles/colors';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const TransactionListHeader = styled.View`
 background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};

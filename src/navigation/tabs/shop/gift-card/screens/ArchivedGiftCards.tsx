@@ -9,7 +9,7 @@ import {
 import {GiftCardGroupParamList, GiftCardScreens} from '../GiftCardGroup';
 import {GiftCard} from '../../../../../store/shop/shop.models';
 import GiftCardCreditsItem from '../../components/GiftCardCreditsItem';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {sortByDescendingDate} from '../../../../../lib/gift-cards/gift-card';
 

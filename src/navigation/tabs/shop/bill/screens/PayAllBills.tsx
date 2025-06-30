@@ -10,7 +10,7 @@ import {
 import styled from 'styled-components/native';
 import Button from '../../../../../components/button/Button';
 import {Linking, ScrollView} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   LightBlack,
   LuckySevens,

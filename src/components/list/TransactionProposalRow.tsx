@@ -5,7 +5,7 @@ import {ScreenGutter} from '../styled/Containers';
 import {useTranslation} from 'react-i18next';
 import {GetContactName} from '../../store/wallet/effects/transactions/transactions';
 import {ContactRowProps} from './ContactRow';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {Dimensions} from 'react-native';
 
 const {width} = Dimensions.get('window');

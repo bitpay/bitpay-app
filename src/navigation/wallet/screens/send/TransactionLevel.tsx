@@ -32,7 +32,7 @@ import {
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
 import Back from '../../../../components/back/Back';
 import {View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {DetailsList} from './confirm/Shared';
 import Button from '../../../../components/button/Button';
 import {
@@ -645,7 +645,6 @@ const TransactionLevel = ({
 
                 <CtaContainer>
                   <Button
-                    touchableLibrary={'react-native'}
                     onPress={() => onApply()}
                     disabled={disableApply}>
                     {t('Apply')}

@@ -7,7 +7,7 @@ import {
   Slate30,
 } from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const BuyCryptoItemCard = styled(TouchableOpacity)`
   border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};

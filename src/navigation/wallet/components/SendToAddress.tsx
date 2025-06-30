@@ -25,7 +25,7 @@ import {
   ValidateURI,
 } from '../../../store/wallet/utils/validations';
 import {FlatList, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import haptic from '../../../components/haptic-feedback/haptic';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {

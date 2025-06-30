@@ -6,7 +6,7 @@ import styled from 'styled-components/native';
 import {BaseText, H4} from '../../../components/styled/Text';
 import {Action, NeutralSlate, SlateDark} from '../../../styles/colors';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const Header = styled.View`
   margin-bottom: 30px;

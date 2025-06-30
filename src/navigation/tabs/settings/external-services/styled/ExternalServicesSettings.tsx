@@ -1,6 +1,6 @@
 import styled from 'styled-components/native';
 import {BaseText} from '../../../../../components/styled/Text';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const NoPrMsg = styled(BaseText)`
   font-size: 15px;

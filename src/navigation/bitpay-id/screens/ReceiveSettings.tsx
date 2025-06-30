@@ -5,7 +5,7 @@ import uniqBy from 'lodash.uniqby';
 import styled from 'styled-components/native';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {
   ActiveOpacity,
   Br,

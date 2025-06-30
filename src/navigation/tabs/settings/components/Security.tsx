@@ -30,7 +30,7 @@ import {useTranslation} from 'react-i18next';
 import {sleep} from '../../../../utils/helper-methods';
 import {LogActions} from '../../../../store/log';
 import {useLogger} from '../../../../utils/hooks';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const FingerprintSvg = {
   light: <FingerprintImg />,

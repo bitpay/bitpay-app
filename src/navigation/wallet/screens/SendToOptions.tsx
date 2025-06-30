@@ -16,7 +16,7 @@ import {
 } from '../../../store/wallet/wallet.models';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {ActiveOpacity, Hr} from '../../../components/styled/Containers';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import WalletIcons from '../components/WalletIcons';
 import _ from 'lodash';
 import AmountModal from '../../../components/amount/AmountModal';

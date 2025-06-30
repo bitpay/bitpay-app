@@ -6,7 +6,7 @@ import CautionSvg from '../../../../assets/img/error.svg';
 import {H4, Link, Paragraph} from '../../../components/styled/Text';
 import {SlateDark, White} from '../../../styles/colors';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
 
 interface ConfirmationModalProps {

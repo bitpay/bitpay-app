@@ -19,7 +19,7 @@ import {
   White,
 } from '../../../../../styles/colors';
 import {RefreshControl, ScrollView} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {ShopEffects} from '../../../../../store/shop';
 import {AppActions} from '../../../../../store/app';

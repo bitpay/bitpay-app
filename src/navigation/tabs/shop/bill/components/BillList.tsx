@@ -1,6 +1,6 @@
 import React from 'react';
 import moment from 'moment';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
 import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import BillItem from './BillItem';

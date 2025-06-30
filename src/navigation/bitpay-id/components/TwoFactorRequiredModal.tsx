@@ -74,12 +74,10 @@ const TwoFactorRequiredModal = ({
             )}
           </Description>
           <Button
-            touchableLibrary={'react-native'}
             onPress={() => onClose(true)}>
             {t('Set Up Two-Factor Authentication')}
           </Button>
           <SecondaryAction
-            touchableLibrary={'react-native'}
             buttonType={'link'}
             onPress={() => onClose()}
             height={40}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import {Image, View} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {BaseText, H6, Paragraph} from '../../../../../components/styled/Text';

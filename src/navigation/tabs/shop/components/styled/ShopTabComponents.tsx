@@ -20,7 +20,7 @@ import {
   SlateDark,
   White,
 } from '../../../../../styles/colors';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export const horizontalPadding = 20;
 

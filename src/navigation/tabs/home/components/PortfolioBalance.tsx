@@ -18,7 +18,7 @@ import {
 import Percentage from '../../../../components/percentage/Percentage';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const PortfolioContainer = styled.View`
   justify-content: center;

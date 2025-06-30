@@ -44,7 +44,7 @@ import {WithdrawalMethod} from '../../sell-crypto/constants/SellCryptoConstants'
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
@@ -262,7 +262,6 @@ const PaymentMethodsModal = ({
               <Button
                 buttonType={'pill'}
                 buttonStyle={'cancel'}
-                touchableLibrary={'react-native'}
                 onPress={onBackdropPress ? onBackdropPress : () => {}}>
                 {t('Close')}
               </Button>

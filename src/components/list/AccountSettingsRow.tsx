@@ -12,7 +12,7 @@ import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
 import {AccountRowProps} from './AccountListRow';
 import {IsVMChain} from '../../store/wallet/utils/currency';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 interface Props {
   id: string;
