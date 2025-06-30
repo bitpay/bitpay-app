@@ -661,7 +661,7 @@ const SellCryptoOffers: React.FC = () => {
       env: rampSellEnv,
       cryptoAssetSymbol: getRampSellCoinFormat(
         selectedWallet.currencyAbbreviation,
-        selectedWallet.chain,
+        getRampChainFormat(selectedWallet.chain),
       ),
       fiatCurrency: offers.ramp.fiatCurrency.toUpperCase(),
     };

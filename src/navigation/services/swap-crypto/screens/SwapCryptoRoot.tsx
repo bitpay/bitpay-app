@@ -62,6 +62,7 @@ import {useLogger} from '../../../../utils/hooks/useLogger';
 import {
   GetPrecision,
   IsERCToken,
+  IsSVMChain,
   IsVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
@@ -875,6 +876,8 @@ const SwapCryptoRoot: React.FC = () => {
     const changellySupportedChains = getChangellySupportedChains() ?? [];
     const changellySupportedEvmChains =
       getChangellySupportedChains('evm') ?? [];
+    const changellySupportedSvmChains =
+      getChangellySupportedChains('svm') ?? [];
     const currencyBlockchain = currency.blockchain
       ? cloneDeep(currency.blockchain).toLowerCase()
       : undefined;
@@ -887,6 +890,16 @@ const SwapCryptoRoot: React.FC = () => {
       // If currency is not EVM => return true
       // If currency is EVM => check tokens
       (!changellySupportedEvmChains.includes(currencyBlockchain) ||
+        allSupportedTokens.includes(
+          getExternalServiceSymbol(
+            currency.name,
+            getChainFromChangellyBlockchain(currency.name, currency.blockchain),
+          ),
+        )) &&
+      ((currencyBlockchain === 'solana' && currency.ticker === 'sol') ||
+        // If currency is not SVM => return true
+        // If currency is SVM => check tokens
+        !changellySupportedSvmChains.includes(currencyBlockchain) ||
         allSupportedTokens.includes(
           getExternalServiceSymbol(
             currency.name,
@@ -1455,7 +1468,11 @@ const SwapCryptoRoot: React.FC = () => {
                     style={{flexShrink: 1}}>
                     {getEVMAccountName(fromWalletSelected)
                       ? getEVMAccountName(fromWalletSelected)
-                      : `EVM Account${
+                      : `${
+                          IsSVMChain(fromWalletSelected.chain)
+                            ? 'Solana Account'
+                            : 'EVM Account'
+                        }${
                           Number(fromWalletSelected.credentials.account) === 0
                             ? ''
                             : ` (${fromWalletSelected.credentials.account})`
@@ -1655,7 +1672,11 @@ const SwapCryptoRoot: React.FC = () => {
                     style={{flexShrink: 1}}>
                     {getEVMAccountName(toWalletSelected)
                       ? getEVMAccountName(toWalletSelected)
-                      : `EVM Account${
+                      : `${
+                          IsSVMChain(toWalletSelected.chain)
+                            ? 'Solana Account'
+                            : 'EVM Account'
+                        }${
                           Number(toWalletSelected.credentials.account) === 0
                             ? ''
                             : ` (${toWalletSelected.credentials.account})`

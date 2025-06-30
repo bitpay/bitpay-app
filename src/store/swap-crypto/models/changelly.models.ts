@@ -8,7 +8,8 @@ export type ChangellyCurrencyBlockchain =
   | 'arbitrum'
   | 'base'
   | 'optimism'
-  | 'ripple';
+  | 'ripple'
+  | 'solana';
 
 export interface ChangellyCurrency {
   name: string; // currencyAbbreviation

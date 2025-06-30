@@ -128,11 +128,11 @@ export const transakSupportedCoins = [
   'matic', // backward compatibility
   'ltc',
   'pol',
+  'sol',
   'xrp',
 ];
 
 export const transakSupportedErc20Tokens = [
-  '1inch',
   'aave',
   'ads',
   'ageur',
@@ -142,12 +142,10 @@ export const transakSupportedErc20Tokens = [
   'audio',
   'aurora',
   'ava',
-  'bat',
   'bolt',
   'chain',
   'chz',
   'clv',
-  'comp',
   'ctsi',
   'dao',
   'defi',
@@ -159,31 +157,25 @@ export const transakSupportedErc20Tokens = [
   'eurt',
   'fdusd',
   'frax',
-  'glm',
   'gtc',
   'gth',
   'ibz',
   'link',
   'looks',
   'mana',
-  'mask',
   'mcade',
   'mim',
   'minds',
-  'mkr',
   'mnet',
   'mpro',
   'plot',
-  'pols',
   'pyusd',
   'quartz',
-  'sand',
   'shib',
   'spi',
   'steth',
   'stxem',
   'super',
-  'sushi',
   'swap',
   'swapp',
   'tama',
@@ -194,11 +186,9 @@ export const transakSupportedErc20Tokens = [
   'usdc_c',
   'usdr',
   'usdt',
-  'verse',
   'versecopy',
   'vra',
   'wbtc',
-  'xdefi',
   'yld',
   'zerc',
 ];
@@ -213,6 +203,7 @@ export const transakSupportedMaticTokens = [
   'dai',
   'dfyn',
   'doga',
+  'eura',
   'fear',
   'food',
   'fusdc',
@@ -236,17 +227,22 @@ export const transakSupportedMaticTokens = [
   'usdc_c',
   'usdt',
   'usdt_tob',
-  'vext',
   'wbtc',
   'weth',
   'zed',
 ];
 
-export const transakSupportedArbitrumTokens = ['gmx', 'spa', 'usdc', 'usds'];
+export const transakSupportedArbitrumTokens = ['usdc'];
 
 export const transakSupportedBaseTokens = ['tower', 'usdc'];
 
 export const transakSupportedOptimismTokens = ['usdc'];
+
+export const transakSupportedSolanaTokens = [
+  'bonk',
+  'usdc', // EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+  'usdt', // Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB
+];
 
 export const getTransakSupportedCurrencies = (): string[] => {
   const transakSupportedCurrencies = [
@@ -265,6 +261,9 @@ export const getTransakSupportedCurrencies = (): string[] => {
     ),
     ...transakSupportedOptimismTokens.flatMap(optimismToken =>
       getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+    ...transakSupportedSolanaTokens.flatMap(solanaToken =>
+      getCurrencyAbbreviation(solanaToken, 'sol'),
     ),
   ];
 
@@ -360,6 +359,7 @@ export const getTransakChainFormat = (chain: string): string | undefined => {
     base: 'base',
     matic: 'polygon',
     op: 'optimism',
+    sol: 'solana',
     xrp: 'mainnet',
   };
 
