@@ -7,7 +7,7 @@ import {TRANSACTION_ICON_SIZE} from '../../constants/TransactionIcons';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 export const TRANSACTION_ROW_HEIGHT = 75;
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const TransactionContainer = styled(TouchableOpacity)`
   flex-direction: row;

@@ -40,7 +40,7 @@ import {GetPrecision} from '../../../store/wallet/utils/currency';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Button from '../../../components/button/Button';
 import {LayoutAnimation} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,

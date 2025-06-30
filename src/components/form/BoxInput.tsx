@@ -17,7 +17,7 @@ import {
 } from '../../styles/colors';
 import {ActiveOpacity} from '../styled/Containers';
 import {BaseText} from '../styled/Text';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 type InputType = 'password' | 'phone' | 'search' | 'number';
 

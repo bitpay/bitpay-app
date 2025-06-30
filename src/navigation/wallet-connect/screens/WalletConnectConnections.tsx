@@ -62,7 +62,7 @@ import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import Button from '../../../components/button/Button';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import InfoSvg from '../../../../assets/img/info.svg';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const WalletConnectConnectionsContainer = styled.SafeAreaView`
   flex: 1;
@@ -176,6 +176,7 @@ const WalletConnectConnections = () => {
       headerRight: () => {
         return (
           <AddConnectionContainer
+            touchableLibrary={'react-native-gesture-handler'}
             onPress={() => {
               navigation.navigate('WalletConnectRoot', {});
             }}>
@@ -474,6 +475,7 @@ const WalletConnectConnections = () => {
               <Button
                 buttonStyle="danger"
                 buttonOutline={true}
+                touchableLibrary={'react-native'}
                 onPress={async () => {
                   haptic('impactLight');
                   setShowSessionOptions(false);

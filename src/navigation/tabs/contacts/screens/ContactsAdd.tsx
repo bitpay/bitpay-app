@@ -64,7 +64,7 @@ import {
   SupportedCoinsOptions,
 } from '../../../../constants/SupportedCurrencyOptions';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};

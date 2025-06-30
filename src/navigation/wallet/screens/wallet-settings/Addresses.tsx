@@ -42,7 +42,7 @@ import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {setWalletScanning} from '../../../../store/wallet/wallet.actions';
 import {isSingleAddressChain} from '../../../../store/wallet/utils/currency';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const ADDRESS_LIMIT = 5;
 

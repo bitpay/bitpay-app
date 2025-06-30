@@ -15,7 +15,7 @@ import {SettingsContainer} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import styled from 'styled-components/native';
 import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const SettingsComponent = styled.ScrollView`
   flex: 1;

@@ -3,7 +3,7 @@ import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Animated, DeviceEventEmitter, View, NativeModules} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';

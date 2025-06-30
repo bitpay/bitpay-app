@@ -40,7 +40,7 @@ import {
   SendToPillContainer,
 } from '../screens/send/confirm/Shared';
 import {RootState} from '../../../store';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {View} from 'react-native';
 
 const MisunderstoodOutputsText = styled(H7)`

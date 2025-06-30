@@ -1,7 +1,7 @@
 import React, {useCallback, useMemo, memo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {DeviceEventEmitter, Platform} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useTheme} from '@react-navigation/native';
 import {BottomSheetFlashList as FlashList} from '@gorhom/bottom-sheet';
 import styled, {css} from 'styled-components/native';

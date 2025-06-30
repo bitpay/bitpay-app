@@ -59,7 +59,7 @@ import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import SelectorArrowRight from '../../../../assets/img/selector-arrow-right.svg';
 import Blockie from '../../blockie/Blockie';
 import {IsERCToken} from '../../../store/wallet/utils/currency';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import ExternalLinkSvg from '../../../../assets/img/external-link-small.svg';
 import TrustedDomainSvg from '../../../../assets/img/trusted-domain.svg';
@@ -731,6 +731,7 @@ export const WalletConnectStartModal = () => {
                 <Button
                   state={buttonState}
                   disabled={!(allKeys && allKeys[0]?.accounts[0])}
+                  touchableLibrary={'react-native'}
                   onPress={() => {
                     haptic('impactLight');
                     approveSessionProposal();
@@ -741,6 +742,7 @@ export const WalletConnectStartModal = () => {
               <ActionContainer>
                 <Button
                   buttonStyle="secondary"
+                  touchableLibrary={'react-native'}
                   onPress={() => {
                     haptic('impactLight');
                     if (proposal) {

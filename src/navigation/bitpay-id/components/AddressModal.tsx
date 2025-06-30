@@ -30,7 +30,7 @@ import CopySvg from '../../../../assets/img/copy.svg';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {CurrencyIconAndBadge} from '../../wallet/screens/send/confirm/Shared';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const ModalContainer = styled.View`
   justify-content: center;
@@ -187,6 +187,7 @@ const AddressModal = ({
           ) : null}
           <ActionContainer>
             <Button
+              touchableLibrary={'react-native'}
               onPress={() => {
                 removalStarted ? close(true) : setRemovalStarted(true);
               }}
@@ -198,6 +199,7 @@ const AddressModal = ({
           </ActionContainer>
           <ActionContainer>
             <Button
+              touchableLibrary={'react-native'}
               onPress={() => close()}
               buttonStyle={'secondary'}
               height={50}>

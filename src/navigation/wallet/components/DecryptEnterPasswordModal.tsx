@@ -137,12 +137,14 @@ const DecryptEnterPasswordModal = () => {
 
           <ActionContainer>
             <Button
+              touchableLibrary={'react-native'}
               onPress={handleSubmit(onSubmit)}>
               {t('Continue')}
             </Button>
           </ActionContainer>
           <ActionContainer>
             <Button
+              touchableLibrary={'react-native'}
               onPress={dismissModal}
               buttonStyle={'secondary'}>
               {t('Cancel')}

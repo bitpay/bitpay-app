@@ -33,7 +33,10 @@ import * as Icons from './ButtonIcons';
 import ButtonOverlay from './ButtonOverlay';
 import ButtonSpinner from './ButtonSpinner';
 import {StyleProp, ViewStyle} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from '@components/base/TouchableOpacity';
 
 export type ButtonState = 'loading' | 'success' | 'failed' | null | undefined;
 export type ButtonStyle =
@@ -57,6 +60,7 @@ interface ButtonProps extends BaseButtonProps {
   style?: StyleProp<ViewStyle>;
   action?: boolean;
   accessibilityLabel?: string;
+  touchableLibrary?: TouchableOpacityProps['touchableLibrary'];
 }
 
 interface ButtonOptionProps {
@@ -301,6 +305,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     style,
     action,
     accessibilityLabel,
+    touchableLibrary,
   } = props;
   const secondary = buttonStyle === 'secondary';
   const outline = buttonOutline;
@@ -373,6 +378,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
 
   return (
     <ButtonContainer
+      touchableLibrary={touchableLibrary || 'react-native-gesture-handler'}
       accessibilityLabel={accessibilityLabel}
       style={style as any}
       buttonType={buttonType}

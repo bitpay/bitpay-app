@@ -11,7 +11,7 @@ import {css} from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
 import {AddPillContainer} from '../../navigation/wallet/screens/AddCustomToken';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const AddressView = styled(View)`
   align-items: flex-end;

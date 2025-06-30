@@ -44,7 +44,7 @@ import {
 import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
 import {View} from 'react-native';
 import Blockie from '../../../components/blockie/Blockie';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export type WalletConnectRequestDetailsParamList = {
   request: any;

@@ -22,7 +22,7 @@ import {
 } from '../../../../lib/gift-cards/gift-card';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const MyGiftCardsHeaderContainer = styled(SectionHeaderContainer)`
   margin-bottom: -10px;
