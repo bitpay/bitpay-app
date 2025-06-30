@@ -34,6 +34,7 @@ android/app/src/main/res/raw/*
 .cxx/
 *.keystore
 !debug.keystore
+.kotlin/
 
 # Emacs
 .log/

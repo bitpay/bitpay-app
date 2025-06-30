@@ -7,7 +7,8 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import {useTheme} from '@react-navigation/native';
+import {useTheme} from 'styled-components/native';
+import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
 import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
@@ -89,18 +90,20 @@ const SheetModal: React.FC<SheetModalProps> = ({
         index={0}
         accessibilityLabel={'modalBackdrop'}
         ref={bottomSheetModalRef}>
-        <BottomSheetView
-          style={
-            fullscreen
-              ? {
-                  backgroundColor: theme.dark ? Black : White,
-                  height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
-                  paddingTop: insets.top,
-                }
-              : {}
-          }>
-          {children}
-        </BottomSheetView>
+        <NavigationThemeContext.Provider value={theme as any}>
+          <BottomSheetView
+            style={
+              fullscreen
+                ? {
+                    backgroundColor: theme.dark ? Black : White,
+                    height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
+                    paddingTop: insets.top,
+                  }
+                : {}
+            }>
+            {children}
+          </BottomSheetView>
+        </NavigationThemeContext.Provider>
       </BottomSheetModal>
     </View>
   ) : (

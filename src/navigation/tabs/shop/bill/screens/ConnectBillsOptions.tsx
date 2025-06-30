@@ -151,7 +151,7 @@ const ConnectBillsOptions = ({
         title: t('Confirm Your Info'),
         message: '',
         message2: <UserInfo />,
-        modalLibrary: 'modal',
+        modalLibrary: 'bottom-sheet',
         enableBackdropDismiss: true,
         onBackdropDismiss: () => {},
         actions: [

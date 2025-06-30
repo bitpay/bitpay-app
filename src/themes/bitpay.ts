@@ -32,6 +32,7 @@ export const BitPayLightTheme: BitPayTheme = {
     border: DefaultTheme.colors.border,
     notification: DefaultTheme.colors.notification,
   },
+  fonts: DefaultTheme.fonts,
 };
 
 export const BitPayDarkTheme: BitPayTheme = {
@@ -48,4 +49,5 @@ export const BitPayDarkTheme: BitPayTheme = {
     border: DarkTheme.colors.border,
     notification: DarkTheme.colors.notification,
   },
+  fonts: DarkTheme.fonts,
 };
