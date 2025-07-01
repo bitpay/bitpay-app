@@ -11,8 +11,6 @@ end
 node_require('react-native/scripts/react_native_pods.rb')
 node_require('react-native-permissions/scripts/setup.rb')
 
-require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
-
 #######
 # Read min iOS version from Xcode project and set as min iOS version for Podfile
 require 'xcodeproj'
@@ -41,7 +39,7 @@ $VCEnableLocation=false
 
 target 'BitPayApp' do
   pod 'React-RCTText', :path => '../node_modules/react-native/Libraries/Text', :modular_headers => true
-  pod 'BrazeUI', :podspec => 'https://raw.githubusercontent.com/braze-inc/braze-swift-sdk-prebuilt-static/11.1.1/BrazeUI.podspec'
+  pod 'BrazeUI', :podspec => 'https://raw.githubusercontent.com/braze-inc/braze-swift-sdk-prebuilt-static/11.9.0/BrazeUI.podspec'
 
   config = use_native_modules!
 
@@ -50,11 +48,6 @@ target 'BitPayApp' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
-
-  target 'BitPayAppTests' do
-    inherit! :complete
-    # Pods for testing
-  end
 
   post_install do |installer|
     # Workaround for Xcode 16 and iOS 18

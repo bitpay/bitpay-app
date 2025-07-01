@@ -20,7 +20,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {sleep} from '../../../utils/helper-methods';
-import {css} from 'styled-components';
+import {css} from 'styled-components/native';
 
 const TransactButton = styled.View`
   justify-content: center;

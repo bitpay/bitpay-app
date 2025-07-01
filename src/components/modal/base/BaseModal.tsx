@@ -4,6 +4,8 @@ import Modal, {ModalProps, ReactNativeModal} from 'react-native-modal';
 import {AppActions} from '../../../store/app';
 import {ModalId} from '../../../store/app/app.reducer';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
+import {useTheme as useStyledTheme} from 'styled-components/native';
 
 type ModalPropsEx = {
   id: ModalId;
@@ -21,7 +23,7 @@ const BaseModal: React.FC<BaseModalProps> = props => {
     ...props,
   } as ModalProps & ModalPropsEx;
 
-  const {id, isVisible, onModalHide, onModalWillShow, ...restModalProps} =
+  const {id, isVisible, onModalHide, onModalWillShow, children, ...restModalProps} =
     allProps;
 
   // (iOS) if a modal is shown while another modal is not done being hidden,
@@ -38,21 +40,26 @@ const BaseModal: React.FC<BaseModalProps> = props => {
     }
   }, [activeModalId, id, isVisible]);
 
+  const navTheme = useStyledTheme();
+
   return (
-    <View>
-      <Modal
-        isVisible={isVisibleSafe}
-        onModalHide={() => {
-          dispatch(AppActions.activeModalUpdated(null));
-          onModalHide?.();
-        }}
-        onModalWillShow={() => {
-          dispatch(AppActions.activeModalUpdated(id));
-          onModalWillShow?.();
-        }}
-        {...restModalProps}
-      />
-    </View>
+    <NavigationThemeContext.Provider value={navTheme as any}>
+      <View>
+        <Modal
+          isVisible={isVisibleSafe}
+          onModalHide={() => {
+            dispatch(AppActions.activeModalUpdated(null));
+            onModalHide?.();
+          }}
+          onModalWillShow={() => {
+            dispatch(AppActions.activeModalUpdated(id));
+            onModalWillShow?.();
+          }}
+          {...restModalProps}>
+          {children}
+        </Modal>
+      </View>
+    </NavigationThemeContext.Provider>
   );
 };
 

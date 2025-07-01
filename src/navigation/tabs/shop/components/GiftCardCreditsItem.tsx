@@ -48,6 +48,10 @@ const logoHeight = 55;
 
 const LogoContainer = styled.View`
   height: ${logoHeight}px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 `;
 
 const Logo = styled.Image`

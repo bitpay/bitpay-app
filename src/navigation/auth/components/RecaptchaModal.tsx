@@ -1,9 +1,8 @@
-import React, {useImperativeHandle, useRef, useState} from 'react';
-import {StyleSheet} from 'react-native';
-import {View} from 'react-native';
-import Modal from 'react-native-modal';
+import React, {useImperativeHandle, useRef} from 'react';
+import {StyleSheet, View} from 'react-native';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
-import {HEIGHT, WIDTH} from '../../../components/styled/Containers';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import {HEIGHT} from '../../../components/styled/Containers';
 import {Action, White} from '../../../styles/colors';
 
 const RECAPTCHA_ID = 'bp-recaptcha';
@@ -47,9 +46,6 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,.3)',
-    justifyContent: 'center',
-    overflow: 'hidden',
   },
   webview: {
     backgroundColor: 'transparent',
@@ -74,17 +70,14 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
       onError,
     } = props;
     const webviewRef = useRef<WebView>(null);
-    const [hideModalContentWhileAnimating, setHideModalContentWhileAnimating] =
-      useState(false);
-    useImperativeHandle(ref, () => {
-      return {
-        reset: () => {
-          webviewRef.current?.injectJavaScript(`
+    
+    useImperativeHandle(ref, () => ({
+      reset: () => {
+        webviewRef.current?.injectJavaScript(`
             window.grecaptcha.reset('${RECAPTCHA_ID}');
           `);
-        },
-      };
-    });
+      },
+    }));
 
     const onMessage = (e: WebViewMessageEvent) => {
       try {
@@ -92,7 +85,6 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
 
         switch (message) {
           case 'response':
-            setHideModalContentWhileAnimating(true);
             onResponse?.(data);
             break;
           case 'expired':
@@ -102,7 +94,6 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
           `);
             break;
           case 'cancel':
-            setHideModalContentWhileAnimating(true);
             onCancel?.();
             break;
           case 'error':
@@ -115,31 +106,27 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
     };
 
     return (
-      <View>
-        <Modal
-          deviceHeight={HEIGHT}
-          deviceWidth={WIDTH}
-          backdropTransitionOutTiming={0}
-          backdropOpacity={0.85}
-          hideModalContentWhileAnimating={hideModalContentWhileAnimating}
-          useNativeDriverForBackdrop={true}
-          useNativeDriver={true}
-          animationIn={'fadeInUp'}
-          animationOut={'fadeOutDown'}
-          isVisible={isVisible}
-          style={styles.modal}>
-          <View style={styles.wrapper}>
-            <WebView
-              ref={webviewRef}
-              style={styles.webview}
-              onMessage={onMessage}
-              automaticallyAdjustContentInsets
-              originWhitelist={['*']}
-              mixedContentMode={'always'}
-              javaScriptEnabled={true}
-              source={{
-                baseUrl,
-                html: `
+      <SheetModal
+        modalLibrary="bottom-sheet"
+        isVisible={isVisible}
+        fullscreen={true}
+        backdropOpacity={.85}
+        backgroundColor="rgba(0,0,0,.3)"
+        enableBackdropDismiss={false}
+        onBackdropPress={onCancel ?? (() => {})}
+        paddingTop={0}>
+        <View style={styles.wrapper}>
+          <WebView
+            ref={webviewRef}
+            style={styles.webview}
+            onMessage={onMessage}
+            automaticallyAdjustContentInsets
+            originWhitelist={['*']}
+            mixedContentMode={'always'}
+            javaScriptEnabled={true}
+            source={{
+              baseUrl,
+              html: `
               <!DOCTYPE html>
               <html style="margin: 0; padding: 0;">
                 <head>
@@ -254,11 +241,10 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                 </body>
               </html>
             `,
-              }}
-            />
-          </View>
-        </Modal>
-      </View>
+            }}
+          />
+        </View>
+      </SheetModal>
     );
   },
 );
