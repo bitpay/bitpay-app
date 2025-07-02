@@ -72,6 +72,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
             }),
           );
           await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+          await sleep(500);
           const createdKey = await dispatch(
             startCreateKey(getBaseKeyCreationCoinsAndTokens()),
           );
