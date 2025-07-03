@@ -1232,7 +1232,7 @@ export const publishAndSign =
           broadcastedTx: Partial<TransactionProposal> | null = null;
 
         // Already published?
-        if (txp.status !== 'pending') {
+        if (txp.status !== 'pending' || txp.refreshOnPublish) {
           publishedTx = await publishTx(wallet, txp);
           dispatch(LogActions.debug('success publish [publishAndSign]'));
         }
