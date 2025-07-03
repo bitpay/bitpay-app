@@ -23,8 +23,14 @@ const BaseModal: React.FC<BaseModalProps> = props => {
     ...props,
   } as ModalProps & ModalPropsEx;
 
-  const {id, isVisible, onModalHide, onModalWillShow, children, ...restModalProps} =
-    allProps;
+  const {
+    id,
+    isVisible,
+    onModalHide,
+    onModalWillShow,
+    children,
+    ...restModalProps
+  } = allProps;
 
   // (iOS) if a modal is shown while another modal is not done being hidden,
   // both modals end up hidden, so make sure only 1 modal is visible at a time.

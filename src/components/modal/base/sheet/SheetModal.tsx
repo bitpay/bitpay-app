@@ -104,14 +104,14 @@ const SheetModal: React.FC<SheetModalProps> = ({
         stackBehavior={stackBehavior || undefined}
         backdropComponent={renderBackdrop}
         backgroundStyle={{backgroundColor: 'transparent'}}
-        snapPoints={fullscreen ? ['100%'] : (snapPoints || undefined)}
+        snapPoints={fullscreen ? ['100%'] : snapPoints || undefined}
         enableDismissOnClose={true}
         enableDynamicSizing={!fullscreen && !snapPoints}
         enableOverDrag={false}
         enablePanDownToClose={false}
         handleComponent={null}
         index={0}
-        {...disableAnimations && {animationConfigs: {duration: 1}}}
+        {...(disableAnimations && {animationConfigs: {duration: 1}})}
         accessibilityLabel={'modalBackdrop'}
         ref={bottomSheetModalRef}>
         <NavigationThemeContext.Provider value={theme as any}>
@@ -120,10 +120,11 @@ const SheetModal: React.FC<SheetModalProps> = ({
               fullscreen
                 ? {
                     ...bottomSheetViewStyles,
-                    height: HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
+                    height:
+                      HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
                     paddingTop: paddingTop ?? insets.top,
                   }
-                : { ...bottomSheetViewStyles, height }
+                : {...bottomSheetViewStyles, height}
             }>
             {children}
           </BottomSheetView>

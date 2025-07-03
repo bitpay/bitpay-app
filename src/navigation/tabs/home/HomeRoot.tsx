@@ -1,10 +1,12 @@
-import {
-  useScrollToTop,
-  useTheme,
-} from '@react-navigation/native';
+import {useScrollToTop, useTheme} from '@react-navigation/native';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {AppState, AppStateStatus, RefreshControl, ScrollView} from 'react-native';
+import {
+  AppState,
+  AppStateStatus,
+  RefreshControl,
+  ScrollView,
+} from 'react-native';
 import {
   EXCHANGE_RATES_SORT_ORDER,
   STATIC_CONTENT_CARDS_ENABLED,
@@ -249,7 +251,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     function onAppStateChange(status: AppStateStatus) {
       if (status === 'active' && currencyAbbreviation) {
         navigation.setParams({
-          currencyAbbreviation: undefined
+          currencyAbbreviation: undefined,
         });
         const exchangeRatesSection = memoizedExchangeRates.find(
           ({currencyAbbreviation: abbr}) =>
