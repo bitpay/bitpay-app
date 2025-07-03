@@ -404,6 +404,7 @@ const Amount: React.FC<AmountProps> = ({
         allRates,
         currency.toLowerCase(),
         chain!,
+        tokenAddress,
       );
       const fiatRateData = rateByCurrencyName.find(
         r => r.code === fiatCurrency,

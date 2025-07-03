@@ -718,7 +718,7 @@ export default () => {
                       }
                     };
 
-                    // we need to ensure that each svm account has all supported wallets attached.
+                    // we need to ensure that for each key we have equal svm wallets attached.
                     const runCompleteSvmWalletsAccountFix = async () => {
                       try {
                         if (Object.keys(keys).length === 0) {
@@ -729,17 +729,12 @@ export default () => {
                         await sleep(1000); // give the modal time to show
                         await Promise.all(
                           Object.values(keys).map(async key => {
-                            const svmWallets = getSvmGasWallets(key.wallets);
-                            const accountsArray = [
-                              ...new Set(
-                                svmWallets.map(
-                                  wallet => wallet.credentials.account,
-                                ),
-                              ),
-                            ];
+                            if (!key?.properties?.xPrivKeyEDDSA) {
+                              return;
+                            }
                             const wallets = await createWalletsForAccounts(
                               dispatch,
-                              accountsArray,
+                              [0],
                               key.methods as KeyMethods,
                               getBaseSVMAccountCreationCoinsAndTokens(),
                             );

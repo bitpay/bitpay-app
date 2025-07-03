@@ -59,7 +59,7 @@ import {
   shouldScale,
   sleep,
   fixWalletAddresses,
-  getVMGasWallets,
+  getEvmGasWallets,
 } from '../../../utils/helper-methods';
 import {
   BalanceUpdateError,
@@ -83,6 +83,7 @@ import {
   buildAccountList,
   mapAbbreviationAndName,
   buildWalletObj,
+  checkPrivateKeyEncrypted,
 } from '../../../store/wallet/utils/wallet';
 import {each} from 'lodash';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
@@ -92,7 +93,11 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {CoinbaseScreens} from '../../../navigation/coinbase/CoinbaseGroup';
 import SearchComponent from '../../../components/chain-search/ChainSearch';
-import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
+import {
+  IsEVMChain,
+  IsSVMChain,
+  IsVMChain,
+} from '../../../store/wallet/utils/currency';
 import AccountListRow, {
   AccountRowProps,
 } from '../../../components/list/AccountListRow';
@@ -103,8 +108,7 @@ import ChevronDownSvgLight from '../../../../assets/img/chevron-down-lightmode.s
 import ChevronDownSvgDark from '../../../../assets/img/chevron-down-darkmode.svg';
 import {
   BitpaySupportedEvmCoins,
-  BitpaySupportedSvmCoins,
-  getBaseVMAccountCreationCoinsAndTokens,
+  getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
@@ -243,7 +247,7 @@ const KeyOverview = () => {
             activeOpacity={ActiveOpacity}
             disabled={!hasMultipleKeys && !linkedCoinbase}
             onPress={() => setShowKeyDropdown(true)}>
-            {key.methods?.isPrivKeyEncrypted() ? (
+            {checkPrivateKeyEncrypted(key) ? (
               theme.dark ? (
                 <EncryptPasswordDarkModeImg />
               ) : (
@@ -279,7 +283,7 @@ const KeyOverview = () => {
                   <ProposalBadge>{pendingTxps.length}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              {key?.methods?.isPrivKeyEncrypted() &&
+              {checkPrivateKeyEncrypted(key) &&
               missingChainsAccounts.length === 0 ? (
                 <CogIconContainer
                   onPress={async () => {
@@ -452,7 +456,7 @@ const KeyOverview = () => {
     }
   };
 
-  const handleAddVMChain = async () => {
+  const handleAddEvmChain = async () => {
     haptic('impactLight');
     await sleep(500);
 
@@ -461,16 +465,16 @@ const KeyOverview = () => {
       password = await dispatch(getDecryptPassword(Object.assign({}, key)));
     }
 
-    const vmWallets = getVMGasWallets(key.wallets);
+    const evmWallets = getEvmGasWallets(key.wallets);
     const accountsArray = [
-      ...new Set(vmWallets.map(wallet => wallet.credentials.account)),
+      ...new Set(evmWallets.map(wallet => wallet.credentials.account)),
     ];
 
     const wallets = await createWalletsForAccounts(
       dispatch,
       accountsArray,
       key.methods as KeyMethods,
-      getBaseVMAccountCreationCoinsAndTokens(),
+      getBaseEVMAccountCreationCoinsAndTokens(),
       password,
     );
 
@@ -487,9 +491,9 @@ const KeyOverview = () => {
     }
   };
 
-  const missingVMChainsAccounts = memorizedAccountList.filter(
+  const missingChainsAccounts = memorizedAccountList.filter(
     ({chains}) =>
-      (IsVMChain(chains[0]) || IsSVMChain(chains[0])) &&
+      IsEVMChain(chains[0]) &&
       chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
   );
   const keyOptions: Array<Option> = [];
@@ -509,18 +513,18 @@ const KeyOverview = () => {
     },
   });
 
-  if (missingVMChainsAccounts.length > 0) {
+  if (missingChainsAccounts.length > 0) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
-      title: t('Add VM Chain'),
-      description: t('Add all supported chains to your accounts for this key.'),
+      title: t('Add Ethereum networks'),
+      description: t('Add all supported networks for this key.'),
       onPress: async () => {
-        await handleAddVMChain();
+        await handleAddEvmChain();
       },
     });
   }
 
-  if (!key?.isReadOnly && !key?.methods?.isPrivKeyEncrypted()) {
+  if (!key?.isReadOnly && !checkPrivateKeyEncrypted(key)) {
     keyOptions.push({
       img: <Icons.Encrypt />,
       title: t('Encrypt your Key'),

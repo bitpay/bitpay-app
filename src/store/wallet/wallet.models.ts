@@ -7,6 +7,7 @@ import {Network} from '../../constants';
 import {FeeLevels} from './effects/fee/fee';
 import {TxActions} from './effects/transactions/transactions';
 import {WCV2RequestType} from '../wallet-connect-v2/wallet-connect-v2.models';
+import {SolanaPayOpts} from '../../navigation/wallet/screens/send/confirm/Confirm';
 
 /**
  * Currently supported hardware wallet sources.
@@ -32,6 +33,7 @@ export interface KeyMethods {
   toObj: Function;
   use0forBCH: any;
   use44forMultisig: any;
+  addKeyByAlgorithm: Function;
 }
 
 export interface KeyProperties {
@@ -299,6 +301,7 @@ export interface TransactionOptions {
   recipientList?: Recipient[];
   // walletconnect
   request?: WCV2RequestType;
+  solanaPayOpts?: SolanaPayOpts;
 }
 
 export interface Action {
@@ -409,8 +412,9 @@ export interface TransactionProposal {
     type: string;
   };
   refreshOnPublish?: boolean;
-  fromAta: string; // spl tokens
-  decimals: number; // spl tokens
+  fromAta?: string; // spl tokens
+  decimals?: number; // spl tokens
+  memo?: string; // spl tokens
 }
 
 export interface TransactionDetailsBuilt extends TransactionProposal {

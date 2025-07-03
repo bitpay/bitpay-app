@@ -1,11 +1,11 @@
 import React from 'react';
-import {View} from 'react-native';
+import {View, TouchableOpacity} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
 import HomeRoot from './home/HomeRoot';
 import ShopRoot, {ShopStackParamList} from './shop/ShopStack';
-import CardStack, {CardStackParamList} from '../card/CardStack';
+import {CardStackParamList} from '../card/CardStack';
 import SettingsStack from './settings/SettingsStack';
 
 import {SvgProps} from 'react-native-svg';
@@ -67,7 +67,9 @@ export enum TabsScreens {
 }
 
 export type TabsStackParamList = {
-  Home: undefined;
+  Home: {
+    currencyAbbreviation?: string;
+  } | undefined;
   Shop: NavigatorScreenParams<ShopStackParamList> | undefined;
   TransactButton: undefined;
   Bills: undefined;
@@ -91,11 +93,13 @@ const TabsStack = () => {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: theme.colors.background,
-          minHeight: 68,
+          height: 60,
+          paddingBottom: 0,
+          paddingTop: 8,
         },
-        tabBarItemStyle: {
-          minHeight: 68,
-        },
+        tabBarButton: props => (
+          <TouchableOpacity {...(props as any)} activeOpacity={1} />
+        ),
         tabBarShowLabel: false,
         tabBarIcon: ({focused}) => {
           let {name: icon} = route;

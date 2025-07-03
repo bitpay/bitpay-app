@@ -284,7 +284,7 @@ export const buildMigrationKeyObj = ({
     methods: key.methods,
     totalBalance,
     totalBalanceLastDay,
-    isPrivKeyEncrypted: key.methods.isPrivKeyEncrypted(),
+    isPrivKeyEncrypted: checkPrivateKeyEncrypted(key),
     backupComplete,
     keyName,
     hideKeyBalance: false,
@@ -325,6 +325,7 @@ export const toFiat =
       rates,
       currencyAbbreviation,
       chain,
+      tokenAddress,
     );
 
     if (!ratesPerCurrency) {
@@ -405,8 +406,13 @@ export const isCacheKeyStale = (
   return Date.now() - timestamp > TTL;
 };
 
+// Checking only one algorithm should be enough
 export const checkEncryptPassword = (key: Key, password: string) =>
-  key.methods!.checkPassword(password);
+  key?.methods?.checkPassword(password);
+
+// Checking only one algorithm should be enough
+export const checkPrivateKeyEncrypted = (key: Key): boolean =>
+  key?.methods?.isPrivKeyEncrypted();
 
 export const generateKeyExportCode = (
   key: Key,

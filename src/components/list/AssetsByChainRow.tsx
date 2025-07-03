@@ -50,6 +50,7 @@ interface Props {
   onPress: (walletId: string, copayerId?: string) => void;
   hideBalance: boolean;
   showChainAssetsByDefault?: boolean;
+  showNetworkHeader?: boolean;
 }
 
 const AssetsByChainRow = ({
@@ -59,6 +60,7 @@ const AssetsByChainRow = ({
   isLast,
   hideBalance,
   showChainAssetsByDefault = false,
+  showNetworkHeader = true,
 }: Props) => {
   const {chain, chainName, fiatBalanceFormat, chainAssetsList, chainImg} =
     accountItem;
@@ -73,20 +75,6 @@ const AssetsByChainRow = ({
     [key: string]: boolean;
   }>(initialSelected);
   const theme = useTheme();
-
-  const memoizedRenderItem = useCallback(
-    ({item}: {item: WalletRowProps}) => {
-      return (
-        <WalletRow
-          id={item.id}
-          hideBalance={hideBalance}
-          onPress={() => onPress(item.id, item.copayerId)}
-          wallet={item}
-        />
-      );
-    },
-    [hideBalance],
-  );
 
   const onHide = () => {
     setShowChainAssets({[chain]: !showChainAssets[chain]});
@@ -103,45 +91,55 @@ const AssetsByChainRow = ({
 
   return (
     <View>
-      <RowContainer
-        activeOpacity={ActiveOpacity}
-        onPress={onHide}
-        style={{borderBottomWidth: 0, paddingBottom: 0}}>
-        <CurrencyImageContainer>
-          <CurrencyImage img={chainImg} size={20} />
-        </CurrencyImageContainer>
-        <Column>
-          <H5 ellipsizeMode="tail" numberOfLines={1}>
-            {chainName}
-          </H5>
-        </Column>
-        <Column style={{alignItems: 'flex-end'}}>
-          <ChainAssetsContainer>
-            {!hideBalance ? (
-              <H5 numberOfLines={1} ellipsizeMode="tail">
-                {fiatBalanceFormat}
-              </H5>
-            ) : (
-              <H5 style={{marginTop: 8}}>****</H5>
-            )}
-            <ChevronContainer>
-              {showChainAssets[chain] ? (
-                theme.dark ? (
-                  <ChevronUpSvgDark width={10} height={6} />
-                ) : (
-                  <ChevronUpSvgLight width={10} height={6} />
-                )
-              ) : theme.dark ? (
-                <ChevronDownSvgDark width={10} height={6} />
+      {showNetworkHeader ? (
+        <RowContainer
+          activeOpacity={ActiveOpacity}
+          onPress={onHide}
+          style={{borderBottomWidth: 0, paddingBottom: 0}}>
+          <CurrencyImageContainer>
+            <CurrencyImage img={chainImg} size={20} />
+          </CurrencyImageContainer>
+          <Column>
+            <H5 ellipsizeMode="tail" numberOfLines={1}>
+              {chainName}
+            </H5>
+          </Column>
+          <Column style={{alignItems: 'flex-end'}}>
+            <ChainAssetsContainer>
+              {!hideBalance ? (
+                <H5 numberOfLines={1} ellipsizeMode="tail">
+                  {fiatBalanceFormat}
+                </H5>
               ) : (
-                <ChevronDownSvgLight width={10} height={6} />
+                <H5 style={{marginTop: 8}}>****</H5>
               )}
-            </ChevronContainer>
-          </ChainAssetsContainer>
-        </Column>
-      </RowContainer>
-      {Object.values(chainAssetsList).map(item => {
-        return showChainAssets[chain] ? memoizedRenderItem({item}) : null;
+              <ChevronContainer>
+                {showChainAssets[chain] ? (
+                  theme.dark ? (
+                    <ChevronUpSvgDark width={10} height={6} />
+                  ) : (
+                    <ChevronUpSvgLight width={10} height={6} />
+                  )
+                ) : theme.dark ? (
+                  <ChevronDownSvgDark width={10} height={6} />
+                ) : (
+                  <ChevronDownSvgLight width={10} height={6} />
+                )}
+              </ChevronContainer>
+            </ChainAssetsContainer>
+          </Column>
+        </RowContainer>
+      ) : null}
+      {Object.values(chainAssetsList).map((item: WalletRowProps) => {
+        return showChainAssets[chain] ? (
+          <WalletRow
+            key={item.id}
+            id={item.id}
+            hideBalance={hideBalance}
+            onPress={() => onPress(item.id, item.copayerId)}
+            wallet={item}
+          />
+        ) : null;
       })}
     </View>
   );

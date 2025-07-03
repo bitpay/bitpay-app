@@ -47,8 +47,9 @@ export const moonpaySellSupportedCoins = [
   'eth_base',
   'ltc',
   'doge',
-  'matic', // pol_polygon in Moonpay // backward compatibility
-  'pol', // pol_polygon in Moonpay
+  'matic', // pol_polygon in MoonpaySell // backward compatibility
+  'pol', // pol_polygon in MoonpaySell
+  'sol',
   'xrp',
 ];
 
@@ -62,16 +63,26 @@ export const moonpaySellSupportedErc20Tokens = [
 
 export const moonpaySellSupportedMaticTokens = [
   'usdc', // usdc_polygon in MoonpaySell
+  'usdt', // usdt_polygon in MoonpaySell
   'weth', // eth_polygon in MoonpaySell
 ];
 
-export const moonpaySellSupportedArbitrumTokens = [];
+export const moonpaySellSupportedArbitrumTokens = [
+  'usdc', // usdc_arbitrum
+  'usdt', // usdt_arbitrum
+];
+
 export const moonpaySellSupportedBaseTokens = [
   'usdc', // usdc_base in MoonpaySell
 ];
 
 export const moonpaySellSupportedOptimismTokens = [
   'wld', // wld_optimism
+];
+
+export const moonpaySellSupportedSolanaTokens = [
+  'usdc', // usdc_sol
+  'usdt', // usdt_sol
 ];
 
 export const getMoonpaySellSupportedCurrencies = (
@@ -94,6 +105,9 @@ export const getMoonpaySellSupportedCurrencies = (
     ...moonpaySellSupportedOptimismTokens.flatMap(optimismToken =>
       getCurrencyAbbreviation(optimismToken, 'op'),
     ),
+    ...moonpaySellSupportedSolanaTokens.flatMap(solanaToken =>
+      getCurrencyAbbreviation(solanaToken, 'sol'),
+    ),
   ];
 
   return moonpaySellSupportedCurrencies;
@@ -111,9 +125,12 @@ export const getMoonpaySellFixedCurrencyAbbreviation = (
       pol: 'pol_polygon',
       eth: 'eth_polygon',
       usdc: 'usdc_polygon',
+      usdt: 'usdt_polygon',
     },
     arb: {
       eth: 'eth_arbitrum',
+      usdc: 'usdc_arbitrum',
+      usdt: 'usdt_arbitrum',
     },
     base: {
       eth: 'eth_base',
@@ -121,6 +138,10 @@ export const getMoonpaySellFixedCurrencyAbbreviation = (
     },
     op: {
       wld: 'wld_optimism',
+    },
+    sol: {
+      usdc: 'usdc_sol',
+      usdt: 'usdt_sol',
     },
   };
 
@@ -144,6 +165,7 @@ export const getChainFromMoonpayNetworkCode = (
     base: 'base',
     optimism: 'op',
     polygon: 'pol',
+    solana: 'sol',
   };
 
   if (!networkCode) {
@@ -173,11 +195,23 @@ export const getMoonpaySellCurrenciesFixedProps = (
       networkCode: 'polygon',
       contractAddress: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
     },
+    usdc: {
+      code: 'usdc',
+      name: 'USD Coin',
+      networkCode: 'ethereum',
+      contractAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    },
     usdc_polygon: {
       code: 'usdc',
-      name: 'USDC',
+      name: 'USD Coin',
       networkCode: 'polygon',
       contractAddress: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
+    },
+    usdc_arbitrum: {
+      code: 'usdc',
+      name: 'USD Coin',
+      networkCode: 'arbitrum',
+      contractAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     },
     usdc_base: {
       code: 'usdc',
@@ -185,17 +219,35 @@ export const getMoonpaySellCurrenciesFixedProps = (
       networkCode: 'base',
       contractAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
     },
-    usdc: {
+    usdc_sol: {
       code: 'usdc',
       name: 'USD Coin',
-      networkCode: 'ethereum',
-      contractAddress: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+      networkCode: 'sol',
+      contractAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     },
     usdt: {
       code: 'usdt',
       name: 'Tether USD',
       networkCode: 'ethereum',
       contractAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    },
+    usdt_polygon: {
+      code: 'usdt',
+      name: 'Tether USD',
+      networkCode: 'polygon',
+      contractAddress: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
+    },
+    usdt_arbitrum: {
+      code: 'usdt',
+      name: 'Tether USD',
+      networkCode: 'arbitrum',
+      contractAddress: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
+    },
+    usdt_sol: {
+      code: 'usdt',
+      name: 'Tether USD',
+      networkCode: 'sol',
+      contractAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
     },
     wld_optimism: {
       code: 'wld',

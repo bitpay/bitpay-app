@@ -350,6 +350,10 @@ export const setMigrationComplete = (): AppActionType => ({
   type: AppActionTypes.SET_MIGRATION_COMPLETE,
 });
 
+export const setEDDSAKeyMigrationComplete = (): AppActionType => ({
+  type: AppActionTypes.SET_EDDSA_KEY_MIGRATION_COMPLETE,
+});
+
 export const setKeyMigrationFailure = (): AppActionType => ({
   type: AppActionTypes.SET_KEY_MIGRATION_FAILURE,
 });

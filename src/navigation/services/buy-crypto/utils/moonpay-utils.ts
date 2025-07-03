@@ -63,6 +63,7 @@ export const moonpaySupportedCoins = [
   'doge',
   'matic', // pol_polygon in Moonpay // backward compatibility
   'pol', // pol_polygon in Moonpay
+  'sol',
 ];
 
 export const nonUSMoonpaySupportedCoins = ['xrp'];
@@ -71,15 +72,18 @@ export const moonpaySupportedErc20Tokens = [
   'bat',
   'dai',
   'gods',
+  'grt',
   'imx',
   'link',
   'mana',
   'matic', // backward compatibility
   'pixel',
+  'pepe',
   'pol',
   'pyusd',
-  'steth',
+  'rlusd',
   'shib',
+  'steth',
   'uni',
   'usdc',
   'usdt',
@@ -88,26 +92,34 @@ export const moonpaySupportedErc20Tokens = [
 ];
 
 export const nonUSMoonpaySupportedErc20Tokens = [
+  '1inch', // 1inch_eth
   'aave',
   'ape',
+  'arb',
+  'arkm', // arkm_eth
   'axs',
+  'blur', // blur_eth
   'chz',
   'comp',
+  'crv', // crv_eth
+  'eigen', // eigen_eth
+  'ens',
+  'fet', // fet_eth
   'floki',
   'key',
+  'ldo', // ldo_eth
   'looks',
-  'mana',
+  'lpt', // lpt_eth
   'mkr',
+  'neiro', // neiro_eth
   'okb',
   'om',
-  'omg',
-  'pepe',
+  'ondo', // ondo_eth
   'portal',
   'sand',
   'slp',
   'snx',
-  'stmx',
-  'tusd',
+  'trb', // trb_eth
   'uni',
   'utk',
   'verse',
@@ -117,25 +129,49 @@ export const nonUSMoonpaySupportedErc20Tokens = [
 ];
 
 export const moonpaySupportedMaticTokens = [
-  'sand', // sand_polygon in Moonpay
-  'usdc', // usdc_polygon in Moonpay
-  'usdt', // usdt_polygon in Moonpay
-  'voxel', // voxel_polygon in Moonpay
-  'weth', // eth_polygon in Moonpay
+  'crv', // crv_pol
+  'gmt', // gmt_polygon
+  'usdc', // usdc_polygon
+  'usdt', // usdt_polygon
+  'weth', // eth_polygon
 ];
 
 export const moonpaySupportedArbitrumTokens = [
-  'magic', // magic_arbitrum in Moonpay
-  'usdc', // usdc_arbitrum in Moonpay
+  'arb', // arb_arb
+  'magic', // magic_arbitrum
+  'usdc', // usdc_arbitrum
+  'usdt', // usdt_arbitrum
 ];
 
 export const moonpaySupportedBaseTokens = [
-  'usdc', // usdc_base in Moonpay
+  'degen', // degen_base
+  'usdc', // usdc_base
 ];
 
 export const moonpaySupportedOptimismTokens = [
-  'usdc', // usdc_optimism in Moonpay
-  'wld', // wld_optimism in Moonpay
+  'usdc', // usdc_optimism
+  'usdt', // usdt_optimism
+  'wld', // wld_optimism
+];
+
+export const moonpaySupportedSolanaTokens = [
+  'bonk', // bonk_sol
+  'gmt', // gmt_sol
+  'jto', // jto_sol
+  'jup', // jup_sol
+  'me', // me_sol
+  'mew', // mew_sol
+  'moodeng', // moodeng_sol
+  'pengu', // pengu_sol
+  'pnut', // pnut_sol
+  'pyth', // pyth - no "_sol" needed
+  'pyusd', // pyusd_sol
+  'ray', // ray_sol
+  'render', // render_sol
+  'trump', // trump_sol
+  'usdc', // usdc_sol
+  'usdt', // usdt_sol
+  'wif', // wif_sol
 ];
 
 export const getMoonpaySupportedCurrencies = (country?: string): string[] => {
@@ -155,6 +191,9 @@ export const getMoonpaySupportedCurrencies = (country?: string): string[] => {
     ),
     ...moonpaySupportedOptimismTokens.flatMap(optimismToken =>
       getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+    ...moonpaySupportedSolanaTokens.flatMap(solanaToken =>
+      getCurrencyAbbreviation(solanaToken, 'sol'),
     ),
   ];
 
@@ -180,14 +219,48 @@ export const getMoonpayFixedCurrencyAbbreviation = (
   coin = externalServicesCoinMapping(coin);
 
   switch (chain) {
+    case 'eth':
+      if (
+        [
+          '1inch',
+          'arkm',
+          'blur',
+          'crv',
+          'eigen',
+          'fet',
+          'ldo',
+          'lpt',
+          'neiro',
+          'ondo',
+          'trb',
+        ].includes(coin)
+      ) {
+        return coin + '_eth';
+      } else {
+        return coin;
+      }
     case 'matic':
-      return coin + '_polygon';
+      if (['crv'].includes(coin)) {
+        return coin + '_pol';
+      } else {
+        return coin + '_polygon';
+      }
     case 'arb':
-      return coin + '_arbitrum';
+      if (['arb'].includes(coin)) {
+        return coin + '_arb';
+      } else {
+        return coin + '_arbitrum';
+      }
     case 'base':
       return coin + '_base';
     case 'op':
       return coin + '_optimism';
+    case 'sol':
+      if (['pyth'].includes(coin)) {
+        return 'pyth';
+      } else {
+        return coin + '_sol';
+      }
     default:
       return coin;
   }

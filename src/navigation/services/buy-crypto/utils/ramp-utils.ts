@@ -75,6 +75,7 @@ export const rampSupportedCoins = [
   'ltc',
   'matic', // pol // backward compatibility
   'pol',
+  'sol',
   'xrp',
 ];
 
@@ -131,6 +132,11 @@ export const rampSupportedOptimismTokens = [
   'wld',
 ];
 
+export const rampSupportedSolanaTokens = [
+  'usdc', // prod: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v / test: BnLi8JcqbUUTu8UWJkHrgEztVpsnxYz83VGRKYSaMqxj
+  'usdt', // prod: Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB / test: JEGS6twrEXHdJaU7tkxubJ37Lopi58nEMNm1rVGD5M37
+];
+
 export const getRampSupportedCurrencies = (): string[] => {
   const rampSupportedCurrencies = [
     ...rampSupportedCoins,
@@ -148,6 +154,9 @@ export const getRampSupportedCurrencies = (): string[] => {
     ),
     ...rampSupportedOptimismTokens.flatMap(optimismToken =>
       getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+    ...rampSupportedSolanaTokens.flatMap(solanaToken =>
+      getCurrencyAbbreviation(solanaToken, 'sol'),
     ),
   ];
 
@@ -199,6 +208,7 @@ export const getChainFromRampChainFormat = (
     arbitrum: 'arb',
     base: 'base',
     optimism: 'op',
+    solana: 'sol',
   };
 
   return chainMap[chain.toLowerCase()] ?? chain;
@@ -214,6 +224,9 @@ export const getRampChainFormat = (chain: string): string | undefined => {
       break;
     case 'op':
       formattedChain = 'optimism';
+      break;
+    case 'sol':
+      formattedChain = 'solana';
       break;
     default:
       formattedChain = _chain;

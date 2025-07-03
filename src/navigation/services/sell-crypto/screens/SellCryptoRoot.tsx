@@ -51,7 +51,11 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {AppActions} from '../../../../store/app';
-import {IsERCToken, IsVMChain} from '../../../../store/wallet/utils/currency';
+import {
+  IsERCToken,
+  IsSVMChain,
+  IsVMChain,
+} from '../../../../store/wallet/utils/currency';
 import {
   SellCryptoSupportedExchanges,
   getAvailableSellCryptoFiatCurrencies,
@@ -910,6 +914,7 @@ const SellCryptoRoot = ({
           allRates,
           selectedCoin.currencyAbbreviation?.toLowerCase(),
           selectedCoin.chain?.toLowerCase(),
+          selectedCoin.tokenAddress,
         );
         const rateForCoinAndFiat = rateByCurrency?.find(
           r => r.code === simplexSellFiatLimits.fiatCurrency,
@@ -967,9 +972,15 @@ const SellCryptoRoot = ({
             ),
           ) &&
           (currency.code === 'eth' ||
-            (['ethereum', 'polygon', 'arbitrum', 'base', 'optimism'].includes(
-              currency.metadata.networkCode.toLowerCase(),
-            )
+            (currency.metadata.contractAddress &&
+            [
+              'ethereum',
+              'polygon',
+              'arbitrum',
+              'base',
+              'optimism',
+              'solana',
+            ].includes(currency.metadata.networkCode.toLowerCase())
               ? allSupportedTokens.includes(
                   getCurrencyAbbreviation(
                     currency.code,
@@ -1086,7 +1097,8 @@ const SellCryptoRoot = ({
             getChainFromRampChainFormat(currency.chain)!,
           ) &&
           (getCoinFromRampCoinFormat(currency.symbol) === 'eth' ||
-            (['eth', 'matic', 'arbitrum', 'base', 'optimism'].includes(
+            (currency.type !== 'NATIVE' &&
+            ['eth', 'matic', 'arbitrum', 'base', 'optimism', 'solana'].includes(
               currency.chain.toLowerCase(),
             )
               ? allSupportedTokens.includes(
@@ -1120,13 +1132,14 @@ const SellCryptoRoot = ({
           maxPurchaseAmount?: number;
           decimals?: number;
         }) => {
+          const _chain = getChainFromRampChainFormat(chain);
           return {
             currencyAbbreviation: symbol.toLowerCase(),
-            symbol: getExternalServiceSymbol(symbol, chain),
+            symbol: getExternalServiceSymbol(symbol, _chain!),
             name,
-            chain: getChainFromRampChainFormat(chain)!,
+            chain: _chain!,
             protocol: type,
-            logoUri: getLogoUri(symbol.toLowerCase(), chain),
+            logoUri: getLogoUri(symbol.toLowerCase(), _chain!),
             tokenAddress: address,
             limits: {
               min:
@@ -1645,7 +1658,11 @@ const SellCryptoRoot = ({
                   style={{flexShrink: 1}}>
                   {getEVMAccountName(selectedWallet)
                     ? getEVMAccountName(selectedWallet)
-                    : `EVM Account${
+                    : `${
+                        IsSVMChain(selectedWallet.chain)
+                          ? 'Solana Account'
+                          : 'EVM Account'
+                      }${
                         Number(selectedWallet.credentials.account) === 0
                           ? ''
                           : ` (${selectedWallet.credentials.account})`

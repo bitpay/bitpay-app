@@ -14,6 +14,7 @@ import {LogActions} from '../log';
 import {ProposalTypes, SessionTypes, Verify} from '@walletconnect/types';
 import {
   processOtherMethodsRequest,
+  processSolanaSwapRequest,
   processSwapRequest,
   sleep,
 } from '../../utils/helper-methods';
@@ -327,6 +328,13 @@ export const walletConnectV2SubscribeToEvents =
 
         if (event.params.request.method === 'eth_sendTransaction') {
           processedRequestData = await dispatch(processSwapRequest(event));
+        } else if (
+          event.params.request.method ===
+          SOLANA_SIGNING_METHODS.SIGN_TRANSACTION
+        ) {
+          processedRequestData = await dispatch(
+            processSolanaSwapRequest(event),
+          );
         } else {
           processedRequestData = await dispatch(
             processOtherMethodsRequest(event),
@@ -741,7 +749,6 @@ const approveWCRequest =
         const signer = new ethers.Wallet(privKeyBuffer);
         const {params, id} = requestEvent;
         const {chainId, request} = params;
-        // TODO use cwc for solana methods
         const cwcSolTransaction = await BWC.getCore().Transactions.get({
           chain: 'SOL',
         });
@@ -832,7 +839,7 @@ const approveWCRequest =
             break;
 
           case SOLANA_SIGNING_METHODS.SIGN_MESSAGE:
-            const sol_signedMessage = await signMessage({
+            const sol_signedMessage = await cwcSolTransaction.signMessage({
               messageBytes: bs58.decode(request.params.message),
               key: {privKey: bs58.encode(privKeyBuffer)},
             });
@@ -851,11 +858,18 @@ const approveWCRequest =
                 versionedTx.messageBytes,
               );
             const signerCount = decodedMessage?.header?.numSignerAccounts ?? 1;
-            const signMethod = signerCount > 1 ? signPartially : sign;
-            const signedTxBase64 = await signMethod({
-              tx: base64Tx,
-              key: {privKey: bs58.encode(privKeyBuffer)},
-            });
+            let signedTxBase64: string;
+            if (signerCount > 1) {
+              signedTxBase64 = await cwcSolTransaction.signPartially({
+                tx: base64Tx,
+                key: {privKey: bs58.encode(privKeyBuffer)},
+              });
+            } else {
+              signedTxBase64 = await cwcSolTransaction.sign({
+                tx: base64Tx,
+                key: {privKey: bs58.encode(privKeyBuffer)},
+              });
+            }
             const signedTransaction = getTransactionDecoder().decode(
               getBase64Encoder().encode(signedTxBase64),
             );
@@ -878,46 +892,6 @@ const approveWCRequest =
       }
     });
   };
-
-interface SignParams {
-  tx: string;
-  key: {privKey: string};
-}
-
-const sign = async (params: SignParams) => {
-  const {tx, key} = params;
-  const uint8ArrayTx = getBase64Encoder().encode(tx);
-  const decodedTx = getTransactionDecoder().decode(uint8ArrayTx);
-  const privKeyBytes = getBase58Encoder().encode(key.privKey);
-  const keypair = await createKeyPairFromPrivateKeyBytes(privKeyBytes);
-  const signedTransaciton = await signTransaction([keypair], decodedTx);
-  return getBase64EncodedWireTransaction(signedTransaciton);
-};
-const signPartially = async (params: SignParams) => {
-  const {tx, key} = params;
-  const uint8ArrayTx = getBase64Encoder().encode(tx);
-  const decodedTx = getTransactionDecoder().decode(uint8ArrayTx);
-  const privKeyBytes = getBase58Encoder().encode(key.privKey);
-  const keypair = await createKeyPairFromPrivateKeyBytes(privKeyBytes);
-  const signedTransaciton = await partiallySignTransaction(
-    [keypair],
-    decodedTx,
-  );
-  return getBase64EncodedWireTransaction(signedTransaciton);
-};
-
-interface SignMessageParams {
-  messageBytes: ReadonlyUint8Array;
-  key: {privKey: string};
-}
-
-const signMessage = async (params: SignMessageParams) => {
-  const {key, messageBytes} = params;
-  const privKeyBytes = getBase58Encoder().encode(key.privKey);
-  const keypair = await createKeyPairFromPrivateKeyBytes(privKeyBytes);
-  const signedBytes = await signBytes(keypair.privateKey, messageBytes);
-  return getBase58Decoder().decode(signedBytes);
-};
 
 export const getAddressFrom = (request: WCV2RequestType): string => {
   let addressFrom: string = '';

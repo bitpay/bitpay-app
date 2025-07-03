@@ -41,7 +41,18 @@ import {
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
 import {PermissionsAndroid} from 'react-native';
+import {
+  getBase64Encoder,
+  getTransactionDecoder,
+  getCompiledTransactionMessageDecoder,
+} from '@solana/kit';
 import axios from 'axios';
+import {
+  instructionKeys,
+  parseInstructions,
+  TransferCheckedTokenInstruction,
+  TransferSolInstruction,
+} from './sol-transaction-parser';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -392,8 +403,12 @@ export const getRateByCurrencyName = (
   rates: Rates,
   currencyAbbreviation: string,
   chain: string,
+  tokenAddress?: string,
 ): Rate[] => {
-  const currencyName = getCurrencyAbbreviation(currencyAbbreviation, chain);
+  const currencyName = getCurrencyAbbreviation(
+    tokenAddress ?? currencyAbbreviation,
+    chain,
+  );
   if (currencyAbbreviation === 'pol' && rates.matic && rates.matic.length > 0) {
     return rates.matic;
   }
@@ -850,6 +865,189 @@ const parseStandardTokenTransactionData = (data?: string) => {
   return {};
 };
 
+export const processSolanaSwapRequest =
+  (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
+  async (dispatch, getState) => {
+    dispatch(LogActions.debug('processing Solana transaction'));
+    const {
+      APP: {defaultAltCurrency},
+      RATE: {rates: allRates},
+    } = getState();
+    const {params} = event;
+    const {chainId, request} = params;
+    const {method} = params.request;
+    const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
+    const senderAddress = request?.params?.feePayer || request?.params?.pubkey;
+    const transactionDecoder = getTransactionDecoder();
+    const compiledTransactionMessageDecoder =
+      getCompiledTransactionMessageDecoder();
+    const decodedTransaction = transactionDecoder.decode(
+      getBase64Encoder().encode(request?.params?.transaction),
+    );
+    const compiledTransactionMessage = compiledTransactionMessageDecoder.decode(
+      decodedTransaction.messageBytes,
+    );
+    const {
+      staticAccounts,
+      header,
+      instructions: compiledTransactionInstructions,
+    } = compiledTransactionMessage;
+    const accountsWithRoles = staticAccounts.map((address, index) => {
+      const {
+        numSignerAccounts,
+        numReadonlySignerAccounts,
+        numReadonlyNonSignerAccounts,
+      } = header;
+      let role: 'signer' | 'writable' | 'readonly';
+      if (index < numSignerAccounts) {
+        role =
+          index < numSignerAccounts - numReadonlySignerAccounts
+            ? 'signer'
+            : 'readonly';
+      } else {
+        const nonSignerIndex = index - numSignerAccounts;
+        role =
+          nonSignerIndex <
+          staticAccounts.length -
+            numSignerAccounts -
+            numReadonlyNonSignerAccounts
+            ? 'writable'
+            : 'readonly';
+      }
+      return {address, role};
+    });
+    const _instructions = compiledTransactionInstructions.map(ix => {
+      return {
+        programAddress: staticAccounts[ix.programAddressIndex],
+        accounts: ix?.accountIndices?.map(index => accountsWithRoles[index]),
+        data: ix.data,
+      };
+    });
+    const instructions = parseInstructions(_instructions);
+    dispatch(
+      LogActions.debug(
+        `Parsed instructions for ${method} request: ${JSON.stringify(
+          instructions,
+        )}`,
+      ),
+    );
+    const recipientAddresses = new Set();
+    let mainToAddress = null;
+    let amount = 0;
+    let currency = null;
+    let tokenAddress: string | undefined;
+    // @ts-ignore
+    if (instructions?.[instructionKeys.TRANSFER_SOL]?.length > 0) {
+      // @ts-ignorex
+      const solTransfers = instructions[
+        instructionKeys.TRANSFER_SOL
+      ] as TransferSolInstruction[];
+      mainToAddress =
+        solTransfers.find(transfer => transfer.destination !== senderAddress)
+          ?.destination || null;
+      for (const transfer of solTransfers) {
+        if (transfer.destination !== senderAddress) {
+          recipientAddresses.add(transfer.destination);
+        }
+      }
+      if (!tokenAddress) {
+        amount = solTransfers.reduce(
+          (sum, transfer) => sum + Number(transfer.amount),
+          0,
+        );
+        currency = 'sol';
+      }
+    }
+    // @ts-ignore
+    if (instructions?.[instructionKeys.TRANSFER_CHECKED_TOKEN]?.length > 0) {
+      // @ts-ignore
+      const allTransfers = instructions[
+        instructionKeys.TRANSFER_CHECKED_TOKEN
+      ] as TransferCheckedTokenInstruction[];
+      const tokenTransfers = tokenAddress
+        ? allTransfers.filter(
+            transfer =>
+              tokenAddress.toLowerCase() === transfer.mint.toLowerCase(),
+          )
+        : allTransfers;
+      if (tokenAddress || !mainToAddress) {
+        mainToAddress =
+          tokenTransfers.find(
+            transfer => transfer.destination !== senderAddress,
+          )?.destination || null;
+      }
+      for (const transfer of tokenTransfers) {
+        if (transfer.destination !== senderAddress) {
+          recipientAddresses.add(transfer.destination);
+        }
+      }
+      if (tokenAddress) {
+        amount = tokenTransfers.reduce(
+          (sum, transfer) => sum + Number(transfer.amount),
+          0,
+        );
+        // currency = ??; TODO
+      }
+    }
+
+    dispatch(
+      LogActions.debug(
+        `amount: ${amount}, recipientAddresses: ${Array.from(
+          recipientAddresses,
+        ).join(', ')}, mainToAddress: ${mainToAddress}`,
+      ),
+    );
+
+    if (!mainToAddress || !currency) {
+      // not supported PROGRAM ID found.
+      return dispatch(processOtherMethodsRequest(event));
+    }
+    const swapFromCurrencyAbbreviation = currency.toLowerCase();
+    const swapAmount = amount.toString();
+    const swapFormatAmount = await dispatch(
+      FormatAmount(
+        swapFromCurrencyAbbreviation,
+        swapFromChain,
+        undefined,
+        Number(swapAmount),
+      ),
+    );
+
+    const toFiatAmount = await dispatch(
+      toFiat(
+        Number(swapAmount),
+        defaultAltCurrency.isoCode,
+        swapFromCurrencyAbbreviation,
+        swapFromChain,
+        allRates,
+        undefined,
+      ),
+    );
+
+    const swapFiatAmount = formatFiatAmount(
+      toFiatAmount,
+      defaultAltCurrency.isoCode,
+    );
+
+    try {
+      return {
+        transactionDataName: 'SIGN REQUEST',
+        swapAmount,
+        swapFiatAmount,
+        swapFormatAmount,
+        swapFromChain,
+        senderAddress,
+        swapFromCurrencyAbbreviation,
+        recipientAddress: mainToAddress,
+      };
+    } catch (error) {
+      dispatch(
+        LogActions.error(`Error processing ${method} request: ${error}`),
+      );
+      throw error;
+    }
+  };
+
 export const processSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
@@ -1260,7 +1458,7 @@ export const isAndroidStoragePermissionGranted = (
 
 export const getSolanaTokens = async (
   address: string,
-  network: string = 'mainnet',
+  network: string = 'livenet',
 ): Promise<
   {
     mintAddress: string;
@@ -1277,6 +1475,29 @@ export const getSolanaTokens = async (
     const apiResponse = await axios.get<any>(url);
     if (!apiResponse?.data?.length) {
       throw new Error(`No solana tokens found for address: ${address}`);
+    }
+    return apiResponse.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getSolanaTokenInfo = async (
+  splTokenAddress: string,
+  network: string = 'mainnet',
+): Promise<{
+  name: string;
+  symbol: string;
+  decimals: number;
+}> => {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/token/${splTokenAddress}`;
+  try {
+    const apiResponse = await axios.get(url);
+    if (!apiResponse?.data) {
+      throw new Error(
+        `No solana tokens found for splTokenAddress: ${splTokenAddress}`,
+      );
     }
     return apiResponse.data;
   } catch (err) {

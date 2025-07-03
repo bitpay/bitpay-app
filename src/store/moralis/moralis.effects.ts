@@ -1,10 +1,5 @@
 import Moralis from 'moralis';
-import {
-  EvmChain,
-  EvmTokenPriceItemInput,
-  GetMultipleTokenPricesOperationResponseJSON,
-  GetMultipleTokenPricesOperationRequest,
-} from '@moralisweb3/common-evm-utils';
+import {EvmChain} from '@moralisweb3/common-evm-utils';
 import {LogActions} from '../log';
 import {Effect} from '..';
 import axios from 'axios';
@@ -404,32 +399,90 @@ export const getERC20TokenPrice =
     }
   };
 
+export type UnifiedTokenPriceObj = {
+  tokenAddress: string;
+  usdPrice: number;
+  '24hrPercentChange': number;
+};
+
+export const getMultipleSolanaTokenPrices = async (
+  addresses: string[],
+): Promise<UnifiedTokenPriceObj[]> => {
+  const svmUrl = 'https://solana-gateway.moralis.io/token/mainnet/prices';
+  const headers = {
+    accept: 'application/json',
+    'content-type': 'application/json',
+    'X-API-Key': MORALIS_API_KEY,
+  };
+  try {
+    const {data} = await axios.post(svmUrl, {addresses}, {headers});
+    return data;
+  } catch (e: any) {
+    throw e.response.data || e;
+  }
+};
+
+export const getMultipleEvmTokenPrices = async (
+  addresses: string[],
+  chain: string,
+): Promise<UnifiedTokenPriceObj[]> => {
+  const evmUrl = `https://deep-index.moralis.io/api/v2.2/erc20/prices?chain=${chain}&include=percent_change`;
+  const tokens = addresses.map(addr => ({token_address: addr}));
+  const headers = {
+    accept: 'application/json',
+    'content-type': 'application/json',
+    'X-API-Key': MORALIS_API_KEY,
+  };
+  try {
+    const {data} = await axios.post(evmUrl, {tokens: tokens}, {headers});
+    return data;
+  } catch (e: any) {
+    throw e.response.data || e;
+  }
+};
+
 export const getMultipleTokenPrices =
   ({
     addresses,
     chain,
   }: {
-    addresses: EvmTokenPriceItemInput[];
+    addresses: string[];
     chain: string;
-  }): Effect<Promise<GetMultipleTokenPricesOperationResponseJSON>> =>
+  }): Effect<Promise<UnifiedTokenPriceObj[]>> =>
   async dispatch => {
     try {
-      const query = {
-        chain: MORALIS_EVM_CHAIN[chain],
-        include: 'percent_change',
-      } as GetMultipleTokenPricesOperationRequest;
-      const body = {tokens: addresses};
-      const {raw} = await Moralis.EvmApi.token.getMultipleTokenPrices(
-        query,
-        body,
-      );
-
-      dispatch(
-        LogActions.info(
-          '[moralis/getMultipleTokenPrices]: get ERC20 token price successfully',
-        ),
-      );
-      return raw;
+      let data: UnifiedTokenPriceObj[] = [];
+      if (IsSVMChain(chain)) {
+        const response = await getMultipleSolanaTokenPrices(addresses);
+        dispatch(
+          LogActions.info(
+            '[moralis/getMultipleTokenPrices]: get SVM token prices successfully',
+          ),
+        );
+        data = response.map((item: any) => ({
+          tokenAddress: item.tokenAddress,
+          usdPrice: item.usdPrice,
+          '24hrPercentChange': item.usdPrice24hrPercentChange,
+        }));
+      } else {
+        const response = await getMultipleEvmTokenPrices(
+          addresses,
+          MORALIS_EVM_CHAIN[chain]?.apiHex ||
+            MORALIS_EVM_CHAIN[chain]?.hex ||
+            chain,
+        );
+        dispatch(
+          LogActions.info(
+            '[moralis/getMultipleTokenPrices]: get EVM token prices successfully',
+          ),
+        );
+        data = response.map((item: any) => ({
+          tokenAddress: item.tokenAddress,
+          usdPrice: item.usdPrice,
+          '24hrPercentChange': item.usdPrice24hrPercentChange,
+        }));
+      }
+      return data;
     } catch (e) {
       let errorStr;
       if (e instanceof Error) {
@@ -439,7 +492,7 @@ export const getMultipleTokenPrices =
       }
       dispatch(
         LogActions.error(
-          `[moralis/getMultipleTokenPrices]: an error occurred while getting ERC20 token price: ${errorStr}`,
+          `[moralis/getMultipleTokenPrices]: an error occurred while getting ERC20/SOL token price: ${errorStr}`,
         ),
       );
       throw e;

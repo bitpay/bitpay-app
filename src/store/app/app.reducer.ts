@@ -156,6 +156,7 @@ export interface AppState {
   selectedLocalAssetsDropdown: LocalAssetsDropdown | undefined;
   recentSelectedChainFilterOption: string[];
   migrationComplete: boolean;
+  EDDSAKeyMigrationComplete: boolean;
   keyMigrationFailure: boolean;
   migrationMMKVStorageComplete: boolean;
   migrationMMKVStorageFailure: boolean;
@@ -255,6 +256,7 @@ const initialState: AppState = {
   selectedLocalAssetsDropdown: undefined,
   recentSelectedChainFilterOption: [],
   migrationComplete: false,
+  EDDSAKeyMigrationComplete: false,
   keyMigrationFailure: false,
   migrationMMKVStorageComplete: false,
   migrationMMKVStorageFailure: false,
@@ -711,6 +713,12 @@ export const appReducer = (
       return {
         ...state,
         migrationComplete: true,
+      };
+
+    case AppActionTypes.SET_EDDSA_KEY_MIGRATION_COMPLETE:
+      return {
+        ...state,
+        EDDSAKeyMigrationComplete: true,
       };
 
     case AppActionTypes.SET_KEY_MIGRATION_FAILURE:

@@ -45,6 +45,7 @@ import {
   IsValidPrivateKey,
   isValidSwapCryptoUri,
   IsValidAddKeyPath,
+  IsValidSolanaPay,
 } from '../wallet/utils/validations';
 import {APP_DEEPLINK_PREFIX} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
@@ -66,13 +67,17 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../app/app.actions';
-import {sleep} from '../../utils/helper-methods';
+import {
+  getCurrencyAbbreviation,
+  getSolanaTokenInfo,
+  sleep,
+} from '../../utils/helper-methods';
 import {BwcProvider} from '../../lib/bwc';
 import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../wallet/effects/send/send';
-import {Key, Wallet} from '../wallet/wallet.models';
+import {Key, Token, Wallet} from '../wallet/wallet.models';
 import {FormatAmount} from '../wallet/effects/amount/amount';
 import {ButtonState} from '../../components/button/Button';
 import {Linking} from 'react-native';
@@ -80,6 +85,7 @@ import {
   BitcoreLibs,
   bitcoreLibs,
   GetAddressNetwork,
+  GetCoinAndNetwork,
 } from '../wallet/effects/address/address';
 import {Network} from '../../constants';
 import BitPayIdApi from '../../api/bitpay';
@@ -90,7 +96,10 @@ import {
   GeneralError,
 } from '../../navigation/wallet/components/ErrorMessages';
 import {StackActions} from '@react-navigation/native';
-import {BitpaySupportedEvmCoins, BitpaySupportedSvmCoins} from '../../constants/currencies';
+import {
+  BitpaySupportedEvmCoins,
+  BitpaySupportedSvmCoins,
+} from '../../constants/currencies';
 import {Analytics} from '../analytics/analytics.effects';
 import {parseUri} from '@walletconnect/utils';
 import {Invoice} from '../shop/shop.models';
@@ -109,6 +118,9 @@ import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCrypt
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
 import {SimplexSellIncomingData} from '../sell-crypto/models/simplex-sell.models';
 import {ExternalServicesSettingsScreens} from '../../navigation/tabs/settings/external-services/ExternalServicesGroup';
+import {BitpaySupportedTokenOptsByAddress} from '../../constants/tokens';
+import {getTokenContractInfo} from '../wallet/effects/status/status';
+import {SolanaPayOpts} from '../../navigation/wallet/screens/send/confirm/Confirm';
 
 export const incomingData =
   (
@@ -140,6 +152,11 @@ export const incomingData =
       // Paypro
       else if (IsValidPayPro(data)) {
         dispatch(goToPayPro(data, undefined, undefined, opts?.wallet));
+        // Plain Address (Bitcoin)
+      }
+      // SolanaPay
+      else if (IsValidSolanaPay(data)) {
+        dispatch(handleSolanaPay(data, opts?.wallet));
         // Plain Address (Bitcoin)
       } else if (IsValidBitcoinAddress(data)) {
         dispatch(handlePlainAddress(data, coin || 'btc', chain || 'btc', opts));
@@ -514,6 +531,7 @@ const goToConfirm =
       sendMax?: boolean | undefined;
       message?: string;
       feePerKb?: number;
+      solanaPayOpts?: SolanaPayOpts;
     };
   }): Effect<Promise<void>> =>
   async dispatch => {
@@ -531,6 +549,7 @@ const goToConfirm =
                   !!BitpaySupportedSvmCoins[recipient.currency.toLowerCase()], // no wallet selected - if SVM address show all svm wallets and tokens in next view
                 message: opts?.message || '',
                 feePerKb: opts?.feePerKb,
+                solanaPayOpts: opts?.solanaPayOpts,
               },
             },
           },
@@ -567,6 +586,7 @@ const goToConfirm =
         amount,
         message: opts?.message || '',
         sendMax: opts?.sendMax,
+        solanaPayOpts: opts?.solanaPayOpts,
       });
       sleep(300).then(() => setButtonState?.(null));
     } catch (err: any) {
@@ -611,6 +631,7 @@ export const goToAmount =
     opts?: {
       message?: string;
       feePerKb?: number;
+      solanaPayOpts?: SolanaPayOpts;
     };
   }): Effect<Promise<void>> =>
   async dispatch => {
@@ -751,6 +772,236 @@ const handleBitPayUri =
             opts: {message, feePerKb},
           }),
         );
+      }
+    }
+  };
+
+const handleSolanaPay =
+  (data: string, wallet?: Wallet): Effect<void> =>
+  async (dispatch, getState) => {
+    dispatch(LogActions.info('[scan] Incoming-data: SolanaPay URI'));
+
+    const network = getState().APP.network;
+    const walletState = getState().WALLET;
+
+    const tokenOptionsByAddress: {[key in string]: Token} = {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...walletState.tokenOptionsByAddress,
+      ...walletState.customTokenOptionsByAddress,
+    };
+
+    let coin = 'sol';
+    const chain = 'sol';
+
+    const parsed = new URL(data);
+    const recipientAddress = parsed.pathname.replace('/', '');
+    const amount = parsed.searchParams.get('amount');
+    const splTokenAddress = parsed.searchParams.get('spl-token');
+    const reference = parsed.searchParams.get('reference');
+    const memo = parsed.searchParams.get('memo');
+    const label = parsed.searchParams.get('label');
+    const message = parsed.searchParams.get('message');
+
+    let tokenContractInfo: Token | undefined;
+
+    if (splTokenAddress) {
+      const addrData = GetCoinAndNetwork(splTokenAddress, network, chain);
+      const isValid =
+        addrData?.coin.toLowerCase() && network === addrData?.network;
+
+      if (!isValid) {
+        dispatch(
+          LogActions.warn(
+            `[SolanaPay] Invalid SPL tokenAddress: ${splTokenAddress}`,
+          ),
+        );
+        return;
+      }
+
+      dispatch(
+        LogActions.debug(
+          `[SolanaPay] Valid SPL tokenAddress: ${splTokenAddress}. Getting tokenContractInfo`,
+        ),
+      );
+
+      tokenContractInfo =
+        tokenOptionsByAddress?.[
+          getCurrencyAbbreviation(splTokenAddress, chain)
+        ];
+      if (!tokenContractInfo) {
+        dispatch(
+          LogActions.debug(
+            '[SolanaPay] Contract info not present in token options - consulting bitcore',
+          ),
+        );
+
+        try {
+          const contractInfo = await getSolanaTokenInfo(
+            splTokenAddress,
+            'livenet',
+          );
+
+          dispatch(
+            LogActions.debug(
+              '[SolanaPay] Contract info from bitcore: ' +
+                JSON.stringify(contractInfo),
+            ),
+          );
+
+          if (!contractInfo) {
+            dispatch(
+              LogActions.warn(
+                '[SolanaPay] It was not possible to obtain the necessary data for the SPL Token from bitcore',
+              ),
+            );
+            await sleep(300);
+            dispatch(
+              showBottomNotificationModal({
+                type: 'warning',
+                title: t('SolanaPay Error'),
+                message: `It was not possible to obtain the necessary data for the SPL Token: ${splTokenAddress}`,
+                enableBackdropDismiss: true,
+                actions: [
+                  {
+                    text: t('OK'),
+                    action: () => {},
+                    primary: true,
+                  },
+                ],
+              }),
+            );
+            return;
+          }
+
+          (coin = contractInfo.symbol?.toLowerCase()),
+            (tokenContractInfo = {
+              symbol: coin,
+              name: contractInfo.name,
+              address: splTokenAddress,
+              decimals: contractInfo.decimals,
+            });
+        } catch (err) {
+          const errorMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          dispatch(
+            LogActions.warn(
+              `[SolanaPay] It was not possible to obtain the necessary data for the SPL Token from bitcore. Err: ${errorMsg}`,
+            ),
+          );
+          await sleep(300);
+          dispatch(
+            showBottomNotificationModal({
+              type: 'warning',
+              title: t('SolanaPay Error'),
+              message: `It was not possible to obtain the necessary data for the SPL Token: ${splTokenAddress}`,
+              enableBackdropDismiss: true,
+              actions: [
+                {
+                  text: t('OK'),
+                  action: () => {},
+                  primary: true,
+                },
+              ],
+            }),
+          );
+          return;
+        }
+      }
+    }
+
+    const recipient = {
+      type: 'address',
+      currency: tokenContractInfo?.symbol ?? coin, // Review this, get coin from splToken address
+      chain,
+      address: recipientAddress,
+      tokenAddress: splTokenAddress ?? undefined,
+    };
+
+    if (!amount) {
+      dispatch(
+        goToAmount({
+          coin,
+          chain,
+          recipient,
+          wallet,
+          opts: {
+            message: message ?? undefined,
+            solanaPayOpts: {
+              reference,
+              memo,
+              label,
+              message,
+            },
+          },
+        }),
+      );
+    } else {
+      dispatch(LogActions.debug('[SolanaPay] Validating amount...'));
+      const isValidSolanaPayAmount = (
+        amount: string | null | undefined,
+      ): boolean => {
+        if (!amount || typeof amount !== 'string') {
+          return false;
+        }
+        // validate positive decimal number
+        const decimalPattern = /^\d+(\.\d+)?$/;
+        if (!decimalPattern.test(amount)) {
+          return false;
+        }
+        const parsed = parseFloat(amount);
+        if (isNaN(parsed) || parsed <= 0) {
+          return false;
+        }
+        // validate 9 decimals max
+        const decimalPlaces = amount.includes('.')
+          ? amount.split('.')[1].length
+          : 0;
+        if (decimalPlaces > 9) {
+          return false;
+        }
+
+        return true;
+      };
+
+      if (isValidSolanaPayAmount(amount)) {
+        dispatch(LogActions.debug('[SolanaPay] Valid amount. Go to confirm.'));
+        dispatch(
+          goToConfirm({
+            recipient,
+            amount: Number(amount),
+            wallet,
+            opts: {
+              message: message ?? undefined,
+              solanaPayOpts: {
+                reference,
+                memo,
+                label,
+                message,
+              },
+            },
+          }),
+        );
+      } else {
+        dispatch(LogActions.warn('[SolanaPay] Invalid amount'));
+        await sleep(300);
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t('SolanaPay Error'),
+            message: t(
+              'The payment request is invalid: the "amount" field is missing or incorrectly formatted.',
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+                primary: true,
+              },
+            ],
+          }),
+        );
+        return;
       }
     }
   };
@@ -2207,8 +2458,11 @@ const handlePlainAddress =
     },
   ): Effect<void> =>
   dispatch => {
-    let _coin = coin === 'eth' ? 'EVM' : coin;
-    dispatch(LogActions.info(`[scan] Incoming-data: ${_coin} plain address`));
+    dispatch(
+      LogActions.info(
+        `[scan] Incoming-data: ${coin.toUpperCase()} chain plain address`,
+      ),
+    );
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
       : undefined; // There is no way to tell if an evm address is testnet or livenet so let's skip the network filter

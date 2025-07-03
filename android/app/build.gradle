@@ -80,7 +80,7 @@ def enableProguardInReleaseBuilds = false
  * give correct results when using with locales other than en-US. Note that
  * this variant is about 6MiB larger per architecture than default.
  */
-def jscFlavor = 'org.webkit:android-jsc:+'
+def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 /**
  * Private function to get the list of Native Architectures you want to build.
@@ -103,8 +103,8 @@ android {
         applicationId "com.bitpay.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 91212285
-        versionName "14.32.0"
+        versionCode 91212286
+        versionName "14.32.1"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
     }
     splits {

@@ -48,6 +48,7 @@ import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
 import {
   startMigration,
+  startAddEDDSAKey,
   startWalletStoreInit,
   startGetRates,
 } from '../wallet/effects';
@@ -60,6 +61,7 @@ import {
   setConfirmedTxAccepted,
   setEmailNotificationsAccepted,
   setMigrationComplete,
+  setEDDSAKeyMigrationComplete,
   setNotificationsAccepted,
   setUserFeedback,
   showBlur,
@@ -169,7 +171,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    const {migrationComplete} = APP;
+    const {migrationComplete, EDDSAKeyMigrationComplete} = APP;
     const {customTokensMigrationComplete, polygonMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
@@ -218,6 +220,12 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
       dispatch(LogActions.info('success [setMigrationComplete]'));
+    }
+
+    if (!EDDSAKeyMigrationComplete) {
+      await dispatch(startAddEDDSAKey());
+      dispatch(setEDDSAKeyMigrationComplete());
+      dispatch(LogActions.info('success [setEDDSAKeyMigrationComplete]'));
     }
 
     if (!polygonMigrationComplete) {
@@ -1329,6 +1337,13 @@ export const incomingLink =
           dispatch(CardEffects.startOpenDosh());
         });
       }
+    } else if (pathSegments[0] === 'exchange-rate') {
+      handler = () => {
+        navigationRef.navigate(RootStacks.TABS, {
+          screen: TabsScreens.HOME,
+          params,
+        });
+      };
     }
 
     if (handler) {

@@ -20,6 +20,8 @@ import {
 } from '../../../store/app/app.actions';
 import {TextInput} from 'react-native';
 import {useTranslation} from 'react-i18next';
+import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
+import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
 
 const EncryptPasswordContainer = styled.SafeAreaView`
   flex: 1;
@@ -89,11 +91,23 @@ const CreateEncryptionPassword = () => {
   const onSubmit = ({password}: {password: string}) => {
     try {
       if (key) {
-        logger.debug(`Encrypting private key for: ${key.keyName}`);
-
-        key.methods!.encrypt(password);
+        Object.values(Constants.ALGOS).forEach(algo => {
+          try {
+            logger.debug(
+              `Encrypting private key for: ${key.keyName} - with algo: ${algo}`,
+            );
+            key.methods!.encrypt(password, undefined, algo);
+          } catch (err) {
+            const errMsg =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            if (errMsg && errMsg.includes('Could not encrypt')) {
+              throw err;
+            }
+            logger.debug(`error decrypting with ${algo}: ${errMsg}`);
+          }
+        });
         dispatch(WalletActions.successEncryptOrDecryptPassword({key}));
-        key.isPrivKeyEncrypted = key.methods!.isPrivKeyEncrypted();
+        key.isPrivKeyEncrypted = checkPrivateKeyEncrypted(key);
         navigation.goBack();
         dispatch(
           showBottomNotificationModal({

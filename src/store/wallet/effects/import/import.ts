@@ -105,7 +105,7 @@ import {
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {
   createWalletsForAccounts,
-  getVMGasWallets,
+  getEvmGasWallets,
 } from '../../../../utils/helper-methods';
 
 const BWC = BwcProvider.getInstance();
@@ -709,6 +709,34 @@ export const startMigration =
     });
   };
 
+export const startAddEDDSAKey =
+  (): Effect<Promise<void>> =>
+  async (dispatch, getState): Promise<void> => {
+    dispatch(LogActions.info('[startAddEDDSAKey] - Starting migration...'));
+    const {keys} = getState().WALLET;
+    if (!keys || Object.keys(keys).length === 0) {
+      dispatch(LogActions.info('[startAddEDDSAKey] - No keys to migrate.'));
+      return;
+    }
+    for (const key of Object.values(keys)) {
+      try {
+        if (key.methods) {
+          key.methods.addKeyByAlgorithm('EDDSA');
+          dispatch(
+            LogActions.info(`[migrateEDDSAKey] - Migrated key ${key.id}`),
+          );
+        }
+      } catch (err) {
+        dispatch(
+          LogActions.error(
+            `[startAddEDDSAKey] - Error migrating key ${key.id}: ${err}`,
+          ),
+        );
+      }
+    }
+    dispatch(LogActions.info('[startAddEDDSAKey] - Migration completed.'));
+  };
+
 export const migrateKeyAndWallets =
   (migrationData: {
     key: KeyProperties;
@@ -856,7 +884,7 @@ export const startImportMnemonic =
 
         const data = await serverAssistedImport(opts);
         // we need to ensure that each evm/svm account has all supported wallets attached.
-        const vmWallets = getVMGasWallets(data.wallets);
+        const vmWallets = getEvmGasWallets(data.wallets);
         const accountsArray = [
           ...new Set(vmWallets.map(wallet => wallet.credentials.account)),
         ];

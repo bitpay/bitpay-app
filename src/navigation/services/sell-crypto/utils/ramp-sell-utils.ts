@@ -63,7 +63,7 @@ export const rampSellSupportedCoins = [
   // 'ltc',
   // 'doge',
   'pol', // MATIC_POL in RampSell
-  // 'sol', SOLANA_SOL in RampSell
+  'sol', // SOLANA_SOL in RampSell
 ];
 
 export const rampSellSupportedErc20Tokens: string[] = [
@@ -111,6 +111,7 @@ export const rampSellSupportedOptimismTokens: string[] = [
   'usdt',
   'wld',
 ];
+export const rampSellSupportedSolanaTokens: string[] = [];
 
 export const getRampSellSupportedCurrencies = (): string[] => {
   const rampSellSupportedCurrencies = [
@@ -129,6 +130,9 @@ export const getRampSellSupportedCurrencies = (): string[] => {
     ),
     ...rampSellSupportedOptimismTokens.flatMap(optimismToken =>
       getCurrencyAbbreviation(optimismToken, 'op'),
+    ),
+    ...rampSellSupportedSolanaTokens.flatMap(solanaToken =>
+      getCurrencyAbbreviation(solanaToken, 'sol'),
     ),
   ];
 
@@ -176,6 +180,7 @@ export const getChainFromRampChainFormat = (
     arbitrum: 'arb',
     base: 'base',
     optimism: 'op',
+    solana: 'sol',
   };
 
   return chainMap[chain.toLowerCase()] ?? chain;
@@ -194,6 +199,9 @@ export const getRampChainFormat = (chain: string): string | undefined => {
       break;
     case 'op':
       formattedChain = 'optimism';
+      break;
+    case 'sol':
+      formattedChain = 'solana';
       break;
     default:
       formattedChain = _chain;
@@ -327,7 +335,10 @@ export const getRampSellCoinFormat = (
 ): string => {
   coin = coin ? rampCoinMapping(externalServicesCoinMapping(coin)) : undefined;
   const _coin = coin ? cloneDeep(coin).toUpperCase() : undefined;
-  const _chain = chain ? cloneDeep(chain).toUpperCase() : undefined;
+  const rampChainFormat = chain ? getRampChainFormat(chain) : undefined;
+  const _chain = rampChainFormat
+    ? cloneDeep(rampChainFormat).toUpperCase()
+    : undefined;
 
   if (_coin === 'WETH' && _chain === 'MATIC') {
     return 'MATIC_ETH';
