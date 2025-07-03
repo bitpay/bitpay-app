@@ -43,19 +43,29 @@ export const startGetTokenOptions =
             LogActions.info(`request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`),
           );
         }
-        Object.values(tokens).forEach(token => {
-          if (
-            BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
-          ) {
-            return;
-          } // remove bitpay supported tokens and currencies
-          populateTokenInfo({
-            chain,
-            token,
-            tokenOptionsByAddress,
-            tokenDataByAddress,
+        if (tokens && typeof tokens === 'object' && !Array.isArray(tokens)) {
+          Object.values(tokens).forEach(token => {
+            if (
+              BitpaySupportedTokens[
+                getCurrencyAbbreviation(token.address, chain)
+              ]
+            ) {
+              return;
+            } // remove bitpay supported tokens and currencies
+            populateTokenInfo({
+              chain,
+              token,
+              tokenOptionsByAddress,
+              tokenDataByAddress,
+            });
           });
-        });
+        } else {
+          dispatch(
+            LogActions.error(
+              `Unexpected response [startGetTokenOptions]: ${tokens}`,
+            ),
+          );
+        }
       }
       dispatch(
         successGetTokenOptions({
