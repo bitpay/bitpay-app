@@ -110,7 +110,6 @@ import {
   createWalletsForAccounts,
   fixWalletAddresses,
   getEvmGasWallets,
-  getSvmGasWallets,
   sleep,
 } from './utils/helper-methods';
 import {Analytics} from './store/analytics/analytics.effects';
@@ -472,6 +471,7 @@ export default () => {
         }
       }
     }
+
     const subscriptionAppStateChange = AppState.addEventListener(
       'change',
       onAppStateChange,
@@ -498,6 +498,7 @@ export default () => {
       );
       dispatch(handleBwsEvent(response));
     }
+
     const eventEmitter = new NativeEventEmitter(SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
     return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
@@ -545,13 +546,25 @@ export default () => {
   useEffect(() => {
     const eventBrazeListener = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
-      async eid => {
-        // Wait for a few seconds to ensure the user is deleted
+      async ({oldEid, newEid, agreedToMarketingCommunications}) => {
         await sleep(20000);
-        LogActions.info('Deleting old user EID: ', eid);
-        await BrazeWrapper.delete(eid);
-        await sleep(3000);
-        BrazeWrapper.endMergingUser();
+        LogActions.info('Deleting old user EID: ', oldEid);
+        await BrazeWrapper.delete(oldEid);
+        // Wait for a few seconds to ensure the user is deleted
+        await sleep(5000);
+        Analytics.endMergingUser();
+        await sleep(5000);
+        LogActions.info(
+          'Updating Email Notification Subscription to new EID: ',
+          newEid,
+          agreedToMarketingCommunications,
+        );
+        Braze.setEmailNotificationSubscriptionType(
+          agreedToMarketingCommunications
+            ? Braze.NotificationSubscriptionTypes.OPTED_IN
+            : Braze.NotificationSubscriptionTypes.SUBSCRIBED,
+        );
+        dispatch(AppEffects.setAnnouncementsNotifications(agreedToMarketingCommunications));
       },
     );
 

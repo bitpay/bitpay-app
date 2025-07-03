@@ -151,7 +151,6 @@ export const BrazeWrapper = (() => {
     userId?: string;
     attributes?: BrazeUserAttributes;
   } = {};
-  let mergingUser = false;
 
   return {
     init() {
@@ -162,9 +161,6 @@ export const BrazeWrapper = (() => {
       userId: string | undefined,
       attributes?: BrazeUserAttributes | undefined,
     ) {
-      if (mergingUser) {
-        return;
-      }
       if (!lastSeenIdentity) {
         lastSeenIdentity = {};
       }
@@ -192,14 +188,6 @@ export const BrazeWrapper = (() => {
       };
     },
 
-    startMergingUser() {
-      mergingUser = true;
-    },
-
-    endMergingUser() {
-      mergingUser = false;
-    },
-
     merge(userToMerge: string, userToKeep: string) {
       return mergeUsers(userToMerge, userToKeep);
     },
@@ -210,16 +198,11 @@ export const BrazeWrapper = (() => {
 
     screen(name: string, properties: Record<string, any> = {}) {
       const screenName = `Viewed ${name} Screen`;
-
-      if (!mergingUser) {
-        Braze.logCustomEvent(screenName, properties);
-      }
+      Braze.logCustomEvent(screenName, properties);
     },
 
     track(eventName: string, properties: Record<string, any> = {}) {
-      if (!mergingUser) {
-        Braze.logCustomEvent(eventName, properties);
-      }
+      Braze.logCustomEvent(eventName, properties);
     },
   };
 })();
