@@ -1129,7 +1129,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         </TypeText>
                       </TypeContainer>
                     ) : null}
-                    {['xrp'].includes(fullWalletObj?.currencyAbbreviation) ? (
+                    {['xrp', 'sol'].includes(fullWalletObj?.currencyAbbreviation) ? (
                       <TouchableOpacity
                         onPress={() => setShowBalanceDetailsModal(true)}>
                         <InfoSvg />
