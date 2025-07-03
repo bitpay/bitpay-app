@@ -905,7 +905,7 @@ export const buildBalance =
     let satTotalAmount = totalAmount;
     let satLockedAmount = lockedAmount;
 
-    if (['xrp'].includes(chain)) {
+    if (['xrp', 'sol'].includes(chain)) {
       satLockedAmount = lockedAmount - lockedConfirmedAmount;
       satTotalAmount = totalAmount - lockedConfirmedAmount;
     }

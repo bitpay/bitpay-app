@@ -167,6 +167,37 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
               </>
             ) : null}
 
+            {wallet.currencyAbbreviation.toLowerCase() === 'sol' ? (
+              <>
+                <Row>
+                  <RowLabelContainer>
+                    <LockSvg width={30} height={20} />
+                    <RowLabel>{t('SOL Locked Balance')}</RowLabel>
+                  </RowLabelContainer>
+                  <BalanceContainer>
+                    <CryptoBalance type="caution">
+                      {wallet.cryptoConfirmedLockedBalance} SOL
+                    </CryptoBalance>
+                    <FiatBalance>
+                      {isTestnet
+                        ? t('Test Only - No Value')
+                        : wallet.fiatConfirmedLockedBalance}
+                    </FiatBalance>
+                  </BalanceContainer>
+                </Row>
+                <LabelTip type="info">
+                  <LabelTipText>
+                    {t(
+                      'The Solana network requires accounts to maintain a minimum balance of SOL to remain active. This non-refundable amount is used to cover rent-exemption and will remain locked in your wallet.',
+                      {
+                        lockedBalance: wallet.cryptoConfirmedLockedBalance,
+                      },
+                    )}
+                  </LabelTipText>
+                </LabelTip>
+              </>
+            ) : null}
+
             <Row>
               <RowLabelContainer>
                 <SigmaSvg width={30} height={20} />
@@ -188,7 +219,8 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                     wallet: wallet.currencyName,
                   })}
                 </Text>
-                {wallet.currencyAbbreviation.toLowerCase() === 'xrp' ? (
+                {wallet.currencyAbbreviation.toLowerCase() === 'xrp' ||
+                wallet.currencyAbbreviation.toLowerCase() === 'sol' ? (
                   <Text>
                     {' '}
                     {t('Not including locked funds required for activation.')}
