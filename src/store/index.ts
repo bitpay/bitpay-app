@@ -188,6 +188,11 @@ const getStore = async () => {
     // @ts-ignore
     middlewares.push(logger);
   }
+  if (__DEV__) {
+    const inmmutableMiddleware =
+      require('redux-immutable-state-invariant').default();
+    middlewares.push(inmmutableMiddleware);
+  }
 
   let middlewareEnhancers = applyMiddleware(...middlewares);
 
