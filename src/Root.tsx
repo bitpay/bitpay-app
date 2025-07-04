@@ -156,6 +156,7 @@ import {
   getBaseEVMAccountCreationCoinsAndTokens,
   getBaseSVMAccountCreationCoinsAndTokens,
 } from './constants/currencies';
+import Logger from 'bitcore-wallet-client/ts_build/lib/log';
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
@@ -577,6 +578,31 @@ export default () => {
 
     return () => subscriptionAppStateChange.remove();
   }, [rerender, appColorScheme]);
+
+  // Patch BWC logger to forward logs to the debug screen.
+  // Note: BWC logs full request bodies — we filter long messages to avoid clutter.
+  useEffect(() => {
+    const patchLogger = (loggerInstance: Record<string, any>) => {
+      ['debug', 'info', 'log', 'warn', 'error', 'fatal'].forEach(level => {
+        loggerInstance[level] = (...args: any[]) => {
+          try {
+            const message = args
+              .map(arg => (typeof arg === 'string' ? arg : JSON.stringify(arg)))
+              .join(' ');
+            if (message.length < 800) {
+              const logLevel = level === 'fatal' ? 'error' : level;
+              dispatch(
+                (LogActions as Record<string, Function>)[logLevel](
+                  `[BWC] ${message}`,
+                ),
+              );
+            }
+          } catch (_) {}
+        };
+      });
+    };
+    patchLogger(Logger);
+  }, []);
 
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
