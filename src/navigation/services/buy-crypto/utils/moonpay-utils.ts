@@ -258,8 +258,10 @@ export const getMoonpayFixedCurrencyAbbreviation = (
     case 'sol':
       if (['pyth'].includes(coin)) {
         return 'pyth';
-      } else {
+      } else if (coin !== 'sol') {
         return coin + '_sol';
+      } else {
+        return coin;
       }
     default:
       return coin;
