@@ -40,7 +40,9 @@ export const startGetTokenOptions =
           tokens = data;
         } catch (error) {
           dispatch(
-            LogActions.info(`request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`),
+            LogActions.info(
+              `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
+            ),
           );
         }
         if (tokens && typeof tokens === 'object' && !Array.isArray(tokens)) {
