@@ -2,7 +2,13 @@ import {navigationRef} from '../../../Root';
 import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Animated, DeviceEventEmitter, View, NativeModules, Platform} from 'react-native';
+import {
+  Animated,
+  DeviceEventEmitter,
+  View,
+  NativeModules,
+  Platform,
+} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
@@ -87,7 +93,6 @@ const Pin = gestureHandlerRootHOC(() => {
   const [shakeDots, setShakeDots] = useState(false);
   const [showBackButton, setShowBackButton] = useState<boolean>();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
 
   useEffect(() => {
     if (type === 'set' || onClose) {
@@ -374,8 +379,7 @@ const PinModal: React.FC = () => {
       fullscreen
       enableBackdropDismiss={false}
       backgroundColor={BitPay}
-      disableAnimations
-    >
+      disableAnimations>
       <Pin />
     </SheetModal>
   );

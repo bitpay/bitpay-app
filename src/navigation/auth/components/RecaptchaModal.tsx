@@ -70,7 +70,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
       onError,
     } = props;
     const webviewRef = useRef<WebView>(null);
-    
+
     useImperativeHandle(ref, () => ({
       reset: () => {
         webviewRef.current?.injectJavaScript(`
@@ -110,7 +110,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
         modalLibrary="bottom-sheet"
         isVisible={isVisible}
         fullscreen={true}
-        backdropOpacity={.85}
+        backdropOpacity={0.85}
         backgroundColor="rgba(0,0,0,.3)"
         enableBackdropDismiss={false}
         onBackdropPress={onCancel ?? (() => {})}
