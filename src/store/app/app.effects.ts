@@ -601,7 +601,7 @@ export const startOnGoingProcessModal =
       ADDING_WALLET: i18n.t('Adding Wallet'),
       ADDING_ACCOUNT: i18n.t('Adding Account-Based Wallet'),
       ADDING_EVM_CHAINS: i18n.t('Adding EVM Chains'),
-      ADDING_SPL_CHAINS: i18n.t('Adding SPL Chains'),
+      ADDING_SPL_CHAINS: i18n.t('Adding Solana Account'),
       LOADING: i18n.t('Loading'),
       FETCHING_PAYMENT_OPTIONS: i18n.t('Fetching payment options...'),
       FETCHING_PAYMENT_INFO: i18n.t('Fetching payment information...'),

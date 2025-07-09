@@ -14,8 +14,8 @@ import {
 } from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Key, KeyMethods, Wallet} from '../../../store/wallet/wallet.models';
-import {RouteProp} from '@react-navigation/core';
-import {WalletGroupParamList} from '../WalletGroup';
+import {CommonActions, RouteProp} from '@react-navigation/core';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import MultisigOptions from './MultisigOptions';
 import {Option} from './CreationOptions';
 import {useTranslation} from 'react-i18next';
@@ -41,6 +41,7 @@ import {
   getSvmGasWallets,
   sleep,
 } from '../../../utils/helper-methods';
+import {getNavigationTabName, RootStacks} from '../../../Root';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -122,7 +123,30 @@ const AddingOptions: React.FC = () => {
 
           dispatch(successAddWallet({key}));
           dispatch(dismissOnGoingProcessModal());
-          navigation.goBack();
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 2,
+              routes: [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: getNavigationTabName()},
+                },
+                {
+                  name: WalletScreens.KEY_OVERVIEW,
+                  params: {
+                    id: key.id,
+                  },
+                },
+                {
+                  name: WalletScreens.ACCOUNT_DETAILS,
+                  params: {
+                    keyId: key.id,
+                    selectedAccountAddress: wallets[0]?.receiveAddress,
+                  },
+                },
+              ],
+            }),
+          );
         } catch (err) {
           const errstring =
             err instanceof Error ? err.message : JSON.stringify(err);
@@ -193,7 +217,38 @@ const AddingOptions: React.FC = () => {
 
           dispatch(successAddWallet({key}));
           dispatch(dismissOnGoingProcessModal());
-          navigation.goBack();
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 2,
+              routes: [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: getNavigationTabName()},
+                },
+                {
+                  name: WalletScreens.KEY_OVERVIEW,
+                  params: {
+                    id: key.id,
+                  },
+                },
+                {
+                  name: WalletScreens.ACCOUNT_DETAILS,
+                  params: {
+                    keyId: key.id,
+                    selectedAccountAddress: wallets[0]?.receiveAddress,
+                  },
+                },
+                {
+                  name: WalletScreens.WALLET_DETAILS,
+                  params: {
+                    walletId: wallets[0]?.id,
+                    key,
+                    skipInitializeHistory: false,
+                  },
+                },
+              ],
+            }),
+          );
         } catch (err) {
           const errstring =
             err instanceof Error ? err.message : JSON.stringify(err);
