@@ -190,6 +190,7 @@ const Confirm = () => {
   const [txp, updateTxp] = useState(_txp);
   const {fee, networkCost, sendingFrom, total, rateStr} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+  const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
 
   const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
     useState(false);
@@ -490,7 +491,13 @@ const Confirm = () => {
       const twoFactorRequired =
         coinbaseAccount &&
         err?.message?.includes(CoinbaseErrorMessages.twoFactorRequired);
-      twoFactorRequired ? await request2FA() : await handlePaymentFailure(err);
+      try {
+        twoFactorRequired
+          ? await request2FA()
+          : await handlePaymentFailure(err);
+      } finally {
+        setDisableSwipeSendButton(false);
+      }
     }
   };
 
@@ -598,11 +605,15 @@ const Confirm = () => {
   };
 
   const onSwipeComplete = async () => {
+    if (disableSwipeSendButton) {
+      return;
+    }
+    setDisableSwipeSendButton(true);
     logger.debug('Swipe completed. Making payment...');
     if (key?.hardwareSource) {
-      onSwipeCompleteHardwareWallet(key);
+      await onSwipeCompleteHardwareWallet(key);
     } else {
-      sendPaymentAndRedeemGiftCard({});
+      await sendPaymentAndRedeemGiftCard({});
     }
   };
 
