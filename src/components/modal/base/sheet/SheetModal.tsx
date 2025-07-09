@@ -92,11 +92,11 @@ const SheetModal: React.FC<SheetModalProps> = ({
     ),
     [enableBackdropDismiss, onBackdropPress],
   );
-
+  const defaultBorderRadius = Platform.OS === 'ios' ? 12 : 0;
   const bottomSheetViewStyles = {
     backgroundColor: backgroundColor ?? (theme.dark ? Black : White),
-    borderTopLeftRadius: borderRadius,
-    borderTopRightRadius: borderRadius,
+    borderTopLeftRadius: borderRadius ?? defaultBorderRadius,
+    borderTopRightRadius: borderRadius ?? defaultBorderRadius,
   };
   return modalLibrary === 'bottom-sheet' ? (
     <View testID={'modalBackdrop'}>
