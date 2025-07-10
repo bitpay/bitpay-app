@@ -45,29 +45,28 @@ export const startGetTokenOptions =
             ),
           );
         }
-        if (tokens && typeof tokens === 'object' && !Array.isArray(tokens)) {
-          Object.values(tokens).forEach(token => {
-            if (
-              BitpaySupportedTokens[
-                getCurrencyAbbreviation(token.address, chain)
-              ]
-            ) {
-              return;
-            } // remove bitpay supported tokens and currencies
-            populateTokenInfo({
-              chain,
-              token,
-              tokenOptionsByAddress,
-              tokenDataByAddress,
-            });
-          });
-        } else {
+        if (!Array.isArray(tokens)) {
           dispatch(
             LogActions.error(
               `Unexpected response [startGetTokenOptions]: ${tokens}`,
             ),
           );
+          return;
         }
+
+        tokens.forEach(token => {
+          if (
+            BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
+          ) {
+            return;
+          } // remove bitpay supported tokens and currencies
+          populateTokenInfo({
+            chain,
+            token,
+            tokenOptionsByAddress,
+            tokenDataByAddress,
+          });
+        });
       }
       dispatch(
         successGetTokenOptions({
