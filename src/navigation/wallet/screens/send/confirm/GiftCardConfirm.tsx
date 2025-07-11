@@ -229,10 +229,8 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openWalletSelector = async (delay?: number) => {
-    if (delay) {
-      await sleep(delay);
-    }
+  const openWalletSelector = async (delay: number = 700) => {
+    await sleep(delay);
     setWalletSelectorVisible(true);
   };
 
@@ -332,7 +330,7 @@ const Confirm = () => {
       if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
         return popToShopHome();
       }
-      return openWalletSelector(400);
+      return openWalletSelector();
     };
     const [errorConfig] = await Promise.all([
       dispatch(handleCreateTxProposalError(err, onDismiss)),
@@ -554,7 +552,7 @@ const Confirm = () => {
 
   const handlePaymentFailure = async (error: any) => {
     const handled = dispatch(
-      handleSendError({error, onDismiss: () => openWalletSelector(400)}),
+      handleSendError({error, onDismiss: () => openWalletSelector()}),
     );
     if (!handled) {
       if (wallet && txp) {
@@ -645,7 +643,7 @@ const Confirm = () => {
 
   useFocusEffect(
     useCallback(() => {
-      openWalletSelector(100);
+      openWalletSelector();
     }, []),
   );
 
