@@ -1,13 +1,9 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState, useMemo} from 'react';
 import {AppState, AppStateStatus, Platform, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {
-  BottomSheetBackdrop,
-  BottomSheetBackdropProps,
-  BottomSheetModal,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import {BottomSheetModal, BottomSheetView} from '@gorhom/bottom-sheet';
 import {useTheme} from 'styled-components/native';
+import {createCustomBackdrop} from './CustomBackdrop';
 import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
 import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
@@ -79,25 +75,26 @@ const SheetModal: React.FC<SheetModalProps> = ({
     return () => subscriptionAppStateChange.remove();
   }, [isVisible, onBackdropPress]);
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        onPress={onBackdropPress}
-        pressBehavior={enableBackdropDismiss === false ? 'none' : 'close'}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={backdropOpacity}
-      />
-    ),
-    [enableBackdropDismiss, onBackdropPress],
-  );
   const defaultBorderRadius = Platform.OS === 'ios' ? 12 : 0;
   const bottomSheetViewStyles = {
     backgroundColor: backgroundColor ?? (theme.dark ? Black : White),
     borderTopLeftRadius: borderRadius ?? defaultBorderRadius,
     borderTopRightRadius: borderRadius ?? defaultBorderRadius,
   };
+  const handleBackdropTap = useCallback(() => {
+    bottomSheetModalRef.current?.dismiss();
+    onBackdropPress();
+  }, [onBackdropPress]);
+
+  const renderBackdrop = useMemo(
+    () =>
+      createCustomBackdrop(
+        backdropOpacity,
+        enableBackdropDismiss === false ? undefined : handleBackdropTap,
+      ),
+    [enableBackdropDismiss, handleBackdropTap, backdropOpacity],
+  );
+
   return modalLibrary === 'bottom-sheet' ? (
     <View testID={'modalBackdrop'}>
       <BottomSheetModal

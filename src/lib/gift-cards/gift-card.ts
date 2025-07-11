@@ -161,13 +161,13 @@ export function sortByDescendingDate(
   return new Date(b.date).getTime() - new Date(a.date).getTime();
 }
 
-export function redemptionFailuresLessThanADayOld(
+export function redemptionFailuresLessThanAWeekOld(
   giftCard: GiftCard | UnsoldGiftCard,
 ) {
-  const dayAgo = moment().subtract(1, 'day').toDate();
+  const weekAgo = moment().subtract(1, 'week').toDate();
   return (
     ['FAILURE', 'PENDING'].includes(giftCard.status) &&
-    new Date(giftCard.date) > dayAgo
+    new Date(giftCard.date) > weekAgo
   );
 }
 
@@ -350,7 +350,7 @@ export function isGiftCardDisplayable(
   return (
     supportedGiftCardMap[giftCard.name] &&
     (['PENDING', 'SUCCESS', 'SYNCED'].includes(giftCard.status) ||
-      redemptionFailuresLessThanADayOld(giftCard))
+      redemptionFailuresLessThanAWeekOld(giftCard))
   );
 }
 
