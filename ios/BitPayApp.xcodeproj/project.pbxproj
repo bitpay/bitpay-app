@@ -59,7 +59,6 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = BitPayApp/AppDelegate.swift; sourceTree = "<group>"; };
 		BCDAB70057C84109A9201936 /* Heebo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Regular.ttf"; path = "../assets/fonts/Heebo-Regular.ttf"; sourceTree = "<group>"; };
 		E639E0380D05420CD0D64119 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
-		EC0FDD682CC92E90009E1B35 /* InAppMessageModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InAppMessageModule.h; sourceTree = "<group>"; };
 		EC0FDD692CC92E90009E1B35 /* InAppMessageModule.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InAppMessageModule.mm; sourceTree = "<group>"; };
 		ECCB92762860B25D00F9CF8B /* SilentPushEvent.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SilentPushEvent.mm; sourceTree = "<group>"; };
 		ECCB92772860B25D00F9CF8B /* SilentPushEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SilentPushEvent.h; sourceTree = "<group>"; };
@@ -84,7 +83,6 @@
 		13B07FAE1A68108700A75B9A /* BitPayApp */ = {
 			isa = PBXGroup;
 			children = (
-				EC0FDD682CC92E90009E1B35 /* InAppMessageModule.h */,
 				EC0FDD692CC92E90009E1B35 /* InAppMessageModule.mm */,
 				ECCB92772860B25D00F9CF8B /* SilentPushEvent.h */,
 				ECCB92762860B25D00F9CF8B /* SilentPushEvent.mm */,

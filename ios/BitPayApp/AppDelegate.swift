@@ -33,11 +33,12 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelegate, UNUserNotificationCenterDelegate {
+    static private(set) var shared: AppDelegate!
     // MARK: - Static & Instance Properties
-    static var braze: Braze?
+    private var braze: Braze!
 
-    private var isBitPayAppLoaded = false
-    private var cachedInAppMessage: Braze.InAppMessageRaw?
+    public var isBitPayAppLoaded: Bool = false
+    public var cachedInAppMessage: Braze.InAppMessage?
     private var keyEvent: RNKeyEvent?
 
     // MARK: - React Native bootstrap helpers
@@ -48,6 +49,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
     // MARK: - UIApplicationDelegate
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        AppDelegate.shared = self
 
         // 1. React Native setup using factory
         let rnDelegate = ReactNativeDelegate()
@@ -73,7 +75,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
 
         // `BrazeReactBridge.initBraze(_:)` is an Objective-C selector; we call it dynamically
         if let brazeObj = BrazeReactBridge.perform(#selector(BrazeReactBridge.initBraze(_:)), with: config)?.takeUnretainedValue() as? Braze {
-            AppDelegate.braze = brazeObj
+            self.braze = brazeObj
             let inAppUI = BrazeInAppMessageUI()
             inAppUI.delegate = self
             brazeObj.inAppMessagePresenter = inAppUI
@@ -151,7 +153,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
                      fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         SilentPushEvent.emitEvent(withName: "SilentPushNotification", andPayload: userInfo)
 
-        if let braze = AppDelegate.braze,
+        if let braze = braze,
            braze.notifications.handleBackgroundNotification(userInfo: userInfo, fetchCompletionHandler: completionHandler) {
             return
         }
@@ -159,7 +161,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        AppDelegate.braze?.notifications.register(deviceToken: deviceToken)
+        braze?.notifications.register(deviceToken: deviceToken)
     }
 
     // MARK: - UNUserNotificationCenterDelegate
@@ -174,33 +176,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
     }
 
     // MARK: - BrazeInAppMessageUIDelegate
-    func inAppMessage(_ ui: BrazeInAppMessageUI,
-                      displayChoiceForMessage message: Braze.InAppMessageRaw) -> BrazeInAppMessageUI.DisplayChoice {
-        guard isBitPayAppLoaded else {
-            print("BitPay App not ready, caching the in-app message.")
-            cachedInAppMessage = message
-            return .reenqueue
-        }
-        return .now
+    func inAppMessage(
+        _ ui: BrazeInAppMessageUI,
+        displayChoiceForMessage message: Braze.InAppMessage
+      ) -> BrazeInAppMessageUI.DisplayChoice {
+      if !isBitPayAppLoaded {
+        cachedInAppMessage = message
+        return .reenqueue
+      }
+      return .now
     }
 
     // MARK: - BitPay App load state helper
     @objc func setBitPayAppLoaded(_ loaded: Bool) {
-        isBitPayAppLoaded = loaded
+      isBitPayAppLoaded = loaded
 
-        if loaded, let iamRaw = cachedInAppMessage {
-            print("BitPay App is ready, displaying cached IAM.")
-            if let uiPresenter = AppDelegate.braze?.inAppMessagePresenter as? BrazeInAppMessageUI {
-                uiPresenter.present(message: iamRaw)
-            } else {
-                do {
-                    let iamTyped = try Braze.InAppMessage(iamRaw)
-                    AppDelegate.braze?.inAppMessagePresenter?.present(message: iamTyped)
-                } catch {
-                    print("Failed to convert In-App Message: \(error)")
-                }
-            }
-            cachedInAppMessage = nil
-        }
+      if loaded {
+        (braze.inAppMessagePresenter as? BrazeInAppMessageUI)?.presentNext()
+        cachedInAppMessage = nil
+      }
     }
 }
