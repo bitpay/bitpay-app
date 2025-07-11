@@ -32,6 +32,7 @@ const getTrackingAuthorizedByUser =
 export const Analytics = (() => {
   let _preInitQueue: Array<() => void> = [];
   let _isInitialized = false;
+  let _isMergingUser = false;
 
   const guard = (cb: () => void) => {
     if (!APP_ANALYTICS_ENABLED) {
@@ -41,6 +42,11 @@ export const Analytics = (() => {
     if (!_isInitialized) {
       // Queue up any actions that happen before we get a chance to initialize.
       _preInitQueue.push(cb);
+      return;
+    }
+
+    // If we are migrating a user, we don't want to run any analytics events.
+    if (_isMergingUser) {
       return;
     }
 
@@ -199,5 +205,25 @@ export const Analytics = (() => {
           onComplete?.();
         });
       },
+    /**
+     * Start merging user data.
+     * This is used to indicate that the user is in the process of merging accounts.
+     */
+    startMergingUser: () => {
+      _isMergingUser = true;
+    },
+    /**
+     * End merging user data.
+     * This is used to indicate that the user has finished merging accounts.
+     */
+    endMergingUser: () => {
+      _isMergingUser = false;
+    },
+    /**
+     * Check if still merging user data.
+     */
+    isMergingUser: () => {
+      return _isMergingUser;
+    },
   };
 })();

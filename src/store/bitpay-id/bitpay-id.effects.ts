@@ -26,7 +26,6 @@ import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
-import Braze from '@braze/react-native-sdk';
 import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {DeviceEventEmitter} from 'react-native';
@@ -38,7 +37,7 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdAnalyticsInit =
-  (user: BasicUserInfo): Effect<void> =>
+  (user: BasicUserInfo, agreedToMarketingCommunications?: boolean): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
     if (user) {
@@ -61,17 +60,20 @@ export const startBitPayIdAnalyticsInit =
 
       // Check if Braze EID exists and different
       if (APP.brazeEid && APP.brazeEid !== eid) {
-        BrazeWrapper.startMergingUser();
+        Analytics.startMergingUser();
         // Should migrate the user to the new EID
         LogActions.info('Merging current user to new EID: ', eid);
         await BrazeWrapper.merge(APP.brazeEid, eid);
         // Emit an event that delete the user
         DeviceEventEmitter.emit(
           DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
-          APP.brazeEid,
+          {
+            oldEid: APP.brazeEid,
+            newEid: eid,
+            agreedToMarketingCommunications,
+          },
         );
       }
-
       dispatch(setBrazeEid(eid));
       dispatch(
         Analytics.identify(eid, {
@@ -84,13 +86,13 @@ export const startBitPayIdAnalyticsInit =
   };
 
 export const startBitPayIdStoreInit =
-  (initialData: InitialUserData): Effect<void> =>
+  (initialData: InitialUserData, agreedToMarketingCommunications?: boolean): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
     const {basicInfo: user} = initialData;
     dispatch(BitPayIdActions.successInitializeStore(APP.network, initialData));
     try {
-      await dispatch(startBitPayIdAnalyticsInit(user));
+      dispatch(startBitPayIdAnalyticsInit(user, agreedToMarketingCommunications));
     } catch (err) {
       dispatch(LogActions.error('Failed init user analytics'));
       dispatch(LogActions.error(JSON.stringify(err)));
@@ -130,11 +132,7 @@ export const startCreateAccount =
       const salt = generateSalt();
       const hashedPassword = hashPassword(params.password);
 
-      if (params.agreedToMarketingCommunications) {
-        Braze.setEmailNotificationSubscriptionType(
-          Braze.NotificationSubscriptionTypes.OPTED_IN,
-        );
-      }
+      const agreedToMarketingCommunications = params.agreedToMarketingCommunications || false;
 
       await AuthApi.register(APP.network, BITPAY_ID.session.csrfToken, {
         givenName: params.givenName,
@@ -158,7 +156,7 @@ export const startCreateAccount =
         APP.network,
         session.csrfToken,
       );
-      await dispatch(startPairAndLoadUser(APP.network, secret));
+      await dispatch(startPairAndLoadUser(APP.network, secret, undefined, agreedToMarketingCommunications));
 
       dispatch(BitPayIdActions.successCreateAccount());
     } catch (err) {
@@ -428,7 +426,7 @@ export const startDeeplinkPairing =
   };
 
 const startPairAndLoadUser =
-  (network: Network, secret: string, code?: string): Effect<Promise<void>> =>
+  (network: Network, secret: string, code?: string, agreedToMarketingCommunications?: boolean): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     try {
       const token = await AuthApi.pair(secret, code);
@@ -462,7 +460,7 @@ const startPairAndLoadUser =
         );
       }
 
-      await dispatch(startBitPayIdStoreInit(data.user));
+      dispatch(startBitPayIdStoreInit(data.user, agreedToMarketingCommunications));
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>
