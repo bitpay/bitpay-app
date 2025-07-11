@@ -54,6 +54,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
+  const bottomInset = Platform.OS === 'android' ? insets.bottom : 0;
   const theme = useTheme();
 
   const [isModalVisible, setModalVisible] = useState(isVisible);
@@ -102,6 +103,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
     <View testID={'modalBackdrop'}>
       <BottomSheetModal
         stackBehavior={stackBehavior || undefined}
+        bottomInset={bottomInset}
         backdropComponent={renderBackdrop}
         backgroundStyle={{backgroundColor: 'transparent'}}
         snapPoints={fullscreen ? ['100%'] : snapPoints || undefined}
@@ -120,8 +122,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
               fullscreen
                 ? {
                     ...bottomSheetViewStyles,
-                    height:
-                      HEIGHT + (Platform.OS === 'android' ? insets.top : 0), // insets.top added to avoid the white gap on android devices
+                    height: HEIGHT,
                     paddingTop: paddingTop ?? insets.top,
                   }
                 : {...bottomSheetViewStyles, height}

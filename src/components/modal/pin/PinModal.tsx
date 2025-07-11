@@ -2,13 +2,7 @@ import {navigationRef} from '../../../Root';
 import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {
-  Animated,
-  DeviceEventEmitter,
-  View,
-  NativeModules,
-  Platform,
-} from 'react-native';
+import {Animated, DeviceEventEmitter, View, NativeModules} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
@@ -56,7 +50,7 @@ const PinMessage = styled(H5)`
 `;
 
 const VirtualKeyboardContainer = styled.View`
-  margin-bottom: ${Platform.OS === 'android' ? 10 : 5}%;
+  margin-bottom: 5%;
   padding-bottom: 10px;
 `;
 
