@@ -1,6 +1,6 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View} from 'react-native';
+import {View, InteractionManager} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -125,6 +125,15 @@ const GiftCardHeader = ({
   amount: number;
   cardConfig: CardConfig;
 }): JSX.Element | null => {
+  const [showImg, setShowImg] = useState(false);
+  useEffect(() => {
+    InteractionManager.runAfterInteractions(() => {
+      setTimeout(() => {
+        requestAnimationFrame(() => setShowImg(true));
+      }, 800);
+    });
+  }, []);
+
   const {t} = useTranslation();
   const boostedAmount = getBoostedAmount(cardConfig, amount);
   return (
@@ -150,13 +159,17 @@ const GiftCardHeader = ({
               ) : null}
             </BoostAppliedText>
           </View>
-          <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
+          {showImg ? (
+            <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
+          ) : null}
         </DetailRow>
       </DetailContainer>
       <Hr style={{marginBottom: 40}} />
     </>
   );
 };
+
+const MemoizedGiftCardHeader = React.memo(GiftCardHeader);
 
 const Confirm = () => {
   const {t} = useTranslation();
@@ -229,9 +242,16 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openWalletSelector = async (delay: number = 700) => {
-    await sleep(delay);
-    setWalletSelectorVisible(true);
+  const openWalletSelector = (): Promise<void> => {
+    return new Promise<void>(resolve => {
+      InteractionManager.runAfterInteractions(() => {
+        // allow one more frame for heavy renders to settle
+        setTimeout(() => {
+          setWalletSelectorVisible(true);
+          resolve();
+        }, 300);
+      });
+    });
   };
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
@@ -650,7 +670,7 @@ const Confirm = () => {
   return (
     <ConfirmContainer>
       <DetailsList>
-        <GiftCardHeader amount={amount} cardConfig={cardConfig} />
+        <MemoizedGiftCardHeader amount={amount} cardConfig={cardConfig} />
         {wallet || coinbaseAccount ? (
           <>
             <Header hr>Summary</Header>
