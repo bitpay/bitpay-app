@@ -471,6 +471,14 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
     contentCardSubscription = Braze.addListener(
       Braze.Events.CONTENT_CARDS_UPDATED,
       async (update: Braze.ContentCardsUpdatedEvent) => {
+        if (Analytics.isMergingUser()) {
+          dispatch(
+            LogActions.debug(
+              'Skipping Braze content cards update during user merge.',
+            ),
+          );
+          return;
+        }
         const contentCards = update.cards;
         const isInitializing = currentRetry < MAX_RETRIES;
 
@@ -562,6 +570,14 @@ const createBrazeEid = (): Effect<string | undefined> => dispatch => {
  * @returns void
  */
 export const requestBrazeContentRefresh = (): Effect => async dispatch => {
+  if (Analytics.isMergingUser()) {
+    dispatch(
+      LogActions.debug(
+        'Skipping Braze content refresh during user merge.',
+      ),
+    );
+    return;
+  }
   try {
     dispatch(LogActions.info('Refreshing Braze content...'));
 
