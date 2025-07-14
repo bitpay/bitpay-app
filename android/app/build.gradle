@@ -97,6 +97,8 @@ android {
 
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
+    // Support compileSdk in older versions of the Android Gradle plugin
+    compileSdkVersion rootProject.ext.compileSdkVersion
 
     namespace "com.bitpay.wallet"
     defaultConfig {
