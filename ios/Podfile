@@ -39,9 +39,12 @@ $VCEnableLocation=false
 
 target 'BitPayApp' do
   pod 'React-RCTText', :path => '../node_modules/react-native/Libraries/Text', :modular_headers => true
-  pod 'BrazeUI', :podspec => 'https://raw.githubusercontent.com/braze-inc/braze-swift-sdk-prebuilt-static/11.9.0/BrazeUI.podspec'
 
   config = use_native_modules!
+
+  # Braze SDK
+  pod 'BrazeKit'
+  pod 'BrazeUI'
 
   use_react_native!(
     :path => config[:reactNativePath],

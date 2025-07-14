@@ -3,10 +3,10 @@ PODS:
     - AppsFlyerFramework/Main (= 6.5.2)
   - AppsFlyerFramework/Main (6.5.2)
   - boost (1.84.0)
-  - braze-react-native-sdk (14.1.0):
-    - BrazeKit (~> 11.9.0)
-    - BrazeLocation (~> 11.9.0)
-    - BrazeUI (~> 11.9.0)
+  - braze-react-native-sdk (15.0.1):
+    - BrazeKit (~> 12.0.0)
+    - BrazeLocation (~> 12.0.0)
+    - BrazeUI (~> 12.0.0)
     - DoubleConversion
     - glog
     - hermes-engine
@@ -30,11 +30,11 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - BrazeKit (11.9.0)
-  - BrazeLocation (11.9.0):
-    - BrazeKit (= 11.9.0)
-  - BrazeUI (11.9.0):
-    - BrazeKit (= 11.9.0)
+  - BrazeKit (12.0.3)
+  - BrazeLocation (12.0.3):
+    - BrazeKit (= 12.0.3)
+  - BrazeUI (12.0.3):
+    - BrazeKit (= 12.0.3)
   - BVLinearGradient (2.6.2):
     - React-Core
   - DoubleConversion (1.1.6)
@@ -2478,7 +2478,8 @@ PODS:
 DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - "braze-react-native-sdk (from `../node_modules/@braze/react-native-sdk`)"
-  - BrazeUI (from `https://raw.githubusercontent.com/braze-inc/braze-swift-sdk-prebuilt-static/11.9.0/BrazeUI.podspec`)
+  - BrazeKit
+  - BrazeUI
   - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - fast_float (from `../node_modules/react-native/third-party-podspecs/fast_float.podspec`)
@@ -2605,6 +2606,7 @@ SPEC REPOS:
     - AppsFlyerFramework
     - BrazeKit
     - BrazeLocation
+    - BrazeUI
     - InputMask
     - libwebp
     - Mixpanel-swift
@@ -2618,8 +2620,6 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/boost.podspec"
   braze-react-native-sdk:
     :path: "../node_modules/@braze/react-native-sdk"
-  BrazeUI:
-    :podspec: https://raw.githubusercontent.com/braze-inc/braze-swift-sdk-prebuilt-static/11.9.0/BrazeUI.podspec
   BVLinearGradient:
     :path: "../node_modules/react-native-linear-gradient"
   DoubleConversion:
@@ -2861,10 +2861,10 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppsFlyerFramework: 9f304d91cc80b6579b1206a59220383056b58b47
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
-  braze-react-native-sdk: 04ead3df03e44adf22db036d06a06755476c5d2d
-  BrazeKit: b21335426470a4e80b0a21fdeec69bdbe6852222
-  BrazeLocation: 03848efc27e835646013aa297868707111a1e715
-  BrazeUI: 0bf2c6e97921438bd0edf698cc9a043b918634d0
+  braze-react-native-sdk: 664dc2d24fa459c07ba3923673d3057d9a6075e9
+  BrazeKit: 44fab385edca94faaf96d7ce9f020b9c2ad3505e
+  BrazeLocation: 44d76d8bd8b71e9b35b80014d968bf28c6e60aac
+  BrazeUI: 8d107fe48a924d4e34bb8590a465082a822c20f7
   BVLinearGradient: 34a999fda29036898a09c6a6b728b0b4189e1a44
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: 06eeec4fe712a76acc9376682e4808b05ce978b6
@@ -2991,6 +2991,6 @@ SPEC CHECKSUMS:
   VisionCamera: 168f46071274ce58c50adef4c82ae3367b2ba2a6
   Yoga: dfabf1234ccd5ac41d1b1d43179f024366ae9831
 
-PODFILE CHECKSUM: ed828d9111811790aacf2dc6e3abc51fdb075b4b
+PODFILE CHECKSUM: d4a69f4929cd4bb267b578fbe7b03426e23387aa
 
 COCOAPODS: 1.15.2
