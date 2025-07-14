@@ -19,7 +19,7 @@ import {
 } from './shop.models';
 import {
   getCardConfigMapFromApiConfigMap,
-  redemptionFailuresLessThanADayOld,
+  redemptionFailuresLessThanAWeekOld,
   sortByDescendingDate,
 } from '../../lib/gift-cards/gift-card';
 import {DeviceEventEmitter} from 'react-native';
@@ -282,7 +282,7 @@ export const retryGiftCardRedemptions =
   (): Effect<Promise<void>> => async (dispatch, getState) => {
     const {APP, SHOP} = getState();
     const failedRedemptionGiftCards = SHOP.giftCards[APP.network].filter(
-      redemptionFailuresLessThanADayOld,
+      redemptionFailuresLessThanAWeekOld,
     );
     const retryPromises = failedRedemptionGiftCards.map(giftCard =>
       dispatch(startRedeemGiftCard(giftCard.invoiceId)),

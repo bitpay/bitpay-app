@@ -1,6 +1,6 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View} from 'react-native';
+import {View, InteractionManager} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -125,6 +125,15 @@ const GiftCardHeader = ({
   amount: number;
   cardConfig: CardConfig;
 }): JSX.Element | null => {
+  const [showImg, setShowImg] = useState(false);
+  useEffect(() => {
+    InteractionManager.runAfterInteractions(() => {
+      setTimeout(() => {
+        requestAnimationFrame(() => setShowImg(true));
+      }, 800);
+    });
+  }, []);
+
   const {t} = useTranslation();
   const boostedAmount = getBoostedAmount(cardConfig, amount);
   return (
@@ -150,13 +159,17 @@ const GiftCardHeader = ({
               ) : null}
             </BoostAppliedText>
           </View>
-          <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
+          {showImg ? (
+            <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
+          ) : null}
         </DetailRow>
       </DetailContainer>
       <Hr style={{marginBottom: 40}} />
     </>
   );
 };
+
+const MemoizedGiftCardHeader = React.memo(GiftCardHeader);
 
 const Confirm = () => {
   const {t} = useTranslation();
@@ -190,6 +203,7 @@ const Confirm = () => {
   const [txp, updateTxp] = useState(_txp);
   const {fee, networkCost, sendingFrom, total, rateStr} = txDetails || {};
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
+  const [disableSwipeSendButton, setDisableSwipeSendButton] = useState(false);
 
   const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
     useState(false);
@@ -228,11 +242,16 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openWalletSelector = async (delay?: number) => {
-    if (delay) {
-      await sleep(delay);
-    }
-    setWalletSelectorVisible(true);
+  const openWalletSelector = (): Promise<void> => {
+    return new Promise<void>(resolve => {
+      InteractionManager.runAfterInteractions(() => {
+        // allow one more frame for heavy renders to settle
+        setTimeout(() => {
+          setWalletSelectorVisible(true);
+          resolve();
+        }, 300);
+      });
+    });
   };
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
@@ -331,7 +350,7 @@ const Confirm = () => {
       if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
         return popToShopHome();
       }
-      return openWalletSelector(400);
+      return openWalletSelector();
     };
     const [errorConfig] = await Promise.all([
       dispatch(handleCreateTxProposalError(err, onDismiss)),
@@ -490,7 +509,13 @@ const Confirm = () => {
       const twoFactorRequired =
         coinbaseAccount &&
         err?.message?.includes(CoinbaseErrorMessages.twoFactorRequired);
-      twoFactorRequired ? await request2FA() : await handlePaymentFailure(err);
+      try {
+        twoFactorRequired
+          ? await request2FA()
+          : await handlePaymentFailure(err);
+      } finally {
+        setDisableSwipeSendButton(false);
+      }
     }
   };
 
@@ -547,7 +572,7 @@ const Confirm = () => {
 
   const handlePaymentFailure = async (error: any) => {
     const handled = dispatch(
-      handleSendError({error, onDismiss: () => openWalletSelector(400)}),
+      handleSendError({error, onDismiss: () => openWalletSelector()}),
     );
     if (!handled) {
       if (wallet && txp) {
@@ -598,11 +623,15 @@ const Confirm = () => {
   };
 
   const onSwipeComplete = async () => {
+    if (disableSwipeSendButton) {
+      return;
+    }
+    setDisableSwipeSendButton(true);
     logger.debug('Swipe completed. Making payment...');
     if (key?.hardwareSource) {
-      onSwipeCompleteHardwareWallet(key);
+      await onSwipeCompleteHardwareWallet(key);
     } else {
-      sendPaymentAndRedeemGiftCard({});
+      await sendPaymentAndRedeemGiftCard({});
     }
   };
 
@@ -634,14 +663,14 @@ const Confirm = () => {
 
   useFocusEffect(
     useCallback(() => {
-      openWalletSelector(100);
+      openWalletSelector();
     }, []),
   );
 
   return (
     <ConfirmContainer>
       <DetailsList>
-        <GiftCardHeader amount={amount} cardConfig={cardConfig} />
+        <MemoizedGiftCardHeader amount={amount} cardConfig={cardConfig} />
         {wallet || coinbaseAccount ? (
           <>
             <Header hr>Summary</Header>
