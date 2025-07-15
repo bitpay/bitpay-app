@@ -183,16 +183,21 @@ export const simplexSupportedOptimismTokens = [
 ];
 
 export const simplexSupportedSolanaTokens = [
+  'act',
   'bonk',
   'bome',
   'drift',
+  'fartcoin',
+  'jto',
   'jup',
   'kin',
   'melania',
   'mew',
   'mog',
+  'pengu',
   'pnut',
   'popcat',
+  'ray',
   'trump',
   'usdc', // USDC-SOL
   'usdt', // USDT-SOL
