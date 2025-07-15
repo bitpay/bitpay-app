@@ -88,8 +88,6 @@ const DeleteKey = () => {
           dispatch(unSubscribeEmailNotifications(walletClient));
         }
       });
-
-    await sleep(300);
     dispatch(deleteKey({keyId}));
 
     dispatch(
