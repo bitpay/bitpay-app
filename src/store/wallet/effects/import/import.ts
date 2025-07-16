@@ -1489,6 +1489,16 @@ const createKeyAndCredentialsWithFile = async (
           seedType: 'object',
           seedData: data.key,
         });
+        if (!key.fingerPrintEDDSA) {
+          try {
+            key.addKeyByAlgorithm('EDDSA');
+          } catch (err) {
+            // If the chain is not Solana, the EDDSA key can be migrated later
+            if (credentials.chain === 'sol') {
+              throw new Error(t('Unable to add EDDSA key. Check input file.'));
+            }
+          }
+        }
       }
       addressBook = data.addressBook;
     } catch (err: any) {
@@ -1500,6 +1510,16 @@ const createKeyAndCredentialsWithFile = async (
           seedType: 'object',
           seedData: data.key,
         });
+        if (!key.fingerPrintEDDSA) {
+          try {
+            key.addKeyByAlgorithm('EDDSA');
+          } catch (err) {
+            // If the chain is not Solana, the EDDSA key can be migrated later
+            if (credentials.chain === 'sol') {
+              throw new Error(t('Unable to add EDDSA key. Check input file.'));
+            }
+          }
+        }
       } else {
         throw new Error(t('New format. Could not import. Check input file.'));
       }
