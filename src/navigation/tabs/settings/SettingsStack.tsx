@@ -1,5 +1,5 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import SettingsHome from './SettingsRoot';
 import {useTheme} from 'styled-components/native';
@@ -14,7 +14,7 @@ export enum SettingsScreens {
   SETTINGS_HOME = 'SettingsHome',
 }
 
-const Settings = createNativeStackNavigator<SettingsStackParamList>();
+const Settings = createStackNavigator<SettingsStackParamList>();
 
 const SettingsStack = () => {
   const theme = useTheme();

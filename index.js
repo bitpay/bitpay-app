@@ -16,7 +16,7 @@ import getStore from './src/store';
 import {Provider} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import 'react-native-url-polyfill/auto'; // https://github.com/facebook/react-native/issues/23922#issuecomment-648096619
-import {enableFreeze} from 'react-native-screens';
+import {enableFreeze, enableScreens} from 'react-native-screens';
 import {AppInitialization} from './src/AppInitialization';
 import {Analytics} from './src/store/analytics/analytics.effects';
 import {APP_VERSION} from './src/constants/config';
@@ -27,6 +27,8 @@ import {
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
 
+// Enable screens for better performance
+enableScreens();
 enableFreeze(true);
 
 const errorHandler = (e, isFatal) => {

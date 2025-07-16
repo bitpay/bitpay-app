@@ -1,5 +1,5 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
 import BillsHome from './screens/BillsHome';
 import {useTheme} from 'styled-components/native';
@@ -12,7 +12,7 @@ export enum BillScreens {
   BILLS_HOME = 'BillsHome',
 }
 
-const Bill = createNativeStackNavigator<BillStackParamList>();
+const Bill = createStackNavigator<BillStackParamList>();
 
 const BillStack = () => {
   const theme = useTheme();

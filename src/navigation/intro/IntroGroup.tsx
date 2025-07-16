@@ -1,5 +1,4 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import ShopScreen from './screens/Shop';
 import StartScreen from './screens/Start';
 import WhatsNew from './screens/WhatsNew';

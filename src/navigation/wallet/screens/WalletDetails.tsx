@@ -1040,6 +1040,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   return (
     <WalletDetailsContainer>
       <FlashList
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}

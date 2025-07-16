@@ -1,9 +1,8 @@
 import React from 'react';
 import {
-  createNativeStackNavigator,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import {useTheme} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
 import {HeaderTitle} from '../../../components/styled/Text';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import General from './components/General';
@@ -20,6 +19,7 @@ import CustomizeHomeSettings from './general/screens/customize-home/CustomizeHom
 import AltCurrencySettings from './general/screens/AltCurrencySettings';
 import LanguageSettings from './general/screens/LanguageSettings';
 import {useTranslation} from 'react-i18next';
+import {baseNavigatorOptions} from "../../../constants/NavigationOptions";
 
 export type SettingsDetailsParamList = {
   General: undefined;
@@ -51,7 +51,7 @@ type SettingsDetailsRouteProp = {
   redirectTo?: string;
 };
 
-const Stack = createNativeStackNavigator<SettingsDetailsStackParamList>();
+const Stack = createStackNavigator<SettingsDetailsStackParamList>();
 
 const SettingsDetails = ({
   route,
@@ -61,7 +61,6 @@ const SettingsDetails = ({
 > & {
   route: {params?: SettingsDetailsRouteProp};
 }) => {
-  const theme = useTheme();
   const {t} = useTranslation();
   const {initialRoute, redirectTo} = route.params || {};
 
@@ -69,15 +68,7 @@ const SettingsDetails = ({
     <Stack.Navigator
       initialRouteName={initialRoute || 'General'}
       screenOptions={() => ({
-        headerStyle: {
-          backgroundColor: theme.colors.background,
-        },
-        headerShadowVisible: false,
-        headerTintColor: theme.colors.text,
-        headerTitleAlign: 'center',
-        headerTitle: props => <HeaderTitle {...props} />,
-        headerBackTitleVisible: false,
-        headerBackVisible: false,
+        ...baseNavigatorOptions,
         headerLeft: () => <HeaderBackButton />,
       })}>
       <Stack.Screen
