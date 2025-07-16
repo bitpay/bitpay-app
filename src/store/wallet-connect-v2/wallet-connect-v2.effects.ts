@@ -986,7 +986,7 @@ const getPrivKey =
         const bitcore = BWC.getBitcore();
         if (IsSVMChain(wallet.chain)) {
           xPrivKeyHex = password
-            ? key.methods!.get(password).xPrivKeyEDDSA
+            ? key.methods!.get(password, 'EDDSA').xPrivKey
             : key.properties!.xPrivKeyEDDSA;
           const keyPair = BWC.getCore().Deriver.derivePrivateKeyWithPath(
             wallet.chain,
