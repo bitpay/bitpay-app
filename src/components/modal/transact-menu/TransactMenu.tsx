@@ -1,6 +1,7 @@
 import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement, useState} from 'react';
-import {FlatList, View} from 'react-native';
+import {View} from 'react-native';
+import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
@@ -30,6 +31,7 @@ const TransactButton = styled.View`
 
 const ModalContainer = styled(SheetContainer)`
   background: ${({theme}) => (theme.dark ? '#101010' : White)};
+  flex: 1;
 `;
 
 const TransactItemContainer = styled(TouchableOpacity)`
@@ -87,6 +89,10 @@ const ScanButtonText = styled(BaseText)`
 
 const CloseButtonContainer = styled(TouchableOpacity)`
   align-self: center;
+`;
+
+const FooterContainer = styled.View`
+  padding-top: 20px;
 `;
 
 interface TransactMenuItemProps {
@@ -246,6 +252,10 @@ const TransactModal = () => {
     );
   };
 
+  const maxModalHeight = 650;
+  const modalHeight = Math.min(maxModalHeight, HEIGHT - 100);
+  const modalHeightPercentage = modalHeight / HEIGHT;
+
   return (
     <>
       <TransactButton>
@@ -255,32 +265,34 @@ const TransactModal = () => {
       </TransactButton>
       <SheetModal
         modalLibrary={'bottom-sheet'}
+        height={modalHeight}
+        snapPoints={[`${Math.floor(modalHeightPercentage * 100)}%`]}
+        stackBehavior="push"
         isVisible={modalVisible}
         onBackdropPress={hideModal}>
         <ModalContainer>
-          <FlatList
+          <BottomSheetFlashList
             data={TransactMenuList}
-            scrollEnabled={HEIGHT < 700}
             renderItem={renderItem}
           />
-
-          <ScanButtonContainer
-            onPress={async () => {
-              hideModal();
-              await sleep(500);
-              ScanButton.onPress();
-            }}>
-            <View>
-              <Icons.Scan />
-            </View>
-            <ScanButtonText>{ScanButton.title}</ScanButtonText>
-          </ScanButtonContainer>
-
-          <CloseButtonContainer onPress={hideModal}>
-            <View>
-              <Icons.Close />
-            </View>
-          </CloseButtonContainer>
+          <FooterContainer>
+            <ScanButtonContainer
+              onPress={async () => {
+                hideModal();
+                await sleep(500);
+                ScanButton.onPress();
+              }}>
+              <View>
+                <Icons.Scan />
+              </View>
+              <ScanButtonText>{ScanButton.title}</ScanButtonText>
+            </ScanButtonContainer>
+            <CloseButtonContainer onPress={hideModal}>
+              <View>
+                <Icons.Close />
+              </View>
+            </CloseButtonContainer>
+          </FooterContainer>
         </ModalContainer>
       </SheetModal>
     </>
