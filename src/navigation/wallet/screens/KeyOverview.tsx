@@ -741,6 +741,7 @@ const KeyOverview = () => {
       </BalanceContainer>
 
       <FlashList<AccountRowProps>
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}

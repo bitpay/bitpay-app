@@ -64,32 +64,22 @@ const BackSvg: React.FC<BackSvgProps> = ({color, background, opacity}) => {
 
 const BackContainer = styled.View<{
   platform: string;
-  stackNavigation?: boolean;
 }>`
-  padding-top: 2px;
-  ${({platform, stackNavigation}) =>
-    stackNavigation
-      ? css`
-          padding-left: 15px;
-        `
-      : platform === 'android' &&
-        css`
-          padding-top: 6px;
-        `}
+  padding-top: 5px;
+  padding-left: 15px;
 `;
 
 const Back = ({
   color,
   background,
   opacity,
-  stackNavigation,
-}: Props & {stackNavigation?: boolean}) => {
+}: Props) => {
   const theme = useTheme();
   const themedColor = theme.dark ? White : null;
   const themedBackground = theme.dark ? LightBlack : NeutralSlate;
 
   return (
-    <BackContainer platform={Platform.OS} stackNavigation={stackNavigation}>
+    <BackContainer platform={Platform.OS}>
       <BackSvg
         color={color || themedColor}
         background={background || themedBackground}

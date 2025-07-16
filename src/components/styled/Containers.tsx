@@ -23,7 +23,7 @@ export const isNotMobile = HEIGHT / WIDTH < 1.6;
 export const ScreenGutter = '15px';
 // Nav
 export const HeaderRightContainer = styled.View`
-  height: 40px;
+  padding-right: 10px;
 `;
 
 export const ImageContainer = styled.View<{justifyContent?: string}>`

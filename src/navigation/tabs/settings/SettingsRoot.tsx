@@ -199,6 +199,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
         <FlashList
           ref={listRef}
           data={memoizedSettingsConfigs}
+          showsVerticalScrollIndicator={false}
           renderItem={renderSettingItem}
           estimatedItemSize={56}
           ListHeaderComponent={ListHeaderComponent}

@@ -585,6 +585,7 @@ const KeySettings = () => {
     <WalletSettingsContainer>
       <WalletSettingsListContainer>
         <FlatList<AccountRowProps>
+          showsVerticalScrollIndicator={false}
           ListHeaderComponent={renderListHeaderComponent}
           ListFooterComponent={renderListFooterComponent}
           data={

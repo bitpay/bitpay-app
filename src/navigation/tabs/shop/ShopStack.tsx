@@ -1,5 +1,5 @@
 import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import ShopHome, {ShopHomeParamList} from './ShopHome';
 import {NavigatorScreenParams} from '@react-navigation/native';
@@ -14,7 +14,7 @@ export enum ShopScreens {
   ARCHIVED_GIFT_CARDS = 'ArchivedGiftCards',
 }
 
-const Shop = createNativeStackNavigator<ShopStackParamList>();
+const Shop = createStackNavigator<ShopStackParamList>();
 
 const ShopStack = () => {
   const theme = useTheme();

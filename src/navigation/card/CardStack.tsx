@@ -1,8 +1,8 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 // import {createSharedElementStackNavigator} from 'react-navigation-shared-element';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {oldBaseNavigatorOptions} from '../../constants/NavigationOptions';
+import {createStackNavigator} from '@react-navigation/stack';
+import {baseNavigatorOptions} from '../../constants/NavigationOptions';
 import CardHome, {CardHomeScreenParamList} from './screens/CardHome';
 import CardPairingScreen, {
   CardPairingScreenParamList,
@@ -38,7 +38,7 @@ export enum CardScreens {
 }
 
 // const Card = createSharedElementStackNavigator<CardStackParamList>();
-const Card = createNativeStackNavigator<CardStackParamList>();
+const Card = createStackNavigator<CardStackParamList>();
 
 const CardStack = () => {
   const {t} = useTranslation();
@@ -47,7 +47,7 @@ const CardStack = () => {
     <Card.Navigator
       initialRouteName={CardScreens.HOME}
       screenOptions={{
-        ...oldBaseNavigatorOptions,
+        ...baseNavigatorOptions,
       }}>
       <Card.Screen
         name={CardScreens.HOME}

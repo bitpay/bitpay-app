@@ -4,7 +4,7 @@ import {
   NavigationState,
   NavigatorScreenParams,
 } from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import debounce from 'lodash.debounce';
 import Braze from '@braze/react-native-sdk';
 import React, {useEffect, useMemo, useState} from 'react';
@@ -266,7 +266,7 @@ export const getNavigationTabName = () => {
   return tabNames[navigationTabIndex] || TabsScreens.HOME;
 };
 
-export const Root = createNativeStackNavigator<RootStackParamList>();
+export const Root = createStackNavigator<RootStackParamList>();
 
 export default () => {
   const dispatch = useAppDispatch();
@@ -870,6 +870,7 @@ export default () => {
                       component={TabsStack}
                       options={{
                         gestureEnabled: false,
+                        animation: 'none',
                       }}
                     />
                     {AuthGroup({Auth: Root})}
