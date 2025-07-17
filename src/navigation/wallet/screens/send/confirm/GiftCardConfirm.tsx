@@ -231,8 +231,7 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openWalletSelector = async (delay: number = 0): Promise<void> => {
-    await sleep(delay);
+  const openWalletSelector = () => {
     setWalletSelectorVisible(true);
   };
 
@@ -326,7 +325,6 @@ const Confirm = () => {
   };
 
   const handleCreateGiftCardInvoiceOrTxpError = async (err: any) => {
-    await sleep(400);
     dispatch(dismissOnGoingProcessModal());
     const onDismiss = () => {
       if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
@@ -334,10 +332,7 @@ const Confirm = () => {
       }
       return openWalletSelector();
     };
-    const [errorConfig] = await Promise.all([
-      dispatch(handleCreateTxProposalError(err, onDismiss)),
-      sleep(500),
-    ]);
+    const errorConfig = await dispatch(handleCreateTxProposalError(err, onDismiss));
     dispatch(
       AppActions.showBottomNotificationModal({
         ...errorConfig,
@@ -505,9 +500,7 @@ const Confirm = () => {
     const giftCard = await dispatch(
       ShopEffects.startRedeemGiftCard(invoice!.id),
     );
-    await sleep(500);
     dispatch(dismissOnGoingProcessModal());
-    await sleep(500);
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
@@ -645,7 +638,7 @@ const Confirm = () => {
 
   useFocusEffect(
     useCallback(() => {
-      openWalletSelector(600);
+      openWalletSelector();
     }, []),
   );
 

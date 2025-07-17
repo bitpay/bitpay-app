@@ -594,7 +594,6 @@ export const WalletSelector = ({
             );
           }
         }
-        await sleep(10);
         setSelectorVisible(true);
       } else {
         dispatch(showNoWalletsModal({navigation}));
