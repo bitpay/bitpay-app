@@ -590,10 +590,6 @@ const SendTo = () => {
     }
   };
 
-  const onSearchInputChange = debounce((text: string) => {
-    validateAndNavigateToConfirm(text, {searching: true});
-  }, 300);
-
   const onSendToWallet = async (selectedWallet: Wallet) => {
     try {
       const {
@@ -684,7 +680,7 @@ const SendTo = () => {
             value={searchInput}
             onChangeText={(text: string) => {
               setSearchInput(text);
-              onSearchInputChange(text);
+              validateAndNavigateToConfirm(text);
             }}
           />
           <TouchableOpacity
