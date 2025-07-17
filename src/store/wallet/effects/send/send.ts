@@ -1091,35 +1091,37 @@ const buildTransactionProposal =
 
         if (tx.tokenAddress) {
           txp.tokenAddress = tx.tokenAddress;
-          if (tx.context !== 'paypro' && IsEVMChain(txp.chain!)) {
-            for (const output of txp.outputs) {
-              if (output.amount) {
-                output.amount = parseAmountToStringIfBN(output.amount);
+          if (tx.context !== 'paypro') {
+            if (IsEVMChain(txp.chain!)) {
+              for (const output of txp.outputs) {
+                if (output.amount) {
+                  output.amount = parseAmountToStringIfBN(output.amount);
+                }
+                if (!output.data) {
+                  output.data = BwcProvider.getInstance()
+                    .getCore()
+                    .Transactions.get({chain: getCWCChain(txp.chain!)})
+                    .encodeData({
+                      recipients: [
+                        {address: output.toAddress, amount: output.amount},
+                      ],
+                      tokenAddress: tx.tokenAddress,
+                    });
+                }
               }
-              if (!output.data) {
-                output.data = BwcProvider.getInstance()
-                  .getCore()
-                  .Transactions.get({chain: getCWCChain(txp.chain!)})
-                  .encodeData({
-                    recipients: [
-                      {address: output.toAddress, amount: output.amount},
-                    ],
-                    tokenAddress: tx.tokenAddress,
-                  });
+            } else {
+              const fromSolanaTokens = await getSolanaTokens(
+                wallet?.receiveAddress!,
+                wallet?.network,
+              );
+              const fromAta = fromSolanaTokens.find((item: any) => {
+                return item.mintAddress === tx.tokenAddress;
+              });
+              txp.fromAta = fromAta?.ataAddress;
+              txp.decimals = fromAta?.decimals;
+              if (solanaPayOpts?.memo) {
+                txp.memo = solanaPayOpts.memo;
               }
-            }
-          } else {
-            const fromSolanaTokens = await getSolanaTokens(
-              wallet?.receiveAddress!,
-              wallet?.network,
-            );
-            const fromAta = fromSolanaTokens.find((item: any) => {
-              return item.mintAddress === tx.tokenAddress;
-            });
-            txp.fromAta = fromAta?.ataAddress;
-            txp.decimals = fromAta?.decimals;
-            if (solanaPayOpts?.memo) {
-              txp.memo = solanaPayOpts.memo;
             }
           }
         }
