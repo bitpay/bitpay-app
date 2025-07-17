@@ -81,6 +81,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
     backgroundColor: backgroundColor ?? (theme.dark ? Black : White),
     borderTopLeftRadius: borderRadius ?? defaultBorderRadius,
     borderTopRightRadius: borderRadius ?? defaultBorderRadius,
+    paddingBottom: bottomInset,
   };
   const handleBackdropTap = useCallback(() => {
     bottomSheetModalRef.current?.dismiss();
@@ -100,7 +101,6 @@ const SheetModal: React.FC<SheetModalProps> = ({
     <View testID={'modalBackdrop'}>
       <BottomSheetModal
         stackBehavior={stackBehavior || undefined}
-        bottomInset={bottomInset}
         backdropComponent={renderBackdrop}
         backgroundStyle={{backgroundColor: 'transparent'}}
         snapPoints={fullscreen ? ['100%'] : snapPoints || undefined}
