@@ -9,14 +9,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {BaseText, H4, TextAlign} from '../../styled/Text';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
-import {
-  Black,
-  Action,
-  SlateDark,
-  White,
-  Slate,
-  LightBlack,
-} from '../../../styles/colors';
+import {Black, Action, SlateDark, White, Slate} from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
 
 import {
@@ -296,7 +289,6 @@ const ChainSelectorModal = () => {
       snapPoints={[`${Math.floor(modalHeightPercentage * 100)}%`]}
       stackBehavior="push"
       isVisible={isVisible}
-      backgroundColor={theme.dark ? LightBlack : White}
       borderRadius={Platform.OS === 'ios' ? 12 : 0}
       backdropOpacity={0.4}
       onBackdropPress={async () => {

@@ -16,6 +16,7 @@ import {
   Linking,
   NativeEventEmitter,
   NativeModules,
+  Platform,
   StatusBar,
 } from 'react-native';
 import 'react-native-gesture-handler';
@@ -565,7 +566,11 @@ export default () => {
             ? Braze.NotificationSubscriptionTypes.OPTED_IN
             : Braze.NotificationSubscriptionTypes.SUBSCRIBED,
         );
-        dispatch(AppEffects.setAnnouncementsNotifications(agreedToMarketingCommunications));
+        dispatch(
+          AppEffects.setAnnouncementsNotifications(
+            agreedToMarketingCommunications,
+          ),
+        );
       },
     );
 
@@ -639,7 +644,13 @@ export default () => {
       <ThemeProvider theme={theme}>
         <GestureHandlerRootView style={{flex: 1}}>
           <BottomSheetModalProvider>
-            <SafeAreaView style={{flex: 1}}>
+            <SafeAreaView
+              style={{flex: 1}}
+              edges={
+                Platform.OS === 'android' && Platform.Version >= 35
+                  ? ['left', 'right', 'bottom']
+                  : undefined
+              }>
               {showArchaxBanner && <ArchaxBanner />}
               {/* https://github.com/react-navigation/react-navigation/issues/11353#issuecomment-1548114655 */}
               <HeaderShownContext.Provider value>
