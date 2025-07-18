@@ -2,7 +2,7 @@ import {useNavigation} from '@react-navigation/native';
 import React, {ReactElement, useState} from 'react';
 import {FlatList, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import TransactButtonIcon from '../../../../assets/img/tab-icons/transact-button.svg';
 import {
   Action,
@@ -99,6 +99,7 @@ interface TransactMenuItemProps {
 
 const TransactModal = () => {
   const {t} = useTranslation();
+  const theme = useTheme();
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const hideModal = () => setModalVisible(false);
@@ -254,6 +255,7 @@ const TransactModal = () => {
         </TouchableOpacity>
       </TransactButton>
       <SheetModal
+        backgroundColor={theme.dark ? '#101010' : White}
         modalLibrary={'bottom-sheet'}
         isVisible={modalVisible}
         onBackdropPress={hideModal}>
