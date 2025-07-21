@@ -1,21 +1,11 @@
-import React, {useCallback, useEffect, useRef} from 'react';
+import React from 'react';
 import {ActivityIndicator} from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
 import styled from 'styled-components/native';
-import {
-  BottomSheetBackdrop,
-  BottomSheetBackdropProps,
-  BottomSheetModal,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
 import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';
+import SheetModal from '../base/sheet/SheetModal';
 import BaseModal from '../base/BaseModal';
 import {HEIGHT, WIDTH} from '../../styled/Containers';
 
@@ -89,92 +79,42 @@ const ModalWrapper = styled.View`
   margin-left: -20px;
 `;
 
+const FullscreenWrapper = styled.View`
+  height: ${HEIGHT}px;
+  width: ${WIDTH}px;
+  align-items: center;
+  justify-content: center;
+`;
+
 const OnGoingProcessModal: React.FC = () => {
   const message = useAppSelector(({APP}) => APP.onGoingProcessModalMessage);
   const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
 
   const modalLibrary: 'bottom-sheet' | 'modal' = 'bottom-sheet';
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const opacityFadeDuration = 200;
-  const opacity = useSharedValue(0);
-  const animatedStyles = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-      height: HEIGHT,
-      width: WIDTH,
-      alignItems: 'center',
-      justifyContent: 'center',
-    };
-  });
-  useEffect(() => {
-    let dismissTimeout: NodeJS.Timeout;
-    let opacityTimeout: NodeJS.Timeout;
-
-    if (isVisible && appWasInit) {
-      bottomSheetModalRef.current?.present();
-      opacityTimeout = setTimeout(() => {
-        opacity.value = withTiming(1, {duration: opacityFadeDuration});
-      }, 300);
-    } else {
-      opacity.value = withTiming(0, {duration: opacityFadeDuration});
-      dismissTimeout = setTimeout(() => {
-        if (bottomSheetModalRef.current) {
-          bottomSheetModalRef.current.dismiss();
-        }
-      }, opacityFadeDuration);
-    }
-
-    return () => {
-      if (dismissTimeout) {
-        clearTimeout(dismissTimeout);
-      }
-      if (opacityTimeout) {
-        clearTimeout(opacityTimeout);
-      }
-    };
-  }, [appWasInit, isVisible, opacity, opacityFadeDuration]);
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        opacity={0.4}
-        pressBehavior={'none'}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-      />
-    ),
-    [],
-  );
 
   return modalLibrary === 'bottom-sheet' ? (
-    <BottomSheetModal
-      detached={true}
-      bottomInset={0}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{borderRadius: 18}}
-      enableDismissOnClose={true}
-      enableDynamicSizing={false}
-      enableOverDrag={false}
-      enablePanDownToClose={false}
-      handleComponent={null}
-      animateOnMount={true}
-      backgroundComponent={null}
-      snapPoints={['100%']}
-      index={0}
-      ref={bottomSheetModalRef}>
-      <BottomSheetView>
-        <Animated.View style={[animatedStyles]}>
-          <Row>
-            <ActivityIndicatorContainer>
-              <ActivityIndicator color={SlateDark} />
-            </ActivityIndicatorContainer>
-            <Message>{message}</Message>
-            <BlurContainer />
-          </Row>
-        </Animated.View>
-      </BottomSheetView>
-    </BottomSheetModal>
+    <SheetModal
+      modalLibrary={modalLibrary}
+      isVisible={appWasInit && isVisible}
+      fullscreen={true}
+      enableBackdropDismiss={false}
+      onBackdropPress={() => {}}
+      backdropOpacity={0.4}
+      backgroundColor="transparent"
+      borderRadius={18}
+      stackBehavior="replace"
+      paddingTop={0}>
+      <FullscreenWrapper>
+        <Row>
+          <ActivityIndicatorContainer>
+            <ActivityIndicator color={SlateDark} />
+          </ActivityIndicatorContainer>
+          <Message>{message}</Message>
+          <BlurContainer />
+        </Row>
+      </FullscreenWrapper>
+    </SheetModal>
   ) : (
     <BaseModal
       id={'ongoingProcess'}

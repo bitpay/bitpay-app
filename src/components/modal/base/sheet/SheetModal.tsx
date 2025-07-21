@@ -66,6 +66,9 @@ const SheetModal: React.FC<SheetModalProps> = ({
       bottomSheetModalRef.current?.present();
     } else if (!isVisible && isModalVisible) {
       bottomSheetModalRef.current?.dismiss();
+      setTimeout(() => {
+        bottomSheetModalRef.current?.forceClose();
+      }, 10);
     }
 
     const subscriptionAppStateChange = AppState.addEventListener(
