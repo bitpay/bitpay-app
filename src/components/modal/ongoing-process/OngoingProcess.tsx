@@ -1,5 +1,5 @@
 import React from 'react';
-import {ActivityIndicator} from 'react-native';
+import {ActivityIndicator, Platform} from 'react-native';
 import styled from 'styled-components/native';
 import {LightBlack, SlateDark, White} from '../../../styles/colors';
 import {useAppSelector} from '../../../utils/hooks';
@@ -91,7 +91,7 @@ const OnGoingProcessModal: React.FC = () => {
   const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
 
-  const modalLibrary: 'bottom-sheet' | 'modal' = 'bottom-sheet';
+  const modalLibrary: 'bottom-sheet' | 'modal' = Platform.OS === 'ios' ? 'modal' : 'bottom-sheet';
 
   return modalLibrary === 'bottom-sheet' ? (
     <SheetModal
