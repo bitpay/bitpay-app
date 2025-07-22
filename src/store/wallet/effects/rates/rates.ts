@@ -332,6 +332,15 @@ export const fetchHistoricalRates =
         },
       } = getState();
 
+      switch (currencyAbbreviation?.toLowerCase()) {
+        case 'wbtc':
+          currencyAbbreviation = 'btc';
+          break;
+        case 'weth':
+          currencyAbbreviation = 'eth';
+          break;
+      }
+
       const cachedRatesByCoin =
         (currencyAbbreviation &&
           cachedRates[dateRange][currencyAbbreviation.toLowerCase()]) ||
