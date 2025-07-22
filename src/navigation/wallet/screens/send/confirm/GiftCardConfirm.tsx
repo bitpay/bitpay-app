@@ -1,6 +1,6 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, InteractionManager} from 'react-native';
+import {View} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -125,15 +125,6 @@ const GiftCardHeader = ({
   amount: number;
   cardConfig: CardConfig;
 }): JSX.Element | null => {
-  const [showImg, setShowImg] = useState(false);
-  useEffect(() => {
-    InteractionManager.runAfterInteractions(() => {
-      setTimeout(() => {
-        requestAnimationFrame(() => setShowImg(true));
-      }, 800);
-    });
-  }, []);
-
   const {t} = useTranslation();
   const boostedAmount = getBoostedAmount(cardConfig, amount);
   return (
@@ -159,9 +150,7 @@ const GiftCardHeader = ({
               ) : null}
             </BoostAppliedText>
           </View>
-          {showImg ? (
-            <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
-          ) : null}
+          <RemoteImage uri={cardConfig.icon} height={40} borderRadius={40} />
         </DetailRow>
       </DetailContainer>
       <Hr style={{marginBottom: 40}} />
@@ -242,16 +231,11 @@ const Confirm = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openWalletSelector = (): Promise<void> => {
-    return new Promise<void>(resolve => {
-      InteractionManager.runAfterInteractions(() => {
-        // allow one more frame for heavy renders to settle
-        setTimeout(() => {
-          setWalletSelectorVisible(true);
-          resolve();
-        }, 300);
-      });
-    });
+  const openWalletSelector = async (delay: number = 0): Promise<void> => {
+    if (delay) {
+      await sleep(delay);
+    }
+    setWalletSelectorVisible(true);
   };
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
