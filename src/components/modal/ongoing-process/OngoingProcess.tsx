@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef} from 'react';
-import {ActivityIndicator, Platform} from 'react-native';
+import {ActivityIndicator} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -94,8 +94,7 @@ const OnGoingProcessModal: React.FC = () => {
   const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
 
-  const modalLibrary: 'bottom-sheet' | 'modal' =
-    Platform.OS === 'ios' ? 'modal' : 'bottom-sheet';
+  const modalLibrary: 'bottom-sheet' | 'modal' = 'modal';
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const opacityFadeDuration = 200;
   const opacity = useSharedValue(0);
