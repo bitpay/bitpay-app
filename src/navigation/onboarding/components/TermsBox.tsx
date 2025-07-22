@@ -32,17 +32,22 @@ const TermTextContainer = styled.View`
 const TermsBox = ({term, emit}: Props) => {
   const {statement} = term;
   const [checked, setChecked] = useState(false);
-  const acknowledge = (): void => {
-    if (!checked) {
-      haptic('impactLight');
-      setChecked(true);
+
+  const toggleCheck = (): void => {
+    haptic('impactLight');
+    const newChecked = !checked;
+    setChecked(newChecked);
+    if (newChecked) {
       emit(term.id);
+    } else {
+      emit(-term.id);
     }
   };
+
   return (
-    <TermsBoxContainer activeOpacity={1.0} onPressIn={acknowledge}>
+    <TermsBoxContainer activeOpacity={1.0} onPressIn={toggleCheck}>
       <CheckBoxContainer>
-        <Checkbox checked={checked} onPress={acknowledge} />
+        <Checkbox checked={checked} onPress={toggleCheck} />
       </CheckBoxContainer>
       <TermTextContainer>{statement}</TermTextContainer>
     </TermsBoxContainer>
