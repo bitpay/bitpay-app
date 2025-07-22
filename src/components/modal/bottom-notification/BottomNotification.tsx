@@ -152,6 +152,7 @@ const BottomNotification = () => {
       modalLibrary={modalLibrary || 'bottom-sheet'}
       enableBackdropDismiss={enableBackdropDismiss}
       isVisible={isVisible}
+      stackBehavior="replace"
       onBackdropPress={() => {
         if (enableBackdropDismiss) {
           dispatch(AppActions.dismissBottomNotificationModal());

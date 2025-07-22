@@ -325,6 +325,7 @@ const Confirm = () => {
   };
 
   const handleCreateGiftCardInvoiceOrTxpError = async (err: any) => {
+    await sleep(400);
     dispatch(dismissOnGoingProcessModal());
     const onDismiss = () => {
       if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
@@ -333,6 +334,7 @@ const Confirm = () => {
       return openWalletSelector();
     };
     const errorConfig = await dispatch(handleCreateTxProposalError(err, onDismiss));
+    await sleep(500);
     dispatch(
       AppActions.showBottomNotificationModal({
         ...errorConfig,
@@ -501,6 +503,7 @@ const Confirm = () => {
       ShopEffects.startRedeemGiftCard(invoice!.id),
     );
     dispatch(dismissOnGoingProcessModal());
+    await sleep(500);
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
     }
