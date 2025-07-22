@@ -115,7 +115,6 @@ const AddingOptions: React.FC = () => {
                 network,
                 password,
                 account,
-                customAccount: true,
               },
             }),
           );
@@ -209,7 +208,6 @@ const AddingOptions: React.FC = () => {
                 network,
                 password,
                 account,
-                customAccount: true,
               },
             }),
           );
