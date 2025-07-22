@@ -542,7 +542,7 @@ export default () => {
     );
 
     return () => subscriptionAppStateChange.remove();
-  }, [pinLockActive, biometricLockActive]);
+  }, [pinLockActive, biometricLockActive, onboardingCompleted]);
 
   useEffect(() => {
     const eventBrazeListener = DeviceEventEmitter.addListener(
