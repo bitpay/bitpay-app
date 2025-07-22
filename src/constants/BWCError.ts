@@ -72,7 +72,7 @@ export enum BWCErrorName {
 }
 
 export const getErrorName = (err: Error) =>
-  err.name
+  err?.name
     ? err.name === 'Error'
       ? err.message
       : err.name.replace(/^bwc.Error/g, '')

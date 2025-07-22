@@ -2297,6 +2297,13 @@ export const handleCreateTxProposalError =
           return CustomErrorMessage({
             errMsg: BWCErrorMessage(err),
             title: t('Uh oh, something went wrong'),
+            cta: [
+              {
+                text: t('OK'),
+                action: () => onDismiss && onDismiss(),
+                primary: true,
+              },
+            ],
           });
       }
     } catch (err2) {
