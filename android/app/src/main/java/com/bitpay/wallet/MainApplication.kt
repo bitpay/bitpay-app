@@ -52,7 +52,7 @@ class MainApplication : Application(), ReactApplication {
         if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
             load()
         }
-        
+
         // Set custom OkHttpClient
         OkHttpClientProvider.setOkHttpClientFactory(UserAgentClientFactory(context))
 
@@ -65,10 +65,10 @@ class MainApplication : Application(), ReactApplication {
         ReactFontManager.getInstance().addCustomFont(this, "Heebo", R.font.heebo)
 
         // Initialize Braze
-        BrazeInAppMessageManager.getInstance().ensureSubscribedToInAppMessageEvents(this)
+        BrazeInAppMessageManager.getInstance().ensureSubscribedToInAppMessageEvents(context)
         customInAppMessageManagerListener = CustomInAppMessageManagerListener()
         BrazeInAppMessageManager.getInstance().setCustomInAppMessageManagerListener(customInAppMessageManagerListener)
-        registerActivityLifecycleCallbacks(BrazeActivityLifecycleCallbackListener())
+        //registerActivityLifecycleCallbacks(BrazeActivityLifecycleCallbackListener())
     }
 
     fun notifyReactNativeAppLoaded() {

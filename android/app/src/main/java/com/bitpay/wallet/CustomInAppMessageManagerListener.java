@@ -9,7 +9,7 @@ import android.util.Log;
 
 public class CustomInAppMessageManagerListener implements IInAppMessageManagerListener {
     private static final String TAG = BrazeLogger.getBrazeLogTag(CustomInAppMessageManagerListener.class);
-    private boolean isReactNativeAppLoaded = false;
+    public boolean isReactNativeAppLoaded = false;
     private IInAppMessage cachedInAppMessage = null;
 
     @Override
@@ -19,7 +19,7 @@ public class CustomInAppMessageManagerListener implements IInAppMessageManagerLi
             // Cache the IAM if the app is not ready
             Log.d(TAG, "App not ready, caching IAM");
             cachedInAppMessage = inAppMessage;
-            return InAppMessageOperation.DISCARD;  // Discard the message if app is not ready
+            return InAppMessageOperation.DISPLAY_LATER;  // Discard the message if app is not ready
         }
         Log.d(TAG, "App loaded. Displaying in-app message.");
         return InAppMessageOperation.DISPLAY_NOW;  // Display the message if app is loaded
