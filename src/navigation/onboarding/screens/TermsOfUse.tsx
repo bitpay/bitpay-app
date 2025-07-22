@@ -154,7 +154,12 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
   useAndroidBackHandler(() => true);
 
   const setChecked = (id: number) => {
-    setAgreed([...agreed, id]);
+    if (id > 0) {
+      setAgreed(prev => (prev.includes(id) ? prev : [...prev, id]));
+    } else {
+      const positiveId = Math.abs(id);
+      setAgreed(prev => prev.filter(agreedId => agreedId !== positiveId));
+    }
   };
 
   return (
