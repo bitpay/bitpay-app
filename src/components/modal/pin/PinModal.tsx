@@ -18,7 +18,7 @@ import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
-import {ActiveOpacity, HEIGHT} from '../../styled/Containers';
+import {ActiveOpacity} from '../../styled/Containers';
 import {H5} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 import PinDots from './PinDots';
@@ -32,6 +32,11 @@ export interface PinModalConfig {
 const PinContainer = styled.View`
   flex: 1;
   background-color: ${BitPay};
+`;
+
+const UpperContainer = styled.View`
+  flex: 1;
+  justify-content: center;
 `;
 
 const PinMessagesContainer = styled(Animated.View)`
@@ -50,7 +55,6 @@ const VirtualKeyboardContainer = styled.View`
 `;
 
 const SheetHeaderContainer = styled.View`
-  margin: 20px 0;
   align-items: center;
   flex-direction: row;
 `;
@@ -69,17 +73,6 @@ export const hashPin = (pin: string[]) => {
   return sjcl.codec.hex.fromBits(bits);
 };
 
-const getHeaderMargin = (
-  type?: 'set' | 'check',
-  onClosePresent?: boolean,
-): string => {
-  if (HEIGHT < 700) {
-    return type === 'set' || onClosePresent ? '1%' : '20%';
-  } else {
-    return type === 'set' || onClosePresent ? '10%' : '40%';
-  }
-};
-
 const Pin = gestureHandlerRootHOC(() => {
   const {t} = useTranslation();
   const logger = useLogger();
@@ -90,9 +83,6 @@ const Pin = gestureHandlerRootHOC(() => {
     pin: Array<string | undefined>;
     firstPinEntered: Array<string | undefined>;
   }>({pin: [], firstPinEntered: []});
-  const [headerMargin, setHeaderMargin] = useState<string>(
-    getHeaderMargin(type, !!onClose),
-  );
   const [message, setMessage] = useState<string>(t('Please enter your PIN'));
   const [shakeDots, setShakeDots] = useState(false);
   const insets = useSafeAreaInsets();
@@ -337,18 +327,22 @@ const Pin = gestureHandlerRootHOC(() => {
           </TouchableOpacity>
         </SheetHeaderContainer>
       ) : null}
-      <View style={{marginTop: headerMargin}}>
-        <BitPayLogo height={50} />
-      </View>
-      <PinMessagesContainer>
-        <PinMessage>{message}</PinMessage>
-      </PinMessagesContainer>
-      <PinDots
-        shakeDots={shakeDots}
-        setShakeDots={setShakeDots}
-        pinLength={PIN_LENGTH}
-        pin={pinStatus.pin}
-      />
+      <UpperContainer>
+        <View>
+          <View>
+            <BitPayLogo height={50} />
+          </View>
+          <PinMessagesContainer>
+            <PinMessage>{message}</PinMessage>
+          </PinMessagesContainer>
+          <PinDots
+            shakeDots={shakeDots}
+            setShakeDots={setShakeDots}
+            pinLength={PIN_LENGTH}
+            pin={pinStatus.pin}
+          />
+        </View>
+      </UpperContainer>
       <VirtualKeyboardContainer accessibilityLabel="virtual-key-container">
         <VirtualKeyboard
           showDot={false}
