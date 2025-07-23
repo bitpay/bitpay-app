@@ -870,13 +870,18 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   const openCryptoSelector = useCallback(async (selectObj: GlobalSelectObj) => {
     setCryptoSelectModalVisible(true);
-    const availableKeys = Object.values(keys);
-    if (availableKeys.length > 1) {
+    const filteredWalletsByChain = Object.values(keys).filter((key: Key) =>
+      key.wallets.some(
+        (wallet: Wallet) =>
+          selectObj.chains.includes(wallet.chain) && key.backupComplete,
+      ),
+    );
+    if (filteredWalletsByChain.length > 1) {
       // has more than 1 key created -> choose key
-      openKeySelector(selectObj);
+      openKeySelector(selectObj, filteredWalletsByChain);
     } else {
       // only 1 key created -> choose account if evm / select wallet if utxo
-      const selectedKey = availableKeys[0];
+      const selectedKey = filteredWalletsByChain[0];
       if (IsVMChain(selectObj.chains[0])) {
         openAccountSelector(selectObj, selectedKey);
       } else {
@@ -1199,11 +1204,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   };
 
-  const openKeySelector = async (selectObj: GlobalSelectObj) => {
+  const openKeySelector = async (selectObj: GlobalSelectObj, keys: Key[]) => {
     setCardsList(
       createHomeCardList({
         navigation,
-        keys: Object.values(keys),
+        keys,
         dispatch,
         linkedCoinbase: false,
         homeCarouselConfig: homeCarouselConfig || [],
