@@ -1,11 +1,12 @@
-import {navigationRef} from '../../../Root';
+import {useNavigation} from '@react-navigation/native';
 import isEqual from 'lodash.isequal';
 import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Animated, DeviceEventEmitter, View, NativeModules} from 'react-native';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
-import styled from 'styled-components/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import styled, {useTheme} from 'styled-components/native';
 import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
@@ -17,9 +18,9 @@ import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
-import {ActiveOpacity} from '../../styled/Containers';
+import {ActiveOpacity, HEIGHT} from '../../styled/Containers';
 import {H5} from '../../styled/Text';
-import SheetModal from '../base/sheet/SheetModal';
+import BaseModal from '../base/BaseModal';
 import PinDots from './PinDots';
 
 export interface PinModalConfig {
@@ -28,14 +29,9 @@ export interface PinModalConfig {
   onClose?: (checked?: boolean) => void;
 }
 
-const PinContainer = styled(Animated.View)`
+const PinContainer = styled.View`
   flex: 1;
   background-color: ${BitPay};
-`;
-
-const UpperContainer = styled.View`
-  flex: 1;
-  justify-content: center;
 `;
 
 const PinMessagesContainer = styled(Animated.View)`
@@ -50,11 +46,11 @@ const PinMessage = styled(H5)`
 `;
 
 const VirtualKeyboardContainer = styled.View`
-  margin-bottom: 5%;
-  padding-bottom: 10px;
+  margin-bottom: 10%;
 `;
 
 const SheetHeaderContainer = styled.View`
+  margin: 20px 0;
   align-items: center;
   flex-direction: row;
 `;
@@ -73,6 +69,17 @@ export const hashPin = (pin: string[]) => {
   return sjcl.codec.hex.fromBits(bits);
 };
 
+const getHeaderMargin = (
+  type?: 'set' | 'check',
+  onClosePresent?: boolean,
+): string => {
+  if (HEIGHT < 700) {
+    return type === 'set' || onClosePresent ? '1%' : '20%';
+  } else {
+    return type === 'set' || onClosePresent ? '10%' : '40%';
+  }
+};
+
 const Pin = gestureHandlerRootHOC(() => {
   const {t} = useTranslation();
   const logger = useLogger();
@@ -83,22 +90,20 @@ const Pin = gestureHandlerRootHOC(() => {
     pin: Array<string | undefined>;
     firstPinEntered: Array<string | undefined>;
   }>({pin: [], firstPinEntered: []});
+  const [headerMargin, setHeaderMargin] = useState<string>(
+    getHeaderMargin(type, !!onClose),
+  );
   const [message, setMessage] = useState<string>(t('Please enter your PIN'));
   const [shakeDots, setShakeDots] = useState(false);
+  const insets = useSafeAreaInsets();
   const [showBackButton, setShowBackButton] = useState<boolean>();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (type === 'set' || onClose) {
       setShowBackButton(true);
     }
-    // fade in
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  }, [type, onClose, fadeAnim]);
+  }, [type, onClose]);
 
   // checkPin
   const currentPin = useAppSelector(({APP}) => APP.currentPin);
@@ -143,7 +148,7 @@ const Pin = gestureHandlerRootHOC(() => {
   );
 
   const gotoCreateKey = async () => {
-    navigationRef.navigate('CreateKey' as any);
+    navigation.navigate('CreateKey');
     await sleep(10);
     dispatch(AppActions.dismissPinModal());
   };
@@ -315,9 +320,9 @@ const Pin = gestureHandlerRootHOC(() => {
   }, [dispatch, pinBannedUntil]);
 
   return (
-    <PinContainer style={{opacity: fadeAnim}}>
+    <PinContainer>
       {showBackButton ? (
-        <SheetHeaderContainer style={{paddingLeft: 25}}>
+        <SheetHeaderContainer style={{marginTop: insets.top, paddingLeft: 25}}>
           <TouchableOpacity
             activeOpacity={ActiveOpacity}
             onPress={() => {
@@ -332,22 +337,18 @@ const Pin = gestureHandlerRootHOC(() => {
           </TouchableOpacity>
         </SheetHeaderContainer>
       ) : null}
-      <UpperContainer>
-        <View>
-          <View>
-            <BitPayLogo height={50} />
-          </View>
-          <PinMessagesContainer>
-            <PinMessage>{message}</PinMessage>
-          </PinMessagesContainer>
-          <PinDots
-            shakeDots={shakeDots}
-            setShakeDots={setShakeDots}
-            pinLength={PIN_LENGTH}
-            pin={pinStatus.pin}
-          />
-        </View>
-      </UpperContainer>
+      <View style={{marginTop: headerMargin}}>
+        <BitPayLogo height={50} />
+      </View>
+      <PinMessagesContainer>
+        <PinMessage>{message}</PinMessage>
+      </PinMessagesContainer>
+      <PinDots
+        shakeDots={shakeDots}
+        setShakeDots={setShakeDots}
+        pinLength={PIN_LENGTH}
+        pin={pinStatus.pin}
+      />
       <VirtualKeyboardContainer accessibilityLabel="virtual-key-container">
         <VirtualKeyboard
           showDot={false}
@@ -361,21 +362,25 @@ const Pin = gestureHandlerRootHOC(() => {
 
 const PinModal: React.FC = () => {
   const isVisible = useAppSelector(({APP}) => APP.showPinModal);
-  const dispatch = useAppDispatch();
+  const theme = useTheme();
 
   return (
-    <SheetModal
-      modalLibrary="bottom-sheet"
+    <BaseModal
+      accessibilityLabel="pin-view"
+      id={'pin'}
       isVisible={isVisible}
-      onBackdropPress={() => {
-        dispatch(AppActions.dismissPinModal());
-      }}
-      fullscreen
-      enableBackdropDismiss={false}
-      backgroundColor={BitPay}
-      disableAnimations>
+      backdropTransitionOutTiming={0}
+      hideModalContentWhileAnimating
+      backdropOpacity={1}
+      backdropColor={theme.colors.background}
+      animationIn={'fadeIn'}
+      animationOut={'fadeOut'}
+      useNativeDriverForBackdrop={true}
+      useNativeDriver={false}
+      statusBarTranslucent={true}
+      style={{margin: 0}}>
       <Pin />
-    </SheetModal>
+    </BaseModal>
   );
 };
 
