@@ -135,7 +135,6 @@ export const incomingData =
   ): Effect<Promise<boolean>> =>
   async dispatch => {
     // wait to close blur
-    await sleep(200);
     const coin = opts?.wallet?.currencyAbbreviation?.toLowerCase();
     const chain = opts?.wallet?.credentials?.chain.toLowerCase();
     let handled = true;
