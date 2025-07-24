@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
   BaseText,
   H4,
+  H5,
   HeaderTitle,
   TextAlign,
   Badge,
@@ -221,6 +222,7 @@ const AddCustomToken = ({
   >();
   const [invalidTokenAddress, setInvalidTokenAddress] =
     useState<boolean>(false);
+  const [unverifiedToken, setUnverifiedToken] = useState<boolean>(false);
 
   const DESCRIPTIONS: Record<string, string> = {
     eth: t('TokensOnEthereumNetworkDescription'),
@@ -378,7 +380,13 @@ const AddCustomToken = ({
                 actions: [
                   {
                     text: t('OK'),
-                    action: () => {},
+                    action: () => {
+                      setInvalidTokenAddress(false);
+                      setUnverifiedToken(false);
+                      setTokenAddress(undefined);
+                      setCurrencyAbbreviation(undefined);
+                      setCurrencyName(undefined);
+                    },
                     primary: true,
                   },
                 ],
@@ -457,7 +465,13 @@ const AddCustomToken = ({
         actions: [
           {
             text: t('OK'),
-            action: () => {},
+            action: () => {
+              setInvalidTokenAddress(false);
+              setUnverifiedToken(false);
+              setTokenAddress(undefined);
+              setCurrencyAbbreviation(undefined);
+              setCurrencyName(undefined);
+            },
             primary: true,
           },
         ],
@@ -528,6 +542,23 @@ const AddCustomToken = ({
             : tokenAddress?.toLowerCase(), // Solana addresses are case sensitive
         };
         dispatch(addCustomTokenOption(customToken, chain));
+      } else {
+        if (
+          !BitpaySupportedTokenOptsByAddress[
+            getCurrencyAbbreviation(
+              tokenContractInfo.address,
+              chain,
+            ).toLowerCase()
+          ]
+        ) {
+          dispatch(
+            LogActions.debug(
+              'token address not present in BitpaySupportedTokenOptsByAddress',
+            ),
+          );
+          // Show a warning if the token is not supported by BitPay
+          setUnverifiedToken(true);
+        }
       }
       setCurrencyAbbreviation(tokenContractInfo.symbol);
       setCurrencyName(tokenContractInfo.name);
@@ -643,6 +674,15 @@ const AddCustomToken = ({
             error={errors.walletName?.message || invalidTokenAddress}
             value={tokenAddress}
           />
+          {unverifiedToken && (
+            <View style={{marginTop: 10}}>
+            <TextAlign align={'center'}>
+              <H5 style={{color: 'red', fontSize: 14}}>
+                {t('This token is not verified by BitPay. Please proceed with caution.')}
+              </H5>
+            </TextAlign>
+            </View>
+          )}
         </View>
 
         <SheetModal
