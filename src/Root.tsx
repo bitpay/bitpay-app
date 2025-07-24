@@ -647,7 +647,7 @@ export default () => {
             <SafeAreaView
               style={{flex: 1}}
               edges={
-                Platform.OS === 'android' && Platform.Version >= 35
+                Platform.OS === 'android'
                   ? ['left', 'right', 'bottom']
                   : undefined
               }>

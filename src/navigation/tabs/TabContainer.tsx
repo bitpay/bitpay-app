@@ -13,9 +13,7 @@ const TabContainer: React.FC<PropsWithMoreParams> = ({children}) => {
   const Container = useMemo(
     () => styled.View`
       flex: 1;
-      padding-top: ${Platform.OS === 'android' && Platform.Version >= 35
-        ? insets.top
-        : 0}px;
+      padding-top: ${Platform.OS === 'android' ? insets.top : 0}px;
     `,
     [],
   );
