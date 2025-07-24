@@ -37,7 +37,10 @@ interface StartLoginParams {
 }
 
 export const startBitPayIdAnalyticsInit =
-  (user: BasicUserInfo, agreedToMarketingCommunications?: boolean): Effect<void> =>
+  (
+    user: BasicUserInfo,
+    agreedToMarketingCommunications?: boolean,
+  ): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
     if (user) {
@@ -65,14 +68,11 @@ export const startBitPayIdAnalyticsInit =
         LogActions.info('Merging current user to new EID: ', eid);
         await BrazeWrapper.merge(APP.brazeEid, eid);
         // Emit an event that delete the user
-        DeviceEventEmitter.emit(
-          DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
-          {
-            oldEid: APP.brazeEid,
-            newEid: eid,
-            agreedToMarketingCommunications,
-          },
-        );
+        DeviceEventEmitter.emit(DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER, {
+          oldEid: APP.brazeEid,
+          newEid: eid,
+          agreedToMarketingCommunications,
+        });
       }
       dispatch(setBrazeEid(eid));
       dispatch(
@@ -86,13 +86,18 @@ export const startBitPayIdAnalyticsInit =
   };
 
 export const startBitPayIdStoreInit =
-  (initialData: InitialUserData, agreedToMarketingCommunications?: boolean): Effect<void> =>
+  (
+    initialData: InitialUserData,
+    agreedToMarketingCommunications?: boolean,
+  ): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
     const {basicInfo: user} = initialData;
     dispatch(BitPayIdActions.successInitializeStore(APP.network, initialData));
     try {
-      dispatch(startBitPayIdAnalyticsInit(user, agreedToMarketingCommunications));
+      dispatch(
+        startBitPayIdAnalyticsInit(user, agreedToMarketingCommunications),
+      );
     } catch (err) {
       dispatch(LogActions.error('Failed init user analytics'));
       dispatch(LogActions.error(JSON.stringify(err)));
@@ -132,7 +137,8 @@ export const startCreateAccount =
       const salt = generateSalt();
       const hashedPassword = hashPassword(params.password);
 
-      const agreedToMarketingCommunications = params.agreedToMarketingCommunications || false;
+      const agreedToMarketingCommunications =
+        params.agreedToMarketingCommunications || false;
 
       await AuthApi.register(APP.network, BITPAY_ID.session.csrfToken, {
         givenName: params.givenName,
@@ -156,7 +162,14 @@ export const startCreateAccount =
         APP.network,
         session.csrfToken,
       );
-      await dispatch(startPairAndLoadUser(APP.network, secret, undefined, agreedToMarketingCommunications));
+      await dispatch(
+        startPairAndLoadUser(
+          APP.network,
+          secret,
+          undefined,
+          agreedToMarketingCommunications,
+        ),
+      );
 
       dispatch(BitPayIdActions.successCreateAccount());
     } catch (err) {
@@ -426,7 +439,12 @@ export const startDeeplinkPairing =
   };
 
 const startPairAndLoadUser =
-  (network: Network, secret: string, code?: string, agreedToMarketingCommunications?: boolean): Effect<Promise<void>> =>
+  (
+    network: Network,
+    secret: string,
+    code?: string,
+    agreedToMarketingCommunications?: boolean,
+  ): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     try {
       const token = await AuthApi.pair(secret, code);
@@ -460,7 +478,9 @@ const startPairAndLoadUser =
         );
       }
 
-      dispatch(startBitPayIdStoreInit(data.user, agreedToMarketingCommunications));
+      dispatch(
+        startBitPayIdStoreInit(data.user, agreedToMarketingCommunications),
+      );
       dispatch(CardEffects.startCardStoreInit(data.user));
       dispatch(ShopEffects.startFetchCatalog());
       dispatch(ShopEffects.startSyncGiftCards()).then(() =>

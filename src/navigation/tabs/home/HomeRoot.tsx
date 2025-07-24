@@ -28,6 +28,7 @@ import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
 import {
   calculatePercentageDifference,
+  getCurrencyAbbreviation,
   sleep,
 } from '../../../utils/helper-methods';
 import {
@@ -66,6 +67,10 @@ import TabContainer from '../TabContainer';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {TabsScreens, TabsStackParamList} from '../TabsStack';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedTokens,
+} from '../../../constants/currencies';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -137,36 +142,48 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           ({currencyAbbreviation}) => currencyAbbreviation === key,
         );
 
-        if (
-          option &&
-          lastDayRateForDefaultCurrency?.rate &&
-          rateForDefaultCurrency?.rate &&
-          rateForDefaultCurrency.rate !== 1
-        ) {
-          const {
-            id,
-            img,
-            currencyName,
-            currencyAbbreviation,
-            chain,
-            tokenAddress,
-          } = option;
-
-          const percentChange = calculatePercentageDifference(
-            rateForDefaultCurrency.rate,
-            lastDayRateForDefaultCurrency.rate,
+        if (option && option.chain && option.currencyAbbreviation) {
+          const currencyName = getCurrencyAbbreviation(
+            option?.tokenAddress
+              ? option?.tokenAddress
+              : option?.currencyAbbreviation,
+            option?.chain,
           );
+          const isStableCoin =
+            BitpaySupportedCoins[currencyName]?.properties?.isStableCoin ||
+            BitpaySupportedTokens[currencyName]?.properties?.isStableCoin;
 
-          ratesList.push({
-            id,
-            img,
-            currencyName,
-            currencyAbbreviation,
-            chain: chain ? chain : currencyAbbreviation,
-            tokenAddress: tokenAddress,
-            average: percentChange,
-            currentPrice: rateForDefaultCurrency.rate,
-          });
+          if (
+            option &&
+            lastDayRateForDefaultCurrency?.rate &&
+            rateForDefaultCurrency?.rate &&
+            !isStableCoin
+          ) {
+            const {
+              id,
+              img,
+              currencyName,
+              currencyAbbreviation,
+              chain,
+              tokenAddress,
+            } = option;
+
+            const percentChange = calculatePercentageDifference(
+              rateForDefaultCurrency.rate,
+              lastDayRateForDefaultCurrency.rate,
+            );
+
+            ratesList.push({
+              id,
+              img,
+              currencyName,
+              currencyAbbreviation,
+              chain: chain ? chain : currencyAbbreviation,
+              tokenAddress: tokenAddress,
+              average: percentChange,
+              currentPrice: rateForDefaultCurrency.rate,
+            });
+          }
         }
         return ratesList;
       },

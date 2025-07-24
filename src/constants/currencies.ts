@@ -321,7 +321,7 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       hasMultiSend: false,
       isUtxo: false,
       isERCToken: true,
-      isStableCoin: true,
+      isStableCoin: false,
       singleAddress: true,
     },
     paymentInfo: {
@@ -692,7 +692,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       hasMultiSend: false,
       isUtxo: false,
       isERCToken: true,
-      isStableCoin: true,
+      isStableCoin: false,
       singleAddress: true,
     },
     paymentInfo: {
@@ -726,7 +726,7 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       hasMultiSend: false,
       isUtxo: false,
       isERCToken: true,
-      isStableCoin: true,
+      isStableCoin: false,
       singleAddress: true,
     },
     paymentInfo: {
@@ -943,7 +943,7 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
       hasMultiSend: false,
       isUtxo: false,
       isERCToken: true,
-      isStableCoin: true,
+      isStableCoin: false,
       singleAddress: true,
     },
     paymentInfo: {
@@ -1019,7 +1019,7 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
       hasMultiSend: false,
       isUtxo: false,
       isERCToken: true,
-      isStableCoin: true,
+      isStableCoin: false,
       singleAddress: true,
     },
     paymentInfo: {
@@ -1094,7 +1094,7 @@ export const BitpaySupportedBaseTokens: {[key in string]: CurrencyOpts} = {
       hasMultiSend: false,
       isUtxo: false,
       isERCToken: true,
-      isStableCoin: true,
+      isStableCoin: false,
       singleAddress: true,
     },
     paymentInfo: {
@@ -1169,7 +1169,7 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
       hasMultiSend: false,
       isUtxo: false,
       isERCToken: true,
-      isStableCoin: true,
+      isStableCoin: false,
       singleAddress: true,
     },
     paymentInfo: {
@@ -1245,7 +1245,7 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
       hasMultiSend: false,
       isUtxo: false,
       isERCToken: true,
-      isStableCoin: true,
+      isStableCoin: false,
       singleAddress: true,
     },
     paymentInfo: {

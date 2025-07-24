@@ -572,9 +572,7 @@ const createBrazeEid = (): Effect<string | undefined> => dispatch => {
 export const requestBrazeContentRefresh = (): Effect => async dispatch => {
   if (Analytics.isMergingUser()) {
     dispatch(
-      LogActions.debug(
-        'Skipping Braze content refresh during user merge.',
-      ),
+      LogActions.debug('Skipping Braze content refresh during user merge.'),
     );
     return;
   }
