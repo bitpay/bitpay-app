@@ -209,6 +209,14 @@ export const createProposalAndBuildTxDetails =
           }
         }
 
+        if (chain === 'sol') {
+          if (payProDetails) {
+            const instructions = payProDetails.instructions[0];
+            const {outputs} = instructions;
+            tx.memo = outputs[0].invoiceID;
+          }
+        }
+
         const feeLevel =
           customFeeLevel || cachedFeeLevel[chain] || FeeLevels.NORMAL;
         if (!feePerKb && tx.sendMax) {
@@ -933,6 +941,7 @@ const buildTransactionProposal =
           case 'paypro':
             txp.payProUrl = payProUrl;
             const {instructions} = tx.payProDetails;
+            txp.memo = tx.memo; // Solana memo
             for (const instruction of instructions) {
               txp.outputs.push({
                 toAddress: instruction.toAddress,
