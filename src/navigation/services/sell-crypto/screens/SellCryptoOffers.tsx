@@ -690,21 +690,27 @@ const SellCryptoOffers: React.FC = () => {
             case 'ach':
               if (data.AMERICAN_BANK_TRANSFER) {
                 paymentMethodData = data.AMERICAN_BANK_TRANSFER;
+              } else if (data.AUTO_BANK_TRANSFER) {
+                paymentMethodData = data.AUTO_BANK_TRANSFER;
               }
               break;
-            case 'sepaBankTransfer':
+            case 'sepaBankTransfer': // TODO: review this PayoutMethod
               if (data.SEPA) {
                 paymentMethodData = data.SEPA;
+              } else if (data.AUTO_BANK_TRANSFER) {
+                paymentMethodData = data.AUTO_BANK_TRANSFER;
               }
               break;
             case 'debitCard':
             case 'creditCard':
               if (data.CARD) {
                 paymentMethodData = data.CARD;
+              } else if (data.CARD_PAYMENT) {
+                paymentMethodData = data.CARD_PAYMENT;
               }
               break;
             default:
-              paymentMethodData = data.CARD;
+              paymentMethodData = data.CARD_PAYMENT ?? data.CARD;
           }
 
           if (!paymentMethodData?.fiatValue) {
