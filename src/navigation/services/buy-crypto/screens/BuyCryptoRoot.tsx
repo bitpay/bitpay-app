@@ -171,9 +171,7 @@ const BuyCryptoRoot = ({
   );
   const [buyCryptoSupportedCoinsFullObj, setBuyCryptoSupportedCoinsFullObj] =
     useState<ToWalletSelectorCustomCurrency[]>([]);
-  const fiatCurrency = getAvailableFiatCurrencies().includes(
-    defaultAltCurrency.isoCode,
-  )
+  const fiatCurrency = defaultAltCurrency?.isoCode
     ? defaultAltCurrency.isoCode
     : 'USD';
 

@@ -314,9 +314,7 @@ const SellCryptoRoot = ({
   const [moonpaySelectedCoin, setMoonpaySelectedCoin] =
     useState<SellCryptoCoin>();
   const [fiatCurrency, setFiatCurrency] = useState<string>(
-    getAvailableSellCryptoFiatCurrencies().includes(defaultAltCurrency.isoCode)
-      ? defaultAltCurrency.isoCode
-      : 'USD',
+    defaultAltCurrency?.isoCode ? defaultAltCurrency.isoCode : 'USD',
   );
   const [sellLimits, setSellLimits] = useState<SellLimits>({
     minAmount: undefined,

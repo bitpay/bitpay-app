@@ -37,6 +37,7 @@ export interface RampSettingsProps {
   incomingPaymentRequest: {
     flow?: 'buy' | 'sell';
     rampExternalId: string;
+    walletId?: string;
     status?: string;
   };
 }
