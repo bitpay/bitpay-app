@@ -36,6 +36,20 @@ export const AppsFlyerWrapper = (() => {
     track(eventName: string, eventValues?: any) {
       return AppsFlyer.logEvent(eventName, eventValues);
     },
+
+    /**
+     * Configure AppsFlyer to handle wrapped deeplinks
+     * @param allowedHosts - List of allowed hosts for wrapped deeplinks
+     * @param success - Callback for successful configuration
+     * @param failed - Callback for failed configuration
+     */
+    configureResolvedDeepLinks(
+      allowedHosts: string[],
+      success: () => void,
+      failed: (error: any) => void,
+    ) {
+      AppsFlyer.setResolveDeepLinkURLs(allowedHosts, success, failed);
+    },
   };
 })();
 
