@@ -302,6 +302,8 @@ export interface TransactionOptions {
   // walletconnect
   request?: WCV2RequestType;
   solanaPayOpts?: SolanaPayOpts;
+  //sol
+  memo?: string;
 }
 
 export interface Action {
@@ -321,6 +323,7 @@ export interface TransactionProposalOutputs {
   data?: string;
   gasLimit?: number;
   script?: string;
+  invoiceID?: string; // Solana paypro
 }
 
 export interface TransactionProposal {
