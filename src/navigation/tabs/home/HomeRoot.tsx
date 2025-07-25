@@ -289,7 +289,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   }, [currencyAbbreviation]);
 
   return (
-    <TabContainer>
+    <TabContainer removeMarginTop={showArchaxBanner ? true : false}>
       {appIsLoading ? null : (
         <>
           <HeaderContainer>
@@ -362,7 +362,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             ) : null}
 
             {/* ////////////////////////////// EXCHANGE RATES */}
-            {memoizedExchangeRates.length ? (
+            {!showArchaxBanner && memoizedExchangeRates.length ? (
               <HomeSection title={t('Exchange Rates')} label="1D">
                 <ExchangeRatesList
                   items={memoizedExchangeRates}

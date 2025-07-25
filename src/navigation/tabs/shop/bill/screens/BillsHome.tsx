@@ -28,7 +28,7 @@ const BillsHome = ({}: NativeStackScreenProps<
   const [refreshing, setRefreshing] = useState(false);
 
   return (
-    <TabContainer>
+    <TabContainer removeMarginTop={showArchaxBanner ? true : false}>
       <HeaderContainer>
         <HeaderTitle>{t('Pay Bills')}</HeaderTitle>
       </HeaderContainer>

@@ -191,7 +191,7 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
   );
 
   return (
-    <TabContainer>
+    <TabContainer removeMarginTop={showArchaxBanner ? true : false}>
       <HeaderContainer>
         <HeaderTitle>{t('Settings')}</HeaderTitle>
       </HeaderContainer>

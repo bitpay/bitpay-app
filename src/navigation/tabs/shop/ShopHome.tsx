@@ -267,7 +267,7 @@ const ShopHome: React.FC<
   );
 
   return (
-    <TabContainer>
+    <TabContainer removeMarginTop={showArchaxBanner ? true : false}>
       <HeaderContainer>
         <HeaderTitle>{t('Pay with Crypto')}</HeaderTitle>
       </HeaderContainer>

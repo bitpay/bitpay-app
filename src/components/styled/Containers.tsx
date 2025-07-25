@@ -545,5 +545,6 @@ export const ArchaxBannerContainer = styled.View<{
 }>`
   background: ${({theme}) => (theme.dark ? '#a25718' : '#ffedc9')};
   overflow: hidden;
+  margin-top: ${({inset}) => inset.top}px;
   padding: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '16px')};
 `;

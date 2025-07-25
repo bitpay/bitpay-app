@@ -8,12 +8,12 @@ type PropsWithMoreParams<P = unknown> = P & {
   removeMarginTop?: boolean;
 };
 
-const TabContainer: React.FC<PropsWithMoreParams> = ({children}) => {
+const TabContainer: React.FC<PropsWithMoreParams> = ({children, removeMarginTop}) => {
   const insets = useSafeAreaInsets();
   const Container = useMemo(
     () => styled.View`
       flex: 1;
-      padding-top: ${Platform.OS === 'android' ? insets.top : 0}px;
+      padding-top: ${Platform.OS === 'android' && !removeMarginTop ? insets.top : 0}px;
     `,
     [],
   );
