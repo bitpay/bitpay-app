@@ -216,27 +216,10 @@ export const useDeeplinks = () => {
         }
       });
 
-      // Configure AppsFlyer to handle wrapped deeplinks.
-      // ie. resolve deeplinks with these hostnames to get the real deeplink
-      AppsFlyer.setResolveDeepLinkURLs(
-        ['clicks.bitpay.com', 'email.bitpay.com'],
-        () => {
-          logger.debug(
-            'Successfully configured AppsFlyer deeplink resolution.',
-          );
-        },
-        e => {
-          const errString = e instanceof Error ? e.message : JSON.stringify(e);
-          logger.debug(
-            `An error occurred trying to configure AppsFlyer deeplink resolution: ${errString}`,
-          );
-        },
-      );
-
       const appsFlyerUnsubscribe = AppsFlyer.onDeepLink(udlData => {
         const {data, deepLinkStatus, status} = udlData;
 
-        if (status === 'failure' || deepLinkStatus === 'Error') {
+        if (status === 'failure' || deepLinkStatus === 'ERROR') {
           logger.info('Failed to handle Universal Deep Link.');
           return;
         }

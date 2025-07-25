@@ -102,6 +102,27 @@ export const Analytics = (() => {
             dispatch(
               LogActions.debug('Successfully initialized AppsFlyer SDK'),
             );
+            // Configure AppsFlyer to handle wrapped deeplinks
+            AppsFlyerWrapper.configureResolvedDeepLinks(
+              ['clicks.bitpay.com', 'email.bitpay.com'],
+              () => {
+                dispatch(
+                  LogActions.debug(
+                    'AppsFlyer SDK configured to handle wrapped deeplinks',
+                  ),
+                );
+              },
+              (err: any) => {
+                const errMsg =
+                  err instanceof Error ? err.message : JSON.stringify(err);
+                dispatch(
+                  LogActions.error(
+                    'AppsFlyer SDK failed to configure wrapped deeplinks: ' +
+                      errMsg,
+                  ),
+                );
+              },
+            );
           })
           .catch(err => {
             const errMsg =
