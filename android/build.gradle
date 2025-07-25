@@ -50,5 +50,6 @@ allprojects {
         mavenCentral()
         maven { url 'https://www.jitpack.io' }
         maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
+        maven { url "https://dl.appsflyer.com" }
     }
 }
