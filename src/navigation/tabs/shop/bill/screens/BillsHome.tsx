@@ -21,7 +21,6 @@ const BillsHome = ({}: NativeStackScreenProps<
   const theme = useTheme();
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );

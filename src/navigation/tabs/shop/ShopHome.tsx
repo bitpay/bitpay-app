@@ -100,7 +100,6 @@ const ShopHome: React.FC<
 > = ({route}) => {
   const {t} = useTranslation();
   const theme = useTheme();
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const availableCardMap = useAppSelector(
     ({SHOP_CATALOG}) => SHOP_CATALOG.availableCardMap,
   );

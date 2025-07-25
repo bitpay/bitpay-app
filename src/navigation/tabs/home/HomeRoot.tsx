@@ -362,7 +362,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             ) : null}
 
             {/* ////////////////////////////// EXCHANGE RATES */}
-            {memoizedExchangeRates.length ? (
+            {!showArchaxBanner && memoizedExchangeRates.length ? (
               <HomeSection title={t('Exchange Rates')} label="1D">
                 <ExchangeRatesList
                   items={memoizedExchangeRates}
