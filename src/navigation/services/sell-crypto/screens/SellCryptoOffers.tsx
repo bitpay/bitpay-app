@@ -1122,7 +1122,7 @@ const SellCryptoOffers: React.FC = () => {
       lockAmount: true,
       colorCode: BitPay,
       theme: theme.dark ? 'dark' : 'light',
-      quoteCurrencyCode: cloneDeep(fiatCurrency).toLowerCase(),
+      quoteCurrencyCode: cloneDeep(offers.moonpay.fiatCurrency)?.toLowerCase(),
       showWalletAddressForm: false,
     };
 

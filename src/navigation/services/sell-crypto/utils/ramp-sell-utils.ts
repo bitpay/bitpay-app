@@ -11,46 +11,7 @@ import {WithdrawalMethodKey} from '../constants/SellCryptoConstants';
 
 export const rampSellEnv = __DEV__ ? 'sandbox' : 'production';
 
-export const rampSellSupportedFiatCurrencies = [
-  'BAM',
-  'BGN',
-  'BMD',
-  'BRL',
-  'BWP',
-  'CHF',
-  'CRC',
-  'CZK',
-  'DKK',
-  'EUR',
-  'GEL',
-  'GBP',
-  'GTQ',
-  'HNL',
-  'HUF',
-  'ILS',
-  'INR',
-  'ISK',
-  'KES',
-  'KWD',
-  'KZT',
-  'LAK',
-  'LKR',
-  'MDL',
-  'MKD',
-  'MYR',
-  'MXN',
-  'NZD',
-  'PEN',
-  'PLN',
-  'PYG',
-  'RON',
-  'RSD',
-  'SEK',
-  'SGD',
-  'THB',
-  'USD',
-  'UYU',
-];
+export const rampSellSupportedFiatCurrencies = ['EUR', 'GBP', 'USD'];
 
 export const rampSellSupportedCoins = [
   // UTXO coins will be temporarily disabled, as the sale of these coins through Ramp requires the address from which the funds will be sent. This does not match the flow we have for crypto sales in our app.
