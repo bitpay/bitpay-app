@@ -336,15 +336,16 @@ const Confirm = () => {
       }
       return openWalletSelector();
     };
-    const [errorConfig] = await Promise.all([
-      dispatch(handleCreateTxProposalError(err, onDismiss)),
-      sleep(500),
-    ]);
+    const errorMessageConfig = await dispatch(
+      handleCreateTxProposalError(err, onDismiss),
+    );
     dispatch(
       AppActions.showBottomNotificationModal({
-        ...errorConfig,
+        ...errorMessageConfig,
         message:
-          err.response?.data?.message || err.message || errorConfig.message,
+          err.response?.data?.message ||
+          err.message ||
+          errorMessageConfig.message,
       }),
     );
   };

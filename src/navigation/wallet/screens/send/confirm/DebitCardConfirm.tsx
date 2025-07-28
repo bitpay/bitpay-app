@@ -166,16 +166,15 @@ const Confirm = () => {
   const handleCreateInvoiceOrTxpError = async (err: any) => {
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
-    const [errorConfig] = await Promise.all([
-      dispatch(handleCreateTxProposalError(err)),
-      sleep(500),
-    ]);
+    const errorMessageConfig = await dispatch(handleCreateTxProposalError(err));
     dispatch(
       AppActions.showBottomNotificationModal(
         CustomErrorMessage({
           title: t('Error'),
           errMsg:
-            err.response?.data?.message || err.message || errorConfig.message,
+            err.response?.data?.message ||
+            err.message ||
+            errorMessageConfig.message,
           action: () => reshowWalletSelector(),
         }),
       ),

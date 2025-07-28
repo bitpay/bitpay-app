@@ -393,10 +393,9 @@ const Confirm = () => {
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
       dispatch(dismissOnGoingProcessModal());
-      const [errorMessageConfig] = await Promise.all([
-        dispatch(handleCreateTxProposalError(err)),
-        sleep(400),
-      ]);
+      const errorMessageConfig = await dispatch(
+        handleCreateTxProposalError(err),
+      );
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,

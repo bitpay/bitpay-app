@@ -240,12 +240,9 @@ const SendToOptions = () => {
         amount,
       });
     } catch (err: any) {
-      const errorMessageConfig = (
-        await Promise.all([
-          dispatch(handleCreateTxProposalError(err)),
-          sleep(500),
-        ])
-      )[0];
+      const errorMessageConfig = await dispatch(
+        handleCreateTxProposalError(err),
+      );
       dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       dispatch(
