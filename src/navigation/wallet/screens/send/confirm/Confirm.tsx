@@ -88,7 +88,7 @@ import {
   getFeeRatePerKb,
 } from '../../../../../store/wallet/effects/fee/fee';
 import haptic from '../../../../../components/haptic-feedback/haptic';
-import {Memo} from './Memo';
+import {TxDescription} from './TxDescription';
 import {toFiat} from '../../../../../store/wallet/utils/wallet';
 import {
   GetFeeUnits,
@@ -222,6 +222,7 @@ const Confirm = () => {
   const [destinationTag, setDestinationTag] = useState(
     recipient?.destinationTag || _destinationTag,
   );
+  const [memo, setMemo] = useState<string | undefined>();
   const {currencyAbbreviation, chain, tokenAddress} = wallet;
   const feeOptions = GetFeeOptions(chain);
   const {unitToSatoshi} =
@@ -330,6 +331,7 @@ const Confirm = () => {
               nonce?: number;
               gasLimit?: number;
               destinationTag?: number;
+              memo?: string;
             } = {};
             switch (type) {
               case 'nonce':
@@ -340,6 +342,9 @@ const Confirm = () => {
                 break;
               case 'destinationTag':
                 opts.destinationTag = Number(value);
+                break;
+              case 'memo':
+                opts.memo = value;
                 break;
               default:
                 break;
@@ -383,6 +388,7 @@ const Confirm = () => {
       setGasLimit(_txDetails.gasLimit);
       setNonce(_txDetails.nonce);
       setDestinationTag(_txDetails.destinationTag);
+      setMemo(_txDetails.memo);
       await sleep(500);
       dispatch(dismissOnGoingProcessModal());
     } catch (err: any) {
@@ -819,9 +825,26 @@ const Confirm = () => {
                 </Info>
               </>
             ) : null}
+            {currencyAbbreviation === 'sol' ? (
+              <>
+                <SharedDetailRow
+                  description={t('Memo')}
+                  value={memo || 'edit'}
+                  onPress={() => editValue(t('Edit memo'), 'memo')}
+                />
+                <Info>
+                  <InfoTriangle />
+                  <InfoDescription>
+                    {t(
+                      'A Memo is an optional message attached to a Solana transaction, typically used by apps and exchanges to store extra information like user IDs or order numbers',
+                    )}
+                  </InfoDescription>
+                </Info>
+              </>
+            ) : null}
             {txp ? (
-              <Memo
-                memo={txp.message || message || ''}
+              <TxDescription
+                txDescription={txp.message || message || ''}
                 onChange={message => setTxp({...txp, message})}
               />
             ) : null}

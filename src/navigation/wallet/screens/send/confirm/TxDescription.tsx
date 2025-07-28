@@ -22,23 +22,23 @@ import PencilSvg from '../../../../../../assets/img/pencil.svg';
 import PencilDarkSvg from '../../../../../../assets/img/pencil-dark.svg';
 import {sleep} from '../../../../../utils/helper-methods';
 
-const memoBorderRadius = 4;
-const memoBorderWidth = 1;
-const memoInputHeight = 72;
+const txDescriptionBorderRadius = 4;
+const txDescriptionBorderWidth = 1;
+const txDescriptionInputHeight = 72;
 
-interface MemoColor {
+interface TxDescriptionColor {
   dark: string;
   light: string;
 }
-interface MemoColors {
-  border: MemoColor;
-  unfocusedBorder: MemoColor;
-  focusedInputBg: MemoColor;
-  unfocusedInputBg: MemoColor;
-  inputEditModeFont: MemoColor;
-  inputNonEditModeFont: MemoColor;
+interface TxDescriptionColors {
+  border: TxDescriptionColor;
+  unfocusedBorder: TxDescriptionColor;
+  focusedInputBg: TxDescriptionColor;
+  unfocusedInputBg: TxDescriptionColor;
+  inputEditModeFont: TxDescriptionColor;
+  inputNonEditModeFont: TxDescriptionColor;
 }
-const memoColors: MemoColors = {
+const txDescriptionColors: TxDescriptionColors = {
   border: {
     dark: LuckySevens,
     light: '#e1e4e7',
@@ -65,152 +65,164 @@ const memoColors: MemoColors = {
   },
 };
 
-const getMemoColor = (name: keyof MemoColors, isDark: boolean) => {
-  const color = memoColors[name];
+const getTxDescriptionColor = (
+  name: keyof TxDescriptionColors,
+  isDark: boolean,
+) => {
+  const color = txDescriptionColors[name];
   return isDark ? color.dark : color.light;
 };
 
-const getMemoInputColor = (
-  {hasFocus, isEditMode, isEmpty}: MemoInputContainerParams,
+const getTxDescriptionInputColor = (
+  {hasFocus, isEditMode, isEmpty}: TxDescriptionInputContainerParams,
   darkTheme: boolean,
 ) => {
   if (hasFocus) {
-    return getMemoColor('focusedInputBg', darkTheme);
+    return getTxDescriptionColor('focusedInputBg', darkTheme);
   }
   return isEditMode || isEmpty
     ? 'transparent'
-    : getMemoColor('unfocusedInputBg', darkTheme);
+    : getTxDescriptionColor('unfocusedInputBg', darkTheme);
 };
 
-const getMemoBorderColor = (
-  {hasFocus, isEditMode, isEmpty}: MemoInputContainerParams,
+const getTxDescriptionBorderColor = (
+  {hasFocus, isEditMode, isEmpty}: TxDescriptionInputContainerParams,
   darkTheme: boolean,
 ) => {
   return hasFocus || isEditMode || isEmpty
-    ? getMemoColor('border', darkTheme)
-    : getMemoColor('unfocusedBorder', darkTheme);
+    ? getTxDescriptionColor('border', darkTheme)
+    : getTxDescriptionColor('unfocusedBorder', darkTheme);
 };
 
-export interface MemoInputContainerParams {
+export interface TxDescriptionInputContainerParams {
   hasFocus?: boolean;
   isEmpty?: boolean;
   isEditMode?: boolean;
 }
 
-const MemoRow = styled.View`
+const TxDescriptionRow = styled.View`
   margin: 10px 0 20px;
 `;
 
-const MemoContainer = styled.View`
+const TxDescriptionContainer = styled.View`
   flex-direction: row;
   margin-top: 9px;
 `;
 
-const MemoInput = styled(ImportTextInput)<MemoInputContainerParams>`
+const TxDescriptionInput = styled(
+  ImportTextInput,
+)<TxDescriptionInputContainerParams>`
   flex: 1;
   background-color: ${({isEditMode, hasFocus, isEmpty, theme}) =>
-    getMemoInputColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
+    getTxDescriptionInputColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
   border: 0;
   border-top-right-radius: 0;
-  border-top-left-radius: ${memoBorderRadius}px;
+  border-top-left-radius: ${txDescriptionBorderRadius}px;
   font-size: 12px;
   font-weight: 500;
   padding: 12px;
   color: ${({isEditMode, theme}) =>
     isEditMode
-      ? getMemoColor('inputEditModeFont', theme.dark)
-      : getMemoColor('inputNonEditModeFont', theme.dark)};
+      ? getTxDescriptionColor('inputEditModeFont', theme.dark)
+      : getTxDescriptionColor('inputNonEditModeFont', theme.dark)};
   height: ${({hasFocus, isEmpty}) =>
-    !hasFocus && isEmpty ? 40 : memoInputHeight}px;
+    !hasFocus && isEmpty ? 40 : txDescriptionInputHeight}px;
 `;
 
-const MemoInputContainer = styled.View<MemoInputContainerParams>`
+const TxDescriptionInputContainer = styled.View<TxDescriptionInputContainerParams>`
   flex-grow: 1;
   border-color: ${({hasFocus, isEditMode, isEmpty, theme}) =>
-    getMemoBorderColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
-  border-width: ${memoBorderWidth}px;
-  border-top-left-radius: ${memoBorderRadius}px;
+    getTxDescriptionBorderColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
+  border-width: ${txDescriptionBorderWidth}px;
+  border-top-left-radius: ${txDescriptionBorderRadius}px;
   border-top-right-radius: ${({isEditMode, isEmpty}) =>
-    isEditMode || !isEmpty ? 0 : memoBorderRadius}px;
+    isEditMode || !isEmpty ? 0 : txDescriptionBorderRadius}px;
   border-bottom-color: ${({hasFocus, isEditMode, isEmpty, theme}) =>
     hasFocus
       ? Action
-      : getMemoBorderColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
+      : getTxDescriptionBorderColor(
+          {hasFocus, isEditMode, isEmpty},
+          theme.dark,
+        )};
   border-right-width: ${({isEmpty, isEditMode}) =>
-    isEmpty && !isEditMode ? memoBorderWidth : 0}px;
+    isEmpty && !isEditMode ? txDescriptionBorderWidth : 0}px;
   flex-direction: row;
 `;
 
-const memoOuterButtonHeight = memoInputHeight + memoBorderWidth * 2;
-const MemoOuterButtonContainer = styled.View<MemoInputContainerParams>`
+const txDescriptionOuterButtonHeight =
+  txDescriptionInputHeight + txDescriptionBorderWidth * 2;
+const TxDescriptionOuterButtonContainer = styled.View<TxDescriptionInputContainerParams>`
   background-color: ${({isEditMode, theme}) =>
     isEditMode || theme.dark ? Action : White};
   border-color: ${({isEditMode, hasFocus, isEmpty, theme}) =>
     isEditMode
       ? Action
-      : getMemoBorderColor({hasFocus, isEditMode, isEmpty}, theme.dark)};
-  border-width: ${memoBorderWidth}px;
+      : getTxDescriptionBorderColor(
+          {hasFocus, isEditMode, isEmpty},
+          theme.dark,
+        )};
+  border-width: ${txDescriptionBorderWidth}px;
   border-left-width: 0;
-  border-top-right-radius: ${memoBorderRadius}px;
-  height: ${memoOuterButtonHeight}px;
+  border-top-right-radius: ${txDescriptionBorderRadius}px;
+  height: ${txDescriptionOuterButtonHeight}px;
   width: 39px;
   justify-content: center;
   align-items: center;
 `;
 
-const MemoOuterButton = styled(TouchableOpacity)`
-  height: ${memoOuterButtonHeight}px;
+const TxDescriptionOuterButton = styled(TouchableOpacity)`
+  height: ${txDescriptionOuterButtonHeight}px;
   width: 39px;
   justify-content: center;
   align-items: center;
 `;
 
-const MemoClearButtonContainer = styled.View<MemoInputContainerParams>`
-  height: ${memoInputHeight}px;
+const TxDescriptionClearButtonContainer = styled.View<TxDescriptionInputContainerParams>`
+  height: ${txDescriptionInputHeight}px;
   width: 33px;
   background-color: ${({hasFocus, isEditMode, isEmpty, theme}) =>
-    getMemoInputColor({hasFocus, isEditMode, isEmpty}, theme.dark)}
+    getTxDescriptionInputColor({hasFocus, isEditMode, isEmpty}, theme.dark)}
   justify-content: center;
 `;
 
-export const Memo = ({
-  memo,
+export const TxDescription = ({
+  txDescription,
   onChange,
 }: {
-  memo: string;
-  onChange: (memo: string) => void;
+  txDescription: string;
+  onChange: (txDescription: string) => void;
 }) => {
   const {t} = useTranslation();
   const [isEditMode, setIsEditMode] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
-  const [draftMemo, setDraftMemo] = useState(memo);
+  const [draftTxDescription, setDraftTxDescription] = useState(txDescription);
   const theme = useTheme();
   const inputRef = useRef<TextInput>(null);
   const save = () => {
     setIsEditMode(false);
-    onChange(draftMemo);
+    onChange(draftTxDescription);
     inputRef.current?.blur();
   };
   return (
     <>
-      <MemoRow>
-        <H7>{t('Memo')}</H7>
-        <MemoContainer>
-          <MemoInputContainer
+      <TxDescriptionRow>
+        <H7>{t('Tx Description')}</H7>
+        <TxDescriptionContainer>
+          <TxDescriptionInputContainer
             hasFocus={hasFocus}
-            isEmpty={!draftMemo}
+            isEmpty={!draftTxDescription}
             isEditMode={isEditMode}>
-            <MemoInput
+            <TxDescriptionInput
               hasFocus={hasFocus}
               isEditMode={isEditMode}
-              isEmpty={!draftMemo}
-              editable={isEditMode || !draftMemo}
+              isEmpty={!draftTxDescription}
+              editable={isEditMode || !draftTxDescription}
               multiline
               numberOfLines={3}
               selectTextOnFocus={false}
-              value={draftMemo}
+              value={draftTxDescription}
               onChangeText={text => {
-                setDraftMemo(text);
+                setDraftTxDescription(text);
                 if (text) {
                   setIsEditMode(true);
                 }
@@ -219,32 +231,32 @@ export const Memo = ({
               onFocus={() => setHasFocus(true)}
               onBlur={() => {
                 setHasFocus(false);
-                if (!draftMemo) {
+                if (!draftTxDescription) {
                   onChange('');
                   setIsEditMode(false);
                 }
               }}
             />
-            {draftMemo && isEditMode ? (
-              <MemoClearButtonContainer
+            {draftTxDescription && isEditMode ? (
+              <TxDescriptionClearButtonContainer
                 hasFocus={hasFocus}
                 isEditMode={isEditMode}
-                isEmpty={!draftMemo}>
+                isEmpty={!draftTxDescription}>
                 <TouchableOpacity
                   onPress={() => {
-                    setDraftMemo('');
+                    setDraftTxDescription('');
                     onChange('');
                     inputRef.current?.focus();
                   }}>
                   {theme.dark ? <ClearDarkSvg /> : <ClearSvg />}
                 </TouchableOpacity>
-              </MemoClearButtonContainer>
+              </TxDescriptionClearButtonContainer>
             ) : null}
-          </MemoInputContainer>
-          {draftMemo || isEditMode ? (
-            <MemoOuterButtonContainer isEditMode={isEditMode}>
+          </TxDescriptionInputContainer>
+          {draftTxDescription || isEditMode ? (
+            <TxDescriptionOuterButtonContainer isEditMode={isEditMode}>
               {isEditMode ? (
-                <MemoOuterButton
+                <TxDescriptionOuterButton
                   onPress={async () => {
                     save();
                     // Prevent refocus after delayed autocorrect
@@ -252,21 +264,21 @@ export const Memo = ({
                     save();
                   }}>
                   <CheckSvg width={14} />
-                </MemoOuterButton>
+                </TxDescriptionOuterButton>
               ) : (
-                <MemoOuterButton
+                <TxDescriptionOuterButton
                   onPress={async () => {
                     setIsEditMode(true);
                     await sleep(0);
                     inputRef.current?.focus();
                   }}>
                   {theme.dark ? <PencilDarkSvg /> : <PencilSvg />}
-                </MemoOuterButton>
+                </TxDescriptionOuterButton>
               )}
-            </MemoOuterButtonContainer>
+            </TxDescriptionOuterButtonContainer>
           ) : null}
-        </MemoContainer>
-      </MemoRow>
+        </TxDescriptionContainer>
+      </TxDescriptionRow>
       <Hr />
     </>
   );

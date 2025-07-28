@@ -69,7 +69,7 @@ import {
 } from '../../../store/wallet/wallet.models';
 import CopiedSvg from '../../../../assets/img/copied-success.svg';
 import {useTranslation} from 'react-i18next';
-import {Memo} from './send/confirm/Memo';
+import {TxDescription} from './send/confirm/TxDescription';
 import {SUPPORTED_VM_TOKENS} from '../../../constants/currencies';
 import {DetailColumn, DetailContainer, DetailRow} from './send/confirm/Shared';
 import {LogActions} from '../../../store/log';
@@ -209,7 +209,7 @@ const TimelineList = ({actions}: {actions: TxActions[]}) => {
 const TransactionDetails = () => {
   const logger = useLogger();
   const {
-    params: {transaction, wallet, onMemoChange},
+    params: {transaction, wallet, onTxDescriptionChange},
   } = useRoute<RouteProp<WalletGroupParamList, 'TransactionDetails'>>();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
@@ -217,7 +217,7 @@ const TransactionDetails = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [txs, setTxs] = useState<TransactionDetailsBuilt>();
-  const [memo, setMemo] = useState<string>();
+  const [txDescription, setTxDescription] = useState<string>();
   const [isForFee, setIsForFee] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [failStatus, setFailStatus] = useState<{
@@ -303,7 +303,7 @@ const TransactionDetails = () => {
       }
 
       setTxs(_transaction);
-      setMemo(_transaction.detailsMemo);
+      setTxDescription(_transaction.txDescription);
       setIsForFee(
         transaction.action !== 'received' &&
           TxForPaymentFeeEVM(
@@ -454,20 +454,20 @@ const TransactionDetails = () => {
     dispatch(openUrlWithInAppBrowser(url));
   };
 
-  const saveMemo = async (newMemo: string) => {
+  const saveTxDescription = async (newTxDescription: string) => {
     if (!txs?.txid) {
       dispatch(LogActions.error('[EditTxNote] There is no txid present'));
       return;
     }
 
     try {
-      await EditTxNote(wallet, {txid: txs.txid, body: newMemo});
+      await EditTxNote(wallet, {txid: txs.txid, body: newTxDescription});
       transaction.note = {
-        body: newMemo,
+        body: newTxDescription,
       };
-      transaction.uiDescription = newMemo;
-      setMemo(newMemo);
-      onMemoChange();
+      transaction.uiDescription = newTxDescription;
+      setTxDescription(newTxDescription);
+      onTxDescriptionChange();
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
       dispatch(LogActions.error('[EditTxNote] ', e));
@@ -712,7 +712,10 @@ const TransactionDetails = () => {
           ) : null}
 
           <VerticalSpace>
-            <Memo memo={memo || ''} onChange={text => saveMemo(text)} />
+            <TxDescription
+              txDescription={txDescription || ''}
+              onChange={text => saveTxDescription(text)}
+            />
           </VerticalSpace>
 
           <VerticalSpace>

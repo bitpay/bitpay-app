@@ -141,12 +141,12 @@ const NumberIcon = styled(IconBackground)`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 
-const MemoMsgContainer = styled.View`
+const TxDescriptionMsgContainer = styled.View`
   margin: 20px 0;
   justify-content: flex-start;
 `;
 
-const MemoMsgText = styled(BaseText)`
+const TxDescriptionMsgText = styled(BaseText)`
   font-size: 16px;
   color: #9b9bab;
   margin-top: 10px;
@@ -808,10 +808,10 @@ const TransactionProposalDetails = () => {
           {txp.message &&
           (!payProDetails || payProDetails.memo !== txp.message) ? (
             <>
-              <MemoMsgContainer>
-                <H7>{t('Memo')}</H7>
-                <MemoMsgText>{txp.message}</MemoMsgText>
-              </MemoMsgContainer>
+              <TxDescriptionMsgContainer>
+                <H7>{t('Tx Description')}</H7>
+                <TxDescriptionMsgText>{txp.message}</TxDescriptionMsgText>
+              </TxDescriptionMsgContainer>
               <Hr />
             </>
           ) : null}
@@ -845,10 +845,12 @@ const TransactionProposalDetails = () => {
               {payProDetails.memo ? (
                 <>
                   <Hr />
-                  <MemoMsgContainer>
+                  <TxDescriptionMsgContainer>
                     <H7>{t('Merchant Message')}</H7>
-                    <MemoMsgText>{payProDetails.memo}</MemoMsgText>
-                  </MemoMsgContainer>
+                    <TxDescriptionMsgText>
+                      {payProDetails.memo}
+                    </TxDescriptionMsgText>
+                  </TxDescriptionMsgContainer>
                 </>
               ) : null}
               <Hr />

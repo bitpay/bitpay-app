@@ -142,7 +142,7 @@ export type WalletGroupParamList = {
   TransactionDetails: {
     wallet: WalletModel;
     transaction: any;
-    onMemoChange: () => void;
+    onTxDescriptionChange: () => void;
   };
   TransactionProposalDetails: {
     walletId: string;

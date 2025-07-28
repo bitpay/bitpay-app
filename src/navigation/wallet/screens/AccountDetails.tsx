@@ -887,7 +887,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   };
 
   const goToTransactionDetails = (transaction: any) => {
-    const onMemoChange = () =>
+    const onTxDescriptionChange = () =>
       debouncedLoadHistory(selectedChainFilterOption, true);
     const fullWalletObj = findWalletById(
       keyFullWalletObjs,
@@ -896,7 +896,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     navigation.navigate('TransactionDetails', {
       wallet: fullWalletObj,
       transaction,
-      onMemoChange,
+      onTxDescriptionChange,
     });
   };
 

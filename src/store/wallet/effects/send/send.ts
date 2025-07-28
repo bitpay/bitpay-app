@@ -473,7 +473,8 @@ export const buildTxDetails =
         amount,
         fee,
         tokenAddress,
-        data;
+        data,
+        memo;
 
       if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
         tokenAddress =
@@ -518,6 +519,7 @@ export const buildTxDetails =
         chain = proposal.chain;
         amount = proposal.amount;
         fee = proposal.fee || 0; // proposal fee is zero for coinbase
+        memo = proposal.memo;
       }
 
       const selectedTransactionCurrency = getCurrencyCodeFromCoinAndChain(
@@ -690,6 +692,7 @@ export const buildTxDetails =
         gasLimit,
         nonce,
         destinationTag,
+        memo,
         rateStr,
         data,
       };
@@ -825,6 +828,8 @@ const buildTransactionProposal =
             tx.toAddress = !recipientList
               ? ToCashAddress(tx.toAddress!, false)
               : undefined;
+          case 'sol':
+            txp.memo = tx.memo;
             break;
         }
 
@@ -941,7 +946,6 @@ const buildTransactionProposal =
           case 'paypro':
             txp.payProUrl = payProUrl;
             const {instructions} = tx.payProDetails;
-            txp.memo = tx.memo; // Solana memo
             for (const instruction of instructions) {
               txp.outputs.push({
                 toAddress: instruction.toAddress,
