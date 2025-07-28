@@ -648,11 +648,9 @@ const ChangellyCheckout: React.FC = () => {
           : err?.err?.message ?? JSON.stringify(err);
       const log = `changellyCheckout createTxProposal error: ${errStr}`;
       logger.error(log);
-
-      const [errorMessageConfig] = await Promise.all([
-        dispatch(handleCreateTxProposalError(err, undefined, 'swap')),
-        sleep(400),
-      ]);
+      const errorMessageConfig = await dispatch(
+        handleCreateTxProposalError(err, undefined, 'swap'),
+      );
       return Promise.reject(errorMessageConfig);
     }
   };

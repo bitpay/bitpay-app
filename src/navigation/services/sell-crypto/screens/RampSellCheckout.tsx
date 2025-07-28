@@ -485,11 +485,9 @@ const RampSellCheckout: React.FC = () => {
           : err?.err?.message ?? JSON.stringify(err);
       const log = `rampSellCheckout createTxProposal error: ${errStr}`;
       logger.error(log);
-
-      const [errorMessageConfig] = await Promise.all([
-        dispatch(handleCreateTxProposalError(err, undefined, 'sell')),
-        sleep(400),
-      ]);
+      const errorMessageConfig = await dispatch(
+        handleCreateTxProposalError(err, undefined, 'sell'),
+      );
       return Promise.reject(errorMessageConfig);
     }
   };

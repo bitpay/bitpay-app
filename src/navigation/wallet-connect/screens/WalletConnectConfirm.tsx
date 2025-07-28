@@ -167,13 +167,9 @@ const WalletConnectConfirm = () => {
       setTxDetails(_txDetails);
       setTxp(newTxp);
     } catch (err: any) {
-      const errorMessageConfig = (
-        await Promise.all([
-          dispatch(handleCreateTxProposalError(err)),
-          sleep(500),
-        ])
-      )[0];
-      await sleep(500);
+      const errorMessageConfig = await dispatch(
+        handleCreateTxProposalError(err),
+      );
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,

@@ -275,15 +275,16 @@ const BillConfirm: React.FC<
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
     const onDismiss = () => openWalletSelector(400);
-    const [errorConfig] = await Promise.all([
-      dispatch(handleCreateTxProposalError(err, onDismiss)),
-      sleep(500),
-    ]);
+    const errorMessageConfig = await dispatch(
+      handleCreateTxProposalError(err, onDismiss),
+    );
     dispatch(
       AppActions.showBottomNotificationModal({
-        ...errorConfig,
+        ...errorMessageConfig,
         message:
-          err.response?.data?.message || err.message || errorConfig.message,
+          err.response?.data?.message ||
+          err.message ||
+          errorMessageConfig.message,
       }),
     );
   };

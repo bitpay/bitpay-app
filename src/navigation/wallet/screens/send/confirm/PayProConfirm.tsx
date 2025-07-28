@@ -237,7 +237,9 @@ const PayProConfirm = () => {
       setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
         address: string;
       });
-      if (fee) checkHighFees(selectedWallet, newTxp, fee);
+      if (fee) {
+        checkHighFees(selectedWallet, newTxp, fee);
+      }
       dispatch(
         Analytics.track('BitPay App - Start Merchant Purchase', {
           merchantBrand: invoice.merchantName,
@@ -248,15 +250,16 @@ const PayProConfirm = () => {
       dispatch(dismissOnGoingProcessModal());
       const onDismiss = () =>
         wallet ? navigation.goBack() : reshowWalletSelector();
-      const [errorConfig] = await Promise.all([
-        dispatch(handleCreateTxProposalError(err, onDismiss)),
-        sleep(500),
-      ]);
+      const errorMessageConfig = await dispatch(
+        handleCreateTxProposalError(err, onDismiss),
+      );
       dispatch(
         AppActions.showBottomNotificationModal({
-          ...errorConfig,
+          ...errorMessageConfig,
           message:
-            err.response?.data?.message || err.message || errorConfig.message,
+            err.response?.data?.message ||
+            err.message ||
+            errorMessageConfig.message,
         }),
       );
     }
@@ -278,15 +281,16 @@ const PayProConfirm = () => {
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
     const onDismiss = () => reshowWalletSelector();
-    const [errorConfig] = await Promise.all([
-      dispatch(handleCreateTxProposalError(err, onDismiss)),
-      sleep(500),
-    ]);
+    const errorMessageConfig = await dispatch(
+      handleCreateTxProposalError(err, onDismiss),
+    );
     dispatch(
       AppActions.showBottomNotificationModal({
-        ...errorConfig,
+        ...errorMessageConfig,
         message:
-          err.response?.data?.message || err.message || errorConfig.message,
+          err.response?.data?.message ||
+          err.message ||
+          errorMessageConfig.message,
       }),
     );
   };
