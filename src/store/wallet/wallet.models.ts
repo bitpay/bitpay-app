@@ -302,6 +302,8 @@ export interface TransactionOptions {
   // walletconnect
   request?: WCV2RequestType;
   solanaPayOpts?: SolanaPayOpts;
+  //sol
+  memo?: string;
 }
 
 export interface Action {
@@ -321,6 +323,7 @@ export interface TransactionProposalOutputs {
   data?: string;
   gasLimit?: number;
   script?: string;
+  invoiceID?: string; // Solana paypro
 }
 
 export interface TransactionProposal {
@@ -414,14 +417,14 @@ export interface TransactionProposal {
   refreshOnPublish?: boolean;
   fromAta?: string; // spl tokens
   decimals?: number; // spl tokens
-  memo?: string; // spl tokens
+  memo?: string; // solana
 }
 
 export interface TransactionDetailsBuilt extends TransactionProposal {
   actionsList?: TxActions[];
   confirmations?: number;
   creatorName?: string;
-  detailsMemo?: string;
+  txDescription?: string;
   error?: any;
   feeFiatStr?: string;
   feeRateStr?: string;
@@ -504,6 +507,8 @@ export interface TxDetails {
   rateStr?: string;
   // xrp
   destinationTag?: number;
+  // sol
+  memo?: string;
 }
 
 export interface SendMaxInfo {

@@ -1339,11 +1339,11 @@ export const buildTransactionDetails =
         }
 
         if (!note) {
-          _transaction.detailsMemo = message;
+          _transaction.txDescription = message;
         }
 
         if (note?.body) {
-          _transaction.detailsMemo = note.body;
+          _transaction.txDescription = note.body;
         }
 
         _transaction.actionsList = GetActionsList(transaction, wallet);

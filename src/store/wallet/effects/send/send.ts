@@ -209,6 +209,14 @@ export const createProposalAndBuildTxDetails =
           }
         }
 
+        if (chain === 'sol') {
+          if (payProDetails) {
+            const instructions = payProDetails.instructions[0];
+            const {outputs} = instructions;
+            tx.memo = outputs[0].invoiceID;
+          }
+        }
+
         const feeLevel =
           customFeeLevel || cachedFeeLevel[chain] || FeeLevels.NORMAL;
         if (!feePerKb && tx.sendMax) {
@@ -465,7 +473,8 @@ export const buildTxDetails =
         amount,
         fee,
         tokenAddress,
-        data;
+        data,
+        memo;
 
       if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
         tokenAddress =
@@ -510,6 +519,7 @@ export const buildTxDetails =
         chain = proposal.chain;
         amount = proposal.amount;
         fee = proposal.fee || 0; // proposal fee is zero for coinbase
+        memo = proposal.memo;
       }
 
       const selectedTransactionCurrency = getCurrencyCodeFromCoinAndChain(
@@ -682,6 +692,7 @@ export const buildTxDetails =
         gasLimit,
         nonce,
         destinationTag,
+        memo,
         rateStr,
         data,
       };
@@ -817,6 +828,8 @@ const buildTransactionProposal =
             tx.toAddress = !recipientList
               ? ToCashAddress(tx.toAddress!, false)
               : undefined;
+          case 'sol':
+            txp.memo = tx.memo;
             break;
         }
 

@@ -157,7 +157,7 @@ export const HandlePayPro =
       const confirmScreenParams = {
         amount: estimatedAmount,
         toAddress,
-        description: memo,
+        description: memo, // called memo but it's description in app/bws
         data,
         gasLimit,
         invoiceID,

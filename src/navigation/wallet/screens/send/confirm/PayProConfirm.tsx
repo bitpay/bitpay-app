@@ -82,7 +82,7 @@ import {
   CoinbaseErrorMessages,
 } from '../../../../../api/coinbase/coinbase.types';
 import {coinbasePayInvoice} from '../../../../../store/coinbase';
-import {Memo} from './Memo';
+import {TxDescription} from './TxDescription';
 import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
 import WarningSvg from '../../../../../../assets/img/warning.svg';
 import {
@@ -237,7 +237,7 @@ const PayProConfirm = () => {
       setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
         address: string;
       });
-      checkHighFees(selectedWallet, newTxp, fee);
+      if (fee) checkHighFees(selectedWallet, newTxp, fee);
       dispatch(
         Analytics.track('BitPay App - Start Merchant Purchase', {
           merchantBrand: invoice.merchantName,
@@ -649,8 +649,8 @@ const PayProConfirm = () => {
                 />
               ) : null}
               {txp ? (
-                <Memo
-                  memo={txp.message}
+                <TxDescription
+                  txDescription={txp.message}
                   onChange={message => updateTxp({...txp, message})}
                 />
               ) : null}

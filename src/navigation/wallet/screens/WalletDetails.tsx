@@ -700,11 +700,11 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   };
 
   const goToTransactionDetails = (transaction: any) => {
-    const onMemoChange = () => debouncedLoadHistory(true);
+    const onTxDescriptionChange = () => debouncedLoadHistory(true);
     navigation.navigate('TransactionDetails', {
       wallet: fullWalletObj,
       transaction,
-      onMemoChange,
+      onTxDescriptionChange,
     });
   };
 
