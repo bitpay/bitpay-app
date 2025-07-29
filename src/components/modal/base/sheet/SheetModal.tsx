@@ -81,10 +81,10 @@ const SheetModal: React.FC<SheetModalProps> = ({
   }, [isVisible, onBackdropPress]);
 
   const defaultBorderRadius = Platform.OS === 'ios' ? 12 : 0;
+  const sheetBackgroundColor =
+    backgroundColor ?? (theme.dark ? (fullscreen ? Black : LightBlack) : White);
   const bottomSheetViewStyles = {
-    backgroundColor:
-      backgroundColor ??
-      (theme.dark ? (fullscreen ? Black : LightBlack) : White),
+    backgroundColor: sheetBackgroundColor,
     borderTopLeftRadius: borderRadius ?? defaultBorderRadius,
     borderTopRightRadius: borderRadius ?? defaultBorderRadius,
     paddingBottom: bottomInset,
@@ -109,7 +109,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
       <BottomSheetModal
         stackBehavior={stackBehavior || undefined}
         backdropComponent={renderBackdrop}
-        backgroundStyle={{backgroundColor: 'transparent'}}
+        backgroundStyle={{backgroundColor: sheetBackgroundColor}}
         snapPoints={fullscreen ? ['100%'] : snapPoints || undefined}
         enableDismissOnClose={true}
         enableDynamicSizing={!fullscreen && !snapPoints}
