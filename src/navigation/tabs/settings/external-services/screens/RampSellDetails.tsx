@@ -30,6 +30,7 @@ import {
   RemoveCta,
   CopiedContainer,
   CopyImgContainerRight,
+  ExternalServiceContainer,
 } from '../styled/ExternalServicesDetails';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
@@ -108,232 +109,238 @@ const RampSellDetails: React.FC = () => {
   return (
     <SettingsContainer>
       <SettingsComponent>
-        <RowDataContainer>
-          <CryptoAmountContainer>
-            <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
-            <CryptoContainer>
-              <CryptoAmount>
-                {Number(sellOrder.fiat_receiving_amount).toFixed(2)}
-              </CryptoAmount>
-              <CryptoUnit>{sellOrder.fiat_currency}</CryptoUnit>
-            </CryptoContainer>
-          </CryptoAmountContainer>
-          <RampLogo iconOnly={true} width={50} height={50} />
-        </RowDataContainer>
-
-        <LabelTip type="warn">
-          <LabelTipText>
-            {t(
-              "The final amount you receive when the transaction is complete may differ because it is based on Ramp's exchange rate.",
-            )}
-          </LabelTipText>
-        </LabelTip>
-
-        <RowDataContainer>
-          <RowLabel>{t('Paying')}</RowLabel>
-          <RowData>
-            {sellOrder.crypto_amount} {sellOrder.coin}
-          </RowData>
-        </RowDataContainer>
-
-        {sellOrder.chain && (
+        <ExternalServiceContainer>
           <RowDataContainer>
-            <RowLabel>{t('Blockchain')}</RowLabel>
-            <RowData>
-              {BitpaySupportedCoins[sellOrder.chain.toLowerCase()]?.name ||
-                sellOrder.chain.toUpperCase()}
-            </RowData>
+            <CryptoAmountContainer>
+              <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
+              <CryptoContainer>
+                <CryptoAmount>
+                  {Number(sellOrder.fiat_receiving_amount).toFixed(2)}
+                </CryptoAmount>
+                <CryptoUnit>{sellOrder.fiat_currency}</CryptoUnit>
+              </CryptoContainer>
+            </CryptoAmountContainer>
+            <RampLogo iconOnly={true} width={50} height={50} />
           </RowDataContainer>
-        )}
 
-        <RowDataContainer>
-          <RowLabel>{t('Created')}</RowLabel>
-          <RowData>
-            {moment(sellOrder.created_on).format('MMM DD, YYYY hh:mm a')}
-          </RowData>
-        </RowDataContainer>
-
-        {!!sellOrder.status && (
-          <RowDataContainer>
-            <RowLabel>{t('Status')}</RowLabel>
-            <RowData
-              style={{
-                color: rampSellGetStatusColor(sellOrder.status),
-                textTransform: 'capitalize',
-              }}>
-              {status.statusTitle || t('Sell Order started')}
-            </RowData>
-          </RowDataContainer>
-        )}
-
-        {!sellOrder.status && (
-          <LabelTip type="info">
+          <LabelTip type="warn">
             <LabelTipText>
               {t(
-                'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
+                "The final amount you receive when the transaction is complete may differ because it is based on Ramp's exchange rate.",
               )}
             </LabelTipText>
-            <TouchableOpacity
-              onPress={() => {
-                haptic('impactLight');
-                dispatch(
-                  openUrlWithInAppBrowser(
-                    'https://support.ramp.network/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
-                  ),
-                );
-              }}>
-              <Link style={{marginTop: 15}}>
-                {t('What is the status of my crypto sale?')}
-              </Link>
-            </TouchableOpacity>
           </LabelTip>
-        )}
 
-        {sellOrder.status ? (
-          <LabelTip type="info">
-            <LabelTipText
-              style={{maxWidth: status?.statusDescription ? '80%' : '90%'}}>
-              {status.statusDescription ||
-                t(
+          <RowDataContainer>
+            <RowLabel>{t('Paying')}</RowLabel>
+            <RowData>
+              {sellOrder.crypto_amount} {sellOrder.coin}
+            </RowData>
+          </RowDataContainer>
+
+          {sellOrder.chain && (
+            <RowDataContainer>
+              <RowLabel>{t('Blockchain')}</RowLabel>
+              <RowData>
+                {BitpaySupportedCoins[sellOrder.chain.toLowerCase()]?.name ||
+                  sellOrder.chain.toUpperCase()}
+              </RowData>
+            </RowDataContainer>
+          )}
+
+          <RowDataContainer>
+            <RowLabel>{t('Created')}</RowLabel>
+            <RowData>
+              {moment(sellOrder.created_on).format('MMM DD, YYYY hh:mm a')}
+            </RowData>
+          </RowDataContainer>
+
+          {!!sellOrder.status && (
+            <RowDataContainer>
+              <RowLabel>{t('Status')}</RowLabel>
+              <RowData
+                style={{
+                  color: rampSellGetStatusColor(sellOrder.status),
+                  textTransform: 'capitalize',
+                }}>
+                {status.statusTitle || t('Sell Order started')}
+              </RowData>
+            </RowDataContainer>
+          )}
+
+          {!sellOrder.status && (
+            <LabelTip type="info">
+              <LabelTipText>
+                {t(
                   'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
                 )}
-            </LabelTipText>
-            {['expired'].includes(sellOrder.status) ? (
-              <>
-                <Br />
-                <LabelTipText>{t('Having problems with Ramp?')} </LabelTipText>
-                <TouchableOpacity
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser('https://www.ramp.com/support/'),
-                    );
-                  }}>
-                  <Link style={{marginTop: 15}}>
-                    {t('Contact the Ramp support team.')}
-                  </Link>
-                </TouchableOpacity>
-              </>
-            ) : null}
-            {['created', 'createdOrder', 'bitpayTxSent'].includes(
-              sellOrder.status,
-            ) ? (
-              <>
-                <Br />
-                <LabelTipText>
-                  {t('What is the status of my crypto sale?')}{' '}
-                </LabelTipText>
-                <TouchableOpacity
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser(
-                        'https://support.ramp.network/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
-                      ),
-                    );
-                  }}>
-                  <Link style={{marginTop: 15}}>{t('Transaction FAQ')}</Link>
-                </TouchableOpacity>
-              </>
-            ) : null}
-          </LabelTip>
-        ) : null}
+              </LabelTipText>
+              <TouchableOpacity
+                onPress={() => {
+                  haptic('impactLight');
+                  dispatch(
+                    openUrlWithInAppBrowser(
+                      'https://support.ramp.network/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
+                    ),
+                  );
+                }}>
+                <Link style={{marginTop: 15}}>
+                  {t('What is the status of my crypto sale?')}
+                </Link>
+              </TouchableOpacity>
+            </LabelTip>
+          )}
 
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(sellOrder.address_to);
-              setCopiedDepositAddress(true);
-            }}>
-            <RowLabel>{t('Deposit address')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {sellOrder.address_to}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
-
-        {sellOrder.quote_id ? (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(sellOrder.quote_id!);
-                setCopiedPaymentId(true);
-              }}>
-              <RowLabel>{t('Ramp Network Order ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {sellOrder.quote_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedPaymentId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        ) : null}
-
-        {!!sellOrder.tx_sent_id && (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(sellOrder.tx_sent_id!);
-                setCopiedTransactionSentId(true);
-              }}>
-              <RowLabel>{t('Transaction ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {sellOrder.tx_sent_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedTransactionSentId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        )}
-
-        <RemoveCta
-          onPress={async () => {
-            haptic('impactLight');
-            dispatch(
-              showBottomNotificationModal({
-                type: 'question',
-                title: t('Removing sell order data'),
-                message: t(
-                  "The data of this sell order will be deleted. Make sure you don't need it",
-                ),
-                enableBackdropDismiss: true,
-                actions: [
-                  {
-                    text: t('REMOVE'),
-                    action: () => {
-                      dispatch(dismissBottomNotificationModal());
+          {sellOrder.status ? (
+            <LabelTip type="info">
+              <LabelTipText
+                style={{maxWidth: status?.statusDescription ? '80%' : '90%'}}>
+                {status.statusDescription ||
+                  t(
+                    'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
+                  )}
+              </LabelTipText>
+              {['expired'].includes(sellOrder.status) ? (
+                <>
+                  <Br />
+                  <LabelTipText>
+                    {t('Having problems with Ramp?')}{' '}
+                  </LabelTipText>
+                  <TouchableOpacity
+                    onPress={() => {
+                      haptic('impactLight');
                       dispatch(
-                        SellCryptoActions.removeSellOrderRamp({
-                          rampExternalId: sellOrder.external_id,
-                        }),
+                        openUrlWithInAppBrowser(
+                          'https://www.ramp.com/support/',
+                        ),
                       );
-                      navigation.goBack();
+                    }}>
+                    <Link style={{marginTop: 15}}>
+                      {t('Contact the Ramp support team.')}
+                    </Link>
+                  </TouchableOpacity>
+                </>
+              ) : null}
+              {['created', 'createdOrder', 'bitpayTxSent'].includes(
+                sellOrder.status,
+              ) ? (
+                <>
+                  <Br />
+                  <LabelTipText>
+                    {t('What is the status of my crypto sale?')}{' '}
+                  </LabelTipText>
+                  <TouchableOpacity
+                    onPress={() => {
+                      haptic('impactLight');
+                      dispatch(
+                        openUrlWithInAppBrowser(
+                          'https://support.ramp.network/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
+                        ),
+                      );
+                    }}>
+                    <Link style={{marginTop: 15}}>{t('Transaction FAQ')}</Link>
+                  </TouchableOpacity>
+                </>
+              ) : null}
+            </LabelTip>
+          ) : null}
+
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(sellOrder.address_to);
+                setCopiedDepositAddress(true);
+              }}>
+              <RowLabel>{t('Deposit address')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {sellOrder.address_to}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+
+          {sellOrder.quote_id ? (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(sellOrder.quote_id!);
+                  setCopiedPaymentId(true);
+                }}>
+                <RowLabel>{t('Ramp Network Order ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {sellOrder.quote_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedPaymentId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          ) : null}
+
+          {!!sellOrder.tx_sent_id && (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(sellOrder.tx_sent_id!);
+                  setCopiedTransactionSentId(true);
+                }}>
+                <RowLabel>{t('Transaction ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {sellOrder.tx_sent_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedTransactionSentId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          )}
+
+          <RemoveCta
+            onPress={async () => {
+              haptic('impactLight');
+              dispatch(
+                showBottomNotificationModal({
+                  type: 'question',
+                  title: t('Removing sell order data'),
+                  message: t(
+                    "The data of this sell order will be deleted. Make sure you don't need it",
+                  ),
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: t('REMOVE'),
+                      action: () => {
+                        dispatch(dismissBottomNotificationModal());
+                        dispatch(
+                          SellCryptoActions.removeSellOrderRamp({
+                            rampExternalId: sellOrder.external_id,
+                          }),
+                        );
+                        navigation.goBack();
+                      },
+                      primary: true,
                     },
-                    primary: true,
-                  },
-                  {
-                    text: t('GO BACK'),
-                    action: () => {
-                      console.log('Removing sell order CANCELED');
+                    {
+                      text: t('GO BACK'),
+                      action: () => {
+                        console.log('Removing sell order CANCELED');
+                      },
                     },
-                  },
-                ],
-              }),
-            );
-          }}>
-          <Text style={{color: 'red'}}>{t('Remove')}</Text>
-        </RemoveCta>
+                  ],
+                }),
+              );
+            }}>
+            <Text style={{color: 'red'}}>{t('Remove')}</Text>
+          </RemoveCta>
+        </ExternalServiceContainer>
       </SettingsComponent>
     </SettingsContainer>
   );

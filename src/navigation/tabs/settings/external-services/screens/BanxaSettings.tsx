@@ -29,6 +29,7 @@ import {
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
 import {useTranslation} from 'react-i18next';
+import {ExternalServiceContainer} from '../styled/ExternalServicesDetails';
 
 export interface BanxaSettingsProps {
   incomingPaymentRequest: {
@@ -74,91 +75,93 @@ const BanxaSettings: React.FC = () => {
     <>
       <SettingsContainer>
         <SettingsComponent style={{paddingBottom: 500}}>
-          {paymentRequests && paymentRequests.length > 0 && (
-            <PrTitle>{t('Payment Requests')}</PrTitle>
-          )}
-          {paymentRequests &&
-            paymentRequests.length > 0 &&
-            paymentRequests
-              .sort((a, b) => b.created_on - a.created_on)
-              .map(pr => {
-                return (
-                  <PrRow
-                    key={pr.order_id}
-                    onPress={() => {
-                      haptic('impactLight');
-                      navigation.navigate('BanxaDetails', {
-                        paymentRequest: pr,
-                      });
-                    }}>
-                    <PrRowLeft>
-                      <PrTxtFiatAmount>
-                        {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
-                      </PrTxtFiatAmount>
-                      {pr.status === 'declined' && (
-                        <PrTxtStatus style={{color: '#df5264'}}>
-                          {t('Payment request declined')}
-                        </PrTxtStatus>
-                      )}
-                      {pr.status === 'expired' && (
-                        <PrTxtStatus style={{color: '#df5264'}}>
-                          {t('Payment request expired')}
-                        </PrTxtStatus>
-                      )}
-                      {pr.status === 'failed' && (
-                        <PrTxtStatus style={{color: '#df5264'}}>
-                          {t('Payment request failed')}
-                        </PrTxtStatus>
-                      )}
-                      {pr.status === 'cancelled' && (
-                        <PrTxtStatus style={{color: '#df5264'}}>
-                          {t('Payment request cancelled')}
-                        </PrTxtStatus>
-                      )}
-                      {pr.status === 'complete' && (
-                        <PrTxtStatus style={{color: '#01d1a2'}}>
-                          {t('Payment request completed')}
-                        </PrTxtStatus>
-                      )}
-                      {pr.status === 'refunded' && (
-                        <PrTxtStatus>
-                          {t('Payment request refunded')}
-                        </PrTxtStatus>
-                      )}
-                      {!pr.status ||
-                        (pr.status === 'paymentRequestSent' && (
-                          <PrTxtStatus>
-                            {t('Attempted payment request')}
-                          </PrTxtStatus>
-                        ))}
-                      {pr.status &&
-                        [
-                          'pending',
-                          'pendingPayment',
-                          'waitingPayment',
-                          'paymentReceived',
-                          'inProgress',
-                          'coinTransferred',
-                        ].includes(pr.status) && (
-                          <PrTxtStatus>
-                            {t('Processing payment request')}
+          <ExternalServiceContainer style={{paddingBottom: 50}}>
+            {paymentRequests && paymentRequests.length > 0 && (
+              <PrTitle>{t('Payment Requests')}</PrTitle>
+            )}
+            {paymentRequests &&
+              paymentRequests.length > 0 &&
+              paymentRequests
+                .sort((a, b) => b.created_on - a.created_on)
+                .map(pr => {
+                  return (
+                    <PrRow
+                      key={pr.order_id}
+                      onPress={() => {
+                        haptic('impactLight');
+                        navigation.navigate('BanxaDetails', {
+                          paymentRequest: pr,
+                        });
+                      }}>
+                      <PrRowLeft>
+                        <PrTxtFiatAmount>
+                          {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
+                        </PrTxtFiatAmount>
+                        {pr.status === 'declined' && (
+                          <PrTxtStatus style={{color: '#df5264'}}>
+                            {t('Payment request declined')}
                           </PrTxtStatus>
                         )}
-                    </PrRowLeft>
-                    <PrRowRight>
-                      <PrTxtCryptoAmount>
-                        {pr.crypto_amount} {pr.coin}
-                      </PrTxtCryptoAmount>
-                      <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
-                    </PrRowRight>
-                  </PrRow>
-                );
-              })}
-          {(!paymentRequests || paymentRequests.length === 0) && (
-            <NoPrMsg>
-              {t('There are currently no transactions with Banxa')}
-            </NoPrMsg>
-          )}
+                        {pr.status === 'expired' && (
+                          <PrTxtStatus style={{color: '#df5264'}}>
+                            {t('Payment request expired')}
+                          </PrTxtStatus>
+                        )}
+                        {pr.status === 'failed' && (
+                          <PrTxtStatus style={{color: '#df5264'}}>
+                            {t('Payment request failed')}
+                          </PrTxtStatus>
+                        )}
+                        {pr.status === 'cancelled' && (
+                          <PrTxtStatus style={{color: '#df5264'}}>
+                            {t('Payment request cancelled')}
+                          </PrTxtStatus>
+                        )}
+                        {pr.status === 'complete' && (
+                          <PrTxtStatus style={{color: '#01d1a2'}}>
+                            {t('Payment request completed')}
+                          </PrTxtStatus>
+                        )}
+                        {pr.status === 'refunded' && (
+                          <PrTxtStatus>
+                            {t('Payment request refunded')}
+                          </PrTxtStatus>
+                        )}
+                        {!pr.status ||
+                          (pr.status === 'paymentRequestSent' && (
+                            <PrTxtStatus>
+                              {t('Attempted payment request')}
+                            </PrTxtStatus>
+                          ))}
+                        {pr.status &&
+                          [
+                            'pending',
+                            'pendingPayment',
+                            'waitingPayment',
+                            'paymentReceived',
+                            'inProgress',
+                            'coinTransferred',
+                          ].includes(pr.status) && (
+                            <PrTxtStatus>
+                              {t('Processing payment request')}
+                            </PrTxtStatus>
+                          )}
+                      </PrRowLeft>
+                      <PrRowRight>
+                        <PrTxtCryptoAmount>
+                          {pr.crypto_amount} {pr.coin}
+                        </PrTxtCryptoAmount>
+                        <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
+                      </PrRowRight>
+                    </PrRow>
+                  );
+                })}
+            {(!paymentRequests || paymentRequests.length === 0) && (
+              <NoPrMsg>
+                {t('There are currently no transactions with Banxa')}
+              </NoPrMsg>
+            )}
+          </ExternalServiceContainer>
         </SettingsComponent>
       </SettingsContainer>
       <FooterSupport>

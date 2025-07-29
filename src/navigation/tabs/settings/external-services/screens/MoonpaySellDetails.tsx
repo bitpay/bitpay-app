@@ -40,6 +40,7 @@ import {
   RemoveCta,
   CopiedContainer,
   CopyImgContainerRight,
+  ExternalServiceContainer,
 } from '../styled/ExternalServicesDetails';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
@@ -279,354 +280,357 @@ const MoonpaySellDetails: React.FC = () => {
             onRefresh={onRefresh}
           />
         }>
-        <RowDataContainer>
-          <CryptoAmountContainer>
-            <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
-            <CryptoContainer>
-              <CryptoAmount>
-                {Number(sellOrder.fiat_receiving_amount).toFixed(2)}
-              </CryptoAmount>
-              <CryptoUnit>{sellOrder.fiat_currency}</CryptoUnit>
-            </CryptoContainer>
-          </CryptoAmountContainer>
-          <MoonpayLogo iconOnly={true} />
-        </RowDataContainer>
-
-        <LabelTip type="warn">
-          <LabelTipText>
-            {t(
-              "The final amount you receive when the transaction is complete may differ because it is based on Moonpay's exchange rate.",
-            )}
-          </LabelTipText>
-        </LabelTip>
-
-        <RowDataContainer>
-          <RowLabel>{t('Paying')}</RowLabel>
-          <RowData>
-            {sellOrder.crypto_amount} {sellOrder.coin}
-          </RowData>
-        </RowDataContainer>
-
-        {sellOrder.chain && (
+        <ExternalServiceContainer>
           <RowDataContainer>
-            <RowLabel>{t('Blockchain')}</RowLabel>
-            <RowData>
-              {BitpaySupportedCoins[sellOrder.chain.toLowerCase()]?.name ||
-                sellOrder.chain.toUpperCase()}
-            </RowData>
+            <CryptoAmountContainer>
+              <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
+              <CryptoContainer>
+                <CryptoAmount>
+                  {Number(sellOrder.fiat_receiving_amount).toFixed(2)}
+                </CryptoAmount>
+                <CryptoUnit>{sellOrder.fiat_currency}</CryptoUnit>
+              </CryptoContainer>
+            </CryptoAmountContainer>
+            <MoonpayLogo iconOnly={true} />
           </RowDataContainer>
-        )}
 
-        <RowDataContainer>
-          <RowLabel>{t('Created')}</RowLabel>
-          <RowData>
-            {moment(sellOrder.created_on).format('MMM DD, YYYY hh:mm a')}
-          </RowData>
-        </RowDataContainer>
-
-        {!!sellOrder.status && (
-          <RowDataContainer>
-            <RowLabel>{t('Status')}</RowLabel>
-            <RowData
-              style={{
-                color: moonpaySellGetStatusColor(sellOrder.status),
-                textTransform: 'capitalize',
-              }}>
-              {status.statusTitle}
-            </RowData>
-          </RowDataContainer>
-        )}
-
-        {!sellOrder.status && (
-          <LabelTip type="info">
+          <LabelTip type="warn">
             <LabelTipText>
               {t(
-                'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few hours.',
+                "The final amount you receive when the transaction is complete may differ because it is based on Moonpay's exchange rate.",
               )}
             </LabelTipText>
-            <TouchableOpacity
-              onPress={() => {
+          </LabelTip>
+
+          <RowDataContainer>
+            <RowLabel>{t('Paying')}</RowLabel>
+            <RowData>
+              {sellOrder.crypto_amount} {sellOrder.coin}
+            </RowData>
+          </RowDataContainer>
+
+          {sellOrder.chain && (
+            <RowDataContainer>
+              <RowLabel>{t('Blockchain')}</RowLabel>
+              <RowData>
+                {BitpaySupportedCoins[sellOrder.chain.toLowerCase()]?.name ||
+                  sellOrder.chain.toUpperCase()}
+              </RowData>
+            </RowDataContainer>
+          )}
+
+          <RowDataContainer>
+            <RowLabel>{t('Created')}</RowLabel>
+            <RowData>
+              {moment(sellOrder.created_on).format('MMM DD, YYYY hh:mm a')}
+            </RowData>
+          </RowDataContainer>
+
+          {!!sellOrder.status && (
+            <RowDataContainer>
+              <RowLabel>{t('Status')}</RowLabel>
+              <RowData
+                style={{
+                  color: moonpaySellGetStatusColor(sellOrder.status),
+                  textTransform: 'capitalize',
+                }}>
+                {status.statusTitle}
+              </RowData>
+            </RowDataContainer>
+          )}
+
+          {!sellOrder.status && (
+            <LabelTip type="info">
+              <LabelTipText>
+                {t(
+                  'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few hours.',
+                )}
+              </LabelTipText>
+              <TouchableOpacity
+                onPress={() => {
+                  haptic('impactLight');
+                  dispatch(
+                    openUrlWithInAppBrowser(
+                      'https://sell.moonpay.com/trade_history',
+                    ),
+                  );
+                }}>
+                <Link style={{marginTop: 15}}>
+                  {t('What is the status of my crypto sell order?')}
+                </Link>
+              </TouchableOpacity>
+            </LabelTip>
+          )}
+
+          {!!sellOrder.status && (
+            <LabelTip type="info">
+              <LabelTipText>{status.statusDescription}</LabelTipText>
+              {['failed'].includes(sellOrder.status) ? (
+                <>
+                  {sellOrder.failure_reason ? (
+                    <>
+                      <Br />
+                      <LabelTipText>
+                        {t('Failure Reason:')} {sellOrder.failure_reason}
+                      </LabelTipText>
+                    </>
+                  ) : null}
+                  <Br />
+                  <LabelTipText>
+                    {t('Having problems with Moonpay?')}{' '}
+                  </LabelTipText>
+                  <TouchableOpacity
+                    onPress={() => {
+                      haptic('impactLight');
+                      dispatch(
+                        openUrlWithInAppBrowser(
+                          'https://support.moonpay.com/hc/en-gb/requests/new',
+                        ),
+                      );
+                    }}>
+                    <Link style={{marginTop: 15}}>
+                      {t('Contact the Moonpay support team.')}
+                    </Link>
+                  </TouchableOpacity>
+                </>
+              ) : null}
+            </LabelTip>
+          )}
+
+          {!!sellOrder.address_to && (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  if (sellOrder.address_to) {
+                    copyText(sellOrder.address_to);
+                    setCopiedDepositAddress(true);
+                  }
+                }}>
+                <RowLabel>{t('Deposit address')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {sellOrder.address_to}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          )}
+
+          {!!sellOrder.refund_address &&
+          ['failed'].includes(sellOrder.status) ? (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(sellOrder.refund_address);
+                  setCopiedRefundAddress(true);
+                }}>
+                <RowLabel>{t('Refund address')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {sellOrder.refund_address}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedRefundAddress ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          ) : null}
+
+          {!!sellOrder.tx_sent_id && (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(sellOrder.tx_sent_id!);
+                  setCopiedTransactionSentId(true);
+                }}>
+                <RowLabel>{t('Transaction ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {sellOrder.tx_sent_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedTransactionSentId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          )}
+
+          {!!sellOrder.transaction_id && (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(sellOrder.transaction_id!);
+                  setCopiedTransactionId(true);
+                }}>
+                <RowLabel>{t('Moonpay Sell Order ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {sellOrder.transaction_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedTransactionId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          )}
+
+          {sellOrder.external_id && (__DEV__ || !sellOrder.transaction_id) ? (
+            <ColumnDataContainer
+              style={{marginBottom: Platform.OS === 'android' ? 20 : 0}}>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(sellOrder.external_id);
+                  setCopiedExternalId(true);
+                }}>
+                <RowLabel>{t('External Sell Order ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {sellOrder.external_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedExternalId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          ) : null}
+
+          {['bitpayPending', 'waitingForDeposit'].includes(sellOrder.status) &&
+          sourceWallet ? (
+            <RemoveCta
+              onPress={async () => {
                 haptic('impactLight');
                 dispatch(
-                  openUrlWithInAppBrowser(
-                    'https://sell.moonpay.com/trade_history',
-                  ),
-                );
-              }}>
-              <Link style={{marginTop: 15}}>
-                {t('What is the status of my crypto sell order?')}
-              </Link>
-            </TouchableOpacity>
-          </LabelTip>
-        )}
+                  showBottomNotificationModal({
+                    type: 'question',
+                    title: t('Cancel sell order'),
+                    message: t(
+                      "The data of this order will be canceled. Make sure you don't need it",
+                    ),
+                    enableBackdropDismiss: true,
+                    actions: [
+                      {
+                        text: t('CANCEL ORDER'),
+                        action: async () => {
+                          dispatch(dismissBottomNotificationModal());
+                          try {
+                            const reqData: MoonpayCancelSellTransactionRequestData =
+                              {
+                                env: moonpaySellEnv,
+                                transactionId: sellOrder.transaction_id,
+                                externalId: sellOrder.external_id,
+                              };
+                            const res =
+                              await sourceWallet.moonpayCancelSellTransaction(
+                                reqData,
+                              );
+                            if (res?.statusCode == 204) {
+                              // Canceled successfully
+                              sellOrder.status = 'bitpayCanceled';
+                              const stateParams = {
+                                externalId: sellOrder.external_id,
+                                status:
+                                  'bitpayCanceled' as MoonpaySellOrderStatus,
+                              };
 
-        {!!sellOrder.status && (
-          <LabelTip type="info">
-            <LabelTipText>{status.statusDescription}</LabelTipText>
-            {['failed'].includes(sellOrder.status) ? (
-              <>
-                {sellOrder.failure_reason ? (
-                  <>
-                    <Br />
-                    <LabelTipText>
-                      {t('Failure Reason:')} {sellOrder.failure_reason}
-                    </LabelTipText>
-                  </>
-                ) : null}
-                <Br />
-                <LabelTipText>
-                  {t('Having problems with Moonpay?')}{' '}
-                </LabelTipText>
-                <TouchableOpacity
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser(
-                        'https://support.moonpay.com/hc/en-gb/requests/new',
-                      ),
-                    );
-                  }}>
-                  <Link style={{marginTop: 15}}>
-                    {t('Contact the Moonpay support team.')}
-                  </Link>
-                </TouchableOpacity>
-              </>
-            ) : null}
-          </LabelTip>
-        )}
-
-        {!!sellOrder.address_to && (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                if (sellOrder.address_to) {
-                  copyText(sellOrder.address_to);
-                  setCopiedDepositAddress(true);
-                }
-              }}>
-              <RowLabel>{t('Deposit address')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {sellOrder.address_to}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        )}
-
-        {!!sellOrder.refund_address && ['failed'].includes(sellOrder.status) ? (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(sellOrder.refund_address);
-                setCopiedRefundAddress(true);
-              }}>
-              <RowLabel>{t('Refund address')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {sellOrder.refund_address}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedRefundAddress ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        ) : null}
-
-        {!!sellOrder.tx_sent_id && (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(sellOrder.tx_sent_id!);
-                setCopiedTransactionSentId(true);
-              }}>
-              <RowLabel>{t('Transaction ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {sellOrder.tx_sent_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedTransactionSentId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        )}
-
-        {!!sellOrder.transaction_id && (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(sellOrder.transaction_id!);
-                setCopiedTransactionId(true);
-              }}>
-              <RowLabel>{t('Moonpay Sell Order ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {sellOrder.transaction_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedTransactionId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        )}
-
-        {sellOrder.external_id && (__DEV__ || !sellOrder.transaction_id) ? (
-          <ColumnDataContainer
-            style={{marginBottom: Platform.OS === 'android' ? 20 : 0}}>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(sellOrder.external_id);
-                setCopiedExternalId(true);
-              }}>
-              <RowLabel>{t('External Sell Order ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {sellOrder.external_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedExternalId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        ) : null}
-
-        {['bitpayPending', 'waitingForDeposit'].includes(sellOrder.status) &&
-        sourceWallet ? (
-          <RemoveCta
-            onPress={async () => {
-              haptic('impactLight');
-              dispatch(
-                showBottomNotificationModal({
-                  type: 'question',
-                  title: t('Cancel sell order'),
-                  message: t(
-                    "The data of this order will be canceled. Make sure you don't need it",
-                  ),
-                  enableBackdropDismiss: true,
-                  actions: [
-                    {
-                      text: t('CANCEL ORDER'),
-                      action: async () => {
-                        dispatch(dismissBottomNotificationModal());
-                        try {
-                          const reqData: MoonpayCancelSellTransactionRequestData =
-                            {
-                              env: moonpaySellEnv,
-                              transactionId: sellOrder.transaction_id,
-                              externalId: sellOrder.external_id,
-                            };
-                          const res =
-                            await sourceWallet.moonpayCancelSellTransaction(
-                              reqData,
-                            );
-                          if (res?.statusCode == 204) {
-                            // Canceled successfully
-                            sellOrder.status = 'bitpayCanceled';
-                            const stateParams = {
-                              externalId: sellOrder.external_id,
-                              status:
-                                'bitpayCanceled' as MoonpaySellOrderStatus,
-                            };
-
+                              dispatch(
+                                SellCryptoActions.updateSellOrderMoonpay({
+                                  moonpaySellIncomingData: stateParams,
+                                }),
+                              );
+                              updateStatusDescription();
+                            }
+                          } catch (err) {
+                            await sleep(500);
                             dispatch(
-                              SellCryptoActions.updateSellOrderMoonpay({
-                                moonpaySellIncomingData: stateParams,
+                              showBottomNotificationModal({
+                                type: 'warning',
+                                title: t('Something went wrong'),
+                                message: t(
+                                  'There was an error trying to cancel the order.',
+                                ),
+                                enableBackdropDismiss: true,
+                                actions: [
+                                  {
+                                    text: t('OK'),
+                                    action: () => {},
+                                    primary: true,
+                                  },
+                                ],
                               }),
                             );
-                            updateStatusDescription();
                           }
-                        } catch (err) {
-                          await sleep(500);
+                        },
+                        primary: true,
+                      },
+                      {
+                        text: t('GO BACK'),
+                        action: () => {
+                          logger.debug('Cancel sell order aborted');
+                        },
+                      },
+                    ],
+                  }),
+                );
+              }}>
+              <Text style={{color: 'red'}}>{t('Cancel Order')}</Text>
+            </RemoveCta>
+          ) : null}
+
+          {[
+            'createdOrder',
+            'bitpayPending',
+            'bitpayCanceled',
+            'failed',
+            'completed',
+          ].includes(sellOrder.status) ||
+          (['bitpayPending', 'waitingForDeposit'].includes(sellOrder.status) &&
+            !sourceWallet) ? (
+            <RemoveCta
+              onPress={async () => {
+                haptic('impactLight');
+                dispatch(
+                  showBottomNotificationModal({
+                    type: 'question',
+                    title: t('Removing sell order data'),
+                    message: t(
+                      "The data of this sell order will be deleted. Make sure you don't need it",
+                    ),
+                    enableBackdropDismiss: true,
+                    actions: [
+                      {
+                        text: t('REMOVE'),
+                        action: () => {
+                          dispatch(dismissBottomNotificationModal());
                           dispatch(
-                            showBottomNotificationModal({
-                              type: 'warning',
-                              title: t('Something went wrong'),
-                              message: t(
-                                'There was an error trying to cancel the order.',
-                              ),
-                              enableBackdropDismiss: true,
-                              actions: [
-                                {
-                                  text: t('OK'),
-                                  action: () => {},
-                                  primary: true,
-                                },
-                              ],
+                            SellCryptoActions.removeSellOrderMoonpay({
+                              externalId: sellOrder.external_id,
                             }),
                           );
-                        }
+                          navigation.goBack();
+                        },
+                        primary: true,
                       },
-                      primary: true,
-                    },
-                    {
-                      text: t('GO BACK'),
-                      action: () => {
-                        logger.debug('Cancel sell order aborted');
+                      {
+                        text: t('GO BACK'),
+                        action: () => {
+                          logger.debug('Removing sell order CANCELED');
+                        },
                       },
-                    },
-                  ],
-                }),
-              );
-            }}>
-            <Text style={{color: 'red'}}>{t('Cancel Order')}</Text>
-          </RemoveCta>
-        ) : null}
-
-        {[
-          'createdOrder',
-          'bitpayPending',
-          'bitpayCanceled',
-          'failed',
-          'completed',
-        ].includes(sellOrder.status) ||
-        (['bitpayPending', 'waitingForDeposit'].includes(sellOrder.status) &&
-          !sourceWallet) ? (
-          <RemoveCta
-            onPress={async () => {
-              haptic('impactLight');
-              dispatch(
-                showBottomNotificationModal({
-                  type: 'question',
-                  title: t('Removing sell order data'),
-                  message: t(
-                    "The data of this sell order will be deleted. Make sure you don't need it",
-                  ),
-                  enableBackdropDismiss: true,
-                  actions: [
-                    {
-                      text: t('REMOVE'),
-                      action: () => {
-                        dispatch(dismissBottomNotificationModal());
-                        dispatch(
-                          SellCryptoActions.removeSellOrderMoonpay({
-                            externalId: sellOrder.external_id,
-                          }),
-                        );
-                        navigation.goBack();
-                      },
-                      primary: true,
-                    },
-                    {
-                      text: t('GO BACK'),
-                      action: () => {
-                        logger.debug('Removing sell order CANCELED');
-                      },
-                    },
-                  ],
-                }),
-              );
-            }}>
-            <Text style={{color: 'red'}}>{t('Remove')}</Text>
-          </RemoveCta>
-        ) : null}
+                    ],
+                  }),
+                );
+              }}>
+              <Text style={{color: 'red'}}>{t('Remove')}</Text>
+            </RemoveCta>
+          ) : null}
+        </ExternalServiceContainer>
       </SettingsComponent>
     </SettingsContainer>
   );

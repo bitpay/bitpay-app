@@ -31,6 +31,7 @@ import {
   RemoveCta,
   CopiedContainer,
   CopyImgContainerRight,
+  ExternalServiceContainer,
 } from '../styled/ExternalServicesDetails';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
@@ -108,200 +109,202 @@ const SimplexSellDetails: React.FC = () => {
   return (
     <SettingsContainer>
       <SettingsComponent>
-        <RowDataContainer>
-          <CryptoAmountContainer>
-            <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
-            <CryptoContainer>
-              <CryptoAmount>
-                {Number(sellOrder.fiat_receiving_amount).toFixed(2)}
-              </CryptoAmount>
-              <CryptoUnit>{sellOrder.fiat_currency}</CryptoUnit>
-            </CryptoContainer>
-          </CryptoAmountContainer>
-          <SimplexLogo iconOnly={true} />
-        </RowDataContainer>
-
-        <LabelTip type="warn">
-          <LabelTipText>
-            {t(
-              "The final amount you receive when the transaction is complete may differ because it is based on Simplex's exchange rate.",
-            )}
-          </LabelTipText>
-        </LabelTip>
-
-        <RowDataContainer>
-          <RowLabel>{t('Paying')}</RowLabel>
-          <RowData>
-            {sellOrder.crypto_amount} {sellOrder.coin}
-          </RowData>
-        </RowDataContainer>
-
-        {sellOrder.chain && (
+        <ExternalServiceContainer>
           <RowDataContainer>
-            <RowLabel>{t('Blockchain')}</RowLabel>
-            <RowData>
-              {BitpaySupportedCoins[sellOrder.chain.toLowerCase()]?.name ||
-                sellOrder.chain.toUpperCase()}
-            </RowData>
+            <CryptoAmountContainer>
+              <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
+              <CryptoContainer>
+                <CryptoAmount>
+                  {Number(sellOrder.fiat_receiving_amount).toFixed(2)}
+                </CryptoAmount>
+                <CryptoUnit>{sellOrder.fiat_currency}</CryptoUnit>
+              </CryptoContainer>
+            </CryptoAmountContainer>
+            <SimplexLogo iconOnly={true} />
           </RowDataContainer>
-        )}
 
-        <RowDataContainer>
-          <RowLabel>{t('Created')}</RowLabel>
-          <RowData>
-            {moment(sellOrder.created_on).format('MMM DD, YYYY hh:mm a')}
-          </RowData>
-        </RowDataContainer>
-
-        {!!sellOrder.status && (
-          <RowDataContainer>
-            <RowLabel>{t('Status')}</RowLabel>
-            <RowData
-              style={{
-                color: simplexSellGetStatusColor(sellOrder.status),
-                textTransform: 'capitalize',
-              }}>
-              {status.statusTitle || t('Sell Order started')}
-            </RowData>
-          </RowDataContainer>
-        )}
-
-        {!sellOrder.status && (
-          <LabelTip type="info">
+          <LabelTip type="warn">
             <LabelTipText>
               {t(
-                'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
+                "The final amount you receive when the transaction is complete may differ because it is based on Simplex's exchange rate.",
               )}
             </LabelTipText>
           </LabelTip>
-        )}
 
-        {!!sellOrder.status && (
-          <LabelTip type="info">
-            <LabelTipText>
-              {status.statusDescription ||
-                t(
+          <RowDataContainer>
+            <RowLabel>{t('Paying')}</RowLabel>
+            <RowData>
+              {sellOrder.crypto_amount} {sellOrder.coin}
+            </RowData>
+          </RowDataContainer>
+
+          {sellOrder.chain && (
+            <RowDataContainer>
+              <RowLabel>{t('Blockchain')}</RowLabel>
+              <RowData>
+                {BitpaySupportedCoins[sellOrder.chain.toLowerCase()]?.name ||
+                  sellOrder.chain.toUpperCase()}
+              </RowData>
+            </RowDataContainer>
+          )}
+
+          <RowDataContainer>
+            <RowLabel>{t('Created')}</RowLabel>
+            <RowData>
+              {moment(sellOrder.created_on).format('MMM DD, YYYY hh:mm a')}
+            </RowData>
+          </RowDataContainer>
+
+          {!!sellOrder.status && (
+            <RowDataContainer>
+              <RowLabel>{t('Status')}</RowLabel>
+              <RowData
+                style={{
+                  color: simplexSellGetStatusColor(sellOrder.status),
+                  textTransform: 'capitalize',
+                }}>
+                {status.statusTitle || t('Sell Order started')}
+              </RowData>
+            </RowDataContainer>
+          )}
+
+          {!sellOrder.status && (
+            <LabelTip type="info">
+              <LabelTipText>
+                {t(
                   'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
                 )}
-            </LabelTipText>
-            {['failed'].includes(sellOrder.status) ? (
-              <>
-                <LabelTipText>
-                  {t('Having problems with Simplex?')}{' '}
-                </LabelTipText>
-                <TouchableOpacity
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser(
-                        'https://www.simplex.com/support/',
-                      ),
-                    );
-                  }}>
-                  <Link style={{marginTop: 15}}>
-                    {t('Contact the Simplex support team.')}
-                  </Link>
-                </TouchableOpacity>
-              </>
-            ) : null}
-          </LabelTip>
-        )}
+              </LabelTipText>
+            </LabelTip>
+          )}
 
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(sellOrder.address_to);
-              setCopiedDepositAddress(true);
-            }}>
-            <RowLabel>{t('Deposit address')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {sellOrder.address_to}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
-
-        {sellOrder.quote_id ? (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(sellOrder.quote_id!);
-                setCopiedPaymentId(true);
-              }}>
-              <RowLabel>{t('Simplex Quote ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {sellOrder.quote_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedPaymentId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        ) : null}
-
-        {!!sellOrder.tx_sent_id && (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(sellOrder.tx_sent_id!);
-                setCopiedTransactionSentId(true);
-              }}>
-              <RowLabel>{t('Transaction ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {sellOrder.tx_sent_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedTransactionSentId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        )}
-
-        <RemoveCta
-          onPress={async () => {
-            haptic('impactLight');
-            dispatch(
-              showBottomNotificationModal({
-                type: 'question',
-                title: t('Removing sell order data'),
-                message: t(
-                  "The data of this sell order will be deleted. Make sure you don't need it",
-                ),
-                enableBackdropDismiss: true,
-                actions: [
-                  {
-                    text: t('REMOVE'),
-                    action: () => {
-                      dispatch(dismissBottomNotificationModal());
+          {!!sellOrder.status && (
+            <LabelTip type="info">
+              <LabelTipText>
+                {status.statusDescription ||
+                  t(
+                    'If you have successfully completed the entire crypto selling process, remember that receiving payment may take a few days.',
+                  )}
+              </LabelTipText>
+              {['failed'].includes(sellOrder.status) ? (
+                <>
+                  <LabelTipText>
+                    {t('Having problems with Simplex?')}{' '}
+                  </LabelTipText>
+                  <TouchableOpacity
+                    onPress={() => {
+                      haptic('impactLight');
                       dispatch(
-                        SellCryptoActions.removeSellOrderSimplex({
-                          simplexExternalId: sellOrder.external_id,
-                        }),
+                        openUrlWithInAppBrowser(
+                          'https://www.simplex.com/support/',
+                        ),
                       );
-                      navigation.goBack();
+                    }}>
+                    <Link style={{marginTop: 15}}>
+                      {t('Contact the Simplex support team.')}
+                    </Link>
+                  </TouchableOpacity>
+                </>
+              ) : null}
+            </LabelTip>
+          )}
+
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(sellOrder.address_to);
+                setCopiedDepositAddress(true);
+              }}>
+              <RowLabel>{t('Deposit address')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {sellOrder.address_to}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+
+          {sellOrder.quote_id ? (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(sellOrder.quote_id!);
+                  setCopiedPaymentId(true);
+                }}>
+                <RowLabel>{t('Simplex Quote ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {sellOrder.quote_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedPaymentId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          ) : null}
+
+          {!!sellOrder.tx_sent_id && (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(sellOrder.tx_sent_id!);
+                  setCopiedTransactionSentId(true);
+                }}>
+                <RowLabel>{t('Transaction ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {sellOrder.tx_sent_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedTransactionSentId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          )}
+
+          <RemoveCta
+            onPress={async () => {
+              haptic('impactLight');
+              dispatch(
+                showBottomNotificationModal({
+                  type: 'question',
+                  title: t('Removing sell order data'),
+                  message: t(
+                    "The data of this sell order will be deleted. Make sure you don't need it",
+                  ),
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: t('REMOVE'),
+                      action: () => {
+                        dispatch(dismissBottomNotificationModal());
+                        dispatch(
+                          SellCryptoActions.removeSellOrderSimplex({
+                            simplexExternalId: sellOrder.external_id,
+                          }),
+                        );
+                        navigation.goBack();
+                      },
+                      primary: true,
                     },
-                    primary: true,
-                  },
-                  {
-                    text: t('GO BACK'),
-                    action: () => {
-                      console.log('Removing sell order CANCELED');
+                    {
+                      text: t('GO BACK'),
+                      action: () => {
+                        console.log('Removing sell order CANCELED');
+                      },
                     },
-                  },
-                ],
-              }),
-            );
-          }}>
-          <Text style={{color: 'red'}}>{t('Remove')}</Text>
-        </RemoveCta>
+                  ],
+                }),
+              );
+            }}>
+            <Text style={{color: 'red'}}>{t('Remove')}</Text>
+          </RemoveCta>
+        </ExternalServiceContainer>
       </SettingsComponent>
     </SettingsContainer>
   );

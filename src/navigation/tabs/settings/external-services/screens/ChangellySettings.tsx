@@ -23,6 +23,7 @@ import {
 } from '../styled/ExternalServicesSettings';
 import {changellyGetStatusColor} from '../../../../services/swap-crypto/utils/changelly-utils';
 import {useTranslation} from 'react-i18next';
+import {ExternalServiceContainer} from '../styled/ExternalServicesDetails';
 
 const ChangellySettings: React.FC = () => {
   const {t} = useTranslation();
@@ -45,46 +46,558 @@ const ChangellySettings: React.FC = () => {
     <>
       <SettingsContainer>
         <SettingsComponent style={{paddingBottom: 500}}>
-          {!!swapTxs?.length && <PrTitle>{t('Transactions')}</PrTitle>}
-          {!!swapTxs?.length &&
-            swapTxs.map(swapTx => {
-              return (
-                <PrRow
-                  key={swapTx.exchangeTxId}
-                  onPress={() => {
-                    haptic('impactLight');
-                    navigation.navigate('ChangellyDetails', {
-                      swapTx: swapTx,
-                    });
-                  }}>
-                  <PrRowLeft>
-                    <PrTxtFiatAmount>
-                      {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
-                    </PrTxtFiatAmount>
-                    {!!swapTx.status && (
-                      <PrTxtStatus
-                        style={{
-                          color: changellyGetStatusColor(swapTx.status),
-                          textTransform: 'capitalize',
-                        }}>
-                        {swapTx.status}
-                      </PrTxtStatus>
-                    )}
-                  </PrRowLeft>
-                  <PrRowRight>
-                    <PrTxtCryptoAmount>
-                      {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
-                    </PrTxtCryptoAmount>
-                    <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
-                  </PrRowRight>
-                </PrRow>
-              );
-            })}
-          {!swapTxs?.length && (
-            <NoPrMsg>
-              {t('There are currently no transactions with Changelly')}
-            </NoPrMsg>
-          )}
+          <ExternalServiceContainer style={{paddingBottom: 50}}>
+            {!!swapTxs?.length && <PrTitle>{t('Transactions')}</PrTitle>}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!!swapTxs?.length &&
+              swapTxs.map(swapTx => {
+                return (
+                  <PrRow
+                    key={swapTx.exchangeTxId}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('ChangellyDetails', {
+                        swapTx: swapTx,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+                      </PrTxtFiatAmount>
+                      {!!swapTx.status && (
+                        <PrTxtStatus
+                          style={{
+                            color: changellyGetStatusColor(swapTx.status),
+                            textTransform: 'capitalize',
+                          }}>
+                          {swapTx.status}
+                        </PrTxtStatus>
+                      )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {swapTx.amountTo} {swapTx.coinTo.toUpperCase()}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(swapTx.date).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+            {!swapTxs?.length && (
+              <NoPrMsg>
+                {t('There are currently no transactions with Changelly')}
+              </NoPrMsg>
+            )}
+          </ExternalServiceContainer>
         </SettingsComponent>
       </SettingsContainer>
       <FooterSupport>

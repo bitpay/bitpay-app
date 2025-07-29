@@ -29,6 +29,7 @@ import {
   SupportTxt,
 } from '../styled/ExternalServicesSettings';
 import {useTranslation} from 'react-i18next';
+import {ExternalServiceContainer} from '../styled/ExternalServicesDetails';
 
 export interface SardineSettingsProps {
   incomingPaymentRequest: {
@@ -75,71 +76,73 @@ const SardineSettings: React.FC = () => {
     <>
       <SettingsContainer>
         <SettingsComponent style={{paddingBottom: 500}}>
-          {!!paymentRequests?.length && (
-            <PrTitle>{t('Payment Requests')}</PrTitle>
-          )}
-          {paymentRequests &&
-            paymentRequests.length > 0 &&
-            paymentRequests
-              .sort((a, b) => b.created_on - a.created_on)
-              .map(pr => {
-                return (
-                  <PrRow
-                    key={pr.external_id}
-                    onPress={() => {
-                      haptic('impactLight');
-                      navigation.navigate('SardineDetails', {
-                        paymentRequest: pr,
-                      });
-                    }}>
-                    <PrRowLeft>
-                      <PrTxtFiatAmount>
-                        {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
-                      </PrTxtFiatAmount>
-                      {['Declined', 'Expired'].includes(pr.status) && (
-                        <PrTxtStatus style={{color: '#df5264'}}>
-                          {pr.status === 'Declined'
-                            ? t('Payment request declined')
-                            : t('Payment request expired')}
-                        </PrTxtStatus>
-                      )}
-                      {['Complete', 'Completed'].includes(pr.status) && (
-                        <PrTxtStatus style={{color: '#01d1a2'}}>
-                          {t('Payment request completed')}
-                        </PrTxtStatus>
-                      )}
-                      {!pr.status ||
-                        (pr.status === 'paymentRequestSent' && (
-                          <PrTxtStatus>
-                            {t('Attempted payment request')}
-                          </PrTxtStatus>
-                        ))}
-                      {pr.status &&
-                        [
-                          'pending',
-                          'UserCustody',
-                          'Processed',
-                          'Draft',
-                        ].includes(pr.status) && (
-                          <PrTxtStatus>
-                            {t('Processing payment request')}
+          <ExternalServiceContainer style={{paddingBottom: 50}}>
+            {!!paymentRequests?.length && (
+              <PrTitle>{t('Payment Requests')}</PrTitle>
+            )}
+            {paymentRequests &&
+              paymentRequests.length > 0 &&
+              paymentRequests
+                .sort((a, b) => b.created_on - a.created_on)
+                .map(pr => {
+                  return (
+                    <PrRow
+                      key={pr.external_id}
+                      onPress={() => {
+                        haptic('impactLight');
+                        navigation.navigate('SardineDetails', {
+                          paymentRequest: pr,
+                        });
+                      }}>
+                      <PrRowLeft>
+                        <PrTxtFiatAmount>
+                          {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
+                        </PrTxtFiatAmount>
+                        {['Declined', 'Expired'].includes(pr.status) && (
+                          <PrTxtStatus style={{color: '#df5264'}}>
+                            {pr.status === 'Declined'
+                              ? t('Payment request declined')
+                              : t('Payment request expired')}
                           </PrTxtStatus>
                         )}
-                    </PrRowLeft>
-                    <PrRowRight>
-                      <PrTxtCryptoAmount>
-                        {pr.crypto_amount} {pr.coin}
-                      </PrTxtCryptoAmount>
-                      <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
-                    </PrRowRight>
-                  </PrRow>
-                );
-              })}
-          {(!paymentRequests || paymentRequests.length === 0) && (
-            <NoPrMsg>
-              {t('There are currently no transactions with Sardine')}
-            </NoPrMsg>
-          )}
+                        {['Complete', 'Completed'].includes(pr.status) && (
+                          <PrTxtStatus style={{color: '#01d1a2'}}>
+                            {t('Payment request completed')}
+                          </PrTxtStatus>
+                        )}
+                        {!pr.status ||
+                          (pr.status === 'paymentRequestSent' && (
+                            <PrTxtStatus>
+                              {t('Attempted payment request')}
+                            </PrTxtStatus>
+                          ))}
+                        {pr.status &&
+                          [
+                            'pending',
+                            'UserCustody',
+                            'Processed',
+                            'Draft',
+                          ].includes(pr.status) && (
+                            <PrTxtStatus>
+                              {t('Processing payment request')}
+                            </PrTxtStatus>
+                          )}
+                      </PrRowLeft>
+                      <PrRowRight>
+                        <PrTxtCryptoAmount>
+                          {pr.crypto_amount} {pr.coin}
+                        </PrTxtCryptoAmount>
+                        <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
+                      </PrRowRight>
+                    </PrRow>
+                  );
+                })}
+            {(!paymentRequests || paymentRequests.length === 0) && (
+              <NoPrMsg>
+                {t('There are currently no transactions with Sardine')}
+              </NoPrMsg>
+            )}
+          </ExternalServiceContainer>
         </SettingsComponent>
       </SettingsContainer>
       <FooterSupport>
