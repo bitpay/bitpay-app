@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef} from 'react';
-import {ActivityIndicator} from 'react-native';
+import {ActivityIndicator, Dimensions, Platform} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -18,6 +18,11 @@ import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 import {HEIGHT, WIDTH} from '../../styled/Containers';
+
+// Get full screen dimensions (includes navigation bar on Android)
+const {height: SCREEN_HEIGHT, width: SCREEN_WIDTH} = Dimensions.get(
+  Platform.OS === 'android' ? 'screen' : 'window',
+);
 
 export type OnGoingProcessMessages =
   | 'GENERAL_AWAITING'
@@ -178,8 +183,8 @@ const OnGoingProcessModal: React.FC = () => {
   ) : (
     <BaseModal
       id={'ongoingProcess'}
-      deviceHeight={HEIGHT}
-      deviceWidth={WIDTH}
+      deviceHeight={SCREEN_HEIGHT}
+      deviceWidth={SCREEN_WIDTH}
       presentationStyle="overFullScreen"
       isVisible={appWasInit && isVisible}
       backdropOpacity={0.4}
