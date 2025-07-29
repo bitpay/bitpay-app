@@ -14,6 +14,7 @@ import {
   Slate30,
 } from '../../styles/colors';
 import {BaseText} from './Text';
+import {IS_ANDROID} from "../../constants";
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 export {ActiveOpacity} from '@components/base/TouchableOpacity';
 
@@ -545,5 +546,6 @@ export const ArchaxBannerContainer = styled.View<{
 }>`
   background: ${({theme}) => (theme.dark ? '#a25718' : '#ffedc9')};
   overflow: hidden;
+  margin-top: ${({inset}) => IS_ANDROID ? inset.top : 0}px;
   padding: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '16px')};
 `;

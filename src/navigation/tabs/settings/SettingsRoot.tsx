@@ -16,7 +16,6 @@ import {
 } from '../../../components/styled/Containers';
 import {RootState} from '../../../store';
 import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {useAppSelector} from '../../../utils/hooks';
 import {useSelector} from 'react-redux';
 import {useScrollToTop} from '@react-navigation/native';
 import {SettingsScreens, SettingsGroupParamList} from './SettingsGroup';
@@ -85,7 +84,6 @@ const BitPayIdUserText = styled.Text<{bold?: boolean}>`
 const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
   const {redirectTo} = route.params || {};
   const {t} = useTranslation();
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const user = useSelector<RootState, User | null>(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
