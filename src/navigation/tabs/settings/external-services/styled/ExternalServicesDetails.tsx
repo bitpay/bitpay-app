@@ -99,3 +99,7 @@ export const RemoveCta = styled(TouchableOpacity)`
   height: 60px;
   margin-top: 30px;
 `;
+
+export const ExternalServiceContainer = styled.View`
+  padding: 0 15px;
+`;

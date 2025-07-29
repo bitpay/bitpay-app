@@ -42,7 +42,7 @@ const SwapHistorySelector = () => {
   type ExchangeData = {
     key: SwapCryptoExchangeKey;
     exchangeName: string;
-    logo: JSX.Element;
+    logo: React.JSX.Element;
     screenHistory: any;
     showExchange: boolean;
     txCount: number;

@@ -38,6 +38,7 @@ import {
   RemoveCta,
   CopiedContainer,
   CopyImgContainerRight,
+  ExternalServiceContainer,
 } from '../styled/ExternalServicesDetails';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
@@ -293,213 +294,215 @@ const TransakDetails: React.FC = () => {
             onRefresh={onRefresh}
           />
         }>
-        <RowDataContainer>
-          <CryptoAmountContainer>
-            <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
-            <CryptoContainer>
-              <CryptoAmount>{paymentRequest.crypto_amount}</CryptoAmount>
-              <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
-            </CryptoContainer>
-          </CryptoAmountContainer>
-          <TransakLogo iconOnly={true} width={50} height={30} />
-        </RowDataContainer>
-
-        <RowDataContainer>
-          <RowLabel>{t('Approximate receiving fiat amount')}</RowLabel>
-          <RowData>
-            {paymentRequest.fiat_base_amount.toFixed(2)}{' '}
-            {paymentRequest.fiat_total_amount_currency}
-          </RowData>
-        </RowDataContainer>
-        <LabelTip type="warn">
-          <LabelTipText>
-            {t(
-              "The final crypto amount you receive when the transaction is complete may differ because it is based on Transak's exchange rate.",
-            )}
-          </LabelTipText>
-        </LabelTip>
-
-        <RowDataContainer>
-          <RowLabel>{t('Paying')}</RowLabel>
-          <RowData>
-            {paymentRequest.fiat_total_amount}{' '}
-            {paymentRequest.fiat_total_amount_currency}
-          </RowData>
-        </RowDataContainer>
-
-        {paymentRequest.chain && (
+        <ExternalServiceContainer>
           <RowDataContainer>
-            <RowLabel>{t('Deposit Blockchain')}</RowLabel>
+            <CryptoAmountContainer>
+              <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
+              <CryptoContainer>
+                <CryptoAmount>{paymentRequest.crypto_amount}</CryptoAmount>
+                <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
+              </CryptoContainer>
+            </CryptoAmountContainer>
+            <TransakLogo iconOnly={true} width={50} height={30} />
+          </RowDataContainer>
+
+          <RowDataContainer>
+            <RowLabel>{t('Approximate receiving fiat amount')}</RowLabel>
             <RowData>
-              {BitpaySupportedCoins[paymentRequest.chain.toLowerCase()]?.name ||
-                paymentRequest.chain.toUpperCase()}
+              {paymentRequest.fiat_base_amount.toFixed(2)}{' '}
+              {paymentRequest.fiat_total_amount_currency}
             </RowData>
           </RowDataContainer>
-        )}
-
-        <RowDataContainer>
-          <RowLabel>{t('Created')}</RowLabel>
-          <RowData>
-            {moment(paymentRequest.created_on).format('MMM DD, YYYY hh:mm a')}
-          </RowData>
-        </RowDataContainer>
-
-        {!!paymentRequest.status && (
-          <RowDataContainer>
-            <RowLabel>{t('Status')}</RowLabel>
-            <RowData
-              style={{
-                textTransform: 'capitalize',
-              }}>
-              {status.statusTitle}
-            </RowData>
-          </RowDataContainer>
-        )}
-
-        {!!paymentRequest.status && (
-          <LabelTip type="info">
-            <LabelTipText>{status.statusDescription}</LabelTipText>
-            {['CANCELLED', 'FAILED', 'REFUNDED', 'EXPIRED'].includes(
-              paymentRequest.status,
-            ) ? (
-              <>
-                <Br />
-                <LabelTipText>
-                  {t('Having problems with Transak?')}
-                </LabelTipText>
-                <TouchableOpacity
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser(
-                        'https://support.transak.com/en/collections/3985810-customer-help-center',
-                      ),
-                    );
-                  }}>
-                  <Link style={{marginTop: 15}}>
-                    {t('Visit the Transak customer help center.')}
-                  </Link>
-                </TouchableOpacity>
-              </>
-            ) : null}
+          <LabelTip type="warn">
+            <LabelTipText>
+              {t(
+                "The final crypto amount you receive when the transaction is complete may differ because it is based on Transak's exchange rate.",
+              )}
+            </LabelTipText>
           </LabelTip>
-        )}
 
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(paymentRequest.address);
-              setCopiedDepositAddress(true);
-            }}>
-            <RowLabel>{t('Deposit address')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {paymentRequest.address}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
+          <RowDataContainer>
+            <RowLabel>{t('Paying')}</RowLabel>
+            <RowData>
+              {paymentRequest.fiat_total_amount}{' '}
+              {paymentRequest.fiat_total_amount_currency}
+            </RowData>
+          </RowDataContainer>
 
-        {!!paymentRequest.order_id && (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(paymentRequest.order_id!);
-                setCopiedOrderId(true);
-              }}>
-              <RowLabel>{t('Order ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {paymentRequest.order_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedOrderId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        )}
+          {paymentRequest.chain && (
+            <RowDataContainer>
+              <RowLabel>{t('Deposit Blockchain')}</RowLabel>
+              <RowData>
+                {BitpaySupportedCoins[paymentRequest.chain.toLowerCase()]
+                  ?.name || paymentRequest.chain.toUpperCase()}
+              </RowData>
+            </RowDataContainer>
+          )}
 
-        {!!paymentRequest.external_id && (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(paymentRequest.external_id!);
-                setCopiedReferenceId(true);
-              }}>
-              <RowLabel>{t('Reference ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {paymentRequest.external_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedReferenceId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        )}
+          <RowDataContainer>
+            <RowLabel>{t('Created')}</RowLabel>
+            <RowData>
+              {moment(paymentRequest.created_on).format('MMM DD, YYYY hh:mm a')}
+            </RowData>
+          </RowDataContainer>
 
-        {!!paymentRequest.transaction_id && (
-          <ColumnDataContainer>
-            <TouchableOpacity
-              onPress={() => {
-                copyText(paymentRequest.transaction_id!);
-                setCopiedTransactionId(true);
-              }}>
-              <RowLabel>{t('Transaction ID')}</RowLabel>
-              <CopiedContainer>
-                <ColumnData style={{maxWidth: '90%'}}>
-                  {paymentRequest.transaction_id}
-                </ColumnData>
-                <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedTransactionId ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </TouchableOpacity>
-          </ColumnDataContainer>
-        )}
+          {!!paymentRequest.status && (
+            <RowDataContainer>
+              <RowLabel>{t('Status')}</RowLabel>
+              <RowData
+                style={{
+                  textTransform: 'capitalize',
+                }}>
+                {status.statusTitle}
+              </RowData>
+            </RowDataContainer>
+          )}
 
-        <RemoveCta
-          onPress={async () => {
-            haptic('impactLight');
-            dispatch(
-              showBottomNotificationModal({
-                type: 'question',
-                title: t('Removing payment request data'),
-                message: t(
-                  "The data of this payment request will be deleted. Make sure you don't need it",
-                ),
-                enableBackdropDismiss: true,
-                actions: [
-                  {
-                    text: t('REMOVE'),
-                    action: () => {
-                      dispatch(dismissBottomNotificationModal());
+          {!!paymentRequest.status && (
+            <LabelTip type="info">
+              <LabelTipText>{status.statusDescription}</LabelTipText>
+              {['CANCELLED', 'FAILED', 'REFUNDED', 'EXPIRED'].includes(
+                paymentRequest.status,
+              ) ? (
+                <>
+                  <Br />
+                  <LabelTipText>
+                    {t('Having problems with Transak?')}
+                  </LabelTipText>
+                  <TouchableOpacity
+                    onPress={() => {
+                      haptic('impactLight');
                       dispatch(
-                        BuyCryptoActions.removePaymentRequestTransak({
-                          transakExternalId: paymentRequest.external_id,
-                        }),
+                        openUrlWithInAppBrowser(
+                          'https://support.transak.com/en/collections/3985810-customer-help-center',
+                        ),
                       );
-                      navigation.goBack();
+                    }}>
+                    <Link style={{marginTop: 15}}>
+                      {t('Visit the Transak customer help center.')}
+                    </Link>
+                  </TouchableOpacity>
+                </>
+              ) : null}
+            </LabelTip>
+          )}
+
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(paymentRequest.address);
+                setCopiedDepositAddress(true);
+              }}>
+              <RowLabel>{t('Deposit address')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {paymentRequest.address}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+
+          {!!paymentRequest.order_id && (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(paymentRequest.order_id!);
+                  setCopiedOrderId(true);
+                }}>
+                <RowLabel>{t('Order ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {paymentRequest.order_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedOrderId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          )}
+
+          {!!paymentRequest.external_id && (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(paymentRequest.external_id!);
+                  setCopiedReferenceId(true);
+                }}>
+                <RowLabel>{t('Reference ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {paymentRequest.external_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedReferenceId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          )}
+
+          {!!paymentRequest.transaction_id && (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(paymentRequest.transaction_id!);
+                  setCopiedTransactionId(true);
+                }}>
+                <RowLabel>{t('Transaction ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {paymentRequest.transaction_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedTransactionId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          )}
+
+          <RemoveCta
+            onPress={async () => {
+              haptic('impactLight');
+              dispatch(
+                showBottomNotificationModal({
+                  type: 'question',
+                  title: t('Removing payment request data'),
+                  message: t(
+                    "The data of this payment request will be deleted. Make sure you don't need it",
+                  ),
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: t('REMOVE'),
+                      action: () => {
+                        dispatch(dismissBottomNotificationModal());
+                        dispatch(
+                          BuyCryptoActions.removePaymentRequestTransak({
+                            transakExternalId: paymentRequest.external_id,
+                          }),
+                        );
+                        navigation.goBack();
+                      },
+                      primary: true,
                     },
-                    primary: true,
-                  },
-                  {
-                    text: t('GO BACK'),
-                    action: () => {
-                      logger.debug('Removing payment Request CANCELED');
+                    {
+                      text: t('GO BACK'),
+                      action: () => {
+                        logger.debug('Removing payment Request CANCELED');
+                      },
                     },
-                  },
-                ],
-              }),
-            );
-          }}>
-          <Text style={{color: 'red'}}>{t('Remove')}</Text>
-        </RemoveCta>
+                  ],
+                }),
+              );
+            }}>
+            <Text style={{color: 'red'}}>{t('Remove')}</Text>
+          </RemoveCta>
+        </ExternalServiceContainer>
       </SettingsComponent>
     </SettingsContainer>
   );

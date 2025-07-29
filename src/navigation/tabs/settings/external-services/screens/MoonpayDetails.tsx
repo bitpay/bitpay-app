@@ -37,6 +37,7 @@ import {
   RemoveCta,
   CopiedContainer,
   CopyImgContainerRight,
+  ExternalServiceContainer,
 } from '../styled/ExternalServicesDetails';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
@@ -171,213 +172,215 @@ const MoonpayDetails: React.FC = () => {
             onRefresh={onRefresh}
           />
         }>
-        <RowDataContainer>
-          <CryptoAmountContainer>
-            <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
-            <CryptoContainer>
-              <CryptoAmount>{paymentRequest.crypto_amount}</CryptoAmount>
-              <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
-            </CryptoContainer>
-          </CryptoAmountContainer>
-          <MoonpayLogo iconOnly={true} />
-        </RowDataContainer>
-
-        <RowDataContainer>
-          <RowLabel>{t('Approximate receiving fiat amount')}</RowLabel>
-          <RowData>
-            {paymentRequest.fiat_base_amount}{' '}
-            {paymentRequest.fiat_total_amount_currency}
-          </RowData>
-        </RowDataContainer>
-        <LabelTip type="warn">
-          <LabelTipText>
-            {t(
-              "The final crypto amount you receive when the transaction is complete may differ because it is based on Moonpay's exchange rate.",
-            )}
-          </LabelTipText>
-        </LabelTip>
-
-        <RowDataContainer>
-          <RowLabel>{t('Paying')}</RowLabel>
-          <RowData>
-            {paymentRequest.fiat_total_amount}{' '}
-            {paymentRequest.fiat_total_amount_currency}
-          </RowData>
-        </RowDataContainer>
-
-        {paymentRequest.chain && (
+        <ExternalServiceContainer>
           <RowDataContainer>
-            <RowLabel>{t('Deposit Blockchain')}</RowLabel>
+            <CryptoAmountContainer>
+              <CryptoTitle>{t('Approximate receiving amount')}</CryptoTitle>
+              <CryptoContainer>
+                <CryptoAmount>{paymentRequest.crypto_amount}</CryptoAmount>
+                <CryptoUnit>{paymentRequest.coin}</CryptoUnit>
+              </CryptoContainer>
+            </CryptoAmountContainer>
+            <MoonpayLogo iconOnly={true} />
+          </RowDataContainer>
+
+          <RowDataContainer>
+            <RowLabel>{t('Approximate receiving fiat amount')}</RowLabel>
             <RowData>
-              {BitpaySupportedCoins[paymentRequest.chain.toLowerCase()]?.name ||
-                paymentRequest.chain.toUpperCase()}
+              {paymentRequest.fiat_base_amount}{' '}
+              {paymentRequest.fiat_total_amount_currency}
             </RowData>
           </RowDataContainer>
-        )}
-
-        <RowDataContainer>
-          <RowLabel>{t('Created')}</RowLabel>
-          <RowData>
-            {moment(paymentRequest.created_on).format('MMM DD, YYYY hh:mm a')}
-          </RowData>
-        </RowDataContainer>
-
-        {!!paymentRequest.status && (
-          <RowDataContainer>
-            <RowLabel>{t('Status')}</RowLabel>
-            <RowData
-              style={{
-                color: moonpayGetStatusColor(paymentRequest.status),
-                textTransform: 'capitalize',
-              }}>
-              {status.statusTitle}
-            </RowData>
-          </RowDataContainer>
-        )}
-
-        {!paymentRequest.status && (
-          <LabelTip type="info">
+          <LabelTip type="warn">
             <LabelTipText>
               {t(
-                'If you have successfully completed the entire payment process, remember that receiving crypto may take a few hours.',
+                "The final crypto amount you receive when the transaction is complete may differ because it is based on Moonpay's exchange rate.",
               )}
             </LabelTipText>
-            <TouchableOpacity
-              onPress={() => {
-                haptic('impactLight');
-                dispatch(
-                  openUrlWithInAppBrowser(
-                    'https://buy.moonpay.com/trade_history',
-                  ),
-                );
-              }}>
-              <Link style={{marginTop: 15}}>
-                {t('What is the status of my payment?')}
-              </Link>
-            </TouchableOpacity>
           </LabelTip>
-        )}
 
-        {!!paymentRequest.status && (
-          <LabelTip type="info">
-            <LabelTipText>{status.statusDescription}</LabelTipText>
-            {['failed'].includes(paymentRequest.status) ? (
-              <>
-                <Br />
-                <LabelTipText>
-                  {t('Having problems with Moonpay?')}{' '}
-                </LabelTipText>
-                <TouchableOpacity
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser(
-                        'https://support.moonpay.com/hc/en-gb/requests/new',
-                      ),
-                    );
-                  }}>
-                  <Link style={{marginTop: 15}}>
-                    {t('Contact the Moonpay support team.')}
-                  </Link>
-                </TouchableOpacity>
-              </>
-            ) : null}
-          </LabelTip>
-        )}
+          <RowDataContainer>
+            <RowLabel>{t('Paying')}</RowLabel>
+            <RowData>
+              {paymentRequest.fiat_total_amount}{' '}
+              {paymentRequest.fiat_total_amount_currency}
+            </RowData>
+          </RowDataContainer>
 
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(paymentRequest.address);
-              setCopiedDepositAddress(true);
-            }}>
-            <RowLabel>{t('Deposit address')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {paymentRequest.address}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
+          {paymentRequest.chain && (
+            <RowDataContainer>
+              <RowLabel>{t('Deposit Blockchain')}</RowLabel>
+              <RowData>
+                {BitpaySupportedCoins[paymentRequest.chain.toLowerCase()]
+                  ?.name || paymentRequest.chain.toUpperCase()}
+              </RowData>
+            </RowDataContainer>
+          )}
 
-        {!!paymentRequest.transaction_id && (
+          <RowDataContainer>
+            <RowLabel>{t('Created')}</RowLabel>
+            <RowData>
+              {moment(paymentRequest.created_on).format('MMM DD, YYYY hh:mm a')}
+            </RowData>
+          </RowDataContainer>
+
+          {!!paymentRequest.status && (
+            <RowDataContainer>
+              <RowLabel>{t('Status')}</RowLabel>
+              <RowData
+                style={{
+                  color: moonpayGetStatusColor(paymentRequest.status),
+                  textTransform: 'capitalize',
+                }}>
+                {status.statusTitle}
+              </RowData>
+            </RowDataContainer>
+          )}
+
+          {!paymentRequest.status && (
+            <LabelTip type="info">
+              <LabelTipText>
+                {t(
+                  'If you have successfully completed the entire payment process, remember that receiving crypto may take a few hours.',
+                )}
+              </LabelTipText>
+              <TouchableOpacity
+                onPress={() => {
+                  haptic('impactLight');
+                  dispatch(
+                    openUrlWithInAppBrowser(
+                      'https://buy.moonpay.com/trade_history',
+                    ),
+                  );
+                }}>
+                <Link style={{marginTop: 15}}>
+                  {t('What is the status of my payment?')}
+                </Link>
+              </TouchableOpacity>
+            </LabelTip>
+          )}
+
+          {!!paymentRequest.status && (
+            <LabelTip type="info">
+              <LabelTipText>{status.statusDescription}</LabelTipText>
+              {['failed'].includes(paymentRequest.status) ? (
+                <>
+                  <Br />
+                  <LabelTipText>
+                    {t('Having problems with Moonpay?')}{' '}
+                  </LabelTipText>
+                  <TouchableOpacity
+                    onPress={() => {
+                      haptic('impactLight');
+                      dispatch(
+                        openUrlWithInAppBrowser(
+                          'https://support.moonpay.com/hc/en-gb/requests/new',
+                        ),
+                      );
+                    }}>
+                    <Link style={{marginTop: 15}}>
+                      {t('Contact the Moonpay support team.')}
+                    </Link>
+                  </TouchableOpacity>
+                </>
+              ) : null}
+            </LabelTip>
+          )}
+
           <ColumnDataContainer>
             <TouchableOpacity
               onPress={() => {
-                copyText(paymentRequest.transaction_id!);
-                setCopiedTransactionId(true);
+                copyText(paymentRequest.address);
+                setCopiedDepositAddress(true);
               }}>
-              <RowLabel>{t('Transaction ID')}</RowLabel>
+              <RowLabel>{t('Deposit address')}</RowLabel>
               <CopiedContainer>
                 <ColumnData style={{maxWidth: '90%'}}>
-                  {paymentRequest.transaction_id}
+                  {paymentRequest.address}
                 </ColumnData>
                 <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedTransactionId ? <CopiedSvg width={17} /> : null}
+                  {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainerRight>
               </CopiedContainer>
             </TouchableOpacity>
           </ColumnDataContainer>
-        )}
 
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(paymentRequest.external_id);
-              setCopiedExternalId(true);
+          {!!paymentRequest.transaction_id && (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(paymentRequest.transaction_id!);
+                  setCopiedTransactionId(true);
+                }}>
+                <RowLabel>{t('Transaction ID')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {paymentRequest.transaction_id}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedTransactionId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          )}
+
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(paymentRequest.external_id);
+                setCopiedExternalId(true);
+              }}>
+              <RowLabel>{t('External Transaction ID')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {paymentRequest.external_id}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedExternalId ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+
+          <RemoveCta
+            onPress={async () => {
+              haptic('impactLight');
+              dispatch(
+                showBottomNotificationModal({
+                  type: 'question',
+                  title: t('Removing payment request data'),
+                  message: t(
+                    "The data of this payment request will be deleted. Make sure you don't need it",
+                  ),
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: t('REMOVE'),
+                      action: () => {
+                        dispatch(dismissBottomNotificationModal());
+                        dispatch(
+                          BuyCryptoActions.removePaymentRequestMoonpay({
+                            externalId: paymentRequest.external_id,
+                          }),
+                        );
+                        navigation.goBack();
+                      },
+                      primary: true,
+                    },
+                    {
+                      text: t('GO BACK'),
+                      action: () => {
+                        console.log('Removing payment Request CANCELED');
+                      },
+                    },
+                  ],
+                }),
+              );
             }}>
-            <RowLabel>{t('External Transaction ID')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {paymentRequest.external_id}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedExternalId ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
-
-        <RemoveCta
-          onPress={async () => {
-            haptic('impactLight');
-            dispatch(
-              showBottomNotificationModal({
-                type: 'question',
-                title: t('Removing payment request data'),
-                message: t(
-                  "The data of this payment request will be deleted. Make sure you don't need it",
-                ),
-                enableBackdropDismiss: true,
-                actions: [
-                  {
-                    text: t('REMOVE'),
-                    action: () => {
-                      dispatch(dismissBottomNotificationModal());
-                      dispatch(
-                        BuyCryptoActions.removePaymentRequestMoonpay({
-                          externalId: paymentRequest.external_id,
-                        }),
-                      );
-                      navigation.goBack();
-                    },
-                    primary: true,
-                  },
-                  {
-                    text: t('GO BACK'),
-                    action: () => {
-                      console.log('Removing payment Request CANCELED');
-                    },
-                  },
-                ],
-              }),
-            );
-          }}>
-          <Text style={{color: 'red'}}>{t('Remove')}</Text>
-        </RemoveCta>
+            <Text style={{color: 'red'}}>{t('Remove')}</Text>
+          </RemoveCta>
+        </ExternalServiceContainer>
       </SettingsComponent>
     </SettingsContainer>
   );

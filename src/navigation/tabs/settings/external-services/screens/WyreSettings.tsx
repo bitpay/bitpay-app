@@ -21,6 +21,7 @@ import {useTranslation} from 'react-i18next';
 import {AppActions} from '../../../../../store/app';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {sleep} from '../../../../../utils/helper-methods';
+import {ExternalServiceContainer} from '../styled/ExternalServicesDetails';
 
 export interface WyreSettingsProps {
   incomingPaymentRequest?: WyrePaymentData;
@@ -71,57 +72,59 @@ const WyreSettings: React.FC = () => {
     <>
       <SettingsContainer>
         <SettingsComponent style={{paddingBottom: 500}}>
-          {!!paymentRequests?.length && (
-            <PrTitle>{t('Payment Requests')}</PrTitle>
-          )}
-          {paymentRequests &&
-            paymentRequests.length > 0 &&
-            paymentRequests
-              .sort((a, b) => b.created_on - a.created_on)
-              .map(pr => {
-                return (
-                  <PrRow
-                    key={pr.orderId}
-                    onPress={() => {
-                      haptic('impactLight');
-                      navigation.navigate('WyreDetails', {
-                        paymentRequest: pr,
-                      });
-                    }}>
-                    <PrRowLeft>
-                      <PrTxtFiatAmount>
-                        {pr.sourceAmount} {pr.sourceCurrency}
-                      </PrTxtFiatAmount>
-                      {pr.status === 'failed' && (
-                        <PrTxtStatus style={{color: '#df5264'}}>
-                          {t('Payment request rejected')}
-                        </PrTxtStatus>
-                      )}
-                      {pr.status === 'success' && (
-                        <PrTxtStatus style={{color: '#01d1a2'}}>
-                          {t('Payment request approved')}
-                        </PrTxtStatus>
-                      )}
-                      {pr.status === 'paymentRequestSent' && (
-                        <PrTxtStatus>
-                          {t('Processing payment request')}
-                        </PrTxtStatus>
-                      )}
-                    </PrRowLeft>
-                    <PrRowRight>
-                      <PrTxtCryptoAmount>
-                        {pr.destAmount} {pr.destCurrency}
-                      </PrTxtCryptoAmount>
-                      <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
-                    </PrRowRight>
-                  </PrRow>
-                );
-              })}
-          {(!paymentRequests || paymentRequests.length == 0) && (
-            <NoPrMsg>
-              {t('There are currently no transactions with Wyre')}
-            </NoPrMsg>
-          )}
+          <ExternalServiceContainer style={{paddingBottom: 50}}>
+            {!!paymentRequests?.length && (
+              <PrTitle>{t('Payment Requests')}</PrTitle>
+            )}
+            {paymentRequests &&
+              paymentRequests.length > 0 &&
+              paymentRequests
+                .sort((a, b) => b.created_on - a.created_on)
+                .map(pr => {
+                  return (
+                    <PrRow
+                      key={pr.orderId}
+                      onPress={() => {
+                        haptic('impactLight');
+                        navigation.navigate('WyreDetails', {
+                          paymentRequest: pr,
+                        });
+                      }}>
+                      <PrRowLeft>
+                        <PrTxtFiatAmount>
+                          {pr.sourceAmount} {pr.sourceCurrency}
+                        </PrTxtFiatAmount>
+                        {pr.status === 'failed' && (
+                          <PrTxtStatus style={{color: '#df5264'}}>
+                            {t('Payment request rejected')}
+                          </PrTxtStatus>
+                        )}
+                        {pr.status === 'success' && (
+                          <PrTxtStatus style={{color: '#01d1a2'}}>
+                            {t('Payment request approved')}
+                          </PrTxtStatus>
+                        )}
+                        {pr.status === 'paymentRequestSent' && (
+                          <PrTxtStatus>
+                            {t('Processing payment request')}
+                          </PrTxtStatus>
+                        )}
+                      </PrRowLeft>
+                      <PrRowRight>
+                        <PrTxtCryptoAmount>
+                          {pr.destAmount} {pr.destCurrency}
+                        </PrTxtCryptoAmount>
+                        <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
+                      </PrRowRight>
+                    </PrRow>
+                  );
+                })}
+            {(!paymentRequests || paymentRequests.length == 0) && (
+              <NoPrMsg>
+                {t('There are currently no transactions with Wyre')}
+              </NoPrMsg>
+            )}
+          </ExternalServiceContainer>
         </SettingsComponent>
       </SettingsContainer>
     </>

@@ -32,6 +32,7 @@ import {useTranslation} from 'react-i18next';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import {MoonpaySellOrderData} from '../../../../../store/sell-crypto/models/moonpay-sell.models';
 import CustomTabBar from '../../../../../components/custom-tab-bar/CustomTabBar';
+import {ExternalServiceContainer} from '../styled/ExternalServicesDetails';
 
 export interface MoonpaySettingsProps {
   incomingPaymentRequest?: {
@@ -69,69 +70,71 @@ const MoonpaySettings: React.FC = () => {
 
   const memoizedBuyCryptoHistory = useCallback(
     () => (
-      <SettingsComponent style={{marginTop: 10, paddingBottom: 500}}>
-        {!!paymentRequests?.length && (
-          <PrTitle>{t('Payment Requests')}</PrTitle>
-        )}
-        {paymentRequests &&
-          paymentRequests.length > 0 &&
-          paymentRequests
-            .sort((a, b) => b.created_on - a.created_on)
-            .map(pr => {
-              return (
-                <PrRow
-                  key={pr.external_id}
-                  onPress={() => {
-                    haptic('impactLight');
-                    navigation.navigate('MoonpayDetails', {
-                      paymentRequest: pr,
-                    });
-                  }}>
-                  <PrRowLeft>
-                    <PrTxtFiatAmount>
-                      {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
-                    </PrTxtFiatAmount>
-                    {pr.status === 'failed' && (
-                      <PrTxtStatus style={{color: '#df5264'}}>
-                        {t('Payment request failed')}
-                      </PrTxtStatus>
-                    )}
-                    {pr.status === 'completed' && (
-                      <PrTxtStatus style={{color: '#01d1a2'}}>
-                        {t('Payment request completed')}
-                      </PrTxtStatus>
-                    )}
-                    {!pr.status ||
-                      (pr.status === 'paymentRequestSent' && (
-                        <PrTxtStatus>
-                          {t('Attempted payment request')}
-                        </PrTxtStatus>
-                      ))}
-                    {pr.status &&
-                      [
-                        'waitingPayment',
-                        'pending',
-                        'waitingAuthorization',
-                      ].includes(pr.status) && (
-                        <PrTxtStatus>
-                          {t('Processing payment request')}
+      <SettingsComponent style={{marginTop: 20, paddingBottom: 500}}>
+        <ExternalServiceContainer style={{paddingBottom: 50}}>
+          {!!paymentRequests?.length && (
+            <PrTitle>{t('Payment Requests')}</PrTitle>
+          )}
+          {paymentRequests &&
+            paymentRequests.length > 0 &&
+            paymentRequests
+              .sort((a, b) => b.created_on - a.created_on)
+              .map(pr => {
+                return (
+                  <PrRow
+                    key={pr.external_id}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('MoonpayDetails', {
+                        paymentRequest: pr,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {pr.fiat_total_amount} {pr.fiat_total_amount_currency}
+                      </PrTxtFiatAmount>
+                      {pr.status === 'failed' && (
+                        <PrTxtStatus style={{color: '#df5264'}}>
+                          {t('Payment request failed')}
                         </PrTxtStatus>
                       )}
-                  </PrRowLeft>
-                  <PrRowRight>
-                    <PrTxtCryptoAmount>
-                      {pr.crypto_amount} {pr.coin}
-                    </PrTxtCryptoAmount>
-                    <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
-                  </PrRowRight>
-                </PrRow>
-              );
-            })}
-        {(!paymentRequests || paymentRequests.length === 0) && (
-          <NoPrMsg>
-            {t('There are currently no transactions with Moonpay')}
-          </NoPrMsg>
-        )}
+                      {pr.status === 'completed' && (
+                        <PrTxtStatus style={{color: '#01d1a2'}}>
+                          {t('Payment request completed')}
+                        </PrTxtStatus>
+                      )}
+                      {!pr.status ||
+                        (pr.status === 'paymentRequestSent' && (
+                          <PrTxtStatus>
+                            {t('Attempted payment request')}
+                          </PrTxtStatus>
+                        ))}
+                      {pr.status &&
+                        [
+                          'waitingPayment',
+                          'pending',
+                          'waitingAuthorization',
+                        ].includes(pr.status) && (
+                          <PrTxtStatus>
+                            {t('Processing payment request')}
+                          </PrTxtStatus>
+                        )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {pr.crypto_amount} {pr.coin}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(pr.created_on).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+          {(!paymentRequests || paymentRequests.length === 0) && (
+            <NoPrMsg>
+              {t('There are currently no transactions with Moonpay')}
+            </NoPrMsg>
+          )}
+        </ExternalServiceContainer>
       </SettingsComponent>
     ),
     [paymentRequests],
@@ -139,71 +142,75 @@ const MoonpaySettings: React.FC = () => {
 
   const memoizedSellCryptoHistory = useCallback(
     () => (
-      <SettingsComponent style={{marginTop: 10, paddingBottom: 500}}>
-        {!!sellOrders?.length && <PrTitle>{t('Sell Orders')}</PrTitle>}
-        {sellOrders &&
-          sellOrders.length > 0 &&
-          sellOrders
-            .sort((a, b) => b.created_on - a.created_on)
-            .map(so => {
-              return (
-                <PrRow
-                  key={so.external_id}
-                  onPress={() => {
-                    haptic('impactLight');
-                    navigation.navigate('MoonpaySellDetails', {
-                      sellOrder: so,
-                    });
-                  }}>
-                  <PrRowLeft>
-                    <PrTxtFiatAmount>
-                      {so.crypto_amount} {so.coin}
-                    </PrTxtFiatAmount>
-                    {so.status === 'failed' && (
-                      <PrTxtStatus style={{color: '#df5264'}}>
-                        {t('Sell order failed')}
-                      </PrTxtStatus>
-                    )}
-                    {so.status === 'bitpayCanceled' && (
-                      <PrTxtStatus style={{color: '#df5264'}}>
-                        {t('Sell order canceled')}
-                      </PrTxtStatus>
-                    )}
-                    {so.status &&
-                      ['waitingForDeposit', 'bitpayPending'].includes(
-                        so.status,
-                      ) && (
-                        <PrTxtStatus>{t('Waiting for deposit')}</PrTxtStatus>
+      <SettingsComponent style={{marginTop: 20, paddingBottom: 500}}>
+        <ExternalServiceContainer style={{paddingBottom: 50}}>
+          {!!sellOrders?.length && <PrTitle>{t('Sell Orders')}</PrTitle>}
+          {sellOrders &&
+            sellOrders.length > 0 &&
+            sellOrders
+              .sort((a, b) => b.created_on - a.created_on)
+              .map(so => {
+                return (
+                  <PrRow
+                    key={so.external_id}
+                    onPress={() => {
+                      haptic('impactLight');
+                      navigation.navigate('MoonpaySellDetails', {
+                        sellOrder: so,
+                      });
+                    }}>
+                    <PrRowLeft>
+                      <PrTxtFiatAmount>
+                        {so.crypto_amount} {so.coin}
+                      </PrTxtFiatAmount>
+                      {so.status === 'failed' && (
+                        <PrTxtStatus style={{color: '#df5264'}}>
+                          {t('Sell order failed')}
+                        </PrTxtStatus>
                       )}
-                    {so.status === 'completed' && (
-                      <PrTxtStatus style={{color: '#01d1a2'}}>
-                        {t('Sell order completed')}
-                      </PrTxtStatus>
-                    )}
-                    {!so.status ||
-                      (so.status === 'createdOrder' && (
-                        <PrTxtStatus>{t('Sell order started')}</PrTxtStatus>
-                      ))}
-                    {so.status &&
-                      ['pending', 'bitpayTxSent'].includes(so.status) && (
-                        <PrTxtStatus>{t('Processing sell order')}</PrTxtStatus>
+                      {so.status === 'bitpayCanceled' && (
+                        <PrTxtStatus style={{color: '#df5264'}}>
+                          {t('Sell order canceled')}
+                        </PrTxtStatus>
                       )}
-                  </PrRowLeft>
-                  <PrRowRight>
-                    <PrTxtCryptoAmount>
-                      {Number(so.fiat_receiving_amount).toFixed(2)}{' '}
-                      {so.fiat_currency}
-                    </PrTxtCryptoAmount>
-                    <PrTxtDate>{moment(so.created_on).fromNow()}</PrTxtDate>
-                  </PrRowRight>
-                </PrRow>
-              );
-            })}
-        {(!sellOrders || sellOrders.length === 0) && (
-          <NoPrMsg>
-            {t('There are currently no transactions with Moonpay')}
-          </NoPrMsg>
-        )}
+                      {so.status &&
+                        ['waitingForDeposit', 'bitpayPending'].includes(
+                          so.status,
+                        ) && (
+                          <PrTxtStatus>{t('Waiting for deposit')}</PrTxtStatus>
+                        )}
+                      {so.status === 'completed' && (
+                        <PrTxtStatus style={{color: '#01d1a2'}}>
+                          {t('Sell order completed')}
+                        </PrTxtStatus>
+                      )}
+                      {!so.status ||
+                        (so.status === 'createdOrder' && (
+                          <PrTxtStatus>{t('Sell order started')}</PrTxtStatus>
+                        ))}
+                      {so.status &&
+                        ['pending', 'bitpayTxSent'].includes(so.status) && (
+                          <PrTxtStatus>
+                            {t('Processing sell order')}
+                          </PrTxtStatus>
+                        )}
+                    </PrRowLeft>
+                    <PrRowRight>
+                      <PrTxtCryptoAmount>
+                        {Number(so.fiat_receiving_amount).toFixed(2)}{' '}
+                        {so.fiat_currency}
+                      </PrTxtCryptoAmount>
+                      <PrTxtDate>{moment(so.created_on).fromNow()}</PrTxtDate>
+                    </PrRowRight>
+                  </PrRow>
+                );
+              })}
+          {(!sellOrders || sellOrders.length === 0) && (
+            <NoPrMsg>
+              {t('There are currently no transactions with Moonpay')}
+            </NoPrMsg>
+          )}
+        </ExternalServiceContainer>
       </SettingsComponent>
     ),
     [sellOrders],

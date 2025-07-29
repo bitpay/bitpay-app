@@ -38,6 +38,7 @@ import {
   RemoveCta,
   CopiedContainer,
   CopyImgContainerRight,
+  ExternalServiceContainer,
 } from '../styled/ExternalServicesDetails';
 import {useTranslation} from 'react-i18next';
 import CopiedSvg from '../../../../../../assets/img/copied-success.svg';
@@ -86,8 +87,10 @@ const ChangellyDetails: React.FC = () => {
     if (swapTx.status === 'finished' && !force) {
       return;
     }
+    console.log('===========changellyGetStatus data enviada : ', swapTx);
     changellyGetStatus(swapTx.exchangeTxId, swapTx.status)
       .then(data => {
+        console.log('===========changellyGetStatus data recibida : ', data);
         if (data.error) {
           logger.error('Changelly getStatus Error: ' + data.error.message);
           return;
@@ -106,6 +109,7 @@ const ChangellyDetails: React.FC = () => {
         }
       })
       .catch(err => {
+        console.log('===========changellyGetStatus err : ', err);
         logger.error('Changelly getStatus Error: ' + JSON.stringify(err));
       });
   };
@@ -180,239 +184,247 @@ const ChangellyDetails: React.FC = () => {
             onRefresh={onRefresh}
           />
         }>
-        <RowDataContainer>
-          <CryptoAmountContainer>
-            <CryptoTitle>{t('Receiving amount')}</CryptoTitle>
-            <CryptoContainer>
-              <CryptoAmount>{swapTx.amountTo}</CryptoAmount>
-              <CryptoUnit>{swapTx.coinTo.toUpperCase()}</CryptoUnit>
-            </CryptoContainer>
-          </CryptoAmountContainer>
-          <ChangellyLogo iconOnly={true} width={45} height={45} />
-        </RowDataContainer>
-
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(swapTx.addressTo);
-              setCopiedDepositAddress(true);
-            }}>
-            <RowLabel>{t('Deposit address')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {swapTx.addressTo}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
-
-        {swapTx.chainTo && (
-          <RowDataContainer style={{marginTop: 20}}>
-            <RowLabel>{t('Deposit Blockchain')}</RowLabel>
-            <RowData>
-              {BitpaySupportedCoins[swapTx.chainTo.toLowerCase()]?.name ||
-                swapTx.chainTo.toUpperCase()}
-            </RowData>
-          </RowDataContainer>
-        )}
-
-        <RowDataContainer style={!swapTx.chainTo ? {marginTop: 20} : {}}>
-          <RowLabel>{t('Paying')}</RowLabel>
-          <RowData>
-            {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
-          </RowData>
-        </RowDataContainer>
-
-        {swapTx.chainFrom && (
+        <ExternalServiceContainer>
           <RowDataContainer>
-            <RowLabel>{t('Source Blockchain')}</RowLabel>
-            <RowData>
-              {BitpaySupportedCoins[swapTx.chainFrom.toLowerCase()]?.name ||
-                swapTx.chainFrom.toUpperCase()}
-            </RowData>
+            <CryptoAmountContainer>
+              <CryptoTitle>{t('Receiving amount')}</CryptoTitle>
+              <CryptoContainer>
+                <CryptoAmount>{swapTx.amountTo}</CryptoAmount>
+                <CryptoUnit>{swapTx.coinTo.toUpperCase()}</CryptoUnit>
+              </CryptoContainer>
+            </CryptoAmountContainer>
+            <ChangellyLogo iconOnly={true} width={45} height={45} />
           </RowDataContainer>
-        )}
 
-        <RowDataContainer>
-          <RowLabel>{t('Created')}</RowLabel>
-          <RowData>
-            {moment(swapTx.date).format('MMM DD, YYYY hh:mm a')}
-          </RowData>
-        </RowDataContainer>
-
-        {!!swapTx.status && (
-          <RowDataContainer>
-            <RowLabel>{t('Status')}</RowLabel>
-            <RowData
-              style={{
-                color: changellyGetStatusColor(swapTx.status),
-                textTransform: 'capitalize',
-              }}>
-              {status.statusTitle}
-            </RowData>
-          </RowDataContainer>
-        )}
-
-        <LabelTip type="info">
-          <LabelTipText>{status.statusDescription}</LabelTipText>
-          {!!swapTx.status && ['failed', 'hold'].includes(swapTx.status) ? (
-            <>
-              <Br />
-              <CopiedContainer>
-                <TouchableOpacity
-                  style={{maxWidth: '90%'}}
-                  onPress={() => {
-                    copyText('security@changelly.com');
-                    setCopiedSupportEmailLabelTip(true);
-                  }}>
-                  <LabelTipText>
-                    {t('Please contact Changelly support:')}{' '}
-                    <LabelTipText style={{fontWeight: '700'}}>
-                      security@changelly.com
-                    </LabelTipText>
-                  </LabelTipText>
-                </TouchableOpacity>
-                <CopyImgContainerRight style={{minWidth: '10%', paddingTop: 0}}>
-                  {copiedSupportEmailLabelTip ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-              <Br />
-              <CopiedContainer>
-                <TouchableOpacity
-                  style={{maxWidth: '90%'}}
-                  onPress={() => {
-                    copyText(swapTx.exchangeTxId);
-                    setCopiedExchangeTxIdLabelTip(true);
-                  }}>
-                  <LabelTipText>
-                    {t('Provide the transaction id:')}{' '}
-                    <LabelTipText style={{fontWeight: '700'}}>
-                      {swapTx.exchangeTxId}
-                    </LabelTipText>
-                  </LabelTipText>
-                </TouchableOpacity>
-                <CopyImgContainerRight style={{minWidth: '10%', paddingTop: 0}}>
-                  {copiedExchangeTxIdLabelTip ? <CopiedSvg width={17} /> : null}
-                </CopyImgContainerRight>
-              </CopiedContainer>
-            </>
-          ) : null}
-        </LabelTip>
-
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(swapTx.payinAddress);
-              setCopiedPayinAddress(true);
-            }}>
-            <RowLabel>{t('Exchange address (Payin)')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {swapTx.payinAddress}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedPayinAddress ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
-
-        {swapTx.payinExtraId ? (
           <ColumnDataContainer>
             <TouchableOpacity
               onPress={() => {
-                copyText(swapTx.payinExtraId!);
-                setCopiedPayinExtraId(true);
+                copyText(swapTx.addressTo);
+                setCopiedDepositAddress(true);
               }}>
-              <RowLabel>{t('Destination Tag (Payin Extra Id)')}</RowLabel>
+              <RowLabel>{t('Deposit address')}</RowLabel>
               <CopiedContainer>
                 <ColumnData style={{maxWidth: '90%'}}>
-                  {swapTx.payinExtraId}
+                  {swapTx.addressTo}
                 </ColumnData>
                 <CopyImgContainerRight style={{minWidth: '10%'}}>
-                  {copiedPayinExtraId ? <CopiedSvg width={17} /> : null}
+                  {copiedDepositAddress ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainerRight>
               </CopiedContainer>
             </TouchableOpacity>
           </ColumnDataContainer>
-        ) : null}
 
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(swapTx.refundAddress);
-              setCopiedRefundAddress(true);
-            }}>
-            <RowLabel>{t('Refund address')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {swapTx.refundAddress}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedRefundAddress ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
+          {swapTx.chainTo && (
+            <RowDataContainer style={{marginTop: 20}}>
+              <RowLabel>{t('Deposit Blockchain')}</RowLabel>
+              <RowData>
+                {BitpaySupportedCoins[swapTx.chainTo.toLowerCase()]?.name ||
+                  swapTx.chainTo.toUpperCase()}
+              </RowData>
+            </RowDataContainer>
+          )}
 
-        <ColumnDataContainer>
-          <TouchableOpacity
-            onPress={() => {
-              copyText(swapTx.exchangeTxId);
-              setCopiedExchangeTxId(true);
-            }}>
-            <RowLabel>{t('Exchange Transaction ID')}</RowLabel>
-            <CopiedContainer>
-              <ColumnData style={{maxWidth: '90%'}}>
-                {swapTx.exchangeTxId}
-              </ColumnData>
-              <CopyImgContainerRight style={{minWidth: '10%'}}>
-                {copiedExchangeTxId ? <CopiedSvg width={17} /> : null}
-              </CopyImgContainerRight>
-            </CopiedContainer>
-          </TouchableOpacity>
-        </ColumnDataContainer>
+          <RowDataContainer style={!swapTx.chainTo ? {marginTop: 20} : {}}>
+            <RowLabel>{t('Paying')}</RowLabel>
+            <RowData>
+              {swapTx.amountFrom} {swapTx.coinFrom.toUpperCase()}
+            </RowData>
+          </RowDataContainer>
 
-        <RemoveCta
-          onPress={async () => {
-            haptic('impactLight');
-            dispatch(
-              showBottomNotificationModal({
-                type: 'question',
-                title: t('Removing transaction data'),
-                message: t(
-                  "The data of this swap will be deleted from your device. Make sure you don't need it",
-                ),
-                enableBackdropDismiss: true,
-                actions: [
-                  {
-                    text: t('REMOVE'),
-                    action: () => {
-                      dispatch(dismissBottomNotificationModal());
-                      dispatch(
-                        SwapCryptoActions.removeTxChangelly({
-                          exchangeTxId: swapTx.exchangeTxId,
-                        }),
-                      );
-                      navigation.goBack();
+          {swapTx.chainFrom && (
+            <RowDataContainer>
+              <RowLabel>{t('Source Blockchain')}</RowLabel>
+              <RowData>
+                {BitpaySupportedCoins[swapTx.chainFrom.toLowerCase()]?.name ||
+                  swapTx.chainFrom.toUpperCase()}
+              </RowData>
+            </RowDataContainer>
+          )}
+
+          <RowDataContainer>
+            <RowLabel>{t('Created')}</RowLabel>
+            <RowData>
+              {moment(swapTx.date).format('MMM DD, YYYY hh:mm a')}
+            </RowData>
+          </RowDataContainer>
+
+          {!!swapTx.status && (
+            <RowDataContainer>
+              <RowLabel>{t('Status')}</RowLabel>
+              <RowData
+                style={{
+                  color: changellyGetStatusColor(swapTx.status),
+                  textTransform: 'capitalize',
+                }}>
+                {status.statusTitle}
+              </RowData>
+            </RowDataContainer>
+          )}
+
+          <LabelTip type="info">
+            <LabelTipText>{status.statusDescription}</LabelTipText>
+            {!!swapTx.status && ['failed', 'hold'].includes(swapTx.status) ? (
+              <>
+                <Br />
+                <CopiedContainer>
+                  <TouchableOpacity
+                    style={{maxWidth: '90%'}}
+                    onPress={() => {
+                      copyText('security@changelly.com');
+                      setCopiedSupportEmailLabelTip(true);
+                    }}>
+                    <LabelTipText>
+                      {t('Please contact Changelly support:')}{' '}
+                      <LabelTipText style={{fontWeight: '700'}}>
+                        security@changelly.com
+                      </LabelTipText>
+                    </LabelTipText>
+                  </TouchableOpacity>
+                  <CopyImgContainerRight
+                    style={{minWidth: '10%', paddingTop: 0}}>
+                    {copiedSupportEmailLabelTip ? (
+                      <CopiedSvg width={17} />
+                    ) : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+                <Br />
+                <CopiedContainer>
+                  <TouchableOpacity
+                    style={{maxWidth: '90%'}}
+                    onPress={() => {
+                      copyText(swapTx.exchangeTxId);
+                      setCopiedExchangeTxIdLabelTip(true);
+                    }}>
+                    <LabelTipText>
+                      {t('Provide the transaction id:')}{' '}
+                      <LabelTipText style={{fontWeight: '700'}}>
+                        {swapTx.exchangeTxId}
+                      </LabelTipText>
+                    </LabelTipText>
+                  </TouchableOpacity>
+                  <CopyImgContainerRight
+                    style={{minWidth: '10%', paddingTop: 0}}>
+                    {copiedExchangeTxIdLabelTip ? (
+                      <CopiedSvg width={17} />
+                    ) : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </>
+            ) : null}
+          </LabelTip>
+
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(swapTx.payinAddress);
+                setCopiedPayinAddress(true);
+              }}>
+              <RowLabel>{t('Exchange address (Payin)')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {swapTx.payinAddress}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedPayinAddress ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+
+          {swapTx.payinExtraId ? (
+            <ColumnDataContainer>
+              <TouchableOpacity
+                onPress={() => {
+                  copyText(swapTx.payinExtraId!);
+                  setCopiedPayinExtraId(true);
+                }}>
+                <RowLabel>{t('Destination Tag (Payin Extra Id)')}</RowLabel>
+                <CopiedContainer>
+                  <ColumnData style={{maxWidth: '90%'}}>
+                    {swapTx.payinExtraId}
+                  </ColumnData>
+                  <CopyImgContainerRight style={{minWidth: '10%'}}>
+                    {copiedPayinExtraId ? <CopiedSvg width={17} /> : null}
+                  </CopyImgContainerRight>
+                </CopiedContainer>
+              </TouchableOpacity>
+            </ColumnDataContainer>
+          ) : null}
+
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(swapTx.refundAddress);
+                setCopiedRefundAddress(true);
+              }}>
+              <RowLabel>{t('Refund address')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {swapTx.refundAddress}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedRefundAddress ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+
+          <ColumnDataContainer>
+            <TouchableOpacity
+              onPress={() => {
+                copyText(swapTx.exchangeTxId);
+                setCopiedExchangeTxId(true);
+              }}>
+              <RowLabel>{t('Exchange Transaction ID')}</RowLabel>
+              <CopiedContainer>
+                <ColumnData style={{maxWidth: '90%'}}>
+                  {swapTx.exchangeTxId}
+                </ColumnData>
+                <CopyImgContainerRight style={{minWidth: '10%'}}>
+                  {copiedExchangeTxId ? <CopiedSvg width={17} /> : null}
+                </CopyImgContainerRight>
+              </CopiedContainer>
+            </TouchableOpacity>
+          </ColumnDataContainer>
+
+          <RemoveCta
+            onPress={async () => {
+              haptic('impactLight');
+              dispatch(
+                showBottomNotificationModal({
+                  type: 'question',
+                  title: t('Removing transaction data'),
+                  message: t(
+                    "The data of this swap will be deleted from your device. Make sure you don't need it",
+                  ),
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: t('REMOVE'),
+                      action: () => {
+                        dispatch(dismissBottomNotificationModal());
+                        dispatch(
+                          SwapCryptoActions.removeTxChangelly({
+                            exchangeTxId: swapTx.exchangeTxId,
+                          }),
+                        );
+                        navigation.goBack();
+                      },
+                      primary: true,
                     },
-                    primary: true,
-                  },
-                  {
-                    text: t('GO BACK'),
-                    action: () => {
-                      console.log('Removing transaction data CANCELED');
+                    {
+                      text: t('GO BACK'),
+                      action: () => {
+                        console.log('Removing transaction data CANCELED');
+                      },
                     },
-                  },
-                ],
-              }),
-            );
-          }}>
-          <Text style={{color: 'red'}}>{t('Remove')}</Text>
-        </RemoveCta>
+                  ],
+                }),
+              );
+            }}>
+            <Text style={{color: 'red'}}>{t('Remove')}</Text>
+          </RemoveCta>
+        </ExternalServiceContainer>
       </SettingsComponent>
     </SettingsContainer>
   );
