@@ -1,5 +1,6 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
+import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../components/styled/Text';
 import ActivateScreen, {
   ActivateScreenParamList,
@@ -8,11 +9,11 @@ import CompleteScreen, {
   CompleteScreenParamList,
 } from './screens/CompleteScreen';
 import {Root} from '../../Root';
-import {baseNavigatorOptions} from '../../constants/NavigationOptions';
-import HeaderBackButton from '../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../utils/headerHelpers';
 
 interface CardActivationProps {
   CardActivation: typeof Root;
+  theme: Theme;
 }
 
 export type CardActivationGroupParamList = {
@@ -27,14 +28,12 @@ export enum CardActivationScreens {
 
 const CardActivationGroup: React.FC<CardActivationProps> = ({
   CardActivation,
+  theme,
 }) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <CardActivation.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <CardActivation.Group screenOptions={commonOptions}>
       <CardActivation.Screen
         name={CardActivationScreens.ACTIVATE}
         component={ActivateScreen}

@@ -1,4 +1,13 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
+import {Theme} from '@react-navigation/native';
+import {useStackScreenOptions} from '../../../utils/headerHelpers';
+import {HeaderTitle} from '../../../../components/styled/Text';
+import {Root} from '../../../../Root';
+import ArchivedGiftCards from './screens/ArchivedGiftCards';
+import GiftCardDeeplinkScreen, {
+  GiftCardDeeplinkScreenParamList,
+} from './GiftCardDeeplink';
 import {
   CardConfig,
   CardConfigMap,
@@ -9,21 +18,13 @@ import BuyGiftCard from './screens/BuyGiftCard';
 import GiftCardDetails from './screens/GiftCardDetails';
 import EnterPhone from './screens/EnterPhone';
 import EnterEmail from './screens/EnterEmail';
-import {HeaderTitle} from '../../../../components/styled/Text';
 import Confirm, {
   GiftCardConfirmParamList,
 } from '../../../wallet/screens/send/confirm/GiftCardConfirm';
-import {useTranslation} from 'react-i18next';
-import {Root} from '../../../../Root';
-import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../../components/back/HeaderBackButton';
-import GiftCardDeeplinkScreen, {
-  GiftCardDeeplinkScreenParamList,
-} from './GiftCardDeeplink';
-import ArchivedGiftCards from './screens/ArchivedGiftCards';
 
 interface GiftCardProps {
   GiftCard: typeof Root;
+  theme: Theme;
 }
 
 export type GiftCardGroupParamList = {
@@ -65,14 +66,11 @@ export enum GiftCardScreens {
   GIFT_CARD_DEEPLINK = 'GiftCardDeeplink',
 }
 
-const GiftCardGroup: React.FC<GiftCardProps> = ({GiftCard}) => {
+const GiftCardGroup: React.FC<GiftCardProps> = ({GiftCard, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <GiftCard.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <GiftCard.Group screenOptions={commonOptions}>
       <GiftCard.Screen
         name={GiftCardScreens.BUY_GIFT_CARD}
         component={BuyGiftCard}

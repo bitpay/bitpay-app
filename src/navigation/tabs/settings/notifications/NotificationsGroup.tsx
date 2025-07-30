@@ -1,14 +1,15 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
+import {Theme} from '@react-navigation/native';
 import EmailNotifications from './screens/EmailNotifications';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import PushNotifications from './screens/PushNotifications';
-import {useTranslation} from 'react-i18next';
 import {Root} from '../../../../Root';
-import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../../../utils/headerHelpers';
 
 interface NotificationsProps {
   Notifications: typeof Root;
+  theme: Theme;
 }
 
 export type NotificationsSettingsGroupParamsList = {
@@ -23,15 +24,13 @@ export enum NotificationsSettingsScreens {
 
 const NotificationsSettingsGroup: React.FC<NotificationsProps> = ({
   Notifications,
+  theme,
 }) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
 
   return (
-    <Notifications.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <Notifications.Group screenOptions={commonOptions}>
       <Notifications.Screen
         name={NotificationsSettingsScreens.EMAIL_NOTIFICATIONS}
         component={EmailNotifications}

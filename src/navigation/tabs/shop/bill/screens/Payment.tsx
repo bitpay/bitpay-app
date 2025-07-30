@@ -36,7 +36,7 @@ const AmountDue = styled(BaseText)`
   font-size: 50px;
   font-weight: 500;
   text-align: center;
-  margin-top: 110px;
+  margin-top: 20px;
 `;
 
 const PaymentDateContainer = styled.View`
@@ -105,7 +105,6 @@ const Payment = ({
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTransparent: true,
       headerTitle: () => {
         return <BillAccountPill account={account} payment={payment} />;
       },

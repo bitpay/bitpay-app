@@ -1,4 +1,5 @@
 import React from 'react';
+import {Theme} from '@react-navigation/native';
 import Backup, {BackupParamList} from './screens/Backup';
 import RecoveryPhrase, {
   RecoveryPhraseParamList,
@@ -75,6 +76,7 @@ import PayProConfirmTwoFactor, {
   PayProConfirmTwoFactorParamList,
 } from './screens/send/confirm/PayProConfirmTwoFactor';
 import {useTranslation} from 'react-i18next';
+import {useStackScreenOptions} from '../utils/headerHelpers';
 import SendToOptions, {SendToOptionsParamList} from './screens/SendToOptions';
 import SelectInputs, {SelectInputsParamList} from './screens/SelectInputs';
 import EnterBuyerProvidedEmail from './screens/send/EnterBuyerProvidedEmail';
@@ -85,12 +87,11 @@ import BackupOnboarding, {
   BackupOnboardingParamList,
 } from './screens/BackupOnboarding';
 import {Root} from '../../Root';
-import {baseNavigatorOptions} from '../../constants/NavigationOptions';
-import HeaderBackButton from '../../components/back/HeaderBackButton';
 import {AccountRowProps} from '../../components/list/AccountListRow';
 
 interface WalletProps {
   Wallet: typeof Root;
+  theme: Theme;
 }
 
 export type WalletGroupParamList = {
@@ -232,14 +233,11 @@ export enum WalletScreens {
   PAPER_WALLET = 'PaperWallet',
 }
 
-const WalletGroup: React.FC<WalletProps> = ({Wallet}) => {
+const WalletGroup: React.FC<WalletProps> = ({Wallet, theme}) => {
   const {t} = useTranslation();
+  const commonOptions = useStackScreenOptions(theme);
   return (
-    <Wallet.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <Wallet.Group screenOptions={commonOptions}>
       <Wallet.Screen
         options={{
           headerTitle: () => (

@@ -25,11 +25,12 @@ import ForgotPassword, {
 } from './screens/ForgotPassword';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../Root';
-import {baseNavigatorOptions} from '../../constants/NavigationOptions';
-import HeaderBackButton from '../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../utils/headerHelpers';
+import {Theme} from '@react-navigation/native';
 
 interface AuthProps {
   Auth: typeof Root;
+  theme: Theme;
 }
 
 export enum AuthScreens {
@@ -52,8 +53,9 @@ export type AuthGroupParamList = {
   ForgotPassword: ForgotPasswordParamList;
 };
 
-const AuthGroup: React.FC<AuthProps> = ({Auth}) => {
+const AuthGroup: React.FC<AuthProps> = ({Auth, theme}) => {
   const {t} = useTranslation();
+  const commonOptions = useStackScreenOptions(theme);
   const dispatch = useDispatch();
   const loginStatus = useSelector<RootState, LoginStatus>(
     ({BITPAY_ID}) => BITPAY_ID.loginStatus,
@@ -68,11 +70,7 @@ const AuthGroup: React.FC<AuthProps> = ({Auth}) => {
   }, [dispatch]);
 
   return (
-    <Auth.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <Auth.Group screenOptions={commonOptions}>
       <Auth.Screen
         name={AuthScreens.LOGIN}
         component={LoginScreen}

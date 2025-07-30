@@ -1,4 +1,5 @@
 import React from 'react';
+import {Theme} from '@react-navigation/native';
 import {
   Category,
   DirectIntegrationApiObject,
@@ -6,10 +7,11 @@ import {
 import MerchantDetails from './screens/MerchantDetails';
 import MerchantCategory from './screens/MerchantCategory';
 import {Root} from '../../../../Root';
-import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
+import {useStackScreenOptions} from '../../../utils/headerHelpers';
 
 interface MerchantProps {
   Merchant: typeof Root;
+  theme: Theme;
 }
 
 export type MerchantGroupParamList = {
@@ -25,12 +27,10 @@ export enum MerchantScreens {
   MERCHANT_DETAILS = 'MerchantDetails',
 }
 
-const MerchantGroup: React.FC<MerchantProps> = ({Merchant}) => {
+const MerchantGroup: React.FC<MerchantProps> = ({Merchant, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   return (
-    <Merchant.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-      })}>
+    <Merchant.Group screenOptions={commonOptions}>
       <Merchant.Screen
         name={MerchantScreens.MERCHANT_CATEGORY}
         component={MerchantCategory}

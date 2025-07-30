@@ -1,14 +1,15 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
+import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../components/styled/Text';
 import ZenLedgerImport from './screens/ZenLedgerImport';
 import ZenLedgerIntro from './screens/ZenLedgerIntro';
 import {Root} from '../../Root';
-import {baseNavigatorOptions} from '../../constants/NavigationOptions';
-import HeaderBackButton from '../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../utils/headerHelpers';
 
 interface ZenLedgerProps {
   ZenLedger: typeof Root;
+  theme: Theme;
 }
 
 export type ZenLedgerGroupParamsList = {
@@ -21,14 +22,11 @@ export enum ZenLedgerScreens {
   ZENLEDGER_IMPORT = 'ZenLedgerImport',
 }
 
-const ZenLedgerGroup: React.FC<ZenLedgerProps> = ({ZenLedger}) => {
+const ZenLedgerGroup: React.FC<ZenLedgerProps> = ({ZenLedger, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <ZenLedger.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <ZenLedger.Group screenOptions={commonOptions}>
       <ZenLedger.Screen
         name={ZenLedgerScreens.ROOT}
         component={ZenLedgerIntro}

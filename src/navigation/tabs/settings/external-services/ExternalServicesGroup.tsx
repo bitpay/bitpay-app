@@ -1,5 +1,6 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
+import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../../../components/styled/Text';
 import BanxaDetails from './screens/BanxaDetails';
 import BanxaSettings from './screens/BanxaSettings';
@@ -41,8 +42,7 @@ import {SimplexSellOrderData} from '../../../../store/sell-crypto/models/simplex
 import {changellyTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {thorswapTxData} from '../../../../store/swap-crypto/swap-crypto.models';
 import {Root} from '../../../../Root';
-import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../../../utils/headerHelpers';
 import SwapHistorySelector from './screens/SwapHistorySelector';
 import {
   RampIncomingData,
@@ -51,6 +51,7 @@ import {
 
 interface ExternalServicesSettingsProps {
   ExternalServicesSettings: typeof Root;
+  theme: Theme;
 }
 
 export type ExternalServicesSettingsGroupParamList = {
@@ -158,14 +159,11 @@ export enum ExternalServicesSettingsScreens {
 
 const ExternalServicesSettingsGroup: React.FC<
   ExternalServicesSettingsProps
-> = ({ExternalServicesSettings}) => {
+> = ({ExternalServicesSettings, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <ExternalServicesSettings.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <ExternalServicesSettings.Group screenOptions={commonOptions}>
       <ExternalServicesSettings.Screen
         name={ExternalServicesSettingsScreens.BANXA_SETTINGS}
         component={BanxaSettings}

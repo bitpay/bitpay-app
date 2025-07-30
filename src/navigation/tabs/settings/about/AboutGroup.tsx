@@ -1,14 +1,15 @@
 import React from 'react';
+import {Theme} from '@react-navigation/native';
 import SessionLogs from './screens/SessionLog';
 import SendFeedback, {SendFeedbackParamList} from './screens/SendFeedback';
 import {useTranslation} from 'react-i18next';
 import StorageUsage from './screens/StorageUsage';
 import {Root} from '../../../../Root';
-import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../../../utils/headerHelpers';
 
 interface AboutProps {
   About: typeof Root;
+  theme: Theme;
 }
 
 export type AboutGroupParamList = {
@@ -23,14 +24,11 @@ export enum AboutScreens {
   SEND_FEEDBACK = 'SendFeedback',
 }
 
-const AboutGroup: React.FC<AboutProps> = ({About}) => {
+const AboutGroup: React.FC<AboutProps> = ({About, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <About.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <About.Group screenOptions={commonOptions}>
       <About.Screen
         name={AboutScreens.STORAGE_USAGE}
         component={StorageUsage}

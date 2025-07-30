@@ -1,5 +1,6 @@
 import React from 'react';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import SwapCryptoRoot, {
   SwapCryptoRootScreenParams,
@@ -17,8 +18,7 @@ import HistoryIcon from '../../../../assets/img/swap-crypto/icon-history.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Root, navigationRef} from '../../../Root';
-import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../../utils/headerHelpers';
 import {SwapCryptoExchangeKey} from './utils/swap-crypto-utils';
 import {
   changellyTxData,
@@ -31,6 +31,7 @@ import SwapCryptoApproveErc20, {
 
 interface SwapCryptoProps {
   SwapCrypto: typeof Root;
+  theme: Theme;
 }
 
 export type SwapCryptoGroupParamList = {
@@ -58,7 +59,8 @@ export enum SwapCryptoScreens {
   SWAP_CRYPTO_APPROVE = 'SwapCryptoApproveErc20',
 }
 
-const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
+const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   const changellyHistory = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
@@ -105,11 +107,7 @@ const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto}) => {
   const swapHistoryData = getHistoryData(swapTxs);
 
   return (
-    <SwapCrypto.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <SwapCrypto.Group screenOptions={commonOptions}>
       <SwapCrypto.Screen
         name={SwapCryptoScreens.SWAP_CRYPTO_ROOT}
         component={SwapCryptoRoot}

@@ -1,4 +1,5 @@
 import React from 'react';
+import {Theme} from '@react-navigation/native';
 import Button from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
 import {HeaderRightContainer} from '../../components/styled/Containers';
@@ -20,11 +21,11 @@ import TwoFactorEnabled, {
   TwoFactorEnabledScreenParamList,
 } from './screens/TwoFactorEnabled';
 import {Root, navigationRef} from '../../Root';
-import {baseNavigatorOptions} from '../../constants/NavigationOptions';
-import HeaderBackButton from '../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../utils/headerHelpers';
 
 interface BitpayIdProps {
   BitpayId: typeof Root;
+  theme: Theme;
 }
 
 export type BitpayIdGroupParamList = {
@@ -46,7 +47,8 @@ export enum BitpayIdScreens {
   TWO_FACTOR_ENABLED = 'TwoFactorEnabled',
 }
 
-const BitpayIdGroup: React.FC<BitpayIdProps> = ({BitpayId}) => {
+const BitpayIdGroup: React.FC<BitpayIdProps> = ({BitpayId, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const user = useAppSelector(
@@ -54,11 +56,7 @@ const BitpayIdGroup: React.FC<BitpayIdProps> = ({BitpayId}) => {
   );
 
   return (
-    <BitpayId.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <BitpayId.Group screenOptions={commonOptions}>
       <BitpayId.Screen
         name={BitpayIdScreens.PAIRING}
         component={PairingScreen}

@@ -1,4 +1,5 @@
 import React from 'react';
+import {Theme} from '@react-navigation/native';
 import OnboardingStartScreen from './screens/OnboardingStart';
 import NotificationsScreen from './screens/Notifications';
 import PinScreen from './screens/Pin';
@@ -10,11 +11,11 @@ import {RecoveryPhraseParamList} from '../wallet/screens/RecoveryPhrase';
 import {VerifyPhraseParamList} from '../wallet/screens/VerifyPhrase';
 import {ImportParamList} from '../wallet/screens/Import';
 import {Root} from '../../Root';
-import {baseNavigatorOptions} from '../../constants/NavigationOptions';
-import HeaderBackButton from '../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../utils/headerHelpers';
 
 interface OnboardingProps {
   Onboarding: typeof Root;
+  theme: Theme;
 }
 
 export type OnboardingGroupParamList = {
@@ -43,13 +44,10 @@ export enum OnboardingScreens {
   IMPORT = 'Import',
 }
 
-const OnboardingStack: React.FC<OnboardingProps> = ({Onboarding}) => {
+const OnboardingStack: React.FC<OnboardingProps> = ({Onboarding, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   return (
-    <Onboarding.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <Onboarding.Group screenOptions={commonOptions}>
       <Onboarding.Screen
         name={OnboardingScreens.ONBOARDING_START}
         component={OnboardingStartScreen}
