@@ -74,6 +74,8 @@ import {
   IsVMChain,
   IsUtxoChain,
   IsOtherChain,
+  IsEVMChain,
+  IsSVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {goToAmount, incomingData} from '../../../../store/scan/scan.effects';
 import {useTranslation} from 'react-i18next';
@@ -84,7 +86,9 @@ import {
 import Settings from '../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../components/OptionsSheet';
 import Icons from '../../components/WalletIcons';
-import ContactRow from '../../../../components/list/ContactRow';
+import ContactRow, {
+  ContactRowProps,
+} from '../../../../components/list/ContactRow';
 import {ReceivingAddress} from '../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
 import {getCurrencyCodeFromCoinAndChain} from '../../../bitpay-id/utils/bitpay-id-utils';
@@ -420,25 +424,33 @@ const SendTo = () => {
   );
 
   const contacts = useMemo(() => {
-    if (isUtxo || isXrp) {
-      return allContacts.filter(
-        contact =>
+    const normalizedSearch = searchInput.toLowerCase();
+
+    const matchesContact = (contact: ContactRowProps) =>
+      contact.network === network &&
+      (contact.name.toLowerCase().includes(normalizedSearch) ||
+        contact.email?.toLowerCase().includes(normalizedSearch));
+
+    return allContacts.filter(contact => {
+      if (isUtxo || isXrp) {
+        return (
           contact.coin === currencyAbbreviation.toLowerCase() &&
           contact.chain === chain.toLowerCase() &&
-          contact.network === network &&
-          (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-            contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
-      );
-    } else {
-      return allContacts.filter(
-        contact =>
-          IsVMChain(contact.chain) &&
-          contact.network === network &&
-          (contact.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-            contact.email?.toLowerCase().includes(searchInput.toLowerCase())),
-      );
-    }
-  }, [allContacts, currencyAbbreviation, network, searchInput]);
+          matchesContact(contact)
+        );
+      }
+
+      if (IsEVMChain(chain)) {
+        return IsEVMChain(contact.chain) && matchesContact(contact);
+      }
+
+      if (IsSVMChain(chain)) {
+        return IsSVMChain(contact.chain) && matchesContact(contact);
+      }
+
+      return false;
+    });
+  }, [allContacts, currencyAbbreviation, chain, network, searchInput]);
 
   const onErrorMessageDismiss = () => {
     setSearchInput('');
