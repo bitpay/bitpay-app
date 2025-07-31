@@ -1,9 +1,9 @@
 import React from 'react';
-import {HeaderTitle} from '../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
+import {Theme} from '@react-navigation/native';
+import {HeaderTitle} from '../../../components/styled/Text';
 import {Root} from '../../../Root';
-import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../../utils/headerHelpers';
 import SellCryptoRoot, {
   SellCryptoRootScreenParams,
 } from './screens/SellCryptoRoot';
@@ -22,6 +22,7 @@ import SellCryptoOffers, {
 
 interface SellCryptoProps {
   SellCrypto: typeof Root;
+  theme: Theme;
 }
 
 export type SellCryptoGroupParamList = {
@@ -40,14 +41,11 @@ export enum SellCryptoScreens {
   SIMPLEX_SELL_CHECKOUT = 'SimplexSellCheckout',
 }
 
-const SellCryptoGroup: React.FC<SellCryptoProps> = ({SellCrypto}) => {
+const SellCryptoGroup: React.FC<SellCryptoProps> = ({SellCrypto, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <SellCrypto.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <SellCrypto.Group screenOptions={commonOptions}>
       <SellCrypto.Screen
         name={SellCryptoScreens.ROOT}
         component={SellCryptoRoot}

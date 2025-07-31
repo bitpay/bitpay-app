@@ -1,16 +1,17 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
+import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import ContactsRoot from './screens/ContactsRoot';
 import ContactsDetails from './screens/ContactsDetails';
 import ContactsAdd from './screens/ContactsAdd';
 import {ContactRowProps} from '../../../components/list/ContactRow';
-import {useTranslation} from 'react-i18next';
 import {Root} from '../../../Root';
-import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../../utils/headerHelpers';
 
 interface ContactsProps {
   Contacts: typeof Root;
+  theme: Theme;
 }
 
 export type ContactsGroupParamList = {
@@ -31,14 +32,11 @@ export enum ContactsScreens {
   ADD = 'ContactsAdd',
 }
 
-const ContactsGroup: React.FC<ContactsProps> = ({Contacts}) => {
+const ContactsGroup: React.FC<ContactsProps> = ({Contacts, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <Contacts.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <Contacts.Group screenOptions={commonOptions}>
       <Contacts.Screen name={ContactsScreens.ROOT} component={ContactsRoot} />
       <Contacts.Screen
         name={ContactsScreens.DETAILS}

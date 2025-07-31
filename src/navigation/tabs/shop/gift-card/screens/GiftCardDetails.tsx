@@ -87,7 +87,7 @@ const GiftCardDetailsContainer = styled.SafeAreaView`
 const Amount = styled(BaseText)`
   font-size: 38px;
   font-weight: 500;
-  margin: 40px 0 20px;
+  margin: 25px 0 20px;
 `;
 
 const ClaimCodeBox = styled.View`

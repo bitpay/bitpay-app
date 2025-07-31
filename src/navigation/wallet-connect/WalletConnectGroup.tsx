@@ -1,4 +1,5 @@
 import React from 'react';
+import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../components/styled/Text';
 import WalletConnectIntro, {
   WalletConnectIntroParamList,
@@ -18,11 +19,11 @@ import WalletConnectConfirm, {
 } from './screens/WalletConnectConfirm';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../Root';
-import {baseNavigatorOptions} from '../../constants/NavigationOptions';
-import HeaderBackButton from '../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../utils/headerHelpers';
 
 interface WalletConnectProps {
   WalletConnect: typeof Root;
+  theme: Theme;
 }
 
 const WalletConnectHeaderTitle = styled.View`
@@ -61,14 +62,14 @@ export enum WalletConnectScreens {
   WC_CONFIRM = 'WalletConnectConfirm',
 }
 
-const WalletConnectGroup: React.FC<WalletConnectProps> = ({WalletConnect}) => {
+const WalletConnectGroup: React.FC<WalletConnectProps> = ({
+  WalletConnect,
+  theme,
+}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <WalletConnect.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <WalletConnect.Group screenOptions={commonOptions}>
       <WalletConnect.Screen
         name={WalletConnectScreens.WC_ROOT}
         component={WalletConnectIntro}

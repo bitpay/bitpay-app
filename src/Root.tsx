@@ -883,33 +883,35 @@ export default () => {
                         gestureEnabled: false,
                       }}
                     />
-                    {AuthGroup({Auth: Root})}
-                    {IntroGroup({Intro: Root})}
-                    {OnboardingGroup({Onboarding: Root})}
-                    {SettingsGroup({Settings: Root})}
-                    {BitpayIdGroup({BitpayId: Root})}
-                    {WalletGroup({Wallet: Root})}
-                    {CardActivationGroup({CardActivation: Root})}
-                    {ScanGroup({Scan: Root})}
-                    {GiftCardGroup({GiftCard: Root})}
-                    {MerchantGroup({Merchant: Root})}
-                    {BillGroup({Bill: Root})}
-                    {GeneralSettingsGroup({GeneralSettings: Root})}
-                    {ContactsGroup({Contacts: Root})}
+                    {AuthGroup({Auth: Root, theme})}
+                    {IntroGroup({Intro: Root, theme})}
+                    {OnboardingGroup({Onboarding: Root, theme})}
+                    {SettingsGroup({Settings: Root, theme})}
+                    {BitpayIdGroup({BitpayId: Root, theme})}
+                    {WalletGroup({Wallet: Root, theme})}
+                    {CardActivationGroup({CardActivation: Root, theme})}
+                    {ScanGroup({Scan: Root, theme})}
+                    {GiftCardGroup({GiftCard: Root, theme})}
+                    {MerchantGroup({Merchant: Root, theme})}
+                    {BillGroup({Bill: Root, theme})}
+                    {GeneralSettingsGroup({GeneralSettings: Root, theme})}
+                    {ContactsGroup({Contacts: Root, theme})}
                     {ExternalServicesSettingsGroup({
                       ExternalServicesSettings: Root,
+                      theme,
                     })}
-                    {NotificationsSettingsGroup({Notifications: Root})}
+                    {NotificationsSettingsGroup({Notifications: Root, theme})}
                     {NetworkFeePolicySettingsGroup({
                       NetworkFeePolicySettings: Root,
+                      theme,
                     })}
-                    {AboutGroup({About: Root})}
-                    {CoinbaseGroup({Coinbase: Root})}
-                    {BuyCryptoGroup({BuyCrypto: Root})}
-                    {SellCryptoGroup({SellCrypto: Root})}
-                    {SwapCryptoGroup({SwapCrypto: Root})}
-                    {WalletConnectGroup({WalletConnect: Root})}
-                    {ZenLedgerGroup({ZenLedger: Root})}
+                    {AboutGroup({About: Root, theme})}
+                    {CoinbaseGroup({Coinbase: Root, theme})}
+                    {BuyCryptoGroup({BuyCrypto: Root, theme})}
+                    {SellCryptoGroup({SellCrypto: Root, theme})}
+                    {SwapCryptoGroup({SwapCrypto: Root, theme})}
+                    {WalletConnectGroup({WalletConnect: Root, theme})}
+                    {ZenLedgerGroup({ZenLedger: Root, theme})}
                   </Root.Navigator>
                   <OnGoingProcessModal />
                   <InAppNotification />

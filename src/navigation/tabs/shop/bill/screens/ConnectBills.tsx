@@ -1,7 +1,9 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import WebView from 'react-native-webview';
+import {useTranslation} from 'react-i18next';
+import {Platform} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import WebView from 'react-native-webview';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BillGroupParamList} from '../BillGroup';
 import {ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
@@ -10,7 +12,6 @@ import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {METHOD_ENVS} from '../../../../../constants/config';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
-import {useTranslation} from 'react-i18next';
 import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {BillPayAccount} from '../../../../../store/shop/shop.models';
@@ -154,7 +155,7 @@ const ConnectBills = ({
     <>
       {isWebViewShown && token ? (
         <WebView
-          style={{marginTop: insets.top}}
+          style={{marginTop: Platform.OS === 'android' ? insets.top : 0}}
           source={{
             uri: `https://elements.${METHOD_ENVS[appNetwork]}.methodfi.com/?token=${token}`,
           }}

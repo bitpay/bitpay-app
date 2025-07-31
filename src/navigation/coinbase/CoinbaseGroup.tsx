@@ -1,5 +1,6 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
+import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../components/styled/Text';
 import CoinbaseAccount, {
   CoinbaseAccountScreenParamList,
@@ -16,11 +17,11 @@ import CoinbaseTransaction, {
 } from './screens/CoinbaseTransaction';
 import {CoinbaseWithdrawConfirmParamList} from './screens/CoinbaseWithdrawConfirm';
 import {Root} from '../../Root';
-import {baseNavigatorOptions} from '../../constants/NavigationOptions';
-import HeaderBackButton from '../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../utils/headerHelpers';
 
 interface CoinbaseProps {
   Coinbase: typeof Root;
+  theme: Theme;
 }
 
 export type CoinbaseGroupParamList = {
@@ -39,14 +40,11 @@ export enum CoinbaseScreens {
   WITHDRAW = 'CoinbaseWithdraw',
 }
 
-const CoinbaseGroup: React.FC<CoinbaseProps> = ({Coinbase}) => {
+const CoinbaseGroup: React.FC<CoinbaseProps> = ({Coinbase, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <Coinbase.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <Coinbase.Group screenOptions={commonOptions}>
       <Coinbase.Screen name={CoinbaseScreens.ROOT} component={CoinbaseRoot} />
       <Coinbase.Screen
         name={CoinbaseScreens.SETTINGS}

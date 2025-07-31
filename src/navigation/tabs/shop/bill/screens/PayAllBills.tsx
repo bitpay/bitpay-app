@@ -265,7 +265,6 @@ const PayAllBills = ({
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTransparent: false,
       headerTitle: () => {
         return <HeaderTitle>{t('Pay All Bills')}</HeaderTitle>;
       },

@@ -1,5 +1,6 @@
 import React from 'react';
 import {useTranslation} from 'react-i18next';
+import {Theme} from '@react-navigation/native';
 import ConnectBills from './screens/ConnectBills';
 import Payments from './screens/Payments';
 import Payment from './screens/Payment';
@@ -16,12 +17,13 @@ import PayAllBills from './screens/PayAllBills';
 import BillSettings from './screens/BillSettings';
 import ConnectBillsOptions from './screens/ConnectBillsOptions';
 import {Root} from '../../../../Root';
-import {baseNavigatorOptions} from '../../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../../../utils/headerHelpers';
+
 import BillsHome from './screens/BillsHome';
 
 interface BillProps {
   Bill: typeof Root;
+  theme: Theme;
 }
 
 export type BillGroupParamList = {
@@ -50,14 +52,11 @@ export enum BillScreens {
   PAYMENTS = 'Payments',
 }
 
-const BillGroup: React.FC<BillProps> = ({Bill}) => {
+const BillGroup: React.FC<BillProps> = ({Bill, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <Bill.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <Bill.Group screenOptions={commonOptions}>
       <Bill.Screen
         options={{
           headerTitle: () => <HeaderTitle>{t('Confirm Payment')}</HeaderTitle>,
@@ -75,7 +74,7 @@ const BillGroup: React.FC<BillProps> = ({Bill}) => {
         component={BillSettings}
       />
       <Bill.Screen
-        options={{headerShown: false}}
+        options={{headerShown: false, contentStyle: {paddingTop: 0}}}
         name={BillScreens.CONNECT_BILLS}
         component={ConnectBills}
       />

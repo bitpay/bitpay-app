@@ -4,8 +4,8 @@ import {
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 import {useTheme} from '@react-navigation/native';
+import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../../components/styled/Text';
-import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import General from './components/General';
 import Security from './components/Security';
 import Notifications from './components/Notifications';
@@ -19,7 +19,7 @@ import ThemeSettings from './general/screens/Theme';
 import CustomizeHomeSettings from './general/screens/customize-home/CustomizeHome';
 import AltCurrencySettings from './general/screens/AltCurrencySettings';
 import LanguageSettings from './general/screens/LanguageSettings';
-import {useTranslation} from 'react-i18next';
+import {useStackScreenOptions} from '../../../navigation/utils/headerHelpers';
 
 export type SettingsDetailsParamList = {
   General: undefined;
@@ -61,24 +61,16 @@ const SettingsDetails = ({
 > & {
   route: {params?: SettingsDetailsRouteProp};
 }) => {
-  const theme = useTheme();
   const {t} = useTranslation();
+  const theme = useTheme();
+  const commonOptions = useStackScreenOptions(theme);
   const {initialRoute, redirectTo} = route.params || {};
-
   return (
     <Stack.Navigator
       initialRouteName={initialRoute || 'General'}
       screenOptions={() => ({
-        headerStyle: {
-          backgroundColor: theme.colors.background,
-        },
-        headerShadowVisible: false,
-        headerTintColor: theme.colors.text,
-        headerTitleAlign: 'center',
+        ...commonOptions,
         headerTitle: props => <HeaderTitle {...props} />,
-        headerBackTitleVisible: false,
-        headerBackVisible: false,
-        headerLeft: () => <HeaderBackButton />,
       })}>
       <Stack.Screen
         name="General"

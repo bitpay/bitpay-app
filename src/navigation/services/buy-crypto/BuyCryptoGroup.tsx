@@ -1,4 +1,5 @@
 import React from 'react';
+import {Theme} from '@react-navigation/native';
 import {HeaderTitle} from '../../../components/styled/Text';
 import BuyCryptoRoot, {
   BuyCryptoRootScreenParams,
@@ -8,11 +9,11 @@ import BuyCryptoOffers, {
 } from './screens/BuyCryptoOffers';
 import {useTranslation} from 'react-i18next';
 import {Root} from '../../../Root';
-import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
-import HeaderBackButton from '../../../components/back/HeaderBackButton';
+import {useStackScreenOptions} from '../../utils/headerHelpers';
 
 interface BuyCryptoProps {
   BuyCrypto: typeof Root;
+  theme: Theme;
 }
 
 export type BuyCryptoGroupParamList = {
@@ -25,14 +26,11 @@ export enum BuyCryptoScreens {
   OFFERS = 'BuyCryptoOffers',
 }
 
-const BuyCryptoGroup: React.FC<BuyCryptoProps> = ({BuyCrypto}) => {
+const BuyCryptoGroup: React.FC<BuyCryptoProps> = ({BuyCrypto, theme}) => {
+  const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (
-    <BuyCrypto.Group
-      screenOptions={() => ({
-        ...baseNavigatorOptions,
-        headerLeft: () => <HeaderBackButton />,
-      })}>
+    <BuyCrypto.Group screenOptions={commonOptions}>
       <BuyCrypto.Screen
         name={BuyCryptoScreens.ROOT}
         component={BuyCryptoRoot}
