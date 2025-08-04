@@ -136,6 +136,14 @@ const VerifyContextModal = ({
       );
       break;
   }
+  // if scam ignore validation
+  if (sessionV2?.verifyContext?.verified?.isScam) {
+    VerifyIcon = InvalidDomainSvg;
+    modalTitle = t('Scam Domain');
+    type = 'error';
+    title = t('Security Risk');
+    text = t("The application's domain has been flagged as a scam.");
+  }
 
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>

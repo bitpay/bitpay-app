@@ -153,6 +153,12 @@ const WalletConnectConfirm = () => {
       break;
   }
 
+  // if scam ignore validation
+  if (sessionV2?.verifyContext?.verified?.isScam) {
+    bgColor = Caution25;
+    VerifyIcon = InvalidDomainSvg;
+  }
+
   const _setTxDetails = async () => {
     try {
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(

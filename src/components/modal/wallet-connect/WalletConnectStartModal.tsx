@@ -564,6 +564,14 @@ export const WalletConnectStartModal = () => {
                             return null;
                         }
 
+                        // if scam ignore validation
+                        if (verifyContext?.verified?.isScam) {
+                          bgColor = Caution25;
+                          textColor = Caution;
+                          text = t('Scam Domain');
+                          Icon = InvalidDomainSvg;
+                        }
+
                         return (
                           <ValidationContainer bgColor={bgColor}>
                             <ValidationText textColor={textColor}>
@@ -604,6 +612,16 @@ export const WalletConnectStartModal = () => {
                           break;
                         default:
                           return null;
+                      }
+
+                      // if scam ignore validation
+                      if (verifyContext?.verified?.isScam) {
+                        VerifyIcon = InvalidDomainSvg;
+                        text = t(
+                          "The application's domain has been flagged as a scam.",
+                        );
+                        type = 'error';
+                        title = t('Security Risk');
                       }
 
                       return (

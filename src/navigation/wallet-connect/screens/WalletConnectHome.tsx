@@ -263,6 +263,12 @@ const WalletConnectHome = () => {
       break;
   }
 
+  // if scam ignore validation
+  if (sessionV2?.verifyContext?.verified?.isScam) {
+    bgColor = Caution25;
+    VerifyIcon = InvalidDomainSvg;
+  }
+
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
       await sleep(500);
