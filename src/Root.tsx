@@ -884,9 +884,9 @@ export default () => {
                       }}
                     />
                     {AuthGroup({Auth: Root, theme})}
-                    {IntroGroup({Intro: Root, theme})}
+                    {IntroGroup({Intro: Root})}
                     {OnboardingGroup({Onboarding: Root, theme})}
-                    {SettingsGroup({Settings: Root, theme})}
+                    {SettingsGroup({Settings: Root})}
                     {BitpayIdGroup({BitpayId: Root, theme})}
                     {WalletGroup({Wallet: Root, theme})}
                     {CardActivationGroup({CardActivation: Root, theme})}
@@ -894,7 +894,7 @@ export default () => {
                     {GiftCardGroup({GiftCard: Root, theme})}
                     {MerchantGroup({Merchant: Root, theme})}
                     {BillGroup({Bill: Root, theme})}
-                    {GeneralSettingsGroup({GeneralSettings: Root, theme})}
+                    {GeneralSettingsGroup({GeneralSettings: Root})}
                     {ContactsGroup({Contacts: Root, theme})}
                     {ExternalServicesSettingsGroup({
                       ExternalServicesSettings: Root,
