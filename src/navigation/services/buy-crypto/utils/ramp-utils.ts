@@ -14,7 +14,7 @@ export const rampEnv = __DEV__ ? 'sandbox' : 'production';
 export const getRampCheckoutUri = (): string => {
   return __DEV__
     ? 'https://ri-widget-staging.firebaseapp.com'
-    : 'https://buy.ramp.network';
+    : 'https://buy.rampnetwork';
 };
 
 export const rampSupportedFiatCurrencies = [
