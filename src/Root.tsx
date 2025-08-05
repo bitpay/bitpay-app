@@ -780,6 +780,11 @@ export default () => {
                         await Promise.all(
                           Object.values(keys).map(async key => {
                             if (!key?.properties?.xPrivKeyEDDSA) {
+                              dispatch(
+                                LogActions.info(
+                                  'skipping SVM creation — private key is encrypted',
+                                ),
+                              );
                               return;
                             }
                             const wallets = await createWalletsForAccounts(
@@ -789,6 +794,11 @@ export default () => {
                               getBaseSVMAccountCreationCoinsAndTokens(),
                             );
                             key.wallets.push(...wallets);
+                            dispatch(
+                              LogActions.info(
+                                `success adding SVM account for key: ${key?.id}`,
+                              ),
+                            );
                             dispatch(successAddWallet({key}));
                           }),
                         );
