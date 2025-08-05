@@ -73,7 +73,32 @@ const DeleteKey = () => {
     await sleep(500);
     dispatch(startOnGoingProcessModal('DELETING_KEY'));
 
-    // Unsubscribe wallets to push/email notifications if enabled
+    await sleep(300);
+    unsubscribeNotifications();
+    dispatch(deleteKey({keyId}));
+
+    dispatch(
+      setHomeCarouselConfig(
+        homeCarouselConfig.filter(item => item.id !== keyId),
+      ),
+    );
+    dispatch(updatePortfolioBalance());
+    dispatch(AppActions.dismissOnGoingProcessModal());
+    await sleep(1000);
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: RootStacks.TABS,
+            params: {screen: TabsScreens.HOME},
+          },
+        ],
+      }),
+    );
+  };
+
+  const unsubscribeNotifications = async () => {
     const keyObj = await findKeyByKeyId(keyId, keys);
     keyObj.wallets
       .filter(
@@ -88,29 +113,6 @@ const DeleteKey = () => {
           dispatch(unSubscribeEmailNotifications(walletClient));
         }
       });
-
-    await sleep(300);
-    dispatch(deleteKey({keyId}));
-
-    dispatch(
-      setHomeCarouselConfig(
-        homeCarouselConfig.filter(item => item.id !== keyId),
-      ),
-    );
-    await sleep(1000);
-    dispatch(updatePortfolioBalance());
-    dispatch(AppActions.dismissOnGoingProcessModal());
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [
-          {
-            name: RootStacks.TABS,
-            params: {screen: TabsScreens.HOME},
-          },
-        ],
-      }),
-    );
   };
 
   return (
