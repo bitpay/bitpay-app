@@ -1134,13 +1134,8 @@ export const buildAccountList = (
     if (opts?.filterWalletsByPaymentOptions) {
       if (opts?.paymentOptions?.length) {
         const matchesPaymentOption = opts.paymentOptions.some(
-          ({currency, network: optionNetwork}) => {
-            return (
-              getCurrencyCodeFromCoinAndChain(
-                GetInvoiceCurrency(wallet.currencyAbbreviation).toLowerCase(),
-                wallet.chain,
-              ) === currency && wallet.network === optionNetwork
-            );
+          ({network: optionNetwork}) => {
+            return wallet.network === optionNetwork;
           },
         );
         if (!matchesPaymentOption) {

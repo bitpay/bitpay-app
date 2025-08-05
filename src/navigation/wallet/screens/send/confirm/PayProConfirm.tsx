@@ -64,10 +64,7 @@ import {
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
-import {
-  CustomErrorMessage,
-  WrongPasswordError,
-} from '../../../components/ErrorMessages';
+import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {PayProOptions} from '../../../../../store/wallet/effects/paypro/paypro';
 import {
@@ -122,7 +119,7 @@ const PayProConfirm = () => {
     recipient: _recipient,
     txDetails: _txDetails,
     txp: _txp,
-    invoice: _invoice,
+    invoice,
   } = route.params!;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -132,7 +129,6 @@ const PayProConfirm = () => {
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
   const [coinbaseAccount, setCoinbaseAccount] =
     useState<CoinbaseAccountProps>();
-  const [invoice, setInvoice] = useState<Invoice>(_invoice);
   const [wallet, setWallet] = useState(_wallet);
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
@@ -724,6 +720,9 @@ const PayProConfirm = () => {
           walletsAndAccounts={memoizedKeysAndWalletsList}
           onWalletSelect={onWalletSelect}
           onCoinbaseAccountSelect={onCoinbaseAccountSelect}
+          supportedTransactionCurrencies={
+            invoice.supportedTransactionCurrencies
+          }
           onBackdropPress={async () => {
             setWalletSelectorVisible(false);
             if (!wallet && !coinbaseAccount) {
