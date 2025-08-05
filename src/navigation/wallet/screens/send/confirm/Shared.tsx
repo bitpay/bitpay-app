@@ -531,6 +531,7 @@ export const WalletSelector = ({
   autoSelectIfOnlyOneWallet,
   currency,
   chain,
+  context,
 }: {
   walletsAndAccounts: WalletsAndAccounts;
   onWalletSelect: (wallet: Wallet) => void;
@@ -541,6 +542,7 @@ export const WalletSelector = ({
   autoSelectIfOnlyOneWallet?: boolean;
   currency?: string;
   chain?: string;
+  context?: string;
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -665,6 +667,7 @@ export const WalletSelector = ({
             currency={currency}
             keyAccounts={walletsAndAccounts.keyWallets}
             hideBalance={hideAllBalances}
+            context={context}
             onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
           />
           <KeyWalletsRow<WalletRowProps>
