@@ -59,6 +59,7 @@ export interface AccountRowProps extends SearchableItem {
   fiatConfirmedLockedBalanceFormat: string;
   fiatSpendableBalanceFormat: string;
   fiatPendingBalanceFormat: string;
+  isCurrencyEnabledByBitPay?: boolean;
 }
 
 interface Props {
