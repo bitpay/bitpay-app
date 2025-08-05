@@ -32,26 +32,39 @@ import {
   Row,
   SheetContainer,
 } from '../../styled/Containers';
-import {ProposalTypes, SessionTypes} from '@walletconnect/types';
 import {
+  AuthTypes,
+  CoreTypes,
+  ProposalTypes,
+  RelayerTypes,
+  SessionTypes,
+  SignClientTypes,
+} from '@walletconnect/types';
+import {
+  formatAuthMessage,
+  getPrivKey,
+  walletConnectV2approveSessionAuthenticateProposal,
   walletConnectV2ApproveSessionProposal,
   walletConnectV2RejectSessionProposal,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.effects';
-import {buildApprovedNamespaces} from '@walletconnect/utils';
+import {buildApprovedNamespaces, buildAuthObject} from '@walletconnect/utils';
 import {
   CHAIN_NAME_MAPPING,
   EIP155_SIGNING_METHODS,
   SOLANA_SIGNING_METHODS,
   WALLET_CONNECT_SUPPORTED_CHAINS,
   WC_EVENTS,
+  WC_SUPPORTED_CHAINS,
 } from '../../../constants/WalletConnectV2';
 import {WalletKitTypes} from '@reown/walletkit';
 import FastImage from 'react-native-fast-image';
 import {WalletConnectScreens} from '../../../navigation/wallet-connect/WalletConnectGroup';
 import SheetModal from '../base/sheet/SheetModal';
 import {KeyWalletsRowProps} from '../../list/KeyWalletsRow';
-import {buildAccountList} from '../../../store/wallet/utils/wallet';
-import {SUPPORTED_VM_TOKENS} from '../../../constants/currencies';
+import {
+  buildAccountList,
+  findWalletByAddress,
+} from '../../../store/wallet/utils/wallet';
 import {AccountRowProps} from '../../list/AccountListRow';
 import {WalletRowProps} from '../../list/WalletRow';
 import {CurrencyImage} from '../../currency-image/CurrencyImage';
@@ -72,10 +85,17 @@ import WCErrorBottomNotification from './WCErrorBottomNotification';
 import WarningBrownSvg from '../../../../assets/img/warning-brown.svg';
 import {getNavigationTabName, RootStacks} from '../../../Root';
 import {SvgProps} from 'react-native-svg';
+import {ethers} from 'ethers';
+
+type AuthEvt = WalletKitTypes.EventArguments['session_authenticate'];
+type ProposalEvt = WalletKitTypes.EventArguments['session_proposal'];
+type AuthOrProp = AuthEvt | ProposalEvt;
 
 export type WalletConnectStartParamList = {
   // version 2
-  proposal: WalletKitTypes.EventArguments['session_proposal'];
+  proposal:
+    | WalletKitTypes.EventArguments['session_proposal']
+    | WalletKitTypes.EventArguments['session_authenticate'];
   selectedWallets?: {
     chain: string;
     address: string;
@@ -182,7 +202,7 @@ export const WalletConnectStartModal = () => {
     ({APP}) => APP.showWalletConnectStartModal,
   );
   const [buttonState, setButtonState] = useState<ButtonState>();
-  const {proposal} = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
+  const w = useAppSelector(({WALLET_CONNECT_V2}) => WALLET_CONNECT_V2);
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const [
@@ -211,16 +231,40 @@ export const WalletConnectStartModal = () => {
   const [customErrorMessageData, setCustomErrorMessageData] = useState<
     BottomNotificationConfig | undefined
   >();
-  // version 2
-  const {id, params, verifyContext} = proposal || {};
-  const {
-    proposer,
-    relays,
-    pairingTopic,
-    requiredNamespaces,
-    optionalNamespaces,
-  } = params || {};
-  const {metadata} = proposer || {};
+  const p = w?.proposal as AuthOrProp | undefined;
+  let id: number;
+  let params: AuthTypes.AuthRequestEventArgs | ProposalTypes.Struct;
+  let proposal: AuthEvt | ProposalEvt;
+  let verifyContext: any;
+  let pairingTopic: string;
+  let authPayload: AuthTypes.PayloadParams;
+  let proposer: {
+    publicKey: string;
+    metadata: SignClientTypes.Metadata;
+  };
+  let relays: RelayerTypes.ProtocolOptions[];
+  let requiredNamespaces: ProposalTypes.RequiredNamespaces | undefined;
+  let optionalNamespaces: ProposalTypes.OptionalNamespaces | undefined;
+  let metadata: CoreTypes.Metadata | AuthTypes.Metadata | undefined;
+
+  if (p && 'authPayload' in p.params) {
+    proposal = p as AuthEvt;
+    params = proposal.params as AuthTypes.AuthRequestEventArgs;
+    ({id, verifyContext} = p);
+    pairingTopic = proposal.topic;
+    authPayload = proposal.params.authPayload;
+    metadata = proposal.params.requester?.metadata;
+  } else if (p) {
+    proposal = p as ProposalEvt;
+    params = proposal.params as ProposalTypes.Struct;
+    ({id, verifyContext} = proposal);
+    pairingTopic = proposal.params.pairingTopic;
+    proposer = proposal.params.proposer;
+    relays = proposal.params.relays;
+    requiredNamespaces = proposal.params.requiredNamespaces;
+    optionalNamespaces = proposal.params.optionalNamespaces;
+    metadata = proposer?.metadata;
+  }
 
   const peerName = metadata?.name;
   const peerUrl = metadata?.url;
@@ -257,7 +301,68 @@ export const WalletConnectStartModal = () => {
   const approveSessionProposal = async () => {
     try {
       setButtonState('loading');
-      if (selectedWallets && proposal) {
+      if ('authPayload' in params) {
+        const authPromises: Promise<AuthTypes.Cacao | null>[] = [];
+        const accounts: string[] = [];
+        const chains: string[] = [];
+
+        for (const selectedWallet of selectedWallets) {
+          for (const chain of selectedWallet.supportedChain) {
+            const iss = `${chain}:${selectedWallet.address}`;
+            accounts.push(iss);
+            chains.push(chain);
+            authPromises.push(
+              (async () => {
+                try {
+                  const wallet = findWalletByAddress(
+                    selectedWallet.address,
+                    selectedWallet.chain,
+                    selectedWallet.network,
+                    keys,
+                  );
+                  if (!wallet) {
+                    throw new Error(
+                      `Wallet not found for address ${selectedWallet.address} on chain ${chain} and network ${selectedWallet.network}`,
+                    );
+                  }
+
+                  const message = formatAuthMessage({authPayload, iss});
+                  const privKey = (await dispatch<any>(
+                    getPrivKey(wallet),
+                  )) as string;
+                  const signer = new ethers.Wallet(Buffer.from(privKey, 'hex'));
+                  const eth_signedMessage = await signer.signMessage(message);
+
+                  return buildAuthObject(
+                    authPayload,
+                    {t: 'eip191', s: eth_signedMessage},
+                    iss,
+                  );
+                } catch (e) {
+                  console.error('auth error:', e);
+                  return null;
+                }
+              })(),
+            );
+          }
+        }
+
+        const auths = (await Promise.all(authPromises)).filter(
+          (a): a is AuthTypes.Cacao => a !== null,
+        );
+        const uniqueChains = [...new Set(chains)];
+        dispatch(
+          walletConnectV2approveSessionAuthenticateProposal(
+            id,
+            pairingTopic,
+            params,
+            auths,
+            accounts,
+            uniqueChains,
+            verifyContext,
+          ),
+        );
+      } else if (selectedWallets && proposal) {
         const accounts: string[] = [];
         const chains: string[] = [];
         selectedWallets.forEach(selectedWallet => {
@@ -269,7 +374,7 @@ export const WalletConnectStartModal = () => {
         // Remove duplicate values from chains array
         const uniqueChains = [...new Set(chains)];
         const namespaces: SessionTypes.Namespaces = buildApprovedNamespaces({
-          proposal: proposal.params,
+          proposal: params,
           supportedNamespaces: {
             ...(uniqueChains.some(chain => chain.startsWith('eip155')) && {
               eip155: {
@@ -296,7 +401,7 @@ export const WalletConnectStartModal = () => {
               relays[0].protocol,
               namespaces,
               pairingTopic!,
-              proposal.params,
+              params,
               accounts,
               uniqueChains,
               verifyContext,
@@ -377,31 +482,40 @@ export const WalletConnectStartModal = () => {
   };
 
   const _setAllKeysAndSelectedWallets = (
-    chainsSelected:
-      | {
-          chain: string;
-          network: string;
-        }[]
-      | undefined,
+    chainsSelected?: {chain: string; network: string}[],
+    authPayload?: {chains: string[]},
   ) => {
     let accountChecked = false;
     const formattedKeys = Object.values(keys)
       .map(key => {
+        const filteredWallets = key.wallets.filter(
+          ({chain, currencyAbbreviation, network}) => {
+            if (chainsSelected) {
+              return chainsSelected.some(
+                selected =>
+                  chain === selected.chain &&
+                  network === selected.network &&
+                  !IsERCToken(currencyAbbreviation, chain),
+              );
+            }
+            if (authPayload) {
+              return authPayload.chains.some(
+                selected =>
+                  chain === WC_SUPPORTED_CHAINS[selected]?.chainName &&
+                  network === WC_SUPPORTED_CHAINS[selected]?.network &&
+                  !IsERCToken(currencyAbbreviation, chain),
+              );
+            }
+            return true;
+          },
+        );
         const accountList = buildAccountList(
           key,
           defaultAltCurrency.isoCode,
           rates,
           dispatch,
           {
-            filterByCustomWallets: key.wallets.filter(
-              ({chain, currencyAbbreviation, network}) =>
-                chainsSelected?.some(
-                  (selected: {chain: string; network: string}) =>
-                    chain === selected.chain &&
-                    network === selected.network &&
-                    !IsERCToken(currencyAbbreviation, chain),
-                ),
-            ),
+            filterByCustomWallets: filteredWallets,
             skipFiatCalculations: true,
           },
         ) as AccountRowProps[];
@@ -434,7 +548,7 @@ export const WalletConnectStartModal = () => {
 
   useEffect(() => {
     if (showWalletConnectStartModal) {
-      _setAllKeysAndSelectedWallets(chainsSelected);
+      _setAllKeysAndSelectedWallets(chainsSelected, authPayload);
     }
   }, [chainsSelected, showWalletConnectStartModal]);
 
