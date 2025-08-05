@@ -26,6 +26,8 @@ import {ProgressBlue} from '../../styles/colors';
 import {SearchableItem} from '../chain-search/ChainSearch';
 import {IsERCToken, IsVMChain} from '../../store/wallet/utils/currency';
 import GasTokenSvg from '../../../assets/img/gas-token.svg';
+import {getCurrencyCodeFromCoinAndChain} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
+import {SupportedTransactionCurrencies} from '../../store/wallet/effects/paypro/paypro';
 
 const SpinnerContainer = styled.View`
   display: flex;
@@ -95,6 +97,7 @@ interface Props {
   noBorder?: boolean;
   onPress: () => void;
   hideBalance: boolean;
+  supportedTransactionCurrencies?: SupportedTransactionCurrencies;
 }
 
 export const buildPreviewAddress = (
@@ -173,6 +176,7 @@ const WalletRow = ({
   isLast,
   hideBalance,
   noBorder,
+  supportedTransactionCurrencies,
 }: Props) => {
   const {
     currencyName,
@@ -194,13 +198,22 @@ const WalletRow = ({
   const showFiatBalance = Number(cryptoBalance.replaceAll(',', '')) > 0;
   const _currencyAbbreviation =
     formatCurrencyAbbreviation(currencyAbbreviation);
+  const invoiceCurrencyAbbreviation = getCurrencyCodeFromCoinAndChain(
+    currencyAbbreviation?.toUpperCase(),
+    chain,
+  );
+  const isDisabled =
+    supportedTransactionCurrencies &&
+    !supportedTransactionCurrencies[invoiceCurrencyAbbreviation]?.enabled;
 
   return (
     <RowContainer
       activeOpacity={ActiveOpacity}
       onPress={onPress}
       style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}
-      noBorder={noBorder}>
+      noBorder={noBorder}
+      containerStyle={isDisabled ? {opacity: 0.6} : {}}
+      disabled={isDisabled}>
       {isToken && (
         <NestedArrowContainer>
           <NestedArrowIcon />
@@ -218,19 +231,27 @@ const WalletRow = ({
           </H5>
         </Row>
         <Row style={{alignItems: 'center'}}>
-          <ListItemSubText
-            ellipsizeMode="tail"
-            numberOfLines={1}
-            style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-            {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
-          </ListItemSubText>
-          <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
-            {buildGasTokenBadge(
-              !IsERCToken(currencyAbbreviation, chain) && IsVMChain(chain),
-            )}
-            {buildTestBadge(network, chain, isToken)}
-            {buildUncompleteBadge(isComplete)}
-          </Row>
+          {isDisabled ? (
+            <BadgeContainer>
+              <Badge>Temporarily disabled</Badge>
+            </BadgeContainer>
+          ) : (
+            <>
+              <ListItemSubText
+                ellipsizeMode="tail"
+                numberOfLines={1}
+                style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+                {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
+              </ListItemSubText>
+              <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
+                {buildGasTokenBadge(
+                  !IsERCToken(currencyAbbreviation, chain) && IsVMChain(chain),
+                )}
+                {buildTestBadge(network, chain, isToken)}
+                {buildUncompleteBadge(isComplete)}
+              </Row>
+            </>
+          )}
         </Row>
       </CurrencyColumn>
       {!isScanning ? (
