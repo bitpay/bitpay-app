@@ -3,7 +3,13 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
-import {Keyboard, SafeAreaView, TextInput} from 'react-native';
+import {
+  Keyboard,
+  NativeSyntheticEvent,
+  SafeAreaView,
+  TextInput,
+  TextInputEndEditingEventData,
+} from 'react-native';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -55,6 +61,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     control,
     handleSubmit,
     getValues,
+    setValue,
     formState: {errors},
   } = useForm<LoginFormFieldValues>({resolver: yupResolver(schema)});
   const network = useAppSelector(({APP}) => APP.network);
@@ -159,6 +166,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     },
   );
 
+  const handleAutofill = (
+    fieldName: keyof LoginFormFieldValues,
+    event: NativeSyntheticEvent<TextInputEndEditingEventData>,
+    currentValue: string,
+  ) => {
+    const text = event.nativeEvent.text;
+    if (!text || text === currentValue) {
+      return;
+    }
+    setTimeout(() => {
+      setValue(fieldName, text, {shouldValidate: true, shouldDirty: true});
+    }, 50);
+  };
+
   const onTroubleLoggingIn = () => {
     navigation.navigate('ForgotPassword');
   };
@@ -187,6 +208,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
                 onBlur={onBlur}
+                onEndEditing={event => handleAutofill('email', event, value)}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.email?.message}
                 value={value}
@@ -212,6 +234,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
                 label={t('PASSWORD')}
                 type={'password'}
                 onBlur={onBlur}
+                onEndEditing={event => handleAutofill('password', event, value)}
                 onChangeText={(text: string) => onChange(text)}
                 error={errors.password?.message}
                 value={value}
