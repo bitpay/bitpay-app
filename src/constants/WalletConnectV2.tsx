@@ -158,7 +158,7 @@ export const EIP155_SIGNING_METHODS = {
 export const SOLANA_SIGNING_METHODS = {
   SIGN_TRANSACTION: 'solana_signTransaction',
   SIGN_MESSAGE: 'solana_signMessage',
-  // SIGN_AND_SEND_TRANSACTION: 'solana_signAndSendTransaction',
+  SIGN_AND_SEND_TRANSACTION: 'solana_signAndSendTransaction',
   // SING_ALL_TRANSACTIONS: "solana_signAllTransactions",
 };
 

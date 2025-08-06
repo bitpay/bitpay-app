@@ -45,6 +45,10 @@ import {EVM_BLOCKCHAIN_ID} from '../../../constants/config';
 import {View} from 'react-native';
 import Blockie from '../../../components/blockie/Blockie';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {
+  EIP155_SIGNING_METHODS,
+  SOLANA_SIGNING_METHODS,
+} from '../../../constants/WalletConnectV2';
 
 export type WalletConnectRequestDetailsParamList = {
   request: any;
@@ -121,16 +125,15 @@ const WalletConnectRequestDetails = () => {
     let _chainId: number;
     let chain: string | undefined;
     switch (request.method) {
-      case 'eth_signTypedData':
-      case 'eth_signTypedData_v1':
-      case 'eth_signTypedData_v3':
-      case 'eth_signTypedData_v4':
-      case 'eth_sign':
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V3:
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
+      case EIP155_SIGNING_METHODS.ETH_SIGN:
         setAddress(request.params[0]);
         setMessage(request.params[1]);
         setIsMethodSupported(true);
         break;
-      case 'personal_sign':
+      case EIP155_SIGNING_METHODS.PERSONAL_SIGN:
         setAddress(request.params[1]);
         setMessage(request.params[0]);
         setIsMethodSupported(true);
@@ -160,13 +163,14 @@ const WalletConnectRequestDetails = () => {
         setMessage(t('WCSwitchEthereumChainMsg', {peerName}));
         break;
 
-      case 'solana_signMessage':
+      case SOLANA_SIGNING_METHODS.SIGN_MESSAGE:
         setAddress(request.params.pubkey);
         setMessage(request.params.message);
         setIsMethodSupported(true);
         break;
 
-      case 'solana_signTransaction':
+      case SOLANA_SIGNING_METHODS.SIGN_TRANSACTION:
+      case SOLANA_SIGNING_METHODS.SIGN_AND_SEND_TRANSACTION:
         const senderData = request.params?.instructions?.[0].keys?.find(
           (instruction: {
             pubkey: string;
