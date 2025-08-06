@@ -14,7 +14,7 @@ import {
   Row,
   ScreenGutter,
 } from '../../../../../components/styled/Containers';
-import React, {ReactChild, useCallback, useEffect, useState} from 'react';
+import React, {ReactNode, useCallback, useEffect, useState} from 'react';
 import styled from 'styled-components/native';
 import {Pressable, ScrollView, View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -56,14 +56,10 @@ import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import AddressCard from '../../../components/AddressCard';
 import {LuckySevens} from '../../../../../styles/colors';
-import {
-  IsERCToken,
-  IsUtxoChain,
-} from '../../../../../store/wallet/utils/currency';
+import {IsERCToken} from '../../../../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
 import CoinbaseSvg from '../../../../../../assets/img/wallet/transactions/coinbase.svg';
-import {IS_ANDROID} from '../../../../../constants';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -133,7 +129,7 @@ export const Header = ({
   children,
   hr,
 }: {
-  children: ReactChild;
+  children: ReactNode;
   hr?: boolean;
 }): JSX.Element | null => {
   if (children) {
@@ -180,7 +176,6 @@ export const SendingTo: React.FC<SendingToProps> = ({
 
   const {
     recipientName,
-    recipientAddress,
     recipientEmail,
     img,
     recipientFullAddress,
