@@ -150,7 +150,6 @@ export interface WalletObj {
      */
     accountPath?: string;
   };
-  isCurrencyEnabledByBitPay?: boolean;
 }
 
 export interface KeyOptions {

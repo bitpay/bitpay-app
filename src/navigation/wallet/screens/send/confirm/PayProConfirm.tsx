@@ -66,6 +66,7 @@ import {
 import {AppActions} from '../../../../../store/app';
 import {
   CustomErrorMessage,
+  WrongPasswordError,
 } from '../../../components/ErrorMessages';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {PayProOptions} from '../../../../../store/wallet/effects/paypro/paypro';
@@ -121,7 +122,7 @@ const PayProConfirm = () => {
     recipient: _recipient,
     txDetails: _txDetails,
     txp: _txp,
-    invoice,
+    invoice: _invoice,
   } = route.params!;
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -131,6 +132,7 @@ const PayProConfirm = () => {
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
   const [coinbaseAccount, setCoinbaseAccount] =
     useState<CoinbaseAccountProps>();
+  const [invoice, setInvoice] = useState<Invoice>(_invoice);
   const [wallet, setWallet] = useState(_wallet);
   const [recipient, setRecipient] = useState(_recipient);
   const [txDetails, updateTxDetails] = useState(_txDetails);
@@ -322,9 +324,6 @@ const PayProConfirm = () => {
   };
 
   const onWalletSelect = async (selectedWallet: Wallet) => {
-    if (!selectedWallet.isCurrencyEnabledByBitPay) {
-      return;
-    }
     setWalletSelectorVisible(false);
     // not ideal - will dive into why the timeout has to be this long
     await sleep(400);
@@ -725,7 +724,6 @@ const PayProConfirm = () => {
           walletsAndAccounts={memoizedKeysAndWalletsList}
           onWalletSelect={onWalletSelect}
           onCoinbaseAccountSelect={onCoinbaseAccountSelect}
-          context={invoice ? 'invoice' : undefined}
           onBackdropPress={async () => {
             setWalletSelectorVisible(false);
             if (!wallet && !coinbaseAccount) {

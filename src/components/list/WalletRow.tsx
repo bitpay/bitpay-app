@@ -85,7 +85,6 @@ export interface WalletRowProps extends SearchableItem {
   isComplete?: boolean;
   receiveAddress?: string;
   account?: number;
-  isCurrencyEnabledByBitPay?: boolean;
 }
 
 interface Props {
@@ -96,7 +95,6 @@ interface Props {
   noBorder?: boolean;
   onPress: () => void;
   hideBalance: boolean;
-  context?: string;
 }
 
 export const buildPreviewAddress = (
@@ -175,7 +173,6 @@ const WalletRow = ({
   isLast,
   hideBalance,
   noBorder,
-  context,
 }: Props) => {
   const {
     currencyName,
@@ -191,7 +188,6 @@ const WalletRow = ({
     multisig,
     isScanning,
     isComplete,
-    isCurrencyEnabledByBitPay,
   } = wallet;
 
   // @ts-ignore
@@ -204,8 +200,7 @@ const WalletRow = ({
       activeOpacity={ActiveOpacity}
       onPress={onPress}
       style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}
-      noBorder={noBorder}
-      isDisabled={context === 'invoice' ? !isCurrencyEnabledByBitPay : false}>
+      noBorder={noBorder}>
       {isToken && (
         <NestedArrowContainer>
           <NestedArrowIcon />
@@ -223,27 +218,19 @@ const WalletRow = ({
           </H5>
         </Row>
         <Row style={{alignItems: 'center'}}>
-          {context === 'invoice' && !isCurrencyEnabledByBitPay ? (
-            <BadgeContainer>
-              <Badge>Temporarily disabled</Badge>
-            </BadgeContainer>
-          ) : (
-            <>
-              <ListItemSubText
-                ellipsizeMode="tail"
-                numberOfLines={1}
-                style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-                {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
-              </ListItemSubText>
-              <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
-                {buildGasTokenBadge(
-                  !IsERCToken(currencyAbbreviation, chain) && IsVMChain(chain),
-                )}
-                {buildTestBadge(network, chain, isToken)}
-                {buildUncompleteBadge(isComplete)}
-              </Row>
-            </>
-          )}
+          <ListItemSubText
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+            {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
+          </ListItemSubText>
+          <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
+            {buildGasTokenBadge(
+              !IsERCToken(currencyAbbreviation, chain) && IsVMChain(chain),
+            )}
+            {buildTestBadge(network, chain, isToken)}
+            {buildUncompleteBadge(isComplete)}
+          </Row>
         </Row>
       </CurrencyColumn>
       {!isScanning ? (
