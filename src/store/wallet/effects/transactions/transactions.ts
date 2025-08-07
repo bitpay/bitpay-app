@@ -9,7 +9,12 @@ import {FormatAmountStr} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import uniqBy from 'lodash.uniqby';
 import {SAFE_CONFIRMATIONS} from '../../../../constants/wallet';
-import {IsCustomERCToken, IsERCToken, IsUtxoChain} from '../../utils/currency';
+import {
+  IsCustomERCToken,
+  IsERCToken,
+  IsSVMChain,
+  IsUtxoChain,
+} from '../../utils/currency';
 import {ToAddress, ToLtcAddress} from '../address/address';
 import {
   IsDateInCurrentMonth,
@@ -179,13 +184,17 @@ const ProcessTx =
     let tokenSymbol: string | undefined;
 
     if (txpContractAddress) {
-      tokenSymbol = Object.values(tokensOptsByAddress)
-        .find(
-          ({address}) =>
-            txpContractAddress?.toLowerCase() === address?.toLowerCase(),
-        )
-        ?.symbol.toLowerCase();
-      if (tokenSymbol) {
+      const matchedToken = Object.values(tokensOptsByAddress).find(
+        ({address}) => {
+          if (IsSVMChain(chain)) {
+            return txpContractAddress === address;
+          }
+          return txpContractAddress?.toLowerCase() === address?.toLowerCase();
+        },
+      );
+
+      if (matchedToken?.symbol) {
+        tokenSymbol = matchedToken.symbol.toLowerCase();
         tokenAddress = txpContractAddress;
       }
     }
