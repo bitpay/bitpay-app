@@ -528,22 +528,23 @@ export const ValidateCoinAddress = (
 ) => {
   const extractAddress = (data: string) => {
     const prefix = /^[a-z]+:/i;
-    const params = /([\?\&](value|gas|gasPrice|gasLimit)=(\d+([\,\.]\d+)?))+/i;
+    const params =
+      /([\?\&](amount|gas|gasLimit|gasPrice|value)=(\d+([\,\.]\d+)?))+/i;
     return data.replace(prefix, '').replace(params, '');
   };
   switch (coin) {
     case 'btc':
       const address = BWC.getBitcore().Address;
-      return !!address.isValid(str, network);
+      return !!address.isValid(extractAddress(str), network);
     case 'bch':
       const addressCash = BWC.getBitcoreCash().Address;
-      return !!addressCash.isValid(str, network);
+      return !!addressCash.isValid(extractAddress(str), network);
     case 'doge':
       const addressDoge = BWC.getBitcoreDoge().Address;
-      return !!addressDoge.isValid(str, network);
+      return !!addressDoge.isValid(extractAddress(str), network);
     case 'ltc':
       const addressLtc = BWC.getBitcoreLtc().Address;
-      return !!addressLtc.isValid(str, network);
+      return !!addressLtc.isValid(extractAddress(str), network);
     case 'eth':
     case 'xrp':
     case 'matic':

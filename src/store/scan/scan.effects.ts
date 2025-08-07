@@ -379,13 +379,19 @@ const handleUnlock =
         if (context === 'u') {
           const {
             invoice: {
+              buyerEmailAddress,
               buyerProvidedInfo: {emailAddress},
               buyerProvidedEmail,
               status,
             },
           } = invoice;
 
-          if (emailAddress || buyerProvidedEmail || status !== 'new') {
+          if (
+            emailAddress ||
+            buyerProvidedEmail ||
+            buyerEmailAddress ||
+            status !== 'new'
+          ) {
             dispatch(goToPayPro(data, undefined, undefined, wallet));
           } else {
             navigationRef.navigate('EnterBuyerProvidedEmail', {data});
