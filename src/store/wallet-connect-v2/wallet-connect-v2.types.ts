@@ -14,7 +14,9 @@ export enum WalletConnectV2ActionTypes {
 interface SessionProposal {
   type: typeof WalletConnectV2ActionTypes.SESSION_PROPOSAL;
   payload: {
-    proposal?: WalletKitTypes.EventArguments['session_proposal'];
+    proposal?:
+      | WalletKitTypes.EventArguments['session_proposal']
+      | WalletKitTypes.EventArguments['session_authenticate'];
   };
 }
 

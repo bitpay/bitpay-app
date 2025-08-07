@@ -6,7 +6,9 @@ import {
 import {WalletKitTypes} from '@reown/walletkit';
 
 export const sessionProposal = (
-  proposal?: WalletKitTypes.EventArguments['session_proposal'],
+  proposal?:
+    | WalletKitTypes.EventArguments['session_proposal']
+    | WalletKitTypes.EventArguments['session_authenticate'],
 ): WalletConnectV2ActionType => ({
   type: WalletConnectV2ActionTypes.SESSION_PROPOSAL,
   payload: {proposal},

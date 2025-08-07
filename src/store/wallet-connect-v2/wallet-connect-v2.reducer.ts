@@ -11,7 +11,9 @@ export const walletConnectV2ReduxPersistBlackList: (keyof WalletConnectV2State)[
 export interface WalletConnectV2State {
   sessions: WCV2SessionType[];
   requests: WCV2RequestType[];
-  proposal?: WalletKitTypes.EventArguments['session_proposal'];
+  proposal?:
+    | WalletKitTypes.EventArguments['session_proposal']
+    | WalletKitTypes.EventArguments['session_authenticate'];
   contractAbi: {[key: string]: string};
 }
 

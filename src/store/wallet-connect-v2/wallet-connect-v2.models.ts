@@ -1,4 +1,9 @@
-import {ProposalTypes, SessionTypes, Verify} from '@walletconnect/types';
+import {
+  ProposalTypes,
+  SessionTypes,
+  Verify,
+  AuthTypes,
+} from '@walletconnect/types';
 import {Wallet} from '../wallet/wallet.models';
 import {WalletKitTypes} from '@reown/walletkit';
 import {ReactElement} from 'react';
@@ -40,7 +45,7 @@ export type WCV2RequestType =
 
 export type WCV2SessionType = SessionTypes.Struct & {
   pairingTopic: string;
-  proposalParams: ProposalTypes.Struct;
+  proposalParams: ProposalTypes.Struct | AuthTypes.AuthRequestEventArgs;
   accounts: string[];
   chains: string[];
   verifyContext: Verify.Context | undefined;
