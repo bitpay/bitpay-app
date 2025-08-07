@@ -1,5 +1,3 @@
-import {SupportedTransactionCurrencies} from '@/store/wallet/effects/paypro/paypro';
-
 export enum ClaimCodeType {
   barcode = 'barcode',
   code = 'code',
@@ -187,7 +185,6 @@ export interface Invoice {
     };
   };
   usdAmount: number;
-  supportedTransactionCurrencies: SupportedTransactionCurrencies;
 }
 
 export interface PhoneCountryInfo {

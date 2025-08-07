@@ -583,7 +583,6 @@ export const BuildKeysAndWalletsList = ({
   keys,
   network,
   payProOptions,
-  invoice,
   defaultAltCurrencyIsoCode = 'USD',
   filterWalletsByBalance = true,
   rates,
@@ -592,7 +591,6 @@ export const BuildKeysAndWalletsList = ({
   keys: {[key in string]: Key};
   network?: Network;
   payProOptions?: PayProOptions;
-  invoice?: Invoice;
   defaultAltCurrencyIsoCode?: string;
   filterWalletsByBalance?: boolean;
   rates: Rates;
@@ -614,8 +612,6 @@ export const BuildKeysAndWalletsList = ({
         paymentOptions,
         filterWalletsByPaymentOptions: true,
         filterByHideWallet: true,
-        filterWalletsByInvoiceOptions:
-          !!invoice?.supportedTransactionCurrencies,
         filterWalletsByBalance,
         network,
       },
@@ -653,33 +649,6 @@ export const BuildKeysAndWalletsList = ({
     const accounts = flatMergedAccounts.filter(a => {
       !a.chain;
     });
-
-    if (invoice?.supportedTransactionCurrencies) {
-      flatMergedAccounts.forEach(account => {
-        if (account.chain && account.currencyAbbreviation) {
-          const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
-            account.currencyAbbreviation?.toUpperCase(),
-            account.chain,
-          );
-          const isSupported =
-            invoice.supportedTransactionCurrencies[invoiceCurrency]?.enabled;
-          account.isCurrencyEnabledByBitPay = !!isSupported;
-        } else if (account.wallets) {
-          account.wallets.forEach(wallet => {
-            const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
-              wallet.currencyAbbreviation?.toUpperCase(),
-              wallet.chain,
-            );
-            const isSupported =
-              invoice.supportedTransactionCurrencies[invoiceCurrency]?.enabled;
-            (wallet as WalletRowProps).isCurrencyEnabledByBitPay =
-              !!isSupported;
-          });
-        } else {
-          return;
-        }
-      });
-    }
 
     const mergedUtxoAndEvmAccounts = flatMergedAccounts.sort((a, b) => {
       const chainA = a.chains?.[0] ?? a.chain ?? '';
@@ -760,7 +729,6 @@ export const BuildPayProWalletSelectorList =
       keys,
       network,
       payProOptions,
-      invoice,
       defaultAltCurrencyIsoCode,
       rates,
       dispatch,
@@ -1124,7 +1092,6 @@ export const buildAccountList = (
     filterWalletsByBalance?: boolean;
     filterWalletsByChain?: boolean;
     filterWalletsByPaymentOptions?: boolean;
-    filterWalletsByInvoiceOptions?: boolean;
     filterByWalletOptions?: boolean;
     filterByComplete?: boolean;
     filterByCurrencyAbbreviation?: boolean;
@@ -1165,10 +1132,7 @@ export const buildAccountList = (
     }
 
     if (opts?.filterWalletsByPaymentOptions) {
-      if (
-        opts?.paymentOptions?.length &&
-        !opts?.filterWalletsByInvoiceOptions
-      ) {
+      if (opts?.paymentOptions?.length) {
         const matchesPaymentOption = opts.paymentOptions.some(
           ({currency, network: optionNetwork}) => {
             return (
@@ -1182,12 +1146,6 @@ export const buildAccountList = (
         if (!matchesPaymentOption) {
           return;
         }
-      } else if (
-        opts?.filterWalletsByInvoiceOptions &&
-        opts?.paymentOptions?.length &&
-        opts.paymentOptions[0].network !== wallet.network
-      ) {
-        return;
       } else if (opts?.network && opts?.network !== wallet.network) {
         return;
       }
