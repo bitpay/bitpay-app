@@ -58,6 +58,7 @@ import {
   WCV2SessionType,
 } from '../../../store/wallet-connect-v2/wallet-connect-v2.models';
 import {
+  EIP155_SIGNING_METHODS,
   SOLANA_SIGNING_METHODS,
   WALLET_CONNECT_SUPPORTED_CHAINS,
 } from '../../../constants/WalletConnectV2';
@@ -382,16 +383,24 @@ const WalletConnectHome = () => {
 
   const handleRequestMethod = (request: WCV2RequestType, wallet: Wallet) => {
     const {method} = request.params.request;
-    method !== 'eth_sendTransaction' &&
-    method !== 'eth_signTransaction' &&
-    method !== SOLANA_SIGNING_METHODS.SIGN_TRANSACTION
-      ? navigation.navigate('WalletConnectRequestDetails', {
-          request,
-          wallet,
-          peerName,
-          topic,
-        })
-      : goToConfirmView(request, wallet);
+
+    const excludedMethods = [
+      EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION,
+      EIP155_SIGNING_METHODS.ETH_SIGN_TRANSACTION,
+      SOLANA_SIGNING_METHODS.SIGN_TRANSACTION,
+      SOLANA_SIGNING_METHODS.SIGN_AND_SEND_TRANSACTION,
+    ];
+
+    if (!excludedMethods.includes(method)) {
+      navigation.navigate('WalletConnectRequestDetails', {
+        request,
+        wallet,
+        peerName,
+        topic,
+      });
+    } else {
+      goToConfirmView(request, wallet);
+    }
   };
 
   useEffect(() => {

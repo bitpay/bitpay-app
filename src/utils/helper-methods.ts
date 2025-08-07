@@ -27,7 +27,11 @@ import {FormatAmount} from '../store/wallet/effects/amount/amount';
 import {getERC20TokenPrice} from '../store/moralis/moralis.effects';
 import {ethers} from 'ethers';
 import EtherscanAPI from '../api/etherscan';
-import {WALLET_CONNECT_SUPPORTED_CHAINS} from '../constants/WalletConnectV2';
+import {
+  EIP155_SIGNING_METHODS,
+  SOLANA_SIGNING_METHODS,
+  WALLET_CONNECT_SUPPORTED_CHAINS,
+} from '../constants/WalletConnectV2';
 import {BitpaySupportedTokenOptsByAddress} from '../constants/tokens';
 import {Effect} from '../store';
 import {WalletKitTypes} from '@reown/walletkit';
@@ -772,23 +776,23 @@ export const processOtherMethodsRequest =
     const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
     let senderAddress = '';
     switch (method) {
-      case 'eth_signTypedData':
-      case 'eth_signTypedData_v1':
-      case 'eth_signTypedData_v3':
-      case 'eth_signTypedData_v4':
-      case 'eth_sign':
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA:
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V3:
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TYPED_DATA_V4:
+      case EIP155_SIGNING_METHODS.ETH_SIGN:
         senderAddress = request.params?.[0];
         break;
-      case 'personal_sign':
+      case EIP155_SIGNING_METHODS.PERSONAL_SIGN:
         senderAddress = request.params?.[1];
         break;
-      case 'eth_signTransaction':
+      case EIP155_SIGNING_METHODS.ETH_SIGN_TRANSACTION:
         senderAddress = request.params?.[0]?.from;
         break;
-      case 'solana_signMessage':
+      case SOLANA_SIGNING_METHODS.SIGN_MESSAGE:
         senderAddress = request.params?.pubkey;
         break;
-      case 'solana_signTransaction':
+      case SOLANA_SIGNING_METHODS.SIGN_TRANSACTION:
+      case SOLANA_SIGNING_METHODS.SIGN_AND_SEND_TRANSACTION:
         senderAddress = request?.params?.feePayer || request?.params?.pubkey;
         break;
     }
