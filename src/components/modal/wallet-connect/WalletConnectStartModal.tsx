@@ -442,26 +442,36 @@ export const WalletConnectStartModal = () => {
     requiredNamespaces: ProposalTypes.RequiredNamespaces | undefined,
     optionalNamespaces: ProposalTypes.OptionalNamespaces | undefined,
   ) => {
-    Object.keys(requiredNamespaces || {})
-      .concat(Object.keys(optionalNamespaces || {}))
-      .forEach(key => {
-        const chains: {chain: string; network: string}[] = [];
-        [
-          ...new Set([
-            //@ts-ignore
-            ...(requiredNamespaces[key]?.chains || []),
-            //@ts-ignore
-            ...(optionalNamespaces[key]?.chains || []),
-          ]),
-        ].map((chain: string) => {
-          if (WALLET_CONNECT_SUPPORTED_CHAINS[chain]) {
-            chains.push(WALLET_CONNECT_SUPPORTED_CHAINS[chain]);
-          }
-        });
-        const chainNames = [...new Set(chains.map(({chain}) => chain))];
-        setChainsSelected(chains);
-        setChainNames(chainNames);
+    const chains: {chain: string; network: string}[] = [];
+    const allNamespaces = {
+      ...(requiredNamespaces || {}),
+      ...(optionalNamespaces || {}),
+    };
+    Object.keys(allNamespaces).forEach(key => {
+      const requiredChains = requiredNamespaces?.[key]?.chains || [];
+      const optionalChains = optionalNamespaces?.[key]?.chains || [];
+      const combinedChains = [
+        ...new Set([...requiredChains, ...optionalChains]),
+      ];
+      combinedChains.map(chainId => {
+        const chainInfo = WALLET_CONNECT_SUPPORTED_CHAINS[chainId];
+        if (chainInfo) {
+          chains.push(chainInfo);
+        }
       });
+    });
+    const seen = new Set<string>();
+    const uniqueChains = chains.filter(({chain, network}) => {
+      const key = `${chain}-${network}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+    const chainNames = [...new Set(uniqueChains.map(({chain}) => chain))];
+    setChainsSelected(uniqueChains);
+    setChainNames(chainNames);
   };
 
   useEffect(() => {
