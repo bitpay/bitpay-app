@@ -171,7 +171,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
 
-    const {migrationComplete, EDDSAKeyMigrationComplete} = APP;
+    const {migrationComplete, EDDSAKeyMigrationCompleteV2} = APP;
     const {customTokensMigrationComplete, polygonMigrationComplete} = WALLET;
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
@@ -222,7 +222,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       dispatch(LogActions.info('success [setMigrationComplete]'));
     }
 
-    if (!EDDSAKeyMigrationComplete) {
+    if (!EDDSAKeyMigrationCompleteV2) {
       await dispatch(startAddEDDSAKey());
       dispatch(setEDDSAKeyMigrationComplete());
       dispatch(LogActions.info('success [setEDDSAKeyMigrationComplete]'));
