@@ -169,7 +169,6 @@ const AddingOptions: React.FC = () => {
               context: 'AddingOptions',
             }),
           );
-          const _key = key.methods as KeyMethods;
           let password: string | undefined;
           if (key.isPrivKeyEncrypted) {
             password = await dispatch(
@@ -184,6 +183,7 @@ const AddingOptions: React.FC = () => {
               await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
               await sleep(500);
               key.methods!.addKeyByAlgorithm('EDDSA', {password});
+              key.properties = key.methods!.toObj();
             } catch (err) {
               dispatch(dismissOnGoingProcessModal());
               const errstring =
@@ -202,7 +202,7 @@ const AddingOptions: React.FC = () => {
           await sleep(500);
           const wallets = await dispatch(
             createMultipleWallets({
-              key: _key,
+              key: key.methods as KeyMethods,
               currencies: getBaseSVMAccountCreationCoinsAndTokens(),
               options: {
                 network,

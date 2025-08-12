@@ -730,6 +730,12 @@ export const startAddEDDSAKey =
       try {
         if (key.methods) {
           key.methods.addKeyByAlgorithm('EDDSA');
+          key.properties = key.methods!.toObj();
+          dispatch(
+            successImport({
+              key,
+            }),
+          );
           dispatch(
             LogActions.persistLog(
               LogActions.info(`[migrateEDDSAKey] - Migrated key ${key.id}`),
