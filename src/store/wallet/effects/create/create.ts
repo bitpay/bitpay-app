@@ -161,6 +161,27 @@ export const addWallet =
         };
         const {walletName} = options;
 
+        let password: string | undefined = options.password;
+        if (key.isPrivKeyEncrypted && !password) {
+          throw new Error(
+            'A password is required to add a wallet when the key is encrypted',
+          );
+        }
+        if (
+          !key?.properties?.xPrivKeyEDDSA &&
+          !key?.properties?.xPrivKeyEDDSAEncrypted
+        ) {
+          try {
+            await sleep(500);
+            key.methods!.addKeyByAlgorithm('EDDSA', {password});
+          } catch (err) {
+            const errstring =
+              err instanceof Error ? err.message : JSON.stringify(err);
+            dispatch(LogActions.error(`Error EDDSA key - addWallet: ${errstring}`));
+            throw err;
+          }
+        }
+
         if (currency.isToken) {
           if (!associatedWallet) {
             associatedWallet = (await dispatch(
