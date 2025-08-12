@@ -1287,10 +1287,6 @@ export const incomingLink =
           }, 500);
         };
       }
-    } else if (pathSegments[0] === 'buy-crypto') {
-      handler = () => {
-        navigationRef.navigate(BuyCryptoScreens.ROOT, params);
-      };
     } else if (pathSegments[0] === 'connections') {
       const redirectTo = pathSegments[1];
 

@@ -832,7 +832,7 @@ const BuyCryptoRoot = ({
       return;
     }
 
-    if (fromWallet?.id) {
+    if (fromWallet?.id || fromCurrencyAbbreviation) {
       selectFirstAvailableWallet();
     } else {
       await sleep(500);
