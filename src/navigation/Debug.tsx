@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert, Platform} from 'react-native';
+import {Alert, Platform, Button} from 'react-native';
 import Mailer from 'react-native-mail';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppDispatch, useAppSelector} from '../utils/hooks';
@@ -9,7 +9,6 @@ import {RootState} from '../store';
 import {BaseText} from '../components/styled/Text';
 import styled from 'styled-components/native';
 import {Caution, SlateDark, White} from '../styles/colors';
-import Button from '../components/button/Button';
 import {isAndroidStoragePermissionGranted} from '../utils/helper-methods';
 import RNFS from 'react-native-fs';
 import Share, {ShareOptions} from 'react-native-share';
@@ -22,11 +21,11 @@ export enum DebugScreens {
 
 export type DebugScreenParamList = {
   Debug: {
-    name: string | undefined | null;
+    name?: string | undefined | null;
   };
 };
 
-const DebugContainer = styled.SafeAreaView`
+const DebugContainer = styled.View`
   flex: 1;
 `;
 
@@ -61,7 +60,7 @@ const DebugScreen: React.FC<
 > = ({route}) => {
   const dispatch = useAppDispatch();
   const logs = useAppSelector(({LOG}: RootState) => LOG.logs);
-  const {name} = route.params || {};
+  const {name} = route.params || {name: ''};
 
   let logStr: string =
     'Session Logs.\nBe careful, this could contain sensitive private data\n\n';
@@ -179,15 +178,11 @@ const DebugScreen: React.FC<
         <LogError>{filteredLogs}</LogError>
       </ScrollView>
       <ButtonContainer>
-        <Button onPress={() => showDisclaimer(logStr, 'share')}>
-          Share Logs
-        </Button>
+        <Button title="Share Logs" onPress={() => showDisclaimer(logStr, 'share')} />
       </ButtonContainer>
       {!IS_DESKTOP && (
         <ButtonContainer>
-          <Button onPress={() => showDisclaimer(logStr, 'email')}>
-            Send Logs By Email
-          </Button>
+          <Button title="Send Logs By Email" onPress={() => showDisclaimer(logStr, 'email')} />
         </ButtonContainer>
       )}
     </DebugContainer>
