@@ -29,7 +29,7 @@ import {
 
 enableFreeze(true);
 
-const errorHandler = (e, isFatal) => {
+const makeErrorHandler = store => (e, isFatal) => {
   if (isFatal) {
     store.dispatch(
       Analytics.track('BitPay App - Crashed App', {
@@ -53,7 +53,7 @@ const errorHandler = (e, isFatal) => {
   }
 };
 
-const exceptionHandler = () => {
+const makeNativeExceptionHandler = store => () => {
   store.dispatch(
     Analytics.track('BitPay App - Crashed App', {
       build: GIT_COMMIT_HASH,
@@ -61,10 +61,6 @@ const exceptionHandler = () => {
     }),
   );
 };
-
-// Handle uncaught exceptions
-setJSExceptionHandler(errorHandler, true);
-setNativeExceptionHandler(exceptionHandler);
 
 
 configureReanimatedLogger({
@@ -75,20 +71,25 @@ configureReanimatedLogger({
 
 const ReduxProvider = () => {
   const [storeReady, setStoreReady] = useState(false);
-  const [{store, persistor}, setStore] = useState({store: null, persistor: null});
+  const [{store: reduxStore, persistor: reduxPersistor}, setStore] = useState({
+    store: null,
+    persistor: null,
+  });
 
   useEffect(() => {
-    getStore().then(store => {
-      setStore(store);
+    getStore().then(({store, persistor}) => {
+      setStore({store, persistor});
       setStoreReady(true);
+      setJSExceptionHandler(makeErrorHandler(store), true);
+      setNativeExceptionHandler(makeNativeExceptionHandler(store));
     });
   }, []);
 
   return (
     <>
       {storeReady ? (
-        <Provider store={store}>
-          <PersistGate loading={null} persistor={persistor}>
+        <Provider store={reduxStore}>
+          <PersistGate loading={null} persistor={reduxPersistor}>
             {storeRehydrated =>
               storeRehydrated ? (
                 <AppInitialization>
