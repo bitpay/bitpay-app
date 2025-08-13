@@ -2027,7 +2027,7 @@ const BuyCryptoOffers: React.FC = () => {
           default:
             getSardinePaymentMethodFormat(paymentMethod.method, country) ??
             'debit',
-          enabled: ['ach', 'apple_pay', 'card'],
+          enabled: ['ach', 'apple_pay', 'card', 'sepa'],
         },
       };
       authTokenData = await selectedWallet.sardineGetToken(quoteData);

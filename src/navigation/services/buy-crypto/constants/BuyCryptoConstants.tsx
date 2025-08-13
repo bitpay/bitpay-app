@@ -137,7 +137,7 @@ export const PaymentMethodsAvailable: PaymentMethods = {
       banxa: true,
       moonpay: true,
       ramp: true,
-      sardine: false,
+      sardine: true, // EU Only
       simplex: true, // EU Only
       transak: true,
     },
