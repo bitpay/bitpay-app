@@ -445,7 +445,7 @@ export const BadgeContainer = styled.View`
   padding: 4px;
   border-radius: 2.4px;
   gap: 4px;
-  height: 20px;
+  height: 22px;
 `;
 
 export const BadgeContainerTouchable = styled(TouchableOpacity)`
