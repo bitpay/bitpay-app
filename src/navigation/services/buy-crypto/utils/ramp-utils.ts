@@ -291,20 +291,20 @@ export const getRampPaymentMethodFormat = (
 ): RampPaymentMethodType => {
   switch (paymentMethod) {
     case 'sepaBankTransfer':
-      return 'SEPA';
+      return 'MANUAL_BANK_TRANSFER';
     case 'applePay':
-      return 'APPLEPAY';
+      return 'APPLE_PAY';
     case 'googlePay':
-      return 'GOOGLEPAY';
+      return 'GOOGLE_PAY';
     case 'pisp':
-      return 'PISP';
+      return 'AUTO_BANK_TRANSFER';
     case 'pix':
       return 'PIX';
     case 'debitCard':
     case 'creditCard':
-      return 'CARD';
+      return 'CARD_PAYMENT';
     default:
-      return 'CARD';
+      return 'CARD_PAYMENT';
   }
 };
 

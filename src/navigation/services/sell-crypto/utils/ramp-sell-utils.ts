@@ -343,12 +343,15 @@ export const getPayoutMethodKeyFromRampType = (
   let formattedPaymentMethod: WithdrawalMethodKey | undefined;
   switch (method) {
     case RampPayoutMethodName.AMERICAN_BANK_TRANSFER:
+    case RampPayoutMethodName.AUTO_BANK_TRANSFER:
       formattedPaymentMethod = 'ach';
       break;
     case RampPayoutMethodName.CARD:
+    case RampPayoutMethodName.CARD_PAYMENT:
       formattedPaymentMethod = 'debitCard';
       break;
     case RampPayoutMethodName.SEPA:
+    case RampPayoutMethodName.MANUAL_BANK_TRANSFER:
       formattedPaymentMethod = 'sepaBankTransfer';
       break;
     default:

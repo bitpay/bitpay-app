@@ -64,20 +64,13 @@ export interface RampGetSellQuoteRequestData {
   cryptoAmount?: string;
 }
 
-// export interface RampGetSellQuoteData {
-//   expiry_ts: number;
-//   fiat_amount: string;
-//   quote_id: string;
-//   rate: number;
-//   errors?: any;
-//   error?: any;
-//   message?: any;
-// }
-
 export interface RampGetSellQuoteData {
   asset: RampAssetInfo;
   [RampPayoutMethodName.AMERICAN_BANK_TRANSFER]?: RampSellQuoteResultForPayoutMethod;
+  [RampPayoutMethodName.AUTO_BANK_TRANSFER]?: RampSellQuoteResultForPayoutMethod;
+  [RampPayoutMethodName.MANUAL_BANK_TRANSFER]?: RampSellQuoteResultForPayoutMethod;
   [RampPayoutMethodName.CARD]?: RampSellQuoteResultForPayoutMethod;
+  [RampPayoutMethodName.CARD_PAYMENT]?: RampSellQuoteResultForPayoutMethod;
   [RampPayoutMethodName.SEPA]?: RampSellQuoteResultForPayoutMethod;
   [RampPayoutMethodName.SPEI]?: RampSellQuoteResultForPayoutMethod;
   errors?: any;
@@ -87,7 +80,10 @@ export interface RampGetSellQuoteData {
 
 export enum RampPayoutMethodName {
   AMERICAN_BANK_TRANSFER = 'AMERICAN_BANK_TRANSFER',
+  AUTO_BANK_TRANSFER = 'AUTO_BANK_TRANSFER',
+  MANUAL_BANK_TRANSFER = 'MANUAL_BANK_TRANSFER',
   CARD = 'CARD',
+  CARD_PAYMENT = 'CARD_PAYMENT',
   SEPA = 'SEPA',
   SPEI = 'SPEI',
 }
