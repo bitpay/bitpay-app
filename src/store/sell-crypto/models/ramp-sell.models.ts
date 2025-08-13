@@ -68,6 +68,7 @@ export interface RampGetSellQuoteData {
   asset: RampAssetInfo;
   [RampPayoutMethodName.AMERICAN_BANK_TRANSFER]?: RampSellQuoteResultForPayoutMethod;
   [RampPayoutMethodName.AUTO_BANK_TRANSFER]?: RampSellQuoteResultForPayoutMethod;
+  [RampPayoutMethodName.MANUAL_BANK_TRANSFER]?: RampSellQuoteResultForPayoutMethod;
   [RampPayoutMethodName.CARD]?: RampSellQuoteResultForPayoutMethod;
   [RampPayoutMethodName.CARD_PAYMENT]?: RampSellQuoteResultForPayoutMethod;
   [RampPayoutMethodName.SEPA]?: RampSellQuoteResultForPayoutMethod;
@@ -80,6 +81,7 @@ export interface RampGetSellQuoteData {
 export enum RampPayoutMethodName {
   AMERICAN_BANK_TRANSFER = 'AMERICAN_BANK_TRANSFER',
   AUTO_BANK_TRANSFER = 'AUTO_BANK_TRANSFER',
+  MANUAL_BANK_TRANSFER = 'MANUAL_BANK_TRANSFER',
   CARD = 'CARD',
   CARD_PAYMENT = 'CARD_PAYMENT',
   SEPA = 'SEPA',

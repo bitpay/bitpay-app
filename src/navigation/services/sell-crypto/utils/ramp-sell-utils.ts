@@ -350,7 +350,8 @@ export const getPayoutMethodKeyFromRampType = (
     case RampPayoutMethodName.CARD_PAYMENT:
       formattedPaymentMethod = 'debitCard';
       break;
-    case RampPayoutMethodName.SEPA: // TODO: check this PayoutMethod
+    case RampPayoutMethodName.SEPA:
+    case RampPayoutMethodName.MANUAL_BANK_TRANSFER:
       formattedPaymentMethod = 'sepaBankTransfer';
       break;
     default:

@@ -694,9 +694,11 @@ const SellCryptoOffers: React.FC = () => {
                 paymentMethodData = data.AUTO_BANK_TRANSFER;
               }
               break;
-            case 'sepaBankTransfer': // TODO: review this PayoutMethod
+            case 'sepaBankTransfer':
               if (data.SEPA) {
                 paymentMethodData = data.SEPA;
+              } else if (data.MANUAL_BANK_TRANSFER) {
+                paymentMethodData = data.MANUAL_BANK_TRANSFER;
               } else if (data.AUTO_BANK_TRANSFER) {
                 paymentMethodData = data.AUTO_BANK_TRANSFER;
               }
