@@ -1,7 +1,7 @@
 import moment from 'moment';
 import {LogEntry} from './log.models';
 import {LogActionType, LogActionTypes} from './log.types';
-import {storage} from '..';
+import {storage} from '../index';
 
 export const logReduxPersistBlackList = ['logs'];
 
@@ -46,7 +46,7 @@ export const logReducer = (
           JSON.stringify([...JSON.parse(persistLogs), newPersistedLog]),
         );
       } catch (error) {
-        // nothing
+        console.error('Error adding persisted log:', error);
       }
 
       return {
@@ -72,7 +72,7 @@ export const logReducer = (
           );
         }
       } catch (error) {
-        // nothing
+        console.error('Error clearing persisted logs:', error);
       }
 
       return {
