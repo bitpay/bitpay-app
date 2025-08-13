@@ -398,11 +398,16 @@ export const walletConnectV2SubscribeToEvents =
       try {
         let processedRequestData = {};
 
-        if (event.params.request.method === 'eth_sendTransaction') {
+        if (
+          event.params.request.method ===
+          EIP155_SIGNING_METHODS.ETH_SEND_TRANSACTION
+        ) {
           processedRequestData = await dispatch(processSwapRequest(event));
         } else if (
-          event.params.request.method ===
-          SOLANA_SIGNING_METHODS.SIGN_TRANSACTION
+          [
+            SOLANA_SIGNING_METHODS.SIGN_TRANSACTION,
+            SOLANA_SIGNING_METHODS.SIGN_AND_SEND_TRANSACTION,
+          ].includes(event.params.request.method)
         ) {
           processedRequestData = await dispatch(
             processSolanaSwapRequest(event),
@@ -924,6 +929,7 @@ const approveWCRequest =
             break;
 
           case SOLANA_SIGNING_METHODS.SIGN_TRANSACTION:
+          case SOLANA_SIGNING_METHODS.SIGN_AND_SEND_TRANSACTION:
             const {transaction: base64Tx} = request.params;
             const versionedTx = getTransactionDecoder().decode(
               getBase64Encoder().encode(base64Tx),
