@@ -4,6 +4,11 @@ export const WALLETCONNECT_V2_METADATA = {
   description: 'BitPay Wallet',
   url: '#',
   icons: ['https://bitpay.com/resources/content/images/2019/10/bitpay.png'],
+  redirect: {
+    native: 'bitpay://',
+    universal: 'link.bitpay.com',
+    linkMode: true,
+  },
 };
 
 export const WC_EVENTS = [
