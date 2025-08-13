@@ -162,6 +162,11 @@ export const SOLANA_SIGNING_METHODS = {
   // SING_ALL_TRANSACTIONS: "solana_signAllTransactions",
 };
 
+export const WC_SUPPORTED_METHODS: {[key in string]: any} = {
+  ...SOLANA_SIGNING_METHODS,
+  ...EIP155_SIGNING_METHODS,
+};
+
 export const EIP155_METHODS_NOT_INTERACTION_NEEDED = [
   'wallet_addEthereumChain',
 ];

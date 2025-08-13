@@ -11,7 +11,12 @@ import {
 } from '../../constants/WalletConnectV2';
 import {BwcProvider} from '../../lib/bwc';
 import {LogActions} from '../log';
-import {ProposalTypes, SessionTypes, Verify} from '@walletconnect/types';
+import {
+  AuthTypes,
+  ProposalTypes,
+  SessionTypes,
+  Verify,
+} from '@walletconnect/types';
 import {
   processOtherMethodsRequest,
   processSolanaSwapRequest,
@@ -84,6 +89,73 @@ let web3wallet: IWalletKit;
 const checkCredentials = () => {
   return WALLET_CONNECT_V2_PROJECT_ID && WALLETCONNECT_V2_METADATA;
 };
+
+export const formatAuthMessage = ({
+  authPayload,
+  iss,
+}: {
+  authPayload: AuthTypes.PayloadParams;
+  iss: string;
+}) => {
+  const message = web3wallet.formatAuthMessage({
+    request: authPayload,
+    iss,
+  });
+  return message;
+};
+
+export const walletConnectV2approveSessionAuthenticateProposal =
+  (
+    id: number,
+    pairingTopic: string,
+    proposalParams: AuthTypes.AuthRequestEventArgs,
+    auths: AuthTypes.Cacao[],
+    accounts: string[],
+    chains: string[],
+    verifyContext: Verify.Context | undefined,
+  ): Effect<Promise<void>> =>
+  dispatch => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        dispatch(
+          LogActions.debug(
+            '[WC-V2/walletConnectV2approveSessionAuthenticateProposal]: approving session authenticate proposal with proposal',
+          ),
+        );
+        const {session} = await web3wallet.approveSessionAuthenticate({
+          id,
+          auths,
+        });
+        if (!session) {
+          throw new Error('Session is undefined');
+        }
+        dispatch(
+          WalletConnectV2Actions.approveSessionProposal({
+            ...session,
+            pairingTopic,
+            proposalParams,
+            accounts,
+            chains,
+            verifyContext,
+          }),
+        );
+        dispatch(sessionProposal());
+        resolve();
+      } catch (err) {
+        await web3wallet.rejectSession({
+          id,
+          reason: getSdkError('USER_REJECTED'),
+        });
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(
+          LogActions.error(
+            `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${errMsg}`,
+          ),
+        );
+        reject(err);
+      }
+    });
+  };
 
 export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
   try {
@@ -435,13 +507,16 @@ export const walletConnectV2SubscribeToEvents =
     );
     web3wallet.on(
       'session_authenticate',
-      async (data: WalletKitTypes.EventArguments['session_authenticate']) => {
-        // TODO Handle auth_request
+      async (
+        proposal: WalletKitTypes.EventArguments['session_authenticate'],
+      ) => {
+        dispatch(WalletConnectV2Actions.sessionProposal(proposal));
+        dispatch(AppActions.showWalletConnectStartModal());
         try {
           dispatch(
             LogActions.info(
               `[WC-V2/walletConnectV2SubscribeToEvents] auth request: ${JSON.stringify(
-                data,
+                proposal,
               )}`,
             ),
           );
@@ -930,7 +1005,7 @@ export const getAddressFrom = (request: WCV2RequestType): string => {
   return addressFrom;
 };
 
-const getPrivKey =
+export const getPrivKey =
   (wallet: Wallet): Effect<Promise<string>> =>
   (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
