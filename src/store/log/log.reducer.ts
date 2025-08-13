@@ -1,7 +1,7 @@
 import moment from 'moment';
 import {LogEntry} from './log.models';
 import {LogActionType, LogActionTypes} from './log.types';
-import {storage} from '..';
+import {storage} from '../index';
 
 export const logReduxPersistBlackList = ['logs'];
 
