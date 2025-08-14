@@ -211,6 +211,16 @@ const AddingOptions: React.FC = () => {
               },
             }),
           );
+
+          const _wallets = wallets.filter(Boolean) as Wallet[];
+          if (_wallets.length === 0) {
+            const err = 'Error adding Solana account';
+            dispatch(LogActions.error(err));
+            dispatch(dismissOnGoingProcessModal());
+            showErrorModal(err);
+            return;
+          }
+
           key.wallets.push(...(wallets as Wallet[]));
 
           dispatch(successAddWallet({key}));

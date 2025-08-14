@@ -41,6 +41,7 @@ export interface WalletState {
   polygonMigrationComplete: boolean;
   accountEvmCreationMigrationComplete: boolean;
   accountSvmCreationMigrationComplete: boolean;
+  svmAddressFixComplete: boolean;
 }
 
 export const initialState: WalletState = {
@@ -77,6 +78,7 @@ export const initialState: WalletState = {
   polygonMigrationComplete: false,
   accountEvmCreationMigrationComplete: false,
   accountSvmCreationMigrationComplete: false,
+  svmAddressFixComplete: false,
 };
 
 export const walletReducer = (
@@ -624,6 +626,12 @@ export const walletReducer = (
       return {
         ...state,
         accountSvmCreationMigrationComplete: true,
+      };
+
+    case WalletActionTypes.SET_SVM_ADDRESS_CREATION_FIX_COMPLETE:
+      return {
+        ...state,
+        svmAddressFixComplete: true,
       };
 
     case WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS: {

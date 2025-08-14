@@ -266,6 +266,14 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
             }),
           );
           break;
+
+        case 'INVALID_SOL_ADDRESS_GENERATED':
+          showErrorMessage(
+            CustomErrorMessage({
+              errMsg: createAddressErr.error,
+            }),
+          );
+          break;
         default:
           showErrorMessage(
             CustomErrorMessage({
