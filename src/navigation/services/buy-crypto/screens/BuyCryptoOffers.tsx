@@ -1719,6 +1719,7 @@ const BuyCryptoOffers: React.FC = () => {
       console.error(err);
       const reason = 'createWalletAddress Error';
       showBanxaError(err, reason);
+      return;
     }
 
     const destinationChain = selectedWallet.chain;
@@ -1814,6 +1815,7 @@ const BuyCryptoOffers: React.FC = () => {
       console.error(err);
       const reason = 'createWalletAddress Error';
       showMoonpayError(err, reason);
+      return;
     }
 
     const destinationChain = selectedWallet.chain;
@@ -1907,6 +1909,7 @@ const BuyCryptoOffers: React.FC = () => {
       console.error(err);
       const reason = 'createWalletAddress Error';
       showRampError(err, reason);
+      return;
     }
 
     const destinationChain = selectedWallet.chain;
@@ -2011,6 +2014,7 @@ const BuyCryptoOffers: React.FC = () => {
       console.error(err);
       const reason = 'createWalletAddress Error';
       showSardineError(err, reason);
+      return;
     }
 
     const destinationChain = selectedWallet.chain;
@@ -2135,6 +2139,7 @@ const BuyCryptoOffers: React.FC = () => {
       console.error(err);
       const reason = 'createWalletAddress Error';
       showSimplexError(err, reason);
+      return;
     }
 
     const quoteData = {
@@ -2233,6 +2238,7 @@ const BuyCryptoOffers: React.FC = () => {
       console.error(err);
       const reason = 'createWalletAddress Error';
       showTransakError(err, reason);
+      return;
     }
 
     const destinationChain = selectedWallet.chain;
