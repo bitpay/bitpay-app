@@ -161,7 +161,9 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   const [filterLevel, setFilterLevel] = useState(LogLevel.Debug);
 
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
-  const currentSessionStartTime = new Date(logs[0].timestamp);
+  const currentSessionStartTime = logs.length
+    ? new Date(logs[0].timestamp)
+    : new Date();
   const [filteredPersistedLogs, setFilteredPersistedLogs] = useState(
     [] as LogEntry[],
   );

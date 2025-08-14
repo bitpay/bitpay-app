@@ -153,7 +153,6 @@ const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
-    dispatch(LogActions.clear());
     dispatch(
       LogActions.info(
         `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
@@ -165,8 +164,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     const {APP, CONTACT, WALLET} = getState();
     const {network, colorScheme} = APP;
-
-    WALLET.initLogs.forEach(log => dispatch(log));
 
     dispatch(LogActions.debug(`Network: ${network}`));
     dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));

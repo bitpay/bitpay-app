@@ -10,8 +10,9 @@ import {ContactState} from '../contact/contact.reducer';
 import {WalletState} from '../wallet/wallet.reducer';
 import {buildWalletObj} from '../wallet/utils/wallet';
 import {ContactRowProps} from '../../components/list/ContactRow';
-import {AddLog} from '../log/log.types';
+import {getErrorString} from '../../utils/helper-methods';
 import {LogActions} from '../log';
+import * as initLogs from '../log/initLogs';
 import {
   encryptAppStore,
   decryptAppStore,
@@ -22,12 +23,25 @@ import {
 } from './encrypt';
 
 const BWCProvider = BwcProvider.getInstance();
-const initLogs: AddLog[] = [];
 
-export const bootstrapWallets = (
-  wallets: Wallet[],
-  logHandler?: (addLog: AddLog) => {},
+// Helper for logging transform failures before the store exists
+const logTransformFailure = (
+  phase: 'encrypt' | 'decrypt',
+  store: 'Wallet' | 'App' | 'Shop',
+  error: unknown,
 ) => {
+  try {
+    initLogs.add(
+      LogActions.persistLog(
+        LogActions.error(
+          `${phase}${store}Store failed - ${getErrorString(error)}`,
+        ),
+      ),
+    );
+  } catch (_) {}
+};
+
+export const bootstrapWallets = (wallets: Wallet[]) => {
   return wallets
     .map(wallet => {
       try {
@@ -41,9 +55,7 @@ export const bootstrapWallets = (
           JSON.stringify(wallet.credentials),
         );
         const successLog = `bindWalletClient - ${wallet.id}`;
-        if (logHandler) {
-          logHandler(LogActions.info(successLog));
-        }
+        initLogs.add(LogActions.info(successLog));
         // build wallet obj with bwc client credentials
         return merge(
           walletClient,
@@ -54,21 +66,16 @@ export const bootstrapWallets = (
           }),
         );
       } catch (err: unknown) {
-        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        const errorLog = `Failed to bindWalletClient - ${wallet.id} - ${errStr}`;
-        if (logHandler) {
-          logHandler(LogActions.persistLog(LogActions.error(errorLog)));
-        }
+        const errorLog = `Failed to bindWalletClient - ${
+          wallet.id
+        } - ${getErrorString(err)}`;
+        initLogs.add(LogActions.persistLog(LogActions.error(errorLog)));
       }
     })
     .filter((w): w is NonNullable<typeof w> => w !== undefined);
 };
 
-export const bootstrapKey = (
-  key: Key,
-  id: string,
-  logHandler?: (addLog: AddLog) => {},
-) => {
+export const bootstrapKey = (key: Key, id: string) => {
   if (id === 'readonly') {
     return key;
   } else if (key.hardwareSource) {
@@ -82,16 +89,13 @@ export const bootstrapKey = (
         }),
       });
       const successLog = `bindKey - ${id}`;
-      if (logHandler) {
-        logHandler(LogActions.info(successLog));
-      }
+      initLogs.add(LogActions.info(successLog));
       return _key;
     } catch (err: unknown) {
-      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-      const errorLog = `Failed to bindWalletKeys - ${id} - ${errStr}`;
-      if (logHandler) {
-        logHandler(LogActions.persistLog(LogActions.error(errorLog)));
-      }
+      const errorLog = `Failed to bindWalletKeys - ${id} - ${getErrorString(
+        err,
+      )}`;
+      initLogs.add(LogActions.persistLog(LogActions.error(errorLog)));
     }
   }
 };
@@ -116,19 +120,13 @@ export const bindWalletKeys = createTransform<WalletState, WalletState>(
     const keys = outboundState.keys || {};
     if (Object.keys(keys).length > 0) {
       for (const [id, key] of Object.entries(keys)) {
-        const bootstrappedKey = bootstrapKey(key, id, log =>
-          initLogs.push(log),
-        );
-        const wallets = bootstrapWallets(key.wallets, log =>
-          initLogs.push(log),
-        );
+        const bootstrappedKey = bootstrapKey(key, id);
+        const wallets = bootstrapWallets(key.wallets);
 
         if (bootstrappedKey) {
           outboundState.keys[id] = {...bootstrappedKey, wallets};
         }
       }
-
-      outboundState.initLogs = initLogs;
     }
     return outboundState;
   },
@@ -167,17 +165,23 @@ export const encryptSpecificFields = (secretKey: string) => {
       if (key === 'WALLET') {
         try {
           return encryptWalletStore(inboundState, secretKey);
-        } catch (error) {}
+        } catch (error) {
+          logTransformFailure('encrypt', 'Wallet', error);
+        }
       }
       if (key === 'APP') {
         try {
           return encryptAppStore(inboundState, secretKey);
-        } catch (error) {}
+        } catch (error) {
+          logTransformFailure('encrypt', 'App', error);
+        }
       }
       if (key === 'SHOP') {
         try {
           return encryptShopStore(inboundState, secretKey);
-        } catch (error) {}
+        } catch (error) {
+          logTransformFailure('encrypt', 'Shop', error);
+        }
       }
       return inboundState;
     },
@@ -186,17 +190,23 @@ export const encryptSpecificFields = (secretKey: string) => {
       if (key === 'WALLET') {
         try {
           return decryptWalletStore(outboundState, secretKey);
-        } catch (error) {}
+        } catch (error) {
+          logTransformFailure('decrypt', 'Wallet', error);
+        }
       }
       if (key === 'APP') {
         try {
           return decryptAppStore(outboundState, secretKey);
-        } catch (error) {}
+        } catch (error) {
+          logTransformFailure('decrypt', 'App', error);
+        }
       }
       if (key === 'SHOP') {
         try {
           return decryptShopStore(outboundState, secretKey);
-        } catch (error) {}
+        } catch (error) {
+          logTransformFailure('decrypt', 'Shop', error);
+        }
       }
       return outboundState;
     },
