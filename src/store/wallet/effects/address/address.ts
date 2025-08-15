@@ -56,7 +56,8 @@ export const createWalletAddress =
         if (
           wallet.receiveAddress &&
           wallet.chain === 'sol' &&
-          wallet.network === 'livenet'
+          wallet.network === 'livenet' &&
+          keys[wallet.keyId]?.properties?.xPrivKeyEDDSA
         ) {
           const xPrivKeyHex = keys[wallet.keyId].properties!.xPrivKeyEDDSA;
           const derivedAddress = BWC.getCore().Deriver.derivePrivateKeyWithPath(
@@ -132,7 +133,8 @@ export const createWalletAddress =
           } else if (
             addressObj?.address &&
             wallet.chain === 'sol' &&
-            wallet.network === 'livenet'
+            wallet.network === 'livenet' &&
+            keys[wallet.keyId]?.properties?.xPrivKeyEDDSA
           ) {
             const xPrivKeyHex = keys[wallet.keyId].properties!.xPrivKeyEDDSA;
             const derivedAddress =
