@@ -60,6 +60,7 @@ import {
 } from './coinbase/coinbase.reducer';
 import {rateReducer, rateReduxPersistBlackList} from './rate/rate.reducer';
 import {LogActions} from './log';
+import * as initLogs from './log/initLogs';
 import {
   walletConnectReducer,
   walletConnectV2Reducer,
@@ -68,6 +69,7 @@ import {
 
 import {Storage} from 'redux-persist';
 import {MMKV} from 'react-native-mmkv';
+import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
 import {
   ZenledgerReduxPersistBlackList,
@@ -246,6 +248,11 @@ const getStore = async () => {
   // @ts-ignore
   const persistedReducer = persistReducer(rootPersistConfig, rootReducer);
   const store = createStore(persistedReducer, undefined, middlewareEnhancers);
+
+  // Clear any stale logs, and immediately flush any initLogs that were added before the store was initialized
+  store.dispatch(LogActions.clear());
+  initLogs.drainAndDispatch(store.dispatch);
+
   const persistor = persistStore(store);
 
   if (__DEV__) {
@@ -286,19 +293,52 @@ export function configureTestStore(initialState: any) {
 export async function getEncryptionKey(): Promise<string> {
   const encryptionKeyId = 'bitpay-app-encryption-key';
 
-  const existingKey = await Keychain.getGenericPassword({
-    service: encryptionKeyId,
-  });
+  try {
+    initLogs.add(
+      LogActions.info('getEncryptionKey: attempting to retrieve from Keychain'),
+    );
+    const existingKey = await Keychain.getGenericPassword({
+      service: encryptionKeyId,
+    });
 
-  if (existingKey && existingKey.password) {
-    return existingKey.password;
+    if (existingKey && existingKey.password) {
+      initLogs.add(
+        LogActions.info('getEncryptionKey: found existing key in Keychain'),
+      );
+      return existingKey.password;
+    }
+  } catch (err) {
+    initLogs.add(
+      LogActions.persistLog(
+        LogActions.error(
+          `getEncryptionKey: Keychain get failed - ${getErrorString(err)}`,
+        ),
+      ),
+    );
   }
 
+  initLogs.add(
+    LogActions.warn('getEncryptionKey: generating new key (no existing key)'),
+  );
   const newKey = getUniqueId();
-  // Save to keychain
-  await Keychain.setGenericPassword(encryptionKeyId, newKey, {
-    service: encryptionKeyId,
-  });
+
+  try {
+    // Save to keychain
+    await Keychain.setGenericPassword(encryptionKeyId, newKey, {
+      service: encryptionKeyId,
+    });
+    initLogs.add(
+      LogActions.info('getEncryptionKey: stored new key in Keychain'),
+    );
+  } catch (err) {
+    initLogs.add(
+      LogActions.persistLog(
+        LogActions.error(
+          `getEncryptionKey: Keychain set failed - ${getErrorString(err)}`,
+        ),
+      ),
+    );
+  }
 
   return newKey;
 }
