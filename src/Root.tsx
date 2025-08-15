@@ -145,7 +145,9 @@ import {KeyMethods} from './store/wallet/wallet.models';
 import {
   setAccountEVMCreationMigrationComplete,
   setAccountSVMCreationMigrationComplete,
+  setSvmAddressCreationFixComplete,
   successAddWallet,
+  successGetReceiveAddress,
 } from './store/wallet/wallet.actions';
 import {BrazeWrapper} from './lib/Braze';
 import {selectSettingsNotificationState} from './store/app/app.selectors';
@@ -157,6 +159,8 @@ import {
   getBaseSVMAccountCreationCoinsAndTokens,
 } from './constants/currencies';
 import Logger from 'bitcore-wallet-client/ts_build/lib/log';
+import {BwcProvider} from './lib/bwc';
+const BWC = BwcProvider.getInstance();
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
@@ -297,6 +301,9 @@ export default () => {
   );
   const accountSvmCreationMigrationComplete = useAppSelector(
     ({WALLET}) => WALLET.accountSvmCreationMigrationComplete,
+  );
+  const svmAddressFixComplete = useAppSelector(
+    ({WALLET}) => WALLET.svmAddressFixComplete,
   );
   const notificationsState = useAppSelector(selectSettingsNotificationState);
   const currentLocation = useAppSelector(({LOCATION}) => LOCATION.locationData);
@@ -824,6 +831,108 @@ export default () => {
                       }
                     };
 
+                    const runSvmAddressCreationFix = async () => {
+                      dispatch(
+                        LogActions.persistLog(
+                          LogActions.info('start [runSvmAddressCreationFix]'),
+                        ),
+                      );
+                      try {
+                        if (Object.keys(keys).length === 0) {
+                          dispatch(setSvmAddressCreationFixComplete());
+                          return;
+                        }
+                        dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+                        await sleep(1000);
+                        await Promise.all(
+                          Object.values(keys).map(async key => {
+                            if (!key?.properties?.xPrivKeyEDDSA) {
+                              dispatch(
+                                LogActions.persistLog(
+                                  LogActions.info(
+                                    'skipping SVM address fix — private key is encrypted',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            for (const wallet of key.wallets) {
+                              if (
+                                wallet.chain?.toLowerCase() !== 'sol' ||
+                                !wallet.credentials.isComplete() ||
+                                !wallet.receiveAddress
+                              ) {
+                                continue;
+                              }
+                              const xPrivKeyHex = key.properties!.xPrivKeyEDDSA;
+                              const derivedAddress =
+                                BWC.getCore().Deriver.derivePrivateKeyWithPath(
+                                  'SOL',
+                                  wallet.network,
+                                  xPrivKeyHex,
+                                  wallet.credentials.rootPath,
+                                  null,
+                                );
+                              if (
+                                derivedAddress &&
+                                derivedAddress?.address !==
+                                  wallet.receiveAddress
+                              ) {
+                                dispatch(
+                                  LogActions.persistLog(
+                                    LogActions.debug(
+                                      `Invalidating receive address ${wallet.receiveAddress} for wallet ${wallet.id} of key ${key.id} - replacing for correct one: ${derivedAddress.address}`,
+                                    ),
+                                  ),
+                                );
+                                dispatch(
+                                  Analytics.track(
+                                    'Solana Address Creation Fix',
+                                    {
+                                      invalidAddress: wallet.receiveAddress,
+                                      validAddress: derivedAddress.address,
+                                      walletId: wallet.id,
+                                      context: 'solanaAddressCreationFix',
+                                    },
+                                  ),
+                                );
+                                dispatch(
+                                  successGetReceiveAddress({
+                                    keyId: key.id,
+                                    walletId: wallet.id,
+                                    receiveAddress: derivedAddress.address,
+                                  }),
+                                );
+                              }
+                            }
+                          }),
+                        );
+                        dispatch(
+                          LogActions.persistLog(
+                            LogActions.info(
+                              'success [runSvmAddressCreationFix]',
+                            ),
+                          ),
+                        );
+                        dispatch(setSvmAddressCreationFixComplete());
+                        dispatch(dismissOnGoingProcessModal());
+                      } catch (error) {
+                        const errMsg =
+                          error instanceof Error
+                            ? error.message
+                            : JSON.stringify(error);
+                        dispatch(
+                          LogActions.persistLog(
+                            LogActions.error(
+                              `Error in [runSvmAddressCreationFix]: ${errMsg}`,
+                            ),
+                          ),
+                        );
+                        dispatch(setSvmAddressCreationFixComplete());
+                        dispatch(dismissOnGoingProcessModal());
+                      }
+                    };
+
                     if (pinLockActive || biometricLockActive) {
                       const subscriptionToPinModalDismissed =
                         DeviceEventEmitter.addListener(
@@ -839,6 +948,10 @@ export default () => {
                               await sleep(1000);
                               await runCompleteSvmWalletsAccountFix();
                             }
+                            if (!svmAddressFixComplete) {
+                              await sleep(1000);
+                              await runSvmAddressCreationFix();
+                            }
                             urlHandler();
                           },
                         );
@@ -851,6 +964,10 @@ export default () => {
                       if (!accountSvmCreationMigrationComplete) {
                         await sleep(1000);
                         await runCompleteSvmWalletsAccountFix();
+                      }
+                      if (!svmAddressFixComplete) {
+                        await sleep(1000);
+                        await runSvmAddressCreationFix();
                       }
                       urlHandler();
                     }

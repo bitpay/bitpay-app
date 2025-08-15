@@ -43,14 +43,39 @@ export const createWalletAddress =
     newAddress?: boolean;
     skipDispatch?: boolean;
   }): Effect<Promise<string>> =>
-  async dispatch => {
+  async (dispatch, getState) => {
     return new Promise((resolve, reject) => {
+      const keys = getState().WALLET.keys;
+
       if (!wallet) {
         return reject();
       }
 
       if (!newAddress && wallet.receiveAddress) {
         dispatch(LogActions.info('returned cached wallet address'));
+        if (
+          wallet.receiveAddress &&
+          wallet.chain === 'sol' &&
+          wallet.network === 'livenet' &&
+          keys[wallet.keyId]?.properties?.xPrivKeyEDDSA
+        ) {
+          const xPrivKeyHex = keys[wallet.keyId].properties!.xPrivKeyEDDSA;
+          const derivedAddress = BWC.getCore().Deriver.derivePrivateKeyWithPath(
+            'SOL',
+            wallet.network,
+            xPrivKeyHex,
+            wallet.credentials.rootPath,
+            null,
+          );
+          dispatch(
+            successGetReceiveAddress({
+              keyId: wallet.keyId,
+              walletId: wallet.id,
+              receiveAddress: derivedAddress.address,
+            }),
+          );
+          wallet.receiveAddress = derivedAddress.address;
+        }
         return resolve(wallet.receiveAddress);
       }
 
@@ -105,6 +130,29 @@ export const createWalletAddress =
               type: 'INVALID_ADDRESS_GENERATED',
               error: addressObj.address,
             });
+          } else if (
+            addressObj?.address &&
+            wallet.chain === 'sol' &&
+            wallet.network === 'livenet' &&
+            keys[wallet.keyId]?.properties?.xPrivKeyEDDSA
+          ) {
+            const xPrivKeyHex = keys[wallet.keyId].properties!.xPrivKeyEDDSA;
+            const derivedAddress =
+              BWC.getCore().Deriver.derivePrivateKeyWithPath(
+                'SOL',
+                wallet.network,
+                xPrivKeyHex,
+                wallet.credentials.rootPath,
+                null,
+              );
+            dispatch(
+              successGetReceiveAddress({
+                keyId: wallet.keyId,
+                walletId: wallet.id,
+                receiveAddress: derivedAddress.address,
+              }),
+            );
+            wallet.receiveAddress = derivedAddress.address;
           } else if (addressObj) {
             const receiveAddress = addressObj.address;
             if (!skipDispatch) {
