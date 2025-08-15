@@ -168,6 +168,9 @@ export const getSardinePaymentMethodFormat = (
       formattedPaymentMethod =
         country === 'US' ? 'credit' : 'international_credit';
       break;
+    case 'sepaBankTransfer':
+      formattedPaymentMethod = 'sepa';
+      break;
     default:
       formattedPaymentMethod = undefined;
       break;
