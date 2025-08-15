@@ -833,7 +833,9 @@ export default () => {
 
                     const runSvmAddressCreationFix = async () => {
                       dispatch(
-                        LogActions.info('start [runSvmAddressCreationFix]'),
+                        LogActions.persistLog(
+                          LogActions.info('start [runSvmAddressCreationFix]'),
+                        ),
                       );
                       try {
                         if (Object.keys(keys).length === 0) {
@@ -846,8 +848,10 @@ export default () => {
                           Object.values(keys).map(async key => {
                             if (!key?.properties?.xPrivKeyEDDSA) {
                               dispatch(
-                                LogActions.info(
-                                  'skipping SVM address fix — private key is encrypted',
+                                LogActions.persistLog(
+                                  LogActions.info(
+                                    'skipping SVM address fix — private key is encrypted',
+                                  ),
                                 ),
                               );
                               return;
@@ -875,8 +879,10 @@ export default () => {
                                   wallet.receiveAddress
                               ) {
                                 dispatch(
-                                  LogActions.debug(
-                                    `Invalidating receive address ${wallet.receiveAddress} for wallet ${wallet.id} of key ${key.id} - replacing for correct one: ${derivedAddress.address}`,
+                                  LogActions.persistLog(
+                                    LogActions.debug(
+                                      `Invalidating receive address ${wallet.receiveAddress} for wallet ${wallet.id} of key ${key.id} - replacing for correct one: ${derivedAddress.address}`,
+                                    ),
                                   ),
                                 );
                                 dispatch(
@@ -902,8 +908,10 @@ export default () => {
                           }),
                         );
                         dispatch(
-                          LogActions.info(
-                            'success [runCompleteSvmWalletsAccountFix]',
+                          LogActions.persistLog(
+                            LogActions.info(
+                              'success [runSvmAddressCreationFix]',
+                            ),
                           ),
                         );
                         dispatch(setSvmAddressCreationFixComplete());
@@ -914,8 +922,10 @@ export default () => {
                             ? error.message
                             : JSON.stringify(error);
                         dispatch(
-                          LogActions.error(
-                            `Error in [runCompleteSvmWalletsAccountFix]: ${errMsg}`,
+                          LogActions.persistLog(
+                            LogActions.error(
+                              `Error in [runSvmAddressCreationFix]: ${errMsg}`,
+                            ),
                           ),
                         );
                         dispatch(setSvmAddressCreationFixComplete());
