@@ -1,8 +1,9 @@
-import React, {useCallback, useMemo, useState} from 'react';
-import DraggableFlatList, {
-  RenderItemParams,
-  ScaleDecorator,
-} from 'react-native-draggable-flatlist';
+import React, {memo, useCallback, useMemo, useState} from 'react';
+import ReorderableList, {
+  ReorderableListReorderEvent,
+  reorderItems,
+  useReorderableDrag,
+} from 'react-native-reorderable-list';
 import {
   ActiveOpacity,
   CtaContainerAbsolute,
@@ -71,43 +72,61 @@ const CustomizeHomeSettings = () => {
   const [hiddenList, setHiddenList] = useState(_hidden);
   const Tab = createMaterialTopTabNavigator();
 
-  const toggle = useCallback(
-    (item: CustomizeItem) => {
-      const newItem = {...item};
-      const {show, key} = newItem;
+  const toggle = useCallback((item: CustomizeItem) => {
+    const newItem = {...item};
+    const {show} = newItem;
 
-      newItem.show = !show;
-      setDirty(true);
-      if (show) {
-        setVisibleList(visibleList.filter(vi => vi.key !== key));
-        setHiddenList(hiddenList.concat(newItem));
-      } else {
-        setHiddenList(hiddenList.filter(hi => hi.key !== key));
-        setVisibleList(visibleList.concat(newItem));
-      }
-    },
-    [hiddenList, visibleList],
+    newItem.show = !show;
+    setDirty(true);
+    if (show) {
+      setVisibleList(prev => prev.filter(vi => vi.key !== item.key));
+      setHiddenList(prev => prev.concat(newItem));
+    } else {
+      setHiddenList(prev => prev.filter(hi => hi.key !== item.key));
+      setVisibleList(prev => prev.concat(newItem));
+    }
+  }, []);
+
+  const VisibleRow = memo(function VisibleRow({
+    item,
+    onToggle,
+  }: {
+    item: CustomizeItem;
+    onToggle: (i: CustomizeItem) => void;
+  }) {
+    const drag = useReorderableDrag();
+    return (
+      <CustomizeCardContainer
+        delayLongPress={100}
+        onLongPress={() => {
+          haptic('soft');
+          drag();
+        }}
+        activeOpacity={ActiveOpacity}>
+        <HamburgerContainer>
+          <HamburgerSvg />
+        </HamburgerContainer>
+        <CustomizeCard item={item} toggle={() => onToggle(item)} />
+      </CustomizeCardContainer>
+    );
+  });
+
+  const visibleRenderItem = useCallback(
+    ({item}: {item: CustomizeItem}) => (
+      <VisibleRow item={item} onToggle={toggle} />
+    ),
+    [toggle],
   );
 
-  const visibleRenderItem = ({item, drag, isActive}: RenderItemParams<any>) => {
-    return (
-      <ScaleDecorator>
-        <CustomizeCardContainer
-          delayLongPress={100}
-          onLongPress={() => {
-            haptic('soft');
-            drag();
-          }}
-          disabled={isActive}
-          activeOpacity={ActiveOpacity}>
-          <HamburgerContainer>
-            <HamburgerSvg />
-          </HamburgerContainer>
-          <CustomizeCard item={item} toggle={() => toggle(item)} />
-        </CustomizeCardContainer>
-      </ScaleDecorator>
-    );
-  };
+  const handleReorder = useCallback(
+    ({from, to}: ReorderableListReorderEvent) => {
+      if (!dirty && from !== to) {
+        setDirty(true);
+      }
+      setVisibleList(prev => reorderItems(prev, from, to));
+    },
+    [dirty],
+  );
 
   const ListFooterComponent = () => {
     return (
@@ -230,18 +249,13 @@ const CustomizeHomeSettings = () => {
         </Tab.Navigator>
       </LayoutToggleContainer>
 
-      <DraggableFlatList
+      <ReorderableList
         ListHeaderComponent={() =>
           visibleList.length ? <ListHeader>{t('Favorites')}</ListHeader> : null
         }
         ListFooterComponent={() => memoizedFooterList}
         contentContainerStyle={{paddingTop: 20, paddingBottom: 250}}
-        onDragEnd={({data}) => {
-          if (!dirty && visibleList[0]?.key !== data[0]?.key) {
-            setDirty(true);
-          }
-          setVisibleList(data);
-        }}
+        onReorder={handleReorder}
         data={visibleList}
         renderItem={visibleRenderItem}
         keyExtractor={item => item.key}
