@@ -113,6 +113,7 @@ import {Keys} from '../../../store/wallet/wallet.reducer';
 import {SolanaPayOpts} from './send/confirm/Confirm';
 import cloneDeep from 'lodash.clonedeep';
 import Icons from '../components/WalletIcons';
+import {AppActions} from '../../../store/app';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -1383,10 +1384,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         accounts: [...evmAccounts, ...svmAccounts],
         currency: selectedCurrency,
         showAddSvmAccount:
+          ['buy', 'swapTo', 'coinbase', 'coinbaseDeposit'].includes(context) &&
           selectedCurrencyHasBothVmTypes &&
           evmAccounts.length > 0 &&
           svmAccounts.length === 0,
         showAddEvmAccount:
+          ['buy', 'swapTo', 'coinbase', 'coinbaseDeposit'].includes(context) &&
           selectedCurrencyHasBothVmTypes &&
           svmAccounts.length > 0 &&
           evmAccounts.length === 0,
@@ -1431,6 +1434,25 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       if (!selectedAccount) {
         logger.warn(
           'Selected Account is undefined. Cannot select wallet to receive.',
+        );
+        setCryptoSelectModalVisible(false);
+        await sleep(1000);
+        dispatch(
+          AppActions.showBottomNotificationModal({
+            type: 'warning',
+            title: t('Unable to generate address'),
+            message: t(
+              'Your Key does not have an Account or Wallet corresponding to the selected currency.',
+            ),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('GOT IT'),
+                action: () => null,
+                primary: true,
+              },
+            ],
+          }),
         );
         return;
       }
