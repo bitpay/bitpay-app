@@ -1205,9 +1205,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       if (globalSelectOnDismiss) {
         globalSelectOnDismiss();
       }
-      await sleep(1000);
       setCryptoSelectModalVisible(false);
-      await sleep(1000);
+      await sleep(300);
       dispatch(
         showBottomNotificationModal(
           keyBackupRequired(selectedKey, navigation, dispatch, context),
@@ -1252,7 +1251,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     selectedNetwork: string,
   ) => {
     setCryptoSelectModalVisible(false);
-    await sleep(1000);
+    await sleep(500);
 
     if (!selectedAccount) {
       handleBasicWalletCreation(selectedCurrency, selectedKey, selectedNetwork);
@@ -1436,7 +1435,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
           'Selected Account is undefined. Cannot select wallet to receive.',
         );
         setCryptoSelectModalVisible(false);
-        await sleep(1000);
+        await sleep(500);
         dispatch(
           AppActions.showBottomNotificationModal({
             type: 'warning',
@@ -1458,7 +1457,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
       }
       // user is selecting address to receive funds if context === receive
       setCryptoSelectModalVisible(false);
-      await sleep(1000);
       const {keyId, wallets} = selectedAccount;
       const walletFullObject = findWalletById(
         keys[keyId].wallets,
@@ -1532,7 +1530,6 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   useEffect(() => {
     if (receiveWallet) {
       const showReceiveModal = async () => {
-        await sleep(1000);
         setShowReceiveAddressBottomModal(true);
       };
       showReceiveModal();
