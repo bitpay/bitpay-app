@@ -17,14 +17,18 @@ import {
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../../store/app/app.actions';
-import {Dispatch} from 'redux';
 import {
   calculatePercentageDifference,
+  checkEncryptedKeysForEddsaMigration,
   getMnemonic,
   sleep,
 } from '../../../../utils/helper-methods';
 import _ from 'lodash';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {
+  AppDispatch,
+  useAppDispatch,
+  useAppSelector,
+} from '../../../../utils/hooks';
 import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
@@ -49,7 +53,8 @@ import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
-import {AppActions} from '../../../../store/app';
+import {successImport} from '../../../../store/wallet/wallet.actions';
+import {checkEncryptPassword} from '../../../../store/wallet/utils/wallet';
 
 const CryptoContainer = styled.View`
   background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
@@ -80,7 +85,7 @@ const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
 export const keyBackupRequired = (
   key: Key,
   navigation: NavigationProp<any>,
-  dispatch: Dispatch,
+  dispatch: AppDispatch,
   context?: string,
 ): BottomNotificationConfig => {
   return {
@@ -98,6 +103,9 @@ export const keyBackupRequired = (
               showDecryptPasswordModal({
                 onSubmitHandler: async (encryptPassword: string) => {
                   try {
+                    dispatch(
+                      checkEncryptedKeysForEddsaMigration(key, encryptPassword),
+                    );
                     const decryptedKey = key.methods!.get(encryptPassword);
                     await dispatch(dismissDecryptPasswordModal());
                     await sleep(300);
@@ -150,7 +158,7 @@ export const createHomeCardList = ({
 }: {
   navigation: NavigationProp<any>;
   keys: Key[];
-  dispatch: Dispatch;
+  dispatch: AppDispatch;
   linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;

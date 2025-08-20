@@ -201,15 +201,17 @@ const BackupOnboarding: React.FC = () => {
               } else {
                 dispatch(
                   AppActions.showDecryptPasswordModal(
-                    buildEncryptModalConfig(async ({mnemonic}) => {
-                      navigation.navigate('RecoveryPhrase', {
-                        keyId: key.id,
-                        words: mnemonic.trim().split(' '),
-                        walletTermsAccepted: true,
-                        context: 'keySettings',
-                        key,
-                      });
-                    }),
+                    buildEncryptModalConfig(
+                      async ({mnemonic}: {mnemonic: string}) => {
+                        navigation.navigate('RecoveryPhrase', {
+                          keyId: key.id,
+                          words: mnemonic.trim().split(' '),
+                          walletTermsAccepted: true,
+                          context: 'keySettings',
+                          key,
+                        });
+                      },
+                    ),
                   ),
                 );
               }

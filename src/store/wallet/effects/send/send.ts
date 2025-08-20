@@ -43,6 +43,7 @@ import {
 } from '../fee/fee';
 import {GetInput} from '../transactions/transactions';
 import {
+  checkEncryptedKeysForEddsaMigration,
   formatCryptoAddress,
   formatCurrencyAbbreviation,
   formatFiatAmount,
@@ -1240,9 +1241,14 @@ export const publishAndSign =
                 onSubmitHandler: async (_password: string) => {
                   dispatch(dismissDecryptPasswordModal());
                   await sleep(500);
-                  checkEncryptPassword(key, _password)
-                    ? _resolve(_password)
-                    : _reject('invalid password');
+                  if (checkEncryptPassword(key, _password)) {
+                    dispatch(
+                      checkEncryptedKeysForEddsaMigration(key, _password),
+                    );
+                    _resolve(_password);
+                  } else {
+                    _reject('invalid password');
+                  }
                 },
                 onCancelHandler: () => {
                   _reject('password canceled');
@@ -1401,9 +1407,14 @@ export const publishAndSignMultipleProposals =
                   onSubmitHandler: async (_password: string) => {
                     dispatch(dismissDecryptPasswordModal());
                     await sleep(500);
-                    checkEncryptPassword(key, _password)
-                      ? _resolve(_password)
-                      : _reject('invalid password');
+                    if (checkEncryptPassword(key, _password)) {
+                      dispatch(
+                        checkEncryptedKeysForEddsaMigration(key, _password),
+                      );
+                      _resolve(_password);
+                    } else {
+                      _reject('invalid password');
+                    }
                   },
                   onCancelHandler: () => {
                     _reject('password canceled');

@@ -33,6 +33,7 @@ import {
 } from '../../../app/app.actions';
 import {
   addTokenChainSuffix,
+  checkEncryptedKeysForEddsaMigration,
   getAccount,
   isL2NoSideChainNetwork,
   sleep,
@@ -839,6 +840,7 @@ export const getDecryptPassword =
             dispatch(dismissDecryptPasswordModal());
             await sleep(500);
             if (checkEncryptPassword(key, _password)) {
+              dispatch(checkEncryptedKeysForEddsaMigration(key, _password));
               return resolve(_password);
             } else {
               return reject({message: 'invalid password'});

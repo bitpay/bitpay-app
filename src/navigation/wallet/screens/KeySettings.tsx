@@ -43,7 +43,11 @@ import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordTo
 import {URL} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {AppActions} from '../../../store/app';
-import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
+import {
+  checkEncryptedKeysForEddsaMigration,
+  fixWalletAddresses,
+  sleep,
+} from '../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -55,6 +59,7 @@ import {
 import {
   buildAccountList,
   buildWalletObj,
+  checkEncryptPassword,
   checkPrivateKeyEncrypted,
   generateKeyExportCode,
   mapAbbreviationAndName,
@@ -173,6 +178,7 @@ const KeySettings = () => {
     return {
       onSubmitHandler: async (encryptPassword: string) => {
         try {
+          dispatch(checkEncryptedKeysForEddsaMigration(_key, encryptPassword));
           const decryptedKey = _key.methods!.get(encryptPassword);
           dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(300);

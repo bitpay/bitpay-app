@@ -22,12 +22,16 @@ import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
+  checkEncryptPassword,
   checkPrivateKeyEncrypted,
   findWalletById,
 } from '../../../store/wallet/utils/wallet';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {AppActions} from '../../../store/app';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  checkEncryptedKeysForEddsaMigration,
+  sleep,
+} from '../../../utils/helper-methods';
 import {
   showBottomNotificationModal,
   showDecryptPasswordModal,
@@ -142,6 +146,7 @@ const WalletSettings = () => {
       onSubmitHandler: async (encryptPassword: string) => {
         try {
           const combinedKey: any = {};
+          dispatch(checkEncryptedKeysForEddsaMigration(key, encryptPassword));
           Object.values(Constants.ALGOS).forEach(algo => {
             const keyData = key.methods!.get(encryptPassword, algo);
             if (algo === 'EDDSA') {
