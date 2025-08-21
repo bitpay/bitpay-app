@@ -2,7 +2,6 @@ import {Key, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {CurrencyOpts} from '../../constants/currencies';
-import {AddLog} from '../log/log.types';
 import {checkPrivateKeyEncrypted} from './utils/wallet';
 
 type WalletReduxPersistBlackList = string[];
@@ -36,7 +35,6 @@ export interface WalletState {
   customizeNonce: boolean;
   queuedTransactions: boolean;
   enableReplaceByFee: boolean;
-  initLogs: AddLog[];
   customTokensMigrationComplete: boolean;
   polygonMigrationComplete: boolean;
   accountEvmCreationMigrationComplete: boolean;
@@ -73,7 +71,6 @@ export const initialState: WalletState = {
   customizeNonce: false,
   queuedTransactions: false,
   enableReplaceByFee: false,
-  initLogs: [], // keep init logs at the end (order is important)
   customTokensMigrationComplete: false,
   polygonMigrationComplete: false,
   accountEvmCreationMigrationComplete: false,
