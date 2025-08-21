@@ -12,6 +12,8 @@ import SigmaSvg from '../../../../assets/img/wallet/balance/sigma.svg';
 import CheckmarkSvg from '../../../../assets/img/wallet/balance/checkmark.svg';
 import ConfirmingSvg from '../../../../assets/img/wallet/balance/confirming.svg';
 import {useTranslation} from 'react-i18next';
+import {formatFiatAmount} from '../../../utils/helper-methods';
+import {useAppSelector} from '../../../utils/hooks';
 
 const BalanceDetailsContainer = styled(SheetContainer)`
   background-color: ${({theme: {dark}}) => (dark ? Black : White)};
@@ -107,6 +109,7 @@ interface Props {
 
 const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
   const {t} = useTranslation();
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const isTestnet = wallet.network === 'testnet';
   return (
     <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
@@ -147,11 +150,16 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                     <CryptoBalance type="caution">
                       {wallet.cryptoConfirmedLockedBalance} XRP
                     </CryptoBalance>
-                    <FiatBalance>
-                      {isTestnet
-                        ? t('Test Only - No Value')
-                        : wallet.fiatConfirmedLockedBalance}
-                    </FiatBalance>
+                    {wallet.fiatConfirmedLockedBalance ? (
+                      <FiatBalance>
+                        {isTestnet
+                          ? t('Test Only - No Value')
+                          : formatFiatAmount(
+                              wallet.fiatConfirmedLockedBalance,
+                              defaultAltCurrency.isoCode,
+                            )}
+                      </FiatBalance>
+                    ) : null}
                   </BalanceContainer>
                 </Row>
                 <LabelTip type="info">
@@ -178,11 +186,16 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                     <CryptoBalance type="caution">
                       {wallet.cryptoConfirmedLockedBalance} SOL
                     </CryptoBalance>
-                    <FiatBalance>
-                      {isTestnet
-                        ? t('Test Only - No Value')
-                        : wallet.fiatConfirmedLockedBalance}
-                    </FiatBalance>
+                    {wallet.fiatConfirmedLockedBalance ? (
+                      <FiatBalance>
+                        {isTestnet
+                          ? t('Test Only - No Value')
+                          : formatFiatAmount(
+                              wallet.fiatConfirmedLockedBalance,
+                              defaultAltCurrency.isoCode,
+                            )}
+                      </FiatBalance>
+                    ) : null}
                   </BalanceContainer>
                 </Row>
                 <LabelTip type="info">
@@ -207,9 +220,16 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <CryptoBalance>
                   {wallet.cryptoBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
-                <FiatBalance>
-                  {isTestnet ? t('Test Only - No Value') : wallet.fiatBalance}
-                </FiatBalance>
+                {wallet.fiatBalance ? (
+                  <FiatBalance>
+                    {isTestnet
+                      ? t('Test Only - No Value')
+                      : formatFiatAmount(
+                          wallet.fiatBalance,
+                          defaultAltCurrency.isoCode,
+                        )}
+                  </FiatBalance>
+                ) : null}
               </BalanceContainer>
             </Row>
             <LabelTip type="info">
@@ -238,11 +258,16 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <CryptoBalance type="success">
                   {wallet.cryptoSpendableBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
-                <FiatBalance>
-                  {isTestnet
-                    ? t('Test Only - No Value')
-                    : wallet.fiatSpendableBalance}
-                </FiatBalance>
+                {wallet.fiatSpendableBalance ? (
+                  <FiatBalance>
+                    {isTestnet
+                      ? t('Test Only - No Value')
+                      : formatFiatAmount(
+                          wallet.fiatSpendableBalance,
+                          defaultAltCurrency.isoCode,
+                        )}
+                  </FiatBalance>
+                ) : null}
               </BalanceContainer>
             </Row>
             <LabelTip type="info">
@@ -262,11 +287,16 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <CryptoBalance type="warn">
                   {wallet.cryptoPendingBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
-                <FiatBalance>
-                  {isTestnet
-                    ? t('Test Only - No Value')
-                    : wallet.fiatPendingBalance}
-                </FiatBalance>
+                {wallet.fiatPendingBalance ? (
+                  <FiatBalance>
+                    {isTestnet
+                      ? t('Test Only - No Value')
+                      : formatFiatAmount(
+                          wallet.fiatPendingBalance,
+                          defaultAltCurrency.isoCode,
+                        )}
+                  </FiatBalance>
+                ) : null}
               </BalanceContainer>
             </Row>
             <LabelTip type="info">
@@ -287,17 +317,22 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
                 <CryptoBalance type="caution">
                   {wallet.cryptoLockedBalance} {wallet.currencyAbbreviation}
                 </CryptoBalance>
-                <FiatBalance>
-                  {isTestnet
-                    ? t('Test Only - No Value')
-                    : wallet.fiatLockedBalance}
-                </FiatBalance>
+                {wallet.fiatLockedBalance ? (
+                  <FiatBalance>
+                    {isTestnet
+                      ? t('Test Only - No Value')
+                      : formatFiatAmount(
+                          wallet.fiatLockedBalance,
+                          defaultAltCurrency.isoCode,
+                        )}
+                  </FiatBalance>
+                ) : null}
               </BalanceContainer>
             </Row>
             <LabelTip type="info">
               <LabelTipText>
                 {t(
-                  'The amount of stored in this wallet that is allocated as inputs to your pending transaction proposals. The amount is determined using unspent transaction outputs associated with this wallet and may be more than the actual amounts associated with your pending transaction proposals.',
+                  'The amount in this wallet that is currently allocated to pending transaction proposals. This balance will become available once the proposals are either sent or rejected.',
                   {currencyName: wallet.currencyName},
                 )}
               </LabelTipText>
