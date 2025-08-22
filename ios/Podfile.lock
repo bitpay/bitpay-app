@@ -1443,7 +1443,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-compat (2.14.0):
+  - react-native-compat (2.21.8):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1503,7 +1503,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-netinfo (11.3.2):
+  - react-native-netinfo (11.4.1):
     - React-Core
   - react-native-pager-view (6.7.1):
     - DoubleConversion
@@ -2067,8 +2067,30 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNCAsyncStorage (1.17.10):
+  - RNCAsyncStorage (2.2.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - RNCClipboard (1.11.2):
     - React-Core
   - RNCMaskedView (0.3.2):
@@ -2912,14 +2934,14 @@ SPEC CHECKSUMS:
   react-native-biometrics: 352e5a794bfffc46a0c86725ea7dc62deb085bdc
   react-native-ble-plx: 4ab2fe137178489a1daf6e77946c2554da5c9241
   react-native-blur: d179f9d0898977578a42b0b536d4df57b8d7bd21
-  react-native-compat: 23b65552b90c129e24558bed700e7f51bb678e47
+  react-native-compat: 089b45b6c58c684ac7272ea9f13741ccf2763fe3
   react-native-config: 5330c8258265c1e5fdb8c009d2cabd6badd96727
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-in-app-review: ae45cc55e168a3b78eea9eea031ca57dccd7eb5a
   react-native-keyevent: fa167ff93e90b5d86b1678885669ff8ec099bf09
   react-native-mail: 8fdcd3aef007c33a6877a18eb4cf7447a1d4ce4a
   react-native-mmkv: daba9abc1723d9a88285ff09d29fcbd643591678
-  react-native-netinfo: 076df4f9b07f6670acf4ce9a75aac8d34c2e2ccc
+  react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: e0a6e9be6bf1d8ee1fdbaeab5c6a118ac13cefee
   react-native-print: f704aef52d931bfce6d1d84351dbb5232d7ecb89
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
@@ -2965,7 +2987,7 @@ SPEC CHECKSUMS:
   ReactCommon: eaa02856e231498d67f48d9b50e5a3bf5e5ee5b0
   ReactNativeExceptionHandler: b11ff67c78802b2f62eed0e10e75cb1ef7947c60
   RNBootSplash: 902d8ddc8c99a4c00d7833e1346b7e3117a77787
-  RNCAsyncStorage: 0c357f3156fcb16c8589ede67cc036330b6698ca
+  RNCAsyncStorage: faf86846c58994b6b8aab074a4914eb1796c2a9f
   RNCClipboard: 3f0451a8100393908bea5c5c5b16f96d45f30bfc
   RNCMaskedView: 16e6917a83e0696d3b5edd69f940c2e1fb377a66
   RNDeviceInfo: b32d24c84e40d54b736e62a7d2abd15e1225258d
