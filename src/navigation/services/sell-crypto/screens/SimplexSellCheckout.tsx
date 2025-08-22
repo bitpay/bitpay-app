@@ -1036,7 +1036,9 @@ const SimplexSellCheckout: React.FC = () => {
                             haptic('impactLight');
                             dispatch(
                               openUrlWithInAppBrowser(
-                                'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-do-you-charge-for-card-payments',
+                                paymentMethod === 'sepaBankTransfer'
+                                  ? 'https://www.simplex.com/kb/what-fees-am-i-paying-for-withdrawing-funds-from-my-nuvei-account-via-sepa-or-sepa-instant'
+                                  : 'https://www.simplex.com/kb/what-fees-do-you-charge-for-card-payments',
                               ),
                             );
                           }}

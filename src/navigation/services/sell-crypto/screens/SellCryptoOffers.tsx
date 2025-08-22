@@ -127,6 +127,7 @@ import {
   RampPaymentUrlConfigParams,
 } from '../../../../store/buy-crypto/models/ramp.models';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {isEuCountry} from '../../../../store/location/location.effects';
 
 export type SellCryptoOffersScreenParams = {
   amount: number;
@@ -1885,7 +1886,11 @@ const SellCryptoOffers: React.FC = () => {
                               case 'moonpay':
                                 dispatch(
                                   openUrlWithInAppBrowser(
-                                    'https://support.moonpay.com/customers/docs/moonpay-fees',
+                                    (user?.country &&
+                                      isEuCountry(user.country)) ||
+                                      isEuCountry(country)
+                                      ? 'https://www.moonpay.com/legal/europe_pricing_disclosure'
+                                      : 'https://www.moonpay.com/legal/pricing_disclosure',
                                   ),
                                 );
                                 break;
@@ -1899,7 +1904,9 @@ const SellCryptoOffers: React.FC = () => {
                               case 'simplex':
                                 dispatch(
                                   openUrlWithInAppBrowser(
-                                    'https://support.simplex.com/hc/en-gb/articles/360014078420-What-fees-do-you-charge-for-card-payments',
+                                    paymentMethod?.method === 'sepaBankTransfer'
+                                      ? 'https://www.simplex.com/kb/what-fees-am-i-paying-for-withdrawing-funds-from-my-nuvei-account-via-sepa-or-sepa-instant'
+                                      : 'https://www.simplex.com/kb/what-fees-do-you-charge-for-card-payments',
                                   ),
                                 );
                                 break;
