@@ -210,34 +210,38 @@ const AccountListRow = ({
           </Column>
         )}
         {isMultiNetworkSupported ? (
-          <BalanceColumn>
-            {!hideBalance ? (
-              <H5 numberOfLines={1} ellipsizeMode="tail">
-                {fiatBalanceFormat}
-              </H5>
-            ) : (
-              <H5 style={{marginTop: 8}}>****</H5>
-            )}
-          </BalanceColumn>
-        ) : !isScanning ? (
-          <BalanceColumn>
-            {!hideBalance ? (
-              <>
+          fiatBalanceFormat && (
+            <BalanceColumn>
+              {!hideBalance ? (
                 <H5 numberOfLines={1} ellipsizeMode="tail">
-                  {cryptoBalance}
+                  {fiatBalanceFormat}
                 </H5>
-                {showFiatBalance && (
-                  <ListItemSubText textAlign={'right'}>
-                    {network === 'testnet'
-                      ? 'Test - No Value'
-                      : fiatBalanceFormat}
-                  </ListItemSubText>
-                )}
-              </>
-            ) : (
-              <H5 style={{marginTop: 8}}>****</H5>
-            )}
-          </BalanceColumn>
+              ) : (
+                <H5 style={{marginTop: 8}}>****</H5>
+              )}
+            </BalanceColumn>
+          )
+        ) : !isScanning ? (
+          cryptoBalance && (
+            <BalanceColumn>
+              {!hideBalance ? (
+                <>
+                  <H5 numberOfLines={1} ellipsizeMode="tail">
+                    {cryptoBalance}
+                  </H5>
+                  {showFiatBalance && (
+                    <ListItemSubText textAlign={'right'}>
+                      {network === 'testnet'
+                        ? 'Test - No Value'
+                        : fiatBalanceFormat}
+                    </ListItemSubText>
+                  )}
+                </>
+              ) : (
+                <H5 style={{marginTop: 8}}>****</H5>
+              )}
+            </BalanceColumn>
+          )
         ) : (
           <SpinnerContainer>
             <ActivityIndicator color={ProgressBlue} />
