@@ -64,10 +64,7 @@ import {
   WalletSelector,
 } from './Shared';
 import {AppActions} from '../../../../../store/app';
-import {
-  CustomErrorMessage,
-  WrongPasswordError,
-} from '../../../components/ErrorMessages';
+import {CustomErrorMessage} from '../../../components/ErrorMessages';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {PayProOptions} from '../../../../../store/wallet/effects/paypro/paypro';
 import {

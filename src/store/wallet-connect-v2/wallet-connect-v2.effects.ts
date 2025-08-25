@@ -18,6 +18,7 @@ import {
   Verify,
 } from '@walletconnect/types';
 import {
+  checkEncryptedKeysForEddsaMigration,
   processOtherMethodsRequest,
   processSolanaSwapRequest,
   processSwapRequest,
@@ -1039,6 +1040,9 @@ export const getPrivKey =
                 showDecryptPasswordModal({
                   onSubmitHandler: async (_password: string) => {
                     if (checkEncryptPassword(key, _password)) {
+                      dispatch(
+                        checkEncryptedKeysForEddsaMigration(key, _password),
+                      );
                       dispatch(dismissDecryptPasswordModal());
                       await sleep(500);
                       _resolve(_password);

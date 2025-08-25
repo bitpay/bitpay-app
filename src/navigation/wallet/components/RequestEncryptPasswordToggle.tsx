@@ -3,7 +3,6 @@ import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import React, {useEffect, useState} from 'react';
 import {Key} from '../../../store/wallet/wallet.models';
 import {useNavigation} from '@react-navigation/native';
-import {useDispatch} from 'react-redux';
 import {
   dismissBottomNotificationModal,
   showBottomNotificationModal,
@@ -11,15 +10,19 @@ import {
 import {WalletActions} from '../../../store/wallet';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {DecryptError, WrongPasswordError} from './ErrorMessages';
-import {sleep} from '../../../utils/helper-methods';
+import {
+  checkEncryptedKeysForEddsaMigration,
+  sleep,
+} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
 import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
+import {useAppDispatch} from '../../../utils/hooks';
 
 const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const logger = useLogger();
 
   const [passwordToggle, setPasswordToggle] = useState(
@@ -40,6 +43,7 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
             logger.debug(
               `Decrypting private key for: ${key.keyName} - with algo: ${algo}`,
             );
+            dispatch(checkEncryptedKeysForEddsaMigration(key, password));
             key.methods!.decrypt(password, algo);
           } catch (err) {
             const errMsg =

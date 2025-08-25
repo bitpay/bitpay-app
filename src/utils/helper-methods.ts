@@ -22,7 +22,7 @@ import {
 } from '../constants/currencies';
 import {LogActions} from '../store/log';
 import {createMultipleWallets} from '../store/wallet/effects';
-import {toFiat} from '../store/wallet/utils/wallet';
+import {checkEncryptPassword, toFiat} from '../store/wallet/utils/wallet';
 import {FormatAmount} from '../store/wallet/effects/amount/amount';
 import {getERC20TokenPrice} from '../store/moralis/moralis.effects';
 import {ethers} from 'ethers';
@@ -57,6 +57,7 @@ import {
   TransferCheckedTokenInstruction,
   TransferSolInstruction,
 } from './sol-transaction-parser';
+import {successImport} from '../store/wallet/wallet.actions';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -1508,3 +1509,17 @@ export const getSolanaTokenInfo = async (
     throw err;
   }
 };
+
+export const checkEncryptedKeysForEddsaMigration =
+  (key: Key, password: string) =>
+  async (dispatch: any): Promise<void> => {
+    if (
+      checkEncryptPassword(key, password) &&
+      !key?.properties?.xPrivKeyEDDSAEncrypted &&
+      !key?.properties?.xPrivKeyEDDSA
+    ) {
+      key.methods!.addKeyByAlgorithm('EDDSA', {password});
+      key.properties = key.methods!.toObj();
+      dispatch(successImport({key}));
+    }
+  };
