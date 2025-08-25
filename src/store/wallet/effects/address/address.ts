@@ -145,14 +145,17 @@ export const createWalletAddress =
                 wallet.credentials.rootPath,
                 null,
               );
-            dispatch(
-              successGetReceiveAddress({
-                keyId: wallet.keyId,
-                walletId: wallet.id,
-                receiveAddress: derivedAddress.address,
-              }),
-            );
+            if (!skipDispatch) {
+              dispatch(
+                successGetReceiveAddress({
+                  keyId: wallet.keyId,
+                  walletId: wallet.id,
+                  receiveAddress: derivedAddress.address,
+                }),
+              );
+            }
             wallet.receiveAddress = derivedAddress.address;
+            return resolve(derivedAddress.address);
           } else if (addressObj) {
             const receiveAddress = addressObj.address;
             if (!skipDispatch) {
@@ -166,6 +169,7 @@ export const createWalletAddress =
             }
             return resolve(receiveAddress);
           }
+          return reject({type: 'GENERAL_ERROR', error: 'No address generated'});
         });
       }
     });
