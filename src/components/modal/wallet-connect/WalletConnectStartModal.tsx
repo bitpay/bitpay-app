@@ -80,7 +80,9 @@ import WarningOutlineSvg from '../../../../assets/img/warning-outline.svg';
 import InvalidDomainSvg from '../../../../assets/img/invalid-domain.svg';
 import DefaultImage from '../../../../assets/img/wallet-connect/default-icon.svg';
 import Banner from '../../banner/Banner';
-import AccountWCV2RowModal from './AccountWCV2RowModal';
+import AccountWCV2RowModal, {
+  KeyWalletsRowWithChecked,
+} from './AccountWCV2RowModal';
 import WCErrorBottomNotification from './WCErrorBottomNotification';
 import WarningBrownSvg from '../../../../assets/img/warning-brown.svg';
 import {getNavigationTabName, RootStacks} from '../../../Root';
@@ -601,12 +603,6 @@ export const WalletConnectStartModal = () => {
     }
   };
 
-  const getFlatAllKeysAccounts = useMemo(() => {
-    return allKeys?.map(key => key.accounts).flat() as (AccountRowProps & {
-      checked: boolean;
-    })[];
-  }, [allKeys]);
-
   return (
     <SheetModal
       isVisible={showWalletConnectStartModal}
@@ -905,7 +901,7 @@ export const WalletConnectStartModal = () => {
             <AccountWCV2RowModal
               isVisible={showAccountWCV2SelectionBottomModal}
               closeModal={() => setShowAccountWCV2SelectionBottomModal(false)}
-              accounts={getFlatAllKeysAccounts}
+              allKeys={allKeys as KeyWalletsRowWithChecked[]}
               onPress={account => {
                 const _allKeys = allKeys.map(key => ({
                   ...key,

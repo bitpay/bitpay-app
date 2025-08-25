@@ -4,7 +4,7 @@ import {
   ActiveOpacity,
   Column,
 } from '../../styled/Containers';
-import {H4, H5} from '../../styled/Text';
+import {BaseText, H4, H5} from '../../styled/Text';
 import Blockie from '../../blockie/Blockie';
 import styled from 'styled-components/native';
 import {useTranslation} from 'react-i18next';
@@ -20,13 +20,32 @@ import Back from '../../back/Back';
 import {ScrollView} from 'react-native-gesture-handler';
 import {View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
+import {SlateDark, White} from '../../../styles/colors';
+import KeySvg from '../../../../assets/img/key.svg';
 
+export type KeyWalletsRowWithChecked = Omit<KeyWalletsRowProps, 'accounts'> & {
+  accounts: (AccountRowProps & {checked: boolean})[];
+};
 interface Props {
   isVisible: boolean;
-  accounts: (AccountRowProps & {checked: boolean})[];
+  allKeys: KeyWalletsRowWithChecked[];
   onPress: (account: AccountRowProps & {checked: boolean}) => void;
   closeModal: () => void;
 }
+
+const KeyNameContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  margin-top: 20px;
+  margin-left: 10px;
+  margin-bottom: 10px;
+`;
+
+const KeyName = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  margin-left: 10px;
+`;
 
 const AccountSettingsContainer = styled(TouchableOpacity)`
   flex-direction: row;
@@ -76,7 +95,7 @@ const InvisiblePlaceholder = styled.View`
 
 const AccountWCV2RowModal = ({
   isVisible,
-  accounts,
+  allKeys,
   onPress,
   closeModal,
 }: Props) => {
@@ -99,36 +118,43 @@ const AccountWCV2RowModal = ({
           <InvisiblePlaceholder style={{width: 41}} />
         </WalletSelectMenuHeaderContainer>
         <ScrollView>
-          <View style={{paddingBottom: 50}}>
-            {accounts.map((account: AccountRowProps & {checked: boolean}) => (
-              <AccountSettingsContainer
-                key={account.receiveAddress}
-                activeOpacity={ActiveOpacity}
-                onPress={() => {
-                  if (!account.checked) {
-                    onPress(account);
-                  }
-                }}>
-                <CurrencyImageContainer style={{height: 40, width: 40}}>
-                  <Blockie size={40} seed={account.receiveAddress} />
-                </CurrencyImageContainer>
-                <Column>
-                  <H5 ellipsizeMode="tail" numberOfLines={1}>
-                    {account.accountName}
-                  </H5>
-                </Column>
-                <CheckBoxColumn>
-                  <Checkbox
-                    radio={true}
-                    checked={account.checked}
-                    onPress={() => {
-                      if (!account.checked) {
-                        onPress(account);
-                      }
-                    }}
-                  />
-                </CheckBoxColumn>
-              </AccountSettingsContainer>
+          <View style={{paddingBottom: 50, paddingHorizontal: 10}}>
+            {allKeys.map(k => (
+              <React.Fragment key={k.key}>
+                <KeyNameContainer>
+                  {KeySvg({})}
+                  <KeyName>{k.keyName || 'My Key'}</KeyName>
+                </KeyNameContainer>
+                {k.accounts.map(account => {
+                  const handlePress = () => {
+                    if (!account.checked) {
+                      onPress(account);
+                    }
+                  };
+                  return (
+                    <AccountSettingsContainer
+                      key={account.receiveAddress}
+                      activeOpacity={ActiveOpacity}
+                      onPress={handlePress}>
+                      <CurrencyImageContainer style={{height: 40, width: 40}}>
+                        <Blockie size={40} seed={account.receiveAddress} />
+                      </CurrencyImageContainer>
+                      <Column>
+                        <H5 ellipsizeMode="tail" numberOfLines={1}>
+                          {account.accountName}
+                        </H5>
+                      </Column>
+                      <CheckBoxColumn>
+                        <Checkbox
+                          radio
+                          checked={account.checked}
+                          onPress={handlePress}
+                        />
+                      </CheckBoxColumn>
+                    </AccountSettingsContainer>
+                  );
+                })}
+              </React.Fragment>
             ))}
           </View>
         </ScrollView>
