@@ -29,7 +29,6 @@ import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
 import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
-import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoGroup';
 import {CardScreens} from '../../navigation/card/CardStack';
 import {CardActivationScreens} from '../../navigation/card-activation/CardActivationGroup';
 import {TabsScreens} from '../../navigation/tabs/TabsStack';
@@ -244,7 +243,6 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     // splitting inits into store specific ones as to keep it cleaner in the main init here
     dispatch(walletConnectV2Init());
-    dispatch(initializeBrazeContent());
     dispatch(moralisInit());
 
     // Update Coinbase
@@ -281,12 +279,21 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
   const {APP} = getState();
   const {appFirstOpenData, appInstalled, onboardingCompleted} = APP;
+  dispatch(LogActions.info('[initAnalytics] Starting...'));
 
   if (onboardingCompleted) {
     QuickActions.clearShortcutItems();
     QuickActions.setShortcutItems(ShortcutList);
   }
   await dispatch(Analytics.initialize());
+
+  // Create a Braze EID for all users
+  let eid = APP.brazeEid;
+  if (!eid) {
+    eid = dispatch(createBrazeEid());
+  }
+  dispatch(LogActions.debug('[initAnalytics] Braze EID: ', eid));
+  await dispatch(Analytics.identify(eid));
 
   if (!appInstalled) {
     dispatch(trackAppInstalled(Math.floor(Date.now() / 1000)));
@@ -304,6 +311,8 @@ const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
       dispatch(trackFirstOpenEvent(appFirstOpenData.firstOpenDate));
     }
   }
+  dispatch(initializeBrazeContentCards());
+  dispatch(LogActions.info('[initAnalytics] Finished successfully.'));
 };
 
 const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
@@ -448,66 +457,37 @@ const initializeApi =
  * The subscription will fetch latest content when it receives an update event.
  * @returns void
  */
-export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
+const initializeBrazeContentCards = (): Effect => dispatch => {
   try {
-    dispatch(LogActions.info('Initializing Braze content...'));
-    const {APP} = getState();
+    dispatch(LogActions.info('[Braze Content Cards] Initializing...'));
 
-    let contentCardSubscription = APP.brazeContentCardSubscription;
+    // tiny cooldown to avoid bursty repeats
+    let __lastHandledAt = 0;
+    const DEDUPE_MS = 2000;
 
-    if (contentCardSubscription) {
-      contentCardSubscription.subscriber?.removeAllSubscriptions();
-      contentCardSubscription = null;
-    }
-
-    // When triggering a new Braze session (via changeUser), it may take a bit for campaigns/canvases to propogate.
-    const INIT_CONTENT_CARDS_POLL_INTERVAL = 5000;
-    const MAX_RETRIES = 3;
-    let currentRetry = 0;
-
-    contentCardSubscription = Braze.addListener(
+    Braze.addListener(
       Braze.Events.CONTENT_CARDS_UPDATED,
       async (update: Braze.ContentCardsUpdatedEvent) => {
+        // --- dedupe first (so logs stop spamming) ---
+        const now = Date.now();
+        if (now - __lastHandledAt < DEDUPE_MS) {
+          return;
+        }
+        __lastHandledAt = now;
+
         if (Analytics.isMergingUser()) {
           dispatch(
             LogActions.debug(
-              'Skipping Braze content cards update during user merge.',
+              '[Braze Content Cards] Skipping Braze content cards update during user merge.',
             ),
           );
           return;
         }
         const contentCards = update.cards;
-        const isInitializing = currentRetry < MAX_RETRIES;
-
-        dispatch(
-          isInitializing
-            ? LogActions.debug(
-                'Braze content cards updated, fetching latest content cards...',
-              )
-            : LogActions.info(
-                'Braze content cards updated, fetching latest content cards...',
-              ),
-        );
-
-        if (contentCards.length) {
-          currentRetry = MAX_RETRIES;
-        } else {
-          if (isInitializing) {
-            currentRetry++;
-            await sleep(INIT_CONTENT_CARDS_POLL_INTERVAL);
-            dispatch(
-              LogActions.debug(
-                `0 content cards found. Retrying... (${currentRetry} of ${MAX_RETRIES})`,
-              ),
-            );
-            Braze.requestContentCardsRefresh();
-            return;
-          }
-        }
 
         dispatch(
           LogActions.info(
-            `${contentCards.length} content ${
+            `[Braze Content Cards] ${contentCards.length} content ${
               contentCards.length === 1 ? 'card' : 'cards'
             } fetched from Braze.`,
           ),
@@ -516,18 +496,12 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
       },
     );
 
-    // Create a Braze EID for all users
-    let eid = APP.brazeEid;
-    if (!eid) {
-      eid = dispatch(createBrazeEid());
-    }
-    dispatch(LogActions.debug('Braze EID: ', eid));
-    dispatch(Analytics.identify(eid));
-
-    dispatch(LogActions.info('Successfully initialized Braze.'));
-    dispatch(AppActions.brazeInitialized(contentCardSubscription));
+    Braze.requestContentCardsRefresh();
+    dispatch(
+      LogActions.info('[Braze Content Cards] Successfully initialized .'),
+    );
   } catch (err) {
-    const errMsg = 'Something went wrong while initializing Braze.';
+    const errMsg = '[Braze Content Cards] Something went wrong';
 
     dispatch(LogActions.error(errMsg));
     dispatch(
@@ -535,23 +509,21 @@ export const initializeBrazeContent = (): Effect => (dispatch, getState) => {
         err instanceof Error ? err.message : JSON.stringify(err),
       ),
     );
-  } finally {
-    dispatch(LogActions.info('Initializing Braze content complete.'));
   }
 };
 
 const createBrazeEid = (): Effect<string | undefined> => dispatch => {
   try {
-    dispatch(LogActions.info('Generating EID for BWS user...'));
+    dispatch(LogActions.info('[Braze] Generating EID for BWS user...'));
 
     const eid = uuid.v4().toString();
     dispatch(setBrazeEid(eid));
-    dispatch(Analytics.identify(eid));
 
-    dispatch(LogActions.info('Generated EID for BWS user.'));
+    dispatch(LogActions.info('[Braze] Generated EID for BWS user.'));
     return eid;
   } catch (err) {
-    const errMsg = 'Something went wrong while generating EID for BWS user.';
+    const errMsg =
+      '[Braze] Something went wrong while generating EID for BWS user.';
 
     dispatch(LogActions.error(errMsg));
     dispatch(

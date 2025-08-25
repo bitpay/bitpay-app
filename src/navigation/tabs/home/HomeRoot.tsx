@@ -31,11 +31,7 @@ import {
   getCurrencyAbbreviation,
   sleep,
 } from '../../../utils/helper-methods';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useBrazeRefreshOnFocus,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
 import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import DefaultAdvertisements from './components/advertisements/DefaultAdvertisements';
@@ -102,7 +98,6 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups?.length > 0;
-  useBrazeRefreshOnFocus();
 
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 

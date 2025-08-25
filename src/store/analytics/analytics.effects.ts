@@ -151,10 +151,10 @@ export const Analytics = (() => {
       (
         userEid: string | undefined,
         traits?: Record<string, any> | undefined,
-      ): Effect<void> =>
-      () => {
-        BrazeWrapper.identify(userEid, traits);
-        MixpanelWrapper.identify(userEid);
+      ): Effect<Promise<void>> =>
+      async () => {
+        await BrazeWrapper.identify(userEid, traits);
+        await MixpanelWrapper.identify(userEid);
       },
 
     /**

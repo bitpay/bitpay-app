@@ -186,6 +186,7 @@ export const BrazeWrapper = (() => {
         userId,
         attributes,
       };
+      return Promise.resolve();
     },
 
     merge(userToMerge: string, userToKeep: string) {

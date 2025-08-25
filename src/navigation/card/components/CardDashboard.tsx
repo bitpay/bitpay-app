@@ -25,11 +25,7 @@ import {
   selectDashboardTransactions,
 } from '../../../store/card/card.selectors';
 import {isActivationRequired} from '../../../utils/card';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useBrazeRefreshOnFocus,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {CardHomeScreenProps} from '../screens/CardHome';
 import {
   EmptyGhostContainer,
@@ -73,7 +69,6 @@ const CardDashboard: React.FC<CardDashboardProps> = props => {
   );
   const brazeCardOffers = useAppSelector(selectBrazeCardOffers);
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
-  useBrazeRefreshOnFocus();
 
   const currentGroupIdx = Math.max(
     0,
