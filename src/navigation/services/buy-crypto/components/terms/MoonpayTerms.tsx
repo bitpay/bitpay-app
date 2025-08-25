@@ -10,6 +10,7 @@ import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {PaymentMethod} from '../../constants/BuyCryptoConstants';
+import { isEuCountry } from '../../../../../store/location/location.effects';
 
 const MoonpayTerms: React.FC<{
   paymentMethod: PaymentMethod;
@@ -54,7 +55,9 @@ const MoonpayTerms: React.FC<{
           haptic('impactLight');
           dispatch(
             openUrlWithInAppBrowser(
-              'https://support.moonpay.com/customers/docs/moonpay-fees',
+              isEuCountry(country)
+                ? 'https://www.moonpay.com/legal/europe_pricing_disclosure'
+                : 'https://www.moonpay.com/legal/pricing_disclosure',
             ),
           );
         }}>
