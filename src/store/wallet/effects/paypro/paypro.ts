@@ -24,6 +24,11 @@ export interface PayProOptions {
   payProUrl: string;
   verified: boolean;
 }
+export interface SupportedTransactionCurrencies {
+  [key: string]: {
+    enabled: boolean;
+  };
+}
 
 export const GetPayProOptions =
   (paymentUrl: string, attempt: number = 1): Effect<Promise<PayProOptions>> =>

@@ -32,6 +32,7 @@ import {useAppSelector} from '../../utils/hooks';
 import {BitpaySupportedCoins} from '../../constants/currencies';
 import {SearchableItem} from '../chain-search/ChainSearch';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {SupportedTransactionCurrencies} from '../../store/wallet/effects/paypro/paypro';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -157,6 +158,7 @@ interface KeyWalletProps {
   onPress: (wallet: Wallet | WalletRowProps) => void;
   currency?: string;
   hideBalance: boolean;
+  supportedTransactionCurrencies?: SupportedTransactionCurrencies;
 }
 
 const KeyWalletsRow = ({
@@ -165,6 +167,7 @@ const KeyWalletsRow = ({
   onPress,
   currency,
   hideBalance,
+  supportedTransactionCurrencies,
 }: KeyWalletProps) => {
   const {t} = useTranslation();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
@@ -279,6 +282,9 @@ const KeyWalletsRow = ({
                                   id={asset.id}
                                   hideBalance={hideBalance}
                                   noBorder={true}
+                                  supportedTransactionCurrencies={
+                                    supportedTransactionCurrencies
+                                  }
                                   onPress={() => {
                                     const fullWalletObj = findWalletById(
                                       keys[key.key].wallets,
@@ -363,11 +369,15 @@ const KeyWalletsRow = ({
                         id={wallet.id}
                         hideBalance={hideBalance}
                         noBorder={true}
+                        supportedTransactionCurrencies={
+                          supportedTransactionCurrencies
+                        }
                         onPress={() => {
                           const fullWalletObj = findWalletById(
                             keys[key.key].wallets,
                             wallet.id,
                           ) as Wallet;
+
                           onPress(fullWalletObj);
                         }}
                         wallet={wallet}

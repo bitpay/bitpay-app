@@ -60,6 +60,7 @@ import {IsERCToken} from '../../../../../store/wallet/utils/currency';
 import {CurrencyListIcons} from '../../../../../constants/SupportedCurrencyOptions';
 import ContactIcon from '../../../../tabs/contacts/components/ContactIcon';
 import CoinbaseSvg from '../../../../../../assets/img/wallet/transactions/coinbase.svg';
+import {SupportedTransactionCurrencies} from '../../../../../store/wallet/effects/paypro/paypro';
 
 // Styled
 export const ConfirmContainer = styled.SafeAreaView`
@@ -526,6 +527,7 @@ export const WalletSelector = ({
   autoSelectIfOnlyOneWallet,
   currency,
   chain,
+  supportedTransactionCurrencies,
 }: {
   walletsAndAccounts: WalletsAndAccounts;
   onWalletSelect: (wallet: Wallet) => void;
@@ -536,6 +538,7 @@ export const WalletSelector = ({
   autoSelectIfOnlyOneWallet?: boolean;
   currency?: string;
   chain?: string;
+  supportedTransactionCurrencies?: SupportedTransactionCurrencies;
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -660,6 +663,7 @@ export const WalletSelector = ({
             currency={currency}
             keyAccounts={walletsAndAccounts.keyWallets}
             hideBalance={hideAllBalances}
+            supportedTransactionCurrencies={supportedTransactionCurrencies}
             onPress={wallet => selectOption(() => onWalletSelect(wallet), true)}
           />
           <KeyWalletsRow<WalletRowProps>

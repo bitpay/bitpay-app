@@ -105,6 +105,7 @@ export const ListContainer = styled.View`
 interface RowContainerProps {
   isLast?: boolean;
   noBorder?: boolean;
+  isDisabled?: boolean;
 }
 
 export const RowContainer = styled(TouchableOpacity)<RowContainerProps>`
@@ -115,6 +116,7 @@ export const RowContainer = styled(TouchableOpacity)<RowContainerProps>`
   border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
   border-bottom-width: ${({isLast, noBorder}) =>
     isLast || noBorder ? 0 : 1}px;
+  opacity: ${({isDisabled}) => (isDisabled ? 0.5 : 1)};
 `;
 
 export const RowContainerWithoutBorders = styled(
@@ -445,7 +447,7 @@ export const BadgeContainer = styled.View`
   padding: 4px;
   border-radius: 2.4px;
   gap: 4px;
-  height: 20px;
+  height: 22px;
 `;
 
 export const BadgeContainerTouchable = styled(TouchableOpacity)`
