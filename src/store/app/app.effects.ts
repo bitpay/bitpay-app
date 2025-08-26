@@ -1113,25 +1113,29 @@ export const handleBwsEvent =
     }
   };
 
-export const resetAllSettings = (): Effect => dispatch => {
-  dispatch(AppActions.setColorScheme(null));
-  dispatch(AppActions.showPortfolioValue(true));
-  dispatch(AppActions.toggleHideAllBalances(false));
-  // Reset AltCurrency
-  dispatch(
-    AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
-  );
-  dispatch(FormatKeyBalances());
-  dispatch(updatePortfolioBalance());
-  dispatch(coinbaseInitialize());
-  // Reset Default Language
-  i18n.changeLanguage('en');
-  dispatch(AppActions.setDefaultLanguage('en'));
-  dispatch(WalletActions.setUseUnconfirmedFunds(false));
-  dispatch(WalletActions.setCustomizeNonce(false));
-  dispatch(WalletActions.setQueuedTransactions(false));
-  dispatch(WalletActions.setEnableReplaceByFee(false));
-  dispatch(LogActions.info('Reset all settings'));
+export const resetAllSettings = (): Effect<Promise<void>> => async dispatch => {
+  try {
+    await dispatch(AppActions.setColorScheme(null));
+    await dispatch(AppActions.showPortfolioValue(true));
+    await dispatch(AppActions.toggleHideAllBalances(false));
+    // Reset AltCurrency
+    await dispatch(
+      AppActions.setDefaultAltCurrency({isoCode: 'USD', name: 'US Dollar'}),
+    );
+    dispatch(FormatKeyBalances());
+    await dispatch(updatePortfolioBalance());
+    await dispatch(coinbaseInitialize());
+    // Reset Default Language
+    await dispatch(AppActions.setDefaultLanguage('en'));
+    await dispatch(WalletActions.setUseUnconfirmedFunds(false));
+    await dispatch(WalletActions.setCustomizeNonce(false));
+    await dispatch(WalletActions.setQueuedTransactions(false));
+    await dispatch(WalletActions.setEnableReplaceByFee(false));
+    dispatch(LogActions.info('Reset all settings'));
+    return Promise.resolve();
+  } catch (error) {
+    return Promise.reject(error);
+  }
 };
 
 export const getRouteParam = (url: string, param: string) => {

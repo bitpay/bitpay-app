@@ -3,13 +3,19 @@ import Button from '../../../../components/button/Button';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ToggleSwitch from '../../../../components/toggle-switch/ToggleSwitch';
 import {AppActions} from '../../../../store/app';
-import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {resetAllSettings} from '../../../../store/app/app.effects';
-import {sleep} from '../../../../utils/helper-methods';
+import {
+  dismissOnGoingProcessModal,
+  showBottomNotificationModal,
+} from '../../../../store/app/app.actions';
+import {
+  resetAllSettings,
+  startOnGoingProcessModal,
+} from '../../../../store/app/app.effects';
 import {useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {RootState} from '../../../../store';
+import {LogActions} from '../../../../store/log';
 import {useAppDispatch} from '../../../../utils/hooks/useAppDispatch';
 import {useTranslation} from 'react-i18next';
 import {LanguageList} from '../../../../constants/LanguageSelectionList';
@@ -138,30 +144,39 @@ const General: React.FC<Props> = ({navigation}) => {
                 {
                   text: t('RESET'),
                   action: async () => {
-                    dispatch(resetAllSettings());
-                    await sleep(400);
-                    dispatch(
-                      showBottomNotificationModal({
-                        type: 'success',
-                        title: t('Reset complete'),
-                        message: t('All settings have been reset.'),
-                        enableBackdropDismiss: true,
-                        actions: [
-                          {
-                            text: t('OK'),
-                            action: () => null,
-                            primary: true,
-                          },
-                        ],
-                      }),
-                    );
+                    try {
+                      await dispatch(
+                        startOnGoingProcessModal('GENERAL_AWAITING'),
+                      );
+                      await dispatch(resetAllSettings());
+                      dispatch(dismissOnGoingProcessModal());
+                      dispatch(
+                        showBottomNotificationModal({
+                          type: 'success',
+                          title: t('Reset complete'),
+                          message: t('All settings have been reset.'),
+                          enableBackdropDismiss: true,
+                          actions: [
+                            {
+                              text: t('OK'),
+                              action: () => null,
+                              primary: true,
+                            },
+                          ],
+                        }),
+                      );
+                    } catch (error) {
+                      dispatch(dismissOnGoingProcessModal());
+                      dispatch(
+                        LogActions.error('Could not reset settings', error),
+                      );
+                    }
                   },
                   primary: true,
                 },
                 {
                   text: t('CANCEL'),
                   action: () => {},
-                  primary: true,
                 },
               ],
             }),
