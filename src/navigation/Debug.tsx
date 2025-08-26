@@ -178,11 +178,17 @@ const DebugScreen: React.FC<
         <LogError>{filteredLogs}</LogError>
       </ScrollView>
       <ButtonContainer>
-        <Button title="Share Logs" onPress={() => showDisclaimer(logStr, 'share')} />
+        <Button
+          title="Share Logs"
+          onPress={() => showDisclaimer(logStr, 'share')}
+        />
       </ButtonContainer>
       {!IS_DESKTOP && (
         <ButtonContainer>
-          <Button title="Send Logs By Email" onPress={() => showDisclaimer(logStr, 'email')} />
+          <Button
+            title="Send Logs By Email"
+            onPress={() => showDisclaimer(logStr, 'email')}
+          />
         </ButtonContainer>
       )}
     </DebugContainer>
