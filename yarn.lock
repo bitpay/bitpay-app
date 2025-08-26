@@ -7791,9 +7791,9 @@ crypto-js@3.1.9-1:
   integrity sha512-W93aKztssqf29OvUlqfikzGyYbD1rpkXvGP9IQ1JchLY3bxaLXZSWYbwrtib2vk8DobrDzX7PIXcDWHp0B6Ymw==
 
 crypto-wallet-core@^10.10.7:
-  version "10.10.14"
-  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.10.14.tgz#a3f6b202621c2333e2259c745a039d399bfa6812"
-  integrity sha512-UC1oGZHznM6UsoKWq5A3OvJlD5gOfRPMitj6fsgja0w9nhBIOwRVc0vpXpEP5dUattBWv6YILChLSf9mJsIKAA==
+  version "10.10.7"
+  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.10.7.tgz#667aed2fcff9a1d8f306a172efc80270943ff7a1"
+  integrity sha512-GPyVWpfud4CYhMr2KUqVIihJY3FMtZfxZkUGhcXeIlNuXXmM1aRTzZfX1hKrmMoFb48MwO/XwNQjQHjRdFIuLw==
   dependencies:
     "@solana-program/compute-budget" "^0.7.0"
     "@solana-program/memo" "^0.7.0"
