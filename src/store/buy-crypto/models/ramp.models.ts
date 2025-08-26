@@ -117,7 +117,7 @@ export interface RampPaymentUrlConfigParams {
   hostAppName: string;
   swapAsset?: string; // E.g. MATIC_*,ETH_DAI,ETH_USDC,ETH_USDS,ETH_USDT
   offrampAsset?: string; // E.g. MATIC_*,ETH_DAI,ETH_USDC,ETH_USDS,ETH_USDT
-  // swapAmount(number): the amount should be provided in wei or token units. You can block editing value of the transaction by providing swapAmount and single swapAsset parameters e.g. https://buy.ramp.network/?swapAmount=100000000000000000&swapAsset=ETH for 0.1 ETH
+  // swapAmount(number): the amount should be provided in wei or token units. You can block editing value of the transaction by providing swapAmount and single swapAsset parameters e.g. https://buy.rampnetwork.com/?swapAmount=100000000000000000&swapAsset=ETH for 0.1 ETH
   swapAmount?: string | number;
   // fiatCurrency (string) and fiatValue (int): are two optional parameters that allow you to pre-set the total fiat value of the purchase that will be suggested to the user. They have to be used together as they don't work separately.
   fiatCurrency?: string;
