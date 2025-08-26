@@ -33,7 +33,6 @@ index 9f8b64f..0a2ddb6 100644
        async.map(
          txArray,
          function addSignatures(rawTx, next) {
-
 diff --git a/node_modules/bitcore-wallet-client/ts_build/lib/key.js b/node_modules/bitcore-wallet-client/ts_build/lib/key.js
 index 0bbb5ad..0d94edb 100644
 --- a/node_modules/bitcore-wallet-client/ts_build/lib/key.js
