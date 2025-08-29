@@ -359,7 +359,6 @@ const SelectInputs = () => {
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
         }),
       );
     }

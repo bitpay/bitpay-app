@@ -412,7 +412,6 @@ const TransactionDetails = () => {
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
         }),
       );
     }

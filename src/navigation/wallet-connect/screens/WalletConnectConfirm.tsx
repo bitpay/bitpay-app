@@ -179,7 +179,6 @@ const WalletConnectConfirm = () => {
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
         }),
       );
     }
