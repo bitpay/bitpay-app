@@ -1045,7 +1045,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
         }),
       );
     }

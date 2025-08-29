@@ -248,7 +248,6 @@ const SendToOptions = () => {
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
         }),
       );
     }
