@@ -1107,7 +1107,8 @@ const ThorswapCheckout: React.FC = () => {
         type: 'error',
         title: title ?? t('Error'),
         message: msg ?? t('Unknown Error'),
-        enableBackdropDismiss: false,
+        onBackdropDismiss: () => navigation.goBack(),
+        enableBackdropDismiss: true,
         actions: actions ?? [
           {
             text: t('OK'),
