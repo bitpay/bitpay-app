@@ -254,9 +254,7 @@ const logger = createLogger({
 });
 
 const getStore = async () => {
-  const middlewares: Middleware[] = [
-    thunkMiddleware as unknown as Middleware,
-  ];
+  const middlewares: Middleware[] = [thunkMiddleware as unknown as Middleware];
 
   if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {
     // @ts-ignore
