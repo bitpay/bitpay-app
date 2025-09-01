@@ -160,7 +160,8 @@ const BottomNotification = () => {
             onBackdropDismiss();
           }
         }
-      }}>
+      }}
+      accessibilityLabel={'notification-bottom-modal'}>
       <BottomNotificationContainer>
         <Row>
           <ImageContainer>{notificationType[type || 'info']}</ImageContainer>

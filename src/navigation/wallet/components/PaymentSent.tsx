@@ -154,7 +154,8 @@ const PaymentSent = ({
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       fullscreen={true}
-      onBackdropPress={onCloseModal}>
+      onBackdropPress={onCloseModal}
+      accessibilityLabel={'payment-sent-modal'}>
       <AnimatedContainer style={animatedContainerStyle}>
         {showContent && (
           <>

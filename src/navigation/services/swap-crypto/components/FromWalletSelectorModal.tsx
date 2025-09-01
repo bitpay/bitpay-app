@@ -88,6 +88,7 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
       modalLibrary="bottom-sheet"
       isVisible={isVisible}
       onBackdropPress={() => onDismiss(undefined)}
+      accessibilityLabel={'swap-crypto-from-modal'}
       fullscreen>
       <GlobalSelectContainer>
         <GlobalSelect
@@ -104,7 +105,8 @@ const FromWalletSelectorModal: React.FC<FromWalletSelectorModalProps> = ({
 
         <SheetModal
           isVisible={swapCryptoHelpVisible}
-          onBackdropPress={() => setSwapCryptoHelpVisible(false)}>
+          onBackdropPress={() => setSwapCryptoHelpVisible(false)}
+          accessibilityLabel={'swap-crypto-help-modal'}>
           <SwapCryptoHelpContainer>
             <TextAlign align={'center'}>
               {modalContext === 'swapFrom' ? (

@@ -647,7 +647,8 @@ const AddCustomToken = ({
 
         <SheetModal
           isVisible={chainModalVisible}
-          onBackdropPress={() => setChainModalVisible(false)}>
+          onBackdropPress={() => setChainModalVisible(false)}
+          accessibilityLabel={'select-chain-modal'}>
           <AssociatedAccountSelectionModalContainer>
             <TextAlign align={'center'}>
               <H4>{t('Select a Chain')}</H4>

@@ -1339,6 +1339,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
         closeModal={() => setShowWalletOptions(false)}
         title={t('WalletOptions')}
         options={getAssetOptions()}
+        accessibilityLabel="wallet-options-modal"
       />
 
       {fullWalletObj ? (

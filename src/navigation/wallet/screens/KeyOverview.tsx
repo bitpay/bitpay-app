@@ -762,13 +762,15 @@ const KeyOverview = () => {
           title={t('Key Options')}
           options={keyOptions}
           closeModal={() => setShowKeyOptions(false)}
+          accessibilityLabel={'key-options-sheet'}
         />
       ) : null}
 
       <SheetModal
         isVisible={showKeyDropdown}
         placement={'top'}
-        onBackdropPress={() => setShowKeyDropdown(false)}>
+        onBackdropPress={() => setShowKeyDropdown(false)}
+        accessibilityLabel={'key-dropdown-modal'}>
         <KeyDropdown>
           <HeaderTitle style={{margin: 15}}>{t('Other Keys')}</HeaderTitle>
           <KeyDropdownOptionsContainer>

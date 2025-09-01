@@ -68,6 +68,7 @@ interface Props extends SheetParams {
   options: Array<Option>;
   placement?: SheetPlacement;
   paddingHorizontal?: number;
+  accessibilityLabel?: string;
 }
 
 const OptionsSheet = ({
@@ -76,6 +77,7 @@ const OptionsSheet = ({
   title,
   options,
   paddingHorizontal,
+  accessibilityLabel,
 }: Props) => {
   const sheetPlacement = 'bottom' as SheetPlacement;
   const topStyles = {
@@ -86,7 +88,8 @@ const OptionsSheet = ({
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={closeModal}
-      placement={sheetPlacement}>
+      placement={sheetPlacement}
+      {...(accessibilityLabel ? {accessibilityLabel} : {})}>
       <SheetContainer
         placement={sheetPlacement}
         paddingHorizontal={paddingHorizontal}>

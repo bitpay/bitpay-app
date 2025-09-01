@@ -271,7 +271,8 @@ const TransactModal = () => {
         snapPoints={[`${Math.floor(modalHeightPercentage * 100)}%`]}
         stackBehavior="push"
         isVisible={modalVisible}
-        onBackdropPress={hideModal}>
+        onBackdropPress={hideModal}
+        accessibilityLabel={'transact-menu-modal'}>
         <ModalContainer>
           <BottomSheetFlashList
             data={TransactMenuList}

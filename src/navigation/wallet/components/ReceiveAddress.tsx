@@ -330,7 +330,8 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
     <SheetModal
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
-      onBackdropPress={_closeModal}>
+      onBackdropPress={_closeModal}
+      accessibilityLabel={'receive-address-modal'}>
       <ReceiveAddressContainer>
         {!singleAddress && isUtxo ? (
           <ReceiveAddressHeader

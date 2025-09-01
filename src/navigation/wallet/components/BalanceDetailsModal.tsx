@@ -112,7 +112,10 @@ const BalanceDetailsModal = ({isVisible, closeModal, wallet}: Props) => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const isTestnet = wallet.network === 'testnet';
   return (
-    <SheetModal isVisible={isVisible} onBackdropPress={closeModal}>
+    <SheetModal
+      isVisible={isVisible}
+      onBackdropPress={closeModal}
+      accessibilityLabel={'balance-details-modal'}>
       <BalanceDetailsContainer>
         <SafeAreaView style={{height: '100%'}}>
           <ModalHeader>

@@ -644,7 +644,10 @@ export const WalletSelector = ({
   }, [isVisible, walletsAndAccounts, autoSelectSingleWallet]);
 
   return (
-    <SheetModal isVisible={selectorVisible} onBackdropPress={onBackdropPress}>
+    <SheetModal
+      isVisible={selectorVisible}
+      onBackdropPress={onBackdropPress}
+      accessibilityLabel={'key-wallets-row-modal'}>
       <WalletSelectMenuContainer>
         <WalletSelectMenuHeaderContainer currency={currency}>
           {currency ? (

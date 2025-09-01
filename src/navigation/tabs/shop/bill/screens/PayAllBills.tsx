@@ -551,6 +551,7 @@ const PayAllBills = ({
         closeModal={() => setIsOptionsSheetVisible(false)}
         options={sheetOptions}
         paddingHorizontal={0}
+        accessibilityLabel={'bill-pay-all-options-sheet'}
       />
 
       <AmountModal

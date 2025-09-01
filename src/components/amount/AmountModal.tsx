@@ -78,6 +78,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={onClose}
+      accessibilityLabel={'amount-modal'}
       fullscreen>
       <AmountModalContainerHOC>
         {showArchaxBanner && <ArchaxBanner isSmallScreen={isSmallScreen} />}

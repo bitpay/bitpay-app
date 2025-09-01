@@ -296,7 +296,8 @@ const CoinbaseDashboard = () => {
       <SheetModal
         isVisible={showKeyDropdown}
         placement={'top'}
-        onBackdropPress={() => setShowKeyDropdown(false)}>
+        onBackdropPress={() => setShowKeyDropdown(false)}
+        accessibilityLabel={'coinbase-key-dropdown-modal'}>
         <KeyDropdown>
           <HeaderTitle style={{margin: 15}}>{t('Other Keys')}</HeaderTitle>
           <KeyDropdownOptionsContainer>

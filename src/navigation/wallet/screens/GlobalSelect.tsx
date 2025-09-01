@@ -1701,7 +1701,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             isVisible={cryptoSelectModalVisible}
             onBackdropPress={() => {
               setCryptoSelectModalVisible(false);
-            }}>
+            }}
+            accessibilityLabel={'crypto-select-modal'}>
             <WalletSelectMenuContainer
               style={{minHeight: 300, paddingBottom: 80}}>
               <WalletSelectMenuHeaderContainer style={{marginBottom: 10}}>

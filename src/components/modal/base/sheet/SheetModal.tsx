@@ -30,6 +30,7 @@ interface Props extends SheetParams {
   paddingTop?: number;
   snapPoints?: string[];
   stackBehavior?: 'push' | 'replace';
+  accessibilityLabel?: string;
 }
 
 type SheetModalProps = React.PropsWithChildren<Props>;
@@ -51,6 +52,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
   paddingTop,
   snapPoints,
   stackBehavior,
+  accessibilityLabel,
 }) => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const insets = useSafeAreaInsets();
@@ -118,7 +120,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
         handleComponent={null}
         index={0}
         {...(disableAnimations && {animationConfigs: {duration: 1}})}
-        accessibilityLabel={'modalBackdrop'}
+        {...(accessibilityLabel ? {accessibilityLabel} : {})}
         ref={bottomSheetModalRef}>
         <NavigationThemeContext.Provider value={theme as any}>
           <BottomSheetView
@@ -150,6 +152,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
       animationIn={placement === 'top' ? 'slideInDown' : 'slideInUp'}
       animationOut={placement === 'top' ? 'slideOutUp' : 'slideOutDown'}
       onModalHide={onModalHide}
+      {...(accessibilityLabel ? {accessibilityLabel} : {})}
       // swipeDirection={'down'}
       // onSwipeComplete={hideModal}
       style={{

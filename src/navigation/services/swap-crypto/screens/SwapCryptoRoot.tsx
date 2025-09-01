@@ -1829,6 +1829,7 @@ const SwapCryptoRoot: React.FC = () => {
         modalLibrary="bottom-sheet"
         isVisible={toWalletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
+        accessibilityLabel={'swap-crypto-to-modal'}
         fullscreen>
         <GlobalSelectContainer>
           <GlobalSelect

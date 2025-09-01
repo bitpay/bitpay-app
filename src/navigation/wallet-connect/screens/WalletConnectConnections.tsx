@@ -466,7 +466,8 @@ const WalletConnectConnections = () => {
           onBackdropPress={() => {
             setShowSessionOptions(false);
           }}
-          placement={'bottom'}>
+          placement={'bottom'}
+          accessibilityLabel={'wallet-connect-connections-modal'}>
           <SheetContainer placement={'bottom'} paddingHorizontal={200}>
             <TextAlign align={'center'}>
               <H4>{selectedSession.peer.metadata.name}</H4>

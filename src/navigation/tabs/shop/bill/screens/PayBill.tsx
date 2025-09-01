@@ -435,6 +435,7 @@ const PayBill = ({
         closeModal={() => setIsOptionsSheetVisible(false)}
         options={sheetOptions}
         paddingHorizontal={0}
+        accessibilityLabel={'bill-pay-options-sheet'}
       />
     </ScreenContainer>
   );

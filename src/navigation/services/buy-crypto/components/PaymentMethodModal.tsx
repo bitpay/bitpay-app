@@ -249,6 +249,7 @@ const PaymentMethodsModal = ({
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={onBackdropPress ? onBackdropPress : () => {}}
+      accessibilityLabel={`Method Modal: ${context} - partner: ${preSetPartner}`}
       fullscreen>
       <ModalContainer>
         <SafeAreaView style={{height: '100%'}}>

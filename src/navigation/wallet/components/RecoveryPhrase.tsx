@@ -757,7 +757,8 @@ const RecoveryPhrase = () => {
 
             <SheetModal
               isVisible={currencyModalVisible}
-              onBackdropPress={() => setCurrencyModalVisible(false)}>
+              onBackdropPress={() => setCurrencyModalVisible(false)}
+              accessibilityLabel={'recovery-currency-modal'}>
               <CurrencySelectionModalContainer>
                 <TextAlign align={'center'}>
                   <H4>{t('Select a Coin')}</H4>

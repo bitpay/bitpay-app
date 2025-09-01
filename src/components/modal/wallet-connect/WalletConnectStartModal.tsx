@@ -606,7 +606,8 @@ export const WalletConnectStartModal = () => {
   return (
     <SheetModal
       isVisible={showWalletConnectStartModal}
-      onBackdropPress={onBackdropPress}>
+      onBackdropPress={onBackdropPress}
+      accessibilityLabel={'wc-start-modal'}>
       <SheetContainer
         paddingHorizontal={0}
         style={{paddingLeft: 16, paddingRight: 16}}>

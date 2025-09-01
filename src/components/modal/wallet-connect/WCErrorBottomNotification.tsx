@@ -109,7 +109,8 @@ const WCErrorBottomNotification = ({
             onBackdropDismiss();
           }
         }
-      }}>
+      }}
+      accessibilityLabel={'wc-error-bottom-modal'}>
       <BottomNotificationContainer>
         <Row>
           <ImageContainer>{notificationType[type || 'info']}</ImageContainer>

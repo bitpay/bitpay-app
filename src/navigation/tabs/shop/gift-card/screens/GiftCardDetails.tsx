@@ -401,6 +401,7 @@ const GiftCardDetails = ({
         closeModal={() => setIsOptionsSheetVisible(false)}
         options={assetOptions}
         placement={'top'}
+        accessibilityLabel={'gift-card-details-options-sheet'}
       />
       <ScrollView
         contentContainerStyle={{

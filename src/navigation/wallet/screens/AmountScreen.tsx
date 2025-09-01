@@ -156,6 +156,7 @@ const AmountScreen: React.FC<
           isVisible={showWalletOptions}
           closeModal={() => setShowWalletOptions(false)}
           options={assetOptions}
+          accessibilityLabel={'amount-screen-wallet-options-sheet'}
         />
       </WalletScreenContainer>
     </AmountModalContainerHOC>

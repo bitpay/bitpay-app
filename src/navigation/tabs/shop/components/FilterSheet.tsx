@@ -95,7 +95,8 @@ const FilterSheet = ({
       onBackdropPress={() => {
         setCategoryMap(initialCategoryMap);
         closeModal();
-      }}>
+      }}
+      accessibilityLabel={'filter-sheet-modal'}>
       <PillSheetContainer>
         <ScrollView>
           <SheetTitleContainer>

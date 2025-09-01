@@ -187,6 +187,7 @@ const Payment = ({
         closeModal={() => setIsOptionsSheetVisible(false)}
         options={sheetOptions}
         paddingHorizontal={0}
+        accessibilityLabel={'bill-payment-options-sheet'}
       />
     </ScrollView>
   );

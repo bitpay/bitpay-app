@@ -1102,6 +1102,7 @@ const BuyCryptoRoot = ({
         modalLibrary="bottom-sheet"
         isVisible={walletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
+        accessibilityLabel={'buy-crypto-select-modal'}
         fullscreen>
         <GlobalSelectContainer>
           <GlobalSelect
