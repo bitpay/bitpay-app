@@ -109,6 +109,8 @@ const SheetModal: React.FC<SheetModalProps> = ({
   return modalLibrary === 'bottom-sheet' ? (
     <View testID={'modalBackdrop'}>
       <BottomSheetModal
+        accessible={false}
+        importantForAccessibility='no'
         stackBehavior={stackBehavior || undefined}
         backdropComponent={renderBackdrop}
         backgroundStyle={{backgroundColor: sheetBackgroundColor}}
