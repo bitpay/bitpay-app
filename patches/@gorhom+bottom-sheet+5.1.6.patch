@@ -1,0 +1,160 @@
+diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheet/BottomSheet.tsx b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheet/BottomSheet.tsx
+index f908c9a..9bab0c7 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheet/BottomSheet.tsx
++++ b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheet/BottomSheet.tsx
+@@ -168,6 +168,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
+         _providedAccessibilityLabel = DEFAULT_ACCESSIBILITY_LABEL,
+       accessibilityRole:
+         _providedAccessibilityRole = DEFAULT_ACCESSIBILITY_ROLE,
++      importantForAccessibility,
+     } = props;
+     //#endregion
+ 
+@@ -1794,6 +1795,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
+               bottomInset={bottomInset}
+               detached={detached}
+               style={_providedContainerStyle}
++              importantForAccessibility={importantForAccessibility}
+             >
+               <BottomSheetBody style={style}>
+                 {backgroundComponent === null ? null : (
+@@ -1810,6 +1812,7 @@ const BottomSheetComponent = forwardRef<BottomSheet, BottomSheetProps>(
+                   accessible={_providedAccessible ?? undefined}
+                   accessibilityRole={_providedAccessibilityRole ?? undefined}
+                   accessibilityLabel={_providedAccessibilityLabel ?? undefined}
++                  importantForAccessibility={importantForAccessibility}
+                   keyboardBehavior={keyboardBehavior}
+                   detached={detached}
+                 >
+diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/BottomSheetBackdrop.tsx b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/BottomSheetBackdrop.tsx
+index d0756b8..9fcbdbf 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/BottomSheetBackdrop.tsx
++++ b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackdrop/BottomSheetBackdrop.tsx
+@@ -44,6 +44,7 @@ const BottomSheetBackdropComponent = ({
+   accessibilityRole: _providedAccessibilityRole = DEFAULT_ACCESSIBILITY_ROLE,
+   accessibilityLabel: _providedAccessibilityLabel = DEFAULT_ACCESSIBILITY_LABEL,
+   accessibilityHint: _providedAccessibilityHint = DEFAULT_ACCESSIBILITY_HINT,
++  importantForAccessibility,
+ }: BottomSheetDefaultBackdropProps) => {
+   //#region hooks
+   const { snapToIndex, close } = useBottomSheet();
+@@ -149,6 +150,7 @@ const BottomSheetBackdropComponent = ({
+               typeof pressBehavior === 'string' ? pressBehavior : 'move'
+             } the Bottom Sheet`
+       }
++      importantForAccessibility={importantForAccessibility}
+     >
+       {children}
+     </Animated.View>
+diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackground/BottomSheetBackground.tsx b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackground/BottomSheetBackground.tsx
+index 11e7306..a3d8fb3 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackground/BottomSheetBackground.tsx
++++ b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackground/BottomSheetBackground.tsx
+@@ -6,12 +6,13 @@ import type { BottomSheetBackgroundProps } from './types';
+ const BottomSheetBackgroundComponent = ({
+   pointerEvents,
+   style,
++  accessible = false,
++  importantForAccessibility = 'no'
+ }: BottomSheetBackgroundProps) => (
+   <View
+     pointerEvents={pointerEvents}
+-    accessible={true}
+-    accessibilityRole="adjustable"
+-    accessibilityLabel="Bottom Sheet"
++    accessible={accessible}
++    importantForAccessibility={importantForAccessibility}
+     style={[styles.background, style]}
+   />
+ );
+diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackground/types.d.ts b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackground/types.d.ts
+index a4c6cba..3d26098 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackground/types.d.ts
++++ b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetBackground/types.d.ts
+@@ -3,7 +3,10 @@ import type { BottomSheetVariables } from '../../types';
+ import type { BottomSheetProps } from '../bottomSheet';
+ export interface BottomSheetBackgroundProps
+   extends Pick<ViewProps, 'pointerEvents' | 'style'>,
+-    BottomSheetVariables {}
++      BottomSheetVariables {
++            accessible?: boolean;
++           importantForAccessibility?: 'auto' | 'yes' | 'no' | 'no-hide-descendants';
++        }
+ 
+ export type BottomSheetBackgroundContainerProps = Pick<
+   BottomSheetProps,
+diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetHostingContainer/types.d.ts b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetHostingContainer/types.d.ts
+index 9687eaf..1e55d8c 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetHostingContainer/types.d.ts
++++ b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetHostingContainer/types.d.ts
+@@ -12,4 +12,5 @@ export interface BottomSheetHostingContainerProps
+   shouldCalculateHeight?: boolean;
+   style?: StyleProp<ViewStyle>;
+   children?: ReactNode;
++  importantForAccessibility?: 'auto' | 'yes' | 'no' | 'no-hide-descendants';
+ }
+diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx
+index 8978826..c327ea7 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx
++++ b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModal/BottomSheetModal.tsx
+@@ -53,6 +53,9 @@ function BottomSheetModalComponent<T = any>(
+     animateOnMount = true,
+     containerComponent: ContainerComponent = React.Fragment,
+ 
++     // accessibility
++    importantForAccessibility,
++
+     // callbacks
+     onChange: _providedOnChange,
+ 
+@@ -463,6 +466,7 @@ function BottomSheetModalComponent<T = any>(
+           onClose={handleBottomSheetOnClose}
+           onAnimate={handleBottomSheetOnAnimate}
+           $modal={true}
++          importantForAccessibility={importantForAccessibility}
+         >
+           {typeof Content === 'function' ? <Content data={data} /> : Content}
+         </BottomSheet>
+diff --git a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModalProvider/BottomSheetModalProvider.tsx b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModalProvider/BottomSheetModalProvider.tsx
+index 3312774..af1114b 100644
+--- a/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModalProvider/BottomSheetModalProvider.tsx
++++ b/node_modules/@gorhom/bottom-sheet/src/components/bottomSheetModalProvider/BottomSheetModalProvider.tsx
+@@ -1,5 +1,5 @@
+ import { PortalProvider } from '@gorhom/portal';
+-import React, { useCallback, useMemo, useRef } from 'react';
++import React, { useCallback, useMemo, useRef, useState } from 'react';
+ import { useSharedValue } from 'react-native-reanimated';
+ import { MODAL_STACK_BEHAVIOR } from '../../constants';
+ import {
+@@ -20,6 +20,7 @@ import type {
+   BottomSheetModalProviderProps,
+   BottomSheetModalRef,
+ } from './types';
++import { View } from 'react-native';
+ 
+ const BottomSheetModalProviderWrapper = ({
+   children,
+@@ -194,16 +195,22 @@ const BottomSheetModalProviderWrapper = ({
+     ]
+   );
+   //#endregion
++  const isModalVisible = sheetsQueueRef.current.length > 0;
+ 
+   //#region renders
+   return (
+     <BottomSheetModalProvider value={externalContextVariables}>
+       <BottomSheetModalInternalProvider value={internalContextVariables}>
+         <BottomSheetHostingContainer
++          importantForAccessibility={isModalVisible ? "yes" : "no-hide-descendants"}
+           containerOffset={animatedContainerOffset}
+           containerHeight={animatedContainerHeight}
+         />
+-        <PortalProvider rootHostName={hostName}>{children}</PortalProvider>
++        <PortalProvider rootHostName={hostName}>
++          <View style={{flex: 1}} importantForAccessibility={isModalVisible ? "no-hide-descendants" : "yes"}>
++            {children}
++          </View>
++        </PortalProvider>
+       </BottomSheetModalInternalProvider>
+     </BottomSheetModalProvider>
+   );

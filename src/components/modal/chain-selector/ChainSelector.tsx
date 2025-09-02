@@ -300,7 +300,8 @@ const ChainSelectorModal = () => {
         if (onBackdropDismiss) {
           onBackdropDismiss();
         }
-      }}>
+      }}
+      accessibilityLabel={'chain-selector-modal'}>
       <ChainSelectorContainer>
         <WalletSelectMenuHeaderContainer>
           <TextAlign align={'left'}>

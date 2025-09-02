@@ -53,7 +53,8 @@ const DeleteConfirmationModal = ({
     <SheetModal
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
-      onBackdropPress={onPressCancel}>
+      onBackdropPress={onPressCancel}
+      accessibilityLabel="delete-confirmation-modal">
       <SheetContainer>
         <Header>
           <CautionSvg />

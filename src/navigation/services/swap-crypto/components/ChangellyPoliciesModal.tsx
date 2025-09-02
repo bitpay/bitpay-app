@@ -76,7 +76,10 @@ const ChangellyPoliciesModal: React.FC<ChangellyPoliciesModalProps> = ({
   const dispatch = useAppDispatch();
 
   return (
-    <SheetModal isVisible={isVisible} onBackdropPress={onDismiss}>
+    <SheetModal
+      isVisible={isVisible}
+      onBackdropPress={onDismiss}
+      accessibilityLabel={'changelly-policies-modal'}>
       <ChangellyPoliciesContainer>
         <ModalHeader>
           <CloseModalButton

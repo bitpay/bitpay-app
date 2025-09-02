@@ -394,7 +394,8 @@ const ContactsDetails = ({
       <SheetModal
         placement={'top'}
         isVisible={showIconOptions}
-        onBackdropPress={() => setShowIconOptions(false)}>
+        onBackdropPress={() => setShowIconOptions(false)}
+        accessibilityLabel={'contact-details-modal'}>
         <ModalContainer>
           {contactOptions.map(({img, title: optionTitle, onPress}, index) => (
             <OptionContainer key={index} onPress={onPress}>

@@ -814,6 +814,7 @@ const SendTo = () => {
           isVisible={showWalletOptions}
           closeModal={() => setShowWalletOptions(false)}
           options={assetOptions}
+          accessibilityLabel={'send-to-options-sheet'}
         />
 
         <View style={{marginTop: 10}}>

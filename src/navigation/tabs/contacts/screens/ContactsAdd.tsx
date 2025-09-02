@@ -592,7 +592,8 @@ const ContactsAdd = ({
       </ScrollContainer>
       <SheetModal
         isVisible={networkModalVisible}
-        onBackdropPress={() => setNetworkModalVisible(false)}>
+        onBackdropPress={() => setNetworkModalVisible(false)}
+        accessibilityLabel={'contact-add-modal'}>
         <CurrencySelectionModalContainer>
           <TextAlign align={'center'}>
             <H4>{t('Select a Network')}</H4>

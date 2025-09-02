@@ -72,6 +72,7 @@ const MultisigOptions = ({
       title={'Multisig'}
       options={optionList}
       closeModal={() => setShowMultisigOptions(false)}
+      accessibilityLabel={'multisig-options-sheet'}
     />
   );
 };

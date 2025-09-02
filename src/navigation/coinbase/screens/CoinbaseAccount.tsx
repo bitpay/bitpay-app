@@ -776,6 +776,7 @@ const CoinbaseAccount = ({
         modalLibrary="bottom-sheet"
         isVisible={walletModalVisible}
         onBackdropPress={() => onDismiss()}
+        accessibilityLabel={'coinbase-destination-modal'}
         fullscreen>
         <GlobalSelectContainer>
           <GlobalSelect

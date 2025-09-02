@@ -205,7 +205,8 @@ const Security = () => {
       <SheetModal
         modalLibrary={'bottom-sheet'}
         isVisible={modalVisible}
-        onBackdropPress={hideModal}>
+        onBackdropPress={hideModal}
+        accessibilityLabel={'security-lock-modal'}>
         <SheetContainer>
           <Header>
             <Title>{t('Enable Lock')}</Title>

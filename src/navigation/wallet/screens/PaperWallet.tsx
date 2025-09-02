@@ -635,6 +635,7 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
           modalLibrary="bottom-sheet"
           isVisible={walletSelectorVisible}
           onBackdropPress={() => onDismiss(undefined)}
+          accessibilityLabel={'paper-wallet-modal'}
           fullscreen>
           <GlobalSelectContainer>
             <GlobalSelect

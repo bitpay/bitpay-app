@@ -114,7 +114,8 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
         backgroundColor="rgba(0,0,0,.3)"
         enableBackdropDismiss={false}
         onBackdropPress={onCancel ?? (() => {})}
-        paddingTop={0}>
+        paddingTop={0}
+        accessibilityLabel={'recaptcha-modal'}>
         <View style={styles.wrapper}>
           <WebView
             ref={webviewRef}

@@ -1481,7 +1481,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       <SheetModal
         isVisible={showAccountDropdown}
         placement={'top'}
-        onBackdropPress={() => setShowAccountDropdown(false)}>
+        onBackdropPress={() => setShowAccountDropdown(false)}
+        accessibilityLabel={'show-account-dropdown-modal'}>
         <AccountDropdown>
           <HeaderTitle style={{margin: 15}}>{t('Other Accounts')}</HeaderTitle>
           <AccountDropdownOptionsContainer>
@@ -1538,6 +1539,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           title={t('Account Options')}
           options={keyOptions}
           closeModal={() => setShowKeyOptions(false)}
+          accessibilityLabel={'account-options-modal'}
         />
       ) : null}
 

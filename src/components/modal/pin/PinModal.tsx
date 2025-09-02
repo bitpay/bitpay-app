@@ -373,7 +373,8 @@ const PinModal: React.FC = () => {
       fullscreen
       enableBackdropDismiss={false}
       backgroundColor={BitPay}
-      disableAnimations>
+      disableAnimations
+      accessibilityLabel={'pin-modal'}>
       <Pin />
     </SheetModal>
   );
