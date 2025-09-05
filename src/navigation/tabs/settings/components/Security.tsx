@@ -28,9 +28,11 @@ import {Midnight, SlateDark, White} from '../../../../styles/colors';
 import {H4, Paragraph} from '../../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {sleep} from '../../../../utils/helper-methods';
-import {LogActions} from '../../../../store/log';
 import {useLogger} from '../../../../utils/hooks';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {usePasskeySupport} from '../../../../utils/usePasskeySupport';
+import {useNavigation} from '@react-navigation/native';
+import AngleRight from '../../../../../assets/img/angle-right.svg';
 
 const FingerprintSvg = {
   light: <FingerprintImg />,
@@ -80,10 +82,13 @@ const ImgRow = styled.View`
 
 const Security = () => {
   const {t} = useTranslation();
+  const navigation = useNavigation();
   const dispatch = useDispatch();
   const themeType = useThemeType();
   const logger = useLogger();
   const [modalVisible, setModalVisible] = useState(false);
+  const passkeySupported = usePasskeySupport();
+  console.log('##### passkeySupported', passkeySupported);
 
   const pinLockActive = useSelector(({APP}: RootState) => APP.pinLockActive);
   const biometricLockActive = useSelector(
@@ -190,9 +195,20 @@ const Security = () => {
         break;
     }
   };
+
+  const onPressPasskeys = () => {
+    navigation.navigate('Passkeys');
+  };
+
   return (
     <>
       <SettingsComponent>
+        {passkeySupported && (
+          <Setting onPress={onPressPasskeys}>
+            <SettingTitle>{t('Passkeys')}</SettingTitle>
+            <AngleRight />
+          </Setting>
+        )}
         <Setting onPress={onPressLockButton}>
           <SettingTitle>{t('Lock App')}</SettingTitle>
           <Button onPress={onPressLockButton} buttonType={'pill'}>
