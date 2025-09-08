@@ -960,7 +960,8 @@ export const TxForPaymentFeeEVM = (
 ): boolean => {
   return (
     walletCoin.toLowerCase() !== txCoin.toLowerCase() ||
-    IsZeroAmountEVM(amount, txChain.toLowerCase())
+    (IsZeroAmountEVM(amount, txChain.toLowerCase()) &&
+      !IsERCToken(walletCoin, txChain)) // Ensure walletCoin corresponds to the native chain currency (e.g., ETH, SOL)
   );
 };
 
