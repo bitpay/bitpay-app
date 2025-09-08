@@ -31,7 +31,7 @@ import {
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {groupBy, unionBy, uniqueId} from 'lodash';
+import {groupBy, unionBy, uniqueId, isEmpty} from 'lodash';
 import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
 import {
   Action,
@@ -1498,7 +1498,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   }, [navigation, wallets, useAsModal]);
 
   useEffect(() => {
-    if (selectedEVMAccount) {
+    if (!isEmpty(selectedEVMAccount)) {
       const data =
         !searchVal && !selectedChainFilterOption
           ? dataToDisplay
