@@ -21,7 +21,6 @@ import {BottomNotificationConfig} from '../../../../components/modal/bottom-noti
 import {
   formatCurrencyAbbreviation,
   isAndroidStoragePermissionGranted,
-  sleep,
 } from '../../../../utils/helper-methods';
 import {
   dismissOnGoingProcessModal,
@@ -188,7 +187,6 @@ const ExportTransactionHistory = () => {
           const err = new Error(
             `${APP_NAME_UPPERCASE} cannot open default Email App.`,
           );
-          await sleep(500);
           await showErrorMessage(
             CustomErrorMessage({
               errMsg: BWCErrorMessage(err),
@@ -245,13 +243,10 @@ const ExportTransactionHistory = () => {
     try {
       dispatch(startOnGoingProcessModal('LOADING'));
       const csv = await buildCVSFile();
-      await sleep(200);
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
       await shareFile(csv, option);
     } catch (e) {
       dispatch(dismissOnGoingProcessModal());
-      await sleep(500);
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(e),
@@ -263,7 +258,6 @@ const ExportTransactionHistory = () => {
 
   const showErrorMessage = useCallback(
     async (msg: BottomNotificationConfig) => {
-      await sleep(500);
       dispatch(showBottomNotificationModal(msg));
     },
     [dispatch],
