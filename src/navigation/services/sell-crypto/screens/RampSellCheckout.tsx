@@ -464,6 +464,19 @@ const RampSellCheckout: React.FC = () => {
             });
             txp.fromAta = fromAta?.ataAddress;
             txp.decimals = fromAta?.decimals;
+
+            if (txp.outputs) {
+              const toSolanaTokens = await getSolanaTokens(
+                toAddress,
+                wallet?.network,
+              );
+              for (const output of txp.outputs) {
+                const toAta = toSolanaTokens.find((item: any) => {
+                  return item.mintAddress === txp.tokenAddress;
+                });
+                output.toAddress = toAta?.ataAddress;
+              }
+            }
           }
         }
       }

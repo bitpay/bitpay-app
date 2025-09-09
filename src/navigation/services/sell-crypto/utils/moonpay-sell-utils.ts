@@ -81,6 +81,7 @@ export const moonpaySellSupportedOptimismTokens = [
 ];
 
 export const moonpaySellSupportedSolanaTokens = [
+  'trump', // trump_sol
   'usdc', // usdc_sol
   'usdt', // usdt_sol
 ];
@@ -140,6 +141,7 @@ export const getMoonpaySellFixedCurrencyAbbreviation = (
       wld: 'wld_optimism',
     },
     sol: {
+      trump: 'trump_sol',
       usdc: 'usdc_sol',
       usdt: 'usdt_sol',
     },
@@ -195,6 +197,12 @@ export const getMoonpaySellCurrenciesFixedProps = (
       networkCode: 'polygon',
       contractAddress: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619',
     },
+    trump_sol: {
+      code: 'trump',
+      name: 'OFFICIAL TRUMP',
+      networkCode: 'solana',
+      contractAddress: '6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN',
+    },
     usdc: {
       code: 'usdc',
       name: 'USD Coin',
@@ -222,7 +230,7 @@ export const getMoonpaySellCurrenciesFixedProps = (
     usdc_sol: {
       code: 'usdc',
       name: 'USD Coin',
-      networkCode: 'sol',
+      networkCode: 'solana',
       contractAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     },
     usdt: {
@@ -246,7 +254,7 @@ export const getMoonpaySellCurrenciesFixedProps = (
     usdt_sol: {
       code: 'usdt',
       name: 'Tether USD',
-      networkCode: 'sol',
+      networkCode: 'solana',
       contractAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
     },
     wld_optimism: {
@@ -267,12 +275,15 @@ export const getMoonpaySellCurrenciesFixedProps = (
 
     if (
       mapping &&
+      currency.metadata &&
       mapping.networkCode?.toLowerCase() ===
-        currency.metadata?.networkCode?.toLowerCase() &&
+        currency.metadata.networkCode?.toLowerCase() &&
       (!mapping.contractAddress ||
-        (currency.metadata?.contractAddress &&
-          mapping.contractAddress ===
-            currency.metadata.contractAddress.toLowerCase()))
+        (currency.metadata.networkCode === 'solana' &&
+          mapping.contractAddress === currency.metadata.contractAddress) || // Solana contract address is case sensitive
+        (currency.metadata.networkCode !== 'solana' &&
+          mapping.contractAddress?.toLowerCase() ===
+            currency.metadata.contractAddress?.toLowerCase()))
     ) {
       currency.code = mapping.code;
       currency.name = mapping.name;
