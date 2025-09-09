@@ -1037,7 +1037,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         dispatch(
           showBottomNotificationModal({
             ...errorMessageConfig,
-            enableBackdropDismiss: false,
+            enableBackdropDismiss: true,
           }),
         );
       }
