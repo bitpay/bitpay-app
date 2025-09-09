@@ -1691,8 +1691,6 @@ PODS:
     - InputMask (~> 6.1.0)
     - React-Core
     - React-RCTText
-  - react-native-tracking-transparency (0.1.2):
-    - React
   - react-native-user-agent (2.3.1):
     - React
   - react-native-webview (13.13.5):
@@ -2204,7 +2202,7 @@ PODS:
     - React-Core
   - RNOS (1.2.6):
     - React
-  - RNPermissions (5.4.0):
+  - RNPermissions (5.4.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2564,7 +2562,6 @@ DEPENDENCIES:
   - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-text-input-mask (from `../node_modules/react-native-text-input-mask`)
-  - react-native-tracking-transparency (from `../node_modules/react-native-tracking-transparency`)
   - react-native-user-agent (from `../node_modules/react-native-user-agent`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -2763,8 +2760,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/slider"
   react-native-text-input-mask:
     :path: "../node_modules/react-native-text-input-mask"
-  react-native-tracking-transparency:
-    :path: "../node_modules/react-native-tracking-transparency"
   react-native-user-agent:
     :path: "../node_modules/react-native-user-agent"
   react-native-webview:
@@ -2951,7 +2946,6 @@ SPEC CHECKSUMS:
   react-native-skia: c7783062d291be73ef6a2a5c75fde7f70820ccc4
   react-native-slider: b5c4e3729a58e6ece33e7c05a405e62b5f47c729
   react-native-text-input-mask: 36a546b378fadd2efe1b7484a859d34bc2c80395
-  react-native-tracking-transparency: 25ff1ff866e338c137c818bdec20526bb05ffcc1
   react-native-user-agent: a90a1e839b99801baad67a73dd6f361a52aa3cf1
   react-native-webview: 02c782d78f1a20bcb739f4556d936f84e4ca4f5c
   React-NativeModulesApple: 9fbc2bba5acd30d55ecb84a7589b7865ff94a000
@@ -2999,7 +2993,7 @@ SPEC CHECKSUMS:
   RNKeychain: 93ad8613ccd7ea183b748040697b8ab4640b5fac
   RNLocalize: 0df7970cfc60389f00eb62fd7c097dc75af3fb4f
   RNOS: 6f2f9a70895bbbfbdad7196abd952e7b01d45027
-  RNPermissions: ee80ecb67d2205e1f2aa950423da7a01b2ac8c88
+  RNPermissions: 1ebd8809ee975471df30f56525af6d9d4a954c04
   RNQuickAction: 6d404a869dc872cde841ad3147416a670d13fa93
   RNRate: ef3bcff84f39bb1d1e41c5593d3eea4aab2bd73a
   RNReactNativeHapticFeedback: 1e3efeca9628ff9876ee7cdd9edec1b336913f8c
