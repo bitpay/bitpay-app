@@ -45,18 +45,11 @@ import {
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
 import {PermissionsAndroid} from 'react-native';
-import {
-  getBase64Encoder,
-  getTransactionDecoder,
-  getCompiledTransactionMessageDecoder,
-} from '@solana/kit';
 import axios from 'axios';
 import {
-  instructionKeys,
-  parseInstructions,
   TransferCheckedTokenInstruction,
   TransferSolInstruction,
-} from './sol-transaction-parser';
+} from './sol-transaction-instruction.types';
 import {successImport} from '../store/wallet/wallet.actions';
 
 export const suffixChainMap: {[suffix: string]: string} = {
@@ -762,6 +755,7 @@ interface RequestUiValues {
   receiveAmount?: string;
   recipientAddress?: string;
   senderTokenPrice?: number;
+  decodedInstructions?: any;
 }
 
 export const processOtherMethodsRequest =
@@ -798,7 +792,7 @@ export const processOtherMethodsRequest =
         break;
     }
     try {
-      const wallet = Object.values(keys).flatMap(key =>
+      const wallet = Object.values(keys as Keys).flatMap(key =>
         key.wallets.filter(
           wallet =>
             wallet.receiveAddress?.toLowerCase() ===
@@ -883,123 +877,44 @@ export const processSolanaSwapRequest =
     const {method} = params.request;
     const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
     const senderAddress = request?.params?.feePayer || request?.params?.pubkey;
-    const transactionDecoder = getTransactionDecoder();
-    const compiledTransactionMessageDecoder =
-      getCompiledTransactionMessageDecoder();
-    const decodedTransaction = transactionDecoder.decode(
-      getBase64Encoder().encode(request?.params?.transaction),
+    const instructions = await decodeSolanaTxIntructions(
+      request?.params?.transaction,
     );
-    const compiledTransactionMessage = compiledTransactionMessageDecoder.decode(
-      decodedTransaction.messageBytes,
-    );
-    const {
-      staticAccounts,
-      header,
-      instructions: compiledTransactionInstructions,
-    } = compiledTransactionMessage;
-    const accountsWithRoles = staticAccounts.map((address, index) => {
-      const {
-        numSignerAccounts,
-        numReadonlySignerAccounts,
-        numReadonlyNonSignerAccounts,
-      } = header;
-      let role: 'signer' | 'writable' | 'readonly';
-      if (index < numSignerAccounts) {
-        role =
-          index < numSignerAccounts - numReadonlySignerAccounts
-            ? 'signer'
-            : 'readonly';
-      } else {
-        const nonSignerIndex = index - numSignerAccounts;
-        role =
-          nonSignerIndex <
-          staticAccounts.length -
-            numSignerAccounts -
-            numReadonlyNonSignerAccounts
-            ? 'writable'
-            : 'readonly';
-      }
-      return {address, role};
-    });
-    const _instructions = compiledTransactionInstructions.map(ix => {
-      return {
-        programAddress: staticAccounts[ix.programAddressIndex],
-        accounts: ix?.accountIndices?.map(index => accountsWithRoles[index]),
-        data: ix.data,
-      };
-    });
-    const instructions = parseInstructions(_instructions);
-    dispatch(
-      LogActions.debug(
-        `Parsed instructions for ${method} request: ${JSON.stringify(
-          instructions,
-        )}`,
-      ),
-    );
-    const recipientAddresses = new Set();
     let mainToAddress = null;
     let amount = 0;
     let currency = null;
     let tokenAddress: string | undefined;
-    // @ts-ignore
+
+    const instructionKeys = {
+      TRANSFER_SOL: 'transferSol',
+      TRANSFER_CHECKED_TOKEN: 'transferCheckedToken',
+      TRANSFER_TOKEN: 'transferToken',
+      ADVANCE_NONCE_ACCOUNT: 'advanceNonceAccount',
+      MEMO: 'memo',
+      SET_COMPUTE_UNIT_LIMIT: 'setComputeUnitLimit',
+      SET_COMPUTE_UNIT_PRICE: 'setComputeUnitPrice',
+      UNKNOWN: 'unknownInstruction',
+    };
+
+    dispatch(
+      LogActions.debug(`Decoded instructions: ${JSON.stringify(instructions)}`),
+    );
+
     if (instructions?.[instructionKeys.TRANSFER_SOL]?.length > 0) {
-      // @ts-ignorex
       const solTransfers = instructions[
         instructionKeys.TRANSFER_SOL
       ] as TransferSolInstruction[];
-      mainToAddress =
-        solTransfers.find(transfer => transfer.destination !== senderAddress)
-          ?.destination || null;
-      for (const transfer of solTransfers) {
-        if (transfer.destination !== senderAddress) {
-          recipientAddresses.add(transfer.destination);
-        }
-      }
-      if (!tokenAddress) {
-        amount = solTransfers.reduce(
-          (sum, transfer) => sum + Number(transfer.amount),
-          0,
-        );
-        currency = 'sol';
-      }
-    }
-    // @ts-ignore
-    if (instructions?.[instructionKeys.TRANSFER_CHECKED_TOKEN]?.length > 0) {
-      // @ts-ignore
-      const allTransfers = instructions[
-        instructionKeys.TRANSFER_CHECKED_TOKEN
-      ] as TransferCheckedTokenInstruction[];
-      const tokenTransfers = tokenAddress
-        ? allTransfers.filter(
-            transfer =>
-              tokenAddress.toLowerCase() === transfer.mint.toLowerCase(),
-          )
-        : allTransfers;
-      if (tokenAddress || !mainToAddress) {
-        mainToAddress =
-          tokenTransfers.find(
-            transfer => transfer.destination !== senderAddress,
-          )?.destination || null;
-      }
-      for (const transfer of tokenTransfers) {
-        if (transfer.destination !== senderAddress) {
-          recipientAddresses.add(transfer.destination);
-        }
-      }
-      if (tokenAddress) {
-        amount = tokenTransfers.reduce(
-          (sum, transfer) => sum + Number(transfer.amount),
-          0,
-        );
-        // currency = ??; TODO
-      }
+      mainToAddress = solTransfers[0].destination;
+      amount = solTransfers.reduce(
+        (sum, transfer) => sum + Number(transfer.amount),
+        0,
+      );
+      currency = 'sol';
     }
 
     dispatch(
       LogActions.debug(
-        `amount: ${amount}, recipientAddresses: ${Array.from(
-          recipientAddresses,
-        ).join(', ')}, mainToAddress: ${mainToAddress}`,
+        `amount: ${amount},mainToAddress: ${mainToAddress}, currency: ${currency}, tokenAddress: ${tokenAddress}`,
       ),
     );
 
@@ -1013,7 +928,7 @@ export const processSolanaSwapRequest =
       FormatAmount(
         swapFromCurrencyAbbreviation,
         swapFromChain,
-        undefined,
+        tokenAddress,
         Number(swapAmount),
       ),
     );
@@ -1025,7 +940,7 @@ export const processSolanaSwapRequest =
         swapFromCurrencyAbbreviation,
         swapFromChain,
         allRates,
-        undefined,
+        tokenAddress,
       ),
     );
 
@@ -1044,6 +959,7 @@ export const processSolanaSwapRequest =
         senderAddress,
         swapFromCurrencyAbbreviation,
         recipientAddress: mainToAddress,
+        decodedInstructions: instructions,
       };
     } catch (error) {
       dispatch(
@@ -1266,11 +1182,7 @@ const handlePayTransaction = async (
 
   if (isMainChainAddress) {
     // Special case for native transfer
-    senderTokenPrice = getRateByCurrencyName(
-      allRates,
-      chain.toLowerCase(),
-      chain,
-    )[0].rate;
+    senderTokenPrice = getRateByCurrencyName(allRates, 'eth', chain)[0].rate;
   } else {
     senderTokenPrice = (
       await dispatch(
@@ -1489,7 +1401,7 @@ export const getSolanaTokens = async (
 
 export const getSolanaTokenInfo = async (
   splTokenAddress: string,
-  network: string = 'mainnet',
+  network: string = 'livenet',
 ): Promise<{
   name: string;
   symbol: string;
@@ -1523,3 +1435,27 @@ export const checkEncryptedKeysForEddsaMigration =
       dispatch(successImport({key}));
     }
   };
+
+export const decodeSolanaTxIntructions = async (
+  rawTx: string,
+  network: string = 'livenet',
+): Promise<any> => {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/decode`;
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+  try {
+    const apiResponse = await axios.post(url, {rawTx}, config);
+    if (!apiResponse?.data?.instructions) {
+      throw new Error(
+        `Could not decode solana instruction for rawTx: ${rawTx}`,
+      );
+    }
+    return apiResponse.data.instructions;
+  } catch (err) {
+    throw err;
+  }
+};

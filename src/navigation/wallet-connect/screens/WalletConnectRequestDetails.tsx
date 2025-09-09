@@ -224,23 +224,13 @@ const WalletConnectRequestDetails = () => {
     return () => clearTimeout(timer);
   }, [clipboardObj]);
 
-  const goToWalletConnectHome = async (newLinkedWallet?: Wallet) => {
-    await sleep(500);
-    const _wallet = newLinkedWallet || wallet;
-    navigation.navigate('WalletConnectHome', {
-      topic,
-      selectedAccountAddress: _wallet.receiveAddress!,
-      keyId: _wallet.keyId,
-    });
-  };
-
   const rejectRequest = async () => {
     try {
       setRejectButtonState('loading');
       await dispatch(walletConnectV2RejectCallRequest(_request));
       setRejectButtonState('success');
       dispatch(Analytics.track('WalletConnect Request Rejected', {}));
-      goToWalletConnectHome();
+      navigation.goBack();
     } catch (e) {
       setRejectButtonState('failed');
       await showErrorMessage(
@@ -261,12 +251,11 @@ const WalletConnectRequestDetails = () => {
       if (!request) {
         return;
       }
-      let newLinkedWallet;
       setApproveButtonState('loading');
       await dispatch(walletConnectV2ApproveCallRequest(_request, wallet));
       setApproveButtonState('success');
       dispatch(Analytics.track('WalletConnect Request Approved', {}));
-      goToWalletConnectHome(newLinkedWallet);
+      navigation.goBack();
     } catch (err) {
       switch (err) {
         case 'user rejection':

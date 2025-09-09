@@ -508,7 +508,21 @@ export const buildTxDetails =
             }));
           fee = gasLimit * gasPrice;
         } else {
-          fee = 0.000005 * 1e9; // 0.000005 SOL in lamports default low fee
+          const decodedInstructions = request.decodedInstructions;
+          const computUnitLimit =
+            decodedInstructions?.setComputeUnitLimit[0].computeUnitLimit;
+          const computeUnitPrice =
+            decodedInstructions?.setComputeUnitPrice[0].microLamports;
+          const isPriority =
+            decodedInstructions?.setComputeUnitPrice[0].priority;
+          const SOL_BASE_FEE_LAMPORTS = 5000; // default base fee in lamports
+          if (computUnitLimit && computeUnitPrice && isPriority) {
+            fee =
+              SOL_BASE_FEE_LAMPORTS +
+              (computUnitLimit * computeUnitPrice) / 1000000; // BWS is setting 5000 lamports as fee anyway
+          } else {
+            fee = SOL_BASE_FEE_LAMPORTS;
+          }
         }
       }
       if (proposal) {
@@ -1066,7 +1080,21 @@ const buildTransactionProposal =
                   }));
                 txp.fee = gasLimit * gasPrice || undefined;
               } else {
-                txp.fee = 0.000005 * 1e9; // 0.000005 SOL in lamports default low fee
+                const decodedInstructions = request.decodedInstructions;
+                const computUnitLimit =
+                  decodedInstructions?.setComputeUnitLimit[0].computeUnitLimit;
+                const computeUnitPrice =
+                  decodedInstructions?.setComputeUnitPrice[0].microLamports;
+                const isPriority =
+                  decodedInstructions?.setComputeUnitPrice[0].priority;
+                const SOL_BASE_FEE_LAMPORTS = 5000; // default base fee in lamports
+                if (computUnitLimit && computeUnitPrice && isPriority) {
+                  txp.fee =
+                    SOL_BASE_FEE_LAMPORTS +
+                    (computUnitLimit * computeUnitPrice) / 1000000; // BWS is setting 5000 lamports as fee anyway
+                } else {
+                  txp.fee = SOL_BASE_FEE_LAMPORTS;
+                }
               }
               txp.feeLevel = undefined;
               txp.outputs.push({
@@ -2103,6 +2131,9 @@ const generateInsufficientFundsError = (
           formatAvailableAmount,
         },
       );
+  const handleDismiss: () => void =
+    typeof onDismiss === 'function' ? onDismiss : () => {};
+
   return CustomErrorMessage({
     title: t('Insufficient funds'),
     code: BWCErrorName.INSUFFICIENT_FUNDS,
@@ -2124,11 +2155,19 @@ const generateInsufficientFundsError = (
         },
         primary: true,
       },
+
+      {
+        text: t('Maybe Later'),
+        action: handleDismiss,
+        primary: false,
+      },
     ],
   });
 };
 
 const generateInsufficientConfirmedFundsError = (onDismiss?: () => void) => {
+  const handleDismiss: () => void =
+    typeof onDismiss === 'function' ? onDismiss : () => {};
   return CustomErrorMessage({
     code: BWCErrorName.INSUFFICIENT_FUNDS,
     title: t('Insufficient confirmed funds'),
@@ -2143,6 +2182,11 @@ const generateInsufficientConfirmedFundsError = (onDismiss?: () => void) => {
           navigationRef.navigate('SettingsHome');
         },
         primary: true,
+      },
+      {
+        text: t('Maybe Later'),
+        action: handleDismiss,
+        primary: false,
       },
     ],
   });
