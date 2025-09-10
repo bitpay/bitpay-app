@@ -3824,6 +3824,11 @@
   resolved "https://registry.yarnpkg.com/@solana-program/system/-/system-0.7.0.tgz#3e21c9fb31d3795eb65ba5cb663947c19b305bad"
   integrity sha512-FKTBsKHpvHHNc1ATRm7SlC5nF/VdJtOSjldhcyfMN9R7xo712Mo2jHIzvBgn8zQO5Kg0DcWuKB7268Kv1ocicw==
 
+"@solana-program/token-2022@0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@solana-program/token-2022/-/token-2022-0.5.0.tgz#350a4433e50a2808560682c0c0fdef4079e5ef54"
+  integrity sha512-CJcFU2bXeXh2da7GAsBRBbmYbmMCBb7uQye0ePsv9pKbWm7r4sqMLoNEi5B+bHRIx9urTKAbmYlGnvWxC9htNg==
+
 "@solana-program/token@^0.5.1":
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/@solana-program/token/-/token-0.5.1.tgz#10e327df23f05a7f892fd33a9b6418f17dd62296"
@@ -3841,6 +3846,18 @@
     "@solana/rpc-spec" "2.1.1"
     "@solana/rpc-types" "2.1.1"
 
+"@solana/accounts@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/accounts/-/accounts-3.0.2.tgz#1d4a5117e0d34208910920b25c61f47b6bb0891d"
+  integrity sha512-eV38HyAuq61DREvlIHhrIqlG1AVBGV6FNLx67MajYQ+CAHT6N4rJ+NETqNZb6cEnj02/wBfEIdBT17nYmN3Tnw==
+  dependencies:
+    "@solana/addresses" "3.0.2"
+    "@solana/codecs-core" "3.0.2"
+    "@solana/codecs-strings" "3.0.2"
+    "@solana/errors" "3.0.2"
+    "@solana/rpc-spec" "3.0.2"
+    "@solana/rpc-types" "3.0.2"
+
 "@solana/addresses@2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@solana/addresses/-/addresses-2.1.1.tgz#d80710df8da5e695ef52f815fb128d76700c0bea"
@@ -3852,12 +3869,30 @@
     "@solana/errors" "2.1.1"
     "@solana/nominal-types" "2.1.1"
 
+"@solana/addresses@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/addresses/-/addresses-3.0.2.tgz#1ccec558d3fa5b650969b8451c5c4af38acf1b87"
+  integrity sha512-ULqKK1IZkxW8tEZWJ2lxhKxPEHEZgOCDbY+WW9yR3ZVG5gQf0h1lntCVXRyS50xfsIjWVXuQS4y2uVsSAcYdsw==
+  dependencies:
+    "@solana/assertions" "3.0.2"
+    "@solana/codecs-core" "3.0.2"
+    "@solana/codecs-strings" "3.0.2"
+    "@solana/errors" "3.0.2"
+    "@solana/nominal-types" "3.0.2"
+
 "@solana/assertions@2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@solana/assertions/-/assertions-2.1.1.tgz#55caec1c4c1bfc46958681b38308956274d65680"
   integrity sha512-ln6dXkliyb9ybqLGFf5Gn+LJaPZGmer9KloIFfHiiSfYFdoAqOu6+pVY+323SKWXHG+hHl9VkwuZYpSp02OroA==
   dependencies:
     "@solana/errors" "2.1.1"
+
+"@solana/assertions@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/assertions/-/assertions-3.0.2.tgz#a87029bc29018c006ad54d35eb582e700f0eb343"
+  integrity sha512-MsIWJHyqutBT9j633p2IjvPFG0XSd6KOQ3pwGHTJN2AyG/qg9hZKs9I1bYuFaMm+f7N2RFQq+B3Tx6Vsdl92JQ==
+  dependencies:
+    "@solana/errors" "3.0.2"
 
 "@solana/buffer-layout@^4.0.1":
   version "4.0.1"
@@ -3873,6 +3908,13 @@
   dependencies:
     "@solana/errors" "2.1.1"
 
+"@solana/codecs-core@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/codecs-core/-/codecs-core-3.0.2.tgz#0c401b996d23ee6440b763a5c38d9e2a33619c64"
+  integrity sha512-vpy8ySWgPF8+APwpeEr4dQbU/EyHjisd/TywIw3rymguWeZ9/wcThS0WDRi08Z44W6InCIbtI08RdtuHQZoSag==
+  dependencies:
+    "@solana/errors" "3.0.2"
+
 "@solana/codecs-data-structures@2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@solana/codecs-data-structures/-/codecs-data-structures-2.1.1.tgz#681dd189e1cc74e36ad72b00b7d6eb7fa4a244b4"
@@ -3882,6 +3924,15 @@
     "@solana/codecs-numbers" "2.1.1"
     "@solana/errors" "2.1.1"
 
+"@solana/codecs-data-structures@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/codecs-data-structures/-/codecs-data-structures-3.0.2.tgz#3d3c6746cb285d49b78bd9f584617a7c9fd2111f"
+  integrity sha512-07L3czS7xughfCSx2pTC4/3amyjuCd3kOW4m4RJoXqWVzyg5lX4vCIVrlQE4MtM7/5SLLvGHXbCPHcp92esGcQ==
+  dependencies:
+    "@solana/codecs-core" "3.0.2"
+    "@solana/codecs-numbers" "3.0.2"
+    "@solana/errors" "3.0.2"
+
 "@solana/codecs-numbers@2.1.1", "@solana/codecs-numbers@^2.1.0":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@solana/codecs-numbers/-/codecs-numbers-2.1.1.tgz#b7a69024e2397e236bbfb11b75ff4a077236b9d2"
@@ -3889,6 +3940,14 @@
   dependencies:
     "@solana/codecs-core" "2.1.1"
     "@solana/errors" "2.1.1"
+
+"@solana/codecs-numbers@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/codecs-numbers/-/codecs-numbers-3.0.2.tgz#dd18245c342368c51dfd8e8a3b68cbf2f4bfda10"
+  integrity sha512-Yr9kWo2BF4Wdu9mhceUQ3ksA6ZTi2CvQr8GWkRh9DQjvmrdqE2vwxwWWcmnzGDzwbta5o4tAr8JjtAtmwpiLEg==
+  dependencies:
+    "@solana/codecs-core" "3.0.2"
+    "@solana/errors" "3.0.2"
 
 "@solana/codecs-strings@2.1.1":
   version "2.1.1"
@@ -3898,6 +3957,15 @@
     "@solana/codecs-core" "2.1.1"
     "@solana/codecs-numbers" "2.1.1"
     "@solana/errors" "2.1.1"
+
+"@solana/codecs-strings@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/codecs-strings/-/codecs-strings-3.0.2.tgz#4b11619d882415095b03e8650d572db965993316"
+  integrity sha512-V7Ivy3TjdrLL4E3wT2d32MpGYQFWM1UKnevLXPib/Aqws4nP/bGMHq6gSIJ4b9HrkFfrlEgSjusOyEJbRBBFag==
+  dependencies:
+    "@solana/codecs-core" "3.0.2"
+    "@solana/codecs-numbers" "3.0.2"
+    "@solana/errors" "3.0.2"
 
 "@solana/codecs@2.1.1":
   version "2.1.1"
@@ -3910,6 +3978,17 @@
     "@solana/codecs-strings" "2.1.1"
     "@solana/options" "2.1.1"
 
+"@solana/codecs@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/codecs/-/codecs-3.0.2.tgz#f588456063ed24e3e8124793b025817f1027c369"
+  integrity sha512-ihsmK+OnwuVd5le66lIDqsj0BQiHiYbL3pv4kUCVacxoo8pgqxGHTPh1/Ei1GNSm2N7LF/kwPvnZVECgY+ZaJg==
+  dependencies:
+    "@solana/codecs-core" "3.0.2"
+    "@solana/codecs-data-structures" "3.0.2"
+    "@solana/codecs-numbers" "3.0.2"
+    "@solana/codecs-strings" "3.0.2"
+    "@solana/options" "3.0.2"
+
 "@solana/errors@2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@solana/errors/-/errors-2.1.1.tgz#009ebf387b0c014a8fc60a59d65757fef942e4fd"
@@ -3917,6 +3996,14 @@
   dependencies:
     chalk "^5.4.1"
     commander "^13.1.0"
+
+"@solana/errors@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/errors/-/errors-3.0.2.tgz#74e23fb48a62ad1d65b2b1eeb0b1f5e3bfe020f1"
+  integrity sha512-0B4y9JUsX8/DzflhdSXSAF+UPUKyo1R1rrQ/ShS/8ApCOIWIFqZlve0TPatuTOGGNBememoukPOvDVtFy0ZYpg==
+  dependencies:
+    chalk "^5.6.0"
+    commander "^14.0.0"
 
 "@solana/fast-stable-stringify@2.1.1":
   version "2.1.1"
@@ -3976,6 +4063,11 @@
   resolved "https://registry.yarnpkg.com/@solana/nominal-types/-/nominal-types-2.1.1.tgz#9b940751a07d206bb97439c58c713db82892895e"
   integrity sha512-EpdDhuoATsm9bmuduv6yoNm1EKCz2tlq13nAazaVyQvkMBHhVelyT/zq0ruUplQZbl7qyYr5hG7p1SfGgQbgSQ==
 
+"@solana/nominal-types@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/nominal-types/-/nominal-types-3.0.2.tgz#d6711bf5ca3c780ceaa77d0552180b5b5be9a80b"
+  integrity sha512-KrZ/a16+HDDpOrkDVFvDQrFDDZf+kNuD3zmU/5KbxQ0kn9uuEFb9/P9Vct3R8qacshH73lHWOz+006Bb+xX88A==
+
 "@solana/options@2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@solana/options/-/options-2.1.1.tgz#844eb50e809fbff5819bec71eb47ba1b125a61fe"
@@ -3986,6 +4078,17 @@
     "@solana/codecs-numbers" "2.1.1"
     "@solana/codecs-strings" "2.1.1"
     "@solana/errors" "2.1.1"
+
+"@solana/options@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/options/-/options-3.0.2.tgz#18e22eed4e2e9f416d565303a7b6e1eb62b4652a"
+  integrity sha512-hthTZ7CBoRmlDF4aNbjzUf8qzlmXXW7XzIZNXO0xfeGexC+j7noxowHgOlK9a7Lpk+0EDF1LFkMYTh3Wy6nR6w==
+  dependencies:
+    "@solana/codecs-core" "3.0.2"
+    "@solana/codecs-data-structures" "3.0.2"
+    "@solana/codecs-numbers" "3.0.2"
+    "@solana/codecs-strings" "3.0.2"
+    "@solana/errors" "3.0.2"
 
 "@solana/programs@2.1.1":
   version "2.1.1"
@@ -4027,6 +4130,11 @@
   resolved "https://registry.yarnpkg.com/@solana/rpc-spec-types/-/rpc-spec-types-2.1.1.tgz#91e7a30f02d9dd9b78e9834a820d93754a0ea327"
   integrity sha512-3/G/MTi/c70TVZcB0DJjh5AGV7xqOYrjrpnIg+rLZuH65qHMimWiTHj0k8lxTzRMrN06Ed0+Q7SCw9hO/grTHA==
 
+"@solana/rpc-spec-types@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/rpc-spec-types/-/rpc-spec-types-3.0.2.tgz#def46edb289de3ab042dd4790adc4a51930bd3e7"
+  integrity sha512-y+Syivahjlv2qbBwHGZYuFaxHMPWcxMCY8bqQBLdssDxoVTMFunALgeZ6JKD+FT2a58yL+Cpsd7fL6FdMiQIDg==
+
 "@solana/rpc-spec@2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@solana/rpc-spec/-/rpc-spec-2.1.1.tgz#3f1800d7a23db71c8051520756b8cc7ef74d14fc"
@@ -4034,6 +4142,14 @@
   dependencies:
     "@solana/errors" "2.1.1"
     "@solana/rpc-spec-types" "2.1.1"
+
+"@solana/rpc-spec@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/rpc-spec/-/rpc-spec-3.0.2.tgz#192618037bddd14458e8fe79d801aabc6ce8e8ed"
+  integrity sha512-SvHCrpwdzhMQ4bvBBMdeSRxBnP85MbuRv5ePGZHEo9fkgJuOVigGjA7kdvcMhX1m0OO4iOb8YUWs+Vqj3dBqzQ==
+  dependencies:
+    "@solana/errors" "3.0.2"
+    "@solana/rpc-spec-types" "3.0.2"
 
 "@solana/rpc-subscriptions-api@2.1.1":
   version "2.1.1"
@@ -4118,6 +4234,18 @@
     "@solana/errors" "2.1.1"
     "@solana/nominal-types" "2.1.1"
 
+"@solana/rpc-types@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/rpc-types/-/rpc-types-3.0.2.tgz#78008e839019f2a1b5f23464fc292b50a05d44b8"
+  integrity sha512-0OHQ6j6ncBY88IDVSeXf1mqW8KMO8SQsHK/PFLVgJr2Z5FkanCRCzCX2agShOFIVT41lR5jiRhHW8DnUX2C0Hg==
+  dependencies:
+    "@solana/addresses" "3.0.2"
+    "@solana/codecs-core" "3.0.2"
+    "@solana/codecs-numbers" "3.0.2"
+    "@solana/codecs-strings" "3.0.2"
+    "@solana/errors" "3.0.2"
+    "@solana/nominal-types" "3.0.2"
+
 "@solana/rpc@2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@solana/rpc/-/rpc-2.1.1.tgz#e897c5aad583a26e4a167965f3812c1c1a83496a"
@@ -4163,6 +4291,16 @@
     "@solana/codecs" "2.1.1"
     "@solana/errors" "2.1.1"
     "@solana/rpc-types" "2.1.1"
+
+"@solana/sysvars@3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@solana/sysvars/-/sysvars-3.0.2.tgz#68d8abdcca6a499d51fd1bdab0147975560d21ce"
+  integrity sha512-t3yh2lmHXBdDj3eS9ufD3XMf4zMwi/HhJql8281mWFZ2p1tflNUTWrK2Wo7BbPn5OfPhQ0U2ilv6OSvub3mMLg==
+  dependencies:
+    "@solana/accounts" "3.0.2"
+    "@solana/codecs" "3.0.2"
+    "@solana/errors" "3.0.2"
+    "@solana/rpc-types" "3.0.2"
 
 "@solana/transaction-confirmation@2.1.1":
   version "2.1.1"
@@ -6583,16 +6721,16 @@ bitcore-mnemonic@^10.10.7:
     bitcore-lib "^10.10.7"
     unorm "^1.4.1"
 
-bitcore-wallet-client@10.10.12:
-  version "10.10.12"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.10.12.tgz#d4e9b4e0d1fda3d1a4a0655a6c83990ab78c03a1"
-  integrity sha512-tfYQ1ZZvTmzdfJJ39FC/522LF8EjpBWlktdSd/RZ1MYvfW3miX/EVkbLvQZp7Vfad26FCp46v+Q2aG6fQz6LsA==
+bitcore-wallet-client@10.10.15:
+  version "10.10.15"
+  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-10.10.15.tgz#d1f0e91ce2d04f383328542f547288df02c839b8"
+  integrity sha512-U1NFDqfzslk7lzX287f1GRIpGEd772I8JgFsGqGeWLc17wXy8SI7G0B6AtQxZdZU//L/0TXIUHWpGu5TOZB7aw==
   dependencies:
     ajv "6.12.0"
     async "0.9.2"
     bip38 "1.4.0"
     bitcore-mnemonic "^10.10.7"
-    crypto-wallet-core "^10.10.7"
+    crypto-wallet-core "^10.10.15"
     json-stable-stringify "1.0.1"
     preconditions "2.2.3"
     sjcl "1.0.3"
@@ -7108,6 +7246,11 @@ chalk@^5.4.1:
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-5.4.1.tgz#1b48bf0963ec158dce2aacf69c093ae2dd2092d8"
   integrity sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==
 
+chalk@^5.6.0:
+  version "5.6.2"
+  resolved "https://registry.yarnpkg.com/chalk/-/chalk-5.6.2.tgz#b1238b6e23ea337af71c7f8a295db5af0c158aea"
+  integrity sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==
+
 char-regex@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/char-regex/-/char-regex-1.0.2.tgz#d744358226217f981ed58f479b1d6bcc29545dcf"
@@ -7441,6 +7584,11 @@ commander@^13.1.0:
   version "13.1.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-13.1.0.tgz#776167db68c78f38dcce1f9b8d7b8b9a488abf46"
   integrity sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==
+
+commander@^14.0.0:
+  version "14.0.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-14.0.0.tgz#f244fc74a92343514e56229f16ef5c5e22ced5e9"
+  integrity sha512-2uM9rYjPvyq39NwLRqaiLtWHyDC1FvryJDa2ATTVims5YAS4PupsEQsDvP14FqhFr0P49CYDugi59xaxJlTXRA==
 
 commander@^2.20.0, commander@^2.20.3:
   version "2.20.3"
@@ -7790,10 +7938,10 @@ crypto-js@3.1.9-1:
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
   integrity sha512-W93aKztssqf29OvUlqfikzGyYbD1rpkXvGP9IQ1JchLY3bxaLXZSWYbwrtib2vk8DobrDzX7PIXcDWHp0B6Ymw==
 
-crypto-wallet-core@^10.10.7:
-  version "10.10.7"
-  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.10.7.tgz#667aed2fcff9a1d8f306a172efc80270943ff7a1"
-  integrity sha512-GPyVWpfud4CYhMr2KUqVIihJY3FMtZfxZkUGhcXeIlNuXXmM1aRTzZfX1hKrmMoFb48MwO/XwNQjQHjRdFIuLw==
+crypto-wallet-core@^10.10.15:
+  version "10.10.15"
+  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-10.10.15.tgz#85481d4195558a293ec25e6bd1c74bd0d59b0bf8"
+  integrity sha512-4TpOXmbFL6OSRh31w1+6qVlIZ9ttuL/HAQI6FaGjzQIDT0qY4PoWqu5X0L8dLDKz6CWY9tlr0ad1z+W/T4yl2g==
   dependencies:
     "@solana-program/compute-budget" "^0.7.0"
     "@solana-program/memo" "^0.7.0"

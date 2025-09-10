@@ -51,6 +51,9 @@ import {
   TransferSolInstruction,
 } from './sol-transaction-instruction.types';
 import {successImport} from '../store/wallet/wallet.actions';
+import * as SolKit from '@solana/kit';
+import {BwcProvider} from '../lib/bwc';
+import {findAssociatedTokenPda} from '@solana-program/token-2022';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -1390,7 +1393,7 @@ export const getSolanaTokens = async (
   }/SOL/${_network}/ata/${address}`;
   try {
     const apiResponse = await axios.get<any>(url);
-    if (!apiResponse?.data?.length) {
+    if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
       throw new Error(`No solana tokens found for address: ${address}`);
     }
     return apiResponse.data;
@@ -1421,6 +1424,189 @@ export const getSolanaTokenInfo = async (
     throw err;
   }
 };
+
+export async function sendSolanaTx(
+  rawTx: string | Uint8Array,
+  network: string = 'livenet',
+): Promise<{data: any}> {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/tx/send`;
+  const payload = {
+    rawTx,
+    network: 'mainnet',
+    chain: 'SOL',
+  };
+
+  try {
+    const resp = await axios.post(url, payload, {
+      headers: {'Content-Type': 'application/json'},
+    });
+    return {data: resp.data};
+  } catch (err: any) {
+    const msg = err?.response?.data ?? err?.message ?? String(err);
+    throw new Error(`Failed to send transaction: ${msg}`);
+  }
+}
+
+export const getSolanaBlockTip = async (
+  network: string = 'livenet',
+): Promise<{
+  hash: string;
+  height: number;
+  time: string;
+}> => {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/block/tip`;
+
+  try {
+    const apiResponse = await axios.get(url);
+    if (!apiResponse?.data) {
+      throw new Error(`No block tip data returned for network: ${_network}`);
+    }
+
+    return apiResponse.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+interface CreateAtaTxParams {
+  fromKeyPair: SolKit.KeyPairSigner<string>;
+  owner: string;
+  ata: string;
+  mint: string;
+  blockHash: string;
+  blockHeight: number;
+}
+
+export const createAtaIfNeededTx = ({
+  fromKeyPair,
+  owner,
+  mint,
+  ata,
+  blockHash,
+  blockHeight,
+}: CreateAtaTxParams) => {
+  if (!SolKit.isKeyPairSigner(fromKeyPair)) {
+    throw new Error('fromKeyPair required to implement KeyPairSigner');
+  }
+  if (!(blockHash && blockHeight)) {
+    throw new Error('blockHash and blockHeight required');
+  }
+  const recentBlockhash = {
+    blockhash: blockHash as SolKit.Blockhash,
+    lastValidBlockHeight: BigInt(blockHeight),
+  };
+  const SPLTxProvider = BwcProvider.getInstance()
+    .getCore()
+    .Transactions.get({chain: getCWCChain('sol')});
+  const createAtaIx = SPLTxProvider.constructor.createAtokenInstructions(
+    'createAssociatedTokenIdempotent',
+    {
+      payer: fromKeyPair.address,
+      owner,
+      ata,
+      mint,
+    },
+  );
+  const txMsg = SolKit.pipe(
+    SolKit.createTransactionMessage({version: 'legacy'}),
+    tx => SolKit.setTransactionMessageFeePayerSigner(fromKeyPair, tx),
+    tx =>
+      SolKit.setTransactionMessageLifetimeUsingBlockhash(recentBlockhash, tx),
+    tx => SolKit.appendTransactionMessageInstructions([createAtaIx], tx),
+  );
+  const compiled = SolKit.compileTransaction(txMsg);
+  return SolKit.getBase64EncodedWireTransaction(compiled);
+};
+
+export const getOrCreateAssociatedTokenAddress = async (params: {
+  mint: string;
+  feePayer: string; // owner is the ATA owner
+}): Promise<string> => {
+  const [associatedTokenAddress] = await findAssociatedTokenPda({
+    mint: SolKit.address(params.mint),
+    owner: SolKit.address(params.feePayer),
+    tokenProgram: SolKit.address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // TODO resolve token program - check for TOKEN_2022_PROGRAM_ADDRESS
+  });
+  return associatedTokenAddress.toString();
+};
+
+async function deriveSolKeyPairSigner(derivation: DerivationInput) {
+  const {xPrivKeyEDDSA, rootPath, network} = derivation;
+  const keyPair = BwcProvider.getInstance()
+    .getCore()
+    .Deriver.derivePrivateKeyWithPath(
+      'sol',
+      network,
+      xPrivKeyEDDSA,
+      rootPath,
+      '',
+    );
+  const privKeyBytes = SolKit.getBase58Encoder().encode(keyPair.privKey!);
+  const signer = await SolKit.createKeyPairSignerFromPrivateKeyBytes(
+    privKeyBytes,
+  );
+  return {signer, rawKeyPair: keyPair};
+}
+
+export interface DerivationInput {
+  xPrivKeyEDDSA: string;
+  rootPath: string;
+  network: string;
+}
+export interface CreateAtaAndSendParams {
+  ataAddress: string;
+  /** address owner that will hold the token account (ATA owner/recipient) */
+  ownerAddress: string;
+  mintAddress: string;
+  derivation: DerivationInput;
+  network?: string;
+}
+
+export interface CreateAtaAndSendResult {
+  ataAddress: string;
+  signature?: string;
+  rawResponse?: any;
+}
+
+export async function createAtaAndSend({
+  ataAddress,
+  ownerAddress,
+  mintAddress,
+  derivation,
+  network = 'livenet',
+}: CreateAtaAndSendParams): Promise<CreateAtaAndSendResult> {
+  const {signer, rawKeyPair} = await deriveSolKeyPairSigner(derivation);
+
+  const {hash, height} = await getSolanaBlockTip(network);
+
+  const base64Tx = createAtaIfNeededTx({
+    fromKeyPair: signer,
+    owner: ownerAddress,
+    mint: mintAddress,
+    ata: ataAddress,
+    blockHash: hash,
+    blockHeight: height,
+  });
+
+  const SPLTxProvider = BwcProvider.getInstance()
+    .getCore()
+    .Transactions.get({chain: getCWCChain('sol')});
+
+  const signedTxBase64 = await SPLTxProvider.sign({
+    tx: base64Tx,
+    key: {privKey: rawKeyPair.privKey!},
+  });
+
+  const {data} = await sendSolanaTx(signedTxBase64, network);
+
+  return {
+    ataAddress,
+    signature: data?.txid,
+    rawResponse: data,
+  };
+}
 
 export const checkEncryptedKeysForEddsaMigration =
   (key: Key, password: string) =>

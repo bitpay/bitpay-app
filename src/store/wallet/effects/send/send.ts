@@ -44,11 +44,13 @@ import {
 import {GetInput} from '../transactions/transactions';
 import {
   checkEncryptedKeysForEddsaMigration,
+  createAtaAndSend,
   formatCryptoAddress,
   formatCurrencyAbbreviation,
   formatFiatAmount,
   getCWCChain,
   getFullLinkedWallet,
+  getOrCreateAssociatedTokenAddress,
   getRateByCurrencyName,
   getSolanaTokens,
   sleep,
@@ -1115,6 +1117,14 @@ const buildTransactionProposal =
                 (item: {mintAddress: string}) =>
                   item.mintAddress === tx.tokenAddress,
               )?.ataAddress;
+
+              if (!ataAddress) {
+                ataAddress = await getOrCreateAssociatedTokenAddress({
+                  mint: tx.tokenAddress!,
+                  feePayer: tx.toAddress!,
+                });
+                txp.ataOwnerAddress = tx.toAddress;
+              }
             }
 
             const toAddress =
@@ -1211,6 +1221,7 @@ export const startSendPayment =
                   wallet,
                   recipient,
                   transport,
+                  ataOwnerAddress: txp.ataOwnerAddress,
                 }),
               );
               return resolve(broadcastedTx);
@@ -1238,6 +1249,7 @@ export const publishAndSign =
     transport,
     password,
     signingMultipleProposals,
+    ataOwnerAddress,
   }: {
     txp: TransactionProposal;
     key: Key;
@@ -1246,6 +1258,7 @@ export const publishAndSign =
     transport?: Transport;
     password?: string;
     signingMultipleProposals?: boolean; // when signing multiple proposals from a wallet we ask for decrypt password and biometric before
+    ataOwnerAddress?: string; // only for solana tokens, if the recipient needs to create an associated token account
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -1287,6 +1300,38 @@ export const publishAndSign =
           dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         } catch (error) {
           return reject(error);
+        }
+      }
+
+      if (ataOwnerAddress && txp.tokenAddress) {
+        try {
+          const xPrivKeyEDDSA = password
+            ? key.methods!.get(password, 'EDDSA').xPrivKey
+            : key.properties!.xPrivKeyEDDSA;
+          const opts = {
+            ataAddress: txp.outputs[0].toAddress!,
+            ownerAddress: ataOwnerAddress,
+            mintAddress: txp.tokenAddress,
+            derivation: {
+              xPrivKeyEDDSA,
+              rootPath: wallet.credentials.rootPath,
+              network: wallet.network,
+            },
+            network: txp.network,
+          };
+          dispatch(
+            LogActions.debug(
+              `creating ATA if needed for: ${ataOwnerAddress} - mint: ${txp.tokenAddress}`,
+            ),
+          );
+          const result = await createAtaAndSend(opts);
+          dispatch(
+            LogActions.debug(
+              `success create ata [publishAndSign]: ${JSON.stringify(result)}`,
+            ),
+          );
+        } catch (error) {
+          throw new Error(`Error creating associated token account: ${error}`);
         }
       }
 
