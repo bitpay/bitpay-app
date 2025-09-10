@@ -399,7 +399,7 @@ const Confirm = () => {
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
+          enableBackdropDismiss: true,
         }),
       );
     }

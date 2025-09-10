@@ -1,5 +1,5 @@
-import {requestTrackingPermission} from 'react-native-tracking-transparency';
 import {Effect} from '..';
+import {check, request, RESULTS, PERMISSIONS} from 'react-native-permissions';
 import {APP_ANALYTICS_ENABLED, APP_VERSION} from '../../constants/config';
 import {BrazeWrapper} from '../../lib/Braze';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
@@ -7,25 +7,41 @@ import {AppsFlyerWrapper} from '../../utils/appsFlyer';
 import {LogActions} from '../log';
 
 const getTrackingAuthorizedByUser =
-  (): Effect<Promise<boolean>> => dispatch => {
-    return requestTrackingPermission()
+  (): Effect<Promise<void>> => async dispatch => {
+    check(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY)
       .then(status => {
-        return ['authorized', 'unavailable'].includes(status);
+        switch (status) {
+          case RESULTS.DENIED:
+            dispatch(
+              LogActions.debug('Tracking permission denied. Requesting... '),
+            );
+            request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY).then(result => {
+              switch (result) {
+                case RESULTS.GRANTED:
+                case RESULTS.LIMITED:
+                  dispatch(LogActions.debug('Tracking permission granted.'));
+                  return;
+                default:
+                  dispatch(LogActions.debug('Tracking permission: ', result));
+                  return;
+              }
+            });
+            break;
+          // Granted, limited, unavailable, or blocked
+          default:
+            dispatch(LogActions.debug('Tracking permission: ', status));
+            return;
+        }
       })
       .catch(err => {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(
           LogActions.error(
             'An error occurred while requesting tracking permission',
+            errMsg,
           ),
         );
-
-        dispatch(
-          LogActions.error(
-            err instanceof Error ? err.message : JSON.stringify(err),
-          ),
-        );
-
-        return false;
+        return;
       });
   };
 

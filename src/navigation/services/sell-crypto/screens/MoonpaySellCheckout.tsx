@@ -511,6 +511,19 @@ const MoonpaySellCheckout: React.FC = () => {
             });
             txp.fromAta = fromAta?.ataAddress;
             txp.decimals = fromAta?.decimals;
+
+            if (txp.outputs) {
+              const toSolanaTokens = await getSolanaTokens(
+                toAddress,
+                wallet?.network,
+              );
+              for (const output of txp.outputs) {
+                const toAta = toSolanaTokens.find((item: any) => {
+                  return item.mintAddress === txp.tokenAddress;
+                });
+                output.toAddress = toAta?.ataAddress;
+              }
+            }
           }
         }
       }
@@ -861,7 +874,8 @@ const MoonpaySellCheckout: React.FC = () => {
         type: 'error',
         title: title ?? t('Error'),
         message: msg ?? t('Unknown Error'),
-        enableBackdropDismiss: false,
+        onBackdropDismiss: () => navigation.goBack(),
+        enableBackdropDismiss: true,
         actions: actions ?? [
           {
             text: t('OK'),

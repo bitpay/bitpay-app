@@ -77,6 +77,7 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {EIP155_SIGNING_METHODS} from '../../../constants/WalletConnectV2';
 import {formatJsonRpcResult} from '@json-rpc-tools/utils';
 import {AppActions} from '../../../store/app';
+import {GetPrecision} from '../../../store/wallet/utils/currency';
 
 const HeaderRightContainer = styled.View``;
 
@@ -161,13 +162,22 @@ const WalletConnectConfirm = () => {
 
   const _setTxDetails = async () => {
     try {
+      const {unitToSatoshi} = dispatch(
+        GetPrecision(
+          wallet.currencyAbbreviation,
+          wallet.chain,
+          wallet.tokenAddress,
+        ),
+      ) || {
+        unitToSatoshi: 100000000,
+      };
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,
           recipient,
           context: 'walletConnect',
           request,
-          amount: request.swapAmount ?? 0,
+          amount: request.swapAmount ? request.swapAmount / unitToSatoshi : 0,
         }),
       );
       setTxDetails(_txDetails);
@@ -179,7 +189,7 @@ const WalletConnectConfirm = () => {
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
+          enableBackdropDismiss: true,
         }),
       );
     }

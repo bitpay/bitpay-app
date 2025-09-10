@@ -322,7 +322,8 @@ export type SardinePaymentType =
   | 'us_credit'
   | 'us_debit'
   | 'international_debit'
-  | 'international_credit';
+  | 'international_credit'
+  | 'sepa';
 
 export interface SardineGetQuoteRequestData {
   env: 'sandbox' | 'production';
