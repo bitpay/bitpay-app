@@ -1897,7 +1897,7 @@ const SellCryptoOffers: React.FC = () => {
                               case 'ramp':
                                 dispatch(
                                   openUrlWithInAppBrowser(
-                                    'https://support.ramp.network/en/articles/8957-what-are-the-fees-for-selling-crypto-at-ramp-network',
+                                    'https://support.rampnetwork.com/en/articles/8957-what-are-the-fees-for-selling-crypto-at-ramp-network',
                                   ),
                                 );
                                 break;

@@ -49,7 +49,7 @@ const RampTerms: React.FC<{
           haptic('impactLight');
           dispatch(
             openUrlWithInAppBrowser(
-              'https://support.ramp.network/en/articles/10415-what-fees-does-ramp-charge-for-buying-and-selling-crypto',
+              'https://support.rampnetwork.com/en/articles/10415-what-fees-does-ramp-charge-for-buying-and-selling-crypto',
             ),
           );
         }}>
@@ -66,8 +66,8 @@ const RampTerms: React.FC<{
           dispatch(
             openUrlWithInAppBrowser(
               country == 'US'
-                ? 'https://ramp.network/terms-of-service/#us-terms-of-service'
-                : 'https://ramp.network/terms-of-service/#global-terms-of-service',
+                ? 'https://rampnetwork.com/terms-of-service/#us-terms-of-service'
+                : 'https://rampnetwork.com/terms-of-service/#global-terms-of-service',
             ),
           );
         }}>

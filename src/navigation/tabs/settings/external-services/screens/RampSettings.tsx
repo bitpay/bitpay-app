@@ -253,7 +253,7 @@ const RampSettings: React.FC = () => {
             haptic('impactLight');
             dispatch(
               openUrlWithInAppBrowser(
-                'https://support.ramp.network/en/articles/455-get-help-from-ramp-support',
+                'https://support.rampnetwork.com/en/articles/455-get-help-from-ramp-support',
               ),
             );
           }}>
