@@ -1303,7 +1303,7 @@ export const publishAndSign =
         }
       }
 
-      if (ataOwnerAddress && txp.tokenAddress) {
+      if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
         try {
           const xPrivKeyEDDSA = password
             ? key.methods!.get(password, 'EDDSA').xPrivKey
