@@ -14,7 +14,11 @@ import {isAxiosError, isRateLimitError} from '../../utils/axios';
 import {generateSalt, hashPassword} from '../../utils/password';
 import {AppEffects} from '../app/';
 import {Analytics} from '../analytics/analytics.effects';
-import {startOnGoingProcessModal} from '../app/app.effects';
+import {
+  isAnonymousBrazeEid,
+  setEmailNotifications,
+  startOnGoingProcessModal,
+} from '../app/app.effects';
 import {CardActions, CardEffects} from '../card';
 import {Effect} from '../index';
 import {LogActions} from '../log';
@@ -26,7 +30,11 @@ import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
-import {dismissOnGoingProcessModal, setBrazeEid} from '../app/app.actions';
+import {
+  dismissOnGoingProcessModal,
+  setBrazeEid,
+  setEmailNotificationsAccepted,
+} from '../app/app.actions';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {DeviceEventEmitter} from 'react-native';
 
@@ -43,6 +51,7 @@ export const startBitPayIdAnalyticsInit =
   ): Effect<void> =>
   async (dispatch, getState) => {
     const {APP} = getState();
+    const acceptedEmailNotifications = !!APP.emailNotifications?.accepted;
     if (user) {
       const {eid, name} = user;
       let {email, givenName, familyName} = user;
@@ -61,26 +70,41 @@ export const startBitPayIdAnalyticsInit =
         }
       }
 
-      // Check if Braze EID exists and different
-      if (APP.brazeEid && APP.brazeEid !== eid) {
+      // Check if Braze EID exists and not the same
+      // Merge ONLY anonymous EIDs
+      // If login with any other BitPayID, we shouldn't delete/merge previous user
+      // Only switch to a new EID with setBrazeEid
+      if (
+        APP.brazeEid &&
+        APP.brazeEid !== eid &&
+        isAnonymousBrazeEid(APP.brazeEid)
+      ) {
         Analytics.startMergingUser();
         // Should migrate the user to the new EID
         LogActions.info('Merging current user to new EID: ', eid);
         await BrazeWrapper.merge(APP.brazeEid, eid);
-        // Emit an event that delete the user
+        // Emit event to delete old user
         DeviceEventEmitter.emit(DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER, {
           oldEid: APP.brazeEid,
           newEid: eid,
-          agreedToMarketingCommunications,
         });
       }
       dispatch(setBrazeEid(eid));
-      dispatch(
+      await dispatch(
         Analytics.identify(eid, {
           email,
           firstName: givenName,
           lastName: familyName,
         }),
+      );
+      // Set email notifications after Braze EID is set
+      dispatch(
+        setEmailNotifications(
+          acceptedEmailNotifications ||
+            (user.optInEmailMarketing && user.verified),
+          email,
+          agreedToMarketingCommunications,
+        ),
       );
     }
   };
@@ -556,6 +580,7 @@ export const startDisconnectBitPayId =
     dispatch(CardActions.isJoinedWaitlist(false));
     dispatch(ShopActions.clearedBillPayAccounts({network: APP.network}));
     dispatch(ShopActions.clearedBillPayPayments({network: APP.network}));
+    dispatch(setEmailNotificationsAccepted(false, null)); // Only uncheck accepted, keep subscription status
     dispatch(dismissOnGoingProcessModal());
   };
 

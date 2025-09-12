@@ -512,6 +512,12 @@ const initializeBrazeContentCards = (): Effect => dispatch => {
   }
 };
 
+export const isAnonymousBrazeEid = (str: string): boolean => {
+  const uuidV4Regex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidV4Regex.test(str);
+};
+
 const createBrazeEid = (): Effect<string | undefined> => dispatch => {
   try {
     dispatch(LogActions.info('[Braze] Generating EID for BWS user...'));
@@ -955,24 +961,42 @@ export const setEmailNotifications =
     agreedToMarketingCommunications?: boolean,
   ): Effect =>
   (dispatch, getState) => {
-    const _email = accepted ? email : null;
-    dispatch(setEmailNotificationsAccepted(accepted, _email));
-
-    if (agreedToMarketingCommunications) {
-      Braze.setEmailNotificationSubscriptionType(
-        Braze.NotificationSubscriptionTypes.OPTED_IN,
-      );
-    } else {
-      Braze.setEmailNotificationSubscriptionType(
-        Braze.NotificationSubscriptionTypes.SUBSCRIBED,
-      );
-    }
-
     const {
       WALLET: {keys},
       APP,
+      BITPAY_ID,
     } = getState();
+    const bitpayUser = BITPAY_ID.user[APP.network];
 
+    if (accepted) {
+      // When logged out from a BitPay account, but it keeps BrazeEID
+      // Do not overwrite the email for the BitPay user
+      if (email && !bitpayUser && isAnonymousBrazeEid(APP.brazeEid)) {
+        // Only set email for anonymous users
+        Braze.setEmail(email);
+      }
+      Braze.setEmailNotificationSubscriptionType(
+        (bitpayUser &&
+          bitpayUser?.verified &&
+          bitpayUser?.optInEmailMarketing) ||
+          agreedToMarketingCommunications
+          ? Braze.NotificationSubscriptionTypes.OPTED_IN
+          : Braze.NotificationSubscriptionTypes.SUBSCRIBED,
+      );
+      Braze.addToSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+      Braze.addToSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
+    } else {
+      Braze.setEmailNotificationSubscriptionType(
+        Braze.NotificationSubscriptionTypes.UNSUBSCRIBED,
+      );
+      Braze.removeFromSubscriptionGroup(PRODUCTS_UPDATES_GROUP_ID);
+      Braze.removeFromSubscriptionGroup(OFFERS_AND_PROMOTIONS_GROUP_ID);
+    }
+
+    const _email = accepted ? email : null;
+    dispatch(setEmailNotificationsAccepted(accepted, _email));
+
+    // Subscribe to incoming transaction notifications
     getAllWalletClients(keys).then(walletClients => {
       if (accepted && email) {
         const prefs = {

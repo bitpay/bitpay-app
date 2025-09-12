@@ -20,6 +20,8 @@ export interface BasicUserInfo {
     acknowledgePrivacyNotice: boolean;
     optInEmailMarketing: boolean;
   };
+  verified: boolean;
+  optInEmailMarketing: boolean;
 }
 
 export interface FetchBasicInfoResponse {
