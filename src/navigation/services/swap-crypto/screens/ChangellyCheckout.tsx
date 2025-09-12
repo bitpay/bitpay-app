@@ -720,6 +720,7 @@ const ChangellyCheckout: React.FC = () => {
         setConfirmHardwareWalletVisible(false);
       } else {
         dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
+        const {chain} = fromWalletSelected.credentials;
         await sleep(400);
         await dispatch(
           publishAndSign({

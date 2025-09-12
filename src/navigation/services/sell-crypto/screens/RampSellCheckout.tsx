@@ -556,6 +556,7 @@ const RampSellCheckout: React.FC = () => {
         setConfirmHardwareWalletVisible(false);
       } else {
         dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
+        const {chain} = wallet.credentials;
         await sleep(400);
         broadcastedTx = await dispatch(
           publishAndSign({
