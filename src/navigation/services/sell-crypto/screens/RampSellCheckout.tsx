@@ -37,6 +37,7 @@ import {
   GetPrecision,
   IsERCToken,
   IsEVMChain,
+  IsSVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {
   FormatAmountStr,
@@ -49,6 +50,7 @@ import {
   getBadgeImg,
   getCurrencyAbbreviation,
   getCWCChain,
+  getOrCreateAssociatedTokenAddress,
   getSolanaTokens,
   sleep,
 } from '../../../../utils/helper-methods';
@@ -196,6 +198,7 @@ const RampSellCheckout: React.FC = () => {
 
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
   let status: string;
+  let ataOwnerAddress: string | undefined;
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
   const transportRef = useRef(hardwareWalletTransport);
@@ -454,27 +457,41 @@ const RampSellCheckout: React.FC = () => {
                 }
               }
             }
-          } else {
-            const fromSolanaTokens = await getSolanaTokens(
+          } else if (IsSVMChain(txp.chain!)) {
+            const receiveAddressSolanaTokens = await getSolanaTokens(
               wallet?.receiveAddress!,
               wallet?.network,
             );
-            const fromAta = fromSolanaTokens.find((item: any) => {
-              return item.mintAddress === txp.tokenAddress;
-            });
-            txp.fromAta = fromAta?.ataAddress;
-            txp.decimals = fromAta?.decimals;
+            const ataReceiveAddress = receiveAddressSolanaTokens.find(
+              (item: any) => {
+                return item.mintAddress === txp.tokenAddress;
+              },
+            );
+            txp.fromAta = ataReceiveAddress?.ataAddress;
+            txp.decimals = ataReceiveAddress?.decimals;
 
             if (txp.outputs) {
-              const toSolanaTokens = await getSolanaTokens(
+              const toAddressSolanaTokens = await getSolanaTokens(
                 toAddress,
                 wallet?.network,
               );
-              for (const output of txp.outputs) {
-                const toAta = toSolanaTokens.find((item: any) => {
-                  return item.mintAddress === txp.tokenAddress;
+
+              let ataToAddress = toAddressSolanaTokens.find((item: any) => {
+                return item.mintAddress === txp.tokenAddress;
+              })?.ataAddress;
+
+              if (!ataToAddress) {
+                ataToAddress = await getOrCreateAssociatedTokenAddress({
+                  mint: txp.tokenAddress,
+                  feePayer: toAddress,
                 });
-                output.toAddress = toAta?.ataAddress;
+                ataOwnerAddress = toAddress;
+              }
+
+              for (const output of txp.outputs) {
+                if (output.toAddress === toAddress) {
+                  output.toAddress = ataToAddress;
+                }
               }
             }
           }
@@ -531,6 +548,7 @@ const RampSellCheckout: React.FC = () => {
             key,
             wallet,
             transport,
+            ataOwnerAddress,
           }),
         );
         setConfirmHardwareState('complete');
@@ -544,6 +562,7 @@ const RampSellCheckout: React.FC = () => {
             txp: ctxp! as TransactionProposal,
             key,
             wallet,
+            ataOwnerAddress,
           }),
         );
       }
