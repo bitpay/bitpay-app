@@ -712,7 +712,7 @@ const ChangellyCheckout: React.FC = () => {
             key,
             wallet: fromWalletSelected,
             transport,
-            ataOwnerAddress: IsSVMChain(chain) ? ataOwnerAddress : undefined,
+            ataOwnerAddress,
           }),
         );
         setConfirmHardwareState('complete');
@@ -720,14 +720,13 @@ const ChangellyCheckout: React.FC = () => {
         setConfirmHardwareWalletVisible(false);
       } else {
         dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-        const {chain} = fromWalletSelected.credentials;
         await sleep(400);
         await dispatch(
           publishAndSign({
             txp: ctxp! as TransactionProposal,
             key,
             wallet: fromWalletSelected,
-            ataOwnerAddress: IsSVMChain(chain) ? ataOwnerAddress : undefined,
+            ataOwnerAddress,
           }),
         );
       }
