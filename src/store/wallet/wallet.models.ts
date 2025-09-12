@@ -418,6 +418,7 @@ export interface TransactionProposal {
   fromAta?: string; // spl tokens
   decimals?: number; // spl tokens
   memo?: string; // solana
+  ataOwnerAddress?: string;
 }
 
 export interface TransactionDetailsBuilt extends TransactionProposal {
