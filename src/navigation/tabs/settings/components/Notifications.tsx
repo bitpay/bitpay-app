@@ -47,8 +47,6 @@ const Notifications = () => {
     async (isEnabled: boolean) => {
       const changePermissions = () => {
         dispatch(AppEffects.setNotifications(isEnabled));
-        dispatch(AppEffects.setConfirmTxNotifications(isEnabled));
-        dispatch(AppEffects.setAnnouncementsNotifications(isEnabled));
       };
       const systemEnabled = await AppEffects.checkNotificationsPermissions();
       if (!systemEnabled && isEnabled) {

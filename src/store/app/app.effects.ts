@@ -916,9 +916,6 @@ export const setNotifications =
     } = getState();
 
     let eid = APP.brazeEid;
-    if (!eid && accepted) {
-      eid = dispatch(createBrazeEid());
-    }
     if (eid) {
       getAllWalletClients(keys).then(walletClients => {
         if (accepted) {

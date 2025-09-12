@@ -393,16 +393,10 @@ export default () => {
   // CHECK NOTIFICATIONS SETTINGS
   useEffect(() => {
     const _checkNotificationsPermissions = async () => {
-      const {announcements, confirmedTx, pushNotifications} =
-        notificationsState;
+      const {pushNotifications} = notificationsState;
       const systemEnabled = await checkNotificationsPermissions();
-      if (
-        !systemEnabled &&
-        (announcements || confirmedTx || pushNotifications)
-      ) {
+      if (!systemEnabled && pushNotifications) {
         dispatch(AppEffects.setNotifications(false));
-        dispatch(AppEffects.setConfirmTxNotifications(false));
-        dispatch(AppEffects.setAnnouncementsNotifications(false));
       }
     };
 

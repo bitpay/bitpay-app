@@ -41,7 +41,6 @@ import {
   biometricLockActive,
   currentPin,
   pinLockActive,
-  setAnnouncementsAccepted,
   setColorScheme,
   setDefaultAltCurrency,
   setHomeCarouselConfig,
@@ -83,7 +82,6 @@ import {BuyCryptoActions} from '../../../buy-crypto';
 import {SwapCryptoActions} from '../../../swap-crypto';
 import {
   checkNotificationsPermissions,
-  setConfirmTxNotifications,
   setNotifications,
   subscribePushNotifications,
   subscribeEmailNotifications,
@@ -312,11 +310,8 @@ export const startMigration =
         );
 
         const {
-          confirmedTxsNotifications,
           emailNotifications,
           pushNotifications,
-          offersAndPromotions,
-          productsUpdates,
           totalBalance,
           feeLevels,
           theme,
@@ -331,12 +326,6 @@ export const startMigration =
         if (systemEnabled) {
           if (pushNotifications?.enabled) {
             dispatch(setNotifications(true));
-            if (confirmedTxsNotifications?.enabled) {
-              dispatch(setConfirmTxNotifications(true));
-            }
-            if (offersAndPromotions?.enabled || productsUpdates?.enabled) {
-              dispatch(setAnnouncementsAccepted(true));
-            }
           }
         }
 
