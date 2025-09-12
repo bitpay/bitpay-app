@@ -88,8 +88,6 @@ const NotificationsScreen = ({
     const setAndNavigate = (accepted: boolean) => {
       haptic('impactLight');
       dispatch(AppEffects.setNotifications(accepted));
-      dispatch(AppEffects.setConfirmTxNotifications(accepted));
-      dispatch(AppEffects.setAnnouncementsNotifications(accepted));
       askForTrackingThenNavigate(() => navigation.navigate('Pin'));
     };
 

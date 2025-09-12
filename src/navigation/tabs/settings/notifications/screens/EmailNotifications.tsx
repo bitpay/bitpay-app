@@ -21,15 +21,15 @@ import A from '../../../../../components/anchor/Anchor';
 import Button from '../../../../../components/button/Button';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {setEmailNotifications} from '../../../../../store/app/app.effects';
-import {SettingsContainer, SettingsComponent} from '../../SettingsRoot';
+import {SettingsContainer} from '../../SettingsRoot';
 import {
-  Hr,
   ScreenGutter,
-  Setting,
   SettingTitle,
   SettingDescription,
+  Hr,
 } from '../../../../../components/styled/Containers';
 import {useNavigation} from '@react-navigation/native';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const EmailNotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -53,8 +53,24 @@ const VerticalSpace = styled.View`
   margin: 15px 0;
 `;
 
-const EmailFromUser = styled(SettingDescription)`
-  margin: 0 0 10px 10px;
+const SettingRow = styled.View`
+  flex-grow: 1;
+  justify-content: center;
+  flex-direction: column;
+  padding: 8px 0;
+`;
+
+const SettingRowContainer = styled(TouchableOpacity)<{isDisabled?: boolean}>`
+  align-items: center;
+  flex-direction: row;
+  min-height: 58px;
+  opacity: ${({isDisabled}) => (isDisabled ? 0.5 : 1)};
+`;
+
+const SettingsComponent = styled.ScrollView`
+  flex: 1;
+  margin-top: 15px;
+  padding: 0 ${ScreenGutter};
 `;
 
 const schema = yup.object().shape({
@@ -86,34 +102,42 @@ const EmailNotifications = () => {
   );
 
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const [currentEmail, setCurrentEmail] = useState(
+    user?.email || emailNotifications?.email,
+  );
   const navigation = useNavigation();
 
   const dispatch = useAppDispatch();
 
   const onSubmit = handleSubmit(formData => {
     const {email, agreedToMarketingCommunications} = formData;
+    setNotificationsAccepted(true);
+    setCurrentEmail(email);
     dispatch(
       setEmailNotifications(true, email, agreedToMarketingCommunications),
     );
-    setNotificationsAccepted(true);
   });
 
   const onPress = () => {
     const accepted = !notificationsAccepted;
 
     if (!accepted) {
-      dispatch(setEmailNotifications(accepted, null, false));
+      dispatch(setEmailNotifications(accepted, null));
       setNotificationsAccepted(accepted);
     } else {
-      const {email} = user!;
-      dispatch(setEmailNotifications(accepted, email, true));
-      setNotificationsAccepted(accepted);
+      if (user) {
+        const {email} = user;
+        setCurrentEmail(email);
+        dispatch(setEmailNotifications(accepted, email));
+        setNotificationsAccepted(accepted);
+      }
     }
   };
 
   const unsubscribeAll = () => {
-    dispatch(setEmailNotifications(false, null, false));
+    dispatch(setEmailNotifications(false, null));
     setNotificationsAccepted(false);
+    setCurrentEmail(null);
     navigation.goBack();
   };
 
@@ -236,23 +260,22 @@ const EmailNotifications = () => {
       ) : (
         <SettingsContainer>
           <SettingsComponent>
-            <ScrollView>
-              <Hr />
-
-              <Setting onPress={onPress}>
-                <SettingTitle>{t('Enable Email Notifications')}</SettingTitle>
-
-                <Checkbox
-                  radio={true}
-                  onPress={onPress}
-                  checked={notificationsAccepted}
-                />
-              </Setting>
-              {user && user.email ? (
-                <EmailFromUser>{user.email}</EmailFromUser>
-              ) : null}
-              <Hr />
-            </ScrollView>
+            <SettingRowContainer onPress={onPress}>
+              <SettingRow style={{flex: 1}}>
+                <SettingTitle style={{flexGrow: 0}}>
+                  {t('Enable Email Notifications')}
+                </SettingTitle>
+                {currentEmail ? (
+                  <SettingDescription>{currentEmail}</SettingDescription>
+                ) : null}
+              </SettingRow>
+              <Checkbox
+                radio={true}
+                onPress={onPress}
+                checked={notificationsAccepted}
+              />
+            </SettingRowContainer>
+            <Hr />
           </SettingsComponent>
         </SettingsContainer>
       )}
