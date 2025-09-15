@@ -11,6 +11,7 @@ import {
   CtaContainer,
   HeaderRightContainer,
   ImageContainer,
+  isNarrowHeight,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -43,13 +44,19 @@ const CreateKeyContainer = styled.SafeAreaView`
 const KeyImage = {
   light: (
     <OnboardingImage
-      style={{width: 212, height: 247}}
+      style={{
+        width: isNarrowHeight ? 142 : 212,
+        height: isNarrowHeight ? 165 : 247,
+      }}
       source={require('../../../../assets/img/onboarding/light/create-wallet.png')}
     />
   ),
   dark: (
     <OnboardingImage
-      style={{width: 189, height: 247}}
+      style={{
+        width: isNarrowHeight ? 126 : 189,
+        height: isNarrowHeight ? 165 : 247,
+      }}
       source={require('../../../../assets/img/onboarding/dark/create-wallet.png')}
     />
   ),

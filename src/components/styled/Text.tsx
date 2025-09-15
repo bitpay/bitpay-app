@@ -259,13 +259,13 @@ export const CopyToClipboardText = styled(BaseText)`
   padding: 0 20px 0 10px;
 `;
 
-export const ArchaxBannerText = styled(H7)<{isSmallScreen?: boolean}>`
+export const ArchaxBannerText = styled(BaseText)<{isSmallScreen?: boolean}>`
   color: ${({theme}) => theme.colors.text};
-  font-size: ${({isSmallScreen}) => (isSmallScreen ? '10px' : '14px')};
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '14px')};
 `;
 
 export const ArchaxBannerLink = styled(BaseText)<{isSmallScreen?: boolean}>`
   color: ${({theme}) => (theme.dark ? '#ffffff' : theme.colors.link)};
   text-decoration: underline;
-  font-size: ${({isSmallScreen}) => (isSmallScreen ? '11px' : '14px')};
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '14px')};
 `;

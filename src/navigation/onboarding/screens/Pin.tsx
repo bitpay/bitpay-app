@@ -11,6 +11,7 @@ import {
   CtaContainer,
   HeaderRightContainer,
   ImageContainer,
+  isNarrowHeight,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -31,18 +32,23 @@ import {useTranslation} from 'react-i18next';
 const PinImage = {
   light: (
     <OnboardingImage
-      style={{width: 180, height: 247}}
+      style={{
+        width: isNarrowHeight ? 120 : 180,
+        height: isNarrowHeight ? 165 : 247,
+      }}
       source={require('../../../../assets/img/onboarding/light/pin.png')}
     />
   ),
   dark: (
     <OnboardingImage
-      style={{width: 151, height: 247}}
+      style={{
+        width: isNarrowHeight ? 101 : 151,
+        height: isNarrowHeight ? 165 : 247,
+      }}
       source={require('../../../../assets/img/onboarding/dark/pin.png')}
     />
   ),
 };
-
 const PinContainer = styled.SafeAreaView`
   flex: 1;
   align-items: stretch;

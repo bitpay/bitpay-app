@@ -5,6 +5,7 @@ import {
   CtaContainer,
   HeaderRightContainer,
   ImageContainer,
+  isNarrowHeight,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -26,13 +27,19 @@ import {useTranslation} from 'react-i18next';
 const BackupImage = {
   light: (
     <OnboardingImage
-      style={{width: 217, height: 195}}
+      style={{
+        width: isNarrowHeight ? 145 : 217,
+        height: isNarrowHeight ? 130 : 195,
+      }}
       source={require('../../../../assets/img/onboarding/light/backup.png')}
     />
   ),
   dark: (
     <OnboardingImage
-      style={{width: 217, height: 165}}
+      style={{
+        width: isNarrowHeight ? 145 : 217,
+        height: isNarrowHeight ? 110 : 165,
+      }}
       source={require('../../../../assets/img/onboarding/dark/backup.png')}
     />
   ),

@@ -8,6 +8,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {
   ActionContainer,
   CtaContainerAbsolute,
+  isNarrowHeight,
   WIDTH,
 } from '../../../components/styled/Containers';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
@@ -29,13 +30,19 @@ const KeyExplanationImages = {
   recoveryPhrase: {
     light: (
       <OnboardingImage
-        style={{width: 205, height: 210}}
+        style={{
+          width: isNarrowHeight ? 137 : 205,
+          height: isNarrowHeight ? 140 : 210,
+        }}
         source={require('../../../../assets/img/key-explanation/light/recovery-phrase.png')}
       />
     ),
     dark: (
       <OnboardingImage
-        style={{width: 200, height: 210}}
+        style={{
+          width: isNarrowHeight ? 133 : 200,
+          height: isNarrowHeight ? 140 : 210,
+        }}
         source={require('../../../../assets/img/key-explanation/dark/recovery-phrase.png')}
       />
     ),
@@ -43,13 +50,19 @@ const KeyExplanationImages = {
   safeCoins: {
     light: (
       <OnboardingImage
-        style={{width: 247, height: 225}}
+        style={{
+          width: isNarrowHeight ? 165 : 247,
+          height: isNarrowHeight ? 150 : 225,
+        }}
         source={require('../../../../assets/img/key-explanation/light/safe-coins.png')}
       />
     ),
     dark: (
       <OnboardingImage
-        style={{width: 247, height: 190}}
+        style={{
+          width: isNarrowHeight ? 165 : 247,
+          height: isNarrowHeight ? 127 : 190,
+        }}
         source={require('../../../../assets/img/key-explanation/dark/safe-coins.png')}
       />
     ),
@@ -57,13 +70,19 @@ const KeyExplanationImages = {
   walletSafety: {
     light: (
       <OnboardingImage
-        style={{width: 205, height: 210}}
+        style={{
+          width: isNarrowHeight ? 137 : 205,
+          height: isNarrowHeight ? 140 : 210,
+        }}
         source={require('../../../../assets/img/key-explanation/light/wallet-safety.png')}
       />
     ),
     dark: (
       <OnboardingImage
-        style={{width: 180, height: 210}}
+        style={{
+          width: isNarrowHeight ? 120 : 180,
+          height: isNarrowHeight ? 140 : 210,
+        }}
         source={require('../../../../assets/img/key-explanation/dark/wallet-safety.png')}
       />
     ),

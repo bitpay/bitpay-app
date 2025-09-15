@@ -6,7 +6,7 @@ import haptic from '../haptic-feedback/haptic';
 import SwapHorizontal from '../icons/swap-horizontal/SwapHorizontal';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import useAppSelector from '../../utils/hooks/useAppSelector';
-import {HEIGHT} from '../styled/Containers';
+import {isNarrowHeight} from '../styled/Containers';
 
 export const SwapButtonContainer = styled(TouchableOpacity)<{
   isSmallScreen?: boolean;
@@ -35,7 +35,7 @@ const SwapButton = ({swapList, onChange}: SwapButtonProps) => {
   const initText = swapList[0];
   const [text, setText] = useState(initText);
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
+  const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
 
   const swapText = (val: string) => {
     if (swapList.length === 1) {
