@@ -1072,7 +1072,7 @@ const RampSellCheckout: React.FC = () => {
                   onPress={() => {
                     dispatch(
                       openUrlWithInAppBrowser(
-                        'https://ramp.network/terms-of-service',
+                        'https://rampnetwork.com/terms-of-service',
                       ),
                     );
                   }}>

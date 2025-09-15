@@ -180,7 +180,7 @@ const RampSellDetails: React.FC = () => {
                   haptic('impactLight');
                   dispatch(
                     openUrlWithInAppBrowser(
-                      'https://support.ramp.network/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
+                      'https://support.rampnetwork.com/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
                     ),
                   );
                 }}>
@@ -234,7 +234,7 @@ const RampSellDetails: React.FC = () => {
                       haptic('impactLight');
                       dispatch(
                         openUrlWithInAppBrowser(
-                          'https://support.ramp.network/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
+                          'https://support.rampnetwork.com/en/articles/8968-how-do-i-check-the-status-of-my-crypto-sale',
                         ),
                       );
                     }}>
