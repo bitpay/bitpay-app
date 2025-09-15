@@ -58,6 +58,9 @@ const SheetModal: React.FC<SheetModalProps> = ({
   const theme = useTheme();
 
   const [isModalVisible, setModalVisible] = useState(isVisible);
+  // Track transitional states to allow immediate re-open after dismiss
+  const isDismissingRef = useRef(false);
+  const pendingOpenRef = useRef(false);
   useEffect(() => {
     function onAppStateChange(status: AppStateStatus) {
       if (isVisible && !fullscreen && status === 'background') {
@@ -66,10 +69,19 @@ const SheetModal: React.FC<SheetModalProps> = ({
       }
     }
     setModalVisible(isVisible);
-    if (isVisible && !isModalVisible) {
-      bottomSheetModalRef.current?.present();
-    } else if (!isVisible && isModalVisible) {
-      bottomSheetModalRef.current?.dismiss();
+    // Imperatively control bottom sheet to avoid race conditions between dismiss and present
+    if (modalLibrary === 'bottom-sheet') {
+      if (isVisible && !isModalVisible) {
+        // If a dismiss animation is in progress, queue the open until onDismiss fires
+        if (isDismissingRef.current) {
+          pendingOpenRef.current = true;
+        } else {
+          bottomSheetModalRef.current?.present();
+        }
+      } else if (!isVisible && isModalVisible) {
+        isDismissingRef.current = true;
+        bottomSheetModalRef.current?.dismiss();
+      }
     }
 
     const subscriptionAppStateChange = AppState.addEventListener(
@@ -120,6 +132,19 @@ const SheetModal: React.FC<SheetModalProps> = ({
         index={0}
         {...(disableAnimations && {animationConfigs: {duration: 1}})}
         accessibilityLabel={'modalBackdrop'}
+        onDismiss={() => {
+          // Mark dismiss finished and flush any pending open request immediately
+          isDismissingRef.current = false;
+          if (pendingOpenRef.current) {
+            pendingOpenRef.current = false;
+            // Schedule on next frame to ensure internal state is fully reset
+            requestAnimationFrame(() => {
+              bottomSheetModalRef.current?.present();
+            });
+          }
+          // Maintain parity with BaseModal's onModalHide if provided
+          onModalHide?.();
+        }}
         ref={bottomSheetModalRef}>
         <NavigationThemeContext.Provider value={theme as any}>
           <BottomSheetView

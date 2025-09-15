@@ -9,7 +9,6 @@ const plugins = [
   '@babel/plugin-proposal-optional-chaining',
   '@babel/plugin-proposal-nullish-coalescing-operator',
   '@babel/plugin-transform-template-literals',
-  'react-native-reanimated/plugin',
   [
     'module:react-native-dotenv',
     {
@@ -34,6 +33,8 @@ const plugins = [
 if (prod) {
   plugins.push('transform-remove-console');
 }
+
+plugins.push('react-native-worklets/plugin');
 
 module.exports = {
   presets: [

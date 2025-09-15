@@ -1,5 +1,6 @@
 import UIKit
 import React
+import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import AppsFlyerLib
 import RNBootSplash
@@ -10,11 +11,11 @@ import UserNotifications
 // MARK: - React Native Factory Delegate
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
-    override func sourceURL(for bridge: RCTBridge!) -> URL! {
+    override func sourceURL(for bridge: RCTBridge) -> URL? {
         return bundleURL()
     }
 
-    override func bundleURL() -> URL! {
+    override func bundleURL() -> URL? {
 #if DEBUG
         return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
 #else
