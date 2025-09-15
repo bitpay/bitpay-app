@@ -1,10 +1,16 @@
-import React, {useLayoutEffect, useMemo, useRef, useState} from 'react';
+import React, {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import {
   CtaContainerAbsolute,
   HeaderRightContainer,
+  isNarrowHeight,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {AppActions} from '../../../store/app';
@@ -22,6 +28,10 @@ import {Slate30, SlateDark} from '../../../styles/colors';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../lib/yup';
 import SuccessIcon from '../../../../assets/img/success.svg';
+import {KeyboardAvoidingView, Platform, View} from 'react-native';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useHeaderHeight} from '@react-navigation/elements';
 
 type VerifyPhraseScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -41,12 +51,7 @@ interface WordItem {
   isActive: boolean;
 }
 
-const VerifyPhraseContainer = styled.SafeAreaView`
-  flex: 1;
-`;
-
 const VerifyPhraseForm = styled.View`
-  flex: 1;
   padding: 0 20px;
 `;
 
@@ -55,7 +60,7 @@ const VerifyPhraseField = styled.View`
 `;
 
 const HeaderContainer = styled.View`
-  margin: 25px;
+  margin: 10px;
 `;
 
 const HeaderText = styled(BaseText)`
@@ -82,6 +87,10 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const [ctaHeight, setCtaHeight] = useState(0);
 
   const {control, handleSubmit, setValue, setError, reset, formState} = useForm(
     {
@@ -293,121 +302,136 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
   }, [navigation, headerTitle, headerRight]);
 
   return (
-    <VerifyPhraseContainer accessibilityLabel="verify-phrase-container">
-      <HeaderContainer>
-        <HeaderText>
-          {t(
-            'Verify you saved your recovery phrase correctly by writing in ' +
-              'the {{first}} ({{firstNumber}}), {{second}} ({{secondNumber}}) ' +
-              'and {{third}} ({{thirdNumber}}) word in your recovery phrase.',
-            {
-              first: randomWords[0].ordinalSrt,
-              firstNumber: randomWords[0].indexStr,
-              second: randomWords[1].ordinalSrt,
-              secondNumber: randomWords[1].indexStr,
-              third: randomWords[2].ordinalSrt,
-              thirdNumber: randomWords[2].indexStr,
-            },
-          )}
-        </HeaderText>
-      </HeaderContainer>
-      <VerifyPhraseForm>
-        <VerifyPhraseField>
-          <Controller
-            key={'word1'}
-            control={control}
-            render={({field}) => (
-              <BoxInput
-                label={randomWords[0].indexStr + ' Word'}
-                onBlur={field.onBlur}
-                error={errors.word1?.message}
-                disabled={word1Validation}
-                autoCorrect={false}
-                onChangeText={async (newValue: string) => {
-                  const trimmedValue = newValue.trim();
-                  field.onChange(trimmedValue);
-                  if (checkValidWord(trimmedValue, 0)) {
-                    setValue('word1', trimmedValue);
-                    setWord1Validation(true);
-                  }
-                }}
-              />
+    <KeyboardAvoidingView
+      accessibilityLabel="verify-phrase-container"
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={headerHeight}>
+      <KeyboardAwareScrollView
+        enableOnAndroid
+        enableAutomaticScroll
+        keyboardShouldPersistTaps="handled"
+        extraHeight={0}
+        extraScrollHeight={
+          isNarrowHeight ? 0 : Math.max(ctaHeight - insets.bottom - 8, 0)
+        }>
+        <HeaderContainer>
+          <HeaderText>
+            {t(
+              'Verify you saved your recovery phrase correctly by writing in ' +
+                'the {{first}} ({{firstNumber}}), {{second}} ({{secondNumber}}) ' +
+                'and {{third}} ({{thirdNumber}}) word in your recovery phrase.',
+              {
+                first: randomWords[0].ordinalSrt,
+                firstNumber: randomWords[0].indexStr,
+                second: randomWords[1].ordinalSrt,
+                secondNumber: randomWords[1].indexStr,
+                third: randomWords[2].ordinalSrt,
+                thirdNumber: randomWords[2].indexStr,
+              },
             )}
-            name={'word1'}
-          />
-          {word1Validation ? (
-            <ValidationBadge>
-              <SuccessIcon />
-            </ValidationBadge>
-          ) : null}
-        </VerifyPhraseField>
-        <VerifyPhraseField>
-          <Controller
-            key={'word2'}
-            control={control}
-            render={({field}) => (
-              <BoxInput
-                label={randomWords[1].indexStr + ' Word'}
-                onBlur={field.onBlur}
-                error={errors.word2?.message}
-                disabled={word2Validation}
-                autoCorrect={false}
-                onChangeText={async (newValue: string) => {
-                  const trimmedValue = newValue.trim();
-                  field.onChange(trimmedValue);
-                  if (checkValidWord(trimmedValue, 1)) {
-                    setValue('word2', trimmedValue);
-                    setWord2Validation(true);
-                  }
-                }}
-              />
-            )}
-            name={'word2'}
-          />
-          {word2Validation ? (
-            <ValidationBadge>
-              <SuccessIcon />
-            </ValidationBadge>
-          ) : null}
-        </VerifyPhraseField>
-        <VerifyPhraseField>
-          <Controller
-            key={'word3'}
-            control={control}
-            render={({field}) => (
-              <BoxInput
-                label={randomWords[2].indexStr + ' Word'}
-                onBlur={field.onBlur}
-                error={errors.word3?.message}
-                disabled={word3Validation}
-                autoCorrect={false}
-                onChangeText={async (newValue: string) => {
-                  const trimmedValue = newValue.trim();
-                  field.onChange(trimmedValue);
-                  if (checkValidWord(trimmedValue, 2)) {
-                    setValue('word3', trimmedValue);
-                    setWord3Validation(true);
-                  }
-                }}
-              />
-            )}
-            name={'word3'}
-          />
-          {word3Validation ? (
-            <ValidationBadge>
-              <SuccessIcon />
-            </ValidationBadge>
-          ) : null}
-        </VerifyPhraseField>
-      </VerifyPhraseForm>
-      <CtaContainerAbsolute accessibilityLabel="cta-container">
+          </HeaderText>
+        </HeaderContainer>
+        <VerifyPhraseForm>
+          <VerifyPhraseField>
+            <Controller
+              key={'word1'}
+              control={control}
+              render={({field}) => (
+                <BoxInput
+                  label={randomWords[0].indexStr + ' Word'}
+                  onBlur={field.onBlur}
+                  error={errors.word1?.message}
+                  disabled={word1Validation}
+                  autoCorrect={false}
+                  onChangeText={async (newValue: string) => {
+                    const trimmedValue = newValue.trim();
+                    field.onChange(trimmedValue);
+                    if (checkValidWord(trimmedValue, 0)) {
+                      setValue('word1', trimmedValue);
+                      setWord1Validation(true);
+                    }
+                  }}
+                />
+              )}
+              name={'word1'}
+            />
+            {word1Validation ? (
+              <ValidationBadge>
+                <SuccessIcon />
+              </ValidationBadge>
+            ) : null}
+          </VerifyPhraseField>
+          <VerifyPhraseField>
+            <Controller
+              key={'word2'}
+              control={control}
+              render={({field}) => (
+                <BoxInput
+                  label={randomWords[1].indexStr + ' Word'}
+                  onBlur={field.onBlur}
+                  error={errors.word2?.message}
+                  disabled={word2Validation}
+                  autoCorrect={false}
+                  onChangeText={async (newValue: string) => {
+                    const trimmedValue = newValue.trim();
+                    field.onChange(trimmedValue);
+                    if (checkValidWord(trimmedValue, 1)) {
+                      setValue('word2', trimmedValue);
+                      setWord2Validation(true);
+                    }
+                  }}
+                />
+              )}
+              name={'word2'}
+            />
+            {word2Validation ? (
+              <ValidationBadge>
+                <SuccessIcon />
+              </ValidationBadge>
+            ) : null}
+          </VerifyPhraseField>
+          <VerifyPhraseField>
+            <Controller
+              key={'word3'}
+              control={control}
+              render={({field}) => (
+                <BoxInput
+                  label={randomWords[2].indexStr + ' Word'}
+                  onBlur={field.onBlur}
+                  error={errors.word3?.message}
+                  disabled={word3Validation}
+                  autoCorrect={false}
+                  onChangeText={async (newValue: string) => {
+                    const trimmedValue = newValue.trim();
+                    field.onChange(trimmedValue);
+                    if (checkValidWord(trimmedValue, 2)) {
+                      setValue('word3', trimmedValue);
+                      setWord3Validation(true);
+                    }
+                  }}
+                />
+              )}
+              name={'word3'}
+            />
+            {word3Validation ? (
+              <ValidationBadge>
+                <SuccessIcon />
+              </ValidationBadge>
+            ) : null}
+          </VerifyPhraseField>
+        </VerifyPhraseForm>
+      </KeyboardAwareScrollView>
+      <CtaContainerAbsolute
+        onLayout={e => setCtaHeight(e.nativeEvent.layout.height)}
+        accessibilityLabel="cta-container">
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
           Confirm
         </Button>
       </CtaContainerAbsolute>
-    </VerifyPhraseContainer>
+      </KeyboardAvoidingView>
   );
 };
 
