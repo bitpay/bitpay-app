@@ -237,7 +237,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           loop={false}
           vertical={false}
           width={WIDTH}
-          height={WIDTH * 2}
+          height={WIDTH * 1.2}
           autoPlay={false}
           data={onboardingSlides}
           pagingEnabled={true}
@@ -247,6 +247,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           onProgressChange={(_, index) => {
             progressValue.value = index;
           }}
+          onConfigurePanGesture={gesture => gesture.activeOffsetX([-10, 10])}
           renderItem={({item}) => <OnboardingSlide item={item} />}
         />
         <View style={{height: scrollHintHeight}} />

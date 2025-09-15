@@ -1,13 +1,9 @@
-import React, {
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, {useLayoutEffect, useMemo, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, HeaderTitle} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import {
+  CTA_RESERVED,
   CtaContainerAbsolute,
   HeaderRightContainer,
   isNarrowHeight,
@@ -90,7 +86,6 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
 
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-  const [ctaHeight, setCtaHeight] = useState(0);
 
   const {control, handleSubmit, setValue, setError, reset, formState} = useForm(
     {
@@ -313,7 +308,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         keyboardShouldPersistTaps="handled"
         extraHeight={0}
         extraScrollHeight={
-          isNarrowHeight ? 0 : Math.max(ctaHeight - insets.bottom - 8, 0)
+          isNarrowHeight ? 0 : Math.max(CTA_RESERVED - insets.bottom - 8, 0)
         }>
         <HeaderContainer>
           <HeaderText>
@@ -422,16 +417,14 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
           </VerifyPhraseField>
         </VerifyPhraseForm>
       </KeyboardAwareScrollView>
-      <CtaContainerAbsolute
-        onLayout={e => setCtaHeight(e.nativeEvent.layout.height)}
-        accessibilityLabel="cta-container">
+      <CtaContainerAbsolute accessibilityLabel="cta-container">
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
           Confirm
         </Button>
       </CtaContainerAbsolute>
-      </KeyboardAvoidingView>
+    </KeyboardAvoidingView>
   );
 };
 
