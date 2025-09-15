@@ -11,6 +11,7 @@ import {
   SheetContainer,
   ActiveOpacity,
   CloseButtonContainer,
+  isNarrowHeight,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BWCErrorMessage, BWCErrorName} from '../../../constants/BWCError';
@@ -90,8 +91,8 @@ const QRCodeContainer = styled.View`
 
 const QRCodeBackground = styled.View`
   background-color: ${White};
-  width: 225px;
-  height: 225px;
+  width: ${isNarrowHeight ? '190px' : '225px'};
+  height: ${isNarrowHeight ? '190px' : '225px'};
   justify-content: center;
   align-items: center;
   border-radius: 12px;
@@ -121,7 +122,7 @@ const CloseButtonText = styled(Paragraph)`
 const WarningContainer = styled.View`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 4px;
-  padding: 20px;
+  padding: ${isNarrowHeight ? '5px' : '20px'}
   margin-bottom: 20px;
 `;
 
@@ -357,7 +358,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
 
             <QRCodeContainer>
               <QRCodeBackground>
-                <QRCode value={address} size={200} />
+                <QRCode value={address} size={isNarrowHeight ? 180 : 200} />
               </QRCodeBackground>
             </QRCodeContainer>
           </>
