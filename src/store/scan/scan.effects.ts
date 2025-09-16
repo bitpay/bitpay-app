@@ -384,12 +384,14 @@ const handleUnlock =
               buyerProvidedEmail,
               status,
             },
+            buyer,
           } = invoice;
 
           if (
             emailAddress ||
             buyerProvidedEmail ||
             buyerEmailAddress ||
+            buyer?.email ||
             status !== 'new'
           ) {
             dispatch(goToPayPro(data, undefined, undefined, wallet));
