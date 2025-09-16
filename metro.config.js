@@ -27,6 +27,34 @@ const config = {
 
 // Ensure Metro resolves to the ES6 build of tslib to avoid '__extends' undefined errors
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Normalize problematic deep imports to public exports for @noble/hashes
+  // Some dependencies attempt to import "@noble/hashes/crypto.js", which isn't declared in
+  // the package "exports" map. Redirect to the supported subpath export "@noble/hashes/crypto".
+  if (
+    moduleName === '@noble/hashes/crypto.js' ||
+    moduleName === 'crypto-wallet-core/node_modules/@noble/hashes/crypto.js' ||
+    // Absolute path variants (top-level & nested)
+    /node_modules\/@noble\/hashes\/crypto\.js$/.test(moduleName) ||
+    /node_modules\/crypto-wallet-core\/node_modules\/@noble\/hashes\/crypto\.js$/.test(moduleName)
+  ) {
+    moduleName = '@noble/hashes/crypto';
+  }
+
+  // Normalize multiformats deep CJS import to public export subpath
+  // e.g., "multiformats/cjs/src/basics.js" -> "multiformats/basics"
+  if (
+    moduleName === 'multiformats/cjs/src/basics.js' ||
+    /node_modules\/multiformats\/cjs\/src\/basics\.js$/.test(moduleName)
+  ) {
+    moduleName = 'multiformats/basics';
+  }
+
+  // rpc-websockets: the package uses conditional exports but doesn't have an
+  // android condition; prefer the browser build under RN.
+  if (moduleName === 'rpc-websockets') {
+    moduleName = 'rpc-websockets/dist/index.browser.mjs';
+  }
+
   return context.resolveRequest(
     context,
     ALIASES[moduleName] ?? moduleName,

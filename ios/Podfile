@@ -32,8 +32,6 @@ setup_permissions([
 'Notifications',
 ])
 
-use_frameworks! :linkage => :static
-
 # Disable Location APIs so we compile out any privacy sensitive APIs
 $VCEnableLocation=false
 
