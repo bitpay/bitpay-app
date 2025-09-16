@@ -17,6 +17,8 @@ import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {CommonActions} from '@react-navigation/native';
 import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {OnboardingScreens} from '../../../navigation/onboarding/OnboardingGroup';
+import {IntroScreens} from '../../../navigation/intro/IntroGroup';
 
 const POLL_INTERVAL = 1000 * 5;
 const POLL_TIMEOUT = 1000 * 60 * 5;
@@ -47,15 +49,27 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
     ({BITPAY_ID}) => BITPAY_ID.session.csrfToken,
   );
   const isTimedOut = pollCountdown.current <= 0;
+  const onboardingCompleted = useAppSelector(
+    ({APP}) => APP.onboardingCompleted,
+  );
+  const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
 
-  const goToProfile = useCallback(() => {
+  const goToPreviousScreen = useCallback(() => {
+    const routesStack = [];
+    if (onboardingCompleted) {
+      routesStack.push(
+        {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
+        {name: BitpayIdScreens.PROFILE, params: {}},
+      );
+    } else if (introCompleted) {
+      routesStack.push({name: OnboardingScreens.ONBOARDING_START, params: {}});
+    } else {
+      routesStack.push({name: IntroScreens.START, params: {}});
+    }
     navigation.dispatch(
       CommonActions.reset({
         index: 1,
-        routes: [
-          {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
-          {name: BitpayIdScreens.PROFILE, params: {}},
-        ],
+        routes: routesStack,
       }),
     );
   }, [navigation]);
@@ -120,9 +134,9 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
         }),
       );
 
-      goToProfile();
+      goToPreviousScreen();
     }
-  }, [dispatch, navigation, isVerified, csrfToken, email, goToProfile]);
+  }, [dispatch, navigation, isVerified, csrfToken, email, goToPreviousScreen]);
 
   const resendVerificationEmail = async () => {
     dispatch(startOnGoingProcessModal('LOADING'));
@@ -133,7 +147,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   const GoBackLink = () => (
     <Link
       accessibilityLabel="go-back-link-button"
-      onPress={() => goToProfile()}>
+      onPress={() => goToPreviousScreen()}>
       {t('Go Back')}
     </Link>
   );

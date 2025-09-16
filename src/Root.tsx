@@ -393,16 +393,10 @@ export default () => {
   // CHECK NOTIFICATIONS SETTINGS
   useEffect(() => {
     const _checkNotificationsPermissions = async () => {
-      const {announcements, confirmedTx, pushNotifications} =
-        notificationsState;
+      const {pushNotifications} = notificationsState;
       const systemEnabled = await checkNotificationsPermissions();
-      if (
-        !systemEnabled &&
-        (announcements || confirmedTx || pushNotifications)
-      ) {
+      if (!systemEnabled && pushNotifications) {
         dispatch(AppEffects.setNotifications(false));
-        dispatch(AppEffects.setConfirmTxNotifications(false));
-        dispatch(AppEffects.setAnnouncementsNotifications(false));
       }
     };
 
@@ -555,29 +549,13 @@ export default () => {
   useEffect(() => {
     const eventBrazeListener = DeviceEventEmitter.addListener(
       DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
-      async ({oldEid, newEid, agreedToMarketingCommunications}) => {
+      async ({oldEid, newEid}) => {
         await sleep(20000);
         LogActions.info('Deleting old user EID: ', oldEid);
         await BrazeWrapper.delete(oldEid);
         // Wait for a few seconds to ensure the user is deleted
         await sleep(5000);
         Analytics.endMergingUser();
-        await sleep(5000);
-        LogActions.info(
-          'Updating Email Notification Subscription to new EID: ',
-          newEid,
-          agreedToMarketingCommunications,
-        );
-        Braze.setEmailNotificationSubscriptionType(
-          agreedToMarketingCommunications
-            ? Braze.NotificationSubscriptionTypes.OPTED_IN
-            : Braze.NotificationSubscriptionTypes.SUBSCRIBED,
-        );
-        dispatch(
-          AppEffects.setAnnouncementsNotifications(
-            agreedToMarketingCommunications,
-          ),
-        );
       },
     );
 
