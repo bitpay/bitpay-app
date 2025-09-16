@@ -3,6 +3,7 @@ import styled from 'styled-components/native';
 import {Trans, useTranslation} from 'react-i18next';
 import {BaseText, Paragraph} from '../../../../../components/styled/Text';
 import {Slate30, SlateDark} from '../../../../../styles/colors';
+import {isNarrowHeight} from '../../../../../components/styled/Containers';
 const BillsZeroState = require('../../../../../../assets/img/bills/bills-zero-state.png');
 
 const BillsValueProp = styled.View`
@@ -12,9 +13,9 @@ const BillsValueProp = styled.View`
 `;
 
 const BillsImage = styled.Image`
-  width: 317px;
-  height: 242px;
-  margin-top: 20px;
+  width: ${isNarrowHeight ? 211 : 317}px;
+  height: ${isNarrowHeight ? 161 : 242}px;
+  margin-top: ${isNarrowHeight ? 13 : 20}px;
 `;
 
 const TitleContainer = styled.View`

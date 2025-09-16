@@ -5,7 +5,7 @@ import {BaseText} from '../styled/Text';
 import DeleteIcon from '../icons/delete/Delete';
 import VirtualKeyboardButtonAnimation from './VirtualKeyboardButtonAnimation';
 import useAppSelector from '../../utils/hooks/useAppSelector';
-import {HEIGHT} from '../styled/Containers';
+import {isNarrowHeight} from '../styled/Containers';
 export const PIXEL_DENSITY_LIMIT = 2.5;
 
 interface SymbolContainerProps {
@@ -81,7 +81,7 @@ const Cell: React.FC<CellProps> = ({
   darkModeOnly,
 }) => {
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
+  const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
   const accessibilityLabel = `${value}-button`;
   return (
     <CellContainer accessibilityLabel={accessibilityLabel}>
@@ -145,7 +145,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
       : 'rgba(0, 0, 0, 0.1)';
   const bgColor = darkModeOnly || theme.dark ? White : '#4A4A4A';
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
+  const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
   return (
     <KeyboardContainer isSmallScreen={_isSmallScreen}>
       <Row

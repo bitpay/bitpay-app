@@ -3,7 +3,7 @@ import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../components/button/Button';
 import haptic from '../../components/haptic-feedback/haptic';
-import {HEIGHT, ScreenGutter} from '../../components/styled/Containers';
+import {isNarrowHeight, ScreenGutter} from '../../components/styled/Containers';
 import {BaseText} from '../../components/styled/Text';
 import SwapButton, {
   ButtonText,
@@ -158,7 +158,7 @@ const Amount: React.FC<AmountProps> = ({
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const curValRef = useRef('');
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
+  const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
 
   const fiatCurrency = useMemo(() => {
     if (fiatCurrencyAbbreviation) {

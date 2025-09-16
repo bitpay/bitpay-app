@@ -20,6 +20,8 @@ export {ActiveOpacity} from '@components/base/TouchableOpacity';
 
 export const {height: HEIGHT, width: WIDTH} = Dimensions.get('window');
 export const isNotMobile = HEIGHT / WIDTH < 1.6;
+export const isNarrowHeight = HEIGHT < 700;
+export const CTA_RESERVED = 104;
 
 export const ScreenGutter = '15px';
 // Nav

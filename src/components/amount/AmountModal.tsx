@@ -12,7 +12,7 @@ import {Platform} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useAppSelector} from '../../utils/hooks';
 import ArchaxBanner from '../archax/archax-banner';
-import {HEIGHT} from '../styled/Containers';
+import {isNarrowHeight} from '../styled/Containers';
 
 const ModalHeaderText = styled(BaseText)`
   font-size: 18px;
@@ -71,7 +71,6 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
   } = props;
   const theme = useTheme();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const isSmallScreen = HEIGHT < 700;
 
   return (
     <SheetModal
@@ -80,7 +79,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
       onBackdropPress={onClose}
       fullscreen>
       <AmountModalContainerHOC>
-        {showArchaxBanner && <ArchaxBanner isSmallScreen={isSmallScreen} />}
+        {showArchaxBanner && <ArchaxBanner isSmallScreen={isNarrowHeight} />}
         <ModalHeader>
           <CloseModalButton
             onPress={() => {

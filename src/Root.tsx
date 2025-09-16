@@ -160,6 +160,7 @@ import {
 } from './constants/currencies';
 import Logger from 'bitcore-wallet-client/ts_build/lib/log';
 import {BwcProvider} from './lib/bwc';
+import {isNarrowHeight} from './components/styled/Containers';
 const BWC = BwcProvider.getInstance();
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
@@ -636,7 +637,9 @@ export default () => {
                   ? ['left', 'right', 'bottom']
                   : undefined
               }>
-              {showArchaxBanner && <ArchaxBanner />}
+              {showArchaxBanner && (
+                <ArchaxBanner isSmallScreen={isNarrowHeight} />
+              )}
               {/* https://github.com/react-navigation/react-navigation/issues/11353#issuecomment-1548114655 */}
               <HeaderShownContext.Provider value>
                 <NavigationContainer
