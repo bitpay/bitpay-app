@@ -113,6 +113,7 @@ export const createWalletAddress =
                   }),
                 );
               }
+              dispatch(LogActions.info('returned last main address'));
               return resolve(addressObj.address);
             }
           }
@@ -134,6 +135,11 @@ export const createWalletAddress =
                   }),
                 );
               }
+              dispatch(
+                LogActions.info(
+                  'address gap reached - returned last main address',
+                ),
+              );
               return resolve(receiveAddress);
             }
             return reject({type: 'GENERAL_ERROR', error: err});
@@ -150,6 +156,7 @@ export const createWalletAddress =
                 }),
               );
             }
+            dispatch(LogActions.info('returned new generated address'));
             return resolve(addressObj.address);
           }
           return reject({type: 'GENERAL_ERROR', error: 'No address generated'});
