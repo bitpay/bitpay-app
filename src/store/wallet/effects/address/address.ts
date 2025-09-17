@@ -33,6 +33,36 @@ interface Address {
   coin: string;
 }
 
+const validateOrThrow = (
+  addrObj: Address | null | undefined,
+  network: string,
+) => {
+  if (!addrObj) return;
+  if (!ValidateCoinAddress(addrObj.address, addrObj.coin, network)) {
+    const err = {type: 'INVALID_ADDRESS_GENERATED', error: addrObj.address};
+    throw err;
+  }
+};
+
+const getLatestMainAddress = (wallet: Wallet) =>
+  new Promise<Address>((resolve, reject) => {
+    wallet.getMainAddresses(
+      {reverse: true, limit: 1},
+      (error: any, addr: Address[]) => {
+        if (error) return reject({type: 'MAIN_ADDRESS_GAP_REACHED', error});
+        resolve(addr?.[0]);
+      },
+    );
+  });
+
+const getNewAddress = (wallet: Wallet) =>
+  new Promise<Address>((resolve, reject) => {
+    wallet.createAddress({}, (error: any, addr: Address) => {
+      if (error) return reject(error);
+      resolve(addr);
+    });
+  });
+
 export const createWalletAddress =
   ({
     wallet,
@@ -43,44 +73,18 @@ export const createWalletAddress =
     newAddress?: boolean;
     skipDispatch?: boolean;
   }): Effect<Promise<string>> =>
-  async (dispatch, getState) => {
-    return new Promise((resolve, reject) => {
-      const keys = getState().WALLET.keys;
-
+  async dispatch => {
+    return new Promise(async (resolve, reject) => {
       if (!wallet) {
         return reject();
       }
 
       if (!newAddress && wallet.receiveAddress) {
         dispatch(LogActions.info('returned cached wallet address'));
-        if (
-          wallet.receiveAddress &&
-          wallet.chain === 'sol' &&
-          wallet.network === 'livenet' &&
-          keys[wallet.keyId]?.properties?.xPrivKeyEDDSA
-        ) {
-          const xPrivKeyHex = keys[wallet.keyId].properties!.xPrivKeyEDDSA;
-          const derivedAddress = BWC.getCore().Deriver.derivePrivateKeyWithPath(
-            'SOL',
-            wallet.network,
-            xPrivKeyHex,
-            wallet.credentials.rootPath,
-            null,
-          );
-          dispatch(
-            successGetReceiveAddress({
-              keyId: wallet.keyId,
-              walletId: wallet.id,
-              receiveAddress: derivedAddress.address,
-            }),
-          );
-          wallet.receiveAddress = derivedAddress.address;
-        }
         return resolve(wallet.receiveAddress);
       }
 
       if (wallet) {
-        const {keyId, id} = wallet;
         let {token, network, multisigEthInfo} = wallet.credentials;
 
         if (multisigEthInfo?.multisigContractAddress) {
@@ -91,86 +95,67 @@ export const createWalletAddress =
           wallet.id.replace(`-${token.address}`, '');
         }
 
-        wallet.createAddress({}, (err: any, addressObj: Address) => {
-          if (err) {
-            //  Rate limits after 20 consecutive addresses
-            if (err.name && err.name.includes('MAIN_ADDRESS_GAP_REACHED')) {
-              wallet.getMainAddresses(
-                {
-                  reverse: true,
-                  limit: 1,
-                },
-                (e: any, addr: Address[]) => {
-                  if (e) {
-                    reject({type: 'MAIN_ADDRESS_GAP_REACHED', error: e});
-                  }
+        try {
+          let addressObj: Address | undefined;
 
-                  const receiveAddress = addr[0].address;
-                  if (!skipDispatch) {
-                    dispatch(
-                      successGetReceiveAddress({
-                        keyId,
-                        walletId: id,
-                        receiveAddress,
-                      }),
-                    );
-                  }
+          if (!newAddress) {
+            addressObj = await getLatestMainAddress(wallet);
+            validateOrThrow(addressObj, network);
 
-                  return resolve(receiveAddress);
-                },
-              );
-            } else {
-              return reject({type: 'GENERAL_ERROR', error: err});
+            if (addressObj?.address) {
+              wallet.receiveAddress = addressObj.address;
+              if (!skipDispatch) {
+                dispatch(
+                  successGetReceiveAddress({
+                    keyId: wallet.keyId,
+                    walletId: wallet.id,
+                    receiveAddress: addressObj.address,
+                  }),
+                );
+              }
+              return resolve(addressObj.address);
             }
-          } else if (
-            addressObj &&
-            !ValidateCoinAddress(addressObj.address, addressObj.coin, network)
-          ) {
-            reject({
-              type: 'INVALID_ADDRESS_GENERATED',
-              error: addressObj.address,
-            });
-          } else if (
-            addressObj?.address &&
-            wallet.chain === 'sol' &&
-            wallet.network === 'livenet' &&
-            keys[wallet.keyId]?.properties?.xPrivKeyEDDSA
-          ) {
-            const xPrivKeyHex = keys[wallet.keyId].properties!.xPrivKeyEDDSA;
-            const derivedAddress =
-              BWC.getCore().Deriver.derivePrivateKeyWithPath(
-                'SOL',
-                wallet.network,
-                xPrivKeyHex,
-                wallet.credentials.rootPath,
-                null,
-              );
+          }
+          // if no main address, generate a new one
+          try {
+            addressObj = await getNewAddress(wallet);
+          } catch (err: any) {
+            if (err?.name?.includes?.('MAIN_ADDRESS_GAP_REACHED')) {
+              const latest = await getLatestMainAddress(wallet);
+              validateOrThrow(latest, network);
+              const receiveAddress = latest.address;
+              wallet.receiveAddress = receiveAddress;
+              if (!skipDispatch) {
+                dispatch(
+                  successGetReceiveAddress({
+                    keyId: wallet.keyId,
+                    walletId: wallet.id,
+                    receiveAddress,
+                  }),
+                );
+              }
+              return resolve(receiveAddress);
+            }
+            return reject({type: 'GENERAL_ERROR', error: err});
+          }
+          validateOrThrow(addressObj, network);
+          if (addressObj?.address) {
+            wallet.receiveAddress = addressObj.address;
             if (!skipDispatch) {
               dispatch(
                 successGetReceiveAddress({
                   keyId: wallet.keyId,
                   walletId: wallet.id,
-                  receiveAddress: derivedAddress.address,
+                  receiveAddress: addressObj.address,
                 }),
               );
             }
-            wallet.receiveAddress = derivedAddress.address;
-            return resolve(derivedAddress.address);
-          } else if (addressObj) {
-            const receiveAddress = addressObj.address;
-            if (!skipDispatch) {
-              dispatch(
-                successGetReceiveAddress({
-                  keyId,
-                  walletId: id,
-                  receiveAddress,
-                }),
-              );
-            }
-            return resolve(receiveAddress);
+            return resolve(addressObj.address);
           }
           return reject({type: 'GENERAL_ERROR', error: 'No address generated'});
-        });
+        } catch (err) {
+          throw err;
+        }
       }
     });
   };
