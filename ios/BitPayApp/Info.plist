@@ -62,7 +62,7 @@
 			<key>localhost</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true />
+				<true/>
 			</dict>
 		</dict>
 	</dict>
@@ -76,6 +76,8 @@
 	<string>Enabling Face ID allows you quick and secure access to your account.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Tracking is used to identify source of traffic, optimize campaigns, and improve user experiences in the app.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Heebo-Black.ttf</string>
