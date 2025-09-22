@@ -75,6 +75,7 @@ const allowedUrlPrefixes = [
   'https://api.etherscan.io/v2/api',
   'https://solana-gateway.moralis.io/',
   'https://tokens-data.1inch.io/images/501/',
+  'https://passkeys-worker.gusmaxi.workers.dev/',
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');
