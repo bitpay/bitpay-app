@@ -512,11 +512,11 @@ export const buildTxDetails =
         } else {
           const decodedInstructions = request.decodedInstructions;
           const computUnitLimit =
-            decodedInstructions?.setComputeUnitLimit[0].computeUnitLimit;
+            decodedInstructions?.setComputeUnitLimit?.[0].computeUnitLimit;
           const computeUnitPrice =
-            decodedInstructions?.setComputeUnitPrice[0].microLamports;
+            decodedInstructions?.setComputeUnitPrice?.[0].microLamports;
           const isPriority =
-            decodedInstructions?.setComputeUnitPrice[0].priority;
+            decodedInstructions?.setComputeUnitPrice?.[0].priority;
           const SOL_BASE_FEE_LAMPORTS = 5000; // default base fee in lamports
           if (computUnitLimit && computeUnitPrice && isPriority) {
             fee =
@@ -1084,11 +1084,12 @@ const buildTransactionProposal =
               } else {
                 const decodedInstructions = request.decodedInstructions;
                 const computUnitLimit =
-                  decodedInstructions?.setComputeUnitLimit[0].computeUnitLimit;
+                  decodedInstructions?.setComputeUnitLimit?.[0]
+                    .computeUnitLimit;
                 const computeUnitPrice =
-                  decodedInstructions?.setComputeUnitPrice[0].microLamports;
+                  decodedInstructions?.setComputeUnitPrice?.[0].microLamports;
                 const isPriority =
-                  decodedInstructions?.setComputeUnitPrice[0].priority;
+                  decodedInstructions?.setComputeUnitPrice?.[0].priority;
                 const SOL_BASE_FEE_LAMPORTS = 5000; // default base fee in lamports
                 if (computUnitLimit && computeUnitPrice && isPriority) {
                   txp.fee =
