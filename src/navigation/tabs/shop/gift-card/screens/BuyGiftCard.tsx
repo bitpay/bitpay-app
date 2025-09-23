@@ -16,7 +16,6 @@ import {
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
-  CtaContainerAbsolute,
   HEIGHT,
   WIDTH,
 } from '../../../../../components/styled/Containers';
@@ -34,6 +33,7 @@ import {
   White,
 } from '../../../../../styles/colors';
 import Button from '../../../../../components/button/Button';
+import FooterButtonContainer from '../../../../../components/footer/FooterButtonContainer';
 import GiftCardDenomSelector from '../../components/GiftCardDenomSelector';
 import GiftCardDenoms, {
   GiftCardDenomText,
@@ -112,11 +112,6 @@ const DescriptionBox = styled.View`
   background-color: ${({theme}) =>
     theme.dark ? theme.colors.background : 'transparent'};
   padding: 20px ${horizontalPadding}px ${Platform.OS === 'android' ? 75 : 50}px;
-`;
-
-const FooterButton = styled(CtaContainerAbsolute)`
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  padding-bottom: 10px;
 `;
 
 const DenomSelectionContainer = styled.View`
@@ -466,19 +461,11 @@ const BuyGiftCard = ({
           </DescriptionBox>
         </DescriptionContainer>
       </ScrollView>
-      <FooterButton
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }}>
+      <FooterButtonContainer>
         <Button onPress={() => buyGiftCard()} buttonStyle={'primary'}>
           {cardConfig.supportedAmounts ? t('Continue') : t('Buy Gift Card')}
         </Button>
-      </FooterButton>
+      </FooterButtonContainer>
     </BuyGiftCardContainer>
   );
 };

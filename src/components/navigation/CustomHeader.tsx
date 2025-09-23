@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Platform} from 'react-native';
+import {View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {css} from 'styled-components/native';
 import HeaderBackButton from '../back/HeaderBackButton';
@@ -58,10 +58,7 @@ const CustomHeader: React.FC<HeaderProps> = ({navigation, back, options}) => {
       ? options.title
       : options.route?.name;
 
-  const paddingTop =
-    Platform.OS === 'android' && !showArchaxBanner
-      ? Math.max(0, insets.top)
-      : 0;
+  const paddingTop = !showArchaxBanner ? insets.top : 0;
 
   // Resolve custom left/right components if provided via navigation.setOptions
   const resolvedLeft =

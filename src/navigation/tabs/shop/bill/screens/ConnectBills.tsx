@@ -155,7 +155,7 @@ const ConnectBills = ({
     <>
       {isWebViewShown && token ? (
         <WebView
-          style={{marginTop: Platform.OS === 'android' ? insets.top : 0}}
+          style={{marginTop: insets.top}}
           source={{
             uri: `https://elements.${METHOD_ENVS[appNetwork]}.methodfi.com/?token=${token}`,
           }}

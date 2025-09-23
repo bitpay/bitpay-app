@@ -299,6 +299,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           </HeaderContainer>
           <ScrollView
             ref={scrollViewRef}
+            // Prevent iOS from injecting automatic top insets which creates a gap
+            // between the Archax banner and the Home header when the scene is edge-to-edge
+            contentInsetAdjustmentBehavior="never"
             refreshControl={
               <RefreshControl
                 tintColor={theme.dark ? White : SlateDark}
