@@ -63,7 +63,12 @@ class MainApplication : Application(), ReactApplication {
         BrazeInAppMessageManager.getInstance().ensureSubscribedToInAppMessageEvents(context)
         customInAppMessageManagerListener = CustomInAppMessageManagerListener()
         BrazeInAppMessageManager.getInstance().setCustomInAppMessageManagerListener(customInAppMessageManagerListener)
-        //registerActivityLifecycleCallbacks(BrazeActivityLifecycleCallbackListener())
+        registerActivityLifecycleCallbacks(
+            BrazeActivityLifecycleCallbackListener(
+                sessionHandlingEnabled = true,
+                registerInAppMessageManager = false
+            )
+        )
     }
 
     fun notifyReactNativeAppLoaded() {
