@@ -913,11 +913,24 @@ export const processSolanaSwapRequest =
         0,
       );
       currency = 'sol';
+    } else if (
+      instructions?.[instructionKeys.TRANSFER_CHECKED_TOKEN]?.length > 0
+    ) {
+      const checkedTokenTransfer = instructions[
+        instructionKeys.TRANSFER_CHECKED_TOKEN
+      ] as TransferSolInstruction[];
+      mainToAddress = checkedTokenTransfer[0].destination;
+      amount = checkedTokenTransfer.reduce(
+        (sum, transfer) => sum + Number(transfer.amount),
+        0,
+      );
+      tokenAddress = checkedTokenTransfer[0].mint!;
+      currency = (await getSolanaTokenInfo(tokenAddress)).symbol?.toLowerCase();
     }
 
     dispatch(
       LogActions.debug(
-        `amount: ${amount},mainToAddress: ${mainToAddress}, currency: ${currency}, tokenAddress: ${tokenAddress}`,
+        `amount: ${amount}, mainToAddress: ${mainToAddress}, currency: ${currency}, tokenAddress: ${tokenAddress}`,
       ),
     );
 

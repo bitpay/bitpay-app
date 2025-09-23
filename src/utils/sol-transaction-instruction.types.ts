@@ -3,6 +3,8 @@ export interface TransferSolInstruction {
   currency: 'SOL';
   destination: string;
   source: string;
+  authority?: string;
+  mint?: string;
 }
 
 export interface AdvanceNonceAccountInstruction {
