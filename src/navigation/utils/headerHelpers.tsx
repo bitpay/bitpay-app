@@ -11,23 +11,32 @@ import CustomHeader, {
 } from '../../components/navigation/CustomHeader';
 import {baseNavigatorOptions} from '../../constants/NavigationOptions';
 
-export const useHeaderPaddingTop = (): number => {
-  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-
-  // Get insets from provider, bootstrap metrics, or fall back to zero.
+const useSafeInsets = (): EdgeInsets => {
   const contextInsets = React.useContext(SafeAreaInsetsContext);
-  const insets: EdgeInsets = contextInsets ||
-    initialWindowMetrics?.insets || {top: 0, bottom: 0, left: 0, right: 0};
+  return (
+    contextInsets ||
+    initialWindowMetrics?.insets || {top: 0, bottom: 0, left: 0, right: 0}
+  );
+};
 
-  return Platform.OS === 'android' && !showArchaxBanner
-    ? headerHeight + (insets.top ?? 0)
-    : headerHeight;
+export const useContentPaddingTop = (): number => {
+  const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const insets = useSafeInsets();
+
+  return !showArchaxBanner ? headerHeight + (insets.top ?? 0) : headerHeight;
+};
+
+export const useContentPaddingBottom = (): number => {
+  const insets = useSafeInsets();
+
+  return Platform.OS === 'android' ? insets.bottom : 0;
 };
 
 export const useStackScreenOptions = (theme: {
   colors: {background: string; text: string};
 }) => {
-  const paddingTop = useHeaderPaddingTop();
+  const paddingBottom = useContentPaddingBottom();
+  const paddingTop = useContentPaddingTop();
 
   return {
     ...baseNavigatorOptions,
@@ -36,7 +45,7 @@ export const useStackScreenOptions = (theme: {
     headerShadowVisible: false,
     headerTintColor: theme.colors.text,
     headerTitleAlign: 'center' as const,
-    contentStyle: {paddingTop},
+    contentStyle: {paddingBottom, paddingTop},
     header: (props: any) => <CustomHeader {...props} />,
   };
 };

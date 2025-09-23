@@ -10,10 +10,8 @@ import {
 } from '../../components/styled/ShopTabComponents';
 import Button from '../../../../../components/button/Button';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {
-  ActiveOpacity,
-  CtaContainerAbsolute,
-} from '../../../../../components/styled/Containers';
+import {ActiveOpacity} from '../../../../../components/styled/Containers';
+import FooterButtonContainer from '../../../../../components/footer/FooterButtonContainer';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {
   H5,
@@ -37,11 +35,6 @@ import {AppActions} from '../../../../../store/app';
 const TitleText = styled(H5)`
   margin-bottom: 14px;
   margin-top: 16px;
-`;
-
-const FooterButton = styled(CtaContainerAbsolute)`
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  padding-bottom: 30px;
 `;
 
 const ConnectOptions = styled.View`
@@ -242,16 +235,7 @@ const ConnectBillsOptions = ({
           </TouchableOpacity>
         </ConnectOptions>
       </ScrollView>
-      <FooterButton
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-          marginBottom: -10,
-        }}>
+      <FooterButtonContainer>
         <Button
           state={continueButtonState}
           onPress={() => {
@@ -260,7 +244,7 @@ const ConnectBillsOptions = ({
           buttonStyle={'primary'}>
           {continueButtonState === 'loading' ? t('Loading...') : t('Continue')}
         </Button>
-      </FooterButton>
+      </FooterButtonContainer>
     </ScreenContainer>
   );
 };

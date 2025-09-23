@@ -6,11 +6,7 @@ import styled from 'styled-components/native';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {
-  ActiveOpacity,
-  Br,
-  CtaContainerAbsolute,
-} from '../../../components/styled/Containers';
+import {ActiveOpacity, Br} from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {BaseText, H3, H5, Paragraph} from '../../../components/styled/Text';
 import {
@@ -56,6 +52,7 @@ import {
 } from '../../../constants/currencies';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
+import FooterButtonContainer from '../../../components/footer/FooterButtonContainer';
 
 const ReceiveSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -126,10 +123,6 @@ const UnusedCurrencies = styled.View`
 const UnusedCurrencyIcons = styled.View`
   flex-direction: row;
   margin-right: 30px;
-`;
-
-const FooterButton = styled(CtaContainerAbsolute)`
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
 `;
 
 const numVisibleCurrencyIcons = 3;
@@ -562,16 +555,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
           }}
         />
       </ViewContainer>
-      <FooterButton
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-          marginBottom: -10,
-        }}>
+      <FooterButtonContainer>
         <Button
           onPress={() =>
             navigator.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
@@ -591,8 +575,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
           buttonStyle={'primary'}>
           {t('Save Defaults')}
         </Button>
-        <Br />
-      </FooterButton>
+      </FooterButtonContainer>
       <AddressModal
         receivingAddress={addressModalActiveAddress}
         onClose={(remove?: boolean) => {

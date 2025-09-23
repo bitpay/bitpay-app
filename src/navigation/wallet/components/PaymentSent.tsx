@@ -151,6 +151,7 @@ const PaymentSent = ({
 
   return (
     <SheetModal
+      backgroundColor={Success}
       modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       fullscreen={true}

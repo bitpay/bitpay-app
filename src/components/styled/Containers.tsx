@@ -1,5 +1,6 @@
 import React from 'react';
-import {Dimensions, Text} from 'react-native';
+import {Dimensions, Text, Platform} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {css} from 'styled-components/native';
 import {
   Feather,
@@ -14,7 +15,6 @@ import {
   Slate30,
 } from '../../styles/colors';
 import {BaseText} from './Text';
-import {IS_ANDROID} from '../../constants';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 export {ActiveOpacity} from '@components/base/TouchableOpacity';
 
@@ -66,7 +66,7 @@ export const CtaContainer = styled.View`
   margin-top: 30px;
 `;
 
-export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
+const CtaContainerAbsoluteBase = styled.View<{background?: boolean}>`
   padding: 15px;
   position: absolute;
   padding-bottom: 10px;
@@ -81,6 +81,22 @@ export const CtaContainerAbsolute = styled.View<{background?: boolean}>`
       background: ${({theme}) => theme.colors.background};
     `};
 `;
+
+export const CtaContainerAbsolute = React.forwardRef<
+  React.ElementRef<typeof CtaContainerAbsoluteBase>,
+  React.ComponentProps<typeof CtaContainerAbsoluteBase>
+>((props, ref) => {
+  const insets = useSafeAreaInsets();
+  const paddingBottom = Platform.OS === 'ios' ? insets.bottom : 10;
+  const {style, ...rest} = props;
+  return (
+    <CtaContainerAbsoluteBase
+      ref={ref}
+      {...rest}
+      style={[{paddingBottom}, style]}
+    />
+  );
+});
 
 export const Br: React.FC = () => <Text />;
 
@@ -550,6 +566,6 @@ export const ArchaxBannerContainer = styled.View<{
 }>`
   background: ${({theme}) => (theme.dark ? '#a25718' : '#ffedc9')};
   overflow: hidden;
-  margin-top: ${({inset}) => (IS_ANDROID ? inset.top : 0)}px;
+  margin-top: ${({inset}) => inset.top}px;
   padding: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '16px')};
 `;

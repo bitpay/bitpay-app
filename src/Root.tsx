@@ -630,13 +630,7 @@ export default () => {
       <ThemeProvider theme={theme}>
         <GestureHandlerRootView style={{flex: 1}}>
           <BottomSheetModalProvider>
-            <SafeAreaView
-              style={{flex: 1}}
-              edges={
-                Platform.OS === 'android'
-                  ? ['left', 'right', 'bottom']
-                  : undefined
-              }>
+            <SafeAreaView style={{flex: 1}} edges={['left', 'right']}>
               {showArchaxBanner && (
                 <ArchaxBanner isSmallScreen={isNarrowHeight} />
               )}

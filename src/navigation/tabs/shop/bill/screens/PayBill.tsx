@@ -25,9 +25,9 @@ import {useAppDispatch} from '../../../../../utils/hooks';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
   ActiveOpacity,
-  CtaContainerAbsolute,
   HeaderRightContainer,
 } from '../../../../../components/styled/Containers';
+import FooterButtonContainer from '../../../../../components/footer/FooterButtonContainer';
 import {SectionHeaderContainer} from '../../components/styled/ShopTabComponents';
 import Settings from '../../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
@@ -76,11 +76,6 @@ const AmountSublabel = styled.View`
 
 const AmountSublabelText = styled(Paragraph)`
   font-size: 14px;
-`;
-
-const FooterButton = styled(CtaContainerAbsolute)`
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  padding-bottom: 30px;
 `;
 
 const getCustomAmountSublabel = (account: BillPayAccount) => {
@@ -402,15 +397,7 @@ const PayBill = ({
           </View>
         </SectionContainer>
       </ScrollView>
-      <FooterButton
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }}>
+      <FooterButtonContainer>
         <Button
           disabled={removingBill}
           onPress={() => {
@@ -429,7 +416,7 @@ const PayBill = ({
           buttonStyle={'primary'}>
           {t('Continue')}
         </Button>
-      </FooterButton>
+      </FooterButtonContainer>
       <OptionsSheet
         isVisible={isOptionsSheetVisible}
         closeModal={() => setIsOptionsSheetVisible(false)}
