@@ -378,7 +378,10 @@ const Crypto = () => {
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('soft');
-                navigation.navigate('CustomizeHomeSettings');
+                // Apply SettingsDetails config so that the custom header is used
+                navigation.navigate('SettingsDetails', {
+                  initialRoute: 'Customize Home',
+                } as any);
               }}>
               <CustomizeSvg width={37} height={37} />
             </TouchableOpacity>
