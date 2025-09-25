@@ -108,6 +108,7 @@ PODS:
     - React-RCTText (= 0.81.4)
     - React-RCTVibration (= 0.81.4)
   - React-callinvoker (0.81.4)
+  - React-Codegen (0.1.0)
   - React-Core (0.81.4):
     - boost
     - DoubleConversion
@@ -1969,6 +1970,13 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-passkey (3.1.0):
+    - RCT-Folly
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
+    - React-Core
+    - ReactCommon/turbomodule/core
   - react-native-print (0.11.0):
     - React-Core
   - react-native-randombytes (3.6.1):
@@ -3282,6 +3290,7 @@ DEPENDENCIES:
   - react-native-mmkv (from `../node_modules/react-native-mmkv`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
+  - react-native-passkey (from `../node_modules/react-native-passkey`)
   - react-native-print (from `../node_modules/react-native-print`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-render-html (from `../node_modules/react-native-render-html`)
@@ -3358,6 +3367,7 @@ SPEC REPOS:
     - libwebp
     - Mixpanel-swift
     - MultiplatformBleAdapter
+    - React-Codegen
     - SDWebImage
     - SDWebImageWebPCoder
     - SocketRocket
@@ -3476,6 +3486,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-pager-view:
     :path: "../node_modules/react-native-pager-view"
+  react-native-passkey:
+    :path: "../node_modules/react-native-passkey"
   react-native-print:
     :path: "../node_modules/react-native-print"
   react-native-randombytes:
@@ -3630,6 +3642,7 @@ SPEC CHECKSUMS:
   RCTTypeSafety: 4aefa8328ab1f86da273f08517f1f6b343f6c2cc
   React: 2073376f47c71b7e9a0af7535986a77522ce1049
   React-callinvoker: 751b6f2c83347a0486391c3f266f291f0f53b27e
+  React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
   React-Core: 7195661f0b48e7ea46c3360ccb575288a20c932c
   React-CoreModules: 14f0054ab46000dd3b816d6528af3bd600d82073
   React-cxxreact: 7f602425c63096c398dac13cd7a300efd7c281ae
@@ -3670,6 +3683,7 @@ SPEC CHECKSUMS:
   react-native-mmkv: 31524b627cc06d5099f45c9128d8e918e0a4a71d
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: e17f0602f115f6a6a8953e58f2182dbe8eeb0bd5
+  react-native-passkey: e0b0f58fa9b33c424bafaa0a93d66fb0e21dc092
   react-native-print: f704aef52d931bfce6d1d84351dbb5232d7ecb89
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-render-html: 984dfe2294163d04bf5fe25d7c9f122e60e05ebe
