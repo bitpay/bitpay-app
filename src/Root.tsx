@@ -14,9 +14,9 @@ import {
   AppStateStatus,
   DeviceEventEmitter,
   Linking,
+  LogBox,
   NativeEventEmitter,
   NativeModules,
-  Platform,
   StatusBar,
 } from 'react-native';
 import 'react-native-gesture-handler';
@@ -393,11 +393,23 @@ export default () => {
 
   // CHECK NOTIFICATIONS SETTINGS
   useEffect(() => {
+    let silentPushInterval: ReturnType<typeof setInterval> | undefined;
+
     const _checkNotificationsPermissions = async () => {
       const {pushNotifications} = notificationsState;
       const systemEnabled = await checkNotificationsPermissions();
       if (!systemEnabled && pushNotifications) {
         dispatch(AppEffects.setNotifications(false));
+      } else if (systemEnabled && pushNotifications) {
+        // Ignore warning: Setting a timer for long period of time...
+        LogBox.ignoreLogs(['Setting a timer']);
+        if (notificationsState && notificationsState.pushNotifications) {
+          dispatch(AppEffects.renewSubscription());
+          // Subscribe for silent push notifications
+          silentPushInterval = setInterval(() => {
+            dispatch(AppEffects.renewSubscription());
+          }, 3 * 60 * 1000); // 3 min
+        }
       }
     };
 
@@ -413,7 +425,12 @@ export default () => {
       onAppStateChange,
     );
 
-    return () => subscriptionAppStateChange.remove();
+    return () => {
+      subscriptionAppStateChange.remove();
+      if (silentPushInterval) {
+        clearInterval(silentPushInterval);
+      }
+    };
   }, []);
 
   // CHECK PIN || BIOMETRIC
