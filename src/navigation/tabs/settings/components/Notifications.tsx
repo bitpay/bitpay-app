@@ -1,5 +1,5 @@
 import React, {useEffect, useCallback} from 'react';
-import {Alert, Linking, LogBox, DeviceEventEmitter} from 'react-native';
+import {Alert, Linking, DeviceEventEmitter} from 'react-native';
 import {AppEffects} from '../../../../store/app';
 import {
   ActiveOpacity,
@@ -11,14 +11,12 @@ import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {SettingsComponent} from '../SettingsRoot';
 import {useTranslation} from 'react-i18next';
 import {useNavigation} from '@react-navigation/native';
-import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
-import {selectSettingsNotificationState} from '../../../../store/app/app.selectors';
+import {useAppDispatch} from '../../../../utils/hooks';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 
 const Notifications = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const notificationsState = useAppSelector(selectSettingsNotificationState);
   const navigation = useNavigation();
 
   const openSettings = useCallback(() => {
@@ -73,18 +71,6 @@ const Notifications = () => {
     );
     return () => subscription.remove();
   }, [setNotificationValue]);
-
-  // Ignore warning: Setting a timer for long period of time...
-  LogBox.ignoreLogs(['Setting a timer']);
-  useEffect(() => {
-    if (notificationsState && notificationsState.pushNotifications) {
-      // Subscribe for silent push notifications
-      const silentPushInterval = setInterval(() => {
-        dispatch(AppEffects.renewSubscription());
-      }, 3 * 60 * 1000); // 3 min
-      return () => clearInterval(silentPushInterval);
-    }
-  }, [dispatch, notificationsState]);
 
   return (
     <SettingsComponent>
