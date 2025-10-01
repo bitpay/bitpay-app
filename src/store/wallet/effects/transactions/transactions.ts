@@ -396,12 +396,6 @@ const ProcessNewTxs =
         if (!txHistoryUnique[`${tx.txid}-${tx.coin}`]) {
           ret.push(tx);
           txHistoryUnique[`${tx.txid}-${tx.coin}`] = true;
-        } else {
-          dispatch(
-            LogActions.info(
-              `Ignoring duplicate TX in history: ${tx.txid}-${tx.coin}`,
-            ),
-          );
         }
       } catch (e) {
         const error = e instanceof Error ? e.message : JSON.stringify(e);
