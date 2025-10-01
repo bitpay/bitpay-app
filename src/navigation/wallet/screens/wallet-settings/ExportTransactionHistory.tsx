@@ -1,5 +1,5 @@
 import {RouteProp, useRoute} from '@react-navigation/native';
-import React, {useCallback} from 'react';
+import React, {useCallback, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Button from '../../../../components/button/Button';
@@ -23,12 +23,10 @@ import {
   isAndroidStoragePermissionGranted,
 } from '../../../../utils/helper-methods';
 import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {LogActions} from '../../../../store/log';
 import {Paragraph} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
@@ -53,12 +51,19 @@ const ButtonContainer = styled.View`
   margin-top: 20px;
 `;
 
+type Option = 'download' | 'email';
+type BtnState = 'loading' | 'success' | 'failed' | undefined;
+
 const ExportTransactionHistory = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletGroupParamList, 'ExportTransactionHistory'>>();
+
+  const [buttonStateCsv, setButtonStateCsv] = useState<BtnState>();
+  const [buttonStateEmail, setButtonStateEmail] = useState<BtnState>();
+
   const {currencyAbbreviation, chain, walletName, tokenAddress} = wallet;
 
   const formatDate = (date: number): string => {
@@ -239,20 +244,25 @@ const ExportTransactionHistory = () => {
     }
   };
 
-  const onSubmit = async (option: string) => {
+  const onSubmit = async (option: Option) => {
+    const setState =
+      option === 'download' ? setButtonStateCsv : setButtonStateEmail;
+  
     try {
-      dispatch(startOnGoingProcessModal('LOADING'));
+      setState('loading');
       const csv = await buildCVSFile();
-      dispatch(dismissOnGoingProcessModal());
+      setState('success');
       await shareFile(csv, option);
     } catch (e) {
-      dispatch(dismissOnGoingProcessModal());
+      setState('failed');
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(e),
           title: t('Uh oh, something went wrong'),
         }),
       );
+    } finally {
+      setTimeout(() => setState(undefined), 2000);
     }
   };
 
@@ -271,14 +281,14 @@ const ExportTransactionHistory = () => {
         </ExportTransactionHistoryDescription>
 
         <ButtonContainer>
-          <Button onPress={() => onSubmit('download')}>
+          <Button state={buttonStateCsv} onPress={() => onSubmit('download')}>
             {t('Share File')}
           </Button>
         </ButtonContainer>
 
         {!IS_DESKTOP && (
           <ButtonContainer>
-            <Button onPress={() => onSubmit('email')} buttonStyle={'secondary'}>
+            <Button state={buttonStateEmail} onPress={() => onSubmit('email')} buttonStyle={'secondary'}>
               {t('Send by Email')}
             </Button>
           </ButtonContainer>
