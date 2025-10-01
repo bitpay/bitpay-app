@@ -351,7 +351,11 @@ const shouldFilterTx = (tx: any, wallet: Wallet) => {
 };
 
 const ProcessNewTxs =
-  (wallet: Wallet, txs: any[]): Effect<Promise<any>> =>
+  (
+    wallet: Wallet,
+    txs: any[],
+    skipWalletProcessing?: boolean,
+  ): Effect<Promise<any>> =>
   async dispatch => {
     const now = Math.floor(Date.now() / 1000);
     const txHistoryUnique: any = {};
@@ -368,7 +372,9 @@ const ProcessNewTxs =
           continue;
         }
 
-        tx = dispatch(ProcessTx(tx, wallet));
+        if (!skipWalletProcessing) {
+          tx = dispatch(ProcessTx(tx, wallet));
+        }
 
         // no future transactions...
         if (tx.time > now) {
@@ -418,6 +424,7 @@ const GetNewTransactions =
     requestLimit: number,
     lastTransactionId: string | null,
     tries: number = 0,
+    skipWalletProcessing: boolean = false,
   ): Effect<Promise<any>> =>
   dispatch => {
     return new Promise((resolve, reject) => {
@@ -431,7 +438,9 @@ const GetNewTransactions =
           const {transactions, loadMore = false} = result;
 
           let _transactions = transactions.filter(txs => txs);
-          const _newTxs = await dispatch(ProcessNewTxs(wallet, _transactions));
+          const _newTxs = await dispatch(
+            ProcessNewTxs(wallet, _transactions, skipWalletProcessing),
+          );
           newTxs = newTxs.concat(_newTxs);
 
           dispatch(
@@ -746,6 +755,7 @@ export const GetTransactionHistory =
     refresh = false,
     contactList = [],
     isAccountDetailsView = false,
+    isExportHistoryView = false,
   }: {
     wallet: Wallet;
     transactionsHistory: any[];
@@ -753,6 +763,7 @@ export const GetTransactionHistory =
     refresh?: boolean;
     contactList?: any[];
     isAccountDetailsView?: boolean;
+    isExportHistoryView?: boolean;
   }): Effect<
     Promise<{transactions: any[]; loadMore: boolean; hasConfirmingTxs: boolean}>
   > =>
@@ -798,8 +809,18 @@ export const GetTransactionHistory =
       }
 
       try {
+        const skipWalletProcessing = isExportHistoryView;
+        const tries = 0;
         let {transactions, loadMore} = await dispatch(
-          GetNewTransactions([], skip, wallet, requestLimit, lastTransactionId),
+          GetNewTransactions(
+            [],
+            skip,
+            wallet,
+            requestLimit,
+            lastTransactionId,
+            tries,
+            skipWalletProcessing,
+          ),
         );
 
         // To get transaction list details: icon, description, amount and date

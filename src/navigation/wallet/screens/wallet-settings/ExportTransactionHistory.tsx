@@ -21,10 +21,9 @@ import {BottomNotificationConfig} from '../../../../components/modal/bottom-noti
 import {
   formatCurrencyAbbreviation,
   isAndroidStoragePermissionGranted,
+  titleCasing,
 } from '../../../../utils/helper-methods';
-import {
-  showBottomNotificationModal,
-} from '../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {LogActions} from '../../../../store/log';
@@ -80,13 +79,24 @@ const ExportTransactionHistory = () => {
 
   const buildCVSFile = async () => {
     try {
-      const {transactions} = await dispatch(
-        GetTransactionHistory({
-          wallet,
-          transactionsHistory: [],
-          limit: BWS_TX_HISTORY_LIMIT,
-        }),
-      );
+      let acc: any[] = [];
+      let loadMore = true;
+      let iters = 0;
+      while (loadMore) {
+        const {transactions, loadMore: _loadMore} = await dispatch(
+          GetTransactionHistory({
+            wallet,
+            transactionsHistory: acc,
+            limit: BWS_TX_HISTORY_LIMIT,
+            isExportHistoryView: true,
+            refresh: iters === 0,
+          }),
+        );
+        acc = transactions;
+        loadMore = _loadMore;
+        iters++;
+      }
+      const transactions = acc;
 
       if (_.isEmpty(transactions)) {
         dispatch(
@@ -141,7 +151,7 @@ const ExportTransactionHistory = () => {
 
         csvContent.push({
           Date: formatDate(tx.time * 1000),
-          Destination: tx.addressTo || '',
+          Destination: titleCasing(tx.action === 'moved' ? 'sent' : tx.action),
           Description: _note,
           Amount: _amount,
           Currency: formatCurrencyAbbreviation(currencyAbbreviation),
@@ -247,7 +257,7 @@ const ExportTransactionHistory = () => {
   const onSubmit = async (option: Option) => {
     const setState =
       option === 'download' ? setButtonStateCsv : setButtonStateEmail;
-  
+
     try {
       setState('loading');
       const csv = await buildCVSFile();
@@ -288,7 +298,10 @@ const ExportTransactionHistory = () => {
 
         {!IS_DESKTOP && (
           <ButtonContainer>
-            <Button state={buttonStateEmail} onPress={() => onSubmit('email')} buttonStyle={'secondary'}>
+            <Button
+              state={buttonStateEmail}
+              onPress={() => onSubmit('email')}
+              buttonStyle={'secondary'}>
               {t('Send by Email')}
             </Button>
           </ButtonContainer>
