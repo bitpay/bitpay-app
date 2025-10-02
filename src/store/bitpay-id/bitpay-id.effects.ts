@@ -15,8 +15,10 @@ import {generateSalt, hashPassword} from '../../utils/password';
 import {AppEffects} from '../app/';
 import {Analytics} from '../analytics/analytics.effects';
 import {
+  checkNotificationsPermissions,
   isAnonymousBrazeEid,
   setEmailNotifications,
+  setNotifications,
   startOnGoingProcessModal,
 } from '../app/app.effects';
 import {CardActions, CardEffects} from '../card';
@@ -52,6 +54,8 @@ export const startBitPayIdAnalyticsInit =
   async (dispatch, getState) => {
     const {APP} = getState();
     const acceptedEmailNotifications = !!APP.emailNotifications?.accepted;
+    const notificationsAccepted = APP.notificationsAccepted;
+
     if (user) {
       const {eid, name} = user;
       let {email, givenName, familyName} = user;
@@ -106,7 +110,7 @@ export const startBitPayIdAnalyticsInit =
           lastName: familyName,
         }),
       );
-      // Set email notifications after Braze EID is set
+      // Set email notifications and push notifications after Braze EID is set
       dispatch(
         setEmailNotifications(
           acceptedEmailNotifications ||
@@ -115,6 +119,11 @@ export const startBitPayIdAnalyticsInit =
           agreedToMarketingCommunications,
         ),
       );
+      
+      const systemEnabled = await checkNotificationsPermissions();
+      if (systemEnabled && notificationsAccepted) {
+        dispatch(setNotifications(true));
+      }
     }
   };
 
