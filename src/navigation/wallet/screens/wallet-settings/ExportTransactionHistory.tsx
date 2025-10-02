@@ -1,5 +1,5 @@
 import {RouteProp, useRoute} from '@react-navigation/native';
-import React, {useCallback} from 'react';
+import React, {useCallback, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import Button from '../../../../components/button/Button';
@@ -21,14 +21,11 @@ import {BottomNotificationConfig} from '../../../../components/modal/bottom-noti
 import {
   formatCurrencyAbbreviation,
   isAndroidStoragePermissionGranted,
+  titleCasing,
 } from '../../../../utils/helper-methods';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {LogActions} from '../../../../store/log';
 import {Paragraph} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
@@ -53,12 +50,19 @@ const ButtonContainer = styled.View`
   margin-top: 20px;
 `;
 
+type Option = 'download' | 'email';
+type BtnState = 'loading' | 'success' | 'failed' | undefined;
+
 const ExportTransactionHistory = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const {
     params: {wallet},
   } = useRoute<RouteProp<WalletGroupParamList, 'ExportTransactionHistory'>>();
+
+  const [buttonStateCsv, setButtonStateCsv] = useState<BtnState>();
+  const [buttonStateEmail, setButtonStateEmail] = useState<BtnState>();
+
   const {currencyAbbreviation, chain, walletName, tokenAddress} = wallet;
 
   const formatDate = (date: number): string => {
@@ -75,13 +79,24 @@ const ExportTransactionHistory = () => {
 
   const buildCVSFile = async () => {
     try {
-      const {transactions} = await dispatch(
-        GetTransactionHistory({
-          wallet,
-          transactionsHistory: [],
-          limit: BWS_TX_HISTORY_LIMIT,
-        }),
-      );
+      let acc: any[] = [];
+      let loadMore = true;
+      let iters = 0;
+      while (loadMore) {
+        const {transactions, loadMore: _loadMore} = await dispatch(
+          GetTransactionHistory({
+            wallet,
+            transactionsHistory: acc,
+            limit: BWS_TX_HISTORY_LIMIT,
+            isExportHistoryView: true,
+            refresh: iters === 0,
+          }),
+        );
+        acc = transactions;
+        loadMore = _loadMore;
+        iters++;
+      }
+      const transactions = acc;
 
       if (_.isEmpty(transactions)) {
         dispatch(
@@ -136,7 +151,7 @@ const ExportTransactionHistory = () => {
 
         csvContent.push({
           Date: formatDate(tx.time * 1000),
-          Destination: tx.addressTo || '',
+          Destination: titleCasing(tx.action === 'moved' ? 'sent' : tx.action),
           Description: _note,
           Amount: _amount,
           Currency: formatCurrencyAbbreviation(currencyAbbreviation),
@@ -239,20 +254,25 @@ const ExportTransactionHistory = () => {
     }
   };
 
-  const onSubmit = async (option: string) => {
+  const onSubmit = async (option: Option) => {
+    const setState =
+      option === 'download' ? setButtonStateCsv : setButtonStateEmail;
+
     try {
-      dispatch(startOnGoingProcessModal('LOADING'));
+      setState('loading');
       const csv = await buildCVSFile();
-      dispatch(dismissOnGoingProcessModal());
+      setState('success');
       await shareFile(csv, option);
     } catch (e) {
-      dispatch(dismissOnGoingProcessModal());
+      setState('failed');
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(e),
           title: t('Uh oh, something went wrong'),
         }),
       );
+    } finally {
+      setTimeout(() => setState(undefined), 2000);
     }
   };
 
@@ -271,14 +291,17 @@ const ExportTransactionHistory = () => {
         </ExportTransactionHistoryDescription>
 
         <ButtonContainer>
-          <Button onPress={() => onSubmit('download')}>
+          <Button state={buttonStateCsv} onPress={() => onSubmit('download')}>
             {t('Share File')}
           </Button>
         </ButtonContainer>
 
         {!IS_DESKTOP && (
           <ButtonContainer>
-            <Button onPress={() => onSubmit('email')} buttonStyle={'secondary'}>
+            <Button
+              state={buttonStateEmail}
+              onPress={() => onSubmit('email')}
+              buttonStyle={'secondary'}>
               {t('Send by Email')}
             </Button>
           </ButtonContainer>
