@@ -120,8 +120,8 @@ const mergeUsers = async (
   try {
     const {data} = await axios.post(url, body, {headers});
     return data;
-  } catch (error: any) {
-    throw error.response.data;
+  } catch (err: any) {
+    throw err.response?.data?.message || err.message || err;
   }
 };
 
@@ -137,8 +137,8 @@ const deleteUser = async (eid: string): Promise<any> => {
   try {
     const {data} = await axios.post(url, body, {headers});
     return data;
-  } catch (error: any) {
-    throw error.response.data;
+  } catch (err: any) {
+    throw err.response?.data?.message || err.message || err;
   }
 };
 

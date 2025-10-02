@@ -82,12 +82,21 @@ export const startBitPayIdAnalyticsInit =
         Analytics.startMergingUser();
         // Should migrate the user to the new EID
         LogActions.info('Merging current user to new EID: ', eid);
-        await BrazeWrapper.merge(APP.brazeEid, eid);
-        // Emit event to delete old user
-        DeviceEventEmitter.emit(DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER, {
-          oldEid: APP.brazeEid,
-          newEid: eid,
-        });
+        try {
+          await BrazeWrapper.merge(APP.brazeEid, eid);
+          // Emit event to delete old user
+          DeviceEventEmitter.emit(
+            DeviceEmitterEvents.SHOULD_DELETE_BRAZE_USER,
+            {
+              oldEid: APP.brazeEid,
+              newEid: eid,
+            },
+          );
+        } catch (error) {
+          const errMsg =
+            error instanceof Error ? error.message : JSON.stringify(error);
+          dispatch(LogActions.error(`Merging current user failed: ${errMsg}`));
+        }
       }
       dispatch(setBrazeEid(eid));
       await dispatch(
