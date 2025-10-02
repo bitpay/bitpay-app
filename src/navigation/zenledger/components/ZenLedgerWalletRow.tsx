@@ -13,6 +13,8 @@ import {ZenLedgerWalletObj} from '../../../store/zenledger/zenledger.models';
 import {formatCryptoAddress} from '../../../utils/helper-methods';
 import {PillContainer, PillText} from '../../wallet/components/SendToPill';
 import {SendToPillContainer} from '../../wallet/screens/send/confirm/Shared';
+import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
+import {useLogger} from '../../../utils/hooks';
 
 const BalanceColumn = styled(Column)`
   align-items: flex-end;
@@ -38,10 +40,20 @@ const WalletBox = ({keyId, wallet, onPress}: WalletBoxProps) => {
     haptic('impactLight');
     onPress(keyId, wallet);
   };
+  const logger = useLogger();
 
   return (
     <CheckBoxContainer>
-      <Checkbox checked={wallet.checked} onPress={() => acknowledge()} />
+      <TouchableOpacity
+        touchableLibrary={'react-native-gesture-handler'}
+        onPress={() => acknowledge()}>
+        <Checkbox
+          checked={wallet.checked}
+          onPress={() => {
+            logger.debug('ZenLedger Wallet Row: checkbox clicked');
+          }}
+        />
+      </TouchableOpacity>
     </CheckBoxContainer>
   );
 };
