@@ -570,7 +570,13 @@ export default () => {
       async ({oldEid, newEid}) => {
         await sleep(20000);
         LogActions.info('Deleting old user EID: ', oldEid);
-        await BrazeWrapper.delete(oldEid);
+        try {
+          await BrazeWrapper.delete(oldEid);
+        } catch (error) {
+          const errMsg =
+            error instanceof Error ? error.message : JSON.stringify(error);
+          dispatch(LogActions.error(`Deleting old user EID failed: ${errMsg}`));
+        }
         // Wait for a few seconds to ensure the user is deleted
         await sleep(5000);
         Analytics.endMergingUser();
