@@ -18,7 +18,8 @@ import {
   ZenLedgerKey,
   ZenLedgerWalletObj,
 } from '../../../store/zenledger/zenledger.models';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
+import {useLogger} from '../../../utils/hooks';
 
 interface KeyWalletsRowContainerProps {
   isLast?: boolean;
@@ -78,10 +79,20 @@ const KeyBox = ({keyId, onPress, checked}: Props) => {
     haptic('impactLight');
     onPress(keyId);
   };
+  const logger = useLogger();
 
   return (
     <CheckBoxContainer>
-      <Checkbox checked={checked} onPress={() => acknowledge()} />
+      <TouchableOpacity
+        touchableLibrary={'react-native-gesture-handler'}
+        onPress={() => acknowledge()}>
+        <Checkbox
+          checked={checked}
+          onPress={() => {
+            logger.debug('ZenLedger Key Row: checkbox clicked');
+          }}
+        />
+      </TouchableOpacity>
     </CheckBoxContainer>
   );
 };
