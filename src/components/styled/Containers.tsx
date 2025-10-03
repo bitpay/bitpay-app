@@ -520,13 +520,17 @@ export const ExternalServicesItemTopTitle = styled.Text`
   line-height: 18px;
 `;
 
-export const AccountChainsContainer = styled(TouchableOpacity)`
+export const AccountChainsContainer = styled(TouchableOpacity)<{
+  padding?: string;
+  maxWidth?: string;
+}>`
   flex-direction: row;
+  flex-shrink: 1;
   align-items: center;
   gap: 10px;
   border-radius: 50px;
-  padding: 5px 10px;
-  max-width: 250px;
+  padding: ${({padding}) => padding ?? '5px 10px'};
+  max-width: ${({maxWidth}) => (maxWidth ? `${maxWidth}` : '250px')};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 
