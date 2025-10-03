@@ -1816,7 +1816,7 @@ const SellCryptoRoot = ({
               <ActionsContainer>
                 <DataText>{selectedPaymentMethod.label}</DataText>
                 <SelectedOptionCol>
-                  {selectedPaymentMethod.imgSrc}
+                  {selectedPaymentMethod.imgLogo}
                   <ArrowContainer>
                     <SelectorArrowRight
                       {...{
