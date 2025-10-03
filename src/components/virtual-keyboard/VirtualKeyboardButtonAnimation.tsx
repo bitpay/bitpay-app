@@ -7,12 +7,14 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import {getKeyboardSizes} from './VirtualKeyboard';
 
 interface RippleProps {
   onPress: () => void;
   backgroundColor?: string;
   onLongPress?: () => void;
   isSmallScreen?: boolean;
+  context?: 'buyCrypto' | 'sellCrypto';
   children: React.ReactNode;
 }
 
@@ -21,9 +23,13 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
   backgroundColor,
   onLongPress,
   isSmallScreen,
+  context,
   children,
 }) => {
-  const virtualKeyboardButtonSize = isSmallScreen ? 60 : 85;
+  const virtualKeyboardButtonSize = getKeyboardSizes(
+    isSmallScreen,
+    context,
+  ).virtualKeyboardButtonSize;
   onLongPress = onLongPress || onPress;
   const centerX = useSharedValue(0);
   const centerY = useSharedValue(0);
