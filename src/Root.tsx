@@ -69,12 +69,9 @@ import SecurityGroup, {
   SecurityGroupParamList,
 } from './navigation/tabs/settings/security/SecurityGroup';
 import AuthGroup, {AuthGroupParamList} from './navigation/auth/AuthGroup';
-import BuyCryptoGroup, {
-  BuyCryptoGroupParamList,
-} from './navigation/services/buy-crypto/BuyCryptoGroup';
-import SellCryptoGroup, {
-  SellCryptoGroupParamList,
-} from './navigation/services/sell-crypto/SellCryptoGroup';
+import ExternalServicesGroup, {
+  ExternalServicesGroupParamList,
+} from './navigation/services/ExternalServicesGroup';
 import SwapCryptoGroup, {
   SwapCryptoGroupParamList,
 } from './navigation/services/swap-crypto/SwapCryptoGroup';
@@ -174,8 +171,7 @@ export type RootStackParamList = {
   BitpayIdGroupParamList &
   ScanGroupParamList &
   CoinbaseGroupParamList &
-  BuyCryptoGroupParamList &
-  SellCryptoGroupParamList &
+  ExternalServicesGroupParamList &
   SwapCryptoGroupParamList &
   CardActivationGroupParamList &
   OnboardingGroupParamList &
@@ -216,8 +212,7 @@ export type NavScreenParams = NavigatorScreenParams<
     ExternalServicesSettingsGroupParamList &
     AboutGroupParamList &
     CoinbaseGroupParamList &
-    BuyCryptoGroupParamList &
-    SellCryptoGroupParamList &
+    ExternalServicesGroupParamList &
     SwapCryptoGroupParamList &
     ScanGroupParamList &
     WalletConnectGroupParamList &
@@ -1011,8 +1006,7 @@ export default () => {
             })}
             {AboutGroup({About: Root, theme})}
             {CoinbaseGroup({Coinbase: Root, theme})}
-            {BuyCryptoGroup({BuyCrypto: Root, theme})}
-            {SellCryptoGroup({SellCrypto: Root, theme})}
+            {ExternalServicesGroup({ExternalServices: Root, theme})}
             {SwapCryptoGroup({SwapCrypto: Root, theme})}
             {WalletConnectGroup({WalletConnect: Root, theme})}
             {ZenLedgerGroup({ZenLedger: Root, theme})}
