@@ -56,6 +56,7 @@ export enum BitPayIdActionTypes {
   SUCCESS_FETCH_RECEIVING_ADDRESSES = 'BitPayId/SUCCESS_FETCH_RECEIVING_ADDRESSES',
   SUCCESS_FETCH_SECURITY_SETTINGS = 'BitPayId/SUCCESS_FETCH_SECURITY_SETTINGS',
   SUCCESS_RESET_METHOD_USER = 'BitPayId/SUCCESS_RESET_METHOD_USER',
+  PASSKEY_STATUS = 'BitPayId/PASSKEY_STATUS',
 }
 
 interface SuccessFetchSession {
@@ -241,6 +242,13 @@ interface SuccessFetchSecuritySettings {
   };
 }
 
+interface PasskeyStatus {
+  type: typeof BitPayIdActionTypes.PASSKEY_STATUS;
+  payload: {
+    passkey: boolean;
+  };
+}
+
 export type BitPayIdActionType =
   | SuccessFetchSession
   | FailedFetchSession
@@ -257,6 +265,7 @@ export type BitPayIdActionType =
   | FailedLogin
   | PendingLogin
   | UpdateLoginStatus
+  | PasskeyStatus
 
   // auth + two factor
   | SuccessSubmitTwoFactorAuth
