@@ -30,7 +30,12 @@ import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
-import {SendMaxInfo, Wallet} from '../../../../store/wallet/wallet.models';
+import {
+  Key,
+  SendMaxInfo,
+  Token,
+  Wallet,
+} from '../../../../store/wallet/wallet.models';
 import {
   Action,
   White,
@@ -68,6 +73,7 @@ import {useTranslation} from 'react-i18next';
 import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   BitpaySupportedCoins,
+  CurrencyOpts,
   SUPPORTED_COINS,
   SUPPORTED_TOKENS,
 } from '../../../../constants/currencies';
@@ -112,7 +118,10 @@ import InfoSvg from '../../../../../assets/img/info.svg';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import BalanceDetailsModal from '../../../../navigation/wallet/components/BalanceDetailsModal';
 import SellCryptoBalanceSkeleton from './SellCryptoBalanceSkeleton';
-import {buildUIFormattedWallet} from '../../../../store/wallet/utils/wallet';
+import {
+  buildUIFormattedWallet,
+  getEVMAccountName,
+} from '../../../../store/wallet/utils/wallet';
 import {SatToUnit} from '../../../../store/wallet/effects/amount/amount';
 import {
   getExternalServiceSymbol,
@@ -261,8 +270,10 @@ const SellCryptoRoot = ({
   const theme = useTheme();
   const logger = useLogger();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
-  const tokenDataByAddress = useAppSelector(
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
+  const tokenDataByAddress: {[key in string]: CurrencyOpts} = useAppSelector(
     ({WALLET}: RootState) => WALLET.tokenDataByAddress,
   );
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
@@ -271,7 +282,7 @@ const SellCryptoRoot = ({
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const allRates = useAppSelector(({RATE}) => RATE.rates);
 
-  const tokenOptionsByAddress = useAppSelector(
+  const tokenOptionsByAddress: {[x: string]: Token} = useAppSelector(
     ({WALLET}) => WALLET.tokenOptionsByAddress,
   );
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -363,13 +374,6 @@ const SellCryptoRoot = ({
     dispatch(dismissOnGoingProcessModal());
     await sleep(400);
     dispatch(showWalletError(type, fromCurrencyAbbreviation));
-  };
-
-  const getEVMAccountName = (wallet: Wallet) => {
-    const selectedKey = allKeys[wallet.keyId];
-    const evmAccountInfo =
-      selectedKey.evmAccountsInfo?.[wallet.receiveAddress!];
-    return evmAccountInfo?.name;
   };
 
   const selectFirstAvailableWallet = async () => {
@@ -1654,8 +1658,8 @@ const SellCryptoRoot = ({
                   ellipsizeMode="tail"
                   numberOfLines={1}
                   style={{flexShrink: 1}}>
-                  {getEVMAccountName(selectedWallet)
-                    ? getEVMAccountName(selectedWallet)
+                  {getEVMAccountName(selectedWallet, allKeys)
+                    ? getEVMAccountName(selectedWallet, allKeys)
                     : `${
                         IsSVMChain(selectedWallet.chain)
                           ? 'Solana Account'
@@ -1816,7 +1820,7 @@ const SellCryptoRoot = ({
               <ActionsContainer>
                 <DataText>{selectedPaymentMethod.label}</DataText>
                 <SelectedOptionCol>
-                  {selectedPaymentMethod.imgSrc}
+                  {selectedPaymentMethod.imgLogo}
                   <ArrowContainer>
                     <SelectorArrowRight
                       {...{
