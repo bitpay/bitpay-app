@@ -217,13 +217,6 @@ const BuyCryptoRoot = ({
     dispatch(showWalletError(type, fromCurrencyAbbreviation));
   };
 
-  const getEVMAccountName = (wallet: Wallet) => {
-    const selectedKey = allKeys[wallet.keyId];
-    const evmAccountInfo =
-      selectedKey.evmAccountsInfo?.[wallet.receiveAddress!];
-    return evmAccountInfo?.name;
-  };
-
   const selectFirstAvailableWallet = async () => {
     const keysList = Object.values(allKeys).filter(key => key.backupComplete);
 
