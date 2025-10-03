@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import _ from 'lodash';
 import uniqBy from 'lodash.uniqby';
@@ -192,6 +192,36 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   const [activeAddresses, setActiveAddresses] = useState<
     _.Dictionary<ReceivingAddress>
   >(createAddressMap(receivingAddresses));
+
+  const initialAddressMap = useMemo(
+    () => createAddressMap(receivingAddresses),
+    [receivingAddresses],
+  );
+
+  const hasChanges = useMemo(() => {
+    const initKeys = Object.keys(initialAddressMap);
+    const currKeys = Object.keys(activeAddresses);
+
+    if (initKeys.length !== currKeys.length) {
+      return true;
+    }
+
+    const sortedInit = [...initKeys].sort();
+    const sortedCurr = [...currKeys].sort();
+    for (let i = 0; i < sortedInit.length; i++) {
+      if (sortedInit[i] !== sortedCurr[i]) {
+        return true;
+      }
+    }
+
+    for (const key of initKeys) {
+      if (initialAddressMap[key]?.address !== activeAddresses[key]?.address) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [initialAddressMap, activeAddresses]);
   const uniqueActiveWallets = _.uniqBy(
     Object.values(keys)
       .flatMap(key => key.wallets)
@@ -557,7 +587,27 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
       </ViewContainer>
       <FooterButtonContainer>
         <Button
-          onPress={() =>
+          onPress={() => {
+            if (!hasChanges) {
+              dispatch(
+                showBottomNotificationModal({
+                  type: 'info',
+                  title: t('No changes detected'),
+                  message: t(
+                    "It looks like you haven't made any changes to your receiving addresses yet. Please make some changes before saving.",
+                  ),
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: t('OK'),
+                      action: () => {},
+                      primary: true,
+                    },
+                  ],
+                }),
+              );
+              return;
+            }
             navigator.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
               onSubmit: async (twoFactorCode: string) => {
                 saveAddresses(twoFactorCode).catch(async error => {
@@ -570,8 +620,8 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
                 });
               },
               twoFactorCodeLength: 6,
-            })
-          }
+            });
+          }}
           buttonStyle={'primary'}>
           {t('Save Defaults')}
         </Button>
