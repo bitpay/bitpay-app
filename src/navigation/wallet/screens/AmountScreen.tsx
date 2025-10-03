@@ -2,7 +2,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
-import Amount from '../../../components/amount/Amount';
+import Amount, {AmountContext} from '../../../components/amount/Amount';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
@@ -16,7 +16,6 @@ import OptionsSheet, {
 import WalletIcons from '../../../navigation/wallet/components/WalletIcons';
 import Settings from '../../../components/settings/Settings';
 import {sleep} from '../../../utils/helper-methods';
-import {useAppSelector} from '../../../utils/hooks';
 
 const HeaderContainer = styled(HeaderRightContainer)`
   justify-content: center;
@@ -44,7 +43,7 @@ export interface AmountScreenParamList {
   customAmountSublabel?: any;
   chain?: string;
   tokenAddress?: string;
-  context?: string;
+  context?: AmountContext;
   headerTitle?:
     | string
     | ((props: HeaderTitleProps) => React.ReactNode)
@@ -58,9 +57,11 @@ export interface AmountScreenParamList {
   };
 }
 
-const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
-  return <>{props.children}</>;
-});
+const AmountModalContainerHOC = gestureHandlerRootHOC(
+  (props: React.PropsWithChildren<{}>) => {
+    return <>{props.children}</>;
+  },
+);
 
 const AmountScreen: React.FC<
   NativeStackScreenProps<WalletGroupParamList, WalletScreens.AMOUNT>
