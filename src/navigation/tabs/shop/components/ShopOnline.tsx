@@ -132,11 +132,13 @@ export const ShopOnline = ({
     () =>
       debounce((text: string) => {
         setSearchVal(text);
-        const newSearchResults = integrations.filter(integration =>
-          integration.displayName
-            .toLowerCase()
-            .includes(text.toLocaleLowerCase()),
-        );
+        const newSearchResults = integrations
+          .filter(integration =>
+            integration.displayName
+              .toLowerCase()
+              .includes(text.toLocaleLowerCase()),
+          )
+          .slice(0, 40);
         setSearchResults(newSearchResults);
         dispatch(Analytics.track('Searched Online Brands', {search: text}));
       }, 300),
