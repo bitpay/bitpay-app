@@ -1,12 +1,12 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import styled from 'styled-components/native';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {
   Keyboard,
   NativeSyntheticEvent,
-  SafeAreaView,
   TextInput,
   TextInputEndEditingEventData,
 } from 'react-native';
@@ -15,6 +15,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Link} from '../../../components/styled/Text';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
+import {Network} from '../../../constants';
 import yup from '../../../lib/yup';
 import {navigationRef, RootStacks} from '../../../Root';
 import {AppActions} from '../../../store/app';
@@ -54,6 +55,10 @@ interface LoginFormFieldValues {
   password: string;
 }
 
+const LoginContainer = styled.View`
+  flex: 1;
+`;
+
 const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -62,9 +67,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     handleSubmit,
     getValues,
     setValue,
-    formState: {errors},
+    formState: {errors, isDirty},
   } = useForm<LoginFormFieldValues>({resolver: yupResolver(schema)});
-  const network = useAppSelector(({APP}) => APP.network);
+  const network: Network = useAppSelector(({APP}) => APP.network);
   const session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
   const loginStatus = useAppSelector(({BITPAY_ID}) => BITPAY_ID.loginStatus);
   const loginError = useAppSelector(
@@ -90,9 +95,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       }
 
       const parentNav = navigation.getParent();
+      const state = navigation.getState();
 
       if (parentNav?.canGoBack()) {
         parentNav.goBack();
+      } else if (state.routes.length > 2) {
+        navigation.pop();
       } else {
         navigationRef.dispatch(
           CommonActions.reset({
@@ -153,7 +161,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   }, [dispatch, onLoginSuccess, navigation, loginStatus, loginError, t]);
 
   const onSubmit = handleSubmit(
-    ({email, password}) => {
+    async ({email, password}) => {
       Keyboard.dismiss();
       if (session.captchaDisabled) {
         dispatch(BitPayIdEffects.startLogin({email, password}));
@@ -165,6 +173,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       Keyboard.dismiss();
     },
   );
+
+  const loginWithPasskey = () => {
+    dispatch(BitPayIdEffects.startLoginWithPasskey());
+  };
 
   const handleAutofill = (
     fieldName: keyof LoginFormFieldValues,
@@ -197,7 +209,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   };
 
   return (
-    <SafeAreaView accessibilityLabel="login-view">
+    <LoginContainer accessibilityLabel="login-view">
       <AuthFormContainer accessibilityLabel="auth-form-container">
         <AuthRowContainer>
           <Controller
@@ -248,8 +260,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
         <AuthActionsContainer accessibilityLabel="auth-cta-container">
           <AuthActionRow>
-            <Button accessibilityLabel="login-button" onPress={onSubmit}>
+            <Button
+              accessibilityLabel="login-button"
+              onPress={onSubmit}
+              disabled={!isDirty}>
               {t('Log In')}
+            </Button>
+          </AuthActionRow>
+
+          <AuthActionRow>
+            <Button
+              accessibilityLabel="login-button"
+              onPress={loginWithPasskey}
+              disabled={loginStatus === 'loading'}>
+              {t('Log In with Passkey')}
             </Button>
           </AuthActionRow>
 
@@ -286,7 +310,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
           onCancel={onCaptchaCancel}
         />
       </AuthFormContainer>
-    </SafeAreaView>
+    </LoginContainer>
   );
 };
 

@@ -253,3 +253,8 @@ export const successFetchSecuritySettings = (
   type: BitPayIdActionTypes.SUCCESS_FETCH_SECURITY_SETTINGS,
   payload: {network, securitySettings},
 });
+
+export const setPasskeyStatus = (passkey: boolean): BitPayIdActionType => ({
+  type: BitPayIdActionTypes.PASSKEY_STATUS,
+  payload: {passkey},
+});
