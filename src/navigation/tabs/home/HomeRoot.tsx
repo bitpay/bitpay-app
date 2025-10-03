@@ -67,6 +67,11 @@ import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
 } from '../../../constants/currencies';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../../store';
+import {User} from '../../../store/bitpay-id/bitpay-id.models';
+import {Network} from '../../../constants';
+import SecurePasskeyBanner from './components/SecurePasskeyBanner';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -100,6 +105,27 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const hasCards = cardGroups?.length > 0;
 
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const network: Network = useSelector<RootState, Network>(
+    ({APP}) => APP.network,
+  );
+  const user = useSelector<RootState, User | null>(
+    ({BITPAY_ID}) => BITPAY_ID.user[network],
+  );
+  const passkeyStatus = useSelector<RootState, boolean>(
+    ({BITPAY_ID}) => BITPAY_ID.passkeyStatus,
+  );
+  const [showSecureAccountBanner, setShowSecureAccountBanner] = useState(false);
+
+  // Check if user has passkey
+  useEffect(() => {
+    if (!user) {
+      setShowSecureAccountBanner(false);
+    } else if (passkeyStatus) {
+      setShowSecureAccountBanner(false);
+    } else {
+      setShowSecureAccountBanner(true);
+    }
+  }, [passkeyStatus, user]);
 
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
@@ -331,6 +357,13 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             <HomeSection slimContainer={true}>
               <Crypto />
             </HomeSection>
+
+            {/* ////////////////////////////// SECURE WITH PASSKEY */}
+            {showSecureAccountBanner ? (
+              <HomeSection>
+                <SecurePasskeyBanner />
+              </HomeSection>
+            ) : null}
 
             {/* ////////////////////////////// SHOP WITH CRYPTO */}
             {memoizedShopWithCryptoCards.length ? (
