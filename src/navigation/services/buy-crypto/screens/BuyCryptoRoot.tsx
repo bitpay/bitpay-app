@@ -92,6 +92,7 @@ import {
 } from '../../../../components/styled/Containers';
 import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
 import Blockie from '../../../../components/blockie/Blockie';
+import {getEVMAccountName} from '../../../../store/wallet/utils/wallet';
 import ArchaxFooter from '../../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../../contexts';
 
