@@ -242,7 +242,7 @@ export const getRampDefaultOfferData = (
 };
 
 export const getRampPaymentMethodDataFromQuoteData = (
-  paymentMethod: PaymentMethodKey,
+  paymentMethod: PaymentMethodKey | undefined,
   quoteData: RampQuoteRequestData,
 ) => {
   let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;

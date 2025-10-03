@@ -46,7 +46,12 @@ import {
   updatePortfolioBalance,
   syncWallets,
 } from '../../../store/wallet/wallet.actions';
-import {KeyMethods, Status, Wallet} from '../../../store/wallet/wallet.models';
+import {
+  Key,
+  KeyMethods,
+  Status,
+  Wallet,
+} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
   NeutralSlate,
@@ -207,7 +212,7 @@ const KeyOverview = () => {
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(({WALLET}) => WALLET);
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const linkedCoinbase = useAppSelector(
@@ -319,7 +324,9 @@ const KeyOverview = () => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            logger.error(`error [getStatus]: ${errStr}`);
+            logger.error(
+              `error [KeyOverview - createNewMultisigKey] [getStatus]: ${errStr}`,
+            );
           } else {
             navigation.navigate('Copayers', {
               wallet: key?.wallets[0],
@@ -617,7 +624,9 @@ const KeyOverview = () => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            logger.error(`error [getStatus]: ${errStr}`);
+            logger.error(
+              `error [KeyOverview - onPressItem] [getStatus]: ${errStr}`,
+            );
           } else {
             if (status?.wallet?.status === 'complete') {
               fullWalletObj.openWallet({}, () => {

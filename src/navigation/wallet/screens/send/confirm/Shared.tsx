@@ -132,7 +132,7 @@ export const Header = ({
 }: {
   children: ReactNode;
   hr?: boolean;
-}): JSX.Element | null => {
+}): React.JSX.Element | null => {
   if (children) {
     return (
       <>
@@ -271,7 +271,7 @@ export const Fee = ({
   hideFeeOptions?: boolean;
   hr?: boolean;
   onPress?: () => void;
-}): JSX.Element | null => {
+}): React.JSX.Element | null => {
   const {t} = useTranslation();
   if (fee) {
     const {feeLevel, cryptoAmount, fiatAmount, percentageOfTotalAmountStr} =
@@ -364,7 +364,7 @@ export const Amount = ({
   network?: string | undefined;
   showInfoIcon?: boolean;
   infoIconOnPress?: () => void;
-}): JSX.Element | null => {
+}): React.JSX.Element | null => {
   if (amount && description) {
     const {cryptoAmount, fiatAmount} = amount;
     return (
@@ -436,7 +436,7 @@ export const SharedDetailRow = ({
   hr?: boolean;
   secondary?: boolean;
   onPress?: () => void;
-}): JSX.Element | null => {
+}): React.JSX.Element | null => {
   return (
     <>
       {onPress ? (
@@ -717,6 +717,6 @@ export const ExchangeRate = ({
 }: {
   description: string;
   rateStr: string;
-}): JSX.Element | null => {
+}): React.JSX.Element | null => {
   return <SharedDetailRow description={description} value={rateStr} hr />;
 };
