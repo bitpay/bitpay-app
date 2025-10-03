@@ -70,6 +70,9 @@ import AboutGroup, {
   AboutGroupParamList,
 } from './navigation/tabs/settings/about/AboutGroup';
 import AuthGroup, {AuthGroupParamList} from './navigation/auth/AuthGroup';
+import ExternalServicesGroup, {
+  ExternalServicesGroupParamList,
+} from './navigation/services/ExternalServicesGroup';
 import BuyCryptoGroup, {
   BuyCryptoGroupParamList,
 } from './navigation/services/buy-crypto/BuyCryptoGroup';
@@ -141,7 +144,7 @@ import SettingsGroup, {
 } from './navigation/tabs/settings/SettingsGroup';
 //import {ImportLedgerWalletModal} from './components/modal/import-ledger-wallet/ImportLedgerWalletModal';
 import {WalletConnectStartModal} from './components/modal/wallet-connect/WalletConnectStartModal';
-import {KeyMethods} from './store/wallet/wallet.models';
+import {Key, KeyMethods} from './store/wallet/wallet.models';
 import {
   setAccountEVMCreationMigrationComplete,
   setAccountSVMCreationMigrationComplete,
@@ -161,6 +164,7 @@ import {
 import Logger from 'bitcore-wallet-client/ts_build/lib/log';
 import {BwcProvider} from './lib/bwc';
 import {isNarrowHeight} from './components/styled/Containers';
+import {RootState} from './store';
 const BWC = BwcProvider.getInstance();
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
@@ -173,6 +177,7 @@ export type RootStackParamList = {
   BitpayIdGroupParamList &
   ScanGroupParamList &
   CoinbaseGroupParamList &
+  ExternalServicesGroupParamList &
   BuyCryptoGroupParamList &
   SellCryptoGroupParamList &
   SwapCryptoGroupParamList &
@@ -214,6 +219,7 @@ export type NavScreenParams = NavigatorScreenParams<
     ExternalServicesSettingsGroupParamList &
     AboutGroupParamList &
     CoinbaseGroupParamList &
+    ExternalServicesGroupParamList &
     BuyCryptoGroupParamList &
     SellCryptoGroupParamList &
     SwapCryptoGroupParamList &
@@ -298,7 +304,9 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const keys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const accountEvmCreationMigrationComplete = useAppSelector(
     ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
   );
@@ -1074,6 +1082,7 @@ export default () => {
                     })}
                     {AboutGroup({About: Root, theme})}
                     {CoinbaseGroup({Coinbase: Root, theme})}
+                    {ExternalServicesGroup({ExternalServices: Root, theme})}
                     {BuyCryptoGroup({BuyCrypto: Root, theme})}
                     {SellCryptoGroup({SellCrypto: Root, theme})}
                     {SwapCryptoGroup({SwapCrypto: Root, theme})}
