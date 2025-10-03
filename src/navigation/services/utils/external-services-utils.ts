@@ -6,6 +6,7 @@ import {
   addTokenChainSuffix,
   getCurrencyAbbreviation,
 } from '../../../utils/helper-methods';
+import {t} from 'i18next';
 
 export const getExternalServiceSymbol = (
   coin: string,
@@ -66,4 +67,26 @@ export const externalServicesCoinMapping = (coin: string): string => {
     return 'pol';
   }
   return coin;
+};
+
+export const getErrorMessage = (err: any): string => {
+  let msg = t('Could not get crypto offer. Please try again later.');
+  if (err) {
+    if (typeof err === 'string') {
+      msg = err;
+    } else {
+      if (err.error && err.error.error) {
+        msg = err.error.error;
+      } else if (err.error && !err.message) {
+        if (typeof err.error === 'string') {
+          msg = err.error;
+        } else if (err.error.message) {
+          msg = err.error.message;
+        }
+      } else if (err.message) {
+        msg = err.message;
+      }
+    }
+  }
+  return msg;
 };
