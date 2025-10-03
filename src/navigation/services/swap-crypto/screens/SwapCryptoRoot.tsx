@@ -9,6 +9,7 @@ import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyO
 import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
+  CurrencyOpts,
   SUPPORTED_COINS,
   SUPPORTED_TOKENS,
 } from '../../../../constants/currencies';
@@ -66,7 +67,12 @@ import {
   IsVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
-import {Wallet, SendMaxInfo} from '../../../../store/wallet/wallet.models';
+import {
+  Wallet,
+  SendMaxInfo,
+  Token,
+  Key,
+} from '../../../../store/wallet/wallet.models';
 import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/changelly/changelly';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import ArrowDown from '../../../../../assets/img/swap-crypto/down-arrow.svg';
@@ -130,6 +136,7 @@ import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
 import Blockie from '../../../../components/blockie/Blockie';
 import {
   buildUIFormattedWallet,
+  getEVMAccountName,
   toFiat,
 } from '../../../../store/wallet/utils/wallet';
 import {BuyCryptoItemTitle} from '../../buy-crypto/styled/BuyCryptoCard';
@@ -215,13 +222,11 @@ const SwapCryptoRoot: React.FC = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const keys = useAppSelector(({WALLET}) => WALLET.keys);
+  const keys: {[key: string]: Key} = useAppSelector(({WALLET}) => WALLET.keys);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
-
   const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
-
   const tokenOptions = Object.entries(tokenOptionsByAddress).map(
     ([k, {symbol}]) => {
       const chain = getChainFromTokenByAddressKey(k);
@@ -310,13 +315,6 @@ const SwapCryptoRoot: React.FC = () => {
 
   const canContinue = (): boolean => {
     return !!toWalletSelected && !!fromWalletSelected && amountFrom > 0;
-  };
-
-  const getEVMAccountName = (wallet: Wallet) => {
-    const selectedKey = keys[wallet.keyId];
-    const evmAccountInfo =
-      selectedKey.evmAccountsInfo?.[wallet.receiveAddress!];
-    return evmAccountInfo?.name;
   };
 
   const setSelectedWallet = async (supportedCoins: SwapCryptoCoin[]) => {
@@ -1461,8 +1459,8 @@ const SwapCryptoRoot: React.FC = () => {
                     ellipsizeMode="tail"
                     numberOfLines={1}
                     style={{flexShrink: 1}}>
-                    {getEVMAccountName(fromWalletSelected)
-                      ? getEVMAccountName(fromWalletSelected)
+                    {getEVMAccountName(fromWalletSelected, keys)
+                      ? getEVMAccountName(fromWalletSelected, keys)
                       : `${
                           IsSVMChain(fromWalletSelected.chain)
                             ? 'Solana Account'
@@ -1665,8 +1663,8 @@ const SwapCryptoRoot: React.FC = () => {
                     ellipsizeMode="tail"
                     numberOfLines={1}
                     style={{flexShrink: 1}}>
-                    {getEVMAccountName(toWalletSelected)
-                      ? getEVMAccountName(toWalletSelected)
+                    {getEVMAccountName(toWalletSelected, keys)
+                      ? getEVMAccountName(toWalletSelected, keys)
                       : `${
                           IsSVMChain(toWalletSelected.chain)
                             ? 'Solana Account'
@@ -1795,7 +1793,7 @@ const SwapCryptoRoot: React.FC = () => {
 
       <FromWalletSelectorModal
         route={route}
-        navigation={navigation}
+        navigation={navigation as any}
         isVisible={fromWalletSelectorModalVisible}
         customSupportedCurrencies={
           useDefaultToWallet && toWalletSelected
@@ -1828,7 +1826,7 @@ const SwapCryptoRoot: React.FC = () => {
         <GlobalSelectContainer>
           <GlobalSelect
             route={route}
-            navigation={navigation}
+            navigation={navigation as any}
             modalContext={'swapTo'}
             livenetOnly={true}
             useAsModal={true}

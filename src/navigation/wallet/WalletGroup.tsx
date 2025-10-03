@@ -21,7 +21,7 @@ import WalletSettings from './screens/WalletSettings';
 import AccountSettings from './screens/AccountSettings';
 import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
-import {HeaderTitle} from '../../components/styled/Text';
+import {H7, HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
   Key,
@@ -89,6 +89,15 @@ import BackupOnboarding, {
 import {Root} from '../../Root';
 import {AccountRowProps} from '../../components/list/AccountListRow';
 import KeyInformation from './screens/KeyInformation';
+import {IsSVMChain, IsVMChain} from '../../store/wallet/utils/currency';
+import {
+  AccountChainsContainer,
+  WIDTH,
+} from '../../components/styled/Containers';
+import Blockie from '../../components/blockie/Blockie';
+import {getEVMAccountName} from '../../store/wallet/utils/wallet';
+import {useAppSelector} from '../../utils/hooks';
+import {RootState} from '../../store';
 
 interface WalletProps {
   Wallet: typeof Root;
@@ -238,6 +247,9 @@ export enum WalletScreens {
 
 const WalletGroup = ({Wallet, theme}: WalletProps) => {
   const {t} = useTranslation();
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const commonOptions = useStackScreenOptions(theme);
   return (
     <Wallet.Group screenOptions={commonOptions}>
@@ -327,7 +339,42 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       />
       <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
       <Wallet.Screen name={WalletScreens.TERMS_OF_USE} component={TermsOfUse} />
-      <Wallet.Screen name={WalletScreens.AMOUNT} component={AmountScreen} />
+      <Wallet.Screen
+        options={({route}) => ({
+          headerTitle: () => <HeaderTitle>{t('Buy')}</HeaderTitle>,
+          headerRight: () =>
+            route.params?.wallet ? (
+              IsVMChain(route.params.wallet.chain) ? (
+                <AccountChainsContainer
+                  padding="8px"
+                  maxWidth={`${WIDTH / 2 - 50}px`}>
+                  <Blockie
+                    size={19}
+                    seed={route.params.wallet.receiveAddress}
+                  />
+                  <H7
+                    ellipsizeMode="tail"
+                    numberOfLines={1}
+                    style={{flexShrink: 1, fontSize: 13, letterSpacing: 0}}>
+                    {getEVMAccountName(route.params.wallet, allKeys)
+                      ? getEVMAccountName(route.params.wallet, allKeys)
+                      : `${
+                          IsSVMChain(route.params.wallet.chain)
+                            ? 'Solana Account'
+                            : 'EVM Account'
+                        }${
+                          Number(route.params.wallet.credentials?.account) === 0
+                            ? ''
+                            : ` (${route.params.wallet.credentials?.account})`
+                        }`}
+                  </H7>
+                </AccountChainsContainer>
+              ) : null
+            ) : null,
+        })}
+        name={WalletScreens.AMOUNT}
+        component={AmountScreen}
+      />
       <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
       <Wallet.Screen
         options={{gestureEnabled: false}}

@@ -26,8 +26,15 @@ import {
 import Button from '../../../../components/button/Button';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../../store';
-import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {SendMaxInfo, Wallet} from '../../../../store/wallet/wallet.models';
+import {
+  showBottomNotificationModal,
+} from '../../../../store/app/app.actions';
+import {
+  Key,
+  SendMaxInfo,
+  Token,
+  Wallet,
+} from '../../../../store/wallet/wallet.models';
 import {
   Action,
   White,
@@ -64,6 +71,7 @@ import {
 import {useTranslation} from 'react-i18next';
 import {
   BitpaySupportedCoins,
+  CurrencyOpts,
   SUPPORTED_COINS,
   SUPPORTED_TOKENS,
 } from '../../../../constants/currencies';
@@ -108,7 +116,10 @@ import InfoSvg from '../../../../../assets/img/info.svg';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import BalanceDetailsModal from '../../../../navigation/wallet/components/BalanceDetailsModal';
 import SellCryptoBalanceSkeleton from './SellCryptoBalanceSkeleton';
-import {buildUIFormattedWallet} from '../../../../store/wallet/utils/wallet';
+import {
+  buildUIFormattedWallet,
+  getEVMAccountName,
+} from '../../../../store/wallet/utils/wallet';
 import {SatToUnit} from '../../../../store/wallet/effects/amount/amount';
 import {
   getExternalServiceSymbol,
@@ -261,7 +272,9 @@ const SellCryptoRoot = ({
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
@@ -357,13 +370,6 @@ const SellCryptoRoot = ({
     hideOngoingProcess();
     await sleep(400);
     dispatch(showWalletError(type, fromCurrencyAbbreviation));
-  };
-
-  const getEVMAccountName = (wallet: Wallet) => {
-    const selectedKey = allKeys[wallet.keyId];
-    const evmAccountInfo =
-      selectedKey.evmAccountsInfo?.[wallet.receiveAddress!];
-    return evmAccountInfo?.name;
   };
 
   const selectFirstAvailableWallet = async () => {
@@ -1648,8 +1654,8 @@ const SellCryptoRoot = ({
                   ellipsizeMode="tail"
                   numberOfLines={1}
                   style={{flexShrink: 1}}>
-                  {getEVMAccountName(selectedWallet)
-                    ? getEVMAccountName(selectedWallet)
+                  {getEVMAccountName(selectedWallet, allKeys)
+                    ? getEVMAccountName(selectedWallet, allKeys)
                     : `${
                         IsSVMChain(selectedWallet.chain)
                           ? 'Solana Account'

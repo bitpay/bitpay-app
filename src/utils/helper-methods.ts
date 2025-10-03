@@ -405,7 +405,7 @@ export const getRateByCurrencyName = (
   rates: Rates,
   currencyAbbreviation: string,
   chain: string,
-  tokenAddress?: string,
+  tokenAddress?: string | null,
 ): Rate[] => {
   const currencyName = getCurrencyAbbreviation(
     tokenAddress ?? currencyAbbreviation,

@@ -26,7 +26,7 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {RootState} from '../../../../store';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {getBuyCryptoFiatLimits} from '../../../../store/buy-crypto/buy-crypto.effects';
-import {Wallet} from '../../../../store/wallet/wallet.models';
+import {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Black, Slate} from '../../../../styles/colors';
 import SelectorArrowDown from '../../../../../assets/img/selector-arrow-down.svg';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
@@ -52,6 +52,7 @@ import {useTranslation} from 'react-i18next';
 import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
+  CurrencyOpts,
 } from '../../../../constants/currencies';
 import {
   addWallet,
@@ -135,7 +136,9 @@ const BuyCryptoRoot = ({
   const {tokenDataByAddress} = useTokenContext();
 
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
@@ -641,7 +644,9 @@ const BuyCryptoRoot = ({
   };
 
   const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
-    const foundToken = Object.values(tokenDataByAddress).find(
+    const foundToken = (
+      Object.values(tokenDataByAddress) as CurrencyOpts[]
+    ).find(
       token =>
         token.coin === _currencyAbbreviation.toLowerCase() &&
         token.chain === _chain,
@@ -776,10 +781,12 @@ const BuyCryptoRoot = ({
             const isErc20Token = IsERCToken(coin, chain);
             let foundToken;
             if (isErc20Token) {
-              foundToken = Object.values({
-                ...BitpaySupportedTokens,
-                ...tokenDataByAddress,
-              }).find(token => token.coin === coin && token.chain === chain);
+              foundToken = (
+                Object.values({
+                  ...BitpaySupportedTokens,
+                  ...tokenDataByAddress,
+                }) as CurrencyOpts[]
+              ).find(token => token.coin === coin && token.chain === chain);
             }
             return {
               currencyAbbreviation: coin,
@@ -919,8 +926,8 @@ const BuyCryptoRoot = ({
                   ellipsizeMode="tail"
                   numberOfLines={1}
                   style={{flexShrink: 1}}>
-                  {getEVMAccountName(selectedWallet)
-                    ? getEVMAccountName(selectedWallet)
+                  {getEVMAccountName(selectedWallet, allKeys)
+                    ? getEVMAccountName(selectedWallet, allKeys)
                     : `${
                         IsSVMChain(selectedWallet.chain)
                           ? 'Solana Account'
@@ -1057,7 +1064,7 @@ const BuyCryptoRoot = ({
               <ActionsContainer>
                 <DataText>{selectedPaymentMethod.label}</DataText>
                 <SelectedOptionCol>
-                  {selectedPaymentMethod.imgSrc}
+                  {selectedPaymentMethod.imgLogo}
                   <ArrowContainer>
                     <SelectorArrowRight
                       {...{
