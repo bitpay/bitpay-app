@@ -146,7 +146,7 @@ export const getSardineChainFormat = (chain: string): string | undefined => {
 };
 
 export const getSardinePaymentMethodFormat = (
-  method: PaymentMethodKey,
+  method: PaymentMethodKey | undefined,
   country?: string,
 ): SardinePaymentType | undefined => {
   if (!method) {
