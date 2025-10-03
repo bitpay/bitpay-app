@@ -5,6 +5,7 @@ import {
   DeviceEventEmitter,
   EmitterSubscription,
   Linking,
+  NativeModules,
   Platform,
   Share,
 } from 'react-native';
@@ -866,6 +867,8 @@ export const checkNotificationsPermissions = async (): Promise<boolean> => {
     normalized === RESULTS.GRANTED || normalized === RESULTS.LIMITED;
   if (granted) {
     Braze.requestPushPermission();
+    if (Platform.OS === 'ios')
+      await NativeModules.PushPermissionManager.askForPermission();
   }
   return granted;
 };

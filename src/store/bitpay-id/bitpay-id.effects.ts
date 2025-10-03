@@ -39,6 +39,7 @@ import {
 } from '../app/app.actions';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {DeviceEventEmitter} from 'react-native';
+import Braze from '@braze/react-native-sdk';
 
 interface StartLoginParams {
   email: string;
@@ -110,7 +111,6 @@ export const startBitPayIdAnalyticsInit =
           lastName: familyName,
         }),
       );
-      // Set email notifications and push notifications after Braze EID is set
       dispatch(
         setEmailNotifications(
           acceptedEmailNotifications ||
@@ -119,10 +119,11 @@ export const startBitPayIdAnalyticsInit =
           agreedToMarketingCommunications,
         ),
       );
-      
       const systemEnabled = await checkNotificationsPermissions();
       if (systemEnabled && notificationsAccepted) {
-        dispatch(setNotifications(true));
+        Braze.setPushNotificationSubscriptionType(
+          Braze.NotificationSubscriptionTypes.OPTED_IN,
+        );
       }
     }
   };
