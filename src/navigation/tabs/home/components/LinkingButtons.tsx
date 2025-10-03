@@ -10,9 +10,9 @@ import {useNavigation} from '@react-navigation/native';
 import {Path, Rect, Svg} from 'react-native-svg';
 import {useRequireKeyAndWalletRedirect} from '../../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
-import {WalletScreens} from '../../../wallet/WalletGroup';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {ExternalServicesScreens} from '../../../services/ExternalServicesGroup';
 
 const ButtonsRow = styled.View`
   justify-content: center;
@@ -167,12 +167,7 @@ const LinkingButtons = ({buy, sell, receive, send, swap}: Props) => {
               context: 'LinkingButtons',
             }),
           );
-          navigation.navigate(WalletScreens.AMOUNT, {
-            onAmountSelected: async (amount: string) => {
-              navigation.navigate('BuyCryptoRoot', {
-                amount: Number(amount),
-              });
-            },
+          navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
             context: 'buyCrypto',
           });
         },
