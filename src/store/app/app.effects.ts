@@ -5,7 +5,6 @@ import {
   DeviceEventEmitter,
   EmitterSubscription,
   Linking,
-  NativeModules,
   Platform,
   Share,
 } from 'react-native';
@@ -861,13 +860,9 @@ export const unSubscribeEmailNotifications =
 
 export const checkNotificationsPermissions = async (): Promise<boolean> => {
   const {status} = await checkNotifications().catch(() => ({status: null}));
-
   const normalized = status?.toLowerCase?.();
   const granted =
     normalized === RESULTS.GRANTED || normalized === RESULTS.LIMITED;
-  if (granted && Platform.OS === 'ios') {
-    await NativeModules.PushPermissionManager.askForPermission();
-  }
   return granted;
 };
 
