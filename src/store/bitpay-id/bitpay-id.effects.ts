@@ -15,10 +15,8 @@ import {generateSalt, hashPassword} from '../../utils/password';
 import {AppEffects} from '../app/';
 import {Analytics} from '../analytics/analytics.effects';
 import {
-  checkNotificationsPermissions,
   isAnonymousBrazeEid,
   setEmailNotifications,
-  setNotifications,
   startOnGoingProcessModal,
 } from '../app/app.effects';
 import {CardActions, CardEffects} from '../card';
@@ -119,11 +117,6 @@ export const startBitPayIdAnalyticsInit =
           agreedToMarketingCommunications,
         ),
       );
-      
-      const systemEnabled = await checkNotificationsPermissions();
-      if (systemEnabled && notificationsAccepted) {
-        dispatch(setNotifications(true));
-      }
     }
   };
 
