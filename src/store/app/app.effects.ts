@@ -860,13 +860,9 @@ export const unSubscribeEmailNotifications =
 
 export const checkNotificationsPermissions = async (): Promise<boolean> => {
   const {status} = await checkNotifications().catch(() => ({status: null}));
-
   const normalized = status?.toLowerCase?.();
   const granted =
     normalized === RESULTS.GRANTED || normalized === RESULTS.LIMITED;
-  if (granted) {
-    Braze.requestPushPermission();
-  }
   return granted;
 };
 
