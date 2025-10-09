@@ -511,12 +511,6 @@ export default () => {
   // Silent Push Notifications
   useEffect(() => {
     function onMessageReceived(response: SilentPushEventObj) {
-      dispatch(
-        LogActions.debug(
-          '[Root] Silent Push Notification',
-          JSON.stringify(response),
-        ),
-      );
       dispatch(handleBwsEvent(response));
     }
 
