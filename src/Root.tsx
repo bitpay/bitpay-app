@@ -406,7 +406,7 @@ export default () => {
       if (intervalRef.current) return;
       intervalRef.current = setInterval(() => {
         dispatch(AppEffects.renewSubscription());
-      }, 3 * 60 * 1000);
+      }, 10 * 60 * 1000);
     };
 
     const stopSilentInterval = () => {
@@ -563,7 +563,7 @@ export default () => {
 
     const eventEmitter = new NativeEventEmitter(SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
-    return () => DeviceEventEmitter.removeAllListeners('inAppMessageReceived');
+    return () => DeviceEventEmitter.removeAllListeners('SilentPushNotification');
   }, [dispatch]);
 
   // IAM handler
