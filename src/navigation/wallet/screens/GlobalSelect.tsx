@@ -872,9 +872,10 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
             params: {screen: 'Home'},
           },
           {
-            name: 'BuyCryptoRoot',
+            name: 'BuyAndSellRoot',
             params: {
               amount: 200,
+              context: 'buyCrypto',
             },
           },
         ],

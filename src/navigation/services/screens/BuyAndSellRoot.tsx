@@ -500,6 +500,8 @@ const BuyAndSellRoot = ({
   useEffect(() => {
     if (selectedOffer && buttonState !== 'loading' && !openingBrowser) {
       setContinueEnabled(true);
+    } else {
+      setContinueEnabled(false);
     }
   }, [selectedOffer, buttonState, openingBrowser]);
 
@@ -546,7 +548,12 @@ const BuyAndSellRoot = ({
     if (!currency) {
       return;
     }
-    updateAmount('0');
+    if (fromAmount && !isNaN(fromAmount)) {
+      // Valid fromAmount
+      updateAmount(fromAmount.toString());
+    } else {
+      updateAmount('0');
+    }
     // if added for dev (hot reload)
     if (
       !primaryIsFiat &&
@@ -617,8 +624,6 @@ const BuyAndSellRoot = ({
 
   const initBuyCrypto = async () => {
     try {
-      await sleep(100);
-      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
       const requestData: ExternalServicesConfigRequestParams = {
         currentLocationCountry: locationData?.countryShortCode,
         currentLocationState: locationData?.stateShortCode,
@@ -808,12 +813,14 @@ const BuyAndSellRoot = ({
   };
 
   useMount(() => {
+    dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
     if (context === 'buyCrypto') {
       try {
         initBuyCrypto();
       } catch (err: any) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         logger.error(`[Buy] could not initialize view: ${errStr}`);
+        dispatch(dismissOnGoingProcessModal());
       }
     } else if (context === 'sellCrypto') {
       // TODO initSellCrypto();
@@ -865,6 +872,13 @@ const BuyAndSellRoot = ({
   const goTo = (offer: CryptoOffer, paymentMethod: PaymentMethod): void => {
     setButtonState('loading');
     setOpeningBrowser(true);
+    dispatch(
+      BuyCryptoActions.updateBuyCryptoOpts({
+        buyCryptoOpts: {
+          selectedPaymentMethod: paymentMethod.method,
+        },
+      }),
+    );
     switch (offer.key) {
       case 'banxa':
         goToBanxaBuyPage(offer, paymentMethod);

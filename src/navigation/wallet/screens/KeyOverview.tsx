@@ -213,7 +213,9 @@ const KeyOverview = () => {
   const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(({WALLET}) => WALLET);
+  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
+    ({WALLET}) => WALLET,
+  );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const linkedCoinbase = useAppSelector(

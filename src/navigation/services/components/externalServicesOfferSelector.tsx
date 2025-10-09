@@ -374,6 +374,49 @@ const ExternalServicesOfferSelector: React.FC<
     _paymentMethod,
   );
 
+  BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
+    if (offersDefault[exchange]) {
+      offersDefault[exchange].fiatCurrency = getAvailableFiatCurrencies(
+        exchange,
+      ).includes(fiatCurrency)
+        ? fiatCurrency
+        : 'USD';
+
+      if (paymentMethod) {
+        if (
+          preSetPartner &&
+          BuyCryptoSupportedExchanges.includes(preSetPartner)
+        ) {
+          offersDefault[exchange].showOffer =
+            preSetPartner === exchange
+              ? isPaymentMethodSupported(
+                  preSetPartner,
+                  paymentMethod,
+                  coin,
+                  chain,
+                  offersDefault[preSetPartner].fiatCurrency,
+                  country,
+                ) &&
+                (!buyCryptoConfig?.[preSetPartner] ||
+                  !buyCryptoConfig?.[preSetPartner]?.removed)
+              : false;
+        } else {
+          offersDefault[exchange].showOffer =
+            isPaymentMethodSupported(
+              exchange,
+              paymentMethod,
+              coin,
+              chain,
+              offersDefault[exchange].fiatCurrency,
+              country,
+            ) &&
+            (!buyCryptoConfig?.[exchange] ||
+              !buyCryptoConfig?.[exchange]?.removed);
+        }
+      }
+    }
+  });
+
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
   const [selectedOffer, setSelectedOffer] = useState<CryptoOffer | undefined>();
   const [selectedOfferLoading, setSelectedOfferLoading] =
@@ -1462,49 +1505,6 @@ const ExternalServicesOfferSelector: React.FC<
   };
 
   const getBuyCryptoQuotes = (selectedWallet: Wallet) => {
-    BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
-      if (offersDefault[exchange]) {
-        offersDefault[exchange].fiatCurrency = getAvailableFiatCurrencies(
-          exchange,
-        ).includes(fiatCurrency)
-          ? fiatCurrency
-          : 'USD';
-
-        if (paymentMethod) {
-          if (
-            preSetPartner &&
-            BuyCryptoSupportedExchanges.includes(preSetPartner)
-          ) {
-            offersDefault[exchange].showOffer =
-              preSetPartner === exchange
-                ? isPaymentMethodSupported(
-                    preSetPartner,
-                    paymentMethod,
-                    coin,
-                    chain,
-                    offersDefault[preSetPartner].fiatCurrency,
-                    country,
-                  ) &&
-                  (!buyCryptoConfig?.[preSetPartner] ||
-                    !buyCryptoConfig?.[preSetPartner]?.removed)
-                : false;
-          } else {
-            offersDefault[exchange].showOffer =
-              isPaymentMethodSupported(
-                exchange,
-                paymentMethod,
-                coin,
-                chain,
-                offersDefault[exchange].fiatCurrency,
-                country,
-              ) &&
-              (!buyCryptoConfig?.[exchange] ||
-                !buyCryptoConfig?.[exchange]?.removed);
-          }
-        }
-      }
-    });
-
     const showedOffersCount = Object.values(cloneDeep(offers)).filter(
       offer => offer.showOffer,
     ).length;

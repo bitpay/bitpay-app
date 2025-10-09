@@ -138,6 +138,7 @@ import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
 import {BillPayAccount} from '../../../store/shop/shop.models';
 import debounce from 'lodash.debounce';
 import ArchaxFooter from '../../../components/archax/archax-footer';
+import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -1170,15 +1171,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             chain: fullWalletObj.chain || '',
                           }),
                         );
-                        navigation.navigate(WalletScreens.AMOUNT, {
-                          onAmountSelected: async (amount: string) => {
-                            navigation.navigate('BuyCryptoRoot', {
-                              amount: Number(amount),
-                              fromWallet: fullWalletObj,
-                            });
+                        navigation.navigate(
+                          ExternalServicesScreens.ROOT_BUY_AND_SELL,
+                          {
+                            context: 'buyCrypto',
+                            fromWallet: fullWalletObj,
                           },
-                          context: 'buyCrypto',
-                        });
+                        );
                       },
                     }}
                     sell={{
