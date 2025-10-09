@@ -167,6 +167,7 @@ import {
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
+import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -1296,15 +1297,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     context: 'AccountDetails',
                   }),
                 );
-                navigation.navigate(WalletScreens.AMOUNT, {
-                  onAmountSelected: async (
-                    amount: string,
-                    setButtonState: any,
-                  ) => {
-                    navigation.navigate('BuyCryptoRoot', {
-                      amount: Number(amount),
-                    });
-                  },
+                navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
                   context: 'buyCrypto',
                 });
               },
