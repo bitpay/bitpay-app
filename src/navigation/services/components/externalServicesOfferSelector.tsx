@@ -56,6 +56,7 @@ import {
 } from '../buy-crypto/utils/buy-crypto-utils';
 import {
   PaymentMethod,
+  PaymentMethodKey,
   PaymentMethodsAvailable,
 } from '../buy-crypto/constants/BuyCryptoConstants';
 import {
@@ -110,6 +111,7 @@ import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import OfferSelectorModal from './OfferSelectorModal';
 import {getErrorMessage} from '../utils/external-services-utils';
+import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 
 export const ExternalServicesOfferSelectorContainer = styled.View``;
 
@@ -306,7 +308,7 @@ interface ExternalServicesOfferSelectorProps {
   chain: string;
   country: string;
   getWarnMsg?: string;
-  preSetPaymentMethod?: PaymentMethod;
+  preSetPaymentMethod?: PaymentMethodKey;
   onSelectOffer?: (offer: CryptoOffer | undefined) => void;
   onSelectPaymentMethod?: (paymentMethod: PaymentMethod | undefined) => void;
   buyCryptoConfig: BuyCryptoConfig | undefined;
@@ -347,16 +349,25 @@ const ExternalServicesOfferSelector: React.FC<
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const buyCryptoOpts: BuyCryptoStateOpts = useAppSelector(
+    ({BUY_CRYPTO}) => BUY_CRYPTO.opts,
+  );
 
   let _paymentMethod: PaymentMethod | undefined;
-  if (!preSetPaymentMethod) {
-    // TODO: set the best default payment method based on usual best offers
+  if (preSetPaymentMethod && PaymentMethodsAvailable[preSetPaymentMethod]) {
+    _paymentMethod = PaymentMethodsAvailable[preSetPaymentMethod];
+  } else if (
+    buyCryptoOpts?.selectedPaymentMethod &&
+    PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod] &&
+    !preSetPartner
+  ) {
+    _paymentMethod =
+      PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod];
+  } else {
     _paymentMethod =
       Platform.OS === 'ios'
         ? PaymentMethodsAvailable.applePay
         : PaymentMethodsAvailable.debitCard;
-  } else {
-    _paymentMethod = preSetPaymentMethod;
   }
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(
