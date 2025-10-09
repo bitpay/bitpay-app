@@ -4,15 +4,24 @@ export enum LogActionTypes {
   ADD_LOG = 'LOG/ADD_LOG',
   ADD_PERSISTED_LOG = 'LOG/ADD_PERSISTED_LOG',
   CLEAR_LOGS = 'LOG/CLEAR_LOGS',
+  SKIP_LOG = 'SKIP_LOG',
+  SHOW_NON_ERROR_LOGS = 'LOG/SHOW_NON_ERROR_LOGS',
 }
 
 export interface AddLog {
-  type: typeof LogActionTypes.ADD_LOG | typeof LogActionTypes.ADD_PERSISTED_LOG;
+  type:
+    | typeof LogActionTypes.ADD_LOG
+    | typeof LogActionTypes.ADD_PERSISTED_LOG
+    | typeof LogActionTypes.SKIP_LOG;
   payload: LogEntry;
 }
 
-interface ClearLogs {
+export interface ClearLogs {
   type: typeof LogActionTypes.CLEAR_LOGS;
 }
+export interface ShowNonErrorLogs {
+  type: typeof LogActionTypes.SHOW_NON_ERROR_LOGS;
+  payload: boolean;
+}
 
-export type LogActionType = AddLog | ClearLogs;
+export type LogActionType = AddLog | ClearLogs | ShowNonErrorLogs;

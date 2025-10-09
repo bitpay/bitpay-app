@@ -11,6 +11,8 @@ import {
   WIDTH,
   SheetContainer,
   SheetParams,
+  SettingTitle,
+  Setting,
 } from '../../../../../components/styled/Containers';
 import {BaseText} from '../../../../../components/styled/Text';
 import {IS_ANDROID, IS_DESKTOP, IS_IOS} from '../../../../../constants';
@@ -41,6 +43,8 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {isAndroidStoragePermissionGranted} from '../../../../../utils/helper-methods';
 import Share, {ShareOptions} from 'react-native-share';
 import RNFS from 'react-native-fs';
+import {setShowNonErrorLogs} from '../../../../../store/log/log.actions';
+import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 
 type SessionLogsScreenProps = NativeStackScreenProps<
   AboutGroupParamList,
@@ -159,7 +163,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   const [showOptions, setShowOptions] = useState(false);
   const logs = useAppSelector(({LOG}) => LOG.logs);
   const [filterLevel, setFilterLevel] = useState(LogLevel.Debug);
-
+  const showNonErrorLogs = useAppSelector(({LOG}) => LOG.showNonErrorLogs);
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
   const currentSessionStartTime = logs.length
     ? new Date(logs[0].timestamp)
@@ -289,8 +293,17 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
     }
   }, []);
 
+  const onPress = async () => {
+    const isEnabled = !showNonErrorLogs;
+    dispatch(setShowNonErrorLogs(isEnabled));
+  };
+
   return (
     <LogsContainer>
+      <Setting activeOpacity={1} onPress={onPress}>
+        <SettingTitle>{t('Show all logs')}</SettingTitle>
+        <ToggleSwitch onChange={onPress} isEnabled={showNonErrorLogs} />
+      </Setting>
       <FlashList
         contentContainerStyle={{
           paddingBottom: 150,

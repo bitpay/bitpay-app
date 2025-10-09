@@ -7,10 +7,12 @@ export const logReduxPersistBlackList = ['logs'];
 
 export interface LogState {
   logs: LogEntry[];
+  showNonErrorLogs: boolean;
 }
 
 const initialState: LogState = {
   logs: [] as LogEntry[],
+  showNonErrorLogs: false,
 };
 
 export const logReducer = (
@@ -78,6 +80,12 @@ export const logReducer = (
       return {
         ...state,
         logs: [],
+      };
+
+    case LogActionTypes.SHOW_NON_ERROR_LOGS:
+      return {
+        ...state,
+        showNonErrorLogs: action.payload,
       };
 
     default:
