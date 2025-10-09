@@ -301,7 +301,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   return (
     <LogsContainer>
       <Setting activeOpacity={1} onPress={onPress}>
-        <SettingTitle>{t('Show all logs')}</SettingTitle>
+        <SettingTitle>{t('Enable debug logs')}</SettingTitle>
         <ToggleSwitch onChange={onPress} isEnabled={showNonErrorLogs} />
       </Setting>
       <FlashList
