@@ -56,7 +56,6 @@ const _log =
     }
 
     if (!showNonErrorLogs && level !== LogLevel.Error) {
-      dispatch({type: LogActionTypes.SKIP_LOG, payload: {} as LogEntry});
       return;
     }
 

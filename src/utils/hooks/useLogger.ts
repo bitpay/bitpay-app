@@ -1,6 +1,6 @@
 import {useRef} from 'react';
-import {useDispatch} from 'react-redux';
 import {LogActions} from '../../store/log';
+import useAppDispatch from './useAppDispatch';
 
 interface Logger {
   clear: () => void;
@@ -11,7 +11,7 @@ interface Logger {
 }
 
 export const useLogger: () => Logger = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const loggerRef = useRef({
     clear() {
