@@ -36,11 +36,6 @@ const _log =
   (dispatch, getState) => {
     const {showNonErrorLogs} = getState().LOG;
 
-    if (!showNonErrorLogs && level !== LogLevel.Error) {
-      dispatch({type: LogActionTypes.SKIP_LOG, payload: {} as LogEntry});
-      return;
-    }
-
     if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true') && !!messages) {
       switch (LogLevel[level]) {
         case 'Debug':
@@ -58,6 +53,11 @@ const _log =
         default:
           console.log('[Log]', ...messages);
       }
+    }
+
+    if (!showNonErrorLogs && level !== LogLevel.Error) {
+      dispatch({type: LogActionTypes.SKIP_LOG, payload: {} as LogEntry});
+      return;
     }
 
     dispatch({
