@@ -111,7 +111,7 @@ export const startBitPayIdAnalyticsInit =
       // Set email notifications and push notifications after Braze EID is set
       dispatch(
         setEmailNotifications(
-          acceptedEmailNotifications ||
+          acceptedEmailNotifications &&
             (user.optInEmailMarketing && user.verified),
           email,
           agreedToMarketingCommunications,
