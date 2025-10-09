@@ -119,8 +119,9 @@ import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCrypt
 import {SimplexSellIncomingData} from '../sell-crypto/models/simplex-sell.models';
 import {ExternalServicesSettingsScreens} from '../../navigation/tabs/settings/external-services/ExternalServicesGroup';
 import {BitpaySupportedTokenOptsByAddress} from '../../constants/tokens';
-import {getTokenContractInfo} from '../wallet/effects/status/status';
 import {SolanaPayOpts} from '../../navigation/wallet/screens/send/confirm/Confirm';
+import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
+import {BuyAndSellRootProps} from '../../navigation/services/screens/BuyAndSellRoot';
 
 export const incomingData =
   (
@@ -1508,13 +1509,14 @@ const handleBuyCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: 'BuyCryptoRoot',
+          name: ExternalServicesScreens.ROOT_BUY_AND_SELL,
           params: {
             partner,
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
-          },
+            context: 'buyCrypto',
+          } as BuyAndSellRootProps,
         },
       ],
     });
