@@ -125,6 +125,7 @@ import {
 } from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
+import {ExternalServicesScreens} from '../../../../navigation/services/ExternalServicesGroup';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -2193,9 +2194,10 @@ const generateInsufficientFundsError = (
               context: 'errorBottomNotification',
             }),
           );
-          navigationRef.navigate('BuyCryptoRoot', {
+          navigationRef.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
             amount: 100,
             fromWallet: wallet,
+            context: 'buyCrypto',
           });
         },
         primary: true,
@@ -2340,11 +2342,12 @@ const processInsufficientFundsForFee = (
             navigationRef.goBack();
             await sleep(100);
           }
-          navigationRef.navigate('BuyCryptoRoot', {
+          navigationRef.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
             amount: 100,
             fromWallet: IsERCToken(wallet.currencyAbbreviation, wallet.chain)
               ? linkedWallet
               : wallet,
+            context: 'buyCrypto',
           });
         };
         goToBuyCrypto();
@@ -2759,14 +2762,12 @@ export const sendCrypto =
                     context: 'HomeRoot',
                   }),
                 );
-                navigationRef.navigate(WalletScreens.AMOUNT, {
-                  onAmountSelected: (amount: string) => {
-                    navigationRef.navigate('BuyCryptoRoot', {
-                      amount: Number(amount),
-                    });
+                navigationRef.navigate(
+                  ExternalServicesScreens.ROOT_BUY_AND_SELL,
+                  {
+                    context: 'buyCrypto',
                   },
-                  context: 'buyCrypto',
-                });
+                );
               },
               primary: true,
             },

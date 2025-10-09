@@ -212,7 +212,9 @@ const KeyOverview = () => {
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(({WALLET}) => WALLET);
+  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
+    ({WALLET}) => WALLET,
+  );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const linkedCoinbase = useAppSelector(
