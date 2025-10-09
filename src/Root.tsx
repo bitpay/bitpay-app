@@ -7,7 +7,7 @@ import {
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import debounce from 'lodash.debounce';
 import Braze from '@braze/react-native-sdk';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   Appearance,
   AppState,
@@ -279,6 +279,8 @@ export default () => {
   const [, rerender] = useState({});
   const linking = useDeeplinks();
   const urlEventHandler = useUrlEventHandler();
+  const lastSystemEnabledRef = useRef<boolean | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
@@ -307,6 +309,7 @@ export default () => {
     ({WALLET}) => WALLET.svmAddressFixComplete,
   );
   const notificationsState = useAppSelector(selectSettingsNotificationState);
+  const pushNotificationsRef = useRef(notificationsState.pushNotifications);
   const currentLocation = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
@@ -391,24 +394,63 @@ export default () => {
     }
   }, [dispatch, currentLocation]);
 
+  useEffect(() => {
+    pushNotificationsRef.current = notificationsState.pushNotifications;
+  }, [notificationsState.pushNotifications]);
+
   // CHECK NOTIFICATIONS SETTINGS
   useEffect(() => {
-    let silentPushInterval: ReturnType<typeof setInterval> | undefined;
+    let isMounted = true;
+
+    const startSilentInterval = () => {
+      if (intervalRef.current) return;
+      intervalRef.current = setInterval(() => {
+        dispatch(AppEffects.renewSubscription());
+      }, 3 * 60 * 1000);
+    };
+
+    const stopSilentInterval = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
 
     const _checkNotificationsPermissions = async () => {
-      const {pushNotifications} = notificationsState;
+      const appToggleOn = pushNotificationsRef.current;
       const systemEnabled = await checkNotificationsPermissions();
-      if (!systemEnabled && pushNotifications) {
-        dispatch(AppEffects.setNotifications(false));
-      } else if (systemEnabled && pushNotifications) {
-        // Ignore warning: Setting a timer for long period of time...
-        LogBox.ignoreLogs(['Setting a timer']);
-        if (notificationsState && notificationsState.pushNotifications) {
+      if (!isMounted) return;
+
+      const prev = lastSystemEnabledRef.current;
+
+      if (prev === null) {
+        lastSystemEnabledRef.current = systemEnabled;
+
+        if (!systemEnabled && appToggleOn) {
+          dispatch(AppEffects.setNotifications(false));
+          stopSilentInterval();
+        } else if (systemEnabled && appToggleOn) {
           dispatch(AppEffects.renewSubscription());
           // Subscribe for silent push notifications
-          silentPushInterval = setInterval(() => {
+          startSilentInterval();
+        }
+        return;
+      }
+
+      if (prev !== systemEnabled) {
+        lastSystemEnabledRef.current = systemEnabled;
+        if (systemEnabled) {
+          //  changed from off->on in phone Settings
+          if (appToggleOn) {
             dispatch(AppEffects.renewSubscription());
-          }, 3 * 60 * 1000); // 3 min
+            startSilentInterval();
+          }
+        } else {
+          // changed from on->off in phone Settings
+          if (appToggleOn) {
+            dispatch(AppEffects.setNotifications(false));
+          }
+          stopSilentInterval();
         }
       }
     };
@@ -426,10 +468,9 @@ export default () => {
     );
 
     return () => {
+      isMounted = false;
       subscriptionAppStateChange.remove();
-      if (silentPushInterval) {
-        clearInterval(silentPushInterval);
-      }
+      stopSilentInterval();
     };
   }, []);
 
