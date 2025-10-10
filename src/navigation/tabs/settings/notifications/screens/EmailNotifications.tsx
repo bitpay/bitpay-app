@@ -12,6 +12,7 @@ import {
   Hr,
 } from '../../../../../components/styled/Containers';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 
 const EmailNotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -82,11 +83,9 @@ const EmailNotifications = () => {
                 <SettingDescription>{currentEmail}</SettingDescription>
               ) : null}
             </SettingRow>
-            <Checkbox
-              disabled={!user}
-              radio={true}
-              onPress={onPress}
-              checked={notificationsAccepted}
+            <ToggleSwitch
+              onChange={onPress}
+              isEnabled={notificationsAccepted}
             />
           </SettingRowContainer>
           <Hr />
