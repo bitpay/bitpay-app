@@ -15,6 +15,7 @@ import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../../store/log';
 import {Black, Feather, LightBlack, White} from '../../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {storage} from '../../../../../store';
 
 const ScrollContainer = styled.ScrollView``;
 
@@ -46,6 +47,8 @@ const StorageUsage: React.FC = () => {
   const [customTokenStorage, setCustomTokenStorage] = useState<string>('');
   const [contactStorage, setContactStorage] = useState<string>('');
   const [ratesStorage, setRatesStorage] = useState<string>('');
+  const [backupStorage, setBackupStorage] = useState<string>('');
+  const [shopCatalogStorage, setShopCatalogStorage] = useState<string>('');
 
   const giftCards = useAppSelector(
     ({APP, SHOP}) => SHOP.giftCards[APP.network],
@@ -93,6 +96,51 @@ const StorageUsage: React.FC = () => {
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         dispatch(LogActions.error('[setAppSize] Error ', errStr));
+      }
+    };
+    const _setShopCatalogStorage = async () => {
+      try {
+        const root = storage.getString('persist:root');
+        if (root) {
+          try {
+            const parsed = JSON.parse(root);
+            const data = parsed?.SHOP_CATALOG;
+            const bytes = data ? JSON.stringify(data).length : 0;
+            setShopCatalogStorage(formatBytes(bytes));
+          } catch (_) {
+            setShopCatalogStorage('0 Bytes');
+          }
+        } else {
+          setShopCatalogStorage('0 Bytes');
+        }
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setShopCatalogStorage] Error ', errStr));
+      }
+    };
+    const _setBackupStorage = async () => {
+      try {
+        // Filesystem backup created by fs-backup.ts
+        const baseDir = RNFS.CachesDirectoryPath + '/bitpay/redux';
+        const finalFile = baseDir + '/persist-root.json';
+        const bakFile = finalFile + '.bak';
+
+        let bytes = 0;
+        const finalExists = await RNFS.exists(finalFile);
+        if (finalExists) {
+          const stat = await RNFS.stat(finalFile);
+          bytes = Number(stat.size) || 0;
+        } else {
+          const bakExists = await RNFS.exists(bakFile);
+          if (bakExists) {
+            const stat = await RNFS.stat(bakFile);
+            bytes = Number(stat.size) || 0;
+          }
+        }
+        setBackupStorage(formatBytes(bytes));
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        dispatch(LogActions.error('[setBackupStorage] Error ', errStr));
       }
     };
     const _setDeviceStorage = async () => {
@@ -195,6 +243,8 @@ const StorageUsage: React.FC = () => {
     _setCustomTokensStorage();
     _setContactStorage();
     _setRatesStorage();
+    _setBackupStorage();
+    _setShopCatalogStorage();
   }, [dispatch]);
 
   return (
@@ -269,6 +319,20 @@ const StorageUsage: React.FC = () => {
             <SettingTitle>{t('Rates')}</SettingTitle>
 
             <Button buttonType="pill">{ratesStorage}</Button>
+          </Setting>
+
+          <Hr />
+          <Setting>
+            <SettingTitle>{t('Shop Catalog')}</SettingTitle>
+
+            <Button buttonType="pill">{shopCatalogStorage}</Button>
+          </Setting>
+
+          <Hr />
+          <Setting>
+            <SettingTitle>{t('Filesystem Backup')}</SettingTitle>
+
+            <Button buttonType="pill">{backupStorage}</Button>
           </Setting>
         </SettingsComponent>
       </ScrollContainer>
