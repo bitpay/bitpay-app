@@ -75,14 +75,14 @@ export async function registerPasskey(
     );
     const result: PasskeyCreateResult = await Passkey.create(creationOptions);
 
-    await post(
+    const res = await post(
       BASE_BITPAY_URLS[network] + PASSKEY_API_REGISTER_VERIFY,
       {
         credential: result,
       },
       token,
     );
-    return true;
+    return res.success || false;
   } catch (error) {
     const errStr =
       error instanceof Error ? error.message : JSON.stringify(error);
@@ -105,11 +105,12 @@ export async function signInWithPasskey(
     const _reqOptions: PasskeyGetRequest = authChallenge.options;
     const result: PasskeyGetResult = await Passkey.get(_reqOptions);
 
-    return await post(
+    const res = await post(
       BASE_BITPAY_URLS[network] + PASSKEY_API_AUTH_VERIFY,
       {credential: result},
       token,
     );
+    return res.success || false;
   } catch (error) {
     const errStr =
       error instanceof Error ? error.message : JSON.stringify(error);

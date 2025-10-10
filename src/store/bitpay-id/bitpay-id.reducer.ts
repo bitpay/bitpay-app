@@ -4,6 +4,7 @@ import {
   SecuritySettings,
   Session,
   User,
+  PasskeyCredential,
 } from './bitpay-id.models';
 import {Network} from '../../constants';
 
@@ -81,6 +82,7 @@ export interface BitPayIdState {
   fetchDoshTokenStatus: FetchDoshTokenStatus;
   forgotPasswordEmailStatus: ForgotPasswordEmailStatus;
   passkeyStatus: boolean;
+  passkeyCredentials: PasskeyCredential[] | [];
 }
 
 const initialState: BitPayIdState = {
@@ -131,6 +133,7 @@ const initialState: BitPayIdState = {
   fetchDoshTokenStatus: null,
   forgotPasswordEmailStatus: null,
   passkeyStatus: false,
+  passkeyCredentials: [],
 };
 
 export const bitPayIdReducer = (
@@ -423,6 +426,13 @@ export const bitPayIdReducer = (
       return {
         ...state,
         passkeyStatus: action.payload.passkey,
+      };
+    }
+
+    case BitPayIdActionTypes.PASSKEY_CREDENTIALS: {
+      return {
+        ...state,
+        passkeyCredentials: action.payload,
       };
     }
 

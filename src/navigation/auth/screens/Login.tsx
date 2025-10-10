@@ -270,6 +270,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
           <AuthActionRow>
             <Button
+              buttonStyle={'secondary'}
               accessibilityLabel="login-button"
               onPress={loginWithPasskey}
               disabled={loginStatus === 'loading'}>

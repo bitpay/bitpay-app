@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
@@ -7,11 +7,15 @@ import {
   Setting,
   SettingDescription,
   SettingTitle,
+  SettingIcon,
+  SheetContainer,
+  SheetParams,
 } from '../../../../../components/styled/Containers';
 import Button from '../../../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
 import {LogActions} from '../../../../../store/log';
 import {
+  Action,
   Black,
   Feather,
   LightBlack,
@@ -24,21 +28,30 @@ import {RootState} from '../../../../../store';
 import {Session, User} from '../../../../../store/bitpay-id/bitpay-id.models';
 import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 import {
-  getPasskeyStatus,
   getPasskeyCredentials,
   registerPasskey,
   removePasskey,
+  getPasskeyStatus,
 } from '../../../../../utils/passkey';
 import {FlashList} from '@shopify/flash-list';
 import {Network} from '../../../../../constants';
 import DeleteConfirmationModal from '../../../../../navigation/wallet/components/DeleteConfirmationModal';
 import PasskeyHeader from '../../../../../../assets/img/passkey-header.svg';
+import PasskeyPersonSetup from '../../../../../../assets/img/passkey-person-setup.svg';
 import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../../../store/app/app.actions';
-import {setPasskeyStatus} from '../../../../../store/bitpay-id/bitpay-id.actions';
+import {
+  setPasskeyStatus,
+  setPasskeyCredentials,
+} from '../../../../../store/bitpay-id/bitpay-id.actions';
+import {PasskeyCredential} from '../../../../../store/bitpay-id/bitpay-id.models';
+import Settings from '../../../../../components/settings/Settings';
+import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
+import {TouchableOpacity} from '../../../../../components/base/TouchableOpacity';
+import {BaseText} from '../../../../../components/styled/Text';
 
 const ScrollContainer = styled.ScrollView``;
 
@@ -84,6 +97,32 @@ const PasskeyDescription = styled(SettingDescription)`
   margin-bottom: 10px;
 `;
 
+const OptionContainer = styled(TouchableOpacity)<SheetParams>`
+  flex-direction: row;
+  align-items: stretch;
+  padding-${({placement}) => placement}: 41px;
+`;
+
+const OptionTextContainer = styled.View`
+  align-items: flex-start;
+  justify-content: space-around;
+  flex-direction: column;
+  margin: 0 25px;
+`;
+
+const OptionTitleText = styled(BaseText)`
+  font-style: normal;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 28px;
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
+`;
+
+const OptionIconContainer = styled.View`
+  justify-content: center;
+  width: 24px;
+`;
+
 const PasskeyScreen: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -93,21 +132,41 @@ const PasskeyScreen: React.FC = () => {
   const user = useSelector<RootState, User | null>(
     ({BITPAY_ID}) => BITPAY_ID.user[network],
   );
-  const [passkeyCredentials, setPasskeyCredentials] = useState<Array<any>>([]);
+  const passkeyStatus = useSelector<RootState, boolean>(
+    ({BITPAY_ID}) => BITPAY_ID.passkeyStatus,
+  );
+  const passkeyCredentials = useSelector<RootState, Array<PasskeyCredential>>(
+    ({BITPAY_ID}) => BITPAY_ID.passkeyCredentials,
+  );
   const [isVisible, setIsVisible] = useState(false);
   const [passkeyId, setPasskeyId] = useState<string>('');
-  const [checkingPasskey, setCheckingPasskey] = useState<boolean>(false);
+  const [showOptions, setShowOptions] = useState(false);
+
+  useLayoutEffect(() => {
+    if (passkeyCredentials && passkeyCredentials.length > 0) {
+      navigation.setOptions({
+        headerRight: () => <Settings onPress={() => setShowOptions(true)} />,
+      });
+    }
+  }, [navigation]);
 
   const createPasskey = async () => {
-    if (!user || !session?.isAuthenticated) return;
+    setShowOptions(false);
+    if (!user || !session?.isAuthenticated) {
+      dispatch(LogActions.warn('[PasskeyScreen] User not authenticated'));
+      navigation.navigate('Login');
+      return;
+    }
     await dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
     const registeredPasskey = await registerPasskey(
       user.email,
       network,
       session.csrfToken,
     );
+    dispatch(setPasskeyStatus(registeredPasskey));
     dispatch(dismissOnGoingProcessModal());
     if (registeredPasskey) {
+      await fetchCredentials();
       dispatch(
         showBottomNotificationModal({
           type: 'success',
@@ -146,36 +205,20 @@ const PasskeyScreen: React.FC = () => {
     dispatch(BitPayIdEffects.startFetchSession());
   }, []);
 
-  useEffect(() => {
-    const checkStatus = async () => {
-      if (checkingPasskey) {
-        return;
-      }
-      if (!user) return;
-      if (!session?.isAuthenticated) {
-        dispatch(LogActions.warn('[PasskeyScreen] User not authenticated'));
-        navigation.navigate('Login');
-        return;
-      }
-      setCheckingPasskey(true);
-      const hasPasskey = await getPasskeyStatus(
+  const fetchCredentials = async () => {
+    if (passkeyStatus && user && session?.isAuthenticated) {
+      const _passkeyCredentials = await getPasskeyCredentials(
         user.email,
         network,
         session.csrfToken,
       );
-      dispatch(setPasskeyStatus(hasPasskey));
-      if (hasPasskey) {
-        const credentials = await getPasskeyCredentials(
-          user.email,
-          network,
-          session.csrfToken,
-        );
-        setPasskeyCredentials(credentials);
-      }
-      setCheckingPasskey(false);
-    };
-    checkStatus();
-  }, [session]);
+      dispatch(setPasskeyCredentials(_passkeyCredentials));
+    }
+  };
+
+  useEffect(() => {
+    fetchCredentials();
+  }, []);
 
   const renderPasskey = ({item, index}) => {
     const date = new Date(item.createdAt);
@@ -193,8 +236,9 @@ const PasskeyScreen: React.FC = () => {
           </PasskeyDescription>
         </PasskeyTitleContainer>
         <Button
+          height={40}
           style={{marginVertical: 15, width: '50%'}}
-          buttonType={'pill'}
+          buttonStyle={'secondary'}
           onPress={() => {
             setPasskeyId(item.id);
             setIsVisible(true);
@@ -207,6 +251,14 @@ const PasskeyScreen: React.FC = () => {
 
   const deletePasskey = async () => {
     await removePasskey(passkeyId, network, session.csrfToken);
+    if (user) {
+      const _passkeyStatus = await getPasskeyStatus(
+        user.email,
+        network,
+        session.csrfToken,
+      );
+      dispatch(setPasskeyStatus(_passkeyStatus));
+    }
     setIsVisible(false);
     setPasskeyId('');
   };
@@ -220,7 +272,10 @@ const PasskeyScreen: React.FC = () => {
               <SettingTitle>{t('Setup a passkey')}</SettingTitle>
             </HeaderTitle>
             <SettingsComponent>
-              <Setting>
+              <Setting style={{marginTop: 10}}>
+                <SettingIcon style={{marginRight: 20, marginBottom: 10}}>
+                  <PasskeyPersonSetup />
+                </SettingIcon>
                 <SettingTitle>
                   Passkeys are encrypted digital keys you create using your
                   fingerprint, face, or screen lock.
@@ -238,11 +293,19 @@ const PasskeyScreen: React.FC = () => {
             />
           </>
         )}
-        {user && session?.isAuthenticated && (
-          <CreateButtonContainer>
-            <Button onPress={createPasskey}>Create a Passkey</Button>
-          </CreateButtonContainer>
-        )}
+        {user &&
+          session?.isAuthenticated &&
+          passkeyCredentials.length === 0 && (
+            <CreateButtonContainer>
+              <Button
+                style={{width: '60%'}}
+                height={45}
+                buttonStyle={'secondary'}
+                onPress={createPasskey}>
+                Create a Passkey
+              </Button>
+            </CreateButtonContainer>
+          )}
       </ScrollContainer>
       <DeleteConfirmationModal
         description={t(
@@ -252,6 +315,23 @@ const PasskeyScreen: React.FC = () => {
         isVisible={isVisible}
         onPressCancel={() => setIsVisible(false)}
       />
+
+      <SheetModal
+        modalLibrary={'bottom-sheet'}
+        placement={'bottom'}
+        isVisible={showOptions}
+        onBackdropPress={() => setShowOptions(false)}>
+        <SheetContainer placement={'bottom'}>
+          <OptionContainer placement={'bottom'} onPress={createPasskey}>
+            <OptionIconContainer>
+              <PasskeyPersonSetup />
+            </OptionIconContainer>
+            <OptionTextContainer>
+              <OptionTitleText>{t('Create a Passkey')}</OptionTitleText>
+            </OptionTextContainer>
+          </OptionContainer>
+        </SheetContainer>
+      </SheetModal>
     </SettingsContainer>
   );
 };

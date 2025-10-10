@@ -260,10 +260,20 @@ export const startLoginWithPasskey =
 
       // Passkey
       dispatch(LogActions.info('Authenticating BitPayID Passkey...'));
-      const resp = await signInWithPasskey(
+      const signedStatus = await signInWithPasskey(
         APP.network,
         BITPAY_ID.session.csrfToken,
       );
+      if (!signedStatus) {
+        dispatch(
+          LogActions.error(
+            'Failed to sign in with BitPayID Passkey. Please try again.',
+          ),
+        );
+        return;
+      }
+      // Set passkey status
+      dispatch(setPasskeyStatus(signedStatus));
 
       // refresh session
       const session = await AuthApi.fetchSession(APP.network);
@@ -271,7 +281,7 @@ export const startLoginWithPasskey =
       dispatch(
         LogActions.info(
           'Successfully authenticated BitPayID Passkey: ',
-          resp.success,
+          signedStatus,
         ),
       );
 
@@ -289,7 +299,6 @@ export const startLoginWithPasskey =
         }),
       );
 
-      dispatch(CardActions.isJoinedWaitlist(false));
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err) {
       let errMsg;
@@ -333,15 +342,23 @@ export const startLogin =
       dispatch(setPasskeyStatus(hasPasskey));
       if (hasPasskey) {
         dispatch(LogActions.info('Authenticating with Passkey...'));
-        const resp = await signInWithPasskey(
+        const signedStatus = await signInWithPasskey(
           APP.network,
           BITPAY_ID.session.csrfToken,
           email,
         );
+        if (!signedStatus) {
+          dispatch(
+            LogActions.error(
+              'Failed to sign in with Passkey. Please try again.',
+            ),
+          );
+          return;
+        }
         dispatch(
           LogActions.info(
             'Successfully authenticated with Passkey: ',
-            resp.success,
+            signedStatus,
           ),
         );
         session = await AuthApi.fetchSession(APP.network);
@@ -640,6 +657,7 @@ export const startDisconnectBitPayId =
         await AuthApi.logout(APP.network, csrfToken);
         dispatch(Analytics.track('Log Out User success', {}));
       }
+      dispatch(setPasskeyStatus(false));
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.debug('An error occurred while logging out.'));
