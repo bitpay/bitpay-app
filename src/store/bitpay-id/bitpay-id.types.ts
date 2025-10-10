@@ -4,6 +4,7 @@ import {
   SecuritySettings,
   Session,
   User,
+  PasskeyCredential,
 } from './bitpay-id.models';
 import {
   EmailPairingStatus,
@@ -56,6 +57,8 @@ export enum BitPayIdActionTypes {
   SUCCESS_FETCH_RECEIVING_ADDRESSES = 'BitPayId/SUCCESS_FETCH_RECEIVING_ADDRESSES',
   SUCCESS_FETCH_SECURITY_SETTINGS = 'BitPayId/SUCCESS_FETCH_SECURITY_SETTINGS',
   SUCCESS_RESET_METHOD_USER = 'BitPayId/SUCCESS_RESET_METHOD_USER',
+  PASSKEY_STATUS = 'BitPayId/PASSKEY_STATUS',
+  PASSKEY_CREDENTIALS = 'BitPayId/PASSKEY_CREDENTIALS',
 }
 
 interface SuccessFetchSession {
@@ -241,6 +244,18 @@ interface SuccessFetchSecuritySettings {
   };
 }
 
+interface PasskeyStatus {
+  type: typeof BitPayIdActionTypes.PASSKEY_STATUS;
+  payload: {
+    passkey: boolean;
+  };
+}
+
+interface PasskeyCredentials {
+  type: typeof BitPayIdActionTypes.PASSKEY_CREDENTIALS;
+  payload: PasskeyCredential[];
+}
+
 export type BitPayIdActionType =
   | SuccessFetchSession
   | FailedFetchSession
@@ -257,6 +272,8 @@ export type BitPayIdActionType =
   | FailedLogin
   | PendingLogin
   | UpdateLoginStatus
+  | PasskeyStatus
+  | PasskeyCredentials
 
   // auth + two factor
   | SuccessSubmitTwoFactorAuth

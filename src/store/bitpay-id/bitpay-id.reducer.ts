@@ -4,11 +4,11 @@ import {
   SecuritySettings,
   Session,
   User,
+  PasskeyCredential,
 } from './bitpay-id.models';
 import {Network} from '../../constants';
 
 export const bitPayIdReduxPersistBlackList: (keyof BitPayIdState)[] = [
-  'session',
   'fetchSessionStatus',
   'createAccountStatus',
   'createAccountError',
@@ -81,6 +81,8 @@ export interface BitPayIdState {
   fetchBasicInfoStatus: FetchBasicInfoStatus;
   fetchDoshTokenStatus: FetchDoshTokenStatus;
   forgotPasswordEmailStatus: ForgotPasswordEmailStatus;
+  passkeyStatus: boolean;
+  passkeyCredentials: PasskeyCredential[] | [];
 }
 
 const initialState: BitPayIdState = {
@@ -130,6 +132,8 @@ const initialState: BitPayIdState = {
   fetchBasicInfoStatus: null,
   fetchDoshTokenStatus: null,
   forgotPasswordEmailStatus: null,
+  passkeyStatus: false,
+  passkeyCredentials: [],
 };
 
 export const bitPayIdReducer = (
@@ -415,6 +419,20 @@ export const bitPayIdReducer = (
           ...state.securitySettings,
           [action.payload.network]: action.payload.securitySettings,
         },
+      };
+    }
+
+    case BitPayIdActionTypes.PASSKEY_STATUS: {
+      return {
+        ...state,
+        passkeyStatus: action.payload.passkey,
+      };
+    }
+
+    case BitPayIdActionTypes.PASSKEY_CREDENTIALS: {
+      return {
+        ...state,
+        passkeyCredentials: action.payload,
       };
     }
 
