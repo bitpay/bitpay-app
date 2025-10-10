@@ -563,7 +563,8 @@ export default () => {
 
     const eventEmitter = new NativeEventEmitter(SilentPushEvent);
     eventEmitter.addListener('SilentPushNotification', onMessageReceived);
-    return () => DeviceEventEmitter.removeAllListeners('SilentPushNotification');
+    return () =>
+      DeviceEventEmitter.removeAllListeners('SilentPushNotification');
   }, [dispatch]);
 
   // IAM handler
