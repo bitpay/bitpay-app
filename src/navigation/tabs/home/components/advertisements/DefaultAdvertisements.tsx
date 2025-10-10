@@ -56,7 +56,7 @@ const DefaultAdvertisements = (
       cardDescription: t(
         'Buy direct using your debit, credit card, or Apple Pay.',
       ),
-      url: `${APP_DEEPLINK_PREFIX}buy/50`,
+      url: `${APP_DEEPLINK_PREFIX}buy/100`,
       openURLInWebView: false,
     },
   ];

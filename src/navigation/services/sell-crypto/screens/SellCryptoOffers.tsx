@@ -147,7 +147,7 @@ export type SellCryptoOffersScreenParams = {
 export type CryptoOffer = {
   key: SellCryptoExchangeKey;
   showOffer: boolean;
-  logo: JSX.Element;
+  logo: React.JSX.Element;
   expanded: boolean;
   sellClicked: boolean;
   fiatCurrency: string;
