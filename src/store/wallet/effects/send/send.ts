@@ -1403,7 +1403,6 @@ export const publishAndSign =
           LogActions.info(`resultTx [publishAndSign]: ${resultTx?.txid}`),
         );
 
-        // Check if ConfirmTx notification is enabled - only BTC
         if (APP.notificationsAccepted && wallet.chain === 'btc') {
           wallet.txConfirmationSubscribe(
             {txid: resultTx?.id, amount: txp.amount},
