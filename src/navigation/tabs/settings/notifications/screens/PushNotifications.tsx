@@ -6,11 +6,10 @@ import {AppEffects} from '../../../../../store/app';
 import {
   Hr,
   ScreenGutter,
-  SettingDescription,
   SettingTitle,
 } from '../../../../../components/styled/Containers';
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
-import Checkbox from '../../../../../components/checkbox/Checkbox';
+import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 import {SettingsContainer} from '../../SettingsRoot';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import styled from 'styled-components/native';
@@ -81,7 +80,7 @@ const PushNotifications = () => {
                 <SettingRow style={{flex: 1}}>
                   <SettingTitle style={{flexGrow: 0}}>{title}</SettingTitle>
                 </SettingRow>
-                <Checkbox radio={true} onPress={onPress} checked={checked} />
+                <ToggleSwitch onChange={onPress} isEnabled={checked} />
               </SettingRowContainer>
               <Hr />
             </View>
