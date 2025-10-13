@@ -1,8 +1,8 @@
 diff --git a/node_modules/react-native-text-input-mask/android/build.gradle b/node_modules/react-native-text-input-mask/android/build.gradle
-index c94f33f..c045381 100644
+index c94f33f..449778c 100644
 --- a/node_modules/react-native-text-input-mask/android/build.gradle
 +++ b/node_modules/react-native-text-input-mask/android/build.gradle
-@@ -27,7 +27,7 @@ android {
+@@ -27,10 +27,10 @@ android {
  
  buildscript {
      ext {
@@ -10,7 +10,20 @@ index c94f33f..c045381 100644
 +        kotlinVersion = '1.6.10'
      }
      repositories {
-         jcenter()
+-        jcenter()
++        mavenCentral()
+         google()
+         mavenCentral()
+     }
+@@ -41,7 +41,7 @@ buildscript {
+ }
+ 
+ repositories {
+-    jcenter()
++    mavenCentral()
+     google()
+     mavenCentral()
+     maven {
 diff --git a/node_modules/react-native-text-input-mask/ios/TextInputMask.swift b/node_modules/react-native-text-input-mask/ios/TextInputMask.swift
 index 7626c50..8131a1a 100644
 --- a/node_modules/react-native-text-input-mask/ios/TextInputMask.swift

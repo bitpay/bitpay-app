@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-user-agent/android/build.gradle b/node_modules/react-native-user-agent/android/build.gradle
+index 77ec183..54fee66 100644
+--- a/node_modules/react-native-user-agent/android/build.gradle
++++ b/node_modules/react-native-user-agent/android/build.gradle
+@@ -1,7 +1,7 @@
+ buildscript {
+     repositories {
+         google()
+-        jcenter()
++        mavenCentral()
+     }
+     def buildGradleVersion = ext.has('buildGradlePluginVersion') ? ext.get('buildGradlePluginVersion') : '3.5.3'
+ 
