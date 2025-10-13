@@ -528,8 +528,7 @@ export const ValidateCoinAddress = (
 ) => {
   const extractAddress = (data: string) => {
     const prefix = /^[a-z]+:/i;
-    const params =
-      /([\?\&](amount|gas|gasLimit|gasPrice|value)=(\d+([\,\.]\d+)?))+/i;
+    const params = /\?.*/;
     return data.replace(prefix, '').replace(params, '');
   };
   switch (coin) {
