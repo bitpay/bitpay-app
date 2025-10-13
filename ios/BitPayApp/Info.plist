@@ -9,6 +9,8 @@
 		<key>Endpoint</key>
 		<string>sdk.iad-05.braze.com</string>
 	</dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
