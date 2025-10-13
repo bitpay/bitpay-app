@@ -186,9 +186,18 @@ export default ({
       debounce((text: string) => {
         setSearchVal(text);
         const lowerCaseText = text.toLocaleLowerCase();
-        const newSearchResults = availableGiftCards.filter(giftCard =>
-          giftCard.displayName.toLowerCase().includes(lowerCaseText),
-        );
+        const newSearchResults = availableGiftCards.filter(giftCard => {
+          const matchesDisplayName = giftCard.displayName
+            .toLowerCase()
+            .includes(lowerCaseText);
+
+          const matchesSupportedBrands =
+            giftCard.supportedBrands?.some(brand =>
+              brand.toLowerCase().includes(lowerCaseText),
+            ) ?? false;
+
+          return matchesDisplayName || matchesSupportedBrands;
+        });
         setSearchResults(newSearchResults);
         dispatch(Analytics.track('Searched Gift Cards', {search: text}));
       }, 300),
