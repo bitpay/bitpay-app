@@ -7,7 +7,7 @@ import {useTheme} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 import {HeaderTitle} from '../../../components/styled/Text';
 import General from './components/General';
-import Security from './components/Security';
+import SecurityHome from './security/screens/SecurityHome';
 import Notifications from './components/Notifications';
 import Connections from './components/Connections';
 import ExternalServices from './components/ExternalServices';
@@ -102,7 +102,7 @@ const SettingsDetails = ({
       />
       <Stack.Screen
         name="Security"
-        component={Security}
+        component={SecurityHome}
         options={{
           headerTitle: () => <HeaderTitle>{t('Security')}</HeaderTitle>,
         }}

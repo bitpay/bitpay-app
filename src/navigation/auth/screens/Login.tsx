@@ -1,12 +1,12 @@
 import {yupResolver} from '@hookform/resolvers/yup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import styled from 'styled-components/native';
 import React, {useEffect, useRef, useState} from 'react';
 import {Controller, useForm} from 'react-hook-form';
 import {useTranslation} from 'react-i18next';
 import {
   Keyboard,
   NativeSyntheticEvent,
-  SafeAreaView,
   TextInput,
   TextInputEndEditingEventData,
 } from 'react-native';
@@ -15,6 +15,7 @@ import BoxInput from '../../../components/form/BoxInput';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Link} from '../../../components/styled/Text';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
+import {Network} from '../../../constants';
 import yup from '../../../lib/yup';
 import {navigationRef, RootStacks} from '../../../Root';
 import {AppActions} from '../../../store/app';
@@ -26,12 +27,14 @@ import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
   AuthActionsContainer,
-  AuthActionText,
   AuthRowContainer,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
 import {CommonActions} from '@react-navigation/native';
 import {TabsScreens} from '../../tabs/TabsStack';
+import PasskeyPersonSetup from '../../../../assets/img/passkey-person-setup.svg';
+import IconCreateAccount from '../../../../assets/img/icon-create-account.svg';
+import {LightBlack, Slate30, SlateDark, White} from '../../../styles/colors';
 
 export type LoginScreenParamList =
   | {
@@ -54,6 +57,40 @@ interface LoginFormFieldValues {
   password: string;
 }
 
+const LoginContainer = styled.View`
+  flex: 1;
+`;
+
+const DividerContainer = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+`;
+
+const DividerLine = styled.View`
+  flex: 1;
+  height: 1px;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+`;
+
+const DividerText = styled.Text`
+  margin: 0 18px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+const FooterContainer = styled.View`
+  margin-top: 32px;
+  margin-bottom: 32px;
+`;
+
+const FooterLink = styled(Link)`
+  font-size: 18px;
+  text-align: center;
+`;
+
 const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -62,13 +99,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
     handleSubmit,
     getValues,
     setValue,
-    formState: {errors},
+    formState: {errors, isDirty},
   } = useForm<LoginFormFieldValues>({resolver: yupResolver(schema)});
-  const network = useAppSelector(({APP}) => APP.network);
+  const network: Network = useAppSelector(({APP}) => APP.network);
   const session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
   const loginStatus = useAppSelector(({BITPAY_ID}) => BITPAY_ID.loginStatus);
   const loginError = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.loginError || '',
+  );
+  const passkeyStatus = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.passkeyStatus,
   );
   const [isCaptchaModalVisible, setCaptchaModalVisible] = useState(false);
   const passwordRef = useRef<TextInput>(null);
@@ -91,7 +131,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
       const parentNav = navigation.getParent();
 
-      if (parentNav?.canGoBack()) {
+      if (!passkeyStatus) {
+        navigation.navigate(AuthScreens.SECURE_ACCOUNT);
+      } else if (parentNav?.canGoBack()) {
         parentNav.goBack();
       } else {
         navigationRef.dispatch(
@@ -153,7 +195,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   }, [dispatch, onLoginSuccess, navigation, loginStatus, loginError, t]);
 
   const onSubmit = handleSubmit(
-    ({email, password}) => {
+    async ({email, password}) => {
       Keyboard.dismiss();
       if (session.captchaDisabled) {
         dispatch(BitPayIdEffects.startLogin({email, password}));
@@ -165,6 +207,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       Keyboard.dismiss();
     },
   );
+
+  const loginWithPasskey = () => {
+    // Use the same logic as the login button
+    dispatch(BitPayIdEffects.startLogin({}));
+  };
 
   const handleAutofill = (
     fieldName: keyof LoginFormFieldValues,
@@ -197,7 +244,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   };
 
   return (
-    <SafeAreaView accessibilityLabel="login-view">
+    <LoginContainer accessibilityLabel="login-view">
       <AuthFormContainer accessibilityLabel="auth-form-container">
         <AuthRowContainer>
           <Controller
@@ -248,32 +295,42 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
 
         <AuthActionsContainer accessibilityLabel="auth-cta-container">
           <AuthActionRow>
-            <Button accessibilityLabel="login-button" onPress={onSubmit}>
+            <Button
+              buttonStyle={'secondary'}
+              accessibilityLabel="login-button"
+              onPress={onSubmit}
+              disabled={!isDirty}>
               {t('Log In')}
             </Button>
           </AuthActionRow>
 
-          <AuthActionRow>
-            <AuthActionText>
-              {t("Don't have an account?")}{' '}
-              <Link
-                accessibilityLabel="create-account-button"
-                onPress={() => {
-                  navigation.navigate('CreateAccount');
-                }}>
-                {t('Create Account')}
-              </Link>
-            </AuthActionText>
-          </AuthActionRow>
+          <DividerContainer>
+            <DividerLine />
+            <DividerText>or</DividerText>
+            <DividerLine />
+          </DividerContainer>
 
+          <AuthActionRow style={{marginBottom: 16}}>
+            <Button
+              buttonStyle={'secondary'}
+              accessibilityLabel="login-button"
+              onPress={loginWithPasskey}
+              disabled={loginStatus === 'loading'}
+              icon={<PasskeyPersonSetup width={28} height={28} />}>
+              {t('Log In with Passkey')}
+            </Button>
+          </AuthActionRow>
           <AuthActionRow>
-            <AuthActionText>
-              <Link
-                accessibilityLabel="trouble-logging-in-button"
-                onPress={() => onTroubleLoggingIn()}>
-                {t('Trouble logging in?')}
-              </Link>
-            </AuthActionText>
+            <Button
+              buttonStyle={'secondary'}
+              accessibilityLabel="create-account-button"
+              onPress={() => {
+                navigation.navigate('CreateAccount');
+              }}
+              disabled={loginStatus === 'loading'}
+              icon={<IconCreateAccount width={28} height={28} />}>
+              {t('Create an Account')}
+            </Button>
           </AuthActionRow>
         </AuthActionsContainer>
 
@@ -286,7 +343,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
           onCancel={onCaptchaCancel}
         />
       </AuthFormContainer>
-    </SafeAreaView>
+      <FooterContainer>
+        <FooterLink
+          accessibilityLabel="trouble-logging-in-button"
+          onPress={() => onTroubleLoggingIn()}>
+          {t('Trouble logging in?')}
+        </FooterLink>
+      </FooterContainer>
+    </LoginContainer>
   );
 };
 

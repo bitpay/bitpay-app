@@ -1,7 +1,6 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
-import {useSelector} from 'react-redux';
 import styled from 'styled-components/native';
 import Avatar from '../../../components/avatar/BitPayIdAvatar';
 import {
@@ -16,9 +15,6 @@ import {
   Paragraph,
 } from '../../../components/styled/Text';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {Network} from '../../../constants';
-import {RootState} from '../../../store';
-import {User} from '../../../store/bitpay-id/bitpay-id.models';
 import {ShopActions, ShopEffects} from '../../../store/shop';
 import {
   LightBlack,
@@ -33,6 +29,7 @@ import ChevronRight from '../components/ChevronRight';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {SectionSpacer} from '../../tabs/shop/components/styled/ShopTabComponents';
+import {SecurityScreens} from '../../tabs/settings/security/SecurityGroup';
 
 type ProfileProps = NativeStackScreenProps<
   BitpayIdGroupParamList,
@@ -73,10 +70,9 @@ const EmailAddressNotVerified = styled(Paragraph)`
 
 const SettingsSection = styled.View`
   flex-direction: row;
-  padding: 20px 0;
+  padding: 20px 16px;
   border: ${({theme: {dark}}) => (dark ? SlateDark : '#E5E5E5')};
   border-radius: 12px;
-  padding: 16px;
   margin-top: 16px;
   margin-bottom: 8px;
 `;
@@ -110,8 +106,8 @@ export const ProfileSettingsScreen = ({route}: ProfileProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const network = useSelector<RootState, Network>(({APP}) => APP.network);
-  const syncGiftCardPurchasesWithBitPayId = useSelector<RootState, boolean>(
+  const network = useAppSelector(({APP}) => APP.network);
+  const syncGiftCardPurchasesWithBitPayId = useAppSelector(
     ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
   );
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
@@ -183,18 +179,14 @@ export const ProfileSettingsScreen = ({route}: ProfileProps) => {
 
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
-              onPress={() =>
-                navigation.navigate(BitpayIdScreens.ENABLE_TWO_FACTOR)
-              }>
+              onPress={() => {
+                navigation.navigate(SecurityScreens.HOME);
+              }}>
               <SettingsItem>
                 <SettingsSectionBody>
-                  <SettingsSectionHeader>
-                    {t('Two-Factor Authentication')}
-                  </SettingsSectionHeader>
+                  <SettingsSectionHeader>{t('Security')}</SettingsSectionHeader>
                   <SettingsSectionDescription>
-                    {t(
-                      'Secure your account with time-based one-time 6-digit codes.',
-                    )}
+                    {t('Manage security of your device and BitPay account.')}
                   </SettingsSectionDescription>
                 </SettingsSectionBody>
                 <ChevronRight />

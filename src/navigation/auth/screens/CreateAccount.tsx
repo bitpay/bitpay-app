@@ -9,7 +9,7 @@ import Button from '../../../components/button/Button';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import BoxInput from '../../../components/form/BoxInput';
 import {Link} from '../../../components/styled/Text';
-import {URL} from '../../../constants';
+import {Network, URL} from '../../../constants';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
 import yup from '../../../lib/yup';
 import {navigationRef} from '../../../Root';
@@ -50,7 +50,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   const familyNameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
-  const network = useAppSelector(({APP}) => APP.network);
+  const network: Network = useAppSelector(({APP}) => APP.network);
   const session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
   const createAccountStatus = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.createAccountStatus,
