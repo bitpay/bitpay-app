@@ -14,14 +14,12 @@ import {
   SettingTitle,
   Hr,
 } from '../../../components/styled/Containers';
-import {RootState} from '../../../store';
-import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {useSelector} from 'react-redux';
 import {useScrollToTop} from '@react-navigation/native';
 import {SettingsScreens, SettingsGroupParamList} from './SettingsGroup';
 import {HeaderContainer} from '../../tabs/home/components/Styled';
 import {HeaderTitle} from '../../../components/styled/Text';
 import TabContainer from '../../tabs/TabContainer';
+import {useAppSelector} from '../../../utils/hooks';
 
 export type SettingsListType =
   | 'General'
@@ -84,7 +82,7 @@ const BitPayIdUserText = styled.Text<{bold?: boolean}>`
 const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
   const {redirectTo} = route.params || {};
   const {t} = useTranslation();
-  const user = useSelector<RootState, User | null>(
+  const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
   const listRef = useRef<FlashList<any>>(null);
