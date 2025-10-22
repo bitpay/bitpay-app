@@ -141,6 +141,7 @@ import {Key, Wallet} from '../wallet/wallet.models';
 import {AppDispatch} from '../../utils/hooks';
 import {isNotMobile} from '../../components/styled/Containers';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsGroup';
+import {NotificationsSettingsScreens} from '../../navigation/tabs/settings/notifications/NotificationsGroup';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -1354,6 +1355,16 @@ export const incomingLink =
           screen: TabsScreens.HOME,
           params,
         });
+      };
+    } else if (pathSegments[0] === 'email-opt-in') {
+      handler = () => {
+        navigationRef.navigate(
+          NotificationsSettingsScreens.EMAIL_NOTIFICATIONS,
+        );
+      };
+    } else if (pathSegments[0] === 'push-opt-in') {
+      handler = () => {
+        navigationRef.navigate(NotificationsSettingsScreens.PUSH_NOTIFICATIONS);
       };
     }
 
