@@ -69,6 +69,9 @@ import ExternalServicesSettingsGroup, {
 import AboutGroup, {
   AboutGroupParamList,
 } from './navigation/tabs/settings/about/AboutGroup';
+import SecurityGroup, {
+  SecurityGroupParamList,
+} from './navigation/tabs/settings/security/SecurityGroup';
 import AuthGroup, {AuthGroupParamList} from './navigation/auth/AuthGroup';
 import BuyCryptoGroup, {
   BuyCryptoGroupParamList,
@@ -191,7 +194,8 @@ export type RootStackParamList = {
   BillGroupParamList &
   WalletGroupParamList &
   ZenLedgerGroupParamsList &
-  SettingsGroupParamList;
+  SettingsGroupParamList &
+  SecurityGroupParamList;
 
 // ROOT NAVIGATION CONFIG
 export enum RootStacks {
@@ -222,7 +226,8 @@ export type NavScreenParams = NavigatorScreenParams<
     NotificationsSettingsGroupParamsList &
     ZenLedgerGroupParamsList &
     NetworkFeePolicySettingsGroupParamsList &
-    SettingsGroupParamList
+    SettingsGroupParamList &
+    SecurityGroupParamList
 >;
 
 declare global {
@@ -1079,6 +1084,7 @@ export default () => {
                     {SwapCryptoGroup({SwapCrypto: Root, theme})}
                     {WalletConnectGroup({WalletConnect: Root, theme})}
                     {ZenLedgerGroup({ZenLedger: Root, theme})}
+                    {SecurityGroup({Security: Root, theme})}
                   </Root.Navigator>
                   <OnGoingProcessModal />
                   <InAppNotification />

@@ -1,5 +1,12 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useCallback, useEffect, useLayoutEffect, useRef} from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {Link} from '../../../components/styled/Text';
@@ -15,13 +22,20 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {CommonActions} from '@react-navigation/native';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {OnboardingScreens} from '../../../navigation/onboarding/OnboardingGroup';
 import {IntroScreens} from '../../../navigation/intro/IntroGroup';
+import AuthApi from '../../../api/auth';
+import {
+  ActiveOpacity,
+  TouchableOpacity,
+} from '../../../components/base/TouchableOpacity';
+import {IS_ANDROID} from '../../../constants';
+import Back from '../../../components/back/Back';
+import {ScreenGutter} from '../../../components/styled/Containers';
+import Spinner from '../../../components/spinner/Spinner';
 
-const POLL_INTERVAL = 1000 * 5;
-const POLL_TIMEOUT = 1000 * 60 * 5;
+const POLL_INTERVAL = 1000 * 15;
+const POLL_TIMEOUT = 1000 * 60 * 15;
 
 export type VerifyEmailScreenParamList = {} | undefined;
 
@@ -32,27 +46,37 @@ type VerifyEmailScreenProps = NativeStackScreenProps<
 
 const VerifyEmailParagraph = styled(AuthFormParagraph)`
   text-align: center;
+  padding: 0 ${ScreenGutter};
+`;
+
+const LogoContainer = styled.View`
+  align-items: center;
+  margin-bottom: 32px;
+  width: 100%;
 `;
 
 const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
-  const pollId = useRef<ReturnType<typeof setInterval>>();
+  const pollId = useRef<ReturnType<typeof setInterval>>(null);
   const pollCountdown = useRef(POLL_TIMEOUT);
-  const email = useAppSelector(
-    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network]?.email,
-  );
+  const network = useAppSelector(({APP}) => APP.network);
+  const email = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]?.email);
   const isVerified = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.session.verified,
   );
   const csrfToken = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.session.csrfToken,
   );
+  const passkeyStatus = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.passkeyStatus,
+  );
   const isTimedOut = pollCountdown.current <= 0;
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
   const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
+  const [emailVerified, setEmailVerified] = useState(false);
 
   const goToPreviousScreen = useCallback(() => {
     const routesStack = [];
@@ -62,7 +86,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
         {name: BitpayIdScreens.PROFILE, params: {}},
       );
     } else if (introCompleted) {
-      routesStack.push({name: OnboardingScreens.ONBOARDING_START, params: {}});
+      routesStack.push({name: OnboardingScreens.NOTIFICATIONS, params: {}});
     } else {
       routesStack.push({name: IntroScreens.START, params: {}});
     }
@@ -74,11 +98,28 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
     );
   }, [navigation]);
 
+  const onPressBackButtonRef = useRef(goToPreviousScreen);
+  onPressBackButtonRef.current = goToPreviousScreen;
+
+  const headerLeft = useMemo(() => {
+    return () => (
+      <TouchableOpacity
+        touchableLibrary={'react-native-gesture-handler'}
+        accessibilityLabel="cancel-button"
+        style={{marginLeft: IS_ANDROID ? 10 : 0}}
+        activeOpacity={ActiveOpacity}
+        onPress={onPressBackButtonRef.current}>
+        <Back opacity={1} />
+      </TouchableOpacity>
+    );
+  }, []);
+
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerLeft: () => null,
+      gestureEnabled: false,
+      headerLeft,
     });
-  }, [navigation]);
+  }, [navigation, headerLeft]);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -89,15 +130,10 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   }, []);
 
   useEffect(() => {
-    if (!email || !csrfToken) {
-      navigation.navigate('Login');
-    } else {
-      dispatch(BitPayIdEffects.startSendVerificationEmail()).catch(() => {
-        // If session is unauthenticated (expired), request another login
-        navigation.navigate('Login');
-      });
+    if (email && csrfToken) {
+      AuthApi.sendVerificationEmail(network, csrfToken);
     }
-  }, [email, csrfToken, navigation, dispatch]);
+  }, []);
 
   // start polling session until verified
   useEffect(() => {
@@ -134,14 +170,17 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
         }),
       );
 
-      goToPreviousScreen();
+      setEmailVerified(true);
+      if (!passkeyStatus) {
+        navigation.navigate(AuthScreens.SECURE_ACCOUNT);
+      } else {
+        goToPreviousScreen();
+      }
     }
   }, [dispatch, navigation, isVerified, csrfToken, email, goToPreviousScreen]);
 
-  const resendVerificationEmail = async () => {
-    dispatch(startOnGoingProcessModal('LOADING'));
-    await dispatch(BitPayIdEffects.startSendVerificationEmail());
-    dispatch(dismissOnGoingProcessModal());
+  const resendVerificationEmail = () => {
+    AuthApi.sendVerificationEmail(network, csrfToken);
   };
 
   const GoBackLink = () => (
@@ -155,6 +194,9 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   return (
     <SafeAreaView accessibilityLabel="verify-email-view">
       <AuthFormContainer accessibilityLabel="verify-email-view">
+        <LogoContainer>
+          <Spinner size={78} />
+        </LogoContainer>
         {isTimedOut && (
           <VerifyEmailParagraph>
             {t("Didn't get an email? Try logging in again later.")}{' '}
@@ -162,11 +204,11 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
           </VerifyEmailParagraph>
         )}
 
-        {!isTimedOut && (
+        {!isTimedOut && !emailVerified && (
           <>
             <VerifyEmailParagraph>
               {t(
-                'We sent a verification email to. Open the link inside to continue.',
+                `We sent a verification email to ${email}. Open the link inside to continue.`,
                 {
                   email: email || t('your email address'),
                 },
@@ -180,10 +222,6 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
                 onPress={() => resendVerificationEmail()}>
                 {t('Resend link')}
               </Link>
-            </VerifyEmailParagraph>
-
-            <VerifyEmailParagraph>
-              {t("I'll do it later.")} <GoBackLink />
             </VerifyEmailParagraph>
           </>
         )}

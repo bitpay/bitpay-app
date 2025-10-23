@@ -66,3 +66,9 @@ export interface User {
   name?: string;
   verified?: boolean;
 }
+
+export interface PasskeyCredential {
+  id: string;
+  createdAt: string;
+  publicKey: string;
+}
