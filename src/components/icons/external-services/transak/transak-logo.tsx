@@ -22,7 +22,7 @@ const TransakLogoSvg: React.FC<{
     <Svg
       width={width}
       height={height}
-      viewBox={iconOnly ? '180 325 570 450' : '269 325 1347 430'}>
+      viewBox={iconOnly ? '240 300 500 450' : '269 325 1347 430'}>
       <Defs>
         <LinearGradient
           id="linear-gradient"

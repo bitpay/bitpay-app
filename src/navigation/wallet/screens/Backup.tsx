@@ -16,13 +16,14 @@ import {OnboardingImage} from '../../onboarding/components/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {Key, Wallet} from '../../../store/wallet/wallet.models';
+import {Key} from '../../../store/wallet/wallet.models';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
+import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 
 const BackupImage = {
   light: (
@@ -89,7 +90,9 @@ export const backupRedirect = ({
   } else if (context === 'swapCrypto' || context === 'swapTo') {
     navigation.navigate('SwapCryptoRoot');
   } else if (context === 'buyCrypto') {
-    navigation.navigate('BuyCryptoRoot');
+    navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+      context: 'buyCrypto',
+    });
   } else {
     navigation.dispatch(StackActions.popToTop());
     navigation.dispatch(StackActions.push('KeyOverview', {id: key.id}));

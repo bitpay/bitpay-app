@@ -13,6 +13,14 @@ import {
   WyrePaymentData,
 } from './buy-crypto.models';
 import {RampIncomingData, RampPaymentData} from './models/ramp.models';
+import {BuyCryptoStateOpts} from './buy-crypto.reducer';
+
+export const updateBuyCryptoOpts = (payload: {
+  buyCryptoOpts: BuyCryptoStateOpts;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_OPTS,
+  payload,
+});
 
 export const successPaymentRequestBanxa = (payload: {
   banxaPaymentData: BanxaPaymentData;
