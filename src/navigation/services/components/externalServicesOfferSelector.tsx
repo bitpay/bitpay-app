@@ -1095,10 +1095,10 @@ const ExternalServicesOfferSelector: React.FC<
 
     const getAssetsRequestData: RampGetAssetsRequestData = {
       env: rampEnv,
-      // currencyCode: offers.ramp.fiatCurrency.toUpperCase(),
+      currencyCode: offers.ramp.fiatCurrency.toUpperCase(),
       withDisabled: false,
       withHidden: false,
-      // useIp: true,
+      useIp: true,
     };
 
     let assetsData: RampGetAssetsData | undefined;
@@ -1136,7 +1136,7 @@ const ExternalServicesOfferSelector: React.FC<
         cryptoAssetSymbol: getRampCoinFormat(coin, getRampChainFormat(chain)),
         fiatValue: offers.ramp.fiatAmount,
         fiatCurrency: offers.ramp.fiatCurrency.toUpperCase(),
-        env: 'production',
+        env: rampEnv,
       };
 
       const data: RampQuoteRequestData = await selectedWallet.rampGetQuote(
