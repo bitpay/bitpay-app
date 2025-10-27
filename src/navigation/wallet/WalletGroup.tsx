@@ -339,42 +339,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       />
       <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
       <Wallet.Screen name={WalletScreens.TERMS_OF_USE} component={TermsOfUse} />
-      <Wallet.Screen
-        options={({route}) => ({
-          headerTitle: () => <HeaderTitle>{t('Buy')}</HeaderTitle>,
-          headerRight: () =>
-            route.params?.wallet ? (
-              IsVMChain(route.params.wallet.chain) ? (
-                <AccountChainsContainer
-                  padding="8px"
-                  maxWidth={`${WIDTH / 2 - 50}px`}>
-                  <Blockie
-                    size={19}
-                    seed={route.params.wallet.receiveAddress}
-                  />
-                  <H7
-                    ellipsizeMode="tail"
-                    numberOfLines={1}
-                    style={{flexShrink: 1, fontSize: 13, letterSpacing: 0}}>
-                    {getEVMAccountName(route.params.wallet, allKeys)
-                      ? getEVMAccountName(route.params.wallet, allKeys)
-                      : `${
-                          IsSVMChain(route.params.wallet.chain)
-                            ? 'Solana Account'
-                            : 'EVM Account'
-                        }${
-                          Number(route.params.wallet.credentials?.account) === 0
-                            ? ''
-                            : ` (${route.params.wallet.credentials?.account})`
-                        }`}
-                  </H7>
-                </AccountChainsContainer>
-              ) : null
-            ) : null,
-        })}
-        name={WalletScreens.AMOUNT}
-        component={AmountScreen}
-      />
+      <Wallet.Screen name={WalletScreens.AMOUNT} component={AmountScreen} />
       <Wallet.Screen name={WalletScreens.SEND_TO} component={SendTo} />
       <Wallet.Screen
         options={{gestureEnabled: false}}

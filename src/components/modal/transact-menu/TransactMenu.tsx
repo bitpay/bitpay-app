@@ -152,7 +152,9 @@ const TransactModal = () => {
             context: 'TransactMenu',
           }),
         );
-        navigation.navigate('SellCryptoRoot');
+        navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+          context: 'sellCrypto',
+        });
       },
     },
     {

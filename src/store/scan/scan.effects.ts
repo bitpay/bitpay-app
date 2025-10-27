@@ -1494,6 +1494,7 @@ const handleBuyCryptoUri =
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
+            fromDeeplink: true,
             context: 'buyCrypto',
           } as BuyAndSellRootProps,
         },
@@ -1548,14 +1549,15 @@ const handleSellCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: SellCryptoScreens.ROOT,
+          name: ExternalServicesScreens.ROOT_BUY_AND_SELL,
           params: {
             partner,
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
             fromDeeplink: true,
-          },
+            context: 'sellCrypto',
+          } as BuyAndSellRootProps,
         },
       ],
     });

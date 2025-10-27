@@ -19,6 +19,7 @@ export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
 export interface BuyCryptoStateOpts {
   selectedPaymentMethod: PaymentMethodKey | undefined;
 }
+
 export interface BuyCryptoState {
   opts: BuyCryptoStateOpts;
   banxa: {[key in string]: BanxaPaymentData};

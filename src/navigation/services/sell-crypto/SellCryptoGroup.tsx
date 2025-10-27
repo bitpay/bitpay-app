@@ -28,17 +28,17 @@ interface SellCryptoProps {
 export type SellCryptoGroupParamList = {
   SellCryptoRoot: SellCryptoRootScreenParams;
   SellCryptoOffers: SellCryptoOffersScreenParams;
-  MoonpaySellCheckout: MoonpaySellCheckoutProps;
-  RampSellCheckout: RampSellCheckoutProps;
-  SimplexSellCheckout: SimplexSellCheckoutProps;
+  MoonpaySellCheckout2: MoonpaySellCheckoutProps;
+  RampSellCheckout2: RampSellCheckoutProps;
+  SimplexSellCheckout2: SimplexSellCheckoutProps;
 };
 
 export enum SellCryptoScreens {
   ROOT = 'SellCryptoRoot',
   SELL_CRYPTO_OFFERS = 'SellCryptoOffers',
-  MOONPAY_SELL_CHECKOUT = 'MoonpaySellCheckout',
-  RAMP_SELL_CHECKOUT = 'RampSellCheckout',
-  SIMPLEX_SELL_CHECKOUT = 'SimplexSellCheckout',
+  MOONPAY_SELL_CHECKOUT_2 = 'MoonpaySellCheckout2',
+  RAMP_SELL_CHECKOUT_2 = 'RampSellCheckout2',
+  SIMPLEX_SELL_CHECKOUT_2 = 'SimplexSellCheckout2',
 }
 
 const SellCryptoGroup = ({SellCrypto, theme}: SellCryptoProps) => {
@@ -61,21 +61,21 @@ const SellCryptoGroup = ({SellCrypto, theme}: SellCryptoProps) => {
         }}
       />
       <SellCrypto.Screen
-        name={SellCryptoScreens.MOONPAY_SELL_CHECKOUT}
+        name={SellCryptoScreens.MOONPAY_SELL_CHECKOUT_2}
         component={MoonpaySellCheckout}
         options={{
           headerTitle: () => <HeaderTitle>{t('Sell Crypto')}</HeaderTitle>,
         }}
       />
       <SellCrypto.Screen
-        name={SellCryptoScreens.RAMP_SELL_CHECKOUT}
+        name={SellCryptoScreens.RAMP_SELL_CHECKOUT_2}
         component={RampSellCheckout}
         options={{
           headerTitle: () => <HeaderTitle>{t('Sell Crypto')}</HeaderTitle>,
         }}
       />
       <SellCrypto.Screen
-        name={SellCryptoScreens.SIMPLEX_SELL_CHECKOUT}
+        name={SellCryptoScreens.SIMPLEX_SELL_CHECKOUT_2}
         component={SimplexSellCheckout}
         options={{
           headerTitle: () => <HeaderTitle>{t('Sell Crypto')}</HeaderTitle>,

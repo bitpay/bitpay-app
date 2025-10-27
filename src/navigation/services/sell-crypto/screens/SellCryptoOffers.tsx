@@ -86,8 +86,8 @@ import {GetProtocolPrefixAddress} from '../../../../store/wallet/utils/wallet';
 import {useTheme} from 'styled-components/native';
 import {
   getSimplexBaseAmountFormat,
-  getSimplexCoinFormat,
-  getSimplexCountryFormat,
+  getSimplexSellCoinFormat,
+  getSimplexSellCountryFormat,
   getSimplexSellReturnURL,
   simplexSellEnv,
 } from '../utils/simplex-sell-utils';
@@ -941,12 +941,12 @@ const SellCryptoOffers: React.FC = () => {
         showSimplexError(msg, reason);
         return;
       }
-      const userCountry = getSimplexCountryFormat(country, user?.country);
+      const userCountry = getSimplexSellCountryFormat(country, user?.country);
 
       const requestData: SimplexGetSellQuoteRequestData = {
         env: simplexSellEnv,
         userCountry: __DEV__ ? 'LT' : userCountry || 'US',
-        base_currency: getSimplexCoinFormat(coin, selectedWallet.chain),
+        base_currency: getSimplexSellCoinFormat(coin, selectedWallet.chain),
         base_amount: getSimplexBaseAmountFormat(amount), // base_amount should be integer, which counts millionths of a whole currency unit.
         quote_currency: offers.simplex.fiatCurrency.toUpperCase(),
         pp_payment_method: 'sepa', // pp_payment_method = "sepa" (this does not impact user payment method but is needed to get a quote, no impact on price) | TODO: use simplexPaymentMethod,
@@ -1504,7 +1504,7 @@ const SellCryptoOffers: React.FC = () => {
             setSellModalVisible({open: false, url: sellModalVisible?.url});
             await sleep(1500);
             navigation.goBack();
-            navigation.navigate(SellCryptoScreens.RAMP_SELL_CHECKOUT, {
+            navigation.navigate(SellCryptoScreens.RAMP_SELL_CHECKOUT_2, {
               rampQuoteOffer: offers.ramp,
               wallet: selectedWallet,
               toAddress: sendCryptoPayload?.address,
@@ -1552,7 +1552,7 @@ const SellCryptoOffers: React.FC = () => {
       useSendMax,
     );
 
-    const userCountry = getSimplexCountryFormat(country, user?.country);
+    const userCountry = getSimplexSellCountryFormat(country, user?.country);
 
     const quoteData: SimplexSellPaymentRequestReqData = {
       env: simplexSellEnv,
@@ -1607,7 +1607,7 @@ const SellCryptoOffers: React.FC = () => {
         await sleep(500);
 
         navigation.goBack();
-        navigation.navigate(SellCryptoScreens.SIMPLEX_SELL_CHECKOUT, {
+        navigation.navigate(SellCryptoScreens.SIMPLEX_SELL_CHECKOUT_2, {
           simplexQuoteOffer: offers.simplex,
           wallet: selectedWallet,
           amount: amount,
