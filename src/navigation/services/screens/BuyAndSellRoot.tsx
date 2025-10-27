@@ -1,51 +1,72 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
+import SwapCurrenciesSvg from '../../../../assets/img/swap-currencies.svg';
 import Button, {ButtonState} from '../../../components/button/Button';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {HEIGHT, ScreenGutter} from '../../../components/styled/Containers';
+import {
+  HEIGHT,
+  WIDTH,
+  ScreenGutter,
+} from '../../../components/styled/Containers';
 import {BaseText} from '../../../components/styled/Text';
-import SwapButton, {
-  ButtonText,
-  SwapButtonContainer,
-} from '../../../components/swap-button/SwapButton';
-import {orderBy} from 'lodash';
+import {orderBy, uniqBy} from 'lodash';
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
 import {
   BuyCryptoExchangeKey,
   getAvailableFiatCurrencies,
   getBuyCryptoSupportedCoins,
 } from '../buy-crypto/utils/buy-crypto-utils';
-import {getAvailableSellCryptoFiatCurrencies} from '../sell-crypto/utils/sell-crypto-utils';
-import {ParseAmount} from '../../../store/wallet/effects/amount/amount';
-import {BitPay, Slate30, SlateDark} from '../../../styles/colors';
+import {
+  getAvailableSellCryptoFiatCurrencies,
+  isCoinSupportedToSellBy,
+  SellCryptoExchangeKey,
+} from '../sell-crypto/utils/sell-crypto-utils';
+import {
+  ParseAmount,
+  SatToUnit,
+} from '../../../store/wallet/effects/amount/amount';
+import {
+  BitPay,
+  LightBlack,
+  Slate10,
+  Slate30,
+  SlateDark,
+} from '../../../styles/colors';
 import {
   formatCurrencyAbbreviation,
   formatFiatAmount,
   getBadgeImg,
+  getChainFromTokenByAddressKey,
   getCurrencyAbbreviation,
   getRateByCurrencyName,
   sleep,
 } from '../../../utils/helper-methods';
 import {useAppDispatch, useMount} from '../../../utils/hooks';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
-import CurrencySymbol from '../../../components/icons/currency-symbol/CurrencySymbol';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {getBuyCryptoFiatLimits} from '../../../store/buy-crypto/buy-crypto.effects';
 import KeyEvent from 'react-native-keyevent';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import ExternalServicesOfferSelector, {
   CryptoOffer,
+  SellCryptoOffer,
 } from '../components/externalServicesOfferSelector';
 import ExternalServicesAmountPills from '../components/externalServicesAmountPills';
 import {AltCurrenciesRowProps} from '../../../components/list/AltCurrenciesRow';
 import {StackActions} from '@react-navigation/native';
 import ExternalServicesWalletSelector from '../components/externalServicesWalletSelector';
-import {Wallet} from '../../../store/wallet/wallet.models';
+import {
+  Key,
+  SendMaxInfo,
+  Token,
+  Wallet,
+} from '../../../store/wallet/wallet.models';
 import {
   BuyCryptoConfig,
   ExternalServicesConfig,
   ExternalServicesConfigRequestParams,
+  SellCryptoConfig,
 } from '../../../store/external-services/external-services.types';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
@@ -67,6 +88,8 @@ import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
   CurrencyOpts,
+  SUPPORTED_COINS,
+  SUPPORTED_TOKENS,
 } from '../../../constants/currencies';
 import {RootState} from '../../../store';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
@@ -78,6 +101,7 @@ import {
   BanxaCreateOrderRequestData,
   BanxaOrderData,
   BanxaPaymentData,
+  MoonpayGetCurrenciesRequestData,
   MoonpayGetSignedPaymentUrlData,
   MoonpayGetSignedPaymentUrlReqData,
   MoonpayPaymentData,
@@ -106,11 +130,16 @@ import {
   moonpayEnv,
 } from '../buy-crypto/utils/moonpay-utils';
 import {
+  RampAssetInfo,
+  RampGetAssetsData,
+  RampGetAssetsRequestData,
   RampGetSellSignedPaymentUrlData,
   RampPaymentData,
   RampPaymentUrlConfigParams,
 } from '../../../store/buy-crypto/models/ramp.models';
 import {
+  getChainFromRampChainFormat,
+  getCoinFromRampCoinFormat,
   getRampChainFormat,
   getRampCoinFormat,
   getRampPaymentMethodFormat,
@@ -134,17 +163,85 @@ import {
   getTransakPaymentMethodFormat,
   transakEnv,
 } from '../buy-crypto/utils/transak-utils';
-import {getErrorMessage} from '../utils/external-services-utils';
+import {
+  getErrorMessage,
+  getExternalServiceSymbol,
+  getSendMaxData,
+} from '../utils/external-services-utils';
+import {SellCryptoLimits} from '../../../store/sell-crypto/sell-crypto.models';
+import {isEuCountry} from '../../../store/location/location.effects';
+import {
+  MoonpayCurrency,
+  MoonpayCurrencyMetadata,
+  MoonpayGetSellSignedPaymentUrlData,
+  MoonpayGetSellSignedPaymentUrlRequestData,
+  MoonpaySellOrderData,
+} from '../../../store/sell-crypto/models/moonpay-sell.models';
+import {
+  getChainFromMoonpayNetworkCode,
+  getMoonpaySellCurrenciesFixedProps,
+  getMoonpaySellFixedCurrencyAbbreviation,
+  getMoonpaySellPayoutMethodFormat,
+  moonpaySellEnv,
+} from '../sell-crypto/utils/moonpay-sell-utils';
+import {moonpayGetCurrencies} from '../../../store/buy-crypto/effects/moonpay/moonpay';
+import {
+  getPayoutMethodKeyFromRampType,
+  getRampSellCoinFormat,
+  getRampSellCurrenciesFixedProps,
+  rampSellEnv,
+} from '../sell-crypto/utils/ramp-sell-utils';
+import {rampGetAssets} from '../../../store/buy-crypto/effects/ramp/ramp';
+import {
+  SimplexCurrency,
+  SimplexGetCurrenciesRequestData,
+} from '../../../store/buy-crypto/models/simplex.models';
+import {
+  getChainFromSimplexNetworkCode,
+  getSimplexSellCountryFormat,
+  getSimplexSellFiatAmountLimits,
+  getSimplexSellReturnURL,
+  simplexSellEnv,
+} from '../sell-crypto/utils/simplex-sell-utils';
+import {simplexGetCurrencies} from '../../../store/buy-crypto/effects/simplex/simplex';
+import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
+import {SellLimits} from '../sell-crypto/screens/SellCryptoRoot';
+import _ from 'lodash';
+import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
+import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
+import {SellCryptoActions} from '../../../store/sell-crypto';
+import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
+import {useTheme} from 'styled-components/native';
+import Modal from 'react-native-modal';
+import {Linking, Text, View} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import WebView, {WebViewMessageEvent} from 'react-native-webview';
+import {
+  RampOfframpSaleCreatedEvent,
+  RampSellCreatedEventPayload,
+  RampSellIncomingData,
+  RampSellOrderData,
+  RampSellSendCryptoPayload,
+} from '../../../store/sell-crypto/models/ramp-sell.models';
+import {
+  SimplexSellPaymentRequestData,
+  SimplexSellPaymentRequestReqData,
+} from '../../../store/sell-crypto/models/simplex-sell.models';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const CtaContainer = styled.View<{isSmallScreen?: boolean}>`
+const CtaContainer = styled.View<{
+  isSmallScreen?: boolean;
+  justifyCenter?: boolean;
+}>`
   width: 100%;
-  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
+  /* margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')}; */
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: ${({justifyCenter}) =>
+    justifyCenter ? 'center' : 'space-between'};
+  align-items: center;
 `;
 
 export const AmountHeroContainer = styled.View<{isSmallScreen: boolean}>`
@@ -212,12 +309,22 @@ const CurrencyText = styled(BaseText)<{bigAmount?: boolean}>`
   position: absolute;
 `;
 
+const SwapCurrenciesButton = styled(TouchableOpacity)<{
+  isSmallScreen?: boolean;
+}>`
+  flex-direction: row;
+  align-items: center;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate10)};
+  padding: 5px;
+  border-radius: 100px;
+`;
+
 export interface Limits {
   min?: number;
   max?: number;
 }
 
-export interface LimitsOpts {
+export interface SellLimitsOpts {
   maxWalletAmount?: string;
   limits: {
     minAmount?: number;
@@ -225,34 +332,90 @@ export interface LimitsOpts {
   };
 }
 
+export interface SellCryptoCoin {
+  currencyAbbreviation: string;
+  symbol: string;
+  chain: string;
+  name: string;
+  protocol?: string; // Moonpay | Ramp | Simplex
+  logoUri?: any;
+  tokenAddress?: string | null;
+  limits?: {
+    min: number | undefined;
+    max: number | undefined;
+  };
+  supportsTestMode?: boolean; // Moonpay
+  precision?: number; // Moonpay | Ramp
+}
+
+export interface SellCryptoExchange {
+  key: SellCryptoExchangeKey;
+  showOffer: boolean;
+  supportedCoins: SellCryptoCoin[] | undefined;
+  disabled: boolean; // The offer card is shown but with an error message
+  offerError: string | undefined;
+  limits?: SellCryptoLimits;
+  precision?: number; // used to adjust moonpay amount
+}
+
+export type PreLoadPartnersData = {
+  [key in SellCryptoExchangeKey]: SellCryptoExchange;
+};
+
+const sellCryptoExchangesDefault: PreLoadPartnersData = {
+  moonpay: {
+    key: 'moonpay',
+    showOffer: true,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: {
+      min: undefined,
+      max: undefined,
+    },
+  },
+  ramp: {
+    key: 'ramp',
+    showOffer: true,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: {
+      min: undefined,
+      max: undefined,
+    },
+  },
+  simplex: {
+    key: 'simplex',
+    showOffer: true,
+    supportedCoins: undefined,
+    disabled: false,
+    offerError: undefined,
+    limits: {
+      min: undefined,
+      max: undefined,
+    },
+  },
+};
+
 export type ExternalServicesContext = 'buyCrypto' | 'sellCrypto';
 
 export interface BuyAndSellRootProps {
   route?: any;
   navigation?: any;
 
-  fromWallet?: any;
+  context: ExternalServicesContext;
+  fromWallet?: Wallet;
   amount?: number; // deeplink params are strings, ensure this is number so offers will work
   currencyAbbreviation?: string; // used from charts and deeplinks.
   chain?: string; // used from charts and deeplinks.
   partner?: BuyCryptoExchangeKey | undefined; // used from deeplinks.
-
-  wallet?: Wallet;
-  cryptoCurrencyAbbreviation?: string;
-  fiatCurrencyAbbreviation?: string;
-  tokenAddress?: string;
-  context?: ExternalServicesContext;
+  fromDeeplink?: boolean;
   reduceTopGap?: boolean;
-  limitsOpts?: LimitsOpts; // TODO: take it from components
-  customAmountSublabel?: (amount: number) => void;
-
-  /**
-   * @param amount crypto amount
-   */
-  onSubmit?: (amount: number) => void;
 }
 
 let buyCryptoConfig: BuyCryptoConfig | undefined;
+let sellCryptoConfig: SellCryptoConfig | undefined;
 
 const BuyAndSellRoot = ({
   route,
@@ -264,6 +427,8 @@ const BuyAndSellRoot = ({
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const logger = useLogger();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const defaultAltCurrency: AltCurrenciesRowProps = useAppSelector(
     ({APP}) => APP.defaultAltCurrency,
@@ -275,6 +440,20 @@ const BuyAndSellRoot = ({
   const tokenDataByAddress = useAppSelector(
     ({WALLET}: RootState) => WALLET.tokenDataByAddress,
   );
+  const tokenOptionsByAddress: {[x: string]: Token} = useAppSelector(
+    ({WALLET}) => WALLET.tokenOptionsByAddress,
+  );
+  const tokenOptions = Object.entries(tokenOptionsByAddress).map(
+    ([k, {symbol}]) => {
+      const chain = getChainFromTokenByAddressKey(k);
+      return getCurrencyAbbreviation(symbol.toLowerCase(), chain);
+    },
+  );
+  const SupportedChains: string[] = SUPPORTED_COINS;
+
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
   const curValRef = useRef('');
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
@@ -283,6 +462,7 @@ const BuyAndSellRoot = ({
   const country = locationData?.countryShortCode || 'US';
 
   // Real route params
+  const context = route.params?.context;
   const fromWallet = route.params?.fromWallet;
   const fromAmount = route.params?.amount
     ? Number(route.params.amount)
@@ -293,16 +473,9 @@ const BuyAndSellRoot = ({
   const preSetPartner = route.params?.partner?.toLowerCase() as
     | BuyCryptoExchangeKey
     | undefined;
+  const fromDeeplink = route.params?.fromDeeplink;
 
-  // TODO: Route params to review or delete
-  const cryptoCurrencyAbbreviation = route.params?.cryptoCurrencyAbbreviation;
-  const fiatCurrencyAbbreviation = route.params?.fiatCurrencyAbbreviation;
-  const tokenAddress = route.params?.tokenAddress;
-  const context = route.params?.context;
   const reduceTopGap = route.params?.reduceTopGap;
-  const limitsOpts = route.params?.limitsOpts;
-  const customAmountSublabel = route.params?.customAmountSublabel;
-  const onSubmit = route.params?.onSubmit;
 
   let _buyCryptoSupportedCoins: string[] | undefined;
   if (context === 'buyCrypto') {
@@ -317,19 +490,23 @@ const BuyAndSellRoot = ({
   );
   const [buyCryptoSupportedCoinsFullObj, setBuyCryptoSupportedCoinsFullObj] =
     useState<ToWalletSelectorCustomCurrency[]>([]);
-  const [selectedOffer, setSelectedOffer] = useState<CryptoOffer | undefined>();
+
+  const [sellCryptoSupportedCoins, setSellCryptoSupportedCoins] =
+    useState<string[]>();
+  const [sellCryptoSupportedCoinsFullObj, setSellCryptoSupportedCoinsFullObj] =
+    useState<SellCryptoCoin[]>([]);
+
+  const [selectedOffer, setSelectedOffer] = useState<
+    CryptoOffer | SellCryptoOffer | undefined
+  >();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    PaymentMethod | undefined
+    PaymentMethod | WithdrawalMethod | undefined
   >();
   const [openingBrowser, setOpeningBrowser] = useState(false);
   const [buttonState, setButtonState] = useState<ButtonState>();
   const [continueEnabled, setContinueEnabled] = useState(false);
 
   const fiatCurrency = useMemo<string>(() => {
-    if (fiatCurrencyAbbreviation) {
-      return fiatCurrencyAbbreviation;
-    }
-
     if (context === 'buyCrypto') {
       return getAvailableFiatCurrencies().includes(defaultAltCurrency.isoCode)
         ? defaultAltCurrency.isoCode
@@ -343,59 +520,67 @@ const BuyAndSellRoot = ({
     }
 
     return defaultAltCurrency.isoCode;
-  }, [context, defaultAltCurrency.isoCode, fiatCurrencyAbbreviation]);
+  }, [context, defaultAltCurrency.isoCode]);
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);
+  // const [cryptoCurrencyAbbreviation, setCryptoCurrencyAbbreviation] = useState<string | undefined>(_cryptoCurrencyAbbreviation);
   const [amountConfig, updateAmountConfig] = useState({
     // display amount fiat/crypto
     displayAmount: '0',
     displayEquivalentAmount: '0',
     // amount to be sent to proposal creation (sats)
     amount: '0',
-    currency: cryptoCurrencyAbbreviation
-      ? cryptoCurrencyAbbreviation
-      : fiatCurrency,
-    primaryIsFiat:
-      !cryptoCurrencyAbbreviation ||
-      cryptoCurrencyAbbreviation === fiatCurrency,
   });
-  const [useSendMax, setUseSendMax] = useState(false);
+  const [useSendMax, setUseSendMax] = useState<boolean>(false);
+  const [sendMaxInfo, setSendMaxInfo] = useState<SendMaxInfo | undefined>();
   const [limits, setLimits] = useState<Limits>({
     min: undefined,
     max: undefined,
   });
-  const [selectedPillValue, setSelectedPillValue] = useState<number | null>(
-    null,
-  );
+  const [selectedPillValue, setSelectedPillValue] = useState<
+    number | string | null
+  >(null);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | undefined>();
   const [externalServicesConfig, setExternalServicesConfig] = useState<
     ExternalServicesConfig | undefined
   >();
-
-  const swapList = useMemo(() => {
-    return cryptoCurrencyAbbreviation
-      ? [
-          ...new Set([
-            formatCurrencyAbbreviation(cryptoCurrencyAbbreviation),
-            fiatCurrency,
-          ]),
-        ]
-      : [fiatCurrency];
-  }, [cryptoCurrencyAbbreviation, fiatCurrency]);
-
-  const {
-    displayAmount,
-    displayEquivalentAmount,
-    amount,
-    currency,
-    primaryIsFiat,
-  } = amountConfig;
+  const [swapCurrenciesList, setSwapCurrenciesList] = useState<string[]>([
+    fiatCurrency,
+  ]);
+  const [usingCurrency, setUsingCurrency] = useState<string>(fiatCurrency);
+  const [usingCurrencyIsFiat, setUsingCurrencyIsFiat] = useState<boolean>(true);
+  const [loadingWalletFromStatus, setLoadingWalletFromStatus] =
+    useState<boolean>(false);
+  const [loadingEnterAmountBtn, setLoadingEnterAmountBtn] =
+    useState<boolean>(false);
+  const [sellLimits, setSellLimits] = useState<SellLimitsOpts>({
+    maxWalletAmount: undefined,
+    limits: {
+      minAmount: undefined,
+      maxAmount: undefined,
+    },
+  });
+  const [sellModalVisible, setSellModalVisible] = useState<{
+    open: boolean;
+    url: string | undefined;
+    rampOffer?: SellCryptoOffer;
+  }>({open: false, url: undefined, rampOffer: undefined});
 
   const updateAmount = (_val: string) => {
     const val = Number(_val);
 
-    if (isNaN(val) || !cryptoCurrencyAbbreviation || !fromChain) {
+    let _cryptoCurrencyAbbreviation;
+    let _fromChain = fromChain;
+
+    if (context === 'sellCrypto') {
+      if (selectedWallet) {
+        _cryptoCurrencyAbbreviation = selectedWallet.currencyAbbreviation;
+        _fromChain = selectedWallet.chain;
+      }
+    }
+
+    if (isNaN(val) || !_cryptoCurrencyAbbreviation || !_fromChain) {
       updateAmountConfig(current => ({
         ...current,
         displayAmount: _val,
@@ -406,37 +591,63 @@ const BuyAndSellRoot = ({
     }
 
     const cryptoAmount =
-      val === 0 || !cryptoCurrencyAbbreviation
+      val === 0 || !_cryptoCurrencyAbbreviation
         ? '0'
         : dispatch(
             ParseAmount(
-              primaryIsFiat ? val / rate : val,
-              cryptoCurrencyAbbreviation.toLowerCase(),
-              fromChain,
-              tokenAddress,
+              usingCurrencyIsFiat ? val / rate : val,
+              _cryptoCurrencyAbbreviation.toLowerCase(),
+              _fromChain,
+              selectedWallet?.tokenAddress, // TODO: review this
             ),
           ).amount;
 
     const fiatAmount = formatFiatAmount(val * rate, fiatCurrency, {
       currencyDisplay: 'symbol',
-      currencyAbbreviation: primaryIsFiat
+      currencyAbbreviation: usingCurrencyIsFiat
         ? undefined
-        : cryptoCurrencyAbbreviation,
+        : _cryptoCurrencyAbbreviation,
     });
 
     updateAmountConfig(current => ({
       ...current,
       displayAmount: _val,
-      displayEquivalentAmount: primaryIsFiat ? cryptoAmount : fiatAmount,
+      displayEquivalentAmount: usingCurrencyIsFiat ? cryptoAmount : fiatAmount,
       amount: cryptoAmount,
     }));
   };
   const updateAmountRef = useRef(updateAmount);
   updateAmountRef.current = updateAmount;
 
+  const onSwapCurrencies = (toCurrency: string) => {
+    let newPrimaryIsFiat = usingCurrencyIsFiat;
+    if (toCurrency === fiatCurrency) {
+      newPrimaryIsFiat = true;
+    } else {
+      newPrimaryIsFiat = false;
+    }
+
+    updateAmountConfig(current => ({
+      ...current,
+      currency: toCurrency,
+      primaryIsFiat: newPrimaryIsFiat,
+      displayAmount: '0',
+      displayEquivalentAmount: newPrimaryIsFiat
+        ? formatFiatAmount(0, fiatCurrency, {
+            currencyDisplay: 'symbol',
+          })
+        : '0',
+    }));
+
+    // reset amount on swap currencies
+    curValRef.current = '';
+    updateAmountRef.current('0');
+  };
+
   const onCellPress = useCallback((val: string) => {
     haptic('soft');
     setUseSendMax(false);
+    setSelectedPillValue(null);
     let newValue;
     switch (val) {
       case 'reset':
@@ -460,55 +671,121 @@ const BuyAndSellRoot = ({
     updateAmountRef.current(newValue);
   }, []);
 
-  const sellCryptoSendMax = () => {
+  const sellCryptoSendMax = async () => {
     logger.debug(
-      `Handling sellCryptoSendMax with: ${JSON.stringify(limitsOpts)}`,
+      `Handling sellCryptoSendMax with: ${JSON.stringify(sellLimits)}`,
     );
 
     let sendMaxAmount: string;
-    if (limitsOpts?.limits?.maxAmount && limitsOpts?.maxWalletAmount) {
-      if (limitsOpts.limits.maxAmount >= Number(limitsOpts.maxWalletAmount)) {
-        sendMaxAmount = limitsOpts.maxWalletAmount;
-        if (primaryIsFiat && rate) {
-          sendMaxAmount = (+limitsOpts.maxWalletAmount * rate).toFixed(2);
+    if (sellLimits?.limits?.maxAmount && sellLimits?.maxWalletAmount) {
+      if (
+        selectedWallet &&
+        sellLimits.limits.maxAmount >= Number(sellLimits.maxWalletAmount)
+      ) {
+        let maxAmount: number | undefined;
+        if (
+          IsERCToken(selectedWallet.currencyAbbreviation, selectedWallet.chain)
+        ) {
+          setUseSendMax(true);
+          setSendMaxInfo(undefined);
+          maxAmount = Number(
+            // @ts-ignore
+            selectedWallet.balance.cryptoSpendable.replaceAll(',', ''),
+          );
+        } else {
+          dispatch(startOnGoingProcessModal('WAITING_FOR_MAX_AMOUNT'));
+          setUseSendMax(true);
+          const data = await getSendMaxData(selectedWallet);
+          setSendMaxInfo(data);
+          if (data?.amount) {
+            maxAmount = dispatch(
+              SatToUnit(
+                data.amount,
+                selectedWallet.currencyAbbreviation,
+                selectedWallet.chain,
+                selectedWallet.tokenAddress,
+              ),
+            );
+          }
         }
-        setUseSendMax(true);
+
+        if (usingCurrencyIsFiat && rate && maxAmount) {
+          sendMaxAmount = (maxAmount * rate).toFixed(2);
+        } else {
+          sendMaxAmount = maxAmount?.toFixed(8).replace(/\.?0+$/, '') || '0';
+        }
+
+        await sleep(300);
+        dispatch(dismissOnGoingProcessModal());
       } else {
-        sendMaxAmount = limitsOpts.limits.maxAmount.toString();
-        if (primaryIsFiat && rate) {
-          sendMaxAmount = (+limitsOpts.limits.maxAmount * rate).toFixed(2);
+        sendMaxAmount = sellLimits.limits.maxAmount.toString();
+        if (usingCurrencyIsFiat && rate) {
+          sendMaxAmount = (+sellLimits.limits.maxAmount * rate).toFixed(2);
         }
         curValRef.current = sendMaxAmount;
         updateAmountRef.current(sendMaxAmount);
         setUseSendMax(false);
       }
+
       curValRef.current = sendMaxAmount;
       updateAmountRef.current(sendMaxAmount);
-    } else if (limitsOpts?.maxWalletAmount) {
-      sendMaxAmount = limitsOpts.maxWalletAmount;
-      if (primaryIsFiat && rate) {
-        sendMaxAmount = (+limitsOpts.maxWalletAmount * rate).toFixed(2);
+
+      await sleep(300);
+      dispatch(dismissOnGoingProcessModal());
+    } else if (sellLimits?.maxWalletAmount && selectedWallet) {
+      let maxAmount: number | undefined;
+      if (
+        IsERCToken(selectedWallet.currencyAbbreviation, selectedWallet.chain)
+      ) {
+        setUseSendMax(true);
+        setSendMaxInfo(undefined);
+        maxAmount = Number(
+          // @ts-ignore
+          selectedWallet.balance.cryptoSpendable.replaceAll(',', ''),
+        );
+      } else {
+        dispatch(startOnGoingProcessModal('WAITING_FOR_MAX_AMOUNT'));
+        setUseSendMax(true);
+        const data = await getSendMaxData(selectedWallet);
+        setSendMaxInfo(data);
+        if (data?.amount) {
+          maxAmount = dispatch(
+            SatToUnit(
+              data.amount,
+              selectedWallet.currencyAbbreviation,
+              selectedWallet.chain,
+              selectedWallet.tokenAddress,
+            ),
+          );
+        }
       }
+
+      if (usingCurrencyIsFiat && rate && maxAmount) {
+        sendMaxAmount = (maxAmount * rate).toFixed(2);
+      } else {
+        sendMaxAmount = maxAmount?.toFixed(8).replace(/\.?0+$/, '') || '0';
+      }
+
       setUseSendMax(true);
       curValRef.current = sendMaxAmount;
       updateAmountRef.current(sendMaxAmount);
+
+      await sleep(300);
+      dispatch(dismissOnGoingProcessModal());
     } else {
       setUseSendMax(false);
+      setSendMaxInfo(undefined);
     }
   };
 
-  useEffect(() => {
-    if (selectedOffer && buttonState !== 'loading' && !openingBrowser) {
-      setContinueEnabled(true);
-    } else {
-      setContinueEnabled(false);
-    }
-  }, [selectedOffer, buttonState, openingBrowser]);
-
   const getWarnMsg = useMemo<string | undefined>(() => {
     let msg: string | undefined;
-    if (+amount > 0) {
-      if (limits.min && +amount < limits.min) {
+    const cryptoCurrencyAbbreviation = cloneDeep(
+      selectedWallet?.currencyAbbreviation,
+    );
+
+    if (+amountConfig.amount > 0) {
+      if (limits.min && +amountConfig.amount < limits.min) {
         if (context === 'buyCrypto' && fiatCurrency) {
           msg = t('MinAmountWarnMsg', {
             min: limits.min,
@@ -517,16 +794,22 @@ const BuyAndSellRoot = ({
         } else if (context !== 'buyCrypto' && cryptoCurrencyAbbreviation) {
           msg = t('MinAmountWarnMsg', {
             min: limits.min,
-            currency: cryptoCurrencyAbbreviation,
+            currency: cloneDeep(cryptoCurrencyAbbreviation).toUpperCase(),
           });
         }
       } else if (
-        (!limits?.min || (limits.min && +amount >= limits.min)) &&
-        limitsOpts?.maxWalletAmount &&
-        +amount > Number(limitsOpts.maxWalletAmount)
+        (!limits?.min || (limits.min && +amountConfig.amount >= limits.min)) &&
+        sellLimits?.maxWalletAmount &&
+        +amountConfig.amount > Number(sellLimits.maxWalletAmount)
       ) {
-        msg = t('Not enough funds');
-      } else if (limits.max && +amount > limits.max) {
+        msg =
+          t('Not enough funds: ') +
+          `${
+            selectedWallet?.balance.cryptoSpendable
+          } ${selectedWallet?.currencyAbbreviation.toUpperCase()} ${t(
+            'available to sell',
+          )}`;
+      } else if (limits.max && +amountConfig.amount > limits.max) {
         if (context === 'buyCrypto' && fiatCurrency) {
           msg = t('MaxAmountWarnMsg', {
             max: limits.max,
@@ -535,17 +818,17 @@ const BuyAndSellRoot = ({
         } else if (context !== 'buyCrypto' && cryptoCurrencyAbbreviation) {
           msg = t('MaxAmountWarnMsg', {
             max: limits.max,
-            currency: cryptoCurrencyAbbreviation,
+            currency: cloneDeep(cryptoCurrencyAbbreviation).toUpperCase(),
           });
         }
       }
     }
 
     return msg;
-  }, [amount, limits, context]);
+  }, [selectedWallet, amountConfig.amount, limits, context, sellLimits]);
 
   const initAmount = () => {
-    if (!currency) {
+    if (!usingCurrency) {
       return;
     }
     if (fromAmount && !isNaN(fromAmount)) {
@@ -554,32 +837,6 @@ const BuyAndSellRoot = ({
     } else {
       updateAmount('0');
     }
-    // if added for dev (hot reload)
-    if (
-      !primaryIsFiat &&
-      getRateByCurrencyName(allRates, currency.toLowerCase(), fromChain!)
-    ) {
-      const rateByCurrencyName = getRateByCurrencyName(
-        allRates,
-        currency.toLowerCase(),
-        fromChain!,
-        tokenAddress,
-      );
-      const fiatRateData = rateByCurrencyName.find(
-        r => r.code === fiatCurrency,
-      );
-
-      if (!fiatRateData) {
-        logger.warn(
-          `There is no fiatRateData for: ${currency.toLowerCase()} (${fromChain}) and ${fiatCurrency}. Setting rate to 0.`,
-        );
-        setRate(0);
-        return;
-      }
-
-      const fiatRate = fiatRateData.rate;
-      setRate(fiatRate);
-    }
   };
   const initAmountRef = useRef(initAmount);
   initAmountRef.current = initAmount;
@@ -587,12 +844,8 @@ const BuyAndSellRoot = ({
   const initLimits = (): void => {
     if (context === 'buyCrypto') {
       setLimits(dispatch(getBuyCryptoFiatLimits(undefined, fiatCurrency)));
-    } else if (limitsOpts?.limits) {
-      setLimits({
-        min: limitsOpts.limits.minAmount,
-        max: limitsOpts.limits.maxAmount,
-      });
     }
+    // Sell crypto limits are set when selling coin is selected (from selectedWallet)
   };
 
   const getLogoUri = (_currencyAbbreviation: string, _chain: string) => {
@@ -803,6 +1056,7 @@ const BuyAndSellRoot = ({
       return;
     }
 
+    // TODO: review if this if(...) is necessary
     if (fromWallet?.id || fromCurrencyAbbreviation) {
       // TODO: selectFirstAvailableWallet
       // selectFirstAvailableWallet();
@@ -812,8 +1066,870 @@ const BuyAndSellRoot = ({
     }
   };
 
-  useMount(() => {
+  const filterMoonpayCurrenciesConditions = (
+    currency: MoonpayCurrency,
+  ): boolean => {
+    return (
+      !currency.isSuspended &&
+      currency.isSellSupported &&
+      currency.type === 'crypto'
+    );
+  };
+
+  const getMoonpayCurrencies = async () => {
+    const requestData: MoonpayGetCurrenciesRequestData = {
+      env: moonpaySellEnv,
+    };
+    const moonpayAllCurrencies: MoonpayCurrency[] = await moonpayGetCurrencies(
+      requestData,
+    );
+
+    const moonpayAllSellCurrencies = moonpayAllCurrencies.filter(
+      (moonpayCurrency: MoonpayCurrency) => {
+        return filterMoonpayCurrenciesConditions(moonpayCurrency);
+      },
+    );
+
+    const moonpayAllSellSupportedCurrenciesFixedProps: MoonpayCurrency[] =
+      getMoonpaySellCurrenciesFixedProps(moonpayAllSellCurrencies);
+
+    const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
+    const moonpaySellSupportedCurrenciesFullObj =
+      moonpayAllSellSupportedCurrenciesFixedProps.filter(currency => {
+        return (
+          currency.metadata?.networkCode &&
+          [...SupportedChains].includes(
+            getChainFromMoonpayNetworkCode(
+              currency.code,
+              currency.metadata.networkCode,
+            ),
+          ) &&
+          (currency.code === 'eth' ||
+            (currency.metadata.contractAddress &&
+            [
+              'ethereum',
+              'polygon',
+              'arbitrum',
+              'base',
+              'optimism',
+              'solana',
+            ].includes(currency.metadata.networkCode.toLowerCase())
+              ? allSupportedTokens.includes(
+                  getCurrencyAbbreviation(
+                    currency.code,
+                    getChainFromMoonpayNetworkCode(
+                      currency.code,
+                      currency.metadata.networkCode,
+                    ),
+                  ),
+                )
+              : true))
+        );
+      });
+
+    const moonpaySellSupportedCurrencies: SellCryptoCoin[] =
+      moonpaySellSupportedCurrenciesFullObj.map(
+        ({
+          code,
+          name,
+          metadata,
+          minSellAmount,
+          maxSellAmount,
+          supportsTestMode,
+          precision,
+        }: {
+          code: string;
+          name: string;
+          metadata?: MoonpayCurrencyMetadata;
+          minSellAmount?: number;
+          maxSellAmount?: number;
+          supportsTestMode?: boolean;
+          precision?: number;
+        }) => {
+          const chain = getChainFromMoonpayNetworkCode(
+            code,
+            metadata?.networkCode,
+          );
+          return {
+            currencyAbbreviation: code.toLowerCase(),
+            symbol: getExternalServiceSymbol(code, chain),
+            name,
+            chain,
+            protocol: metadata?.networkCode,
+            logoUri: getLogoUri(code.toLowerCase(), chain),
+            tokenAddress: metadata?.contractAddress,
+            limits: {
+              min: minSellAmount,
+              max: maxSellAmount,
+            },
+            supportsTestMode,
+            precision,
+          };
+        },
+      );
+
+    // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+    let supportedCoins = orderBy(
+      moonpaySellSupportedCurrencies,
+      [
+        coin => {
+          return orderedArray.includes(coin.symbol)
+            ? orderedArray.indexOf(coin.symbol)
+            : orderedArray.length;
+        },
+        'name',
+      ],
+      ['asc', 'asc'],
+    );
+
+    return supportedCoins;
+  };
+
+  const filterRampCurrenciesConditions = (currency: RampAssetInfo): boolean => {
+    return !currency.hidden && currency.enabled;
+  };
+
+  const getRampCurrencies = async () => {
+    const requestData: RampGetAssetsRequestData = {
+      env: rampSellEnv,
+      flow: 'sell',
+      // TODO: review if "fiatCurrency" is correct in currencyCode
+      currencyCode: cloneDeep(fiatCurrency).toUpperCase(),
+      withDisabled: false,
+      withHidden: false,
+      useIp: true,
+    };
+
+    const rampAllCurrencies: RampGetAssetsData = await rampGetAssets(
+      requestData,
+    );
+
+    if (!rampAllCurrencies?.assets) {
+      return [];
+    }
+
+    const rampAllSellCurrencies = rampAllCurrencies.assets.filter(
+      (rampCurrency: RampAssetInfo) => {
+        return filterRampCurrenciesConditions(rampCurrency);
+      },
+    );
+
+    const rampAllSellSupportedCurrenciesFixedProps: RampAssetInfo[] =
+      getRampSellCurrenciesFixedProps(rampAllSellCurrencies);
+
+    const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
+    const rampSellSupportedCurrenciesFullObj =
+      rampAllSellSupportedCurrenciesFixedProps.filter(currency => {
+        return (
+          currency.chain &&
+          [...SupportedChains].includes(
+            getChainFromRampChainFormat(currency.chain)!,
+          ) &&
+          (getCoinFromRampCoinFormat(currency.symbol) === 'eth' ||
+            (currency.type !== 'NATIVE' &&
+            ['eth', 'matic', 'arbitrum', 'base', 'optimism', 'solana'].includes(
+              currency.chain.toLowerCase(),
+            )
+              ? allSupportedTokens.includes(
+                  getCurrencyAbbreviation(
+                    getCoinFromRampCoinFormat(currency.symbol),
+                    getChainFromRampChainFormat(currency.chain)!,
+                  ),
+                )
+              : true))
+        );
+      });
+
+    const rampSellSupportedCurrencies: SellCryptoCoin[] =
+      rampSellSupportedCurrenciesFullObj.map(
+        ({
+          symbol,
+          chain,
+          name,
+          address,
+          type,
+          minPurchaseAmount,
+          maxPurchaseAmount,
+          decimals,
+        }: {
+          symbol: string;
+          chain: string;
+          name: string;
+          address?: string | null;
+          type: string;
+          minPurchaseAmount?: number;
+          maxPurchaseAmount?: number;
+          decimals?: number;
+        }) => {
+          const _chain = getChainFromRampChainFormat(chain);
+          return {
+            currencyAbbreviation: symbol.toLowerCase(),
+            symbol: getExternalServiceSymbol(symbol, _chain!),
+            name,
+            chain: _chain!,
+            protocol: type,
+            logoUri: getLogoUri(symbol.toLowerCase(), _chain!),
+            tokenAddress: address,
+            limits: {
+              min:
+                minPurchaseAmount && minPurchaseAmount > 0
+                  ? minPurchaseAmount
+                  : undefined,
+              max:
+                maxPurchaseAmount && maxPurchaseAmount > 0
+                  ? maxPurchaseAmount
+                  : undefined,
+            },
+            precision: decimals,
+          };
+        },
+      );
+
+    // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+    let supportedCoins = orderBy(
+      rampSellSupportedCurrencies,
+      [
+        coin => {
+          return orderedArray.includes(coin.symbol)
+            ? orderedArray.indexOf(coin.symbol)
+            : orderedArray.length;
+        },
+        'name',
+      ],
+      ['asc', 'asc'],
+    );
+
+    return supportedCoins;
+  };
+
+  const filterSimplexCurrenciesConditions = (
+    currency: SimplexCurrency,
+  ): boolean => {
+    return (
+      // For now, BTC is the only coin supported for sale on Simplex.
+      currency.ticker_symbol === 'BTC' && currency.network_code === 'bitcoin'
+    );
+  };
+
+  const getSimplexCurrencies = async () => {
+    const requestData: SimplexGetCurrenciesRequestData = {
+      env: simplexSellEnv,
+    };
+    const simplexAllCurrencies: SimplexCurrency[] = await simplexGetCurrencies(
+      requestData,
+    );
+
+    const simplexAllSellCurrencies = simplexAllCurrencies.filter(
+      (simplexCurrency: SimplexCurrency) => {
+        return filterSimplexCurrenciesConditions(simplexCurrency);
+      },
+    );
+
+    const simplexSellSupportedCurrencies: SellCryptoCoin[] =
+      simplexAllSellCurrencies.map((simplexCurrency: SimplexCurrency) => {
+        const coin = simplexCurrency.ticker_symbol.toLowerCase();
+        const chain = getChainFromSimplexNetworkCode(
+          coin,
+          simplexCurrency.network_code,
+        );
+        return {
+          currencyAbbreviation: coin,
+          symbol: getExternalServiceSymbol(coin, chain),
+          name: simplexCurrency.name,
+          chain,
+          protocol: simplexCurrency.network_code,
+          logoUri: getLogoUri(coin.toLowerCase(), chain),
+          tokenAddress: simplexCurrency.contract_address ?? undefined,
+          limits: {
+            min: simplexCurrency.fixed_min_amount ?? undefined,
+            max: undefined,
+          },
+        };
+      });
+
+    // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+    const orderedArray = SupportedCurrencyOptions.map(currency =>
+      currency.chain
+        ? getCurrencyAbbreviation(currency.currencyAbbreviation, currency.chain)
+        : currency.currencyAbbreviation,
+    );
+    let supportedCoins = orderBy(
+      simplexSellSupportedCurrencies,
+      [
+        coin => {
+          return orderedArray.includes(coin.symbol)
+            ? orderedArray.indexOf(coin.symbol)
+            : orderedArray.length;
+        },
+        'name',
+      ],
+      ['asc', 'asc'],
+    );
+
+    return supportedCoins;
+  };
+
+  const initSellCrypto = async () => {
+    try {
+      const requestData: ExternalServicesConfigRequestParams = {
+        currentLocationCountry: locationData?.countryShortCode,
+        currentLocationState: locationData?.stateShortCode,
+        bitpayIdLocationCountry: user?.country,
+        bitpayIdLocationState: user?.state,
+      };
+      const config: ExternalServicesConfig = await dispatch(
+        getExternalServicesConfig(requestData),
+      );
+      sellCryptoConfig = config?.sellCrypto;
+      logger.debug('sellCryptoConfig: ' + JSON.stringify(sellCryptoConfig));
+    } catch (err) {
+      logger.error('getSellCryptoConfig Error: ' + JSON.stringify(err));
+    }
+
+    if (sellCryptoConfig?.disabled) {
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(600);
+      dispatch(
+        AppActions.showBottomNotificationModal({
+          title: sellCryptoConfig?.disabledTitle
+            ? sellCryptoConfig.disabledTitle
+            : t('Out of service'),
+          message: sellCryptoConfig?.disabledMessage
+            ? sellCryptoConfig.disabledMessage
+            : t(
+                'This feature is temporarily out of service. Please try again later.',
+              ),
+          type: 'warning',
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {
+                navigation.dispatch(StackActions.popToTop());
+              },
+            },
+          ],
+          enableBackdropDismiss: true,
+          onBackdropDismiss: () => {
+            navigation.dispatch(StackActions.popToTop());
+          },
+        }),
+      );
+      return;
+    }
+
+    const supportedExchanges: SellCryptoExchangeKey[] = Object.keys(
+      sellCryptoExchangesDefault,
+    ) as SellCryptoExchangeKey[];
+
+    // prevent "getCurrencies" from deleted or disabled exchanges
+    supportedExchanges.forEach(exchange => {
+      if (sellCryptoConfig && sellCryptoConfig[exchange]) {
+        sellCryptoExchangesDefault[exchange].showOffer =
+          !sellCryptoConfig[exchange]?.removed;
+        sellCryptoExchangesDefault[exchange].disabled =
+          !!sellCryptoConfig[exchange]?.disabled;
+      }
+
+      if (exchange === 'simplex' && sellCryptoExchangesDefault.simplex) {
+        // Simplex sell only available in the EU
+        sellCryptoExchangesDefault.simplex.showOffer =
+          !!(
+            locationData?.countryShortCode &&
+            isEuCountry(locationData.countryShortCode)
+          ) || !!(user?.country && isEuCountry(user.country));
+      }
+    });
+
+    const enabledExchanges = Object.values(sellCryptoExchangesDefault)
+      .filter(
+        exchange =>
+          exchange.showOffer &&
+          !exchange.disabled &&
+          (!preSetPartner || exchange.key === preSetPartner),
+      )
+      .map(exchange => exchange.key);
+
+    if (!enabledExchanges || enabledExchanges.length === 0) {
+      logger.error(
+        'There are no partners with offers available for the user parameters.',
+      );
+      let msg: string;
+
+      if (
+        preSetPartner === 'simplex' &&
+        !(
+          isEuCountry(locationData?.countryShortCode) ||
+          isEuCountry(user?.country)
+        )
+      ) {
+        msg = t(
+          'Sell Crypto feature is currently unavailable in your country. Please try again later.',
+        );
+      } else {
+        msg = t(
+          'Sell Crypto feature is not available at this moment. Please try again later.',
+        );
+      }
+      const reason =
+        'initSellCrypto Error. Could not get enabledExchanges for the user parameters';
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(100);
+      showError(undefined, msg, reason);
+      return;
+    }
+
+    const getCurrenciesPromiseByExchange = (
+      exchange: SellCryptoExchangeKey,
+    ) => {
+      switch (exchange) {
+        case 'moonpay':
+          return getMoonpayCurrencies();
+        case 'ramp':
+          return getRampCurrencies();
+        case 'simplex':
+          return getSimplexCurrencies();
+        default:
+          return Promise.resolve([]);
+      }
+    };
+
+    const getCurrenciesPromises = enabledExchanges.map(exchange =>
+      getCurrenciesPromiseByExchange(exchange),
+    );
+
+    try {
+      const responseByExchange = await Promise.allSettled([
+        ...getCurrenciesPromises,
+        sleep(400),
+      ]);
+      const responseByExchangeKey = responseByExchange.map((res, index) => {
+        const exchangeKey: SellCryptoExchangeKey | undefined =
+          enabledExchanges[index] ?? undefined;
+        return {exchangeKey, promiseRes: res};
+      });
+
+      let allSupportedCoins: SellCryptoCoin[] = [];
+
+      if (responseByExchangeKey instanceof Array) {
+        responseByExchangeKey.forEach((e, index) => {
+          if (e.promiseRes.status === 'rejected') {
+            logger.error(
+              `Sell crypto getCurrencies[${index}] Rejected: + ${JSON.stringify(
+                e.promiseRes.reason,
+              )}`,
+            );
+            if (e.promiseRes.reason instanceof Error) {
+              switch (e.exchangeKey) {
+                case 'moonpay':
+                  logger.debug(
+                    'getMoonpayCurrencies Error: ' +
+                      e.promiseRes.reason.message,
+                  );
+                  sellCryptoExchangesDefault.moonpay.showOffer = false;
+                  break;
+                case 'ramp':
+                  logger.debug(
+                    'getRampCurrencies Error: ' + e.promiseRes.reason.message,
+                  );
+                  sellCryptoExchangesDefault.ramp.showOffer = false;
+                  break;
+                case 'simplex':
+                  logger.debug(
+                    'getSimplexCurrencies Error: ' +
+                      e.promiseRes.reason.message,
+                  );
+                  sellCryptoExchangesDefault.simplex.showOffer = false;
+                  break;
+                default:
+                  logger.debug('Error: ' + e.promiseRes.reason.message);
+                  break;
+              }
+            }
+          } else if (e.promiseRes.status === 'fulfilled') {
+            switch (e.exchangeKey) {
+              case 'moonpay':
+                sellCryptoExchangesDefault.moonpay.supportedCoins = e.promiseRes
+                  .value as SellCryptoCoin[];
+                break;
+              case 'ramp':
+                sellCryptoExchangesDefault.ramp.supportedCoins = e.promiseRes
+                  .value as SellCryptoCoin[];
+                break;
+              case 'simplex':
+                sellCryptoExchangesDefault.simplex.supportedCoins = e.promiseRes
+                  .value as SellCryptoCoin[];
+                break;
+              default:
+                break;
+            }
+
+            allSupportedCoins = [
+              ...allSupportedCoins,
+              ...((e.promiseRes.value as SellCryptoCoin[]) || []),
+            ];
+          }
+        });
+
+        if (allSupportedCoins.length > 0) {
+          const coinsToRemove =
+            !locationData || locationData.countryShortCode === 'US'
+              ? ['xrp']
+              : [];
+          coinsToRemove.push('busd');
+
+          if (coinsToRemove.length > 0) {
+            logger.debug(
+              `Removing ${JSON.stringify(
+                coinsToRemove,
+              )} from Sell supported coins`,
+            );
+            allSupportedCoins = allSupportedCoins.filter(
+              supportedCoin =>
+                !coinsToRemove.includes(supportedCoin.currencyAbbreviation),
+            );
+          }
+
+          allSupportedCoins = uniqBy(allSupportedCoins, 'symbol');
+        }
+
+        // Sort the array with our supported coins first and then the unsupported ones sorted alphabetically
+        const orderedArray = SupportedCurrencyOptions.map(currency =>
+          currency.chain
+            ? getCurrencyAbbreviation(
+                currency.currencyAbbreviation,
+                currency.chain,
+              )
+            : currency.currencyAbbreviation,
+        );
+        let allSupportedCoinsOrdered = orderBy(
+          allSupportedCoins,
+          [
+            coin => {
+              return orderedArray.includes(coin.symbol)
+                ? orderedArray.indexOf(coin.symbol)
+                : orderedArray.length;
+            },
+            'name',
+          ],
+          ['asc', 'asc'],
+        );
+
+        if (allSupportedCoinsOrdered?.length > 0) {
+          setSellCryptoSupportedCoinsFullObj(allSupportedCoinsOrdered);
+          const _sellCryptoSupportedCoins = allSupportedCoinsOrdered?.map(
+            ({symbol}) => symbol,
+          );
+          setSellCryptoSupportedCoins(_sellCryptoSupportedCoins);
+          await sleep(100);
+          dispatch(dismissOnGoingProcessModal());
+        } else {
+          logger.error(
+            'Sell crypto getCurrencies Error: allSupportedCoins array is empty',
+          );
+          const msg = t(
+            'Sell Crypto feature is not available at this moment. Please try again later.',
+          );
+          dispatch(dismissOnGoingProcessModal());
+          await sleep(500);
+          showError(undefined, msg, undefined, undefined, true);
+        }
+      }
+    } catch (err) {
+      logger.error('Sell crypto getCurrencies Error: ' + JSON.stringify(err));
+      const msg = t(
+        'Sell Crypto feature is not available at this moment. Please try again later.',
+      );
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(500);
+      showError(undefined, msg, undefined, undefined, true);
+    }
+  };
+
+  const init = async () => {
+    if (fromDeeplink) {
+      await sleep(200);
+    }
+    await sleep(100);
     dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+  };
+
+  const updateWalletStatus = async (
+    wallet: Wallet,
+    skipStatusUpdate?: boolean,
+  ) => {
+    if (!wallet) {
+      return;
+    }
+
+    if (!skipStatusUpdate) {
+      setLoadingWalletFromStatus(true);
+
+      const key = allKeys[wallet.keyId];
+      try {
+        await dispatch(startUpdateWalletStatus({key, wallet, force: true}));
+      } catch (err) {
+        logger.warn('Failed to update balances from Sell Crypto');
+      }
+    }
+
+    setLoadingWalletFromStatus(false);
+  };
+
+  const sellGetLimits = async () => {
+    setLoadingEnterAmountBtn(true);
+    if (!selectedWallet) {
+      setLoadingEnterAmountBtn(false);
+      return;
+    }
+
+    const sellSymbol = getExternalServiceSymbol(
+      selectedWallet.currencyAbbreviation,
+      selectedWallet.chain,
+    );
+    logger.debug(`Updating max and min for: ${sellSymbol}`);
+
+    const enabledExchanges = Object.values(sellCryptoExchangesDefault)
+      .filter(
+        exchange =>
+          (!preSetPartner || exchange.key === preSetPartner) &&
+          exchange.showOffer &&
+          !exchange.disabled &&
+          exchange.supportedCoins &&
+          exchange.supportedCoins.length > 0 &&
+          isCoinSupportedToSellBy(
+            exchange.key,
+            selectedWallet.currencyAbbreviation,
+            selectedWallet.chain,
+            locationData?.countryShortCode || 'US',
+          ),
+      )
+      .map(exchange => exchange.key);
+
+    const getLimitsPromiseByExchange = (exchange: SellCryptoExchangeKey) => {
+      switch (exchange) {
+        case 'moonpay':
+          return moonpayGetLimits(selectedWallet);
+        case 'ramp':
+          return rampGetLimits(selectedWallet);
+        case 'simplex':
+          return simplexGetLimits(selectedWallet);
+        default:
+          return Promise.reject('No getLimits function for this partner');
+      }
+    };
+
+    const getLimitsPromises = enabledExchanges.map(exchange =>
+      getLimitsPromiseByExchange(exchange),
+    );
+
+    try {
+      const responseByExchange = await Promise.allSettled([
+        ...getLimitsPromises,
+        sleep(400),
+      ]);
+      const responseByExchangeKey = responseByExchange.map((res, index) => {
+        const exchangeKey: SellCryptoExchangeKey | undefined =
+          enabledExchanges[index] ?? undefined;
+        return {exchangeKey, promiseRes: res};
+      });
+
+      let allLimits: SellLimits[] = [];
+
+      if (responseByExchangeKey instanceof Array) {
+        responseByExchangeKey.forEach((e, index) => {
+          if (e.promiseRes.status === 'rejected') {
+            logger.debug(
+              `Sell crypto getLimits[${
+                e.exchangeKey
+              }] Rejected: + ${JSON.stringify(e.promiseRes.reason)}`,
+            );
+          } else if (e.promiseRes.status === 'fulfilled') {
+            switch (e.exchangeKey) {
+              case 'moonpay':
+                sellCryptoExchangesDefault.moonpay.limits = {
+                  min: e.promiseRes.value?.minAmount
+                    ? Number(e.promiseRes.value.minAmount)
+                    : undefined,
+                  max: e.promiseRes.value?.maxAmount
+                    ? Number(e.promiseRes.value.maxAmount)
+                    : undefined,
+                };
+                allLimits.push(e.promiseRes.value as SellLimits);
+                break;
+              case 'ramp':
+                sellCryptoExchangesDefault.ramp.limits = {
+                  min: e.promiseRes.value?.minAmount
+                    ? Number(e.promiseRes.value.minAmount)
+                    : undefined,
+                  max: e.promiseRes.value?.maxAmount
+                    ? Number(e.promiseRes.value.maxAmount)
+                    : undefined,
+                };
+                allLimits.push(e.promiseRes.value as SellLimits);
+                break;
+              case 'simplex':
+                sellCryptoExchangesDefault.simplex.limits = {
+                  min: e.promiseRes.value?.minAmount
+                    ? Number(e.promiseRes.value.minAmount)
+                    : undefined,
+                  max: e.promiseRes.value?.maxAmount
+                    ? Number(e.promiseRes.value.maxAmount)
+                    : undefined,
+                };
+                allLimits.push(e.promiseRes.value as SellLimits);
+                break;
+            }
+          }
+        });
+
+        if (allLimits.length > 0) {
+          // If at least one enabled exchange does not have limits, then I set the limits to undefined,
+          // this way the user can put any value in Amount modal
+          const minMinAmount = allLimits.find(
+            limit => limit.minAmount === undefined,
+          )
+            ? undefined
+            : _.minBy(allLimits, 'minAmount')?.minAmount;
+          const maxMaxAmount = allLimits.find(
+            limit => limit.maxAmount === undefined,
+          )
+            ? undefined
+            : _.maxBy(allLimits, 'maxAmount')?.maxAmount;
+
+          setSellLimits({
+            limits: {
+              minAmount: minMinAmount,
+              maxAmount: maxMaxAmount,
+            },
+            maxWalletAmount:
+            // @ts-ignore
+              selectedWallet?.balance?.cryptoSpendable?.replaceAll(',', ''),
+          });
+
+          setLimits({
+            min: minMinAmount,
+            max: maxMaxAmount,
+          });
+        }
+      }
+      setLoadingEnterAmountBtn(false);
+    } catch (err) {
+      logger.error('Sell crypto getLimits Error: ' + JSON.stringify(err));
+      setLoadingEnterAmountBtn(false);
+      const msg = t(
+        'Sell Crypto feature is not available at this moment. Please try again later.',
+      );
+      const reason = 'Sell crypto getLimits Error';
+      dispatch(dismissOnGoingProcessModal());
+      await sleep(200);
+      showError(undefined, msg, reason);
+    }
+  };
+
+  const moonpayGetLimits = async (
+    wallet: Wallet,
+  ): Promise<SellLimits | undefined> => {
+    let moonpayLimits: SellLimits = {
+      minAmount: undefined,
+      maxAmount: undefined,
+    };
+    if (sellCryptoExchangesDefault.moonpay.supportedCoins) {
+      const selectedCoin =
+        sellCryptoExchangesDefault.moonpay.supportedCoins.find(
+          coin =>
+            coin.symbol ===
+            getExternalServiceSymbol(wallet.currencyAbbreviation, wallet.chain),
+        );
+
+      if (selectedCoin) {
+        moonpayLimits = {
+          minAmount: selectedCoin.limits?.min,
+          maxAmount: selectedCoin.limits?.max,
+        };
+      }
+    }
+
+    return Promise.resolve(moonpayLimits);
+  };
+
+  const rampGetLimits = async (
+    wallet: Wallet,
+  ): Promise<SellLimits | undefined> => {
+    let rampLimits: SellLimits = {
+      minAmount: undefined,
+      maxAmount: undefined,
+    };
+    if (sellCryptoExchangesDefault.ramp.supportedCoins) {
+      const selectedCoin = sellCryptoExchangesDefault.ramp.supportedCoins.find(
+        coin =>
+          coin.symbol ===
+          getExternalServiceSymbol(wallet.currencyAbbreviation, wallet.chain),
+      );
+
+      if (selectedCoin) {
+        rampLimits = {
+          minAmount: selectedCoin.limits?.min,
+          maxAmount: selectedCoin.limits?.max,
+        };
+      }
+    }
+
+    return Promise.resolve(rampLimits);
+  };
+
+  const simplexGetLimits = async (
+    wallet: Wallet,
+  ): Promise<SellLimits | undefined> => {
+    let simplexLimits: SellLimits = {
+      minAmount: undefined,
+      maxAmount: undefined,
+    };
+    if (sellCryptoExchangesDefault.simplex.supportedCoins) {
+      const selectedCoin =
+        sellCryptoExchangesDefault.simplex.supportedCoins.find(
+          coin =>
+            coin.symbol ===
+            getExternalServiceSymbol(wallet.currencyAbbreviation, wallet.chain),
+        );
+
+      if (selectedCoin) {
+        const simplexSellFiatLimits = getSimplexSellFiatAmountLimits();
+
+        const rateByCurrency = getRateByCurrencyName(
+          allRates,
+          selectedCoin.currencyAbbreviation?.toLowerCase(),
+          selectedCoin.chain?.toLowerCase(),
+          selectedCoin.tokenAddress,
+        );
+        const rateForCoinAndFiat = rateByCurrency?.find(
+          r => r.code === simplexSellFiatLimits.fiatCurrency,
+        );
+
+        if (rateForCoinAndFiat) {
+          const fiatRate = rateForCoinAndFiat.rate;
+          simplexLimits = {
+            minAmount: simplexSellFiatLimits.min / fiatRate,
+            maxAmount: simplexSellFiatLimits.max / fiatRate,
+          };
+        }
+      }
+    }
+
+    return Promise.resolve(simplexLimits);
+  };
+
+  useMount(() => {
+    init();
     if (context === 'buyCrypto') {
       try {
         initBuyCrypto();
@@ -823,7 +1939,13 @@ const BuyAndSellRoot = ({
         dispatch(dismissOnGoingProcessModal());
       }
     } else if (context === 'sellCrypto') {
-      // TODO initSellCrypto();
+      try {
+        initSellCrypto();
+      } catch (err: any) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(`[Sell] could not initialize view: ${errStr}`);
+        dispatch(dismissOnGoingProcessModal());
+      }
     }
 
     try {
@@ -840,7 +1962,8 @@ const BuyAndSellRoot = ({
       if (keyEvent.pressedKey === '\b') {
         onCellPress('backspace');
       } else if (keyEvent.pressedKey === '\r' && continueEnabled) {
-        onSubmit?.(+curValRef.current);
+        // onSubmit?.(+curValRef.current);
+        // TODO: handle continue with keyboard
       } else if (keyEvent.pressedKey === 'UIKeyInputEscape') {
         onCellPress('reset');
       } else if (keyEvent.pressedKey === '0') {
@@ -855,8 +1978,17 @@ const BuyAndSellRoot = ({
   }, [continueEnabled]);
 
   useEffect(() => {
+    if (selectedOffer && buttonState !== 'loading' && !openingBrowser) {
+      setContinueEnabled(true);
+    } else {
+      setContinueEnabled(false);
+    }
+  }, [selectedOffer, buttonState, openingBrowser]);
+
+  useEffect(() => {
     if (
       selectedPillValue !== null &&
+      selectedPillValue !== 'max' &&
       curValRef.current !== selectedPillValue.toString()
     ) {
       setSelectedPillValue(null);
@@ -864,12 +1996,97 @@ const BuyAndSellRoot = ({
   }, [curValRef.current]);
 
   useEffect(() => {
-    if (selectedWallet) {
-      navigation.setParams({wallet: selectedWallet});
+    if (context === 'sellCrypto' && selectedWallet?.currencyAbbreviation) {
+      const cryptoCurrency = cloneDeep(selectedWallet.currencyAbbreviation);
+      setSwapCurrenciesList([
+        ...new Set([formatCurrencyAbbreviation(cryptoCurrency), fiatCurrency]),
+      ]);
+    } else {
+      setSwapCurrenciesList([fiatCurrency]);
     }
-  }, [selectedWallet, navigation]);
+  }, [selectedWallet, fiatCurrency, context]);
 
-  const goTo = (offer: CryptoOffer, paymentMethod: PaymentMethod): void => {
+  useEffect(() => {
+    if (selectedWallet) {
+      navigation.setParams({fromWallet: selectedWallet});
+
+      if (context === 'sellCrypto') {
+        // TODO: Clean amount?
+        // curValRef.current = '0';
+        // updateAmountRef.current('0');
+        // setSelectedPillValue(null);
+
+        // Update wallet status
+        updateWalletStatus(selectedWallet);
+
+        // Set Moonpay preload data
+        if (
+          sellCryptoExchangesDefault.moonpay.supportedCoins &&
+          sellCryptoExchangesDefault.moonpay.supportedCoins.length > 0
+        ) {
+          const selectedCoin =
+            sellCryptoExchangesDefault.moonpay.supportedCoins.find(
+              coin =>
+                coin.symbol ===
+                getExternalServiceSymbol(
+                  selectedWallet.currencyAbbreviation,
+                  selectedWallet.chain,
+                ),
+            );
+          // setMoonpaySelectedCoin(selectedCoin);
+          sellCryptoExchangesDefault.moonpay.precision =
+            selectedCoin?.precision;
+
+          // TODO: review if needed
+          // sellGetLimits();
+        }
+
+        // Set Sell limits
+        if (sellCryptoSupportedCoins && sellCryptoSupportedCoins.length > 0) {
+          sellGetLimits();
+        }
+
+        const currency = cloneDeep(
+          selectedWallet.currencyAbbreviation,
+        ).toUpperCase();
+        const fromChain = cloneDeep(selectedWallet.chain);
+
+        setUsingCurrency(currency);
+        setUsingCurrencyIsFiat(false);
+
+        // if added for dev (hot reload)
+        if (
+          getRateByCurrencyName(allRates, currency.toLowerCase(), fromChain)
+        ) {
+          const rateByCurrencyName = getRateByCurrencyName(
+            allRates,
+            currency.toLowerCase(),
+            fromChain,
+            selectedWallet.tokenAddress, // TODO: review this
+          );
+          const fiatRateData = rateByCurrencyName.find(
+            r => r.code === fiatCurrency,
+          );
+
+          if (!fiatRateData) {
+            logger.warn(
+              `There is no fiatRateData for: ${currency.toLowerCase()} (${fromChain}) and ${fiatCurrency}. Setting rate to 0.`,
+            );
+            setRate(0);
+            return;
+          }
+
+          const fiatRate = fiatRateData.rate;
+          setRate(fiatRate);
+        }
+      }
+    }
+  }, [selectedWallet, navigation, allRates, fiatCurrency, context]);
+
+  const goToBuyCheckout = (
+    offer: CryptoOffer,
+    paymentMethod: PaymentMethod,
+  ): void => {
     setButtonState('loading');
     setOpeningBrowser(true);
     dispatch(
@@ -1633,7 +2850,667 @@ const BuyAndSellRoot = ({
     navigation.goBack();
   };
 
-  const showError = (title: string, msg: string, reason: string) => {
+  const goToSellCheckout = (
+    offer: SellCryptoOffer,
+    paymentMethod: WithdrawalMethod,
+  ): void => {
+    setButtonState('loading');
+    setOpeningBrowser(true);
+    dispatch(
+      SellCryptoActions.updateSellCryptoOpts({
+        sellCryptoOpts: {
+          selectedWithdrawalMethod: paymentMethod.method,
+        },
+      }),
+    );
+    switch (offer.key) {
+      case 'moonpay':
+        goToMoonpaySellPage(offer, paymentMethod);
+        break;
+
+      case 'ramp':
+        goToRampSellPage(offer, paymentMethod);
+        break;
+
+      case 'simplex':
+        goToSimplexSellPage(offer, paymentMethod);
+        break;
+    }
+  };
+
+  const goToMoonpaySellPage = (
+    offer: SellCryptoOffer,
+    paymentMethod: WithdrawalMethod,
+  ) => {
+    if (offer.errorMsg || offer.outOfLimitMsg) {
+      return;
+    }
+    continueToMoonpaySell(offer, paymentMethod);
+  };
+
+  const continueToMoonpaySell = async (
+    offer: SellCryptoOffer,
+    paymentMethod: WithdrawalMethod,
+  ) => {
+    if (!selectedWallet) {
+      return;
+    }
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const msg = t('Error when trying to generate wallet address.');
+      const title = t('MoonPay Error');
+      const reason = 'createWalletAddress Error';
+      showError(title, msg, reason);
+      return;
+    }
+
+    if (
+      selectedWallet.currencyAbbreviation.toLowerCase() === 'bch' &&
+      selectedWallet.chain.toLowerCase() === 'bch'
+    ) {
+      address = dispatch(
+        GetProtocolPrefixAddress(
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.network,
+          address,
+          selectedWallet.chain,
+        ),
+      );
+    }
+
+    const newId = uuid.v4().toString();
+    const externalTransactionId = `${selectedWallet.id}-${newId}`;
+
+    const requestData: MoonpayGetSellSignedPaymentUrlRequestData = {
+      env: moonpaySellEnv,
+      baseCurrencyCode: getMoonpaySellFixedCurrencyAbbreviation(
+        selectedWallet.currencyAbbreviation,
+        selectedWallet.chain,
+      ),
+      baseCurrencyAmount: offer.sellAmount || +curValRef.current,
+      externalTransactionId: externalTransactionId,
+      paymentMethod: getMoonpaySellPayoutMethodFormat(paymentMethod!.method),
+      externalCustomerId: user?.eid ?? selectedWallet.id,
+      redirectURL:
+        APP_DEEPLINK_PREFIX +
+        `moonpay?flow=sell&externalId=${externalTransactionId}` +
+        `${useSendMax ? '&sendMax=true' : ''}`,
+      refundWalletAddress: address,
+      lockAmount: true,
+      colorCode: BitPay,
+      theme: theme.dark ? 'dark' : 'light',
+      quoteCurrencyCode: cloneDeep(offer.fiatCurrency)?.toLowerCase(),
+      showWalletAddressForm: false,
+    };
+
+    let data: MoonpayGetSellSignedPaymentUrlData;
+    try {
+      data = await selectedWallet.moonpayGetSellSignedPaymentUrl(requestData);
+      if (!data?.urlWithSignature) {
+        const msg = t(
+          'Our partner Moonpay is not currently available. Please try again later.',
+        );
+        const reason =
+          'moonpayGetSignedPaymentUrl Error. urlWithSignature not present.';
+        const title = t('MoonPay Error');
+        showError(title, msg, reason);
+        return;
+      }
+    } catch (err) {
+      const msg = t(
+        'Our partner Moonpay is not currently available. Please try again later.',
+      );
+      const reason = 'moonpayGetSignedPaymentUrl Error.';
+      const title = t('MoonPay Error');
+      showError(title, msg, reason);
+      const logErr = getErrorMessage(err);
+      logger.error(`moonpayGetSellSignedPaymentUrl Error: ${logErr}`);
+      return;
+    }
+
+    const newData: MoonpaySellOrderData = {
+      env: __DEV__ ? 'dev' : 'prod',
+      wallet_id: selectedWallet.id,
+      coin: cloneDeep(selectedWallet.currencyAbbreviation).toUpperCase(),
+      chain: cloneDeep(selectedWallet.chain).toLowerCase(),
+      external_id: externalTransactionId,
+      created_on: Date.now(),
+      crypto_amount: offer.sellAmount || +curValRef.current,
+      refund_address: address,
+      fiat_currency: offer.quoteData?.quoteCurrency?.code
+        ? cloneDeep(offer.quoteData.quoteCurrency.code).toUpperCase()
+        : fiatCurrency,
+      payment_method: paymentMethod!.method,
+      fiat_fee_amount: Number(offer.fee),
+      fiat_receiving_amount: Number(offer.amountReceiving),
+      status: 'createdOrder',
+      send_max: useSendMax,
+    };
+
+    dispatch(
+      SellCryptoActions.successSellOrderMoonpay({
+        moonpaySellOrderData: newData,
+      }),
+    );
+
+    await sleep(300);
+    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
+    await sleep(500);
+    navigation.dispatch(StackActions.popToTop());
+  };
+
+  const goToRampSellPage = (
+    offer: SellCryptoOffer,
+    paymentMethod: WithdrawalMethod,
+  ) => {
+    if (offer.errorMsg || offer.outOfLimitMsg) {
+      return;
+    }
+    continueToRampSell(offer, paymentMethod);
+  };
+
+  const continueToRampSell = async (
+    offer: SellCryptoOffer,
+    paymentMethod: WithdrawalMethod,
+  ) => {
+    if (!selectedWallet) {
+      return;
+    }
+    let address: string = '';
+    try {
+      address = (await dispatch<any>(
+        createWalletAddress({wallet: selectedWallet, newAddress: false}),
+      )) as string;
+    } catch (err) {
+      console.error(err);
+      const msg = t('Error when trying to generate wallet address.');
+      const title = t('Ramp Error');
+      const reason = 'createWalletAddress Error';
+      showError(title, msg, reason);
+      return;
+    }
+
+    if (
+      selectedWallet.currencyAbbreviation.toLowerCase() === 'bch' &&
+      selectedWallet.chain.toLowerCase() === 'bch'
+    ) {
+      address = dispatch(
+        GetProtocolPrefixAddress(
+          selectedWallet.currencyAbbreviation,
+          selectedWallet.network,
+          address,
+          selectedWallet.chain,
+        ),
+      );
+    }
+
+    const rampAsset = getRampSellCoinFormat(
+      selectedWallet.currencyAbbreviation,
+      getRampChainFormat(selectedWallet.chain),
+    );
+
+    const requestData: RampPaymentUrlConfigParams = {
+      env: rampSellEnv,
+      flow: 'sell',
+      userAddress: address, // TODO: ask Ramp team about this for UTXO coins
+      hostLogoUrl: 'https://bitpay.com/_nuxt/img/bitpay-logo-blue.1c0494b.svg',
+      hostAppName: APP_NAME_UPPERCASE,
+      offrampAsset: rampAsset,
+      swapAsset: rampAsset,
+      swapAmount: offer.decimals
+        ? Number(offer.sellAmount) * 10 ** offer.decimals
+        : undefined,
+      fiatCurrency: offer.fiatCurrency,
+      enabledFlows: 'OFFRAMP',
+      defaultFlow: 'OFFRAMP',
+      selectedCountryCode: country,
+      defaultAsset: rampAsset,
+      variant: 'webview-mobile',
+      useSendCryptoCallback: true,
+      useSendCryptoCallbackVersion: 1,
+      hideExitButton: false,
+    };
+
+    let data: RampGetSellSignedPaymentUrlData;
+    try {
+      data = await selectedWallet.rampGetSignedPaymentUrl(requestData);
+      if (!data?.urlWithSignature) {
+        const msg = t(
+          'Our partner Ramp Network is not currently available. Please try again later.',
+        );
+        const reason =
+          'rampGetSignedPaymentUrl Error. urlWithSignature not present.';
+        const title = t('Ramp Network Error');
+        showError(title, msg, reason);
+        return;
+      }
+    } catch (err) {
+      const msg = t(
+        'Our partner Ramp Network is not currently available. Please try again later.',
+      );
+      const reason = 'rampGetSignedPaymentUrl Error.';
+      const title = t('Ramp Network Error');
+      showError(title, msg, reason);
+      const logErr = getErrorMessage(err);
+      logger.error(`rampGetSignedPaymentUrl Error: ${logErr}`);
+      return;
+    }
+
+    try {
+      const RampWebView = (url: string) => {
+        setSellModalVisible({open: true, url: url, rampOffer: offer});
+      };
+
+      RampWebView(data.urlWithSignature);
+    } catch (err) {
+      const msg = t(
+        'The Ramp Network checkout page could not be opened. Please try again later.',
+      );
+      const reason =
+        'rampGetSignedPaymentUrl Error. The checkout page could not be opened.';
+      const title = t('Ramp Network Error');
+      showError(title, msg, reason);
+      const logErr = getErrorMessage(err);
+      logger.error(`RampWebView Error: ${logErr}`);
+      return;
+    }
+  };
+
+  const handleRampCheckoutMessage = async (
+    event: WebViewMessageEvent,
+    offer: SellCryptoOffer | undefined,
+  ) => {
+    if (!selectedWallet) {
+      logger.error('handleRampCheckoutMessage: selectedWallet is undefined');
+      return;
+    }
+    if (!offer) {
+      logger.error('handleRampCheckoutMessage: offer is undefined');
+      return;
+    }
+    if (event?.nativeEvent?.data) {
+      let parsedEventData: RampOfframpSaleCreatedEvent;
+      try {
+        logger.debug('Trying to parse event JSON: ' + event.nativeEvent.data);
+        parsedEventData = JSON.parse(
+          event.nativeEvent.data,
+        ) as RampOfframpSaleCreatedEvent;
+        logger.debug('Successfully parsed!');
+      } catch (error) {
+        logger.error(
+          'Error trying to parse event JSON: ' + JSON.stringify(error),
+        );
+        return;
+      }
+
+      if (parsedEventData.type) {
+        switch (parsedEventData.type) {
+          case 'WIDGET_CONFIG_DONE': // Wdiget successfully opened
+            logger.debug('Ramp checkout event: WIDGET_CONFIG_DONE');
+            return;
+
+          case 'OFFRAMP_SALE_CREATED': // Quote accepted in checkout page and continue clicked
+            logger.debug('Ramp checkout event: OFFRAMP_SALE_CREATED');
+            const orderData =
+              parsedEventData.payload as RampSellCreatedEventPayload;
+
+            const newData: RampSellOrderData = {
+              env: __DEV__ ? 'dev' : 'prod',
+              wallet_id: selectedWallet.id,
+              address_to: '',
+              coin: cloneDeep(
+                selectedWallet.currencyAbbreviation,
+              ).toUpperCase(),
+              chain: cloneDeep(selectedWallet.chain).toLowerCase(),
+              created_on: Date.now(),
+              crypto_amount: offer.sellAmount || +curValRef.current,
+              fiat_receiving_amount: Number(offer.amountReceiving),
+              fiat_fee_amount: Number(offer.fee),
+              fiat_currency: offer.quoteData?.quoteCurrency?.code
+                ? cloneDeep(offer.quoteData.quoteCurrency.code).toUpperCase()
+                : fiatCurrency,
+              payment_method: (selectedPaymentMethod as WithdrawalMethod)
+                ?.method,
+              external_id: cloneDeep(offer.externalId)!,
+              sale_view_token: orderData.saleViewToken,
+              quote_id: orderData.sale?.id,
+              status: 'createdOrder',
+              send_max: useSendMax,
+            };
+
+            if (
+              IsERCToken(
+                cloneDeep(selectedWallet.currencyAbbreviation),
+                cloneDeep(selectedWallet.chain),
+              )
+            ) {
+              if (
+                orderData.sale?.crypto?.assetInfo?.address &&
+                selectedWallet.tokenAddress
+              ) {
+                const contractAddressFromRamp = cloneDeep(
+                  orderData.sale.crypto.assetInfo.address,
+                ).toLowerCase();
+                const contractAddress = cloneDeep(
+                  selectedWallet.tokenAddress,
+                ).toLowerCase();
+                if (contractAddress !== contractAddressFromRamp) {
+                  logger.warn(
+                    `The contract address from Ramp: ${contractAddressFromRamp} is different from the selected wallet: ${contractAddress}. The sale process is going to be cancelled.`,
+                  );
+
+                  const errMsg = t(
+                    'There was an error trying to create the sale transaction. Please try again later.',
+                  );
+
+                  const title = t('Ramp Network Error');
+                  const reason = 'Contract address mismatch error.';
+
+                  setSellModalVisible({
+                    open: false,
+                    url: sellModalVisible?.url,
+                    rampOffer: sellModalVisible?.rampOffer,
+                  });
+                  await sleep(1500);
+                  showError(title, errMsg, reason);
+                }
+              }
+            } else {
+              if (
+                orderData.sale?.crypto?.assetInfo?.symbol &&
+                orderData.sale?.crypto?.assetInfo?.chain
+              ) {
+                const orderCoin = getCoinFromRampCoinFormat(
+                  cloneDeep(
+                    orderData.sale.crypto.assetInfo.symbol,
+                  ).toLowerCase(),
+                );
+                const orderChain = getChainFromRampChainFormat(
+                  cloneDeep(
+                    orderData.sale.crypto.assetInfo.chain,
+                  ).toLowerCase(),
+                );
+                if (
+                  orderCoin !==
+                    selectedWallet.currencyAbbreviation.toLowerCase() ||
+                  orderChain !== selectedWallet.chain.toLowerCase()
+                ) {
+                  logger.warn(
+                    `The order coin-cain: ${orderCoin}-${orderChain} is different from the selected wallet: ${selectedWallet.currencyAbbreviation.toLowerCase()}-${selectedWallet.chain.toLowerCase()}. The sale process is going to be cancelled.`,
+                  );
+
+                  const errMsg = t(
+                    'There was an error trying to create the sale transaction. Please try again later.',
+                  );
+                  const title = t('Ramp Network Error');
+                  const reason = 'Coin-chain mismatch error.';
+
+                  setSellModalVisible({
+                    open: false,
+                    url: sellModalVisible?.url,
+                    rampOffer: sellModalVisible?.rampOffer,
+                  });
+                  await sleep(1500);
+                  showError(title, errMsg, reason);
+                }
+              }
+            }
+
+            if (
+              orderData.sale?.fiat?.payoutMethod &&
+              getPayoutMethodKeyFromRampType(
+                orderData.sale.fiat.payoutMethod,
+              ) !== selectedPaymentMethod?.method
+            ) {
+              logger.debug(
+                `Payout Method changed on the checkout page. Updating payment_method from: ${selectedPaymentMethod?.method} to: ${orderData.sale.fiat.payoutMethod}`,
+              );
+              newData.payment_method = getPayoutMethodKeyFromRampType(
+                orderData.sale.fiat.payoutMethod,
+              );
+            }
+
+            if (
+              orderData.sale?.crypto?.amount &&
+              Number(orderData.sale.crypto.amount) &&
+              offer.decimals
+            ) {
+              const orderAmount =
+                Number(orderData.sale.crypto.amount) / 10 ** offer.decimals;
+              if (orderAmount !== newData.crypto_amount) {
+                // TODO: review the send max case here. Set it to undefined when the amount changed
+                logger.debug(
+                  `Amount changed on the checkout page. Updating crypto_amount from: ${newData.crypto_amount} to: ${orderAmount}`,
+                );
+                newData.crypto_amount = orderAmount;
+                offer.sellAmount = orderAmount;
+              }
+            }
+
+            if (
+              orderData.sale?.fiat?.amount &&
+              Number(orderData.sale.fiat.amount) &&
+              Number(orderData.sale.fiat.amount) !==
+                newData.fiat_receiving_amount
+            ) {
+              logger.debug(
+                `Receiving Amount changed on the checkout page. Updating fiat_receiving_amount from: ${newData.fiat_receiving_amount} to: ${orderData.sale.fiat.amount}`,
+              );
+              newData.fiat_receiving_amount = Number(
+                orderData.sale.fiat.amount,
+              );
+            }
+
+            if (
+              orderData.sale?.fiat?.currencySymbol &&
+              orderData.sale.fiat.currencySymbol !== newData.fiat_currency
+            ) {
+              logger.debug(
+                `Fiat Currency changed on the checkout page. Updating fiat_currency from: ${newData.fiat_currency} to: ${orderData.sale.fiat.amount}`,
+              );
+              newData.fiat_currency = orderData.sale.fiat.amount;
+            }
+
+            if (
+              orderData.sale?.fees?.amount &&
+              Number(orderData.sale.fees.amount) &&
+              Number(orderData.sale.fees.amount) !== newData.fiat_fee_amount
+            ) {
+              logger.debug(
+                `Fees Amount changed on the checkout page. Updating fiat_fee_amount from: ${newData.fiat_fee_amount} to: ${orderData.sale.fees.amount}`,
+              );
+              newData.fiat_fee_amount = Number(orderData.sale.fees.amount);
+            }
+
+            dispatch(
+              SellCryptoActions.successSellOrderRamp({
+                rampSellOrderData: newData,
+              }),
+            );
+            return;
+          case 'SEND_CRYPTO': // Pay in wallet clicked in checkout page
+            logger.debug('Ramp checkout event: SEND_CRYPTO');
+
+            const sendCryptoPayload =
+              parsedEventData.payload as RampSellSendCryptoPayload;
+
+            const dataToUpdate: RampSellIncomingData = {
+              rampExternalId: cloneDeep(offer.externalId)!,
+              depositWalletAddress: sendCryptoPayload?.address,
+            };
+
+            dispatch(
+              SellCryptoActions.updateSellOrderRamp({
+                rampSellIncomingData: dataToUpdate,
+              }),
+            );
+
+            setSellModalVisible({
+              open: false,
+              url: sellModalVisible?.url,
+              rampOffer: sellModalVisible?.rampOffer,
+            });
+            await sleep(1500);
+            navigation.goBack();
+            navigation.navigate(ExternalServicesScreens.RAMP_SELL_CHECKOUT, {
+              rampQuoteOffer: offer,
+              wallet: selectedWallet,
+              toAddress: sendCryptoPayload?.address,
+              amount: offer.sellAmount!,
+              showNewQuoteInfo: !!(offer.sellAmount !== +curValRef.current),
+              sellCryptoExternalId: cloneDeep(offer.externalId)!,
+              paymentMethod: (selectedPaymentMethod as WithdrawalMethod)
+                ?.method,
+              useSendMax: IsERCToken(
+                selectedWallet!.currencyAbbreviation,
+                selectedWallet!.chain,
+              )
+                ? false
+                : useSendMax,
+              sendMaxInfo: sendMaxInfo,
+            });
+            return;
+
+          default:
+            logger.debug('Event not handled: ' + parsedEventData.type);
+            return;
+        }
+      }
+    }
+  };
+
+  const goToSimplexSellPage = (
+    offer: SellCryptoOffer,
+    paymentMethod: WithdrawalMethod,
+  ) => {
+    if (offer.errorMsg || offer.outOfLimitMsg) {
+      return;
+    }
+    continueToSimplexSell(offer, paymentMethod);
+  };
+
+  const continueToSimplexSell = async (
+    offer: SellCryptoOffer,
+    paymentMethod: WithdrawalMethod,
+  ) => {
+    if (!selectedWallet) {
+      const msg = 'selectedWallet is undefined.';
+      const reason = 'selectedWallet is undefined.';
+      const title = t('Simplex Error');
+      showError(title, msg, reason);
+      return;
+    }
+    if (!offer.quoteData?.quote_id) {
+      const msg =
+        'There was an error while trying to reach the checkout page. Please try again later';
+      const reason = 'quote_id not included in Simplex quote data.';
+      const title = t('Simplex Error');
+      showError(title, msg, reason);
+      return;
+    }
+
+    const externalTransactionId = uuid.v4().toString();
+
+    const return_url = getSimplexSellReturnURL(
+      externalTransactionId,
+      useSendMax,
+    );
+
+    const userCountry = getSimplexSellCountryFormat(country, user?.country);
+
+    const quoteData: SimplexSellPaymentRequestReqData = {
+      env: simplexSellEnv,
+      userCountry: __DEV__ ? 'LT' : userCountry || 'US',
+      referer_url: 'https://bitpay.com/',
+      return_url: return_url,
+      txn_details: {quote_id: offer.quoteData.quote_id},
+    };
+
+    selectedWallet
+      .simplexSellPaymentRequest(quoteData)
+      .then(async (data: SimplexSellPaymentRequestData) => {
+        if (data?.error) {
+          const msg = getErrorMessage(data.error);
+          const reason = 'simplexSellPaymentRequest Error';
+          const title = t('Simplex Error');
+          showError(title, msg, reason);
+          setOpeningBrowser(false);
+          return;
+        }
+
+        if (!data?.txn_url) {
+          const msg =
+            'There was an error. Simplex did not provide the URL to continue with the sales process.';
+          const reason = 'simplexSellPaymentRequest Error: No txn_url present.';
+          const title = t('Simplex Error');
+          showError(title, msg, reason);
+          setOpeningBrowser(false);
+          return;
+        }
+
+        logger.debug('Simplex creating sell payment request: SUCCESS');
+
+        const destinationChain = selectedWallet.chain;
+
+        dispatch(
+          Analytics.track('Sell Crypto Order Created', {
+            exchange: 'simplex',
+            cryptoAmount: offer.sellAmount,
+            fiatAmount: offer.quoteData?.fiat_amount
+              ? Number(offer.quoteData.fiat_amount)
+              : '',
+            fiatCurrency: offer.fiatCurrency || '',
+            coin: selectedWallet.currencyAbbreviation.toLowerCase(),
+            chain: destinationChain?.toLowerCase(),
+          }),
+        );
+
+        const ref = data.app_sell_ref_id ?? 'bitpay';
+        const paymentUrl = `${data.txn_url}?ref=${ref}`;
+
+        // This offer is opened in an external browser as Simplex does not provide the deposit address in advance.
+        // The user would have to go back and forth between the web and the app.
+        await Linking.openURL(paymentUrl);
+        await sleep(500);
+
+        navigation.goBack();
+        navigation.navigate(ExternalServicesScreens.SIMPLEX_SELL_CHECKOUT, {
+          simplexQuoteOffer: offer,
+          wallet: selectedWallet,
+          amount: offer.sellAmount || +curValRef.current,
+          externalId: externalTransactionId,
+          paymentMethod: paymentMethod.method,
+          simplexTxId: data.txn_id,
+          useSendMax: IsERCToken(
+            selectedWallet!.currencyAbbreviation,
+            selectedWallet!.chain,
+          )
+            ? false
+            : useSendMax,
+          sendMaxInfo: sendMaxInfo,
+        });
+      })
+      .catch(err => {
+        const msg = getErrorMessage(err);
+        const reason = 'simplexSellPaymentRequest Error';
+        const title = t('Simplex Error');
+        showError(title, msg, reason);
+        setOpeningBrowser(false);
+      });
+  };
+
+  const showError = (
+    title: string | undefined,
+    msg: string,
+    reason: string | undefined,
+    actions?: any,
+    goBack?: boolean,
+  ) => {
     logger.error(
       selectedOffer?.label + ' error: ' + msg + ' | Reason: ' + reason,
     );
@@ -1644,7 +3521,7 @@ const BuyAndSellRoot = ({
         context: 'BuyCryptoOffers',
         reason: reason || 'unknown',
         paymentMethod: selectedPaymentMethod?.method || '',
-        amount: Number(selectedOffer?.fiatAmount) || '',
+        amount: Number((selectedOffer as CryptoOffer)?.fiatAmount) || '',
         coin:
           cloneDeep(selectedWallet?.currencyAbbreviation)?.toLowerCase() || '',
         chain: cloneDeep(selectedWallet?.chain)?.toLowerCase() || '',
@@ -1657,7 +3534,8 @@ const BuyAndSellRoot = ({
         title: title ?? t('Error'),
         message: msg,
         type: 'error',
-        actions: [
+        enableBackdropDismiss: goBack ? false : true,
+        actions: actions ?? [
           {
             text: t('OK'),
             action: () => {
@@ -1665,7 +3543,6 @@ const BuyAndSellRoot = ({
             },
           },
         ],
-        enableBackdropDismiss: true,
         onBackdropDismiss: () => {
           navigation.dispatch(StackActions.popToTop());
         },
@@ -1690,91 +3567,116 @@ const BuyAndSellRoot = ({
             <AmountText
               numberOfLines={1}
               ellipsizeMode={'tail'}
-              bigAmount={_isSmallScreen ? true : displayAmount?.length > 8}>
-              {displayAmount || 0}
+              bigAmount={
+                _isSmallScreen ? true : amountConfig.displayAmount?.length > 8
+              }>
+              {amountConfig.displayAmount || 0}
             </AmountText>
-            <CurrencySuperScript>
-              <CurrencyText
-                bigAmount={_isSmallScreen ? true : displayAmount?.length > 8}>
-                {formatCurrencyAbbreviation(currency) || 'USD'}
-              </CurrencyText>
-            </CurrencySuperScript>
+            {context !== 'sellCrypto' || selectedWallet ? (
+              <CurrencySuperScript>
+                <CurrencyText
+                  bigAmount={
+                    _isSmallScreen
+                      ? true
+                      : amountConfig.displayAmount?.length > 8
+                  }>
+                  {formatCurrencyAbbreviation(usingCurrency) || 'USD'}
+                </CurrencyText>
+              </CurrencySuperScript>
+            ) : null}
           </Row>
-          {customAmountSublabel ? (
-            <>{customAmountSublabel(+amount)}</>
-          ) : cryptoCurrencyAbbreviation ? (
+          {/* This section shows the equivalent amount (in crypto if usingCurrency is fiat / in fiat if usingCurrency is crypto) 
+              Do not remove commented section*/}
+          {usingCurrency &&
+          context === 'sellCrypto' &&
+          usingCurrencyIsFiat &&
+          amountConfig.displayEquivalentAmount !== '0' &&
+          amountConfig.amount !== '0' ? (
             <Row>
               <AmountEquivText>
-                {displayEquivalentAmount || 0}{' '}
-                {primaryIsFiat &&
-                  formatCurrencyAbbreviation(cryptoCurrencyAbbreviation)}
+                {usingCurrencyIsFiat
+                  ? Number(amountConfig.displayEquivalentAmount)
+                      .toFixed(8)
+                      .replace(/\.?0+$/, '')
+                  : amountConfig.displayEquivalentAmount}{' '}
+                {context === 'sellCrypto'
+                  ? usingCurrencyIsFiat
+                    ? selectedWallet?.currencyAbbreviation.toUpperCase()
+                    : fiatCurrency
+                  : null}
               </AmountEquivText>
             </Row>
           ) : null}
-          {selectedOffer?.amountReceiving ? (
-            <Row>
-              <SelectedOfferAmountText>
-                {'≈ '}
-                {Number(selectedOffer.amountReceiving)
-                  .toFixed(8)
-                  .replace(/\.?0+$/, '')}{' '}
-                {selectedWallet?.currencyAbbreviation.toUpperCase()}
-              </SelectedOfferAmountText>
-            </Row>
-          ) : null}
+          <CtaContainer justifyCenter={context === 'buyCrypto'}>
+            {selectedOffer?.amountReceiving ? (
+              <>
+                {context === 'sellCrypto' ? <View style={{width: 40}} /> : null}
+                <SelectedOfferAmountText>
+                  {'≈ '}
+                  {Number(selectedOffer.amountReceiving)
+                    .toFixed(8)
+                    .replace(/\.?0+$/, '')}{' '}
+                  {context === 'buyCrypto'
+                    ? selectedWallet?.currencyAbbreviation.toUpperCase()
+                    : null}
+                  {context === 'sellCrypto'
+                    ? selectedOffer?.fiatCurrency.toUpperCase()
+                    : null}
+                </SelectedOfferAmountText>
+              </>
+            ) : context === 'sellCrypto' ? (
+              <View style={{width: 40}} />
+            ) : null}
+            {context === 'sellCrypto' &&
+            swapCurrenciesList.length > 1 &&
+            selectedWallet ? (
+              <SwapCurrenciesButton
+                onPress={() => {
+                  curValRef.current = '0';
+                  updateAmountRef.current('0');
+                  setSelectedPillValue(null);
+                  if (usingCurrencyIsFiat) {
+                    setUsingCurrencyIsFiat(false);
+                    setUsingCurrency(
+                      selectedWallet.currencyAbbreviation.toUpperCase(),
+                    );
+                  } else {
+                    setUsingCurrencyIsFiat(true);
+                    setUsingCurrency(fiatCurrency);
+                  }
+                }}>
+                <SwapCurrenciesSvg width={30} height={30} />
+              </SwapCurrenciesButton>
+            ) : null}
+          </CtaContainer>
 
           <ExternalServicesWalletSelector
             navigation={navigation}
             route={route}
+            context={context}
             buyCryptoSupportedCoins={buyCryptoSupportedCoins ?? []}
             buyCryptoSupportedCoinsFullObj={buyCryptoSupportedCoinsFullObj}
+            sellCryptoSupportedCoins={sellCryptoSupportedCoins ?? []}
+            sellCryptoSupportedCoinsFullObj={
+              sellCryptoSupportedCoinsFullObj ?? []
+            }
             fromWallet={fromWallet}
             currencyAbbreviation={fromCurrencyAbbreviation}
             chain={fromChain}
             partner={preSetPartner}
             onWalletSelected={setSelectedWallet}
           />
-
-          <CtaContainer isSmallScreen={_isSmallScreen}>
-            {context === 'sellCrypto' && limitsOpts?.maxWalletAmount ? (
-              <SwapButtonContainer
-                isSmallScreen={_isSmallScreen}
-                onPress={() => sellCryptoSendMax()}>
-                <CurrencySymbol />
-                <ButtonText isSmallScreen={_isSmallScreen}>MAX</ButtonText>
-              </SwapButtonContainer>
-            ) : (
-              <Row />
-            )}
-            {swapList.length > 1 ? (
-              <SwapButton
-                swapList={swapList}
-                onChange={(toCurrency: string) => {
-                  curValRef.current = '';
-                  updateAmountRef.current('0');
-                  updateAmountConfig(current => ({
-                    ...current,
-                    currency: toCurrency,
-                    primaryIsFiat: !primaryIsFiat,
-                    displayAmount: '0',
-                    displayEquivalentAmount: primaryIsFiat
-                      ? formatFiatAmount(0, fiatCurrency, {
-                          currencyDisplay: 'symbol',
-                        })
-                      : '0',
-                  }));
-                }}
-              />
-            ) : null}
-          </CtaContainer>
         </AmountHeroContainer>
-
         <ActionContainer>
           {selectedWallet ? (
             <ExternalServicesOfferSelector
+              context={context}
               selectedWallet={selectedWallet}
-              amount={+amount}
+              amount={
+                usingCurrencyIsFiat ? +amountConfig.amount : +curValRef.current
+              }
               amountLimits={limits}
+              sellLimits={sellLimits}
               getWarnMsg={getWarnMsg}
               fiatCurrency={
                 defaultAltCurrency?.isoCode ? defaultAltCurrency.isoCode : 'USD'
@@ -1784,20 +3686,62 @@ const BuyAndSellRoot = ({
               country={country}
               preSetPartner={preSetPartner}
               buyCryptoConfig={externalServicesConfig?.buyCrypto}
+              sellCryptoConfig={externalServicesConfig?.sellCrypto}
+              preLoadSellPartnersData={sellCryptoExchangesDefault}
+              useSendMax={
+                IsERCToken(
+                  selectedWallet!.currencyAbbreviation,
+                  selectedWallet!.chain,
+                )
+                  ? false
+                  : useSendMax
+              }
+              sendMaxInfo={sendMaxInfo}
               onSelectOffer={setSelectedOffer}
               onSelectPaymentMethod={setSelectedPaymentMethod}
             />
           ) : null}
-          {['USD', 'EUR'].includes(defaultAltCurrency.isoCode) ? (
+          {(context === 'buyCrypto' &&
+            ['USD', 'EUR'].includes(defaultAltCurrency.isoCode)) ||
+          (context === 'sellCrypto' && selectedWallet) ? (
             <ExternalServicesAmountPills
               fiatCurrency={defaultAltCurrency.isoCode}
               selectedValue={selectedPillValue}
-              onPillPress={(pillValue: number) => {
+              showMaxPill={context === 'sellCrypto'}
+              maxPillDisabled={
+                !sellLimits?.maxWalletAmount && !sellLimits?.limits?.maxAmount
+              }
+              hideFiatPills={
+                !usingCurrencyIsFiat ||
+                !['USD', 'EUR'].includes(defaultAltCurrency.isoCode)
+              }
+              onPillPress={(pillValue: number | string) => {
                 const pillValueStr = pillValue?.toString();
                 if (pillValueStr) {
-                  curValRef.current = pillValueStr;
-                  updateAmountRef.current(pillValueStr);
-                  setSelectedPillValue(pillValue);
+                  if (context === 'buyCrypto') {
+                    curValRef.current = pillValueStr;
+                    updateAmountRef.current(pillValueStr);
+                    setSelectedPillValue(pillValue);
+                  } else if (context === 'sellCrypto') {
+                    if (usingCurrencyIsFiat && typeof pillValue === 'number') {
+                      curValRef.current = pillValueStr;
+                      updateAmountRef.current(pillValueStr);
+                      setSelectedPillValue(pillValue);
+                    } else if (typeof pillValue === 'number' && rate) {
+                      const rateForPill = rate
+                        ? (pillValue / rate).toFixed(8).replace(/\.?0+$/, '')
+                        : '0';
+                      curValRef.current = rateForPill;
+                      updateAmountRef.current(rateForPill);
+                      setSelectedPillValue(pillValue);
+                    } else if (
+                      typeof pillValue === 'string' &&
+                      pillValue === 'max'
+                    ) {
+                      setSelectedPillValue(pillValue);
+                      sellCryptoSendMax();
+                    }
+                  }
                 }
               }}
             />
@@ -1806,7 +3750,7 @@ const BuyAndSellRoot = ({
           <VirtualKeyboardContainer>
             <VirtualKeyboard
               onCellPress={onCellPress}
-              showDot={currency !== 'JPY'}
+              showDot={usingCurrency !== 'JPY'}
               context={'buyCrypto'}
             />
           </VirtualKeyboardContainer>
@@ -1815,9 +3759,21 @@ const BuyAndSellRoot = ({
               state={buttonState}
               disabled={!continueEnabled}
               onPress={() => {
-                selectedOffer && selectedPaymentMethod
-                  ? goTo(selectedOffer, selectedPaymentMethod)
-                  : {};
+                if (context === 'buyCrypto') {
+                  selectedOffer && selectedPaymentMethod
+                    ? goToBuyCheckout(
+                        selectedOffer as CryptoOffer,
+                        selectedPaymentMethod as PaymentMethod,
+                      )
+                    : {};
+                } else if (context === 'sellCrypto') {
+                  selectedOffer && selectedPaymentMethod
+                    ? goToSellCheckout(
+                        selectedOffer as SellCryptoOffer,
+                        selectedPaymentMethod as WithdrawalMethod,
+                      )
+                    : {};
+                }
               }}>
               {selectedOffer
                 ? t('Continue with ') + selectedOffer.label
@@ -1827,6 +3783,71 @@ const BuyAndSellRoot = ({
           {showArchaxBanner && <ArchaxFooter isSmallScreen={_isSmallScreen} />}
         </ActionContainer>
       </ViewContainer>
+
+      <Modal
+        deviceHeight={HEIGHT}
+        deviceWidth={WIDTH}
+        backdropTransitionOutTiming={0}
+        backdropOpacity={0.85}
+        // hideModalContentWhileAnimating={hideModalContentWhileAnimating}
+        useNativeDriverForBackdrop={true}
+        useNativeDriver={true}
+        animationIn={'fadeInUp'}
+        animationOut={'fadeOutDown'}
+        isVisible={sellModalVisible.open}
+        style={{
+          margin: 0,
+          padding: 0,
+        }}>
+        <View
+          style={{
+            flex: 1,
+            // backgroundColor: '#f8f8f8',
+            justifyContent: 'center',
+            overflow: 'scroll',
+          }}>
+          {/* Close Button */}
+          <View
+            style={{
+              borderTopLeftRadius: 15,
+              borderTopRightRadius: 15,
+              marginTop: insets.top,
+              height: 50,
+              backgroundColor: '#f8f8f8',
+              justifyContent: 'center',
+              alignItems: 'flex-start',
+              paddingHorizontal: 15,
+              borderBottomWidth: 1,
+              borderBottomColor: '#ddd',
+            }}>
+            <TouchableOpacity
+              style={{padding: 10}}
+              onPress={() => {
+                setSellModalVisible({
+                  open: false,
+                  url: undefined,
+                  rampOffer: undefined,
+                });
+              }}>
+              <Text style={{fontSize: 24, color: '#333'}}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <WebView
+            style={{
+              paddingBottom: insets.bottom + 30,
+            }}
+            source={{uri: sellModalVisible.url ?? ''}}
+            scrollEnabled={true}
+            onMessage={(e: WebViewMessageEvent) => {
+              handleRampCheckoutMessage(e, sellModalVisible.rampOffer);
+            }}
+            originWhitelist={['https://*']}
+            automaticallyAdjustContentInsets
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+          />
+        </View>
+      </Modal>
     </AmountContainer>
   );
 };
