@@ -11,6 +11,14 @@ import {
   RampSellIncomingData,
   RampSellOrderData,
 } from './models/ramp-sell.models';
+import {SellCryptoStateOpts} from './sell-crypto.reducer';
+
+export const updateSellCryptoOpts = (payload: {
+  sellCryptoOpts: SellCryptoStateOpts;
+}): SellCryptoActionType => ({
+  type: SellCryptoActionTypes.UPDATE_OPTS,
+  payload,
+});
 
 export const successSellOrderMoonpay = (payload: {
   moonpaySellOrderData: MoonpaySellOrderData;

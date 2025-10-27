@@ -181,7 +181,9 @@ const LinkingButtons = ({buy, sell, receive, send, swap}: Props) => {
               context: 'LinkingButtons',
             }),
           );
-          navigation.navigate('SellCryptoRoot');
+          navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+            context: 'sellCrypto',
+          });
         },
   );
   const swapCryptoCta = useRequireKeyAndWalletRedirect(
