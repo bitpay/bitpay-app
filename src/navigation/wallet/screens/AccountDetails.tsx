@@ -1309,7 +1309,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     context: 'AccountDetails',
                   }),
                 );
-                navigation.navigate('SellCryptoRoot');
+                navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+                  context: 'sellCrypto',
+                });
               },
             }}
             swap={{

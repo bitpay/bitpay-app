@@ -1193,9 +1193,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             chain: fullWalletObj.chain || '',
                           }),
                         );
-                        navigation.navigate('SellCryptoRoot', {
-                          fromWallet: fullWalletObj,
-                        });
+                        navigation.navigate(
+                          ExternalServicesScreens.ROOT_BUY_AND_SELL,
+                          {
+                            context: 'sellCrypto',
+                            fromWallet: fullWalletObj,
+                          },
+                        );
                       },
                     }}
                     swap={{

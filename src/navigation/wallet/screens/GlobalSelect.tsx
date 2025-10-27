@@ -348,7 +348,7 @@ const buildSelectableCurrenciesList = (
   wallets: Wallet[],
 ): GlobalSelectObjByKey => {
   const coins: GlobalSelectObjByKey = {};
-  customToSelectCurrencies.forEach(currency => {
+  (customToSelectCurrencies || []).forEach(currency => {
     const {currencyAbbreviation, chain, name, tokenAddress, logoUri, badgeUri} =
       currency;
 
@@ -517,7 +517,8 @@ interface GlobalSelectProps {
   customSupportedCurrencies?: any[];
   customToSelectCurrencies?:
     | ToWalletSelectorCustomCurrency[]
-    | SwapCryptoCoin[];
+    | SwapCryptoCoin[]
+    | undefined;
   globalSelectOnDismiss?: (
     newWallet?: any,
     createNewWalletData?: AddWalletData,

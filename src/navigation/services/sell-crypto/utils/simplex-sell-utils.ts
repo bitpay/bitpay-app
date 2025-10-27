@@ -29,6 +29,7 @@ export const simplexSellMaticTokensWithSuffix: string[] = [];
 export const simplexSellArbitrumTokensWithSuffix: string[] = [];
 export const simplexSellBaseTokensWithSuffix: string[] = [];
 export const simplexSellOptimismTokensWithSuffix: string[] = [];
+export const simplexSellSolanaTokensWithSuffix: string[] = [];
 
 export const getSimplexSellSupportedCurrencies = (
   locationCountry?: string,
@@ -60,7 +61,10 @@ export const getSimplexSellSupportedCurrencies = (
   }
 };
 
-export const getSimplexCoinFormat = (coin: string, chain: string): string => {
+export const getSimplexSellCoinFormat = (
+  coin: string,
+  chain: string,
+): string => {
   coin = externalServicesCoinMapping(coin);
   let formattedCoin: string = coin.toUpperCase();
   switch (chain) {
@@ -94,6 +98,11 @@ export const getSimplexCoinFormat = (coin: string, chain: string): string => {
     case 'op':
       if (simplexSellOptimismTokensWithSuffix.includes(coin.toLowerCase())) {
         formattedCoin = `${coin.toUpperCase()}-OPTIMISM`;
+      }
+      break;
+    case 'sol':
+      if (simplexSellSolanaTokensWithSuffix.includes(coin.toLowerCase())) {
+        formattedCoin = `${coin.toUpperCase()}-SOL`;
       }
       break;
     default:
@@ -150,7 +159,7 @@ export const getSimplexSellPayoutMethodFormat = (
   return formattedPaymentMethod;
 };
 
-export const getSimplexCountryFormat = (
+export const getSimplexSellCountryFormat = (
   locationCountry: string,
   userCountry?: string | undefined,
 ): string => {
