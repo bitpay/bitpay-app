@@ -45,6 +45,10 @@ import GlobalSelect, {
 } from '../../wallet/screens/GlobalSelect';
 import {getExternalServiceSymbol} from '../utils/external-services-utils';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
+import {
+  ExternalServicesContext,
+  SellCryptoCoin,
+} from '../screens/BuyAndSellRoot';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -100,8 +104,11 @@ export const WalletSelectorName = styled.Text`
 interface ExternalServicesWalletSelectorScreenProps {
   navigation: any;
   route: any;
+  context: ExternalServicesContext | undefined;
   buyCryptoSupportedCoins: string[];
   buyCryptoSupportedCoinsFullObj: ToWalletSelectorCustomCurrency[];
+  sellCryptoSupportedCoins: string[] | undefined;
+  sellCryptoSupportedCoinsFullObj?: SellCryptoCoin[] | undefined;
   onWalletSelected?: (wallet: Wallet) => void;
   fromWallet?: any;
   currencyAbbreviation?: string | undefined; // used from charts and deeplinks.
@@ -114,8 +121,11 @@ const ExternalServicesWalletSelector: React.FC<
 > = ({
   navigation,
   route,
+  context,
   buyCryptoSupportedCoins,
   buyCryptoSupportedCoinsFullObj,
+  sellCryptoSupportedCoinsFullObj,
+  sellCryptoSupportedCoins,
   onWalletSelected,
   fromWallet,
   currencyAbbreviation,
@@ -247,27 +257,66 @@ const ExternalServicesWalletSelector: React.FC<
   };
 
   const setWallet = (wallet: Wallet) => {
-    if (
-      wallet.credentials &&
-      wallet.network === 'livenet' &&
-      buyCryptoSupportedCoins.includes(
-        getExternalServiceSymbol(
-          wallet.currencyAbbreviation.toLowerCase(),
-          wallet.chain,
-        ),
-      )
-    ) {
-      if (wallet.isComplete()) {
-        if (allKeys[wallet.keyId].backupComplete) {
-          _setSelectedWallet(wallet);
+    if (context === 'buyCrypto') {
+      if (
+        wallet.credentials &&
+        wallet.network === 'livenet' &&
+        buyCryptoSupportedCoins.includes(
+          getExternalServiceSymbol(
+            wallet.currencyAbbreviation.toLowerCase(),
+            wallet.chain,
+          ),
+        )
+      ) {
+        if (wallet.isComplete()) {
+          if (allKeys[wallet.keyId].backupComplete) {
+            _setSelectedWallet(wallet);
+          } else {
+            walletError('needsBackup');
+          }
         } else {
-          walletError('needsBackup');
+          walletError('walletNotCompleted');
         }
       } else {
-        walletError('walletNotCompleted');
+        walletError('walletNotSupportedToBuy');
       }
-    } else {
-      walletError('walletNotSupportedToBuy');
+    } else if (context === 'sellCrypto') {
+      if (
+        wallet.credentials &&
+        (wallet.network === 'livenet' ||
+          (__DEV__ &&
+            wallet.network === 'testnet' &&
+            ['btc', 'eth'].includes(
+              getExternalServiceSymbol(
+                wallet.currencyAbbreviation.toLowerCase(),
+                wallet.chain,
+              ),
+            ))) &&
+        sellCryptoSupportedCoinsFullObj &&
+        sellCryptoSupportedCoinsFullObj.some(coin => {
+          const symbol = getExternalServiceSymbol(
+            wallet.currencyAbbreviation.toLowerCase(),
+            wallet.chain,
+          );
+          return coin.symbol === symbol;
+        })
+      ) {
+        if (wallet.isComplete()) {
+          if (allKeys[wallet.keyId].backupComplete) {
+            if (wallet.balance?.satSpendable > 0) {
+              _setSelectedWallet(wallet);
+            } else {
+              walletError('noSpendableFunds');
+            }
+          } else {
+            walletError('needsBackup');
+          }
+        } else {
+          walletError('walletNotCompleted');
+        }
+      } else {
+        walletError('walletNotSupported');
+      }
     }
   };
 
@@ -370,7 +419,7 @@ const ExternalServicesWalletSelector: React.FC<
             <WalletSelectorName
               ellipsizeMode="tail"
               numberOfLines={1}
-              style={{fontWeight: 500}}>
+              style={{fontWeight: 500, color: White}}>
               {t('Choose Crypto')}
             </WalletSelectorName>
           )}
@@ -401,11 +450,24 @@ const ExternalServicesWalletSelector: React.FC<
           <GlobalSelect
             route={route}
             navigation={navigation}
-            modalContext={'buy'}
+            modalContext={
+              context === 'buyCrypto'
+                ? 'buy'
+                : context === 'sellCrypto'
+                ? 'sell'
+                : undefined
+            }
             livenetOnly={!__DEV__}
             useAsModal={true}
             modalTitle={t('Select Crypto')}
-            customToSelectCurrencies={buyCryptoSupportedCoinsFullObj}
+            customToSelectCurrencies={
+              context === 'buyCrypto'
+                ? buyCryptoSupportedCoinsFullObj
+                : undefined
+            }
+            customSupportedCurrencies={
+              context === 'sellCrypto' ? sellCryptoSupportedCoins : undefined
+            }
             globalSelectOnDismiss={onDismiss}
           />
         </GlobalSelectContainer>
