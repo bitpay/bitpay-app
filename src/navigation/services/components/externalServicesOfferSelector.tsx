@@ -1,4 +1,5 @@
 import React, {memo, useEffect, useRef, useState} from 'react';
+import uuid from 'react-native-uuid';
 import styled, {useTheme} from 'styled-components/native';
 import {
   Caution,
@@ -45,9 +46,10 @@ import {
 } from '../../../store/buy-crypto/buy-crypto.models';
 import {
   calculateAltFiatToUsd,
+  calculateAnyFiatToAltFiat,
   getBuyCryptoFiatLimits,
 } from '../../../store/buy-crypto/buy-crypto.effects';
-import {Wallet} from '../../../store/wallet/wallet.models';
+import {SendMaxInfo, Wallet} from '../../../store/wallet/wallet.models';
 import {
   BuyCryptoExchangeKey,
   BuyCryptoSupportedExchanges,
@@ -79,7 +81,10 @@ import {
   getCoinFromRampCoinFormat,
   getRampPaymentMethodDataFromQuoteData,
 } from '../buy-crypto/utils/ramp-utils';
-import {BuyCryptoConfig} from '../../../store/external-services/external-services.types';
+import {
+  BuyCryptoConfig,
+  SellCryptoConfig,
+} from '../../../store/external-services/external-services.types';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {AppActions} from '../../../store/app';
 import {banxaGetPaymentMethods} from '../../../store/buy-crypto/effects/banxa/banxa';
@@ -112,6 +117,53 @@ import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import OfferSelectorModal from './OfferSelectorModal';
 import {getErrorMessage} from '../utils/external-services-utils';
 import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
+import {
+  ExternalServicesContext,
+  PreLoadPartnersData,
+  SellLimitsOpts,
+} from '../screens/BuyAndSellRoot';
+import {
+  WithdrawalMethod,
+  WithdrawalMethodKey,
+  WithdrawalMethodsAvailable,
+} from '../sell-crypto/constants/SellCryptoConstants';
+import {SellCryptoStateOpts} from '../../../store/sell-crypto/sell-crypto.reducer';
+import {
+  getAvailableSellCryptoFiatCurrencies,
+  getBaseSellCryptoFiatCurrencies,
+  getDefaultPaymentMethod,
+  isWithdrawalMethodSupported,
+  SellCryptoExchangeKey,
+  SellCryptoSupportedExchanges,
+} from '../sell-crypto/utils/sell-crypto-utils';
+import {SellCryptoLimits} from '../../../store/sell-crypto/sell-crypto.models';
+import {
+  adjustMoonpaySellAmount,
+  getMoonpaySellFixedCurrencyAbbreviation,
+  getMoonpaySellPayoutMethodFormat,
+  moonpaySellEnv,
+} from '../sell-crypto/utils/moonpay-sell-utils';
+import {MoonpayGetSellQuoteRequestData} from '../../../store/sell-crypto/models/moonpay-sell.models';
+import {
+  RampGetSellQuoteData,
+  RampGetSellQuoteRequestData,
+  RampSellQuoteResultForPayoutMethod,
+} from '../../../store/sell-crypto/models/ramp-sell.models';
+import {
+  getRampSellCoinFormat,
+  rampSellEnv,
+} from '../sell-crypto/utils/ramp-sell-utils';
+import {
+  SimplexGetSellQuoteData,
+  SimplexGetSellQuoteRequestData,
+  SimplexPayoutMethodType,
+} from '../../../store/sell-crypto/models/simplex-sell.models';
+import {
+  getSimplexBaseAmountFormat,
+  getSimplexSellCoinFormat,
+  getSimplexSellCountryFormat,
+  simplexSellEnv,
+} from '../sell-crypto/utils/simplex-sell-utils';
 
 export const ExternalServicesOfferSelectorContainer = styled.View``;
 
@@ -120,7 +172,7 @@ const OfferSelectorContainer = styled(TouchableOpacity)<{
 }>`
   margin: ${({isSmallScreen}) => (isSmallScreen ? 5 : 10)}px ${ScreenGutter};
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
-  height: ${({isSmallScreen}) => (isSmallScreen ? 40 : 56)}px;
+  min-height: ${({isSmallScreen}) => (isSmallScreen ? 40 : 56)}px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -134,6 +186,8 @@ const OfferSelectorContainerLeft = styled.View`
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+  flex: 1;
+  min-width: 0;
 `;
 
 const OfferSelectorText = styled(BaseText)`
@@ -141,6 +195,10 @@ const OfferSelectorText = styled(BaseText)`
   font-weight: 500;
   line-height: 24px;
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  flex: 1;
+  min-width: 0;
+  flex-shrink: 1;
+  flex-wrap: wrap;
 `;
 
 const WarnMsgText = styled(BaseText)`
@@ -148,6 +206,10 @@ const WarnMsgText = styled(BaseText)`
   font-weight: 700;
   line-height: 24px;
   color: ${Caution};
+  flex: 1;
+  min-width: 0;
+  flex-shrink: 1;
+  flex-wrap: wrap;
 `;
 
 const ActivityIndicatorContainer = styled.View`
@@ -161,23 +223,6 @@ const ArrowContainer = styled.View`
   margin-left: 10px;
 `;
 
-export type BuyCryptoOffersScreenParams = {
-  amount: number;
-  amountLimits?: BuyCryptoLimits;
-  fiatCurrency: string;
-  coin: string;
-  chain: string;
-  country: string;
-  selectedWallet: Wallet;
-  paymentMethod?: PaymentMethod;
-  buyCryptoConfig: BuyCryptoConfig | undefined;
-  preSetPartner?: BuyCryptoExchangeKey | undefined;
-  preLoadPartnersData?: {
-    banxa: {
-      banxaPreloadPaymentMethods: BanxaPaymentMethodsData | undefined;
-    };
-  };
-};
 
 export type CryptoOffer = {
   key: BuyCryptoExchangeKey;
@@ -299,20 +344,111 @@ const offersDefault: {
   },
 };
 
+export type SellCryptoOffer = {
+  key: SellCryptoExchangeKey;
+  label: string;
+  showOffer: boolean;
+  logo: React.JSX.Element;
+  expanded: boolean;
+  sellClicked: boolean;
+  fiatCurrency: string;
+  cryptoAmount: number;
+  sellAmount?: number;
+  fee?: number;
+  precision?: number; // Moonpay to calculate adjusted amount
+  decimals?: number; // Decimals used for coin/token
+  fiatMoney?: string; // Rate without fees
+  amountReceiving?: string;
+  amountReceivingAltFiatCurrency?: string;
+  amountReceivingUnit?: string; // Ramp
+  amountLimits?: SellCryptoLimits;
+  errorMsg?: string;
+  quoteData?: any; // Moonpay | Ramp | Simplex
+  externalId?: string; // Ramp
+  outOfLimitMsg?: string;
+};
+
+const sellOffersDefault: {
+  moonpay: SellCryptoOffer;
+  ramp: SellCryptoOffer;
+  simplex: SellCryptoOffer;
+} = {
+  moonpay: {
+    key: 'moonpay',
+    label: 'MoonPay',
+    amountReceiving: '0', // Fiat amount
+    amountReceivingAltFiatCurrency: '0', // Fiat amount in alt fiat currency
+    showOffer: true,
+    logo: <MoonpayLogo iconOnly={true} widthIcon={25} heightIcon={25} />,
+    expanded: false,
+    sellClicked: false,
+    fiatCurrency: 'USD',
+    cryptoAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  ramp: {
+    key: 'ramp',
+    label: 'Ramp Network',
+    amountReceiving: '0', // Fiat amount
+    amountReceivingAltFiatCurrency: '0', // Fiat amount in alt fiat currency
+    showOffer: true,
+    logo: <RampLogo iconOnly={true} width={25} height={25} />,
+    expanded: false,
+    sellClicked: false,
+    fiatCurrency: 'EUR',
+    cryptoAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+  simplex: {
+    key: 'simplex',
+    label: 'Simplex',
+    amountReceiving: '0', // Fiat amount
+    amountReceivingAltFiatCurrency: '0', // Fiat amount in alt fiat currency
+    showOffer: true,
+    logo: (
+      <SimplexLogo
+        widthIcon={25}
+        heightIcon={25}
+        widthLogo={60}
+        heightLogo={30}
+      />
+    ),
+    expanded: false,
+    sellClicked: false,
+    fiatCurrency: 'EUR',
+    cryptoAmount: 0,
+    fiatMoney: undefined,
+    errorMsg: undefined,
+    outOfLimitMsg: undefined,
+  },
+};
+
 interface ExternalServicesOfferSelectorProps {
+  context: ExternalServicesContext;
   selectedWallet: Wallet;
   amount: number;
   amountLimits?: BuyCryptoLimits;
+  sellLimits?: SellLimitsOpts;
   fiatCurrency: string;
   coin: string;
   chain: string;
   country: string;
   getWarnMsg?: string;
-  preSetPaymentMethod?: PaymentMethodKey;
-  onSelectOffer?: (offer: CryptoOffer | undefined) => void;
-  onSelectPaymentMethod?: (paymentMethod: PaymentMethod | undefined) => void;
+  preSetPaymentMethod?: PaymentMethodKey | WithdrawalMethodKey;
+  onSelectOffer?: (offer: CryptoOffer | SellCryptoOffer | undefined) => void;
+  onSelectPaymentMethod?: (
+    paymentMethod: PaymentMethod | WithdrawalMethod | undefined,
+  ) => void;
   buyCryptoConfig: BuyCryptoConfig | undefined;
-  preSetPartner?: BuyCryptoExchangeKey | undefined;
+  sellCryptoConfig: SellCryptoConfig | undefined;
+  preLoadSellPartnersData?: PreLoadPartnersData | undefined;
+  useSendMax?: boolean | undefined;
+  sendMaxInfo?: SendMaxInfo | undefined;
+  preSetPartner?: BuyCryptoExchangeKey | SellCryptoExchangeKey | undefined;
   preLoadPartnersData?: {
     banxa: {
       banxaPreloadPaymentMethods: BanxaPaymentMethodsData | undefined;
@@ -323,10 +459,12 @@ interface ExternalServicesOfferSelectorProps {
 const ExternalServicesOfferSelector: React.FC<
   ExternalServicesOfferSelectorProps
 > = ({
+  context,
   selectedWallet,
   getWarnMsg,
   amount,
   amountLimits,
+  sellLimits,
   fiatCurrency,
   coin,
   chain,
@@ -335,6 +473,10 @@ const ExternalServicesOfferSelector: React.FC<
   onSelectOffer,
   onSelectPaymentMethod,
   buyCryptoConfig,
+  sellCryptoConfig,
+  preLoadSellPartnersData,
+  useSendMax,
+  sendMaxInfo,
   preSetPartner,
   preLoadPartnersData,
 }) => {
@@ -352,73 +494,175 @@ const ExternalServicesOfferSelector: React.FC<
   const buyCryptoOpts: BuyCryptoStateOpts = useAppSelector(
     ({BUY_CRYPTO}) => BUY_CRYPTO.opts,
   );
+  const sellCryptoOpts: SellCryptoStateOpts = useAppSelector(
+    ({SELL_CRYPTO}) => SELL_CRYPTO.opts,
+  );
 
-  let _paymentMethod: PaymentMethod | undefined;
-  if (preSetPaymentMethod && PaymentMethodsAvailable[preSetPaymentMethod]) {
-    _paymentMethod = PaymentMethodsAvailable[preSetPaymentMethod];
-  } else if (
-    buyCryptoOpts?.selectedPaymentMethod &&
-    PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod] &&
-    !preSetPartner
-  ) {
-    _paymentMethod =
-      PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod];
-  } else {
-    _paymentMethod =
-      Platform.OS === 'ios'
-        ? PaymentMethodsAvailable.applePay
-        : PaymentMethodsAvailable.debitCard;
+  let _paymentMethod: PaymentMethod | WithdrawalMethod | undefined;
+  if (context === 'buyCrypto') {
+    if (
+      preSetPaymentMethod &&
+      PaymentMethodsAvailable[preSetPaymentMethod as PaymentMethodKey]
+    ) {
+      _paymentMethod =
+        PaymentMethodsAvailable[preSetPaymentMethod as PaymentMethodKey];
+    } else if (
+      buyCryptoOpts?.selectedPaymentMethod &&
+      PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod] &&
+      !preSetPartner
+    ) {
+      _paymentMethod =
+        PaymentMethodsAvailable[buyCryptoOpts.selectedPaymentMethod];
+    } else {
+      _paymentMethod =
+        Platform.OS === 'ios'
+          ? PaymentMethodsAvailable.applePay
+          : PaymentMethodsAvailable.debitCard;
+    }
+  } else if (context === 'sellCrypto') {
+    if (
+      preSetPaymentMethod &&
+      WithdrawalMethodsAvailable[preSetPaymentMethod as WithdrawalMethodKey]
+    ) {
+      _paymentMethod =
+        WithdrawalMethodsAvailable[preSetPaymentMethod as WithdrawalMethodKey];
+    } else if (
+      sellCryptoOpts?.selectedWithdrawalMethod &&
+      WithdrawalMethodsAvailable[sellCryptoOpts.selectedWithdrawalMethod] &&
+      !preSetPartner
+    ) {
+      _paymentMethod =
+        WithdrawalMethodsAvailable[sellCryptoOpts.selectedWithdrawalMethod];
+    } else {
+      _paymentMethod = getDefaultPaymentMethod(country);
+    }
   }
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(
-    _paymentMethod,
+    _paymentMethod as PaymentMethod,
   );
 
-  BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
-    if (offersDefault[exchange]) {
-      offersDefault[exchange].fiatCurrency = getAvailableFiatCurrencies(
-        exchange,
-      ).includes(fiatCurrency)
-        ? fiatCurrency
-        : 'USD';
+  const [withdrawalMethod, setWithdrawalMethod] = useState<
+    WithdrawalMethod | undefined
+  >(_paymentMethod as WithdrawalMethod);
 
-      if (paymentMethod) {
-        if (
-          preSetPartner &&
-          BuyCryptoSupportedExchanges.includes(preSetPartner)
-        ) {
-          offersDefault[exchange].showOffer =
-            preSetPartner === exchange
-              ? isPaymentMethodSupported(
-                  preSetPartner,
-                  paymentMethod,
-                  coin,
-                  chain,
-                  offersDefault[preSetPartner].fiatCurrency,
-                  country,
-                ) &&
-                (!buyCryptoConfig?.[preSetPartner] ||
-                  !buyCryptoConfig?.[preSetPartner]?.removed)
-              : false;
-        } else {
-          offersDefault[exchange].showOffer =
-            isPaymentMethodSupported(
-              exchange,
-              paymentMethod,
-              coin,
-              chain,
-              offersDefault[exchange].fiatCurrency,
-              country,
-            ) &&
-            (!buyCryptoConfig?.[exchange] ||
-              !buyCryptoConfig?.[exchange]?.removed);
+  if (context === 'buyCrypto') {
+    BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
+      if (offersDefault[exchange]) {
+        offersDefault[exchange].fiatCurrency = getAvailableFiatCurrencies(
+          exchange,
+        ).includes(fiatCurrency)
+          ? fiatCurrency
+          : 'USD';
+
+        if (paymentMethod) {
+          if (
+            preSetPartner &&
+            BuyCryptoSupportedExchanges.includes(preSetPartner)
+          ) {
+            offersDefault[exchange].showOffer =
+              preSetPartner === exchange
+                ? isPaymentMethodSupported(
+                    preSetPartner,
+                    paymentMethod,
+                    coin,
+                    chain,
+                    offersDefault[preSetPartner].fiatCurrency,
+                    country,
+                  ) &&
+                  (!buyCryptoConfig?.[preSetPartner] ||
+                    !buyCryptoConfig?.[preSetPartner]?.removed)
+                : false;
+          } else {
+            offersDefault[exchange].showOffer =
+              isPaymentMethodSupported(
+                exchange,
+                paymentMethod,
+                coin,
+                chain,
+                offersDefault[exchange].fiatCurrency,
+                country,
+              ) &&
+              (!buyCryptoConfig?.[exchange] ||
+                !buyCryptoConfig?.[exchange]?.removed);
+          }
         }
       }
-    }
-  });
+    });
+  } else if (context === 'sellCrypto') {
+    SellCryptoSupportedExchanges.forEach((exchange: SellCryptoExchangeKey) => {
+      if (sellOffersDefault[exchange]) {
+        if (preLoadSellPartnersData && preLoadSellPartnersData[exchange]) {
+          sellOffersDefault[exchange].amountLimits =
+            preLoadSellPartnersData[exchange].limits;
+
+          if (exchange === 'moonpay') {
+            sellOffersDefault.moonpay.precision =
+              preLoadSellPartnersData.moonpay.precision;
+            const adjustedSellAmount = adjustMoonpaySellAmount(
+              amount,
+              preLoadSellPartnersData?.moonpay?.precision,
+            );
+            sellOffersDefault.moonpay.sellAmount = adjustedSellAmount;
+          }
+        }
+
+        if (withdrawalMethod) {
+          sellOffersDefault[exchange].fiatCurrency =
+            getAvailableSellCryptoFiatCurrencies(
+              exchange,
+              withdrawalMethod.method,
+            ).includes(fiatCurrency)
+              ? fiatCurrency
+              : getBaseSellCryptoFiatCurrencies(
+                  exchange,
+                  withdrawalMethod.method,
+                );
+
+          if (
+            preSetPartner &&
+            SellCryptoSupportedExchanges.includes(
+              preSetPartner as SellCryptoExchangeKey,
+            )
+          ) {
+            sellOffersDefault[exchange].showOffer =
+              preSetPartner === exchange
+                ? isWithdrawalMethodSupported(
+                    preSetPartner,
+                    withdrawalMethod,
+                    coin,
+                    chain,
+                    sellOffersDefault[preSetPartner].fiatCurrency,
+                    country,
+                    user?.country,
+                  ) &&
+                  (!sellCryptoConfig?.[preSetPartner] ||
+                    !sellCryptoConfig?.[preSetPartner]?.removed)
+                : false;
+          } else {
+            sellOffersDefault[exchange].showOffer =
+              isWithdrawalMethodSupported(
+                exchange,
+                withdrawalMethod,
+                coin,
+                chain,
+                sellOffersDefault[exchange].fiatCurrency,
+                country,
+                user?.country,
+              ) &&
+              (!sellCryptoConfig?.[exchange] ||
+                !sellCryptoConfig?.[exchange]?.removed);
+          }
+        }
+      }
+    });
+  }
 
   const [offers, setOffers] = useState(cloneDeep(offersDefault));
-  const [selectedOffer, setSelectedOffer] = useState<CryptoOffer | undefined>();
+  const [sellOffers, setSellOffers] = useState(cloneDeep(sellOffersDefault));
+  const [selectedOffer, setSelectedOffer] = useState<
+    CryptoOffer | SellCryptoOffer | undefined
+  >();
   const [selectedOfferLoading, setSelectedOfferLoading] =
     useState<boolean>(false);
   const [offerSelectorText, setOfferSelectorText] = useState<string>(
@@ -432,9 +676,12 @@ const ExternalServicesOfferSelector: React.FC<
   const [finishedSimplex, setFinishedSimplex] = useState(false);
   const [finishedTransak, setFinishedTransak] = useState(false);
   const [updateView, setUpdateView] = useState<number>(0);
+  const [updateViewSell, setUpdateViewSell] = useState<number>(0);
 
   const [offerSelectorModalVisible, setOfferSelectorModalVisible] =
     useState(false);
+
+  // Get Buy Quotes
 
   const getBanxaQuote = async (selectedWallet: Wallet): Promise<void> => {
     logger.debug('Banxa getting quote');
@@ -1482,6 +1729,536 @@ const ExternalServicesOfferSelector: React.FC<
     setUpdateView(Math.random());
   };
 
+  // Get Sell Quotes
+
+  const getMoonpaySellQuote = async (selectedWallet: Wallet): Promise<void> => {
+    logger.debug('Moonpay getting sell quote');
+
+    if (sellCryptoConfig?.moonpay?.disabled) {
+      let err = sellCryptoConfig?.moonpay?.disabledMessage
+        ? sellCryptoConfig?.moonpay?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason =
+        'moonpayGetSellQuote Error. Exchange disabled from config.';
+      showMoonpayError(err, reason);
+      return;
+    }
+
+    sellOffers.moonpay.cryptoAmount = amount;
+
+    const requestData: MoonpayGetSellQuoteRequestData = {
+      env: moonpaySellEnv,
+      currencyAbbreviation: getMoonpaySellFixedCurrencyAbbreviation(
+        selectedWallet.currencyAbbreviation,
+        selectedWallet.chain,
+      ),
+      quoteCurrencyCode: sellOffers.moonpay.fiatCurrency.toLowerCase(),
+      baseCurrencyAmount: sellOffers.moonpay.sellAmount || amount,
+      payoutMethod: getMoonpaySellPayoutMethodFormat(withdrawalMethod?.method),
+    };
+
+    selectedWallet
+      .moonpayGetSellQuote(requestData)
+      .then(data => {
+        if (data?.baseCurrencyAmount) {
+          sellOffers.moonpay.amountLimits = {
+            min: data.baseCurrency.minsellAmount,
+            max: data.baseCurrency.maxsellAmount,
+          };
+
+          if (
+            (sellOffers.moonpay.amountLimits.min &&
+              Number(sellOffers.moonpay.sellAmount) <
+                sellOffers.moonpay.amountLimits.min) ||
+            (sellOffers.moonpay.amountLimits.max &&
+              Number(sellOffers.moonpay.sellAmount) >
+                sellOffers.moonpay.amountLimits.max)
+          ) {
+            sellOffers.moonpay.outOfLimitMsg = t(
+              'There are no Moonpay offers available, as the current sell limits for this exchange must be between and',
+              {
+                min: sellOffers.moonpay.amountLimits.min,
+                max: sellOffers.moonpay.amountLimits.max,
+                fiatCurrency: sellOffers.moonpay.fiatCurrency,
+              },
+            );
+            setFinishedMoonpay(!finishedMoonpay);
+            return;
+          } else {
+            sellOffers.moonpay.outOfLimitMsg = undefined;
+            sellOffers.moonpay.errorMsg = undefined;
+            sellOffers.moonpay.quoteData = data;
+            sellOffers.moonpay.sellAmount = data.baseCurrencyAmount;
+            sellOffers.moonpay.fee =
+              Number(data.extraFeeAmount) + Number(data.feeAmount);
+
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
+            if (sellOffers.moonpay.sellAmount && coin && precision) {
+              sellOffers.moonpay.fiatMoney = Number(
+                sellOffers.moonpay.sellAmount / data.quoteCurrencyAmount,
+              ).toFixed(precision!.unitDecimals);
+            } else {
+              logger.error(
+                `Moonpay error: Could not get precision for ${coin}`,
+              );
+            }
+            const adjustedFiatAmount: number =
+              sellOffers.moonpay.fiatCurrency === fiatCurrency
+                ? Number(data.quoteCurrencyAmount)
+                : dispatch(
+                    calculateAnyFiatToAltFiat(
+                      Number(data.quoteCurrencyAmount),
+                      sellOffers.moonpay.fiatCurrency,
+                      fiatCurrency,
+                    ),
+                  ) || Number(data.quoteCurrencyAmount);
+
+            sellOffers.moonpay.amountReceiving = Number(
+              data.quoteCurrencyAmount,
+            ).toFixed(2);
+            sellOffers.moonpay.amountReceivingAltFiatCurrency =
+              adjustedFiatAmount.toFixed(2);
+
+            logger.debug('Moonpay getting sell quote: SUCCESS');
+            setFinishedMoonpay(!finishedMoonpay);
+          }
+        } else {
+          if (!data) {
+            logger.error('Moonpay error: No data received');
+          }
+          if (data.message && typeof data.message === 'string') {
+            logger.error('Moonpay error: ' + data.message);
+          }
+          if (data.error && typeof data.error === 'string') {
+            logger.error('Moonpay error: ' + data.error);
+          }
+          if (data.errors) {
+            logger.error(data.errors);
+          }
+          let err = t("Can't get rates at this moment. Please try again later");
+          const reason =
+            'moonpayGetSellQuote Error. Necessary data not included.';
+          showMoonpaySellError(err, reason);
+        }
+      })
+      .catch(err => {
+        const reason = 'moonpayGetSellQuote Error';
+        showMoonpaySellError(err, reason);
+      });
+  };
+
+  const showMoonpaySellError = (err?: any, reason?: string) => {
+    let msg = getErrorMessage(err);
+    logger.error('Moonpay sell error: ' + msg + ' | Reason: ' + reason);
+
+    dispatch(
+      Analytics.track('Failed Sell Crypto', {
+        exchange: 'moonpay',
+        context: 'SellCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: withdrawalMethod?.method || '',
+        cryptoAmount: amount || '',
+        fiatAmount: Number(sellOffers.moonpay.amountReceiving) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: sellOffers.moonpay.fiatCurrency || '',
+      }),
+    );
+
+    sellOffers.moonpay.errorMsg = msg;
+    sellOffers.moonpay.fiatMoney = undefined;
+    sellOffers.moonpay.expanded = false;
+    setUpdateViewSell(Math.random());
+  };
+
+  const getRampSellQuote = async (selectedWallet: Wallet): Promise<void> => {
+    logger.debug('Ramp getting sell quote');
+
+    if (sellCryptoConfig?.ramp?.disabled) {
+      let err = sellCryptoConfig?.ramp?.disabledMessage
+        ? sellCryptoConfig?.ramp?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason = 'rampGetSellQuote Error. Exchange disabled from config.';
+      showRampSellError(err, reason);
+      return;
+    }
+
+    sellOffers.ramp.cryptoAmount = amount;
+
+    const requestData: RampGetSellQuoteRequestData = {
+      env: rampSellEnv,
+      cryptoAssetSymbol: getRampSellCoinFormat(
+        selectedWallet.currencyAbbreviation,
+        getRampChainFormat(selectedWallet.chain),
+      ),
+      fiatCurrency: sellOffers.ramp.fiatCurrency.toUpperCase(),
+    };
+
+    const precision = dispatch(
+      GetPrecision(coin, chain, selectedWallet.tokenAddress),
+    );
+    if (precision) {
+      requestData.cryptoAmount = BigInt(
+        (amount * precision.unitToSatoshi).toFixed(0),
+      ).toString();
+    } else {
+      logger.error(`Ramp error: Could not get precision for ${coin}`);
+      const msg = t('An error occurred while calculating the quote.');
+      const reason = 'rampGetSellQuote Error. Could not get precision';
+      showRampSellError(msg, reason);
+      return;
+    }
+
+    selectedWallet
+      .rampGetSellQuote(requestData)
+      .then((data: RampGetSellQuoteData) => {
+        let paymentMethodData: RampSellQuoteResultForPayoutMethod | undefined;
+        if (data?.asset) {
+          switch (withdrawalMethod?.method) {
+            case 'ach':
+              if (data.AMERICAN_BANK_TRANSFER) {
+                paymentMethodData = data.AMERICAN_BANK_TRANSFER;
+              } else if (data.AUTO_BANK_TRANSFER) {
+                paymentMethodData = data.AUTO_BANK_TRANSFER;
+              }
+              break;
+            case 'sepaBankTransfer':
+              if (data.SEPA) {
+                paymentMethodData = data.SEPA;
+              } else if (data.MANUAL_BANK_TRANSFER) {
+                paymentMethodData = data.MANUAL_BANK_TRANSFER;
+              } else if (data.AUTO_BANK_TRANSFER) {
+                paymentMethodData = data.AUTO_BANK_TRANSFER;
+              }
+              break;
+            case 'debitCard':
+            case 'creditCard':
+              if (data.CARD) {
+                paymentMethodData = data.CARD;
+              } else if (data.CARD_PAYMENT) {
+                paymentMethodData = data.CARD_PAYMENT;
+              }
+              break;
+            default:
+              paymentMethodData = data.CARD_PAYMENT ?? data.CARD;
+          }
+
+          if (!paymentMethodData?.fiatValue) {
+            logger.error(
+              'rampGetSellQuote Error: No fiat value provided from Ramp',
+            );
+            const reason =
+              'rampGetSellQuote Error. No fiat value provided from Ramp';
+            showRampSellError(undefined, reason);
+            return;
+          }
+
+          sellOffers.ramp.amountLimits = {
+            min:
+              data.asset.minPurchaseAmount < 0
+                ? undefined
+                : data.asset.minPurchaseAmount,
+            max:
+              data.asset.maxPurchaseAmount < 0
+                ? undefined
+                : data.asset.maxPurchaseAmount,
+          };
+
+          if (
+            (sellOffers.ramp.amountLimits.min &&
+              Number(sellOffers.ramp.sellAmount) <
+                sellOffers.ramp.amountLimits.min) ||
+            (sellOffers.ramp.amountLimits.max &&
+              Number(sellOffers.ramp.sellAmount) >
+                sellOffers.ramp.amountLimits.max)
+          ) {
+            sellOffers.ramp.outOfLimitMsg = t(
+              'There are no Ramp Network offers available, as the current sell limits for this exchange must be between and',
+              {
+                min: sellOffers.ramp.amountLimits.min,
+                max: sellOffers.ramp.amountLimits.max,
+                fiatCurrency: sellOffers.ramp.fiatCurrency,
+              },
+            );
+            setFinishedRamp(!finishedRamp);
+            return;
+          } else {
+            sellOffers.ramp.outOfLimitMsg = undefined;
+            sellOffers.ramp.errorMsg = undefined;
+            sellOffers.ramp.quoteData = data;
+            sellOffers.ramp.sellAmount = cloneDeep(amount); // paymentMethodData.fiatValue;
+            sellOffers.ramp.fee =
+              Number(paymentMethodData.baseRampFee ?? 0) +
+              Number(paymentMethodData.appliedFee);
+
+            sellOffers.ramp.externalId = uuid.v4().toString();
+
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
+            let decimals: number | undefined;
+
+            if (data.asset.decimals && data.asset.decimals > 0) {
+              decimals = data.asset.decimals;
+            } else if (precision?.unitDecimals) {
+              decimals = precision.unitDecimals;
+            }
+            sellOffers.ramp.decimals = decimals;
+
+            if (sellOffers.ramp.sellAmount && coin && decimals) {
+              sellOffers.ramp.fiatMoney = Number(
+                sellOffers.ramp.sellAmount /
+                  Number(paymentMethodData.fiatValue),
+              ).toFixed(decimals);
+            } else {
+              logger.error(`Ramp error: Could not get precision for ${coin}`);
+
+              const reason = 'rampGetSellQuote Error. Could not get decimals';
+              showRampSellError(undefined, reason);
+              return;
+            }
+
+            const adjustedFiatAmount: number =
+              sellOffers.ramp.fiatCurrency === fiatCurrency
+                ? Number(paymentMethodData.fiatValue)
+                : dispatch(
+                    calculateAnyFiatToAltFiat(
+                      Number(paymentMethodData.fiatValue),
+                      sellOffers.ramp.fiatCurrency,
+                      fiatCurrency,
+                    ),
+                  ) || Number(paymentMethodData.fiatValue);
+
+            sellOffers.ramp.amountReceiving = Number(
+              paymentMethodData.fiatValue,
+            ).toFixed(2);
+            sellOffers.ramp.amountReceivingAltFiatCurrency =
+              adjustedFiatAmount.toFixed(2);
+            // const amountReceivingNum =
+            //   Number(paymentMethodData.cryptoAmount) / 10 ** decimals;
+            // sellOffers.ramp.amountReceiving = amountReceivingNum.toFixed(8);
+
+            // if (
+            //   sellOffers.ramp.sellAmount &&
+            //   Number(paymentMethodData.fiatValue) > 0 &&
+            //   coin &&
+            //   precision
+            // ) {
+            //   sellOffers.ramp.fiatMoney = Number(
+            //     sellOffers.ramp.sellAmount / paymentMethodData.fiatValue,
+            //   ).toFixed(precision.unitDecimals);
+            // } else {
+            //   logger.error(`Ramp error: Could not get precision for ${coin}`);
+            // }
+
+            logger.debug('Ramp getting quote: SUCCESS');
+            setFinishedRamp(!finishedRamp);
+          }
+        } else {
+          if (!data) {
+            logger.error('Ramp error: No data received');
+          }
+          if (data.message && typeof data.message === 'string') {
+            logger.error('Ramp error: ' + data.message);
+          }
+          if (data.error && typeof data.error === 'string') {
+            logger.error('Ramp error: ' + data.error);
+          }
+          if (data.errors) {
+            logger.error(data.errors);
+          }
+
+          let err = t("Can't get rates at this moment. Please try again later");
+          const reason = 'rampGetSellQuote Error. Necessary data not included.';
+          showRampSellError(err, reason);
+        }
+      })
+      .catch(err => {
+        const reason = 'rampGetSellQuote Error';
+        showRampSellError(err, reason);
+      });
+  };
+
+  const showRampSellError = (err?: any, reason?: string) => {
+    let msg = getErrorMessage(err);
+    logger.error('Ramp sell error: ' + msg + ' | Reason: ' + reason);
+
+    dispatch(
+      Analytics.track('Failed Sell Crypto', {
+        exchange: 'ramp',
+        context: 'SellCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: withdrawalMethod?.method || '',
+        cryptoAmount: amount || '',
+        fiatAmount: Number(sellOffers.ramp.amountReceiving) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: sellOffers.ramp.fiatCurrency || '',
+      }),
+    );
+
+    sellOffers.ramp.errorMsg = msg;
+    sellOffers.ramp.fiatMoney = undefined;
+    sellOffers.ramp.expanded = false;
+    setUpdateViewSell(Math.random());
+  };
+
+  const getSimplexSellQuote = (selectedWallet: Wallet): void => {
+    logger.debug('Simplex getting sell quote');
+
+    if (sellCryptoConfig?.simplex?.disabled) {
+      let err = sellCryptoConfig?.simplex?.disabledMessage
+        ? sellCryptoConfig?.simplex?.disabledMessage
+        : t("Can't get rates at this moment. Please try again later");
+      const reason =
+        'simplexGetSellQuote Error. Exchange disabled from config.';
+      showSimplexSellError(err, reason);
+      return;
+    }
+
+    sellOffers.simplex.cryptoAmount = amount;
+
+    if (
+      (sellOffers.simplex.amountLimits?.min &&
+        Number(sellOffers.simplex.sellAmount) <
+          sellOffers.simplex.amountLimits.min) ||
+      (sellOffers.simplex.amountLimits?.max &&
+        Number(sellOffers.simplex.sellAmount) >
+          sellOffers.simplex.amountLimits.max)
+    ) {
+      sellOffers.simplex.outOfLimitMsg = t(
+        'There are no Simplex offers available, as the current sell limits for this exchange must be between and',
+        {
+          min: sellOffers.simplex.amountLimits.min,
+          max: sellOffers.simplex.amountLimits.max,
+          fiatCurrency: sellOffers.simplex.fiatCurrency,
+        },
+      );
+      setFinishedSimplex(!finishedSimplex);
+      return;
+    } else {
+      let simplexPaymentMethod: SimplexPayoutMethodType | undefined;
+      switch (withdrawalMethod?.method) {
+        case 'sepaBankTransfer':
+          simplexPaymentMethod = 'sepa';
+          break;
+        case 'debitCard':
+        case 'creditCard':
+          simplexPaymentMethod = 'card';
+          break;
+      }
+
+      if (!simplexPaymentMethod) {
+        const msg = t("Can't get rates at this moment. Please try again later");
+        const reason =
+          'No valid simplexPaymentMethod selected for Simplex offer.';
+        showSimplexSellError(msg, reason);
+        return;
+      }
+      const userCountry = getSimplexSellCountryFormat(country, user?.country);
+
+      const requestData: SimplexGetSellQuoteRequestData = {
+        env: simplexSellEnv,
+        userCountry: __DEV__ ? 'LT' : userCountry || 'US',
+        base_currency: getSimplexSellCoinFormat(coin, selectedWallet.chain),
+        base_amount: getSimplexBaseAmountFormat(amount), // base_amount should be integer, which counts millionths of a whole currency unit.
+        quote_currency: sellOffers.simplex.fiatCurrency.toUpperCase(),
+        pp_payment_method: 'sepa', // pp_payment_method = "sepa" (this does not impact user payment method but is needed to get a quote, no impact on price) | TODO: use simplexPaymentMethod,
+      };
+
+      selectedWallet
+        .simplexGetSellQuote(requestData)
+        .then((data: SimplexGetSellQuoteData) => {
+          if (data && data.fiat_amount) {
+            sellOffers.simplex.outOfLimitMsg = undefined;
+            sellOffers.simplex.errorMsg = undefined;
+            sellOffers.simplex.quoteData = data;
+            sellOffers.simplex.sellAmount = cloneDeep(amount);
+            sellOffers.simplex.fee = Number(data.fiat_amount) * 0.05;
+
+            const precision = dispatch(
+              GetPrecision(coin, chain, selectedWallet.tokenAddress),
+            );
+            if (sellOffers.simplex.sellAmount && coin && precision) {
+              sellOffers.simplex.fiatMoney = Number(
+                sellOffers.simplex.sellAmount / Number(data.fiat_amount),
+              ).toFixed(precision!.unitDecimals);
+            } else {
+              logger.error(
+                `Simplex error: Could not get precision for ${coin}`,
+              );
+            }
+
+            const adjustedFiatAmount: number =
+              sellOffers.simplex.fiatCurrency === fiatCurrency
+                ? Number(data.fiat_amount)
+                : dispatch(
+                    calculateAnyFiatToAltFiat(
+                      Number(data.fiat_amount),
+                      sellOffers.simplex.fiatCurrency,
+                      fiatCurrency,
+                    ),
+                  ) || Number(data.fiat_amount);
+
+            sellOffers.simplex.amountReceiving = Number(
+              data.fiat_amount,
+            ).toFixed(2);
+            sellOffers.simplex.amountReceivingAltFiatCurrency =
+              adjustedFiatAmount.toFixed(2);
+
+            logger.debug('Simplex getting sell quote: SUCCESS');
+            setFinishedSimplex(!finishedSimplex);
+          } else {
+            if (data.message && typeof data.message === 'string') {
+              logger.error('Simplex error: ' + data.message);
+            }
+            if (data.error && typeof data.error === 'string') {
+              logger.error('Simplex error: ' + data.error);
+            }
+            if (data.errors) {
+              logger.error(data.errors);
+            }
+            let err = t(
+              "Can't get rates at this moment. Please try again later",
+            );
+            const reason =
+              'simplexGetSellQuote Error. Necessary data not included.';
+            showSimplexSellError(err, reason);
+          }
+        })
+        .catch((err: any) => {
+          const reason = 'simplexGetSellQuote Error';
+          showSimplexSellError(err, reason);
+        });
+    }
+  };
+
+  const showSimplexSellError = (err?: any, reason?: string) => {
+    let msg = getErrorMessage(err);
+    logger.error('Simplex sell error: ' + msg + ' | Reason: ' + reason);
+
+    dispatch(
+      Analytics.track('Failed Sell Crypto', {
+        exchange: 'simplex',
+        context: 'SellCryptoOffers',
+        reason: reason || 'unknown',
+        paymentMethod: withdrawalMethod?.method || '',
+        cryptoAmount: amount || '',
+        fiatAmount: Number(sellOffers.simplex.amountReceiving) || '',
+        coin: coin?.toLowerCase() || '',
+        chain: chain?.toLowerCase() || '',
+        fiatCurrency: sellOffers.simplex.fiatCurrency || '',
+      }),
+    );
+
+    sellOffers.simplex.errorMsg = msg;
+    sellOffers.simplex.fiatMoney = undefined;
+    sellOffers.simplex.expanded = false;
+    setUpdateViewSell(Math.random());
+  };
+
   const showError = (title: string, msg: string) => {
     dispatch(
       AppActions.showBottomNotificationModal({
@@ -1537,35 +2314,96 @@ const ExternalServicesOfferSelector: React.FC<
     }
   };
 
+  const getSellCryptoQuotes = (selectedWallet: Wallet) => {
+    const showedOffersCount = Object.values(cloneDeep(sellOffers)).filter(
+      offer => offer.showOffer,
+    ).length;
+    if (showedOffersCount === 0) {
+      const title = t('No offers');
+      const msg = t(
+        'There are currently no offers that satisfy your request. Please try again later.',
+      );
+      logger.error(msg);
+      showError(title, msg);
+    } else {
+      if (sellOffers.moonpay.showOffer) {
+        getMoonpaySellQuote(selectedWallet);
+      }
+      if (sellOffers.ramp.showOffer) {
+        getRampSellQuote(selectedWallet);
+      }
+      if (sellOffers.simplex.showOffer) {
+        getSimplexSellQuote(selectedWallet);
+      }
+    }
+  };
+
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!amount || amount === 0) {
+    if (!amount || amount === 0 || isNaN(amount)) {
       setOfferSelectorText(t('Set Amount for Best Offer'));
       setSelectedOffer(undefined);
       onSelectOffer?.(undefined);
       setSelectedOfferLoading(false);
       setOffers(offersDefault);
-      return;
-    }
-
-    if (!selectedWallet || !amountLimits) {
+      setSellOffers(sellOffersDefault);
       return;
     }
 
     if (
-      amountLimits.min &&
-      amountLimits.max &&
-      (amount < amountLimits.min || amount > amountLimits.max)
+      !selectedWallet ||
+      (context === 'buyCrypto' && !amountLimits) ||
+      (context === 'sellCrypto' && !sellLimits)
     ) {
+      setSelectedOffer(undefined);
+      onSelectOffer?.(undefined);
+      setSelectedOfferLoading(false);
+      setOffers(offersDefault);
+      setSellOffers(sellOffersDefault);
       return;
+    }
+
+    if (context === 'buyCrypto' && amountLimits) {
+      if (
+        amountLimits.min &&
+        amountLimits.max &&
+        (amount < amountLimits.min || amount > amountLimits.max)
+      ) {
+        setSelectedOffer(undefined);
+        onSelectOffer?.(undefined);
+        setSelectedOfferLoading(false);
+        setOffers(offersDefault);
+        setSellOffers(sellOffersDefault);
+        return;
+      }
+    }
+
+    if (context === 'sellCrypto' && sellLimits) {
+      if (
+        (sellLimits.limits?.minAmount &&
+          sellLimits.limits?.maxAmount &&
+          (amount < sellLimits.limits.minAmount ||
+            amount > sellLimits.limits.maxAmount)) ||
+        (sellLimits.maxWalletAmount &&
+          amount > Number(sellLimits.maxWalletAmount))
+      ) {
+        setSelectedOffer(undefined);
+        onSelectOffer?.(undefined);
+        setSelectedOfferLoading(false);
+        setOffers(offersDefault);
+        setSellOffers(sellOffersDefault);
+        return;
+      }
     }
 
     setOfferSelectorText(t('Searching for Best Offer'));
     setSelectedOffer(undefined);
     onSelectOffer?.(undefined);
     setSelectedOfferLoading(true);
-    onSelectPaymentMethod?.(paymentMethod);
+    onSelectPaymentMethod?.(
+      context === 'sellCrypto' ? withdrawalMethod : paymentMethod,
+    );
 
     // Clean up the previous timeout if the value changes
     if (timeoutRef.current) {
@@ -1573,7 +2411,8 @@ const ExternalServicesOfferSelector: React.FC<
     }
 
     timeoutRef.current = setTimeout(() => {
-      getBuyCryptoQuotes(selectedWallet);
+      if (context === 'buyCrypto') getBuyCryptoQuotes(selectedWallet);
+      if (context === 'sellCrypto') getSellCryptoQuotes(selectedWallet);
     }, 2000);
 
     // Clean up the timeout on unmount
@@ -1582,9 +2421,19 @@ const ExternalServicesOfferSelector: React.FC<
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [selectedWallet, amount, amountLimits, paymentMethod]);
+  }, [
+    selectedWallet,
+    amount,
+    amountLimits,
+    sellLimits,
+    paymentMethod,
+    withdrawalMethod,
+  ]);
 
   useEffect(() => {
+    if (context !== 'buyCrypto') {
+      return;
+    }
     setOffers(offers);
 
     if (!selectedWallet || !amount || !amountLimits) {
@@ -1634,6 +2483,63 @@ const ExternalServicesOfferSelector: React.FC<
     updateView,
   ]);
 
+  useEffect(() => {
+    if (context !== 'sellCrypto') {
+      return;
+    }
+    setSellOffers(sellOffers);
+
+    if (!selectedWallet || !amount || !sellLimits) {
+      return;
+    }
+    if (
+      (sellLimits.limits?.minAmount &&
+        sellLimits.limits?.maxAmount &&
+        (amount < sellLimits.limits.minAmount ||
+          amount > sellLimits.limits.maxAmount)) ||
+      (sellLimits.maxWalletAmount &&
+        amount > Number(sellLimits.maxWalletAmount))
+    ) {
+      return;
+    }
+
+    const offersTimeout = setTimeout(() => {
+      const offersArray = Object.values(sellOffers);
+      const filteredOffers = offersArray.filter(
+        offer => offer.showOffer && offer.amountReceiving,
+      );
+      if (filteredOffers.length === 0) {
+        setSelectedOffer(undefined);
+        onSelectOffer?.(undefined);
+        return;
+      }
+      const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
+        parseFloat(curr.amountReceiving || '0') >
+        parseFloat(prev.amountReceiving || '0')
+          ? curr
+          : prev,
+      );
+      setSelectedOffer(_selectedOffer);
+      onSelectOffer?.(_selectedOffer);
+      setOfferSelectorText(
+        _selectedOffer?.label +
+          ' ' +
+          t('paid to') +
+          ' ' +
+          withdrawalMethod?.label,
+      );
+      setSelectedOfferLoading(false);
+    }, 3500);
+
+    return () => clearTimeout(offersTimeout);
+  }, [
+    withdrawalMethod,
+    finishedMoonpay,
+    finishedRamp,
+    finishedSimplex,
+    updateViewSell,
+  ]);
+
   const onBackdropPress = () => {
     setOfferSelectorModalVisible(false);
   };
@@ -1643,12 +2549,24 @@ const ExternalServicesOfferSelector: React.FC<
       <OfferSelectorContainer
         isSmallScreen={_isSmallScreen}
         onPress={() => {
-          if (amount === 0 || !amount || !selectedWallet) {
+          if (amount === 0 || !amount || isNaN(amount) || !selectedWallet) {
             return;
           }
           if (
-            (amountLimits?.min && amount < amountLimits.min) ||
-            (amountLimits?.max && amount > amountLimits.max)
+            context === 'buyCrypto' &&
+            ((amountLimits?.min && amount < amountLimits.min) ||
+              (amountLimits?.max && amount > amountLimits.max))
+          ) {
+            return;
+          }
+          if (
+            context === 'sellCrypto' &&
+            ((sellLimits?.limits?.minAmount &&
+              amount < sellLimits.limits.minAmount) ||
+              (sellLimits?.limits?.maxAmount &&
+                amount > sellLimits.limits.maxAmount) ||
+              (sellLimits?.maxWalletAmount &&
+                amount > Number(sellLimits.maxWalletAmount)))
           ) {
             return;
           }
@@ -1691,32 +2609,58 @@ const ExternalServicesOfferSelector: React.FC<
         onBackdropPress={onBackdropPress}
         fullscreen>
         <OfferSelectorModal
-          modalContext={'buyCrypto'}
+          modalContext={context}
           modalTitle={t('Partners')}
           coin={coin}
           fiatCurrency={fiatCurrency}
-          offers={offers}
+          offers={context === 'sellCrypto' ? sellOffers : offers}
           country={country}
           selectedWallet={selectedWallet}
           preSetPartner={preSetPartner}
-          selectedPaymentMethod={paymentMethod}
+          selectedPaymentMethod={
+            context === 'sellCrypto' ? withdrawalMethod : paymentMethod
+          }
           selectedOffer={selectedOffer}
           showOffersLoading={selectedOfferLoading}
           onPaymentMethodSelected={pm => {
-            if (pm && pm.method !== paymentMethod?.method) {
+            if (
+              (pm &&
+                context === 'buyCrypto' &&
+                pm.method !== paymentMethod?.method) ||
+              (context === 'sellCrypto' &&
+                pm.method !== withdrawalMethod?.method)
+            ) {
               setOffers(offersDefault);
+              setSellOffers(sellOffersDefault);
               setSelectedOffer(undefined);
               onSelectOffer?.(undefined);
-              setPaymentMethod(pm);
+              if (context === 'buyCrypto') {
+                setPaymentMethod(pm as PaymentMethod);
+              } else if (context === 'sellCrypto') {
+                setWithdrawalMethod(pm as WithdrawalMethod);
+              }
               onSelectPaymentMethod?.(pm);
             }
           }}
           offerSelectorOnDismiss={selectedOffer => {
             if (selectedOffer) {
-              // TODO: review this if
-              setOfferSelectorText(
-                selectedOffer.label + t(' using ') + paymentMethod?.label,
-              );
+              if (context === 'buyCrypto') {
+                setOfferSelectorText(
+                  selectedOffer.label +
+                    ' ' +
+                    t('using') +
+                    ' ' +
+                    paymentMethod?.label,
+                );
+              } else if (context === 'sellCrypto') {
+                setOfferSelectorText(
+                  selectedOffer.label +
+                    ' ' +
+                    t('paid to') +
+                    ' ' +
+                    withdrawalMethod?.label,
+                );
+              }
               setSelectedOffer(selectedOffer);
               onSelectOffer?.(selectedOffer);
             }

@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {useAppSelector, useLogger} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import CloseModal from '../../../../assets/img/close-modal-icon.svg';
+import InfoSvg from '../../../../assets/img/info.svg';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import {
   Action,
@@ -19,7 +20,7 @@ import {formatFiatAmount} from '../../../utils/helper-methods';
 import {BuyCryptoExchangeKey} from '../buy-crypto/utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
-import {CryptoOffer} from './externalServicesOfferSelector';
+import {CryptoOffer, SellCryptoOffer} from './externalServicesOfferSelector';
 import {
   PaymentMethod,
   PaymentMethodKey,
@@ -44,6 +45,11 @@ import PaymentMethodsModal from '../buy-crypto/components/PaymentMethodModal';
 import ArrowDownSvg from '../../../../assets/img/chevron-down.svg';
 import ArrowUpSvg from '../../../../assets/img/chevron-up.svg';
 import BuyCryptoTerms from '../buy-crypto/components/terms/BuyCryptoTerms';
+import {SellCryptoExchangeKey} from '../sell-crypto/utils/sell-crypto-utils';
+import haptic from '../../../components/haptic-feedback/haptic';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {isEuCountry} from '../../../store/location/location.effects';
+import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -161,9 +167,15 @@ const SpinnerContainer = styled.View`
 const BuyCryptoExpandibleCard = styled(TouchableOpacity)<{selected?: boolean}>`
   border: 1px solid
     ${({theme: {dark}, selected}) =>
-      selected ? Action : dark ? SlateDark : '#e6e8ec'};
+      dark ? (selected ? Action : SlateDark) : selected ? Action : '#e6e8ec'};
   background-color: ${({theme: {dark}, selected}) =>
-    selected ? '#2240C440' : 'transparent'};
+    dark
+      ? selected
+        ? '#2240C440'
+        : 'transparent'
+      : selected
+      ? '#ECEFFD'
+      : 'transparent'};
   border-radius: 8px;
   margin: 20px 15px 0px 15px;
   padding: 18px 14px;
@@ -212,7 +224,7 @@ const BestOfferTag = styled.View`
 `;
 
 const BestOfferTagText = styled(Small)`
-  color: ${Success25};
+  color: ${({theme: {dark}}) => (dark ? Success25 : '#004D27')};
 `;
 
 const FeesInfoTextContainer = styled.View`
@@ -222,7 +234,7 @@ const FeesInfoTextContainer = styled.View`
 `;
 
 const FeesInfoText = styled(Small)`
-  color: ${White};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const OfferDataCryptoAmount = styled(H5)`
@@ -328,19 +340,27 @@ export const WalletSelectorName = styled.Text`
 interface OfferSelectorModalScreenProps {
   modalContext: 'buyCrypto' | 'sellCrypto';
   modalTitle?: string;
-  offers?: {
-    [key in BuyCryptoExchangeKey]: CryptoOffer;
-  };
+  offers?:
+    | {
+        [key in BuyCryptoExchangeKey]: CryptoOffer;
+      }
+    | {
+        [key in SellCryptoExchangeKey]: SellCryptoOffer;
+      };
   showOffersLoading?: boolean;
-  selectedPaymentMethod?: PaymentMethod;
-  selectedOffer?: CryptoOffer;
-  onPaymentMethodSelected: (paymentMethod: PaymentMethod) => void;
+  selectedPaymentMethod?: PaymentMethod | WithdrawalMethod;
+  selectedOffer?: CryptoOffer | SellCryptoOffer;
+  onPaymentMethodSelected: (
+    paymentMethod: PaymentMethod | WithdrawalMethod,
+  ) => void;
   coin: string;
   fiatCurrency: string;
   country: string;
   selectedWallet: Wallet;
   preSetPartner?: BuyCryptoExchangeKey;
-  offerSelectorOnDismiss?: (selectedOffer?: CryptoOffer | undefined) => void;
+  offerSelectorOnDismiss?: (
+    selectedOffer?: CryptoOffer | SellCryptoOffer | undefined,
+  ) => void;
 }
 
 const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
@@ -359,9 +379,13 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
   offerSelectorOnDismiss,
 }) => {
   const {t} = useTranslation();
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
     useState(false);
 
@@ -371,13 +395,19 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
     setUpdateView(Math.random());
   }, [selectedPaymentMethod]);
 
-  const expandCard = (offer: CryptoOffer) => {
+  const expandCard = (offer: CryptoOffer | SellCryptoOffer) => {
     const key = offer.key;
     if (!offer.fiatMoney) {
       return;
     }
-    if (offers && offers[key]) {
-      offers[key].expanded = offers[key].expanded ? false : true;
+    if (
+      offers &&
+      (offers as Record<string, CryptoOffer | SellCryptoOffer>)[key]
+    ) {
+      (offers as Record<string, CryptoOffer | SellCryptoOffer>)[key].expanded =
+        (offers as Record<string, CryptoOffer | SellCryptoOffer>)[key].expanded
+          ? false
+          : true;
     }
     setUpdateView(Math.random());
   };
@@ -463,12 +493,14 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
         <ScrollView>
           {offers && !showOffersLoading
             ? Object.values(offers)
-                .sort(
-                  (a, b) =>
-                    parseFloat(b.amountReceiving || '0') -
-                    parseFloat(a.amountReceiving || '0'),
+                .sort((a, b) =>
+                  modalContext === 'buyCrypto'
+                    ? parseFloat(b.amountReceiving || '0') -
+                      parseFloat(a.amountReceiving || '0')
+                    : parseFloat(b.amountReceivingAltFiatCurrency || '0') -
+                      parseFloat(a.amountReceivingAltFiatCurrency || '0'),
                 )
-                .map((offer: CryptoOffer, index: number) => {
+                .map((offer: CryptoOffer | SellCryptoOffer, index: number) => {
                   return offer.showOffer ? (
                     <BuyCryptoExpandibleCard
                       key={offer.key}
@@ -483,6 +515,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                       <OfferRow>
                         <OfferRowLeft>
                           <OfferDataInfoContainer
+                            testID={offer.key}
                             accessibilityLabel={'Provided By ' + offer.key}>
                             {offer.logo}
                           </OfferDataInfoContainer>
@@ -511,17 +544,32 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                               {Number(offer.amountReceiving)
                                 .toFixed(8)
                                 .replace(/\.?0+$/, '')}{' '}
-                              {coin.toUpperCase()}
+                              {modalContext === 'buyCrypto'
+                                ? coin.toUpperCase()
+                                : null}
+                              {modalContext === 'sellCrypto'
+                                ? offer.fiatCurrency.toUpperCase()
+                                : null}
                             </OfferDataCryptoAmount>
                             <FeesInfoTextContainer>
                               <FeesInfoText>
-                                {formatFiatAmount(
-                                  Number(offer.amountCost),
-                                  offer.fiatCurrency,
-                                  {
-                                    customPrecision: 'minimal',
-                                  },
-                                )}
+                                {modalContext === 'buyCrypto'
+                                  ? formatFiatAmount(
+                                      Number((offer as CryptoOffer).amountCost),
+                                      offer.fiatCurrency,
+                                      {
+                                        customPrecision: 'minimal',
+                                      },
+                                    )
+                                  : null}
+                                {modalContext === 'sellCrypto' ? (
+                                  <>
+                                    {Number(
+                                      (offer as SellCryptoOffer).sellAmount,
+                                    ).toFixed(6)}{' '}
+                                    {coin.toUpperCase()}
+                                  </>
+                                ) : null}
                                 {t(', fees apply')}
                               </FeesInfoText>
                               <SelectorArrowContainer>
@@ -560,13 +608,24 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                       offer.fiatCurrency !== fiatCurrency ? (
                         <OfferDataWarningContainer>
                           <OfferDataWarningMsg>
-                            {t(
-                              "This exchange doesn't support purchases with , tap 'Buy' to continue paying in .",
-                              {
-                                altFiatCurrency: fiatCurrency,
-                                availableFiatCurrency: offer.fiatCurrency,
-                              },
-                            )}
+                            {modalContext === 'buyCrypto'
+                              ? t(
+                                  "This exchange doesn't support purchases with , tap 'Buy' to continue paying in .",
+                                  {
+                                    altFiatCurrency: fiatCurrency,
+                                    availableFiatCurrency: offer.fiatCurrency,
+                                  },
+                                )
+                              : null}
+                            {modalContext === 'sellCrypto'
+                              ? t(
+                                  "This exchange doesn't support sales with , tap 'Sell' to continue paying in .",
+                                  {
+                                    altFiatCurrency: fiatCurrency,
+                                    availableFiatCurrency: offer.fiatCurrency,
+                                  },
+                                )
+                              : null}
                           </OfferDataWarningMsg>
                         </OfferDataWarningContainer>
                       ) : null}
@@ -576,53 +635,166 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                           <ItemDivisor style={{marginTop: 20}} />
                           <OfferExpandibleItem>
                             <OfferDataInfoLabel>
-                              {t('Purchase Amount')}
+                              {modalContext === 'buyCrypto'
+                                ? t('Purchase Amount')
+                                : null}
+                              {modalContext === 'sellCrypto'
+                                ? t('Sell Amount')
+                                : null}
                             </OfferDataInfoLabel>
                             <OfferDataRightContainer>
                               <OfferDataInfoText>
                                 {'≈ '}
-                                {formatFiatAmount(
-                                  Number(offer.buyAmount),
-                                  offer.fiatCurrency,
-                                )}
+                                {modalContext === 'buyCrypto'
+                                  ? formatFiatAmount(
+                                      Number((offer as CryptoOffer).buyAmount),
+                                      offer.fiatCurrency,
+                                    )
+                                  : null}
+                                {modalContext === 'sellCrypto' ? (
+                                  <>
+                                    {Number(
+                                      (offer as SellCryptoOffer).sellAmount,
+                                    ).toFixed(6)}{' '}
+                                    {coin.toUpperCase()}
+                                  </>
+                                ) : null}
                               </OfferDataInfoText>
                               <OfferDataInfoTextSec>
-                                {'≈ '}
-                                {Number(offer.amountReceiving).toFixed(6)}{' '}
-                                {coin.toUpperCase()}
+                                {modalContext === 'buyCrypto' ? (
+                                  <>
+                                    {'≈ '}
+                                    {Number(offer.amountReceiving).toFixed(
+                                      6,
+                                    )}{' '}
+                                    {coin.toUpperCase()}
+                                  </>
+                                ) : null}
+                                {modalContext === 'sellCrypto' ? (
+                                  <>
+                                    {'≈ '}
+                                    {formatFiatAmount(
+                                      Number(offer.amountReceiving) +
+                                        Number(offer.fee),
+                                      offer.fiatCurrency,
+                                    )}
+                                  </>
+                                ) : null}
                               </OfferDataInfoTextSec>
                             </OfferDataRightContainer>
                           </OfferExpandibleItem>
                           <ItemDivisor />
                           <OfferExpandibleItem>
-                            <OfferDataInfoLabel>{t('Fee')}</OfferDataInfoLabel>
-                            <OfferDataInfoText>
-                              {formatFiatAmount(
-                                Number(offer.fee),
-                                offer.fiatCurrency,
-                              )}
-                            </OfferDataInfoText>
+                            {modalContext === 'buyCrypto' ? (
+                              <>
+                                <OfferDataInfoLabel>
+                                  {t('Fee')}
+                                </OfferDataInfoLabel>
+                                <OfferDataInfoText>
+                                  {formatFiatAmount(
+                                    Number(offer.fee),
+                                    offer.fiatCurrency,
+                                  )}
+                                </OfferDataInfoText>
+                              </>
+                            ) : null}
+                            {modalContext === 'sellCrypto' ? (
+                              <>
+                                <FeesInfoTextContainer>
+                                  <OfferDataInfoLabel>
+                                    {t('Exchange Fee')}
+                                  </OfferDataInfoLabel>
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      haptic('impactLight');
+                                      switch ((offer as SellCryptoOffer).key) {
+                                        case 'moonpay':
+                                          dispatch(
+                                            openUrlWithInAppBrowser(
+                                              (user?.country &&
+                                                isEuCountry(user.country)) ||
+                                                isEuCountry(country)
+                                                ? 'https://www.moonpay.com/legal/europe_pricing_disclosure'
+                                                : 'https://www.moonpay.com/legal/pricing_disclosure',
+                                            ),
+                                          );
+                                          break;
+                                        case 'ramp':
+                                          dispatch(
+                                            openUrlWithInAppBrowser(
+                                              'https://support.rampnetwork.com/en/articles/8957-what-are-the-fees-for-selling-crypto-at-ramp-network',
+                                            ),
+                                          );
+                                          break;
+                                        case 'simplex':
+                                          dispatch(
+                                            openUrlWithInAppBrowser(
+                                              selectedPaymentMethod?.method ===
+                                                'sepaBankTransfer'
+                                                ? 'https://www.simplex.com/kb/what-fees-am-i-paying-for-withdrawing-funds-from-my-nuvei-account-via-sepa-or-sepa-instant'
+                                                : 'https://www.simplex.com/kb/what-fees-do-you-charge-for-card-payments',
+                                            ),
+                                          );
+                                          break;
+                                      }
+                                    }}
+                                    style={{marginLeft: 0, marginTop: -3}}>
+                                    <InfoSvg width={20} height={20} />
+                                  </TouchableOpacity>
+                                </FeesInfoTextContainer>
+                                <OfferDataInfoText>
+                                  {formatFiatAmount(
+                                    Number(offer.fee),
+                                    offer.fiatCurrency,
+                                  )}
+                                </OfferDataInfoText>
+                              </>
+                            ) : null}
                           </OfferExpandibleItem>
                           <ItemDivisor />
                           <OfferExpandibleItem>
-                            <OfferDataInfoTotal>
-                              {t('TOTAL')}
-                            </OfferDataInfoTotal>
-                            <OfferDataInfoTotal>
-                              {formatFiatAmount(
-                                Number(offer.amountCost),
-                                offer.fiatCurrency,
-                                {
-                                  customPrecision: 'minimal',
-                                },
-                              )}
-                            </OfferDataInfoTotal>
+                            {modalContext === 'buyCrypto' ? (
+                              <>
+                                <OfferDataInfoTotal>
+                                  {t('TOTAL')}
+                                </OfferDataInfoTotal>
+                                <OfferDataInfoTotal>
+                                  {formatFiatAmount(
+                                    Number((offer as CryptoOffer).amountCost),
+                                    offer.fiatCurrency,
+                                    {
+                                      customPrecision: 'minimal',
+                                    },
+                                  )}
+                                </OfferDataInfoTotal>
+                              </>
+                            ) : null}
+                            {modalContext === 'sellCrypto' ? (
+                              <>
+                                <OfferDataInfoTotal>
+                                  {t('Receiving')}
+                                </OfferDataInfoTotal>
+                                <OfferDataInfoTotal>
+                                  {formatFiatAmount(
+                                    Number(offer.amountReceiving),
+                                    offer.fiatCurrency,
+                                    {
+                                      customPrecision: 'minimal',
+                                    },
+                                  )}
+                                </OfferDataInfoTotal>
+                              </>
+                            ) : null}
                           </OfferExpandibleItem>
-                          <BuyCryptoTerms
-                            exchangeKey={offer.key}
-                            paymentMethod={selectedPaymentMethod}
-                            country={country}
-                          />
+                          {modalContext === 'buyCrypto' ? (
+                            <BuyCryptoTerms
+                              exchangeKey={offer.key}
+                              paymentMethod={
+                                selectedPaymentMethod as PaymentMethod
+                              }
+                              country={country}
+                            />
+                          ) : null}
                         </>
                       ) : null}
                       {showArchaxBanner && (
