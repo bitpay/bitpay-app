@@ -375,6 +375,34 @@ const RecoveryPhrase = () => {
     }
   };
 
+  const scanFunds = async (key: Key) => {
+    try {
+      await dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
+      logger.debug('[Scan funds] Get rates (1/4)...');
+      await dispatch(startGetRates({force: true}));
+      logger.debug('[Scan funds] Fix wallet addresses (2/4)...');
+      // workaround for fixing wallets without receive address
+      await fixWalletAddresses({
+        appDispatch: dispatch,
+        wallets: key.wallets,
+      });
+      logger.debug('[Scan funds] Update all wallet status for key (3/4)...');
+      await dispatch(
+        startUpdateAllWalletStatusForKey({
+          key,
+          force: true,
+          createTokenWalletWithFunds: true,
+        }),
+      );
+      dispatch(dismissOnGoingProcessModal());
+      logger.debug('[Scan Funds] Update portfolio balance (4/4)... Finished.');
+      dispatch(updatePortfolioBalance());
+    } catch (error) {
+      dispatch(dismissOnGoingProcessModal());
+      // ignore error
+    }
+  };
+
   const importWallet = async (
     importData: {words?: string | undefined; xPrivKey?: string | undefined},
     opts: Partial<KeyOptions>,
@@ -389,27 +417,8 @@ const RecoveryPhrase = () => {
           )) as Key);
       dispatch(dismissOnGoingProcessModal());
       await sleep(1000);
-      try {
-        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
-        await dispatch(startGetRates({force: true}));
-        // workaround for fixing wallets without receive address
-        await fixWalletAddresses({
-          appDispatch: dispatch,
-          wallets: key.wallets,
-        });
-        await dispatch(
-          startUpdateAllWalletStatusForKey({
-            key,
-            force: true,
-            createTokenWalletWithFunds: true,
-          }),
-        );
-        await sleep(1000);
-        await dispatch(updatePortfolioBalance());
-      } catch (error) {
-        // ignore error
-      }
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+      await scanFunds(key);
       backupRedirect({
         context: route.params?.context,
         navigation,
@@ -422,7 +431,6 @@ const RecoveryPhrase = () => {
           source: 'RecoveryPhrase',
         }),
       );
-      dispatch(dismissOnGoingProcessModal());
     } catch (e: any) {
       logger.error(e.message);
       dispatch(dismissOnGoingProcessModal());
