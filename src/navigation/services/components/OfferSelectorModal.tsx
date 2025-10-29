@@ -570,7 +570,9 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                                     {coin.toUpperCase()}
                                   </>
                                 ) : null}
-                                {t(', fees apply')}
+                                {modalContext === 'buyCrypto'
+                                  ? t(', fees apply')
+                                  : null}
                               </FeesInfoText>
                               <SelectorArrowContainer>
                                 {offer.expanded ? (

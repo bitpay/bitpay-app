@@ -223,7 +223,6 @@ const ArrowContainer = styled.View`
   margin-left: 10px;
 `;
 
-
 export type CryptoOffer = {
   key: BuyCryptoExchangeKey;
   label: string;
@@ -2519,15 +2518,22 @@ const ExternalServicesOfferSelector: React.FC<
           ? curr
           : prev,
       );
-      setSelectedOffer(_selectedOffer);
-      onSelectOffer?.(_selectedOffer);
-      setOfferSelectorText(
-        _selectedOffer?.label +
-          ' ' +
-          t('paid to') +
-          ' ' +
-          withdrawalMethod?.label,
-      );
+
+      const amountReceiving = Number(cloneDeep(_selectedOffer.amountReceiving));
+      if (amountReceiving !== 0 && !isNaN(amountReceiving)) {
+        setSelectedOffer(_selectedOffer);
+        onSelectOffer?.(_selectedOffer);
+        setOfferSelectorText(
+          _selectedOffer?.label +
+            ' ' +
+            t('paid to') +
+            ' ' +
+            withdrawalMethod?.label,
+        );
+      } else {
+        setSelectedOffer(undefined);
+        onSelectOffer?.(undefined);
+      }
       setSelectedOfferLoading(false);
     }, 3500);
 

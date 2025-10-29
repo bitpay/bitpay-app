@@ -1812,7 +1812,7 @@ const BuyAndSellRoot = ({
               maxAmount: maxMaxAmount,
             },
             maxWalletAmount:
-            // @ts-ignore
+              // @ts-ignore
               selectedWallet?.balance?.cryptoSpendable?.replaceAll(',', ''),
           });
 
@@ -1978,12 +1978,17 @@ const BuyAndSellRoot = ({
   }, [continueEnabled]);
 
   useEffect(() => {
-    if (selectedOffer && buttonState !== 'loading' && !openingBrowser) {
+    if (
+      selectedOffer &&
+      buttonState !== 'loading' &&
+      !openingBrowser &&
+      !getWarnMsg
+    ) {
       setContinueEnabled(true);
     } else {
       setContinueEnabled(false);
     }
-  }, [selectedOffer, buttonState, openingBrowser]);
+  }, [selectedOffer, buttonState, openingBrowser, getWarnMsg]);
 
   useEffect(() => {
     if (
