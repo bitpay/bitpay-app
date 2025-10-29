@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Platform, ScrollView} from 'react-native';
+import {ScrollView} from 'react-native';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
 import {WalletGroupParamList} from '../../../../navigation/wallet/WalletGroup';
 import styled from 'styled-components/native';
@@ -17,13 +17,8 @@ import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage
 import {H4, H5, SubText, TextAlign} from '../../../../components/styled/Text';
 import {SwapCryptoCoin} from '../screens/SwapCryptoRoot';
 import {getBadgeImg} from '../../../../utils/helper-methods';
-import {SellCryptoCoin} from '../../sell-crypto/screens/SellCryptoRoot';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {
-  SellCryptoGroupParamList,
-  SellCryptoScreens,
-} from '../../sell-crypto/SellCryptoGroup';
 import {SwapCryptoGroupParamList, SwapCryptoScreens} from '../SwapCryptoGroup';
+import {SellCryptoCoin} from '../../screens/BuyAndSellRoot';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -58,7 +53,6 @@ interface FromWalletSelectorModalProps {
   navigation: NavigationProp<any>;
   route:
     | RouteProp<WalletGroupParamList, 'GlobalSelect'>
-    | RouteProp<SellCryptoGroupParamList, SellCryptoScreens.ROOT>
     | RouteProp<SwapCryptoGroupParamList, SwapCryptoScreens.SWAP_CRYPTO_ROOT>;
 }
 
