@@ -109,6 +109,7 @@ import {
   SardineGetAuthTokenRequestData,
   SardinePaymentUrlConfigParams,
   SimplexPaymentData,
+  TransakAccessTokenData,
   TransakGetSignedUrlRequestData,
   TransakPaymentData,
   TransakSignedUrlData,
@@ -205,7 +206,6 @@ import {
 } from '../sell-crypto/utils/simplex-sell-utils';
 import {simplexGetCurrencies} from '../../../store/buy-crypto/effects/simplex/simplex';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
-import {SellLimits} from '../sell-crypto/screens/SellCryptoRoot';
 import _ from 'lodash';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
@@ -324,6 +324,11 @@ export interface Limits {
   max?: number;
 }
 
+export interface SellLimits {
+  minAmount?: number;
+  maxAmount?: number;
+}
+
 export interface SellLimitsOpts {
   maxWalletAmount?: string;
   limits: {
@@ -436,6 +441,9 @@ const BuyAndSellRoot = ({
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
+  const accessTokenTransak: TransakAccessTokenData = useAppSelector(
+    ({BUY_CRYPTO}) => BUY_CRYPTO.accessToken.transak,
+  );
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const tokenDataByAddress = useAppSelector(
     ({WALLET}: RootState) => WALLET.tokenDataByAddress,
@@ -2787,6 +2795,23 @@ const BuyAndSellRoot = ({
       }),
     );
 
+    const nowTimestamp = (Date.now() / 1000) | 0;
+    let _accessToken = accessTokenTransak?.accessToken;
+    if (!_accessToken || accessTokenTransak.expiresAt < nowTimestamp) {
+      try {
+        const {data} = await selectedWallet.transakGetAccessToken('');
+        dispatch(BuyCryptoActions.updateAccessTokenTransak(data));
+        _accessToken = data.accessToken;
+      } catch (err: any) {
+        const title = t('Transak Error');
+        const msg = getErrorMessage(err);
+        const reason = 'transakUpdateAccessToken Error';
+        showError(title, msg, reason);
+        setOpeningBrowser(false);
+        return;
+      }
+    }
+
     dispatch(
       Analytics.track('Requested Crypto Purchase', {
         exchange: 'transak',
@@ -2814,6 +2839,7 @@ const BuyAndSellRoot = ({
       hideMenu: false,
       partnerOrderId: transakExternalId,
       partnerCustomerId: selectedWallet.id,
+      accessToken: _accessToken,
     };
 
     quoteData[
