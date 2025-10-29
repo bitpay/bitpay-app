@@ -117,9 +117,9 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
-import {CryptoOffer} from './SellCryptoOffers';
 import {SellBalanceContainer} from '../styled/SellCryptoCard';
 import {AppActions} from '../../../../store/app';
+import {SellCryptoOffer} from '../../components/externalServicesOfferSelector';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -145,7 +145,7 @@ const ScanButtonContainer = styled(TouchableOpacity)`
 `;
 
 export interface SimplexSellCheckoutProps {
-  simplexQuoteOffer: CryptoOffer;
+  simplexQuoteOffer: SellCryptoOffer;
   wallet: Wallet;
   amount: number;
   externalId: string;

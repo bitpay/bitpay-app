@@ -205,7 +205,6 @@ import {
 } from '../sell-crypto/utils/simplex-sell-utils';
 import {simplexGetCurrencies} from '../../../store/buy-crypto/effects/simplex/simplex';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
-import {SellLimits} from '../sell-crypto/screens/SellCryptoRoot';
 import _ from 'lodash';
 import {startUpdateWalletStatus} from '../../../store/wallet/effects/status/status';
 import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
@@ -322,6 +321,11 @@ const SwapCurrenciesButton = styled(TouchableOpacity)<{
 export interface Limits {
   min?: number;
   max?: number;
+}
+
+export interface SellLimits {
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 export interface SellLimitsOpts {
