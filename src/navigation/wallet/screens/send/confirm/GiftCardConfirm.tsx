@@ -1,6 +1,6 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View} from 'react-native';
+import {View, Linking} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -98,6 +98,7 @@ import {
   hasVisibleBoost,
 } from '../../../../../lib/gift-cards/gift-card';
 import GiftCardDiscountText from '../../../../../navigation/tabs/shop/components/GiftCardDiscountText';
+import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -116,6 +117,7 @@ const BoostAppliedText = styled(BaseText)`
 enum GiftCardInvoiceCreationErrors {
   couponExpired = 'This promotion is no longer available.',
   atLeast1USD = 'Invoice price must be at least $1 USD',
+  kycRequired = 'Identity verification is required for this purchase. Please link your account in app settings, and complete identity verification before attempting this purchase.',
 }
 
 const GiftCardHeader = ({
@@ -331,21 +333,53 @@ const Confirm = () => {
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
     const onDismiss = () => {
-      if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
+      if (
+        err.message === GiftCardInvoiceCreationErrors.couponExpired ||
+        err.response?.data?.message ===
+          GiftCardInvoiceCreationErrors.kycRequired
+      ) {
         return popToShopHome();
       }
       return openWalletSelector();
     };
-    const errorMessageConfig = await dispatch(
+    let errorMessageConfig: BottomNotificationConfig = await dispatch(
       handleCreateTxProposalError(err, onDismiss),
     );
+    if (
+      err.response?.data?.message === GiftCardInvoiceCreationErrors.kycRequired
+    ) {
+      const url = `${BASE_BITPAY_URLS[appNetwork]}/authenticate/signup?context=eyJ1cmwiOiJpZC92ZXJpZnkifQ==`;
+      errorMessageConfig = {
+        type: 'warning',
+        message: t(
+          'Identify verification is required for this purchase. After verifying your identity, return to the app to complete your purchase.',
+        ),
+        title: t('Identity verification required'),
+        enableBackdropDismiss: false,
+        actions: [
+          {
+            text: t('GET VERIFIED'),
+            action: () => {
+              onDismiss().then(async () => {
+                await Linking.openURL(url);
+              });
+            },
+            primary: true,
+          },
+          {
+            text: t('NEVERMIND'),
+            action: () => onDismiss && onDismiss(),
+          },
+        ],
+      };
+    }
     dispatch(
       AppActions.showBottomNotificationModal({
         ...errorMessageConfig,
         message:
+          errorMessageConfig.message ||
           err.response?.data?.message ||
-          err.message ||
-          errorMessageConfig.message,
+          err.message,
       }),
     );
   };
