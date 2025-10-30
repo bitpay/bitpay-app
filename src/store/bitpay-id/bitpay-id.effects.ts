@@ -26,7 +26,7 @@ import {ShopActions, ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
-import {ReceivingAddress, SecuritySettings} from './bitpay-id.models';
+import {ReceivingAddress, SecuritySettings, Session} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
@@ -37,6 +37,11 @@ import {
 } from '../app/app.actions';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {DeviceEventEmitter} from 'react-native';
+import {getPasskeyStatus, signInWithPasskey} from '../../utils/passkey';
+import {
+  setPasskeyCredentials,
+  setPasskeyStatus,
+} from '../../store/bitpay-id/bitpay-id.actions';
 
 interface StartLoginParams {
   email: string;
@@ -112,7 +117,8 @@ export const startBitPayIdAnalyticsInit =
       dispatch(
         setEmailNotifications(
           acceptedEmailNotifications &&
-            (user.optInEmailMarketing && user.verified),
+            user.optInEmailMarketing &&
+            user.verified,
           email,
           agreedToMarketingCommunications,
         ),
@@ -231,20 +237,76 @@ export const startCreateAccount =
     }
   };
 
-export const startSendVerificationEmail =
-  (): Effect<Promise<void>> => async (dispatch, getState) => {
+export const startLoginWithPasskey =
+  (): Effect => async (dispatch, getState) => {
     try {
+      await dispatch(startOnGoingProcessModal('LOGGING_IN'));
+      dispatch(BitPayIdActions.updateLoginStatus(null));
+
       const {APP, BITPAY_ID} = getState();
 
-      return AuthApi.sendVerificationEmail(
+      // Passkey
+      dispatch(
+        LogActions.info(
+          '[startLoginWithPasskey] Authenticating BitPayID Passkey...',
+        ),
+      );
+      const signedStatus = await signInWithPasskey(
         APP.network,
         BITPAY_ID.session.csrfToken,
       );
-    } catch (err) {
+      // Set passkey status
+      dispatch(setPasskeyStatus(signedStatus));
+      if (!signedStatus) {
+        const errMsg = 'Failed to sign in with Passkey. Please try again.';
+        dispatch(LogActions.error('[startLoginWithPasskey] ', errMsg));
+        dispatch(BitPayIdActions.failedLogin(errMsg));
+        return;
+      }
+      // Refresh session
+      const session = await AuthApi.fetchSession(APP.network);
+
       dispatch(
-        LogActions.error('An error occurred sending verification email.'),
+        LogActions.info(
+          '[startLoginWithPasskey] Successfully authenticated BitPayID Passkey: ',
+        ),
       );
-      dispatch(LogActions.error(JSON.stringify(err)));
+
+      // start pairing
+      const secret = await AuthApi.generatePairingCode(
+        APP.network,
+        session.csrfToken,
+      );
+      await dispatch(startPairAndLoadUser(APP.network, secret));
+
+      // complete
+      dispatch(
+        Analytics.track('Log In User success', {
+          type: 'passkeyAuth',
+        }),
+      );
+
+      dispatch(CardActions.isJoinedWaitlist(false));
+      dispatch(BitPayIdActions.successLogin(APP.network, session));
+    } catch (err: any) {
+      let errMsg;
+
+      if (isAxiosError<LoginErrorResponse>(err)) {
+        errMsg = upperFirst(
+          err.response?.data.message ||
+            err.message ||
+            t('An unexpected error occurred.'),
+        );
+        dispatch(LogActions.error('[startLoginWithPasskey]', errMsg));
+      } else {
+        errMsg = err.message || JSON.stringify(err);
+        dispatch(
+          LogActions.error('[startLoginWithPasskey]', err.status, errMsg),
+        );
+      }
+      dispatch(BitPayIdActions.failedLogin(errMsg));
+    } finally {
+      dispatch(dismissOnGoingProcessModal());
     }
   };
 
@@ -252,42 +314,83 @@ export const startLogin =
   ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
   async (dispatch, getState) => {
     try {
-      dispatch(startOnGoingProcessModal('LOGGING_IN'));
+      await dispatch(startOnGoingProcessModal('LOGGING_IN'));
       dispatch(BitPayIdActions.updateLoginStatus(null));
 
       const {APP, BITPAY_ID} = getState();
 
-      // authenticate
-      dispatch(LogActions.info('Authenticating BitPayID credentials...'));
-      const {twoFactorPending, emailAuthenticationPending} =
-        await AuthApi.login(
-          APP.network,
-          email,
-          password,
-          BITPAY_ID.session.csrfToken,
-          gCaptchaResponse,
-        );
+      let session: Session | null = null;
 
-      // refresh session
-      const session = await AuthApi.fetchSession(APP.network);
-
-      if (twoFactorPending) {
-        dispatch(LogActions.debug('Two-factor authentication pending.'));
-        dispatch(BitPayIdActions.pendingLogin('twoFactorPending', session));
-        return;
-      }
-
-      if (emailAuthenticationPending) {
-        dispatch(LogActions.debug('Email authentication pending.'));
-        dispatch(
-          BitPayIdActions.pendingLogin('emailAuthenticationPending', session),
-        );
-        return;
-      }
-
-      dispatch(
-        LogActions.info('Successfully authenticated BitPayID credentials.'),
+      // check if user has passkey
+      const {passkey} = await getPasskeyStatus(
+        email,
+        APP.network,
+        BITPAY_ID.session.csrfToken,
       );
+      dispatch(setPasskeyStatus(passkey));
+      if (passkey) {
+        dispatch(
+          LogActions.info('[startLogin] Authenticating with Passkey...'),
+        );
+        const signedStatus = await signInWithPasskey(
+          APP.network,
+          BITPAY_ID.session.csrfToken,
+          email,
+        );
+        if (!signedStatus) {
+          const errMsg = 'Failed to sign in with Passkey. Please try again.';
+          dispatch(LogActions.error('[startLogin] ', errMsg));
+          dispatch(BitPayIdActions.failedLogin(errMsg));
+          return;
+        }
+        dispatch(
+          LogActions.info(
+            '[startLogin] Successfully authenticated with Passkey: ',
+          ),
+        );
+        session = await AuthApi.fetchSession(APP.network);
+      } else {
+        // authenticate
+        dispatch(
+          LogActions.info(
+            '[startLogin] Authenticating BitPayID credentials...',
+          ),
+        );
+        const {twoFactorPending, emailAuthenticationPending} =
+          await AuthApi.login(
+            APP.network,
+            email,
+            password,
+            BITPAY_ID.session.csrfToken,
+            gCaptchaResponse,
+          );
+
+        // refresh session
+        session = await AuthApi.fetchSession(APP.network);
+        if (twoFactorPending) {
+          dispatch(
+            LogActions.debug('[startLogin] Two-factor authentication pending.'),
+          );
+          dispatch(BitPayIdActions.pendingLogin('twoFactorPending', session));
+          return;
+        }
+
+        if (emailAuthenticationPending) {
+          dispatch(
+            LogActions.debug('[startLogin] Email authentication pending.'),
+          );
+          dispatch(
+            BitPayIdActions.pendingLogin('emailAuthenticationPending', session),
+          );
+          return;
+        }
+
+        dispatch(
+          LogActions.info(
+            '[startLogin] Successfully authenticated BitPayID credentials.',
+          ),
+        );
+      }
 
       // start pairing
       const secret = await AuthApi.generatePairingCode(
@@ -305,7 +408,7 @@ export const startLogin =
 
       dispatch(CardActions.isJoinedWaitlist(false));
       dispatch(BitPayIdActions.successLogin(APP.network, session));
-    } catch (err) {
+    } catch (err: any) {
       let errMsg;
 
       if (isAxiosError<LoginErrorResponse>(err)) {
@@ -314,13 +417,12 @@ export const startLogin =
             err.message ||
             t('An unexpected error occurred.'),
         );
-        console.error(errMsg);
+        dispatch(LogActions.error('[startLogin]', errMsg));
       } else {
-        console.error(err);
+        errMsg = err.message || JSON.stringify(err);
+        dispatch(LogActions.error('[startLogin]', err.status, errMsg));
       }
 
-      dispatch(LogActions.error('Login failed.'));
-      dispatch(LogActions.error(JSON.stringify(err)));
       dispatch(BitPayIdActions.failedLogin(errMsg));
     } finally {
       dispatch(dismissOnGoingProcessModal());
@@ -473,7 +575,7 @@ export const startDeeplinkPairing =
     }
   };
 
-const startPairAndLoadUser =
+export const startPairAndLoadUser =
   (
     network: Network,
     secret: string,
@@ -550,6 +652,8 @@ export const startDisconnectBitPayId =
         await AuthApi.logout(APP.network, csrfToken);
         dispatch(Analytics.track('Log Out User success', {}));
       }
+      dispatch(setPasskeyStatus(false));
+      dispatch(setPasskeyCredentials([]));
     } catch (err) {
       // log but swallow this error
       dispatch(LogActions.debug('An error occurred while logging out.'));
