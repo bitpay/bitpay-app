@@ -619,6 +619,7 @@ export const startOnGoingProcessModal =
       SCANNING_FUNDS_WITH_PASSPHRASE: i18n.t(
         'Scanning Funds... this process may take a few minutes',
       ),
+      WAITING_FOR_MAX_AMOUNT: i18n.t('Calculating maximum amount...'),
     };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next

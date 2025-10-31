@@ -52,15 +52,17 @@ type AmountModalProps = AmountProps & {
   onSendMaxPressed?: () => any;
 };
 
-const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
-  return (
-    <StyledAmountModalContainer platform={Platform.OS}>
-      {props.children}
-    </StyledAmountModalContainer>
-  );
-});
+const AmountModalContainerHOC = gestureHandlerRootHOC(
+  (props: React.PropsWithChildren) => {
+    return (
+      <StyledAmountModalContainer platform={Platform.OS}>
+        {props.children}
+      </StyledAmountModalContainer>
+    );
+  },
+);
 
-const AmountModal: React.VFC<AmountModalProps> = props => {
+const AmountModal: React.FC<AmountModalProps> = props => {
   const {
     onClose,
     onSendMaxPressed,

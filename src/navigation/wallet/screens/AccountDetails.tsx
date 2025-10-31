@@ -19,6 +19,7 @@ import {
   TransactionProposal,
   Status,
   KeyMethods,
+  Key,
 } from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
 import {
@@ -166,6 +167,7 @@ import {
 import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
+import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -327,7 +329,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const {selectedAccountAddress, keyId, isSvmAccount} = route.params;
   const [refreshing, setRefreshing] = useState(false);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
+    ({WALLET}) => WALLET,
+  );
   const [copied, setCopied] = useState(false);
   const [searchVal, setSearchVal] = useState('');
   const [showActivityTab, setShowActivityTab] = useState(false);
@@ -1293,15 +1297,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     context: 'AccountDetails',
                   }),
                 );
-                navigation.navigate(WalletScreens.AMOUNT, {
-                  onAmountSelected: async (
-                    amount: string,
-                    setButtonState: any,
-                  ) => {
-                    navigation.navigate('BuyCryptoRoot', {
-                      amount: Number(amount),
-                    });
-                  },
+                navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
                   context: 'buyCrypto',
                 });
               },
@@ -1313,7 +1309,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     context: 'AccountDetails',
                   }),
                 );
-                navigation.navigate('SellCryptoRoot');
+                navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+                  context: 'sellCrypto',
+                });
               },
             }}
             swap={{

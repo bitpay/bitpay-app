@@ -121,8 +121,8 @@ import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {rampGetSellTransactionDetails} from '../../../../store/buy-crypto/effects/ramp/ramp';
-import {CryptoOffer} from './SellCryptoOffers';
 import {AppActions} from '../../../../store/app';
+import {SellCryptoOffer} from '../../components/externalServicesOfferSelector';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -131,7 +131,7 @@ export const SellCheckoutContainer = styled.SafeAreaView`
 `;
 
 export interface RampSellCheckoutProps {
-  rampQuoteOffer: CryptoOffer;
+  rampQuoteOffer: SellCryptoOffer;
   sellCryptoExternalId: string;
   wallet: Wallet;
   toAddress: string;
