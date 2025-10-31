@@ -7,7 +7,6 @@ import {
   combineReducers,
   legacy_createStore as createStore,
   Middleware,
-  StoreEnhancer,
 } from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
@@ -18,6 +17,7 @@ import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
+import {backupPersistRoot, readBackupPersistRoot} from './backup/fs-backup';
 import {
   bindWalletKeys,
   transformContacts,
@@ -50,6 +50,10 @@ import {
   swapCryptoReduxPersistBlackList,
 } from './swap-crypto/swap-crypto.reducer';
 import {
+  ZenledgerReduxPersistBlackList,
+  zenledgerReducer,
+} from './zenledger/zenledger.reducer';
+import {
   walletReducer,
   walletReduxPersistBlackList,
 } from './wallet/wallet.reducer';
@@ -74,10 +78,6 @@ import {Storage} from 'redux-persist';
 import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
-import {
-  ZenledgerReduxPersistBlackList,
-  zenledgerReducer,
-} from './zenledger/zenledger.reducer';
 
 export const storage = new MMKV();
 
@@ -92,6 +92,37 @@ const addLog = (log: AddLog) => {
       initLogs.add(log);
     }
   } catch (_) {}
+};
+
+const restoreFromBackup = (reason: string): Promise<string | null> => {
+  const startTs = Date.now();
+  return readBackupPersistRoot()
+    .then(restored => {
+      if (restored) {
+        try {
+          // Write back to MMKV to repair store for future runs
+          storage.set('persist:root', restored);
+          addLog(
+            LogActions.info(
+              `MMKV persist:root ${reason} - restored from filesystem backup - durationMs:${
+                Date.now() - startTs
+              }`,
+            ),
+          );
+        } catch (err) {
+          addLog(
+            LogActions.persistLog(
+              LogActions.error(
+                `MMKV restore write-back failed - ${getErrorString(err)}`,
+              ),
+            ),
+          );
+        }
+        return restored;
+      }
+      return null;
+    })
+    .catch(() => null);
 };
 
 export const reduxStorage: Storage = {
@@ -109,11 +140,20 @@ export const reduxStorage: Storage = {
         ),
       );
     }
+    try {
+      if (key === 'persist:root' && typeof value === 'string') {
+        backupPersistRoot(value);
+      }
+    } catch (_) {}
     return Promise.resolve();
   },
   getItem: key => {
     try {
       const value = storage.getString(key);
+      if (value == null && key === 'persist:root') {
+        // Attempt restore from backup if MMKV has been wiped or is missing
+        return restoreFromBackup('missing');
+      }
       return Promise.resolve(value);
     } catch (err) {
       addLog(
@@ -123,6 +163,10 @@ export const reduxStorage: Storage = {
           ),
         ),
       );
+      if (key === 'persist:root') {
+        // Try backup on MMKV get failure as well
+        return restoreFromBackup('getItem error');
+      }
       return Promise.resolve(null);
     }
   },
