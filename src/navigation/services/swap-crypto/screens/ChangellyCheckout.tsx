@@ -454,7 +454,11 @@ const ChangellyCheckout: React.FC = () => {
 
           let msg = t('Error creating transaction');
           let errorMsgLog;
-          if (typeof err?.message === 'string') {
+
+          if (typeof err === 'string') {
+            msg = msg + `: ${err}`;
+            errorMsgLog = err;
+          } else if (typeof err?.message === 'string') {
             msg = msg + `: ${err.message}`;
             errorMsgLog = err.message;
           }
@@ -783,10 +787,15 @@ const ChangellyCheckout: React.FC = () => {
           logger.error(JSON.stringify(err));
           let msg = t('Uh oh, something went wrong. Please try again later');
           const reason = 'publishAndSign Error';
-          if (typeof err?.message === 'string') {
+          let errorMsgLog: string | undefined;
+          if (typeof err === 'string') {
+            errorMsgLog = err;
+            msg = `${msg}.\n${BWCErrorMessage(err)}`;
+          } else if (typeof err?.message === 'string') {
+            errorMsgLog = err.message;
             msg = `${msg}.\n${BWCErrorMessage(err)}`;
           }
-          showError(msg, reason);
+          showError(msg, reason, errorMsgLog);
       }
     }
   };
