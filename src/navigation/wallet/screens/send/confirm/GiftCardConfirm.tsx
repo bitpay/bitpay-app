@@ -330,13 +330,16 @@ const Confirm = () => {
   };
 
   const handleCreateGiftCardInvoiceOrTxpError = async (err: any) => {
+    const errorMessage = err.response?.data?.message || err.message;
+    logger.error('Error creating gift card invoice or txp: ' + errorMessage);
     await sleep(400);
     dispatch(dismissOnGoingProcessModal());
     const onDismiss = () => {
       if (
-        err.message === GiftCardInvoiceCreationErrors.couponExpired ||
-        err.response?.data?.message ===
-          GiftCardInvoiceCreationErrors.kycRequired
+        [
+          GiftCardInvoiceCreationErrors.couponExpired,
+          GiftCardInvoiceCreationErrors.kycRequired,
+        ].includes(errorMessage)
       ) {
         return popToShopHome();
       }
@@ -345,9 +348,7 @@ const Confirm = () => {
     let errorMessageConfig: BottomNotificationConfig = await dispatch(
       handleCreateTxProposalError(err, onDismiss),
     );
-    if (
-      err.response?.data?.message === GiftCardInvoiceCreationErrors.kycRequired
-    ) {
+    if (errorMessage === GiftCardInvoiceCreationErrors.kycRequired) {
       const url = `${BASE_BITPAY_URLS[appNetwork]}/authenticate/signup?context=eyJ1cmwiOiJpZC92ZXJpZnkifQ==`;
       errorMessageConfig = {
         type: 'warning',
@@ -376,10 +377,7 @@ const Confirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal({
         ...errorMessageConfig,
-        message:
-          errorMessageConfig.message ||
-          err.response?.data?.message ||
-          err.message,
+        message: errorMessageConfig.message || errorMessage,
       }),
     );
   };
