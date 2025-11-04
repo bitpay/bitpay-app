@@ -182,6 +182,12 @@ const Confirm = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[appNetwork]);
   const boostedAmount = getBoostedAmount(cardConfig, amount);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
+  const syncGiftCardPurchasesWithBitPayId = useAppSelector(
+    ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
+  );
 
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
@@ -349,7 +355,9 @@ const Confirm = () => {
       handleCreateTxProposalError(err, onDismiss),
     );
     if (errorMessage === GiftCardInvoiceCreationErrors.kycRequired) {
-      const url = `${BASE_BITPAY_URLS[appNetwork]}/authenticate/signup?context=eyJ1cmwiOiJpZC92ZXJpZnkifQ==`;
+      const route =
+        user && syncGiftCardPurchasesWithBitPayId ? 'login' : 'signup';
+      const url = `${BASE_BITPAY_URLS[appNetwork]}/authenticate/${route}?context=eyJ1cmwiOiJpZC92ZXJpZnkifQ==`;
       errorMessageConfig = {
         type: 'warning',
         message: t(
