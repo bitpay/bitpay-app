@@ -30,7 +30,7 @@ import {successFetchCatalog} from '../shop-catalog/shop-catalog.actions';
 
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
-    const {APP, BITPAY_ID, LOCATION, SHOP} = getState();
+    const {APP, BITPAY_ID, LOCATION} = getState();
     const baseUrl = BASE_BITPAY_URLS[APP.network];
     const user = BITPAY_ID.user[APP.network];
     const incentiveLevelId = user?.incentiveLevelId;
@@ -39,9 +39,7 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
       await Promise.all([
         axios.get(
           `${baseUrl}/gift-cards/catalog/${country}${
-            incentiveLevelId && SHOP.syncGiftCardPurchasesWithBitPayId
-              ? `/${incentiveLevelId}`
-              : ''
+            incentiveLevelId && user ? `/${incentiveLevelId}` : ''
           }`,
         ),
         axios.get(`${baseUrl}/merchant-directory/directory`),
@@ -179,15 +177,14 @@ export const startCreateGiftCardInvoice =
       const {APP, BITPAY_ID, SHOP} = getState();
       const baseUrl = BASE_BITPAY_URLS[APP.network];
       const user = BITPAY_ID.user[APP.network];
-      const shouldSync = user && SHOP.syncGiftCardPurchasesWithBitPayId;
       const fullParams = {
         ...params,
         ...(cardConfig.emailRequired && {
-          email: shouldSync ? user?.email : SHOP.email,
+          email: user?.email || SHOP.email,
         }),
         ...(cardConfig.phoneRequired && {phone: SHOP.phone}),
       };
-      const createInvoiceResponse = shouldSync
+      const createInvoiceResponse = user
         ? await BitPayIdApi.getInstance()
             .request(
               'createGiftCardInvoice',

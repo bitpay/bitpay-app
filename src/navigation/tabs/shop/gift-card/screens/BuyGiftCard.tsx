@@ -156,15 +156,11 @@ const BuyGiftCard = ({
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const syncGiftCardPurchasesWithBitPayId = useAppSelector(
-    ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
-  );
   const savedEmail = useAppSelector(({SHOP}) => SHOP.email);
   const savedPhone = useAppSelector(({SHOP}) => SHOP.phone);
   const savedPhoneCountryInfo = useAppSelector(
     ({SHOP}) => SHOP.phoneCountryInfo,
   );
-  const shouldSync = user && syncGiftCardPurchasesWithBitPayId;
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
   );
@@ -338,7 +334,7 @@ const BuyGiftCard = ({
   };
 
   const next = (amount: number, phone?: string) => {
-    if (cardConfig.emailRequired && !shouldSync) {
+    if (cardConfig.emailRequired && !user) {
       return navigation.navigate(GiftCardScreens.ENTER_EMAIL, {
         cardConfig,
         initialEmail: savedEmail,

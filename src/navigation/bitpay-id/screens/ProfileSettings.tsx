@@ -15,11 +15,8 @@ import {
   Link,
   Paragraph,
 } from '../../../components/styled/Text';
-import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {Network} from '../../../constants';
 import {RootState} from '../../../store';
-import {User} from '../../../store/bitpay-id/bitpay-id.models';
-import {ShopActions, ShopEffects} from '../../../store/shop';
 import {
   LightBlack,
   NeutralSlate,
@@ -111,9 +108,6 @@ export const ProfileSettingsScreen = ({route}: ProfileProps) => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const network = useSelector<RootState, Network>(({APP}) => APP.network);
-  const syncGiftCardPurchasesWithBitPayId = useSelector<RootState, boolean>(
-    ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
-  );
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const apiToken = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.apiToken[APP.network],
@@ -202,26 +196,6 @@ export const ProfileSettingsScreen = ({route}: ProfileProps) => {
             </TouchableOpacity>
           </>
         ) : null}
-
-        <SettingsSection>
-          <SettingsSectionBody>
-            <SettingsSectionHeader>
-              {t('Sync Gift Card Purchases')}
-            </SettingsSectionHeader>
-            <SettingsSectionDescription>
-              {t(
-                'If enabled, your gift card purchases will be associated with your BitPay ID, allowing you to keep track of your gift card purchases even if this device is lost.',
-              )}
-            </SettingsSectionDescription>
-          </SettingsSectionBody>
-          <ToggleSwitch
-            isEnabled={syncGiftCardPurchasesWithBitPayId}
-            onChange={() => {
-              dispatch(ShopActions.toggledSyncGiftCardPurchasesWithBitPayId());
-              dispatch(ShopEffects.startFetchCatalog());
-            }}
-          />
-        </SettingsSection>
         <SectionSpacer />
       </ScrollView>
     </ProfileSettingsScreenContainer>

@@ -112,7 +112,8 @@ export const startBitPayIdAnalyticsInit =
       dispatch(
         setEmailNotifications(
           acceptedEmailNotifications &&
-            (user.optInEmailMarketing && user.verified),
+            user.optInEmailMarketing &&
+            user.verified,
           email,
           agreedToMarketingCommunications,
         ),
