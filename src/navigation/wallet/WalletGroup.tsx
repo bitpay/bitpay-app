@@ -88,6 +88,7 @@ import BackupOnboarding, {
 } from './screens/BackupOnboarding';
 import {Root} from '../../Root';
 import {AccountRowProps} from '../../components/list/AccountListRow';
+import KeyInformation from './screens/KeyInformation';
 
 interface WalletProps {
   Wallet: typeof Root;
@@ -126,6 +127,7 @@ export type WalletGroupParamList = {
   CreateEncryptPassword: {key: Key};
   ExtendedPrivateKey: {xPrivKey: string};
   DeleteKey: {keyId: string};
+  KeyInformation: undefined;
   ExportKey: {code: string; keyName: string | undefined};
   WalletAmountScreen: AmountScreenParamList;
   SendTo: {
@@ -201,6 +203,7 @@ export enum WalletScreens {
   CREATE_ENCRYPT_PASSWORD = 'CreateEncryptPassword',
   EXTENDED_PRIVATE_KEY = 'ExtendedPrivateKey',
   DELETE_KEY = 'DeleteKey',
+  KEY_INFORMATION = 'KeyInformation',
   EXPORT_KEY = 'ExportKey',
   AMOUNT = 'WalletAmountScreen',
   SEND_TO = 'SendTo',
@@ -318,6 +321,10 @@ const WalletGroup: React.FC<WalletProps> = ({Wallet, theme}) => {
         component={ExtendedPrivateKey}
       />
       <Wallet.Screen name={WalletScreens.DELETE_KEY} component={DeleteKey} />
+      <Wallet.Screen
+        name={WalletScreens.KEY_INFORMATION}
+        component={KeyInformation}
+      />
       <Wallet.Screen name={WalletScreens.EXPORT_KEY} component={ExportKey} />
       <Wallet.Screen name={WalletScreens.TERMS_OF_USE} component={TermsOfUse} />
       <Wallet.Screen name={WalletScreens.AMOUNT} component={AmountScreen} />
