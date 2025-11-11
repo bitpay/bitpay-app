@@ -408,6 +408,16 @@ const KeySettings = () => {
 
             <Hr />
 
+            <Setting
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('KeyInformation');
+              }}>
+              <WalletSettingsTitle>{t('Key Information')}</WalletSettingsTitle>
+            </Setting>
+
+            <Hr />
+
             <SettingView style={{paddingLeft: 15, paddingRight: 15}}>
               <WalletSettingsTitle>
                 {t('Request Encrypt Password')}
