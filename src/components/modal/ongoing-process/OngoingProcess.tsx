@@ -63,7 +63,9 @@ export type OnGoingProcessMessages =
   | 'BROADCASTING_TXP'
   | 'SWEEPING_WALLET'
   | 'SCANNING_FUNDS'
-  | 'SCANNING_FUNDS_WITH_PASSPHRASE';
+  | 'SCANNING_FUNDS_WITH_PASSPHRASE'
+  | 'CREATING_PASSKEY'
+  | 'DELETING_PASSKEY';
 
 const Row = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : White)};

@@ -179,3 +179,13 @@ export const EXCHANGE_RATES_SORT_ORDER = [
   'shib',
   'matic',
 ];
+
+// Passkey
+export const PASSKEY_API_REGISTER_CHALLENGE =
+  '/auth/passkey/register/challenge';
+export const PASSKEY_API_REGISTER_VERIFY = '/auth/passkey/register/verify';
+export const PASSKEY_API_AUTH_CHALLENGE =
+  '/auth/passkey/authenticate/challenge';
+export const PASSKEY_API_AUTH_VERIFY = '/auth/passkey/authenticate/verify';
+export const PASSKEY_API_STATUS = '/auth/passkey/status';
+export const PASSKEY_API_CREDENTIALS = '/auth/passkey/credentials';

@@ -619,6 +619,8 @@ export const startOnGoingProcessModal =
       SCANNING_FUNDS_WITH_PASSPHRASE: i18n.t(
         'Scanning Funds... this process may take a few minutes',
       ),
+      CREATING_PASSKEY: i18n.t('Creating Passkey...'),
+      DELETING_PASSKEY: i18n.t('Deleting Passkey...'),
     };
 
     // if modal currently active dismiss and sleep to allow animation to complete before showing next
