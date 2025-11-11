@@ -12,6 +12,7 @@
 		<string>applinks:link.test.bitpay.com</string>
 		<string>applinks:link.staging.bitpay.com</string>
 		<string>applinks:bitpay.onelink.me</string>
+		<string>webcredentials:bitpay.com</string>
 	</array>
 	<key>com.apple.developer.in-app-payments</key>
 	<array>
@@ -22,6 +23,6 @@
 		<string>$(TeamIdentifierPrefix)*</string>
 	</array>
 	<key>com.apple.developer.payment-pass-provisioning</key>
-  <true/>
+	<true/>
 </dict>
 </plist>

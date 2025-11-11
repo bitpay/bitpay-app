@@ -12,6 +12,7 @@
 		<string>applinks:link.test.bitpay.com</string>
 		<string>applinks:link.staging.bitpay.com</string>
 		<string>applinks:bitpay.onelink.me</string>
+		<string>webcredentials:test.bitpay.com</string>
 	</array>
 	<key>com.apple.developer.in-app-payments</key>
 	<array>

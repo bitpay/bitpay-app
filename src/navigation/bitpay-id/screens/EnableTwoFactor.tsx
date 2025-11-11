@@ -2,7 +2,6 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {ActiveOpacity, Br} from '../../../components/styled/Containers';
 import {BaseText, H3, Paragraph} from '../../../components/styled/Text';
-import {t} from 'i18next';
 import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Action, SlateDark, White} from '../../../styles/colors';
@@ -115,7 +114,7 @@ const schema = yup.object().shape({
   code: yup.string().required().length(TWO_FACTOR_CODE_LENGTH),
 });
 
-const EnableTwoFactor = ({route, navigation}: EnableTwoFactorProps) => {
+const EnableTwoFactor = ({navigation}: EnableTwoFactorProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const network = useAppSelector(({APP}) => APP.network);

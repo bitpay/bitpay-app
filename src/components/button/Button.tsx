@@ -61,6 +61,7 @@ interface ButtonProps extends BaseButtonProps {
   action?: boolean;
   accessibilityLabel?: string;
   touchableLibrary?: TouchableOpacityProps['touchableLibrary'];
+  icon?: React.ReactNode;
 }
 
 interface ButtonOptionProps {
@@ -165,6 +166,19 @@ const ButtonText = styled(ButtonBaseText)<ButtonOptionProps>`
     return White;
   }};
 `;
+
+const ButtonIconContainer = styled.View`
+  margin-right: 10px;
+`;
+
+const ButtonContainerFlex = styled.View<{hasIcon: boolean}>`
+  flex-direction: row;
+  justify-content: ${({hasIcon}) => (hasIcon ? 'space-between' : 'center')};
+  padding-left: ${({hasIcon}) => (hasIcon ? 10 : 0)}px;
+  align-items: center;
+`;
+
+const ButtonTextContainer = styled.View``;
 
 const PillContent = styled.View<ButtonOptionProps>`
   background: ${({
@@ -306,6 +320,7 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
     action,
     accessibilityLabel,
     touchableLibrary,
+    icon,
   } = props;
   const secondary = buttonStyle === 'secondary';
   const outline = buttonOutline;
@@ -394,15 +409,20 @@ const Button: React.FC<React.PropsWithChildren<ButtonProps>> = props => {
         disabled={disabled}
         action={action}>
         <Animated.View style={childrenStyle}>
-          <ButtonTypeText
-            secondary={secondary}
-            cancel={cancel}
-            danger={danger}
-            disabled={disabled}
-            outline={outline}
-            action={action}>
-            {children}
-          </ButtonTypeText>
+          <ButtonContainerFlex hasIcon={!!icon}>
+            <ButtonTextContainer>
+              <ButtonTypeText
+                secondary={secondary}
+                cancel={cancel}
+                danger={danger}
+                disabled={disabled}
+                outline={outline}
+                action={action}>
+                {children}
+              </ButtonTypeText>
+            </ButtonTextContainer>
+            {icon && <ButtonIconContainer>{icon}</ButtonIconContainer>}
+          </ButtonContainerFlex>
         </Animated.View>
       </ButtonTypeContainer>
 

@@ -1,36 +1,50 @@
-import {SettingsComponent} from '../SettingsRoot';
+import {SettingsComponent} from '../../SettingsRoot';
 import {
   Setting,
   SettingTitle,
   SheetContainer,
-} from '../../../../components/styled/Containers';
-import Button from '../../../../components/button/Button';
-import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
+} from '@components/styled/Containers';
+import Button from '@components/button/Button';
+import SheetModal from '@components/modal/base/sheet/SheetModal';
 import {Platform, NativeModules} from 'react-native';
 import React, {useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
-import {useThemeType} from '../../../../utils/hooks/useThemeType';
-import {RootState} from '../../../../store';
-import {AppActions} from '../../../../store/app';
+import {useThemeType} from '../../../../../utils/hooks/useThemeType';
+import {RootState} from '../../../../../store';
+import {AppActions} from '../../../../../store/app';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
-import {BiometricErrorNotification} from '../../../../constants/BiometricError';
-import {LOCK_AUTHORIZED_TIME} from '../../../../constants/Lock';
-import {showBottomNotificationModal} from '../../../../store/app/app.actions';
-import {checkFaceIdPermissions} from '../../../../store/app/app.effects';
-import FingerprintImg from '../../../../../assets/img/fingerprint.svg';
-import FingerprintDarkModeImg from '../../../../../assets/img/fingerprint-darkmode.svg';
-import FaceImg from '../../../../../assets/img/face.svg';
-import FaceDarkModeImg from '../../../../../assets/img/face-darkmode.svg';
-import PinImg from '../../../../../assets/img/pin.svg';
-import PinDarkModeImg from '../../../../../assets/img/pin-darkmode.svg';
+import {BiometricErrorNotification} from '../../../../../constants/BiometricError';
+import {LOCK_AUTHORIZED_TIME} from '../../../../../constants/Lock';
+import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
+import {checkFaceIdPermissions} from '../../../../../store/app/app.effects';
+import FingerprintImg from '../../../../../../assets/img/fingerprint.svg';
+import FingerprintDarkModeImg from '../../../../../../assets/img/fingerprint-darkmode.svg';
+import FaceImg from '../../../../../../assets/img/face.svg';
+import FaceDarkModeImg from '../../../../../../assets/img/face-darkmode.svg';
+import PinImg from '../../../../../../assets/img/pin.svg';
+import PinDarkModeImg from '../../../../../../assets/img/pin-darkmode.svg';
 import styled from 'styled-components/native';
-import {Midnight, SlateDark, White} from '../../../../styles/colors';
-import {H4, Paragraph} from '../../../../components/styled/Text';
+import {Midnight, SlateDark, White} from '../../../../../styles/colors';
+import {H4, Paragraph} from '@components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {sleep} from '../../../../utils/helper-methods';
-import {LogActions} from '../../../../store/log';
-import {useLogger} from '../../../../utils/hooks';
+import {sleep} from '../../../../../utils/helper-methods';
+import {useLogger} from '../../../../../utils/hooks';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {usePasskeySupport} from '../../../../../utils/usePasskeySupport';
+import AngleRight from '../../../../../../assets/img/angle-right.svg';
+import {User} from '../../../../../store/bitpay-id/bitpay-id.models';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {
+  SecurityGroupParamList,
+  SecurityScreens,
+} from '../../../settings/security/SecurityGroup';
+import {BitpayIdScreens} from '../../../../bitpay-id/BitpayIdGroup';
+import {useNavigation} from '@react-navigation/native';
+
+export type SecurityHomeProps = NativeStackScreenProps<
+  SecurityGroupParamList,
+  SecurityScreens.HOME
+>;
 
 const FingerprintSvg = {
   light: <FingerprintImg />,
@@ -77,13 +91,17 @@ const ImgRow = styled.View`
   justify-content: space-evenly;
   margin-bottom: 20px;
 `;
-
-const Security = () => {
+const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
   const {t} = useTranslation();
+  const navigator = useNavigation();
   const dispatch = useDispatch();
   const themeType = useThemeType();
   const logger = useLogger();
   const [modalVisible, setModalVisible] = useState(false);
+  const passkeySupported = usePasskeySupport();
+  const user = useSelector<RootState, User | null>(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const pinLockActive = useSelector(({APP}: RootState) => APP.pinLockActive);
   const biometricLockActive = useSelector(
@@ -190,9 +208,30 @@ const Security = () => {
         break;
     }
   };
+
+  const onPressPasskeys = () => {
+    navigation.navigate('Passkeys');
+  };
+
+  const onPressTwoFactorAuthentication = () => {
+    navigator.navigate(BitpayIdScreens.ENABLE_TWO_FACTOR);
+  };
+
   return (
     <>
       <SettingsComponent>
+        {user && user.verified && (
+          <Setting onPress={onPressTwoFactorAuthentication}>
+            <SettingTitle>{t('2-Factor Authentication')}</SettingTitle>
+            <AngleRight />
+          </Setting>
+        )}
+        {passkeySupported && user && user.verified && (
+          <Setting onPress={onPressPasskeys}>
+            <SettingTitle>{t('Passkeys')}</SettingTitle>
+            <AngleRight />
+          </Setting>
+        )}
         <Setting onPress={onPressLockButton}>
           <SettingTitle>{t('Lock App')}</SettingTitle>
           <Button onPress={onPressLockButton} buttonType={'pill'}>
@@ -239,4 +278,4 @@ const Security = () => {
   );
 };
 
-export default Security;
+export default SecurityHome;
