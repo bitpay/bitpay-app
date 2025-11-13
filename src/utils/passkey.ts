@@ -115,7 +115,7 @@ export async function signInWithPasskey(
   network: Network,
   token: string,
   email?: string,
-): Promise<boolean> {
+): Promise<{passkeyAuthStatus: boolean; challenge: string; credential: PasskeyGetResult}> {
   const authChallenge = await post(
     BASE_BITPAY_URLS[network] + PASSKEY_API_AUTH_CHALLENGE,
     email ? {email} : {},
@@ -129,7 +129,11 @@ export async function signInWithPasskey(
     {credential: result},
     token,
   );
-  return !!success;
+  return {
+    passkeyAuthStatus: !!success,
+    challenge: authChallenge,
+    credential: result
+  };
 }
 
 export async function removePasskey(

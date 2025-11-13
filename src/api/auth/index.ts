@@ -2,7 +2,7 @@ import axios from 'axios';
 import DeviceInfo from 'react-native-device-info';
 import {Network} from '../../constants';
 import {BASE_BITPAY_URLS} from '../../constants/config';
-import {Session} from '../../store/bitpay-id/bitpay-id.models';
+import {PasskeyPairingData, Session} from '../../store/bitpay-id/bitpay-id.models';
 import {isAxiosError} from '../../utils/axios';
 import {hashPassword} from '../../utils/password';
 import BitPayApi from '../bitpay';
@@ -198,10 +198,10 @@ export const AuthApi = {
    * @param code Two-factor authentication code.
    * @returns An API token used to make session-less requests on behalf of the user.
    */
-  async pair(secret: string, code?: string): Promise<string> {
+  async pair(secret: string, code?: string, passkeyPairingData?: PasskeyPairingData): Promise<string> {
     const api = BitPayApi.getInstance();
     const deviceName = DeviceInfo.getDeviceNameSync() || 'unknown device';
-    const token = await api.createToken(secret, deviceName, code);
+    const token = await api.createToken(secret, deviceName, code, passkeyPairingData);
 
     return token;
   },

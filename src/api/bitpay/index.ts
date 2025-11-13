@@ -4,6 +4,7 @@ import {Network} from '../../constants';
 import {BASE_BITPAY_URLS} from '../../constants/config';
 import {AppIdentity} from '../../store/app/app.models';
 import {BpApiResponse} from './bitpay.types';
+import {PasskeyPairingData} from '@/store/bitpay-id/bitpay-id.models';
 
 interface BitPayIdApiConfig {
   overrideHost?: string;
@@ -132,13 +133,15 @@ export class BitPayIdApi {
     return this;
   }
 
-  async createToken(secret: string, deviceName: string, code?: string) {
+  async createToken(secret: string, deviceName: string, code?: string, passkeyPairingData?: PasskeyPairingData) {
     let params: any = {
       secret,
       version: 2,
       deviceName,
       code,
+      passkeyPairingData
     };
+
     const unsignedData = JSON.stringify(params);
     const signature = BitAuth.sign(unsignedData, this.identity.priv);
     const verified = BitAuth.verifySignature(
