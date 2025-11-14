@@ -30,11 +30,7 @@ import {
   WalletSelector,
 } from '../../wallet/screens/send/confirm/Shared';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {AppActions} from '../../../store/app';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
@@ -53,6 +49,7 @@ import {
 import {IsVMChain} from '../../../store/wallet/utils/currency';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
 import FooterButtonContainer from '../../../components/footer/FooterButtonContainer';
+import {useOngoingProcess} from '../../../contexts';
 
 const ReceiveSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -171,6 +168,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
   const theme = useTheme();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const network = useAppSelector(({APP}) => APP.network);
@@ -329,11 +327,11 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   };
 
   const generateAddress = async (wallet: Wallet) => {
-    dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
+    showOngoingProcess('GENERATING_ADDRESS');
     const address = await dispatch(
       createWalletAddress({wallet, newAddress: true}),
     );
-    await dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     setActiveAddresses({
       ...activeAddresses,
       [getReceivingAddressKey(wallet.currencyAbbreviation, wallet.chain)]: {
@@ -364,7 +362,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   };
 
   const saveAddresses = async (twoFactorCode: string) => {
-    dispatch(startOnGoingProcessModal('SAVING_ADDRESSES'));
+    showOngoingProcess('SAVING_ADDRESSES');
     const newReceivingAddresses = Object.values(activeAddresses);
     await dispatch(
       BitPayIdEffects.startUpdateReceivingAddresses(
@@ -372,7 +370,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
         twoFactorCode,
       ),
     );
-    await dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     return !receivingAddresses.length && newReceivingAddresses.length
       ? navigator.navigate(BitpayIdScreens.RECEIVING_ENABLED)
       : navigation.pop();
@@ -571,7 +569,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
               return;
             }
             await generateAddress(wallet).catch(async error => {
-              await dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
               await sleep(400);
               showError({
                 error,
@@ -611,7 +609,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
             navigator.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
               onSubmit: async (twoFactorCode: string) => {
                 saveAddresses(twoFactorCode).catch(async error => {
-                  dispatch(dismissOnGoingProcessModal());
+                  hideOngoingProcess();
                   await sleep(300);
                   showError({
                     error,

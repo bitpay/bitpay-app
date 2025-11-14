@@ -32,7 +32,7 @@ export enum ContactsScreens {
   ADD = 'ContactsAdd',
 }
 
-const ContactsGroup: React.FC<ContactsProps> = ({Contacts, theme}) => {
+const ContactsGroup = ({Contacts, theme}: ContactsProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

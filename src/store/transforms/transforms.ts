@@ -21,6 +21,7 @@ import {
   encryptWalletStore,
   decryptWalletStore,
 } from './encrypt';
+import {logManager} from '../../managers/LogManager';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -55,7 +56,7 @@ export const bootstrapWallets = (wallets: Wallet[]) => {
           JSON.stringify(wallet.credentials),
         );
         const successLog = `bindWalletClient - ${wallet.id}`;
-        initLogs.add(LogActions.info(successLog));
+        logManager.info(successLog);
         // build wallet obj with bwc client credentials
         return merge(
           walletClient,
@@ -89,7 +90,7 @@ export const bootstrapKey = (key: Key, id: string) => {
         }),
       });
       const successLog = `bindKey - ${id}`;
-      initLogs.add(LogActions.info(successLog));
+      logManager.info(successLog);
       return _key;
     } catch (err: unknown) {
       const errorLog = `Failed to bindWalletKeys - ${id} - ${getErrorString(

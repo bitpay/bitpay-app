@@ -71,14 +71,6 @@ export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
   payload,
 });
 
-export const successGetTokenOptions = (payload: {
-  tokenOptionsByAddress: {[key in string]: Token};
-  tokenDataByAddress: {[key in string]: CurrencyOpts};
-}): WalletActionType => ({
-  type: WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS,
-  payload,
-});
-
 export const successGetCustomTokenOptions = (payload: {
   customTokenOptionsByAddress: {[key in string]: Token};
   customTokenDataByAddress: {[key in string]: CurrencyOpts};
@@ -101,14 +93,6 @@ export const successUpdateWalletStatus = (payload: {
   status: WalletStatus;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_UPDATE_WALLET_STATUS,
-  payload,
-});
-
-export const failedUpdateWalletStatus = (payload: {
-  keyId: string;
-  walletId: string;
-}): WalletActionType => ({
-  type: WalletActionTypes.FAILED_UPDATE_WALLET_STATUS,
   payload,
 });
 
@@ -162,15 +146,6 @@ export const updateAccountName = (payload: {
   accountAddress: string;
 }): WalletActionType => ({
   type: WalletActionTypes.UPDATE_ACCOUNT_NAME,
-  payload,
-});
-
-export const setWalletRefreshing = (payload: {
-  keyId: string;
-  walletId: string;
-  isRefreshing: boolean;
-}): WalletActionType => ({
-  type: WalletActionTypes.SET_WALLET_REFRESHING,
   payload,
 });
 

@@ -23,16 +23,14 @@ import {IntroScreens} from '../../intro/IntroGroup';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {getPasskeyCredentials, registerPasskey} from '../../../utils/passkey';
 import {Session} from '../../../store/bitpay-id/bitpay-id.models';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   setPasskeyCredentials,
   setPasskeyStatus,
 } from '../../../store/bitpay-id/bitpay-id.actions';
 import {LogActions} from '../../../store/log';
+import {useOngoingProcess} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 const AccountSecurityScreenContainer = styled.SafeAreaView`
   flex: 1;
@@ -130,6 +128,7 @@ export const SecureAccountScreen = () => {
   const dispatch = useAppDispatch();
   const {dark} = useTheme();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const network = useAppSelector(({APP}) => APP.network);
   const session: Session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
@@ -178,18 +177,16 @@ export const SecureAccountScreen = () => {
     if (!user) {
       return;
     }
-    await dispatch(startOnGoingProcessModal('CREATING_PASSKEY'));
+    showOngoingProcess('CREATING_PASSKEY');
     try {
       const registeredPasskey = await registerPasskey(
         user.email,
         network,
         session.csrfToken,
       );
-      dispatch(
-        LogActions.info(
-          '[Onboarding] Passkey created: ',
-          JSON.stringify(registeredPasskey),
-        ),
+      logManager.info(
+        '[Onboarding] Passkey created: ',
+        JSON.stringify(registeredPasskey),
       );
       dispatch(setPasskeyStatus(registeredPasskey));
       const {credentials} = await getPasskeyCredentials(
@@ -198,7 +195,7 @@ export const SecureAccountScreen = () => {
         session.csrfToken,
       );
       dispatch(setPasskeyCredentials(credentials));
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       if (registeredPasskey) {
         dispatch(
           showBottomNotificationModal({
@@ -235,9 +232,9 @@ export const SecureAccountScreen = () => {
         );
       }
     } catch (e: any) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       const eMsg = e.message || JSON.stringify(e);
-      dispatch(LogActions.error('[Onboarding] Error creating passkey: ', eMsg));
+      logManager.error('[Onboarding] Error creating passkey: ', eMsg);
       if (e.error !== 'UserCancelled' && !eMsg.includes('error 1001')) {
         dispatch(
           showBottomNotificationModal({

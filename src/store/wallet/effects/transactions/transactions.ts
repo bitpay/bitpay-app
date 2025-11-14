@@ -36,13 +36,14 @@ import {
 } from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {t} from 'i18next';
-import {LogActions} from '../../../log';
 import {partition} from 'lodash';
 import {
   BitpaySupportedCoins,
   SUPPORTED_VM_TOKENS,
 } from '../../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
+import {tokenManager} from '../../../../managers/TokenManager';
+import {logManager} from '../../../../managers/LogManager';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -145,10 +146,8 @@ export const ProcessPendingTxps =
         ret.push(tx);
       } catch (e) {
         const error = e instanceof Error ? e.message : JSON.stringify(e);
-        dispatch(
-          LogActions.error(
-            `The transaction proposal could not be processed correctly ${tx.id}: ${error}`,
-          ),
+        logManager.error(
+          `The transaction proposal could not be processed correctly ${tx.id}: ${error}`,
         );
       }
     });
@@ -169,8 +168,10 @@ const ProcessTx =
       return tx;
     }
 
-    const {tokenOptionsByAddress, customTokenOptionsByAddress} =
-      getState().WALLET;
+    const {customTokenOptionsByAddress} = getState().WALLET;
+
+    const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
+
     const tokensOptsByAddress = {
       ...BitpaySupportedTokenOptsByAddress,
       ...tokenOptionsByAddress,
@@ -405,10 +406,8 @@ const ProcessNewTxs =
         }
       } catch (e) {
         const error = e instanceof Error ? e.message : JSON.stringify(e);
-        dispatch(
-          LogActions.error(
-            `The transaction could not be processed correctly ${tx.txid}: ${error}`,
-          ),
+        logManager.error(
+          `The transaction could not be processed correctly ${tx.txid}: ${error}`,
         );
         continue;
       }
@@ -443,10 +442,8 @@ const GetNewTransactions =
           );
           newTxs = newTxs.concat(_newTxs);
 
-          dispatch(
-            LogActions.info(
-              `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
-            ),
+          logManager.info(
+            `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
           );
 
           return resolve({
@@ -557,7 +554,7 @@ const getMonthName = (time: MomentInput): String => {
   } catch (e) {
     // Fallback to default locale if the language is not supported
     const error = e instanceof Error ? e.message : JSON.stringify(e);
-    LogActions.warn('Error formatting date:', error);
+    logManager.warn('Error formatting date:', error);
     month = moment(time).format('MMMM');
   }
   return month;
@@ -692,10 +689,8 @@ export const GetAccountTransactionHistory =
           accountTransactionsHistory[wallet.id] = transactionHistory;
           return transactionHistory.transactions;
         } catch (error) {
-          dispatch(
-            LogActions.error(
-              `!! Could not update transaction history for ${wallet.id}: ${error}`,
-            ),
+          logManager.error(
+            `!! Could not update transaction history for ${wallet.id}: ${error}`,
           );
           return [];
         }
@@ -889,11 +884,9 @@ export const GetTransactionHistory =
         const errString =
           err instanceof Error ? err.message : JSON.stringify(err);
 
-        dispatch(
-          LogActions.error(
-            `!! Could not update transaction history for
+        logManager.error(
+          `!! Could not update transaction history for
           ${wallet.id}: ${errString}`,
-          ),
         );
         return reject(err);
       }
@@ -1284,8 +1277,10 @@ export const buildTransactionDetails =
         } = transaction;
 
         const {
-          WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress},
+          WALLET: {customTokenOptionsByAddress},
         } = getState();
+
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
         const tokensOptsByAddress = {
           ...BitpaySupportedTokenOptsByAddress,
@@ -1359,7 +1354,7 @@ export const buildTransactionDetails =
               minFeeErr instanceof Error
                 ? minFeeErr.message
                 : JSON.stringify(minFeeErr);
-            dispatch(LogActions.error('[GeMinFee] ', e));
+            logManager.error('[GeMinFee] ', e);
           }
         }
 

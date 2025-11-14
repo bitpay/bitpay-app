@@ -22,7 +22,7 @@ export enum ZenLedgerScreens {
   ZENLEDGER_IMPORT = 'ZenLedgerImport',
 }
 
-const ZenLedgerGroup: React.FC<ZenLedgerProps> = ({ZenLedger, theme}) => {
+const ZenLedgerGroup = ({ZenLedger, theme}: ZenLedgerProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

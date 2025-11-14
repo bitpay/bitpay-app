@@ -17,11 +17,7 @@ import {
 import {Key, Token, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   addWallet,
   getDecryptPassword,
@@ -87,6 +83,8 @@ import {RootState} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import cloneDeep from 'lodash.clonedeep';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 export type AddCustomTokenParamList = {
   key: Key;
@@ -193,12 +191,14 @@ const AddCustomToken = ({
 >) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
   const {key: _key, selectedAccountAddress, selectedChain} = route.params;
 
   const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ..._tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   }) as {[key in string]: Token};
@@ -293,7 +293,7 @@ const AddCustomToken = ({
             isErc20Token: true,
           }),
         );
-        dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        showOngoingProcess('ADDING_WALLET');
 
         const wallet = await dispatch(
           addWallet({
@@ -325,7 +325,7 @@ const AddCustomToken = ({
           const walletAddress = (await dispatch<any>(
             createWalletAddress({wallet, newAddress: true}),
           )) as string;
-          dispatch(LogActions.info(`new address generated: ${walletAddress}`));
+          logManager.info(`new address generated: ${walletAddress}`);
         }
 
         try {
@@ -338,13 +338,13 @@ const AddCustomToken = ({
           // ignore error
         }
 
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         resolve(wallet);
       } catch (err: any) {
         if (err.message === 'invalid password') {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
         } else {
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           await sleep(500);
           showErrorModal(BWCErrorMessage(err));
           reject(err);
@@ -424,7 +424,7 @@ const AddCustomToken = ({
         );
       }
     } catch (err: any) {
-      dispatch(LogActions.error(JSON.stringify(err)));
+      logManager.error(JSON.stringify(err));
     }
   });
 
@@ -507,10 +507,8 @@ const AddCustomToken = ({
       let tokenContractInfo =
         tokenOptionsByAddress?.[getCurrencyAbbreviation(tokenAddress, chain)];
       if (!tokenContractInfo) {
-        dispatch(
-          LogActions.debug(
-            'contract info not present in token options - consulting bws',
-          ),
+        logManager.debug(
+          'contract info not present in token options - consulting bws',
         );
         const fullWalletObj = key.wallets.find(
           ({id}) => id === associatedWallet?.id,

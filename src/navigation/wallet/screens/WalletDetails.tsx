@@ -360,10 +360,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   }, [navigation, uiFormattedWallet.walletName, key.keyName]);
 
-  useEffect(() => {
-    setRefreshing(!!fullWalletObj.isRefreshing);
-  }, [fullWalletObj.isRefreshing]);
-
   const ShareAddress = async () => {
     try {
       await sleep(1000);

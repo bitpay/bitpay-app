@@ -1,5 +1,4 @@
 import {Effect} from '..';
-import {LogActions} from '../log';
 import {
   accessTokenPending,
   accessTokenSuccess,
@@ -17,6 +16,7 @@ import {
   createPortfoliosPending,
   createPortfoliosSuccess,
 } from '../../store/zenledger/zenledger.actions';
+import {logManager} from '../../managers/LogManager';
 
 const checkCredentials = () => {
   return (
@@ -35,24 +35,24 @@ const tokenExpired = (token: ZenledgerTokenProps): boolean => {
 
 export const zenledgerInitialize =
   (): Effect<Promise<any>> => async dispatch => {
-    dispatch(LogActions.info('zenledgerInitialize: starting...'));
+    logManager.info('zenledgerInitialize: starting...');
     if (!checkCredentials()) {
-      dispatch(LogActions.error('zenledgerInitialize: credentials not found'));
+      logManager.error('zenledgerInitialize: credentials not found');
       return;
     }
-    dispatch(LogActions.info('zenledgerInitialize: success'));
+    logManager.info('zenledgerInitialize: success');
   };
 
 export const getZenLedgerToken = (): Effect<Promise<any>> => async dispatch => {
   try {
-    dispatch(LogActions.info('zenledgerToken: creating new token...'));
+    logManager.info('zenledgerToken: creating new token...');
     dispatch(accessTokenPending());
     const newToken = await ZenledgerAPI.getAccessToken();
     dispatch(accessTokenSuccess(newToken));
-    dispatch(LogActions.info('zenledgerToken: token created successfully'));
+    logManager.info('zenledgerToken: token created successfully');
   } catch (e: any) {
     dispatch(accessTokenFailed(e));
-    dispatch(LogActions.error('zenledgerToken Error: ', e));
+    logManager.error('zenledgerToken Error: ', e);
     throw e;
   }
 };
@@ -63,16 +63,14 @@ export const zenledgerCreatePortfolio =
   ): Effect<Promise<ZenledgerPortfolioResponseProps>> =>
   async (dispatch, getState) => {
     const {ZENLEDGER} = getState();
-    dispatch(
-      LogActions.info('zenledgerCreatePortfolio: creating portfolios...'),
-    );
+    logManager.info('zenledgerCreatePortfolio: creating portfolios...');
     if (!ZENLEDGER.token) {
-      dispatch(LogActions.info('zenledgerCreatePortolio: token not found'));
+      logManager.info('zenledgerCreatePortolio: token not found');
       await dispatch(getZenLedgerToken());
       return dispatch(zenledgerCreatePortfolio(portfolios));
     }
     if (tokenExpired(ZENLEDGER.token)) {
-      dispatch(LogActions.info('zenledgerCreatePortolio: token expired'));
+      logManager.info('zenledgerCreatePortolio: token expired');
       await dispatch(getZenLedgerToken());
       return dispatch(zenledgerCreatePortfolio(portfolios));
     }
@@ -83,11 +81,11 @@ export const zenledgerCreatePortfolio =
         portfolios,
       );
       dispatch(createPortfoliosSuccess({wallets: portfolios, data: resp}));
-      dispatch(LogActions.info('zenledgerCreatePortfolio: success'));
+      logManager.info('zenledgerCreatePortfolio: success');
       return resp;
     } catch (e: any) {
       dispatch(createPortfoliosFailed(e));
-      dispatch(LogActions.error('zenledgerCreatePortfolio Error: ', e));
+      logManager.error('zenledgerCreatePortfolio Error: ', e);
       return e;
     }
   };

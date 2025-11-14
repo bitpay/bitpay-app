@@ -12,10 +12,10 @@ import {
 } from '../../../../../components/styled/Containers';
 import Button from '../../../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
-import {LogActions} from '../../../../../store/log';
 import {Black, Feather, LightBlack, White} from '../../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {storage} from '../../../../../store';
+import {logManager} from '../../../../../managers/LogManager';
 
 const ScrollContainer = styled.ScrollView``;
 
@@ -95,7 +95,7 @@ const StorageUsage: React.FC = () => {
         setAppSize(formatBytes(_appSize));
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setAppSize] Error ', errStr));
+        logManager.error('[setAppSize] Error ', errStr);
       }
     };
     const _setShopCatalogStorage = async () => {
@@ -115,7 +115,7 @@ const StorageUsage: React.FC = () => {
         }
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setShopCatalogStorage] Error ', errStr));
+        logManager.error('[setShopCatalogStorage] Error ', errStr);
       }
     };
     const _setBackupStorage = async () => {
@@ -140,7 +140,7 @@ const StorageUsage: React.FC = () => {
         setBackupStorage(formatBytes(bytes));
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setBackupStorage] Error ', errStr));
+        logManager.error('[setBackupStorage] Error ', errStr);
       }
     };
     const _setDeviceStorage = async () => {
@@ -153,7 +153,7 @@ const StorageUsage: React.FC = () => {
         }
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setDeviceStorage] Error ', errStr));
+        logManager.error('[setDeviceStorage] Error ', errStr);
       }
     };
     const _setDataCounterStorage = async () => {
@@ -171,7 +171,7 @@ const StorageUsage: React.FC = () => {
         setCustomTokenCount(_customTokenCount);
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setDataCounterStorage] Error ', errStr));
+        logManager.error('[setDataCounterStorage] Error ', errStr);
       }
     };
     const _setWalletStorage = async () => {
@@ -184,7 +184,7 @@ const StorageUsage: React.FC = () => {
         setWalletStorage(formatBytes(_walletStorageSize));
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setWalletStorage] Error ', errStr));
+        logManager.error('[setWalletStorage] Error ', errStr);
       }
     };
     const _setGiftCardStorage = async () => {
@@ -196,7 +196,7 @@ const StorageUsage: React.FC = () => {
         setGiftCardStorage(formatBytes(_giftCardStorageSize));
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setGiftCardStorage] Error ', errStr));
+        logManager.error('[setGiftCardStorage] Error ', errStr);
       }
     };
     const _setCustomTokensStorage = async () => {
@@ -208,7 +208,7 @@ const StorageUsage: React.FC = () => {
         setCustomTokenStorage(formatBytes(_customTokenStorageSize));
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setCustomTokensStorage] Error ', errStr));
+        logManager.error('[setCustomTokensStorage] Error ', errStr);
       }
     };
     const _setContactStorage = async () => {
@@ -220,7 +220,7 @@ const StorageUsage: React.FC = () => {
         setContactStorage(formatBytes(_contactStorageSize));
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setContactStorage] Error ', errStr));
+        logManager.error('[setContactStorage] Error ', errStr);
       }
     };
     const _setRatesStorage = async () => {
@@ -232,7 +232,7 @@ const StorageUsage: React.FC = () => {
         setRatesStorage(formatBytes(_ratesStorageSize));
       } catch (err) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[setRatesStorage] Error ', errStr));
+        logManager.error('[setRatesStorage] Error ', errStr);
       }
     };
     _setAppSize();

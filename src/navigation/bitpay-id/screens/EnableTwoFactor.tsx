@@ -15,9 +15,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {Controller, useForm} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {AppActions} from '../../../store/app';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
@@ -26,6 +24,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {useTranslation} from 'react-i18next';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
+import {useOngoingProcess} from '../../../contexts';
 
 const EnableTwoFactorContainer = styled.SafeAreaView`
   flex: 1;
@@ -118,6 +117,7 @@ const EnableTwoFactor = ({navigation}: EnableTwoFactorProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const network = useAppSelector(({APP}) => APP.network);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const securitySettings = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.securitySettings[network],
   );
@@ -164,9 +164,9 @@ const EnableTwoFactor = ({navigation}: EnableTwoFactorProps) => {
   };
 
   const toggleTwoFactor = async (twoFactorCode: string) => {
-    dispatch(startOnGoingProcessModal('UPDATING_ACCOUNT'));
+    showOngoingProcess('UPDATING_ACCOUNT');
     await requestTwoFactorChange(twoFactorCode);
-    await dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     if (otpEnabled) {
       navigation.pop(2);
       return;
@@ -184,7 +184,7 @@ const EnableTwoFactor = ({navigation}: EnableTwoFactorProps) => {
           ? t('Could not disable two-factor authentication')
           : t('Could not enable two-factor authentication'),
       });
-      await dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       throw error;
     });
   };

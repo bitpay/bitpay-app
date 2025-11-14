@@ -27,7 +27,6 @@ import {AppActions} from '.';
 import BitPayApi from '../../api/bitpay';
 import GraphQlApi from '../../api/graphql';
 import UserApi from '../../api/user';
-import {OnGoingProcessMessages} from '../../components/modal/ongoing-process/OngoingProcess';
 import {Network} from '../../constants';
 import {CardScreens} from '../../navigation/card/CardStack';
 import {CardActivationScreens} from '../../navigation/card-activation/CardActivationGroup';
@@ -142,6 +141,7 @@ import {AppDispatch} from '../../utils/hooks';
 import {isNotMobile} from '../../components/styled/Containers';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsGroup';
 import {NotificationsSettingsScreens} from '../../navigation/tabs/settings/notifications/NotificationsGroup';
+import {logManager} from '../../managers/LogManager';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -153,20 +153,18 @@ const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
 
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
-    dispatch(
-      LogActions.info(
-        `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
-      ),
+    logManager.info(
+      `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
     );
-    dispatch(LogActions.info(`Current App Version: ${APP_VERSION}`));
+    logManager.info(`Current App Version: ${APP_VERSION}`);
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
     const {APP, CONTACT, WALLET} = getState();
     const {network, colorScheme} = APP;
 
-    dispatch(LogActions.debug(`Network: ${network}`));
-    dispatch(LogActions.debug(`Theme: ${colorScheme || 'system'}`));
+    logManager.debug(`Network: ${network}`);
+    logManager.debug(`Theme: ${colorScheme || 'system'}`);
 
     const {migrationComplete, EDDSAKeyMigrationCompleteV2} = APP;
     const {customTokensMigrationComplete, polygonMigrationComplete} = WALLET;
@@ -185,51 +183,47 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     if (!contactMigrationComplete) {
       await dispatch(startContactMigration());
       dispatch(setContactMigrationComplete());
-      dispatch(LogActions.info('success [setContactMigrationComplete]'));
+      logManager.info('success [setContactMigrationComplete]');
     }
     if (!contactTokenAddressMigrationComplete) {
       await dispatch(startContactTokenAddressMigration());
       dispatch(setContactTokenAddressMigrationComplete());
-      dispatch(
-        LogActions.info('success [setContactTokenAddressMigrationComplete]'),
-      );
+      logManager.info('success [setContactTokenAddressMigrationComplete]');
     }
     if (!contactBridgeUsdcMigrationComplete) {
       await dispatch(startContactBridgeUsdcMigration());
       dispatch(setContactBridgeUsdcMigrationComplete());
-      dispatch(
-        LogActions.info('success [setContactBridgeUsdcMigrationComplete]'),
-      );
+      logManager.info('success [setContactBridgeUsdcMigrationComplete]');
     }
     if (!customTokensMigrationComplete) {
       await dispatch(startCustomTokensMigration());
       dispatch(setCustomTokensMigrationComplete());
-      dispatch(LogActions.info('success [setCustomTokensMigrationComplete]'));
+      logManager.info('success [setCustomTokensMigrationComplete]');
     }
 
     if (!contactMigrationCompleteV2) {
       await dispatch(startContactV2Migration());
       dispatch(setContactMigrationCompleteV2());
-      dispatch(LogActions.info('success [setContactMigrationCompleteV2]'));
+      logManager.info('success [setContactMigrationCompleteV2]');
     }
 
     if (!migrationComplete) {
       await dispatch(startMigration());
       dispatch(setMigrationComplete());
-      dispatch(LogActions.info('success [setMigrationComplete]'));
+      logManager.info('success [setMigrationComplete]');
     }
 
     if (!EDDSAKeyMigrationCompleteV2) {
       await dispatch(startAddEDDSAKey());
       dispatch(setEDDSAKeyMigrationComplete());
-      dispatch(LogActions.info('success [setEDDSAKeyMigrationComplete]'));
+      logManager.info('success [setEDDSAKeyMigrationComplete]');
     }
 
     if (!polygonMigrationComplete) {
       await dispatch(startPolMigration());
       await dispatch(startContactPolMigration());
       dispatch(setPolygonMigrationComplete());
-      dispatch(LogActions.info('success [setPolygonMigrationComplete]'));
+      logManager.info('success [setPolygonMigrationComplete]');
     }
 
     dispatch(migrateShopCatalog());
@@ -254,7 +248,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
-    dispatch(LogActions.info('Initialized app successfully.'));
+    logManager.info('Initialized app successfully.');
     dispatch(AppActions.appInitCompleted());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
   } catch (err: unknown) {
@@ -270,7 +264,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
       // Avoid lock the app in Debug view
       dispatch(AppActions.failedAppInit());
     }
-    dispatch(LogActions.error('Failed to initialize app: ' + errorStr));
+    logManager.error('Failed to initialize app: ' + errorStr);
     await sleep(500);
     dispatch(showBlur(false));
     RNBootSplash.hide();
@@ -280,7 +274,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
   const {APP} = getState();
   const {appFirstOpenData, appInstalled, onboardingCompleted} = APP;
-  dispatch(LogActions.info('[initAnalytics] Starting...'));
+  logManager.info('[initAnalytics] Starting...');
 
   if (onboardingCompleted) {
     QuickActions.clearShortcutItems();
@@ -293,7 +287,7 @@ const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
   if (!eid) {
     eid = dispatch(createBrazeEid());
   }
-  dispatch(LogActions.debug('[initAnalytics] Braze EID: ', eid));
+  logManager.debug('[initAnalytics] Braze EID: ', eid);
   await dispatch(Analytics.identify(eid));
 
   if (!appInstalled) {
@@ -313,7 +307,7 @@ const initAnalytics = (): Effect<void> => async (dispatch, getState) => {
     }
   }
   dispatch(initializeBrazeContentCards());
-  dispatch(LogActions.info('[initAnalytics] Finished successfully.'));
+  logManager.info('[initAnalytics] Finished successfully.');
 };
 
 const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
@@ -327,9 +321,7 @@ const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
   }
 
   try {
-    dispatch(
-      LogActions.info('App is paired with BitPayID, refreshing user data...'),
-    );
+    logManager.info('App is paired with BitPayID, refreshing user data...');
 
     const {errors, data} = await UserApi.fetchInitialUserData(token);
 
@@ -339,31 +331,24 @@ const fetchInitialUserData = (): Effect<void> => async (dispatch, getState) => {
         .map(e => `${e.path.join('.')}: ${e.message}`)
         .join(',\n');
 
-      dispatch(
-        LogActions.error(
-          'One or more errors occurred while fetching initial user data:\n' +
-            msg,
-        ),
+      logManager.error(
+        'One or more errors occurred while fetching initial user data:\n' + msg,
       );
     }
     dispatch(BitPayIdEffects.startBitPayIdStoreInit(data.user));
     dispatch(CardEffects.startCardStoreInit(data.user));
   } catch (err: any) {
     if (isAxiosError(err)) {
-      dispatch(LogActions.error(`${err.name}: ${err.message}`));
-      dispatch(LogActions.error(err.config.url));
-      dispatch(LogActions.error(JSON.stringify(err.config.data || {})));
+      logManager.error(`${err.name}: ${err.message}`);
+      logManager.error(err.config.url);
+      logManager.error(JSON.stringify(err.config.data || {}));
     } else if (err instanceof Error) {
-      dispatch(LogActions.error(`${err.name}: ${err.message}`));
+      logManager.error(`${err.name}: ${err.message}`);
     } else {
-      dispatch(LogActions.error(JSON.stringify(err)));
+      logManager.error(JSON.stringify(err));
     }
 
-    dispatch(
-      LogActions.info(
-        'Failed to refresh user data. Continuing initialization.',
-      ),
-    );
+    logManager.info('Failed to refresh user data. Continuing initialization.');
   }
 };
 
@@ -414,26 +399,24 @@ const initializeAppIdentity =
     const {APP} = getState();
     let identity = APP.identity[APP.network];
 
-    dispatch(LogActions.info('Initializing App Identity...'));
+    logManager.info('Initializing App Identity...');
 
     if (!identity || !Object.keys(identity).length || !identity.priv) {
       try {
-        dispatch(LogActions.info('Generating new App Identity...'));
+        logManager.info('Generating new App Identity...');
 
         identity = BitAuth.generateSin();
 
         dispatch(AppActions.successGenerateAppIdentity(APP.network, identity));
       } catch (error) {
-        dispatch(
-          LogActions.error(
-            'Error generating App Identity: ' + JSON.stringify(error),
-          ),
+        logManager.error(
+          'Error generating App Identity: ' + JSON.stringify(error),
         );
         dispatch(AppActions.failedGenerateAppIdentity());
       }
     }
 
-    dispatch(LogActions.info('Initialized App Identity successfully.'));
+    logManager.info('Initialized App Identity successfully.');
 
     return identity;
   };
@@ -460,7 +443,7 @@ const initializeApi =
  */
 const initializeBrazeContentCards = (): Effect => dispatch => {
   try {
-    dispatch(LogActions.info('[Braze Content Cards] Initializing...'));
+    logManager.info('[Braze Content Cards] Initializing...');
 
     // tiny cooldown to avoid bursty repeats
     let __lastHandledAt = 0;
@@ -477,39 +460,29 @@ const initializeBrazeContentCards = (): Effect => dispatch => {
         __lastHandledAt = now;
 
         if (Analytics.isMergingUser()) {
-          dispatch(
-            LogActions.debug(
-              '[Braze Content Cards] Skipping Braze content cards update during user merge.',
-            ),
+          logManager.debug(
+            '[Braze Content Cards] Skipping Braze content cards update during user merge.',
           );
           return;
         }
         const contentCards = update.cards;
 
-        dispatch(
-          LogActions.info(
-            `[Braze Content Cards] ${contentCards.length} content ${
-              contentCards.length === 1 ? 'card' : 'cards'
-            } fetched from Braze.`,
-          ),
+        logManager.info(
+          `[Braze Content Cards] ${contentCards.length} content ${
+            contentCards.length === 1 ? 'card' : 'cards'
+          } fetched from Braze.`,
         );
         dispatch(AppActions.brazeContentCardsFetched(contentCards));
       },
     );
 
     Braze.requestContentCardsRefresh();
-    dispatch(
-      LogActions.info('[Braze Content Cards] Successfully initialized .'),
-    );
+    logManager.info('[Braze Content Cards] Successfully initialized .');
   } catch (err) {
     const errMsg = '[Braze Content Cards] Something went wrong';
 
-    dispatch(LogActions.error(errMsg));
-    dispatch(
-      LogActions.error(
-        err instanceof Error ? err.message : JSON.stringify(err),
-      ),
-    );
+    logManager.error(errMsg);
+    logManager.error(err instanceof Error ? err.message : JSON.stringify(err));
   }
 };
 
@@ -521,23 +494,19 @@ export const isAnonymousBrazeEid = (str: string): boolean => {
 
 const createBrazeEid = (): Effect<string | undefined> => dispatch => {
   try {
-    dispatch(LogActions.info('[Braze] Generating EID for BWS user...'));
+    logManager.info('[Braze] Generating EID for BWS user...');
 
     const eid = uuid.v4().toString();
     dispatch(setBrazeEid(eid));
 
-    dispatch(LogActions.info('[Braze] Generated EID for BWS user.'));
+    logManager.info('[Braze] Generated EID for BWS user.');
     return eid;
   } catch (err) {
     const errMsg =
       '[Braze] Something went wrong while generating EID for BWS user.';
 
-    dispatch(LogActions.error(errMsg));
-    dispatch(
-      LogActions.error(
-        err instanceof Error ? err.message : JSON.stringify(err),
-      ),
-    );
+    logManager.error(errMsg);
+    logManager.error(err instanceof Error ? err.message : JSON.stringify(err));
   }
 };
 
@@ -547,112 +516,20 @@ const createBrazeEid = (): Effect<string | undefined> => dispatch => {
  */
 export const requestBrazeContentRefresh = (): Effect => async dispatch => {
   if (Analytics.isMergingUser()) {
-    dispatch(
-      LogActions.debug('Skipping Braze content refresh during user merge.'),
-    );
+    logManager.debug('Skipping Braze content refresh during user merge.');
     return;
   }
   try {
-    dispatch(LogActions.info('Refreshing Braze content...'));
+    logManager.info('Refreshing Braze content...');
 
     Braze.requestContentCardsRefresh();
   } catch (err) {
     const errMsg = 'Something went wrong while refreshing Braze content.';
 
-    dispatch(LogActions.error(errMsg));
-    dispatch(
-      LogActions.error(
-        err instanceof Error ? err.message : JSON.stringify(err),
-      ),
-    );
+    logManager.error(errMsg);
+    logManager.error(err instanceof Error ? err.message : JSON.stringify(err));
   }
 };
-
-export const startOnGoingProcessModal =
-  (key: OnGoingProcessMessages): Effect<Promise<void>> =>
-  async (dispatch, getState: () => RootState) => {
-    const store: RootState = getState();
-
-    const translations: Record<OnGoingProcessMessages, string> = {
-      GENERAL_AWAITING: i18n.t("Just a second, we're setting a few things up"),
-      CREATING_KEY: i18n.t(
-        "Creating Key... just a second, we're setting a few things up",
-      ),
-      LOGGING_IN: i18n.t('Logging In'),
-      LOGGING_OUT: i18n.t('Logging Out'),
-      PAIRING: i18n.t('Pairing'),
-      CREATING_ACCOUNT: i18n.t('Creating Account'),
-      UPDATING_ACCOUNT: i18n.t('Updating Account'),
-      IMPORTING: i18n.t('Importing... this process may take a few minutes'),
-      IMPORT_SCANNING_FUNDS: i18n.t(
-        'Scanning Funds... this process may take a few minutes',
-      ),
-      DELETING_KEY: i18n.t('Deleting Key'),
-      ADDING_WALLET: i18n.t('Adding Wallet'),
-      ADDING_ACCOUNT: i18n.t('Adding Account-Based Wallet'),
-      ADDING_EVM_CHAINS: i18n.t('Adding EVM Chains'),
-      ADDING_SPL_CHAINS: i18n.t('Adding Solana Account'),
-      LOADING: i18n.t('Loading'),
-      FETCHING_PAYMENT_OPTIONS: i18n.t('Fetching payment options...'),
-      FETCHING_PAYMENT_INFO: i18n.t('Fetching payment information...'),
-      JOIN_WALLET: i18n.t('Joining Wallet'),
-      SENDING_PAYMENT: i18n.t('Sending Payment'),
-      ACCEPTING_PAYMENT: i18n.t('Accepting Payment'),
-      GENERATING_ADDRESS: i18n.t('Generating Address'),
-      GENERATING_GIFT_CARD: i18n.t('Generating Gift Card'),
-      SYNCING_WALLETS: i18n.t('Syncing Wallets...'),
-      REJECTING_CALL_REQUEST: i18n.t('Rejecting Call Request'),
-      SAVING_LAYOUT: i18n.t('Saving Layout'),
-      SAVING_ADDRESSES: i18n.t('Saving Addresses'),
-      EXCHANGE_GETTING_DATA: i18n.t('Getting data from the exchange...'),
-      CALCULATING_FEE: i18n.t('Calculating Fee'),
-      CONNECTING_COINBASE: i18n.t('Connecting with Coinbase...'),
-      FETCHING_COINBASE_DATA: i18n.t('Fetching data from Coinbase...'),
-      UPDATING_TXP: i18n.t('Updating Transaction'),
-      CREATING_TXP: i18n.t('Creating Transaction'),
-      SENDING_EMAIL: i18n.t('Sending Email'),
-      REDIRECTING: i18n.t('Redirecting'),
-      REMOVING_BILL: i18n.t('Removing Bill'),
-      BROADCASTING_TXP: i18n.t('Broadcasting transaction...'),
-      SWEEPING_WALLET: i18n.t('Sweeping Wallet...'),
-      SCANNING_FUNDS: i18n.t('Scanning Funds...'),
-      SCANNING_FUNDS_WITH_PASSPHRASE: i18n.t(
-        'Scanning Funds... this process may take a few minutes',
-      ),
-      CREATING_PASSKEY: i18n.t('Creating Passkey...'),
-      DELETING_PASSKEY: i18n.t('Deleting Passkey...'),
-    };
-
-    // if modal currently active dismiss and sleep to allow animation to complete before showing next
-    if (store.APP.showOnGoingProcessModal) {
-      dispatch(AppActions.dismissOnGoingProcessModal());
-      await sleep(500);
-    }
-
-    // Translate message before show message
-    const _message = translations[key];
-
-    dispatch(AppActions.showOnGoingProcessModal(_message));
-
-    // After 60 seconds, check if the modal is active. If so, dismiss it.
-    setTimeout(async () => {
-      const currentStore = getState();
-      if (
-        currentStore.APP.showOnGoingProcessModal &&
-        currentStore.APP.onGoingProcessModalMessage !==
-          i18n.t('Importing... this process may take a few minutes') &&
-        currentStore.APP.onGoingProcessModalMessage !==
-          i18n.t('Scanning Funds... this process may take a few minutes') &&
-        currentStore.APP.onGoingProcessModalMessage !==
-          i18n.t("Creating Key... just a second, we're setting a few things up")
-      ) {
-        dispatch(AppActions.dismissOnGoingProcessModal());
-        await sleep(500);
-      }
-    }, 60000);
-
-    return sleep(100);
-  };
 
 export const startInAppNotification =
   (
@@ -699,7 +576,7 @@ export const openUrlWithInAppBrowser =
     const handler = isIabAvailable ? 'InAppBrowser' : 'external app';
 
     try {
-      dispatch(LogActions.info(`Opening URL ${url} with ${handler}`));
+      logManager.info(`Opening URL ${url} with ${handler}`);
 
       if (isIabAvailable) {
         try {
@@ -720,15 +597,13 @@ export const openUrlWithInAppBrowser =
           });
 
           dispatch(AppActions.setInAppBrowserOpen(false));
-          dispatch(
-            LogActions.info(`InAppBrowser closed with type: ${result.type}`),
-          );
+          logManager.info(`InAppBrowser closed with type: ${result.type}`);
         } catch (err) {
           const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${JSON.stringify(
             err,
           )}`;
           dispatch(AppActions.setInAppBrowserOpen(false));
-          dispatch(LogActions.error(logMsg));
+          logManager.error(logMsg);
           // if InAppBrowser is available but InAppBrowser.open fails, will try to open an external browser
           await Linking.openURL(url);
         }
@@ -744,7 +619,7 @@ export const openUrlWithInAppBrowser =
       )}`;
 
       dispatch(AppActions.setInAppBrowserOpen(false));
-      dispatch(LogActions.error(logMsg));
+      logManager.error(logMsg);
     }
   };
 
@@ -779,17 +654,13 @@ export const subscribePushNotifications =
     };
     walletClient.pushNotificationsSubscribe(opts, (err: any) => {
       if (err) {
-        dispatch(
-          LogActions.error(
-            'Push Notifications error subscribing: ' + JSON.stringify(err),
-          ),
+        logManager.error(
+          'Push Notifications error subscribing: ' + JSON.stringify(err),
         );
       } else {
-        dispatch(
-          LogActions.info(
-            'Push Notifications success subscribing: ' +
-              walletClient.credentials.walletName,
-          ),
+        logManager.info(
+          'Push Notifications success subscribing: ' +
+            walletClient.credentials.walletName,
         );
       }
     });
@@ -800,17 +671,13 @@ export const unSubscribePushNotifications =
   dispatch => {
     walletClient.pushNotificationsUnsubscribe(eid, (err: any) => {
       if (err) {
-        dispatch(
-          LogActions.error(
-            'Push Notifications error unsubscribing: ' + JSON.stringify(err),
-          ),
+        logManager.error(
+          'Push Notifications error unsubscribing: ' + JSON.stringify(err),
         );
       } else {
-        dispatch(
-          LogActions.info(
-            'Push Notifications success unsubscribing: ' +
-              walletClient.credentials.walletName,
-          ),
+        logManager.info(
+          'Push Notifications success unsubscribing: ' +
+            walletClient.credentials.walletName,
         );
       }
     });
@@ -824,17 +691,13 @@ export const subscribeEmailNotifications =
   async dispatch => {
     walletClient.savePreferences(prefs, (err: any) => {
       if (err) {
-        dispatch(
-          LogActions.error(
-            'Email Notifications error subscribing: ' + JSON.stringify(err),
-          ),
+        logManager.error(
+          'Email Notifications error subscribing: ' + JSON.stringify(err),
         );
       } else {
-        dispatch(
-          LogActions.info(
-            'Email Notifications success subscribing: ' +
-              walletClient.credentials.walletName,
-          ),
+        logManager.info(
+          'Email Notifications success subscribing: ' +
+            walletClient.credentials.walletName,
         );
       }
     });
@@ -845,17 +708,13 @@ export const unSubscribeEmailNotifications =
   async dispatch => {
     walletClient.savePreferences({email: ''}, (err: any) => {
       if (err) {
-        dispatch(
-          LogActions.error(
-            'Email Notifications error unsubscribing: ' + JSON.stringify(err),
-          ),
+        logManager.error(
+          'Email Notifications error unsubscribing: ' + JSON.stringify(err),
         );
       } else {
-        dispatch(
-          LogActions.info(
-            'Email Notifications success unsubscribing: ' +
-              walletClient.credentials.walletName,
-          ),
+        logManager.info(
+          'Email Notifications success unsubscribing: ' +
+            walletClient.credentials.walletName,
         );
       }
     });
@@ -879,7 +738,7 @@ export const renewSubscription = (): Effect => (dispatch, getState) => {
     return;
   }
 
-  LogActions.debug('Renewing Push Notifications...');
+  logManager.debug('Renewing Push Notifications...');
 
   let eid = APP.brazeEid;
   if (!eid) {
@@ -933,7 +792,7 @@ export const setNotifications =
             dispatch(unSubscribePushNotifications(walletClient, eid!));
           });
         }
-        dispatch(LogActions.info('Push Notifications: ' + value));
+        logManager.info('Push Notifications: ' + value);
       });
     }
   };
@@ -1158,7 +1017,7 @@ export const resetAllSettings = (): Effect<Promise<void>> => async dispatch => {
     await dispatch(WalletActions.setCustomizeNonce(false));
     await dispatch(WalletActions.setQueuedTransactions(false));
     await dispatch(WalletActions.setEnableReplaceByFee(false));
-    dispatch(LogActions.info('Reset all settings'));
+    logManager.info('Reset all settings');
     return Promise.resolve();
   } catch (error) {
     return Promise.reject(error);
@@ -1406,7 +1265,7 @@ export const shareApp = (): Effect<Promise<void>> => async dispatch => {
     } else {
       errorStr = JSON.stringify(err);
     }
-    dispatch(LogActions.error(`failed [shareApp]: ${errorStr}`));
+    logManager.error(`failed [shareApp]: ${errorStr}`);
   }
 };
 
@@ -1462,17 +1321,13 @@ export const isVersionUpdated =
     };
 
     if (!verifyTagFormat(currentVersion)) {
-      dispatch(
-        LogActions.error(
-          'Cannot verify the format of version tag: ' + currentVersion,
-        ),
+      logManager.error(
+        'Cannot verify the format of version tag: ' + currentVersion,
       );
     }
     if (!verifyTagFormat(savedVersion)) {
-      dispatch(
-        LogActions.error(
-          'Cannot verify the format of the saved version tag: ' + savedVersion,
-        ),
+      logManager.error(
+        'Cannot verify the format of the saved version tag: ' + savedVersion,
       );
     }
 
@@ -1538,27 +1393,23 @@ export const requestInAppReview =
       const isAvailable = InAppReview.isAvailable();
 
       if (!isAvailable) {
-        dispatch(LogActions.debug('In-app review not available.'));
+        logManager.debug('In-app review not available.');
         return;
       }
 
-      dispatch(LogActions.debug('Requesting in-app review...'));
+      logManager.debug('Requesting in-app review...');
 
       // Android - true means the user finished or closed the review flow successfully, but does not indicate if the user left a review
       // iOS - true means the rating flow was launched successfully, but does not indicate if the user left a review
       const hasFlowFinishedSuccessfully =
         await InAppReview.RequestInAppReview();
 
-      dispatch(
-        LogActions.debug(
-          `In-app review completed successfully: ${!!hasFlowFinishedSuccessfully}`,
-        ),
+      logManager.debug(
+        `In-app review completed successfully: ${!!hasFlowFinishedSuccessfully}`,
       );
     } catch (e: any) {
-      dispatch(
-        LogActions.debug(
-          `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
-        ),
+      logManager.debug(
+        `Failed to request in-app review: ${e?.message || JSON.stringify(e)}`,
       );
     }
   };
@@ -1596,7 +1447,7 @@ export const joinWaitlist =
           break;
       }
     } catch (err) {
-      dispatch(LogActions.error(`Error joining waitlist: ${err}`));
+      logManager.error(`Error joining waitlist: ${err}`);
       throw err;
     }
   };
@@ -1615,18 +1466,14 @@ export const migrateShopCatalog = (): Effect => (dispatch, getState) => {
       );
       dispatch(clearedShopCatalogFields());
       dispatch(setShopMigrationComplete());
-      dispatch(
-        LogActions.info(
-          'Migrated shop tab catalog fields from SHOP store to SHOP_CATALOG store.',
-        ),
+      logManager.info(
+        'Migrated shop tab catalog fields from SHOP store to SHOP_CATALOG store.',
       );
     }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
-    dispatch(
-      LogActions.error(
-        `Error migrating shop tab catalog fields from SHOP store to SHOP_CATALOG store: ${errorMsg}`,
-      ),
+    logManager.error(
+      `Error migrating shop tab catalog fields from SHOP store to SHOP_CATALOG store: ${errorMsg}`,
     );
   }
 };

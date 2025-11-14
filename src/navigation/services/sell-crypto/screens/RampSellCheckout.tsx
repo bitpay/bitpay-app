@@ -69,12 +69,8 @@ import {
   PoliciesText,
   CheckBoxCol,
 } from '../../swap-crypto/styled/SwapCryptoCheckout.styled';
+import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
@@ -122,7 +118,7 @@ import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {rampGetSellTransactionDetails} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {CryptoOffer} from './SellCryptoOffers';
-import {AppActions} from '../../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -195,6 +191,9 @@ const RampSellCheckout: React.FC = () => {
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
   let status: string;
@@ -381,7 +380,7 @@ const RampSellCheckout: React.FC = () => {
         setCtxp(ctxp);
         setFee(ctxp.fee);
         setIsLoading(false);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(400);
 
         if (useSendMax) {
@@ -558,8 +557,6 @@ const RampSellCheckout: React.FC = () => {
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-        await sleep(400);
         broadcastedTx = await dispatch(
           publishAndSign({
             txp: ctxp! as TransactionProposal,
@@ -570,19 +567,13 @@ const RampSellCheckout: React.FC = () => {
         );
       }
       updateRampTx(txData!, broadcastedTx as Partial<TransactionProposal>);
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
-
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            wallet?.credentials?.n > 1
-              ? t('Payment Sent')
-              : t('Payment Accepted'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title:
+          wallet?.credentials?.n > 1
+            ? t('Payment Sent')
+            : t('Payment Accepted'),
+      });
 
       await sleep(1200);
       const rampSettingsParams: RampSettingsProps = {
@@ -614,7 +605,7 @@ const RampSellCheckout: React.FC = () => {
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -645,10 +636,7 @@ const RampSellCheckout: React.FC = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -818,7 +806,7 @@ const RampSellCheckout: React.FC = () => {
     actions?: any[],
   ) => {
     setIsLoading(false);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
 
     let msg = getErrorMsgFromError(err);
 
@@ -862,7 +850,7 @@ const RampSellCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
+    showOngoingProcess('EXCHANGE_GETTING_DATA');
     if (isToken) {
       useSendMax = false;
     }

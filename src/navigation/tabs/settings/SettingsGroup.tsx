@@ -26,7 +26,7 @@ export enum SettingsScreens {
   SETTINGS_DETAILS = 'SettingsDetails',
 }
 
-const SettingsGroup: React.FC<SettingsProps> = ({Settings}) => {
+const SettingsGroup = ({Settings}: SettingsProps) => {
   const {t} = useTranslation();
 
   return (

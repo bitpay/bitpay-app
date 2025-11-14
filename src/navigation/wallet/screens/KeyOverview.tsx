@@ -38,7 +38,6 @@ import {RootState} from '../../../store';
 import {
   showBottomNotificationModal,
   toggleHideAllBalances,
-  dismissOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {
@@ -111,9 +110,9 @@ import {
   getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -205,6 +204,8 @@ const KeyOverview = () => {
   const logger = useLogger();
   const theme = useTheme();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
@@ -348,7 +349,7 @@ const KeyOverview = () => {
   const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ...tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   });
@@ -358,7 +359,7 @@ const KeyOverview = () => {
       // To close decrypt modal
       await sleep(500);
     }
-    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
+    showOngoingProcess('SYNCING_WALLETS');
     const opts = {
       words: normalizeMnemonic(mnemonic),
       mnemonic,
@@ -414,7 +415,7 @@ const KeyOverview = () => {
           message = t('Your key is already synced');
         }
 
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         dispatch(
           showBottomNotificationModal({
@@ -432,7 +433,7 @@ const KeyOverview = () => {
           }),
         );
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         await dispatch(
           showBottomNotificationModal(
@@ -443,7 +444,7 @@ const KeyOverview = () => {
         );
       }
     } catch (e) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       await dispatch(
         showBottomNotificationModal(

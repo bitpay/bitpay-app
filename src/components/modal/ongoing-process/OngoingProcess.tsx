@@ -18,6 +18,7 @@ import {BlurContainer} from '../../blur/Blur';
 import {BaseText} from '../../styled/Text';
 import BaseModal from '../base/BaseModal';
 import {HEIGHT, WIDTH} from '../../styled/Containers';
+import {useOngoingProcess} from '../../../contexts';
 
 // Get full screen dimensions (includes navigation bar on Android)
 const {height: SCREEN_HEIGHT, width: SCREEN_WIDTH} = Dimensions.get(
@@ -97,8 +98,7 @@ const ModalWrapper = styled.View`
 `;
 
 const OnGoingProcessModal: React.FC = () => {
-  const message = useAppSelector(({APP}) => APP.onGoingProcessModalMessage);
-  const isVisible = useAppSelector(({APP}) => APP.showOnGoingProcessModal);
+  const {message, isVisible} = useOngoingProcess();
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
 
   const modalLibrary: 'bottom-sheet' | 'modal' = 'modal';

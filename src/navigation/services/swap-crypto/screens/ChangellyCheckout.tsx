@@ -81,9 +81,7 @@ import {
   CheckBoxCol,
 } from '../styled/SwapCryptoCheckout.styled';
 import {startGetRates} from '../../../../store/wallet/effects';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
@@ -114,7 +112,7 @@ import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
-import {AppActions} from '../../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -180,6 +178,9 @@ const ChangellyCheckout: React.FC = () => {
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
 
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
   const alternativeIsoCode = 'USD';
   let addressFrom: string; // Refund address
   let addressTo: string; // Receiving address
@@ -242,7 +243,7 @@ const ChangellyCheckout: React.FC = () => {
       )) as string;
     } catch (err) {
       console.error(err);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(400);
       return;
     }
@@ -434,7 +435,7 @@ const ChangellyCheckout: React.FC = () => {
           setTxData(_txData);
 
           setIsLoading(false);
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           await sleep(400);
 
           if (useSendMax) {
@@ -723,8 +724,6 @@ const ChangellyCheckout: React.FC = () => {
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-        await sleep(400);
         await dispatch(
           publishAndSign({
             txp: ctxp! as TransactionProposal,
@@ -735,19 +734,14 @@ const ChangellyCheckout: React.FC = () => {
         );
       }
       saveChangellyTx();
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
 
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            fromWalletSelected?.credentials?.n > 1
-              ? t('Payment Sent')
-              : t('Payment Accepted'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title:
+          fromWalletSelected?.credentials?.n > 1
+            ? t('Payment Sent')
+            : t('Payment Accepted'),
+      });
 
       await sleep(1200);
       navigation.dispatch(
@@ -770,7 +764,6 @@ const ChangellyCheckout: React.FC = () => {
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -801,10 +794,7 @@ const ChangellyCheckout: React.FC = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -934,7 +924,7 @@ const ChangellyCheckout: React.FC = () => {
     actions?: any[],
   ) => {
     setIsLoading(false);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     await sleep(1000);
     dispatch(
       Analytics.track('Failed Crypto Swap', {
@@ -972,7 +962,7 @@ const ChangellyCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
+    showOngoingProcess('EXCHANGE_GETTING_DATA');
     createFixTransaction(1);
 
     return () => {

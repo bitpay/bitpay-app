@@ -34,10 +34,7 @@ import {
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Slate, SlateDark, White} from '../../../styles/colors';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import InfoIcon from '../../../components/icons/info/Info';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {URL} from '../../../constants';
@@ -48,10 +45,7 @@ import {
   fixWalletAddresses,
   sleep,
 } from '../../../utils/helper-methods';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   CustomErrorMessage,
   WrongPasswordError,
@@ -80,6 +74,7 @@ import {AccountRowProps} from '../../../components/list/AccountListRow';
 import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
 import {useTheme} from 'styled-components/native';
 import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -138,6 +133,8 @@ const KeySettings = () => {
   const theme = useTheme();
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenOptionsByAddress} = useTokenContext();
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
@@ -198,7 +195,7 @@ const KeySettings = () => {
   const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ...tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   });
@@ -208,7 +205,7 @@ const KeySettings = () => {
       // To close decrypt modal
       await sleep(500);
     }
-    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
+    showOngoingProcess('SYNCING_WALLETS');
     const opts = {
       words: normalizeMnemonic(mnemonic),
       mnemonic,
@@ -264,7 +261,7 @@ const KeySettings = () => {
           message = t('Your key is already synced');
         }
 
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         dispatch(
           showBottomNotificationModal({
@@ -282,7 +279,7 @@ const KeySettings = () => {
           }),
         );
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         await dispatch(
           showBottomNotificationModal(
@@ -293,7 +290,7 @@ const KeySettings = () => {
         );
       }
     } catch (e) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       await dispatch(
         showBottomNotificationModal(

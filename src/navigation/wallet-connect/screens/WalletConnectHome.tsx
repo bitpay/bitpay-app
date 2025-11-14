@@ -41,7 +41,6 @@ import {sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -236,7 +235,6 @@ const WalletConnectHome = () => {
     try {
       await dispatch(walletConnectV2RejectCallRequest(request));
     } catch (err) {
-      dispatch(dismissOnGoingProcessModal());
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(err),

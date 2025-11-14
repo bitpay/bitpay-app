@@ -27,7 +27,6 @@ import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
-import {PaymentSentModalConfig} from '../../navigation/wallet/components/PaymentSent';
 
 export const appReduxPersistBlackList: Array<keyof AppState> = [
   'activeModalId',
@@ -39,7 +38,6 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'inAppBrowserOpen',
   'inAppNotificationData',
   'lockAuthorizedUntil',
-  'onGoingProcessModalMessage',
   'pinModalConfig',
   'showBiometricModal',
   'showBottomNotificationModal',
@@ -47,15 +45,12 @@ export const appReduxPersistBlackList: Array<keyof AppState> = [
   'chainSelectorModalConfig',
   'showDecryptPasswordModal',
   'showInAppNotification',
-  'showOnGoingProcessModal',
   'showWalletConnectStartModal',
   'showPinModal',
   'selectedLocalChainFilterOption',
   'tokensDataLoaded',
   'isImportLedgerModalVisible',
   'showArchaxBanner',
-  'showPaymentSentModal',
-  'paymentSentModalConfig',
 ];
 
 export type ModalId =
@@ -102,9 +97,7 @@ export interface AppState {
   introCompleted: boolean;
   userFeedback: FeedbackType;
   onboardingCompleted: boolean;
-  showOnGoingProcessModal: boolean;
   showWalletConnectStartModal: boolean;
-  onGoingProcessModalMessage: string | undefined;
   inAppMessageData: string | undefined;
   showInAppNotification: boolean;
   inAppNotificationData:
@@ -171,8 +164,6 @@ export interface AppState {
   inAppBrowserOpen: boolean;
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
-  showPaymentSentModal: boolean;
-  paymentSentModalConfig: PaymentSentModalConfig | undefined;
 }
 
 const initialState: AppState = {
@@ -208,9 +199,7 @@ const initialState: AppState = {
     rate: 'default',
   },
   onboardingCompleted: false,
-  showOnGoingProcessModal: false,
   showWalletConnectStartModal: false,
-  onGoingProcessModalMessage: undefined,
   inAppMessageData: undefined,
   showInAppNotification: false,
   inAppNotificationData: undefined,
@@ -271,8 +260,6 @@ const initialState: AppState = {
   inAppBrowserOpen: false,
   tokensDataLoaded: false,
   showArchaxBanner: false,
-  showPaymentSentModal: false,
-  paymentSentModalConfig: undefined,
 };
 
 export const appReducer = (
@@ -350,19 +337,6 @@ export const appReducer = (
       return {
         ...state,
         appInstalled: true,
-      };
-
-    case AppActionTypes.SHOW_ONGOING_PROCESS_MODAL:
-      return {
-        ...state,
-        showOnGoingProcessModal: true,
-        onGoingProcessModalMessage: action.payload,
-      };
-
-    case AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL:
-      return {
-        ...state,
-        showOnGoingProcessModal: false,
       };
 
     case AppActionTypes.SHOW_WALLET_CONNECT_START_MODAL:
@@ -797,25 +771,6 @@ export const appReducer = (
       return {
         ...state,
         showArchaxBanner: action.payload,
-      };
-
-    case AppActionTypes.SHOW_PAYMENT_SENT_MODAL:
-      return {
-        ...state,
-        showPaymentSentModal: true,
-        paymentSentModalConfig: action.payload,
-      };
-
-    case AppActionTypes.DISMISS_PAYMENT_SENT_MODAL:
-      return {
-        ...state,
-        showPaymentSentModal: false,
-      };
-
-    case AppActionTypes.CLEAR_PAYMENT_SENT_MODAL_OPTIONS:
-      return {
-        ...state,
-        paymentSentModalConfig: undefined,
       };
 
     default:

@@ -21,13 +21,11 @@ export enum WalletActionTypes {
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
   DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
-  SUCCESS_GET_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_TOKEN_OPTIONS',
   SUCCESS_GET_CUSTOM_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_CUSTOM_TOKEN_OPTIONS',
   FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
   SUCCESS_ADD_WALLET = 'WALLET/SUCCESS_ADD_WALLET',
   FAILED_ADD_WALLET = 'WALLET/FAILED_ADD_WALLET',
   SUCCESS_UPDATE_WALLET_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_STATUS',
-  FAILED_UPDATE_WALLET_STATUS = 'WALLET/FAILED_UPDATE_WALLET_STATUS',
   SUCCESS_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEY_TOTAL_BALANCE',
   SUCCESS_UPDATE_KEYS_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEYS_TOTAL_BALANCE',
   FAILED_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/FAILED_UPDATE_KEY_TOTAL_BALANCE',
@@ -37,7 +35,6 @@ export enum WalletActionTypes {
   UPDATE_KEY_NAME = 'WALLET/UPDATE_KEY_NAME',
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
   UPDATE_ACCOUNT_NAME = 'WALLET/UPDATE_ACCOUNT_NAME',
-  SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SET_WALLET_SCANNING = 'WALLET/SET_WALLET_SCANNING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
   SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
@@ -131,14 +128,6 @@ interface deleteKey {
   };
 }
 
-interface successGetTokenOptions {
-  type: typeof WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS;
-  payload: {
-    tokenOptionsByAddress: {[key in string]: Token};
-    tokenDataByAddress: {[key in string]: CurrencyOpts};
-  };
-}
-
 interface successGetCustomTokenOptions {
   type: typeof WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS;
   payload: {
@@ -165,14 +154,6 @@ interface successUpdateWalletStatus {
       pendingTxps: TransactionProposal[];
       singleAddress: boolean;
     };
-  };
-}
-
-interface failedUpdateWalletStatus {
-  type: typeof WalletActionTypes.FAILED_UPDATE_WALLET_STATUS;
-  payload: {
-    keyId: string;
-    walletId: string;
   };
 }
 
@@ -233,15 +214,6 @@ interface updateAccountName {
     keyId: string;
     accountAddress: string;
     name: string;
-  };
-}
-
-interface setWalletRefreshing {
-  type: typeof WalletActionTypes.SET_WALLET_REFRESHING;
-  payload: {
-    keyId: string;
-    walletId: string;
-    isRefreshing: boolean;
   };
 }
 
@@ -381,12 +353,10 @@ export type WalletActionType =
   | setBackupComplete
   | successEncryptOrDecryptPassword
   | deleteKey
-  | successGetTokenOptions
   | successGetCustomTokenOptions
   | failedGetTokenOptions
   | setWalletTermsAccepted
   | successUpdateWalletStatus
-  | failedUpdateWalletStatus
   | successUpdateKeysTotalBalance
   | failedUpdateKeyTotalBalance
   | updatePortfolioBalance
@@ -395,7 +365,6 @@ export type WalletActionType =
   | updateKeyName
   | updateWalletName
   | updateAccountName
-  | setWalletRefreshing
   | setWalletScanning
   | successGetReceiveAddress
   | setUseUnconfirmedFunds

@@ -27,7 +27,7 @@ export enum IntroScreens {
 
 export const IntroAnimeDelay = 300;
 
-const IntroStack: React.FC<IntroProps> = ({Intro}) => {
+const IntroStack = ({Intro}: IntroProps) => {
   return (
     <Intro.Group
       screenOptions={() => ({

@@ -18,13 +18,9 @@ import {
 import {toFiat} from '../../../store/wallet/utils/wallet';
 import {zenledgerCreatePortfolio} from '../../../store/zenledger/zenledger.effects';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {
   dismissBottomNotificationModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
@@ -38,6 +34,7 @@ import {createWalletAddress} from '../../../store/wallet/effects/address/address
 import {SUPPORTED_UTXO_COINS} from '../../../constants/currencies';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {ZenledgerPortfolioProps} from '../../../api/zenledger/zenledger.types';
+import {useOngoingProcess} from '../../../contexts';
 
 const ZenLedgerImportContainer = styled.View`
   flex: 1;
@@ -55,6 +52,7 @@ const ZenLedgerImport: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const {rates} = useAppSelector(({RATE}) => RATE);
@@ -158,11 +156,11 @@ const ZenLedgerImport: React.FC = () => {
 
   const goToZenLedger = async (requestWallets: ZenledgerPortfolioProps[]) => {
     try {
-      dispatch(startOnGoingProcessModal('REDIRECTING'));
+      showOngoingProcess('REDIRECTING');
       const {signup_url} = await dispatch(
         zenledgerCreatePortfolio(requestWallets),
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       if (!signup_url) {
         await showErrorMessage({
@@ -187,7 +185,7 @@ const ZenLedgerImport: React.FC = () => {
       await sleep(500);
       navigation.goBack();
     } catch (e) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       await showErrorMessage(
         CustomErrorMessage({
@@ -263,9 +261,9 @@ const ZenLedgerImport: React.FC = () => {
           onPress={async () => {
             try {
               haptic('impactLight');
-              dispatch(startOnGoingProcessModal('LOADING'));
+              showOngoingProcess('LOADING');
               const requestWallets = await getRequestWallets();
-              dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
               await sleep(500);
               if (
                 requestWallets.some(wallet =>
@@ -315,7 +313,7 @@ const ZenLedgerImport: React.FC = () => {
                 goToZenLedger(requestWallets);
               }
             } catch (e) {
-              dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
               await sleep(500);
               await showErrorMessage(
                 CustomErrorMessage({

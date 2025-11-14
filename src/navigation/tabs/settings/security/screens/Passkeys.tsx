@@ -33,11 +33,7 @@ import {FlashList} from '@shopify/flash-list';
 import DeleteConfirmationModal from '../../../../../navigation/wallet/components/DeleteConfirmationModal';
 import PasskeyHeader from '../../../../../../assets/img/passkey-header.svg';
 import PasskeyPersonSetup from '../../../../../../assets/img/passkey-person-setup.svg';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 import {
   setPasskeyStatus,
   setPasskeyCredentials,
@@ -46,6 +42,8 @@ import Settings from '../../../../../components/settings/Settings';
 import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
 import {TouchableOpacity} from '../../../../../components/base/TouchableOpacity';
 import {BaseText} from '../../../../../components/styled/Text';
+import {useOngoingProcess} from '../../../../../contexts';
+import {logManager} from '../../../../../managers/LogManager';
 
 const ScrollContainer = styled.ScrollView``;
 
@@ -146,6 +144,7 @@ const PasskeyScreen: React.FC = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const network = useAppSelector(({APP}) => APP.network);
   const session: Session = useAppSelector(({BITPAY_ID}) => BITPAY_ID.session);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
@@ -170,52 +169,46 @@ const PasskeyScreen: React.FC = () => {
   const createPasskey = useCallback(async () => {
     setShowOptions(false);
     if (listPasskeyCredentials && listPasskeyCredentials.length > 4) {
-      dispatch(
-        LogActions.warn('[PasskeyScreen] Reached max number of passkeys'),
-      );
-      dispatch(
-        showBottomNotificationModal({
-          type: 'warning',
-          title: t("Couldn't create a new Passkey"),
-          message: t('You reached max number of passkeys.'),
-          enableBackdropDismiss: true,
-          actions: [
-            {
-              text: t('OK'),
-              action: () => {},
-            },
-          ],
-        }),
-      );
+      logManager.warn('[PasskeyScreen] Reached max number of passkeys'),
+        dispatch(
+          showBottomNotificationModal({
+            type: 'warning',
+            title: t("Couldn't create a new Passkey"),
+            message: t('You reached max number of passkeys.'),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+              },
+            ],
+          }),
+        );
       return;
     }
     if (!user || !session?.isAuthenticated) {
-      dispatch(
-        LogActions.warn(
-          '[PasskeyScreen] User not authenticated. Redirecting to login.',
-        ),
+      logManager.warn(
+        '[PasskeyScreen] User not authenticated. Redirecting to login.',
       );
       navigateToLogin();
       return;
     }
     if (user && !user.verified) {
-      dispatch(LogActions.warn('[PasskeyScreen] Email address not verified'));
+      logManager.warn('[PasskeyScreen] Email address not verified');
       // TODO: check that user data is updated before redirecting to verify email screen
       //navigation.navigate('VerifyEmail');
       return;
     }
-    await dispatch(startOnGoingProcessModal('CREATING_PASSKEY'));
+    showOngoingProcess('CREATING_PASSKEY');
     try {
       const registeredPasskey = await registerPasskey(
         user.email,
         network,
         session.csrfToken,
       );
-      dispatch(
-        LogActions.info(
-          '[PasskeyScreen] Passkey created: ',
-          JSON.stringify(registeredPasskey),
-        ),
+      logManager.info(
+        '[PasskeyScreen] Passkey created: ',
+        JSON.stringify(registeredPasskey),
       );
       dispatch(setPasskeyStatus(registeredPasskey));
       const {credentials} = await getPasskeyCredentials(
@@ -225,7 +218,7 @@ const PasskeyScreen: React.FC = () => {
       );
       dispatch(setPasskeyCredentials(credentials));
       setListPasskeyCredentials(credentials);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       if (registeredPasskey) {
         dispatch(
           showBottomNotificationModal({
@@ -261,9 +254,9 @@ const PasskeyScreen: React.FC = () => {
       }
     } catch (err: any) {
       dispatch(setPasskeyStatus(false));
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       const errMessage = err.message || JSON.stringify(err);
-      dispatch(LogActions.error('[PasskeyScreen] ', errMessage));
+      logManager.error('[PasskeyScreen] ', errMessage);
       if (err.error === 'Unauthorized') {
         dispatch(
           showBottomNotificationModal({
@@ -329,16 +322,14 @@ const PasskeyScreen: React.FC = () => {
         dispatch(setPasskeyCredentials(credentials));
         setListPasskeyCredentials(credentials);
       } else {
-        dispatch(
-          LogActions.warn(
-            '[PasskeyScreen] Session expired. Cannot create/delete passkey until user logs in.',
-          ),
+        logManager.warn(
+          '[PasskeyScreen] Session expired. Cannot create/delete passkey until user logs in.',
         );
       }
       setFetchingCredentials(false);
     } catch (err: any) {
       setFetchingCredentials(false);
-      dispatch(LogActions.error('[PasskeyScreen] ', err));
+      logManager.error('[PasskeyScreen] ', err);
     }
   }, [dispatch, user, fetchingCredentials, session, network]);
 
@@ -382,10 +373,8 @@ const PasskeyScreen: React.FC = () => {
   const deletePasskey = async () => {
     setIsVisible(false);
     if (!user || !session?.isAuthenticated) {
-      dispatch(
-        LogActions.warn(
-          '[PasskeyScreen] Cannot delete passkey because user not authenticated. Redirecting to login.',
-        ),
+      logManager.warn(
+        '[PasskeyScreen] Cannot delete passkey because user not authenticated. Redirecting to login.',
       );
       navigateToLogin();
       return;
@@ -401,7 +390,7 @@ const PasskeyScreen: React.FC = () => {
         fetchCredentials();
       }
     } catch (err: any) {
-      dispatch(LogActions.error('[PasskeyScreen] ', err));
+      logManager.error('[PasskeyScreen] ', err);
       dispatch(
         showBottomNotificationModal({
           type: 'error',

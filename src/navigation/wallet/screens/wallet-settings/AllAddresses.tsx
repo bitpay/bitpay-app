@@ -25,6 +25,7 @@ import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {LogActions} from '../../../../store/log';
 import {FlashList} from '@shopify/flash-list';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {logManager} from '../../../../managers/LogManager';
 
 export type AllAddressesParamList = {
   walletName: string;
@@ -142,7 +143,7 @@ const AllAddresses = () => {
       setButtonState(undefined);
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[SendAddresses] ', e));
+      logManager.error('[SendAddresses] ', e);
       setButtonState('failed');
       await sleep(500);
       setButtonState(undefined);

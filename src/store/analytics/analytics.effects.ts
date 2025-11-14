@@ -4,7 +4,7 @@ import {APP_ANALYTICS_ENABLED, APP_VERSION} from '../../constants/config';
 import {BrazeWrapper} from '../../lib/Braze';
 import {MixpanelWrapper} from '../../lib/Mixpanel';
 import {AppsFlyerWrapper} from '../../utils/appsFlyer';
-import {LogActions} from '../log';
+import {logManager} from '../../managers/LogManager';
 
 const getTrackingAuthorizedByUser =
   (): Effect<Promise<void>> => async dispatch => {
@@ -12,34 +12,30 @@ const getTrackingAuthorizedByUser =
       .then(status => {
         switch (status) {
           case RESULTS.DENIED:
-            dispatch(
-              LogActions.debug('Tracking permission denied. Requesting... '),
-            );
+            logManager.debug('Tracking permission denied. Requesting... ');
             request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY).then(result => {
               switch (result) {
                 case RESULTS.GRANTED:
                 case RESULTS.LIMITED:
-                  dispatch(LogActions.debug('Tracking permission granted.'));
+                  logManager.debug('Tracking permission granted.');
                   return;
                 default:
-                  dispatch(LogActions.debug('Tracking permission: ', result));
+                  logManager.debug('Tracking permission: ', result);
                   return;
               }
             });
             break;
           // Granted, limited, unavailable, or blocked
           default:
-            dispatch(LogActions.debug('Tracking permission: ', status));
+            logManager.debug('Tracking permission: ', status);
             return;
         }
       })
       .catch(err => {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(
-            'An error occurred while requesting tracking permission',
-            errMsg,
-          ),
+        logManager.error(
+          'An error occurred while requesting tracking permission',
+          errMsg,
         );
         return;
       });
@@ -85,57 +81,45 @@ export const Analytics = (() => {
 
         await BrazeWrapper.init()
           .then(() => {
-            dispatch(LogActions.debug('Successfully initialized Braze SDK.'));
+            logManager.debug('Successfully initialized Braze SDK.');
           })
           .catch(err => {
             const errMsg =
               err instanceof Error ? err.message : JSON.stringify(err);
 
-            dispatch(
-              LogActions.debug('Failed to initialize Braze SDK.', errMsg),
-            );
+            logManager.debug('Failed to initialize Braze SDK.', errMsg);
           });
 
         // Force App Version
         const superProperties = {app_version_string: APP_VERSION};
         await MixpanelWrapper.init(false, superProperties)
           .then(() => {
-            dispatch(
-              LogActions.debug('Successfully initialized Mixpanel SDK.'),
-            );
+            logManager.debug('Successfully initialized Mixpanel SDK.');
           })
           .catch(err => {
             const errMsg =
               err instanceof Error ? err.message : JSON.stringify(err);
 
-            dispatch(
-              LogActions.debug('Failed to initialize Mixpanel SDK.', errMsg),
-            );
+            logManager.debug('Failed to initialize Mixpanel SDK.', errMsg);
           });
 
         await AppsFlyerWrapper.init()
           .then(() => {
-            dispatch(
-              LogActions.debug('Successfully initialized AppsFlyer SDK'),
-            );
+            logManager.debug('Successfully initialized AppsFlyer SDK');
             // Configure AppsFlyer to handle wrapped deeplinks
             AppsFlyerWrapper.configureResolvedDeepLinks(
               ['clicks.bitpay.com', 'email.bitpay.com'],
               () => {
-                dispatch(
-                  LogActions.debug(
-                    'AppsFlyer SDK configured to handle wrapped deeplinks',
-                  ),
+                logManager.debug(
+                  'AppsFlyer SDK configured to handle wrapped deeplinks',
                 );
               },
               (err: any) => {
                 const errMsg =
                   err instanceof Error ? err.message : JSON.stringify(err);
-                dispatch(
-                  LogActions.error(
-                    'AppsFlyer SDK failed to configure wrapped deeplinks: ' +
-                      errMsg,
-                  ),
+                logManager.error(
+                  'AppsFlyer SDK failed to configure wrapped deeplinks: ' +
+                    errMsg,
                 );
               },
             );
@@ -143,15 +127,13 @@ export const Analytics = (() => {
           .catch(err => {
             const errMsg =
               err instanceof Error ? err.message : JSON.stringify(err);
-            dispatch(
-              LogActions.error('AppsFlyer SDK failed to initialize: ' + errMsg),
-            );
+            logManager.error('AppsFlyer SDK failed to initialize: ' + errMsg);
           });
       }
 
       _isInitialized = true;
 
-      dispatch(LogActions.info('Successfully initialized analytics.'));
+      logManager.info('Successfully initialized analytics.');
 
       return;
     },

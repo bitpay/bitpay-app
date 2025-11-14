@@ -26,8 +26,6 @@ import {
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, formatFiatAmount} from '../../../../../utils/helper-methods';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
   Amount,
@@ -59,6 +57,7 @@ import {coinbasePayInvoice} from '../../../../../store/coinbase';
 import {useTranslation} from 'react-i18next';
 import {getTransactionCurrencyForPayInvoice} from '../../../../../store/coinbase/coinbase.effects';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../bitpay-id/utils/bitpay-id-utils';
+import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
 
 export interface DebitCardConfirmParamList {
   amount: number;
@@ -91,6 +90,9 @@ const Confirm = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
   const route = useRoute<RouteProp<WalletGroupParamList, 'DebitCardConfirm'>>();
   const {
     amount,
@@ -149,7 +151,7 @@ const Confirm = () => {
     walletId: string;
     transactionCurrency: string;
   }) => {
-    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
+    showOngoingProcess('FETCHING_PAYMENT_INFO');
     const invoiceCurrency = card.currency.code;
     const {invoiceId, invoice: newInvoice} = await dispatch(
       CardEffects.startCreateDebitCardTopUpInvoice(card, {
@@ -165,7 +167,7 @@ const Confirm = () => {
 
   const handleCreateInvoiceOrTxpError = async (err: any) => {
     await sleep(400);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     const errorMessageConfig = await dispatch(handleCreateTxProposalError(err));
     dispatch(
       AppActions.showBottomNotificationModal(
@@ -204,7 +206,7 @@ const Confirm = () => {
       );
       updateTxDetails(newTxDetails);
       setCoinbaseAccount(selectedCoinbaseAccount);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } catch (err) {
       handleCreateInvoiceOrTxpError(err);
     }
@@ -239,7 +241,7 @@ const Confirm = () => {
       setWallet(selectedWallet);
       setKey(keys[selectedWallet.keyId]);
       await sleep(400);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       updateTxDetails(newTxDetails);
       updateTxp(newTxp);
       setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
@@ -251,9 +253,15 @@ const Confirm = () => {
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
     txp && wallet && recipient
-      ? await dispatch(startSendPayment({txp, key, wallet, recipient}))
+      ? await dispatch(
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+          }),
+        )
       : await dispatch(
           coinbasePayInvoice(
             invoice!.id,
@@ -261,19 +269,13 @@ const Confirm = () => {
             twoFactorCode,
           ),
         );
-    dispatch(dismissOnGoingProcessModal());
     await sleep(400);
 
-    dispatch(
-      AppActions.showPaymentSentModal({
-        isVisible: true,
-        onCloseModal,
-        title:
-          wallet?.credentials?.n > 1
-            ? t('Payment Sent')
-            : t('Payment Accepted'),
-      }),
-    );
+    showPaymentSent({
+      onCloseModal,
+      title:
+        wallet?.credentials?.n > 1 ? t('Payment Sent') : t('Payment Accepted'),
+    });
 
     await sleep(1200);
     navigation.dispatch(StackActions.popToTop());
@@ -281,10 +283,7 @@ const Confirm = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   const showError = ({
@@ -333,7 +332,6 @@ const Confirm = () => {
         try {
           await sendPayment(twoFactorCode);
         } catch (error: any) {
-          dispatch(dismissOnGoingProcessModal());
           const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
           error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
             ? showError({defaultErrorMessage: invalid2faMessage})
@@ -467,7 +465,7 @@ const Confirm = () => {
                   }),
                 );
               } catch (err: any) {
-                dispatch(dismissOnGoingProcessModal());
+                hideOngoingProcess();
                 await sleep(400);
                 const twoFactorRequired =
                   coinbaseAccount &&

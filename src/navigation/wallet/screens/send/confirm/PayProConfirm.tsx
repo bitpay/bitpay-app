@@ -29,11 +29,7 @@ import {
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
 import {sleep, toggleThenUntoggle} from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
   GetFeeUnits,
@@ -98,7 +94,7 @@ import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {RootStacks} from '../../../../../Root';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
-
+import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
 export interface PayProConfirmParamList {
   wallet?: Wallet;
   recipient?: Recipient;
@@ -112,6 +108,8 @@ const PayProConfirm = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const route = useRoute<RouteProp<WalletGroupParamList, 'PayProConfirm'>>();
   const {
     payProOptions,
@@ -213,7 +211,7 @@ const PayProConfirm = () => {
   }, []);
 
   const createTxp = async (selectedWallet: Wallet) => {
-    dispatch(startOnGoingProcessModal('CREATING_TXP'));
+    showOngoingProcess('CREATING_TXP');
     try {
       const {txDetails: newTxDetails, txp: newTxp} = await dispatch(
         await createPayProTxProposal({
@@ -227,7 +225,7 @@ const PayProConfirm = () => {
       setWallet(selectedWallet);
       setKey(keys[selectedWallet.keyId]);
       await sleep(400);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       updateTxDetails(newTxDetails);
       updateTxp(newTxp);
       setRecipient({address: newTxDetails.sendingTo.recipientAddress} as {
@@ -243,7 +241,7 @@ const PayProConfirm = () => {
       );
     } catch (err: any) {
       await sleep(400);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       const onDismiss = () =>
         wallet ? navigation.goBack() : reshowWalletSelector();
       const errorMessageConfig = await dispatch(
@@ -275,7 +273,7 @@ const PayProConfirm = () => {
 
   const handleTxpError = async (err: any) => {
     await sleep(400);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     const onDismiss = () => reshowWalletSelector();
     const errorMessageConfig = await dispatch(
       handleCreateTxProposalError(err, onDismiss),
@@ -292,7 +290,7 @@ const PayProConfirm = () => {
   };
 
   const onCoinbaseAccountSelect = async (walletRowProps: WalletRowProps) => {
-    dispatch(startOnGoingProcessModal('CREATING_TXP'));
+    showOngoingProcess('CREATING_TXP');
     const selectedCoinbaseAccount = walletRowProps.coinbaseAccount!;
     try {
       const rates = await dispatch(startGetRates({}));
@@ -308,7 +306,7 @@ const PayProConfirm = () => {
       updateTxp(undefined);
       setCoinbaseAccount(selectedCoinbaseAccount);
       await sleep(400);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       dispatch(
         Analytics.track('BitPay App - Start Merchant Purchase', {
           merchantBrand: invoice.merchantName,
@@ -352,16 +350,28 @@ const PayProConfirm = () => {
           setConfirmHardwareState('sending');
           await sleep(500);
           await dispatch(
-            startSendPayment({txp, key, wallet, recipient, transport}),
+            startSendPayment({
+              txp,
+              key,
+              wallet,
+              recipient,
+              transport,
+            }),
           );
           setConfirmHardwareState('complete');
           await sleep(1000);
           setConfirmHardwareWalletVisible(false);
         }
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         txp && wallet && recipient
-          ? await dispatch(startSendPayment({txp, key, wallet, recipient}))
+          ? await dispatch(
+              startSendPayment({
+                txp,
+                key,
+                wallet,
+                recipient,
+              }),
+            )
           : await dispatch(
               coinbasePayInvoice(
                 invoice!.id,
@@ -369,7 +379,6 @@ const PayProConfirm = () => {
                 twoFactorCode,
               ),
             );
-        dispatch(dismissOnGoingProcessModal());
       }
       dispatch(
         Analytics.track('Sent Crypto', {
@@ -386,16 +395,11 @@ const PayProConfirm = () => {
         }),
       );
 
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            wallet?.credentials.n > 1
-              ? t('Proposal created')
-              : t('Payment Sent'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title:
+          wallet?.credentials.n > 1 ? t('Proposal created') : t('Payment Sent'),
+      });
 
       await sleep(1000);
 
@@ -460,7 +464,6 @@ const PayProConfirm = () => {
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
       const twoFactorRequired =
         coinbaseAccount &&
         err?.message?.includes(CoinbaseErrorMessages.twoFactorRequired);
@@ -498,7 +501,7 @@ const PayProConfirm = () => {
         try {
           await startSendingPayment({twoFactorCode});
         } catch (error: any) {
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
           error?.message?.includes(invalid2faMessage)
             ? showErrorMessage({defaultErrorMessage: invalid2faMessage})
@@ -591,10 +594,7 @@ const PayProConfirm = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   useEffect(() => {
