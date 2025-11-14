@@ -100,6 +100,7 @@ export enum AppActionTypes {
   SHOW_PAYMENT_SENT_MODAL = 'APP/SHOW_PAYMENT_SENT_MODAL',
   DISMISS_PAYMENT_SENT_MODAL = 'APP/DISMISS_PAYMENT_SENT_MODAL',
   CLEAR_PAYMENT_SENT_MODAL_OPTIONS = 'APP/CLEAR_PAYMENT_SENT_MODAL_OPTIONS',
+  DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
 }
 
 interface ImportLedgerModalToggled {
@@ -455,6 +456,11 @@ interface ClearPaymentSentModalOptions {
   type: typeof AppActionTypes.CLEAR_PAYMENT_SENT_MODAL_OPTIONS;
 }
 
+interface DismissMarketingContentCard {
+  type: typeof AppActionTypes.DISMISS_MARKETING_CONTENT_CARD;
+  payload: string;
+}
+
 export type AppActionType =
   | NetworkChanged
   | SuccessAppInit
@@ -532,4 +538,5 @@ export type AppActionType =
   | ShowArchaxBanner
   | ShowPaymentSentModal
   | DismissPaymentSentModal
-  | ClearPaymentSentModalOptions;
+  | ClearPaymentSentModalOptions
+  | DismissMarketingContentCard;

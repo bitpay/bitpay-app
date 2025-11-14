@@ -52,7 +52,8 @@ const BaseText = styled(H5)`
 export const OptionName = styled(BaseText)``;
 
 export const Balance = styled(BaseText)`
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 400;
 `;
 
 const DropdownOption = ({

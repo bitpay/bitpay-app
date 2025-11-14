@@ -17,6 +17,7 @@ import SendLightSvg from '../../../../../assets/img/send-icon-light.svg';
 import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
 import {
   LightBlack,
+  LightBlue,
   Midnight,
   NeutralSlate,
   SlateDark,
@@ -118,7 +119,7 @@ export const ContactTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
   padding-bottom: 10px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   border-bottom-width: 1px;
   margin-bottom: 10px;
 `;

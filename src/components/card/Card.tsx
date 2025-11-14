@@ -16,8 +16,12 @@ const CardBody = styled.View`
 `;
 
 const CardFooter = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
   min-height: 30px;
   padding: ${CardGutter};
+  width: 100%;
 `;
 
 const BackgroundImage = styled.View`
