@@ -14,11 +14,6 @@ import {
   Link,
   Paragraph,
 } from '../../../components/styled/Text';
-
-import {Network} from '../../../constants';
-import {RootState} from '../../../store';
-import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
-import {ShopActions, ShopEffects} from '../../../store/shop';
 import {
   LightBlack,
   NeutralSlate,
@@ -105,14 +100,11 @@ const SettingsSectionDescription = styled(BaseText)`
   line-height: 18px;
 `;
 
-export const ProfileSettingsScreen = ({route}: ProfileProps) => {
+export const ProfileSettingsScreen = ({}: ProfileProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
-  const network = useSelector<RootState, Network>(({APP}) => APP.network);
-  const syncGiftCardPurchasesWithBitPayId = useAppSelector(
-    ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
-  );
+  const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const apiToken = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.apiToken[APP.network],
