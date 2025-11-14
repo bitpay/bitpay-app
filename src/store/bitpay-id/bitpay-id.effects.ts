@@ -26,7 +26,7 @@ import {ShopActions, ShopEffects} from '../shop';
 import {BitPayIdActions} from './index';
 import {t} from 'i18next';
 import BitPayIdApi from '../../api/bitpay';
-import {ReceivingAddress, SecuritySettings, Session} from './bitpay-id.models';
+import {PasskeyPairingData, ReceivingAddress, SecuritySettings, Session} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
 import {BASE_BITPAY_URLS} from '../../constants/config';
@@ -246,7 +246,7 @@ export const checkLoginWithPasskey =
     email: string | undefined,
     network: Network,
     csrfToken: string,
-  ): Effect<Promise<boolean>> =>
+  ): Effect<Promise<{passkeyAuthStatus: boolean; passkeyPairingData: PasskeyPairingData}>> =>
   async dispatch => {
     let _passkey = false;
 
@@ -258,17 +258,21 @@ export const checkLoginWithPasskey =
     }
 
     if (email && !_passkey) {
-      return Promise.resolve(false);
+      return Promise.resolve({passkeyAuthStatus: false});
     }
 
     try {
-      const signedStatus = await signInWithPasskey(network, csrfToken, email);
-      dispatch(setPasskeyStatus(signedStatus));
-      if (!signedStatus) {
+      const {passkeyAuthStatus, challenge, credential} = await signInWithPasskey(
+        network,
+        csrfToken,
+        email
+      );
+      dispatch(setPasskeyStatus(passkeyAuthStatus));
+      if (!passkeyAuthStatus) {
         const errMsg = 'Failed to sign in with Passkey. Please try again.';
         return Promise.reject(new Error(errMsg));
       }
-      return Promise.resolve(true);
+      return Promise.resolve({passkeyAuthStatus, passkeyPairingData: {challenge, credential}});
     } catch (err: any) {
       const errMsg = err.message || JSON.stringify(err);
 
@@ -293,11 +297,11 @@ export const startLogin =
       let session: Session | null = null;
 
       dispatch(LogActions.info('[startLogin] Authenticating...'));
-      const signedInPasskey: boolean = await dispatch(
+      const {passkeyAuthStatus, passkeyData} = await dispatch(
         checkLoginWithPasskey(email, APP.network, BITPAY_ID.session.csrfToken),
       );
 
-      if (signedInPasskey) {
+      if (passkeyAuthStatus) {
         typeLogin = 'passkeyAuth';
         dispatch(
           LogActions.info(
@@ -356,9 +360,9 @@ export const startLogin =
         APP.network,
         session.csrfToken,
       );
-      await dispatch(startPairAndLoadUser(APP.network, secret));
+      await dispatch(startPairAndLoadUser(APP.network, secret, passkeyData));
 
-      if (signedInPasskey) {
+      if (passkeyAuthStatus) {
         const {BITPAY_ID: bitpay_id} = getState();
         // Updating lists of credentials
         const {credentials} = await getPasskeyCredentials(
@@ -551,10 +555,11 @@ export const startPairAndLoadUser =
     secret: string,
     code?: string,
     agreedToMarketingCommunications?: boolean,
+    passkeyPairingData?: PasskeyPairingData,
   ): Effect<Promise<void>> =>
   async (dispatch, getState) => {
     try {
-      const token = await AuthApi.pair(secret, code);
+      const token = await AuthApi.pair(secret, code, passkeyPairingData);
 
       dispatch(BitPayIdActions.successPairingBitPayId(network, token));
       dispatch(LogActions.info('Successfully paired with BitPayID.'));

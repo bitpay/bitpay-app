@@ -72,3 +72,8 @@ export interface PasskeyCredential {
   createdAt: string;
   publicKey: string;
 }
+
+export interface PasskeyPairingData {
+  challenge: string;
+  credential: PasskeyCredential
+}
