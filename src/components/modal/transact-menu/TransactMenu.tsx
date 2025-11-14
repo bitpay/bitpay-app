@@ -11,6 +11,8 @@ import {
   White,
   Disabled,
   DisabledDark,
+  LinkBlue,
+  LightBlue,
 } from '../../../styles/colors';
 import {ActiveOpacity, HEIGHT, SheetContainer} from '../../styled/Containers';
 import {BaseText, H6} from '../../styled/Text';
@@ -30,7 +32,7 @@ const TransactButton = styled.View`
 `;
 
 const ModalContainer = styled(SheetContainer)`
-  background: ${({theme}) => (theme.dark ? '#101010' : White)};
+  background: ${({theme}) => (theme.dark ? Midnight : LightBlue)};
   flex: 1;
 `;
 
@@ -41,13 +43,18 @@ const TransactItemContainer = styled(TouchableOpacity)`
 `;
 
 const ItemIconContainer = styled.View<{disabled: boolean}>`
+  width: 40px;
+  height: 40px;
   background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
   ${({disabled}) =>
     disabled &&
     css`
       background: ${({theme}) => (theme.dark ? DisabledDark : Disabled)};
     `};
-  border-radius: 11px;
+  border-radius: 23px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
 `;
 
 const ItemTextContainer = styled.View<{disabled: boolean}>`
@@ -71,7 +78,7 @@ const ItemDescriptionText = styled(BaseText)`
 `;
 
 const ScanButtonContainer = styled(TouchableOpacity)`
-  background-color: ${({theme}) => (theme.dark ? Midnight : Action)};
+  border: 2px solid ${({theme}) => (theme.dark ? LinkBlue : Action)};
   flex-direction: row;
   align-self: center;
   align-items: center;
@@ -80,11 +87,13 @@ const ScanButtonContainer = styled(TouchableOpacity)`
   height: 60px;
   padding-left: 11px;
   padding-right: 26px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  width: 100%;
 `;
 
 const ScanButtonText = styled(BaseText)`
-  color: ${White};
+  color: ${({theme}) => (theme.dark ? White : Action)};
+  font-size: 16px;
 `;
 
 const CloseButtonContainer = styled(TouchableOpacity)`
@@ -163,7 +172,7 @@ const TransactModal = () => {
     {
       id: 'exchange',
       img: ({disabled}) => <Icons.Exchange disabled={disabled} />,
-      title: t('Exchange'),
+      title: t('Swap'),
       description: t('Swap crypto for another'),
       onPress: () => {
         dispatch(
@@ -253,7 +262,7 @@ const TransactModal = () => {
     );
   };
 
-  const maxModalHeight = 650;
+  const maxModalHeight = 630;
   const modalHeight = Math.min(maxModalHeight, HEIGHT - 100);
   const modalHeightPercentage = modalHeight / HEIGHT;
 
@@ -265,7 +274,7 @@ const TransactModal = () => {
         </TouchableOpacity>
       </TransactButton>
       <SheetModal
-        backgroundColor={theme.dark ? '#101010' : White}
+        backgroundColor={theme.dark ? Midnight : LightBlue}
         modalLibrary={'bottom-sheet'}
         height={modalHeight}
         snapPoints={[`${Math.floor(modalHeightPercentage * 100)}%`]}

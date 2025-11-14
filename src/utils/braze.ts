@@ -60,3 +60,7 @@ export const isDoMore = (contentCard: ContentCard) => {
 export const isCardOffer = (contentCard: ContentCard) => {
   return contentCard.extras.feed_type === 'card_promotion';
 };
+
+export const isMarketingCarousel = (contentCard: ContentCard) => {
+  return contentCard.extras.feed_type === 'marketing_carousel';
+};
