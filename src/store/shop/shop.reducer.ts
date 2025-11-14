@@ -32,7 +32,6 @@ export interface ShopState {
   giftCards: {
     [key in Network]: (GiftCard | UnsoldGiftCard)[];
   };
-  syncGiftCardPurchasesWithBitPayId: boolean;
   isJoinedWaitlist: boolean;
 }
 
@@ -62,7 +61,6 @@ export const initialShopState: ShopState = {
     [Network.testnet]: [],
     [Network.regtest]: [],
   },
-  syncGiftCardPurchasesWithBitPayId: true,
   isJoinedWaitlist: false,
 };
 
@@ -201,12 +199,6 @@ export const shopReducer = (
                 : card,
           ),
         },
-      };
-    case ShopActionTypes.TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID:
-      return {
-        ...state,
-        syncGiftCardPurchasesWithBitPayId:
-          !state.syncGiftCardPurchasesWithBitPayId,
       };
     case ShopActionTypes.UPDATED_EMAIL_ADDRESS:
       const {email} = action.payload;
