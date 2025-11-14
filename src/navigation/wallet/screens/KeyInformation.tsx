@@ -22,6 +22,7 @@ import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {LightBlack, Slate30} from '../../../styles/colors';
 import ErrorIcon from '../../../../assets/img/error.svg';
+import {View} from 'react-native';
 
 const KeyInfoContainer = styled.SafeAreaView`
   flex: 1;
@@ -70,16 +71,19 @@ const KeyInformation = () => {
 
   const items = [
     {
+      id: '1',
       title: t('Where are my private keys stored?'),
       content: t('They are encrypted and stored locally on your device.'),
     },
     {
+      id: '2',
       title: t('How are my keys stored?'),
       content: t(
         'Your keys are protected by 12-word recovery phrase which unlocks access to your crypto.',
       ),
     },
     {
+      id: '3',
       title: t('Where are they backed up?'),
       content: t(
         "BitPay never stores your recovery phrase or private keys. It's your responsibility to back them up. Write your recovery phrase on the printable backup template or export and secure the backup file.",
@@ -97,16 +101,16 @@ const KeyInformation = () => {
     <KeyInfoContainer>
       <ScrollView>
         {items.map((item, i) => (
-          <>
+          <View key={item.id}>
             <TitleInfoContainer onPress={() => toggleItem(i)}>
               <Title>{item.title}</Title>
               {open[i] ? <ChevronUpSvg /> : <ChevronDownSvg />}
             </TitleInfoContainer>
             {open[i] && <KeyParagraph>{item.content}</KeyParagraph>}
             <Hr />
-          </>
+          </View>
         ))}
-        <Info style={{marginTop: 30, borderRadius: 15}}>
+        <Info style={{marginTop: 30, borderRadius: 15, paddingRight: 25}}>
           <InfoRowContainer>
             <InfoRow>
               <InfoImageContainer infoMargin={'0 15px 0 0'}>
