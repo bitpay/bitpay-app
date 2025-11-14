@@ -41,10 +41,7 @@ import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Button from '../../../components/button/Button';
 import {LayoutAnimation} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {SatToUnit} from '../../../store/wallet/effects/amount/amount';
 import {
   createProposalAndBuildTxDetails,
@@ -57,7 +54,6 @@ import {
 } from '../../../utils/helper-methods';
 import {GetMinFee} from '../../../store/wallet/effects/fee/fee';
 import _ from 'lodash';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {
   buildUIFormattedWallet,
   toFiat,
@@ -68,6 +64,7 @@ import Question from '../../../../assets/img/settings/feedback/question.svg';
 import {ScrollView} from 'react-native-gesture-handler';
 import {WalletRowProps} from '../../../components/list/WalletRow';
 import BalanceDetailsModal from '../components/BalanceDetailsModal';
+import {useOngoingProcess} from '../../../contexts';
 
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
@@ -146,6 +143,7 @@ const SelectInputs = () => {
   const navigation = useNavigation();
   const {t} = useTranslation();
   const route = useRoute<RouteProp<WalletGroupParamList, 'SelectInputs'>>();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const useUnconfirmedFunds = useAppSelector(
     ({WALLET}) => WALLET.useUnconfirmedFunds,
   );
@@ -312,7 +310,7 @@ const SelectInputs = () => {
   const goToConfirmView = async () => {
     try {
       haptic('impactLight');
-      dispatch(startOnGoingProcessModal('LOADING'));
+      showOngoingProcess('LOADING');
       const selectedInputs = inputs.filter(input => input.checked);
       logger.debug(
         `Estimating fee for: ${selectedInputs.length} selected inputs - feeLevel: ${feeLevel[currencyAbbreviation]}`,
@@ -340,7 +338,7 @@ const SelectInputs = () => {
       const {txDetails, txp} = (await dispatch<any>(
         createProposalAndBuildTxDetails(tx),
       )) as any;
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       navigation.navigate('Confirm', {
         wallet,
@@ -354,7 +352,7 @@ const SelectInputs = () => {
       const errorMessageConfig = await dispatch(
         handleCreateTxProposalError(err),
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       dispatch(
         showBottomNotificationModal({

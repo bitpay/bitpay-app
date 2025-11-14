@@ -23,6 +23,7 @@ import {sleep} from '../../../../../utils/helper-methods';
 import RNRestart from 'react-native-restart';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {SettingsDetailsParamList} from '../../SettingsDetails';
+import {logManager} from '../../../../../managers/LogManager';
 
 type Props = NativeStackScreenProps<SettingsDetailsParamList, 'Theme'>;
 
@@ -90,9 +91,7 @@ const ThemeSettings: React.FC<Props> = ({navigation}) => {
 
   const onSetThemePress = (setScheme: ColorSchemeName) => {
     dispatch(AppActions.setColorScheme(setScheme));
-    dispatch(
-      LogActions.info('Theme updated to ' + (setScheme || 'system default')),
-    );
+    logManager.info('Theme updated to ' + (setScheme || 'system default'));
     dispatch(
       Analytics.track('Saved Theme', {
         theme: setScheme || 'system default',

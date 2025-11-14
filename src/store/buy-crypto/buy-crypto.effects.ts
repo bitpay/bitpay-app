@@ -7,10 +7,10 @@ import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {getTransakFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/transak-utils';
 import {navigationRef} from '../../Root';
 import {Effect} from '../index';
-import {LogActions} from '../log';
 import {BuyCryptoLimits} from './buy-crypto.models';
 import {Analytics} from '../analytics/analytics.effects';
 import {BuyCryptoExchangeKey} from '../../navigation/services/buy-crypto/utils/buy-crypto-utils';
+import {logManager} from '../../managers/LogManager';
 
 export const calculateAltFiatToUsd =
   (
@@ -34,16 +34,12 @@ export const calculateAltFiatToUsd =
     if (rateBtcUsd && rateBtcAlt?.rate && rateBtcAlt.rate > 0) {
       const rateAltUsd = rateBtcUsd.rate / rateBtcAlt.rate;
       const equivalentAmount = +(altFiatAmount * rateAltUsd).toFixed(2);
-      dispatch(
-        LogActions.debug(
-          `${altFiatAmount} ${altFiatCurrency} => ${equivalentAmount} USD`,
-        ),
+      logManager.debug(
+        `${altFiatAmount} ${altFiatCurrency} => ${equivalentAmount} USD`,
       );
       return equivalentAmount;
     } else {
-      dispatch(
-        LogActions.warn(`There are no rates for : ${altFiatCurrency}-USD`),
-      );
+      logManager.warn(`There are no rates for : ${altFiatCurrency}-USD`);
       return undefined;
     }
   };
@@ -72,17 +68,13 @@ export const calculateUsdToAltFiat =
         decimalPrecision,
       );
       if (!shouldSkipLogging) {
-        dispatch(
-          LogActions.debug(
-            `${usdAmount} USD => ${equivalentAmount} ${altFiatCurrency}`,
-          ),
+        logManager.debug(
+          `${usdAmount} USD => ${equivalentAmount} ${altFiatCurrency}`,
         );
       }
       return equivalentAmount;
     } else {
-      dispatch(
-        LogActions.warn(`There are no rates for : USD-${altFiatCurrency}`),
-      );
+      logManager.warn(`There are no rates for : USD-${altFiatCurrency}`);
       return undefined;
     }
   };
@@ -110,17 +102,13 @@ export const calculateAnyFiatToAltFiat =
     if (rateBtcToFiat && rateBtcFromFiat?.rate && rateBtcFromFiat.rate > 0) {
       const newRate = rateBtcToFiat.rate / rateBtcFromFiat.rate;
       const equivalentAmount = +(fromFiatAmount * newRate).toFixed(2);
-      dispatch(
-        LogActions.debug(
-          `${fromFiatAmount} ${fromFiatCurrency} => ${equivalentAmount} ${toFiatCurrency}`,
-        ),
+      logManager.debug(
+        `${fromFiatAmount} ${fromFiatCurrency} => ${equivalentAmount} ${toFiatCurrency}`,
       );
       return equivalentAmount;
     } else {
-      dispatch(
-        LogActions.warn(
-          `There are no rates for : ${rateBtcFromFiat}-${rateBtcToFiat}`,
-        ),
+      logManager.warn(
+        `There are no rates for : ${rateBtcFromFiat}-${rateBtcToFiat}`,
       );
       return undefined;
     }
@@ -137,10 +125,8 @@ export const getBuyCryptoFiatLimits =
     let limits: BuyCryptoLimits = {min: undefined, max: undefined};
     let baseFiatArray: string[];
 
-    dispatch(
-      LogActions.info(
-        `Getting buyCrypto fiat limits. Exchange: ${exchange} - fiatCurrency: ${fiatCurrency}`,
-      ),
+    logManager.info(
+      `Getting buyCrypto fiat limits. Exchange: ${exchange} - fiatCurrency: ${fiatCurrency}`,
     );
 
     switch (exchange) {

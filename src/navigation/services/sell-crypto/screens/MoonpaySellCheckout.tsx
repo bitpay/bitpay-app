@@ -69,12 +69,8 @@ import {
   PoliciesText,
   CheckBoxCol,
 } from '../../swap-crypto/styled/SwapCryptoCheckout.styled';
+import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
@@ -121,7 +117,7 @@ import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
-import {AppActions} from '../../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -190,6 +186,9 @@ const MoonpaySellCheckout: React.FC = () => {
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
   let status: string;
@@ -428,7 +427,7 @@ const MoonpaySellCheckout: React.FC = () => {
         console.log(ctxp);
         setFee(ctxp.fee);
         setIsLoading(false);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(400);
 
         if (useSendMax) {
@@ -605,8 +604,6 @@ const MoonpaySellCheckout: React.FC = () => {
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-        await sleep(400);
         broadcastedTx = await dispatch(
           publishAndSign({
             txp: ctxp! as TransactionProposal,
@@ -617,19 +614,13 @@ const MoonpaySellCheckout: React.FC = () => {
         );
       }
       updateMoonpayTx(txData!, broadcastedTx as Partial<TransactionProposal>);
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
-
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            wallet?.credentials?.n > 1
-              ? t('Payment Sent')
-              : t('Payment Accepted'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title:
+          wallet?.credentials?.n > 1
+            ? t('Payment Sent')
+            : t('Payment Accepted'),
+      });
 
       await sleep(1200);
       const moonpaySettingsParams: MoonpaySettingsProps = {
@@ -662,7 +653,7 @@ const MoonpaySellCheckout: React.FC = () => {
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -693,10 +684,7 @@ const MoonpaySellCheckout: React.FC = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -875,7 +863,7 @@ const MoonpaySellCheckout: React.FC = () => {
     actions?: any[],
   ) => {
     setIsLoading(false);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
 
     let msg = getErrorMsgFromError(err);
 
@@ -928,7 +916,7 @@ const MoonpaySellCheckout: React.FC = () => {
       init();
     };
 
-    dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
+    showOngoingProcess('EXCHANGE_GETTING_DATA');
     if (isToken) {
       useSendMax = false;
     }

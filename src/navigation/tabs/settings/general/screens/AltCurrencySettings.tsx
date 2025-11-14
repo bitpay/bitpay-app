@@ -16,10 +16,7 @@ import {
 } from '../../../../../components/styled/Containers';
 import {FlatList, Keyboard, SectionList, View} from 'react-native';
 import {BaseText} from '../../../../../components/styled/Text';
-import {
-  dismissOnGoingProcessModal,
-  setDefaultAltCurrency,
-} from '../../../../../store/app/app.actions';
+import {setDefaultAltCurrency} from '../../../../../store/app/app.actions';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 
 import {useNavigation} from '@react-navigation/native';
@@ -31,8 +28,8 @@ import {updatePortfolioBalance} from '../../../../../store/wallet/wallet.actions
 import {useTranslation} from 'react-i18next';
 import {coinbaseInitialize} from '../../../../../store/coinbase';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {sleep} from '../../../../../utils/helper-methods';
+import {useOngoingProcess} from '../../../../../contexts';
 
 const AltCurrencySettingsContainer = styled.SafeAreaView`
   margin-top: 20px;
@@ -88,6 +85,7 @@ const AltCurrencySettings = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const alternativeCurrencies = useAppSelector(
     ({APP}: RootState) => APP.altCurrencyList,
   );
@@ -159,7 +157,7 @@ const AltCurrencySettings = () => {
             selected={selected}
             onPress={async () => {
               Keyboard.dismiss();
-              dispatch(startOnGoingProcessModal('LOADING'));
+              showOngoingProcess('LOADING');
               await sleep(500);
               dispatch(
                 Analytics.track('Saved Display Currency', {
@@ -171,7 +169,7 @@ const AltCurrencySettings = () => {
               dispatch(updatePortfolioBalance());
               await dispatch(coinbaseInitialize());
               await sleep(500);
-              dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
               await sleep(500);
               navigation.goBack();
             }}

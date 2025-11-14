@@ -13,11 +13,10 @@ import {AppActions} from '../../../../../store/app';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {getBillAccountEventParams} from '../utils';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {sleep} from '../../../../../utils/helper-methods';
 import {ShopEffects} from '../../../../../store/shop';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../../../../navigation/wallet/components/ErrorMessages';
+import {useOngoingProcess} from '../../../../../contexts';
 
 const sortByAscendingDate = (a: BillPayAccount, b: BillPayAccount) => {
   const farIntoTheFuture = moment().add(1, 'year').toDate();
@@ -52,6 +51,7 @@ export const BillList = ({
 }) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const persistedBillPayPayments = useAppSelector(
     ({APP, SHOP}) => SHOP.billPayPayments[APP.network],
   ) as BillPayPayment[];
@@ -100,12 +100,12 @@ export const BillList = ({
 
   const removeBill = async (account: BillPayAccount) => {
     await sleep(500);
-    dispatch(startOnGoingProcessModal('REMOVING_BILL'));
+    showOngoingProcess('REMOVING_BILL');
     if (account) {
       await dispatch(ShopEffects.startHideBillPayAccount(account.id));
     }
     await dispatch(ShopEffects.startGetBillPayAccounts());
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     dispatch(
       Analytics.track(
         'Bill Pay - Removed Bill',
@@ -143,7 +143,7 @@ export const BillList = ({
                           text: t('REMOVE BILL'),
                           action: () => {
                             removeBill(account).catch(async err => {
-                              dispatch(dismissOnGoingProcessModal());
+                              hideOngoingProcess();
                               await sleep(500);
                               dispatch(
                                 AppActions.showBottomNotificationModal(

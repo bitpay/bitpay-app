@@ -157,9 +157,10 @@ export enum ExternalServicesSettingsScreens {
   THORSWAP_DETAILS = 'ThorswapDetails',
 }
 
-const ExternalServicesSettingsGroup: React.FC<
-  ExternalServicesSettingsProps
-> = ({ExternalServicesSettings, theme}) => {
+const ExternalServicesSettingsGroup = ({
+  ExternalServicesSettings,
+  theme,
+}: ExternalServicesSettingsProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

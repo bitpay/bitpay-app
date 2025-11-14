@@ -13,6 +13,7 @@ import {
   isL2NoSideChainNetwork,
 } from '../../../utils/helper-methods';
 import cloneDeep from 'lodash.clonedeep';
+import {tokenManager} from '../../../managers/TokenManager';
 
 export const GetProtocolPrefix = (
   network: string = 'livenet',
@@ -40,8 +41,10 @@ export const GetPrecision =
   > =>
   (_dispatch, getState) => {
     const {
-      WALLET: {tokenDataByAddress, customTokenDataByAddress},
+      WALLET: {customTokenDataByAddress},
     } = getState();
+    const {tokenDataByAddress} = tokenManager.getTokenOptions();
+
     const tokens = {
       ...tokenDataByAddress,
       ...customTokenDataByAddress,
@@ -165,8 +168,9 @@ export const GetName =
   ): Effect<string> =>
   (_dispatch, getState) => {
     const {
-      WALLET: {tokenDataByAddress, customTokenDataByAddress},
+      WALLET: {customTokenDataByAddress},
     } = getState();
+    const {tokenDataByAddress} = tokenManager.getTokenOptions();
     const tokens = {
       ...tokenDataByAddress,
       ...customTokenDataByAddress,

@@ -24,10 +24,7 @@ import {
 import Button from '../../../../components/button/Button';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../../store';
-import {
-  showBottomNotificationModal,
-  dismissOnGoingProcessModal,
-} from '../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {getBuyCryptoFiatLimits} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {Action, White, Black, Slate} from '../../../../styles/colors';
@@ -52,7 +49,6 @@ import {
   isPaymentMethodSupported,
 } from '../utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
@@ -96,6 +92,7 @@ import {
 import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
 import Blockie from '../../../../components/blockie/Blockie';
 import ArchaxFooter from '../../../../components/archax/archax-footer';
+import {useOngoingProcess, useTokenContext} from '../../../../contexts';
 
 export type BuyCryptoRootScreenParams =
   | {
@@ -134,11 +131,11 @@ const BuyCryptoRoot = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenDataByAddress} = useTokenContext();
+
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
-  const tokenDataByAddress = useAppSelector(
-    ({WALLET}: RootState) => WALLET.tokenDataByAddress,
-  );
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
@@ -211,7 +208,7 @@ const BuyCryptoRoot = ({
     type?: string,
     fromCurrencyAbbreviation?: string,
   ) => {
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     await sleep(400);
     dispatch(showWalletError(type, fromCurrencyAbbreviation));
   };
@@ -245,7 +242,7 @@ const BuyCryptoRoot = ({
       if (fromWalletData) {
         setWallet(fromWalletData);
         await sleep(500);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       } else {
         walletError('walletNotSupportedToBuy');
       }
@@ -279,7 +276,7 @@ const BuyCryptoRoot = ({
         if (allowedWallets[0]) {
           setSelectedWallet(allowedWallets[0]);
           await sleep(500);
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
         } else {
           walletError('noWalletsAbleToBuy', fromCurrencyAbbreviation);
         }
@@ -671,7 +668,7 @@ const BuyCryptoRoot = ({
   const init = async () => {
     try {
       await sleep(100);
-      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+      showOngoingProcess('GENERAL_AWAITING');
       const requestData: ExternalServicesConfigRequestParams = {
         currentLocationCountry: locationData?.countryShortCode,
         currentLocationState: locationData?.stateShortCode,
@@ -688,7 +685,7 @@ const BuyCryptoRoot = ({
     }
 
     if (buyCryptoConfig?.disabled) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -804,7 +801,7 @@ const BuyCryptoRoot = ({
         'Buy crypto Error when trying to build the list of supported coins from: ' +
           JSON.stringify(supportedCoins),
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -836,7 +833,7 @@ const BuyCryptoRoot = ({
       selectFirstAvailableWallet();
     } else {
       await sleep(500);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     }
   };
 
@@ -869,7 +866,7 @@ const BuyCryptoRoot = ({
         }
 
         await sleep(500);
-        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        showOngoingProcess('ADDING_WALLET');
 
         const createdToWallet = await dispatch(addWallet(createNewWalletData));
         logger.debug(
@@ -885,9 +882,9 @@ const BuyCryptoRoot = ({
         );
         setWallet(createdToWallet);
         await sleep(300);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       } catch (err: any) {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         if (err.message === 'invalid password') {
           dispatch(showBottomNotificationModal(WrongPasswordError()));

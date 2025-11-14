@@ -34,14 +34,8 @@ import {
   formatFiatAmount,
   sleep,
 } from '../../../../../utils/helper-methods';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../../store/app/app.actions';
+import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
+import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 import {
   Amount,
   ConfirmContainer,
@@ -117,7 +111,7 @@ import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {CommonActions} from '@react-navigation/native';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {RootStacks} from '../../../../../Root';
-import {AppActions} from '../../../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -186,6 +180,8 @@ const Confirm = () => {
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const {isoCode} = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   const key = allKeys[wallet?.keyId!];
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
@@ -365,7 +361,7 @@ const Confirm = () => {
 
   const updateTxProposal = async (newOpts: any) => {
     try {
-      dispatch(startOnGoingProcessModal('UPDATING_TXP'));
+      showOngoingProcess('UPDATING_TXP');
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,
@@ -390,9 +386,9 @@ const Confirm = () => {
       setDestinationTag(_txDetails.destinationTag);
       setMemo(_txDetails.memo);
       await sleep(500);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } catch (err: any) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       const errorMessageConfig = await dispatch(
         handleCreateTxProposalError(err),
       );
@@ -406,10 +402,7 @@ const Confirm = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   const startSendingPayment = async ({
@@ -435,39 +428,35 @@ const Confirm = () => {
         setConfirmHardwareState('sending');
         await sleep(500);
         await dispatch(
-          startSendPayment({txp, key, wallet, recipient, transport}),
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+            transport,
+          }),
         );
         setConfirmHardwareState('complete');
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-        await sleep(500);
         await dispatch(
-          startSendPayment({txp, key, wallet, recipient, transport}),
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+            transport,
+          }),
         );
-        dispatch(dismissOnGoingProcessModal());
       }
-
-      dispatch(
-        Analytics.track('Sent Crypto', {
-          context: 'Confirm',
-          coin: currencyAbbreviation || '',
-        }),
-      );
-
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            wallet.credentials.n > 1
-              ? t('Proposal created')
-              : t('Payment Sent'),
-        }),
-      );
-
-      await sleep(1000);
+      await sleep(300);
+      showPaymentSent({
+        title:
+          wallet.credentials.n > 1 ? t('Proposal created') : t('Payment Sent'),
+        onCloseModal,
+      });
+      await sleep(300);
       if (recipient.type === 'coinbase') {
         navigation.dispatch(StackActions.popToTop());
         navigation.dispatch(StackActions.push('CoinbaseRoot'));
@@ -525,7 +514,6 @@ const Confirm = () => {
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {

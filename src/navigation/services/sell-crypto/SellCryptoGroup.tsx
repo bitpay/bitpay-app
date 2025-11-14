@@ -41,7 +41,7 @@ export enum SellCryptoScreens {
   SIMPLEX_SELL_CHECKOUT = 'SimplexSellCheckout',
 }
 
-const SellCryptoGroup: React.FC<SellCryptoProps> = ({SellCrypto, theme}) => {
+const SellCryptoGroup = ({SellCrypto, theme}: SellCryptoProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

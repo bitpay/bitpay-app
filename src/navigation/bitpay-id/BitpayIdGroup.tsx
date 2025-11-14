@@ -47,7 +47,7 @@ export enum BitpayIdScreens {
   TWO_FACTOR_ENABLED = 'TwoFactorEnabled',
 }
 
-const BitpayIdGroup: React.FC<BitpayIdProps> = ({BitpayId, theme}) => {
+const BitpayIdGroup = ({BitpayId, theme}: BitpayIdProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -76,7 +76,6 @@ const BitpayIdGroup: React.FC<BitpayIdProps> = ({BitpayId, theme}) => {
                     buttonType={'pill'}
                     onPress={async () => {
                       haptic('impactLight');
-
                       await dispatch(BitPayIdEffects.startDisconnectBitPayId());
                       dispatch(ShopEffects.startFetchCatalog());
 

@@ -27,7 +27,7 @@ export enum MerchantScreens {
   MERCHANT_DETAILS = 'MerchantDetails',
 }
 
-const MerchantGroup: React.FC<MerchantProps> = ({Merchant, theme}) => {
+const MerchantGroup = ({Merchant, theme}: MerchantProps) => {
   const commonOptions = useStackScreenOptions(theme);
   return (
     <Merchant.Group screenOptions={commonOptions}>

@@ -40,6 +40,7 @@ import {Platform} from 'react-native';
 import Share, {ShareOptions} from 'react-native-share';
 import RNFS from 'react-native-fs';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
+import {logManager} from '../../../../managers/LogManager';
 
 const BWC = BwcProvider.getInstance();
 
@@ -224,7 +225,7 @@ const ExportWallet = () => {
       await RNFS.writeFile(filePath, txt, 'utf8');
       await Share.open(opts);
     } catch (err: any) {
-      dispatch(LogActions.debug(`[shareFile]: ${err.message}`));
+      logManager.debug(`[shareFile]: ${err.message}`);
       if (err && err.message === 'User did not share') {
         return;
       } else {
@@ -242,10 +243,10 @@ const ExportWallet = () => {
       },
       (error, event) => {
         if (error) {
-          dispatch(LogActions.error('Error sending email: ' + error));
+          logManager.error('Error sending email: ' + error);
         }
         if (event) {
-          dispatch(LogActions.debug('Email Backup: ' + event));
+          logManager.debug('Email Backup: ' + event);
         }
       },
     );
@@ -279,7 +280,7 @@ const ExportWallet = () => {
       setSendButtonState(undefined);
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[onSendByEmail] ', e));
+      logManager.error('[onSendByEmail] ', e);
       setSendButtonState('failed');
       await sleep(500);
       setSendButtonState(undefined);

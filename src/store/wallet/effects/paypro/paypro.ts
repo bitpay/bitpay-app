@@ -2,7 +2,7 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getCurrencyCodeFromCoinAndChain} from '../../../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {Effect} from '../../..';
-import {LogActions} from '../../../log';
+import {logManager} from '../../../../managers/LogManager';
 
 const BWC = BwcProvider.getInstance();
 export interface PayProPaymentOption {
@@ -33,7 +33,7 @@ export interface SupportedTransactionCurrencies {
 export const GetPayProOptions =
   (paymentUrl: string, attempt: number = 1): Effect<Promise<PayProOptions>> =>
   async (dispatch): Promise<PayProOptions> => {
-    dispatch(LogActions.info('PayPro Options: try... ' + attempt));
+    logManager.info('PayPro Options: try... ' + attempt);
     const bwc = BWC.getPayProV2();
     const options: any = {
       paymentUrl,
@@ -45,7 +45,7 @@ export const GetPayProOptions =
       } else {
         errorStr = JSON.stringify(err);
       }
-      dispatch(LogActions.error(`PayPro Options ERR: ${errorStr}`));
+      logManager.error(`PayPro Options ERR: ${errorStr}`);
       if (attempt <= 3) {
         await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
         return dispatch(GetPayProOptions(paymentUrl, ++attempt));
@@ -56,9 +56,7 @@ export const GetPayProOptions =
     payOpts.paymentOptions.forEach((o: any) => {
       o.network = 'livenet';
     });
-    dispatch(
-      LogActions.info('PayPro Options: SUCCESS', JSON.stringify(payOpts)),
-    );
+    logManager.info('PayPro Options: SUCCESS', JSON.stringify(payOpts));
     return payOpts;
   };
 
@@ -72,7 +70,7 @@ export const GetPayProDetails =
   }): Effect<Promise<any>> =>
   async (dispatch): Promise<any> => {
     let {paymentUrl, coin, chain, payload, attempt = 1} = params;
-    dispatch(LogActions.info('PayPro Details: try... ' + attempt));
+    logManager.info('PayPro Details: try... ' + attempt);
     const bwc = BWC.getPayProV2();
     const options: any = {
       paymentUrl,
@@ -90,7 +88,7 @@ export const GetPayProDetails =
         } else {
           errorStr = JSON.stringify(err);
         }
-        dispatch(LogActions.error(`PayPro Details ERR: ${errorStr}`));
+        logManager.error(`PayPro Details ERR: ${errorStr}`);
         if (attempt <= 3) {
           await new Promise(resolve => setTimeout(resolve, 5000 * attempt));
           return dispatch(
@@ -107,9 +105,7 @@ export const GetPayProDetails =
         }
       });
     payDetails.network = 'livenet';
-    dispatch(
-      LogActions.info('PayPro Details: SUCCESS', JSON.stringify(payDetails)),
-    );
+    logManager.info('PayPro Details: SUCCESS', JSON.stringify(payDetails));
     return payDetails;
   };
 
@@ -181,7 +177,7 @@ export const HandlePayPro =
       } else {
         errorStr = JSON.stringify(err);
       }
-      dispatch(LogActions.error(`HandlePayPro ERR: ${errorStr}`));
+      logManager.error(`HandlePayPro ERR: ${errorStr}`);
       throw err;
     }
   };

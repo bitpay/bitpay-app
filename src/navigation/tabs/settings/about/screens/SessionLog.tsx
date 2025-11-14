@@ -15,7 +15,6 @@ import {
 import {BaseText} from '../../../../../components/styled/Text';
 import {IS_ANDROID, IS_DESKTOP, IS_IOS} from '../../../../../constants';
 import {APP_NAME_UPPERCASE, APP_VERSION} from '../../../../../constants/config';
-import {LogActions} from '../../../../../store/log';
 import {LogEntry, LogLevel} from '../../../../../store/log/log.models';
 import {
   Action,
@@ -27,7 +26,7 @@ import {
   Slate,
   Black,
 } from '../../../../../styles/colors';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {useAppDispatch} from '../../../../../utils/hooks';
 import {AboutGroupParamList, AboutScreens} from '../AboutGroup';
 import Settings from '../../../../../components/settings/Settings';
 import SheetModal from '../../../../../components/modal/base/sheet/SheetModal';
@@ -41,6 +40,8 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {isAndroidStoragePermissionGranted} from '../../../../../utils/helper-methods';
 import Share, {ShareOptions} from 'react-native-share';
 import RNFS from 'react-native-fs';
+import {logManager} from '../../../../../managers/LogManager';
+import {useLogContext} from '../../../../../contexts/LogContext';
 
 type SessionLogsScreenProps = NativeStackScreenProps<
   AboutGroupParamList,
@@ -157,7 +158,9 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const [showOptions, setShowOptions] = useState(false);
-  const logs = useAppSelector(({LOG}) => LOG.logs);
+
+  const {logs} = useLogContext();
+
   const [filterLevel, setFilterLevel] = useState(LogLevel.Debug);
 
   const filteredLogs = logs.filter(log => log.level <= filterLevel);
@@ -209,7 +212,7 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
       await RNFS.writeFile(filePath, data, 'utf8');
       await Share.open(opts);
     } catch (err: any) {
-      dispatch(LogActions.debug(`[shareFile]: ${err.message}`));
+      logManager.debug(`[shareFile]: ${err.message}`);
       if (err && err.message === 'User did not share') {
         return;
       } else {
@@ -227,10 +230,10 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
       },
       (error, event) => {
         if (error) {
-          dispatch(LogActions.error('Error sending email: ' + error));
+          logManager.error('Error sending email: ' + error);
         }
         if (event) {
-          dispatch(LogActions.debug('Email Logs: ' + event));
+          logManager.debug('Email Logs: ' + event);
         }
       },
     );
@@ -333,7 +336,6 @@ const SessionLogs = ({}: SessionLogsScreenProps) => {
       />
 
       <SheetModal
-        modalLibrary={'bottom-sheet'}
         placement={'bottom'}
         isVisible={showOptions}
         onBackdropPress={() => setShowOptions(false)}>

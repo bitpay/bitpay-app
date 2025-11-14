@@ -52,7 +52,7 @@ export enum BillScreens {
   PAYMENTS = 'Payments',
 }
 
-const BillGroup: React.FC<BillProps> = ({Bill, theme}) => {
+const BillGroup = ({Bill, theme}: BillProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

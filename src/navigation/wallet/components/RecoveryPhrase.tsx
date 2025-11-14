@@ -25,7 +25,6 @@ import {
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
@@ -53,7 +52,6 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import Haptic from '../../../components/haptic-feedback/haptic';
@@ -89,6 +87,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {IS_ANDROID, IS_IOS} from '../../../constants';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useOngoingProcess} from '../../../contexts';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -189,6 +188,7 @@ const RecoveryPhrase = () => {
   const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletGroupParamList, 'Import'>>();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
@@ -377,7 +377,7 @@ const RecoveryPhrase = () => {
 
   const scanFunds = async (key: Key) => {
     try {
-      await dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
+      showOngoingProcess('IMPORT_SCANNING_FUNDS');
       logger.debug('[Scan funds] Get rates (1/4)...');
       await dispatch(startGetRates({force: true}));
       logger.debug('[Scan funds] Fix wallet addresses (2/4)...');
@@ -394,11 +394,11 @@ const RecoveryPhrase = () => {
           createTokenWalletWithFunds: true,
         }),
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       logger.debug('[Scan Funds] Update portfolio balance (4/4)... Finished.');
       dispatch(updatePortfolioBalance());
     } catch (error) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       // ignore error
     }
   };
@@ -408,14 +408,14 @@ const RecoveryPhrase = () => {
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      dispatch(startOnGoingProcessModal('IMPORTING'));
+      showOngoingProcess('IMPORTING');
       await sleep(1000);
       const key = !derivationPathEnabled
         ? ((await dispatch<any>(startImportMnemonic(importData, opts))) as Key)
         : ((await dispatch<any>(
             startImportWithDerivationPath(importData, opts),
           )) as Key);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(1000);
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
       await scanFunds(key);
@@ -433,7 +433,7 @@ const RecoveryPhrase = () => {
       );
     } catch (e: any) {
       logger.error(e.message);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       showErrorModal(e);
       return;
@@ -476,13 +476,13 @@ const RecoveryPhrase = () => {
         }
       }
 
-      await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+      showOngoingProcess('CREATING_KEY');
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(1000);
       try {
-        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
+        showOngoingProcess('IMPORT_SCANNING_FUNDS');
         await dispatch(startGetRates({force: true}));
         // workaround for fixing wallets without receive address
         await fixWalletAddresses({
@@ -509,11 +509,11 @@ const RecoveryPhrase = () => {
         walletTermsAccepted,
         key,
       });
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       setRecreateWallet(false);
     } catch (e: any) {
       logger.error(e.message);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       showErrorModal(e);
       setRecreateWallet(false);

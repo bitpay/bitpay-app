@@ -20,7 +20,6 @@ import {CacheKeys} from '../../../rate/rate.models';
 import moment from 'moment';
 import {addAltCurrencyList} from '../../../app/app.actions';
 import {AltCurrenciesRowProps} from '../../../../components/list/AltCurrenciesRow';
-import {LogActions} from '../../../log';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
 import {
   getCurrencyAbbreviation,
@@ -33,6 +32,8 @@ import {
 import {calculateUsdToAltFiat} from '../../../../store/buy-crypto/buy-crypto.effects';
 import {IsERCToken, IsSVMChain} from '../../utils/currency';
 import {UpdateAllKeyAndWalletStatusContext} from '../status/status';
+import {tokenManager} from '../../../../managers/TokenManager';
+import {logManager} from '../../../../managers/LogManager';
 
 export const startGetRates =
   ({
@@ -44,7 +45,7 @@ export const startGetRates =
   }): Effect<Promise<Rates>> =>
   async (dispatch, getState) => {
     return new Promise(async resolve => {
-      dispatch(LogActions.info('startGetRates: starting...'));
+      logManager.info('startGetRates: starting...');
       const {
         RATE: {ratesCacheKey, rates: cachedRates},
         APP: {altCurrencyList},
@@ -57,43 +58,33 @@ export const startGetRates =
         !force &&
         altCurrencyList.length > 0
       ) {
-        dispatch(
-          LogActions.info('startGetRates: success (using cached rates)'),
-        );
+        logManager.info('startGetRates: success (using cached rates)');
         return resolve(cachedRates);
       }
 
       dispatch(updateCacheKey({cacheKey: CacheKeys.RATES}));
 
       try {
-        dispatch(LogActions.info('startGetRates: fetching new rates...'));
+        logManager.info('startGetRates: fetching new rates...');
         const yesterday =
           moment().subtract(1, 'days').startOf('hour').unix() * 1000;
 
-        dispatch(
-          LogActions.info(
-            `startGetRates: get request to: ${BASE_BWS_URL}/v3/fiatrates/`,
-          ),
+        logManager.info(
+          `startGetRates: get request to: ${BASE_BWS_URL}/v3/fiatrates/`,
         );
         const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
-        dispatch(LogActions.info('startGetRates: success get request'));
+        logManager.info('startGetRates: success get request');
 
-        dispatch(
-          LogActions.info(
-            `startGetRates: get request (yesterday) to: ${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
-          ),
+        logManager.info(
+          `startGetRates: get request (yesterday) to: ${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
         );
         const {data: lastDayRates} = await axios.get(
           `${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
         );
-        dispatch(
-          LogActions.info('startGetRates: success get request (yesterday)'),
-        );
+        logManager.info('startGetRates: success get request (yesterday)');
 
         if (context === 'init' || altCurrencyList.length === 0) {
-          dispatch(
-            LogActions.info('startGetRates: setting alternative currency list'),
-          );
+          logManager.info('startGetRates: setting alternative currency list');
           // set alternative currency list
           const alternatives: Array<AltCurrenciesRowProps> = [];
           rates.btc.forEach((r: Rate) => {
@@ -103,10 +94,8 @@ export const startGetRates =
           });
           alternatives.sort((a, b) => (a.name < b.name ? -1 : 1));
           dispatch(addAltCurrencyList(alternatives));
-          dispatch(
-            LogActions.info(
-              'startGetRates: success set alternative currency list',
-            ),
+          logManager.info(
+            'startGetRates: success set alternative currency list',
           );
         }
 
@@ -124,7 +113,7 @@ export const startGetRates =
             lastDayRates: allLastDayRates,
           }),
         );
-        dispatch(LogActions.info('startGetRates: success'));
+        logManager.info('startGetRates: success');
         resolve(allRates);
       } catch (err) {
         let errorStr;
@@ -134,7 +123,7 @@ export const startGetRates =
           errorStr = JSON.stringify(err);
         }
         dispatch(failedGetRates());
-        dispatch(LogActions.error(`startGetRates: failed ${errorStr}`));
+        logManager.error(`startGetRates: failed ${errorStr}`);
         resolve(getState().RATE.rates); // Return cached rates
       }
     });
@@ -143,7 +132,7 @@ export const startGetRates =
 export const getContractAddresses =
   (chain: string): Effect<Array<string>> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info(`getContractAddresses ${chain}: starting...`));
+    logManager.info(`getContractAddresses ${chain}: starting...`);
     const {
       WALLET: {keys},
     } = getState();
@@ -164,7 +153,7 @@ export const getContractAddresses =
         }
       });
     });
-    dispatch(LogActions.info('getContractAddresses: success'));
+    logManager.info('getContractAddresses: success');
     const uniqueTokenAddresses = [...new Set(allTokenAddresses)];
     return uniqueTokenAddresses;
   };
@@ -175,7 +164,7 @@ export const getTokenRates =
   > =>
   (dispatch, getState) => {
     return new Promise(async resolve => {
-      dispatch(LogActions.info('getTokenRates: starting...'));
+      logManager.info('getTokenRates: starting...');
 
       let tokenRates: {[key in string]: any} = {};
       let tokenLastDayRates: {[key in string]: any} = {};
@@ -185,8 +174,9 @@ export const getTokenRates =
       try {
         const {
           APP: {altCurrencyList},
-          WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress},
+          WALLET: {customTokenOptionsByAddress},
         } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
         const tokensOptsByAddress = {
           ...BitpaySupportedTokenOptsByAddress,
@@ -194,9 +184,7 @@ export const getTokenRates =
           ...customTokenOptionsByAddress,
         };
 
-        dispatch(
-          LogActions.info('getTokenRates: selecting alternative currencies'),
-        );
+        logManager.info('getTokenRates: selecting alternative currencies');
         const altCurrencies = altCurrencyList.map(altCurrency =>
           altCurrency.isoCode.toLowerCase(),
         );
@@ -273,15 +261,13 @@ export const getTokenRates =
               });
             }
           } else {
-            dispatch(
-              LogActions.info(
-                `No tokens wallets for ${chain} found. Skipping getTokenRates...`,
-              ),
+            logManager.info(
+              `No tokens wallets for ${chain} found. Skipping getTokenRates...`,
             );
           }
         }
 
-        dispatch(LogActions.info('getTokenRates: success'));
+        logManager.info('getTokenRates: success');
         resolve({tokenRates, tokenLastDayRates});
       } catch (e) {
         let errorStr;
@@ -290,11 +276,7 @@ export const getTokenRates =
         } else {
           errorStr = JSON.stringify(e);
         }
-        dispatch(
-          LogActions.error(
-            `getTokenRates: failed (continue anyway) ${errorStr}`,
-          ),
-        );
+        logManager.error(`getTokenRates: failed (continue anyway) ${errorStr}`);
         resolve({tokenRates, tokenLastDayRates}); // prevent the app from crashing if coingecko fails
       }
     });
@@ -354,10 +336,8 @@ export const fetchHistoricalRates =
         cachedRatesByCoin.length > 0 &&
         cachedValuesFiatCode?.toUpperCase() === fiatIsoCode?.toUpperCase()
       ) {
-        dispatch(
-          LogActions.info(
-            `[rates]: using cached rates. currencyAbbreviation: ${currencyAbbreviation} | fiatIsoCode: ${fiatIsoCode}`,
-          ),
+        logManager.info(
+          `[rates]: using cached rates. currencyAbbreviation: ${currencyAbbreviation} | fiatIsoCode: ${fiatIsoCode}`,
         );
         return resolve(cachedRatesByCoin);
       }
@@ -367,10 +347,8 @@ export const fetchHistoricalRates =
       );
 
       try {
-        dispatch(
-          LogActions.info(
-            `[rates]: fetching historical rates for ${fiatIsoCode} period ${dateRange}`,
-          ),
+        logManager.info(
+          `[rates]: fetching historical rates for ${fiatIsoCode} period ${dateRange}`,
         );
         const firstDateTs =
           moment().subtract(dateRange, 'days').startOf('hour').unix() * 1000;
@@ -385,19 +363,15 @@ export const fetchHistoricalRates =
             fiatCode: fiatIsoCode,
           }),
         );
-        dispatch(
-          LogActions.info('[rates]: fetched historical rates successfully'),
-        );
+        logManager.info('[rates]: fetched historical rates successfully');
 
         const ratesByCoin = currencyAbbreviation
           ? rates[currencyAbbreviation.toLowerCase()]
           : [];
         resolve(ratesByCoin);
       } catch (e) {
-        dispatch(
-          LogActions.error(
-            '[rates]: an error occurred while fetching historical rates.',
-          ),
+        logManager.error(
+          '[rates]: an error occurred while fetching historical rates.',
         );
         reject(e);
       }

@@ -84,12 +84,8 @@ import {
   CheckBoxCol,
 } from '../styled/SwapCryptoCheckout.styled';
 import {startGetRates} from '../../../../store/wallet/effects';
+import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
@@ -136,7 +132,7 @@ import {
   THORSWAP_DEFAULT_SLIPPAGE,
 } from '../constants/ThorswapConstants';
 import {ExchangeConfig} from '../../../../store/external-services/external-services.types';
-import {AppActions} from '../../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -208,6 +204,9 @@ const ThorswapCheckout: React.FC = () => {
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
 
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
   const alternativeIsoCode = 'USD';
   let addressFrom: string; // Refund address
   let addressTo: string; // Receiving address
@@ -269,7 +268,7 @@ const ThorswapCheckout: React.FC = () => {
       )) as string;
     } catch (err) {
       console.error(err);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(400);
       return;
     }
@@ -544,7 +543,7 @@ const ThorswapCheckout: React.FC = () => {
         setTxData(_txData);
 
         setIsLoading(false);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(400);
 
         if (useSendMax) {
@@ -858,8 +857,6 @@ const ThorswapCheckout: React.FC = () => {
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-        await sleep(400);
         broadcastedTx = await dispatch(
           publishAndSign({
             txp: ctxp! as TransactionProposal,
@@ -882,19 +879,14 @@ const ThorswapCheckout: React.FC = () => {
       const swapTx: ThorswapGetSwapTxData = await thorswapGetSwapTx(reqData);
 
       saveThorswapTx(broadcastedTx, swapTx);
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
 
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            fromWalletSelected?.credentials?.n > 1
-              ? t('Payment Sent')
-              : t('Payment Accepted'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title:
+          fromWalletSelected?.credentials?.n > 1
+            ? t('Payment Sent')
+            : t('Payment Accepted'),
+      });
 
       await sleep(1200);
       navigation.dispatch(
@@ -917,7 +909,6 @@ const ThorswapCheckout: React.FC = () => {
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -940,10 +931,7 @@ const ThorswapCheckout: React.FC = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -1087,7 +1075,7 @@ const ThorswapCheckout: React.FC = () => {
     actions?: any[],
   ) => {
     setIsLoading(false);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     await sleep(1000);
     dispatch(
       Analytics.track('Failed Crypto Swap', {
@@ -1125,7 +1113,7 @@ const ThorswapCheckout: React.FC = () => {
   };
 
   useEffect(() => {
-    dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
+    showOngoingProcess('EXCHANGE_GETTING_DATA');
     createThorswapTransaction();
 
     return () => {

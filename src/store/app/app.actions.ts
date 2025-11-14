@@ -19,7 +19,6 @@ import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
-import {PaymentSentModalConfig} from '../../navigation/wallet/components/PaymentSent';
 
 export const importLedgerModalToggled = (show: boolean): AppActionType => ({
   type: AppActionTypes.IMPORT_LEDGER_MODAL_TOGGLED,
@@ -71,15 +70,6 @@ export const setIntroCompleted = (): AppActionType => ({
 
 export const setOnboardingCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_ONBOARDING_COMPLETED,
-});
-
-export const showOnGoingProcessModal = (message: string): AppActionType => ({
-  type: AppActionTypes.SHOW_ONGOING_PROCESS_MODAL,
-  payload: message,
-});
-
-export const dismissOnGoingProcessModal = (): AppActionType => ({
-  type: AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL,
 });
 
 export const showWalletConnectStartModal = (): AppActionType => ({
@@ -410,19 +400,4 @@ export const setInAppBrowserOpen = (payload: boolean): AppActionType => ({
 export const showArchaxBanner = (payload: boolean): AppActionType => ({
   type: AppActionTypes.SHOW_ARCHAX_BANNER,
   payload,
-});
-
-export const dismissPaymentSentModal = (): AppActionType => ({
-  type: AppActionTypes.DISMISS_PAYMENT_SENT_MODAL,
-});
-
-export const clearPaymentSentModalOptions = (): AppActionType => ({
-  type: AppActionTypes.CLEAR_PAYMENT_SENT_MODAL_OPTIONS,
-});
-
-export const showPaymentSentModal = (
-  config: PaymentSentModalConfig,
-): AppActionType => ({
-  type: AppActionTypes.SHOW_PAYMENT_SENT_MODAL,
-  payload: config,
 });

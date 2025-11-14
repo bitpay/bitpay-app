@@ -18,16 +18,15 @@ import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {sleep} from '../../../utils/helper-methods';
 import {getBaseKeyCreationCoinsAndTokens} from '../../../constants/currencies';
-import {LogActions} from '../../../store/log';
+import {useOngoingProcess} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 type CreationOptionsScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -46,6 +45,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
 
   useLayoutEffect(() => {
@@ -71,7 +71,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
               context: 'CreationOptions',
             }),
           );
-          await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+          showOngoingProcess('CREATING_KEY');
           await sleep(500);
           const createdKey = await dispatch(
             startCreateKey(getBaseKeyCreationCoinsAndTokens()),
@@ -80,12 +80,12 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
           dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
 
           navigation.navigate('BackupKey', {context, key: createdKey});
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
         } catch (err: any) {
           const errstring =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(LogActions.error(`Error creating key: ${errstring}`));
-          dispatch(dismissOnGoingProcessModal());
+          logManager.error(`Error creating key: ${errstring}`);
+          hideOngoingProcess();
           await sleep(500);
           showErrorModal(errstring);
         }

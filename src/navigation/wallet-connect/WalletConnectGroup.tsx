@@ -62,10 +62,7 @@ export enum WalletConnectScreens {
   WC_CONFIRM = 'WalletConnectConfirm',
 }
 
-const WalletConnectGroup: React.FC<WalletConnectProps> = ({
-  WalletConnect,
-  theme,
-}) => {
+const WalletConnectGroup = ({WalletConnect, theme}: WalletConnectProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

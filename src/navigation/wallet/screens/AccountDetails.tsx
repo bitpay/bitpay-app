@@ -44,7 +44,6 @@ import {
   ProposalBadge,
 } from '../../../components/styled/Text';
 import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   toggleHideAllBalances,
 } from '../../../store/app/app.actions';
@@ -163,9 +162,10 @@ import {
   BitpaySupportedSvmCoins,
   getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -321,6 +321,8 @@ const CenteredText = styled(BaseText)`
 const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenOptionsByAddress} = useTokenContext();
   const theme = useTheme();
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
@@ -409,7 +411,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ...tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   });
@@ -419,7 +421,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       // To close decrypt modal
       await sleep(500);
     }
-    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
+    showOngoingProcess('SYNCING_WALLETS');
     const opts = {
       words: normalizeMnemonic(mnemonic),
       mnemonic,
@@ -475,7 +477,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           message = t('Your key is already synced');
         }
 
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         dispatch(
           showBottomNotificationModal({
@@ -493,7 +495,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           }),
         );
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         await dispatch(
           showBottomNotificationModal(
@@ -504,7 +506,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         );
       }
     } catch (e) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       await dispatch(
         showBottomNotificationModal(
@@ -536,7 +538,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         if (key.isPrivKeyEncrypted) {
           password = await dispatch(getDecryptPassword(Object.assign({}, key)));
         }
-        await dispatch(startOnGoingProcessModal('ADDING_EVM_CHAINS'));
+        showOngoingProcess('ADDING_EVM_CHAINS');
         const wallets = await dispatch(
           createMultipleWallets({
             key: _key,
@@ -560,7 +562,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           key.wallets.push(...(wallets as Wallet[]));
           dispatch(successAddWallet({key}));
         }
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       },
     });
   }
@@ -1134,7 +1136,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            LogActions.error(`[getStatus] Error: ${errStr}`);
+            logManager.error(`[getStatus] Error: ${errStr}`);
           } else {
             if (status?.wallet?.status === 'complete') {
               fullWalletObj.openWallet({}, () => {

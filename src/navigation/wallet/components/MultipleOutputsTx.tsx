@@ -42,6 +42,7 @@ import {
 import {RootState} from '../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {View} from 'react-native';
+import {useTokenContext} from '../../../contexts';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -96,10 +97,12 @@ const MultipleOutputsTx = ({
   let {coin, network, chain} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
 
+  const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
+
   const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ..._tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   });

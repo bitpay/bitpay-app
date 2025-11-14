@@ -26,7 +26,6 @@ import {
   ImageSourcePropType,
   ListRenderItem,
 } from 'react-native';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle, Link} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -40,7 +39,6 @@ import {
 } from '../../../constants/SupportedCurrencyOptions';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
@@ -59,6 +57,8 @@ import SearchComponent, {
 import {ignoreGlobalListContextList} from '../../../components/modal/chain-selector/ChainSelector';
 import cloneDeep from 'lodash.clonedeep';
 import {LogActions} from '../../../store/log';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 type CurrencySelectionScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -181,6 +181,8 @@ const keyExtractor = (item: CurrencySelectionListItem) => item.currency.id;
 const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
   const {context, key, selectedAccountAddress} = route.params;
   const logger = useLogger();
   const dispatch = useAppDispatch();
@@ -193,12 +195,9 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
       ? APP.selectedLocalChainFilterOption
       : APP.selectedChainFilterOption,
   );
-  const appTokenOptionsByAddress = useAppSelector(
-    ({WALLET}) => WALLET.tokenOptionsByAddress,
-  );
-  const appTokenDataByAddress = useAppSelector(
-    ({WALLET}) => WALLET.tokenDataByAddress,
-  );
+
+  const appTokenOptionsByAddress = tokenOptionsByAddress;
+  const appTokenDataByAddress = tokenDataByAddress;
   const appCustomTokenOptionsByAddress = useAppSelector(
     ({WALLET}) => WALLET.customTokenOptionsByAddress,
   );
@@ -455,7 +454,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
               : t('Add Wallet'),
           onCtaPress: async () => {
             try {
-              await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+              showOngoingProcess('CREATING_KEY');
               const createdKey = await dispatch(
                 startCreateKey(selectedCurrencies),
               );
@@ -469,12 +468,12 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
                   coins: selectedCurrencies,
                 }),
               );
-              dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
             } catch (err: any) {
               const errstring =
                 err instanceof Error ? err.message : JSON.stringify(err);
-              dispatch(LogActions.error(`Error creating key: ${errstring}`));
-              dispatch(dismissOnGoingProcessModal());
+              logManager.error(`Error creating key: ${errstring}`);
+              hideOngoingProcess();
               await sleep(500);
               showErrorModal(errstring);
             }

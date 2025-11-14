@@ -11,10 +11,8 @@ import {
 } from '../../../store/wallet/wallet.models';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {sleep} from '../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {
   dismissBottomNotificationModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {WalletConnectGroupParamList} from '../WalletConnectGroup';
@@ -76,8 +74,8 @@ import VerifyContextModal from '../../../components/modal/wallet-connect/VerifyM
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {EIP155_SIGNING_METHODS} from '../../../constants/WalletConnectV2';
 import {formatJsonRpcResult} from '@json-rpc-tools/utils';
-import {AppActions} from '../../../store/app';
 import {GetPrecision} from '../../../store/wallet/utils/currency';
+import {usePaymentSent} from '../../../contexts';
 
 const HeaderRightContainer = styled.View``;
 
@@ -101,6 +99,8 @@ const WalletConnectConfirm = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+
   const route =
     useRoute<RouteProp<WalletConnectGroupParamList, 'WalletConnectConfirm'>>();
   const {
@@ -203,7 +203,6 @@ const WalletConnectConfirm = () => {
 
   const approveCallRequest = async () => {
     try {
-      dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
       const {params, id} = request as WCV2RequestType;
       const {request: requestProps} = params;
       // if method is eth_sendTransaction, use bitcore to sign/broadcast transaction
@@ -212,7 +211,12 @@ const WalletConnectConfirm = () => {
         txp
       ) {
         const broadcastedTx = await dispatch(
-          startSendPayment({txp, key, wallet, recipient}),
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+          }),
         );
         await dispatch(
           walletConnectV2ApproveCallRequest(
@@ -224,26 +228,18 @@ const WalletConnectConfirm = () => {
       } else {
         await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
       }
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(1000);
       dispatch(
         Analytics.track('Sent Crypto', {
           context: 'WalletConnect Confirm',
           coin: wallet?.currencyAbbreviation || '',
         }),
       );
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            wallet?.credentials.n > 1
-              ? t('Proposal created')
-              : t('Payment Sent'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title:
+          wallet?.credentials.n > 1 ? t('Proposal created') : t('Payment Sent'),
+      });
     } catch (err) {
-      dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -392,10 +388,7 @@ const WalletConnectConfirm = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   useEffect(() => {

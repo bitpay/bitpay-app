@@ -132,7 +132,6 @@ export interface WalletObj {
   img: string | ((props?: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);
   receiveAddress?: string;
-  isRefreshing?: boolean;
   isScanning?: boolean;
   transactionHistory?: {
     transactions: any[];
