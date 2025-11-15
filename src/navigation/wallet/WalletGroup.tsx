@@ -236,7 +236,7 @@ export enum WalletScreens {
   PAPER_WALLET = 'PaperWallet',
 }
 
-const WalletGroup: React.FC<WalletProps> = ({Wallet, theme}) => {
+const WalletGroup = ({Wallet, theme}: WalletProps) => {
   const {t} = useTranslation();
   const commonOptions = useStackScreenOptions(theme);
   return (

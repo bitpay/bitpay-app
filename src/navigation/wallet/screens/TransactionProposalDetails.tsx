@@ -47,14 +47,11 @@ import {
 } from '../../../utils/helper-methods';
 import {GetAmFormatDate, GetAmTimeAgo} from '../../../store/wallet/utils/time';
 import SendToPill from '../components/SendToPill';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import SecureLockIcon from '../../../../assets/img/secure-lock.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {
   broadcastTx,
   publishAndSign,
@@ -84,10 +81,12 @@ import {
   SendToPillContainer,
 } from './send/confirm/Shared';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {LogActions} from '../../../store/log';
 import {GetPayProDetails} from '../../../store/wallet/effects/paypro/paypro';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {AppActions} from '../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
+import {DeviceEventEmitter} from 'react-native';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 
 const TxpDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -227,6 +226,8 @@ const TransactionProposalDetails = () => {
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [lastSigner, setLastSigner] = useState(false);
   const [isForFee, setIsForFee] = useState(false);
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   const title = getDetailsTitle(transaction, wallet);
   let {currencyAbbreviation, chain, network, tokenAddress} = wallet;
@@ -276,7 +277,7 @@ const TransactionProposalDetails = () => {
       await sleep(500);
       setIsLoading(false);
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[TransactionProposalDetails] ', e));
+      logManager.error('[TransactionProposalDetails] ', e);
     }
   };
 
@@ -284,7 +285,7 @@ const TransactionProposalDetails = () => {
     try {
       setPayproIsLoading(true);
       await sleep(400);
-      dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
+      showOngoingProcess('FETCHING_PAYMENT_INFO');
       const address = (await dispatch<Promise<string>>(
         createWalletAddress({wallet: wallet, newAddress: false}),
       )) as string;
@@ -303,11 +304,11 @@ const TransactionProposalDetails = () => {
       setPayProDetails(_payProDetails);
       await sleep(500);
       setPayproIsLoading(false);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } catch (err) {
       setPayproIsLoading(false);
       await sleep(1000);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       logger.warn('Error fetching this invoice: ' + BWCErrorMessage(err));
       await sleep(600);
       await dispatch(
@@ -366,7 +367,7 @@ const TransactionProposalDetails = () => {
   };
 
   const broadcastTxp = async (txp: TransactionProposal) => {
-    dispatch(startOnGoingProcessModal('BROADCASTING_TXP'));
+    showOngoingProcess('BROADCASTING_TXP');
 
     try {
       logger.debug('Trying to broadcast Txp');
@@ -377,23 +378,23 @@ const TransactionProposalDetails = () => {
         amount: number;
       };
       const targetAmount = wallet.balance.sat - (fee + amount);
-
-      dispatch(
-        waitForTargetAmountAndUpdateWallet({
-          key,
-          wallet,
-          targetAmount,
-        }),
-      );
-      await sleep(1000);
-      dispatch(dismissOnGoingProcessModal());
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
-        }),
-      );
+      setTimeout(() => {
+        // show refresing in wallet details view
+        DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
+        dispatch(
+          waitForTargetAmountAndUpdateWallet({
+            key,
+            wallet,
+            targetAmount,
+          }),
+        );
+      }, 3000);
+      await sleep(300);
+      hideOngoingProcess();
+      showPaymentSent({
+        onCloseModal,
+        title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
+      });
       await sleep(1000);
       navigation.goBack();
     } catch (err: any) {
@@ -405,7 +406,7 @@ const TransactionProposalDetails = () => {
         msg = msg + `: ${err.message}`;
       }
       await sleep(1000);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       await dispatch(
         showBottomNotificationModal(
@@ -445,7 +446,7 @@ const TransactionProposalDetails = () => {
       );
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[removePaymentProposal] ', e));
+      logManager.error('[removePaymentProposal] ', e);
     }
   };
 
@@ -476,39 +477,34 @@ const TransactionProposalDetails = () => {
       );
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[rejectPaymentProposal] ', e));
+      logManager.error('[rejectPaymentProposal] ', e);
     }
   };
 
   const onSwipeComplete = async () => {
     try {
-      dispatch(
-        startOnGoingProcessModal(
-          lastSigner ? 'SENDING_PAYMENT' : 'ACCEPTING_PAYMENT',
-        ),
+      await sleep(400);
+      await dispatch(
+        publishAndSign({
+          txp,
+          key,
+          wallet,
+        }),
       );
-      await sleep(400);
-      await dispatch(publishAndSign({txp, key, wallet}));
-      await sleep(400);
-      dispatch(dismissOnGoingProcessModal());
       dispatch(
         Analytics.track('Sent Crypto', {
           context: 'Transaction Proposal Details',
           coin: currencyAbbreviation || '',
         }),
       );
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
+      });
       await sleep(1000);
       navigation.goBack();
     } catch (err) {
       await sleep(500);
-      dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -533,10 +529,7 @@ const TransactionProposalDetails = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   useEffect(() => {

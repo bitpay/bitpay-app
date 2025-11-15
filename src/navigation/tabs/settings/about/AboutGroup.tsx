@@ -24,7 +24,7 @@ export enum AboutScreens {
   SEND_FEEDBACK = 'SendFeedback',
 }
 
-const AboutGroup: React.FC<AboutProps> = ({About, theme}) => {
+const AboutGroup = ({About, theme}: AboutProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

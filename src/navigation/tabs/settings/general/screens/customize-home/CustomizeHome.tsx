@@ -14,7 +14,6 @@ import Button from '../../../../../../components/button/Button';
 import {FlashList} from '@shopify/flash-list';
 import {useAppDispatch, useAppSelector} from '../../../../../../utils/hooks';
 import {
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   setHomeCarouselLayoutType,
 } from '../../../../../../store/app/app.actions';
@@ -39,15 +38,16 @@ import {
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
 import {COINBASE_ENV} from '../../../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
-import {startOnGoingProcessModal} from '../../../../../../store/app/app.effects';
 import {Analytics} from '../../../../../../store/analytics/analytics.effects';
 import CustomTabBar from '../../../../../../components/custom-tab-bar/CustomTabBar';
+import {useOngoingProcess} from '../../../../../../contexts';
 
 // Layout selector
 const Noop = () => null;
 
 const CustomizeHomeSettings = () => {
   const {t} = useTranslation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   useAndroidBackHandler(() => true);
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
@@ -134,7 +134,7 @@ const CustomizeHomeSettings = () => {
         <Button
           disabled={!dirty && defaultLayoutType === layoutType}
           onPress={async () => {
-            dispatch(startOnGoingProcessModal('SAVING_LAYOUT'));
+            showOngoingProcess('SAVING_LAYOUT');
             await sleep(1000);
             const list = [...visibleList, ...hiddenList].map(({key, show}) => ({
               id: key,
@@ -147,7 +147,7 @@ const CustomizeHomeSettings = () => {
             );
             dispatch(setHomeCarouselConfig(list));
             dispatch(setHomeCarouselLayoutType(layoutType));
-            dispatch(dismissOnGoingProcessModal());
+            hideOngoingProcess();
             await sleep(200);
             navigation.goBack();
           }}

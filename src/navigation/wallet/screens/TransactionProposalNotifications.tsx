@@ -47,17 +47,13 @@ import {
   startUpdateAllWalletStatusForKeys,
   startUpdateAllWalletStatusForReadOnlyKeys,
 } from '../../../store/wallet/effects/status/status';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   BalanceUpdateError,
   CustomErrorMessage,
   WrongPasswordError,
 } from '../components/ErrorMessages';
 import Checkbox from '../../../components/checkbox/Checkbox';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
@@ -67,6 +63,7 @@ import {TransactionIcons} from '../../../constants/TransactionIcons';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {AppActions} from '../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../contexts';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -149,6 +146,7 @@ const TransactionProposalNotifications = () => {
     },
   );
   const [selectAll, setSelectAll] = useState(false);
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
 
   let pendingTxps: TransactionProposal[] = wallets.flatMap(w => w.pendingTxps);
 
@@ -545,10 +543,7 @@ const TransactionProposalNotifications = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   useEffect(() => {
@@ -603,8 +598,6 @@ const TransactionProposalNotifications = () => {
           forceReset={resetSwipeButton}
           onSwipeComplete={async () => {
             try {
-              dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-              await sleep(400);
               const wallet = findWalletById(
                 wallets,
                 selectingProposalsWalletId,
@@ -617,8 +610,6 @@ const TransactionProposalNotifications = () => {
                   wallet,
                 }),
               )) as (TransactionProposal | Error)[];
-              dispatch(dismissOnGoingProcessModal());
-              await sleep(400);
               const count = countSuccessAndFailed(data);
               if (count.failed > 0) {
                 const errMsgs = [
@@ -650,20 +641,16 @@ const TransactionProposalNotifications = () => {
                   count.success > 1
                     ? t('proposals signed', {sucess: count.success})
                     : t('Proposal signed');
-                dispatch(
-                  AppActions.showPaymentSentModal({
-                    isVisible: true,
-                    onCloseModal,
-                    title,
-                  }),
-                );
+                showPaymentSent({
+                  onCloseModal,
+                  title,
+                });
               }
               setSelectingProposalsWalletId('');
               setTxpsToSign([]);
               setTxpChecked({});
               setResetSwipeButton(true);
             } catch (err) {
-              dispatch(dismissOnGoingProcessModal());
               await sleep(500);
               setResetSwipeButton(true);
               switch (err) {

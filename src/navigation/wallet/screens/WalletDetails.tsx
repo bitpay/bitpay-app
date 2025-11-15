@@ -360,10 +360,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     });
   }, [navigation, uiFormattedWallet.walletName, key.keyName]);
 
-  useEffect(() => {
-    setRefreshing(!!fullWalletObj.isRefreshing);
-  }, [fullWalletObj.isRefreshing]);
-
   const ShareAddress = async () => {
     try {
       await sleep(1000);
@@ -659,6 +655,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     );
     return () => subscription.remove();
   }, [keys]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.SET_REFRESHING,
+      val => {
+        setRefreshing(!!val);
+      },
+    );
+    return () => subscription.remove();
+  }, []);
 
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 

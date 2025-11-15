@@ -22,7 +22,7 @@ export enum SecurityScreens {
   PASSKEYS = 'Passkeys',
 }
 
-const SecurityGroup: React.FC<SecurityProps> = ({Security, theme}) => {
+const SecurityGroup = ({Security, theme}: SecurityProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

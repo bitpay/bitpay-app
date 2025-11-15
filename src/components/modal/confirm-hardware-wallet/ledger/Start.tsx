@@ -5,7 +5,6 @@ import React, {useState} from 'react';
 import styled from 'styled-components/native';
 import LedgerLogoIconSvg from '../../../../../assets/img/icon-ledger-logo.svg';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
-import {LogActions} from '../../../../store/log';
 import {useAppDispatch, useMount} from '../../../../utils/hooks';
 import {H3, Paragraph} from '../../../styled/Text';
 import {
@@ -21,7 +20,7 @@ import {
 import {checkPermissionsBLE} from '../../import-ledger-wallet/utils';
 import {SearchingForDevices} from '../../import-ledger-wallet/pair-device/SearchingForDevices';
 import {sleep} from '../../../../utils/helper-methods';
-import {ErrorDescriptionColumn} from '../../import-ledger-wallet/components/ErrorDescriptionColumn';
+import {logManager} from '../../../../managers/LogManager';
 
 interface PairHardwareWalletModalProps {
   onPaired: (transport: Transport) => void;
@@ -71,10 +70,8 @@ export const ConfirmLedgerStart: React.FC<
           message: `An error occurred while checking hardware wallet connection support: ${errMsg}`,
           title: 'Connection Failed',
         });
-        dispatch(
-          LogActions.error(
-            `An error occurred while checking hardware wallet transport support: ${errMsg}`,
-          ),
+        logManager.error(
+          `An error occurred while checking hardware wallet transport support: ${errMsg}`,
         );
       });
   });
@@ -112,11 +109,7 @@ export const ConfirmLedgerStart: React.FC<
       transport = result[0];
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(
-        LogActions.error(
-          `An error occurred creating BLE transport: ${errorMsg}`,
-        ),
-      );
+      logManager.error(`An error occurred creating BLE transport: ${errorMsg}`);
     }
 
     if (transport) {
@@ -160,11 +153,7 @@ export const ConfirmLedgerStart: React.FC<
       transport = result[0];
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(
-        LogActions.error(
-          `An error occurred creating HID transport: ${errorMsg}`,
-        ),
-      );
+      logManager.error(`An error occurred creating HID transport: ${errorMsg}`);
     }
 
     if (transport) {

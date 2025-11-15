@@ -78,7 +78,6 @@ import {
   checkingBiometricForSending,
   dismissBottomNotificationModal,
   dismissDecryptPasswordModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
@@ -96,15 +95,11 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {createWalletAddress, ToCashAddress} from '../address/address';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../app/app.effects';
-import {LogActions} from '../../../log';
+import {openUrlWithInAppBrowser} from '../../../app/app.effects';
 import _ from 'lodash';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
-import {Platform} from 'react-native';
+import {DeviceEventEmitter, Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
 import {
   getCoinAndChainFromCurrencyCode,
@@ -125,6 +120,9 @@ import {
 } from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
+import {logManager} from '../../../../managers/LogManager';
+import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
+import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -323,11 +321,11 @@ const setEthAddressNonce =
         let address = nonceWallet?.receiveAddress;
 
         if (!address) {
-          dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
+          ongoingProcessManager.show('GENERATING_ADDRESS');
           address = await dispatch<Promise<string>>(
             createWalletAddress({wallet: nonceWallet, newAddress: false}),
           );
-          dispatch(dismissOnGoingProcessModal());
+          ongoingProcessManager.hide();
         }
 
         const nonce = await getNonce(nonceWallet, chain, address);
@@ -359,12 +357,10 @@ const setEthAddressNonce =
           }
         }
 
-        dispatch(
-          LogActions.info(
-            `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
-              suggestedNonce! - nonce
-            }`,
-          ),
+        logManager.info(
+          `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
+            suggestedNonce! - nonce
+          }`,
         );
 
         tx.nonce = suggestedNonce;
@@ -373,7 +369,7 @@ const setEthAddressNonce =
       } catch (error: any) {
         const errString =
           error instanceof Error ? error.message : JSON.stringify(error);
-        dispatch(LogActions.error(`Could not get address nonce ${errString}`));
+        logManager.error(`Could not get address nonce ${errString}`);
         return resolve();
       }
     });
@@ -1235,7 +1231,7 @@ export const startSendPayment =
       } catch (err) {
         const errString =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`startSendPayment: ${errString}`));
+        logManager.error(`startSendPayment: ${errString}`);
         reject(err);
       }
     });
@@ -1276,7 +1272,6 @@ export const publishAndSign =
       if (key.isPrivKeyEncrypted && !signingMultipleProposals) {
         try {
           password = await new Promise<string>(async (_resolve, _reject) => {
-            dispatch(dismissOnGoingProcessModal()); // dismiss any previous modal
             await sleep(500);
             dispatch(
               showDecryptPasswordModal({
@@ -1298,7 +1293,6 @@ export const publishAndSign =
               }),
             );
           });
-          dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         } catch (error) {
           return reject(error);
         }
@@ -1320,16 +1314,12 @@ export const publishAndSign =
             },
             network: txp.network,
           };
-          dispatch(
-            LogActions.debug(
-              `creating ATA if needed for: ${ataOwnerAddress} - mint: ${txp.tokenAddress}`,
-            ),
+          logManager.debug(
+            `creating ATA if needed for: ${ataOwnerAddress} - mint: ${txp.tokenAddress}`,
           );
           const result = await createAtaAndSend(opts);
-          dispatch(
-            LogActions.debug(
-              `success create ata [publishAndSign]: ${JSON.stringify(result)}`,
-            ),
+          logManager.debug(
+            `success create ata [publishAndSign]: ${JSON.stringify(result)}`,
           );
         } catch (error) {
           throw new Error(`Error creating associated token account: ${error}`);
@@ -1343,7 +1333,7 @@ export const publishAndSign =
         // Already published?
         if (txp.status !== 'pending' || txp.refreshOnPublish) {
           publishedTx = await publishTx(wallet, txp);
-          dispatch(LogActions.debug('success publish [publishAndSign]'));
+          logManager.debug('success publish [publishAndSign]');
         }
 
         if (key.isReadOnly && !key.hardwareSource) {
@@ -1375,44 +1365,44 @@ export const publishAndSign =
           )) as TransactionProposal;
         }
 
-        dispatch(LogActions.debug('success sign [publishAndSign]'));
+        logManager.debug('success sign [publishAndSign]');
 
         if (signedTx.status === 'accepted') {
           broadcastedTx = await broadcastTx(wallet, signedTx);
-          dispatch(LogActions.debug('success broadcast [publishAndSign]'));
+          logManager.debug('success broadcast [publishAndSign]');
           const {fee, amount} = broadcastedTx as {
             fee: number;
             amount: number;
           };
           const targetAmount = wallet.balance.sat - (fee + amount);
 
-          dispatch(
-            waitForTargetAmountAndUpdateWallet({
-              key,
-              wallet,
-              targetAmount,
-              recipient,
-            }),
-          );
+          setTimeout(() => {
+            // show refresing in wallet details view
+            DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
+            dispatch(
+              waitForTargetAmountAndUpdateWallet({
+                key,
+                wallet,
+                targetAmount,
+                recipient,
+              }),
+            );
+          }, 3000);
         } else {
           dispatch(startUpdateWalletStatus({key, wallet, force: true}));
         }
 
         let resultTx = broadcastedTx ? broadcastedTx : signedTx;
-        dispatch(
-          LogActions.info(`resultTx [publishAndSign]: ${resultTx?.txid}`),
-        );
+        logManager.info(`resultTx [publishAndSign]: ${resultTx?.txid}`);
 
         if (APP.notificationsAccepted && wallet.chain === 'btc') {
           wallet.txConfirmationSubscribe(
             {txid: resultTx?.id, amount: txp.amount},
             (err: any) => {
               if (err) {
-                dispatch(
-                  LogActions.error(
-                    '[publishAndSign] txConfirmationSubscribe err',
-                    err,
-                  ),
+                logManager.error(
+                  '[publishAndSign] txConfirmationSubscribe err',
+                  err,
                 );
               }
             },
@@ -1423,7 +1413,7 @@ export const publishAndSign =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`[publishAndSign] err: ${errorStr}`));
+        logManager.error(`[publishAndSign] err: ${errorStr}`);
         // if broadcast fails, remove transaction proposal
         try {
           // except for multisig pending transactions
@@ -1431,10 +1421,8 @@ export const publishAndSign =
             await removeTxp(wallet, txp);
           }
         } catch (removeTxpErr: any) {
-          dispatch(
-            LogActions.error(
-              `[publishAndSign] err - Could not delete payment proposal: ${removeTxpErr?.message}`,
-            ),
+          logManager.error(
+            `[publishAndSign] err - Could not delete payment proposal: ${removeTxpErr?.message}`,
           );
         }
         reject(err);
@@ -1473,7 +1461,7 @@ export const publishAndSignMultipleProposals =
         if (key.isPrivKeyEncrypted) {
           try {
             password = await new Promise<string>(async (_resolve, _reject) => {
-              dispatch(dismissOnGoingProcessModal()); // dismiss any previous modal
+              ongoingProcessManager.hide(); // dismiss any previous modal
               await sleep(500);
               dispatch(
                 showDecryptPasswordModal({
@@ -1523,11 +1511,7 @@ export const publishAndSignMultipleProposals =
           } catch (err) {
             const errorStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            dispatch(
-              LogActions.error(
-                `Error signing transaction proposal: ${errorStr}`,
-              ),
-            );
+            logManager.error(`Error signing transaction proposal: ${errorStr}`);
             resultsWithNonce.push(err);
           }
         }
@@ -1549,11 +1533,7 @@ export const publishAndSignMultipleProposals =
           ).catch(err => {
             const errorStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            dispatch(
-              LogActions.error(
-                `Error signing transaction proposal: ${errorStr}`,
-              ),
-            );
+            logManager.error(`Error signing transaction proposal: ${errorStr}`);
             return err;
           }),
         );
@@ -1562,9 +1542,7 @@ export const publishAndSignMultipleProposals =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(`Error signing transaction proposal: ${errorStr}`),
-        );
+        logManager.error(`Error signing transaction proposal: ${errorStr}`);
         return reject(err);
       }
     });

@@ -8,8 +8,6 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScreenGutter} from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {AppActions} from '../../../store/app';
 import {sleep} from '../../../utils/helper-methods';
 import {
   deleteKey,
@@ -26,6 +24,7 @@ import {useTranslation} from 'react-i18next';
 import {useAppDispatch} from '../../../utils/hooks';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
+import {useOngoingProcess} from '../../../contexts';
 
 const DeleteKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -48,6 +47,7 @@ const DeleteKey = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
   const notificationsAccepted = useAppSelector(
@@ -71,7 +71,7 @@ const DeleteKey = () => {
   const startDeleteKey = async () => {
     setIsVisible(false);
     await sleep(500);
-    dispatch(startOnGoingProcessModal('DELETING_KEY'));
+    showOngoingProcess('DELETING_KEY');
 
     await sleep(300);
     unsubscribeNotifications();
@@ -83,7 +83,7 @@ const DeleteKey = () => {
       ),
     );
     dispatch(updatePortfolioBalance());
-    dispatch(AppActions.dismissOnGoingProcessModal());
+    hideOngoingProcess();
     await sleep(1000);
     navigation.dispatch(
       CommonActions.reset({

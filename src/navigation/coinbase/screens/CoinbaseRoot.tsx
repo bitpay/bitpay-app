@@ -1,9 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {CoinbaseGroupParamList, CoinbaseScreens} from '../CoinbaseGroup';
 import CoinbaseDashboard from '../components/CoinbaseDashboard';
 import CoinbaseIntro from '../components/CoinbaseIntro';
@@ -17,7 +14,7 @@ import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {useOngoingProcess} from '../../../contexts';
 
 export type CoinbaseRootScreenParamList =
   | {
@@ -34,6 +31,7 @@ type CoinbaseRootScreenProps = NativeStackScreenProps<
 const CoinbaseRoot = ({route, navigation}: CoinbaseRootScreenProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   const tokenError = useAppSelector(
     ({COINBASE}) => COINBASE.getAccessTokenError,
@@ -75,7 +73,7 @@ const CoinbaseRoot = ({route, navigation}: CoinbaseRootScreenProps) => {
 
       if (!token && code && state && tokenStatus !== 'failed') {
         await sleep(1000);
-        dispatch(startOnGoingProcessModal('CONNECTING_COINBASE'));
+        showOngoingProcess('CONNECTING_COINBASE');
         await dispatch(coinbaseLinkAccount(code, state));
         // reset params to prevent re-triggering flow based on cached params when disconnecting
         navigation.setParams({code: undefined, state: undefined});
@@ -83,12 +81,12 @@ const CoinbaseRoot = ({route, navigation}: CoinbaseRootScreenProps) => {
 
       if (token || tokenStatus === 'success') {
         await sleep(1000);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         setIsDashboardEnabled(true);
       }
 
       if (tokenError) {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         setIsDashboardEnabled(false);
         await sleep(1000);
         showError(tokenError);

@@ -26,7 +26,7 @@ export enum BuyCryptoScreens {
   OFFERS = 'BuyCryptoOffers',
 }
 
-const BuyCryptoGroup: React.FC<BuyCryptoProps> = ({BuyCrypto, theme}) => {
+const BuyCryptoGroup = ({BuyCrypto, theme}: BuyCryptoProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

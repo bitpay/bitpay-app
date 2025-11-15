@@ -68,11 +68,7 @@ import {
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
 import {Wallet, SendMaxInfo} from '../../../../store/wallet/wallet.models';
 import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/changelly/changelly';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import ArrowDown from '../../../../../assets/img/swap-crypto/down-arrow.svg';
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {AppActions} from '../../../../store/app';
@@ -137,6 +133,7 @@ import {
   toFiat,
 } from '../../../../store/wallet/utils/wallet';
 import {BuyCryptoItemTitle} from '../../buy-crypto/styled/BuyCryptoCard';
+import {useOngoingProcess, useTokenContext} from '../../../../contexts';
 
 export type SwapCryptoRootScreenParams =
   | {
@@ -217,16 +214,14 @@ const SwapCryptoRoot: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
-  const tokenDataByAddress = useAppSelector(
-    ({WALLET}) => WALLET.tokenDataByAddress,
-  );
-  const tokenOptionsByAddress = useAppSelector(
-    ({WALLET}) => WALLET.tokenOptionsByAddress,
-  );
+
+  const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
+
   const tokenOptions = Object.entries(tokenOptionsByAddress).map(
     ([k, {symbol}]) => {
       const chain = getChainFromTokenByAddressKey(k);
@@ -368,7 +363,7 @@ const SwapCryptoRoot: React.FC = () => {
         logger.warn('It was not possible to set the selected wallet');
       }
     }
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
   };
 
   const setFromWallet = async (
@@ -606,7 +601,7 @@ const SwapCryptoRoot: React.FC = () => {
       const msg = t(
         'Swap Crypto feature is not available at this moment. Please try again later.',
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(200);
       showError(msg);
     }
@@ -712,7 +707,7 @@ const SwapCryptoRoot: React.FC = () => {
     actions?: any,
     goBack?: boolean,
   ) => {
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     await sleep(400);
     setLoading(false);
     setLoadingEnterAmountBtn(false);
@@ -1154,7 +1149,7 @@ const SwapCryptoRoot: React.FC = () => {
 
   const init = async () => {
     await sleep(100);
-    dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+    showOngoingProcess('GENERAL_AWAITING');
 
     try {
       const requestData: ExternalServicesConfigRequestParams = {
@@ -1173,7 +1168,7 @@ const SwapCryptoRoot: React.FC = () => {
     }
 
     if (swapCryptoConfig?.disabled) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -1358,7 +1353,7 @@ const SwapCryptoRoot: React.FC = () => {
           const msg = t(
             'Swap Crypto feature is not available at this moment. Please try again later.',
           );
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           await sleep(500);
           showError(msg, undefined, undefined, true);
         }
@@ -1368,7 +1363,7 @@ const SwapCryptoRoot: React.FC = () => {
       const msg = t(
         'Swap Crypto feature is not available at this moment. Please try again later.',
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       showError(msg, undefined, undefined, true);
     }
@@ -1403,7 +1398,7 @@ const SwapCryptoRoot: React.FC = () => {
         }
 
         await sleep(500);
-        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        showOngoingProcess('ADDING_WALLET');
 
         const createdToWallet = await dispatch(addWallet(createToWalletData));
         logger.debug(
@@ -1419,9 +1414,9 @@ const SwapCryptoRoot: React.FC = () => {
         );
         setToWallet(createdToWallet);
         await sleep(300);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       } catch (err: any) {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         if (err.message === 'invalid password') {
           dispatch(showBottomNotificationModal(WrongPasswordError()));

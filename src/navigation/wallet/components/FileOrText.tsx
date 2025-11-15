@@ -18,13 +18,11 @@ import {useLogger} from '../../../utils/hooks/useLogger';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {startGetRates, startImportFile} from '../../../store/wallet/effects';
 import {
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
@@ -35,6 +33,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ScrollView, Keyboard} from 'react-native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useOngoingProcess} from '../../../contexts';
 
 const BWCProvider = BwcProvider.getInstance();
 
@@ -72,6 +71,7 @@ const FileOrText = () => {
   const logger = useLogger();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const route = useRoute<RouteProp<WalletGroupParamList, 'Import'>>();
   const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
@@ -88,14 +88,14 @@ const FileOrText = () => {
     opts: Partial<KeyOptions>,
   ) => {
     try {
-      dispatch(startOnGoingProcessModal('IMPORTING'));
+      showOngoingProcess('IMPORTING');
       await sleep(1000);
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(1000);
       try {
-        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
+        showOngoingProcess('IMPORT_SCANNING_FUNDS');
         await dispatch(startGetRates({force: true}));
         // workaround for fixing wallets without receive address
         await fixWalletAddresses({
@@ -128,10 +128,10 @@ const FileOrText = () => {
           source: 'FileOrText',
         }),
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } catch (e: any) {
       logger.error(e.message);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(1000);
       showErrorModal(e.message);
     }

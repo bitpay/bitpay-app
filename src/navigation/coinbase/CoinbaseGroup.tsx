@@ -40,7 +40,7 @@ export enum CoinbaseScreens {
   WITHDRAW = 'CoinbaseWithdraw',
 }
 
-const CoinbaseGroup: React.FC<CoinbaseProps> = ({Coinbase, theme}) => {
+const CoinbaseGroup = ({Coinbase, theme}: CoinbaseProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

@@ -37,10 +37,7 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
 import {fetchHistoricalRates} from '../../../store/wallet/effects';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
@@ -416,7 +413,6 @@ const PriceCharts = () => {
         setNewDisplayData(rates);
         setLoading(false);
       } catch (e) {
-        dispatch(dismissOnGoingProcessModal());
         await sleep(500);
         setShowRageDateSelector(false);
         const err = BWCErrorMessage(e);

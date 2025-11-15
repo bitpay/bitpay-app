@@ -10,10 +10,10 @@ import {
 } from '../../../../../utils/braze';
 import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {AppEffects} from '../../../../../store/app';
-import {LogActions} from '../../../../../store/log';
 import LinkCard from '../cards/LinkCard';
 import {getRouteParam} from '../../../../../store/app/app.effects';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
+import {logManager} from '../../../../../managers/LogManager';
 
 interface OfferCardProps {
   contentCard: ContentCard;
@@ -74,10 +74,8 @@ const OfferCard: React.FC<OfferCardProps> = props => {
         return;
       }
     } catch (err) {
-      dispatch(
-        LogActions.debug('Something went wrong parsing offer URL: ' + url),
-      );
-      dispatch(LogActions.debug(JSON.stringify(err)));
+      logManager.debug('Something went wrong parsing offer URL: ' + url),
+        logManager.debug(JSON.stringify(err));
     }
 
     if (openURLInWebView) {

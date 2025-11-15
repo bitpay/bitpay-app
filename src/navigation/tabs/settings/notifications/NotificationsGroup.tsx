@@ -22,10 +22,10 @@ export enum NotificationsSettingsScreens {
   PUSH_NOTIFICATIONS = 'PushNotifications',
 }
 
-const NotificationsSettingsGroup: React.FC<NotificationsProps> = ({
+const NotificationsSettingsGroup = ({
   Notifications,
   theme,
-}) => {
+}: NotificationsProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
 

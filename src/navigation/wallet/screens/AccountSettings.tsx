@@ -35,12 +35,10 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
-import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useOngoingProcess} from '../../../contexts';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -91,6 +89,7 @@ const AccountSettings = () => {
   } = useRoute<RouteProp<WalletGroupParamList, 'AccountSettings'>>();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const _key: Key = keys[key.id];
 
@@ -240,7 +239,7 @@ const AccountSettings = () => {
 
           <ToggleSwitch
             onChange={async () => {
-              dispatch(startOnGoingProcessModal('LOADING'));
+              showOngoingProcess('LOADING');
               setHideAccount(!hideAccount);
               dispatch(
                 toggleHideAccount({
@@ -259,7 +258,7 @@ const AccountSettings = () => {
               );
               await sleep(1000);
               dispatch(updatePortfolioBalance());
-              dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
             }}
             isEnabled={!!hideAccount}
             isDisabled={!hasVisibleWallet}

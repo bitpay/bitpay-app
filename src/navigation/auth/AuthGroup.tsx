@@ -55,7 +55,7 @@ export type AuthGroupParamList = {
   SecureAccount: undefined;
 };
 
-const AuthGroup: React.FC<AuthProps> = ({Auth, theme}) => {
+const AuthGroup = ({Auth, theme}: AuthProps) => {
   const {t} = useTranslation();
   const commonOptions = useStackScreenOptions(theme);
   const dispatch = useDispatch();

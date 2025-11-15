@@ -117,6 +117,11 @@ const ChainSelectorContainer = styled.View`
   flex: 1;
 `;
 
+const contentContainerStyle = {paddingBottom: 80};
+const searchIconSize = {height: 16, width: 16};
+const ghostSvgStyle = {marginTop: 20};
+const allNetworkSvgStyle = {width: 20, height: 20};
+
 const ChainSelectorModal = () => {
   const dispatch = useDispatch();
   const {t} = useTranslation();
@@ -141,63 +146,13 @@ const ChainSelectorModal = () => {
       : APP.selectedChainFilterOption,
   );
 
-  const renderChainItem = useCallback(
-    ({item, index}: {item: string; index: number}) => {
-      const supportedChain = SupportedChainsOptions.find(
-        ({chain}) => chain === item,
-      );
-      const badgeLabel = supportedChain?.chainName || item;
-      const selected = selectedChainFilterOption === item;
-      const isLastItem = index === chainList.length - 1;
-      return (
-        <>
-          <NetworkChainContainer
-            activeOpacity={ActiveOpacity}
-            selected={selected}
-            onPress={async () => {
-              dispatch(AppActions.dismissChainSelectorModal());
-              await sleep(1000);
-              dispatch(AppActions.clearChainSelectorModalOptions());
-              const option = supportedChain?.chain as
-                | SupportedChains
-                | undefined;
-
-              // Check if the context is one of 'sell', 'swapFrom', 'swapTo', 'buy', 'walletconnect'
-              if (ignoreGlobalListContextList.includes(context as string)) {
-                dispatch(setLocalDefaultChainFilterOption(option));
-              } else {
-                dispatch(setDefaultChainFilterOption(option));
-              }
-              if (context === 'accounthistoryview') {
-                DeviceEventEmitter.emit(
-                  DeviceEmitterEvents.WALLET_LOAD_HISTORY,
-                  option || '',
-                );
-              }
-              setSearchVal('');
-            }}>
-            <NetworkRowContainer>
-              <ImageContainer>
-                {supportedChain?.img ? (
-                  <CurrencyImage img={supportedChain?.img} size={32} />
-                ) : (
-                  <AllNetworkSvg style={{width: 20, height: 20}} />
-                )}
-              </ImageContainer>
-              <NetworkName selected={selected}>{badgeLabel}</NetworkName>
-            </NetworkRowContainer>
-          </NetworkChainContainer>
-          {!selected && !isLastItem ? <Hr /> : null}
-        </>
-      );
-    },
-    [dispatch, context, customChains, selectedChainFilterOption],
+  const sectionHeaders = useMemo(
+    () => ({
+      all: t('All Networks'),
+      recentlySelected: t('Recently Selected'),
+    }),
+    [t],
   );
-
-  const sectionHeaders = {
-    all: t('All Networks'),
-    recentlySelected: t('Recently Selected'),
-  };
 
   const chainList = useMemo(() => {
     // Function to filter and sort chains based on recent selection
@@ -263,44 +218,139 @@ const ChainSelectorModal = () => {
     chainsOptions,
   ]);
 
-  const updateSearchResults = debounce((text: string) => {
-    setSearchVal(text);
-    const normalizedText = text.replace(/\s+/g, '').toLowerCase();
-    const results = Object.values(BitpaySupportedCoins)
-      .map(({name, chain}) => {
-        const normalizedCurrencyAbbreviation = name
-          .replace(/\s+/g, '')
-          .toLowerCase();
-        const normalizedCurrencyName = chain.replace(/\s+/g, '').toLowerCase();
-        return normalizedCurrencyAbbreviation.includes(normalizedText) ||
-          normalizedCurrencyName.includes(normalizedText)
-          ? chain
-          : null;
-      })
-      .filter((chain): chain is string => chain !== null);
-    setSearchResults(results);
-  }, 300);
-  const modalHeight = Math.min(600, HEIGHT - 150);
-  const modalHeightPercentage = modalHeight / HEIGHT;
+  const handleChainSelect = useCallback(
+    async (supportedChain: any) => {
+      dispatch(AppActions.dismissChainSelectorModal());
+      await sleep(1000);
+      dispatch(AppActions.clearChainSelectorModalOptions());
+      const option = supportedChain?.chain as SupportedChains | undefined;
+
+      // Check if the context is one of 'sell', 'swapFrom', 'swapTo', 'buy', 'walletconnect'
+      if (ignoreGlobalListContextList.includes(context as string)) {
+        dispatch(setLocalDefaultChainFilterOption(option));
+      } else {
+        dispatch(setDefaultChainFilterOption(option));
+      }
+      if (context === 'accounthistoryview') {
+        DeviceEventEmitter.emit(
+          DeviceEmitterEvents.WALLET_LOAD_HISTORY,
+          option || '',
+        );
+      }
+      setSearchVal('');
+    },
+    [dispatch, context],
+  );
+
+  const renderChainItem = useCallback(
+    ({item, index}: {item: string; index: number}) => {
+      const supportedChain = SupportedChainsOptions.find(
+        ({chain}) => chain === item,
+      );
+      const badgeLabel = supportedChain?.chainName || item;
+      const selected = selectedChainFilterOption === item;
+      const isLastItem = index === chainList.length - 1;
+
+      return (
+        <>
+          <NetworkChainContainer
+            activeOpacity={ActiveOpacity}
+            selected={selected}
+            onPress={() => handleChainSelect(supportedChain)}>
+            <NetworkRowContainer>
+              <ImageContainer>
+                {supportedChain?.img ? (
+                  <CurrencyImage img={supportedChain?.img} size={32} />
+                ) : (
+                  <AllNetworkSvg style={allNetworkSvgStyle} />
+                )}
+              </ImageContainer>
+              <NetworkName selected={selected}>{badgeLabel}</NetworkName>
+            </NetworkRowContainer>
+          </NetworkChainContainer>
+          {!selected && !isLastItem ? <Hr /> : null}
+        </>
+      );
+    },
+    [selectedChainFilterOption, chainList.length, handleChainSelect],
+  );
+
+  const updateSearchResults = useMemo(
+    () =>
+      debounce((text: string) => {
+        setSearchVal(text);
+        const normalizedText = text.replace(/\s+/g, '').toLowerCase();
+        const results = Object.values(BitpaySupportedCoins)
+          .map(({name, chain}) => {
+            const normalizedCurrencyAbbreviation = name
+              .replace(/\s+/g, '')
+              .toLowerCase();
+            const normalizedCurrencyName = chain
+              .replace(/\s+/g, '')
+              .toLowerCase();
+            return normalizedCurrencyAbbreviation.includes(normalizedText) ||
+              normalizedCurrencyName.includes(normalizedText)
+              ? chain
+              : null;
+          })
+          .filter((chain): chain is string => chain !== null);
+        setSearchResults(results);
+      }, 300),
+    [],
+  );
+
+  const handleBackdropPress = useCallback(async () => {
+    dispatch(AppActions.dismissChainSelectorModal());
+    await sleep(1000);
+    dispatch(AppActions.clearChainSelectorModalOptions());
+    setSearchVal('');
+    haptic('impactLight');
+    if (onBackdropDismiss) {
+      onBackdropDismiss();
+    }
+  }, [dispatch, onBackdropDismiss]);
+
+  const modalHeight = useMemo(() => Math.min(600, HEIGHT - 150), []);
+  const modalHeightPercentage = useMemo(
+    () => modalHeight / HEIGHT,
+    [modalHeight],
+  );
+
+  const snapPoints = useMemo(
+    () => [`${Math.floor(modalHeightPercentage * 100)}%`],
+    [modalHeightPercentage],
+  );
+
+  const keyExtractor = useCallback((item, index) => index.toString(), []);
+
+  const getItemType = useCallback(
+    item => (item.title ? 'sectionHeader' : 'row'),
+    [],
+  );
+
+  const renderItem = useCallback(
+    ({item, index}) => {
+      if (item.title) {
+        return <ListHeader>{item.title}</ListHeader>;
+      } else {
+        return renderChainItem({item, index});
+      }
+    },
+    [renderChainItem],
+  );
+
+  const borderRadius = useMemo(() => (Platform.OS === 'ios' ? 12 : 0), []);
+
   return (
     <SheetModal
       modalLibrary="bottom-sheet"
       height={Math.floor(modalHeightPercentage * HEIGHT)}
-      snapPoints={[`${Math.floor(modalHeightPercentage * 100)}%`]}
+      snapPoints={snapPoints}
       stackBehavior="push"
       isVisible={isVisible}
-      borderRadius={Platform.OS === 'ios' ? 12 : 0}
+      borderRadius={borderRadius}
       backdropOpacity={0.4}
-      onBackdropPress={async () => {
-        dispatch(AppActions.dismissChainSelectorModal());
-        await sleep(1000);
-        dispatch(AppActions.clearChainSelectorModalOptions());
-        setSearchVal('');
-        haptic('impactLight');
-        if (onBackdropDismiss) {
-          onBackdropDismiss();
-        }
-      }}>
+      onBackdropPress={handleBackdropPress}>
       <ChainSelectorContainer>
         <WalletSelectMenuHeaderContainer>
           <TextAlign align={'left'}>
@@ -310,31 +360,29 @@ const ChainSelectorModal = () => {
         <Header>
           <SearchRoundContainer>
             <SearchIconContainer>
-              <SearchSvg height={16} width={16} />
+              <SearchSvg {...searchIconSize} />
             </SearchIconContainer>
             <SearchRoundInput
               placeholder={'Search Networks'}
               placeholderTextColor={theme.dark ? Slate : Slate}
-              onChangeText={(text: string) => {
-                updateSearchResults(text);
-              }}
+              onChangeText={updateSearchResults}
             />
           </SearchRoundContainer>
         </Header>
         <HideableView show={!!searchVal}>
           {searchResults.length ? (
             <FlashList
-              contentContainerStyle={{paddingBottom: 80}}
+              contentContainerStyle={contentContainerStyle}
               data={searchResults}
               estimatedItemSize={65}
               // @ts-ignore
               renderItem={renderChainItem}
-              keyExtractor={(item, index) => index.toString()}
+              keyExtractor={keyExtractor}
             />
           ) : (
             <NoResultsContainer>
               <NoResultsImgContainer>
-                <GhostSvg style={{marginTop: 20}} />
+                <GhostSvg style={ghostSvgStyle} />
               </NoResultsImgContainer>
               <NoResultsDescription>
                 {t("We couldn't find a match for ")}
@@ -346,18 +394,12 @@ const ChainSelectorModal = () => {
 
         <HideableView show={!searchVal}>
           <FlashList
-            contentContainerStyle={{paddingBottom: 80}}
+            contentContainerStyle={contentContainerStyle}
             data={chainList}
-            renderItem={({item, index}) => {
-              if (item.title) {
-                return <ListHeader>{item.title}</ListHeader>;
-              } else {
-                return renderChainItem({item, index});
-              }
-            }}
+            renderItem={renderItem}
             estimatedItemSize={65}
-            keyExtractor={(item, index) => index.toString()}
-            getItemType={item => (item.title ? 'sectionHeader' : 'row')}
+            keyExtractor={keyExtractor}
+            getItemType={getItemType}
           />
         </HideableView>
       </ChainSelectorContainer>

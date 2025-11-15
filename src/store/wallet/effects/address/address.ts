@@ -4,7 +4,7 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {ExtractCoinNetworkAddress} from '../../utils/decode-uri';
 import {Effect} from '../../../index';
 import {successGetReceiveAddress} from '../../wallet.actions';
-import {LogActions} from '../../../log';
+import {logManager} from '../../../../managers/LogManager';
 
 const BWC = BwcProvider.getInstance();
 
@@ -80,7 +80,7 @@ export const createWalletAddress =
       }
 
       if (!newAddress && wallet.receiveAddress) {
-        dispatch(LogActions.info('returned cached wallet address'));
+        logManager.info('returned cached wallet address');
         return resolve(wallet.receiveAddress);
       }
 
@@ -113,7 +113,7 @@ export const createWalletAddress =
                   }),
                 );
               }
-              dispatch(LogActions.info('returned last main address'));
+              logManager.info('returned last main address');
               return resolve(addressObj.address);
             }
           }
@@ -135,10 +135,8 @@ export const createWalletAddress =
                   }),
                 );
               }
-              dispatch(
-                LogActions.info(
-                  'address gap reached - returned last main address',
-                ),
+              logManager.info(
+                'address gap reached - returned last main address',
               );
               return resolve(receiveAddress);
             }
@@ -156,7 +154,7 @@ export const createWalletAddress =
                 }),
               );
             }
-            dispatch(LogActions.info('returned new generated address'));
+            logManager.info('returned new generated address');
             return resolve(addressObj.address);
           }
           return reject({type: 'GENERAL_ERROR', error: 'No address generated'});

@@ -7,8 +7,6 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BillGroupParamList} from '../BillGroup';
 import {ShopEffects} from '../../../../../store/shop';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {METHOD_ENVS} from '../../../../../constants/config';
 import {AppActions} from '../../../../../store/app';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
@@ -16,6 +14,7 @@ import {BitPayIdEffects} from '../../../../../store/bitpay-id';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {BillPayAccount} from '../../../../../store/shop/shop.models';
 import {getBillAccountEventParamsForMultipleBills} from '../utils';
+import {useOngoingProcess} from '../../../../../contexts';
 
 const ConnectBills = ({
   navigation,
@@ -24,6 +23,7 @@ const ConnectBills = ({
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const [isWebViewShown, setIsWebViewShown] = useState(true);
   const [token, setToken] = useState('');
   const appNetwork = useAppSelector(({APP}) => APP.network);
@@ -42,7 +42,7 @@ const ConnectBills = ({
   const [isInitialApplication] = useState(!user?.methodVerified);
 
   useLayoutEffect(() => {
-    dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+    showOngoingProcess('GENERAL_AWAITING');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -62,7 +62,7 @@ const ConnectBills = ({
       );
     };
     getToken().catch(err => {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       navigation.pop();
       dispatch(
         AppActions.showBottomNotificationModal(
@@ -84,7 +84,7 @@ const ConnectBills = ({
       return;
     }
     setExiting(true);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     if (publicAccountToken) {
       await dispatch(
         ShopEffects.exchangeMethodAccountToken(publicAccountToken),
@@ -136,7 +136,7 @@ const ConnectBills = ({
       setPublicAccountToken(params.public_account_token || publicAccountToken);
       switch (op) {
         case 'open':
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           break;
         case 'exit':
           refreshAccountsAndExit();

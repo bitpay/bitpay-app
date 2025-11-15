@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState, useCallback, memo} from 'react';
 import styled from 'styled-components/native';
 import Button, {ButtonState} from '../../button/Button';
 import {H6, H3, BaseText, Paragraph, Link, H7} from '../../styled/Text';
@@ -195,7 +195,48 @@ const styles = StyleSheet.create({
   },
 });
 
-export const WalletConnectStartModal = () => {
+const staticStyles = {
+  iconContainer: {marginTop: 36},
+  view: {marginTop: 16},
+  innerView: {marginTop: 10, marginBottom: 10},
+  row: {justifyContent: 'center' as const, flexWrap: 'wrap' as const, gap: 10},
+  sheetContainer: {paddingLeft: 16, paddingRight: 16},
+  title: {textAlign: 'center' as const, fontWeight: '400' as const},
+  link: {fontSize: 12},
+  accountRow: {alignItems: 'center' as const, gap: 8, display: 'flex' as const},
+  currencyImageContainer: {height: 30, width: 30},
+  chainImage: {marginRight: -5},
+};
+
+const transformErrorMessage = (error: string) => {
+  const NETWORK_ERROR_PREFIX =
+    "Non conforming namespaces. approve() namespaces chains don't satisfy required namespaces.";
+
+  const EVENTS_ERROR_PREFIX =
+    "Non conforming namespaces. approve() namespaces events don't satisfy namespace events for eip155:1";
+
+  if (error.includes(NETWORK_ERROR_PREFIX)) {
+    // Replace chain codes with corresponding chain names
+    error = error.replace(/eip155:\d+/g, match => {
+      const chainCode = match.split(':')[1];
+      return CHAIN_NAME_MAPPING[chainCode] || match;
+    });
+    let parts = error.split('Required: ')[1].split('Approved: ');
+    let requiredPart = parts[0].replace(/,/g, ', ');
+    let approvedPart = parts[1].replace(/,/g, ', ');
+    const transformedMessage = `Network compatibility issue. The supported networks do not meet the requirements.\n\nRequired Networks:\n${requiredPart}\n\nSupported Networks:\n${approvedPart}`;
+    return transformedMessage;
+  }
+  if (error.includes(EVENTS_ERROR_PREFIX)) {
+    const transformedMessage =
+      'Events compatibility issue. The current supported events are insufficient to fulfill the requirements of the DApp.';
+    return transformedMessage;
+  } else {
+    return error;
+  }
+};
+
+export const WalletConnectStartModal = memo(() => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
@@ -233,76 +274,82 @@ export const WalletConnectStartModal = () => {
   const [customErrorMessageData, setCustomErrorMessageData] = useState<
     BottomNotificationConfig | undefined
   >();
-  const p = w?.proposal as AuthOrProp | undefined;
-  let id: number;
-  let params: AuthTypes.AuthRequestEventArgs | ProposalTypes.Struct;
-  let proposal: AuthEvt | ProposalEvt;
-  let verifyContext: any;
-  let pairingTopic: string;
-  let authPayload: AuthTypes.PayloadParams;
-  let proposer: {
-    publicKey: string;
-    metadata: SignClientTypes.Metadata;
-  };
-  let relays: RelayerTypes.ProtocolOptions[];
-  let requiredNamespaces: ProposalTypes.RequiredNamespaces | undefined;
-  let optionalNamespaces: ProposalTypes.OptionalNamespaces | undefined;
-  let metadata: CoreTypes.Metadata | AuthTypes.Metadata | undefined;
 
-  if (p && 'authPayload' in p.params) {
-    proposal = p as AuthEvt;
-    params = proposal.params as AuthTypes.AuthRequestEventArgs;
-    ({id, verifyContext} = p);
-    pairingTopic = proposal.topic;
-    authPayload = proposal.params.authPayload;
-    metadata = proposal.params.requester?.metadata;
-  } else if (p) {
-    proposal = p as ProposalEvt;
-    params = proposal.params as ProposalTypes.Struct;
-    ({id, verifyContext} = proposal);
-    pairingTopic = proposal.params.pairingTopic;
-    proposer = proposal.params.proposer;
-    relays = proposal.params.relays;
-    requiredNamespaces = proposal.params.requiredNamespaces;
-    optionalNamespaces = proposal.params.optionalNamespaces;
-    metadata = proposer?.metadata;
-  }
+  const proposalData = useMemo(() => {
+    const p = w?.proposal as AuthOrProp | undefined;
+    if (!p) return {};
 
-  const peerName = metadata?.name;
-  const peerUrl = metadata?.url;
-  const peerImg = metadata?.icons?.[0];
+    let id: number;
+    let params: AuthTypes.AuthRequestEventArgs | ProposalTypes.Struct;
+    let proposal: AuthEvt | ProposalEvt;
+    let verifyContext: any;
+    let pairingTopic: string;
+    let authPayload: AuthTypes.PayloadParams;
+    let proposer: {
+      publicKey: string;
+      metadata: SignClientTypes.Metadata;
+    };
+    let relays: RelayerTypes.ProtocolOptions[];
+    let requiredNamespaces: ProposalTypes.RequiredNamespaces | undefined;
+    let optionalNamespaces: ProposalTypes.OptionalNamespaces | undefined;
+    let metadata: CoreTypes.Metadata | AuthTypes.Metadata | undefined;
 
-  const transformErrorMessage = (error: string) => {
-    const NETWORK_ERROR_PREFIX =
-      "Non conforming namespaces. approve() namespaces chains don't satisfy required namespaces.";
-
-    const EVENTS_ERROR_PREFIX =
-      "Non conforming namespaces. approve() namespaces events don't satisfy namespace events for eip155:1";
-
-    if (error.includes(NETWORK_ERROR_PREFIX)) {
-      // Replace chain codes with corresponding chain names
-      error = error.replace(/eip155:\d+/g, match => {
-        const chainCode = match.split(':')[1];
-        return CHAIN_NAME_MAPPING[chainCode] || match;
-      });
-      let parts = error.split('Required: ')[1].split('Approved: ');
-      let requiredPart = parts[0].replace(/,/g, ', ');
-      let approvedPart = parts[1].replace(/,/g, ', ');
-      const transformedMessage = `Network compatibility issue. The supported networks do not meet the requirements.\n\nRequired Networks:\n${requiredPart}\n\nSupported Networks:\n${approvedPart}`;
-      return transformedMessage;
+    if (p && 'authPayload' in p.params) {
+      proposal = p as AuthEvt;
+      params = proposal.params as AuthTypes.AuthRequestEventArgs;
+      ({id, verifyContext} = p);
+      pairingTopic = proposal.topic;
+      authPayload = proposal.params.authPayload;
+      metadata = proposal.params.requester?.metadata;
+    } else if (p) {
+      proposal = p as ProposalEvt;
+      params = proposal.params as ProposalTypes.Struct;
+      ({id, verifyContext} = proposal);
+      pairingTopic = proposal.params.pairingTopic;
+      proposer = proposal.params.proposer;
+      relays = proposal.params.relays;
+      requiredNamespaces = proposal.params.requiredNamespaces;
+      optionalNamespaces = proposal.params.optionalNamespaces;
+      metadata = proposer?.metadata;
     }
-    if (error.includes(EVENTS_ERROR_PREFIX)) {
-      const transformedMessage =
-        'Events compatibility issue. The current supported events are insufficient to fulfill the requirements of the DApp.';
-      return transformedMessage;
-    } else {
-      return error;
-    }
-  };
 
-  const approveSessionProposal = async () => {
+    const peerName = metadata?.name;
+    const peerUrl = metadata?.url;
+    const peerImg = metadata?.icons?.[0];
+
+    return {
+      id,
+      params,
+      proposal,
+      verifyContext,
+      pairingTopic,
+      authPayload,
+      proposer,
+      relays,
+      requiredNamespaces,
+      optionalNamespaces,
+      metadata,
+      peerName,
+      peerUrl,
+      peerImg,
+    };
+  }, [w?.proposal]);
+
+  const approveSessionProposal = useCallback(async () => {
     try {
       setButtonState('loading');
+      const {
+        params,
+        authPayload,
+        id,
+        pairingTopic,
+        proposal,
+        relays,
+        verifyContext,
+      } = proposalData;
+
+      if (!params) return;
+
       if ('authPayload' in params) {
         const authPromises: Promise<AuthTypes.Cacao | null>[] = [];
         const accounts: string[] = [];
@@ -441,9 +488,9 @@ export const WalletConnectStartModal = () => {
         }),
       );
     }
-  };
+  }, [proposalData, selectedWallets, dispatch, navigation, t, keys]);
 
-  const _setSelectedWallets = (_allKeys: KeyWalletsRowProps[]) => {
+  const _setSelectedWallets = useCallback((_allKeys: KeyWalletsRowProps[]) => {
     const selectedWallets: {
       chain: string;
       address: string;
@@ -481,142 +528,282 @@ export const WalletConnectStartModal = () => {
       });
     setSelectedWallets(selectedWallets);
     setButtonState(undefined);
-  };
+  }, []);
 
-  const _setAllKeysAndSelectedWallets = (
-    chainsSelected?: {chain: string; network: string}[],
-    authPayload?: {chains: string[]},
-  ) => {
-    let accountChecked = false;
-    const formattedKeys = Object.values(keys)
-      .map(key => {
-        const filteredWallets = key.wallets.filter(
-          ({chain, currencyAbbreviation, network}) => {
-            if (chainsSelected) {
-              return chainsSelected.some(
-                selected =>
-                  chain === selected.chain &&
-                  network === selected.network &&
-                  !IsERCToken(currencyAbbreviation, chain),
-              );
-            }
-            if (authPayload) {
-              return authPayload.chains.some(
-                selected =>
-                  chain === WC_SUPPORTED_CHAINS[selected]?.chainName &&
-                  network === WC_SUPPORTED_CHAINS[selected]?.network &&
-                  !IsERCToken(currencyAbbreviation, chain),
-              );
-            }
-            return true;
-          },
-        );
-        const accountList = buildAccountList(
-          key,
-          defaultAltCurrency.isoCode,
-          rates,
-          dispatch,
-          {
-            filterByCustomWallets: filteredWallets,
-            skipFiatCalculations: true,
-          },
-        ) as AccountRowProps[];
-        const accounts = accountList.map((account, accountListIndex) => ({
-          ...account,
-          checked: accountListIndex === 0 && !accountChecked,
-        })) as (AccountRowProps & {checked?: boolean})[];
+  const _setAllKeysAndSelectedWallets = useCallback(
+    (
+      chainsSelected?: {chain: string; network: string}[],
+      authPayload?: {chains: string[]},
+    ) => {
+      let accountChecked = false;
+      const formattedKeys = Object.values(keys)
+        .map(key => {
+          const filteredWallets = key.wallets.filter(
+            ({chain, currencyAbbreviation, network}) => {
+              if (chainsSelected) {
+                return chainsSelected.some(
+                  selected =>
+                    chain === selected.chain &&
+                    network === selected.network &&
+                    !IsERCToken(currencyAbbreviation, chain),
+                );
+              }
+              if (authPayload) {
+                return authPayload.chains.some(
+                  selected =>
+                    chain === WC_SUPPORTED_CHAINS[selected]?.chainName &&
+                    network === WC_SUPPORTED_CHAINS[selected]?.network &&
+                    !IsERCToken(currencyAbbreviation, chain),
+                );
+              }
+              return true;
+            },
+          );
+          const accountList = buildAccountList(
+            key,
+            defaultAltCurrency.isoCode,
+            rates,
+            dispatch,
+            {
+              filterByCustomWallets: filteredWallets,
+              skipFiatCalculations: true,
+            },
+          ) as AccountRowProps[];
+          const accounts = accountList.map((account, accountListIndex) => ({
+            ...account,
+            checked: accountListIndex === 0 && !accountChecked,
+          })) as (AccountRowProps & {checked?: boolean})[];
 
-        if (accounts.length === 0) {
-          return null;
-        }
-        accountChecked = true;
-        return {
-          key: key.id,
-          keyName: key.keyName || 'My Key',
-          backupComplete: key.backupComplete,
-          accounts,
-        };
-      })
-      .filter(item => item !== null) as KeyWalletsRowProps[];
-    setAllkeys(formattedKeys);
-    const availableAccountsLength = formattedKeys.reduce(
-      (total, key) => total + key?.accounts?.length || 0,
-      0,
-    );
-    setAvailableAccountsLength(availableAccountsLength);
-    setCheckedAccount(formattedKeys[0]?.accounts[0]);
-    _setSelectedWallets(formattedKeys);
-  };
+          if (accounts.length === 0) {
+            return null;
+          }
+          accountChecked = true;
+          return {
+            key: key.id,
+            keyName: key.keyName || 'My Key',
+            backupComplete: key.backupComplete,
+            accounts,
+          };
+        })
+        .filter(item => item !== null) as KeyWalletsRowProps[];
+      setAllkeys(formattedKeys);
+      const availableAccountsLength = formattedKeys.reduce(
+        (total, key) => total + key?.accounts?.length || 0,
+        0,
+      );
+      setAvailableAccountsLength(availableAccountsLength);
+      setCheckedAccount(formattedKeys[0]?.accounts[0]);
+      _setSelectedWallets(formattedKeys);
+    },
+    [keys, defaultAltCurrency.isoCode, rates, dispatch, _setSelectedWallets],
+  );
 
   useEffect(() => {
     if (showWalletConnectStartModal) {
-      _setAllKeysAndSelectedWallets(chainsSelected, authPayload);
+      _setAllKeysAndSelectedWallets(chainsSelected, proposalData.authPayload);
     }
-  }, [chainsSelected, showWalletConnectStartModal]);
+  }, [
+    chainsSelected,
+    showWalletConnectStartModal,
+    proposalData.authPayload,
+    _setAllKeysAndSelectedWallets,
+  ]);
 
-  const _setChainsSelected = (
-    requiredNamespaces: ProposalTypes.RequiredNamespaces | undefined,
-    optionalNamespaces: ProposalTypes.OptionalNamespaces | undefined,
-  ) => {
-    const chains: {chain: string; network: string}[] = [];
-    const allNamespaces = {
-      ...(requiredNamespaces || {}),
-      ...(optionalNamespaces || {}),
-    };
-    Object.keys(allNamespaces).forEach(key => {
-      const requiredChains = requiredNamespaces?.[key]?.chains || [];
-      const optionalChains = optionalNamespaces?.[key]?.chains || [];
-      const combinedChains = [
-        ...new Set([...requiredChains, ...optionalChains]),
-      ];
-      combinedChains.map(chainId => {
-        const chainInfo = WALLET_CONNECT_SUPPORTED_CHAINS[chainId];
-        if (chainInfo) {
-          chains.push(chainInfo);
-        }
+  const _setChainsSelected = useCallback(
+    (
+      requiredNamespaces: ProposalTypes.RequiredNamespaces | undefined,
+      optionalNamespaces: ProposalTypes.OptionalNamespaces | undefined,
+    ) => {
+      const chains: {chain: string; network: string}[] = [];
+      const allNamespaces = {
+        ...(requiredNamespaces || {}),
+        ...(optionalNamespaces || {}),
+      };
+      Object.keys(allNamespaces).forEach(key => {
+        const requiredChains = requiredNamespaces?.[key]?.chains || [];
+        const optionalChains = optionalNamespaces?.[key]?.chains || [];
+        const combinedChains = [
+          ...new Set([...requiredChains, ...optionalChains]),
+        ];
+        combinedChains.map(chainId => {
+          const chainInfo = WALLET_CONNECT_SUPPORTED_CHAINS[chainId];
+          if (chainInfo) {
+            chains.push(chainInfo);
+          }
+        });
       });
-    });
-    const seen = new Set<string>();
-    const uniqueChains = chains.filter(({chain, network}) => {
-      const key = `${chain}-${network}`;
-      if (seen.has(key)) {
-        return false;
-      }
-      seen.add(key);
-      return true;
-    });
-    const chainNames = [...new Set(uniqueChains.map(({chain}) => chain))];
-    setChainsSelected(uniqueChains);
-    setChainNames(chainNames);
-  };
+      const seen = new Set<string>();
+      const uniqueChains = chains.filter(({chain, network}) => {
+        const key = `${chain}-${network}`;
+        if (seen.has(key)) {
+          return false;
+        }
+        seen.add(key);
+        return true;
+      });
+      const chainNames = [...new Set(uniqueChains.map(({chain}) => chain))];
+      setChainsSelected(uniqueChains);
+      setChainNames(chainNames);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (showWalletConnectStartModal) {
-      _setChainsSelected(requiredNamespaces, optionalNamespaces);
+      _setChainsSelected(
+        proposalData.requiredNamespaces,
+        proposalData.optionalNamespaces,
+      );
     }
-  }, [requiredNamespaces, optionalNamespaces, showWalletConnectStartModal]);
+  }, [
+    proposalData.requiredNamespaces,
+    proposalData.optionalNamespaces,
+    showWalletConnectStartModal,
+    _setChainsSelected,
+  ]);
 
-  const onBackdropPress = () => {
+  const onBackdropPress = useCallback(() => {
     dispatch(dismissWalletConnectStartModal());
-    if (proposal) {
-      dispatch(walletConnectV2RejectSessionProposal(proposal.id));
+    if (proposalData.proposal) {
+      dispatch(walletConnectV2RejectSessionProposal(proposalData.proposal.id));
     }
-  };
+  }, [dispatch, proposalData.proposal]);
+
+  const handleOpenUrl = useCallback(() => {
+    haptic('impactLight');
+    dispatch(openUrlWithInAppBrowser(proposalData.peerUrl));
+  }, [dispatch, proposalData.peerUrl]);
+
+  const handleShowAccountSelection = useCallback(() => {
+    setShowAccountWCV2SelectionBottomModal(true);
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    haptic('impactLight');
+    if (proposalData.proposal) {
+      dispatch(dismissWalletConnectStartModal());
+      dispatch(walletConnectV2RejectSessionProposal(proposalData.proposal.id));
+    }
+  }, [dispatch, proposalData.proposal]);
+
+  const handleApprove = useCallback(() => {
+    haptic('impactLight');
+    approveSessionProposal();
+  }, [approveSessionProposal]);
+
+  const handleAccountPress = useCallback(
+    (account: AccountRowProps & {checked?: boolean}) => {
+      const _allKeys = allKeys?.map(key => ({
+        ...key,
+        accounts: key.accounts.map(accountItem => {
+          const isChecked =
+            accountItem.receiveAddress === account.receiveAddress
+              ? !account.checked
+              : false;
+
+          return {
+            ...accountItem,
+            checked: isChecked,
+          };
+        }),
+      }));
+      setCheckedAccount(account);
+      setAllkeys(_allKeys);
+      _setSelectedWallets(_allKeys || []);
+    },
+    [allKeys, _setSelectedWallets],
+  );
+
+  const validationInfo = useMemo(() => {
+    if (!proposalData.verifyContext) return null;
+
+    let bgColor = '';
+    let textColor = '';
+    let text = '';
+    let Icon = null;
+
+    if (proposalData.verifyContext?.verified?.isScam) {
+      bgColor = Caution25;
+      textColor = Caution;
+      text = t('Scam Domain');
+      Icon = InvalidDomainSvg;
+    } else {
+      switch (proposalData.verifyContext.verified.validation) {
+        case 'UNKNOWN':
+          bgColor = Warning25;
+          textColor = '#AC6304';
+          text = t('Cannot Verify');
+          Icon = WarningOutlineSvg;
+          break;
+        case 'INVALID':
+          bgColor = Caution25;
+          textColor = Caution;
+          text = t('Security Risk');
+          Icon = InvalidDomainSvg;
+          break;
+        case 'VALID':
+          bgColor = Success25;
+          textColor = '#0B754A';
+          text = t('Trusted Domain');
+          Icon = TrustedDomainSvg;
+          break;
+        default:
+          return null;
+      }
+    }
+
+    return {bgColor, textColor, text, Icon};
+  }, [proposalData.verifyContext, t]);
+
+  const bannerInfo = useMemo(() => {
+    if (!proposalData.verifyContext) return null;
+
+    let text = '';
+    let type = '';
+    let title = '';
+    let VerifyIcon: React.FC<SvgProps> | null = null;
+
+    if (proposalData.verifyContext?.verified?.isScam) {
+      VerifyIcon = InvalidDomainSvg;
+      text = t("The application's domain has been flagged as a scam.");
+      type = 'error';
+      title = t('Security Risk');
+    } else {
+      switch (proposalData.verifyContext.verified.validation) {
+        case 'UNKNOWN':
+          VerifyIcon = WarningOutlineSvg;
+          text = t('The domain sending the request cannot be verified.');
+          type = 'warning';
+          title = t('Unknown Domain');
+          break;
+        case 'INVALID':
+          VerifyIcon = InvalidDomainSvg;
+          text = t(
+            "The application's domain doesn't match the sender of this request.",
+          );
+          type = 'error';
+          title = t('Security Risk');
+          break;
+        default:
+          return null;
+      }
+    }
+
+    return {text, type, title, VerifyIcon};
+  }, [proposalData.verifyContext, t]);
 
   return (
     <SheetModal
       isVisible={showWalletConnectStartModal}
       onBackdropPress={onBackdropPress}>
-      <SheetContainer
-        paddingHorizontal={0}
-        style={{paddingLeft: 16, paddingRight: 16}}>
+      <SheetContainer paddingHorizontal={0} style={staticStyles.sheetContainer}>
         <ScrollView>
-          <IconContainer style={{marginTop: 36}}>
-            {peerImg && !imageError ? (
+          <IconContainer style={staticStyles.iconContainer}>
+            {proposalData.peerImg && !imageError ? (
               <FastImage
                 style={styles.icon}
                 source={{
-                  uri: peerImg,
+                  uri: proposalData.peerImg,
                   priority: FastImage.priority.normal,
                 }}
                 resizeMode={FastImage.resizeMode.cover}
@@ -626,135 +813,44 @@ export const WalletConnectStartModal = () => {
               <DefaultImage width={80} height={80} />
             )}
           </IconContainer>
-          <View
-            style={{
-              marginTop: 16,
-            }}>
-            {peerName && peerUrl && (
+          <View style={staticStyles.view}>
+            {proposalData.peerName && proposalData.peerUrl && (
               <View>
-                <View style={{marginTop: 10, marginBottom: 10}}>
+                <View style={staticStyles.innerView}>
                   <TitleContainer>
-                    <H3 style={{textAlign: 'center', fontWeight: '400'}}>
-                      {peerName + t(' wants to connect to your wallet')}
+                    <H3 style={staticStyles.title}>
+                      {proposalData.peerName +
+                        t(' wants to connect to your wallet')}
                     </H3>
                   </TitleContainer>
-                  <Row
-                    style={{
-                      justifyContent: 'center',
-                      flexWrap: 'wrap',
-                      gap: 10,
-                    }}>
-                    <UriContainerTouchable
-                      onPress={() => {
-                        haptic('impactLight');
-                        dispatch(openUrlWithInAppBrowser(peerUrl));
-                      }}>
+                  <Row style={staticStyles.row}>
+                    <UriContainerTouchable onPress={handleOpenUrl}>
                       <UriContainer>
-                        <Link style={{fontSize: 12}}>{peerUrl}</Link>
+                        <Link style={staticStyles.link}>
+                          {proposalData.peerUrl}
+                        </Link>
                         <ExternalLinkSvg width={12} />
                       </UriContainer>
                     </UriContainerTouchable>
-                    {verifyContext &&
-                      (() => {
-                        let bgColor = '';
-                        let textColor = '';
-                        let text = '';
-                        let Icon = null;
-                        switch (verifyContext.verified.validation) {
-                          case 'UNKNOWN':
-                            bgColor = Warning25;
-                            textColor = '#AC6304';
-                            text = t('Cannot Verify');
-                            Icon = WarningOutlineSvg;
-                            break;
-                          case 'INVALID':
-                            bgColor = Caution25;
-                            textColor = Caution;
-                            text = t('Security Risk');
-                            Icon = InvalidDomainSvg;
-                            break;
-                          case 'VALID':
-                            bgColor = Success25;
-                            textColor = '#0B754A';
-                            text = t('Trusted Domain');
-                            Icon = TrustedDomainSvg;
-                            break;
-
-                          default:
-                            return null;
-                        }
-
-                        // if scam ignore validation
-                        if (verifyContext?.verified?.isScam) {
-                          bgColor = Caution25;
-                          textColor = Caution;
-                          text = t('Scam Domain');
-                          Icon = InvalidDomainSvg;
-                        }
-
-                        return (
-                          <ValidationContainer bgColor={bgColor}>
-                            <ValidationText textColor={textColor}>
-                              {text}
-                            </ValidationText>
-                            <Icon />
-                          </ValidationContainer>
-                        );
-                      })()}
+                    {validationInfo && (
+                      <ValidationContainer bgColor={validationInfo.bgColor}>
+                        <ValidationText textColor={validationInfo.textColor}>
+                          {validationInfo.text}
+                        </ValidationText>
+                        <validationInfo.Icon />
+                      </ValidationContainer>
+                    )}
                   </Row>
-                  {verifyContext &&
-                    (() => {
-                      let text = '';
-                      let type = '';
-                      let title = '';
-                      let VerifyIcon: React.FC<SvgProps> | null = null;
-                      switch (verifyContext.verified.validation) {
-                        case 'UNKNOWN':
-                          VerifyIcon = WarningOutlineSvg;
-                          text = t(
-                            'The domain sending the request cannot be verified.',
-                          );
-                          type = 'warning';
-                          title = t('Unknown Domain');
-                          break;
-                        // case 'VALID':
-                        //   text = t("The domain linked to this request has been verified as this application's domain.");
-                        //   type = 'success';
-                        //   title = t('Trusted Domain');
-                        //   break;
-                        case 'INVALID':
-                          VerifyIcon = InvalidDomainSvg;
-                          text = t(
-                            "The application's domain doesn't match the sender of this request.",
-                          );
-                          type = 'error';
-                          title = t('Security Risk');
-                          break;
-                        default:
-                          return null;
-                      }
-
-                      // if scam ignore validation
-                      if (verifyContext?.verified?.isScam) {
-                        VerifyIcon = InvalidDomainSvg;
-                        text = t(
-                          "The application's domain has been flagged as a scam.",
-                        );
-                        type = 'error';
-                        title = t('Security Risk');
-                      }
-
-                      return (
-                        <Banner
-                          height={100}
-                          type={type}
-                          title={title}
-                          description={text}
-                          hasBackgroundColor={true}
-                          icon={VerifyIcon}
-                        />
-                      );
-                    })()}
+                  {bannerInfo && (
+                    <Banner
+                      height={100}
+                      type={bannerInfo.type}
+                      title={bannerInfo.title}
+                      description={bannerInfo.text}
+                      hasBackgroundColor={true}
+                      icon={bannerInfo.VerifyIcon}
+                    />
+                  )}
                 </View>
                 <DescriptionContainer>
                   <H7
@@ -781,7 +877,9 @@ export const WalletConnectStartModal = () => {
                   </H7>
                   <DescriptionItemContainer>
                     {chainNames?.map((chain, index) => (
-                      <View key={index.toString()} style={{marginRight: -5}}>
+                      <View
+                        key={index.toString()}
+                        style={staticStyles.chainImage}>
                         <CurrencyImage
                           img={CurrencyListIcons[chain]}
                           size={30}
@@ -798,17 +896,10 @@ export const WalletConnectStartModal = () => {
                     {allKeys && allKeys[0]?.accounts[0] && checkedAccount ? (
                       <AccountSettingsContainer
                         activeOpacity={ActiveOpacity}
-                        onPress={() => {
-                          setShowAccountWCV2SelectionBottomModal(true);
-                        }}>
-                        <Row
-                          style={{
-                            alignItems: 'center',
-                            gap: 8,
-                            display: 'flex',
-                          }}>
+                        onPress={handleShowAccountSelection}>
+                        <Row style={staticStyles.accountRow}>
                           <CurrencyImageContainer
-                            style={{height: 30, width: 30}}>
+                            style={staticStyles.currencyImageContainer}>
                             <Blockie
                               size={30}
                               seed={checkedAccount.receiveAddress}
@@ -870,10 +961,7 @@ export const WalletConnectStartModal = () => {
                   state={buttonState}
                   disabled={!(allKeys && allKeys[0]?.accounts[0])}
                   touchableLibrary={'react-native'}
-                  onPress={() => {
-                    haptic('impactLight');
-                    approveSessionProposal();
-                  }}>
+                  onPress={handleApprove}>
                   {t('Connect')}
                 </Button>
               </ActionContainer>
@@ -881,15 +969,7 @@ export const WalletConnectStartModal = () => {
                 <Button
                   buttonStyle="secondary"
                   touchableLibrary={'react-native'}
-                  onPress={() => {
-                    haptic('impactLight');
-                    if (proposal) {
-                      dispatch(dismissWalletConnectStartModal());
-                      dispatch(
-                        walletConnectV2RejectSessionProposal(proposal.id),
-                      );
-                    }
-                  }}>
+                  onPress={handleCancel}>
                   {t('Cancel')}
                 </Button>
               </ActionContainer>
@@ -902,25 +982,7 @@ export const WalletConnectStartModal = () => {
               isVisible={showAccountWCV2SelectionBottomModal}
               closeModal={() => setShowAccountWCV2SelectionBottomModal(false)}
               allKeys={allKeys as KeyWalletsRowWithChecked[]}
-              onPress={account => {
-                const _allKeys = allKeys.map(key => ({
-                  ...key,
-                  accounts: key.accounts.map(accountItem => {
-                    const isChecked =
-                      accountItem.receiveAddress === account.receiveAddress
-                        ? !account.checked
-                        : false;
-
-                    return {
-                      ...accountItem,
-                      checked: isChecked,
-                    };
-                  }),
-                }));
-                setCheckedAccount(account);
-                setAllkeys(_allKeys);
-                _setSelectedWallets(_allKeys);
-              }}
+              onPress={handleAccountPress}
             />
           ) : null}
 
@@ -934,4 +996,4 @@ export const WalletConnectStartModal = () => {
       </SheetContainer>
     </SheetModal>
   );
-};
+});

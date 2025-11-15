@@ -3,7 +3,7 @@ import {LocationActions} from '.';
 import {Effect} from '..';
 import {EUCountries} from './location.constants';
 import cloneDeep from 'lodash.clonedeep';
-import {LogActions} from '../log';
+import {logManager} from '../../managers/LogManager';
 
 export const isEuCountry = (countryShortCode: string | undefined): boolean => {
   if (!countryShortCode) {
@@ -26,7 +26,7 @@ export const getLocationData = (): Effect => async dispatch => {
       },
     );
 
-    LogActions.info('getLocationData', locationData.country);
+    logManager.info('getLocationData', locationData.country);
     await dispatch(
       LocationActions.successGetLocation({
         locationData: {
@@ -40,6 +40,6 @@ export const getLocationData = (): Effect => async dispatch => {
     );
   } catch (err) {
     const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-    LogActions.error('getLocationData', errStr);
+    logManager.error('getLocationData', errStr);
   }
 };

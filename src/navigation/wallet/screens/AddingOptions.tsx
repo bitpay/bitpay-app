@@ -21,11 +21,7 @@ import {Option} from './CreationOptions';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   createMultipleWallets,
   getDecryptPassword,
@@ -42,6 +38,8 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import {getNavigationTabName, RootStacks} from '../../../Root';
+import {useOngoingProcess} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -51,6 +49,7 @@ const AddingOptions: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const route = useRoute<RouteProp<WalletGroupParamList, 'AddingOptions'>>();
   const {key} = route.params;
   const [showMultisigOptions, setShowMultisigOptions] = useState(false);
@@ -106,7 +105,7 @@ const AddingOptions: React.FC = () => {
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
-          await dispatch(startOnGoingProcessModal('ADDING_EVM_CHAINS'));
+          showOngoingProcess('ADDING_EVM_CHAINS');
           const wallets = await dispatch(
             createMultipleWallets({
               key: _key,
@@ -121,7 +120,7 @@ const AddingOptions: React.FC = () => {
           key.wallets.push(...(wallets as Wallet[]));
 
           dispatch(successAddWallet({key}));
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           navigation.dispatch(
             CommonActions.reset({
               index: 2,
@@ -149,8 +148,8 @@ const AddingOptions: React.FC = () => {
         } catch (err) {
           const errstring =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(LogActions.error(`Error adding account: ${errstring}`));
-          dispatch(dismissOnGoingProcessModal());
+          logManager.error(`Error adding account: ${errstring}`);
+          hideOngoingProcess();
           await sleep(1000);
           showErrorModal(errstring);
         }
@@ -180,15 +179,15 @@ const AddingOptions: React.FC = () => {
             !key?.properties?.xPrivKeyEDDSAEncrypted
           ) {
             try {
-              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+              showOngoingProcess('ADDING_WALLET');
               await sleep(500);
               key.methods!.addKeyByAlgorithm('EDDSA', {password});
               key.properties = key.methods!.toObj();
             } catch (err) {
-              dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
               const errstring =
                 err instanceof Error ? err.message : JSON.stringify(err);
-              dispatch(LogActions.error(`Error EDDSA key: ${errstring}`));
+              logManager.error(`Error EDDSA key: ${errstring}`);
               showErrorModal(errstring);
               return;
             }
@@ -198,7 +197,7 @@ const AddingOptions: React.FC = () => {
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
-          await dispatch(startOnGoingProcessModal('ADDING_SPL_CHAINS'));
+          showOngoingProcess('ADDING_SPL_CHAINS');
           await sleep(500);
           const wallets = await dispatch(
             createMultipleWallets({
@@ -215,8 +214,8 @@ const AddingOptions: React.FC = () => {
           const _wallets = wallets.filter(Boolean) as Wallet[];
           if (_wallets.length === 0) {
             const err = 'Error adding Solana account';
-            dispatch(LogActions.error(err));
-            dispatch(dismissOnGoingProcessModal());
+            logManager.error(err);
+            hideOngoingProcess();
             showErrorModal(err);
             return;
           }
@@ -224,7 +223,7 @@ const AddingOptions: React.FC = () => {
           key.wallets.push(...(wallets as Wallet[]));
 
           dispatch(successAddWallet({key}));
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           navigation.dispatch(
             CommonActions.reset({
               index: 2,
@@ -260,8 +259,8 @@ const AddingOptions: React.FC = () => {
         } catch (err) {
           const errstring =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(LogActions.error(`Error adding account: ${errstring}`));
-          dispatch(dismissOnGoingProcessModal());
+          logManager.error(`Error adding account: ${errstring}`);
+          hideOngoingProcess();
           await sleep(1000);
           showErrorModal(errstring);
         }

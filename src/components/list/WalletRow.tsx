@@ -76,7 +76,6 @@ export interface WalletRowProps extends SearchableItem {
   fiatPendingBalanceFormat?: string;
   isToken?: boolean;
   network: Network;
-  isRefreshing?: boolean;
   isScanning?: boolean;
   hideWallet?: boolean;
   hideWalletByAccount?: boolean;
