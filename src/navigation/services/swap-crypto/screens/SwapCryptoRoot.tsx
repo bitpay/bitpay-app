@@ -1821,6 +1821,7 @@ const SwapCryptoRoot: React.FC = () => {
       />
 
       <SheetModal
+        modalLibrary="bottom-sheet"
         isVisible={toWalletSelectorModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>

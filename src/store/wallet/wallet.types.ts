@@ -24,7 +24,6 @@ export enum WalletActionTypes {
   SUCCESS_GET_CUSTOM_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_CUSTOM_TOKEN_OPTIONS',
   FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
   SUCCESS_ADD_WALLET = 'WALLET/SUCCESS_ADD_WALLET',
-  FAILED_ADD_WALLET = 'WALLET/FAILED_ADD_WALLET',
   SUCCESS_UPDATE_WALLET_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_STATUS',
   SUCCESS_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEY_TOTAL_BALANCE',
   SUCCESS_UPDATE_KEYS_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEYS_TOTAL_BALANCE',
@@ -92,10 +91,6 @@ interface successAddWallet {
   payload: {
     key: Key;
   };
-}
-
-interface failedAddWallet {
-  type: typeof WalletActionTypes.FAILED_ADD_WALLET;
 }
 
 interface successImport {
@@ -347,7 +342,6 @@ export type WalletActionType =
   | successUpdateKey
   | failedUpdateKey
   | successAddWallet
-  | failedAddWallet
   | successImport
   | failedImport
   | setBackupComplete

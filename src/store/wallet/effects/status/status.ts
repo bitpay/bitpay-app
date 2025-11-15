@@ -67,6 +67,7 @@ export const waitForTargetAmountAndUpdateWallet =
         retry++;
 
         if (retry > 5) {
+          DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, false);
           clearInterval(interval);
           return;
         }
@@ -120,6 +121,10 @@ export const waitForTargetAmountAndUpdateWallet =
                 }
               }
               DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+              DeviceEventEmitter.emit(
+                DeviceEmitterEvents.SET_REFRESHING,
+                false,
+              );
               await dispatch(updatePortfolioBalance());
             }
           },

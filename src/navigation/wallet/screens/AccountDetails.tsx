@@ -728,6 +728,16 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return () => subscription.remove();
   }, [keys]);
 
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.SET_REFRESHING,
+      val => {
+        setRefreshing(!!val);
+      },
+    );
+    return () => subscription.remove();
+  }, []);
+
   const keyExtractorAssets = useCallback(item => item.id, []);
   const keyExtractorTransaction = useCallback(
     item => `${item.txid}+${item.walletId}`,

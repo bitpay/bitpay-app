@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useCallback, useMemo} from 'react';
 import styled from 'styled-components/native';
 import {Success, White} from '../../../styles/colors';
 import {
@@ -9,7 +9,7 @@ import PaymentCompleteSvg from '../../../../assets/img/wallet/payment-complete.s
 import {BaseText} from '../../../components/styled/Text';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTranslation} from 'react-i18next';
-import {View} from 'react-native';
+import {View, ViewStyle} from 'react-native';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {usePaymentSent} from '../../../contexts';
 
@@ -45,15 +45,30 @@ const CloseText = styled(BaseText)`
   padding-bottom: 10px;
 `;
 
-const PaymentSent = () => {
+const centerViewStyle: ViewStyle = {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+};
+
+const closeButtonStyle: ViewStyle = {
+  paddingBottom: 20,
+  marginTop: 25,
+};
+
+const PaymentSent = React.memo(() => {
   const {t} = useTranslation();
   const {isVisible, title, onCloseModal, hidePaymentSent} = usePaymentSent();
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     haptic('impactLight');
     onCloseModal?.();
     hidePaymentSent();
-  };
+  }, [onCloseModal, hidePaymentSent]);
+
+  const displayTitle = useMemo(() => title || t('Payment Sent'), [title, t]);
+
+  const closeButtonText = useMemo(() => t('CLOSE'), [t]);
 
   return (
     <SheetModal
@@ -63,23 +78,20 @@ const PaymentSent = () => {
       fullscreen={true}
       onBackdropPress={handleClose}>
       <Container>
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <View style={centerViewStyle}>
           <PaymentSentHero>
             <PaymentCompleteSvg />
-            <Title>{title || t('Payment Sent')}</Title>
+            <Title>{displayTitle}</Title>
           </PaymentSentHero>
         </View>
-
         <PaymentSentFooter>
-          <CloseButtonContainer
-            style={{paddingBottom: 20, marginTop: 25}}
-            onPress={handleClose}>
-            <CloseText>{t('CLOSE')}</CloseText>
+          <CloseButtonContainer style={closeButtonStyle} onPress={handleClose}>
+            <CloseText>{closeButtonText}</CloseText>
           </CloseButtonContainer>
         </PaymentSentFooter>
       </Container>
     </SheetModal>
   );
-};
+});
 
 export default PaymentSent;

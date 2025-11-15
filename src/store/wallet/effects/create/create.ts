@@ -14,7 +14,6 @@ import {
   mapAbbreviationAndName,
 } from '../../utils/wallet';
 import {
-  failedAddWallet,
   successAddWallet,
   successCreateKey,
   successUpdateKey,
@@ -370,7 +369,6 @@ export const addWallet =
       } catch (err) {
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(failedAddWallet());
         if (errstring) {
           logManager.debug(`Error adding wallet: ${errstring}`);
         }
