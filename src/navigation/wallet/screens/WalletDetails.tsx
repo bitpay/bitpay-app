@@ -656,6 +656,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     return () => subscription.remove();
   }, [keys]);
 
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.SET_REFRESHING,
+      val => {
+        setRefreshing(!!val);
+      },
+    );
+    return () => subscription.remove();
+  }, []);
+
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
   const listFooterComponent = () => {

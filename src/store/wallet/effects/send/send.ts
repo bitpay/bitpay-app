@@ -99,7 +99,7 @@ import {openUrlWithInAppBrowser} from '../../../app/app.effects';
 import _ from 'lodash';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
-import {Platform} from 'react-native';
+import {DeviceEventEmitter, Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
 import {
   getCoinAndChainFromCurrencyCode,
@@ -122,6 +122,7 @@ import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
 import {logManager} from '../../../../managers/LogManager';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
+import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1376,6 +1377,8 @@ export const publishAndSign =
           const targetAmount = wallet.balance.sat - (fee + amount);
 
           setTimeout(() => {
+            // show refresing in wallet details view
+            DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
             dispatch(
               waitForTargetAmountAndUpdateWallet({
                 key,

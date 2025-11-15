@@ -85,6 +85,8 @@ import {GetPayProDetails} from '../../../store/wallet/effects/paypro/paypro';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {useOngoingProcess, usePaymentSent} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
+import {DeviceEventEmitter} from 'react-native';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 
 const TxpDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -377,6 +379,8 @@ const TransactionProposalDetails = () => {
       };
       const targetAmount = wallet.balance.sat - (fee + amount);
       setTimeout(() => {
+        // show refresing in wallet details view
+        DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
         dispatch(
           waitForTargetAmountAndUpdateWallet({
             key,

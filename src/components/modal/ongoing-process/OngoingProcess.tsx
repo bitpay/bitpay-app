@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef} from 'react';
+import React, {useCallback, useEffect, useRef, useMemo} from 'react';
 import {ActivityIndicator, Dimensions, Platform} from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -97,7 +97,7 @@ const ModalWrapper = styled.View`
   margin-left: -20px;
 `;
 
-const OnGoingProcessModal: React.FC = () => {
+const OnGoingProcessModal: React.FC = React.memo(() => {
   const {message, isVisible} = useOngoingProcess();
   const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
 
@@ -105,6 +105,7 @@ const OnGoingProcessModal: React.FC = () => {
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const opacityFadeDuration = 200;
   const opacity = useSharedValue(0);
+
   const animatedStyles = useAnimatedStyle(() => {
     return {
       opacity: opacity.value,
@@ -114,6 +115,7 @@ const OnGoingProcessModal: React.FC = () => {
       justifyContent: 'center',
     };
   });
+
   useEffect(() => {
     let dismissTimeout: NodeJS.Timeout;
     let opacityTimeout: NodeJS.Timeout;
@@ -141,6 +143,7 @@ const OnGoingProcessModal: React.FC = () => {
       }
     };
   }, [appWasInit, isVisible, opacity, opacityFadeDuration]);
+
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -154,12 +157,27 @@ const OnGoingProcessModal: React.FC = () => {
     [],
   );
 
+  const modalContent = useMemo(
+    () => (
+      <Row>
+        <ActivityIndicatorContainer>
+          <ActivityIndicator color={SlateDark} />
+        </ActivityIndicatorContainer>
+        <Message>{message}</Message>
+        <BlurContainer />
+      </Row>
+    ),
+    [message],
+  );
+
+  const bottomSheetBackgroundStyle = useMemo(() => ({borderRadius: 18}), []);
+
   return modalLibrary === 'bottom-sheet' ? (
     <BottomSheetModal
       detached={true}
       bottomInset={0}
       backdropComponent={renderBackdrop}
-      backgroundStyle={{borderRadius: 18}}
+      backgroundStyle={bottomSheetBackgroundStyle}
       enableDismissOnClose={true}
       enableDynamicSizing={false}
       enableOverDrag={false}
@@ -171,15 +189,7 @@ const OnGoingProcessModal: React.FC = () => {
       index={0}
       ref={bottomSheetModalRef}>
       <BottomSheetView>
-        <Animated.View style={[animatedStyles]}>
-          <Row>
-            <ActivityIndicatorContainer>
-              <ActivityIndicator color={SlateDark} />
-            </ActivityIndicatorContainer>
-            <Message>{message}</Message>
-            <BlurContainer />
-          </Row>
-        </Animated.View>
+        <Animated.View style={[animatedStyles]}>{modalContent}</Animated.View>
       </BottomSheetView>
     </BottomSheetModal>
   ) : (
@@ -198,17 +208,9 @@ const OnGoingProcessModal: React.FC = () => {
       hideModalContentWhileAnimating={true}
       useNativeDriverForBackdrop={true}
       useNativeDriver={true}>
-      <ModalWrapper>
-        <Row>
-          <ActivityIndicatorContainer>
-            <ActivityIndicator color={SlateDark} />
-          </ActivityIndicatorContainer>
-          <Message>{message}</Message>
-          <BlurContainer />
-        </Row>
-      </ModalWrapper>
+      <ModalWrapper>{modalContent}</ModalWrapper>
     </BaseModal>
   );
-};
+});
 
 export default OnGoingProcessModal;
