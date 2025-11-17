@@ -642,11 +642,8 @@ export default () => {
               .join(' ');
             if (message.length < 800) {
               const logLevel = level === 'fatal' ? 'error' : level;
-              dispatch(
-                (LogActions as Record<string, Function>)[logLevel](
-                  `[BWC] ${message}`,
-                ),
-              );
+              // @ts-ignore
+              logManager[logLevel](`[BWC] ${message}`);
             }
           } catch (_) {}
         };
