@@ -17,7 +17,11 @@ import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://github.com/maxdeviant/redux-persist-transform-encrypt
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
-import {backupPersistRoot, readBackupPersistRoot} from './backup/fs-backup';
+import {
+  backupFileExists,
+  backupPersistRoot,
+  readBackupPersistRoot,
+} from './backup/fs-backup';
 import {
   bindWalletKeys,
   transformContacts,
@@ -73,6 +77,9 @@ import {
   walletConnectV2Reducer,
   walletConnectV2ReduxPersistBlackList,
 } from './wallet-connect-v2/wallet-connect-v2.reducer';
+import {WalletActionTypes} from './wallet/wallet.types';
+import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
+import {AppActionTypes} from './app/app.types';
 
 import {Storage} from 'redux-persist';
 import {MMKV} from 'react-native-mmkv';
@@ -80,6 +87,30 @@ import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
 
 export const storage = new MMKV();
+
+const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
+  WalletActionTypes.SUCCESS_CREATE_KEY,
+  WalletActionTypes.SUCCESS_IMPORT,
+  WalletActionTypes.SUCCESS_ADD_WALLET,
+  WalletActionTypes.DELETE_KEY,
+  WalletActionTypes.UPDATE_KEY_NAME,
+  WalletActionTypes.UPDATE_WALLET_NAME,
+  WalletActionTypes.UPDATE_ACCOUNT_NAME,
+  WalletActionTypes.SYNC_WALLETS,
+  WalletActionTypes.TOGGLE_HIDE_WALLET,
+  WalletActionTypes.TOGGLE_HIDE_ACCOUNT,
+  WalletActionTypes.SET_CUSTOM_TOKENS_MIGRATION_COMPLETE,
+  WalletActionTypes.SET_POLYGON_MIGRATION_COMPLETE,
+  WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE,
+  WalletActionTypes.SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE,
+  WalletActionTypes.SET_SVM_ADDRESS_CREATION_FIX_COMPLETE,
+  BitPayIdActionTypes.COMPLETED_PAIRING,
+  BitPayIdActionTypes.BITPAY_ID_DISCONNECTED,
+  AppActionTypes.PIN_LOCK_ACTIVE,
+  AppActionTypes.BIOMETRIC_LOCK_ACTIVE,
+]);
+
+let backupTriggerAction: string | null = null;
 
 // Module-scoped logger that safely logs before and after store initialization
 let storeDispatch: ((action: AnyAction) => void) | null = null;
@@ -126,7 +157,7 @@ const restoreFromBackup = (reason: string): Promise<string | null> => {
 };
 
 export const reduxStorage: Storage = {
-  setItem: (key, value) => {
+  setItem: async (key, value) => {
     try {
       storage.set(key, value);
     } catch (err) {
@@ -142,10 +173,22 @@ export const reduxStorage: Storage = {
     }
     try {
       if (key === 'persist:root' && typeof value === 'string') {
-        backupPersistRoot(value);
+        const hasBackup = await backupFileExists();
+        if (backupTriggerAction || !hasBackup) {
+          const triggerLabel = backupTriggerAction ?? 'no existing backup';
+          backupPersistRoot(value)
+            .then(() =>
+              addLog(
+                LogActions.debug(
+                  `Backed up store to filesystem, triggered by ${triggerLabel}.`,
+                ),
+              ),
+            )
+            .catch(() => {});
+          backupTriggerAction = null;
+        }
       }
     } catch (_) {}
-    return Promise.resolve();
   },
   getItem: key => {
     try {
@@ -299,6 +342,20 @@ const logger = createLogger({
 
 const getStore = async () => {
   const middlewares: Middleware[] = [thunkMiddleware as unknown as Middleware];
+
+  const lastActionMiddleware =
+    (): Middleware => () => next => (action: AnyAction) => {
+      try {
+        if (action && typeof action.type === 'string') {
+          if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
+            backupTriggerAction = action.type;
+          }
+        }
+      } catch (_) {}
+      return next(action);
+    };
+
+  middlewares.push(lastActionMiddleware());
 
   if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {
     // @ts-ignore
