@@ -376,6 +376,12 @@ const ProcessNewTxs =
           tx = dispatch(ProcessTx(tx, wallet));
         }
 
+        // Scam transactions
+        const isERCToken = IsERCToken(tx.coin, tx.chain);
+        if (isERCToken && tx.amount === 0) {
+          continue;
+        }
+
         // no future transactions...
         if (tx.time > now) {
           tx.time = now;
