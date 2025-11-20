@@ -6,7 +6,7 @@ import {formatCryptoAddress} from '../../utils/helper-methods';
 import {SendToPillContainer} from '../../navigation/wallet/screens/send/confirm/Shared';
 import {PillText} from '../../navigation/wallet/components/SendToPill';
 import {View} from 'react-native';
-import {Action} from '../../styles/colors';
+import {Action, LightBlue} from '../../styles/colors';
 import {css} from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../constants/SupportedCurrencyOptions';
@@ -27,7 +27,7 @@ const RowContainer = styled(TouchableOpacity)<{selected: boolean}>`
   ${({selected}) =>
     selected &&
     css`
-      background: ${({theme: {dark}}) => (dark ? '#2240C440' : '#ECEFFD')};
+      background: ${({theme: {dark}}) => (dark ? '#2240C440' : LightBlue)};
       border-color: ${({theme: {dark}}) => (dark ? Action : Action)};
       border-width: 1px;
       border-radius: 12px;

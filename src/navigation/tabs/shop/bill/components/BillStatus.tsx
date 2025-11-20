@@ -8,6 +8,7 @@ import {
   SlateDark,
   LightBlack,
   LinkBlue,
+  LightBlue,
 } from '../../../../../styles/colors';
 import {
   BillPayAccount,
@@ -92,7 +93,7 @@ const statusFields = {
     },
   },
   refunded: {
-    backgroundColor: '#ECEFFD',
+    backgroundColor: LightBlue,
     color: Action,
     text: 'Refunded',
     darkTheme: {
@@ -101,7 +102,7 @@ const statusFields = {
     },
   },
   refundCreated: {
-    backgroundColor: '#ECEFFD',
+    backgroundColor: LightBlue,
     color: Action,
     text: 'Refunding',
     darkTheme: {
@@ -110,7 +111,7 @@ const statusFields = {
     },
   },
   processing: {
-    backgroundColor: '#ECEFFD',
+    backgroundColor: LightBlue,
     color: Action,
     text: 'Processing',
     darkTheme: {
@@ -119,7 +120,7 @@ const statusFields = {
     },
   },
   pending: {
-    backgroundColor: '#ECEFFD',
+    backgroundColor: LightBlue,
     color: Action,
     text: 'Processing',
     darkTheme: {
@@ -128,7 +129,7 @@ const statusFields = {
     },
   },
   connecting: {
-    backgroundColor: '#ECEFFD',
+    backgroundColor: LightBlue,
     color: Action,
     text: 'Connecting',
     darkTheme: {
@@ -137,7 +138,7 @@ const statusFields = {
     },
   },
   default: {
-    backgroundColor: '#ECEFFD',
+    backgroundColor: LightBlue,
     color: Action,
     darkTheme: {
       backgroundColor: '#071A6A',

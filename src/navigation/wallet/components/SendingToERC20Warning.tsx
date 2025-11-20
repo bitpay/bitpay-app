@@ -10,6 +10,7 @@ import {
   Action,
   Black,
   LightBlack,
+  LightBlue,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -109,7 +110,7 @@ const SendingToDescription = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   margin: 10px 0px 28px 0px;
   border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   line-height: 24px;
 `;
 

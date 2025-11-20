@@ -173,6 +173,7 @@ export interface AppState {
   showArchaxBanner: boolean;
   showPaymentSentModal: boolean;
   paymentSentModalConfig: PaymentSentModalConfig | undefined;
+  dismissedMarketingCardIds: string[];
 }
 
 const initialState: AppState = {
@@ -273,6 +274,7 @@ const initialState: AppState = {
   showArchaxBanner: false,
   showPaymentSentModal: false,
   paymentSentModalConfig: undefined,
+  dismissedMarketingCardIds: [],
 };
 
 export const appReducer = (
@@ -798,6 +800,23 @@ export const appReducer = (
         ...state,
         showArchaxBanner: action.payload,
       };
+
+    case AppActionTypes.DISMISS_MARKETING_CONTENT_CARD: {
+      const cardId = action.payload;
+
+      if (!cardId) {
+        return state;
+      }
+
+      if (state.dismissedMarketingCardIds.includes(cardId)) {
+        return state;
+      }
+
+      return {
+        ...state,
+        dismissedMarketingCardIds: [...state.dismissedMarketingCardIds, cardId],
+      };
+    }
 
     case AppActionTypes.SHOW_PAYMENT_SENT_MODAL:
       return {

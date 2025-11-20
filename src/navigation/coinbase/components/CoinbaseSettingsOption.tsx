@@ -1,6 +1,11 @@
 import React from 'react';
 import styled from 'styled-components/native';
-import {LightBlack, White, Cloud} from '../../../styles/colors';
+import {
+  LightBlack,
+  NeutralSlate,
+  Slate,
+  SlateDark,
+} from '../../../styles/colors';
 import {ActiveOpacity} from '../../../components/styled/Containers';
 import {Theme} from '@react-navigation/native';
 import Svg, {Path} from 'react-native-svg';
@@ -9,12 +14,16 @@ import {TouchableOpacity} from 'react-native-gesture-handler';
 const SettingsSvgContainer = styled(TouchableOpacity)`
   margin: 0;
   padding: 8px;
+  height: 40px;
+  width: 40px;
   border-radius: 30px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Cloud)};
+  align-items: center;
+  justify-content: center;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
 `;
 
 const CogSvg = ({theme}: {theme: Theme}) => {
-  const cogColor = theme.dark ? White : LightBlack;
+  const cogColor = theme.dark ? Slate : SlateDark;
   return (
     <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <Path

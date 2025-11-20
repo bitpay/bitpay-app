@@ -426,3 +426,8 @@ export const showPaymentSentModal = (
   type: AppActionTypes.SHOW_PAYMENT_SENT_MODAL,
   payload: config,
 });
+
+export const dismissMarketingContentCard = (cardId: string): AppActionType => ({
+  type: AppActionTypes.DISMISS_MARKETING_CONTENT_CARD,
+  payload: cardId,
+});
