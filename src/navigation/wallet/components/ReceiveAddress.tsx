@@ -20,6 +20,7 @@ import {
   Action,
   Black,
   LightBlack,
+  LightBlue,
   NeutralSlate,
   White,
 } from '../../../styles/colors';
@@ -77,7 +78,7 @@ const AddressText = styled(BaseText)`
 `;
 
 const CopyImgContainer = styled.View`
-  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : '#ECEFFD')};
+  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : LightBlue)};
   border-right-width: 1px;
   padding-right: 10px;
   height: 25px;
@@ -149,7 +150,7 @@ const WarningDescription = styled(BaseText)<{isToken?: boolean}>`
       padding-bottom: 20px;
       border-bottom-width: 1px;
       border-bottom-color: ${({theme: {dark}}) =>
-        dark ? LightBlack : '#ECEFFD'};
+        dark ? LightBlack : LightBlue};
     `};
 `;
 

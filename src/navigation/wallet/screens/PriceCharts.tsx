@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -11,15 +12,10 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import styled, {useTheme} from 'styled-components/native';
 import Button from '../../../components/button/Button';
 import {CtaContainer, WIDTH} from '../../../components/styled/Containers';
-import {
-  Badge,
-  BaseText,
-  H2,
-  H5,
-  HeaderTitle,
-} from '../../../components/styled/Text';
+import {BaseText, H2, H5, HeaderTitle} from '../../../components/styled/Text';
 import {
   SlateDark,
+  Slate30,
   White,
   Black,
   LuckySevens,
@@ -37,6 +33,7 @@ import {BitpaySupportedCoins} from '../../../constants/currencies';
 import {ExchangeRateItemProps} from '../../tabs/home/components/exchange-rates/ExchangeRatesList';
 import {fetchHistoricalRates} from '../../../store/wallet/effects';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
+import Percentage from '../../../components/percentage/Percentage';
 import {
   dismissOnGoingProcessModal,
   showBottomNotificationModal,
@@ -45,10 +42,9 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {DateRanges, Rate} from '../../../store/rate/rate.models';
-import GainArrow from '../../../../assets/img/home/exchange-rates/increment-arrow.svg';
-import LossArrow from '../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
+import GainArrow from '../../../components/icons/trend-arrow/IncrementArrow';
+import LossArrow from '../../../components/icons/trend-arrow/DecrementArrow';
 import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.svg';
-import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -111,13 +107,15 @@ const SafeAreaView = styled.SafeAreaView`
 
 const HeaderContainer = styled.View`
   flex: 0 0 auto;
-  margin-left: 16px;
-  margin-top: 40px;
+  margin-top: 15px;
+  align-items: center;
+  width: 100%;
+  padding: 0 16px;
 `;
 
 const PriceChartContainer = styled.View`
   flex: 1 1 auto;
-  margin-top: 0;
+  margin-top: 16px;
 `;
 
 const RangeDateSelectorContainer = styled.View`
@@ -131,6 +129,16 @@ const CurrencyAverageText = styled(H5)`
 const RowContainer = styled.View`
   align-items: center;
   flex-direction: row;
+  justify-content: center;
+`;
+
+const AbbreviationLabel = styled(H5)`
+  font-size: 13px;
+  color: ${({theme}: {theme: {dark: boolean}}) =>
+    theme.dark ? Slate30 : SlateDark};
+  text-transform: uppercase;
+  font-weight: 400;
+  margin-bottom: 2px;
 `;
 
 const LoadingContainer = styled.View`
@@ -201,16 +209,8 @@ const getFormattedData = (
   };
 };
 
-const PriceChartHeader = ({currencyName, currencyAbbreviation, img}: any) => {
-  return (
-    <RowContainer>
-      <CurrencyImage img={img} size={20} />
-      <HeaderTitle style={{paddingLeft: 4, paddingRight: 8}}>
-        {currencyName}
-      </HeaderTitle>
-      <Badge>{currencyAbbreviation.toUpperCase()}</Badge>
-    </RowContainer>
-  );
+const PriceChartHeader = ({currencyName}: {currencyName: string}) => {
+  return <HeaderTitle style={{fontSize: 20}}>{currencyName}</HeaderTitle>;
 };
 
 export const AxisLabel = ({
@@ -311,15 +311,9 @@ const PriceCharts = () => {
     navigation.setOptions({
       gestureEnabled: false,
       // eslint-disable-next-line react/no-unstable-nested-components
-      headerTitle: () => (
-        <PriceChartHeader
-          currencyName={currencyName}
-          currencyAbbreviation={currencyAbbreviation}
-          img={img}
-        />
-      ),
+      headerTitle: () => <PriceChartHeader currencyName={currencyName} />,
     });
-  }, [navigation, currencyName, currencyAbbreviation, img]);
+  }, [navigation, currencyName]);
 
   const [loading, setLoading] = useState(true);
   const [showRageDateSelector, setShowRageDateSelector] = useState(true);
@@ -328,6 +322,9 @@ const PriceCharts = () => {
   const [cachedRates, setCachedRates] = useState(defaultCachedRates);
   const [chartRowHeight, setChartRowHeight] = useState(-1);
   const gestureStarted = useRef(false);
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRanges>(
+    DateRanges.Day,
+  );
   const [selectedPoint, setSelectedPoint] = useState(
     undefined as
       | {
@@ -337,6 +334,14 @@ const PriceCharts = () => {
           percentChange: number;
         }
       | undefined,
+  );
+  const rangeLabels = useMemo(
+    () => ({
+      [DateRanges.Day]: t('Last Day'),
+      [DateRanges.Week]: t('Past Week'),
+      [DateRanges.Month]: t('Past Month'),
+    }),
+    [t],
   );
 
   const showErrorMessage = useCallback(
@@ -407,6 +412,7 @@ const PriceCharts = () => {
   };
 
   const redrawChart = async (dateRange: DateRanges) => {
+    setSelectedDateRange(dateRange);
     if (cachedRates[dateRange]?.data?.length) {
       logger.debug('[PriceCharts] Loading cached rates');
       setNewDisplayData(cachedRates[dateRange]);
@@ -544,19 +550,30 @@ const PriceCharts = () => {
           <SkeletonPlaceholder
             backgroundColor={theme.dark ? LightBlack : '#E1E9EE'}
             highlightColor={theme.dark ? '#333333' : '#F2F8FC'}>
-            <SkeletonPlaceholder.Item flexDirection="row" alignItems="center">
-              <SkeletonPlaceholder.Item>
-                <SkeletonPlaceholder.Item width={150} height={30} />
+            <SkeletonPlaceholder.Item
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="center">
+              <SkeletonPlaceholder.Item alignItems="center">
+                <SkeletonPlaceholder.Item
+                  width={150}
+                  height={30}
+                  alignSelf="center"
+                />
                 <SkeletonPlaceholder.Item
                   marginTop={15}
                   width={120}
                   height={15}
+                  alignSelf="center"
                 />
               </SkeletonPlaceholder.Item>
             </SkeletonPlaceholder.Item>
           </SkeletonPlaceholder>
         ) : (
           <>
+            {currencyAbbreviation ? (
+              <AbbreviationLabel>{currencyAbbreviation}</AbbreviationLabel>
+            ) : null}
             {currentPrice ? (
               <H2>
                 {formatFiatAmount(
@@ -569,35 +586,38 @@ const PriceCharts = () => {
                 )}
               </H2>
             ) : null}
-            <RowContainer>
-              {showLossGainOrNeutralArrow(getPercentChange())}
-              <CurrencyAverageText>
-                {selectedPoint?.priceChange ?? displayData.priceChange
-                  ? formatFiatAmount(
-                      selectedPoint?.priceChange ??
-                        displayData.priceChange ??
-                        0,
-                      defaultAltCurrency.isoCode,
-                      {customPrecision: 'minimal', currencyAbbreviation},
-                    )
-                  : ''}
-                <>
-                  {percentChange ? (
-                    <>
-                      {!loading ? ' (' : ''}
-                      {Math.abs(getPercentChange())}%{!loading ? ')' : ''}
-                    </>
-                  ) : null}
-                </>
-              </CurrencyAverageText>
-            </RowContainer>
-            <RowContainer style={{marginTop: 7}}>
-              <CurrencyAverageText style={{fontSize: 13.5, fontWeight: '500'}}>
-                {selectedPoint
-                  ? moment(selectedPoint.date).format('MMM DD, YYYY hh:mm a')
-                  : ' '}
-              </CurrencyAverageText>
-            </RowContainer>
+            {(() => {
+              const percentChangeValue = getPercentChange();
+              const hasPercentChange =
+                typeof percentChangeValue === 'number' &&
+                !Number.isNaN(percentChangeValue);
+              const rawPriceChange =
+                selectedPoint?.priceChange ?? displayData.priceChange;
+              const hasPriceChange = Boolean(rawPriceChange);
+              const formattedPriceChange = hasPriceChange
+                ? formatFiatAmount(
+                    rawPriceChange ?? 0,
+                    defaultAltCurrency.isoCode,
+                    {customPrecision: 'minimal', currencyAbbreviation},
+                  )
+                : undefined;
+
+              if (!hasPercentChange && !hasPriceChange) {
+                return null;
+              }
+
+              return (
+                <RowContainer>
+                  <Percentage
+                    percentageDifference={percentChangeValue || 0}
+                    hideArrow
+                    hideSign
+                    priceChange={formattedPriceChange}
+                    rangeLabel={rangeLabels[selectedDateRange]}
+                  />
+                </RowContainer>
+              );
+            })()}
           </>
         )}
       </HeaderContainer>

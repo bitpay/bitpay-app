@@ -5,6 +5,7 @@ import {
   Action,
   Black,
   LightBlack,
+  LightBlue,
   LinkBlue,
   Midnight,
   NeutralSlate,
@@ -177,7 +178,7 @@ const HomeSettings = () => {
         rx="17.5"
         ry="17.5"
         transform="rotate(180 17.5 17.5)"
-        fill={theme.dark ? Midnight : '#ECEFFD'}
+        fill={theme.dark ? Midnight : LightBlue}
       />
       <Svg.Path
         fill-rule="evenodd"

@@ -14,6 +14,7 @@ const TabContainer: React.FC<PropsWithMoreParams> = ({children}) => {
     () => styled.View`
       flex: 1;
       padding-top: ${!showArchaxBanner ? insets.top : 0}px;
+      background-color: ${({theme}) => theme.colors.background};
     `,
     [insets.top, insets.bottom, showArchaxBanner],
   );
