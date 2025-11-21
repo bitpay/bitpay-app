@@ -1,6 +1,6 @@
-import API from 'bitcore-wallet-client/ts_build';
+import API from 'bitcore-wallet-client/ts_build/src';
 import {ReactElement} from 'react';
-import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
 import {RootState} from '../index';
 import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
@@ -48,6 +48,12 @@ export interface KeyProperties {
   xPrivKeyEncrypted?: string;
   xPrivKeyEDDSAEncrypted?: string;
   mnemonicEncrypted?: string;
+  metadata?: {
+    chain: string;
+    network: string;
+    m: string;
+    n: string;
+  };
 }
 
 export interface Key {
@@ -148,6 +154,13 @@ export interface WalletObj {
      * Each wallet imported from a hardware device maps to a specific account path for the wallet's xPubKey
      */
     accountPath?: string;
+  };
+  isTssWallet?: boolean;
+  tssKeyId?: string;
+  tssPartyId?: number;
+  tssThreshold?: {
+    m: number;
+    n: number;
   };
 }
 
