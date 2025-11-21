@@ -9,7 +9,7 @@ import {
   WalletObj,
 } from '../wallet.models';
 import {Rates} from '../../rate/rate.models';
-import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
 import {
   BitpaySupportedCoins,
   BitpaySupportedMaticTokens,
@@ -135,6 +135,9 @@ export const buildWalletObj = (
     hardwareData = {},
     singleAddress,
     receiveAddress,
+    isTssWallet = false,
+    tssKeyId,
+    tssPartyId,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -158,6 +161,9 @@ export const buildWalletObj = (
     };
     singleAddress: boolean;
     receiveAddress?: string;
+    isTssWallet?: boolean;
+    tssKeyId?: string;
+    tssPartyId?: number;
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
@@ -212,6 +218,36 @@ export const buildWalletObj = (
     hardwareData,
     singleAddress,
     receiveAddress,
+    isTssWallet,
+    tssKeyId,
+    tssPartyId,
+  };
+};
+
+export const buildTssKeyObj = ({
+  tssKey,
+  wallets,
+  keyName,
+}: {
+  tssKey: any;
+  wallets: Wallet[];
+  keyName?: string;
+}): Key => {
+  const cleanProperties = tssKey.toObj();
+  delete cleanProperties.privateKeyShare;
+  return {
+    id: tssKey.id,
+    wallets,
+    properties: cleanProperties,
+    methods: tssKey,
+    totalBalance: 0,
+    totalBalanceLastDay: 0,
+    isPrivKeyEncrypted: tssKey.isPrivKeyEncrypted(),
+    backupComplete: true,
+    keyName:
+      keyName || `TSS Key (${tssKey.metadata.m}-of-${tssKey.metadata.n})`,
+    hideKeyBalance: false,
+    isReadOnly: false,
   };
 };
 

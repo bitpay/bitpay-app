@@ -7,7 +7,7 @@ import {
   mapAbbreviationAndName,
 } from '../../utils/wallet';
 import {successCreateKey, successAddWallet} from '../../wallet.actions';
-import API from 'bitcore-wallet-client/ts_build';
+import API from 'bitcore-wallet-client/ts_build/src';
 import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
 import {
   subscribePushNotifications,
