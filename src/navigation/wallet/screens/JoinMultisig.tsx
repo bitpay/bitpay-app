@@ -4,7 +4,6 @@ import {ImportTitle} from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
 import {
   showBottomNotificationModal,
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -25,7 +24,6 @@ import {
   addWalletJoinMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
@@ -41,6 +39,7 @@ import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
+import {useOngoingProcess} from '../../../contexts';
 
 export type JoinMultisigParamList = {
   key?: Key;
@@ -68,6 +67,7 @@ const CtaContainer = styled(_CtaContainer)`
 const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {key, invitationCode} = route.params || {};
 
   const schema = yup.object().shape({
@@ -118,7 +118,7 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
           opts.password = await dispatch(getDecryptPassword(key));
         }
 
-        dispatch(startOnGoingProcessModal('JOIN_WALLET'));
+        showOngoingProcess('JOIN_WALLET');
 
         const wallet = (await dispatch<any>(
           addWalletJoinMultisig({
@@ -191,11 +191,11 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
                 }),
               );
             }
-            dispatch(dismissOnGoingProcessModal());
+            hideOngoingProcess();
           },
         );
       } else {
-        dispatch(startOnGoingProcessModal('JOIN_WALLET'));
+        showOngoingProcess('JOIN_WALLET');
 
         const multisigKey = (await dispatch<any>(
           startJoinMultisig(opts),
@@ -213,10 +213,10 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
           context: 'createNewKey',
           key: multisigKey,
         });
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       }
     } catch (e: any) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       if (e.message === 'invalid password') {
         dispatch(showBottomNotificationModal(WrongPasswordError()));
       } else {

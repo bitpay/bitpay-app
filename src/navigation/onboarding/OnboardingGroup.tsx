@@ -44,7 +44,7 @@ export enum OnboardingScreens {
   IMPORT = 'Import',
 }
 
-const OnboardingStack: React.FC<OnboardingProps> = ({Onboarding, theme}) => {
+const OnboardingStack = ({Onboarding, theme}: OnboardingProps) => {
   const commonOptions = useStackScreenOptions(theme);
   return (
     <Onboarding.Group screenOptions={commonOptions}>

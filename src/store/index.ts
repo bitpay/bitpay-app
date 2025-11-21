@@ -78,6 +78,7 @@ import {Storage} from 'redux-persist';
 import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
+import {logManager} from '../managers/LogManager';
 
 export const storage = new MMKV();
 
@@ -464,17 +465,13 @@ export async function getEncryptionKey(): Promise<string> {
   const encryptionKeyId = 'bitpay-app-encryption-key';
 
   try {
-    initLogs.add(
-      LogActions.info('getEncryptionKey: attempting to retrieve from Keychain'),
-    );
+    logManager.info('getEncryptionKey: attempting to retrieve from Keychain');
     const existingKey = await Keychain.getGenericPassword({
       service: encryptionKeyId,
     });
 
     if (existingKey && existingKey.password) {
-      initLogs.add(
-        LogActions.info('getEncryptionKey: found existing key in Keychain'),
-      );
+      logManager.info('getEncryptionKey: found existing key in Keychain');
       return existingKey.password;
     }
   } catch (err) {
@@ -487,9 +484,7 @@ export async function getEncryptionKey(): Promise<string> {
     );
   }
 
-  initLogs.add(
-    LogActions.warn('getEncryptionKey: generating new key (no existing key)'),
-  );
+  logManager.warn('getEncryptionKey: generating new key (no existing key)');
   const newKey = getUniqueId();
 
   try {
@@ -497,9 +492,7 @@ export async function getEncryptionKey(): Promise<string> {
     await Keychain.setGenericPassword(encryptionKeyId, newKey, {
       service: encryptionKeyId,
     });
-    initLogs.add(
-      LogActions.info('getEncryptionKey: stored new key in Keychain'),
-    );
+    logManager.info('getEncryptionKey: stored new key in Keychain');
   } catch (err) {
     initLogs.add(
       LogActions.persistLog(

@@ -13,7 +13,7 @@ import {
   subscribePushNotifications,
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
-import {LogActions} from '../../../log';
+import {logManager} from '../../../../managers/LogManager';
 
 const BWC = BwcProvider.getInstance();
 
@@ -84,7 +84,7 @@ export const startCreateKeyMultisig =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`Error create key multisig: ${errorStr}`));
+        logManager.error(`Error create key multisig: ${errorStr}`);
         reject();
       }
     });
@@ -153,7 +153,7 @@ export const addWalletMultisig =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`Error adding multisig wallet: ${errorStr}`));
+        logManager.error(`Error adding multisig wallet: ${errorStr}`);
         reject(err);
       }
     });

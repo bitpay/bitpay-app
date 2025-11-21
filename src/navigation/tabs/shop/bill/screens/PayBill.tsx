@@ -38,8 +38,7 @@ import {BillAccountPill} from '../components/BillAccountPill';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../utils';
 import {ShopEffects} from '../../../../../store/shop';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
+import {useOngoingProcess} from '../../../../../contexts';
 
 const BillPayOption = styled.View<{hasBorderTop?: boolean}>`
   flex-direction: row;
@@ -99,6 +98,7 @@ const PayBill = ({
 }: NativeStackScreenProps<BillGroupParamList, BillScreens.PAY_BILL>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {account} = route.params;
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
   const [removingBill, setRemovingBill] = useState(false);
@@ -116,10 +116,10 @@ const PayBill = ({
 
   const removeBill = async () => {
     setRemovingBill(true);
-    dispatch(startOnGoingProcessModal('REMOVING_BILL'));
+    showOngoingProcess('REMOVING_BILL');
     await dispatch(ShopEffects.startHideBillPayAccount(account.id));
     await dispatch(ShopEffects.startGetBillPayAccounts());
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     navigation.pop();
     dispatch(Analytics.track('Bill Pay - Removed Bill', baseEventParams));
   };
@@ -148,7 +148,7 @@ const PayBill = ({
     {
       onPress: async () => {
         removeBill().catch(async err => {
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           await sleep(500);
           dispatch(
             AppActions.showBottomNotificationModal(

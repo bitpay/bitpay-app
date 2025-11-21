@@ -13,16 +13,10 @@ import {
   ScrollView,
   WalletConnectContainer,
 } from '../styled/WalletConnectContainers';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {useTranslation} from 'react-i18next';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {sleep} from '../../../utils/helper-methods';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {isValidWalletConnectUri} from '../../../store/wallet/utils/validations';
@@ -37,6 +31,7 @@ import {
 } from '../../../components/styled/Containers';
 import ScanSvg from '../../../../assets/img/onboarding/scan.svg';
 import {NeutralSlate} from '../../../styles/colors';
+import {useOngoingProcess} from '../../../contexts';
 
 export type WalletConnectIntroParamList = {
   uri?: string;
@@ -51,6 +46,7 @@ const WalletConnectIntro = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const theme = useTheme();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
 
@@ -79,16 +75,16 @@ const WalletConnectIntro = () => {
           );
           throw errMsg;
         } else {
-          dispatch(startOnGoingProcessModal('LOADING'));
+          showOngoingProcess('LOADING');
           await dispatch(walletConnectV2OnSessionProposal(data));
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
         }
       } else {
         const errMsg = t('The URI does not correspond to WalletConnect.');
         throw errMsg;
       }
     } catch (err: any) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       if (
         typeof err === 'object' &&

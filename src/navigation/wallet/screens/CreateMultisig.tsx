@@ -13,7 +13,6 @@ import {
 import Button from '../../../components/button/Button';
 import {
   showBottomNotificationModal,
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
 } from '../../../store/app/app.actions';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -47,7 +46,6 @@ import {
   addWalletMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import InfoSvg from '../../../../assets/img/info.svg';
 import PlusIcon from '../../../components/plus/Plus';
 import MinusIcon from '../../../components/minus/Minus';
@@ -62,6 +60,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {IsSegwitCoin} from '../../../store/wallet/utils/currency';
+import {useOngoingProcess} from '../../../contexts';
 
 export interface CreateMultisigParamsList {
   currency: string;
@@ -184,6 +183,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const logger = useLogger();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {currency, key} = route.params;
   const segwitSupported = IsSegwitCoin(currency);
   const [showOptions, setShowOptions] = useState(false);
@@ -254,7 +254,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
           opts.password = await dispatch(getDecryptPassword(key));
         }
 
-        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        showOngoingProcess('ADDING_WALLET');
         const wallet = (await dispatch<any>(
           addWalletMultisig({
             key,
@@ -310,11 +310,11 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                 }),
               );
             }
-            dispatch(dismissOnGoingProcessModal());
+            hideOngoingProcess();
           },
         );
       } else {
-        await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+        showOngoingProcess('CREATING_KEY');
         const multisigKey = (await dispatch<any>(
           startCreateKeyMultisig(opts),
         )) as Key;
@@ -340,14 +340,14 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
           context: 'createNewMultisigKey',
           key: multisigKey,
         });
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       }
     } catch (e: any) {
       logger.error(e.message);
       if (e.message === 'invalid password') {
         dispatch(showBottomNotificationModal(WrongPasswordError()));
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         showErrorModal(e.message);
         return;

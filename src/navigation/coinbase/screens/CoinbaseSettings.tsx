@@ -10,10 +10,7 @@ import {
 } from '@react-navigation/native';
 import {StackActions} from '@react-navigation/core';
 import {sleep} from '../../../utils/helper-methods';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import Button from '../../../components/button/Button';
 import {ScreenGutter} from '../../../components/styled/Containers';
@@ -31,8 +28,8 @@ import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
 import {CoinbaseGroupParamList} from '../CoinbaseGroup';
 import {useTranslation} from 'react-i18next';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {Analytics} from '../../../store/analytics/analytics.effects';
+import {useOngoingProcess} from '../../../contexts';
 
 const SettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -101,6 +98,7 @@ const CoinbaseSettings = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   const navigation = useNavigation();
   const {
@@ -209,7 +207,7 @@ const CoinbaseSettings = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    dispatch(startOnGoingProcessModal('FETCHING_COINBASE_DATA'));
+    showOngoingProcess('FETCHING_COINBASE_DATA');
     await sleep(1000);
 
     try {
@@ -217,7 +215,7 @@ const CoinbaseSettings = () => {
     } catch (err: CoinbaseErrorsProps | any) {
       showError(err);
     }
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     setRefreshing(false);
   };
 

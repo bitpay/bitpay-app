@@ -10,6 +10,7 @@ import {
   MoralisWalletApprovalsData,
 } from './moralis.types';
 import {IsSVMChain} from '../../store/wallet/utils/currency';
+import {logManager} from '../../managers/LogManager';
 
 const MORALIS_EVM_CHAIN: {[key in string]: any} = {
   arb: EvmChain.ARBITRUM,
@@ -28,9 +29,7 @@ export const moralisInit = (): Effect<Promise<void>> => async dispatch => {
     await Moralis.start({
       apiKey: MORALIS_API_KEY,
     });
-    dispatch(
-      LogActions.info('[moralis/init]: client initialized successfully'),
-    );
+    logManager.info('[moralis/init]: client initialized successfully');
     return;
   } catch (e) {
     let errorStr;
@@ -39,10 +38,8 @@ export const moralisInit = (): Effect<Promise<void>> => async dispatch => {
     } else {
       errorStr = JSON.stringify(e);
     }
-    dispatch(
-      LogActions.error(
-        `[moralis/init]: an error occurred while initializing client: ${errorStr}`,
-      ),
+    logManager.error(
+      `[moralis/init]: an error occurred while initializing client: ${errorStr}`,
     );
     throw e;
   }
@@ -58,10 +55,8 @@ export const getNativeBalanceByAddress =
         address,
         chain: MORALIS_EVM_CHAIN[chain],
       });
-      dispatch(
-        LogActions.info(
-          '[moralis/getNativeBalanceByAddress]: get balance successfully',
-        ),
+      logManager.info(
+        '[moralis/getNativeBalanceByAddress]: get balance successfully',
       );
       return response;
     } catch (e) {
@@ -71,10 +66,8 @@ export const getNativeBalanceByAddress =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getNativeBalanceByAddress]: an error occurred while getting balance: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getNativeBalanceByAddress]: an error occurred while getting balance: ${errorStr}`,
       );
       throw e;
     }
@@ -100,10 +93,8 @@ export const getNativeBalanceByAddresses =
           .join('&')}`,
         {headers},
       );
-      dispatch(
-        LogActions.info(
-          '[moralis/getNativeBalanceByAddresses]: get balances successfully',
-        ),
+      logManager.info(
+        '[moralis/getNativeBalanceByAddresses]: get balances successfully',
       );
       return data;
     } catch (e) {
@@ -113,10 +104,8 @@ export const getNativeBalanceByAddresses =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getNativeBalanceByAddresses]: an error occurred while getting balances: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getNativeBalanceByAddresses]: an error occurred while getting balances: ${errorStr}`,
       );
       throw e;
     }
@@ -133,10 +122,8 @@ export const getNativeTransactionsByWallet =
         chain: MORALIS_EVM_CHAIN[chain],
       });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getNativeTransactionsByWallet]: get transactions successfully',
-        ),
+      logManager.info(
+        '[moralis/getNativeTransactionsByWallet]: get transactions successfully',
       );
       return result;
     } catch (e) {
@@ -146,10 +133,8 @@ export const getNativeTransactionsByWallet =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getNativeTransactionsByWallet]: an error occurred while getting transactions: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getNativeTransactionsByWallet]: an error occurred while getting transactions: ${errorStr}`,
       );
       throw e;
     }
@@ -165,10 +150,8 @@ export const getDecodedTransactionsByWallet =
           chain: MORALIS_EVM_CHAIN[chain],
         });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getDecodedTransactionsByWallet]: get transactions successfully',
-        ),
+      logManager.info(
+        '[moralis/getDecodedTransactionsByWallet]: get transactions successfully',
       );
       return result;
     } catch (e) {
@@ -178,10 +161,8 @@ export const getDecodedTransactionsByWallet =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getDecodedTransactionsByWallet]: an error occurred while getting transactions: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getDecodedTransactionsByWallet]: an error occurred while getting transactions: ${errorStr}`,
       );
       throw e;
     }
@@ -202,10 +183,8 @@ export const getDecodedTransactionsByHash =
         chain: MORALIS_EVM_CHAIN[chain],
       });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getDecodedTransactionsByHash]: get transactions successfully',
-        ),
+      logManager.info(
+        '[moralis/getDecodedTransactionsByHash]: get transactions successfully',
       );
       return response?.toJSON();
     } catch (e) {
@@ -215,10 +194,8 @@ export const getDecodedTransactionsByHash =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getDecodedTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getDecodedTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
       );
       throw e;
     }
@@ -241,10 +218,8 @@ export const getInternalTransactionsByHash =
         },
       );
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getInternalTransactionsByHash]: get transactions successfully',
-        ),
+      logManager.info(
+        '[moralis/getInternalTransactionsByHash]: get transactions successfully',
       );
       return response?.toJSON();
     } catch (e) {
@@ -254,10 +229,8 @@ export const getInternalTransactionsByHash =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getInternalTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getInternalTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
       );
       throw e;
     }
@@ -278,10 +251,8 @@ export const getTransactionsByHash =
         chain: MORALIS_EVM_CHAIN[chain],
       });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getTransactionsByHash]: get transactions successfully',
-        ),
+      logManager.info(
+        '[moralis/getTransactionsByHash]: get transactions successfully',
       );
       return response?.toJSON();
     } catch (e) {
@@ -291,10 +262,8 @@ export const getTransactionsByHash =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getTransactionsByHash]: an error occurred while getting transactions: ${errorStr}`,
       );
       throw e;
     }
@@ -317,9 +286,7 @@ export const getBlockByHash =
         chain: MORALIS_EVM_CHAIN[chain],
       });
 
-      dispatch(
-        LogActions.info('[moralis/getBlockByHash]: get block successfully'),
-      );
+      logManager.info('[moralis/getBlockByHash]: get block successfully');
       return response?.toJSON();
     } catch (e) {
       let errorStr;
@@ -328,10 +295,8 @@ export const getBlockByHash =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getBlockByHash]: an error occurred while getting block: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getBlockByHash]: an error occurred while getting block: ${errorStr}`,
       );
       throw e;
     }
@@ -346,9 +311,7 @@ export const getBlockByDate =
         chain: MORALIS_EVM_CHAIN[chain],
       });
 
-      dispatch(
-        LogActions.info('[moralis/getBlockByDate]: get block successfully'),
-      );
+      logManager.info('[moralis/getBlockByDate]: get block successfully');
       return response?.result;
     } catch (e) {
       let errorStr;
@@ -357,10 +320,8 @@ export const getBlockByDate =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getBlockByDate]: an error occurred while getting block: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getBlockByDate]: an error occurred while getting block: ${errorStr}`,
       );
       throw e;
     }
@@ -377,10 +338,8 @@ export const getERC20TokenPrice =
         chain: MORALIS_EVM_CHAIN[chain],
       });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getERC20TokenPrice]: get ERC20 token price successfully',
-        ),
+      logManager.info(
+        '[moralis/getERC20TokenPrice]: get ERC20 token price successfully',
       );
       return raw;
     } catch (e) {
@@ -390,10 +349,8 @@ export const getERC20TokenPrice =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getERC20TokenPrice]: an error occurred while getting ERC20 token price: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getERC20TokenPrice]: an error occurred while getting ERC20 token price: ${errorStr}`,
       );
       throw e;
     }
@@ -454,10 +411,8 @@ export const getMultipleTokenPrices =
       let data: UnifiedTokenPriceObj[] = [];
       if (IsSVMChain(chain)) {
         const response = await getMultipleSolanaTokenPrices(addresses);
-        dispatch(
-          LogActions.info(
-            '[moralis/getMultipleTokenPrices]: get SVM token prices successfully',
-          ),
+        logManager.info(
+          '[moralis/getMultipleTokenPrices]: get SVM token prices successfully',
         );
         data = response.map((item: any) => ({
           tokenAddress: item.tokenAddress,
@@ -471,10 +426,8 @@ export const getMultipleTokenPrices =
             MORALIS_EVM_CHAIN[chain]?.hex ||
             chain,
         );
-        dispatch(
-          LogActions.info(
-            '[moralis/getMultipleTokenPrices]: get EVM token prices successfully',
-          ),
+        logManager.info(
+          '[moralis/getMultipleTokenPrices]: get EVM token prices successfully',
         );
         data = response.map((item: any) => ({
           tokenAddress: item.tokenAddress,
@@ -490,10 +443,8 @@ export const getMultipleTokenPrices =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getMultipleTokenPrices]: an error occurred while getting ERC20/SOL token price: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getMultipleTokenPrices]: an error occurred while getting ERC20/SOL token price: ${errorStr}`,
       );
       throw e;
     }
@@ -519,10 +470,8 @@ export const getSVMTokenBalanceByWallet =
         network: network,
       });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getSVMTokenBalanceByWallet]: get SVM token balance successfully',
-        ),
+      logManager.info(
+        '[moralis/getSVMTokenBalanceByWallet]: get SVM token balance successfully',
       );
       return raw.tokens;
     } catch (e) {
@@ -532,10 +481,8 @@ export const getSVMTokenBalanceByWallet =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getSVMTokenBalanceByWallet]: an error occurred while getting SVM token balance: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getSVMTokenBalanceByWallet]: an error occurred while getting SVM token balance: ${errorStr}`,
       );
       throw e;
     }
@@ -560,10 +507,8 @@ export const getERC20TokenBalanceByWallet =
           chain: MORALIS_EVM_CHAIN[chain],
         });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getERC20TokenBalanceByWallet]: get ERC20 token balance successfully',
-        ),
+      logManager.info(
+        '[moralis/getERC20TokenBalanceByWallet]: get ERC20 token balance successfully',
       );
       return raw;
     } catch (e) {
@@ -573,10 +518,8 @@ export const getERC20TokenBalanceByWallet =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getERC20TokenBalanceByWallet]: an error occurred while getting ERC20 token balance: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getERC20TokenBalanceByWallet]: an error occurred while getting ERC20 token balance: ${errorStr}`,
       );
       throw e;
     }
@@ -597,10 +540,8 @@ export const getERC20TokenMetadataByContract =
         chain: MORALIS_EVM_CHAIN[chain],
       });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getERC20TokenMetadataByContract]: get ERC20 token metadata successfully',
-        ),
+      logManager.info(
+        '[moralis/getERC20TokenMetadataByContract]: get ERC20 token metadata successfully',
       );
 
       return raw;
@@ -611,10 +552,8 @@ export const getERC20TokenMetadataByContract =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getERC20TokenMetadataByContract]: an error occurred while getting ERC20 token metadata: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getERC20TokenMetadataByContract]: an error occurred while getting ERC20 token metadata: ${errorStr}`,
       );
       throw e;
     }
@@ -635,10 +574,8 @@ export const getERC20TokenMetadataBySymbol =
         chain: MORALIS_EVM_CHAIN[chain],
       });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getERC20TokenMetadataBySymbol]: get ERC20 token metadata successfully',
-        ),
+      logManager.info(
+        '[moralis/getERC20TokenMetadataBySymbol]: get ERC20 token metadata successfully',
       );
       return raw;
     } catch (e) {
@@ -648,10 +585,8 @@ export const getERC20TokenMetadataBySymbol =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getERC20TokenMetadataBySymbol]: an error occurred while getting ERC20 token metadata: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getERC20TokenMetadataBySymbol]: an error occurred while getting ERC20 token metadata: ${errorStr}`,
       );
       throw e;
     }
@@ -700,10 +635,8 @@ export const getERC20TokenAllowance =
       const {data}: {data: MoralisWalletApprovalsData} = await axios.get(URL, {
         headers,
       });
-      dispatch(
-        LogActions.info(
-          '[moralis/getERC20TokenAllowance]: get ERC20 token allowance successfully',
-        ),
+      logManager.info(
+        '[moralis/getERC20TokenAllowance]: get ERC20 token allowance successfully',
       );
       return data;
     } catch (e) {
@@ -713,10 +646,8 @@ export const getERC20TokenAllowance =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getERC20TokenAllowance]: an error occurred while getting ERC20 token allowance: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getERC20TokenAllowance]: an error occurred while getting ERC20 token allowance: ${errorStr}`,
       );
       throw e;
     }
@@ -732,10 +663,8 @@ export const getAddressByENSDomain =
         domain,
       });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getAddressByENSDomain]: get address by ENS domain successfully',
-        ),
+      logManager.info(
+        '[moralis/getAddressByENSDomain]: get address by ENS domain successfully',
       );
       return response?.toJSON();
     } catch (e) {
@@ -745,10 +674,8 @@ export const getAddressByENSDomain =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getAddressByENSDomain]: an error occurred while getting address by ENS domain: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getAddressByENSDomain]: an error occurred while getting address by ENS domain: ${errorStr}`,
       );
       throw e;
     }
@@ -762,10 +689,8 @@ export const getENSDomainByAddress =
         address,
       });
 
-      dispatch(
-        LogActions.info(
-          '[moralis/getENSDomainByAddress]: get ENS domain by address successfully',
-        ),
+      logManager.info(
+        '[moralis/getENSDomainByAddress]: get ENS domain by address successfully',
       );
       return response?.toJSON();
     } catch (e) {
@@ -775,10 +700,8 @@ export const getENSDomainByAddress =
       } else {
         errorStr = JSON.stringify(e);
       }
-      dispatch(
-        LogActions.error(
-          `[moralis/getENSDomainByAddress]: an error occurred while getting ENS domain by address: ${errorStr}`,
-        ),
+      logManager.error(
+        `[moralis/getENSDomainByAddress]: an error occurred while getting ENS domain by address: ${errorStr}`,
       );
       throw e;
     }

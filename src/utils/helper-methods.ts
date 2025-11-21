@@ -20,7 +20,6 @@ import {
   SUPPORTED_EVM_COINS,
   SUPPORTED_SVM_COINS,
 } from '../constants/currencies';
-import {LogActions} from '../store/log';
 import {createMultipleWallets} from '../store/wallet/effects';
 import {checkEncryptPassword, toFiat} from '../store/wallet/utils/wallet';
 import {FormatAmount} from '../store/wallet/effects/amount/amount';
@@ -54,6 +53,8 @@ import {successImport} from '../store/wallet/wallet.actions';
 import * as SolKit from '@solana/kit';
 import {BwcProvider} from '../lib/bwc';
 import {findAssociatedTokenPda} from '@solana-program/token-2022';
+import {tokenManager} from '../managers/TokenManager';
+import {logManager} from '../managers/LogManager';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -648,10 +649,8 @@ export const fixWalletAddresses = async ({
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        appDispatch(
-          LogActions.error(
-            `Error creating address for wallet ${wallet?.id}-${wallet?.chain}-${wallet?.walletName}: ${errMsg}`,
-          ),
+        logManager.error(
+          `Error creating address for wallet ${wallet?.id}-${wallet?.chain}-${wallet?.walletName}: ${errMsg}`,
         );
       }
     }),
@@ -689,10 +688,8 @@ export const createWalletsForAccounts = async (
         } catch (err) {
           const errMsg =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(
-            LogActions.debug(
-              `Error creating wallet - continue anyway: ${errMsg}`,
-            ),
+          logManager.debug(
+            `Error creating wallet - continue anyway: ${errMsg}`,
           );
         }
       }),
@@ -764,7 +761,7 @@ interface RequestUiValues {
 export const processOtherMethodsRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
-    dispatch(LogActions.debug('processing other method transaction'));
+    logManager.debug('processing other method transaction');
     const {
       WALLET: {keys},
     } = getState();
@@ -812,9 +809,7 @@ export const processOtherMethodsRequest =
           : swapFromChain,
       };
     } catch (error) {
-      dispatch(
-        LogActions.error(`Error processing ${method} request: ${error}`),
-      );
+      logManager.error(`Error processing ${method} request: ${error}`);
       throw error;
     }
   };
@@ -870,7 +865,7 @@ const parseStandardTokenTransactionData = (data?: string) => {
 export const processSolanaSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
-    dispatch(LogActions.debug('processing Solana transaction'));
+    logManager.debug('processing Solana transaction');
     const {
       APP: {defaultAltCurrency},
       RATE: {rates: allRates},
@@ -899,9 +894,7 @@ export const processSolanaSwapRequest =
       UNKNOWN: 'unknownInstruction',
     };
 
-    dispatch(
-      LogActions.debug(`Decoded instructions: ${JSON.stringify(instructions)}`),
-    );
+    logManager.debug(`Decoded instructions: ${JSON.stringify(instructions)}`);
 
     if (instructions?.[instructionKeys.TRANSFER_SOL]?.length > 0) {
       const solTransfers = instructions[
@@ -928,10 +921,8 @@ export const processSolanaSwapRequest =
       currency = (await getSolanaTokenInfo(tokenAddress)).symbol?.toLowerCase();
     }
 
-    dispatch(
-      LogActions.debug(
-        `amount: ${amount}, mainToAddress: ${mainToAddress}, currency: ${currency}, tokenAddress: ${tokenAddress}`,
-      ),
+    logManager.debug(
+      `amount: ${amount}, mainToAddress: ${mainToAddress}, currency: ${currency}, tokenAddress: ${tokenAddress}`,
     );
 
     if (!mainToAddress || !currency) {
@@ -978,9 +969,7 @@ export const processSolanaSwapRequest =
         decodedInstructions: instructions,
       };
     } catch (error) {
-      dispatch(
-        LogActions.error(`Error processing ${method} request: ${error}`),
-      );
+      logManager.error(`Error processing ${method} request: ${error}`);
       throw error;
     }
   };
@@ -989,10 +978,12 @@ export const processSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
     const {
-      WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress, keys},
+      WALLET: {customTokenOptionsByAddress, keys},
       APP: {defaultAltCurrency},
       RATE: {rates: allRates},
     } = getState();
+
+    const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
     const tokenOptions = {
       ...BitpaySupportedTokenOptsByAddress,
@@ -1020,9 +1011,7 @@ export const processSwapRequest =
     try {
       let {transactionData, abi} = parseStandardTokenTransactionData(data);
       if (!transactionData && !abi) {
-        dispatch(
-          LogActions.debug('Continue anyway building a default transaction'),
-        );
+        logManager.debug('Continue anyway building a default transaction');
         return handleDefaultTransaction(
           keys,
           swapFromChain,
@@ -1030,21 +1019,17 @@ export const processSwapRequest =
           method,
           dispatch,
         );
-        // dispatch(
-        //   LogActions.debug(
+        // logManager.debug(
         //     'No standard token data - fetching contract ABI from Etherscan',
-        //   ),
-        // );
+        //   );
         // const _chainId = WC_SUPPORTED_CHAINS[chainId]?.chainId?.toString();
         // abi = await fetchContractAbi(dispatch, _chainId, to);
-        // dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
+        // logManager.debug(`ABI: ${JSON.stringify(abi)}`);
         // const contractInterface = new ethers.utils.Interface(abi!);
         // transactionData = contractInterface.parseTransaction({data});
       }
-      dispatch(
-        LogActions.debug(
-          'Decoded transaction data: ' + JSON.stringify(transactionData),
-        ),
+      logManager.debug(
+        'Decoded transaction data: ' + JSON.stringify(transactionData),
       );
       const transactionDataName = transactionData!.name;
       if (transactionDataName === 'execute') {
@@ -1080,10 +1065,8 @@ export const processSwapRequest =
         dispatch,
       );
     } catch (error) {
-      dispatch(LogActions.error(`Error processing swap request: ${error}`));
-      dispatch(
-        LogActions.debug('Continue anyway building a default transaction'),
-      );
+      logManager.error(`Error processing swap request: ${error}`);
+      logManager.debug('Continue anyway building a default transaction');
       return handleDefaultTransaction(
         keys,
         swapFromChain,
@@ -1118,7 +1101,7 @@ const fetchContractAbi = async (
   );
 
   if (isProxyContract) {
-    dispatch(LogActions.debug('Detected EIP-1967 proxy contract'));
+    logManager.debug('Detected EIP-1967 proxy contract');
 
     // EIP-1967 implementation slot
     const implementationSlot =
@@ -1146,7 +1129,7 @@ const handleDefaultTransaction = async (
   transactionDataName: string,
   dispatch: any,
 ) => {
-  dispatch(LogActions.debug(`processing ${transactionDataName} transaction`));
+  logManager.debug(`processing ${transactionDataName} transaction`);
   const wallet = Object.values(keys).flatMap(key =>
     key.wallets.filter(
       wallet =>
@@ -1175,7 +1158,7 @@ const handlePayTransaction = async (
   allRates: Rates,
   senderAddress: string,
 ) => {
-  dispatch(LogActions.debug('processing pay transaction'));
+  logManager.debug('processing pay transaction');
 
   const [
     valueBN,
@@ -1268,7 +1251,7 @@ const handleExecuteTransaction = async (
   allRates: Rates,
   senderAddress: string,
 ) => {
-  dispatch(LogActions.debug('processing execute transaction'));
+  logManager.debug('processing execute transaction');
   const inputArgs = transactionData.args[1];
   const inputChunks = splitInputsToChunks(inputArgs);
   const relevantChunk = inputChunks.find(chunk => chunk.length === 8);
@@ -1369,17 +1352,13 @@ export const isAndroidStoragePermissionGranted = (
         granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
           PermissionsAndroid.RESULTS.GRANTED
       ) {
-        dispatch(
-          LogActions.info(
-            '[isAndroidStoragePermissionGranted]: Storage permission granted',
-          ),
+        logManager.info(
+          '[isAndroidStoragePermissionGranted]: Storage permission granted',
         );
         resolve(true);
       } else {
-        dispatch(
-          LogActions.warn(
-            '[isAndroidStoragePermissionGranted]: Storage permission denied',
-          ),
+        logManager.warn(
+          '[isAndroidStoragePermissionGranted]: Storage permission denied',
         );
         throw new Error('Storage permission denied');
       }

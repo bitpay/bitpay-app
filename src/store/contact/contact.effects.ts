@@ -9,12 +9,14 @@ import {
 import {LogActions} from '../log';
 import {migrateContacts} from './contact.actions';
 import {IsValidEVMAddress} from '../wallet/utils/validations';
+import {tokenManager} from '../../managers/TokenManager';
+import {logManager} from '../../managers/LogManager';
 
 export const startContactV2Migration =
   (): Effect<Promise<void>> =>
   async (dispatch, getState): Promise<void> => {
     return new Promise(async resolve => {
-      dispatch(LogActions.info('[startContactMigrationV2] - starting...'));
+      logManager.info('[startContactMigrationV2] - starting...');
       const contacts = getState().CONTACT.list;
       const merged: Record<string, ContactRowProps> = {};
       contacts.forEach(_contact => {
@@ -32,12 +34,8 @@ export const startContactV2Migration =
       });
       const mergedContacts = Object.values(merged);
       await dispatch(migrateContacts(mergedContacts));
-      dispatch(
-        LogActions.info(
-          `success [startContactMigrationV2]: ${JSON.stringify(
-            mergedContacts,
-          )}`,
-        ),
+      logManager.info(
+        `success [startContactMigrationV2]: ${JSON.stringify(mergedContacts)}`,
       );
       return resolve();
     });
@@ -47,9 +45,9 @@ export const startContactMigration =
   (): Effect<Promise<void>> =>
   async (dispatch, getState): Promise<void> => {
     return new Promise(async resolve => {
-      dispatch(LogActions.info('[startContactMigration] - starting...'));
+      logManager.info('[startContactMigration] - starting...');
       const contacts = getState().CONTACT.list;
-      dispatch(LogActions.info(`Migrating: ${JSON.stringify(contacts)}`));
+      logManager.info(`Migrating: ${JSON.stringify(contacts)}`);
       // add new chain value to old contacts
       const migratedContacts = contacts.map(contact => ({
         ...contact,
@@ -60,12 +58,8 @@ export const startContactMigration =
             : 'eth',
       }));
       await dispatch(migrateContacts(migratedContacts));
-      dispatch(
-        LogActions.info(
-          `success [startContactMigration]: ${JSON.stringify(
-            migratedContacts,
-          )}`,
-        ),
+      logManager.info(
+        `success [startContactMigration]: ${JSON.stringify(migratedContacts)}`,
       );
       return resolve();
     });
@@ -76,9 +70,7 @@ export const startContactTokenAddressMigration =
   async (dispatch, getState): Promise<void> => {
     return new Promise(async resolve => {
       try {
-        dispatch(
-          LogActions.info('[startContactTokenAddressMigration] - starting...'),
-        );
+        logManager.info('[startContactTokenAddressMigration] - starting...');
         const contacts = getState().CONTACT.list;
         dispatch(
           LogActions.persistLog(
@@ -86,8 +78,10 @@ export const startContactTokenAddressMigration =
           ),
         );
         const {
-          WALLET: {tokenDataByAddress, customTokenDataByAddress},
+          WALLET: {customTokenDataByAddress},
         } = getState();
+        const {tokenDataByAddress} = tokenManager.getTokenOptions();
+
         const tokens = {
           ...tokenDataByAddress,
           ...customTokenDataByAddress,
@@ -139,9 +133,7 @@ export const startContactBridgeUsdcMigration =
   async (dispatch, getState): Promise<void> => {
     return new Promise(async resolve => {
       try {
-        dispatch(
-          LogActions.info('[startContactBridgeUsdcMigration] - starting...'),
-        );
+        logManager.info('[startContactBridgeUsdcMigration] - starting...');
         const contacts = getState().CONTACT.list;
         dispatch(
           LogActions.persistLog(
@@ -187,7 +179,7 @@ export const startContactPolMigration =
   async (dispatch, getState): Promise<void> => {
     return new Promise(async resolve => {
       try {
-        dispatch(LogActions.info('[startContactPolMigration] - starting...'));
+        logManager.info('[startContactPolMigration] - starting...');
         const contacts = getState().CONTACT.list;
         dispatch(
           LogActions.persistLog(

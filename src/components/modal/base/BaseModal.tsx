@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
 import {View} from 'react-native';
 import Modal, {ModalProps, ReactNativeModal} from 'react-native-modal';
 import {AppActions} from '../../../store/app';
@@ -15,13 +15,18 @@ type BaseModalProps = Partial<ModalProps> & ModalPropsEx;
 
 const BaseModal: React.FC<BaseModalProps> = props => {
   const dispatch = useAppDispatch();
+  const navTheme = useStyledTheme();
   const activeModalId = useAppSelector(({APP}) => APP.activeModalId);
   const [isVisibleSafe, setVisibleSafe] = useState(false);
 
-  const allProps = {
-    ...ReactNativeModal.defaultProps,
-    ...props,
-  } as ModalProps & ModalPropsEx;
+  const allProps = useMemo(
+    () =>
+      ({
+        ...ReactNativeModal.defaultProps,
+        ...props,
+      } as ModalProps & ModalPropsEx),
+    [props],
+  );
 
   const {
     id,
@@ -35,32 +40,35 @@ const BaseModal: React.FC<BaseModalProps> = props => {
   // (iOS) if a modal is shown while another modal is not done being hidden,
   // both modals end up hidden, so make sure only 1 modal is visible at a time.
   useEffect(() => {
-    if (isVisible) {
-      if (!activeModalId || activeModalId === id) {
-        setVisibleSafe(true);
-      } else {
-        setVisibleSafe(false);
+    const shouldBeVisible =
+      isVisible && (!activeModalId || activeModalId === id);
+    setVisibleSafe(prevVisible => {
+      if (prevVisible !== shouldBeVisible) {
+        return shouldBeVisible;
       }
-    } else {
-      setVisibleSafe(false);
-    }
+      return prevVisible;
+    });
   }, [activeModalId, id, isVisible]);
 
-  const navTheme = useStyledTheme();
+  const handleModalHide = useCallback(() => {
+    dispatch(AppActions.activeModalUpdated(null));
+    onModalHide?.();
+  }, [dispatch, onModalHide]);
+
+  const handleModalWillShow = useCallback(() => {
+    dispatch(AppActions.activeModalUpdated(id));
+    onModalWillShow?.();
+  }, [dispatch, id, onModalWillShow]);
+
+  const themeValue = useMemo(() => navTheme as any, [navTheme]);
 
   return (
-    <NavigationThemeContext.Provider value={navTheme as any}>
+    <NavigationThemeContext.Provider value={themeValue}>
       <View>
         <Modal
           isVisible={isVisibleSafe}
-          onModalHide={() => {
-            dispatch(AppActions.activeModalUpdated(null));
-            onModalHide?.();
-          }}
-          onModalWillShow={() => {
-            dispatch(AppActions.activeModalUpdated(id));
-            onModalWillShow?.();
-          }}
+          onModalHide={handleModalHide}
+          onModalWillShow={handleModalWillShow}
           {...restModalProps}>
           {children}
         </Modal>
@@ -69,4 +77,4 @@ const BaseModal: React.FC<BaseModalProps> = props => {
   );
 };
 
-export default BaseModal;
+export default React.memo(BaseModal);

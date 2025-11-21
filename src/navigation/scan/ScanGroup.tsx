@@ -16,7 +16,7 @@ export type ScanGroupParamList = {
   ScanRoot: {onScanComplete?: (data: string) => void} | undefined;
 };
 
-const ScanGroup: React.FC<ScanProps> = ({Scan, theme}) => {
+const ScanGroup = ({Scan, theme}: ScanProps) => {
   const commonOptions = useStackScreenOptions(theme);
   return (
     <Scan.Group screenOptions={commonOptions}>

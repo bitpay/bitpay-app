@@ -79,6 +79,7 @@ import {
   LabelTip,
   LabelTipText,
 } from '../../tabs/settings/external-services/styled/ExternalServicesDetails';
+import {logManager} from '../../../managers/LogManager';
 
 const TxsDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -319,7 +320,7 @@ const TransactionDetails = () => {
       await sleep(500);
       setIsLoading(false);
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[TransactionDetails] ', e));
+      logManager.error('[TransactionDetails] ', e);
     }
   };
 
@@ -456,7 +457,7 @@ const TransactionDetails = () => {
 
   const saveTxDescription = async (newTxDescription: string) => {
     if (!txs?.txid) {
-      dispatch(LogActions.error('[EditTxNote] There is no txid present'));
+      logManager.error('[EditTxNote] There is no txid present');
       return;
     }
 
@@ -470,7 +471,7 @@ const TransactionDetails = () => {
       onTxDescriptionChange();
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[EditTxNote] ', e));
+      logManager.error('[EditTxNote] ', e);
     }
   };
 

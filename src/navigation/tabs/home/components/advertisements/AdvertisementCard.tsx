@@ -11,7 +11,6 @@ import {BaseText} from '../../../../../components/styled/Text';
 import {APP_DEEPLINK_PREFIX} from '../../../../../constants/config';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {AppEffects} from '../../../../../store/app';
-import {LogActions} from '../../../../../store/log';
 import {
   LightBlack,
   Slate,
@@ -25,6 +24,7 @@ import {
 import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {BoxShadow} from '../Styled';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {logManager} from '../../../../../managers/LogManager';
 
 interface AdvertisementCardProps {
   contentCard: ContentCard;
@@ -132,10 +132,8 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
         }
         return;
       } catch (err) {
-        dispatch(
-          LogActions.debug('Something went wrong parsing Do More URL: ' + url),
-        );
-        dispatch(LogActions.debug(JSON.stringify(err)));
+        logManager.debug('Something went wrong parsing Do More URL: ' + url),
+          logManager.debug(JSON.stringify(err));
       }
     }
 

@@ -1,7 +1,6 @@
 import {Effect} from '../../../index';
 import {WalletStatus} from '../../wallet.models';
 import {successUpdateWalletBalancesAndStatus} from '../../wallet.actions';
-import {LogActions} from '../../../log';
 import _ from 'lodash';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
 import {WalletActions} from '../..';
@@ -11,10 +10,11 @@ import {
   UpdateAllKeyAndWalletStatusContext,
   updateKeyStatus,
 } from './status';
+import {logManager} from '../../../../managers/LogManager';
 
 export const clearWalletBalances =
   (): Effect<Promise<void>> => async (dispatch, getState) => {
-    dispatch(LogActions.info('starting [clearWalletBalances]'));
+    logManager.info('starting [clearWalletBalances]');
 
     const {WALLET} = getState();
     const keys = WALLET.keys;
@@ -64,9 +64,7 @@ export const clearWalletBalances =
       }),
     );
 
-    dispatch(
-      LogActions.info('success [clearWalletBalances]: all balances cleared'),
-    );
+    logManager.info('success [clearWalletBalances]: all balances cleared');
   };
 
 export const getUpdatedWalletBalances =
@@ -126,10 +124,8 @@ export const getUpdatedWalletBalances =
             }),
           );
         } catch (error) {
-          dispatch(
-            LogActions.info(
-              'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
-            ),
+          logManager.info(
+            'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
           );
         }
       }
@@ -182,10 +178,8 @@ export const getUpdatedWalletBalances =
             status,
           });
         } catch (error) {
-          dispatch(
-            LogActions.error(
-              `Error updating wallet status for read-only wallet ${wallet.id}: ${error}`,
-            ),
+          logManager.error(
+            `Error updating wallet status for read-only wallet ${wallet.id}: ${error}`,
           );
         }
       }
@@ -239,10 +233,8 @@ export const getAndDispatchUpdatedWalletBalances =
       );
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(
-        LogActions.error(
-          `failed [getAndDispatchUpdatedWalletBalances]: ${errorStr}`,
-        ),
+      logManager.error(
+        `failed [getAndDispatchUpdatedWalletBalances]: ${errorStr}`,
       );
       throw err;
     }

@@ -24,9 +24,9 @@ import {
 } from '../../lib/gift-cards/gift-card';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
-import {LogActions} from '../log';
 import {getBillPayAccountDescription} from '../../navigation/tabs/shop/bill/utils';
 import {successFetchCatalog} from '../shop-catalog/shop-catalog.actions';
+import {logManager} from '../../managers/LogManager';
 
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
@@ -57,11 +57,7 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
     );
   } catch (err) {
     const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-    dispatch(
-      LogActions.error(
-        `failed [startFetchCatalog]: ${errStr} - continue anyway`,
-      ),
-    );
+    logManager.error(`failed [startFetchCatalog]: ${errStr} - continue anyway`);
     dispatch(ShopActions.failedFetchCatalog());
   }
 };
@@ -447,13 +443,11 @@ export const startCheckIfBillPayAvailable =
         return res.data.data as any;
       })
       .catch(err => {
-        dispatch(
-          LogActions.error(
-            `failed [startCheckIfBillPayAvailable]: ${err.message}`,
-          ),
+        logManager.error(
+          `failed [startCheckIfBillPayAvailable]: ${err.message}`,
         );
         throw err;
       });
-    dispatch(LogActions.info(`isBillPayAvailable: ${available}`));
+    logManager.info(`isBillPayAvailable: ${available}`);
     return available;
   };

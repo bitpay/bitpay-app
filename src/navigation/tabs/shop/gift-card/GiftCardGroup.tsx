@@ -66,7 +66,7 @@ export enum GiftCardScreens {
   GIFT_CARD_DEEPLINK = 'GiftCardDeeplink',
 }
 
-const GiftCardGroup: React.FC<GiftCardProps> = ({GiftCard, theme}) => {
+const GiftCardGroup = ({GiftCard, theme}: GiftCardProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

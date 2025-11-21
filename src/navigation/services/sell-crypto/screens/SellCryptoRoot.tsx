@@ -26,10 +26,7 @@ import {
 import Button from '../../../../components/button/Button';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../../store';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {SendMaxInfo, Wallet} from '../../../../store/wallet/wallet.models';
 import {
   Action,
@@ -65,7 +62,6 @@ import {
   isCoinSupportedToSellBy,
 } from '../utils/sell-crypto-utils';
 import {useTranslation} from 'react-i18next';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   BitpaySupportedCoins,
   SUPPORTED_COINS,
@@ -145,6 +141,7 @@ import {
   RampGetAssetsData,
   RampGetAssetsRequestData,
 } from '../../../../store/buy-crypto/models/ramp.models';
+import {useOngoingProcess, useTokenContext} from '../../../../contexts';
 
 export type SellCryptoRootScreenParams =
   | {
@@ -260,20 +257,17 @@ const SellCryptoRoot = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
+  const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
-  const tokenDataByAddress = useAppSelector(
-    ({WALLET}: RootState) => WALLET.tokenDataByAddress,
-  );
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const allRates = useAppSelector(({RATE}) => RATE.rates);
 
-  const tokenOptionsByAddress = useAppSelector(
-    ({WALLET}) => WALLET.tokenOptionsByAddress,
-  );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const tokenOptions = Object.entries(tokenOptionsByAddress).map(
     ([k, {symbol}]) => {
@@ -360,7 +354,7 @@ const SellCryptoRoot = ({
     type?: string,
     fromCurrencyAbbreviation?: string,
   ) => {
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     await sleep(400);
     dispatch(showWalletError(type, fromCurrencyAbbreviation));
   };
@@ -388,7 +382,7 @@ const SellCryptoRoot = ({
       // Selected wallet from Wallet Details
       setWallet(fromWallet);
       await sleep(500);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       setDisabledWalletFrom(false);
     } else {
       const availableKeys = keysList.filter(key => {
@@ -420,7 +414,7 @@ const SellCryptoRoot = ({
         }
         if (allowedWallets[0]) {
           await sleep(500);
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           setDisabledWalletFrom(false);
         } else {
           walletError('walletNotSupported', fromCurrencyAbbreviation);
@@ -428,7 +422,7 @@ const SellCryptoRoot = ({
           setDisabledWalletFrom(false);
         }
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         setDisabledWalletFrom(false);
       }
     }
@@ -833,7 +827,7 @@ const SellCryptoRoot = ({
       const msg = t(
         'Sell Crypto feature is not available at this moment. Please try again later.',
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(200);
       showError(msg);
     }
@@ -1249,7 +1243,7 @@ const SellCryptoRoot = ({
         await sleep(200);
       }
       await sleep(100);
-      dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+      showOngoingProcess('GENERAL_AWAITING');
       const requestData: ExternalServicesConfigRequestParams = {
         currentLocationCountry: locationData?.countryShortCode,
         currentLocationState: locationData?.stateShortCode,
@@ -1266,7 +1260,7 @@ const SellCryptoRoot = ({
     }
 
     if (sellCryptoConfig?.disabled) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -1349,7 +1343,7 @@ const SellCryptoRoot = ({
           'Sell Crypto feature is not available at this moment. Please try again later.',
         );
       }
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(300);
       showError(msg);
       return;
@@ -1500,7 +1494,7 @@ const SellCryptoRoot = ({
           const msg = t(
             'Sell Crypto feature is not available at this moment. Please try again later.',
           );
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           await sleep(500);
           showError(msg, undefined, undefined, true);
         }
@@ -1510,7 +1504,7 @@ const SellCryptoRoot = ({
       const msg = t(
         'Sell Crypto feature is not available at this moment. Please try again later.',
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       showError(msg, undefined, undefined, true);
     }
@@ -1562,7 +1556,7 @@ const SellCryptoRoot = ({
     goBack?: boolean,
   ) => {
     logger.debug('Sell crypto Root Error. Reason: ' + reason);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     await sleep(400);
     setLoadingQuote(false);
     await sleep(600);

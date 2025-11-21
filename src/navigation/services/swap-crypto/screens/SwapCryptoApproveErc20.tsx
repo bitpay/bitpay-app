@@ -21,10 +21,7 @@ import _ from 'lodash';
 import cloneDeep from 'lodash.clonedeep';
 import {TextAlign, SubText, BaseText} from '../../../../components/styled/Text';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {useTranslation} from 'react-i18next';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {GetPrecision} from '../../../../store/wallet/utils/currency';
@@ -68,6 +65,7 @@ import {
   ThorswapProviderNames,
 } from '../../../../store/swap-crypto/models/thorswap.models';
 import {Black, White} from '../../../../styles/colors';
+import {useOngoingProcess} from '../../../../contexts';
 
 const CircleCheckIcon = require('../../../../../assets/img/circle-check.png');
 
@@ -119,6 +117,7 @@ const SwapCryptoApproveErc20: React.FC = () => {
   }: {params: SwapCryptoApproveErc20Params} =
     useRoute<RouteProp<{params: SwapCryptoApproveErc20Params}>>();
   const {t} = useTranslation();
+  const {hideOngoingProcess} = useOngoingProcess();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
@@ -147,7 +146,7 @@ const SwapCryptoApproveErc20: React.FC = () => {
     broadcastedTx?: Partial<TransactionProposal>,
     err?: string,
   ) => {
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     navigation.goBack();
     await sleep(1000);
     onDismiss(broadcastedTx, err);
@@ -307,7 +306,11 @@ const SwapCryptoApproveErc20: React.FC = () => {
   const makePayment = async () => {
     try {
       const broadcastedTx = (await dispatch(
-        publishAndSign({txp: ctxp! as TransactionProposal, key, wallet}),
+        publishAndSign({
+          txp: ctxp! as TransactionProposal,
+          key,
+          wallet,
+        }),
       )) as TransactionProposal;
       finish(broadcastedTx);
     } catch (err) {

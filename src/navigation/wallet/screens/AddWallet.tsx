@@ -23,14 +23,8 @@ import {
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import BoxInput from '../../../components/form/BoxInput';
 import Button from '../../../components/button/Button';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   addWallet,
   getDecryptPassword,
@@ -70,6 +64,8 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {RootStacks, getNavigationTabName} from '../../../Root';
 import {BWCErrorMessage} from '../../../constants/BWCError';
+import {useOngoingProcess} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 export type AddWalletParamList = {
   key: Key;
@@ -143,6 +139,7 @@ const AddWallet = ({
 }: NativeStackScreenProps<WalletGroupParamList, WalletScreens.ADD_WALLET>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {currencyAbbreviation, currencyName, key: _key} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const key = keys[_key.id];
@@ -234,7 +231,7 @@ const AddWallet = ({
             isErc20Token: false,
           }),
         );
-        dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        showOngoingProcess('ADDING_WALLET');
         // adds wallet and binds to key obj - creates eth wallet if needed
         const wallet = await dispatch(
           addWallet({
@@ -267,7 +264,7 @@ const AddWallet = ({
           const walletAddress = (await dispatch<any>(
             createWalletAddress({wallet, newAddress: true}),
           )) as string;
-          dispatch(LogActions.info(`new address generated: ${walletAddress}`));
+          logManager.info(`new address generated: ${walletAddress}`);
         }
 
         try {
@@ -280,13 +277,13 @@ const AddWallet = ({
           // ignore error
         }
 
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         resolve(wallet);
       } catch (err: any) {
         if (err.message === 'invalid password') {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
         } else {
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           await sleep(500);
           showErrorModal(BWCErrorMessage(err));
           reject(err);
@@ -334,7 +331,7 @@ const AddWallet = ({
           ? JSON.stringify(err)
           : 'An unknown error occurred';
 
-      dispatch(LogActions.debug(`Error adding wallet: ${errstring}`));
+      logManager.debug(`Error adding wallet: ${errstring}`);
     }
   });
 

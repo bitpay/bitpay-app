@@ -56,10 +56,7 @@ import {
   coinbaseGetTransactionsByAccount,
   coinbaseGetFiatAmount,
 } from '../../../store/coinbase';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {
   ToCashAddress,
@@ -67,7 +64,6 @@ import {
 } from '../../../store/wallet/effects/address/address';
 import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import Icons from '../../wallet/components/WalletIcons';
 import {
   BitpaySupportedUtxoCoins,
@@ -90,6 +86,7 @@ import GlobalSelect, {
   ToWalletSelectorCustomCurrency,
 } from '../../wallet/screens/GlobalSelect';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
 
 const AccountContainer = styled.SafeAreaView`
   flex: 1;
@@ -213,11 +210,10 @@ const CoinbaseAccount = ({
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenDataByAddress} = useTokenContext();
   const {accountId, refresh} = route.params;
   const logger = useLogger();
-  const tokenDataByAddress = useAppSelector(
-    ({WALLET}: RootState) => WALLET.tokenDataByAddress,
-  );
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -503,7 +499,7 @@ const CoinbaseAccount = ({
     if (!account) {
       return;
     }
-    dispatch(startOnGoingProcessModal('FETCHING_COINBASE_DATA'));
+    showOngoingProcess('FETCHING_COINBASE_DATA');
     dispatch(
       Analytics.track('Clicked Receive', {
         context: 'CoinbaseAccount',
@@ -511,7 +507,7 @@ const CoinbaseAccount = ({
     );
     dispatch(coinbaseCreateAddress(accountId))
       .then(async newAddress => {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         if (!newAddress) {
           return;
         }
@@ -649,7 +645,7 @@ const CoinbaseAccount = ({
         }
 
         await sleep(500);
-        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        showOngoingProcess('ADDING_WALLET');
         const createdToWallet = await dispatch(addWallet(createNewWalletData));
         logger.debug(
           `Added ${createdToWallet?.currencyAbbreviation} wallet from Coinbase`,
@@ -664,10 +660,10 @@ const CoinbaseAccount = ({
         );
         onSelectedWallet(createdToWallet);
         await sleep(300);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
       } catch (err: any) {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         if (err.message === 'invalid password') {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
@@ -773,7 +769,6 @@ const CoinbaseAccount = ({
       />
 
       <SheetModal
-        modalLibrary="bottom-sheet"
         isVisible={walletModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>

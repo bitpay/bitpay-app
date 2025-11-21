@@ -27,9 +27,7 @@ export enum GeneralSettingsScreens {
   ALT_CURRENCY_SETTTINGS = 'AltCurrencySettings',
 }
 
-const GeneralSettingsGroup: React.FC<GeneralSettingsProps> = ({
-  GeneralSettings,
-}) => {
+const GeneralSettingsGroup = ({GeneralSettings}: GeneralSettingsProps) => {
   const {t} = useTranslation();
   return (
     <GeneralSettings.Group

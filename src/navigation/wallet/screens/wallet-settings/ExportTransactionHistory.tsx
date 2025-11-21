@@ -31,6 +31,7 @@ import {Paragraph} from '../../../../components/styled/Text';
 import {SlateDark, White} from '../../../../styles/colors';
 import Mailer from 'react-native-mail';
 import {IS_DESKTOP} from '../../../../constants';
+import {logManager} from '../../../../managers/LogManager';
 
 const ExportTransactionHistoryContainer = styled.SafeAreaView`
   flex: 1;
@@ -68,7 +69,7 @@ const ExportTransactionHistory = () => {
   const formatDate = (date: number): string => {
     const dateObj = new Date(date);
     if (!dateObj) {
-      dispatch(LogActions.warn('[formatDate]: Error formating a date.'));
+      logManager.warn('[formatDate]: Error formating a date.');
       return 'DateError';
     }
     if (!dateObj.toJSON()) {
@@ -99,19 +100,15 @@ const ExportTransactionHistory = () => {
       const transactions = acc;
 
       if (_.isEmpty(transactions)) {
-        dispatch(
-          LogActions.warn(
-            '[buildCVSFile]: Failed to generate CSV: no transactions',
-          ),
+        logManager.warn(
+          '[buildCVSFile]: Failed to generate CSV: no transactions',
         );
         const err = t('This wallet has no transactions');
         throw err;
       }
 
-      dispatch(
-        LogActions.debug(
-          `[buildCVSFile]: Wallet Transaction History Length: ${transactions.length}`,
-        ),
+      logManager.debug(
+        `[buildCVSFile]: Wallet Transaction History Length: ${transactions.length}`,
       );
 
       // @ts-ignore
@@ -179,7 +176,7 @@ const ExportTransactionHistory = () => {
       return csv;
     } catch (e) {
       const errString = e instanceof Error ? e.message : JSON.stringify(e);
-      dispatch(LogActions.warn(`[buildCVSFile]: ${errString}`));
+      logManager.warn(`[buildCVSFile]: ${errString}`);
       throw e;
     }
   };
@@ -198,7 +195,7 @@ const ExportTransactionHistory = () => {
       },
       async (error, event) => {
         if (error) {
-          dispatch(LogActions.error('Error sending email: ' + error));
+          logManager.error('Error sending email: ' + error);
           const err = new Error(
             `${APP_NAME_UPPERCASE} cannot open default Email App.`,
           );
@@ -210,7 +207,7 @@ const ExportTransactionHistory = () => {
           );
         }
         if (event) {
-          dispatch(LogActions.debug('Email Logs: ' + event));
+          logManager.debug('Email Logs: ' + event);
         }
       },
     );
@@ -245,7 +242,7 @@ const ExportTransactionHistory = () => {
         handleEmail(opts.subject!, filePath);
       }
     } catch (err: any) {
-      dispatch(LogActions.debug(`[shareFile]: ${err.message}`));
+      logManager.debug(`[shareFile]: ${err.message}`);
       if (err && err.message === 'User did not share') {
         return;
       } else {

@@ -14,7 +14,6 @@ import {
   mapAbbreviationAndName,
 } from '../../utils/wallet';
 import {
-  failedAddWallet,
   successAddWallet,
   successCreateKey,
   successUpdateKey,
@@ -39,7 +38,6 @@ import {
   sleep,
 } from '../../../../utils/helper-methods';
 import {t} from 'i18next';
-import {LogActions} from '../../../log';
 import {
   IsERCToken,
   IsSegwitCoin,
@@ -59,6 +57,8 @@ import {
 import {getTokenContractInfo, startUpdateWalletStatus} from '../status/status';
 import {addCustomTokenOption} from '../currencies/currencies';
 import {uniq} from 'lodash';
+import {tokenManager} from '../../../../managers/TokenManager';
+import {logManager} from '../../../../managers/LogManager';
 
 export interface CreateOptions {
   network?: Network;
@@ -155,9 +155,11 @@ export const addWallet =
           },
           WALLET,
         } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
+
         const tokenOptsByAddress = {
           ...BitpaySupportedTokenOptsByAddress,
-          ...WALLET.tokenOptionsByAddress,
+          ...tokenOptionsByAddress,
           ...WALLET.customTokenOptionsByAddress,
         };
         const {walletName} = options;
@@ -179,9 +181,7 @@ export const addWallet =
           } catch (err) {
             const errstring =
               err instanceof Error ? err.message : JSON.stringify(err);
-            dispatch(
-              LogActions.error(`Error EDDSA key - addWallet: ${errstring}`),
-            );
+            logManager.error(`Error EDDSA key - addWallet: ${errstring}`);
             throw err;
           }
         }
@@ -200,9 +200,7 @@ export const addWallet =
             const receiveAddress = (await dispatch<any>(
               createWalletAddress({wallet: associatedWallet, newAddress: true}),
             )) as string;
-            dispatch(
-              LogActions.info(`new address generated: ${receiveAddress}`),
-            );
+            logManager.info(`new address generated: ${receiveAddress}`);
             associatedWallet.receiveAddress = receiveAddress;
 
             const {currencyAbbreviation, currencyName} = dispatch(
@@ -228,10 +226,8 @@ export const addWallet =
           }
 
           if (currency.tokenAddress && currency.chain) {
-            dispatch(
-              LogActions.debug(
-                `Checking if tokenAddress: ${currency.tokenAddress} is present in tokenOptsByAddress...`,
-              ),
+            logManager.debug(
+              `Checking if tokenAddress: ${currency.tokenAddress} is present in tokenOptsByAddress...`,
             );
             const tokenChain = cloneDeep(currency.chain).toLowerCase();
             const tokenAdressWithChain = addTokenChainSuffix(
@@ -242,14 +238,12 @@ export const addWallet =
 
             if (!currentTokenOpts) {
               // Workaround to add a token that is not present in our tokenOptsByAddress as a custom token
-              dispatch(
-                LogActions.debug(
-                  `Token not present in tokenOptsByAddress. ${
-                    enableCustomTokens
-                      ? 'Creating custom token wallet...'
-                      : 'Avoiding token creation.'
-                  }`,
-                ),
+              logManager.debug(
+                `Token not present in tokenOptsByAddress. ${
+                  enableCustomTokens
+                    ? 'Creating custom token wallet...'
+                    : 'Avoiding token creation.'
+                }`,
               );
               if (enableCustomTokens) {
                 const opts = {
@@ -264,12 +258,10 @@ export const addWallet =
                     opts,
                   );
                 } catch (err) {
-                  dispatch(
-                    LogActions.debug(
-                      `Error in getTokenContractInfo for opts: ${JSON.stringify(
-                        opts,
-                      )}. Continue anyway...`,
-                    ),
+                  logManager.debug(
+                    `Error in getTokenContractInfo for opts: ${JSON.stringify(
+                      opts,
+                    )}. Continue anyway...`,
                   );
                 }
 
@@ -320,7 +312,7 @@ export const addWallet =
           const receiveAddress = (await dispatch<any>(
             createWalletAddress({wallet: newWallet, newAddress: true}),
           )) as string;
-          dispatch(LogActions.info(`new address generated: ${receiveAddress}`));
+          logManager.info(`new address generated: ${receiveAddress}`);
           newWallet.receiveAddress = receiveAddress;
         }
 
@@ -372,14 +364,13 @@ export const addWallet =
         );
 
         dispatch(successAddWallet({key}));
-        dispatch(LogActions.info(`Added Wallet ${currencyName}`));
+        logManager.info(`Added Wallet ${currencyName}`);
         resolve(newWallet);
       } catch (err) {
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(failedAddWallet());
         if (errstring) {
-          dispatch(LogActions.debug(`Error adding wallet: ${errstring}`));
+          logManager.debug(`Error adding wallet: ${errstring}`);
         }
         reject(err);
       }
@@ -413,9 +404,11 @@ export const createMultipleWallets =
         defaultLanguage,
       },
     } = getState();
+    const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
+
     const tokenOpts = {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ...tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
     const wallets: API[] = [];
@@ -438,7 +431,7 @@ export const createMultipleWallets =
         const receiveAddress = (await dispatch<any>(
           createWalletAddress({wallet, newAddress: true}),
         )) as string;
-        dispatch(LogActions.info(`new address generated: ${receiveAddress}`));
+        logManager.info(`new address generated: ${receiveAddress}`);
         wallet.receiveAddress = receiveAddress;
         wallets.push(wallet);
         for (const token of tokens) {
@@ -458,11 +451,7 @@ export const createMultipleWallets =
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.debug(
-            `Error creating wallet - continue anyway: ${errMsg}`,
-          ),
-        );
+        logManager.debug(`Error creating wallet - continue anyway: ${errMsg}`);
       }
     }
 
@@ -600,7 +589,7 @@ const createWallet =
 
             reject(err);
           } else {
-            dispatch(LogActions.info(`Added Coin: ${chain}: ${coin}`));
+            logManager.info(`Added Coin: ${chain}: ${coin}`);
             resolve(bwcClient);
           }
         },
@@ -629,10 +618,8 @@ const createTokenWallet =
         const currentTokenOpts = tokenOptsByAddress?.[tokenAddressWithSuffix];
 
         if (!currentTokenOpts) {
-          dispatch(
-            LogActions.debug(
-              `Could not find tokenOpts for token: ${tokenAddressWithSuffix}. Avoid token creation...`,
-            ),
+          logManager.debug(
+            `Could not find tokenOpts for token: ${tokenAddressWithSuffix}. Avoid token creation...`,
           );
           return reject(new Error(`Could not find token: ${tokenAddress}`));
         }
@@ -700,16 +687,16 @@ const createTokenWallet =
           associatedWallet.preferences,
           (err: any) => {
             if (err) {
-              dispatch(LogActions.error(`Error saving token: ${tokenName}`));
+              logManager.error(`Error saving token: ${tokenName}`);
             }
-            dispatch(LogActions.info(`Added token ${tokenName}`));
+            logManager.info(`Added token ${tokenName}`);
             resolve(bwcClient);
           },
         );
       } catch (err) {
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`Error creating token wallet: ${errstring}`));
+        logManager.error(`Error creating token wallet: ${errstring}`);
         reject(err);
       }
     });
@@ -750,9 +737,7 @@ export const startCreateKeyWithOpts =
       } catch (err) {
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(`Error creating key with opts: ${errstring}`),
-        );
+        logManager.error(`Error creating key with opts: ${errstring}`);
         reject(err);
       }
     });
@@ -819,7 +804,7 @@ export const createWalletWithOpts =
 
               reject(err);
             } else {
-              dispatch(LogActions.info(`Added Coin ${opts.coin || 'btc'}`));
+              logManager.info(`Added Coin ${opts.coin || 'btc'}`);
               resolve(bwcClient);
             }
           },
@@ -865,11 +850,8 @@ export const detectAndCreateTokensForEachEvmWallet =
   }): Effect<Promise<void>> =>
   async dispatch => {
     try {
-      dispatch(
-        LogActions.info(
-          'Starting [detectAndCreateTokensForEachEvmWallet] for keyId: ' +
-            key.id,
-        ),
+      logManager.info(
+        'Starting [detectAndCreateTokensForEachEvmWallet] for keyId: ' + key.id,
       );
 
       const vmWalletsToCheck = key.wallets.filter(w => {
@@ -886,18 +868,14 @@ export const detectAndCreateTokensForEachEvmWallet =
         return _IsVMChain && isNotERCToken && matchesChain && notAlreadyCreated;
       });
 
-      dispatch(
-        LogActions.debug(
-          'Number of VM wallets to check: ' + vmWalletsToCheck?.length,
-        ),
+      logManager.debug(
+        'Number of VM wallets to check: ' + vmWalletsToCheck?.length,
       );
 
       for (const [index, w] of vmWalletsToCheck.entries()) {
         if (w.chain && w.receiveAddress) {
-          dispatch(
-            LogActions.debug(
-              `Checking tokens for wallet[${index}]: ${w.id} - ${w.receiveAddress}`,
-            ),
+          logManager.debug(
+            `Checking tokens for wallet[${index}]: ${w.id} - ${w.receiveAddress}`,
           );
           let filteredTokens;
           if (IsSVMChain(w.chain)) {
@@ -953,10 +931,8 @@ export const detectAndCreateTokensForEachEvmWallet =
             });
           }
 
-          dispatch(
-            LogActions.debug(
-              'Number of tokens to create: ' + filteredTokens?.length,
-            ),
+          logManager.debug(
+            'Number of tokens to create: ' + filteredTokens?.length,
           );
 
           let account: number | undefined;
@@ -975,10 +951,8 @@ export const detectAndCreateTokensForEachEvmWallet =
             });
             if (existingTokenWallet[0]) {
               // workaround for cases where the token was already created but for some reason was not included in the list of tokens in the associated wallet
-              dispatch(
-                LogActions.debug(
-                  `Token ${tokenToAdd.symbol} (${tokenToAdd.token_address}) already created for this wallet. Adding to tokens list in the associated wallet`,
-                ),
+              logManager.debug(
+                `Token ${tokenToAdd.symbol} (${tokenToAdd.token_address}) already created for this wallet. Adding to tokens list in the associated wallet`,
               );
 
               (w.tokens || []).push(existingTokenWallet[0].id);
@@ -1020,10 +994,8 @@ export const detectAndCreateTokensForEachEvmWallet =
                   );
                 }
               } catch (err) {
-                dispatch(
-                  LogActions.debug(
-                    `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
-                  ),
+                logManager.debug(
+                  `Error[${index}] adding Token: ${tokenToAdd?.symbol} (${tokenToAdd.token_address}). Continue anyway...`,
                 );
               }
             }
@@ -1031,19 +1003,14 @@ export const detectAndCreateTokensForEachEvmWallet =
         }
       }
 
-      dispatch(
-        LogActions.info(
-          'success [detectAndCreateTokensForEachEvmWallet] for keyId: ' +
-            key.id,
-        ),
+      logManager.info(
+        'success [detectAndCreateTokensForEachEvmWallet] for keyId: ' + key.id,
       );
       return Promise.resolve();
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(
-        LogActions.error(
-          `failed [detectAndCreateTokensForEachEvmWallet] - keyId: ${key?.id} - Error: ${errorStr}`,
-        ),
+      logManager.error(
+        `failed [detectAndCreateTokensForEachEvmWallet] - keyId: ${key?.id} - Error: ${errorStr}`,
       );
     }
   };

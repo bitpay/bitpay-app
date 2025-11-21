@@ -59,7 +59,7 @@ export enum SwapCryptoScreens {
   SWAP_CRYPTO_APPROVE = 'SwapCryptoApproveErc20',
 }
 
-const SwapCryptoGroup: React.FC<SwapCryptoProps> = ({SwapCrypto, theme}) => {
+const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   const changellyHistory = useAppSelector(

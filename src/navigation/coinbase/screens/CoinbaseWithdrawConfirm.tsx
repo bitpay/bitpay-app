@@ -4,10 +4,7 @@ import {RouteProp} from '@react-navigation/core';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Wallet} from '../../../store/wallet/wallet.models';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   Amount,
   ConfirmContainer,
@@ -27,12 +24,10 @@ import {
 } from '../../../store/coinbase';
 import {CoinbaseErrorsProps} from '../../../api/coinbase/coinbase.types';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import prompt from 'react-native-prompt-android';
-import {AppActions} from '../../../store/app';
-
+import {usePaymentSent} from '../../../contexts';
 export interface CoinbaseWithdrawConfirmParamList {
   accountId: string;
   wallet: Wallet;
@@ -43,6 +38,7 @@ const CoinbaseWithdrawConfirm = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {hidePaymentSent, showPaymentSent} = usePaymentSent();
   const route =
     useRoute<RouteProp<CoinbaseGroupParamList, 'CoinbaseWithdraw'>>();
   const {accountId, wallet, amount} = route.params;
@@ -90,10 +86,7 @@ const CoinbaseWithdrawConfirm = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   useEffect(() => {
@@ -114,8 +107,6 @@ const CoinbaseWithdrawConfirm = () => {
         amount: amount.toString(),
         currency: currency,
       };
-      dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-      await sleep(400);
       dispatch(coinbaseSendTransaction(accountId, buildTx, code));
     },
     [dispatch, accountId, receiveAddress, amount, currency],
@@ -193,7 +184,6 @@ const CoinbaseWithdrawConfirm = () => {
   useEffect(() => {
     (async () => {
       if (!apiLoading && sendStatus === 'failed') {
-        dispatch(dismissOnGoingProcessModal());
         await sleep(500);
         if (sendError?.errors[0].id === 'two_factor_required') {
           askForTwoFactor();
@@ -204,15 +194,11 @@ const CoinbaseWithdrawConfirm = () => {
       }
 
       if (!apiLoading && sendStatus === 'success') {
-        dispatch(dismissOnGoingProcessModal());
         await sleep(1000);
-        dispatch(
-          AppActions.showPaymentSentModal({
-            isVisible: true,
-            onCloseModal,
-            title: t('Payment Sent'),
-          }),
-        );
+        showPaymentSent({
+          onCloseModal,
+          title: t('Payment Sent'),
+        });
         await sleep(1200);
         dispatch(coinbaseClearSendTransactionStatus());
         navigation.goBack();

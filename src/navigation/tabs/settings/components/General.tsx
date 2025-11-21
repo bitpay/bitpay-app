@@ -3,14 +3,8 @@ import Button from '../../../../components/button/Button';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ToggleSwitch from '../../../../components/toggle-switch/ToggleSwitch';
 import {AppActions} from '../../../../store/app';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../store/app/app.actions';
-import {
-  resetAllSettings,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
+import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import {resetAllSettings} from '../../../../store/app/app.effects';
 import {useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
@@ -30,6 +24,8 @@ import HeaderBackButton from '../../../../components/back/HeaderBackButton';
 import {SettingsDetailsParamList} from '../SettingsDetails';
 import {FlashList} from '@shopify/flash-list';
 import {View} from 'react-native';
+import {useOngoingProcess} from '../../../../contexts';
+import {logManager} from '../../../../managers/LogManager';
 
 const SettingsComponent = styled.View`
   flex: 1;
@@ -49,6 +45,7 @@ type SettingItem = {
 
 const General: React.FC<Props> = ({navigation}) => {
   const colorScheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const theme = useTheme();
   const showPortfolioValue = useAppSelector(
     ({APP}: RootState) => APP.showPortfolioValue,
@@ -145,11 +142,9 @@ const General: React.FC<Props> = ({navigation}) => {
                   text: t('RESET'),
                   action: async () => {
                     try {
-                      await dispatch(
-                        startOnGoingProcessModal('GENERAL_AWAITING'),
-                      );
+                      showOngoingProcess('GENERAL_AWAITING');
                       await dispatch(resetAllSettings());
-                      dispatch(dismissOnGoingProcessModal());
+                      hideOngoingProcess();
                       dispatch(
                         showBottomNotificationModal({
                           type: 'success',
@@ -166,10 +161,8 @@ const General: React.FC<Props> = ({navigation}) => {
                         }),
                       );
                     } catch (error) {
-                      dispatch(dismissOnGoingProcessModal());
-                      dispatch(
-                        LogActions.error('Could not reset settings', error),
-                      );
+                      hideOngoingProcess();
+                      logManager.error('Could not reset settings', error);
                     }
                   },
                   primary: true,

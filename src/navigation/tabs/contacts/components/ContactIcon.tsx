@@ -16,6 +16,7 @@ import {
 } from '../../../../utils/helper-methods';
 import {IsVMChain, IsOtherChain} from '../../../../store/wallet/utils/currency';
 import Blockie from '../../../../components/blockie/Blockie';
+import {useTokenContext} from '../../../../contexts';
 
 interface ContactIconProps {
   size?: number;
@@ -53,10 +54,12 @@ const ContactIcon: React.FC<ContactIconProps> = ({
   badge,
   address,
 }) => {
+  const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
+
   const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ...tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   }) as {[key in string]: Token};

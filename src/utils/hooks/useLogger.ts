@@ -1,6 +1,5 @@
 import {useRef} from 'react';
-import {useDispatch} from 'react-redux';
-import {LogActions} from '../../store/log';
+import {logManager} from '../../managers/LogManager';
 
 interface Logger {
   clear: () => void;
@@ -11,26 +10,23 @@ interface Logger {
 }
 
 export const useLogger: () => Logger = () => {
-  const dispatch = useDispatch();
-
   const loggerRef = useRef({
     clear() {
-      dispatch(LogActions.clear());
+      logManager.clearLogs();
     },
     debug(message: string) {
-      dispatch(LogActions.debug(message));
+      logManager.debug(message);
     },
     info(message: string) {
-      dispatch(LogActions.info(message));
+      logManager.info(message);
     },
     warn(message: string) {
-      dispatch(LogActions.warn(message));
+      logManager.warn(message);
     },
     error(message: string) {
-      dispatch(LogActions.error(message));
+      logManager.error(message);
     },
   });
-
   return loggerRef.current;
 };
 

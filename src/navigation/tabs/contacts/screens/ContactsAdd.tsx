@@ -65,6 +65,7 @@ import {
 } from '../../../../constants/SupportedCurrencyOptions';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useTokenContext} from '../../../../contexts';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -166,10 +167,12 @@ const ContactsAdd = ({
 
   const [networkModalVisible, setNetworkModalVisible] = useState(false);
 
+  const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
+
   const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ..._tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   });

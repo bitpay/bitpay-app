@@ -26,10 +26,7 @@ export enum CardActivationScreens {
   COMPLETE = 'CardComplete',
 }
 
-const CardActivationGroup: React.FC<CardActivationProps> = ({
-  CardActivation,
-  theme,
-}) => {
+const CardActivationGroup = ({CardActivation, theme}: CardActivationProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
   return (

@@ -2,7 +2,6 @@ import React, {useState, useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {selectSettingsNotificationState} from '../../../../../store/app/app.selectors';
 import {View, DeviceEventEmitter} from 'react-native';
-import {AppEffects} from '../../../../../store/app';
 import {
   Hr,
   ScreenGutter,
@@ -11,9 +10,8 @@ import {
 import {DeviceEmitterEvents} from '../../../../../constants/device-emitter-events';
 import ToggleSwitch from '../../../../../components/toggle-switch/ToggleSwitch';
 import {SettingsContainer} from '../../SettingsRoot';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {useAppSelector} from '../../../../../utils/hooks';
 import styled from 'styled-components/native';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 const SettingsComponent = styled.ScrollView`
@@ -37,12 +35,8 @@ const SettingRowContainer = styled(TouchableOpacity)`
 
 const PushNotifications = () => {
   const {t} = useTranslation();
-  const dispatch = useAppDispatch();
 
   const notificationsState = useAppSelector(selectSettingsNotificationState);
-  const visibleOnGoingProcess = useAppSelector(
-    ({APP}) => APP.showOnGoingProcessModal,
-  );
 
   const [pushNotifications, setPushNotifications] = useState(
     notificationsState.pushNotifications,
@@ -65,9 +59,6 @@ const PushNotifications = () => {
 
   useEffect(() => {
     setPushNotifications(notificationsState.pushNotifications);
-    if (visibleOnGoingProcess) {
-      dispatch(dismissOnGoingProcessModal());
-    }
   }, [notificationsState]);
 
   return (

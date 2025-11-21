@@ -25,13 +25,10 @@ import {
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
 import {formatCurrencyAbbreviation, sleep} from '../../../utils/helper-methods';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {useAppDispatch} from '../../../utils/hooks';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import CustomTabBar from '../../../components/custom-tab-bar/CustomTabBar';
+import {useOngoingProcess} from '../../../contexts';
 
 export type SendToOptionsParamList = {
   title: string;
@@ -174,6 +171,7 @@ const SendToOptions = () => {
   const dispatch = useAppDispatch();
   const Tab = createMaterialTopTabNavigator();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {params} = useRoute<RouteProp<WalletGroupParamList, 'SendToOptions'>>();
   const {wallet, sendTo} = params;
   const [recipientList, setRecipientList] = useState<Recipient[]>([]);
@@ -217,7 +215,7 @@ const SendToOptions = () => {
 
   const goToConfirmView = async () => {
     try {
-      dispatch(startOnGoingProcessModal('LOADING'));
+      showOngoingProcess('LOADING');
       const amount = _.sumBy(recipientList, 'amount');
       const tx = {
         wallet,
@@ -229,7 +227,7 @@ const SendToOptions = () => {
       const {txDetails, txp} = (await dispatch<any>(
         createProposalAndBuildTxDetails(tx),
       )) as any;
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       navigation.navigate('Confirm', {
         wallet,
@@ -243,7 +241,7 @@ const SendToOptions = () => {
       const errorMessageConfig = await dispatch(
         handleCreateTxProposalError(err),
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       dispatch(
         showBottomNotificationModal({

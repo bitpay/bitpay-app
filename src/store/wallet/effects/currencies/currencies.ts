@@ -4,7 +4,6 @@ import {Token} from '../../wallet.models';
 import {
   failedGetTokenOptions,
   successGetCustomTokenOptions,
-  successGetTokenOptions,
   successImport,
 } from '../../wallet.actions';
 import {
@@ -12,7 +11,6 @@ import {
   CurrencyOpts,
   SUPPORTED_VM_TOKENS,
 } from '../../../../constants/currencies';
-import {LogActions} from '../../../log';
 import {BASE_BWS_URL, BLOCKCHAIN_EXPLORERS} from '../../../../constants/config';
 import {
   addTokenChainSuffix,
@@ -23,12 +21,13 @@ import {GetProtocolPrefix} from '../../utils/currency';
 import {AppActions} from '../../../app';
 import {buildWalletObj, mapAbbreviationAndName} from '../../utils/wallet';
 import merge from 'lodash.merge';
-import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
+import {tokenManager} from '../../../../managers/TokenManager';
+import {logManager} from '../../../../managers/LogManager';
 
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
     try {
-      dispatch(LogActions.info('starting [startGetTokenOptions]'));
+      logManager.info('starting [startGetTokenOptions]');
       let tokenOptionsByAddress: {[key in string]: Token} = {};
       let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
       for await (const chain of SUPPORTED_VM_TOKENS) {
@@ -39,17 +38,13 @@ export const startGetTokenOptions =
           );
           tokens = data;
         } catch (error) {
-          dispatch(
-            LogActions.info(
-              `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
-            ),
+          logManager.info(
+            `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
           );
         }
         if (!Array.isArray(tokens)) {
-          dispatch(
-            LogActions.error(
-              `Unexpected response [startGetTokenOptions]: ${tokens}`,
-            ),
+          logManager.error(
+            `Unexpected response [startGetTokenOptions]: ${tokens}`,
           );
           return;
         }
@@ -68,13 +63,8 @@ export const startGetTokenOptions =
           });
         });
       }
-      dispatch(
-        successGetTokenOptions({
-          tokenOptionsByAddress,
-          tokenDataByAddress,
-        }),
-      );
-      dispatch(LogActions.info('successful [startGetTokenOptions]'));
+      tokenManager.setTokenOptions({tokenOptionsByAddress, tokenDataByAddress});
+      logManager.info('successful [startGetTokenOptions]');
       dispatch(AppActions.appTokensDataLoaded());
     } catch (e) {
       let errorStr;
@@ -84,7 +74,7 @@ export const startGetTokenOptions =
         errorStr = JSON.stringify(e);
       }
       dispatch(failedGetTokenOptions());
-      dispatch(LogActions.error(`failed [startGetTokenOptions]: ${errorStr}`));
+      logManager.error(`failed [startGetTokenOptions]: ${errorStr}`);
       dispatch(AppActions.appTokensDataLoaded());
     }
   };
@@ -114,7 +104,7 @@ export const addCustomTokenOption =
       );
     } catch (e) {
       const errString = e instanceof Error ? e.message : JSON.stringify(e);
-      dispatch(LogActions.error(`Add custom options: ${errString}`));
+      logManager.error(`Add custom options: ${errString}`);
       dispatch(failedGetTokenOptions());
     }
   };
@@ -179,10 +169,10 @@ export const startCustomTokensMigration =
   (): Effect<Promise<void>> =>
   async (dispatch, getState): Promise<void> => {
     return new Promise(async resolve => {
-      dispatch(LogActions.info('[startCustomTokensMigration] - starting...'));
+      logManager.info('[startCustomTokensMigration] - starting...');
       const {customTokenOptions, customTokenData} = getState().WALLET;
       Object.values(customTokenOptions || {}).forEach(token => {
-        dispatch(LogActions.info(`Migrating: ${JSON.stringify(token)}`));
+        logManager.info(`Migrating: ${JSON.stringify(token)}`);
         const chain =
           customTokenData[token.symbol.toLowerCase()]?.chain || 'eth';
         let customToken: Token = {
@@ -193,7 +183,7 @@ export const startCustomTokensMigration =
         };
         addCustomTokenOption(customToken, chain);
       });
-      dispatch(LogActions.info('success [startCustomTokensMigration]}'));
+      logManager.info('success [startCustomTokensMigration]}');
       return resolve();
     });
   };
@@ -202,14 +192,9 @@ export const startPolMigration =
   (): Effect<Promise<void>> =>
   async (dispatch, getState): Promise<void> => {
     return new Promise(async resolve => {
-      dispatch(LogActions.info('[startPolMigration] - starting...'));
-      const {keys, tokenOptionsByAddress, customTokenOptionsByAddress} =
-        getState().WALLET;
-      const tokenOpts = {
-        ...BitpaySupportedTokenOptsByAddress,
-        ...tokenOptionsByAddress,
-        ...customTokenOptionsByAddress,
-      };
+      logManager.info('[startPolMigration] - starting...');
+      const {keys} = getState().WALLET;
+
       Object.values(keys).forEach(key => {
         key.wallets = key.wallets.map(wallet => {
           const {currencyAbbreviation, currencyName} = dispatch(
@@ -235,7 +220,7 @@ export const startPolMigration =
           }),
         );
       });
-      dispatch(LogActions.info('success [startPolMigration]}'));
+      logManager.info('success [startPolMigration]}');
       return resolve();
     });
   };

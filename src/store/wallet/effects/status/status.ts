@@ -16,8 +16,6 @@ import {
   failedUpdateAllKeysAndStatus,
   failedUpdateKey,
   failedUpdateKeyTotalBalance,
-  failedUpdateWalletStatus,
-  setWalletRefreshing,
   successUpdateAllKeysAndStatus,
   successUpdateKey,
   successUpdateKeysTotalBalance,
@@ -34,11 +32,11 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {IsERCToken, IsUtxoChain} from '../../utils/currency';
 import {convertToFiat} from '../../../../utils/helper-methods';
 import {Network} from '../../../../constants';
-import {LogActions} from '../../../log';
 import _ from 'lodash';
 import {createWalletAddress} from '../address/address';
 import {detectAndCreateTokensForEachEvmWallet} from '../create/create';
 import uniqBy from 'lodash.uniqby';
+import {logManager} from '../../../../managers/LogManager';
 
 /*
  * post broadcasting of payment
@@ -58,15 +56,6 @@ export const waitForTargetAmountAndUpdateWallet =
   }): Effect =>
   async (dispatch, getState) => {
     try {
-      // set loading (for UI spinner on wallet details as well as keyOverview
-      dispatch(
-        setWalletRefreshing({
-          keyId: key.id,
-          walletId: wallet.id,
-          isRefreshing: true,
-        }),
-      );
-
       // Update history for showing confirming transactions
       DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
 
@@ -78,14 +67,7 @@ export const waitForTargetAmountAndUpdateWallet =
         retry++;
 
         if (retry > 5) {
-          // balance not met - todo handle this
-          dispatch(
-            setWalletRefreshing({
-              keyId: key.id,
-              walletId: wallet.id,
-              isRefreshing: false,
-            }),
-          );
+          DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, false);
           clearInterval(interval);
           return;
         }
@@ -106,16 +88,15 @@ export const waitForTargetAmountAndUpdateWallet =
             if (err) {
               const errStr =
                 err instanceof Error ? err.message : JSON.stringify(err);
-              dispatch(
-                LogActions.error(
-                  `error [waitForTargetAmountAndUpdateWallet]: ${errStr}`,
-                ),
+              logManager.error(
+                `error [waitForTargetAmountAndUpdateWallet]: ${errStr}`,
               );
             }
             const {totalAmount} = status?.balance;
             // TODO ETH totalAmount !== targetAmount while the transaction is unconfirmed
             // expected amount - update balance
             if (totalAmount === targetAmount) {
+              clearInterval(interval);
               dispatch(startUpdateWalletStatus({key, wallet, force: true}));
 
               // update recipient balance if local
@@ -140,9 +121,11 @@ export const waitForTargetAmountAndUpdateWallet =
                 }
               }
               DeviceEventEmitter.emit(DeviceEmitterEvents.WALLET_LOAD_HISTORY);
+              DeviceEventEmitter.emit(
+                DeviceEmitterEvents.SET_REFRESHING,
+                false,
+              );
               await dispatch(updatePortfolioBalance());
-
-              clearInterval(interval);
             }
           },
         );
@@ -150,10 +133,8 @@ export const waitForTargetAmountAndUpdateWallet =
     } catch (err) {
       const errstring =
         err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(
-        LogActions.error(
-          `Error WaitingForTargetAmountAndUpdateWallet: ${errstring}`,
-        ),
+      logManager.error(
+        `Error WaitingForTargetAmountAndUpdateWallet: ${errstring}`,
       );
     }
   };
@@ -262,12 +243,6 @@ export const startUpdateWalletStatus =
         console.log(`Updated balance: ${currencyAbbreviation} ${id}`);
         resolve();
       } catch (err) {
-        dispatch(
-          failedUpdateWalletStatus({
-            keyId: key.id,
-            walletId: wallet.id,
-          }),
-        );
         reject(err);
       }
     });
@@ -323,7 +298,6 @@ export const updateKeyStatus =
             walletId: string;
             balance: any;
             pendingTxps: any[];
-            isRefreshing: boolean;
             singleAddress: boolean;
           }>;
         }
@@ -396,7 +370,6 @@ export const updateKeyStatus =
           walletId: string;
           balance: any;
           pendingTxps: any[];
-          isRefreshing: boolean;
           singleAddress: boolean;
         }> = [];
 
@@ -466,7 +439,6 @@ export const updateKeyStatus =
               walletId: wallet.id,
               balance: cryptoBalance,
               pendingTxps: newPendingTxps,
-              isRefreshing: false,
               singleAddress: status.wallet?.singleAddress,
             });
 
@@ -474,14 +446,11 @@ export const updateKeyStatus =
               // properties to update
               wallet.balance = cryptoBalance;
               wallet.pendingTxps = newPendingTxps;
-              wallet.isRefreshing = false;
               wallet.singleAddress = status.wallet?.singleAddress;
             }
 
-            dispatch(
-              LogActions.info(
-                `Wallet to be updated: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
-              ),
+            logManager.info(
+              `Wallet to be updated: ${wallet.currencyAbbreviation} ${wallet.id} - status updated`,
             );
 
             return newBalance;
@@ -501,7 +470,7 @@ export const updateKeyStatus =
           }
         });
 
-        dispatch(LogActions.info(`Key: ${key.id} - status updated`));
+        logManager.info(`Key: ${key.id} - status updated`);
 
         if (!dataOnly) {
           dispatch(
@@ -525,10 +494,8 @@ export const updateKeyStatus =
           } else {
             errorStr = JSON.stringify(err);
           }
-          dispatch(
-            LogActions.error(
-              `[startUpdateAllWalletStatusForKeys] - failed getStatusAll: ${errorStr}`,
-            ),
+          logManager.error(
+            `[startUpdateAllWalletStatusForKeys] - failed getStatusAll: ${errorStr}`,
           );
         }
         return reject(err);
@@ -549,9 +516,7 @@ export const startUpdateAllWalletStatusForKeys =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
-        dispatch(
-          LogActions.info('starting [startUpdateAllWalletStatusForKeys]'),
-        );
+        logManager.info('starting [startUpdateAllWalletStatusForKeys]');
         const keyUpdatesPromises = keys.map(key =>
           dispatch(updateKeyStatus({key, accountAddress, force})),
         );
@@ -565,9 +530,7 @@ export const startUpdateAllWalletStatusForKeys =
         if (keyUpdates.length > 0) {
           dispatch(successUpdateKeysTotalBalance(keyUpdates));
         }
-        dispatch(
-          LogActions.info('success [startUpdateAllWalletStatusForKeys]'),
-        );
+        logManager.info('success [startUpdateAllWalletStatusForKeys]');
         resolve();
       } catch (err) {
         let errorStr;
@@ -577,10 +540,8 @@ export const startUpdateAllWalletStatusForKeys =
           errorStr = JSON.stringify(err);
         }
         dispatch(failedUpdateKeyTotalBalance());
-        dispatch(
-          LogActions.error(
-            `failed [startUpdateAllWalletStatusForKeys]: ${errorStr}`,
-          ),
+        logManager.error(
+          `failed [startUpdateAllWalletStatusForKeys]: ${errorStr}`,
         );
         reject(err);
       }
@@ -597,9 +558,7 @@ export const startUpdateAllWalletStatusForReadOnlyKeys =
   }): Effect<Promise<void>> =>
   async dispatch => {
     try {
-      dispatch(
-        LogActions.info('starting [startUpdateAllWalletStatusForReadOnlyKeys]'),
-      );
+      logManager.info('starting [startUpdateAllWalletStatusForReadOnlyKeys]');
       const promises: any = [];
       // update each read only wallet - getStatusAll checks if credentials are from the same key
       readOnlyKeys.forEach(key => {
@@ -611,16 +570,12 @@ export const startUpdateAllWalletStatusForReadOnlyKeys =
       });
 
       await Promise.all(promises);
-      dispatch(
-        LogActions.info('success [startUpdateAllWalletStatusForReadOnlyKeys]'),
-      );
+      logManager.info('success [startUpdateAllWalletStatusForReadOnlyKeys]');
       return Promise.resolve();
     } catch (err) {
       const errorStr = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(
-        LogActions.error(
-          `failed [startUpdateAllWalletStatusForReadOnlyKeys]: ${errorStr}`,
-        ),
+      logManager.error(
+        `failed [startUpdateAllWalletStatusForReadOnlyKeys]: ${errorStr}`,
       );
     }
   };
@@ -644,10 +599,8 @@ export const startUpdateAllWalletStatusForKey =
       try {
         await dispatch(detectAndCreateTokensForEachEvmWallet({key}));
       } catch (error) {
-        dispatch(
-          LogActions.info(
-            'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
-          ),
+        logManager.info(
+          'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
         );
       }
     }
@@ -690,10 +643,8 @@ export const startUpdateAllKeyAndWalletStatus =
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
       try {
-        dispatch(
-          LogActions.info(
-            `Starting [startUpdateAllKeyAndWalletStatus]. Context: ${context}`,
-          ),
+        logManager.info(
+          `Starting [startUpdateAllKeyAndWalletStatus]. Context: ${context}`,
         );
         const {
           WALLET: {keys: _keys, balanceCacheKey},
@@ -712,7 +663,7 @@ export const startUpdateAllKeyAndWalletStatus =
         const [readOnlyKeys, keys] = _.partition(_keys, 'isReadOnly');
 
         if (createTokenWalletWithFunds) {
-          LogActions.debug(
+          logManager.debug(
             `Checking for new token with funds.${
               context ? ' Context: ' + context + '. ' : ''
             }${chain ? ' Chain: ' + chain + '. ' : ''}${
@@ -729,10 +680,8 @@ export const startUpdateAllKeyAndWalletStatus =
                 }),
               );
             } catch (error) {
-              dispatch(
-                LogActions.info(
-                  'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
-                ),
+              logManager.info(
+                'Error trying to detectAndCreateTokensForEachEvmWallet. Continue anyway.',
               );
             }
           }
@@ -746,7 +695,7 @@ export const startUpdateAllKeyAndWalletStatus =
 
         dispatch(updatePortfolioBalance()); // update portfolio balance after updating all keys balances
         dispatch(successUpdateAllKeysAndStatus());
-        dispatch(LogActions.info('success [startUpdateAllKeyAndWalletStatus]'));
+        logManager.info('success [startUpdateAllKeyAndWalletStatus]');
         resolve();
       } catch (err) {
         let errorStr;
@@ -756,10 +705,8 @@ export const startUpdateAllKeyAndWalletStatus =
           errorStr = JSON.stringify(err);
         }
         dispatch(failedUpdateAllKeysAndStatus());
-        dispatch(
-          LogActions.error(
-            `failed [startUpdateAllKeyAndWalletStatus]: ${errorStr}`,
-          ),
+        logManager.error(
+          `failed [startUpdateAllKeyAndWalletStatus]: ${errorStr}`,
         );
         reject(err);
       }
@@ -793,10 +740,8 @@ export const updateWalletStatus =
           const walletAddress = (await dispatch<any>(
             createWalletAddress({wallet, newAddress: true}),
           )) as string;
-          dispatch(
-            LogActions.info(
-              `new address generated [updateWalletStatus]: ${walletAddress}`,
-            ),
+          logManager.info(
+            `new address generated [updateWalletStatus]: ${walletAddress}`,
           );
         } catch (error) {
           return reject(error);
@@ -815,7 +760,7 @@ export const updateWalletStatus =
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            dispatch(LogActions.error(`error [updateWalletStatus]: ${errStr}`));
+            logManager.error(`error [updateWalletStatus]: ${errStr}`);
             return resolve({
               balance: {
                 ...cachedBalance,

@@ -1,5 +1,5 @@
 import Modal from 'react-native-modal';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
 import {RootState} from '../../../store';
 import {AppActions} from '../../../store/app';
 import {useDispatch, useSelector} from 'react-redux';
@@ -70,20 +70,27 @@ export interface BiometricModalConfig {
   onClose?: (checked?: boolean) => void;
 }
 
-const BiometricModal: React.FC = () => {
+const modalStyle = {margin: 0};
+
+const BiometricModal: React.FC = React.memo(() => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const logger = useLogger();
   const isVisible = useSelector(({APP}: RootState) => APP.showBiometricModal);
   const {onClose} =
     useSelector(({APP}: RootState) => APP.biometricModalConfig) || {};
-  const [animation, setAnimation] = useState(new Animated.Value(0));
-  const inputRange = [0, 1];
-  const outputRange = [1, 1.2];
-  const scale = animation.interpolate({inputRange, outputRange});
+  const [animation] = useState(() => new Animated.Value(0));
   const [isActive, setIsActive] = useState(false);
 
-  const pulse = () => {
+  const inputRange = useMemo(() => [0, 1], []);
+  const outputRange = useMemo(() => [1, 1.2], []);
+
+  const scale = useMemo(
+    () => animation.interpolate({inputRange, outputRange}),
+    [animation, inputRange, outputRange],
+  );
+
+  const pulse = useCallback(() => {
     Animated.sequence([
       Animated.timing(animation, {
         toValue: 1,
@@ -110,14 +117,19 @@ const BiometricModal: React.FC = () => {
         pulse();
       }, 10000);
     });
-  };
+  }, [animation]);
 
-  const authenticate = async () => {
+  const rnBiometrics = useMemo(
+    () =>
+      new ReactNativeBiometrics({
+        allowDeviceCredentials: true,
+      }),
+    [],
+  );
+
+  const authenticate = useCallback(async () => {
     try {
       setIsActive(true);
-      const rnBiometrics = new ReactNativeBiometrics({
-        allowDeviceCredentials: true,
-      });
       const {success, error} = await rnBiometrics.simplePrompt({
         promptMessage: t('Verify your identity'),
       });
@@ -139,13 +151,17 @@ const BiometricModal: React.FC = () => {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.warn(`Error providing biometrics: ${errMsg}`);
     }
-  };
+  }, [dispatch, logger, onClose, pulse, rnBiometrics, t]);
 
   useEffect(() => {
     if (isVisible && !isActive) {
       authenticate();
     }
-  }, [isVisible]);
+  }, [isVisible, isActive, authenticate]);
+
+  const transformStyle = useMemo(() => ({transform: [{scale}]}), [scale]);
+
+  const unlockAppText = useMemo(() => t('Unlock App'), [t]);
 
   return (
     <View>
@@ -159,13 +175,13 @@ const BiometricModal: React.FC = () => {
         animationOut={'fadeOutDown'}
         useNativeDriverForBackdrop={true}
         useNativeDriver={true}
-        style={{margin: 0}}>
+        style={modalStyle}>
         <BiometricContainer>
           <BiometricModalTitleContainer>
-            <BiometricModalTitle>{t('Unlock App')}</BiometricModalTitle>
+            <BiometricModalTitle>{unlockAppText}</BiometricModalTitle>
           </BiometricModalTitleContainer>
-          <BiometricModalImgContainer onPress={() => authenticate()}>
-            <ImgContainer style={{transform: [{scale}]}}>
+          <BiometricModalImgContainer onPress={authenticate}>
+            <ImgContainer style={transformStyle}>
               <BitpaySvg width={80} height={80} />
             </ImgContainer>
           </BiometricModalImgContainer>
@@ -174,6 +190,6 @@ const BiometricModal: React.FC = () => {
       </Modal>
     </View>
   );
-};
+});
 
 export default BiometricModal;

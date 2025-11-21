@@ -56,13 +56,9 @@ import {
   createProposalAndBuildTxDetails,
   handleCreateTxProposalError,
 } from '../../../store/wallet/effects/send/send';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Effect} from '../../../store';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
 import {
@@ -114,6 +110,8 @@ import {SolanaPayOpts} from './send/confirm/Confirm';
 import cloneDeep from 'lodash.clonedeep';
 import Icons from '../components/WalletIcons';
 import {AppActions} from '../../../store/app';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 const ModalHeader = styled.View`
   height: 50px;
@@ -564,11 +562,11 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   }
   const logger = useLogger();
   const dispatch = useAppDispatch();
-  const {
-    keys: _keys,
-    tokenOptionsByAddress,
-    customTokenOptionsByAddress,
-  } = useAppSelector(({WALLET}) => WALLET);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenOptionsByAddress} = useTokenContext();
+  const {keys: _keys, customTokenOptionsByAddress} = useAppSelector(
+    ({WALLET}) => WALLET,
+  );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const allTokensByAddress = {
     ...BitpaySupportedTokenOptsByAddress,
@@ -860,9 +858,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     if (globalSelectOnDismiss) {
       globalSelectOnDismiss(undefined);
       await sleep(600);
-      dispatch(
-        LogActions.debug('[GlobalSelect] No wallets. Buy Crypto clicked.'),
-      );
+      logManager.debug('[GlobalSelect] No wallets. Buy Crypto clicked.');
       dispatch(
         Analytics.track('Clicked Buy Crypto', {
           context: `GlobalSelect-${context}`,
@@ -962,7 +958,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         } catch (err) {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(LogActions.error('[GlobalSelect] ' + errStr));
+          logManager.error('[GlobalSelect] ' + errStr);
         }
       } else if (context === 'send') {
         navigation.navigate('SendTo', {wallet});
@@ -997,7 +993,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         if (setButtonState) {
           setButtonState('loading');
         } else {
-          dispatch(startOnGoingProcessModal('CREATING_TXP'));
+          showOngoingProcess('CREATING_TXP');
         }
         const {txDetails, txp} = await dispatch(
           createProposalAndBuildTxDetails({
@@ -1010,7 +1006,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         if (setButtonState) {
           setButtonState('success');
         } else {
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
         }
         await sleep(300);
         navigation.navigate('Confirm', {
@@ -1024,12 +1020,12 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         });
       } catch (err: any) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error('[GlobalSelect] ' + errStr));
+        logManager.error('[GlobalSelect] ' + errStr);
         if (setButtonState) {
           setButtonState('failed');
           sleep(1000).then(() => setButtonState?.(null));
         } else {
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
         }
         const errorMessageConfig = await dispatch(
           handleCreateTxProposalError(err),
