@@ -49,7 +49,7 @@ import {
 import {useTranslation} from 'react-i18next';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
+import {Constants} from 'bitcore-wallet-client/ts_build/src/lib/common';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;

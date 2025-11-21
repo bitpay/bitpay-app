@@ -100,7 +100,6 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const hasKeys = Object.values(keys).length;
   const cardGroups = useAppSelector(selectCardGroups);
   const hasCards = cardGroups?.length > 0;
-
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const network: Network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);

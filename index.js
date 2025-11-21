@@ -1,6 +1,7 @@
 import 'react-native-get-random-values'; // must import before @ethersproject/shims
+import 'react-native-quick-crypto';
 import '@ethersproject/shims';
-import 'fast-text-encoding';
+// import 'fast-text-encoding';
 import './shim';
 import '@walletconnect/react-native-compat';
 import {AppRegistry, Alert, StatusBar, Appearance} from 'react-native';
@@ -38,6 +39,7 @@ import {
 } from './src/contexts';
 import {BitPayDarkTheme, BitPayLightTheme} from './src/themes/bitpay';
 import {useAppSelector} from './src/utils/hooks';
+import { DklsWorkerHost } from './src/dkls/DklsWorker';
 
 const makeErrorHandler = store => (e, isFatal) => {
   if (isFatal) {
@@ -152,6 +154,7 @@ const AppWrapper = () => {
                 <BottomSheetModalProvider>
                   <BottomSheetProvider>
                       <PaymentSentProvider>
+                        <DklsWorkerHost />
                         <AppInitialization>
                           <Root />
                         </AppInitialization>
