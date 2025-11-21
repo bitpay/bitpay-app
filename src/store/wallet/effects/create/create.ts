@@ -4,7 +4,7 @@ import {
   SupportedChains,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
-import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {
@@ -18,7 +18,7 @@ import {
   successCreateKey,
   successUpdateKey,
 } from '../../wallet.actions';
-import API from 'bitcore-wallet-client/ts_build';
+import API from 'bitcore-wallet-client/ts_build/src';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
