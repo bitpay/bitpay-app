@@ -34,6 +34,7 @@ export enum BuyCryptoActionTypes {
   REMOVE_PAYMENT_REQUEST_TRANSAK = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_TRANSAK',
   SUCCESS_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_WYRE',
   REMOVE_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_WYRE',
+  ACCESS_TOKEN_TRANSAK = 'BUY_CRYPTO/ACCESS_TOKEN_TRANSAK',
 }
 
 interface successPaymentRequestBanxa {
@@ -162,6 +163,14 @@ interface removePaymentRequestTransak {
   };
 }
 
+interface updateAccessTokenTransak {
+  type: typeof BuyCryptoActionTypes.ACCESS_TOKEN_TRANSAK;
+  payload: {
+    accessToken: string;
+    expiresAt: number;
+  };
+}
+
 interface successPaymentRequestWyre {
   type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE;
   payload: {
@@ -195,5 +204,6 @@ export type BuyCryptoActionType =
   | successPaymentRequestTransak
   | updatePaymentRequestTransak
   | removePaymentRequestTransak
+  | updateAccessTokenTransak
   | successPaymentRequestWyre
   | removePaymentRequestWyre;

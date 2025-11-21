@@ -58,6 +58,7 @@ import {
   SardinePaymentUrlConfigParams,
   SimplexGetQuoteRequestData,
   SimplexPaymentData,
+  TransakAccessTokenData,
   TransakGetQuoteRequestData,
   TransakGetSignedUrlRequestData,
   TransakPaymentData,
@@ -468,6 +469,9 @@ const BuyCryptoOffers: React.FC = () => {
   const createdOn = useAppSelector(({WALLET}: RootState) => WALLET.createdOn);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
+  const accessTokenTransak: TransakAccessTokenData = useAppSelector(
+    ({BUY_CRYPTO}) => BUY_CRYPTO.accessToken.transak,
   );
 
   BuyCryptoSupportedExchanges.forEach((exchange: BuyCryptoExchangeKey) => {
@@ -2276,6 +2280,21 @@ const BuyCryptoOffers: React.FC = () => {
       }),
     );
 
+    const nowTimestamp = (Date.now() / 1000) | 0;
+    let _accessToken = accessTokenTransak?.accessToken;
+    if (!_accessToken || accessTokenTransak.expiresAt < nowTimestamp) {
+      try {
+        const {data} = await selectedWallet.transakGetAccessToken('');
+        dispatch(BuyCryptoActions.updateAccessTokenTransak(data));
+        _accessToken = data.accessToken;
+      } catch (err: any) {
+        const reason = 'transakUpdateAccessToken Error';
+        showTransakError(err, reason);
+        setOpeningBrowser(false);
+        return;
+      }
+    }
+
     const quoteData: TransakGetSignedUrlRequestData = {
       env: transakEnv,
       walletAddress: address,
@@ -2292,6 +2311,7 @@ const BuyCryptoOffers: React.FC = () => {
       hideMenu: false,
       partnerOrderId: transakExternalId,
       partnerCustomerId: selectedWallet.id,
+      accessToken: _accessToken,
     };
 
     quoteData[

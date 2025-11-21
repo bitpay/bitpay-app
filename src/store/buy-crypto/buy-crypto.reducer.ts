@@ -3,6 +3,7 @@ import {
   MoonpayPaymentData,
   SardinePaymentData,
   SimplexPaymentData,
+  TransakAccessTokenData,
   TransakPaymentData,
   WyrePaymentData,
 } from './buy-crypto.models';
@@ -22,6 +23,9 @@ export interface BuyCryptoState {
   simplex: {[key in string]: SimplexPaymentData};
   transak: {[key in string]: TransakPaymentData};
   wyre: {[key in string]: WyrePaymentData};
+  accessToken: {
+    transak: TransakAccessTokenData | undefined;
+  };
 }
 
 const initialState: BuyCryptoState = {
@@ -32,6 +36,9 @@ const initialState: BuyCryptoState = {
   simplex: {},
   transak: {},
   wyre: {},
+  accessToken: {
+    transak: undefined,
+  },
 };
 
 export const buyCryptoReducer = (
@@ -351,6 +358,15 @@ export const buyCryptoReducer = (
       return {
         ...state,
         transak: {...transakPaymentRequestsList},
+      };
+
+    case BuyCryptoActionTypes.ACCESS_TOKEN_TRANSAK:
+      return {
+        ...state,
+        accessToken: {
+          ...state.accessToken,
+          transak: action.payload,
+        },
       };
 
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE:

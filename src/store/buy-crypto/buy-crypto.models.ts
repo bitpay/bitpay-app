@@ -727,10 +727,17 @@ export interface TransakGetSignedUrlRequestData {
   // Eg: true
   // When true, then the email address will be auto-filled, but the screen will not be skipped. User can edit their email address, basic data like first name & the address. This parameter will be ignored if email or userData are not passed.	Advanced, Look & feel
   isAutoFillUserData?: boolean;
+  // Access Token
+  accessToken: string;
 }
 
 export interface TransakSignedUrlData {
   urlWithSignature: string;
+}
+
+export interface TransakAccessTokenData {
+  accessToken: string;
+  expiresAt: number;
 }
 
 export interface TransakGetOrderDetailsRequestData {
