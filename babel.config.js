@@ -3,6 +3,7 @@ const {NODE_ENV} = process.env;
 const prod = NODE_ENV === 'production';
 
 const plugins = [
+  'babel-plugin-transform-import-meta',
   '@babel/plugin-proposal-export-namespace-from',
   '@babel/plugin-transform-shorthand-properties',
   '@babel/plugin-transform-arrow-functions',

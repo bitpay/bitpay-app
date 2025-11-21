@@ -81,6 +81,22 @@ export const bootstrapKey = (key: Key, id: string) => {
     return key;
   } else if (key.hardwareSource) {
     return key;
+  } else if (key.properties?.metadata) {
+    try {
+      const TssKey = BWCProvider.getTssKey();
+      const tssKey = new TssKey(key.properties);
+
+      const _key = merge(key, {
+        methods: tssKey,
+      });
+
+      const successLog = `bindTssKey - ${id}`;
+      initLogs.add(LogActions.info(successLog));
+      return _key;
+    } catch (err: unknown) {
+      const errorLog = `Failed to bindTssKey - ${id} - ${getErrorString(err)}`;
+      initLogs.add(LogActions.persistLog(LogActions.error(errorLog)));
+    }
   } else {
     try {
       const _key = merge(key, {

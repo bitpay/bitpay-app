@@ -152,7 +152,7 @@ import {
   getBaseEVMAccountCreationCoinsAndTokens,
   getBaseSVMAccountCreationCoinsAndTokens,
 } from './constants/currencies';
-import Logger from 'bitcore-wallet-client/ts_build/lib/log';
+import Logger from 'bitcore-wallet-client/ts_build/src/lib/log';
 import {BwcProvider} from './lib/bwc';
 import {isNarrowHeight} from './components/styled/Containers';
 import {useOngoingProcess} from './contexts';
