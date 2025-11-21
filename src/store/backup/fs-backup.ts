@@ -10,6 +10,8 @@ const FINAL_FILE = BASE_DIR + '/persist-root.json';
 const BACKUP_FILE = BASE_DIR + '/persist-root.json.bak';
 const TEMP_FILE = BASE_DIR + '/persist-root.json.tmp';
 
+let cachedBackupExists: boolean = false;
+
 async function ensureDir(): Promise<void> {
   try {
     const exists = await RNFS.exists(BASE_DIR);
@@ -22,6 +24,18 @@ async function ensureDir(): Promise<void> {
         LogActions.error(`Backup ensureDir failed - ${getErrorString(err)}`),
       ),
     );
+  }
+}
+
+export async function backupFileExists(): Promise<boolean> {
+  if (cachedBackupExists) {
+    return true;
+  }
+  try {
+    const cachedBackupExists = await RNFS.exists(FINAL_FILE);
+    return cachedBackupExists;
+  } catch (_) {
+    return false;
   }
 }
 
@@ -65,6 +79,7 @@ export async function backupPersistRoot(rawJson: string): Promise<void> {
 
     // Atomically move temp to final
     await RNFS.moveFile(TEMP_FILE, FINAL_FILE);
+    cachedBackupExists = true;
   } catch (err) {
     // Best-effort logging; avoid throwing to not impact primary persist
     initLogs.add(
