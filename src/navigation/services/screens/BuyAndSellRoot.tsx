@@ -73,12 +73,8 @@ import {
   ExternalServicesGroupParamList,
   ExternalServicesScreens,
 } from '../ExternalServicesGroup';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {getExternalServicesConfig} from '../../../store/external-services/external-services.effects';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {AppActions} from '../../../store/app';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {ToWalletSelectorCustomCurrency} from '../../wallet/screens/GlobalSelect';
@@ -227,6 +223,7 @@ import {
   SimplexSellPaymentRequestData,
   SimplexSellPaymentRequestReqData,
 } from '../../../store/sell-crypto/models/simplex-sell.models';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
@@ -434,6 +431,7 @@ const BuyAndSellRoot = ({
   const logger = useLogger();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   const defaultAltCurrency: AltCurrenciesRowProps = useAppSelector(
     ({APP}) => APP.defaultAltCurrency,
@@ -445,12 +443,7 @@ const BuyAndSellRoot = ({
     ({BUY_CRYPTO}) => BUY_CRYPTO.accessToken.transak,
   );
   const allRates = useAppSelector(({RATE}) => RATE.rates);
-  const tokenDataByAddress = useAppSelector(
-    ({WALLET}: RootState) => WALLET.tokenDataByAddress,
-  );
-  const tokenOptionsByAddress: {[x: string]: Token} = useAppSelector(
-    ({WALLET}) => WALLET.tokenOptionsByAddress,
-  );
+  const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
   const tokenOptions = Object.entries(tokenOptionsByAddress).map(
     ([k, {symbol}]) => {
       const chain = getChainFromTokenByAddressKey(k);
@@ -701,7 +694,7 @@ const BuyAndSellRoot = ({
             selectedWallet.balance.cryptoSpendable.replaceAll(',', ''),
           );
         } else {
-          dispatch(startOnGoingProcessModal('WAITING_FOR_MAX_AMOUNT'));
+          showOngoingProcess('WAITING_FOR_MAX_AMOUNT');
           setUseSendMax(true);
           const data = await getSendMaxData(selectedWallet);
           setSendMaxInfo(data);
@@ -724,7 +717,7 @@ const BuyAndSellRoot = ({
         }
 
         await sleep(300);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       } else {
         sendMaxAmount = sellLimits.limits.maxAmount.toString();
         if (usingCurrencyIsFiat && rate) {
@@ -739,7 +732,7 @@ const BuyAndSellRoot = ({
       updateAmountRef.current(sendMaxAmount);
 
       await sleep(300);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } else if (sellLimits?.maxWalletAmount && selectedWallet) {
       let maxAmount: number | undefined;
       if (
@@ -752,7 +745,7 @@ const BuyAndSellRoot = ({
           selectedWallet.balance.cryptoSpendable.replaceAll(',', ''),
         );
       } else {
-        dispatch(startOnGoingProcessModal('WAITING_FOR_MAX_AMOUNT'));
+        showOngoingProcess('WAITING_FOR_MAX_AMOUNT');
         setUseSendMax(true);
         const data = await getSendMaxData(selectedWallet);
         setSendMaxInfo(data);
@@ -779,7 +772,7 @@ const BuyAndSellRoot = ({
       updateAmountRef.current(sendMaxAmount);
 
       await sleep(300);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } else {
       setUseSendMax(false);
       setSendMaxInfo(undefined);
@@ -902,7 +895,7 @@ const BuyAndSellRoot = ({
     }
 
     if (buyCryptoConfig?.disabled) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -1036,7 +1029,7 @@ const BuyAndSellRoot = ({
         'Buy crypto Error when trying to build the list of supported coins from: ' +
           JSON.stringify(supportedCoins),
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -1070,7 +1063,7 @@ const BuyAndSellRoot = ({
       // selectFirstAvailableWallet();
     } else {
       await sleep(500);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     }
   };
 
@@ -1405,7 +1398,7 @@ const BuyAndSellRoot = ({
     }
 
     if (sellCryptoConfig?.disabled) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       dispatch(
         AppActions.showBottomNotificationModal({
@@ -1490,7 +1483,7 @@ const BuyAndSellRoot = ({
       }
       const reason =
         'initSellCrypto Error. Could not get enabledExchanges for the user parameters';
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(100);
       showError(undefined, msg, reason);
       return;
@@ -1639,7 +1632,7 @@ const BuyAndSellRoot = ({
           );
           setSellCryptoSupportedCoins(_sellCryptoSupportedCoins);
           await sleep(100);
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
         } else {
           logger.error(
             'Sell crypto getCurrencies Error: allSupportedCoins array is empty',
@@ -1647,7 +1640,7 @@ const BuyAndSellRoot = ({
           const msg = t(
             'Sell Crypto feature is not available at this moment. Please try again later.',
           );
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           await sleep(500);
           showError(undefined, msg, undefined, undefined, true);
         }
@@ -1657,7 +1650,7 @@ const BuyAndSellRoot = ({
       const msg = t(
         'Sell Crypto feature is not available at this moment. Please try again later.',
       );
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       showError(undefined, msg, undefined, undefined, true);
     }
@@ -1668,7 +1661,7 @@ const BuyAndSellRoot = ({
       await sleep(200);
     }
     await sleep(100);
-    dispatch(startOnGoingProcessModal('GENERAL_AWAITING'));
+    showOngoingProcess('GENERAL_AWAITING');
   };
 
   const updateWalletStatus = async (
@@ -1838,7 +1831,7 @@ const BuyAndSellRoot = ({
         'Sell Crypto feature is not available at this moment. Please try again later.',
       );
       const reason = 'Sell crypto getLimits Error';
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(200);
       showError(undefined, msg, reason);
     }
@@ -1944,7 +1937,7 @@ const BuyAndSellRoot = ({
       } catch (err: any) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         logger.error(`[Buy] could not initialize view: ${errStr}`);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       }
     } else if (context === 'sellCrypto') {
       try {
@@ -1952,7 +1945,7 @@ const BuyAndSellRoot = ({
       } catch (err: any) {
         const errStr = err instanceof Error ? err.message : JSON.stringify(err);
         logger.error(`[Sell] could not initialize view: ${errStr}`);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       }
     }
 

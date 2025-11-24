@@ -8,10 +8,7 @@ import {
 } from '../../../utils/hooks';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../store';
-import {
-  showBottomNotificationModal,
-  dismissOnGoingProcessModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
 import {
   Action,
@@ -30,7 +27,6 @@ import {
 } from '../../../utils/helper-methods';
 import {BuyCryptoExchangeKey} from '../buy-crypto/utils/buy-crypto-utils';
 import {useTranslation} from 'react-i18next';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {
   addWallet,
   AddWalletData,
@@ -49,6 +45,7 @@ import {
   ExternalServicesContext,
   SellCryptoCoin,
 } from '../screens/BuyAndSellRoot';
+import {useOngoingProcess} from '../../../contexts';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -135,6 +132,7 @@ const ExternalServicesWalletSelector: React.FC<
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const logger = useLogger();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const allKeys: {[key: string]: Key} = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys,
   );
@@ -150,7 +148,7 @@ const ExternalServicesWalletSelector: React.FC<
     type?: string,
     fromCurrencyAbbreviation?: string,
   ) => {
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     await sleep(400);
     dispatch(showWalletError(type, fromCurrencyAbbreviation));
   };
@@ -186,7 +184,7 @@ const ExternalServicesWalletSelector: React.FC<
       if (fromWalletData) {
         setWallet(fromWalletData);
         await sleep(500);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       } else {
         walletError('walletNotSupportedToBuy');
       }
@@ -220,7 +218,7 @@ const ExternalServicesWalletSelector: React.FC<
         if (allowedWallets[0]) {
           _setSelectedWallet(allowedWallets[0]);
           await sleep(500);
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
         } else {
           walletError('noWalletsAbleToBuy', fromCurrencyAbbreviation);
         }
@@ -355,7 +353,7 @@ const ExternalServicesWalletSelector: React.FC<
         }
 
         await sleep(500);
-        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        await showOngoingProcess('ADDING_WALLET');
 
         const createdToWallet = await dispatch(addWallet(createNewWalletData));
         logger.debug(
@@ -371,9 +369,9 @@ const ExternalServicesWalletSelector: React.FC<
         );
         setWallet(createdToWallet);
         await sleep(300);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       } catch (err: any) {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         if (err.message === 'invalid password') {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
