@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   Caution,
@@ -74,7 +74,7 @@ import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {FlatList, View} from 'react-native';
+import {AppState, FlatList, TextInput, View} from 'react-native';
 import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {
@@ -85,7 +85,11 @@ import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {IS_ANDROID, IS_IOS} from '../../../constants';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useSensitiveRefClear,
+} from '../../../utils/hooks';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
 
@@ -206,6 +210,8 @@ const RecoveryPhrase = () => {
     passphrase: undefined as string | undefined,
     isMultisig: false,
   });
+  const wordsRef = useRef<TextInput>(null);
+  const {clearSensitive} = useSensitiveRefClear([wordsRef]);
 
   const {
     control,
@@ -347,6 +353,7 @@ const RecoveryPhrase = () => {
 
   const onSubmit = (formData: {text: string}) => {
     const {text} = formData;
+    clearSensitive();
 
     let keyOpts: Partial<KeyOptions> = {};
 
@@ -573,6 +580,15 @@ const RecoveryPhrase = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'inactive' || state === 'background') {
+        clearSensitive();
+      }
+    });
+    return () => sub.remove();
+  }, [clearSensitive]);
+
   return (
     <ScrollViewContainer
       accessibilityLabel="recovery-phrase-view"
@@ -611,6 +627,7 @@ const RecoveryPhrase = () => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <ImportTextInput
+              ref={wordsRef}
               accessibilityLabel="import-text-input"
               multiline
               autoCapitalize={'none'}
