@@ -30,10 +30,11 @@ export const AuthApi = {
           'x-csrf-token': csrfToken,
         },
       };
+      const bitpayIdApi = BitPayApi.getInstance();
 
       const {data} = await axios.post<RegisterResponse>(
         `${BASE_BITPAY_URLS[network]}/auth/register`,
-        params,
+        {...params,pubKey: bitpayIdApi.identity.pub},
         config,
       );
 
