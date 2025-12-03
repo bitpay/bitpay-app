@@ -1,14 +1,14 @@
 import React from 'react';
 import styled from 'styled-components/native';
 import {BaseText, H2} from '../../../../components/styled/Text';
-import {Black, LuckySevens, SlateDark, White} from '../../../../styles/colors';
+import {Slate30, SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {
   calculatePercentageDifference,
   formatFiatAmount,
 } from '../../../../utils/helper-methods';
-import InfoSvg from '../../../../../assets/img/info.svg';
+import InfoSvg from './InfoSvg';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
@@ -32,8 +32,8 @@ const PortfolioBalanceHeader = styled(TouchableOpacity)`
 `;
 
 const PortfolioBalanceTitle = styled(BaseText)`
-  margin-right: 5px;
-  font-size: 14px;
+  margin-right: 3px;
+  font-size: 13px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
@@ -43,14 +43,8 @@ const PortfolioBalanceText = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
 `;
 
-const PercentageText = styled(BaseText)`
-  font-size: 12px;
-  color: ${({theme: {dark}}) => (dark ? LuckySevens : Black)};
-`;
-
-const PercentageContainer = styled.View`
-  flex-direction: row;
-  justify-content: center;
+const PercentageWrapper = styled.View`
+  align-items: center;
 `;
 
 const PortfolioBalance = () => {
@@ -98,7 +92,7 @@ const PortfolioBalance = () => {
         activeOpacity={ActiveOpacity}
         onPress={showPortfolioBalanceInfoModal}>
         <PortfolioBalanceTitle>{t('Portfolio Balance')}</PortfolioBalanceTitle>
-        <InfoSvg width={12} height={12} />
+        <InfoSvg width={16} height={16} />
       </PortfolioBalanceHeader>
       <TouchableOpacity
         onLongPress={() => {
@@ -112,10 +106,13 @@ const PortfolioBalance = () => {
               })}
             </PortfolioBalanceText>
             {percentageDifference ? (
-              <PercentageContainer>
-                <Percentage percentageDifference={percentageDifference} />
-                <PercentageText> {t('Last Day')}</PercentageText>
-              </PercentageContainer>
+              <PercentageWrapper>
+                <Percentage
+                  percentageDifference={percentageDifference}
+                  hideArrow
+                  rangeLabel={t('Last Day')}
+                />
+              </PercentageWrapper>
             ) : null}
           </>
         ) : (

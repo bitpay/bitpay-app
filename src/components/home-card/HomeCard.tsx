@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {Action, LightBlack, Slate, SlateDark, White} from '../../styles/colors';
+import {LightBlack, Slate30, SlateDark, White} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {
   ActiveOpacity,
@@ -13,23 +13,10 @@ import Card from '../card/Card';
 import Percentage from '../percentage/Percentage';
 import {View} from 'react-native';
 import {BaseText, H3} from '../styled/Text';
-import * as Svg from 'react-native-svg';
 import {shouldScale} from '../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-
-const Arrow = ({isDark}: {isDark: boolean}) => {
-  return (
-    <Svg.Svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-      <Svg.Path
-        fill={isDark ? '#4F6EF7' : Action}
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M9.65108 2.83329L8.4115 4.01737L12.2188 7.65419L1.41671 7.65419V9.34573L12.2188 9.34573L8.4115 12.9825L9.65108 14.1666L15.5834 8.49996L9.65108 2.83329Z"
-      />
-    </Svg.Svg>
-  );
-};
+import ArrowRightSvg from '../../navigation/tabs/home/components/ArrowRightSvg';
 
 interface BodyProps {
   title?: string;
@@ -42,20 +29,16 @@ interface BodyProps {
 }
 
 interface HomeCardProps {
-  header?: ReactNode;
   body: BodyProps;
+  footer?: ReactNode;
   onCTAPress?: () => void;
   backgroundImg?: () => ReactElement;
 }
 
-const CardHeader = styled.View`
-  min-height: 20px;
-`;
-
 const CardBodyHeader = styled(BaseText)`
-  font-size: 14px;
-  line-height: 21px;
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
+  font-size: 12px;
+  line-height: 15px;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
   margin-top: ${CardGutter};
 `;
 
@@ -88,16 +71,6 @@ const CardPillText = styled(BaseText)`
   color: ${SlateDark};
 `;
 
-const FooterArrow = styled(TouchableOpacity)`
-  width: 35px;
-  height: 35px;
-  align-self: flex-end;
-  border-radius: 50px;
-  background-color: ${({theme}) => (theme.dark ? '#0C204E' : '#ECEFFD')};
-  align-items: center;
-  justify-content: center;
-`;
-
 const CardContainer = styled(TouchableOpacity)`
   left: ${ScreenGutter};
 `;
@@ -107,14 +80,17 @@ export const NeedBackupText = styled(BaseText)`
   text-align: center;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   padding: 2px 4px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? White : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   border-radius: 3px;
   position: absolute;
+  margin-top: 4px;
 `;
 
-const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
+export const HOME_CARD_HEIGHT = 143;
+export const HOME_CARD_WIDTH = 170;
+
+const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
   const {t} = useTranslation();
-  const HeaderComp = <CardHeader>{header}</CardHeader>;
   const theme = useTheme();
   const {
     title,
@@ -137,10 +113,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
         <>
           {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
           {percentageDifference ? (
-            <Percentage
-              percentageDifference={percentageDifference}
-              darkModeColor={Slate}
-            />
+            <Percentage percentageDifference={percentageDifference} />
           ) : null}
           {pillText && (
             <CardPill>
@@ -162,22 +135,21 @@ const HomeCard: React.FC<HomeCardProps> = ({body, onCTAPress, header}) => {
     }
   };
 
-  const FooterComp = (
-    <FooterArrow activeOpacity={ActiveOpacity} onPress={_onPress}>
-      <Arrow isDark={theme.dark} />
-    </FooterArrow>
-  );
+  const DefaultFooter = <ArrowRightSvg />;
+
+  const FooterComp = footer ?? DefaultFooter;
 
   return (
     <CardContainer activeOpacity={ActiveOpacity} onPress={_onPress}>
       <Card
-        header={HeaderComp}
         body={BodyComp}
         footer={FooterComp}
         style={{
-          backgroundColor: theme.dark ? LightBlack : White,
-          height: 200,
-          width: 170,
+          backgroundColor: theme.dark ? '#111' : White,
+          borderColor: theme.dark ? LightBlack : Slate30,
+          borderWidth: 1,
+          height: HOME_CARD_HEIGHT,
+          width: HOME_CARD_WIDTH,
         }}
       />
     </CardContainer>

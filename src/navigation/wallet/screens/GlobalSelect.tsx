@@ -37,6 +37,7 @@ import {
   Action,
   Black,
   LightBlack,
+  LightBlue,
   LinkBlue,
   SlateDark,
   White,
@@ -183,7 +184,7 @@ export const WalletSelectMenuHeaderContainer = styled.View<WalletSelectMenuHeade
   padding-bottom: ${({currency}) => (currency ? 14 : 0)}px;
   padding-left: 5px;
   justify-content: ${({currency}) => (currency ? 'flex-start' : 'center')};
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   border-bottom-width: ${({currency}) => (currency ? 1 : 0)}px;
 `;
 
@@ -212,7 +213,7 @@ const SearchComponentContainer = styled.View`
 const TitleNameContainer = styled.View`
   flex-direction: row;
   align-items: center;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
   border-bottom-width: 1px;
   margin-top: 20px;
   padding-bottom: 10px;

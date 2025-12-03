@@ -21,7 +21,7 @@ const ProfileButton: React.FC = () => {
             ? navigation.navigate('BitPayIdProfile')
             : navigation.navigate('Login');
         }}>
-        <Avatar size={35} />
+        <Avatar size={40} />
       </TouchableOpacity>
     </HeaderButtonContainer>
   );

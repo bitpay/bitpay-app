@@ -5,6 +5,7 @@ import styled, {css} from 'styled-components/native';
 import {
   Feather,
   LightBlack,
+  LightBlue,
   NeutralSlate,
   SlateDark,
   White,
@@ -23,7 +24,7 @@ export const isNotMobile = HEIGHT / WIDTH < 1.6;
 export const isNarrowHeight = HEIGHT < 700;
 export const CTA_RESERVED = 104;
 
-export const ScreenGutter = '15px';
+export const ScreenGutter = '12px';
 // Nav
 export const HeaderRightContainer = styled.View`
   height: 40px;
@@ -131,7 +132,7 @@ export const RowContainer = styled(TouchableOpacity)<RowContainerProps>`
   align-items: center;
   padding: 10px 4px;
   margin: 0 6px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   border-bottom-width: ${({isLast, noBorder}) =>
     isLast || noBorder ? 0 : 1}px;
   opacity: ${({isDisabled}) => (isDisabled ? 0.5 : 1)};
@@ -150,7 +151,7 @@ export const RowContainerWithoutFeedback = styled.View<RowContainerProps>`
   align-items: center;
   padding: 10px 4px;
   margin: 0 10px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
 `;
 
@@ -165,6 +166,7 @@ export const CurrencyImageContainer = styled.View`
   justify-content: center;
   align-self: center;
   border-radius: 8px;
+  margin-right: 3px;
 `;
 
 // Card
@@ -172,7 +174,7 @@ export const CardGutter = '15px';
 
 export const CardContainer = styled.View`
   background: ${({theme}) => (theme.dark ? LightBlack : White)};
-  border-radius: 21px;
+  border-radius: 12px;
   overflow: hidden;
 `;
 
@@ -377,7 +379,7 @@ export const SearchInput = styled.TextInput`
   flex: 1;
   padding: 0 10px;
   border-right-width: 1px;
-  border-right-color: ${({theme: {dark}}) => (dark ? '#45484E' : '#ECEFFD')};
+  border-right-color: ${({theme: {dark}}) => (dark ? '#45484E' : LightBlue)};
   height: 32px;
   color: ${({theme}) => theme.colors.text};
   background-color: transparent;
@@ -422,7 +424,7 @@ export const CopyToClipboardContainer = styled(TouchableOpacity)`
 `;
 
 export const CopyImgContainer = styled.View`
-  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : '#ECEFFD')};
+  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : LightBlue)};
   border-right-width: 1px;
   padding-right: 10px;
   height: 25px;

@@ -88,7 +88,7 @@ const CoinbaseIntro = () => {
           <Title>{t('Connect to Coinbase')}</Title>
           <SubTitle>
             {t(
-              'Manage your Coinbase accounts, check balances, deposits and withdraw funds between wallets.',
+              'Manage your Coinbase accounts, check balances, deposit and withdraw funds between wallets.',
             )}
           </SubTitle>
         </CoinbaseHeaderContainer>

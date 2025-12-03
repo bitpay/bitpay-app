@@ -1,6 +1,7 @@
 import {useFocusEffect} from '@react-navigation/native';
 import React from 'react';
 import {Linking} from 'react-native';
+import styled from 'styled-components/native';
 import Braze, {ContentCard} from '@braze/react-native-sdk';
 import FastImage, {Source} from 'react-native-fast-image';
 import haptic from '../../../../../components/haptic-feedback/haptic';
@@ -10,39 +11,71 @@ import {
 } from '../../../../../utils/braze';
 import {useAppDispatch, useUrlEventHandler} from '../../../../../utils/hooks';
 import {AppEffects} from '../../../../../store/app';
-import LinkCard from '../cards/LinkCard';
+import {logManager} from '../../../../../managers/LogManager';
+import {BaseText} from '../../../../../components/styled/Text';
+import {
+  Black,
+  LightBlack,
+  Slate,
+  Slate30,
+  SlateDark,
+  White,
+} from '../../../../../styles/colors';
 import {getRouteParam} from '../../../../../store/app/app.effects';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
-import {logManager} from '../../../../../managers/LogManager';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface OfferCardProps {
   contentCard: ContentCard;
 }
-
-const OFFER_HEIGHT = 30;
-const OFFER_WIDTH = 30;
 
 const OfferCard: React.FC<OfferCardProps> = props => {
   const {contentCard} = props;
   const {image, url, openURLInWebView} = contentCard;
   const dispatch = useAppDispatch();
   const urlEventHandler = useUrlEventHandler();
+  let title = '';
   let description = '';
-  let imageSource: Source | null = null;
+  let iconSource: Source | null = null;
+  let coverImageSource: Source | null = null;
+  let cardImageSource: Source | null = null;
 
-  if (
-    isCaptionedContentCard(contentCard) ||
-    isClassicContentCard(contentCard)
-  ) {
-    description = contentCard.cardDescription;
+  if (isCaptionedContentCard(contentCard)) {
+    title = contentCard.title || '';
+    description = contentCard.cardDescription || '';
+  } else if (isClassicContentCard(contentCard)) {
+    title = contentCard.title || '';
+    description = contentCard.cardDescription || '';
   }
 
+  const coverImage = contentCard.extras?.cover_image;
+
   if (image) {
-    if (typeof image === 'string') {
-      imageSource = {uri: image};
-    } else {
-      imageSource = image as any;
+    cardImageSource =
+      typeof image === 'string' ? {uri: image} : (image as Source);
+  }
+
+  if (coverImage) {
+    coverImageSource =
+      typeof coverImage === 'string'
+        ? {uri: coverImage}
+        : (coverImage as Source);
+  }
+
+  if (contentCard.extras?.icon_image) {
+    const icon = contentCard.extras.icon_image as string;
+
+    if (icon) {
+      iconSource = {uri: icon};
     }
+  }
+
+  if (!iconSource) {
+    iconSource = cardImageSource;
+  }
+
+  if (!title) {
+    title = contentCard.id;
   }
 
   const _onPress = async () => {
@@ -92,22 +125,107 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   });
 
   return (
-    <LinkCard
-      image={() =>
-        imageSource && (
-          <FastImage
-            style={{
-              height: OFFER_HEIGHT,
-              width: OFFER_WIDTH,
-            }}
-            source={imageSource}
-          />
-        )
-      }
-      description={description}
+    <OfferWrapper
+      activeOpacity={0.9}
       onPress={_onPress}
-    />
+      accessibilityRole="button">
+      <CoverImageContainer>
+        {coverImageSource ? (
+          <CoverImage
+            source={coverImageSource}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+        ) : (
+          <CoverImageFallback />
+        )}
+      </CoverImageContainer>
+      <OfferContent>
+        <IconWrapper>
+          {iconSource ? (
+            <OfferIcon
+              source={iconSource}
+              resizeMode={FastImage.resizeMode.contain}
+            />
+          ) : (
+            <IconPlaceholder />
+          )}
+        </IconWrapper>
+        <TextContainer>
+          {title ? <OfferTitle numberOfLines={2}>{title}</OfferTitle> : null}
+          {description ? (
+            <OfferDescription numberOfLines={3}>{description}</OfferDescription>
+          ) : null}
+        </TextContainer>
+      </OfferContent>
+    </OfferWrapper>
   );
 };
+
+const OfferWrapper = styled(TouchableOpacity)`
+  width: 250px;
+  border-radius: 12px;
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+  overflow: hidden;
+`;
+
+const CoverImageContainer = styled.View`
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+`;
+
+const CoverImage = styled(FastImage)`
+  width: 100%;
+  height: 120px;
+`;
+
+const CoverImageFallback = styled.View`
+  flex: 1;
+`;
+
+const OfferContent = styled.View`
+  padding: 18px 20px 16px;
+  background: ${({theme: {dark}}) => (dark ? '#111' : White)};
+  border-top-width: 1px;
+  border-top-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+`;
+
+const IconWrapper = styled.View`
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  margin-top: -39px;
+  overflow: hidden;
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+  border-radius: 40px;
+`;
+
+const OfferIcon = styled(FastImage)`
+  width: 40px;
+  height: 40px;
+`;
+
+const IconPlaceholder = styled.View`
+  width: 100%;
+  height: 100%;
+`;
+
+const TextContainer = styled.View``;
+
+const OfferTitle = styled(BaseText)`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  margin-bottom: 6px;
+`;
+
+const OfferDescription = styled(BaseText)`
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 15px;
+  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
+`;
 
 export default OfferCard;

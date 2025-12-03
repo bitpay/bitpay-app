@@ -1,7 +1,7 @@
 import React from 'react';
 import {Theme} from '@react-navigation/native';
 import Svg, {Path, Rect, Circle, G} from 'react-native-svg';
-import {Action, Midnight, White} from '../../../../../styles/colors';
+import {Action, LightBlue, Midnight, White} from '../../../../../styles/colors';
 
 const getOptionIconFill = (theme: Theme) => {
   return theme.dark ? White : Action;
@@ -84,7 +84,7 @@ export const CloseSvg = ({theme}: {theme: Theme}) => {
 };
 
 export const AddSvg = ({theme}: {theme: Theme}) => {
-  const circleColor = theme.dark ? Midnight : '#ECEFFD';
+  const circleColor = theme.dark ? Midnight : LightBlue;
   const plusColor = theme.dark ? White : Action;
   return (
     <Svg width="40" height="40" viewBox="0 0 40 40" fill="none">

@@ -14,9 +14,7 @@ export const HeaderLeftContainer = styled.View`
   flex-grow: 1;
 `;
 
-export const HeaderButtonContainer = styled.View`
-  margin-left: ${ScreenGutter};
-`;
+export const HeaderButtonContainer = styled.View``;
 
 export const HomeSectionSubtext = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? Slate : Black)};
@@ -24,6 +22,8 @@ export const HomeSectionSubtext = styled(H7)`
 
 export const HomeSectionTitle = styled(H5)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
+  font-size: 20px;
+  font-weight: 700;
 `;
 
 export const HomeSectionSubTitle = styled(HomeSectionTitle)`
@@ -32,13 +32,11 @@ export const HomeSectionSubTitle = styled(HomeSectionTitle)`
 
 export const SectionHeaderContainer = styled.View<{justifyContent?: string}>`
   flex-direction: row;
-  margin: 20px ${ScreenGutter} 10px;
+  margin: 20px ${ScreenGutter};
   justify-content: ${({justifyContent}) => justifyContent || 'flex-start'};
 `;
 
-export const CarouselItemContainer = styled.View`
-  padding: 20px 0;
-`;
+export const CarouselItemContainer = styled.View``;
 
 export const BoxShadow = {
   shadowColor: '#000',

@@ -35,8 +35,6 @@ import {
 } from '../../../../store/app/app.models';
 import {
   CarouselItemContainer,
-  HomeSectionSubtext,
-  HomeSectionSubTitle,
   HomeSectionTitle,
   SectionHeaderContainer,
 } from './Styled';
@@ -44,25 +42,28 @@ import {View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {Feather} from '../../../../styles/colors';
 import Button from '../../../../components/button/Button';
 import CoinbaseBalanceCard from '../../../coinbase/components/CoinbaseBalanceCard';
+import {
+  HOME_CARD_HEIGHT,
+  HOME_CARD_WIDTH,
+} from '../../../../components/home-card/HomeCard';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import AddSvg from './AddSvg';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
-import {successImport} from '../../../../store/wallet/wallet.actions';
-import {checkEncryptPassword} from '../../../../store/wallet/utils/wallet';
 
 const CryptoContainer = styled.View`
-  background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
-  padding: 10px 0 12px;
+  background: ${({theme}) => theme.colors.background};
+  padding: 5px 0 0px;
 `;
 
 const CarouselContainer = styled.View`
-  margin-top: 10px;
+  margin-top: 28px;
+  margin-bottom: 15px;
 `;
 
 const Row = styled.View`
@@ -71,11 +72,39 @@ const Row = styled.View`
 
 const ListViewContainer = styled.View`
   padding: 20px 0 12px 0;
+  margin-bottom: 15px;
 `;
 
 const ButtonContainer = styled.View`
   padding: 20px 0;
-  margin-top: 15px;
+`;
+
+const NoKeysSectionHeaderContainer = styled(SectionHeaderContainer)`
+  margin-bottom: 0px;
+`;
+
+const NoKeysButtonWrapper = styled.View`
+  margin-bottom: 15px;
+`;
+
+const CryptoSectionHeaderContainer = styled(SectionHeaderContainer)`
+  margin-bottom: -15px;
+  margin-top: 0px;
+`;
+
+const CryptoHeaderRow = styled(Row)`
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0px;
+`;
+
+const CryptoHeaderTitle = styled(HomeSectionTitle)`
+  flex-grow: 1;
+`;
+
+const CryptoHeaderActions = styled.View`
+  flex-direction: row;
+  gap: 8px;
 `;
 
 const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
@@ -311,44 +340,39 @@ const Crypto = () => {
   if (!hasKeys && !linkedCoinbase) {
     return (
       <CryptoContainer>
-        <SectionHeaderContainer style={{marginBottom: 0}}>
+        <NoKeysSectionHeaderContainer>
           <Column>
-            <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
-            <Row style={{justifyContent: 'space-between'}}>
-              <HomeSectionSubtext style={{width: '90%'}}>
-                {t(
-                  'You don’t have any crypto. Create a wallet, import a wallet or connect your Coinbase account.',
-                )}
-              </HomeSectionSubtext>
-            </Row>
+            <HomeSectionTitle>{t('Your Crypto')}</HomeSectionTitle>
             <ButtonContainer>
-              <Button
-                style={{marginBottom: 15}}
-                onPress={() => {
-                  dispatch(
-                    Analytics.track('Clicked create, import or join', {
-                      context: 'NoKeysCryptoContainer',
-                    }),
-                  );
-                  navigation.navigate('CreationOptions');
-                }}>
-                {t('Create, import or join a shared wallet')}
-              </Button>
-              <Button
-                style={{marginBottom: 15}}
-                buttonStyle={'secondary'}
-                onPress={() => {
-                  dispatch(
-                    Analytics.track('Clicked Connect Coinbase', {
-                      context: 'NoKeysCryptoContainer',
-                    }),
-                  );
-                  navigation.navigate('CoinbaseRoot');
-                }}>
-                {linkedCoinbase
-                  ? 'Coinbase'
-                  : t('Connect your Coinbase account')}
-              </Button>
+              <NoKeysButtonWrapper>
+                <Button
+                  onPress={() => {
+                    dispatch(
+                      Analytics.track('Clicked create, import or join', {
+                        context: 'NoKeysCryptoContainer',
+                      }),
+                    );
+                    navigation.navigate('CreationOptions');
+                  }}>
+                  {t('Create, import or join a shared wallet')}
+                </Button>
+              </NoKeysButtonWrapper>
+              <NoKeysButtonWrapper>
+                <Button
+                  buttonStyle={'secondary'}
+                  onPress={() => {
+                    dispatch(
+                      Analytics.track('Clicked Connect Coinbase', {
+                        context: 'NoKeysCryptoContainer',
+                      }),
+                    );
+                    navigation.navigate('CoinbaseRoot');
+                  }}>
+                  {linkedCoinbase
+                    ? 'Coinbase'
+                    : t('Connect your Coinbase account')}
+                </Button>
+              </NoKeysButtonWrapper>
               {/*<Button
                 buttonStyle={'secondary'}
                 onPress={() => {
@@ -358,22 +382,25 @@ const Crypto = () => {
                 </Button> */}
             </ButtonContainer>
           </Column>
-        </SectionHeaderContainer>
+        </NoKeysSectionHeaderContainer>
       </CryptoContainer>
     );
   }
 
   return (
     <CryptoContainer>
-      <SectionHeaderContainer style={{marginBottom: 0}}>
-        <Column>
-          <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
-          <Row style={{justifyContent: 'space-between'}}>
-            <HomeSectionSubtext style={{width: '75%'}}>
-              {t(
-                'View your wallets, card balance, connect to Coinbase and more.',
-              )}
-            </HomeSectionSubtext>
+      <CryptoSectionHeaderContainer>
+        <CryptoHeaderRow>
+          <CryptoHeaderTitle>{t('Your Crypto')}</CryptoHeaderTitle>
+          <CryptoHeaderActions>
+            <TouchableOpacity
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                haptic('soft');
+                navigation.navigate('CreationOptions');
+              }}>
+              <AddSvg width={40} height={40} />
+            </TouchableOpacity>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               onPress={() => {
@@ -383,21 +410,21 @@ const Crypto = () => {
                   initialRoute: 'Customize Home',
                 } as any);
               }}>
-              <CustomizeSvg width={37} height={37} />
+              <CustomizeSvg width={40} height={40} />
             </TouchableOpacity>
-          </Row>
-        </Column>
-      </SectionHeaderContainer>
+          </CryptoHeaderActions>
+        </CryptoHeaderRow>
+      </CryptoSectionHeaderContainer>
       {/* ////////////////////////////// CAROUSEL/LISTVIEW */}
       {homeCarouselLayoutType === 'carousel' ? (
-        <CarouselContainer style={{marginBottom: 22}}>
+        <CarouselContainer>
           <Carousel
             loop={false}
             autoFillData={false}
             vertical={false}
             style={{width: WIDTH}}
-            width={190}
-            height={230}
+            width={HOME_CARD_WIDTH + 16}
+            height={HOME_CARD_HEIGHT + 20}
             autoPlay={false}
             data={cardsList.list}
             scrollAnimationDuration={0}
@@ -412,25 +439,6 @@ const Crypto = () => {
           })}
         </ListViewContainer>
       )}
-      {/* ////////////////////////////// CREATE DEFAULTS */}
-      <CarouselContainer>
-        <SectionHeaderContainer style={{marginTop: 0, position: 'absolute'}}>
-          <HomeSectionSubTitle>
-            {t('Expand your Portfolio')}
-          </HomeSectionSubTitle>
-        </SectionHeaderContainer>
-        <Carousel
-          loop={false}
-          vertical={false}
-          style={{width: WIDTH, marginTop: 20}}
-          width={190}
-          height={190 / 2}
-          autoPlay={false}
-          data={cardsList.defaults}
-          enabled={true}
-          renderItem={_renderItem}
-        />
-      </CarouselContainer>
     </CryptoContainer>
   );
 };

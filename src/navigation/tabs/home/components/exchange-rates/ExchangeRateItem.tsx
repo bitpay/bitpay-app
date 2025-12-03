@@ -13,18 +13,20 @@ import {
   formatFiatAmountObj,
   getRateByCurrencyName,
 } from '../../../../../utils/helper-methods';
-import GainArrow from '../../../../../../assets/img/home/exchange-rates/increment-arrow.svg';
-import LossArrow from '../../../../../../assets/img/home/exchange-rates/decrement-arrow.svg';
+import GainArrow from '../../../../../components/icons/trend-arrow/IncrementArrow';
+import LossArrow from '../../../../../components/icons/trend-arrow/DecrementArrow';
 import NeutralArrow from '../../../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {ExchangeRateItemProps} from './ExchangeRatesList';
 import {
   LuckySevens,
   NeutralSlate,
+  Slate30,
   SlateDark,
 } from '../../../../../styles/colors';
 import {View} from 'react-native';
 import {useAppSelector} from '../../../../../utils/hooks';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import Percentage from '../../../../../components/percentage/Percentage';
 
 const RowContainer = styled(TouchableOpacity)`
   flex-direction: row;
@@ -42,7 +44,8 @@ const SubTextContainer = styled.View`
 `;
 
 const ExchangeRateText = styled(H7)`
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 400;
 `;
 
 const ExchangeRateCode = styled(BaseText)`
@@ -54,7 +57,8 @@ const ExchangeRateCode = styled(BaseText)`
 
 const ExchangeRateSubText = styled(Smallest)`
   line-height: 20px;
-  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
+  font-size: 13px;
+  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
 `;
 
 const showLossGainOrNeutralArrow = (average: number | undefined) => {
@@ -143,8 +147,7 @@ const ExchangeRateItem = ({
           </ExchangeRateText>
         ) : null}
         <SubTextContainer>
-          {showLossGainOrNeutralArrow(average)}
-          <ExchangeRateSubText>{Math.abs(average || 0)}%</ExchangeRateSubText>
+          <Percentage percentageDifference={average || 0} hideArrow />
         </SubTextContainer>
       </NoteContainer>
     </RowContainer>

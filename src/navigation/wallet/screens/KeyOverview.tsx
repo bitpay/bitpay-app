@@ -49,6 +49,7 @@ import {KeyMethods, Status, Wallet} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
   NeutralSlate,
+  Slate,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -59,6 +60,7 @@ import {
   sleep,
   fixWalletAddresses,
   getEvmGasWallets,
+  calculatePercentageDifference,
 } from '../../../utils/helper-methods';
 import {
   BalanceUpdateError,
@@ -113,6 +115,7 @@ import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import Percentage from '../../../components/percentage/Percentage';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -155,6 +158,10 @@ const BalanceContainer = styled.View`
   margin-top: 20px;
   padding: 10px 15px;
   align-items: center;
+`;
+
+const PercentageWrapper = styled.View`
+  align-self: center;
 `;
 
 const WalletListHeader = styled.View`
@@ -337,8 +344,18 @@ const KeyOverview = () => {
     updateStatusForKey(false);
   }, []);
 
-  const {wallets = [], totalBalance} =
-    useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
+  const {
+    wallets = [],
+    totalBalance = 0,
+    totalBalanceLastDay,
+  } = useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
+
+  const percentageDifference = useMemo(() => {
+    if (!totalBalanceLastDay) {
+      return null;
+    }
+    return calculatePercentageDifference(totalBalance, totalBalanceLastDay);
+  }, [totalBalance, totalBalanceLastDay]);
 
   const memorizedAccountList = useMemo(() => {
     return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
@@ -730,11 +747,22 @@ const KeyOverview = () => {
             dispatch(toggleHideAllBalances());
           }}>
           {!hideAllBalances ? (
-            <Balance scale={shouldScale(totalBalance)}>
-              {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
-                currencyDisplay: 'symbol',
-              })}
-            </Balance>
+            <>
+              <Balance scale={shouldScale(totalBalance)}>
+                {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+                  currencyDisplay: 'symbol',
+                })}
+              </Balance>
+              {percentageDifference ? (
+                <PercentageWrapper>
+                  <Percentage
+                    percentageDifference={percentageDifference}
+                    hideArrow
+                    rangeLabel={t('Last Day')}
+                  />
+                </PercentageWrapper>
+              ) : null}
+            </>
           ) : (
             <H2>****</H2>
           )}

@@ -24,8 +24,13 @@ import FaceDarkModeImg from '../../../../../../assets/img/face-darkmode.svg';
 import PinImg from '../../../../../../assets/img/pin.svg';
 import PinDarkModeImg from '../../../../../../assets/img/pin-darkmode.svg';
 import styled from 'styled-components/native';
-import {Midnight, SlateDark, White} from '../../../../../styles/colors';
-import {H4, Paragraph} from '@components/styled/Text';
+import {
+  LightBlue,
+  Midnight,
+  SlateDark,
+  White,
+} from '../../../../../styles/colors';
+import {H4, Paragraph} from '../../../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
 import {sleep} from '../../../../../utils/helper-methods';
 import {useLogger} from '../../../../../utils/hooks';
@@ -67,7 +72,7 @@ const ImgContainer = styled(TouchableOpacity)`
   justify-content: center;
   height: 65px;
   width: 65px;
-  background-color: ${({theme: {dark}}) => (dark ? Midnight : '#ECEFFD')};
+  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
   border-radius: 50px;
 `;
 
