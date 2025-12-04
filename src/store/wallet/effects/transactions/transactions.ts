@@ -790,7 +790,7 @@ export const GetTransactionHistory =
       if (!keyId) {
         keyId = keyId;
       }
-      if (!walletId || !wallet.isComplete()) {
+      if (!walletId || !wallet.isComplete() || wallet.pendingTssSession) {
         return resolve({
           transactions: [],
           loadMore: false,

@@ -16,7 +16,11 @@ import {Caution} from '../../../styles/colors';
 import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {startGetRates, startImportFile} from '../../../store/wallet/effects';
+import {
+  startGetRates,
+  startImportFile,
+  startImportTSSFile,
+} from '../../../store/wallet/effects';
 import {
   setHomeCarouselConfig,
   showBottomNotificationModal,
@@ -179,6 +183,13 @@ const FileOrText = () => {
       showErrorModal(t('Could not decrypt file, check your password'));
       return;
     }
+    try {
+      const parsed = JSON.parse(decryptBackupText);
+      if (parsed.isTSS) {
+        importTSSWallet(decryptBackupText);
+        return;
+      }
+    } catch {}
     importWallet(decryptBackupText, opts);
   });
 
@@ -190,6 +201,61 @@ const FileOrText = () => {
     });
     return () => sub.remove();
   }, [clearSensitive]);
+
+  const importTSSWallet = async (decryptBackupText: string) => {
+    try {
+      showOngoingProcess('IMPORTING');
+      await sleep(1000);
+
+      const key = (await dispatch<any>(
+        startImportTSSFile(decryptBackupText),
+      )) as Key;
+
+      hideOngoingProcess();
+      await sleep(1000);
+
+      try {
+        showOngoingProcess('IMPORT_SCANNING_FUNDS');
+        await dispatch(startGetRates({force: true}));
+        await fixWalletAddresses({
+          appDispatch: dispatch,
+          wallets: key.wallets,
+        });
+        await dispatch(
+          startUpdateAllWalletStatusForKey({
+            key,
+            force: true,
+            createTokenWalletWithFunds: true,
+          }),
+        );
+        await sleep(1000);
+        await dispatch(updatePortfolioBalance());
+      } catch (error) {}
+
+      dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+
+      backupRedirect({
+        context: route.params?.context,
+        navigation,
+        walletTermsAccepted,
+        key,
+      });
+
+      dispatch(
+        Analytics.track('Imported Key', {
+          context: route.params?.context || '',
+          source: 'TSSFile',
+        }),
+      );
+
+      hideOngoingProcess();
+    } catch (e: any) {
+      logger.error(e.message);
+      hideOngoingProcess();
+      await sleep(1000);
+      showErrorModal(e.message);
+    }
+  };
 
   return (
     <ScrollViewContainer

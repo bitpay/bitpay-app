@@ -86,7 +86,7 @@
     "@solana/sysvars": "3.0.2",
     "big-integer": "1.6.51",
     "bitauth": "0.4.1",
-    "bitcore-wallet-client": "11.3.6",
+    "bitcore-wallet-client": "11.4.6",
     "bs58": "6.0.0",
     "buffer": "4.9.2",
     "countries-list": "2.6.1",
