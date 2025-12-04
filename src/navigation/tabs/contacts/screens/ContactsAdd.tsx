@@ -1,28 +1,11 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useLayoutEffect,
-  useEffect,
-} from 'react';
-import {FlatList} from 'react-native';
+import React, {useState, useLayoutEffect, useEffect} from 'react';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
 import styled from 'styled-components/native';
 import {Controller, useForm} from 'react-hook-form';
 import Button from '../../../../components/button/Button';
 import BoxInput from '../../../../components/form/BoxInput';
-import {
-  TextAlign,
-  H4,
-  BaseText,
-  HeaderTitle,
-} from '../../../../components/styled/Text';
-import {
-  SheetContainer,
-  Row,
-  ActiveOpacity,
-} from '../../../../components/styled/Containers';
+import {HeaderTitle} from '../../../../components/styled/Text';
 import {
   IsValidEVMAddress,
   IsValidSVMAddress,
@@ -38,34 +21,13 @@ import {
 } from '../../../../store/contact/contact.actions';
 import SuccessIcon from '../../../../../assets/img/success.svg';
 import ScanSvg from '../../../../../assets/img/onboarding/scan.svg';
-import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
-import {
-  keyExtractor,
-  findContact,
-  getBadgeImg,
-  getChainFromTokenByAddressKey,
-} from '../../../../utils/helper-methods';
-import {CurrencySelectionItem} from '../../../../components/list/CurrencySelectionRow';
-import NetworkSelectionRow, {
-  NetworkSelectionProps,
-} from '../../../../components/list/NetworkSelectionRow';
-import {LightBlack, NeutralSlate, Slate} from '../../../../styles/colors';
-import WalletIcons from '../../../wallet/components/WalletIcons';
-import {BitpaySupportedTokens} from '../../../../constants/currencies';
-import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
+import {findContact} from '../../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {ContactsScreens, ContactsGroupParamList} from '../ContactsGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {
-  SupportedCurrencyOption,
-  SupportedChainsOptions,
-  SupportedTokenOptions,
-  SupportedCoinsOptions,
-} from '../../../../constants/SupportedCurrencyOptions';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {useTokenContext} from '../../../../contexts';
 
 const InputContainer = styled.View<{hideInput?: boolean}>`
   display: ${({hideInput}) => (!hideInput ? 'flex' : 'none')};
@@ -92,44 +54,6 @@ const AddressBadge = styled.View`
 
 const ScanButtonContainer = styled(TouchableOpacity)``;
 
-const CurrencySelectionModalContainer = styled(SheetContainer)`
-  padding: 15px;
-  min-height: 200px;
-`;
-
-const CurrencySelectorContainer = styled.View<{hideSelector?: boolean}>`
-  display: ${({hideSelector}) => (!hideSelector ? 'flex' : 'none')};
-  margin: 10px 0 20px 0;
-  position: relative;
-`;
-
-const Label = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 18px;
-  top: 0;
-  left: 1px;
-  margin-bottom: 3px;
-  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : '#434d5a')};
-`;
-
-const CurrencyContainer = styled(TouchableOpacity)`
-  background: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
-  padding: 0 20px 0 10px;
-  height: 55px;
-  border: 0.75px solid ${({theme}) => (theme.dark ? LightBlack : Slate)};
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-`;
-
-const NetworkName = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  color: #9ba3ae;
-  text-transform: uppercase;
-`;
-
 const schema = yup.object().shape({
   name: yup.string().required().trim(),
   email: yup.string().email().trim(),
@@ -150,7 +74,6 @@ const ContactsAdd = ({
     formState: {errors, dirtyFields},
   } = useForm<ContactRowProps>({resolver: yupResolver(schema)});
   const {contact, context, onEditComplete} = route.params || {};
-  const isDev = __DEV__;
 
   const contacts = useAppSelector(({CONTACT}: RootState) => CONTACT.list);
   const navigation = useNavigation();
@@ -158,87 +81,10 @@ const ContactsAdd = ({
 
   const [validAddress, setValidAddress] = useState(false);
   const [xrpValidAddress, setXrpValidAddress] = useState(false);
-
   const [addressValue, setAddressValue] = useState('');
-  const [tokenAddressValue, setTokenAddressValue] = useState<
-    string | undefined
-  >();
+  const [coinValue, setCoinValue] = useState('');
+  const [chainValue, setChainValue] = useState('');
   const [networkValue, setNetworkValue] = useState('');
-
-  const [networkModalVisible, setNetworkModalVisible] = useState(false);
-
-  const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
-
-  const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ..._tokenOptionsByAddress,
-      ...WALLET.customTokenOptionsByAddress,
-    };
-  });
-
-  const ALL_CUSTOM_TOKENS = useMemo(() => {
-    return Object.entries(tokenOptionsByAddress)
-      .filter(([k]) => !BitpaySupportedTokens[k])
-      .map(([k, {symbol, name, logoURI, address}]) => {
-        const chain = getChainFromTokenByAddressKey(k);
-        return {
-          id: Math.random().toString(),
-          coin: symbol.toLowerCase(),
-          currencyAbbreviation: symbol,
-          currencyName: name,
-          img: logoURI || '',
-          isToken: true,
-          chain,
-          badgeUri: getBadgeImg(symbol.toLowerCase(), chain),
-          tokenAddress: address,
-        } as CurrencySelectionItem;
-      });
-  }, [tokenOptionsByAddress]);
-
-  const SUPPORTED_TOKEN_OPTIONS = useMemo(() => {
-    return Object.entries(SupportedTokenOptions).map(
-      ([
-        id,
-        {
-          img,
-          currencyName,
-          currencyAbbreviation,
-          chain,
-          isToken,
-          badgeUri,
-          tokenAddress,
-        },
-      ]) => {
-        return {
-          id,
-          coin: currencyAbbreviation,
-          currencyAbbreviation: currencyAbbreviation,
-          currencyName,
-          img,
-          isToken,
-          chain,
-          badgeUri,
-          tokenAddress,
-        } as CurrencySelectionItem;
-      },
-    );
-  }, [tokenOptionsByAddress]);
-
-  const ALL_TOKENS = useMemo(
-    () => [...SUPPORTED_TOKEN_OPTIONS, ...ALL_CUSTOM_TOKENS],
-    [ALL_CUSTOM_TOKENS],
-  );
-
-  const [selectedChain, setSelectedChain] = useState(SupportedChainsOptions[0]);
-  const [selectedCurrency, setSelectedCurrency] = useState<
-    SupportedCurrencyOption | CurrencySelectionItem
-  >(SupportedCoinsOptions[0]);
-
-  const networkOptions = [
-    {id: 'livenet', name: 'Livenet'},
-    {id: 'testnet', name: 'Testnet'},
-  ];
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -252,37 +98,20 @@ const ContactsAdd = ({
 
   const setValidValues = (
     address: string,
-    currencyAbbreviation: string,
+    coin: string,
     network: string,
     chain: string,
-    tokenAddress: string | undefined,
   ) => {
     setValidAddress(true);
     setAddressValue(address);
+    setCoinValue(coin);
+    setChainValue(chain);
     setNetworkValue(network);
-    setTokenAddressValue(tokenAddress);
-
-    _setSelectedChain(chain);
-    _setSelectedCurrency(currencyAbbreviation, chain, tokenAddress);
-
-    switch (chain) {
-      case 'xrp':
-        setXrpValidAddress(true);
-        return;
-      default:
-        return;
-    }
+    setXrpValidAddress(chain === 'xrp');
   };
-
-  const processAddress = (
-    address?: string,
-    coin?: string,
-    network?: string,
-    chain?: string,
-    tokenAddress?: string,
-  ) => {
+  const processAddress = (address: string) => {
     if (address) {
-      const coinAndNetwork = GetCoinAndNetwork(address, undefined, chain);
+      const coinAndNetwork = GetCoinAndNetwork(address);
       if (coinAndNetwork) {
         const isValid = ValidateCoinAddress(
           address,
@@ -292,13 +121,11 @@ const ContactsAdd = ({
         if (isValid) {
           setValidValues(
             address,
-            coin || coinAndNetwork.coin,
-            network || coinAndNetwork.network,
-            chain || coinAndNetwork.coin,
-            tokenAddress,
+            coinAndNetwork.coin,
+            coinAndNetwork.network,
+            coinAndNetwork.coin,
           );
         } else {
-          // try testnet
           const isValidTest = ValidateCoinAddress(
             address,
             coinAndNetwork.coin,
@@ -307,17 +134,17 @@ const ContactsAdd = ({
           if (isValidTest) {
             setValidValues(
               address,
-              coin || coinAndNetwork.coin,
-              network || 'testnet',
-              chain || coinAndNetwork.coin,
-              tokenAddress,
+              coinAndNetwork.coin,
+              'testnet',
+              coinAndNetwork.coin,
             );
           }
         }
       } else {
-        setNetworkValue('');
         setAddressValue('');
-        setTokenAddressValue(undefined);
+        setCoinValue('');
+        setChainValue('');
+        setNetworkValue('');
         setValidAddress(false);
         setXrpValidAddress(false);
       }
@@ -333,34 +160,9 @@ const ContactsAdd = ({
       return;
     }
 
-    if (
-      selectedCurrency.currencyAbbreviation &&
-      selectedChain.chain &&
-      networkValue
-    ) {
-      contact.coin = selectedCurrency.currencyAbbreviation;
-      contact.chain = selectedChain.chain;
-      contact.network = networkValue;
-      contact.tokenAddress = tokenAddressValue;
-    } else {
-      setError('address', {
-        type: 'manual',
-        message: t('Coin or Network invalid'),
-      });
-      return;
-    }
-
-    if (
-      selectedCurrency.currencyAbbreviation === 'xrp' &&
-      contact.destinationTag &&
-      isNaN(contact.destinationTag)
-    ) {
-      setError('destinationTag', {
-        type: 'manual',
-        message: t('Only numbers are allowed'),
-      });
-      return;
-    }
+    contact.coin = coinValue;
+    contact.chain = chainValue;
+    contact.network = networkValue;
 
     if (context === 'edit') {
       dispatch(updateContact(contact));
@@ -389,46 +191,6 @@ const ContactsAdd = ({
     navigation.goBack();
   });
 
-  const _setSelectedChain = (_chain: string) => {
-    const _selectedChain = SupportedChainsOptions.filter(
-      ({chain}) => chain === _chain,
-    );
-    setSelectedChain(_selectedChain[0]);
-  };
-
-  const _setSelectedCurrency = (
-    _currencyAbbreviation: string,
-    _chain: string,
-    tokenAddress: string | undefined,
-  ) => {
-    let _selectedCurrency;
-    if (!tokenAddress) {
-      _selectedCurrency = SupportedCoinsOptions.filter(
-        ({currencyAbbreviation, chain}) =>
-          currencyAbbreviation === _currencyAbbreviation && chain === _chain,
-      );
-      setSelectedCurrency(_selectedCurrency[0]);
-    } else {
-      _selectedCurrency = ALL_TOKENS.find(
-        ({tokenAddress: _tokenAddress}) =>
-          _tokenAddress?.toLowerCase() === tokenAddress.toLowerCase(),
-      );
-      setSelectedCurrency(_selectedCurrency!);
-    }
-  };
-
-  const networkSelected = ({id}: NetworkSelectionProps) => {
-    setNetworkValue(id);
-    setNetworkModalVisible(false);
-  };
-
-  const renderNetworkItem = useCallback(
-    ({item}: {item: {id: string; name: string}}) => (
-      <NetworkSelectionRow item={item} emit={networkSelected} key={item.id} />
-    ),
-    [],
-  );
-
   const goToScan = () => {
     dispatch(
       Analytics.track('Open Scanner', {
@@ -445,13 +207,7 @@ const ContactsAdd = ({
 
   useEffect(() => {
     if (contact) {
-      processAddress(
-        contact.address,
-        contact.coin,
-        contact.network,
-        contact.chain,
-        contact.tokenAddress,
-      );
+      processAddress(contact.address!!);
       setValue('address', contact.address!, {shouldDirty: true});
       setValue('name', contact.name || '');
       setValue('email', contact.email);
@@ -565,49 +321,12 @@ const ContactsAdd = ({
           />
         </InputContainer>
 
-        {!contact ? (
-          <CurrencySelectorContainer hideSelector={!isDev || !xrpValidAddress}>
-            <Label>{t('NETWORK')}</Label>
-            <CurrencyContainer
-              activeOpacity={ActiveOpacity}
-              onPress={() => {
-                setNetworkModalVisible(true);
-              }}>
-              <Row
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                <Row style={{alignItems: 'center'}}>
-                  <NetworkName>{networkValue}</NetworkName>
-                </Row>
-                <WalletIcons.DownToggle />
-              </Row>
-            </CurrencyContainer>
-          </CurrencySelectorContainer>
-        ) : null}
-
         <ActionContainer>
           <Button onPress={onSubmit}>
             {contact ? t('Save Contact') : t('Add Contact')}
           </Button>
         </ActionContainer>
       </ScrollContainer>
-      <SheetModal
-        isVisible={networkModalVisible}
-        onBackdropPress={() => setNetworkModalVisible(false)}>
-        <CurrencySelectionModalContainer>
-          <TextAlign align={'center'}>
-            <H4>{t('Select a Network')}</H4>
-          </TextAlign>
-          <FlatList
-            contentContainerStyle={{paddingTop: 20, paddingBottom: 20}}
-            data={networkOptions}
-            keyExtractor={keyExtractor}
-            renderItem={renderNetworkItem}
-          />
-        </CurrencySelectionModalContainer>
-      </SheetModal>
     </Container>
   );
 };

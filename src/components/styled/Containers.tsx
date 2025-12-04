@@ -279,6 +279,7 @@ export const AdvancedOptionsContainer = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : Feather)};
   border-radius: 6px;
   margin-bottom: 20px;
+  margin-top: 10px;
 `;
 
 export const AdvancedOptionsButton = styled(TouchableOpacity)`

@@ -3,7 +3,10 @@ import styled from 'styled-components/native';
 import {
   Caution,
   LightBlack,
+  LuckySevens,
   NeutralSlate,
+  Slate10,
+  Slate30,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -34,6 +37,7 @@ import {Controller, useForm} from 'react-hook-form';
 import {
   BaseText,
   H4,
+  H7,
   ImportTitle,
   Paragraph,
   Small,
@@ -60,6 +64,7 @@ import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {
   fixWalletAddresses,
+  formatCurrencyAbbreviation,
   getAccount,
   getDerivationStrategy,
   getNetworkName,
@@ -71,11 +76,13 @@ import {
 import {DefaultDerivationPath} from '../../../constants/defaultDerivationPath';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import {
+  SupportedCurrencyOption,
+  SupportedCurrencyOptions,
+} from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {AppState, FlatList, TextInput, View} from 'react-native';
-import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {
   GetName,
@@ -92,6 +99,7 @@ import {
 } from '../../../utils/hooks';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
+import haptic from '../../../components/haptic-feedback/haptic';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -184,6 +192,27 @@ const InputContainer = styled.View`
 
 const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
+`;
+
+const CurrencyColumn = styled.View`
+  justify-content: center;
+  margin-right: 8px;
+`;
+
+const CurrencyTitleColumn = styled(CurrencyColumn)`
+  flex: 1 1 auto;
+`;
+
+const CurrencyTitle = styled(H7).attrs(() => ({
+  medium: true,
+}))`
+  margin: 0;
+  padding: 0;
+`;
+
+const CurrencySubTitle = styled(BaseText)`
+  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
+  font-size: 12px;
 `;
 
 const RecoveryPhrase = () => {
@@ -529,49 +558,44 @@ const RecoveryPhrase = () => {
   };
 
   const renderItem = useCallback(
-    ({item}) => {
-      const currencySelected = (
-        _currencyAbbreviation: string,
-        _chain: string,
-      ) => {
-        const _selectedCurrency = CurrencyOptions.filter(
-          currency =>
-            currency.currencyAbbreviation === _currencyAbbreviation &&
-            currency.chain === _chain,
-        );
-        const currencyAbbreviation = _selectedCurrency[0].currencyAbbreviation;
-        const chain = _selectedCurrency[0].chain;
+    ({item}: {item: SupportedCurrencyOption}) => {
+      const {currencyAbbreviation, currencyName, img, badgeUri, chain} = item;
+
+      const onPress = () => {
+        haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
+
         const defaultCoin = `default${chain.toUpperCase()}`;
         // @ts-ignore
         const derivationPath = DefaultDerivationPath[defaultCoin];
-        setSelectedCurrency(_selectedCurrency[0]);
+
+        setSelectedCurrency(item);
         setCurrencyModalVisible(false);
-        const advancedOpts = {
+        setAdvancedOptions({
           ...advancedOptions,
           coin: currencyAbbreviation,
           chain,
           derivationPath,
-        };
-        setAdvancedOptions(advancedOpts);
+        });
       };
 
       return (
-        <CurrencySelectionRow
-          currency={item}
-          onToggle={currencySelected}
-          key={item.id}
-          hideCheckbox={true}
-        />
+        <RowContainer
+          accessibilityLabel="currency-selection-row"
+          onPress={onPress}
+          key={item.id}>
+          <CurrencyColumn>
+            <CurrencyImage img={img} badgeUri={badgeUri} />
+          </CurrencyColumn>
+          <CurrencyTitleColumn>
+            <CurrencyTitle>{currencyName}</CurrencyTitle>
+            <CurrencySubTitle>
+              {formatCurrencyAbbreviation(currencyAbbreviation)}
+            </CurrencySubTitle>
+          </CurrencyTitleColumn>
+        </RowContainer>
       );
     },
-    [
-      setSelectedCurrency,
-      setCurrencyModalVisible,
-      setAdvancedOptions,
-      advancedOptions,
-      recreateWallet,
-      setRecreateWallet,
-    ],
+    [advancedOptions],
   );
 
   useEffect(() => {

@@ -1,0 +1,130 @@
+diff --git a/node_modules/bitcore-wallet-client/src/lib/verifier.ts b/node_modules/bitcore-wallet-client/src/lib/verifier.ts
+index 443c525..93b1d56 100644
+--- a/node_modules/bitcore-wallet-client/src/lib/verifier.ts
++++ b/node_modules/bitcore-wallet-client/src/lib/verifier.ts
+@@ -85,7 +85,7 @@ export class Verifier {
+     const uniq = [];
+     let error;
+     for (const copayer of copayers || []) {
+-      if (uniq[copayers.xPubKey]++) {
++      if (uniq[copayer.xPubKey]++) {
+         log.error('Repeated public keys in server response');
+         error = true;
+       }
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/api.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/api.js
+index 7a27efd..d916b5f 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/api.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/api.js
+@@ -50,6 +50,7 @@ const common_1 = require("./common");
+ const credentials_1 = require("./credentials");
+ const errors_1 = require("./errors");
+ const key_1 = require("./key");
++const tsskey_1 = require("./tsskey");
+ const log_1 = __importDefault(require("./log"));
+ const paypro_1 = require("./paypro");
+ const payproV2_1 = require("./payproV2");
+@@ -2819,6 +2820,8 @@ exports.API = API;
+ API.PayProV2 = payproV2_1.PayProV2;
+ API.PayPro = paypro_1.PayPro;
+ API.Key = key_1.Key;
++API.TssKey = tsskey_1.TssKey;
++API.TssKeyGen = tsskey_1.TssKeyGen;
+ API.Verifier = verifier_1.Verifier;
+ API.Core = CWC;
+ API.Utils = common_1.Utils;
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
+index ffb28f7..92db28f 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
+@@ -7,10 +7,18 @@ exports.Encryption = void 0;
+ const crypto_1 = __importDefault(require("crypto"));
+ const PBKDF2_ITERATIONS = 1000;
+ const DEFAULT_KEY_SIZE = 256;
+-const ALGORITHM = ks => `aes-${ks || DEFAULT_KEY_SIZE}-ccm`;
++const ALGORITHM = ks => `aes-${ks || DEFAULT_KEY_SIZE}-gcm`;
+ const AUTH_TAG_LENGTH = 16;
+ const SALT_LENGTH = 16;
+-const MAX_IV_LENGTH = 13;
++const IV_LENGTH = 12;
++const toBuf = (x) => {
++    if (Buffer.isBuffer(x)) return x;
++    if (x instanceof Uint8Array) return Buffer.from(x);
++    if (x instanceof ArrayBuffer) return Buffer.from(new Uint8Array(x));
++    if (x == null) return Buffer.alloc(0);
++    return Buffer.from(String(x));
++  };
++
+ class EncryptionClass {
+     _optimizeIv(length, iv) {
+         let L = 2;
+@@ -25,18 +33,18 @@ class EncryptionClass {
+     }
+     _baseEncrypt(data, key) {
+         const buf = Buffer.isBuffer(data) ? data : Buffer.from(typeof data === 'string' ? data : JSON.stringify(data), 'utf8');
+-        const iv = this._optimizeIv(buf.length, crypto_1.default.randomBytes(MAX_IV_LENGTH));
+-        const cipher = crypto_1.default.createCipheriv(ALGORITHM(key.length * 8), key, iv, { authTagLength: AUTH_TAG_LENGTH, plaintextLength: buf.length });
+-        let encrypted = cipher.update(buf);
+-        encrypted = Buffer.concat([encrypted, cipher.final()]);
++        const iv = crypto_1.default.randomBytes(IV_LENGTH);
++        const cipher = crypto_1.default.createCipheriv(ALGORITHM(key.length * 8), key, iv, { authTagLength: AUTH_TAG_LENGTH });
++        let encrypted = toBuf(cipher.update(buf));
++        encrypted = Buffer.concat([encrypted, toBuf(cipher.final())]);
+         return {
+             iv: iv.toString('base64'),
+             v: 1,
+             ts: AUTH_TAG_LENGTH * 8,
+-            mode: 'ccm',
++            mode: 'gcm',
+             adata: '',
+             cipher: 'aes',
+-            ct: Buffer.concat([encrypted, cipher.getAuthTag()]).toString('base64')
++            ct: Buffer.concat([encrypted, toBuf(cipher.getAuthTag())]).toString('base64')
+         };
+     }
+     encryptWithKey(data, key) {
+@@ -67,8 +75,30 @@ class EncryptionClass {
+         const authTagLength = json.ts / 8;
+         const ciphertext = ct.subarray(0, ct.length - authTagLength);
+         const authTag = ct.subarray(ct.length - authTagLength);
+-        const iv = this._optimizeIv(ciphertext.length, Buffer.from(json.iv, 'base64'));
+-        const decipher = crypto_1.default.createDecipheriv(`${json.cipher}-${json.ks}-${json.mode}`, key, iv, { authTagLength });
++        
++        let iv;
++        let decipher;
++        
++        if (json.mode === 'gcm') {
++            // GCM mode
++            iv = Buffer.from(json.iv, 'base64');
++            decipher = crypto_1.default.createDecipheriv(
++                `${json.cipher}-${json.ks}-${json.mode}`, 
++                key, 
++                iv, 
++                { authTagLength }
++            );
++        } else {
++            // CCM mode (legacy/server)
++            iv = this._optimizeIv(ciphertext.length, Buffer.from(json.iv, 'base64'));
++            decipher = crypto_1.default.createDecipheriv(
++                `${json.cipher}-${json.ks}-${json.mode}`, 
++                key, 
++                iv, 
++                { authTagLength, plaintextLength: ciphertext.length }
++            );
++        }
++        
+         decipher.setAuthTag(authTag);
+         let decrypted = decipher.update(ciphertext);
+         decrypted = Buffer.concat([decrypted, decipher.final()]);
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
+index 43e3f5d..4767846 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
+@@ -49,7 +49,7 @@ class Credentials {
+         const entropySource = crypto_wallet_core_1.BitcoreLib.crypto.Hash.sha256(priv.toBuffer()).toString('hex');
+         const b = Buffer.from(entropySource, 'hex');
+         const b2 = crypto_wallet_core_1.BitcoreLib.crypto.Hash.sha256hmac(b, Buffer.from(prefix));
+-        x.personalEncryptingKey = b2.subarray(0, 16).toString('base64');
++        x.personalEncryptingKey = Buffer.from(b2.subarray(0, 16)).toString('base64');
+         x.copayerId = common_1.Utils.xPubToCopayerId(x.chain, x.xPubKey);
+         x.publicKeyRing = [
+             {

@@ -63,8 +63,10 @@ const ZenLedgerImport: React.FC = () => {
     return _allKeys.map((key, index) => {
       const formattedWallet: ZenLedgerWalletObj[] = key.wallets
         .filter(
-          ({network, credentials}) =>
-            network === Network.mainnet && credentials.isComplete(),
+          ({network, credentials, pendingTssSession}) =>
+            network === Network.mainnet &&
+            credentials.isComplete() &&
+            !pendingTssSession,
         )
         .map(wallet => {
           const {

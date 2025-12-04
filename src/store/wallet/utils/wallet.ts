@@ -911,7 +911,9 @@ export const getAllWalletClients = (keys: {
           key.wallets
             .filter(
               wallet =>
-                !wallet.credentials.token && wallet.credentials.isComplete(),
+                !wallet.credentials.token &&
+                wallet.credentials.isComplete() &&
+                !wallet.pendingTssSession,
             )
             .forEach(walletClient => {
               walletClients.push(walletClient);
@@ -1075,7 +1077,7 @@ export const buildUIFormattedWallet: (
       credentials.n > 1
         ? `- Multisig ${credentials.m}/${credentials.n}`
         : undefined,
-    isComplete: credentials.isComplete(),
+    isComplete: credentials.isComplete() && !wallet.pendingTssSession,
     receiveAddress,
     account: credentials.account,
   } as WalletRowProps;
@@ -1210,7 +1212,8 @@ export const buildAccountList = (
               ?.toLowerCase()
               ?.includes(searchInput.toLowerCase())
           : true,
-        isComplete: wallet.credentials.isComplete(),
+        isComplete:
+          wallet.credentials.isComplete() && !wallet.pendingTssSession,
       };
 
       const allMatch = Object.values(matches).every(Boolean);
@@ -1221,7 +1224,7 @@ export const buildAccountList = (
     }
 
     if (opts?.filterByComplete) {
-      if (!wallet.credentials.isComplete()) {
+      if (!wallet.credentials.isComplete() && wallet.pendingTssSession) {
         return;
       }
     }
@@ -1252,7 +1255,11 @@ export const buildAccountList = (
 
     let accountKey = receiveAddress;
 
-    if (!accountKey && !wallet?.credentials?.isComplete()) {
+    if (
+      !accountKey &&
+      !wallet?.credentials?.isComplete() &&
+      wallet.pendingTssSession
+    ) {
       // Workaround for incomplete multisig wallets
       accountKey = walletId;
     }

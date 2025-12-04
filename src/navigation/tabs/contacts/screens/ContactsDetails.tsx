@@ -170,6 +170,7 @@ const ContactsDetails = ({
       !wallet.hideWalletByAccount &&
       wallet.network === 'livenet' &&
       wallet.isComplete() &&
+      !wallet.pendingTssSession &&
       wallet.currencyAbbreviation === contact.coin &&
       wallet.balance.sat > 0,
   );

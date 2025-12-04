@@ -6,6 +6,7 @@ import {
   TransactionProposal,
   CacheFeeLevel,
   CryptoBalance,
+  PendingJoinerSession,
 } from './wallet.models';
 
 export enum WalletActionTypes {
@@ -54,6 +55,11 @@ export enum WalletActionTypes {
   SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE = 'APP/SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE',
   SET_SVM_ADDRESS_CREATION_FIX_COMPLETE = 'APP/SET_SVM_ADDRESS_CREATION_FIX_COMPLETE',
   SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS',
+  SET_PENDING_TSS_SESSION = 'WALLET/SET_PENDING_TSS_SESSION',
+  UPDATE_PENDING_TSS_SESSION = 'WALLET/UPDATE_PENDING_TSS_SESSION',
+  REMOVE_PENDING_TSS_SESSION = 'WALLET/REMOVE_PENDING_TSS_SESSION',
+  SET_PENDING_JOINER_SESSION = 'WALLET/SET_PENDING_JOINER_SESSION',
+  REMOVE_PENDING_JOINER_SESSION = 'WALLET/REMOVE_PENDING_JOINER_SESSION',
 }
 
 interface successWalletStoreInit {
@@ -334,6 +340,16 @@ interface successUpdateWalletBalancesAndStatus {
   };
 }
 
+interface removePendingJoinerSession {
+  type: typeof WalletActionTypes.REMOVE_PENDING_JOINER_SESSION;
+  payload: string;
+}
+
+interface setPendingJoinerSession {
+  type: typeof WalletActionTypes.SET_PENDING_JOINER_SESSION;
+  payload: PendingJoinerSession | null;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -376,4 +392,6 @@ export type WalletActionType =
   | setAccountEVMCreationMigrationComplete
   | setAccountSVMCreationMigrationComplete
   | setSvmAddressCreationFixComplete
-  | successUpdateWalletBalancesAndStatus;
+  | successUpdateWalletBalancesAndStatus
+  | setPendingJoinerSession
+  | removePendingJoinerSession;

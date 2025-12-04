@@ -1609,3 +1609,74 @@ const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
 
   return wallets;
 };
+
+export const startImportTSSFile =
+  (decryptedBackupText: string): Effect =>
+  async (dispatch, getState): Promise<Key> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const data = JSON.parse(decryptedBackupText);
+
+        if (!data.isTSS) {
+          throw new Error(t('Invalid TSS backup file.'));
+        }
+
+        if (!data.mnemonic) {
+          throw new Error(t('Missing mnemonic in TSS backup.'));
+        }
+
+        if (!data.keychain) {
+          throw new Error(t('Missing keychain in TSS backup.'));
+        }
+
+        const arrayToBuffer = (
+          arr: number[] | null | undefined,
+        ): Buffer | undefined => {
+          if (!arr) return undefined;
+          return Buffer.from(arr);
+        };
+
+        const importData = {
+          words: data.mnemonic,
+        };
+
+        const key = (await dispatch<any>(
+          startImportMnemonic(importData, {}),
+        )) as Key;
+
+        if (key && data.keychain) {
+          const privateKeyShare = arrayToBuffer(data.keychain.privateKeyShare);
+          const reducedPrivateKeyShare = arrayToBuffer(
+            data.keychain.reducedPrivateKeyShare,
+          );
+
+          if (privateKeyShare && reducedPrivateKeyShare) {
+            key.properties = {
+              ...key.properties,
+              keychain: {
+                commonKeyChain: data.keychain.commonKeyChain,
+                privateKeyShare,
+                reducedPrivateKeyShare,
+              },
+            } as KeyProperties;
+          } else {
+            throw new Error(t('Invalid keychain data in TSS backup.'));
+          }
+
+          dispatch(
+            successImport({
+              key,
+            }),
+          );
+        }
+
+        logManager.info('[ImportTSS] Successfully imported TSS wallet');
+        resolve(key);
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : JSON.stringify(e);
+        logManager.error(`[ImportTSS] Failed to import: ${errorMsg}`);
+        dispatch(failedImport());
+        reject(e);
+      }
+    });
+  };

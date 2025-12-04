@@ -17,7 +17,7 @@ import {Key, KeyMethods, Wallet} from '../../../store/wallet/wallet.models';
 import {CommonActions, RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import MultisigOptions from './MultisigOptions';
-import {Option} from './CreationOptions';
+import {Option, MultisigModalType} from './CreationOptions';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -40,6 +40,7 @@ import {
 import {getNavigationTabName, RootStacks} from '../../../Root';
 import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -52,8 +53,11 @@ const AddingOptions: React.FC = () => {
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const route = useRoute<RouteProp<WalletGroupParamList, 'AddingOptions'>>();
   const {key} = route.params;
-  const [showMultisigOptions, setShowMultisigOptions] = useState(false);
+  const [multisigModalType, setMultisigModalType] =
+    useState<MultisigModalType>(null);
+  const [showMultisigModal, setShowMultisigModal] = useState(false);
   const network = useAppSelector(({APP}) => APP.network);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Select Wallet Type')}</HeaderTitle>,
@@ -61,12 +65,30 @@ const AddingOptions: React.FC = () => {
     });
   }, [navigation, t]);
 
-  const optionList: Option[] = [
+  const showErrorModal = (e: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Something went wrong'),
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('OK'),
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  const standardOptions: Option[] = [
     {
       id: 'utxo-wallet',
-      title: t('UTXO Wallet'),
+      title: t('Single-Currency Wallet'),
       description: t(
-        'Dedicated to a single cryptocurrency like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Perfect for users focusing on one specific coin',
+        'Dedicated to a single cryptocurrency like Bitcoin, Bitcoin Cash, Litecoin, Dogecoin or XRP. Perfect for users focusing on one specific coin',
       ),
       cta: () => {
         dispatch(
@@ -268,31 +290,34 @@ const AddingOptions: React.FC = () => {
     },
     {
       id: 'multisig-wallet',
-      title: t('Multisig Wallet'),
+      title: t('Multisignature Wallet'),
       description: t(
-        'Requires multiple approvals for transactions for wallets like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Ideal for shared funds or enhanced security',
+        'Support for Bitcoin, Litecoin, Dogecoin and Bitcoin Cash networks. Each co-signer/device has a unique private key/recovery phrase, and all signatures are recorded directly on the blockchain.',
       ),
-      cta: () => setShowMultisigOptions(true),
+      cta: () => setShowMultisigModal(true),
     },
   ];
 
-  const showErrorModal = (e: string) => {
-    dispatch(
-      showBottomNotificationModal({
-        type: 'warning',
-        title: t('Something went wrong'),
-        message: e,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('OK'),
-            action: () => {},
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
+  const tssOptions: Option[] = [
+    {
+      id: 'addMultisig',
+      title: t('Add Multisig Wallet'),
+      description: t(
+        'Create a new wallet that requires multiple signatures for transactions',
+      ),
+      cta: () => setMultisigModalType('create'),
+    },
+    {
+      id: 'joinMultisig',
+      title: t('Join Shared Wallet'),
+      description: t(
+        'Join an existing multisig wallet using an invitation from another user',
+      ),
+      cta: () => setMultisigModalType('join'),
+    },
+  ];
+
+  const optionList = isTSSKey(key) ? tssOptions : standardOptions;
 
   return (
     <>
@@ -315,11 +340,20 @@ const AddingOptions: React.FC = () => {
           ))}
         </OptionListContainer>
       </OptionContainer>
-      <MultisigOptions
-        isVisible={showMultisigOptions}
-        setShowMultisigOptions={setShowMultisigOptions}
-        walletKey={key}
-      />
+      {isTSSKey(key) ? (
+        <MultisigOptions
+          isVisible={multisigModalType !== null}
+          modalType={multisigModalType}
+          closeModal={() => setMultisigModalType(null)}
+          walletKey={key}
+        />
+      ) : (
+        <MultisigOptions
+          isVisible={showMultisigModal}
+          walletKey={key}
+          closeModal={() => setShowMultisigModal(false)}
+        />
+      )}
     </>
   );
 };

@@ -1,8 +1,16 @@
 diff --git a/node_modules/bitcore-tss/ecdsa/keygen.js b/node_modules/bitcore-tss/ecdsa/keygen.js
-index cb9eccb..ce8ad2d 100644
+index cb9eccb..9f33573 100644
 --- a/node_modules/bitcore-tss/ecdsa/keygen.js
 +++ b/node_modules/bitcore-tss/ecdsa/keygen.js
-@@ -153,7 +153,7 @@ class KeyGen {
+@@ -137,6 +137,7 @@ class KeyGen {
+     $.checkState(this.#round == 0, 'initJoin must be called before the rounds ');
+ 
+     const unsignedMessageR1 = await this.#dkg.initDkg();
++
+     const serializedMsg = DklsTypes.serializeBroadcastMessage(unsignedMessageR1);
+     const signedMessage = await DklsComms.encryptAndAuthOutgoingMessages(
+       { broadcastMessages: [serializedMsg], p2pMessages: [] },
+@@ -153,7 +154,7 @@ class KeyGen {
     * @param {Array<object>} prevRoundMessages 
     * @returns {{ round: number, partyId: number, publicKey: string, p2pMessages: object[], broadcastMessage: object[] }}
     */
@@ -11,7 +19,7 @@ index cb9eccb..ce8ad2d 100644
      $.checkState(this.#round > 0, 'initJoin must be called before participating in the rounds');
      $.checkState(this.#round < 5, 'Signing rounds are over');
      $.checkArgument(Array.isArray(prevRoundMessages), 'prevRoundMessages must be an array');
-@@ -163,17 +163,40 @@ class KeyGen {
+@@ -163,17 +164,40 @@ class KeyGen {
  
      const prevRoundIncomingMsgs = DklsComms.decryptAndVerifyIncomingMessages(prevRoundMessages, this.#authKey);
  
@@ -64,7 +72,7 @@ index cb9eccb..ce8ad2d 100644
  
    /**
 diff --git a/node_modules/bitcore-tss/ecdsa/sign.js b/node_modules/bitcore-tss/ecdsa/sign.js
-index a7d48d1..72eb551 100644
+index a7d48d1..68c7c9f 100644
 --- a/node_modules/bitcore-tss/ecdsa/sign.js
 +++ b/node_modules/bitcore-tss/ecdsa/sign.js
 @@ -156,7 +156,6 @@ class Sign {
