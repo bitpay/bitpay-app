@@ -64,7 +64,7 @@ export const bootstrapWallets = (wallets: Wallet[]) => {
           buildWalletObj({
             ...walletClient.credentials,
             ...wallet,
-          }),
+          } as any),
         );
       } catch (err: unknown) {
         const errorLog = `Failed to bindWalletClient - ${
@@ -84,8 +84,36 @@ export const bootstrapKey = (key: Key, id: string) => {
   } else if (key.properties?.metadata) {
     try {
       const TssKey = BWCProvider.getTssKey();
-      const tssKey = new TssKey(key.properties);
+      const properties = JSON.parse(JSON.stringify(key.properties));
 
+      if (key.properties.keychain?.privateKeyShare?.data) {
+        properties.keychain.privateKeyShare = Buffer.from(
+          key.properties.keychain.privateKeyShare.data,
+        );
+        console.log(
+          '[bootstrapKey] privateKeyShare restored, length:',
+          properties.keychain.privateKeyShare.length,
+        );
+      } else if (Buffer.isBuffer(key.properties.keychain?.privateKeyShare)) {
+        properties.keychain.privateKeyShare =
+          key.properties.keychain.privateKeyShare;
+        console.log(
+          '[bootstrapKey] privateKeyShare already Buffer, length:',
+          properties.keychain.privateKeyShare.length,
+        );
+      }
+
+      if (key.properties.keychain?.reducedPrivateKeyShare?.data) {
+        properties.keychain.reducedPrivateKeyShare = Buffer.from(
+          key.properties.keychain.reducedPrivateKeyShare.data,
+        );
+      } else if (
+        Buffer.isBuffer(key.properties.keychain?.reducedPrivateKeyShare)
+      ) {
+        properties.keychain.reducedPrivateKeyShare =
+          key.properties.keychain.reducedPrivateKeyShare;
+      }
+      const tssKey = new TssKey(properties);
       const _key = merge(key, {
         methods: tssKey,
       });

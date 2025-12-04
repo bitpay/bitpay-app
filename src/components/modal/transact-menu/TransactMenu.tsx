@@ -119,6 +119,7 @@ const TransactModal = () => {
         !wallet.hideWallet &&
         !wallet.hideWalletByAccount &&
         wallet.isComplete() &&
+        !wallet.pendingTssSession &&
         wallet.balance.sat > 0,
     );
   const disabledSendingOptions = availableWallets.length === 0;

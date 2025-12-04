@@ -218,7 +218,7 @@ export const addWallet =
                     ...associatedWallet.credentials,
                     currencyAbbreviation,
                     currencyName,
-                  },
+                  } as any,
                   tokenOptsByAddress,
                 ),
               ),
@@ -484,7 +484,7 @@ export const createMultipleWallets =
       return merge(
         wallet,
         buildWalletObj(
-          {...wallet.credentials, currencyAbbreviation, currencyName},
+          {...wallet.credentials, currencyAbbreviation, currencyName} as any,
           tokenOpts,
         ),
       );

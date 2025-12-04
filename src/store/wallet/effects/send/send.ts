@@ -123,6 +123,11 @@ import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
 import {logManager} from '../../../../managers/LogManager';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
+import {
+  requiresTSSSigning,
+  TSSSigningCallbacks,
+  startTSSSigning,
+} from '../tss-send/tss-send';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1189,16 +1194,14 @@ export const startSendPayment =
     wallet,
     recipient,
     transport,
+    tssCallbacks,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
-
-    /**
-     * Transport for hardware wallet
-     */
     transport?: Transport;
+    tssCallbacks?: TSSSigningCallbacks;
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -1219,6 +1222,7 @@ export const startSendPayment =
                   recipient,
                   transport,
                   ataOwnerAddress: txp.ataOwnerAddress,
+                  tssCallbacks,
                 }),
               );
               return resolve(broadcastedTx);
@@ -1247,6 +1251,7 @@ export const publishAndSign =
     password,
     signingMultipleProposals,
     ataOwnerAddress,
+    tssCallbacks,
   }: {
     txp: TransactionProposal;
     key: Key;
@@ -1256,6 +1261,7 @@ export const publishAndSign =
     password?: string;
     signingMultipleProposals?: boolean; // when signing multiple proposals from a wallet we ask for decrypt password and biometric before
     ataOwnerAddress?: string; // only for solana tokens, if the recipient needs to create an associated token account
+    tssCallbacks?: TSSSigningCallbacks;
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -1298,6 +1304,22 @@ export const publishAndSign =
         }
       }
 
+      const isTSSSigning = requiresTSSSigning(wallet, key);
+
+      if (isTSSSigning && !tssCallbacks) {
+        tssCallbacks = {
+          onStatusChange: status => logManager.debug(`[TSS] Status: ${status}`),
+          onProgressUpdate: progress =>
+            logManager.debug(`[TSS] Progress: ${JSON.stringify(progress)}`),
+          onCopayerStatusChange: (id, status) =>
+            logManager.debug(`[TSS] Copayer ${id}: ${status}`),
+          onRoundUpdate: (round, type) =>
+            logManager.debug(`[TSS] Round ${round} ${type}`),
+          onError: err => logManager.error(`[TSS] Error: ${err.message}`),
+          onComplete: sig => logManager.debug(`[TSS] Complete`),
+        };
+      }
+
       if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
         try {
           const xPrivKeyEDDSA = password
@@ -1327,14 +1349,16 @@ export const publishAndSign =
       }
 
       try {
-        let publishedTx,
-          broadcastedTx: Partial<TransactionProposal> | null = null;
+        let publishedTx: TransactionProposal | undefined;
+        let broadcastedTx: Partial<TransactionProposal> | null = null;
 
-        // Already published?
+        // Publish if needed
         if (txp.status !== 'pending' || txp.refreshOnPublish) {
-          publishedTx = await publishTx(wallet, txp);
+          publishedTx = (await publishTx(wallet, txp)) as TransactionProposal;
           logManager.debug('success publish [publishAndSign]');
         }
+
+        const txpToSign = publishedTx || txp;
 
         if (key.isReadOnly && !key.hardwareSource) {
           // read only wallet
@@ -1343,33 +1367,51 @@ export const publishAndSign =
 
         let signedTx: TransactionProposal | null = null;
 
-        if (key.hardwareSource) {
+        if (isTSSSigning) {
+          signedTx = await dispatch(
+            startTSSSigning({
+              key,
+              wallet,
+              txp: txpToSign as TransactionProposal,
+              callbacks: tssCallbacks!,
+            }),
+          );
+          logManager.debug('success TSS sign [publishAndSign]');
+        } else if (key.hardwareSource) {
           if (!transport) {
             return reject(
               new Error('No transport provided for hardware signing.'),
             );
           }
-
           signedTx = await signTxWithHardwareWallet(
             transport,
             wallet,
             key,
-            (publishedTx || txp) as TransactionProposal,
+            txpToSign as TransactionProposal,
           );
+          logManager.debug('success hardware sign [publishAndSign]');
         } else {
           signedTx = (await signTx(
             wallet,
             key,
-            publishedTx || txp,
+            txpToSign,
             password,
           )) as TransactionProposal;
+          logManager.debug('success sign [publishAndSign]');
         }
 
-        logManager.debug('success sign [publishAndSign]');
-
         if (signedTx.status === 'accepted') {
+          if (isTSSSigning && tssCallbacks) {
+            tssCallbacks.onStatusChange('broadcasting');
+          }
+
           broadcastedTx = await broadcastTx(wallet, signedTx);
           logManager.debug('success broadcast [publishAndSign]');
+
+          if (isTSSSigning && tssCallbacks) {
+            tssCallbacks.onStatusChange('complete');
+          }
+
           const {fee, amount} = broadcastedTx as {
             fee: number;
             amount: number;
@@ -1414,6 +1456,13 @@ export const publishAndSign =
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(`[publishAndSign] err: ${errorStr}`);
+
+        if (isTSSSigning && tssCallbacks) {
+          tssCallbacks.onError(
+            err instanceof Error ? err : new Error(errorStr),
+          );
+        }
+
         // if broadcast fails, remove transaction proposal
         try {
           // except for multisig pending transactions
@@ -2717,7 +2766,8 @@ export const sendCrypto =
         wallet =>
           !wallet.hideWallet &&
           !wallet.hideWalletByAccount &&
-          wallet.isComplete(),
+          wallet.isComplete() &&
+          !wallet.pendingTssSession,
       )
       .filter(wallet => wallet.balance.sat > 0);
 

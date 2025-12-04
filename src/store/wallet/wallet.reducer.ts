@@ -1,4 +1,4 @@
-import {Key, Token} from './wallet.models';
+import {Key, PendingJoinerSession, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {CurrencyOpts} from '../../constants/currencies';
@@ -35,6 +35,7 @@ export interface WalletState {
   accountEvmCreationMigrationComplete: boolean;
   accountSvmCreationMigrationComplete: boolean;
   svmAddressFixComplete: boolean;
+  pendingJoinerSession: PendingJoinerSession | null;
 }
 
 export const initialState: WalletState = {
@@ -69,6 +70,7 @@ export const initialState: WalletState = {
   accountEvmCreationMigrationComplete: false,
   accountSvmCreationMigrationComplete: false,
   svmAddressFixComplete: false,
+  pendingJoinerSession: null,
 };
 
 export const walletReducer = (
@@ -615,6 +617,18 @@ export const walletReducer = (
         },
       };
     }
+
+    case WalletActionTypes.SET_PENDING_JOINER_SESSION:
+      return {
+        ...state,
+        pendingJoinerSession: action.payload,
+      };
+
+    case WalletActionTypes.REMOVE_PENDING_JOINER_SESSION:
+      return {
+        ...state,
+        pendingJoinerSession: null,
+      };
 
     default:
       return state;

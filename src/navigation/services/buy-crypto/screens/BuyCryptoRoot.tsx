@@ -304,6 +304,7 @@ const BuyCryptoRoot = ({
         ),
       ) &&
       wallet.isComplete() &&
+      !wallet.pendingTssSession &&
       !wallet.hideWallet &&
       !wallet.hideWalletByAccount &&
       (!fromCurrencyAbbreviation ||
@@ -323,7 +324,7 @@ const BuyCryptoRoot = ({
         ),
       )
     ) {
-      if (wallet.isComplete()) {
+      if (wallet.isComplete() && !wallet.pendingTssSession) {
         if (allKeys[wallet.keyId].backupComplete) {
           setSelectedWallet(wallet);
         } else {

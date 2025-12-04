@@ -106,7 +106,7 @@ const CreateOrImportKey = ({
   useLayoutEffect(() => {
     navigation.setOptions({
       gestureEnabled: false,
-      headerLeft: () => null
+      headerLeft: () => null,
     });
   }, [navigation, t]);
 
