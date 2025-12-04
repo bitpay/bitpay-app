@@ -11,7 +11,7 @@ import {
   Slate30,
 } from '../../styles/colors';
 
-export const fontFamily = 'Heebo';
+export const fontFamily = 'Archivo';
 
 export const BaseText = styled.Text`
   color: ${({theme}) => theme.colors.text};

@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		03632D4B8959429DA3B141C2 /* Heebo-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EF767449FFE9477D8B33CD84 /* Heebo-Medium.ttf */; };
+		03632D4B8959429DA3B141C2 /* Archivo-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EF767449FFE9477D8B33CD84 /* Archivo-Medium.ttf */; };
 		06BC8C600A86B5001B6303AC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D5D40A7E7B5265D652187F9 /* PrivacyInfo.xcprivacy */; };
-		0F819B33648D4741AAFCAD09 /* Heebo-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4BD0D9E39B2B473191E700CE /* Heebo-ExtraBold.ttf */; };
+		0F819B33648D4741AAFCAD09 /* Archivo-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4BD0D9E39B2B473191E700CE /* Archivo-ExtraBold.ttf */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		256B92C82AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 256B92C72AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf */; };
 		4054F0E729AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.mm */; };
@@ -21,14 +21,14 @@
 		5BEA4BF02838402700AB2121 /* RCTPaymentPass.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5BEA4BEF2838402700AB2121 /* RCTPaymentPass.mm */; };
 		6D615C4929725FD70063DB8E /* RCTTimer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6D615C4729725FD70063DB8E /* RCTTimer.mm */; };
 		6D7C95E72E9007E200F0D481 /* RCTPushPermissionManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6D7C95E62E9007E200F0D481 /* RCTPushPermissionManager.mm */; };
-		71BABDA4524A43E98A190C87 /* Heebo-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */; };
+		71BABDA4524A43E98A190C87 /* Archivo-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D649751C2644FDCA18A5547 /* Archivo-Light.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
-		D34892F44CAB44409EC335A9 /* Heebo-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4435EB64D2448EC885B3036 /* Heebo-Black.ttf */; };
-		D9739196BA804EA29143DA96 /* Heebo-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */; };
-		E6807D9059A643129784A5C3 /* Heebo-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4DCF32F2D2364E70AD2F1E68 /* Heebo-Thin.ttf */; };
+		D34892F44CAB44409EC335A9 /* Archivo-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F4435EB64D2448EC885B3036 /* Archivo-Black.ttf */; };
+		D9739196BA804EA29143DA96 /* Archivo-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 715670CB346B45A7A9EC2044 /* Archivo-Bold.ttf */; };
+		E6807D9059A643129784A5C3 /* Archivo-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4DCF32F2D2364E70AD2F1E68 /* Archivo-Thin.ttf */; };
 		EC0FDD6A2CC92E90009E1B35 /* InAppMessageModule.mm in Sources */ = {isa = PBXBuildFile; fileRef = EC0FDD692CC92E90009E1B35 /* InAppMessageModule.mm */; };
 		ECCB92782860B25D00F9CF8B /* SilentPushEvent.mm in Sources */ = {isa = PBXBuildFile; fileRef = ECCB92762860B25D00F9CF8B /* SilentPushEvent.mm */; };
-		F64C0BF216CE4402A51A5ACC /* Heebo-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BCDAB70057C84109A9201936 /* Heebo-Regular.ttf */; };
+		F64C0BF216CE4402A51A5ACC /* Archivo-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BCDAB70057C84109A9201936 /* Archivo-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,8 +40,8 @@
 		4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AllowedUrlPrefixProtocol.mm; sourceTree = "<group>"; };
 		4054F0E629AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AllowedUrlPrefixProtocol.h; sourceTree = "<group>"; };
 		4221E54904CA4996330CEB54 /* Pods-BitPayApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.debug.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.debug.xcconfig"; sourceTree = "<group>"; };
-		4BD0D9E39B2B473191E700CE /* Heebo-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-ExtraBold.ttf"; path = "../assets/fonts/Heebo-ExtraBold.ttf"; sourceTree = "<group>"; };
-		4DCF32F2D2364E70AD2F1E68 /* Heebo-Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Thin.ttf"; path = "../assets/fonts/Heebo-Thin.ttf"; sourceTree = "<group>"; };
+		4BD0D9E39B2B473191E700CE /* Archivo-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-ExtraBold.ttf"; path = "../assets/fonts/Archivo-ExtraBold.ttf"; sourceTree = "<group>"; };
+		4DCF32F2D2364E70AD2F1E68 /* Archivo-Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Thin.ttf"; path = "../assets/fonts/Archivo-Thin.ttf"; sourceTree = "<group>"; };
 		5B31AAFC2786381C002765E1 /* RCTDosh.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTDosh.h; sourceTree = "<group>"; };
 		5B31AAFD2786387B002765E1 /* RCTDosh.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTDosh.mm; sourceTree = "<group>"; };
 		5B31AB5E2786515A002765E1 /* Dosh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dosh.swift; sourceTree = "<group>"; };
@@ -54,19 +54,19 @@
 		5D5D40A7E7B5265D652187F9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = BitPayApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6D615C4729725FD70063DB8E /* RCTTimer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTTimer.mm; sourceTree = "<group>"; };
 		6D615C4829725FD70063DB8E /* RCTTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTTimer.h; sourceTree = "<group>"; };
-		6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Light.ttf"; path = "../assets/fonts/Heebo-Light.ttf"; sourceTree = "<group>"; };
+		6D649751C2644FDCA18A5547 /* Archivo-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Light.ttf"; path = "../assets/fonts/Archivo-Light.ttf"; sourceTree = "<group>"; };
 		6D7C95E62E9007E200F0D481 /* RCTPushPermissionManager.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = RCTPushPermissionManager.mm; sourceTree = "<group>"; };
-		715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Bold.ttf"; path = "../assets/fonts/Heebo-Bold.ttf"; sourceTree = "<group>"; };
+		715670CB346B45A7A9EC2044 /* Archivo-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Bold.ttf"; path = "../assets/fonts/Archivo-Bold.ttf"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = BitPayApp/AppDelegate.swift; sourceTree = "<group>"; };
 		B1AA7DD4226DBC3478258808 /* libPods-BitPayApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BitPayApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		BCDAB70057C84109A9201936 /* Heebo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Regular.ttf"; path = "../assets/fonts/Heebo-Regular.ttf"; sourceTree = "<group>"; };
+		BCDAB70057C84109A9201936 /* Archivo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Regular.ttf"; path = "../assets/fonts/Archivo-Regular.ttf"; sourceTree = "<group>"; };
 		E639E0380D05420CD0D64119 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		EC0FDD692CC92E90009E1B35 /* InAppMessageModule.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InAppMessageModule.mm; sourceTree = "<group>"; };
 		ECCB92762860B25D00F9CF8B /* SilentPushEvent.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SilentPushEvent.mm; sourceTree = "<group>"; };
 		ECCB92772860B25D00F9CF8B /* SilentPushEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SilentPushEvent.h; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		EF767449FFE9477D8B33CD84 /* Heebo-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Medium.ttf"; path = "../assets/fonts/Heebo-Medium.ttf"; sourceTree = "<group>"; };
-		F4435EB64D2448EC885B3036 /* Heebo-Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Heebo-Black.ttf"; path = "../assets/fonts/Heebo-Black.ttf"; sourceTree = "<group>"; };
+		EF767449FFE9477D8B33CD84 /* Archivo-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Medium.ttf"; path = "../assets/fonts/Archivo-Medium.ttf"; sourceTree = "<group>"; };
+		F4435EB64D2448EC885B3036 /* Archivo-Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Black.ttf"; path = "../assets/fonts/Archivo-Black.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,13 +123,13 @@
 			isa = PBXGroup;
 			children = (
 				256B92C72AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf */,
-				F4435EB64D2448EC885B3036 /* Heebo-Black.ttf */,
-				715670CB346B45A7A9EC2044 /* Heebo-Bold.ttf */,
-				4BD0D9E39B2B473191E700CE /* Heebo-ExtraBold.ttf */,
-				6D649751C2644FDCA18A5547 /* Heebo-Light.ttf */,
-				EF767449FFE9477D8B33CD84 /* Heebo-Medium.ttf */,
-				BCDAB70057C84109A9201936 /* Heebo-Regular.ttf */,
-				4DCF32F2D2364E70AD2F1E68 /* Heebo-Thin.ttf */,
+				F4435EB64D2448EC885B3036 /* Archivo-Black.ttf */,
+				715670CB346B45A7A9EC2044 /* Archivo-Bold.ttf */,
+				4BD0D9E39B2B473191E700CE /* Archivo-ExtraBold.ttf */,
+				6D649751C2644FDCA18A5547 /* Archivo-Light.ttf */,
+				EF767449FFE9477D8B33CD84 /* Archivo-Medium.ttf */,
+				BCDAB70057C84109A9201936 /* Archivo-Regular.ttf */,
+				4DCF32F2D2364E70AD2F1E68 /* Archivo-Thin.ttf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -234,15 +234,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
-				D34892F44CAB44409EC335A9 /* Heebo-Black.ttf in Resources */,
-				D9739196BA804EA29143DA96 /* Heebo-Bold.ttf in Resources */,
-				0F819B33648D4741AAFCAD09 /* Heebo-ExtraBold.ttf in Resources */,
+				D34892F44CAB44409EC335A9 /* Archivo-Black.ttf in Resources */,
+				D9739196BA804EA29143DA96 /* Archivo-Bold.ttf in Resources */,
+				0F819B33648D4741AAFCAD09 /* Archivo-ExtraBold.ttf in Resources */,
 				5BCF1C352740B8B2006D872E /* BootSplash.storyboard in Resources */,
 				256B92C82AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf in Resources */,
-				71BABDA4524A43E98A190C87 /* Heebo-Light.ttf in Resources */,
-				03632D4B8959429DA3B141C2 /* Heebo-Medium.ttf in Resources */,
-				F64C0BF216CE4402A51A5ACC /* Heebo-Regular.ttf in Resources */,
-				E6807D9059A643129784A5C3 /* Heebo-Thin.ttf in Resources */,
+				71BABDA4524A43E98A190C87 /* Archivo-Light.ttf in Resources */,
+				03632D4B8959429DA3B141C2 /* Archivo-Medium.ttf in Resources */,
+				F64C0BF216CE4402A51A5ACC /* Archivo-Regular.ttf in Resources */,
+				E6807D9059A643129784A5C3 /* Archivo-Thin.ttf in Resources */,
 				06BC8C600A86B5001B6303AC /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
