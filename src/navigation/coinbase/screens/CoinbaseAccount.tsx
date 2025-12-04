@@ -399,7 +399,8 @@ const CoinbaseAccount = ({
           wallet.network === 'livenet' &&
           wallet.currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
           wallet.chain === _chain &&
-          wallet.isComplete(),
+          wallet.isComplete() &&
+          !wallet.pendingTssSession,
       );
 
       if (availableWallets.length) {
@@ -545,7 +546,7 @@ const CoinbaseAccount = ({
     );
     if (newWallet) {
       if (newWallet.credentials) {
-        if (newWallet.isComplete()) {
+        if (newWallet.isComplete() && !newWallet.pendingTssSession) {
           if (allKeys[newWallet.keyId].backupComplete) {
             setSelectedWallet(newWallet);
             await sleep(500);

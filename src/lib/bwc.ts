@@ -62,6 +62,10 @@ export class BwcProvider {
     return BWC.TssKey;
   }
 
+  public getTssKeyGen() {
+    return BWC.TSSKeyGen;
+  }
+
   public upgradeCredentialsV1(x: any) {
     return BWC.upgradeCredentialsV1(x);
   }

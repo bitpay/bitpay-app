@@ -103,7 +103,9 @@ const DeleteKey = () => {
     keyObj.wallets
       .filter(
         (wallet: any) =>
-          !wallet.credentials.token && wallet.credentials.isComplete(),
+          !wallet.credentials.token &&
+          wallet.credentials.isComplete() &&
+          !wallet.pendingTssSession,
       )
       .forEach(walletClient => {
         if (notificationsAccepted && brazeEid) {

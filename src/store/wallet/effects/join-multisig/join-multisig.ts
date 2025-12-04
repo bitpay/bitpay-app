@@ -81,7 +81,7 @@ export const startJoinMultisig =
             ..._wallet.credentials,
             currencyAbbreviation,
             currencyName,
-          }),
+          } as any),
         ) as Wallet;
 
         const key = buildKeyObj({key: _key, wallets: [wallet]});
@@ -157,7 +157,7 @@ export const addWalletJoinMultisig =
               ...newWallet.credentials,
               currencyAbbreviation,
               currencyName,
-            }),
+            } as any),
           ) as Wallet,
         );
 
