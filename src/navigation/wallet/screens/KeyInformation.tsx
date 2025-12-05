@@ -1,21 +1,9 @@
 import React, {useLayoutEffect, useState} from 'react';
-import {
-  HeaderTitle,
-  H5,
-  Paragraph,
-  InfoHeader,
-  InfoTitle,
-  InfoDescription,
-} from '../../../components/styled/Text';
+import {HeaderTitle, H5, Paragraph} from '../../../components/styled/Text';
 import {useNavigation} from '@react-navigation/native';
 import styled from 'styled-components/native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {
-  Hr,
-  Info,
-  InfoImageContainer,
-  ScreenGutter,
-} from '../../../components/styled/Containers';
+import {Hr, ScreenGutter} from '../../../components/styled/Containers';
 import {useTranslation} from 'react-i18next';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
@@ -23,6 +11,7 @@ import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
 import {LightBlack, Slate30} from '../../../styles/colors';
 import ErrorIcon from '../../../../assets/img/error.svg';
 import {View} from 'react-native';
+import Banner from '../../../components/banner/Banner';
 
 const KeyInfoContainer = styled.SafeAreaView`
   flex: 1;
@@ -50,14 +39,6 @@ const KeyParagraph = styled(Paragraph)`
   font-size: 18px;
   margin: 5px 0 20px;
 `;
-
-const InfoRowContainer = styled.View`
-  flex-direction: row;
-  align-items: center;
-  padding: 0 15px;
-`;
-
-const InfoRow = styled.View``;
 
 const KeyInformation = () => {
   const {t} = useTranslation();
@@ -110,25 +91,17 @@ const KeyInformation = () => {
             <Hr />
           </View>
         ))}
-        <Info style={{marginTop: 30, borderRadius: 15, paddingRight: 25}}>
-          <InfoRowContainer>
-            <InfoRow>
-              <InfoImageContainer infoMargin={'0 15px 0 0'}>
-                <ErrorIcon />
-              </InfoImageContainer>
-            </InfoRow>
-            <InfoRow>
-              <InfoHeader>
-                <InfoTitle style={{fontSize: 18}}>{t('Warning')}</InfoTitle>
-              </InfoHeader>
-              <InfoDescription>
-                {t(
-                  'If your device is hacked or infected with malware, your private keys can be compromised and you may lose your crypto.',
-                )}
-              </InfoDescription>
-            </InfoRow>
-          </InfoRowContainer>
-        </Info>
+        <Banner
+          height={130}
+          type={'error'}
+          title={t('Warning')}
+          description={t(
+            'If your device is hacked or infected with malware, your private keys can be compromised and you may lose your crypto.',
+          )}
+          icon={ErrorIcon}
+          titleFontSize={18}
+          descriptionFontSize={16}
+        />
       </ScrollView>
     </KeyInfoContainer>
   );
