@@ -457,6 +457,7 @@ const SellCryptoRoot = ({
         return coin.symbol === symbol;
       }) &&
       wallet.isComplete() &&
+      !wallet.pendingTssSession &&
       !wallet.hideWallet &&
       !wallet.hideWalletByAccount &&
       (!fromCurrencyAbbreviation ||
@@ -486,7 +487,7 @@ const SellCryptoRoot = ({
         return coin.symbol === symbol;
       })
     ) {
-      if (wallet.isComplete()) {
+      if (wallet.isComplete() && !wallet.pendingTssSession) {
         if (allKeys[wallet.keyId].backupComplete) {
           if (wallet.balance?.satSpendable > 0) {
             setSelectedWallet(wallet);

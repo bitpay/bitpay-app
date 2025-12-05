@@ -8,13 +8,17 @@ import {
   Warning,
   LightBlack,
   NeutralSlate,
-  Success,
   Warning25,
   Caution25,
   Success25,
   Black,
+  SlateDark,
+  White,
+  Slate30,
+  LinkBlue,
+  Action,
 } from '../../styles/colors';
-import {H7, Link} from '../styled/Text';
+import {BaseText} from '../styled/Text';
 import {ActionContainer, ActiveOpacity, Row} from '../styled/Containers';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {SvgProps} from 'react-native-svg';
@@ -37,11 +41,33 @@ const BannerContainer = styled.View<{
 
 const Description = styled.View`
   margin: 0 10px;
+  flex: 1;
 `;
 
 const BannerRow = styled(Row)`
   align-items: center;
   justify-content: space-between;
+`;
+
+const TitleText = styled(BaseText)`
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+`;
+
+const DescriptionText = styled(BaseText)`
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+`;
+
+const LinkText = styled(BaseText)`
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
 `;
 
 interface BannerProps {
@@ -106,24 +132,25 @@ const Banner = ({
         {icon ? React.createElement(icon) : <Info bgColor={bgColor} />}
         <Description>
           {title ? (
-            <H7
-              style={containerBgColor ? {color: getBgColor(type)} : {}}
-              medium={true}>
+            <TitleText
+              style={containerBgColor ? {color: getBgColor(type)} : {}}>
               {title}
-            </H7>
+            </TitleText>
           ) : null}
           {description ? (
-            <H7 style={containerBgColor ? {color: Black} : {}}>
+            <DescriptionText style={containerBgColor ? {color: Black} : {}}>
               {description}
-            </H7>
+            </DescriptionText>
           ) : null}
-          {transComponent ? <H7>{transComponent}</H7> : null}
+          {transComponent ? (
+            <DescriptionText>{transComponent}</DescriptionText>
+          ) : null}
           {link ? (
             <ActionContainer>
               <TouchableOpacity
                 activeOpacity={ActiveOpacity}
-                onPress={link?.onPress}>
-                <Link>{link?.text}</Link>
+                onPress={link.onPress}>
+                <LinkText>{link.text}</LinkText>
               </TouchableOpacity>
             </ActionContainer>
           ) : null}

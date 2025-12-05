@@ -34,7 +34,7 @@ export const AuthApi = {
 
       const {data} = await axios.post<RegisterResponse>(
         `${BASE_BITPAY_URLS[network]}/auth/register`,
-        {...params,pubKey: bitpayIdApi.identity.pub},
+        {...params, pubKey: bitpayIdApi.identity.pub},
         config,
       );
 

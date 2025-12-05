@@ -437,6 +437,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           .filter(
             sw =>
               sw.isComplete() &&
+              !sw.pendingTssSession &&
               !key.wallets.some(ew => ew.id === sw.credentials.walletId),
           )
           .map(syncWallet => {
@@ -452,7 +453,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             return _.merge(
               syncWallet,
               buildWalletObj(
-                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                {
+                  ...syncWallet.credentials,
+                  currencyAbbreviation,
+                  currencyName,
+                } as any,
                 _tokenOptionsByAddress,
               ),
             );
@@ -727,7 +732,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
     return () => subscription.remove();
   }, [keys]);
-
 
   const keyExtractorAssets = useCallback(item => item.id, []);
   const keyExtractorTransaction = useCallback(
@@ -1130,7 +1134,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const onPressItem = (walletId: string) => {
     haptic('impactLight');
     const fullWalletObj = findWalletById(keyFullWalletObjs, walletId) as Wallet;
-    if (!fullWalletObj.isComplete()) {
+    if (!fullWalletObj.isComplete() && fullWalletObj.pendingTssSession) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
         (err: any, status: Status) => {

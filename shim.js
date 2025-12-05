@@ -1,5 +1,13 @@
 import { Crypto } from '@peculiar/webcrypto';
 import { install as installEd25519 } from '@solana/webcrypto-ed25519-polyfill';
+import * as RNWasm from 'react-native-webassembly';
+
+global.self ||= global;
+global.globalThis ||= global;
+global.window ||= global;
+global.WebAssembly = RNWasm;
+try { if (global.process) global.process.browser = true; } catch {}
+
 
 if (typeof __dirname === 'undefined') {
   global.__dirname = '/';
