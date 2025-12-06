@@ -17,13 +17,15 @@ const GiftCardItemContainer = styled.View`
 
 const GiftCardBrandName = styled(BaseText)`
   font-size: 16px;
+  line-height: 21px;
   font-weight: 500;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 `;
 
 const BrandDetails = styled.View`
   margin-left: 18px;
   padding-right: 45px;
+  gap: 3px;
 `;
 
 export default ({cardConfig}: {cardConfig: CardConfig}) => {

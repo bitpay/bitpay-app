@@ -157,6 +157,7 @@ export const RowContainerWithoutFeedback = styled.View<RowContainerProps>`
 
 export const CurrencyColumn = styled(Column)`
   margin-left: 8px;
+  gap: 2px;
 `;
 
 export const CurrencyImageContainer = styled.View`

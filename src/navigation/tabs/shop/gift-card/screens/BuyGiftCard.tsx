@@ -450,6 +450,7 @@ const BuyGiftCard = ({
                   color: theme.dark ? White : SlateDark,
                   fontFamily,
                   fontSize: 16,
+                  lineHeight: 22.5,
                 },
               }}>
               {cardConfig.description}

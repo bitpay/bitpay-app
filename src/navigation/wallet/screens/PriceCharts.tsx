@@ -39,9 +39,6 @@ import {BottomNotificationConfig} from '../../../components/modal/bottom-notific
 import {CustomErrorMessage} from '../components/ErrorMessages';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {DateRanges, Rate} from '../../../store/rate/rate.models';
-import GainArrow from '../../../components/icons/trend-arrow/IncrementArrow';
-import LossArrow from '../../../components/icons/trend-arrow/DecrementArrow';
-import NeutralArrow from '../../../../assets/img/home/exchange-rates/flat-arrow.svg';
 import {useRequireKeyAndWalletRedirect} from '../../../utils/hooks/useRequireKeyAndWalletRedirect';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -54,7 +51,6 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import moment from 'moment';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 
 export type PriceChartsParamList = {
@@ -119,23 +115,26 @@ const RangeDateSelectorContainer = styled.View`
   margin-bottom: 33px;
 `;
 
-const CurrencyAverageText = styled(H5)`
-  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
-`;
-
 const RowContainer = styled.View`
   align-items: center;
   flex-direction: row;
   justify-content: center;
+  margin-top: -1px;
 `;
 
 const AbbreviationLabel = styled(H5)`
   font-size: 13px;
+  line-height: 18px;
   color: ${({theme}: {theme: {dark: boolean}}) =>
     theme.dark ? Slate30 : SlateDark};
   text-transform: uppercase;
   font-weight: 400;
   margin-bottom: 2px;
+`;
+
+const PriceText = styled(H2)`
+  line-height: 50px;
+  margin-bottom: 5px;
 `;
 
 const LoadingContainer = styled.View`
@@ -158,20 +157,6 @@ const scaleDownArray = (
     result.push(array[Math.floor(step * i)]);
   }
   return result;
-};
-
-const showLossGainOrNeutralArrow = (percentChange: number | undefined) => {
-  if (percentChange === undefined) {
-    return;
-  }
-
-  if (percentChange > 0) {
-    return <GainArrow style={{marginRight: 5}} width={20} height={20} />;
-  } else if (percentChange < 0) {
-    return <LossArrow style={{marginRight: 5}} width={20} height={20} />;
-  } else {
-    return <NeutralArrow style={{marginRight: 5}} width={20} height={20} />;
-  }
 };
 
 const getFormattedData = (
@@ -571,7 +556,7 @@ const PriceCharts = () => {
               <AbbreviationLabel>{currencyAbbreviation}</AbbreviationLabel>
             ) : null}
             {currentPrice ? (
-              <H2>
+              <PriceText>
                 {formatFiatAmount(
                   selectedPoint?.price ?? currentPrice,
                   defaultAltCurrency.isoCode,
@@ -580,7 +565,7 @@ const PriceCharts = () => {
                     currencyAbbreviation,
                   },
                 )}
-              </H2>
+              </PriceText>
             ) : null}
             {(() => {
               const percentChangeValue = getPercentChange();

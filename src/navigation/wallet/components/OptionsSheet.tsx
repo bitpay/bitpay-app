@@ -48,6 +48,7 @@ const OptionDescriptionText = styled(BaseText)`
   font-size: 14px;
   line-height: 19px;
   color: ${({theme: {dark}}) => (dark ? Slate : Black)};
+  margin-top: 3px;
 `;
 
 export interface Option {

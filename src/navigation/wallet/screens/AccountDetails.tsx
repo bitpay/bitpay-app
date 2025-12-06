@@ -728,7 +728,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     return () => subscription.remove();
   }, [keys]);
 
-
   const keyExtractorAssets = useCallback(item => item.id, []);
   const keyExtractorTransaction = useCallback(
     item => `${item.txid}+${item.walletId}`,

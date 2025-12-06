@@ -402,8 +402,8 @@ const CardTitle = styled(BaseText)`
   color: ${({theme}) => (theme.dark ? White : Black)};
   font-size: 13px;
   font-style: normal;
-  font-weight: 400;
-  line-height: 20px;
+  font-weight: 600;
+  line-height: 18px;
 `;
 
 const CardSubtitle = styled(BaseText)`

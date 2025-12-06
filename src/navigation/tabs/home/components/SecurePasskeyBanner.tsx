@@ -22,6 +22,7 @@ const PasskeyBannerContainer = styled(TouchableOpacity)`
   padding: 16px 35px 16px 76px;
   margin: 0px 11px 30px;
   position: relative;
+  gap: 8px;
 `;
 
 const PasskeyBannerContainerTitle = styled(BaseText)`

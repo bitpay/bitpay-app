@@ -54,6 +54,7 @@ export const OptionName = styled(BaseText)``;
 export const Balance = styled(BaseText)<{hidden?: boolean}>`
   font-size: ${({hidden}) => (hidden ? '20px' : '16px')};
   font-weight: 400;
+  line-height: ${({hidden}) => (hidden ? '24px' : '20px')};
   ${({hidden}) =>
     hidden
       ? `

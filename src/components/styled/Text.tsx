@@ -49,6 +49,7 @@ export const H4 = styled(BaseText)<HeadingProps>`
   font-style: normal;
   font-weight: 500;
   letter-spacing: 0;
+  line-height: 26px;
 `;
 
 export const H5 = styled(BaseText)<HeadingProps>`
@@ -56,12 +57,14 @@ export const H5 = styled(BaseText)<HeadingProps>`
   font-style: normal;
   font-weight: ${({bold = false}) => (bold ? 700 : 500)};
   letter-spacing: 0;
+  line-height: 24px;
 `;
 
 export const H6 = styled(BaseText)<HeadingProps>`
   font-size: 16px;
   font-style: normal;
   font-weight: ${({medium}) => (medium ? 400 : 500)};
+  line-height: 21px;
 `;
 
 export const H7 = styled(BaseText)<HeadingProps>`
@@ -69,6 +72,7 @@ export const H7 = styled(BaseText)<HeadingProps>`
   font-style: normal;
   font-weight: ${({medium = false}) => (medium ? 500 : 400)};
   letter-spacing: 0;
+  line-height: 18px;
 `;
 
 export const SubText = styled(H7)`
@@ -78,7 +82,7 @@ export const SubText = styled(H7)`
 export const ListItemSubText = styled(H7)<{
   textAlign?: 'right' | 'left' | 'center';
 }>`
-  margin-top: 2px;
+  margin-top: 6px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
   text-align: ${({textAlign}) => textAlign || 'left'};
 `;

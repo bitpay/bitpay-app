@@ -36,6 +36,7 @@ const RowContainer = styled(TouchableOpacity)`
 
 const NoteContainer = styled(Column)`
   align-items: flex-end;
+  gap: 4px;
 `;
 
 const SubTextContainer = styled.View`
@@ -137,18 +138,20 @@ const ExchangeRateItem = ({
       </CurrencyColumn>
       <NoteContainer>
         {currentPrice ? (
-          <ExchangeRateText>
-            {amount}
-            {code ? (
-              <View>
-                <ExchangeRateCode>{code}</ExchangeRateCode>
-              </View>
-            ) : null}
-          </ExchangeRateText>
+          <>
+            <ExchangeRateText>
+              {amount}
+              {code ? (
+                <View>
+                  <ExchangeRateCode>{code}</ExchangeRateCode>
+                </View>
+              ) : null}
+            </ExchangeRateText>
+            <SubTextContainer>
+              <Percentage percentageDifference={average || 0} hideArrow />
+            </SubTextContainer>
+          </>
         ) : null}
-        <SubTextContainer>
-          <Percentage percentageDifference={average || 0} hideArrow />
-        </SubTextContainer>
       </NoteContainer>
     </RowContainer>
   );

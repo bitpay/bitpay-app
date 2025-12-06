@@ -87,6 +87,7 @@ const ActivityIndicatorContainer = styled.View`
 const Message = styled(BaseText)`
   font-weight: 700;
   flex-wrap: wrap;
+  line-height: 22px;
 `;
 
 const ModalWrapper = styled.View`

@@ -34,17 +34,25 @@ const PortfolioBalanceHeader = styled(TouchableOpacity)`
 const PortfolioBalanceTitle = styled(BaseText)`
   margin-right: 3px;
   font-size: 13px;
+  line-height: 18px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const PortfolioBalanceText = styled(BaseText)`
   font-weight: bold;
   font-size: 31px;
+  line-height: 40px;
   color: ${({theme}) => theme.colors.text};
+  margin: 2px 0;
 `;
 
 const PercentageWrapper = styled.View`
   align-items: center;
+`;
+
+const HiddenBalance = styled(H2)`
+  line-height: 50px;
+  margin: 6px 0;
 `;
 
 const PortfolioBalance = () => {
@@ -116,7 +124,7 @@ const PortfolioBalance = () => {
             ) : null}
           </>
         ) : (
-          <H2>****</H2>
+          <HiddenBalance>****</HiddenBalance>
         )}
       </TouchableOpacity>
     </PortfolioContainer>

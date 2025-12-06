@@ -98,6 +98,7 @@ const NeedBackupText = styled(BaseText)`
 export const BalanceContainer = styled.View`
   flex-direction: row;
   gap: 6px;
+  margin-top: 4px;
 `;
 
 export const BalanceCode = styled(BaseText)`
@@ -156,6 +157,7 @@ const KeyName = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
   font-size: 12px;
   font-weight: 400;
+  line-height: 16px;
 `;
 
 export const WALLET_DISPLAY_LIMIT = 3;
@@ -239,12 +241,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
               {needsBackup ? (
                 <NeedBackupRow>
                   <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
-                  {context === 'keySelector' ? (
-                    <AngleRightSvg style={{marginLeft: 10}} />
-                  ) : null}
                 </NeedBackupRow>
-              ) : context === 'keySelector' ? (
-                <AngleRightSvg />
               ) : (
                 <SupportedNetworkIconContainer>
                   {SupportedNetworkIcons}

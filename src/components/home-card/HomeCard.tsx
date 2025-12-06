@@ -40,6 +40,7 @@ const CardBodyHeader = styled(BaseText)`
   line-height: 15px;
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
   margin-top: ${CardGutter};
+  margin-bottom: 1px;
 `;
 
 const CardBodyDesc = styled(BaseText)`
@@ -55,6 +56,7 @@ const CardPrice = styled(BaseText)<{scale: boolean}>`
   line-height: 30px;
   font-weight: bold;
   color: ${({theme}) => theme.colors.text};
+  margin-bottom: 2px;
 `;
 
 const CardPill = styled.View`
@@ -83,7 +85,7 @@ export const NeedBackupText = styled(BaseText)`
   border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   border-radius: 3px;
   position: absolute;
-  margin-top: 4px;
+  margin-top: 5px;
 `;
 
 export const HOME_CARD_HEIGHT = 143;

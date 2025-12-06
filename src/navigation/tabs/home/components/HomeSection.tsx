@@ -65,6 +65,7 @@ const HeaderLink = styled(Link)`
   color: ${({theme: {dark}}) => (dark ? White : Action)};
   font-weight: 400;
   font-size: 12px;
+  line-height: 16px;
   text-transform: capitalize;
 `;
 

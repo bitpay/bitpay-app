@@ -49,6 +49,7 @@ const Title = styled(BaseText)`
 const SubTitle = styled(BaseText)`
   text-align: center;
   font-size: 16px;
+  line-height: 22px;
   color: ${({theme: {dark}}) => (dark ? '#E1E4E7' : SlateDark)};
 `;
 

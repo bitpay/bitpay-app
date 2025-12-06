@@ -9,6 +9,7 @@ const PercentageContainer = styled(BaseText)<{
   color?: string;
 }>`
   font-size: 13px;
+  line-height: 18px;
   color: ${({color}) => color};
 `;
 
@@ -19,6 +20,7 @@ const PercentageRow = styled.View`
 
 const RangeLabel = styled(BaseText)`
   font-size: 13px;
+  line-height: 18px;
   color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
   font-weight: 400;
   margin-left: 5px;
