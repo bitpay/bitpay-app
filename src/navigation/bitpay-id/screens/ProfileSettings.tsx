@@ -150,10 +150,9 @@ export const ProfileSettingsScreen = ({}: ProfileProps) => {
           ) : null}
         </ProfileInfoContainer>
 
-        <H5>{t('Account Settings')}</H5>
-
         {user.verified ? (
           <>
+            <H5>{t('Account Settings')}</H5>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               onPress={() =>
