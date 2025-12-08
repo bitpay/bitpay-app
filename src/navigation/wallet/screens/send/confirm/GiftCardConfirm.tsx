@@ -380,7 +380,9 @@ const Confirm = () => {
     dispatch(
       AppActions.showBottomNotificationModal({
         ...errorMessageConfig,
-        message: errorMessageConfig.message || errorMessage,
+        message:
+          (errorMessageConfig.message === 'Unknown error' && errorMessage) ??
+          errorMessageConfig.message,
       }),
     );
   };
