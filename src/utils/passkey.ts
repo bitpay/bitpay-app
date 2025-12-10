@@ -24,7 +24,7 @@ async function handleFetchError(res: Response, url: string): Promise<void> {
   if (res.ok) return;
 
   let message = res.statusText;
-  let body: any = undefined;
+  let body: any;
 
   try {
     const text = await res.text();
