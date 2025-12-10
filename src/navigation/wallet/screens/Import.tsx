@@ -8,7 +8,6 @@ import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
 import CustomTabBar from '../../../components/custom-tab-bar/CustomTabBar';
-import {Platform} from 'react-native';
 
 type ImportScreenProps = NativeStackScreenProps<
   WalletGroupParamList,

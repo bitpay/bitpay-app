@@ -15,7 +15,11 @@ import yup from '../../../lib/yup';
 import {navigationRef} from '../../../Root';
 import {AppActions} from '../../../store/app';
 import {BitPayIdActions, BitPayIdEffects} from '../../../store/bitpay-id';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useSensitiveRefClear,
+} from '../../../utils/hooks';
 import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
@@ -64,6 +68,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   const dispatch = useAppDispatch();
   const [isRecaptchaVisible, setRecaptchaVisible] = useState(false);
   const captchaRef = useRef<CaptchaRef>(null);
+  const {clearSensitive} = useSensitiveRefClear([passwordRef]);
 
   const schema = yup.object().shape({
     givenName: yup.string().required().trim(),
@@ -168,6 +173,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
           agreedToMarketingCommunications,
         }),
       );
+      clearSensitive();
     },
     () => {
       Keyboard.dismiss();

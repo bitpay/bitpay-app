@@ -68,7 +68,10 @@ import AboutGroup, {
 import SecurityGroup, {
   SecurityGroupParamList,
 } from './navigation/tabs/settings/security/SecurityGroup';
-import AuthGroup, {AuthGroupParamList} from './navigation/auth/AuthGroup';
+import AuthGroup, {
+  AuthGroupParamList,
+  AuthScreens,
+} from './navigation/auth/AuthGroup';
 import BuyCryptoGroup, {
   BuyCryptoGroupParamList,
 } from './navigation/services/buy-crypto/BuyCryptoGroup';
@@ -332,6 +335,11 @@ export default () => {
     WalletScreens.ACCOUNT_DETAILS,
     WalletScreens.TRANSACTION_PROPOSAL_NOTIFICATIONS,
     WalletScreens.WALLET_DETAILS,
+    WalletScreens.VERIFY_PHRASE,
+    WalletScreens.EXTENDED_PRIVATE_KEY,
+    AuthScreens.LOGIN,
+    AuthScreens.CREATE_ACCOUNT,
+    AuthScreens.SECURE_ACCOUNT,
   ];
 
   const debouncedOnStateChange = useMemo(
