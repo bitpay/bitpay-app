@@ -84,7 +84,7 @@ const TransactionRow = ({
         <IconContainer>
           <RemoteImage
             borderRadius={50}
-            fallbackComponent={() => icon as JSX.Element}
+            fallbackComponent={() => icon as React.JSX.Element}
             height={TRANSACTION_ICON_SIZE}
             uri={iconURI}
           />

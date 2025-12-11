@@ -10,8 +10,10 @@ import {
   SimplexSellIncomingData,
   SimplexSellOrderData,
 } from './models/simplex-sell.models';
+import {SellCryptoStateOpts} from './sell-crypto.reducer';
 
 export enum SellCryptoActionTypes {
+  UPDATE_OPTS = 'SELL_CRYPTO/UPDATE_OPTS',
   SUCCESS_SELL_ORDER_MOONPAY = 'SELL_CRYPTO/SUCCESS_SELL_ORDER_MOONPAY',
   UPDATE_SELL_ORDER_MOONPAY = 'SELL_CRYPTO/UPDATE_SELL_ORDER_MOONPAY',
   REMOVE_SELL_ORDER_MOONPAY = 'SELL_CRYPTO/REMOVE_SELL_ORDER_MOONPAY',
@@ -21,6 +23,13 @@ export enum SellCryptoActionTypes {
   SUCCESS_SELL_ORDER_SIMPLEX = 'SELL_CRYPTO/SUCCESS_SELL_ORDER_SIMPLEX',
   UPDATE_SELL_ORDER_SIMPLEX = 'SELL_CRYPTO/UPDATE_SELL_ORDER_SIMPLEX',
   REMOVE_SELL_ORDER_SIMPLEX = 'SELL_CRYPTO/REMOVE_SELL_ORDER_SIMPLEX',
+}
+
+interface updateSellCryptoOpts {
+  type: typeof SellCryptoActionTypes.UPDATE_OPTS;
+  payload: {
+    sellCryptoOpts: SellCryptoStateOpts;
+  };
 }
 
 interface successSellOrderMoonpay {
@@ -87,6 +96,7 @@ interface removeSellOrderSimplex {
 }
 
 export type SellCryptoActionType =
+  | updateSellCryptoOpts
   | successSellOrderMoonpay
   | updateSellOrderMoonpay
   | removeSellOrderMoonpay

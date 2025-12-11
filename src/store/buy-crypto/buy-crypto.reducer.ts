@@ -10,12 +10,18 @@ import {
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
 import {handleWyreStatus} from '../../navigation/services/buy-crypto/utils/wyre-utils';
 import {RampPaymentData} from './models/ramp.models';
+import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
 
 type BuyCryptoReduxPersistBlackList = string[];
 export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
   [];
 
+export interface BuyCryptoStateOpts {
+  selectedPaymentMethod: PaymentMethodKey | undefined;
+}
+
 export interface BuyCryptoState {
+  opts: BuyCryptoStateOpts;
   banxa: {[key in string]: BanxaPaymentData};
   moonpay: {[key in string]: MoonpayPaymentData};
   ramp: {[key in string]: RampPaymentData};
@@ -29,6 +35,9 @@ export interface BuyCryptoState {
 }
 
 const initialState: BuyCryptoState = {
+  opts: {
+    selectedPaymentMethod: undefined,
+  },
   banxa: {},
   moonpay: {},
   ramp: {},
@@ -46,6 +55,16 @@ export const buyCryptoReducer = (
   action: BuyCryptoActionType,
 ): BuyCryptoState => {
   switch (action.type) {
+    case BuyCryptoActionTypes.UPDATE_OPTS:
+      const {buyCryptoOpts} = action.payload;
+      return {
+        ...state,
+        opts: {
+          ...state.opts,
+          ...buyCryptoOpts,
+        },
+      };
+
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_BANXA:
       const {banxaPaymentData} = action.payload;
       return {

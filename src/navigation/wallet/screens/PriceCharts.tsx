@@ -60,6 +60,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import moment from 'moment';
 import ArchaxFooter from '../../../components/archax/archax-footer';
+import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 
 export type PriceChartsParamList = {
   item: ExchangeRateItemProps;
@@ -224,7 +225,7 @@ export const AxisLabel = ({
   arrayLength: number;
   currencyAbbreviation: string;
   type: 'min' | 'max';
-}): JSX.Element => {
+}): React.ReactElement => {
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const theme = useTheme();
   const [textWidth, setTextWidth] = useState(50);
@@ -435,15 +436,10 @@ const PriceCharts = () => {
         chain: chain || '',
       }),
     );
-    navigation.navigate(WalletScreens.AMOUNT, {
-      onAmountSelected: async (amount: string) => {
-        navigation.navigate('BuyCryptoRoot', {
-          amount: Number(amount),
-          currencyAbbreviation,
-          chain,
-        });
-      },
+    navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
       context: 'buyCrypto',
+      currencyAbbreviation,
+      chain,
     });
   });
 

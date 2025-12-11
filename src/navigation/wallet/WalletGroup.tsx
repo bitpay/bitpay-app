@@ -21,7 +21,7 @@ import WalletSettings from './screens/WalletSettings';
 import AccountSettings from './screens/AccountSettings';
 import Import, {ImportParamList} from './screens/Import';
 import CreationOptions from './screens/CreationOptions';
-import {HeaderTitle} from '../../components/styled/Text';
+import {H7, HeaderTitle} from '../../components/styled/Text';
 import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
   Key,
@@ -89,6 +89,15 @@ import BackupOnboarding, {
 import {Root} from '../../Root';
 import {AccountRowProps} from '../../components/list/AccountListRow';
 import KeyInformation from './screens/KeyInformation';
+import {IsSVMChain, IsVMChain} from '../../store/wallet/utils/currency';
+import {
+  AccountChainsContainer,
+  WIDTH,
+} from '../../components/styled/Containers';
+import Blockie from '../../components/blockie/Blockie';
+import {getEVMAccountName} from '../../store/wallet/utils/wallet';
+import {useAppSelector} from '../../utils/hooks';
+import {RootState} from '../../store';
 
 interface WalletProps {
   Wallet: typeof Root;
@@ -238,6 +247,9 @@ export enum WalletScreens {
 
 const WalletGroup = ({Wallet, theme}: WalletProps) => {
   const {t} = useTranslation();
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const commonOptions = useStackScreenOptions(theme);
   return (
     <Wallet.Group screenOptions={commonOptions}>

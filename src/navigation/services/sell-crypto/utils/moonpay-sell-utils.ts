@@ -294,7 +294,7 @@ export const getMoonpaySellCurrenciesFixedProps = (
 };
 
 export const getMoonpaySellPayoutMethodFormat = (
-  method: WithdrawalMethodKey,
+  method: WithdrawalMethodKey | undefined,
 ): MoonpayPayoutMethodType | undefined => {
   if (!method) {
     return undefined;

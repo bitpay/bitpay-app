@@ -1,3 +1,4 @@
+import {WithdrawalMethodKey} from '../../navigation/services/sell-crypto/constants/SellCryptoConstants';
 import {MoonpaySellOrderData} from './models/moonpay-sell.models';
 import {RampSellOrderData} from './models/ramp-sell.models';
 import {SimplexSellOrderData} from './models/simplex-sell.models';
@@ -7,13 +8,21 @@ type SellCryptoReduxPersistBlackList = string[];
 export const sellCryptoReduxPersistBlackList: SellCryptoReduxPersistBlackList =
   [];
 
+export interface SellCryptoStateOpts {
+  selectedWithdrawalMethod: WithdrawalMethodKey | undefined;
+}
+
 export interface SellCryptoState {
+  opts: SellCryptoStateOpts;
   moonpay: {[key in string]: MoonpaySellOrderData};
   ramp: {[key in string]: RampSellOrderData};
   simplex: {[key in string]: SimplexSellOrderData};
 }
 
 const initialState: SellCryptoState = {
+  opts: {
+    selectedWithdrawalMethod: undefined,
+  },
   moonpay: {},
   ramp: {},
   simplex: {},
@@ -24,6 +33,16 @@ export const sellCryptoReducer = (
   action: SellCryptoActionType,
 ): SellCryptoState => {
   switch (action.type) {
+    case SellCryptoActionTypes.UPDATE_OPTS:
+      const {sellCryptoOpts} = action.payload;
+      return {
+        ...state,
+        opts: {
+          ...state.opts,
+          ...sellCryptoOpts,
+        },
+      };
+
     case SellCryptoActionTypes.SUCCESS_SELL_ORDER_MOONPAY:
       const {moonpaySellOrderData} = action.payload;
       return {

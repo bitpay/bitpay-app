@@ -253,7 +253,7 @@ const Addresses = () => {
         return;
       }
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error(`error [getStatus]: ${e}`);
+      logger.error(`error [Addresses - setUtxos] [getStatus]: ${e}`);
     }
   };
 

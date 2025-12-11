@@ -41,7 +41,8 @@ export type OnGoingProcessMessages =
   | 'SCANNING_FUNDS'
   | 'SCANNING_FUNDS_WITH_PASSPHRASE'
   | 'CREATING_PASSKEY'
-  | 'DELETING_PASSKEY';
+  | 'DELETING_PASSKEY'
+  | 'WAITING_FOR_MAX_AMOUNT';
 
 export interface OngoingProcessState {
   isVisible: boolean;
@@ -94,6 +95,7 @@ const translations: Record<OnGoingProcessMessages, () => string> = {
     i18n.t('Scanning Funds... this process may take a few minutes'),
   CREATING_PASSKEY: () => i18n.t('Creating Passkey...'),
   DELETING_PASSKEY: () => i18n.t('Deleting Passkey...'),
+  WAITING_FOR_MAX_AMOUNT: () => i18n.t('Calculating maximum amount...'),
 };
 
 const LONG_RUNNING_PROCESSES: OnGoingProcessMessages[] = [

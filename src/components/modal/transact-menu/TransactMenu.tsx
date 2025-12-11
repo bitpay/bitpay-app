@@ -18,10 +18,10 @@ import SheetModal from '../base/sheet/SheetModal';
 import Icons from './TransactMenuIcons';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {css} from 'styled-components/native';
+import {ExternalServicesScreens} from '../../../navigation/services/ExternalServicesGroup';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -136,12 +136,7 @@ const TransactModal = () => {
             context: 'TransactMenu',
           }),
         );
-        navigation.navigate(WalletScreens.AMOUNT, {
-          onAmountSelected: async (amount: string, setButtonState: any) => {
-            navigation.navigate('BuyCryptoRoot', {
-              amount: Number(amount),
-            });
-          },
+        navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
           context: 'buyCrypto',
         });
       },
@@ -157,7 +152,9 @@ const TransactModal = () => {
             context: 'TransactMenu',
           }),
         );
-        navigation.navigate('SellCryptoRoot');
+        navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+          context: 'sellCrypto',
+        });
       },
     },
     {

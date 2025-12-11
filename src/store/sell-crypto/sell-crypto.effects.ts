@@ -1,4 +1,5 @@
 import {Effect} from '..';
+import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
 import {navigationRef} from '../../Root';
 import {Analytics} from '../analytics/analytics.effects';
 
@@ -8,5 +9,7 @@ export const goToSellCrypto = (): Effect<void> => dispatch => {
       context: 'Shortcuts',
     }),
   );
-  navigationRef.navigate('SellCryptoRoot');
+  navigationRef.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+    context: 'sellCrypto',
+  });
 };

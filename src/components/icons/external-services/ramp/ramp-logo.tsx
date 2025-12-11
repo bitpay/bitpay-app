@@ -10,7 +10,7 @@ const RampLogoSvg: React.FC<{
   height: number;
 }> = ({isDark, iconOnly, width, height}) => {
   return iconOnly ? (
-    <Svg width={width} height={height} viewBox={'0 0 708.66 708.66'}>
+    <Svg width={width} height={height} viewBox={'50 50 608.66 608.66'}>
       <G>
         <Path
           id="ramp-path-icon1"

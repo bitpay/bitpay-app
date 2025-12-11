@@ -122,7 +122,7 @@ export type SwapCryptoOffer = {
   key: SwapCryptoExchangeKey;
   name: string;
   showOffer: boolean;
-  logo: JSX.Element;
+  logo: React.JSX.Element;
   expanded: boolean;
   swapClicked: boolean;
   rate: string | undefined;

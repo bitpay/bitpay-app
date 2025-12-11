@@ -269,7 +269,7 @@ export const getMoonpayFixedCurrencyAbbreviation = (
 };
 
 export const getMoonpayPaymentMethodFormat = (
-  method: PaymentMethodKey,
+  method: PaymentMethodKey | undefined,
 ): MoonpayPaymentType | undefined => {
   let moonpayPaymentMethod: MoonpayPaymentType | undefined;
   if (method) {
