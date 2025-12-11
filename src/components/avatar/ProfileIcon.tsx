@@ -1,7 +1,7 @@
 import React from 'react';
 import * as Svg from 'react-native-svg';
 import {useTheme} from 'styled-components/native';
-import {Midnight, ProgressBlue} from '../../styles/colors';
+import {Action, LightBlue, Midnight} from '../../styles/colors';
 
 interface ProfileIconProps {
   color?: Svg.Color;
@@ -14,8 +14,8 @@ const ProfileIcon: React.FC<ProfileIconProps> = props => {
   const theme = useTheme();
 
   size = size || 35;
-  color = color || (theme.dark ? '#4989FF' : '#9FAFF5');
-  background = background || (theme.dark ? Midnight : ProgressBlue);
+  color = color || (theme.dark ? '#4989FF' : Action);
+  background = background || (theme.dark ? Midnight : LightBlue);
 
   return (
     <Svg.Svg width={size} height={size} viewBox="0 0 50 50" fill="none">

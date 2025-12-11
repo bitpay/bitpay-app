@@ -8,8 +8,14 @@ const MockOffers = (): ClassicContentCard[] => {
     {
       ...DEFAULT_CLASSIC_CONTENT_CARD,
       id: 'dev_1',
-      cardDescription: t('Buy movie tickets at AMC Theaters'),
+      title: t('Buy movie tickets with crypto'),
+      cardDescription: t(
+        'Buy an AMC Theatres gift card with crypto in the BitPay app.',
+      ),
       image: require('../../../../../../assets/img/home/offers/amc.png'),
+      extras: {
+        cover_image: require('../../../../../../assets/img/home/offers/amc-cover.png'),
+      },
       url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amc%20theatres`,
       openURLInWebView: false,
     },

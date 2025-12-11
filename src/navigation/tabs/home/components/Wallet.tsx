@@ -1,5 +1,6 @@
 import React from 'react';
-import styled, {useTheme} from 'styled-components/native';
+import {View} from 'react-native';
+import styled from 'styled-components/native';
 import HomeCard from '../../../../components/home-card/HomeCard';
 import {BaseText, H3} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
@@ -24,13 +25,12 @@ import {
   ScreenGutter,
 } from '../../../../components/styled/Containers';
 import {HomeCarouselLayoutType} from '../../../../store/app/app.models';
-import {BoxShadow} from './Styled';
-import {View} from 'react-native';
 import Percentage from '../../../../components/percentage/Percentage';
 import {useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import AngleRightSvg from '../../../../../assets/img/angle-right.svg';
-import {Balance, OptionName} from '../../../wallet/components/DropdownOption';
+import ArrowRightSvg from './ArrowRightSvg';
+import {Balance} from '../../../wallet/components/DropdownOption';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 interface WalletCardComponentProps {
@@ -52,12 +52,15 @@ export const HeaderImg = styled.View`
 `;
 
 export const ListCard = styled(TouchableOpacity)<{outlineStyle?: boolean}>`
-  border: ${({outlineStyle, theme}) =>
-    outlineStyle ? `1px solid ${theme.dark ? SlateDark : Slate30}` : 'none'};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  border: ${({theme, outlineStyle}) =>
+    `1px solid ${
+      theme.dark ? (!outlineStyle ? LightBlack : SlateDark) : Slate30
+    }`};
+  background-color: ${({theme: {dark}, outlineStyle}) =>
+    dark ? (!outlineStyle ? '#111' : 'none') : White};
   border-radius: 12px;
   margin: ${({outlineStyle}) =>
-    outlineStyle ? `0px 0px ${ScreenGutter} 0px` : `10px ${ScreenGutter}`};
+    outlineStyle ? `0px 0px ${ScreenGutter} 0px` : `8px ${ScreenGutter}`};
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -68,15 +71,18 @@ export const ListCard = styled(TouchableOpacity)<{outlineStyle?: boolean}>`
 export const Img = styled.View<{isFirst: boolean}>`
   min-height: 22px;
   margin-left: ${({isFirst}) => (isFirst ? 0 : '-5px')};
+  justify-content: center;
+  align-items: center;
 `;
 
 export const RemainingAssetsLabel = styled(BaseText)`
-  font-size: 12px;
+  font-size: 13px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 18px;
   letter-spacing: 0;
   color: ${Slate};
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
   margin-left: 5px;
 `;
 
@@ -85,8 +91,14 @@ const NeedBackupText = styled(BaseText)`
   text-align: center;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   padding: 2px 4px;
-  border: 1px solid ${({theme: {dark}}) => (dark ? White : Slate30)};
+  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   border-radius: 3px;
+`;
+
+export const BalanceContainer = styled.View`
+  flex-direction: row;
+  gap: 6px;
+  margin-top: 4px;
 `;
 
 export const BalanceCode = styled(BaseText)`
@@ -97,6 +109,55 @@ export const BalanceCode = styled(BaseText)`
 
 export const BalanceCodeContainer = styled.View`
   padding-left: 2px;
+`;
+
+export const SupportedNetworkIconContainer = styled.View`
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+  border-radius: 20px;
+  height: 30px;
+  align-items: center;
+  padding-left: 4px;
+  padding-right: 7px;
+  justify-content: center;
+`;
+
+const RemainingAssetsContainer = styled.View`
+  padding-bottom: 0px;
+`;
+
+const ListRow = styled(Row)`
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+`;
+
+const HeaderColumn = styled(Column)`
+  justify-content: center;
+  align-items: flex-end;
+  margin-right: 12px;
+`;
+
+const NeedBackupRow = styled(Row)`
+  align-items: center;
+`;
+
+const FooterSupportedNetworkIconContainer = styled(
+  SupportedNetworkIconContainer,
+)`
+  margin-right: 12px;
+`;
+
+const FooterContainer = styled(Row)`
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+`;
+
+const KeyName = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
 `;
 
 export const WALLET_DISPLAY_LIMIT = 3;
@@ -114,29 +175,26 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   context,
 }) => {
   const {t} = useTranslation();
-  const theme = useTheme();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const walletInfo = wallets.slice(0, WALLET_DISPLAY_LIMIT);
   const remainingWalletCount = getRemainingWalletCount(wallets);
   const isListView = layout === 'listView';
-  const HeaderComponent = (
+  const SupportedNetworkIcons = (
     <HeaderImg>
       {walletInfo.map((wallet, index) => {
         const {id, img} = wallet;
         return (
           wallet && (
             <Img key={id} isFirst={index === 0}>
-              <CurrencyImage img={img} size={isListView ? 15 : ICON_SIZE} />
+              <CurrencyImage img={img} size={isListView ? 20 : ICON_SIZE} />
             </Img>
           )
         );
       })}
       {remainingWalletCount ? (
-        <View style={isListView ? {paddingBottom: 5} : null}>
-          <RemainingAssetsLabel>
-            + {remainingWalletCount} {t('more')}{' '}
-          </RemainingAssetsLabel>
-        </View>
+        <RemainingAssetsContainer>
+          <RemainingAssetsLabel>+ {remainingWalletCount}</RemainingAssetsLabel>
+        </RemainingAssetsContainer>
       ) : null}
     </HeaderImg>
   );
@@ -151,45 +209,48 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
       <ListCard
         activeOpacity={ActiveOpacity}
         onPress={onPress}
-        style={!theme.dark && context !== 'keySelector' ? BoxShadow : null}
         outlineStyle={context === 'keySelector'}>
-        <Row style={{alignItems: 'center', justifyContent: 'center'}}>
+        <ListRow>
           <Column>
-            {HeaderComponent}
-            <OptionName>{keyName}</OptionName>
+            <KeyName>{keyName}</KeyName>
+            <BalanceContainer>
+              <Balance hidden={hideKeyBalance}>
+                {hideKeyBalance ? (
+                  '****'
+                ) : (
+                  <>
+                    {amount}
+                    {code ? (
+                      <BalanceCodeContainer>
+                        <BalanceCode>{code}</BalanceCode>
+                      </BalanceCodeContainer>
+                    ) : null}
+                  </>
+                )}
+              </Balance>
+              {!hideKeyBalance && percentageDifference ? (
+                <Percentage
+                  percentageDifference={percentageDifference}
+                  hideArrow={true}
+                />
+              ) : null}
+            </BalanceContainer>
           </Column>
-          <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
-            {needsBackup ? (
-              <Row style={{alignItems: 'center'}}>
-                <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
-                {context === 'keySelector' ? (
-                  <AngleRightSvg style={{marginLeft: 10}} />
-                ) : null}
-              </Row>
-            ) : context === 'keySelector' ? (
-              <AngleRightSvg />
-            ) : !hideKeyBalance ? (
-              <>
-                <Balance>
-                  {amount}
-                  {code ? (
-                    <BalanceCodeContainer>
-                      <BalanceCode>{code}</BalanceCode>
-                    </BalanceCodeContainer>
-                  ) : null}
-                </Balance>
-                {percentageDifference ? (
-                  <Percentage
-                    percentageDifference={percentageDifference}
-                    darkModeColor={Slate}
-                  />
-                ) : null}
-              </>
-            ) : (
-              <H3>****</H3>
-            )}
-          </Column>
-        </Row>
+          <Row style={{alignItems: 'center'}}>
+            <HeaderColumn>
+              {needsBackup ? (
+                <NeedBackupRow>
+                  <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+                </NeedBackupRow>
+              ) : (
+                <SupportedNetworkIconContainer>
+                  {SupportedNetworkIcons}
+                </SupportedNetworkIconContainer>
+              )}
+            </HeaderColumn>
+            <ArrowRightSvg />
+          </Row>
+        </ListRow>
       </ListCard>
     );
   }
@@ -197,9 +258,17 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   // todo refactor to not use multiple layers for home card as it will no longer be used for anything other then keys
 
   /* ////////////////////////////// CAROUSEL */
+  const CardFooter = (
+    <FooterContainer>
+      <FooterSupportedNetworkIconContainer>
+        {SupportedNetworkIcons}
+      </FooterSupportedNetworkIconContainer>
+      <ArrowRightSvg />
+    </FooterContainer>
+  );
+
   return (
     <HomeCard
-      header={HeaderComponent}
       body={{
         title: keyName,
         value: formatFiatAmount(totalBalance, defaultAltCurrency.isoCode),
@@ -207,6 +276,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         needsBackup,
         hideKeyBalance,
       }}
+      footer={CardFooter}
       onCTAPress={onPress}
     />
   );

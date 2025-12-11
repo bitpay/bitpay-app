@@ -114,6 +114,12 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       ),
       cta: () => setShowMultisigOptions(true),
     },
+    {
+      id: 'coinbase',
+      title: t('Coinbase Account'),
+      description: t('Connect your Coinbase account'),
+      cta: () => navigation.navigate('CoinbaseRoot'),
+    },
   ];
 
   const showErrorModal = (e: string) => {

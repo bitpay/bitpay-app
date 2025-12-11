@@ -1,27 +1,28 @@
 import React from 'react';
 import {CommonActions, useNavigation} from '@react-navigation/native';
-import {useTheme} from 'styled-components/native';
 import styled from 'styled-components/native';
 import {ActiveOpacity} from '@components/base/TouchableOpacity';
-import {BoxShadow} from '../../../../navigation/tabs/home/components/Styled';
 import SecurePasskeyIcon from '../../../../../assets/img/secure-passkey.svg';
-import HomeArrowRight from '../../../../../assets/img/home-arrow-right.svg';
+import ArrowRightSvg from './ArrowRightSvg';
 import {TouchableOpacity} from '../../../../components/base/TouchableOpacity';
-import {LightBlack, White} from '../../../../styles/colors';
+import {LightBlack, Slate30, White} from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
 import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {SecurityScreens} from '../../../../navigation/tabs/settings/security/SecurityGroup';
 
 const PasskeyBannerContainer = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
+  background-color: ${({theme: {dark}}) => (dark ? '#111' : White)};
+  border-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+  border-width: 1px;
   border-radius: 12px;
   flex-direction: column;
   justify-content: center;
   min-height: 100px;
   padding: 16px 35px 16px 76px;
-  margin: 0 15px;
+  margin: 0px 11px 30px;
   position: relative;
+  gap: 8px;
 `;
 
 const PasskeyBannerContainerTitle = styled(BaseText)`
@@ -49,10 +50,8 @@ const IconArrowRight = styled.View`
 
 const SecurePasskeyBanner: React.FC = () => {
   const navigation = useNavigation();
-  const theme = useTheme();
   return (
     <PasskeyBannerContainer
-      style={!theme.dark && BoxShadow}
       activeOpacity={ActiveOpacity}
       onPress={() => {
         navigation.dispatch(
@@ -74,12 +73,12 @@ const SecurePasskeyBanner: React.FC = () => {
       <PasskeyBannerContainerTitle>
         Secure your account
       </PasskeyBannerContainerTitle>
-      <PasskeyBannerDescription>Setup a Passkey</PasskeyBannerDescription>
+      <PasskeyBannerDescription>Create a Passkey</PasskeyBannerDescription>
       <IconContainer>
         <SecurePasskeyIcon />
       </IconContainer>
       <IconArrowRight>
-        <HomeArrowRight />
+        <ArrowRightSvg />
       </IconArrowRight>
     </PasskeyBannerContainer>
   );

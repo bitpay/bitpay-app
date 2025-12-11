@@ -164,6 +164,7 @@ export interface AppState {
   inAppBrowserOpen: boolean;
   tokensDataLoaded: boolean;
   showArchaxBanner: boolean;
+  dismissedMarketingCardIds: string[];
 }
 
 const initialState: AppState = {
@@ -260,6 +261,7 @@ const initialState: AppState = {
   inAppBrowserOpen: false,
   tokensDataLoaded: false,
   showArchaxBanner: false,
+  dismissedMarketingCardIds: [],
 };
 
 export const appReducer = (
@@ -772,6 +774,23 @@ export const appReducer = (
         ...state,
         showArchaxBanner: action.payload,
       };
+
+    case AppActionTypes.DISMISS_MARKETING_CONTENT_CARD: {
+      const cardId = action.payload;
+
+      if (!cardId) {
+        return state;
+      }
+
+      if (state.dismissedMarketingCardIds.includes(cardId)) {
+        return state;
+      }
+
+      return {
+        ...state,
+        dismissedMarketingCardIds: [...state.dismissedMarketingCardIds, cardId],
+      };
+    }
 
     default:
       return state;

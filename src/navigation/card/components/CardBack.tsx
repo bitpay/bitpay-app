@@ -90,7 +90,7 @@ const CardBack: React.FC<CardBackProps> = props => {
 
           <Svg.Text
             id="CARD-NUMBER-LABEL"
-            fontFamily="Heebo"
+            fontFamily="Archivo"
             fontSize="9"
             fontWeight="700"
             data-lineSpacing="10.3395062"
@@ -103,7 +103,7 @@ const CardBack: React.FC<CardBackProps> = props => {
           <Svg.Text
             id="card-number"
             fill="#FFFFFF"
-            fontFamily="Heebo"
+            fontFamily="Archivo"
             fontSize="26"
             fontWeight="700">
             <Svg.TSpan x="19.6450617" y="128.29321">
@@ -113,7 +113,7 @@ const CardBack: React.FC<CardBackProps> = props => {
 
           <Svg.Text
             id="CARD-HOLDER-LABEL"
-            fontFamily="Heebo"
+            fontFamily="Archivo"
             fontSize="9"
             fontWeight="700"
             data-lineSpacing="10.3395062"
@@ -125,7 +125,7 @@ const CardBack: React.FC<CardBackProps> = props => {
 
           {/* <Svg.Text
             id="nickname"
-            fontFamily="Heebo"
+            fontFamily="Archivo"
             fontSize="17"
             fontWeight="700"
             data-lineSpacing="16.5432099"
@@ -137,7 +137,7 @@ const CardBack: React.FC<CardBackProps> = props => {
 
           <Svg.Text
             id="CVV-LABEL"
-            fontFamily="Heebo"
+            fontFamily="Archivo"
             fontSize="9"
             fontWeight="700"
             data-lineSpacing="10.3395062"
@@ -149,7 +149,7 @@ const CardBack: React.FC<CardBackProps> = props => {
 
           <Svg.Text
             id="cvv"
-            fontFamily="Heebo"
+            fontFamily="Archivo"
             fontSize="17"
             fontWeight="700"
             data-lineSpacing="16.5432099"
@@ -161,7 +161,7 @@ const CardBack: React.FC<CardBackProps> = props => {
 
           <Svg.Text
             id="EXPIRATION-LABEL"
-            fontFamily="Heebo"
+            fontFamily="Archivo"
             fontSize="9"
             fontWeight="700"
             data-lineSpacing="10.3395062"
@@ -173,7 +173,7 @@ const CardBack: React.FC<CardBackProps> = props => {
 
           <Svg.Text
             id="expiration"
-            fontFamily="Heebo"
+            fontFamily="Archivo"
             fontSize="17"
             fontWeight="700"
             data-lineSpacing="16.5432099"

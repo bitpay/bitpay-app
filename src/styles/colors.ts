@@ -46,3 +46,4 @@ export const DisabledTextDark = '#656565';
 export const NotificationPrimary = '#1F3AB3';
 export const ProgressBlue = '#4F6EF7';
 export const LinkBlue = '#4989FF';
+export const LightBlue = '#ECEFFD';

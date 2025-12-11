@@ -415,7 +415,7 @@ const PasskeyScreen: React.FC = () => {
           listPasskeyCredentials &&
           listPasskeyCredentials.length === 0 && (
             <CardIntro>
-              <TitleIntro>{t('Setup a passkey')}</TitleIntro>
+              <TitleIntro>{t('Create a passkey')}</TitleIntro>
               <RowIntro>
                 <IconContainerIntro>
                   <PasskeyPersonSetup width={36} height={36} />

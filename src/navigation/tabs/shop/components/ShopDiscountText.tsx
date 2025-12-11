@@ -13,6 +13,8 @@ interface DiscountTextProps {
 
 const DiscountText = styled(BaseText)<DiscountTextProps>`
   ${({fontSize}) => (fontSize ? `font-size: ${fontSize}px;` : '')};
+  ${({fontSize}) =>
+    fontSize ? `line-height: ${Math.round(fontSize * 1.3)}px;` : ''};
   ${({fontWeight}) => `font-weight: ${fontWeight ?? 600};`};
   ${({color}) => (color ? `color: ${color};` : '')};
 `;
