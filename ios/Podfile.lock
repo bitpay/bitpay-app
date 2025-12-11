@@ -1937,6 +1937,8 @@ PODS:
     - react-native-config/App (= 1.5.0)
   - react-native-config/App (1.5.0):
     - React-Core
+  - react-native-cookies (6.2.1):
+    - React-Core
   - react-native-get-random-values (1.11.0):
     - React-Core
   - react-native-in-app-review (4.3.1):
@@ -3371,6 +3373,7 @@ DEPENDENCIES:
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - "react-native-compat (from `../node_modules/@walletconnect/react-native-compat`)"
   - react-native-config (from `../node_modules/react-native-config`)
+  - "react-native-cookies (from `../node_modules/@react-native-cookies/cookies`)"
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-in-app-review (from `../node_modules/react-native-in-app-review`)
   - react-native-keyevent (from `../node_modules/react-native-keyevent`)
@@ -3561,6 +3564,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@walletconnect/react-native-compat"
   react-native-config:
     :path: "../node_modules/react-native-config"
+  react-native-cookies:
+    :path: "../node_modules/@react-native-cookies/cookies"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
   react-native-in-app-review:
@@ -3768,6 +3773,7 @@ SPEC CHECKSUMS:
   react-native-blur: ba0e9ad6274783c8d45f42da82acae02e25784ad
   react-native-compat: f3f307c339d7755e2562293567ec0bd47235eca9
   react-native-config: 5330c8258265c1e5fdb8c009d2cabd6badd96727
+  react-native-cookies: f54fcded06bb0cda05c11d86788020b43528a26c
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-in-app-review: ae45cc55e168a3b78eea9eea031ca57dccd7eb5a
   react-native-keyevent: fa167ff93e90b5d86b1678885669ff8ec099bf09

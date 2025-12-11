@@ -27,6 +27,7 @@ import AuthFormContainer, {
   CheckboxLabel,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
+import CookieManager from '@react-native-cookies/cookies';
 
 export type CreateAccountScreenParamList = {} | undefined;
 type CreateAccountScreenProps = NativeStackScreenProps<
@@ -197,6 +198,11 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
         agreedToMarketingCommunications,
       }),
     );
+  };
+
+  const onCaptchaCancel = () => {
+    setRecaptchaVisible(false);
+    CookieManager.clearAll();
   };
 
   return (
@@ -391,7 +397,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
         sitekey={session.noCaptchaKey}
         isVisible={isRecaptchaVisible}
         onResponse={onCaptchaResponse}
-        onCancel={() => setRecaptchaVisible(false)}
+        onCancel={onCaptchaCancel}
       />
     </SafeAreaView>
   );
