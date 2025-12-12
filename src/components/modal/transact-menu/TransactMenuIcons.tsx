@@ -8,18 +8,18 @@ import {BitPayTheme} from '../../../themes/bitpay';
 const getIconStateColor = (color: string, disabled: boolean) =>
   disabled ? changeOpacity(color, 0.5) : color;
 
-const BuyCrypto = () => {
+const BuyCrypto = ({disabled = false}) => {
   return (
     <Svg.Svg width="40" height="40" viewBox="0 0 40 40" fill="none">
       <Svg.Circle
         cx="20"
         cy="20"
         r="20"
-        fill={getIconStateColor(Action, false)}
+        fill={getIconStateColor(Action, disabled)}
       />
       <Svg.Path
         d="M8 18V10H0V8H8V0H10V8H18V10H10V18H8Z"
-        fill={getIconStateColor(White, false)}
+        fill={getIconStateColor(White, disabled)}
         transform="translate(11 11)"
       />
     </Svg.Svg>
@@ -106,17 +106,17 @@ const Exchange = ({disabled = false}) => {
   );
 };
 
-const Receive = () => {
+const Receive = ({disabled = false}) => {
   return (
     <Svg.Svg width="40" height="40" viewBox="0 0 40 40" fill="none">
       <Svg.Circle
         cx="20"
         cy="20"
         r="20"
-        fill={getIconStateColor(Action, false)}
+        fill={getIconStateColor(Action, disabled)}
       />
       <Svg.Path
-        fill={getIconStateColor(White, false)}
+        fill={getIconStateColor(White, disabled)}
         d="M9.24506 10.6595L0.636039 2.05048L2.05025 0.636271L10.6593 9.2453L10.6593 1.3257L12.6569 1.34338V12.6571H1.34315L1.32547 10.6595L9.24506 10.6595Z"
         transform="translate(13.5 13.5)"
       />

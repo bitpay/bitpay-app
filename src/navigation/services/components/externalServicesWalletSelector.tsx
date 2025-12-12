@@ -334,7 +334,7 @@ const ExternalServicesWalletSelector: React.FC<
     } else if (createNewWalletData) {
       try {
         if (
-          createNewWalletData.key.isPrivKeyEncrypted &&
+          createNewWalletData.key?.isPrivKeyEncrypted &&
           !(
             createNewWalletData.currency?.isToken &&
             createNewWalletData.associatedWallet
