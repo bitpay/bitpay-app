@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {
   ImportTextInput,
   HeaderContainer,
@@ -30,9 +30,13 @@ import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/st
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {ScrollView, Keyboard} from 'react-native';
+import {ScrollView, Keyboard, TextInput, AppState} from 'react-native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useSensitiveRefClear,
+} from '../../../utils/hooks';
 import {useOngoingProcess} from '../../../contexts';
 
 const BWCProvider = BwcProvider.getInstance();
@@ -76,6 +80,8 @@ const FileOrText = () => {
   const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
+  const plainTextRef = useRef<TextInput>(null);
+  const {clearSensitive} = useSensitiveRefClear([plainTextRef]);
 
   const {
     control,
@@ -157,6 +163,7 @@ const FileOrText = () => {
 
   const onSubmit = handleSubmit(formData => {
     const {text, password} = formData;
+    clearSensitive();
 
     Keyboard.dismiss();
 
@@ -175,6 +182,15 @@ const FileOrText = () => {
     importWallet(decryptBackupText, opts);
   });
 
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'inactive' || state === 'background') {
+        clearSensitive();
+      }
+    });
+    return () => sub.remove();
+  }, [clearSensitive]);
+
   return (
     <ScrollViewContainer
       accessibilityLabel="file-or-text-view"
@@ -189,6 +205,7 @@ const FileOrText = () => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <ImportTextInput
+                ref={plainTextRef}
                 accessibilityLabel="import-text-input"
                 multiline
                 numberOfLines={5}

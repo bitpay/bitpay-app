@@ -1,5 +1,10 @@
-import React, {useState} from 'react';
-import {KeyboardTypeOptions, TextInput, TextInputProps} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  AppState,
+  KeyboardTypeOptions,
+  TextInput,
+  TextInputProps,
+} from 'react-native';
 import TextInputMask, {TextInputMaskProps} from 'react-native-text-input-mask';
 import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
@@ -218,6 +223,15 @@ const BoxInput = React.forwardRef<
         </IconContainer>
       );
     }
+
+    useEffect(() => {
+      const sub = AppState.addEventListener('change', state => {
+        if (isPassword && (state === 'inactive' || state === 'background')) {
+          props.onChangeText?.('');
+        }
+      });
+      return () => sub.remove();
+    }, [isPassword, props]);
 
     return (
       <>
