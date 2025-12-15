@@ -33,6 +33,7 @@ import {
 import {sleep} from '../../../utils/helper-methods';
 import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -146,19 +147,22 @@ const CreateOrImportKey = ({
                   const context = 'onboarding';
                   showOngoingProcess('CREATING_KEY');
                   const createdKey = await dispatch(
-                    startCreateKey(getBaseKeyCreationCoinsAndTokens()),
+                    startCreateKey(getBaseKeyCreationCoinsAndTokens(), 'onboarding'),
                   );
 
                   dispatch(
                     setHomeCarouselConfig({id: createdKey.id, show: true}),
                   );
                   hideOngoingProcess();
-                  askForTrackingThenNavigate(() =>
+                  askForTrackingThenNavigate(() => {
+                    dispatch(
+                      Analytics.track('Clicked Create New Key', {context: 'onboarding'})
+                    );
                     navigation.navigate('BackupKey', {
                       context,
                       key: createdKey,
-                    }),
-                  );
+                    });
+                  });
                 } catch (err: any) {
                   const errstring =
                     err instanceof Error ? err.message : JSON.stringify(err);
@@ -176,11 +180,14 @@ const CreateOrImportKey = ({
               accessibilityLabel="i-already-have-a-key-button"
               buttonStyle={'secondary'}
               onPress={() => {
-                askForTrackingThenNavigate(() =>
+                askForTrackingThenNavigate(() => {
+                  dispatch(
+                    Analytics.track('Clicked Import Key', {context: 'onboarding'})
+                  );
                   navigation.navigate('Import', {
                     context: 'onboarding',
-                  }),
-                );
+                  });
+                });
               }}>
               {t('I already have a Key')}
             </Button>

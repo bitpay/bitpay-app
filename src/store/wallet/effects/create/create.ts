@@ -59,6 +59,7 @@ import {addCustomTokenOption} from '../currencies/currencies';
 import {uniq} from 'lodash';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
+import {Analytics} from '../../../analytics/analytics.effects';
 
 export interface CreateOptions {
   network?: Network;
@@ -97,6 +98,7 @@ export const startCreateKey =
       isToken: boolean;
       tokenAddress?: string;
     }>,
+    context?: string
   ): Effect<Promise<Key>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -119,6 +121,11 @@ export const startCreateKey =
         );
 
         const key = buildKeyObj({key: _key, wallets});
+        if (context !== 'onboarding') {
+          dispatch(
+            Analytics.track('Created Key')
+          );
+        }
         dispatch(
           successCreateKey({
             key,

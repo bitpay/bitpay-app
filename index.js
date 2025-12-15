@@ -42,7 +42,7 @@ import {useAppSelector} from './src/utils/hooks';
 const makeErrorHandler = store => (e, isFatal) => {
   if (isFatal) {
     store.dispatch(
-      Analytics.track('BitPay App - Crashed App', {
+      Analytics.track('Crashed App', {
         build: GIT_COMMIT_HASH,
         version: APP_VERSION,
       }),
@@ -65,7 +65,7 @@ const makeErrorHandler = store => (e, isFatal) => {
 
 const makeNativeExceptionHandler = store => () => {
   store.dispatch(
-    Analytics.track('BitPay App - Crashed App', {
+    Analytics.track('Crashed App', {
       build: GIT_COMMIT_HASH,
       version: APP_VERSION,
     }),

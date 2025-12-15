@@ -988,7 +988,7 @@ export const handleBwsEvent =
           _startUpdateWalletStatus(dispatch, keyObj, wallet);
           break;
         case 'NewIncomingTx':
-          Analytics.track('BitPay App - Funded Wallet', {
+          Analytics.track('Funded Wallet', {
             walletType: wallet.credentials.addressType,
             cryptoType: wallet.credentials.coin,
             cryptoAmount: true,
