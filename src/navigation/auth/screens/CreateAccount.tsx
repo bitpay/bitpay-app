@@ -94,7 +94,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
       // 2) Block very common / leaked-like passwords
       .test(
         'not-common-password',
-        'This password is too common or easily guessable. Please choose a stronger one.',
+        'Please choose a stronger password.',
         value => {
           if (!value) return false;
           return !isCommonWeakPassword(value);
@@ -117,14 +117,10 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
         },
       )
       // 4) Block low-entropy patterns even if they pass complexity regex
-      .test(
-        'no-low-entropy',
-        'Password is too simple or repetitive. Please add more variety of characters.',
-        value => {
-          if (!value) return false;
-          return !isLowEntropy(value);
-        },
-      ),
+      .test('no-low-entropy', 'Please choose a stronger password.', value => {
+        if (!value) return false;
+        return !isLowEntropy(value);
+      }),
     agreedToTOSandPP: yup.boolean().oneOf([true], t('Required')),
     agreedToMarketingCommunications: yup.boolean(),
   });
