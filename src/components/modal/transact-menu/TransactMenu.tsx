@@ -24,6 +24,7 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {sleep} from '../../../utils/helper-methods';
 import {css} from 'styled-components/native';
 import {ExternalServicesScreens} from '../../../navigation/services/ExternalServicesGroup';
+import {Keys} from '../../../store/wallet/wallet.reducer';
 
 const TransactButton = styled.View`
   justify-content: center;
@@ -120,23 +121,28 @@ const TransactModal = () => {
   const hideModal = () => setModalVisible(false);
   const showModal = () => setModalVisible(true);
   const {keys} = useAppSelector(({WALLET}) => WALLET);
-  const availableWallets = Object.values(keys)
+  const availableWallets = Object.values(keys as Keys)
     .filter(key => key.backupComplete)
     .flatMap(key => key.wallets)
     .filter(
       wallet =>
         !wallet.hideWallet &&
         !wallet.hideWalletByAccount &&
-        wallet.isComplete() &&
-        wallet.balance.sat > 0,
+        wallet.isComplete(),
     );
-  const disabledSendingOptions = availableWallets.length === 0;
+
+  const availableWalletsWithFunds = availableWallets.filter(
+    wallet => wallet.balance.sat > 0,
+  );
+
+  const disabledReceivingOptions = availableWallets.length === 0;
+  const disabledSendingOptions = availableWalletsWithFunds.length === 0;
   const dispatch = useAppDispatch();
 
   const TransactMenuList: Array<TransactMenuItemProps> = [
     {
       id: 'buyCrypto',
-      img: () => <Icons.BuyCrypto />,
+      img: ({disabled}) => <Icons.BuyCrypto disabled={disabled} />,
       title: t('Buy Crypto'),
       description: t('Buy crypto with cash'),
       onPress: () => {
@@ -182,7 +188,7 @@ const TransactModal = () => {
     },
     {
       id: 'receive',
-      img: () => <Icons.Receive />,
+      img: ({disabled}) => <Icons.Receive disabled={disabled} />,
       title: t('Receive'),
       description: t('Get crypto from another wallet'),
       onPress: () => {
@@ -232,8 +238,9 @@ const TransactModal = () => {
 
   const renderItem = ({item}: {item: TransactMenuItemProps}) => {
     const disabled =
-      disabledSendingOptions &&
-      ['send', 'sellCrypto', 'exchange', 'buyGiftCard'].includes(item.id);
+      (disabledSendingOptions &&
+        ['send', 'sellCrypto', 'exchange', 'buyGiftCard'].includes(item.id)) ||
+      (disabledReceivingOptions && ['receive', 'buyCrypto'].includes(item.id));
 
     const handlePress = async () => {
       if (disabled) {

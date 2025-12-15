@@ -1377,7 +1377,7 @@ const SwapCryptoRoot: React.FC = () => {
     } else if (createToWalletData) {
       try {
         if (
-          createToWalletData.key.isPrivKeyEncrypted &&
+          createToWalletData.key?.isPrivKeyEncrypted &&
           !(
             createToWalletData.currency?.isToken &&
             createToWalletData.associatedWallet
