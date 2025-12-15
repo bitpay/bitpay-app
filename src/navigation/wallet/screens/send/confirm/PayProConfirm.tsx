@@ -235,7 +235,7 @@ const PayProConfirm = () => {
         checkHighFees(selectedWallet, newTxp, fee);
       }
       dispatch(
-        Analytics.track('BitPay App - Start Merchant Purchase', {
+        Analytics.track('Start Merchant Purchase', {
           merchantBrand: invoice.merchantName,
         }),
       );
@@ -308,7 +308,7 @@ const PayProConfirm = () => {
       await sleep(400);
       hideOngoingProcess();
       dispatch(
-        Analytics.track('BitPay App - Start Merchant Purchase', {
+        Analytics.track('Start Merchant Purchase', {
           merchantBrand: invoice.merchantName,
         }),
       );
@@ -387,7 +387,7 @@ const PayProConfirm = () => {
         }),
       );
       dispatch(
-        Analytics.track('BitPay App - Purchased Merchant', {
+        Analytics.track('Purchased Merchant', {
           merchantBrand: invoice?.merchantName,
           merchantAmount: invoice?.price,
           merchantCurrency: invoice?.currency,
@@ -530,7 +530,7 @@ const PayProConfirm = () => {
     }
     toggleThenUntoggle(setResetSwipeButton);
     dispatch(
-      Analytics.track('BitPay App - Failed Merchant Purchase', {
+      Analytics.track('Failed Merchant Purchase', {
         merchantBrand: invoice?.merchantName,
         merchantAmount: invoice?.price,
         merchantCurrency: invoice?.currency,

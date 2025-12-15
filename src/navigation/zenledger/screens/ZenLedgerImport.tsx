@@ -288,7 +288,7 @@ const ZenLedgerImport: React.FC = () => {
                             })
                             .toString();
                           Analytics.track(
-                            'BitPay App - ZenLedger Imported Wallet Address',
+                            'ZenLedger Imported Wallet Address',
                             {
                               cryptoType: coins,
                             },

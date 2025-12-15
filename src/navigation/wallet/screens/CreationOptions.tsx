@@ -99,7 +99,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       ),
       cta: () => {
         dispatch(
-          Analytics.track('BitPay App - Clicked Import Key', {
+          Analytics.track('Clicked Import Key', {
             context: 'CreationOptions',
           }),
         );

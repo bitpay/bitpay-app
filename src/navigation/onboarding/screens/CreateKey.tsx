@@ -156,7 +156,7 @@ const CreateOrImportKey = ({
                   hideOngoingProcess();
                   askForTrackingThenNavigate(() => {
                     dispatch(
-                      Analytics.track('BitPay App - Clicked Create New Key', {context: 'onboarding'})
+                      Analytics.track('Clicked Create New Key', {context: 'onboarding'})
                     );
                     navigation.navigate('BackupKey', {
                       context,
@@ -182,7 +182,7 @@ const CreateOrImportKey = ({
               onPress={() => {
                 askForTrackingThenNavigate(() => {
                   dispatch(
-                    Analytics.track('BitPay App - Clicked Import Key', {context: 'onboarding'})
+                    Analytics.track('Clicked Import Key', {context: 'onboarding'})
                   );
                   navigation.navigate('Import', {
                     context: 'onboarding',

@@ -123,7 +123,7 @@ export const startCreateKey =
         const key = buildKeyObj({key: _key, wallets});
         if (context !== 'onboarding') {
           dispatch(
-            Analytics.track('BitPay App - Created Key')
+            Analytics.track('Created Key')
           );
         }
         dispatch(
