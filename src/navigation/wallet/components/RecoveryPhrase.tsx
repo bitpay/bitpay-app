@@ -433,7 +433,7 @@ const RecoveryPhrase = () => {
         key,
       });
       dispatch(
-        Analytics.track('Imported Key', {
+        Analytics.track('BitPay App - Imported Key', {
           context: route.params?.context || '',
           source: 'RecoveryPhrase',
         }),
