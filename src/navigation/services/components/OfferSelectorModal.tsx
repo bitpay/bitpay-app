@@ -50,6 +50,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {isEuCountry} from '../../../store/location/location.effects';
 import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
+import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -490,7 +491,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
             )}
           </PartnersText>
         </SectionContainer>
-        <ScrollView>
+        <BottomSheetScrollView>
           {offers && !showOffersLoading
             ? Object.values(offers)
                 .sort((a, b) =>
@@ -813,7 +814,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                 })
             : null}
           {showArchaxBanner && <ArchaxFooter />}
-        </ScrollView>
+        </BottomSheetScrollView>
       </SafeAreaView>
 
       <PaymentMethodsModal
