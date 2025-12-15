@@ -2467,6 +2467,19 @@ const ExternalServicesOfferSelector: React.FC<
       setOfferSelectorText(
         _selectedOffer?.label + t(' using ') + paymentMethod?.label,
       );
+
+      dispatch(
+        Analytics.track('Buy - Our Best Offer Loaded', {
+          exchange: _selectedOffer?.key || 'unknown',
+          paymentMethod: paymentMethod?.method || '',
+          fiatAmount: Number(_selectedOffer?.fiatAmount) || '',
+          coin: coin?.toLowerCase() || '',
+          chain: chain?.toLowerCase() || '',
+          fiatCurrency: _selectedOffer?.fiatCurrency || '',
+          cryptoAmount: Number(_selectedOffer?.amountReceiving) || '',
+        }),
+      );
+
       setSelectedOfferLoading(false);
     }, 3500);
 
@@ -2529,6 +2542,18 @@ const ExternalServicesOfferSelector: React.FC<
             t('paid to') +
             ' ' +
             withdrawalMethod?.label,
+        );
+
+        dispatch(
+          Analytics.track('Sell - Our Best Offer Loaded', {
+            exchange: _selectedOffer?.key || 'unknown',
+            paymentMethod: paymentMethod?.method || '',
+            fiatAmount: Number(_selectedOffer?.amountReceiving) || '',
+            coin: coin?.toLowerCase() || '',
+            chain: chain?.toLowerCase() || '',
+            fiatCurrency: _selectedOffer?.fiatCurrency || '',
+            cryptoAmount: Number(_selectedOffer?.sellAmount) || '',
+          }),
         );
       } else {
         setSelectedOffer(undefined);
