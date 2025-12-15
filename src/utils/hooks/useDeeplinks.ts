@@ -15,7 +15,6 @@ import {
 } from '../../constants/config';
 import {BitpayIdScreens} from '../../navigation/bitpay-id/BitpayIdGroup';
 import {CardScreens} from '../../navigation/card/CardStack';
-import {BuyCryptoScreens} from '../../navigation/services/buy-crypto/BuyCryptoGroup';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
 import {CoinbaseScreens} from '../../navigation/coinbase/CoinbaseGroup';
 import {navigationRef, RootStackParamList, RootStacks} from '../../Root';
@@ -30,7 +29,7 @@ import {DebugScreens} from '../../navigation/Debug';
 import {GiftCardScreens} from '../../navigation/tabs/shop/gift-card/GiftCardGroup';
 import useAppSelector from './useAppSelector';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
-import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
+import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
 
 const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
   initialRouteName: RootStacks.TABS,
@@ -53,9 +52,8 @@ const getLinkingConfig = (): LinkingOptions<RootStackParamList>['config'] => ({
       },
     } as PathConfig<TabsStackParamList>,
     [GiftCardScreens.GIFT_CARD_DEEPLINK]: 'giftcard',
-    [BuyCryptoScreens.ROOT]: {path: 'buy/:amount?'},
+    [ExternalServicesScreens.ROOT_BUY_AND_SELL]: {path: 'buy/:amount?'},
     [SwapCryptoScreens.SWAP_CRYPTO_ROOT]: 'swap',
-    [SellCryptoScreens.ROOT]: 'sell',
     [CoinbaseScreens.ROOT]: 'coinbase',
   },
 });

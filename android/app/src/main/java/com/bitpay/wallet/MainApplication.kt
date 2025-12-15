@@ -46,7 +46,7 @@ class MainApplication : Application(), ReactApplication {
         }
 
         // Register custom font
-        ReactFontManager.getInstance().addCustomFont(this, "Heebo", R.font.heebo)
+        ReactFontManager.getInstance().addCustomFont(this, "Archivo", R.font.archivo)
 
         // Initialize Braze
         BrazeInAppMessageManager.getInstance().ensureSubscribedToInAppMessageEvents(context)

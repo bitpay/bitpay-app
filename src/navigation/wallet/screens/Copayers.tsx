@@ -104,7 +104,7 @@ const Copayers: React.FC<CopayersProps> = props => {
         if (err) {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
-          logger.error(`error [getStatus]: ${errStr}`);
+          logger.error(`error [updateWalletStatus] [getStatus]: ${errStr}`);
         } else {
           setWalletStatus(st?.wallet);
           if (st?.wallet && st?.wallet?.status === 'complete') {

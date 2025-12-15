@@ -119,6 +119,8 @@ import {SolanaPayOpts} from '../../navigation/wallet/screens/send/confirm/Confir
 import {tokenManager} from '../../managers/TokenManager';
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
+import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
+import {BuyAndSellRootProps} from '../../navigation/services/screens/BuyAndSellRoot';
 
 export const incomingData =
   (
@@ -1486,13 +1488,15 @@ const handleBuyCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: 'BuyCryptoRoot',
+          name: ExternalServicesScreens.ROOT_BUY_AND_SELL,
           params: {
             partner,
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
-          },
+            fromDeeplink: true,
+            context: 'buyCrypto',
+          } as BuyAndSellRootProps,
         },
       ],
     });
@@ -1545,14 +1549,15 @@ const handleSellCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: SellCryptoScreens.ROOT,
+          name: ExternalServicesScreens.ROOT_BUY_AND_SELL,
           params: {
             partner,
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
             fromDeeplink: true,
-          },
+            context: 'sellCrypto',
+          } as BuyAndSellRootProps,
         },
       ],
     });

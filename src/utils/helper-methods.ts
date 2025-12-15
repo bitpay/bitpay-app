@@ -71,6 +71,30 @@ export const sleep = (duration: number) =>
 export const titleCasing = (str: string) =>
   `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
 
+export const changeOpacity = (color: string, targetOpacity: number) => {
+  const hex = color.replace('#', '');
+
+  const normalizedHex =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map(char => `${char}${char}`)
+          .join('')
+      : hex;
+
+  if (normalizedHex.length !== 6) {
+    return color;
+  }
+
+  const r = parseInt(normalizedHex.substring(0, 2), 16);
+  const g = parseInt(normalizedHex.substring(2, 4), 16);
+  const b = parseInt(normalizedHex.substring(4, 6), 16);
+
+  const opacity = Math.max(0, Math.min(targetOpacity, 1));
+
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
 export const parsePath = (path: string) => {
   return {
     purpose: path.split('/')[1],
@@ -405,7 +429,7 @@ export const getRateByCurrencyName = (
   rates: Rates,
   currencyAbbreviation: string,
   chain: string,
-  tokenAddress?: string,
+  tokenAddress?: string | null,
 ): Rate[] => {
   const currencyName = getCurrencyAbbreviation(
     tokenAddress ?? currencyAbbreviation,

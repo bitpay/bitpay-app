@@ -401,3 +401,8 @@ export const showArchaxBanner = (payload: boolean): AppActionType => ({
   type: AppActionTypes.SHOW_ARCHAX_BANNER,
   payload,
 });
+
+export const dismissMarketingContentCard = (cardId: string): AppActionType => ({
+  type: AppActionTypes.DISMISS_MARKETING_CONTENT_CARD,
+  payload: cardId,
+});

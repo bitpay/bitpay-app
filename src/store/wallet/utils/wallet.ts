@@ -830,6 +830,21 @@ export const isMatchedWallet = (newWallet: Wallet, wallets: Wallet[]) => {
   );
 };
 
+export const getEVMAccountName = (
+  wallet: Wallet,
+  allKeys: {[key: string]: Key},
+) => {
+  if (!wallet?.keyId || !wallet?.receiveAddress) {
+    return undefined;
+  }
+  const selectedKey = allKeys[wallet.keyId];
+  if (!selectedKey?.evmAccountsInfo) {
+    return undefined;
+  }
+  const evmAccountInfo = selectedKey.evmAccountsInfo[wallet.receiveAddress];
+  return evmAccountInfo?.name;
+};
+
 export const findKeyByKeyId = (
   keyId: string,
   keys: {[key in string]: Key},

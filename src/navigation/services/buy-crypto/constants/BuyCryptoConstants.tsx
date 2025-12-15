@@ -29,7 +29,9 @@ export interface PaymentMethod {
   order: number;
   label: string;
   method: PaymentMethodKey;
-  imgSrc: JSX.Element;
+  waitingTimeDescription?: string;
+  imgLogo: React.JSX.Element;
+  imgIcon: React.JSX.Element;
   supportedExchanges: {
     [key in BuyCryptoExchangeKey]: boolean;
   };
@@ -37,12 +39,40 @@ export interface PaymentMethod {
   supportedCountries?: string[];
 }
 
+export const getPaymentMethodIconByKey = (
+  key: PaymentMethodKey,
+  w?: number,
+  h?: number,
+): React.JSX.Element | null => {
+  const paymentMethod = PaymentMethodsAvailable[key];
+  if (!paymentMethod) {
+    return null;
+  }
+  return (
+    <PaymentMethodIcon
+      iconOnly={true}
+      paymentMethodId={key}
+      width={w ?? 20}
+      height={h ?? 20}
+    />
+  );
+};
+
 export const PaymentMethodsAvailable: PaymentMethods = {
   ach: {
     order: 6,
     label: 'ACH Bank Transfer',
     method: 'ach',
-    imgSrc: <PaymentMethodIcon paymentMethodId="ach" width={40} height={40} />,
+    waitingTimeDescription: '1 - 3 business days',
+    imgLogo: <PaymentMethodIcon paymentMethodId="ach" width={40} height={40} />,
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="ach"
+        width={20}
+        height={20}
+      />
+    ),
     supportedExchanges: {
       banxa: false,
       moonpay: false,
@@ -58,8 +88,17 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 2,
     label: 'Apple Pay',
     method: 'applePay',
-    imgSrc: (
+    waitingTimeDescription: '< 10 mins',
+    imgLogo: (
       <PaymentMethodIcon paymentMethodId="applePay" width={40} height={40} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="applePay"
+        width={20}
+        height={20}
+      />
     ),
     supportedExchanges: {
       banxa: true,
@@ -75,8 +114,17 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 5,
     label: 'Credit Card',
     method: 'creditCard',
-    imgSrc: (
+    waitingTimeDescription: '< 10 mins',
+    imgLogo: (
       <PaymentMethodIcon paymentMethodId="creditCard" width={40} height={40} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="creditCard"
+        width={20}
+        height={20}
+      />
     ),
     supportedExchanges: {
       banxa: true,
@@ -92,8 +140,17 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 1,
     label: 'Debit Card',
     method: 'debitCard',
-    imgSrc: (
+    waitingTimeDescription: '< 10 mins',
+    imgLogo: (
       <PaymentMethodIcon paymentMethodId="debitCard" width={40} height={40} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="debitCard"
+        width={20}
+        height={20}
+      />
     ),
     supportedExchanges: {
       banxa: true,
@@ -109,8 +166,17 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 8,
     label: 'Google Pay',
     method: 'googlePay',
-    imgSrc: (
+    waitingTimeDescription: '< 10 mins',
+    imgLogo: (
       <PaymentMethodIcon paymentMethodId="googlePay" width={60} height={60} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="googlePay"
+        width={20}
+        height={20}
+      />
     ),
     supportedExchanges: {
       banxa: false,
@@ -126,11 +192,20 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 7,
     label: 'SEPA Bank Transfer',
     method: 'sepaBankTransfer',
-    imgSrc: (
+    waitingTimeDescription: '1 - 3 business days',
+    imgLogo: (
       <PaymentMethodIcon
         paymentMethodId="sepaBankTransfer"
         width={40}
         height={40}
+      />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="sepaBankTransfer"
+        width={20}
+        height={20}
       />
     ),
     supportedExchanges: {
@@ -148,8 +223,17 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 11,
     label: 'Other',
     method: 'other',
-    imgSrc: (
+    waitingTimeDescription: 'Select at checkout with provider',
+    imgLogo: (
       <PaymentMethodIcon paymentMethodId="other" width={40} height={40} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="other"
+        width={20}
+        height={20}
+      />
     ),
     supportedExchanges: {
       banxa: true,
@@ -165,8 +249,17 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 3,
     label: 'PayPal',
     method: 'paypal',
-    imgSrc: (
+    waitingTimeDescription: '< 10 mins',
+    imgLogo: (
       <PaymentMethodIcon paymentMethodId="paypal" width={80} height={80} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="paypal"
+        width={20}
+        height={20}
+      />
     ),
     supportedExchanges: {
       banxa: false,
@@ -182,7 +275,18 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 9,
     label: 'PISP',
     method: 'pisp',
-    imgSrc: <PaymentMethodIcon paymentMethodId="pisp" width={40} height={40} />,
+    waitingTimeDescription: '1 - 3 business days',
+    imgLogo: (
+      <PaymentMethodIcon paymentMethodId="pisp" width={40} height={40} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="pisp"
+        width={20}
+        height={20}
+      />
+    ),
     supportedExchanges: {
       banxa: false,
       moonpay: false,
@@ -198,8 +302,17 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 10,
     label: 'Pix',
     method: 'pix',
-    imgSrc: (
+    waitingTimeDescription: '< 10 mins',
+    imgLogo: (
       <PaymentMethodIcon paymentMethodId="pix" width={100} height={100} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="pix"
+        width={20}
+        height={20}
+      />
     ),
     supportedExchanges: {
       banxa: false,
@@ -216,8 +329,17 @@ export const PaymentMethodsAvailable: PaymentMethods = {
     order: 4,
     label: 'Venmo',
     method: 'venmo',
-    imgSrc: (
+    waitingTimeDescription: '< 10 mins',
+    imgLogo: (
       <PaymentMethodIcon paymentMethodId="venmo" width={80} height={80} />
+    ),
+    imgIcon: (
+      <PaymentMethodIcon
+        iconOnly={true}
+        paymentMethodId="venmo"
+        width={20}
+        height={20}
+      />
     ),
     supportedExchanges: {
       banxa: false,

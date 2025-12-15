@@ -209,7 +209,9 @@ export const CustomizeCard = ({
     if (needsBackup) {
       return (
         <NeedsBackupContainer>
-          <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
+          <NeedBackupText style={{marginTop: 0}}>
+            {t('Needs Backup')}
+          </NeedBackupText>
         </NeedsBackupContainer>
       );
     }

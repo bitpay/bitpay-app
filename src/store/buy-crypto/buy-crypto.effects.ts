@@ -3,7 +3,6 @@ import {getMoonpayFiatAmountLimits} from '../../navigation/services/buy-crypto/u
 import {getRampFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/ramp-utils';
 import {getSardineFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/sardine-utils';
 import {getSimplexFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/simplex-utils';
-import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {getTransakFiatAmountLimits} from '../../navigation/services/buy-crypto/utils/transak-utils';
 import {navigationRef} from '../../Root';
 import {Effect} from '../index';
@@ -11,6 +10,7 @@ import {BuyCryptoLimits} from './buy-crypto.models';
 import {Analytics} from '../analytics/analytics.effects';
 import {BuyCryptoExchangeKey} from '../../navigation/services/buy-crypto/utils/buy-crypto-utils';
 import {logManager} from '../../managers/LogManager';
+import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
 
 export const calculateAltFiatToUsd =
   (
@@ -197,12 +197,7 @@ export const goToBuyCrypto = (): Effect<void> => dispatch => {
       context: 'Shortcuts',
     }),
   );
-  navigationRef.navigate(WalletScreens.AMOUNT, {
-    onAmountSelected: async (amount: string, setButtonState: any) => {
-      navigationRef.navigate('BuyCryptoRoot', {
-        amount: Number(amount),
-      });
-    },
+  navigationRef.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
     context: 'buyCrypto',
   });
 };

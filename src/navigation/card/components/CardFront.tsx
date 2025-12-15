@@ -212,7 +212,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
 
           <Svg.Text
             id="card-nickname"
-            fontFamily="Heebo"
+            fontFamily="Archivo"
             fontSize="14"
             fontWeight="400"
             fill="#FFFFFF">
@@ -289,7 +289,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
                   <Svg.Text
                     textAnchor="middle"
                     id="fiatSymbol"
-                    fontFamily="Heebo"
+                    fontFamily="Archivo"
                     fontSize="11"
                     fontWeight="normal"
                     fill={colorPalette.pillColor}>
@@ -298,7 +298,7 @@ const CardFront: React.FC<CardFrontProps> = props => {
                 </Svg.G>
                 <Svg.Text
                   id="fiatName"
-                  fontFamily="Heebo"
+                  fontFamily="Archivo"
                   fontSize="11"
                   fontWeight="normal"
                   fill={colorPalette.pillColor}>

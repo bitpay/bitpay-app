@@ -27,6 +27,7 @@ import {getBuyCryptoFiatLimits} from '../../store/buy-crypto/buy-crypto.effects'
 import KeyEvent from 'react-native-keyevent';
 import ArchaxFooter from '../archax/archax-footer';
 import {View} from 'react-native';
+import {AltCurrenciesRowProps} from '../list/AltCurrenciesRow';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
@@ -118,12 +119,14 @@ export interface LimitsOpts {
   };
 }
 
+export type AmountContext = 'buyCrypto' | 'sellCrypto' | 'swapCrypto';
+
 export interface AmountProps {
   cryptoCurrencyAbbreviation?: string;
   fiatCurrencyAbbreviation?: string;
   tokenAddress?: string;
   chain?: string;
-  context?: string;
+  context?: AmountContext;
   reduceTopGap?: boolean;
   buttonState?: ButtonState;
   limitsOpts?: LimitsOpts;
@@ -154,13 +157,15 @@ const Amount: React.FC<AmountProps> = ({
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const logger = useLogger();
-  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const defaultAltCurrency: AltCurrenciesRowProps = useAppSelector(
+    ({APP}) => APP.defaultAltCurrency,
+  );
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const curValRef = useRef('');
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const _isSmallScreen = showArchaxBanner ? true : isNarrowHeight;
 
-  const fiatCurrency = useMemo(() => {
+  const fiatCurrency = useMemo<string>(() => {
     if (fiatCurrencyAbbreviation) {
       return fiatCurrencyAbbreviation;
     }
@@ -351,7 +356,7 @@ const Amount: React.FC<AmountProps> = ({
     limitsOpts?.maxWalletAmount,
   ]);
 
-  const getWarnMsg = useMemo<JSX.Element>(() => {
+  const getWarnMsg = useMemo<React.ReactNode>(() => {
     let msg: string | undefined;
     if (+amount > 0) {
       if (limits.min && +amount < limits.min) {

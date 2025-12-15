@@ -49,6 +49,7 @@ const Title = styled(BaseText)`
 const SubTitle = styled(BaseText)`
   text-align: center;
   font-size: 16px;
+  line-height: 22px;
   color: ${({theme: {dark}}) => (dark ? '#E1E4E7' : SlateDark)};
 `;
 
@@ -88,7 +89,7 @@ const CoinbaseIntro = () => {
           <Title>{t('Connect to Coinbase')}</Title>
           <SubTitle>
             {t(
-              'Manage your Coinbase accounts, check balances, deposits and withdraw funds between wallets.',
+              'Manage your Coinbase accounts, check balances, deposit and withdraw funds between wallets.',
             )}
           </SubTitle>
         </CoinbaseHeaderContainer>

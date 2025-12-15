@@ -45,10 +45,16 @@ import {
   updatePortfolioBalance,
   syncWallets,
 } from '../../../store/wallet/wallet.actions';
-import {KeyMethods, Status, Wallet} from '../../../store/wallet/wallet.models';
+import {
+  Key,
+  KeyMethods,
+  Status,
+  Wallet,
+} from '../../../store/wallet/wallet.models';
 import {
   LightBlack,
   NeutralSlate,
+  Slate,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -59,6 +65,7 @@ import {
   sleep,
   fixWalletAddresses,
   getEvmGasWallets,
+  calculatePercentageDifference,
 } from '../../../utils/helper-methods';
 import {
   BalanceUpdateError,
@@ -113,6 +120,7 @@ import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import Percentage from '../../../components/percentage/Percentage';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -155,6 +163,10 @@ const BalanceContainer = styled.View`
   margin-top: 20px;
   padding: 10px 15px;
   align-items: center;
+`;
+
+const PercentageWrapper = styled.View`
+  align-self: center;
 `;
 
 const WalletListHeader = styled.View`
@@ -208,7 +220,9 @@ const KeyOverview = () => {
   const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
+    ({WALLET}) => WALLET,
+  );
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
   const linkedCoinbase = useAppSelector(
@@ -320,7 +334,9 @@ const KeyOverview = () => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            logger.error(`error [getStatus]: ${errStr}`);
+            logger.error(
+              `error [KeyOverview - createNewMultisigKey] [getStatus]: ${errStr}`,
+            );
           } else {
             navigation.navigate('Copayers', {
               wallet: key?.wallets[0],
@@ -337,8 +353,18 @@ const KeyOverview = () => {
     updateStatusForKey(false);
   }, []);
 
-  const {wallets = [], totalBalance} =
-    useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
+  const {
+    wallets = [],
+    totalBalance = 0,
+    totalBalanceLastDay,
+  } = useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
+
+  const percentageDifference = useMemo(() => {
+    if (!totalBalanceLastDay) {
+      return null;
+    }
+    return calculatePercentageDifference(totalBalance, totalBalanceLastDay);
+  }, [totalBalance, totalBalanceLastDay]);
 
   const memorizedAccountList = useMemo(() => {
     return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
@@ -618,7 +644,9 @@ const KeyOverview = () => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            logger.error(`error [getStatus]: ${errStr}`);
+            logger.error(
+              `error [KeyOverview - onPressItem] [getStatus]: ${errStr}`,
+            );
           } else {
             if (status?.wallet?.status === 'complete') {
               fullWalletObj.openWallet({}, () => {
@@ -730,11 +758,22 @@ const KeyOverview = () => {
             dispatch(toggleHideAllBalances());
           }}>
           {!hideAllBalances ? (
-            <Balance scale={shouldScale(totalBalance)}>
-              {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
-                currencyDisplay: 'symbol',
-              })}
-            </Balance>
+            <>
+              <Balance scale={shouldScale(totalBalance)}>
+                {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+                  currencyDisplay: 'symbol',
+                })}
+              </Balance>
+              {percentageDifference ? (
+                <PercentageWrapper>
+                  <Percentage
+                    percentageDifference={percentageDifference}
+                    hideArrow
+                    rangeLabel={t('Last Day')}
+                  />
+                </PercentageWrapper>
+              ) : null}
+            </>
           ) : (
             <H2>****</H2>
           )}

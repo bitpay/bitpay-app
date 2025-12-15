@@ -107,16 +107,6 @@ const CreateOrImportKey = ({
     navigation.setOptions({
       gestureEnabled: false,
       headerLeft: () => null,
-      headerRight: () => (
-        <HeaderRightContainer>
-          <Button
-            accessibilityLabel="skip-button"
-            buttonType={'pill'}
-            onPress={onSkipPressRef.current}>
-            {t('Skip')}
-          </Button>
-        </HeaderRightContainer>
-      ),
     });
   }, [navigation, t]);
 
@@ -141,7 +131,7 @@ const CreateOrImportKey = ({
           <TextAlign align={'center'}>
             <Paragraph>
               {t(
-                "Store your assets safely and securely with BitPay's non-custodial app. Reminder: you own your keys, so be sure to have a pen and paper handy to write down your 12 words.",
+                "Store your assets safely and securely with BitPay's self-custody app.",
               )}
             </Paragraph>
           </TextAlign>

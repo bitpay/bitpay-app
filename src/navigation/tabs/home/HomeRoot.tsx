@@ -19,6 +19,7 @@ import {
 import {requestBrazeContentRefresh} from '../../../store/app/app.effects';
 import {
   selectBrazeDoMore,
+  selectBrazeMarketingCarousel,
   selectBrazeQuickLinks,
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
@@ -33,7 +34,6 @@ import {
 } from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
-import AdvertisementsList from './components/advertisements/AdvertisementsList';
 import DefaultAdvertisements from './components/advertisements/DefaultAdvertisements';
 import Crypto from './components/Crypto';
 import ExchangeRatesList, {
@@ -45,6 +45,7 @@ import HomeSection from './components/HomeSection';
 import LinkingButtons from './components/LinkingButtons';
 import MockOffers from './components/offers/MockOffers';
 import OffersCarousel from './components/offers/OffersCarousel';
+import MarketingCarousel from './components/MarketingCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
 import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
@@ -69,6 +70,7 @@ import {
 } from '../../../constants/currencies';
 import {Network} from '../../../constants';
 import SecurePasskeyBanner from './components/SecurePasskeyBanner';
+import DefaultMarketingCards from './components/DefaultMarketingCards';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -82,8 +84,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const theme = useTheme();
   const themeType = useThemeType();
   const [refreshing, setRefreshing] = useState(false);
-  const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
   const brazeDoMore = useAppSelector(selectBrazeDoMore);
+  const brazeMarketingCarousel = useAppSelector(selectBrazeMarketingCarousel);
+  const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const wallets = Object.values(keys).flatMap(k => k.wallets);
@@ -123,13 +126,25 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     }
   }, [passkeyCredentials, user]);
 
+  const memoizedMarketingCards = useMemo(() => {
+    if (STATIC_CONTENT_CARDS_ENABLED && !brazeMarketingCarousel.length) {
+      return DefaultMarketingCards();
+    }
+
+    return brazeMarketingCarousel;
+  }, [brazeMarketingCarousel]);
+
   // Shop with Crypto
   const memoizedShopWithCryptoCards = useMemo(() => {
-    if (STATIC_CONTENT_CARDS_ENABLED && !brazeShopWithCrypto.length) {
+    const cardsWithCoverImage = brazeShopWithCrypto.filter(
+      card => card.extras?.cover_image,
+    );
+
+    if (STATIC_CONTENT_CARDS_ENABLED && !cardsWithCoverImage.length) {
       return MockOffers();
     }
 
-    return brazeShopWithCrypto;
+    return cardsWithCoverImage;
   }, [brazeShopWithCrypto]);
 
   // Do More
@@ -310,13 +325,14 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
       {appIsLoading ? null : (
         <>
           <HeaderContainer>
-            <HeaderLeftContainer />
+            <HeaderLeftContainer>
+              <ScanButton />
+            </HeaderLeftContainer>
             {pendingTxps.length ? (
               <ProposalBadgeContainer onPress={onPressTxpBadge}>
                 <ProposalBadge>{pendingTxps.length}</ProposalBadge>
               </ProposalBadgeContainer>
             ) : null}
-            <ScanButton />
             <ProfileButton />
           </HeaderContainer>
           <ScrollView
@@ -333,7 +349,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             }>
             {/* ////////////////////////////// PORTFOLIO BALANCE */}
             {showPortfolioValue ? (
-              <HomeSection style={{marginTop: 5}} slimContainer={true}>
+              <HomeSection style={{marginTop: 5, marginBottom: 20}}>
                 <PortfolioBalance />
               </HomeSection>
             ) : null}
@@ -352,8 +368,15 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               </HomeSection>
             ) : null}
 
+            {/* ////////////////////////////// MARKETING */}
+            {memoizedMarketingCards.length ? (
+              <HomeSection>
+                <MarketingCarousel contentCards={memoizedMarketingCards} />
+              </HomeSection>
+            ) : null}
+
             {/* ////////////////////////////// CRYPTO */}
-            <HomeSection slimContainer={true}>
+            <HomeSection>
               <Crypto />
             </HomeSection>
 
@@ -367,8 +390,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             {/* ////////////////////////////// SHOP WITH CRYPTO */}
             {memoizedShopWithCryptoCards.length ? (
               <HomeSection
+                style={{marginBottom: -10}}
                 title={t('Shop with Crypto')}
-                action={t('See all')}
+                action={t('Shop all')}
                 onActionPress={() => {
                   navigation.navigate('Tabs', {screen: 'Shop'});
                   dispatch(
@@ -381,16 +405,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               </HomeSection>
             ) : null}
 
-            {/* ////////////////////////////// DO MORE */}
-            {memoizedDoMoreCards.length ? (
-              <HomeSection title={t('Do More')}>
-                <AdvertisementsList contentCards={memoizedDoMoreCards} />
-              </HomeSection>
-            ) : null}
-
             {/* ////////////////////////////// EXCHANGE RATES */}
             {!showArchaxBanner && memoizedExchangeRates.length ? (
-              <HomeSection title={t('Exchange Rates')} label="1D">
+              <HomeSection title={t('Exchange Rates')} label="24H">
                 <ExchangeRatesList
                   items={memoizedExchangeRates}
                   defaultAltCurrencyIsoCode={defaultAltCurrency.isoCode}
@@ -398,12 +415,6 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               </HomeSection>
             ) : null}
 
-            {/* ////////////////////////////// QUICK LINKS - Leave feedback etc */}
-            {memoizedQuickLinks.length ? (
-              <HomeSection title={t('Quick Links')}>
-                <QuickLinksCarousel contentCards={memoizedQuickLinks} />
-              </HomeSection>
-            ) : null}
             {showArchaxBanner && <ArchaxFooter />}
           </ScrollView>
         </>

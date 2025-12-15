@@ -1,8 +1,7 @@
 import {CardContainer, CardGutter} from '../styled/Containers';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
-import {BoxShadow} from '../../navigation/tabs/home/components/Styled';
 import {StyleProp, ViewStyle} from 'react-native';
 
 const CardHeader = styled.View`
@@ -16,8 +15,12 @@ const CardBody = styled.View`
 `;
 
 const CardFooter = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
   min-height: 30px;
   padding: ${CardGutter};
+  width: 100%;
 `;
 
 const BackgroundImage = styled.View`
@@ -41,15 +44,9 @@ export interface CardProps {
 }
 
 const Card = ({header, body, footer, backgroundImg, style}: CardProps) => {
-  const theme = useTheme();
   return (
-    <CardContainer
-      style={{
-        ...(theme.dark ? {} : BoxShadow),
-        ...((style as object) || {}),
-      }}>
+    <CardContainer style={(style as object) || {}}>
       {backgroundImg && <BackgroundImage>{backgroundImg()}</BackgroundImage>}
-
       {header && <CardHeader>{header}</CardHeader>}
       {body && <CardBody>{body}</CardBody>}
       {footer && <CardFooter>{footer}</CardFooter>}

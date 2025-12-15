@@ -9,7 +9,14 @@ import {useDispatch, useSelector} from 'react-redux';
 import {BaseText, H4, TextAlign} from '../../styled/Text';
 import {AppActions} from '../../../store/app';
 import {RootState} from '../../../store';
-import {Black, Action, SlateDark, White, Slate} from '../../../styles/colors';
+import {
+  Black,
+  Action,
+  SlateDark,
+  White,
+  Slate,
+  LightBlue,
+} from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
 
 import {
@@ -88,7 +95,7 @@ const NetworkChainContainer = styled(TouchableOpacity)<{selected?: boolean}>`
   ${({selected}) =>
     selected &&
     css`
-      background: ${({theme: {dark}}) => (dark ? '#2240C440' : '#ECEFFD')};
+      background: ${({theme: {dark}}) => (dark ? '#2240C440' : LightBlue)};
       border-color: ${({theme: {dark}}) => (dark ? Action : Action)};
       border-width: 1px;
       border-radius: 12px;

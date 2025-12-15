@@ -5,6 +5,7 @@ import {
   SlateDark,
   White,
   Slate30,
+  Slate,
 } from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -67,8 +68,9 @@ export const CoinIconContainer = styled.View`
   align-items: center;
 `;
 
-export const ItemDivisor = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+export const ItemDivisor = styled.View<{selected?: boolean}>`
+  border-bottom-color: ${({theme: {dark}, selected}) =>
+    dark ? LightBlack : Slate};
   border-bottom-width: 1px;
 `;
 

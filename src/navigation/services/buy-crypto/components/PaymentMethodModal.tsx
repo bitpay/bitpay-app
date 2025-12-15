@@ -1,27 +1,21 @@
 import React from 'react';
-import {SafeAreaView, View} from 'react-native';
+import {View} from 'react-native';
 import {orderBy} from 'lodash';
-import styled from 'styled-components/native';
+import styled, {useTheme} from 'styled-components/native';
 import {
-  ModalContainer,
   ModalHeader,
   ModalHeaderText,
   ModalHeaderRight,
 } from '../styled/BuyCryptoModals';
 import {
   BuyCryptoExchangeKey,
-  BuyCryptoSupportedExchanges,
   getBuyEnabledPaymentMethods,
-  isPaymentMethodSupported,
 } from '../utils/buy-crypto-utils';
 import {
   getSellEnabledPaymentMethods,
-  isWithdrawalMethodSupported,
   SellCryptoExchangeKey,
-  SellCryptoSupportedExchanges,
 } from '../../sell-crypto/utils/sell-crypto-utils';
 import SheetModal from '../../../../components/modal/base/sheet/SheetModal';
-import Checkbox from '../../../../components/checkbox/Checkbox';
 import {BaseText} from '../../../../components/styled/Text';
 import Button from '../../../../components/button/Button';
 import BanxaLogo from '../../../../components/icons/external-services/banxa/banxa-logo';
@@ -32,19 +26,23 @@ import SimplexLogo from '../../../../components/icons/external-services/simplex/
 import TransakLogo from '../../../../components/icons/external-services/transak/transak-logo';
 import {
   Action,
+  Black,
   LightBlack,
-  LinkBlue,
   SlateDark,
   White,
 } from '../../../../styles/colors';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
-import {PaymentMethod} from '../constants/BuyCryptoConstants';
-import {WithdrawalMethod} from '../../sell-crypto/constants/SellCryptoConstants';
+import {
+  PaymentMethod,
+  PaymentMethodKey,
+  getPaymentMethodIconByKey,
+} from '../constants/BuyCryptoConstants';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {sleep} from '../../../../utils/helper-methods';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import TimeIcon from '../../../../components/icons/payment-methods/timeIcon';
 
 interface PaymentMethodsModalProps {
   isVisible: boolean;
@@ -58,12 +56,23 @@ interface PaymentMethodsModalProps {
   preSetPartner?: BuyCryptoExchangeKey | SellCryptoExchangeKey | undefined;
 }
 
-const PaymentMethodCard = styled(TouchableOpacity)`
-  border-radius: 7px;
-  margin-bottom: 20px;
-  padding: 14px;
-  min-height: 105px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#fbfbff')};
+const MenuContainer = styled.View`
+  background: ${({theme: {dark}}) => (dark ? '#111111' : White)};
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  max-height: 75%;
+  padding: 0 16px 16px 20px;
+`;
+
+const PaymentMethodCard = styled(TouchableOpacity)<{selected?: boolean}>`
+  border: 1px solid
+    ${({theme: {dark}, selected}) =>
+      selected ? Action : dark ? SlateDark : '#e6e8ec'};
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background-color: ${({theme: {dark}, selected}) =>
+    selected ? '#2240C440' : 'transparent'};
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -75,6 +84,22 @@ const PaymentMethodCardContainer = styled.View`
   align-items: center;
 `;
 
+const PaymentMethodImgContainer = styled.View`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+`;
+
+const PaymentMethodImgCircle = styled.View`
+  width: 40px;
+  height: 40px;
+  border-radius: 50px;
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#f0f0f0')};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const PaymentMethodCheckboxTexts = styled.View`
   display: flex;
   flex-direction: column;
@@ -84,8 +109,11 @@ const PaymentMethodCheckboxTexts = styled.View`
 
 const PaymentMethodLabel = styled(BaseText)`
   font-weight: 500;
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
   margin-bottom: 5px;
+  letter-spacing: 0px;
+  line-height: 20px;
+  font-size: 16px;
 `;
 
 const PaymentMethodProvider = styled.View`
@@ -96,7 +124,10 @@ const PaymentMethodProvider = styled.View`
 
 const PaymentMethodProviderText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  font-size: 16px;
+  line-height: 20px;
   margin-right: 6px;
+  letter-spacing: 0px;
 `;
 
 const PaymentMethodProviderLink = styled(BaseText)`
@@ -116,6 +147,7 @@ const PaymentMethodsModal = ({
 }: PaymentMethodsModalProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const theme = useTheme();
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
@@ -181,7 +213,7 @@ const PaymentMethodsModal = ({
   const getPartnerLogo = (
     exchange: BuyCryptoExchangeKey,
     iconOnly?: boolean,
-  ): JSX.Element | null => {
+  ): React.JSX.Element | null => {
     switch (exchange) {
       case 'banxa':
         return (
@@ -246,144 +278,82 @@ const PaymentMethodsModal = ({
 
   return (
     <SheetModal
-      modalLibrary={'bottom-sheet'}
       isVisible={isVisible}
       onBackdropPress={onBackdropPress ? onBackdropPress : () => {}}
-      fullscreen>
-      <ModalContainer>
-        <SafeAreaView style={{height: '100%'}}>
-          <ModalHeader>
-            <ModalHeaderText>
-              {context === 'sellCrypto'
-                ? t('Withdrawal Method')
-                : t('Payment Method')}
-            </ModalHeaderText>
-            <ModalHeaderRight>
-              <Button
-                buttonType={'pill'}
-                buttonStyle={'cancel'}
-                touchableLibrary={'react-native'}
-                onPress={onBackdropPress ? onBackdropPress : () => {}}>
-                {t('Close')}
-              </Button>
-            </ModalHeaderRight>
-          </ModalHeader>
+      enableBackdropDismiss={true}
+      backgroundColor={theme.dark ? Black : White}>
+      <MenuContainer
+        style={{minHeight: 300, paddingTop: 10, paddingBottom: 50}}>
+        <ModalHeader>
+          <ModalHeaderText>
+            {context === 'sellCrypto'
+              ? t('Withdrawal Methods')
+              : t('Payment Methods')}
+          </ModalHeaderText>
+          <ModalHeaderRight>
+            <Button
+              buttonType={'pill'}
+              buttonStyle={'cancel'}
+              touchableLibrary={'react-native'}
+              onPress={onBackdropPress ? onBackdropPress : () => {}}>
+              {t('Close')}
+            </Button>
+          </ModalHeaderRight>
+        </ModalHeader>
 
-          <BottomSheetScrollView style={{marginTop: 20}}>
-            {OrderedEnabledPaymentMethods
-              ? Object.values(OrderedEnabledPaymentMethods).map(
-                  paymentMethod => {
-                    return paymentMethod ? (
-                      <PaymentMethodCard
-                        key={paymentMethod.method}
-                        onPress={() => {
-                          paymentMethod.method !== 'other'
-                            ? onPress(paymentMethod)
-                            : showOtherPaymentMethodsInfoSheet(
-                                paymentMethod,
-                                onPress,
-                              );
-                        }}>
-                        <PaymentMethodCardContainer>
-                          <Checkbox
-                            radio={true}
-                            onPress={() => onPress(paymentMethod)}
-                            checked={
-                              selectedPaymentMethod.method ==
-                              paymentMethod.method
-                            }
-                          />
-                          <PaymentMethodCheckboxTexts>
-                            <PaymentMethodLabel>
-                              {paymentMethod.label}
-                            </PaymentMethodLabel>
+        <BottomSheetScrollView style={{marginTop: 10}}>
+          {OrderedEnabledPaymentMethods
+            ? Object.values(OrderedEnabledPaymentMethods).map(paymentMethod => {
+                return paymentMethod ? (
+                  <PaymentMethodCard
+                    key={paymentMethod.method}
+                    selected={
+                      selectedPaymentMethod
+                        ? selectedPaymentMethod.method === paymentMethod.method
+                        : false
+                    }
+                    onPress={() => {
+                      paymentMethod.method !== 'other'
+                        ? onPress(paymentMethod)
+                        : showOtherPaymentMethodsInfoSheet(
+                            paymentMethod,
+                            onPress,
+                          );
+                    }}>
+                    <PaymentMethodCardContainer>
+                      <PaymentMethodImgContainer>
+                        <PaymentMethodImgCircle>
+                          {getPaymentMethodIconByKey(
+                            paymentMethod.method as PaymentMethodKey,
+                          )}
+                        </PaymentMethodImgCircle>
+                      </PaymentMethodImgContainer>
+                      <PaymentMethodCheckboxTexts>
+                        <PaymentMethodLabel>
+                          {paymentMethod.label}
+                        </PaymentMethodLabel>
 
-                            {paymentMethod.method === 'other' ? (
-                              <View
-                                style={{
-                                  marginBottom: 10,
-                                  flexDirection: 'row',
-                                }}>
-                                <PaymentMethodProviderText>
-                                  See
-                                </PaymentMethodProviderText>
-                                <PaymentMethodProviderLink>
-                                  other supported payment methods
-                                </PaymentMethodProviderLink>
-                              </View>
-                            ) : null}
-
-                            <PaymentMethodProvider>
-                              <PaymentMethodProviderText>
-                                {t('Provided by')}
-                              </PaymentMethodProviderText>
-                            </PaymentMethodProvider>
-                            <PaymentMethodProvider style={{height: 30}}>
-                              {context === 'buyCrypto' ? (
-                                <>
-                                  {preSetPartner &&
-                                  BuyCryptoSupportedExchanges.includes(
-                                    preSetPartner as BuyCryptoExchangeKey,
-                                  )
-                                    ? getPartnerLogo(preSetPartner, false)
-                                    : BuyCryptoSupportedExchanges.map(
-                                        exchange => {
-                                          return coin &&
-                                            currency &&
-                                            chain &&
-                                            isPaymentMethodSupported(
-                                              exchange,
-                                              paymentMethod as PaymentMethod,
-                                              coin,
-                                              chain,
-                                              currency,
-                                              locationData?.countryShortCode ||
-                                                'US',
-                                            )
-                                            ? getPartnerLogo(exchange, true)
-                                            : null;
-                                        },
-                                      )}
-                                </>
-                              ) : null}
-                              {context === 'sellCrypto' ? (
-                                <>
-                                  {preSetPartner &&
-                                  SellCryptoSupportedExchanges.includes(
-                                    preSetPartner as SellCryptoExchangeKey,
-                                  )
-                                    ? getPartnerLogo(preSetPartner)
-                                    : SellCryptoSupportedExchanges.map(
-                                        exchange => {
-                                          return coin &&
-                                            currency &&
-                                            chain &&
-                                            isWithdrawalMethodSupported(
-                                              exchange,
-                                              paymentMethod as WithdrawalMethod,
-                                              coin,
-                                              chain,
-                                              currency,
-                                              locationData?.countryShortCode ||
-                                                'US',
-                                            )
-                                            ? getPartnerLogo(exchange)
-                                            : null;
-                                        },
-                                      )}
-                                </>
-                              ) : null}
-                            </PaymentMethodProvider>
-                          </PaymentMethodCheckboxTexts>
-                        </PaymentMethodCardContainer>
-                      </PaymentMethodCard>
-                    ) : null;
-                  },
-                )
-              : null}
-          </BottomSheetScrollView>
-        </SafeAreaView>
-      </ModalContainer>
+                        <PaymentMethodProvider>
+                          {paymentMethod.method !== 'other' ? (
+                            <View
+                              style={{
+                                marginRight: 8,
+                              }}>
+                              <TimeIcon width={16} height={16} />
+                            </View>
+                          ) : null}
+                          <PaymentMethodProviderText>
+                            {paymentMethod.waitingTimeDescription}
+                          </PaymentMethodProviderText>
+                        </PaymentMethodProvider>
+                      </PaymentMethodCheckboxTexts>
+                    </PaymentMethodCardContainer>
+                  </PaymentMethodCard>
+                ) : null;
+              })
+            : null}
+        </BottomSheetScrollView>
+      </MenuContainer>
     </SheetModal>
   );
 };

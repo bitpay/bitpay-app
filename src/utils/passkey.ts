@@ -16,6 +16,7 @@ import {
 } from '../constants/config';
 import {Network} from '../constants';
 import {PasskeyCredential} from '../store/bitpay-id/bitpay-id.models';
+import BitPayIdApi from '../api/bitpay';
 
 type Json = Record<string, any>;
 
@@ -23,7 +24,7 @@ async function handleFetchError(res: Response, url: string): Promise<void> {
   if (res.ok) return;
 
   let message = res.statusText;
-  let body: any = undefined;
+  let body: any;
 
   try {
     const text = await res.text();
@@ -123,10 +124,10 @@ export async function signInWithPasskey(
   );
   const _reqOptions: PasskeyGetRequest = authChallenge.options;
   const result: PasskeyGetResult = await Passkey.get(_reqOptions);
-
+  const bitpayIdApi = BitPayIdApi.getInstance();
   const {success} = await post(
     BASE_BITPAY_URLS[network] + PASSKEY_API_AUTH_VERIFY,
-    {credential: result},
+    {credential: result, pubKey: bitpayIdApi.identity.pub},
     token,
   );
   return !!success;

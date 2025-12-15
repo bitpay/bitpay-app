@@ -166,6 +166,10 @@ const PasskeyScreen: React.FC = () => {
     }
   }, [navigation, listPasskeyCredentials]);
 
+  const loginRequired = () => {
+    return !user || !session || !session?.isAuthenticated;
+  };
+
   const createPasskey = useCallback(async () => {
     setShowOptions(false);
     if (listPasskeyCredentials && listPasskeyCredentials.length > 4) {
@@ -186,7 +190,7 @@ const PasskeyScreen: React.FC = () => {
         );
       return;
     }
-    if (!user || !session?.isAuthenticated) {
+    if (loginRequired()) {
       logManager.warn(
         '[PasskeyScreen] User not authenticated. Redirecting to login.',
       );
@@ -199,7 +203,6 @@ const PasskeyScreen: React.FC = () => {
       //navigation.navigate('VerifyEmail');
       return;
     }
-    showOngoingProcess('CREATING_PASSKEY');
     try {
       const registeredPasskey = await registerPasskey(
         user.email,
@@ -210,6 +213,7 @@ const PasskeyScreen: React.FC = () => {
         '[PasskeyScreen] Passkey created: ',
         JSON.stringify(registeredPasskey),
       );
+      showOngoingProcess('CREATING_PASSKEY');
       dispatch(setPasskeyStatus(registeredPasskey));
       const {credentials} = await getPasskeyCredentials(
         user.email,
@@ -302,30 +306,24 @@ const PasskeyScreen: React.FC = () => {
   }, []);
 
   const fetchCredentials = useCallback(async () => {
-    if (!user || fetchingCredentials) {
+    if (loginRequired() || fetchingCredentials) {
       return;
     }
     setFetchingCredentials(true);
     try {
-      if (session?.isAuthenticated) {
-        const {passkey} = await getPasskeyStatus(
-          user.email,
-          network,
-          session.csrfToken,
-        );
-        dispatch(setPasskeyStatus(passkey));
-        const {credentials} = await getPasskeyCredentials(
-          user.email,
-          network,
-          session.csrfToken,
-        );
-        dispatch(setPasskeyCredentials(credentials));
-        setListPasskeyCredentials(credentials);
-      } else {
-        logManager.warn(
-          '[PasskeyScreen] Session expired. Cannot create/delete passkey until user logs in.',
-        );
-      }
+      const {passkey} = await getPasskeyStatus(
+        user.email,
+        network,
+        session.csrfToken,
+      );
+      dispatch(setPasskeyStatus(passkey));
+      const {credentials} = await getPasskeyCredentials(
+        user.email,
+        network,
+        session.csrfToken,
+      );
+      dispatch(setPasskeyCredentials(credentials));
+      setListPasskeyCredentials(credentials);
       setFetchingCredentials(false);
     } catch (err: any) {
       setFetchingCredentials(false);
@@ -367,12 +365,19 @@ const PasskeyScreen: React.FC = () => {
   };
 
   const navigateToLogin = () => {
+    if (listPasskeyCredentials && listPasskeyCredentials.length > 0) {
+      logManager.info(
+        '[PasskeyScreen] Passkeys found. Attempting to login with passkey.',
+      );
+      dispatch(BitPayIdEffects.startLogin({}));
+      return;
+    }
     navigation.navigate('Login');
   };
 
   const deletePasskey = async () => {
     setIsVisible(false);
-    if (!user || !session?.isAuthenticated) {
+    if (loginRequired()) {
       logManager.warn(
         '[PasskeyScreen] Cannot delete passkey because user not authenticated. Redirecting to login.',
       );
@@ -415,7 +420,7 @@ const PasskeyScreen: React.FC = () => {
           listPasskeyCredentials &&
           listPasskeyCredentials.length === 0 && (
             <CardIntro>
-              <TitleIntro>{t('Setup a passkey')}</TitleIntro>
+              <TitleIntro>{t('Create a passkey')}</TitleIntro>
               <RowIntro>
                 <IconContainerIntro>
                   <PasskeyPersonSetup width={36} height={36} />

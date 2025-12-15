@@ -183,7 +183,7 @@ const AccountListRow = ({
           </Column>
         ) : (
           <Column>
-            <Row>
+            <Row style={{alignItems: 'center'}}>
               <H5 ellipsizeMode="tail" numberOfLines={1}>
                 {accountName}
               </H5>
@@ -192,7 +192,7 @@ const AccountListRow = ({
               <ListItemSubText
                 ellipsizeMode="tail"
                 numberOfLines={1}
-                style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
+                style={{marginTop: 0}}>
                 {`${_currencyAbbreviation} ${multisig ? multisig : ''}`}
               </ListItemSubText>
               <View

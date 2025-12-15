@@ -66,7 +66,8 @@ export type OnGoingProcessMessages =
   | 'SCANNING_FUNDS'
   | 'SCANNING_FUNDS_WITH_PASSPHRASE'
   | 'CREATING_PASSKEY'
-  | 'DELETING_PASSKEY';
+  | 'DELETING_PASSKEY'
+  | 'WAITING_FOR_MAX_AMOUNT';
 
 const Row = styled.View`
   background-color: ${({theme}) => (theme.dark ? LightBlack : White)};
@@ -87,6 +88,7 @@ const ActivityIndicatorContainer = styled.View`
 const Message = styled(BaseText)`
   font-weight: 700;
   flex-wrap: wrap;
+  line-height: 22px;
 `;
 
 const ModalWrapper = styled.View`

@@ -8,6 +8,7 @@ import {Black} from '../../../../styles/colors';
 
 export const GiftCardDenomText = styled(BaseText)`
   font-size: 14px;
+  line-height: 18px;
   color: ${({theme: {dark}}) => (dark ? '#777777' : Black)};
 `;
 

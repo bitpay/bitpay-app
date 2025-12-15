@@ -8,7 +8,7 @@ import {
   Row,
   ScreenGutter,
 } from '../../../components/styled/Containers';
-import {H3, H5} from '../../../components/styled/Text';
+import {H5} from '../../../components/styled/Text';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {
   BalanceCode,
@@ -51,8 +51,17 @@ const BaseText = styled(H5)`
 
 export const OptionName = styled(BaseText)``;
 
-export const Balance = styled(BaseText)`
-  font-weight: 700;
+export const Balance = styled(BaseText)<{hidden?: boolean}>`
+  font-size: ${({hidden}) => (hidden ? '20px' : '16px')};
+  font-weight: 400;
+  line-height: ${({hidden}) => (hidden ? '24px' : '20px')};
+  ${({hidden}) =>
+    hidden
+      ? `
+    flex-shrink: 1;
+    margin-bottom: -9px;
+  `
+      : ''}
 `;
 
 const DropdownOption = ({
@@ -118,7 +127,7 @@ const DropdownOption = ({
             </Row>
           </>
         ) : (
-          <H3>****</H3>
+          <Balance hidden>****</Balance>
         )}
       </Row>
     </OptionContainer>
