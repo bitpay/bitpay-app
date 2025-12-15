@@ -21,6 +21,7 @@ import AuthFormContainer, {
   AuthRowContainer,
 } from '../components/AuthFormContainer';
 import RecaptchaModal from '../components/RecaptchaModal';
+import CookieManager from '@react-native-cookies/cookies';
 
 export type ForgotPasswordParamList = {} | undefined;
 
@@ -121,6 +122,7 @@ const ForgotPasswordScreen: React.FC<
   const onCaptchaCancel = () => {
     haptic('notificationWarning');
     setCaptchaModalVisible(false);
+    CookieManager.clearAll();
   };
   return (
     <SafeAreaView accessibilityLabel="reset-password-container">

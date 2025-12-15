@@ -39,6 +39,7 @@ import {TabsScreens} from '../../tabs/TabsStack';
 import PasskeyPersonSetup from '../../../../assets/img/passkey-person-setup.svg';
 import IconCreateAccount from '../../../../assets/img/icon-create-account.svg';
 import {LightBlack, Slate30, SlateDark, White} from '../../../styles/colors';
+import CookieManager from '@react-native-cookies/cookies';
 
 export type LoginScreenParamList =
   | {
@@ -248,6 +249,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   const onCaptchaCancel = () => {
     haptic('notificationWarning');
     setCaptchaModalVisible(false);
+    CookieManager.clearAll();
   };
 
   return (

@@ -39,6 +39,7 @@ import {
 } from '../../store/bitpay-id/bitpay-id.actions';
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
+import CookieManager from '@react-native-cookies/cookies';
 
 interface StartLoginParams {
   email?: string;
@@ -226,6 +227,7 @@ export const startCreateAccount =
         errMsg = JSON.stringify(err);
       }
 
+      CookieManager.clearAll();
       dispatch(BitPayIdActions.failedCreateAccount(upperFirst(errMsg)));
       logManager.error('Failed to create account.');
       logManager.error(JSON.stringify(err));
@@ -357,6 +359,7 @@ export const startLogin =
         }),
       );
 
+      CookieManager.clearAll();
       dispatch(CardActions.isJoinedWaitlist(false));
       dispatch(BitPayIdActions.successLogin(APP.network, session));
     } catch (err: any) {
@@ -848,6 +851,7 @@ export const startSubmitForgotPasswordEmail =
           ),
         );
       }
+      CookieManager.clearAll();
     } catch (e) {
       dispatch(BitPayIdActions.forgotPasswordEmailStatus('failed', errMsg));
     } finally {
