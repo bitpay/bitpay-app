@@ -142,6 +142,10 @@ import {isNotMobile} from '../../components/styled/Containers';
 import {SettingsScreens} from '../../navigation/tabs/settings/SettingsGroup';
 import {NotificationsSettingsScreens} from '../../navigation/tabs/settings/notifications/NotificationsGroup';
 import {logManager} from '../../managers/LogManager';
+import {
+  initializeSslPinning,
+  isSslPinningAvailable,
+} from 'react-native-ssl-public-key-pinning';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -151,12 +155,39 @@ const OFFERS_AND_PROMOTIONS_GROUP_ID = __DEV__
   ? '6be103aa-4df0-46f6-a3fa-438e61aadced'
   : '1d1db929-909d-40e0-93ec-34106ea576b4';
 
+// SSL Certificate Pinning - 2 hashes as iOS requires a backup pin
+const SSL_PINS = {
+  BITPAY_LEAF: 'rzdmyE917c+jbCmzOE3GN6bqXznLJW/LOYvG/+PxwvA=',
+  GOOGLE_WE1: 'kIdp6NNEd8wsugYyyIYFsi1ylMCED3hZbSR8ZFsa/A4=',
+};
+
 export const startAppInit = (): Effect => async (dispatch, getState) => {
   try {
     logManager.info(
       `Initializing app (${__DEV__ ? 'Development' : 'Production'})...`,
     );
     logManager.info(`Current App Version: ${APP_VERSION}`);
+
+    if (isSslPinningAvailable()) {
+      try {
+        await initializeSslPinning({
+          'bitpay.com': {
+            includeSubdomains: true,
+            publicKeyHashes: [SSL_PINS.BITPAY_LEAF, SSL_PINS.GOOGLE_WE1],
+          }
+        });
+        logManager.info('SSL certificate pinning initialized successfully');
+      } catch (sslError) {
+        logManager.error(
+          'Failed to initialize SSL pinning: ' +
+            (sslError instanceof Error
+              ? sslError.message
+              : JSON.stringify(sslError)),
+        );
+      }
+    } else {
+      logManager.warn('SSL pinning is not available on this device');
+    }
 
     dispatch(deferDeeplinksUntilAppIsReady());
 
