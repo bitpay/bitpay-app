@@ -82,9 +82,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
             brazeObj.inAppMessagePresenter = inAppUI
         }
 
+        // Disable URL caching globally to prevent sensitive data disclosure
+        URLCache.shared.removeAllCachedResponses()
+        URLCache.shared = URLCache(memoryCapacity: 0, diskCapacity: 0, diskPath: nil)
+
         // Custom NSURLProtocol to whitelist URL prefixes
         RCTSetCustomNSURLSessionConfigurationProvider {
             let configuration = URLSessionConfiguration.default
+            // Disable caching for all network requests
+            configuration.urlCache = nil
+            configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
             var classes = configuration.protocolClasses ?? []
             classes.insert(AllowedUrlPrefixProtocol.self, at: 0)
             configuration.protocolClasses = classes
