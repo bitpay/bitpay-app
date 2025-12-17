@@ -32,6 +32,7 @@ import {BASE_BITPAY_URLS} from '../../../../constants/config';
 import {ShopEffects} from '../../../../store/shop';
 import {AppActions, AppEffects} from '../../../../store/app';
 import BillPitch from '../bill/components/BillPitch';
+import BillAlert from '../bill/components/BillAlert';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../bill/utils';
 import {sleep} from '../../../../utils/helper-methods';
@@ -41,6 +42,9 @@ import {CustomErrorMessage} from '../../../wallet/components/ErrorMessages';
 import {joinWaitlist} from '../../../../store/app/app.effects';
 import UserInfo from './UserInfo';
 import {BitPayIdEffects} from '../../../../store/bitpay-id';
+import {PaymentList} from '../bill/components/PaymentList';
+
+let hasFetchedRuntimeSettingsOnThisLaunch = false;
 
 const Subtitle = styled(Paragraph)`
   font-size: 14px;
@@ -70,6 +74,11 @@ const BillsHeader = styled(SectionHeader)`
   margin-top: 0;
 `;
 
+const JoinWaitlistButton = styled(Button)`
+  width: ${WIDTH - 32}px;
+  margin-top: 24px;
+`;
+
 const BillsHeaderButton = styled(SectionHeaderButton)`
   margin-top: 0;
 `;
@@ -89,6 +98,8 @@ export const Bills = () => {
   const apiToken = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.apiToken[appNetwork],
   );
+
+  const isBillPayEnabled = useAppSelector(({SHOP}) => SHOP.isBillPayEnabled);
 
   const isJoinedWaitlist = useAppSelector(({SHOP}) => SHOP.isJoinedWaitlist);
 
@@ -122,15 +133,21 @@ export const Bills = () => {
 
   useFocusEffect(() => {
     dispatch(AppActions.setHasViewedBillsTab());
+
+    if (!hasFetchedRuntimeSettingsOnThisLaunch) {
+      hasFetchedRuntimeSettingsOnThisLaunch = true;
+      dispatch(ShopEffects.startFetchRuntimeSettings()).catch(() => {});
+    }
   });
 
   const onSubmit = async () => {
     try {
       setWaitlistButtonState('loading');
-      user &&
-        (await dispatch(
+      if (!isJoinedWaitlist && user) {
+        await dispatch(
           joinWaitlist(user.email, 'BillPay Waitlist', 'bill-pay'),
-        ));
+        );
+      }
       await sleep(500);
       setWaitlistButtonState('success');
     } catch (err) {
@@ -212,7 +229,7 @@ export const Bills = () => {
   return (
     <SectionContainer
       style={{minHeight: HEIGHT - (Platform.OS === 'android' ? 200 : 225)}}>
-      {!isVerified ? (
+      {!user ? (
         <>
           <BillPitch />
           <Button
@@ -244,9 +261,90 @@ export const Bills = () => {
             {t('I already have an account')}
           </Button>
         </>
+      ) : !isVerified ? (
+        !isBillPayEnabled ? (
+          <>
+            <BillPitch />
+            <JoinWaitlistButton
+              state={waitlistButtonState}
+              height={50}
+              buttonStyle="secondary"
+              onPress={onSubmit}>
+              {t('Join waitlist')}
+            </JoinWaitlistButton>
+          </>
+        ) : (
+          <>
+            <BillPitch />
+            <Button
+              height={50}
+              onPress={() => {
+                dispatch(
+                  AppEffects.openUrlWithInAppBrowser(
+                    `${verificationBaseUrl}&context=createAccount`,
+                  ),
+                );
+                dispatch(Analytics.track('Bill Pay - Clicked Sign Up'));
+              }}>
+              {t('Sign Up')}
+            </Button>
+            <View style={{height: 10}} />
+            <Button
+              height={50}
+              buttonStyle="secondary"
+              onPress={() => {
+                dispatch(
+                  AppEffects.openUrlWithInAppBrowser(
+                    `${verificationBaseUrl}&context=login`,
+                  ),
+                );
+                dispatch(
+                  Analytics.track(
+                    'Bill Pay - Clicked I Already Have an Account',
+                  ),
+                );
+              }}>
+              {t('I already have an account')}
+            </Button>
+          </>
+        )
       ) : (
         <>
-          {available ? (
+          {!isBillPayEnabled ? (
+            <>
+              {connected ? (
+                <>
+                  <View style={{marginTop: 16}}>
+                    <BillAlert variant={'servicePaused'} />
+                  </View>
+                  <View style={{marginTop: 25}}>
+                    <PaymentList
+                      accounts={accounts}
+                      variation={'small'}
+                      onPress={(accountObj, payment) => {
+                        navigation.navigate(BillScreens.PAYMENT, {
+                          account: accountObj,
+                          payment,
+                        });
+                      }}
+                    />
+                  </View>
+                  <SectionSpacer />
+                </>
+              ) : (
+                <>
+                  <BillPitch />
+                  <JoinWaitlistButton
+                    state={waitlistButtonState}
+                    height={50}
+                    buttonStyle="secondary"
+                    onPress={onSubmit}>
+                    {t('Join waitlist')}
+                  </JoinWaitlistButton>
+                </>
+              )}
+            </>
+          ) : available ? (
             <>
               {!connected ? (
                 <>
@@ -385,20 +483,13 @@ export const Bills = () => {
                     ]}
                   />
                 </Subtitle>
-                {isJoinedWaitlist ? (
-                  <Paragraph style={{textAlign: 'center', fontSize: 14}}>
-                    {t('You have joined the waitlist.')}
-                  </Paragraph>
-                ) : (
-                  <Button
-                    state={waitlistButtonState}
-                    style={{width: WIDTH - 32, marginTop: 24}}
-                    height={50}
-                    buttonStyle="secondary"
-                    onPress={onSubmit}>
-                    {t('Join waitlist')}
-                  </Button>
-                )}
+                <JoinWaitlistButton
+                  state={waitlistButtonState}
+                  height={50}
+                  buttonStyle="secondary"
+                  onPress={onSubmit}>
+                  {t('Join waitlist')}
+                </JoinWaitlistButton>
               </BillsValueProp>
             </>
           )}

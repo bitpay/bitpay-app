@@ -129,6 +129,13 @@ export const updatedEmailAddress = (payload: {
   payload,
 });
 
+export const setIsBillPayEnabled = (payload: {
+  isBillPayEnabled: boolean;
+}): ShopActionType => ({
+  type: ShopActionTypes.SET_IS_BILL_PAY_ENABLED,
+  payload,
+});
+
 export const updatedPhone = (payload: {
   phone: string;
   phoneCountryInfo: PhoneCountryInfo;
