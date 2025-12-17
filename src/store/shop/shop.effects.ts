@@ -451,3 +451,49 @@ export const startCheckIfBillPayAvailable =
     logManager.info(`isBillPayAvailable: ${available}`);
     return available;
   };
+
+export const startFetchRuntimeSettings =
+  (): Effect<
+    Promise<{
+      isBillPayEnabled: boolean;
+    }>
+  > =>
+  async dispatch => {
+    try {
+      const response = await axios.post(
+        'https://bitpay.com/api/v2',
+        {method: 'getRuntimeSettings'},
+        {
+          headers: {
+            'content-type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0',
+          },
+        },
+      );
+
+      if (response?.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      logManager.info(
+        'success [startFetchRuntimeSettings]: ' +
+          JSON.stringify(response.data.data),
+      );
+      const isBillPayEnabled = !!response?.data?.data?.isBillPayEnabled;
+      dispatch(ShopActions.setIsBillPayEnabled({isBillPayEnabled}));
+      return response.data.data;
+    } catch (err: any) {
+      const apiError = err?.response?.data?.error;
+      const errStr =
+        apiError || (err instanceof Error ? err.message : JSON.stringify(err));
+      logManager.error(`failed [startFetchRuntimeSettings]: ${errStr}`);
+
+      const fallbackResponse = {
+        isBillPayEnabled: true,
+      };
+      dispatch(ShopActions.setIsBillPayEnabled({isBillPayEnabled: true}));
+      return fallbackResponse;
+    }
+  };
