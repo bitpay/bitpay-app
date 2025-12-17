@@ -52,6 +52,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         AppDelegate.shared = self
 
+        // Exclude UserDefaults plist from iCloud/iTunes backup to protect sensitive data
+        if let bundleId = Bundle.main.bundleIdentifier,
+           let libraryPath = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first {
+            let prefsPath = libraryPath.appendingPathComponent("Preferences/\(bundleId).plist")
+            var resourceValues = URLResourceValues()
+            resourceValues.isExcludedFromBackup = true
+            var mutablePath = prefsPath
+            try? mutablePath.setResourceValues(resourceValues)
+        }
+
         // 1. React Native setup using factory
         let rnDelegate = ReactNativeDelegate()
         let factory = RCTReactNativeFactory(delegate: rnDelegate)
