@@ -98,7 +98,7 @@ export const startCreateKey =
       isToken: boolean;
       tokenAddress?: string;
     }>,
-    context?: string
+    context?: string,
   ): Effect<Promise<Key>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -122,9 +122,7 @@ export const startCreateKey =
 
         const key = buildKeyObj({key: _key, wallets});
         if (context !== 'onboarding') {
-          dispatch(
-            Analytics.track('Created Key')
-          );
+          dispatch(Analytics.track('Created Key'));
         }
         dispatch(
           successCreateKey({

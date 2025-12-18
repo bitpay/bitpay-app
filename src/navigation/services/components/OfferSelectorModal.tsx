@@ -51,6 +51,7 @@ import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {isEuCountry} from '../../../store/location/location.effects';
 import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
+import ArchaxBanner from '../../../components/archax/archax-banner';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -415,6 +416,9 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
 
   return (
     <>
+      {showArchaxBanner && (
+        <ArchaxBanner isSmallScreen={false} noMarginTop={true} />
+      )}
       <ModalHeader>
         <CloseModalButtonContainer>
           <CloseModalButton
@@ -633,7 +637,7 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                         </OfferDataWarningContainer>
                       ) : null}
 
-                      {offer.expanded || showArchaxBanner ? (
+                      {offer.expanded ? (
                         <>
                           <ItemDivisor style={{marginTop: 20}} />
                           <OfferExpandibleItem>
@@ -800,21 +804,12 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
                           ) : null}
                         </>
                       ) : null}
-                      {showArchaxBanner && (
-                        <TermsContainerOffer>
-                          <TermsText>
-                            {t(
-                              'The final crypto amount you receive when the transaction is complete may differ because it is based on the exchange rates of the providers.',
-                            )}
-                          </TermsText>
-                        </TermsContainerOffer>
-                      )}
                     </BuyCryptoExpandibleCard>
                   ) : null;
                 })
             : null}
-          {showArchaxBanner && <ArchaxFooter />}
         </BottomSheetScrollView>
+        {showArchaxBanner && <ArchaxFooter />}
       </SafeAreaView>
 
       <PaymentMethodsModal

@@ -271,5 +271,7 @@ export const ArchaxBannerText = styled(BaseText)<{isSmallScreen?: boolean}>`
 export const ArchaxBannerLink = styled(BaseText)<{isSmallScreen?: boolean}>`
   color: ${({theme}) => (theme.dark ? '#ffffff' : theme.colors.link)};
   text-decoration: underline;
+  text-decoration-color: ${({theme}) =>
+    theme.dark ? '#ffffff' : theme.colors.link};
   font-size: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '14px')};
 `;
