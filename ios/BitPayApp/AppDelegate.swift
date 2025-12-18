@@ -7,6 +7,65 @@ import RNBootSplash
 import BrazeKit
 import BrazeUI
 import UserNotifications
+import CommonCrypto
+
+// MARK: - Bundle Integrity Verification
+
+/// Calculates SHA256 hash of the React Native bundle to detect tampering
+private func verifyBundleIntegrity() -> Bool {
+#if DEBUG
+    // Skip verification in debug mode (bundle is served from Metro)
+    return true
+#else
+    guard let bundleURL = Bundle.main.url(forResource: "main", withExtension: "jsbundle"),
+          let bundleData = try? Data(contentsOf: bundleURL) else {
+        return false
+    }
+
+    var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
+    bundleData.withUnsafeBytes { buffer in
+        _ = CC_SHA256(buffer.baseAddress, CC_LONG(buffer.count), &hash)
+    }
+
+    let computedHash = hash.map { String(format: "%02x", $0) }.joined()
+
+    // Expected hash is injected during build process via BUNDLE_HASH build setting
+    // If not set, verification is skipped (for backwards compatibility during rollout)
+    guard let expectedHash = Bundle.main.object(forInfoDictionaryKey: "RNBundleHash") as? String,
+          !expectedHash.isEmpty else {
+        // No hash configured yet - log warning but allow launch
+        NSLog("[Security] Bundle hash verification not configured. Set RNBundleHash in Info.plist.")
+        return true
+    }
+
+    let isValid = computedHash.lowercased() == expectedHash.lowercased()
+    if !isValid {
+        NSLog("[Security] Bundle integrity check failed. Expected: %@, Got: %@", expectedHash, computedHash)
+    }
+    return isValid
+#endif
+}
+
+/// Shows an alert when bundle tampering is detected and terminates the app
+private func showBundleTamperedAlert() {
+    DispatchQueue.main.async {
+        let alert = UIAlertController(
+            title: "Security Warning",
+            message: "This application has been modified and cannot run. Please reinstall from the App Store.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Close", style: .destructive) { _ in
+            exit(0)
+        })
+
+        // Create a temporary window to show the alert
+        let window = UIWindow(frame: UIScreen.main.bounds)
+        window.rootViewController = UIViewController()
+        window.windowLevel = .alert + 1
+        window.makeKeyAndVisible()
+        window.rootViewController?.present(alert, animated: true)
+    }
+}
 
 // MARK: - React Native Factory Delegate
 
@@ -51,6 +110,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         AppDelegate.shared = self
+
+        // Verify React Native bundle integrity to prevent tampering
+        if !verifyBundleIntegrity() {
+            showBundleTamperedAlert()
+            return false
+        }
 
         // 1. React Native setup using factory
         let rnDelegate = ReactNativeDelegate()
