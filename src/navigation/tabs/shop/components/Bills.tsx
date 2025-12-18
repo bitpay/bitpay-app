@@ -234,37 +234,50 @@ export const Bills = () => {
     <SectionContainer
       style={{minHeight: HEIGHT - (Platform.OS === 'android' ? 200 : 225)}}>
       {!user ? (
-        <>
-          <BillPitch />
-          <Button
-            height={50}
-            onPress={() => {
-              dispatch(
-                AppEffects.openUrlWithInAppBrowser(
-                  `${verificationBaseUrl}&context=createAccount`,
-                ),
-              );
-              dispatch(Analytics.track('Bill Pay - Clicked Sign Up'));
-            }}>
-            {t('Sign Up')}
-          </Button>
-          <View style={{height: 10}} />
-          <Button
-            height={50}
-            buttonStyle="secondary"
-            onPress={() => {
-              dispatch(
-                AppEffects.openUrlWithInAppBrowser(
-                  `${verificationBaseUrl}&context=login`,
-                ),
-              );
-              dispatch(
-                Analytics.track('Bill Pay - Clicked I Already Have an Account'),
-              );
-            }}>
-            {t('I already have an account')}
-          </Button>
-        </>
+        !isBillPayEnabled ? (
+          <>
+            <BillPitch />
+            <JoinWaitlistButton
+              state={waitlistButtonState}
+              height={50}
+              buttonStyle="secondary"
+              onPress={onSubmit}>
+              {t('Join waitlist')}
+            </JoinWaitlistButton>
+          </>
+        ) : (
+          <>
+            <BillPitch />
+            <Button
+              height={50}
+              onPress={() => {
+                dispatch(
+                  AppEffects.openUrlWithInAppBrowser(
+                    `${verificationBaseUrl}&context=createAccount`,
+                  ),
+                );
+                dispatch(Analytics.track('Bill Pay - Clicked Sign Up'));
+              }}>
+              {t('Sign Up')}
+            </Button>
+            <View style={{height: 10}} />
+            <Button
+              height={50}
+              buttonStyle="secondary"
+              onPress={() => {
+                dispatch(
+                  AppEffects.openUrlWithInAppBrowser(
+                    `${verificationBaseUrl}&context=login`,
+                  ),
+                );
+                dispatch(
+                  Analytics.track('Bill Pay - Clicked I Already Have an Account'),
+                );
+              }}>
+              {t('I already have an account')}
+            </Button>
+          </>
+        )
       ) : !isVerified ? (
         !isBillPayEnabled ? (
           <>
