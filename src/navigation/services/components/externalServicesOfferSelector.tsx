@@ -665,7 +665,7 @@ const ExternalServicesOfferSelector: React.FC<
   const [selectedOfferLoading, setSelectedOfferLoading] =
     useState<boolean>(false);
   const [offerSelectorText, setOfferSelectorText] = useState<string>(
-    t('Set Amount for Best Offer'),
+    t('Set amount for our Best Offer'),
   );
   const [openingBrowser, setOpeningBrowser] = useState(false);
   const [finishedBanxa, setFinishedBanxa] = useState(false);
@@ -2341,7 +2341,7 @@ const ExternalServicesOfferSelector: React.FC<
 
   useEffect(() => {
     if (!amount || amount === 0 || isNaN(amount)) {
-      setOfferSelectorText(t('Set Amount for Best Offer'));
+      setOfferSelectorText(t('Set amount for our Best Offer'));
       setSelectedOffer(undefined);
       onSelectOffer?.(undefined);
       setSelectedOfferLoading(false);
@@ -2396,7 +2396,7 @@ const ExternalServicesOfferSelector: React.FC<
       }
     }
 
-    setOfferSelectorText(t('Searching for Best Offer'));
+    setOfferSelectorText(t('Searching for our Best Offer'));
     setSelectedOffer(undefined);
     onSelectOffer?.(undefined);
     setSelectedOfferLoading(true);
