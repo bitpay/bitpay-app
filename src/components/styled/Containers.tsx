@@ -568,11 +568,11 @@ export const CloseButtonContainer = styled(TouchableOpacity)`
 `;
 
 export const ArchaxBannerContainer = styled.View<{
-  inset: any;
+  inset?: any;
   isSmallScreen?: boolean;
 }>`
   background: ${({theme}) => (theme.dark ? '#a25718' : '#ffedc9')};
   overflow: hidden;
-  margin-top: ${({inset}) => inset.top}px;
+  margin-top: ${({inset}) => inset?.top ?? 0}px;
   padding: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '16px')};
 `;

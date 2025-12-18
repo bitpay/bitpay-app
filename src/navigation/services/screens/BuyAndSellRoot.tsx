@@ -234,7 +234,6 @@ const CtaContainer = styled.View<{
   justifyCenter?: boolean;
 }>`
   width: 100%;
-  /* margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')}; */
   flex-direction: row;
   justify-content: ${({justifyCenter}) =>
     justifyCenter ? 'center' : 'space-between'};
@@ -459,7 +458,11 @@ const BuyAndSellRoot = ({
   const curValRef = useRef('');
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
-  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
+  const _isSmallScreen = showArchaxBanner
+    ? HEIGHT < 1000
+      ? true
+      : false
+    : HEIGHT < 700;
   const country = locationData?.countryShortCode || 'US';
 
   // Real route params
@@ -3804,7 +3807,9 @@ const BuyAndSellRoot = ({
                 : t('Continue')}
             </Button>
           </ButtonContainer>
-          {showArchaxBanner && <ArchaxFooter isSmallScreen={_isSmallScreen} />}
+          {context === 'buyCrypto' && showArchaxBanner && (
+            <ArchaxFooter isSmallScreen={_isSmallScreen} />
+          )}
         </ActionContainer>
       </ViewContainer>
 
