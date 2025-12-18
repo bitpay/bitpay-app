@@ -142,14 +142,18 @@ export const Bills = () => {
 
   const onSubmit = async () => {
     try {
-      setWaitlistButtonState('loading');
-      if (!isJoinedWaitlist && user) {
-        await dispatch(
-          joinWaitlist(user.email, 'BillPay Waitlist', 'bill-pay'),
-        );
+      if (!user) {
+        Linking.openURL('https://bitpay.com/bill-pay');
+      } else {
+        setWaitlistButtonState('loading');
+        if (!isJoinedWaitlist) {
+         await dispatch(
+            joinWaitlist(user.email, 'BillPay Waitlist', 'bill-pay'),
+          );
+        }
+        await sleep(500);
+        setWaitlistButtonState('success');
       }
-      await sleep(500);
-      setWaitlistButtonState('success');
     } catch (err) {
       setWaitlistButtonState('failed');
       logger.warn('Error joining waitlist: ' + BWCErrorMessage(err));
