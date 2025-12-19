@@ -431,9 +431,10 @@ const buildSelectableWalletList = (
           wallet.chain === condition.chain
         );
       } else {
+        const _category = category === 'matic' ? 'pol' : category;
         return (
           getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
-          category
+          _category
         );
       }
     });
