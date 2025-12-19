@@ -431,6 +431,21 @@ const buildSelectableWalletList = (
           wallet.chain === condition.chain
         );
       } else {
+        // POL/MATIC special cases
+        if (
+          category === 'matic' &&
+          wallet.chain === 'matic' &&
+          wallet.currencyAbbreviation === 'pol'
+        ) {
+          return true;
+        }
+        if (
+          category === 'matic_e' &&
+          wallet.chain === 'eth' &&
+          wallet.currencyAbbreviation === 'pol'
+        ) {
+          return true;
+        }
         return (
           getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
           category
@@ -441,7 +456,11 @@ const buildSelectableWalletList = (
       const {currencyAbbreviation, chain, currencyName, img} =
         filteredWallets[0];
 
-      const coinEntry = coins[currencyAbbreviation] || {
+      const key =
+        currencyAbbreviation === 'pol' && chain === 'eth'
+          ? 'matic'
+          : currencyAbbreviation;
+      const coinEntry = coins[key] || {
         id: uniqueId('coin_'),
         currencyName,
         currencyAbbreviation,
@@ -482,7 +501,7 @@ const buildSelectableWalletList = (
           priority,
         };
       });
-      coins[currencyAbbreviation] = coinEntry;
+      coins[key] = coinEntry;
     }
   });
   return coins;
