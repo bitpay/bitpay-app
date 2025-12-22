@@ -7,7 +7,7 @@ import {
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import debounce from 'lodash.debounce';
 import Braze from '@braze/react-native-sdk';
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef} from 'react';
 import {
   Appearance,
   AppState,
@@ -72,22 +72,12 @@ import AuthGroup, {
   AuthGroupParamList,
   AuthScreens,
 } from './navigation/auth/AuthGroup';
-import BuyCryptoGroup, {
-  BuyCryptoGroupParamList,
-} from './navigation/services/buy-crypto/BuyCryptoGroup';
-import SellCryptoGroup, {
-  SellCryptoGroupParamList,
-} from './navigation/services/sell-crypto/SellCryptoGroup';
 import ExternalServicesGroup, {
   ExternalServicesGroupParamList,
 } from './navigation/services/ExternalServicesGroup';
 import SwapCryptoGroup, {
   SwapCryptoGroupParamList,
 } from './navigation/services/swap-crypto/SwapCryptoGroup';
-import IntroGroup, {
-  IntroGroupParamList,
-  IntroScreens,
-} from './navigation/intro/IntroGroup';
 import WalletConnectGroup, {
   WalletConnectGroupParamList,
 } from './navigation/wallet-connect/WalletConnectGroup';
@@ -184,7 +174,6 @@ export type RootStackParamList = {
   SwapCryptoGroupParamList &
   CardActivationGroupParamList &
   OnboardingGroupParamList &
-  IntroGroupParamList &
   AuthGroupParamList &
   GiftCardGroupParamList &
   AboutGroupParamList &
@@ -283,7 +272,6 @@ export const Root = createNativeStackNavigator<RootStackParamList>();
 
 export default () => {
   const dispatch = useAppDispatch();
-  const [, rerender] = useState({});
   const linking = useDeeplinks();
   const urlEventHandler = useUrlEventHandler();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
@@ -292,7 +280,6 @@ export default () => {
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
-  const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
   const checkingBiometricForSending = useAppSelector(
     ({APP}) => APP.checkingBiometricForSending,
   );
@@ -667,9 +654,7 @@ export default () => {
   // ROOT STACKS AND GLOBAL COMPONENTS
   const initialRoute = onboardingCompleted
     ? RootStacks.TABS
-    : introCompleted
-    ? OnboardingScreens.ONBOARDING_START
-    : IntroScreens.START;
+    : OnboardingScreens.ONBOARDING_START;
 
   return (
     <SafeAreaView style={{flex: 1}} edges={['left', 'right']}>
@@ -997,7 +982,6 @@ export default () => {
               }}
             />
             {AuthGroup({Auth: Root, theme})}
-            {IntroGroup({Intro: Root})}
             {OnboardingGroup({Onboarding: Root, theme})}
             {SettingsGroup({Settings: Root})}
             {BitpayIdGroup({BitpayId: Root, theme})}

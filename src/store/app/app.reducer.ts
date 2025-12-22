@@ -94,7 +94,6 @@ export interface AppState {
   appIsReadyForDeeplinking: boolean;
   appFirstOpenData: AppFirstOpenData;
   appInstalled: boolean;
-  introCompleted: boolean;
   userFeedback: FeedbackType;
   onboardingCompleted: boolean;
   showWalletConnectStartModal: boolean;
@@ -192,7 +191,6 @@ const initialState: AppState = {
   appIsReadyForDeeplinking: false,
   appFirstOpenData: {firstOpenEventComplete: false, firstOpenDate: undefined},
   appInstalled: false,
-  introCompleted: false,
   userFeedback: {
     time: moment().unix(),
     version: APP_VERSION,
@@ -327,12 +325,6 @@ export const appReducer = (
       return {
         ...state,
         onboardingCompleted: true,
-      };
-
-    case AppActionTypes.SET_INTRO_COMPLETED:
-      return {
-        ...state,
-        introCompleted: true,
       };
 
     case AppActionTypes.SET_APP_INSTALLED:

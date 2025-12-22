@@ -42,7 +42,6 @@ import {coinbaseInitialize} from '../coinbase';
 import {zenledgerInitialize} from '../zenledger';
 import {Effect, RootState} from '../index';
 import {LocationEffects} from '../location';
-import {LogActions} from '../log';
 import {WalletActions} from '../wallet';
 import {
   startMigration,
