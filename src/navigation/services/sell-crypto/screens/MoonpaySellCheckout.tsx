@@ -119,6 +119,7 @@ import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
+import {Network} from '../../../../constants';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -328,7 +329,9 @@ const MoonpaySellCheckout: React.FC = () => {
         )}`,
       );
       try {
-        const sellQuote = await wallet.moonpayGetSellQuote(requestData);
+        const _sellQuote = await wallet.moonpayGetSellQuote(requestData);
+        const sellQuote = _sellQuote?.body ?? _sellQuote;
+
         if (sellQuote?.quoteCurrencyAmount) {
           sellQuote.totalFee = sellQuote.extraFeeAmount + sellQuote.feeAmount;
 
@@ -600,7 +603,7 @@ const MoonpaySellCheckout: React.FC = () => {
         if (!configFn) {
           throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
-        const params = configFn(network);
+        const params = configFn(network as Network);
         await prepareLedgerApp(
           params.appName,
           transportRef,

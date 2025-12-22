@@ -133,6 +133,7 @@ import {
 } from '../constants/ThorswapConstants';
 import {ExchangeConfig} from '../../../../store/external-services/external-services.types';
 import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
+import {Network} from '../../../../constants';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -210,8 +211,8 @@ const ThorswapCheckout: React.FC = () => {
   const alternativeIsoCode = 'USD';
   let addressFrom: string; // Refund address
   let addressTo: string; // Receiving address
-  let payinExtraId: string;
-  let status: string;
+  let payinExtraId: string | undefined;
+  let status: string | undefined;
   let payinAddress: string;
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
@@ -321,9 +322,8 @@ const ThorswapCheckout: React.FC = () => {
 
     let thorswapQuoteData: ThorswapGetSwapQuoteData | undefined;
     try {
-      thorswapQuoteData = await fromWalletSelected.thorswapGetSwapQuote(
-        requestData,
-      );
+      const _data = await fromWalletSelected.thorswapGetSwapQuote(requestData);
+      thorswapQuoteData = _data?.body ?? _data;
     } catch (err) {
       logger.error(
         'Thorswap createThorswapTransaction > thorswapGetSwapQuote Error: ' +
@@ -835,7 +835,7 @@ const ThorswapCheckout: React.FC = () => {
         if (!configFn) {
           throw new Error(`Unsupported currency: ${coin.toUpperCase()}`);
         }
-        const params = configFn(network);
+        const params = configFn(network as Network);
         await prepareLedgerApp(
           params.appName,
           transportRef,
