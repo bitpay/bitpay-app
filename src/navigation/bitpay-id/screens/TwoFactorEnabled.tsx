@@ -10,7 +10,6 @@ import {useTranslation} from 'react-i18next';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
 import {OnboardingScreens} from '../../../navigation/onboarding/OnboardingGroup';
-import {IntroScreens} from '../../../navigation/intro/IntroGroup';
 import {CommonActions} from '@react-navigation/native';
 import {useAppSelector} from '../../../utils/hooks';
 
@@ -42,7 +41,6 @@ const TwoFactorEnabled = ({navigation}: TwoFactorEnabledProps) => {
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
-  const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
   const onSkipPressRef = useRef(() => {
     const routesStack = [];
     if (onboardingCompleted) {
@@ -50,10 +48,8 @@ const TwoFactorEnabled = ({navigation}: TwoFactorEnabledProps) => {
         {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
         {name: BitpayIdScreens.PROFILE, params: {}},
       );
-    } else if (introCompleted) {
-      routesStack.push({name: OnboardingScreens.NOTIFICATIONS, params: {}});
     } else {
-      routesStack.push({name: IntroScreens.START, params: {}});
+      routesStack.push({name: OnboardingScreens.NOTIFICATIONS, params: {}});
     }
     navigation.dispatch(
       CommonActions.reset({

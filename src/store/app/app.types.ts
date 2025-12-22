@@ -29,7 +29,6 @@ export enum AppActionTypes {
   APP_OPENING_WAS_TRACKED = 'APP/OPENING_WAS_TRACKED',
   SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
-  SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SET_APP_INSTALLED = 'APP/SET_INSTALLED_COMPLETED',
   SHOW_WALLET_CONNECT_START_MODAL = 'APP/SHOW_WALLET_CONNECT_START_MODAL',
@@ -135,10 +134,6 @@ interface setAppFirstOpenEventComplete {
 interface setAppFirstOpenDate {
   type: typeof AppActionTypes.SET_APP_FIRST_OPEN_DATE;
   payload: number;
-}
-
-interface SetIntroCompleted {
-  type: typeof AppActionTypes.SET_INTRO_COMPLETED;
 }
 
 interface SetOnboardingCompleted {
@@ -442,7 +437,6 @@ export type AppActionType =
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
   | setUserFeedback
-  | SetIntroCompleted
   | SetOnboardingCompleted
   | setAppInstalled
   | ShowInAppNotification

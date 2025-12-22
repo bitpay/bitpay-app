@@ -44,7 +44,6 @@ import {
   setColorScheme,
   setDefaultAltCurrency,
   setHomeCarouselConfig,
-  setIntroCompleted,
   setKeyMigrationFailure,
   setMigrationMMKVStorageComplete,
   setOnboardingCompleted,
@@ -171,7 +170,6 @@ export const startMigration =
     return new Promise(async resolve => {
       logManager.info('[startMigration] - starting...');
       const goToNewUserOnboarding = () => {
-        dispatch(setIntroCompleted());
         navigationRef.dispatch(StackActions.replace('OnboardingStart'));
       };
 
