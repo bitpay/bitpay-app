@@ -540,6 +540,9 @@ const ExternalServicesOfferSelector: React.FC<
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(
     _paymentMethod as PaymentMethod,
   );
+  const [offerWarnMsg, setOfferWarnMsg] = useState<string | undefined>(
+    getWarnMsg,
+  );
 
   const [withdrawalMethod, setWithdrawalMethod] = useState<
     WithdrawalMethod | undefined
@@ -2342,6 +2345,7 @@ const ExternalServicesOfferSelector: React.FC<
   useEffect(() => {
     if (!amount || amount === 0 || isNaN(amount)) {
       setOfferSelectorText(t('Set amount for our Best Offer'));
+      setOfferWarnMsg(undefined);
       setSelectedOffer(undefined);
       onSelectOffer?.(undefined);
       setSelectedOfferLoading(false);
@@ -2397,6 +2401,7 @@ const ExternalServicesOfferSelector: React.FC<
     }
 
     setOfferSelectorText(t('Searching for our Best Offer'));
+    setOfferWarnMsg(undefined);
     setSelectedOffer(undefined);
     onSelectOffer?.(undefined);
     setSelectedOfferLoading(true);
@@ -2449,11 +2454,20 @@ const ExternalServicesOfferSelector: React.FC<
     const offersTimeout = setTimeout(() => {
       const offersArray = Object.values(offers);
       const filteredOffers = offersArray.filter(
-        offer => offer.showOffer && offer.amountReceiving,
+        offer =>
+          offer.showOffer &&
+          offer.amountReceiving &&
+          offer.amountReceiving !== '0',
       );
       if (filteredOffers.length === 0) {
+        setOfferWarnMsg(
+          t(
+            'There are currently no offers that satisfy your request. Please try again later.',
+          ),
+        );
         setSelectedOffer(undefined);
         onSelectOffer?.(undefined);
+        setSelectedOfferLoading(false);
         return;
       }
       const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
@@ -2518,11 +2532,20 @@ const ExternalServicesOfferSelector: React.FC<
     const offersTimeout = setTimeout(() => {
       const offersArray = Object.values(sellOffers);
       const filteredOffers = offersArray.filter(
-        offer => offer.showOffer && offer.amountReceiving,
+        offer =>
+          offer.showOffer &&
+          offer.amountReceiving &&
+          offer.amountReceiving !== '0',
       );
       if (filteredOffers.length === 0) {
+        setOfferWarnMsg(
+          t(
+            'There are currently no offers that satisfy your request. Please try again later.',
+          ),
+        );
         setSelectedOffer(undefined);
         onSelectOffer?.(undefined);
+        setSelectedOfferLoading(false);
         return;
       }
       const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
@@ -2571,6 +2594,10 @@ const ExternalServicesOfferSelector: React.FC<
     updateViewSell,
   ]);
 
+  useEffect(() => {
+    setOfferWarnMsg(getWarnMsg);
+  }, [getWarnMsg]);
+
   const onBackdropPress = () => {
     setOfferSelectorModalVisible(false);
   };
@@ -2603,8 +2630,8 @@ const ExternalServicesOfferSelector: React.FC<
           }
           setOfferSelectorModalVisible(true);
         }}>
-        {getWarnMsg ? (
-          <WarnMsgText>{getWarnMsg}</WarnMsgText>
+        {offerWarnMsg ? (
+          <WarnMsgText>{offerWarnMsg}</WarnMsgText>
         ) : (
           <OfferSelectorContainerLeft>
             <View style={{marginRight: 5}}>
@@ -2613,7 +2640,7 @@ const ExternalServicesOfferSelector: React.FC<
             <OfferSelectorText>{offerSelectorText}</OfferSelectorText>
           </OfferSelectorContainerLeft>
         )}
-        {getWarnMsg ? null : selectedOfferLoading ? (
+        {offerWarnMsg ? null : selectedOfferLoading ? (
           <ActivityIndicatorContainer>
             <ActivityIndicator color={SlateDark} />
           </ActivityIndicatorContainer>
