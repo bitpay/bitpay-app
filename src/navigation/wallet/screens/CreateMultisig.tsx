@@ -67,6 +67,7 @@ import Banner from '../../../components/banner/Banner';
 export interface CreateMultisigParamsList {
   context: 'addTSSWalletMultisig' | 'addWalletMultisig';
   currency: string;
+  chain?: string;
   key?: Key;
 }
 
@@ -187,7 +188,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const logger = useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const {currency, key, context} = route.params;
+  const {currency, chain, key, context} = route.params;
   const segwitSupported = IsSegwitCoin(currency);
   const [showOptions, setShowOptions] = useState(false);
   const [testnetEnabled, setTestnetEnabled] = useState(false);
@@ -246,7 +247,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     opts.networkName = options.networkName;
     opts.singleAddress = options.singleAddress;
     opts.coin = currency?.toLowerCase();
-    opts.chain = opts.coin;
+    opts.chain = chain?.toLowerCase() || opts.coin;
 
     CreateMultisigWallet(opts);
   };
@@ -259,7 +260,8 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
 
       const {key: tssKey} = await dispatch<any>(
         startCreateTSSKey({
-          chain: opts.coin!,
+          coin: opts.coin!,
+          chain: opts.chain!,
           network: opts.networkName!,
           m: opts.m,
           n: opts.n,

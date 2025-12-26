@@ -20,7 +20,6 @@ import {
   KeyOptions,
   PendingJoinerSession,
   TSSCopayerInfo,
-  TssSessionData,
   Wallet,
 } from '../../wallet.models';
 import {createWalletWithOpts} from '../create/create';
@@ -34,6 +33,7 @@ import {BASE_BWS_URL} from '../../../../constants/config';
 import {Network} from '../../../../constants';
 import {setHomeCarouselConfig} from '../../../../store/app/app.actions';
 import {createWalletAddress} from '../address/address';
+import {BitpaySupportedCoins} from '../../../../constants/currencies';
 
 const BWC = BwcProvider.getInstance();
 
@@ -191,7 +191,6 @@ const getPubKeyFromKey = (partyKey: any): string => {
   const credentials = partyKey.createCredentials(null, {
     chain: 'BTC', // Doesn't matter for requestPubKey
     network: 'livenet',
-    n: 1,
     account: 0,
   });
   return credentials.requestPubKey;
@@ -199,6 +198,7 @@ const getPubKeyFromKey = (partyKey: any): string => {
 
 export const startCreateTSSKey =
   (opts: {
+    coin: string;
     chain: string;
     network: string;
     m: number;
@@ -209,7 +209,16 @@ export const startCreateTSSKey =
   }): Effect<Promise<{key: Key}>> =>
   async (dispatch, getState): Promise<{key: Key}> => {
     try {
-      const {chain: _chain, network, m, n, password, walletName, myName} = opts;
+      const {
+        coin,
+        chain: _chain,
+        network,
+        m,
+        n,
+        password,
+        walletName,
+        myName,
+      } = opts;
       const chain = _chain === 'pol' ? 'matic' : _chain.toLowerCase(); // for creating a polygon wallet, we use matic as symbol
       const {
         WALLET: {tokenOptionsByAddress},
@@ -221,7 +230,8 @@ export const startCreateTSSKey =
       logManager.debug('[TSS] Created party key for creator');
 
       const tssKeyGen = new TssKeyGen({
-        chain: chain.toUpperCase(),
+        coin,
+        chain,
         network: network as Network,
         baseUrl: BASE_BWS_URL,
         key: partyKey,
@@ -239,11 +249,12 @@ export const startCreateTSSKey =
       logManager.debug(`[TSS] Session created with ID: ${sessionId}`);
 
       const {currencyAbbreviation, currencyName} = dispatch(
-        mapAbbreviationAndName(chain, chain, undefined),
+        mapAbbreviationAndName(coin, chain, undefined),
       );
 
       const walletClient = BWC.getClient();
       const credentials = partyKey.createCredentials(null, {
+        coin,
         chain,
         network,
         n: 1, // TODO: review if this should be opts.n
@@ -285,7 +296,8 @@ export const startCreateTSSKey =
         id: sessionId,
         partyKey: partyKey.toObj(),
         sessionExport,
-        chain: chain,
+        coin,
+        chain,
         network,
         m,
         n,
@@ -342,7 +354,8 @@ export const addCoSignerToTSS =
       });
 
       const tssKeyGen = new TssKeyGen({
-        chain: key.tssSession.chain.toUpperCase(),
+        coin: key.tssSession.coin,
+        chain: key.tssSession.chain,
         network: key.tssSession.network,
         baseUrl: BASE_BWS_URL,
         key: partyKey,
@@ -420,8 +433,15 @@ export const startTSSCeremony =
           throw new Error('Not all co-signers have been invited');
         }
 
-        const {chain, network, myName, walletName, sessionExport, partyKey} =
-          key.tssSession;
+        const {
+          coin,
+          chain,
+          network,
+          myName,
+          walletName,
+          sessionExport,
+          partyKey,
+        } = key.tssSession;
 
         const BWCKey = BWC.getKey();
         const restoredPartyKey = new BWCKey({
@@ -430,7 +450,8 @@ export const startTSSCeremony =
         });
 
         const tssKeyGen = new TssKeyGen({
-          chain: chain.toUpperCase(),
+          coin,
+          chain,
           network,
           baseUrl: BASE_BWS_URL,
           key: restoredPartyKey,
@@ -495,7 +516,7 @@ export const startTSSCeremony =
             copayerName: myName,
             createWalletOpts: {
               network,
-              coin: chain,
+              coin,
               chain,
               walletPrivKey,
             },
@@ -513,10 +534,11 @@ export const startTSSCeremony =
         }
 
         const {currencyAbbreviation, currencyName} = dispatch(
-          mapAbbreviationAndName(chain, chain, undefined),
+          mapAbbreviationAndName(coin, chain, undefined),
         );
 
         const credentials = _tssKey.createCredentials(null, {
+          coin,
           chain,
           network,
           account: 0,
@@ -751,10 +773,12 @@ export const joinTSSWithCode =
           seedType: 'object',
           seedData: opts.partyKey,
         });
+
         logManager.debug('[TSS Join] Party key restored');
 
         const tempTssKeyGen = new TssKeyGen({
-          chain: 'BTC',
+          coin: 'btc',
+          chain: 'btc',
           network: 'livenet',
           baseUrl: BASE_BWS_URL,
           key: partyKey,
@@ -769,10 +793,12 @@ export const joinTSSWithCode =
         );
 
         const chain = decoded.chain.toLowerCase();
+        const coin = BitpaySupportedCoins[chain].coin;
         const network = decoded.network as 'livenet' | 'testnet' | 'regtest';
 
         const tssKeyGen = new TssKeyGen({
-          chain: chain.toUpperCase(),
+          coin,
+          chain,
           network: network,
           baseUrl: BASE_BWS_URL,
           key: partyKey,
@@ -789,12 +815,13 @@ export const joinTSSWithCode =
         const n = tssKeyGen.n;
 
         const {currencyAbbreviation, currencyName} = dispatch(
-          mapAbbreviationAndName(chain, chain, undefined),
+          mapAbbreviationAndName(coin, chain, undefined),
         );
 
         const walletClient = BWC.getClient();
         const tempCredentials = partyKey.createCredentials(null, {
-          chain: chain.toUpperCase(),
+          coin,
+          chain,
           network,
           n: 1,
           account: 0,
@@ -825,6 +852,7 @@ export const joinTSSWithCode =
           id: tssKeyGen.id,
           partyKey: partyKey.toObj(),
           sessionExport: tssKeyGen.exportSession(),
+          coin,
           chain,
           network,
           m,
@@ -891,7 +919,7 @@ export const joinTSSWithCode =
             copayerName: myName,
             createWalletOpts: {
               network,
-              coin: chain,
+              coin,
               chain,
             },
           });
@@ -908,7 +936,7 @@ export const joinTSSWithCode =
         }
 
         const credentials = _tssKey.createCredentials(null, {
-          chain: chain.toUpperCase(),
+          chain,
           network,
           account: 0,
         });

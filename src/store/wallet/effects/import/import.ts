@@ -1411,7 +1411,7 @@ const createKeyAndCredentials = async (
       bwcClient.fromString(
         key.createCredentials(undefined, {
           coin,
-          chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
+          chain,
           network,
           account,
           n,
@@ -1432,7 +1432,7 @@ const createKeyAndCredentials = async (
       bwcClient.fromString(
         key.createCredentials(undefined, {
           coin,
-          chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
+          chain,
           network,
           account,
           n,

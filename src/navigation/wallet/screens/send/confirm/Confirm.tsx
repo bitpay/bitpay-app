@@ -255,9 +255,9 @@ const Confirm = () => {
       setIsTSSWallet(isTss);
       if (isTss) {
         const copayersList =
-          wallet.credentials?.publicKeyRing?.map((pkr: any, index: number) => ({
-            id: pkr.copayerId || `copayer-${index}`,
-            name: pkr.copayerName || `Co-signer ${index + 1}`,
+          wallet.copayers?.map(copayer => ({
+            id: copayer.id,
+            name: copayer.name,
             signed: false,
           })) || [];
         setTssCopayers(copayersList);
@@ -457,11 +457,18 @@ const Confirm = () => {
         `[TSS Confirm] Progress: Round ${progress.currentRound}/${progress.totalRounds}`,
       );
       setTssProgress(progress);
+
+      // When round 1 starts, mark all copayers as joined/signing
+      // TODO remove this when onCopayerStatusChange is added
+      if (progress.currentRound === 1) {
+        setTssCopayers(prev => prev.map(c => ({...c, signed: true})));
+      }
     },
     onCopayerStatusChange: (
       copayerId: string,
       status: TSSCopayerSignStatus,
     ) => {
+      // This will never fire - keeping for future when event exist
       logManager.debug(`[TSS Confirm] Copayer ${copayerId} ${status}`);
       setTssCopayers(prev =>
         prev.map(c =>
@@ -490,7 +497,6 @@ const Confirm = () => {
       logManager.debug(`[TSS Confirm] Signing complete`);
     },
   };
-
   const startSendingPayment = async ({
     transport,
   }: {transport?: Transport} = {}) => {

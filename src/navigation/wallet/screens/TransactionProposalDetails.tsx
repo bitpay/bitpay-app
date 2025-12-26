@@ -271,9 +271,9 @@ const TransactionProposalDetails = () => {
       if (isTss) {
         logManager.debug(`[TxpDetails] Is TSS wallet: ${isTss}`);
         const copayersList =
-          wallet.credentials?.publicKeyRing?.map((pkr: any, index: number) => ({
-            id: pkr.copayerId || `copayer-${index}`,
-            name: pkr.copayerName || `Co-signer ${index + 1}`,
+          wallet.copayers?.map(copayer => ({
+            id: copayer.id,
+            name: copayer.name,
             signed: false,
           })) || [];
         setTssCopayers(copayersList);
@@ -524,7 +524,7 @@ const TransactionProposalDetails = () => {
 
   const tssCallbacks: TSSSigningCallbacks = {
     onStatusChange: (status: TSSSigningStatus) => {
-      logManager.debug(`[TxpDetails TSS] Status: ${status}`);
+      logManager.debug(`[TxpDetails TSS] Status changed: ${status}`);
       setTssStatus(status);
     },
     onProgressUpdate: (progress: TSSSigningProgress) => {
@@ -532,11 +532,18 @@ const TransactionProposalDetails = () => {
         `[TxpDetails TSS] Progress: Round ${progress.currentRound}/${progress.totalRounds}`,
       );
       setTssProgress(progress);
+
+      // When round 1 starts, mark all copayers as joined/signing
+      // TODO remove this when onCopayerStatusChange is added
+      if (progress.currentRound === 1) {
+        setTssCopayers(prev => prev.map(c => ({...c, signed: true})));
+      }
     },
     onCopayerStatusChange: (
       copayerId: string,
       status: TSSCopayerSignStatus,
     ) => {
+      // This will never fire - keeping for future when event exist
       logManager.debug(`[TxpDetails TSS] Copayer ${copayerId} ${status}`);
       setTssCopayers(prev =>
         prev.map(c =>
@@ -554,20 +561,17 @@ const TransactionProposalDetails = () => {
       logManager.error(`[TxpDetails TSS] Error: ${error.message}`);
       setShowTSSProgressModal(false);
       setResetSwipeButton(true);
-      dispatch(
-        showBottomNotificationModal(
-          CustomErrorMessage({
-            errMsg: error.message,
-            title: t('TSS Signing Error'),
-          }),
-        ),
+      showErrorMessage(
+        CustomErrorMessage({
+          errMsg: error.message,
+          title: t('TSS Signing Error'),
+        }),
       );
     },
     onComplete: (signature: string) => {
-      logManager.debug(`[TxpDetails TSS] Complete`);
+      logManager.debug(`[TxpDetails TSS] Signing complete`);
     },
   };
-
   const joinTSSSigning = async () => {
     try {
       logManager.debug(

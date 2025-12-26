@@ -10,6 +10,7 @@ import {
 } from '../../wallet.models';
 import {logManager} from '../../../../managers/LogManager';
 import {BASE_BWS_URL} from '../../../../constants/config';
+import {utils as ethersUtils} from 'ethers';
 
 const BWC = BwcProvider.getInstance();
 
@@ -38,6 +39,37 @@ export const requiresTSSSigning = (wallet: Wallet, key: Key): boolean => {
   return isTSSKey(key) && !!wallet.tssKeyId;
 };
 
+export const toBwsSignatureFormat = (sig: any, chain: string): string => {
+  const strip0x = (h: string) => (h?.startsWith('0x') ? h.slice(2) : h);
+  const pad32 = (h: string) => strip0x(h).padStart(64, '0');
+
+  if (!sig) throw new Error('Missing signature');
+
+  if (typeof sig === 'string') {
+    const hex = strip0x(sig);
+    if (!/^[0-9a-fA-F]+$/.test(hex)) throw new Error('Signature is not hex');
+    return '0x' + hex;
+  }
+
+  const isEvm = ['eth', 'matic', 'arb', 'base', 'op'].includes(
+    (chain || '').toLowerCase(),
+  );
+  if (!isEvm) {
+    throw new Error(`Unsupported chain for this helper: ${chain}`);
+  }
+
+  const r = pad32(sig.r);
+  const s = pad32(sig.s);
+
+  let v = Number(sig.v);
+  if (v === 0 || v === 1) {
+    v = v + 27;
+  }
+  const vHex = v.toString(16).padStart(2, '0');
+
+  return `0x${r}${s}${vHex}`;
+};
+
 export const getTxpMessageHash = (
   wallet: Wallet,
   txp: TransactionProposal,
@@ -53,20 +85,31 @@ export const getTxpMessageHash = (
       Bitcore.crypto.Signature.SIGHASH_ALL,
     );
     return sighash;
-  } else {
+  } else if (
+    ['eth', 'matic', 'arb', 'base', 'op'].includes(txp.chain?.toLowerCase())
+  ) {
     const serialized = tx.uncheckedSerialize()[0];
-
     const hexString = serialized.startsWith('0x')
       ? serialized.slice(2)
       : serialized;
 
     const txBuffer = Buffer.from(hexString, 'hex');
-    const hash = Bitcore.crypto.Hash.sha256(txBuffer);
 
-    logManager.debug(`[getTxpMessageHash] txBuffer length: ${txBuffer.length}`);
-    logManager.debug(`[getTxpMessageHash] hash: ${hash.toString('hex')}`);
+    const hashHex = ethersUtils.keccak256('0x' + txBuffer.toString('hex'));
+    const hash = Buffer.from(hashHex.slice(2), 'hex');
+
+    logManager.debug(
+      `[getTxpMessageHash] Keccak256 hash: ${hash.toString('hex')}`,
+    );
 
     return hash;
+  } else {
+    const serialized = tx.uncheckedSerialize()[0];
+    const hexString = serialized.startsWith('0x')
+      ? serialized.slice(2)
+      : serialized;
+    const txBuffer = Buffer.from(hexString, 'hex');
+    return Bitcore.crypto.Hash.sha256(txBuffer);
   }
 };
 
@@ -114,9 +157,10 @@ export const startTSSSigning =
     txp: TransactionProposal;
     callbacks: TSSSigningCallbacks;
     timeout?: number;
+    joiner?: boolean;
   }): Effect<Promise<TransactionProposal>> =>
   async (dispatch, getState): Promise<TransactionProposal> => {
-    const {key, wallet, txp, callbacks, timeout = 300000} = opts;
+    const {key, wallet, txp, callbacks, timeout = 300000, joiner} = opts;
 
     return new Promise(async (resolve, reject) => {
       let tssSign: any = null;
@@ -214,17 +258,23 @@ export const startTSSSigning =
               logManager.debug(`[TSS Sign] Round ${round} submitted`);
               callbacks.onRoundUpdate(round, 'submitted');
             })
-            .on('copayerjoined', (copayerId: string) => {
-              logManager.debug(`[TSS Sign] Copayer joined: ${copayerId}`);
-              callbacks.onCopayerStatusChange(copayerId, 'joined');
-            })
-            .on('copayersigned', (copayerId: string) => {
-              logManager.debug(`[TSS Sign] Copayer signed: ${copayerId}`);
-              callbacks.onCopayerStatusChange(copayerId, 'signed');
-            })
-            .on('signature', (signature: string) => {
+            // TODO BWC
+            // .on('copayersigned', (copayerId: string) => {
+            //   logManager.debug(`[TSS Sign] Copayer signed: ${copayerId}`);
+            //   callbacks.onCopayerStatusChange(copayerId, 'signed');
+            // })
+            .on('signature', signature => {
               logManager.debug(`[TSS Sign] Signature received`);
-              resolveSign(signature);
+              try {
+                const bwsSig = toBwsSignatureFormat(signature, txp.chain);
+                resolveSign(bwsSig);
+              } catch (err) {
+                rejectSign(
+                  new Error(
+                    `Failed to convert/verify signature: ${err.message}`,
+                  ),
+                );
+              }
             })
             .on('complete', () => {
               logManager.debug('[TSS Sign] Signing complete');
@@ -251,22 +301,25 @@ export const startTSSSigning =
 
         logManager.debug('[TSS Sign] Pushing signature to txp');
 
-        const signedTxp = await new Promise<TransactionProposal>(
-          (resolvePush, rejectPush) => {
-            wallet.pushSignatures(
-              txp,
-              [signature],
-              (err: Error, result: TransactionProposal) => {
-                if (err) {
-                  rejectPush(err);
-                } else {
-                  resolvePush(result);
-                }
-              },
-              null,
-            );
-          },
-        );
+        let signedTXP: TransactionProposal | null = null;
+        if (!joiner) {
+          signedTXP = await new Promise<TransactionProposal>(
+            (resolvePush, rejectPush) => {
+              wallet.pushSignatures(
+                txp,
+                [signature],
+                (err: Error, result: TransactionProposal) => {
+                  if (err) {
+                    rejectPush(err);
+                  } else {
+                    resolvePush(result);
+                  }
+                },
+                null,
+              );
+            },
+          );
+        }
 
         if (tssSign) {
           tssSign.unsubscribe();
@@ -275,7 +328,7 @@ export const startTSSSigning =
         logManager.debug('[TSS Sign] TSS signing completed successfully');
         callbacks.onStatusChange('complete');
 
-        resolve(signedTxp);
+        resolve(signedTXP ?? txp);
       } catch (err) {
         if (timeoutId) {
           clearTimeout(timeoutId);
@@ -314,6 +367,7 @@ export const joinTSSSigningSession =
         wallet,
         txp,
         callbacks,
+        joiner: true,
       }),
     );
   };

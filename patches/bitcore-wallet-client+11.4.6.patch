@@ -128,3 +128,28 @@ index 43e3f5d..4767846 100644
          x.copayerId = common_1.Utils.xPubToCopayerId(x.chain, x.xPubKey);
          x.publicKeyRing = [
              {
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
+index d073bca..cdeaea3 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
+@@ -118,17 +118,19 @@ class TssKeyGen extends events_1.EventEmitter {
+         _TssKeyGen_subscriptionId.set(this, void 0);
+         _TssKeyGen_subscriptionRunning.set(this, void 0);
+         $.checkArgument(params.chain, 'Missing required param: chain');
++        $.checkArgument(params.coin, 'Missing required param: coin');
+         $.checkArgument(params.network, 'Missing required param: network');
+         $.checkArgument(params.baseUrl, 'Missing required param: baseUrl');
+         $.checkArgument(params.key, 'Missing required param: key');
+         $.checkArgument(params.key instanceof key_1.Key, 'key must be an instance of Key');
+         this.chain = params.chain.toLowerCase();
++        this.coin = params.coin.toLowerCase();
+         this.network = params.network;
+         __classPrivateFieldSet(this, _TssKeyGen_request, new request_1.Request(params.baseUrl, {
+             r: params.request,
+         }), "f");
+         __classPrivateFieldSet(this, _TssKeyGen_key, params.key, "f");
+-        __classPrivateFieldSet(this, _TssKeyGen_credentials, __classPrivateFieldGet(this, _TssKeyGen_key, "f").createCredentials(params.password, { chain: this.chain, network: this.network, n: 1, account: 0 }), "f");
++        __classPrivateFieldSet(this, _TssKeyGen_credentials, __classPrivateFieldGet(this, _TssKeyGen_key, "f").createCredentials(params.password, { coin: this.coin, chain: this.chain, network: this.network, n: 1, account: 0 }), "f");
+         __classPrivateFieldGet(this, _TssKeyGen_request, "f").setCredentials(__classPrivateFieldGet(this, _TssKeyGen_credentials, "f"));
+         __classPrivateFieldSet(this, _TssKeyGen_requestPrivateKey, crypto_wallet_core_1.BitcoreLib.PrivateKey.fromString(__classPrivateFieldGet(this, _TssKeyGen_credentials, "f").requestPrivKey), "f");
+         const baseXPrivKey = __classPrivateFieldGet(this, _TssKeyGen_key, "f").get(params.password).xPrivKey;
