@@ -175,7 +175,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
               imgSrc: undefined,
               selected: false,
               disabled: false,
-              chain: currency.currencyAbbreviation,
             } as CurrencySelectionItem,
           };
           return item;
@@ -206,7 +205,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
               imgSrc: undefined,
               selected: false,
               disabled: false,
-              chain: currency.currencyAbbreviation.toLowerCase(),
             } as CurrencySelectionItem,
           });
         });
@@ -224,7 +222,6 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
               imgSrc: undefined,
               selected: false,
               disabled: false,
-              chain: currency.currencyAbbreviation.toLowerCase(),
             } as CurrencySelectionItem,
           });
         });
@@ -365,6 +362,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
     if (context === 'addTSSWalletMultisig') {
       navigation.navigate('CreateMultisig', {
         currency: currencyAbbreviation.toLowerCase(),
+        chain: chain?.toLowerCase()!,
         key,
         context,
       });
