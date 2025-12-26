@@ -129,6 +129,7 @@ export interface WalletObj {
   m: number;
   n: number;
   balance: CryptoBalance;
+  copayers: any[];
   singleAddress?: boolean;
   pendingTxps: TransactionProposal[];
   tokenAddress?: string;
@@ -587,6 +588,7 @@ export interface TssSessionData {
   id: string;
   partyKey: any;
   sessionExport?: string;
+  coin: string;
   chain: string;
   network: string;
   m: number;
