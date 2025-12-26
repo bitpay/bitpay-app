@@ -32,12 +32,15 @@ type CreationOptionsScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
   WalletScreens.CREATION_OPTIONS
 >;
+
 export interface Option {
   id: string;
   title: string;
   description: string;
   cta: () => void;
 }
+
+export type MultisigModalType = 'create' | 'join' | null;
 
 const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
   navigation,
@@ -46,7 +49,8 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const [showMultisigOptions, setShowMultisigOptions] = useState(false);
+  const [multisigModalType, setMultisigModalType] =
+    useState<MultisigModalType>(null);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -107,12 +111,20 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       },
     },
     {
-      id: 'multisig',
-      title: t('Multisig Wallet'),
+      id: 'addMultisig',
+      title: t('Add Multisig Wallet'),
       description: t(
-        'Requires multiple people or devices and is the most secure',
+        'Create a new wallet that requires multiple signatures for transactions',
       ),
-      cta: () => setShowMultisigOptions(true),
+      cta: () => setMultisigModalType('create'),
+    },
+    {
+      id: 'joinMultisig',
+      title: t('Join Shared Wallet'),
+      description: t(
+        'Join an existing multisig wallet using an invitation from another user',
+      ),
+      cta: () => setMultisigModalType('join'),
     },
     {
       id: 'coinbase',
@@ -161,8 +173,9 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
         </OptionListContainer>
       </OptionContainer>
       <MultisigOptions
-        isVisible={showMultisigOptions}
-        setShowMultisigOptions={setShowMultisigOptions}
+        isVisible={multisigModalType !== null}
+        modalType={multisigModalType}
+        closeModal={() => setMultisigModalType(null)}
       />
     </>
   );

@@ -809,7 +809,8 @@ const ExternalServicesOfferSelector: React.FC<
 
       selectedWallet
         .banxaGetQuote(requestData)
-        .then((quoteData: BanxaQuoteData) => {
+        .then((data: any) => {
+          const quoteData: BanxaQuoteData = data?.body ?? data;
           if (quoteData?.data?.prices?.[0]?.coin_amount) {
             const data = quoteData.data.prices[0];
 
@@ -966,7 +967,8 @@ const ExternalServicesOfferSelector: React.FC<
 
     selectedWallet
       .moonpayGetQuote(requestData)
-      .then(data => {
+      .then((data: any) => {
+        data = data?.body ?? data;
         if (data?.baseCurrencyAmount) {
           offers.moonpay.amountLimits = {
             min: data.baseCurrency.minBuyAmount,
@@ -1138,9 +1140,8 @@ const ExternalServicesOfferSelector: React.FC<
         env: rampEnv,
       };
 
-      const data: RampQuoteRequestData = await selectedWallet.rampGetQuote(
-        requestData,
-      );
+      const _data: any = await selectedWallet.rampGetQuote(requestData);
+      const data: RampQuoteRequestData = _data?.body ?? _data;
 
       let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
       if (data?.asset) {
@@ -1339,7 +1340,8 @@ const ExternalServicesOfferSelector: React.FC<
 
       selectedWallet
         .sardineGetQuote(requestData)
-        .then((data: any) => {
+        .then((_data: any) => {
+          const data = _data?.body ?? _data;
           if (data && data.quantity) {
             offers.sardine.outOfLimitMsg = undefined;
             offers.sardine.errorMsg = undefined;
@@ -1474,7 +1476,8 @@ const ExternalServicesOfferSelector: React.FC<
       }
       selectedWallet
         .simplexGetQuote(requestData)
-        .then(data => {
+        .then((_data: any) => {
+          const data = _data?.body ?? _data;
           if (data && data.quote_id) {
             offers.simplex.outOfLimitMsg = undefined;
             offers.simplex.errorMsg = undefined;
@@ -1634,7 +1637,8 @@ const ExternalServicesOfferSelector: React.FC<
 
       selectedWallet
         .transakGetQuote(requestData)
-        .then((data: TransakQuoteData) => {
+        .then((_data: any) => {
+          const data: TransakQuoteData = _data?.body ?? _data;
           if (data?.response?.cryptoAmount) {
             const transakQuoteData = data.response;
             offers.transak.outOfLimitMsg = undefined;
@@ -1758,7 +1762,8 @@ const ExternalServicesOfferSelector: React.FC<
 
     selectedWallet
       .moonpayGetSellQuote(requestData)
-      .then(data => {
+      .then(_data => {
+        const data = _data?.body ?? _data;
         if (data?.baseCurrencyAmount) {
           sellOffers.moonpay.amountLimits = {
             min: data.baseCurrency.minsellAmount,
@@ -1912,7 +1917,8 @@ const ExternalServicesOfferSelector: React.FC<
 
     selectedWallet
       .rampGetSellQuote(requestData)
-      .then((data: RampGetSellQuoteData) => {
+      .then((_data: any) => {
+        const data: RampGetSellQuoteData = _data?.body ?? _data;
         let paymentMethodData: RampSellQuoteResultForPayoutMethod | undefined;
         if (data?.asset) {
           switch (withdrawalMethod?.method) {
@@ -2169,7 +2175,8 @@ const ExternalServicesOfferSelector: React.FC<
 
       selectedWallet
         .simplexGetSellQuote(requestData)
-        .then((data: SimplexGetSellQuoteData) => {
+        .then(_data => {
+          const data: SimplexGetSellQuoteData = _data?.body ?? _data;
           if (data && data.fiat_amount) {
             sellOffers.simplex.outOfLimitMsg = undefined;
             sellOffers.simplex.errorMsg = undefined;

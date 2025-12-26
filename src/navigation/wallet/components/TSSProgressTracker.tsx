@@ -1,0 +1,425 @@
+import React, {useState} from 'react';
+import {View} from 'react-native';
+import styled, {useTheme} from 'styled-components/native';
+import {
+  White,
+  Black,
+  SlateDark,
+  Slate30,
+  Success25,
+} from '../../../styles/colors';
+import {useTranslation} from 'react-i18next';
+import {
+  TSSSigningStatus,
+  TSSSigningProgress,
+} from '../../../store/wallet/wallet.models';
+import {
+  ActiveOpacity,
+  TouchableOpacity,
+} from '@components/base/TouchableOpacity';
+import {GetAmTimeAgo} from '../../../store/wallet/utils/time';
+import ClockLightIcon from '../../../../assets/img/clock-blue.svg';
+import ClockDarkIcon from '../../../../assets/img/clock-light-blue.svg';
+import SuccessLightIcon from '../../../../assets/img/check-dark.svg';
+import SuccessDarkIcon from '../../../../assets/img/check.svg';
+import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import {BaseText, H4} from '../../../components/styled/Text';
+import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+
+const ProgressButton = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 12px;
+  border-width: 1px;
+  border-color: ${({theme: {dark}}) =>
+    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+`;
+
+const ProgressIndicator = styled.View<{status: TSSSigningStatus}>`
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: ${({status, theme: {dark}}) =>
+    status === 'complete' ? (dark ? '#004D27' : Success25) : '#2240C440'};
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+`;
+
+const ProgressButtonText = styled(BaseText)`
+  font-size: 16px;
+  color: ${({theme}) => theme.colors.text};
+`;
+
+const ProgressBarContainer = styled.View`
+  height: 3px;
+  background-color: ${({theme: {dark}}) => (dark ? '#2A2A2A' : '#E5E5E5')};
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+`;
+
+const ProgressBarFill = styled.View<{progress: number; complete?: boolean}>`
+  height: 100%;
+  width: ${({progress}) => progress}%;
+  background-color: ${({complete, theme: {dark}}) =>
+    complete ? (dark ? '#00A651' : '#2FCF6E') : '#2240C4'};
+  border-radius: 2px;
+`;
+
+const DetailsLabel = styled(BaseText)`
+  font-size: 14px;
+  color: ${({theme}) => theme.colors.description};
+  margin-bottom: 8px;
+`;
+
+const ModalContainer = styled.View`
+  padding: 20px;
+  padding-bottom: 40px;
+  background-color: ${({theme}) => theme.colors.background};
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+`;
+
+const Header = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+`;
+
+const Title = styled(H4)`
+  color: ${({theme}) => theme.colors.text};
+`;
+
+const StepsContainer = styled.View``;
+
+const StepRow = styled.View`
+  flex-direction: row;
+  align-items: flex-start;
+`;
+
+const StepRail = styled.View`
+  width: 40px;
+  align-items: center;
+  margin-right: 12px;
+`;
+
+const StepConnector = styled.View<{completed?: boolean; height?: number}>`
+  width: 2px;
+  height: ${({height}) => height || 20}px;
+  margin-top: 0px;
+  background-color: ${({theme: {dark}, completed}) =>
+    completed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : '#F5F5F5'};
+`;
+
+const StepIndicator = styled.View<{active?: boolean; completed?: boolean}>`
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: ${({theme: {dark}, active, completed}) =>
+    active
+      ? '#2240C440'
+      : completed
+      ? dark
+        ? '#004D27'
+        : Success25
+      : dark
+      ? '#2A2A2A'
+      : '#F5F5F5'};
+  align-items: center;
+  justify-content: center;
+`;
+
+const StepContent = styled.View`
+  flex: 1;
+  padding-bottom: 20px;
+`;
+
+const StepNumber = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  font-size: 16px;
+  font-weight: 400;
+`;
+
+const StepTitle = styled(BaseText)`
+  font-size: 16px;
+  font-weight: 400;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+`;
+
+const StepSubtitle = styled(BaseText)`
+  font-size: 14px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  line-height: 20px;
+`;
+
+const StepTime = styled(BaseText)`
+  color: ${({theme}) => theme.colors.description};
+  font-size: 12px;
+  margin-left: auto;
+`;
+
+const CopayerList = styled.View`
+  margin-top: 0px;
+  margin-bottom: 0px;
+`;
+
+const CopayerRow = styled.View`
+  flex-direction: row;
+  align-items: center;
+  padding: 4px 0;
+`;
+
+const CopayerIndicator = styled.View<{signed: boolean}>`
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background-color: ${({signed, theme: {dark}}) =>
+    signed ? (dark ? '#004D27' : Success25) : '#2240C440'};
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+`;
+
+const CopayerName = styled(BaseText)<{signed: boolean}>`
+  color: ${({theme: {dark}, signed}) =>
+    signed ? (dark ? White : Black) : dark ? White : SlateDark};
+  font-size: 14px;
+`;
+
+export interface TSSCopayer {
+  id: string;
+  name: string;
+  signed: boolean;
+}
+
+interface TSSProgressTrackerProps {
+  status: TSSSigningStatus;
+  progress: TSSSigningProgress;
+  createdBy: string;
+  date: Date;
+  copayers: TSSCopayer[];
+  isModalVisible?: boolean;
+  onModalVisibilityChange?: (visible: boolean) => void;
+}
+
+const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
+  status,
+  progress,
+  createdBy,
+  date,
+  copayers,
+  isModalVisible: externalIsVisible,
+  onModalVisibilityChange,
+}) => {
+  const {t} = useTranslation();
+  const theme = useTheme();
+  const [internalIsVisible, setInternalIsVisible] = useState(false);
+
+  const isModalVisible = externalIsVisible ?? internalIsVisible;
+  const setModalVisible = (visible: boolean) => {
+    if (onModalVisibilityChange) {
+      onModalVisibilityChange(visible);
+    } else {
+      setInternalIsVisible(visible);
+    }
+  };
+
+  const ClockIcon = theme.dark ? ClockDarkIcon : ClockLightIcon;
+  const SuccessIcon = theme.dark ? SuccessDarkIcon : SuccessLightIcon;
+
+  const getButtonText = (): string => {
+    switch (status) {
+      case 'initializing':
+        return t('Waiting to initialize');
+      case 'waiting_for_cosigners':
+        return t('Waiting for co-signers');
+      case 'signature_generation':
+        return t('Signature Generation');
+      case 'broadcasting':
+        return t('Broadcast Transaction');
+      case 'complete':
+        return t('Complete');
+      default:
+        return t('Waiting to initialize');
+    }
+  };
+
+  const getProgressPercentage = (): number => {
+    const statusProgress: Record<TSSSigningStatus, number> = {
+      initializing: 0,
+      waiting_for_cosigners: 25,
+      signature_generation: 50,
+      broadcasting: 75,
+      complete: 100,
+      error: 0,
+    };
+
+    if (status === 'signature_generation' && progress.totalRounds > 0) {
+      const baseProgress = 50;
+      const roundProgress = (progress.currentRound / progress.totalRounds) * 25;
+      return baseProgress + roundProgress;
+    }
+
+    return statusProgress[status] || 0;
+  };
+
+  const getStepStatus = (step: number): 'pending' | 'active' | 'complete' => {
+    const statusOrder: TSSSigningStatus[] = [
+      'initializing',
+      'waiting_for_cosigners',
+      'signature_generation',
+      'broadcasting',
+      'complete',
+    ];
+
+    const currentIndex = statusOrder.indexOf(status);
+
+    if (step < currentIndex) return 'complete';
+    if (step === currentIndex) return 'active';
+    return 'pending';
+  };
+
+  const steps = [
+    {
+      title: t('Proposal Created'),
+      subtitle: createdBy,
+      time: date,
+    },
+    {
+      title: t('Waiting for co-signers'),
+      subtitle: `${copayers.filter(c => c.signed).length}/${
+        copayers.length
+      } ${t('signed')}`,
+      showCopayers: true,
+    },
+    {
+      title: t('Signature Generation'),
+    },
+    {
+      title: t('Broadcast Transaction'),
+    },
+  ];
+
+  const handleClose = () => {
+    if (
+      status !== 'complete' &&
+      status !== 'broadcasting' &&
+      status !== 'signature_generation'
+    ) {
+      setModalVisible(false);
+    }
+  };
+
+  return (
+    <>
+      <View style={{paddingBottom: 10}}>
+        <ProgressButton
+          activeOpacity={ActiveOpacity}
+          onPress={() => setModalVisible(true)}>
+          <ProgressIndicator status={status}>
+            {status === 'complete' ? (
+              <SuccessIcon width={28} height={28} />
+            ) : (
+              <ClockIcon width={28} height={28} />
+            )}
+          </ProgressIndicator>
+          <View style={{flex: 1, marginRight: 12}}>
+            <ProgressButtonText>{getButtonText()}</ProgressButtonText>
+            <ProgressBarContainer style={{marginTop: 6}}>
+              <ProgressBarFill
+                progress={getProgressPercentage()}
+                complete={status === 'complete'}
+              />
+            </ProgressBarContainer>
+          </View>
+          <ChevronDownSvg width={16} height={16} />
+        </ProgressButton>
+      </View>
+      <SheetModal isVisible={isModalVisible} onBackdropPress={handleClose}>
+        <ModalContainer>
+          <Header>
+            <View style={{width: 24}} />
+            <Title>{t('Transaction Progress')}</Title>
+            <View style={{width: 24}} />
+          </Header>
+
+          <StepsContainer>
+            {steps.map((step, index) => {
+              const stepStatus = getStepStatus(index);
+              const isActive = stepStatus === 'active';
+              const isComplete = stepStatus === 'complete';
+              const showCopayers =
+                step.showCopayers && (isActive || isComplete);
+
+              const connectorHeight = showCopayers ? 100 : 20;
+
+              return (
+                <View key={index}>
+                  <StepRow>
+                    <StepRail>
+                      <StepIndicator active={isActive} completed={isComplete}>
+                        {isComplete ? (
+                          <SuccessIcon width={20} height={20} />
+                        ) : isActive ? (
+                          <ClockIcon width={24} height={24} />
+                        ) : (
+                          <StepNumber>{index + 1}</StepNumber>
+                        )}
+                      </StepIndicator>
+                      {index < steps.length - 1 && (
+                        <StepConnector
+                          height={connectorHeight}
+                          completed={getStepStatus(index + 1) !== 'pending'}
+                        />
+                      )}
+                    </StepRail>
+
+                    <StepContent>
+                      <View
+                        style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <StepTitle>{step.title}</StepTitle>
+                        {step.time && status !== 'initializing' && (
+                          <StepTime>
+                            {GetAmTimeAgo(step.time.getTime())}
+                          </StepTime>
+                        )}
+                      </View>
+                      {step.subtitle && (
+                        <StepSubtitle>{step.subtitle}</StepSubtitle>
+                      )}
+
+                      {showCopayers && (
+                        <CopayerList style={{marginTop: 8}}>
+                          {copayers.map((copayer, idx) => (
+                            <CopayerRow key={copayer.id || idx}>
+                              <CopayerIndicator signed={copayer.signed}>
+                                {copayer.signed ? (
+                                  <SuccessIcon width={12} height={12} />
+                                ) : (
+                                  <ClockIcon width={12} height={12} />
+                                )}
+                              </CopayerIndicator>
+                              <CopayerName signed={copayer.signed}>
+                                {copayer.name}
+                              </CopayerName>
+                            </CopayerRow>
+                          ))}
+                        </CopayerList>
+                      )}
+                    </StepContent>
+                  </StepRow>
+                </View>
+              );
+            })}
+          </StepsContainer>
+        </ModalContainer>
+      </SheetModal>
+    </>
+  );
+};
+
+export default TSSProgressTracker;

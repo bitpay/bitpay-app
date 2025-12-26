@@ -561,7 +561,8 @@ export const changellyGetFixRateForAmount = async (
       amountFrom: data.amountFrom,
     };
 
-    const response = await wallet.changellyGetFixRateForAmount(messageData);
+    const _response = await wallet.changellyGetFixRateForAmount(messageData);
+    const response = _response?.body ?? _response;
 
     if (response.id && response?.id !== messageData.id) {
       return Promise.reject(
@@ -586,7 +587,8 @@ export const changellyGetPairsParams = async (
       coinTo: data.coinTo,
     };
 
-    const response = await wallet.changellyGetPairsParams(messageData);
+    const _response = await wallet.changellyGetPairsParams(messageData);
+    const response = _response?.body ?? _response;
 
     if (response.id && response.id !== messageData.id) {
       return Promise.reject(
@@ -615,7 +617,8 @@ export const changellyCreateFixTransaction = async (
       refundAddress: data.refundAddress,
     };
 
-    const response = await wallet.changellyCreateFixTransaction(messageData);
+    const _response = await wallet.changellyCreateFixTransaction(messageData);
+    const response = _response?.body ?? _response;
 
     if (response.id && response.id !== messageData.id) {
       return Promise.reject(

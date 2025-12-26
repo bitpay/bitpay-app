@@ -431,9 +431,10 @@ const buildSelectableWalletList = (
           wallet.chain === condition.chain
         );
       } else {
+        const _category = category === 'matic' ? 'pol' : category;
         return (
           getCurrencyAbbreviation(wallet.currencyAbbreviation, wallet.chain) ===
-          category
+          _category
         );
       }
     });
@@ -642,7 +643,9 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const filterCompleteWallets = (keys: Keys) => {
     return Object.fromEntries(
       Object.entries(keys).filter(([_, keys]) =>
-        keys.wallets.some(wallet => wallet.isComplete()),
+        keys.wallets.some(
+          wallet => wallet.isComplete() && !wallet.pendingTssSession,
+        ),
       ),
     );
   };

@@ -332,12 +332,14 @@ export const updateKeyStatus =
           wallet => wallet.receiveAddress === accountAddress,
         );
       }
-      // remote token wallets from getStatusAll
+
+      // remove token wallets from getStatusAll
       const noTokenWallets = walletsToUpdate.filter(wallet => {
         return (
           !wallet.credentials.token &&
           !wallet.credentials.multisigEthInfo &&
-          wallet.credentials.isComplete()
+          wallet.credentials.isComplete() &&
+          !wallet.pendingTssSession
         );
       });
 

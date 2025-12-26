@@ -1,6 +1,6 @@
-import API from 'bitcore-wallet-client/ts_build';
+import API from 'bitcore-wallet-client/ts_build/src';
 import {ReactElement} from 'react';
-import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
 import {RootState} from '../index';
 import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
@@ -48,6 +48,18 @@ export interface KeyProperties {
   xPrivKeyEncrypted?: string;
   xPrivKeyEDDSAEncrypted?: string;
   mnemonicEncrypted?: string;
+  metadata?: {
+    chain: string;
+    network: string;
+    m: string;
+    n: string;
+  };
+  serializedKeychain?: any;
+  keychain?: {
+    privateKeyShare: Buffer | {data: number[]};
+    reducedPrivateKeyShare: Buffer | {data: number[]};
+    commonKeyChain: string;
+  };
 }
 
 export interface Key {
@@ -71,6 +83,7 @@ export interface Key {
     };
   };
   hardwareSource?: SupportedHardwareSource;
+  tssSession?: TssSessionData;
 }
 
 export interface Wallet extends WalletObj, API {}
@@ -149,6 +162,14 @@ export interface WalletObj {
      */
     accountPath?: string;
   };
+  isTssWallet?: boolean;
+  tssKeyId?: string;
+  tssPartyId?: number;
+  tssThreshold?: {
+    m: number;
+    n: number;
+  };
+  pendingTssSession?: boolean;
 }
 
 export interface KeyOptions {
@@ -547,6 +568,75 @@ export interface Utxo {
   txid: string;
   vout: number;
   checked?: boolean;
+}
+
+export interface JoinerSessionId {
+  pubKey: string;
+  name?: string;
+}
+
+export interface TSSCopayerInfo {
+  partyId: number;
+  pubKey: string;
+  name: string;
+  joinCode?: string;
+  status: 'pending' | 'invited' | 'joined';
+}
+
+export interface TssSessionData {
+  id: string;
+  partyKey: any;
+  sessionExport?: string;
+  coin: string;
+  chain: string;
+  network: string;
+  m: number;
+  n: number;
+  password?: string;
+  myName: string;
+  walletName?: string;
+  createdAt: number;
+  isCreator: boolean;
+  partyId: number;
+  status:
+    | 'collecting_copayers'
+    | 'ready_to_start'
+    | 'ceremony_in_progress'
+    | 'complete';
+  invitationCode?: string;
+  copayers?: TSSCopayerInfo[];
+  creatorPubKey?: string;
+}
+
+export interface PendingJoinerSession {
+  sessionId: string;
+  partyKey: any;
+  copayerName?: string;
+  createdAt: number;
+}
+
+export type TSSSigningStatus =
+  | 'initializing'
+  | 'waiting_for_cosigners'
+  | 'signature_generation'
+  | 'broadcasting'
+  | 'complete'
+  | 'error';
+
+export interface TSSSigningProgress {
+  currentRound: number;
+  totalRounds: number;
+  status: 'pending' | 'processing' | 'complete';
+  message?: string;
+}
+
+export type TSSCopayerSignStatus = 'pending' | 'joined' | 'signed' | 'error';
+
+export interface PendingJoinerSession {
+  sessionId: string;
+  partyKey: any;
+  copayerName?: string;
+  createdAt: number;
 }
 
 /**

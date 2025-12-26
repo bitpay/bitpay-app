@@ -161,7 +161,7 @@ import {
   getBaseEVMAccountCreationCoinsAndTokens,
   getBaseSVMAccountCreationCoinsAndTokens,
 } from './constants/currencies';
-import Logger from 'bitcore-wallet-client/ts_build/lib/log';
+import Logger from 'bitcore-wallet-client/ts_build/src/lib/log';
 import {BwcProvider} from './lib/bwc';
 import {isNarrowHeight} from './components/styled/Containers';
 import {useOngoingProcess} from './contexts';
@@ -329,6 +329,7 @@ export default () => {
     WalletScreens.ADDRESSES,
     WalletScreens.ALL_ADDRESSES,
     WalletScreens.COPAYERS,
+    WalletScreens.INVITE_COSIGNERS,
     WalletScreens.EXPORT_KEY,
     WalletScreens.EXPORT_WALLET,
     WalletScreens.JOIN_MULTISIG,
@@ -718,7 +719,9 @@ export default () => {
               const walletsToFix = Object.values(keys).flatMap(key =>
                 key.wallets.filter(
                   wallet =>
-                    !wallet.receiveAddress && wallet?.credentials?.isComplete(),
+                    !wallet.receiveAddress &&
+                    wallet?.credentials?.isComplete() &&
+                    !wallet.pendingTssSession,
                 ),
               );
               if (walletsToFix.length > 0) {
@@ -852,6 +855,7 @@ export default () => {
                       if (
                         wallet.chain?.toLowerCase() !== 'sol' ||
                         !wallet.credentials.isComplete() ||
+                        wallet.pendingTssSession ||
                         !wallet.receiveAddress
                       ) {
                         continue;

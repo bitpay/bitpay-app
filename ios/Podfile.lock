@@ -69,6 +69,7 @@ PODS:
     - Mixpanel-swift (= 4.1.3)
     - React-Core
   - MultiplatformBleAdapter (0.2.0)
+  - OpenSSL-Universal (3.3.3001)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -108,6 +109,7 @@ PODS:
     - React-RCTText (= 0.82.0)
     - React-RCTVibration (= 0.82.0)
   - React-callinvoker (0.82.0)
+  - React-Codegen (0.1.0)
   - React-Core (0.82.0):
     - boost
     - DoubleConversion
@@ -2033,6 +2035,36 @@ PODS:
     - Yoga
   - react-native-print (0.11.0):
     - React-Core
+  - react-native-quick-crypto (0.7.17):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - OpenSSL-Universal
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-randombytes (3.6.1):
     - React-Core
   - react-native-render-html (6.3.4):
@@ -2219,6 +2251,13 @@ PODS:
     - React-RCTText
   - react-native-user-agent (2.3.1):
     - React
+  - react-native-webassembly (0.3.3):
+    - RCT-Folly
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
+    - React-Core
+    - ReactCommon/turbomodule/core
   - react-native-webview (13.16.0):
     - boost
     - DoubleConversion
@@ -3380,6 +3419,7 @@ DEPENDENCIES:
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-passkey (from `../node_modules/react-native-passkey`)
   - react-native-print (from `../node_modules/react-native-print`)
+  - react-native-quick-crypto (from `../node_modules/react-native-quick-crypto`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
   - react-native-render-html (from `../node_modules/react-native-render-html`)
   - react-native-restart (from `../node_modules/react-native-restart`)
@@ -3388,6 +3428,7 @@ DEPENDENCIES:
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-text-input-mask (from `../node_modules/react-native-text-input-mask`)
   - react-native-user-agent (from `../node_modules/react-native-user-agent`)
+  - react-native-webassembly (from `../node_modules/react-native-webassembly`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -3457,6 +3498,8 @@ SPEC REPOS:
     - libwebp
     - Mixpanel-swift
     - MultiplatformBleAdapter
+    - OpenSSL-Universal
+    - React-Codegen
     - SDWebImage
     - SDWebImageWebPCoder
     - SocketRocket
@@ -3579,6 +3622,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-passkey"
   react-native-print:
     :path: "../node_modules/react-native-print"
+  react-native-quick-crypto:
+    :path: "../node_modules/react-native-quick-crypto"
   react-native-randombytes:
     :path: "../node_modules/react-native-randombytes"
   react-native-render-html:
@@ -3595,6 +3640,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-text-input-mask"
   react-native-user-agent:
     :path: "../node_modules/react-native-user-agent"
+  react-native-webassembly:
+    :path: "../node_modules/react-native-webassembly"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
   React-NativeModulesApple:
@@ -3729,12 +3776,14 @@ SPEC CHECKSUMS:
   Mixpanel-swift: d7c7c6a2f7c65f735af3cb4746ed61a5aab0e551
   MixpanelReactNative: 07c808338a1eb69b0c9077668e3acfb0b2dd6689
   MultiplatformBleAdapter: b1fddd0d499b96b607e00f0faa8e60648343dc1d
+  OpenSSL-Universal: 6082b0bf950e5636fe0d78def171184e2b3899c2
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: 22bf66112da540a7d40e536366ddd8557934fca1
   RCTRequired: a0ed4dc41b35f79fbb6d8ba320e06882a8c792cf
   RCTTypeSafety: 59a046ff1e602409a86b89fcd6edff367a5b14af
   React: ade831e2e38887292c2c7d40f2f4098826a9dda4
   React-callinvoker: fb097304922c5da47152147a5fb0712713438575
+  React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
   React-Core: 2f7181fccf31a895720bb0668ac9f67985d6a4a1
   React-CoreModules: 3f7a8f9d28ba287fc07240c5bc53aa4d5e23450a
   React-cxxreact: dca5689d4332bbf71495302103bb24f73fa1de00
@@ -3777,6 +3826,7 @@ SPEC CHECKSUMS:
   react-native-pager-view: e17f0602f115f6a6a8953e58f2182dbe8eeb0bd5
   react-native-passkey: b85aaca917594d530521f484f20fa829bcdcd0f8
   react-native-print: f704aef52d931bfce6d1d84351dbb5232d7ecb89
+  react-native-quick-crypto: 96d796b74a7b1d266950d0f631b57818659e138e
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-render-html: 984dfe2294163d04bf5fe25d7c9f122e60e05ebe
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
@@ -3785,6 +3835,7 @@ SPEC CHECKSUMS:
   react-native-slider: 30cea7008de785564de2f4fd064f2deb38614a4a
   react-native-text-input-mask: 36a546b378fadd2efe1b7484a859d34bc2c80395
   react-native-user-agent: a90a1e839b99801baad67a73dd6f361a52aa3cf1
+  react-native-webassembly: bdd67f75a6145cbfdb3ab8de4ee0381f89e6b140
   react-native-webview: 8b9097e270a99ee8798449f191a7ea27c790fa1c
   React-NativeModulesApple: 1b4d9722d8df62e881684abadf320e7a8fa1b7f6
   React-oscompat: 80ca388c4831481cd03a6b45ecfc82739ca9a95e
