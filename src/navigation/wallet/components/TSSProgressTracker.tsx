@@ -171,6 +171,7 @@ const CopayerRow = styled.View`
   flex-direction: row;
   align-items: center;
   padding: 4px 0;
+  position: relative;
 `;
 
 const CopayerIndicator = styled.View<{signed: boolean}>`
@@ -188,6 +189,23 @@ const CopayerName = styled(BaseText)<{signed: boolean}>`
   color: ${({theme: {dark}, signed}) =>
     signed ? (dark ? White : Black) : dark ? White : SlateDark};
   font-size: 14px;
+`;
+
+const CopayerRail = styled.View`
+  width: 20px;
+  align-items: center;
+  margin-right: 8px;
+  position: relative;
+`;
+
+const CopayerConnector = styled.View<{signed: boolean}>`
+  width: 2px;
+  height: 28px;
+  position: absolute;
+  top: 20px;
+  left: 5px;
+  background-color: ${({theme: {dark}, signed}) =>
+    signed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : '#F5F5F5'};
 `;
 
 export interface TSSCopayer {
@@ -352,9 +370,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
               const stepStatus = getStepStatus(index);
               const isActive = stepStatus === 'active';
               const isComplete = stepStatus === 'complete';
-              const showCopayers =
-                step.showCopayers && (isActive || isComplete);
-
+              const showCopayers = step.showCopayers;
               const connectorHeight = showCopayers ? 100 : 20;
 
               return (
@@ -378,7 +394,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                       )}
                     </StepRail>
 
-                    <StepContent>
+                    <StepContent style={{paddingTop: index >= 2 ? 10 : 5}}>
                       <View
                         style={{flexDirection: 'row', alignItems: 'center'}}>
                         <StepTitle>{step.title}</StepTitle>
@@ -396,13 +412,20 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                         <CopayerList style={{marginTop: 8}}>
                           {copayers.map((copayer, idx) => (
                             <CopayerRow key={copayer.id || idx}>
-                              <CopayerIndicator signed={copayer.signed}>
-                                {copayer.signed ? (
-                                  <SuccessIcon width={12} height={12} />
-                                ) : (
-                                  <ClockIcon width={12} height={12} />
+                              <CopayerRail>
+                                <CopayerIndicator signed={copayer.signed}>
+                                  {copayer.signed ? (
+                                    <SuccessIcon width={12} height={12} />
+                                  ) : (
+                                    <ClockIcon width={12} height={12} />
+                                  )}
+                                </CopayerIndicator>
+                                {idx < copayers.length - 1 && (
+                                  <CopayerConnector
+                                    signed={copayers[idx + 1].signed}
+                                  />
                                 )}
-                              </CopayerIndicator>
+                              </CopayerRail>
                               <CopayerName signed={copayer.signed}>
                                 {copayer.name}
                               </CopayerName>
