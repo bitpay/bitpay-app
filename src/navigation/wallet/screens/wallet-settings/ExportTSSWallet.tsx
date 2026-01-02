@@ -3,7 +3,7 @@ import {
   HeaderTitle,
   Paragraph,
   BaseText,
-  H2,
+  H3,
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import styled from 'styled-components/native';
@@ -100,7 +100,7 @@ const SuccessImageContainer = styled.View`
   margin-bottom: 32px;
 `;
 
-const SuccessTitle = styled(H2)`
+const SuccessTitle = styled(H3)`
   margin-bottom: 16px;
   text-align: center;
 `;
@@ -169,41 +169,71 @@ const ExportTSSWallet = () => {
       return null;
     }
 
-    const bufferToArray = (
-      value: Buffer | {data: number[]} | undefined,
-    ): number[] | null => {
-      if (!value) return null;
-      if (Buffer.isBuffer(value)) {
-        return Array.from(value);
+    const keychain = key.properties?.keychain;
+    const metadata = key.properties?.metadata;
+
+    const bufferToArray = (buffer: any): number[] | null => {
+      if (!buffer) {
+        logManager.debug('[bufferToArray] buffer is null/undefined');
+        return null;
       }
-      if ('data' in value) {
-        return value.data;
+
+      if (Array.isArray(buffer)) {
+        logManager.debug('[bufferToArray] Using Array.isArray path');
+        return buffer;
       }
+
+      if (Buffer.isBuffer(buffer)) {
+        logManager.debug('[bufferToArray] Using Buffer.isBuffer path');
+        return Array.from(buffer);
+      }
+
+      if (buffer && typeof buffer === 'object' && 'data' in buffer) {
+        if (Array.isArray(buffer.data)) {
+          logManager.debug('[bufferToArray] Using buffer.data array path');
+          return buffer.data;
+        }
+      }
+
+      if (buffer && typeof buffer === 'object') {
+        const keys = Object.keys(buffer);
+        if (keys.length > 0 && keys.every(k => !isNaN(Number(k)))) {
+          logManager.debug('[bufferToArray] Using numeric keys object path');
+          const arr: number[] = [];
+          for (let i = 0; i < keys.length; i++) {
+            if (buffer[i] !== undefined) {
+              arr.push(buffer[i]);
+            }
+          }
+          return arr.length > 0 ? arr : null;
+        }
+      }
+
+      logManager.debug('[bufferToArray] No matching condition, returning null');
       return null;
     };
-
-    const keychain = key.properties?.keychain;
+    if (!keychain) {
+      throw new Error('Keychain data is missing');
+    }
 
     const backup = {
       isTSS: true,
       version: 1,
-      mnemonic: key.properties?.mnemonic,
-      keychain: keychain
-        ? {
-            commonKeyChain: keychain.commonKeyChain,
-            privateKeyShare: bufferToArray(keychain.privateKeyShare),
-            reducedPrivateKeyShare: bufferToArray(
-              keychain.reducedPrivateKeyShare,
-            ),
-          }
-        : undefined,
-      keyId: key.id,
-      keyName: key.keyName,
-      createdOn: Date.now(),
+      key: {
+        mnemonic: key.properties?.mnemonic,
+        keychain: {
+          commonKeyChain: keychain.commonKeyChain,
+          privateKeyShare: bufferToArray(keychain.privateKeyShare),
+          reducedPrivateKeyShare: bufferToArray(
+            keychain.reducedPrivateKeyShare,
+          ),
+        },
+        metadata: metadata,
+      },
     };
 
     return BWC.getSJCL().encrypt(password, JSON.stringify(backup), {
-      iter: 10000,
+      iter: 1000,
     });
   };
 
@@ -222,29 +252,29 @@ const ExportTSSWallet = () => {
       }
 
       const walletName = key?.wallets?.[0]?.walletName || 'SharedWallet';
-      const filename = `${APP_NAME_UPPERCASE}-Keyshare-${walletName}`;
+      const filename = `${APP_NAME_UPPERCASE}-Keyshare-${walletName}.txt`;
 
       const rootPath =
         Platform.OS === 'ios'
           ? RNFS.LibraryDirectoryPath
           : RNFS.TemporaryDirectoryPath;
 
-      let filePath = `${rootPath}/${filename}`;
-      await RNFS.mkdir(filePath);
-      filePath += '.txt';
+      const filePath = `${rootPath}/${filename}`;
 
       const txt = t(
         'Here is the encrypted keyshare backup for wallet: {{name}}\n\n{{keyshare}}\n\nTo import this backup, copy all text between {...}, including the symbols {}',
         {name: walletName, keyshare: encryptedKeyshare},
       );
 
+      await RNFS.writeFile(filePath, txt, 'utf8');
+
       const opts: ShareOptions = {
         title: filename,
-        url: `file://${filePath}`,
+        url: Platform.OS === 'android' ? `file://${filePath}` : filePath,
         subject: `${walletName} Keyshare Backup`,
+        type: 'text/plain',
       };
 
-      await RNFS.writeFile(filePath, txt, 'utf8');
       await Share.open(opts);
 
       setShareButtonState('success');
@@ -333,7 +363,7 @@ const ExportTSSWallet = () => {
               onPress={handleSubmit(shareKeyshareFile)}
               state={shareButtonState}
               buttonStyle={'primary'}>
-              {t('Backup Shared Wallet')}
+              {t('Share Backup File')}
             </Button>
           </PasswordActionContainer>
         </PasswordFormContainer>

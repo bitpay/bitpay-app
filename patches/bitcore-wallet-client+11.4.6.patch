@@ -12,10 +12,18 @@ index 443c525..93b1d56 100644
          error = true;
        }
 diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/api.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/api.js
-index 7a27efd..d916b5f 100644
+index 7a27efd..c606ce4 100644
 --- a/node_modules/bitcore-wallet-client/ts_build/src/lib/api.js
 +++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/api.js
-@@ -50,6 +50,7 @@ const common_1 = require("./common");
+@@ -40,6 +40,7 @@ exports.API = void 0;
+ const events_1 = require("events");
+ const querystring_1 = __importDefault(require("querystring"));
+ const async_1 = __importDefault(require("async"));
++const sjcl_1 = __importDefault(require("sjcl"));
+ const bip38_1 = __importDefault(require("bip38"));
+ const bitcore_mnemonic_1 = __importDefault(require("bitcore-mnemonic"));
+ const CWC = __importStar(require("crypto-wallet-core"));
+@@ -50,6 +51,7 @@ const common_1 = require("./common");
  const credentials_1 = require("./credentials");
  const errors_1 = require("./errors");
  const key_1 = require("./key");
@@ -23,7 +31,41 @@ index 7a27efd..d916b5f 100644
  const log_1 = __importDefault(require("./log"));
  const paypro_1 = require("./paypro");
  const payproV2_1 = require("./payproV2");
-@@ -2819,6 +2820,8 @@ exports.API = API;
+@@ -2503,7 +2505,8 @@ class API extends events_1.EventEmitter {
+                         return cb2(null, new Error('Copayer not in wallet'));
+                     try {
+                         credentials.addWalletInfo(wallet.id, wallet.name, wallet.m, wallet.n, me.name, {
+-                            allowOverwrite: !!wallet.tssKeyId
++                            allowOverwrite: !!wallet.tssKeyId,
++                            tssKeyId: wallet.tssKeyId
+                         });
+                     }
+                     catch (e) {
+@@ -2521,7 +2524,7 @@ class API extends events_1.EventEmitter {
+                     credentials.addWalletPrivateKey(item.status.customData.walletPrivKey);
+                 }
+                 if (credentials.walletPrivKey) {
+-                    if (!verifier_1.Verifier.checkCopayers(credentials, wallet.copayers)) {
++                    if (!verifier_1.Verifier.checkCopayers(credentials, wallet.copayers, { isTss: !!wallet.tssKeyId })) {
+                         return cb2(null, new errors_1.Errors.SERVER_COMPROMISED());
+                     }
+                 }
+@@ -2719,6 +2722,14 @@ class API extends events_1.EventEmitter {
+                         ...set
+                     });
+                 }
++                if (opts.tssKeychain && opts.tssMetadata) {
++                    const tssKeyObj = {
++                        ...k.toObj(),
++                        keychain: opts.tssKeychain,
++                        metadata: opts.tssMetadata
++                    };
++                    k = new tsskey_1.TssKey(tssKeyObj);
++                  }
+             }
+             catch (e) {
+                 log_1.default.info('Backup error:', e);
+@@ -2819,10 +2830,13 @@ exports.API = API;
  API.PayProV2 = payproV2_1.PayProV2;
  API.PayPro = paypro_1.PayPro;
  API.Key = key_1.Key;
@@ -32,6 +74,11 @@ index 7a27efd..d916b5f 100644
  API.Verifier = verifier_1.Verifier;
  API.Core = CWC;
  API.Utils = common_1.Utils;
+ API.Encryption = common_1.Encryption;
++API.sjcl = sjcl_1.default;
+ API.errors = errors_1.Errors;
+ API.Bitcore = CWC.BitcoreLib;
+ API.BitcoreCash = CWC.BitcoreLibCash;
 diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
 index ffb28f7..92db28f 100644
 --- a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js

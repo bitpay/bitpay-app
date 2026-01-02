@@ -192,6 +192,7 @@ const getPubKeyFromKey = (partyKey: any): string => {
     chain: 'BTC', // Doesn't matter for requestPubKey
     network: 'livenet',
     account: 0,
+    n: 1,
   });
   return credentials.requestPubKey;
 };
@@ -279,7 +280,8 @@ export const startCreateTSSKey =
       const key = buildKeyObj({
         key: partyKey,
         wallets: [placeholderWallet],
-        keyName: 'My Key',
+        keyName: 'My TSSKey',
+        backupComplete: true,
       });
 
       const copayers: TSSCopayerInfo[] = [];
@@ -677,7 +679,7 @@ export const startTSSCeremony =
         const finalKey = buildTssKeyObj({
           tssKey: _tssKey,
           wallets: [finalWallet],
-          keyName: 'My Key',
+          keyName: 'My TSSKey',
         });
 
         finalKey.tssSession = {
@@ -845,7 +847,7 @@ export const joinTSSWithCode =
         const key = buildKeyObj({
           key: partyKey,
           wallets: [placeholderWallet],
-          keyName: 'My Key',
+          keyName: 'My TSSKey',
         });
 
         key.tssSession = {
@@ -1085,7 +1087,7 @@ export const joinTSSWithCode =
         const finalKey = buildTssKeyObj({
           tssKey: _tssKey,
           wallets: [finalWallet],
-          keyName: 'My Key',
+          keyName: 'My TSSKey',
         });
 
         finalKey.tssSession = {
@@ -1102,7 +1104,7 @@ export const joinTSSWithCode =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        logManager.error(`[TSS Join] Error: ${errorStr}`);
+        logManager.error(`[TSS Join - joinTSSWithCode] Error: ${errorStr}`);
         reject(err);
       }
     });

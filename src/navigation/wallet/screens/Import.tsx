@@ -45,7 +45,7 @@ const Import: React.FC<ImportScreenProps> = ({navigation, route}) => {
           initialParams={route.params}
         />
         <Tab.Screen
-          name={t('Plain Text')}
+          name={t('File')}
           component={FileOrText}
           initialParams={route.params}
         />

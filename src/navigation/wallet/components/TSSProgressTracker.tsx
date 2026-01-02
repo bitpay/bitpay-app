@@ -33,8 +33,7 @@ const ProgressButton = styled(TouchableOpacity)`
   padding: 16px;
   border-radius: 12px;
   border-width: 1px;
-  border-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
 `;
 
 const ProgressIndicator = styled.View<{status: TSSSigningStatus}>`
@@ -309,9 +308,6 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
     },
     {
       title: t('Waiting for co-signers'),
-      subtitle: `${copayers.filter(c => c.signed).length}/${
-        copayers.length
-      } ${t('signed')}`,
       showCopayers: true,
     },
     {
@@ -412,20 +408,13 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                         <CopayerList style={{marginTop: 8}}>
                           {copayers.map((copayer, idx) => (
                             <CopayerRow key={copayer.id || idx}>
-                              <CopayerRail>
-                                <CopayerIndicator signed={copayer.signed}>
-                                  {copayer.signed ? (
-                                    <SuccessIcon width={12} height={12} />
-                                  ) : (
-                                    <ClockIcon width={12} height={12} />
-                                  )}
-                                </CopayerIndicator>
-                                {idx < copayers.length - 1 && (
-                                  <CopayerConnector
-                                    signed={copayers[idx + 1].signed}
-                                  />
+                              <CopayerIndicator signed={copayer.signed}>
+                                {copayer.signed ? (
+                                  <SuccessIcon width={12} height={12} />
+                                ) : (
+                                  <ClockIcon width={12} height={12} />
                                 )}
-                              </CopayerRail>
+                              </CopayerIndicator>
                               <CopayerName signed={copayer.signed}>
                                 {copayer.name}
                               </CopayerName>

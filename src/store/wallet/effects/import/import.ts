@@ -1615,60 +1615,136 @@ export const startImportTSSFile =
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
+        const {
+          WALLET,
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
+        } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
+
+        const tokenOptsByAddress = {
+          ...BitpaySupportedTokenOptsByAddress,
+          ...tokenOptionsByAddress,
+          ...WALLET.customTokenOptionsByAddress,
+        };
+
         const data = JSON.parse(decryptedBackupText);
 
         if (!data.isTSS) {
-          throw new Error(t('Invalid TSS backup file.'));
+          throw new Error(t('Invalid TSS backup file format.'));
         }
 
-        if (!data.mnemonic) {
+        if (!data.key?.mnemonic) {
           throw new Error(t('Missing mnemonic in TSS backup.'));
         }
 
-        if (!data.keychain) {
+        if (!data.key?.keychain) {
           throw new Error(t('Missing keychain in TSS backup.'));
         }
 
-        const arrayToBuffer = (
-          arr: number[] | null | undefined,
-        ): Buffer | undefined => {
-          if (!arr) return undefined;
-          return Buffer.from(arr);
-        };
+        logManager.info('[ImportTSS] Starting TSS wallet import...');
 
-        const importData = {
-          words: data.mnemonic,
-        };
-
-        const key = (await dispatch<any>(
-          startImportMnemonic(importData, {}),
-        )) as Key;
-
-        if (key && data.keychain) {
-          const privateKeyShare = arrayToBuffer(data.keychain.privateKeyShare);
-          const reducedPrivateKeyShare = arrayToBuffer(
-            data.keychain.reducedPrivateKeyShare,
-          );
-
-          if (privateKeyShare && reducedPrivateKeyShare) {
-            key.properties = {
-              ...key.properties,
-              keychain: {
-                commonKeyChain: data.keychain.commonKeyChain,
-                privateKeyShare,
-                reducedPrivateKeyShare,
-              },
-            } as KeyProperties;
-          } else {
-            throw new Error(t('Invalid keychain data in TSS backup.'));
+        const arrayToBuffer = (arr: any): Buffer | null => {
+          if (!arr) return null;
+          if (Buffer.isBuffer(arr)) return arr;
+          if (Array.isArray(arr)) return Buffer.from(arr);
+          if (
+            arr &&
+            typeof arr === 'object' &&
+            'data' in arr &&
+            Array.isArray(arr.data)
+          ) {
+            return Buffer.from(arr.data);
           }
+          return null;
+        };
 
-          dispatch(
-            successImport({
-              key,
-            }),
-          );
+        const privateKeyShare = arrayToBuffer(
+          data.key.keychain.privateKeyShare,
+        );
+        const reducedPrivateKeyShare = arrayToBuffer(
+          data.key.keychain.reducedPrivateKeyShare,
+        );
+
+        if (!privateKeyShare || privateKeyShare.length === 0) {
+          throw new Error(t('Invalid privateKeyShare in backup file.'));
         }
+
+        if (!reducedPrivateKeyShare || reducedPrivateKeyShare.length === 0) {
+          throw new Error(t('Invalid reducedPrivateKeyShare in backup file.'));
+        }
+
+        logManager.info('[ImportTSS] Keyshare conversion successful');
+
+        const opts: Partial<KeyOptions> = {
+          words: normalizeMnemonic(data.key.mnemonic),
+          tssKeychain: {
+            commonKeyChain: data.key.keychain.commonKeyChain,
+            privateKeyShare: privateKeyShare,
+            reducedPrivateKeyShare: reducedPrivateKeyShare,
+          },
+          tssMetadata: data.key.metadata,
+        };
+
+        const importResult = await serverAssistedImport(opts);
+
+        const {
+          key: _key,
+          wallets,
+          keyName,
+        } = findMatchedKeyAndUpdate(
+          importResult.wallets,
+          importResult.key,
+          Object.values(WALLET.keys).filter(k => !k.id.includes('readonly')),
+          opts,
+        );
+
+        const key = buildKeyObj({
+          key: _key,
+          keyName,
+          wallets: wallets.map(wallet => {
+            if (notificationsAccepted) {
+              dispatch(subscribePushNotifications(wallet, brazeEid!));
+            }
+            if (
+              emailNotifications &&
+              emailNotifications.accepted &&
+              emailNotifications.email
+            ) {
+              const prefs = {
+                email: emailNotifications.email,
+                language: defaultLanguage,
+                unit: 'btc',
+              };
+              dispatch(subscribeEmailNotifications(wallet, prefs));
+            }
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                wallet.credentials.coin,
+                wallet.credentials.chain,
+                wallet.credentials.token?.address,
+              ),
+            );
+            return merge(
+              wallet,
+              buildWalletObj(
+                {...wallet.credentials, currencyAbbreviation, currencyName},
+                tokenOptsByAddress,
+              ),
+            );
+          }),
+          backupComplete: true,
+        });
+
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
 
         logManager.info('[ImportTSS] Successfully imported TSS wallet');
         resolve(key);

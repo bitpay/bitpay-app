@@ -54,7 +54,6 @@ export interface KeyProperties {
     m: string;
     n: string;
   };
-  serializedKeychain?: any;
   keychain?: {
     privateKeyShare: Buffer | {data: number[]};
     reducedPrivateKeyShare: Buffer | {data: number[]};
@@ -163,13 +162,7 @@ export interface WalletObj {
      */
     accountPath?: string;
   };
-  isTssWallet?: boolean;
   tssKeyId?: string;
-  tssPartyId?: number;
-  tssThreshold?: {
-    m: number;
-    n: number;
-  };
   pendingTssSession?: boolean;
 }
 
@@ -201,6 +194,12 @@ export interface KeyOptions {
   password?: string;
   includeTestnetWallets?: boolean;
   includeLegacyWallets?: boolean;
+  tssKeychain?: {
+    commonKeyChain: string;
+    privateKeyShare: Buffer<ArrayBufferLike>;
+    reducedPrivateKeyShare: Buffer<ArrayBufferLike>;
+  };
+  tssMetadata?: any;
 }
 
 export interface Token {
