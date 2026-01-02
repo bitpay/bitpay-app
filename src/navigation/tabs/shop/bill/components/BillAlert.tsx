@@ -65,8 +65,9 @@ export default ({
         {variant === 'servicePaused' ? (
           <>
             <AlertText>
-              Bill Pay service has been temporarily paused. At this time, we are unable to provide
-              a confirmed timeline for when the Bill Pay service will resume.
+              Bill Pay service has been temporarily paused. At this time, we are
+              unable to provide a confirmed timeline for when the Bill Pay
+              service will resume.
               <AlertLink
                 onPress={() =>
                   Linking.openURL(

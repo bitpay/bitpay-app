@@ -62,8 +62,7 @@ const QRSectionContainer = styled.View`
   align-items: center;
   border-radius: 12px;
   border-width: 1px;
-  border-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   min-height: 355px;
 `;
 
@@ -103,8 +102,7 @@ const ShareContainer = styled.View`
   padding-top: 16px;
   padding-bottom: 16px;
   border-top-width: 1px;
-  border-top-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+  border-top-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
 `;
 
 const ShareButton = styled.TouchableOpacity`
@@ -166,8 +164,7 @@ const StepsContainer = styled.View`
   padding: 16px;
   border-radius: 12px;
   border-width: 1px;
-  border-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
 `;
 
 const StepsSectionTitle = styled(BaseText)`
@@ -353,7 +350,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       setPartyKey(result.partyKey);
       logger.debug('[TSS Join] Session ID generated');
     } catch (err: any) {
-      logger.error(`[TSS Join] Error: ${err.message}`);
+      logger.error(`[TSS Join - generateNewSession] Error: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -408,7 +405,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       setIsWalletReady(true);
     } catch (err: any) {
       setCurrentStep(2);
-      logger.error(`[TSS Join] Error: ${err.message}`);
+      logger.error(`[TSS Join - handleJoin] Error: ${err.message}`);
       dispatch(
         showBottomNotificationModal({
           type: 'error',
@@ -435,7 +432,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       setSessionId(result.sessionId);
       setPartyKey(result.partyKey);
     } catch (err: any) {
-      logger.error(`[TSS Join] Error: ${err.message}`);
+      logger.error(`[TSS Join - onSubmitStart] Error: ${err.message}`);
       setShowSession(false);
       setShowProcessing(false);
       dispatch(
@@ -584,6 +581,9 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
               {t('Continue')}
             </Button>
           </InviteCodeContainer>
+          <AlreadySharedButton onPress={() => setCurrentStep(1)}>
+            <AlreadySharedText>{t('Check Session ID again')}</AlreadySharedText>
+          </AlreadySharedButton>
         </InviteCodeSection>
       );
       // }
@@ -666,9 +666,9 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
           <StepRow>
             <StepRail>
               <StepIndicator
-                active={currentStep === 1}
+                active={currentStep === 1 || currentStep === 0}
                 completed={currentStep > 1}>
-                {currentStep === 1 ? (
+                {currentStep === 1 || currentStep === 0 ? (
                   <ClockIconSvg width={28} height={28} />
                 ) : (
                   <SuccessIcon />

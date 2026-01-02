@@ -1,5 +1,5 @@
 diff --git a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js
-index d4075db..a5da83c 100644
+index d4075db..f611457 100644
 --- a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js
 +++ b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js
 @@ -51,7 +51,9 @@ class Dkg {
@@ -7,8 +7,8 @@ index d4075db..a5da83c 100644
      async loadDklsWasm() {
          if (!this.dklsWasm) {
 -            this.dklsWasm = await Promise.resolve().then(() => __importStar(require('@silencelaboratories/dkls-wasm-ll-node')));
-+            const shim = await import('@silencelaboratories/dkls-wasm-ll-web');
-+            await shim.default();
++            const shim = await require('@silencelaboratories/dkls-wasm-ll-web');
++            // await shim.default();
 +            this.dklsWasm = shim;
          }
      }

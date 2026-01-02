@@ -42,6 +42,7 @@ import ShareIcon from '../../../../assets/img/share-icon.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTheme} from 'styled-components/native';
 import {sleep} from '../../../utils/helper-methods';
+import {useNavigation} from '@react-navigation/native';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -69,8 +70,7 @@ const CoSignerContainer = styled.View`
   padding: 16px;
   border-radius: 12px;
   border-width: 1px;
-  border-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   gap: 17px;
 `;
 
@@ -115,8 +115,8 @@ const CheckMark = styled.View`
   width: 40px;
   height: 40px;
   padding: 12px;
-  border-radius: 8px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Success25)};
+  border-radius: 12px;
+  background-color: ${({theme: {dark}}) => (dark ? '#004D27' : Success25)};
   align-items: center;
   justify-content: center;
 `;
@@ -150,15 +150,6 @@ const HeaderButton = styled.TouchableOpacity`
   min-width: 60px;
 `;
 
-const HeaderButtonText = styled(BaseText)`
-  font-size: 16px;
-  color: ${Action};
-`;
-
-const HeaderButtonRight = styled(HeaderButton)`
-  align-items: flex-end;
-`;
-
 const PlaceholderView = styled.View`
   min-width: 60px;
 `;
@@ -177,8 +168,7 @@ const TopSectionContainer = styled.View`
   align-items: center;
   border-radius: 12px;
   border-width: 1px;
-  border-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   min-height: 340px;
   justify-content: center;
 `;
@@ -242,8 +232,7 @@ const QRSectionContainer = styled.View`
   align-items: center;
   border-radius: 12px;
   border-width: 1px;
-  border-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   min-height: 355px;
 `;
 
@@ -264,8 +253,7 @@ const ShareContainer = styled.View`
   padding-top: 16px;
   padding-bottom: 16px;
   border-top-width: 1px;
-  border-top-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+  border-top-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
 `;
 
 const QRCodeWrapper = styled.View`
@@ -297,8 +285,7 @@ const StepsContainer = styled.View`
   padding: 16px;
   border-radius: 12px;
   border-width: 1px;
-  border-color: ${({theme: {dark}}) =>
-    dark ? 'rgba(255,255,255,0.1)' : Slate30};
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
 `;
 
 const StepsSectionTitle = styled(BaseText)`
@@ -393,8 +380,9 @@ type Props = NativeStackScreenProps<
   WalletScreens.INVITE_COSIGNERS
 >;
 
-const InviteCosigners: React.FC<Props> = ({navigation, route}) => {
+const InviteCosigners: React.FC<Props> = ({route}) => {
   const dispatch = useAppDispatch();
+  const navigation = useNavigation();
   const {t} = useTranslation();
   const logger = useLogger();
   const theme = useTheme();
@@ -468,12 +456,24 @@ const InviteCosigners: React.FC<Props> = ({navigation, route}) => {
     setCurrentStep(3);
   };
 
+  const handleShareAgain = () => {
+    setIsInviteShared(false);
+    setCurrentStep(2);
+  };
+
   const handleScanQR = () => {
     setIsModalVisible(false);
-    navigation.navigate(WalletScreens.SCAN, {
-      onScanComplete: (data: string) => {
-        setSessionId(data);
-        setIsModalVisible(true);
+    navigation.navigate('ScanRoot', {
+      onScanComplete: data => {
+        try {
+          setIsModalVisible(true);
+          if (data) {
+            setSessionId(data);
+          }
+        } catch (err) {
+          const e = err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error('[OpenScanner SendTo] ' + e);
+        }
       },
     });
   };
@@ -559,9 +559,10 @@ const InviteCosigners: React.FC<Props> = ({navigation, route}) => {
   };
 
   const getModalTitle = () => {
-    if (currentStep === 3) {
-      return t('Add Another Co-signer');
-    }
+    // if (currentStep === 3) {
+    //   const isLastCopayer = copayers.every(c => c.status === 'invited');
+    //   return isLastCopayer ? t('Ready to Continue') : t('Add Another Co-signer');
+    // }
     return t('Invite {{name}}', {name: selectedCopayer?.name || ''});
   };
 
@@ -658,24 +659,33 @@ const InviteCosigners: React.FC<Props> = ({navigation, route}) => {
     }
 
     if (currentStep === 3 && isInviteShared) {
+      const isLastCopayer = copayers.every(c => c.status === 'invited');
+
       return (
-        <TopSection>
-          <TopSectionContainer>
-            <StatusContainer>
-              <StepIndicator completed={true}>
-                <SuccessIcon />
-              </StepIndicator>
-              <StatusText>
-                {t('{{name}} added', {name: selectedCopayer?.name || ''})}
-              </StatusText>
-              <ButtonWrapper>
-                <Button buttonStyle="primary" onPress={handleCloseModal}>
-                  {t('Add Another Co-signer')}
-                </Button>
-              </ButtonWrapper>
-            </StatusContainer>
-          </TopSectionContainer>
-        </TopSection>
+        <>
+          <TopSection>
+            <TopSectionContainer>
+              <StatusContainer>
+                <StepIndicator completed={true}>
+                  <SuccessIcon />
+                </StepIndicator>
+                <StatusText>
+                  {t('{{name}} added', {name: selectedCopayer?.name || ''})}
+                </StatusText>
+                <ButtonWrapper>
+                  <Button buttonStyle="primary" onPress={handleCloseModal}>
+                    {isLastCopayer ? t('Continue') : t('Add Another Co-signer')}
+                  </Button>
+                </ButtonWrapper>
+              </StatusContainer>
+            </TopSectionContainer>
+          </TopSection>
+          <AlreadySharedButton onPress={handleShareAgain}>
+            <AlreadySharedText>
+              {t('Check Invite Code Again')}
+            </AlreadySharedText>
+          </AlreadySharedButton>
+        </>
       );
     }
 

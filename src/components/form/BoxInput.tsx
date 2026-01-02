@@ -26,8 +26,8 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 type InputType = 'password' | 'phone' | 'search' | 'number';
 
-const INPUT_HEIGHT = 55;
-const SEPARATOR_HEIGHT = 37;
+export const INPUT_HEIGHT = 55;
+export const SEPARATOR_HEIGHT = 37;
 
 interface InputProps {
   isFocused: boolean;

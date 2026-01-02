@@ -135,9 +135,7 @@ export const buildWalletObj = (
     hardwareData = {},
     singleAddress,
     receiveAddress,
-    isTssWallet = false,
     tssKeyId,
-    tssPartyId,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -161,9 +159,7 @@ export const buildWalletObj = (
     };
     singleAddress: boolean;
     receiveAddress?: string;
-    isTssWallet?: boolean;
     tssKeyId?: string;
-    tssPartyId?: number;
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
@@ -218,9 +214,7 @@ export const buildWalletObj = (
     hardwareData,
     singleAddress,
     receiveAddress,
-    isTssWallet,
     tssKeyId,
-    tssPartyId,
   };
 };
 

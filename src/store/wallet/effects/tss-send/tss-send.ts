@@ -32,7 +32,11 @@ export interface TSSSigningCallbacks {
 }
 
 export const isTSSKey = (key: Key): boolean => {
-  return !!(key.tssSession?.status === 'complete' && key.tssSession?.n > 1);
+  return !!(
+    key.properties?.keychain?.privateKeyShare ||
+    key.properties?.keychain?.reducedPrivateKeyShare ||
+    key.properties?.keychain?.commonKeyChain
+  );
 };
 
 export const requiresTSSSigning = (wallet: Wallet, key: Key): boolean => {
