@@ -19,7 +19,6 @@ import Button from '../../../components/button/Button';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {OnboardingScreens} from '../../onboarding/OnboardingGroup';
-import {IntroScreens} from '../../intro/IntroGroup';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {getPasskeyCredentials, registerPasskey} from '../../../utils/passkey';
 import {Session} from '../../../store/bitpay-id/bitpay-id.models';
@@ -28,7 +27,6 @@ import {
   setPasskeyCredentials,
   setPasskeyStatus,
 } from '../../../store/bitpay-id/bitpay-id.actions';
-import {LogActions} from '../../../store/log';
 import {useOngoingProcess} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 
@@ -135,7 +133,6 @@ export const SecureAccountScreen = () => {
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
-  const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
 
   const onSkipPressRef = useRef(() => {
     const routesStack = [];
@@ -144,10 +141,8 @@ export const SecureAccountScreen = () => {
         {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
         {name: BitpayIdScreens.PROFILE, params: {}},
       );
-    } else if (introCompleted) {
-      routesStack.push({name: OnboardingScreens.NOTIFICATIONS, params: {}});
     } else {
-      routesStack.push({name: IntroScreens.START, params: {}});
+      routesStack.push({name: OnboardingScreens.NOTIFICATIONS, params: {}});
     }
     navigation.dispatch(
       CommonActions.reset({

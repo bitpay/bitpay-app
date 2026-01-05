@@ -64,10 +64,6 @@ export const setAppInstalled = (): AppActionType => ({
   type: AppActionTypes.SET_APP_INSTALLED,
 });
 
-export const setIntroCompleted = (): AppActionType => ({
-  type: AppActionTypes.SET_INTRO_COMPLETED,
-});
-
 export const setOnboardingCompleted = (): AppActionType => ({
   type: AppActionTypes.SET_ONBOARDING_COMPLETED,
 });
