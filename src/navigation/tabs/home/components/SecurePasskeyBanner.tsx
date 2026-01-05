@@ -5,6 +5,7 @@ import {ActiveOpacity} from '@components/base/TouchableOpacity';
 import SecurePasskeyIcon from '../../../../../assets/img/secure-passkey.svg';
 import ArrowRightSvg from './ArrowRightSvg';
 import {TouchableOpacity} from '../../../../components/base/TouchableOpacity';
+import {ScreenGutter} from '../../../../components/styled/Containers';
 import {LightBlack, Slate30, White} from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
 import {RootStacks} from '../../../../Root';
@@ -20,7 +21,7 @@ const PasskeyBannerContainer = styled(TouchableOpacity)`
   justify-content: center;
   min-height: 100px;
   padding: 16px 35px 16px 76px;
-  margin: 0px 11px 30px;
+  margin: 0px ${ScreenGutter} 20px;
   position: relative;
   gap: 8px;
 `;
