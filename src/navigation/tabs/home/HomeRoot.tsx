@@ -329,7 +329,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               <ScanButton />
             </HeaderLeftContainer>
             {pendingTxps.length ? (
-              <ProposalBadgeContainer onPress={onPressTxpBadge}>
+              <ProposalBadgeContainer
+                onPress={onPressTxpBadge}
+                style={{marginRight: 8}}>
                 <ProposalBadge>{pendingTxps.length}</ProposalBadge>
               </ProposalBadgeContainer>
             ) : null}
