@@ -157,6 +157,7 @@ import {BrazeWrapper} from './lib/Braze';
 import {selectSettingsNotificationState} from './store/app/app.selectors';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
+import Allocation from './navigation/tabs/home/screens/Allocation';
 import {
   getBaseEVMAccountCreationCoinsAndTokens,
   getBaseSVMAccountCreationCoinsAndTokens,
@@ -175,6 +176,12 @@ const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
+  Allocation:
+    | {
+        keyId?: string;
+        accountAddress?: string;
+      }
+    | undefined;
 } & DebugScreenParamList &
   MerchantGroupParamList &
   BitpayIdGroupParamList &
@@ -994,6 +1001,14 @@ export default () => {
               component={TabsStack}
               options={{
                 gestureEnabled: false,
+              }}
+            />
+            <Root.Screen
+              name={'Allocation'}
+              component={Allocation}
+              options={{
+                ...baseNavigatorOptions,
+                headerShown: true,
               }}
             />
             {AuthGroup({Auth: Root, theme})}
