@@ -189,7 +189,8 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             option &&
             lastDayRateForDefaultCurrency?.rate &&
             rateForDefaultCurrency?.rate &&
-            !isStableCoin
+            !isStableCoin &&
+            EXCHANGE_RATES_SORT_ORDER.includes(currencyName)
           ) {
             const {
               id,
