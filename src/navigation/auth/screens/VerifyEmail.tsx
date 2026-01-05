@@ -23,7 +23,6 @@ import {TabsScreens} from '../../tabs/TabsStack';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {CommonActions} from '@react-navigation/native';
 import {OnboardingScreens} from '../../../navigation/onboarding/OnboardingGroup';
-import {IntroScreens} from '../../../navigation/intro/IntroGroup';
 import AuthApi from '../../../api/auth';
 import {
   ActiveOpacity,
@@ -75,7 +74,6 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
   const onboardingCompleted = useAppSelector(
     ({APP}) => APP.onboardingCompleted,
   );
-  const introCompleted = useAppSelector(({APP}) => APP.introCompleted);
   const [emailVerified, setEmailVerified] = useState(false);
 
   const goToPreviousScreen = useCallback(() => {
@@ -85,10 +83,8 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({navigation}) => {
         {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
         {name: BitpayIdScreens.PROFILE, params: {}},
       );
-    } else if (introCompleted) {
-      routesStack.push({name: OnboardingScreens.NOTIFICATIONS, params: {}});
     } else {
-      routesStack.push({name: IntroScreens.START, params: {}});
+      routesStack.push({name: OnboardingScreens.NOTIFICATIONS, params: {}});
     }
     navigation.dispatch(
       CommonActions.reset({

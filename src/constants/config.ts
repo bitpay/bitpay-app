@@ -170,14 +170,11 @@ export const LISTEN_TIMEOUT = 10000;
 export const EXCHANGE_RATES_SORT_ORDER = [
   'btc',
   'eth',
-  'usdt', // not available from the endpoint
   'xrp',
   'sol',
-  'usdc', // not available from the endpoint
   'doge',
   'bch',
-  'shib',
-  'matic',
+  'ltc',
 ];
 
 // Passkey
