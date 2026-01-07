@@ -482,9 +482,7 @@ const FileOrText = () => {
                 {uploadedFileName}
               </FileInputText>
             ) : (
-              <FileInputPlaceholder
-                numberOfLines={1}
-                ellipsizeMode="tail"></FileInputPlaceholder>
+              <FileInputPlaceholder numberOfLines={1} ellipsizeMode="tail" />
             )}
 
             {uploadedFileName ? (
