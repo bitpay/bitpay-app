@@ -187,7 +187,9 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
           IsUtxoChain(currency.currencyAbbreviation.toLowerCase()),
         );
         const accountCurrencies = SupportedTSSCurrencyOptions.filter(
-          currency => !IsUtxoChain(currency.currencyAbbreviation.toLowerCase()),
+          currency =>
+            !IsUtxoChain(currency.currencyAbbreviation.toLowerCase()) &&
+            currency.currencyAbbreviation.toLowerCase() !== 'sol', // TODO: need to add EDDSA support to bitcore-tss
         );
 
         const tssItems: CurrencySelectionListItem[] = [];
