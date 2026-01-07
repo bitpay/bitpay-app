@@ -11,6 +11,9 @@ import {AllocationDonutLegendCard} from '../components/AllocationSection';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {buildAccountList} from '../../../../store/wallet/utils/wallet';
 import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
+import {useTokenContext} from '../../../../contexts';
+import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
+import {addTokenChainSuffix} from '../../../../utils/helper-methods';
 import {
   buildAllocationDataFromWalletRows,
   type AllocationWallet,
@@ -140,6 +143,18 @@ export const AllocationRowsList: React.FC<{
 }> = ({rows, style}) => {
   const theme = useTheme();
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const {tokenOptionsByAddress} = useTokenContext();
+  const customTokenOptionsByAddress = useAppSelector(
+    ({WALLET}) => WALLET.customTokenOptionsByAddress,
+  );
+
+  const allTokenOptionsByAddress = useMemo(() => {
+    return {
+      ...BitpaySupportedTokenOptsByAddress,
+      ...tokenOptionsByAddress,
+      ...customTokenOptionsByAddress,
+    };
+  }, [customTokenOptionsByAddress, tokenOptionsByAddress]);
 
   return (
     <Rows style={style}>
@@ -155,6 +170,14 @@ export const AllocationRowsList: React.FC<{
           );
         });
 
+        const tokenKey = item.tokenAddress
+          ? addTokenChainSuffix(item.tokenAddress, item.chain)
+          : undefined;
+        const tokenOpt = tokenKey
+          ? allTokenOptionsByAddress[tokenKey]
+          : undefined;
+        const img = option?.img || (tokenOpt?.logoURI as string | undefined);
+
         const barColor = theme.dark ? item.barColor.dark : item.barColor.light;
 
         return (
@@ -163,12 +186,14 @@ export const AllocationRowsList: React.FC<{
               <RowLeft>
                 <IconContainer>
                   <CurrencyImage
-                    img={option?.img}
+                    img={img}
                     imgSrc={
                       option?.img
                         ? undefined
                         : (option?.imgSrc as unknown as number)
                     }
+                    badgeUri={option?.badgeUri}
+                    badgeSrc={option?.badgeSrc as unknown as number}
                     size={40}
                   />
                 </IconContainer>

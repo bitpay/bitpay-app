@@ -474,7 +474,7 @@ const KeyOverview = () => {
   }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
 
   const allocationWalletRows: AllocationWallet[] = useMemo(() => {
-    const wallets = key.wallets.filter(
+    const wallets = (key?.wallets ?? []).filter(
       w => !w.hideWallet && !w.hideWalletByAccount,
     );
     return wallets.map((w: Wallet) => {
@@ -486,7 +486,7 @@ const KeyOverview = () => {
         fiatBalance: (w.balance as any)?.fiat,
       };
     });
-  }, [key.wallets]);
+  }, [key?.wallets]);
 
   const allocationData = useMemo(() => {
     return buildAllocationDataFromWalletRows(
@@ -891,7 +891,7 @@ const KeyOverview = () => {
                     activeOpacity={ActiveOpacity}
                     onPress={() =>
                       (navigation as any).navigate('Allocation', {
-                        keyId: key.id,
+                        keyId: id,
                       })
                     }>
                     <ChevronRightSvg width={13} height={19} gray />
@@ -948,7 +948,7 @@ const KeyOverview = () => {
     allocationData.totalFiat,
     defaultAltCurrency.isoCode,
     hideAllBalances,
-    key.id,
+    id,
     navigation,
     showPortfolioValue,
     showArchaxBanner,
