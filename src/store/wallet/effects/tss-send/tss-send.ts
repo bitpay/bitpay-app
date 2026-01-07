@@ -10,7 +10,7 @@ import {
 } from '../../wallet.models';
 import {logManager} from '../../../../managers/LogManager';
 import {BASE_BWS_URL} from '../../../../constants/config';
-import {utils as ethersUtils} from 'ethers';
+import {IsUtxoChain} from '../../utils/currency';
 
 const BWC = BwcProvider.getInstance();
 
@@ -43,92 +43,6 @@ export const requiresTSSSigning = (wallet: Wallet, key: Key): boolean => {
   return isTSSKey(key) && !!wallet.tssKeyId;
 };
 
-export const toBwsSignatureFormat = (sig: any, chain: string): string => {
-  const strip0x = (h: string) => (h?.startsWith('0x') ? h.slice(2) : h);
-  const pad32 = (h: string) => strip0x(h).padStart(64, '0');
-
-  if (!sig) throw new Error('Missing signature');
-
-  if (typeof sig === 'string') {
-    const hex = strip0x(sig);
-    if (!/^[0-9a-fA-F]+$/.test(hex)) throw new Error('Signature is not hex');
-    return '0x' + hex;
-  }
-
-  const isEvm = ['eth', 'matic', 'arb', 'base', 'op'].includes(
-    (chain || '').toLowerCase(),
-  );
-  if (!isEvm) {
-    throw new Error(`Unsupported chain for this helper: ${chain}`);
-  }
-
-  const r = pad32(sig.r);
-  const s = pad32(sig.s);
-
-  let v = Number(sig.v);
-  if (v === 0 || v === 1) {
-    v = v + 27;
-  }
-  const vHex = v.toString(16).padStart(2, '0');
-
-  return `0x${r}${s}${vHex}`;
-};
-
-export const getTxpMessageHash = (
-  wallet: Wallet,
-  txp: TransactionProposal,
-): Buffer => {
-  const Bitcore = BWC.getBitcore();
-  const utils = BWC.getUtils();
-
-  const tx = utils.buildTx(txp);
-
-  if (['btc', 'bch', 'ltc', 'doge'].includes(txp.chain?.toLowerCase())) {
-    const sighash = tx.inputs[0].getSighash(
-      tx,
-      Bitcore.crypto.Signature.SIGHASH_ALL,
-    );
-    return sighash;
-  } else if (
-    ['eth', 'matic', 'arb', 'base', 'op'].includes(txp.chain?.toLowerCase())
-  ) {
-    const serialized = tx.uncheckedSerialize()[0];
-    const hexString = serialized.startsWith('0x')
-      ? serialized.slice(2)
-      : serialized;
-
-    const txBuffer = Buffer.from(hexString, 'hex');
-
-    const hashHex = ethersUtils.keccak256('0x' + txBuffer.toString('hex'));
-    const hash = Buffer.from(hashHex.slice(2), 'hex');
-
-    logManager.debug(
-      `[getTxpMessageHash] Keccak256 hash: ${hash.toString('hex')}`,
-    );
-
-    return hash;
-  } else {
-    const serialized = tx.uncheckedSerialize()[0];
-    const hexString = serialized.startsWith('0x')
-      ? serialized.slice(2)
-      : serialized;
-    const txBuffer = Buffer.from(hexString, 'hex');
-    return Bitcore.crypto.Hash.sha256(txBuffer);
-  }
-};
-
-export const getDerivationPath = (
-  wallet: Wallet,
-  txp: TransactionProposal,
-): string => {
-  // TSS uses simple paths, not full BIP44 paths
-  return 'm/0/0';
-};
-
-export const generateSessionId = (txp: TransactionProposal): string => {
-  return `sign-${txp.id}`;
-};
-
 const restoreKeychain = (tssKey: any): any => {
   if (!tssKey?.keychain) return tssKey;
 
@@ -154,6 +68,151 @@ const restoreKeychain = (tssKey: any): any => {
   return tssKey;
 };
 
+export const toBwsSignatureFormat = (sig: any, chain: string): string => {
+  const CWC = BWC.getCore();
+  const transformed = CWC.Transactions.transformSignatureObject({
+    chain: chain.toUpperCase(),
+    obj: sig,
+  });
+  logManager.debug(
+    `[transformSignatureObject] ${chain} signature: ${transformed}`,
+  );
+  return transformed;
+};
+
+export const generateSessionId = (
+  txp: TransactionProposal,
+  derivationPath: string,
+): string => {
+  return `${txp.id}:${derivationPath.replace(/\//g, '-')}`;
+};
+
+const signInput = async (params: {
+  tssKey: any;
+  wallet: Wallet;
+  txp: TransactionProposal;
+  messageHash: Buffer;
+  derivationPath: string;
+  sessionId: string;
+  inputIndex: number;
+  totalInputs: number;
+  callbacks: TSSSigningCallbacks;
+  timeout: number;
+}): Promise<string> => {
+  const {
+    tssKey,
+    wallet,
+    txp,
+    messageHash,
+    derivationPath,
+    sessionId,
+    inputIndex,
+    totalInputs,
+    callbacks,
+    timeout,
+  } = params;
+
+  const tssSign = new TssSign({
+    baseUrl: BASE_BWS_URL,
+    credentials: wallet.credentials,
+    tssKey: tssKey,
+  });
+
+  try {
+    await tssSign.start({
+      id: sessionId,
+      messageHash,
+      derivationPath,
+    });
+  } catch (startError: any) {
+    if (startError.message?.startsWith('TSS_ROUND_ALREADY_DONE')) {
+      const sig = await tssSign.getSignatureFromServer();
+      if (sig) {
+        logManager.debug(
+          `[TSS Sign] Input ${inputIndex + 1} recovered from server`,
+        );
+        return toBwsSignatureFormat(sig, txp.chain);
+      }
+      throw new Error(
+        'TSS session interrupted. Try deleting this proposal and creating a new one.',
+      );
+    }
+    throw startError;
+  }
+
+  const signature = await new Promise<string>((resolveSign, rejectSign) => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    timeoutId = setTimeout(() => {
+      tssSign.unsubscribe();
+      rejectSign(new Error(`Timeout signing input ${inputIndex + 1}`));
+    }, timeout);
+
+    tssSign
+      .on('roundready', (round: number) => {
+        logManager.debug(
+          `[TSS Sign] Input ${inputIndex + 1} Round ${round} ready`,
+        );
+        callbacks.onRoundUpdate(round, 'ready');
+
+        if (round === 1 && inputIndex === 0) {
+          callbacks.onStatusChange('signature_generation');
+        }
+
+        callbacks.onProgressUpdate({
+          currentRound: round,
+          totalRounds: 4,
+          status: 'processing',
+        });
+      })
+      .on('roundprocessed', (round: number) => {
+        logManager.debug(
+          `[TSS Sign] Input ${inputIndex + 1} Round ${round} processed`,
+        );
+        callbacks.onRoundUpdate(round, 'processed');
+      })
+      .on('roundsubmitted', (round: number) => {
+        logManager.debug(
+          `[TSS Sign] Input ${inputIndex + 1} Round ${round} submitted`,
+        );
+        callbacks.onRoundUpdate(round, 'submitted');
+      })
+      .on('complete', () => {
+        logManager.debug(`[TSS Sign] Input ${inputIndex + 1} complete`);
+        try {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+
+          const sig = tssSign.getSignature();
+          logManager.debug(
+            `[TSS Sign] Input ${inputIndex + 1} Signature from getSignature():`,
+            sig,
+          );
+
+          const bwsSig = toBwsSignatureFormat(sig, txp.chain);
+          resolveSign(bwsSig);
+        } catch (err: any) {
+          rejectSign(new Error(`Failed to convert signature: ${err.message}`));
+        }
+      })
+      .on('error', (error: Error) => {
+        logManager.error(
+          `[TSS Sign] Input ${inputIndex + 1} Error: ${error.message}`,
+        );
+        rejectSign(error);
+      });
+
+    tssSign.subscribe();
+  });
+
+  tssSign.unsubscribe();
+  logManager.debug(`[TSS Sign] Input ${inputIndex + 1} signed successfully`);
+
+  return signature;
+};
+
 export const startTSSSigning =
   (opts: {
     key: Key;
@@ -167,9 +226,6 @@ export const startTSSSigning =
     const {key, wallet, txp, callbacks, timeout = 300000, joiner} = opts;
 
     return new Promise(async (resolve, reject) => {
-      let tssSign: any = null;
-      let timeoutId: NodeJS.Timeout | null = null;
-
       try {
         logManager.debug('[TSS Sign] Starting TSS signing process');
         callbacks.onStatusChange('initializing');
@@ -179,131 +235,84 @@ export const startTSSSigning =
         }
 
         const tssKey = restoreKeychain(key.methods);
-
-        logManager.debug(
-          `[TSS Sign] privateKeyShare isBuffer: ${Buffer.isBuffer(
-            tssKey?.keychain?.privateKeyShare,
-          )}`,
-        );
-        logManager.debug(
-          `[TSS Sign] privateKeyShare length: ${tssKey?.keychain?.privateKeyShare?.length}`,
-        );
-
         if (!tssKey) {
           throw new Error('TSS key methods not available');
         }
 
-        const messageHash = getTxpMessageHash(wallet, txp);
-        const derivationPath = getDerivationPath(wallet, txp);
+        const Bitcore = BWC.getBitcore();
+        const CWC = BWC.getCore();
+        const utils = BWC.getUtils();
 
-        logManager.debug(
-          `[TSS Sign] Message hash: ${messageHash.toString('hex')}`,
+        const chain = wallet.credentials.chain;
+        const network = wallet.credentials.network;
+        const isUtxo = IsUtxoChain(chain);
+
+        const inputPaths =
+          isUtxo && txp.inputPaths?.length ? txp.inputPaths : ['m/0/0'];
+
+        const tx = utils.buildTx(txp);
+        const txHex = tx.uncheckedSerialize();
+        const rawTx = Array.isArray(txHex) ? txHex[0] : txHex;
+        const SIGHASH_TYPE =
+          Bitcore.crypto.Signature.SIGHASH_ALL |
+          Bitcore.crypto.Signature.SIGHASH_FORKID;
+
+        const xPubKey = new Bitcore.HDPublicKey(
+          wallet.credentials.clientDerivedPublicKey,
         );
-        logManager.debug(`[TSS Sign] Derivation path: ${derivationPath}`);
 
-        tssSign = new TssSign({
-          baseUrl: BASE_BWS_URL,
-          credentials: wallet.credentials,
-          tssKey: tssKey,
-        });
-
-        const sessionId = generateSessionId(txp);
-        logManager.debug(`[TSS Sign] Session ID: ${sessionId}`);
+        logManager.debug(`[TSS Sign] Chain: ${chain}, isUtxo: ${isUtxo}`);
+        logManager.debug(
+          `[TSS Sign] Total inputs to sign: ${inputPaths.length}`,
+        );
 
         callbacks.onStatusChange('waiting_for_cosigners');
 
-        try {
-          await tssSign.start({
-            id: sessionId,
+        const signatures: string[] = [];
+
+        for (let i = 0; i < inputPaths.length; i++) {
+          const derivationPath = inputPaths[i];
+          const pubKey = xPubKey
+            .deriveChild(derivationPath)
+            .publicKey.toString();
+
+          logManager.debug(
+            `[TSS Sign] Signing input ${i + 1}/${
+              inputPaths.length
+            } with path: ${derivationPath}`,
+          );
+          const sighashHex = CWC.Transactions.getSighash({
+            chain,
+            network,
+            tx: rawTx,
+            index: i,
+            utxos: txp.inputs,
+            pubKey,
+            sigtype: SIGHASH_TYPE,
+          });
+          const messageHash = Buffer.from(sighashHex, 'hex');
+          const sessionId = generateSessionId(txp, derivationPath!);
+          const signature = await signInput({
+            tssKey,
+            wallet,
+            txp,
             messageHash,
-            derivationPath,
+            derivationPath: derivationPath!,
+            sessionId,
+            inputIndex: i,
+            totalInputs: inputPaths.length,
+            callbacks,
+            timeout,
           });
-          logManager.debug('[TSS Sign] Signing session started successfully');
-        } catch (startError: any) {
-          logManager.warn(
-            `[TSS Sign] Initial start warning: ${startError.message}`,
-          );
+          signatures.push(signature);
         }
 
-        logManager.debug('[TSS Sign] Waiting for co-signers...');
-
-        timeoutId = setTimeout(() => {
-          if (tssSign) {
-            tssSign.unsubscribe();
-          }
-          reject(
-            new Error(
-              'TSS signing timeout - co-signers did not respond in time',
-            ),
-          );
-        }, timeout);
-
-        const signPromise = new Promise<string>((resolveSign, rejectSign) => {
-          tssSign
-            .on('roundready', (round: number) => {
-              logManager.debug(`[TSS Sign] Round ${round} ready`);
-              callbacks.onRoundUpdate(round, 'ready');
-
-              if (round === 1) {
-                callbacks.onStatusChange('signature_generation');
-              }
-
-              callbacks.onProgressUpdate({
-                currentRound: round,
-                totalRounds: 4,
-                status: 'processing',
-              });
-            })
-            .on('roundprocessed', (round: number) => {
-              logManager.debug(`[TSS Sign] Round ${round} processed`);
-              callbacks.onRoundUpdate(round, 'processed');
-            })
-            .on('roundsubmitted', (round: number) => {
-              logManager.debug(`[TSS Sign] Round ${round} submitted`);
-              callbacks.onRoundUpdate(round, 'submitted');
-            })
-            // TODO BWC
-            // .on('copayersigned', (copayerId: string) => {
-            //   logManager.debug(`[TSS Sign] Copayer signed: ${copayerId}`);
-            //   callbacks.onCopayerStatusChange(copayerId, 'signed');
-            // })
-            .on('signature', signature => {
-              logManager.debug(`[TSS Sign] Signature received`);
-              try {
-                const bwsSig = toBwsSignatureFormat(signature, txp.chain);
-                resolveSign(bwsSig);
-              } catch (err) {
-                rejectSign(
-                  new Error(
-                    `Failed to convert/verify signature: ${err.message}`,
-                  ),
-                );
-              }
-            })
-            .on('complete', () => {
-              logManager.debug('[TSS Sign] Signing complete');
-            })
-            .on('error', (error: Error) => {
-              logManager.error(`[TSS Sign] Error: ${error.message}`);
-              rejectSign(error);
-            });
-
-          tssSign.subscribe({
-            timeout: 250,
-          });
-        });
-
-        const signature = await signPromise;
-
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-
-        callbacks.onComplete(signature);
+        callbacks.onComplete(signatures[0]);
         callbacks.onStatusChange('broadcasting');
 
-        logManager.debug('[TSS Sign] Pushing signature to txp');
+        logManager.debug(
+          `[TSS Sign] All ${signatures.length} signature(s) collected, pushing to BWS`,
+        );
 
         let signedTXP: TransactionProposal | null = null;
         if (!joiner) {
@@ -311,7 +320,7 @@ export const startTSSSigning =
             (resolvePush, rejectPush) => {
               wallet.pushSignatures(
                 txp,
-                [signature],
+                signatures,
                 (err: Error, result: TransactionProposal) => {
                   if (err) {
                     rejectPush(err);
@@ -325,23 +334,11 @@ export const startTSSSigning =
           );
         }
 
-        if (tssSign) {
-          tssSign.unsubscribe();
-        }
-
         logManager.debug('[TSS Sign] TSS signing completed successfully');
         callbacks.onStatusChange('complete');
 
         resolve(signedTXP ?? txp);
       } catch (err) {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        if (tssSign) {
-          try {
-            tssSign.unsubscribe();
-          } catch (e) {}
-        }
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(`[TSS Sign] Error: ${errorStr}`);
@@ -364,7 +361,6 @@ export const joinTSSSigningSession =
     logManager.debug(`[TSS Join] Joining signing session for txp: ${txp.id}`);
 
     // The joiner flow is the same as initiator - they both use startTSSSigning
-    // with the same deterministic sessionId
     return dispatch(
       startTSSSigning({
         key,
