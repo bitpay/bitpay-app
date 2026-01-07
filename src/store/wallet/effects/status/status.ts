@@ -437,14 +437,14 @@ export const updateKeyStatus =
             // Collect wallet updates instead of applying them
             walletUpdates.push({
               walletId: wallet.id,
-              balance: cryptoBalance,
+              balance: newBalance,
               pendingTxps: newPendingTxps,
               singleAddress: status.wallet?.singleAddress,
             });
 
             if (!dataOnly) {
               // properties to update
-              wallet.balance = cryptoBalance;
+              wallet.balance = newBalance;
               wallet.pendingTxps = newPendingTxps;
               wallet.singleAddress = status.wallet?.singleAddress;
             }
