@@ -86,5 +86,41 @@ target 'BitPayApp' do
       # necessary for Mac Catalyst builds
       :mac_catalyst_enabled => false
     )
+
+    # Add bundle integrity verification build phase
+    add_bundle_hash_build_phase(project)
   end
+end
+
+# Adds a build phase to inject the React Native bundle hash for integrity verification
+def add_bundle_hash_build_phase(project)
+  target = project.targets.find { |t| t.name == 'BitPayApp' }
+  return unless target
+
+  phase_name = 'Inject Bundle Hash'
+  script_path = '"${SRCROOT}/scripts/inject-bundle-hash.sh"'
+
+  # Check if phase already exists
+  existing_phase = target.shell_script_build_phases.find { |p| p.name == phase_name }
+  if existing_phase
+    puts "Build phase '#{phase_name}' already exists"
+    return
+  end
+
+  # Find the "Bundle React Native code and images" phase to insert after it
+  rn_bundle_phase = target.shell_script_build_phases.find { |p| p.name&.include?('Bundle React Native') }
+
+  # Create new build phase
+  phase = target.new_shell_script_build_phase(phase_name)
+  phase.shell_script = script_path
+  phase.show_env_vars_in_log = '0'
+
+  # Move the phase to run after the RN bundle phase
+  if rn_bundle_phase
+    rn_index = target.build_phases.index(rn_bundle_phase)
+    target.build_phases.move(phase, rn_index + 1)
+  end
+
+  project.save
+  puts "Added '#{phase_name}' build phase to BitPayApp target"
 end
