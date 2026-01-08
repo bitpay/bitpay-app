@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {View} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import {
@@ -12,6 +12,7 @@ import {useTranslation} from 'react-i18next';
 import {
   TSSSigningStatus,
   TSSSigningProgress,
+  Wallet,
 } from '../../../store/wallet/wallet.models';
 import {
   ActiveOpacity,
@@ -221,6 +222,8 @@ interface TSSProgressTrackerProps {
   copayers: TSSCopayer[];
   isModalVisible?: boolean;
   onModalVisibilityChange?: (visible: boolean) => void;
+  wallet?: Wallet;
+  onCopayersInitialized?: (copayers: TSSCopayer[]) => void;
 }
 
 const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
@@ -230,6 +233,8 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   date,
   copayers,
   isModalVisible: externalIsVisible,
+  wallet,
+  onCopayersInitialized,
   onModalVisibilityChange,
 }) => {
   const {t} = useTranslation();
@@ -328,6 +333,19 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
     }
   };
 
+  useEffect(() => {
+    if (wallet && onCopayersInitialized && copayers.length === 0) {
+      const initialCopayers =
+        wallet.copayers?.map(copayer => ({
+          id: copayer.id,
+          name: copayer.name,
+          signed: false,
+        })) || [];
+
+      onCopayersInitialized(initialCopayers);
+    }
+  }, [wallet, onCopayersInitialized, copayers.length]);
+
   return (
     <>
       <View style={{paddingBottom: 10}}>
@@ -367,7 +385,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
               const isActive = stepStatus === 'active';
               const isComplete = stepStatus === 'complete';
               const showCopayers = step.showCopayers;
-              const connectorHeight = showCopayers ? 100 : 20;
+              const connectorHeight = showCopayers ? 35 * copayers.length : 25;
 
               return (
                 <View key={index}>

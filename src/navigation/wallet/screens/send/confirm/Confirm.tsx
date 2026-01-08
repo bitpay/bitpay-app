@@ -23,7 +23,6 @@ import {
   Wallet,
   TSSSigningStatus,
   TSSSigningProgress,
-  TSSCopayerSignStatus,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
@@ -32,10 +31,7 @@ import {
   showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
-import {
-  isTSSKey,
-  TSSSigningCallbacks,
-} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import {
   formatCurrencyAbbreviation,
   formatFiatAmount,
@@ -118,10 +114,8 @@ import {CommonActions} from '@react-navigation/native';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {RootStacks} from '../../../../../Root';
 import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
-import {logManager} from '../../../../../managers/LogManager';
-import TSSProgressTracker, {
-  TSSCopayer,
-} from '../../../components/TSSProgressTracker';
+import TSSProgressTracker from '../../../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -207,7 +201,15 @@ const Confirm = () => {
     useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
-  const [isTSSWallet, setIsTSSWallet] = useState(false);
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const isTSSWallet = isTSSKey(key);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
@@ -217,9 +219,16 @@ const Confirm = () => {
   const [tssCopayers, setTssCopayers] = useState<
     Array<{id: string; name: string; signed: boolean}>
   >([]);
-  const [tssTransactionId, setTssTransactionId] = useState<
-    string | undefined
-  >();
+  const tssCallbacks = useTSSCallbacks({
+    wallet,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage,
+  });
 
   const {
     fee: _fee,
@@ -248,25 +257,6 @@ const Confirm = () => {
   const feeOptions = GetFeeOptions(chain);
   const {unitToSatoshi} =
     dispatch(GetPrecision(currencyAbbreviation, chain, tokenAddress)) || {};
-
-  useEffect(() => {
-    if (key && wallet) {
-      const isTss = isTSSKey(key);
-      setIsTSSWallet(isTss);
-      if (isTss) {
-        const copayersList =
-          wallet.copayers?.map(copayer => ({
-            id: copayer.id,
-            name: copayer.name,
-            signed: false,
-          })) || [];
-        setTssCopayers(copayersList);
-        logManager.debug(
-          `[TSS Confirm] Initialized with ${copayersList.length} copayers`,
-        );
-      }
-    }
-  }, [key, wallet]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -447,56 +437,6 @@ const Confirm = () => {
     hidePaymentSent();
   };
 
-  const tssCallbacks: TSSSigningCallbacks = {
-    onStatusChange: (status: TSSSigningStatus) => {
-      logManager.debug(`[TSS Confirm] Status changed: ${status}`);
-      setTssStatus(status);
-    },
-    onProgressUpdate: (progress: TSSSigningProgress) => {
-      logManager.debug(
-        `[TSS Confirm] Progress: Round ${progress.currentRound}/${progress.totalRounds}`,
-      );
-      setTssProgress(progress);
-
-      // When round 1 starts, mark all copayers as joined/signing
-      // TODO remove this when onCopayerStatusChange is added
-      if (progress.currentRound === 1) {
-        setTssCopayers(prev => prev.map(c => ({...c, signed: true})));
-      }
-    },
-    onCopayerStatusChange: (
-      copayerId: string,
-      status: TSSCopayerSignStatus,
-    ) => {
-      // This will never fire - keeping for future when event exist
-      logManager.debug(`[TSS Confirm] Copayer ${copayerId} ${status}`);
-      setTssCopayers(prev =>
-        prev.map(c =>
-          c.id === copayerId ? {...c, signed: status === 'signed'} : c,
-        ),
-      );
-    },
-    onRoundUpdate: (
-      round: number,
-      type: 'ready' | 'processed' | 'submitted',
-    ) => {
-      logManager.debug(`[TSS Confirm] Round ${round} ${type}`);
-    },
-    onError: (error: Error) => {
-      logManager.error(`[TSS Confirm] Error: ${error.message}`);
-      setShowTSSProgressModal(false);
-      setResetSwipeButton(true);
-      showErrorMessage(
-        CustomErrorMessage({
-          errMsg: error.message,
-          title: t('TSS Signing Error'),
-        }),
-      );
-    },
-    onComplete: (signature: string) => {
-      logManager.debug(`[TSS Confirm] Signing complete`);
-    },
-  };
   const startSendingPayment = async ({
     transport,
   }: {transport?: Transport} = {}) => {
@@ -549,7 +489,6 @@ const Confirm = () => {
         );
 
         if (isTSSWallet && result?.txid) {
-          setTssTransactionId(result.txid);
           setTssStatus('complete');
           await sleep(1500);
           setShowTSSProgressModal(false);
@@ -617,7 +556,6 @@ const Confirm = () => {
       if (isTSSWallet) {
         setShowTSSProgressModal(false);
       }
-
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -695,14 +633,6 @@ const Confirm = () => {
 
     return () => clearTimeout(timer);
   }, [resetSwipeButton]);
-
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
 
   const checkHighFees = async () => {
     const {feeUnitAmount} = GetFeeUnits(chain);
@@ -795,7 +725,9 @@ const Confirm = () => {
                 progress={tssProgress}
                 createdBy={sendingFrom.walletName || 'You'}
                 date={new Date()}
+                wallet={wallet}
                 copayers={tssCopayers}
+                onCopayersInitialized={setTssCopayers}
                 isModalVisible={showTSSProgressModal}
                 onModalVisibilityChange={setShowTSSProgressModal}
               />

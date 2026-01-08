@@ -74,7 +74,6 @@ import {
   Wallet,
   TSSSigningStatus,
   TSSSigningProgress,
-  TSSCopayerSignStatus,
 } from '../../../store/wallet/wallet.models';
 import {
   DetailColumn,
@@ -93,9 +92,9 @@ import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {
   isTSSKey,
   joinTSSSigningSession,
-  TSSSigningCallbacks,
 } from '../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
 const TxpDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -239,7 +238,15 @@ const TransactionProposalDetails = () => {
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
-  const [isTSSWallet, setIsTSSWallet] = useState(false);
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const isTSSWallet = isTSSKey(key);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
@@ -250,6 +257,17 @@ const TransactionProposalDetails = () => {
   const [tssCopayers, setTssCopayers] = useState<
     Array<{id: string; name: string; signed: boolean}>
   >([]);
+
+  const tssCallbacks = useTSSCallbacks({
+    wallet,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage,
+  });
 
   const title = getDetailsTitle(transaction, wallet);
   let {currencyAbbreviation, chain, network, tokenAddress} = wallet;
@@ -262,27 +280,6 @@ const TransactionProposalDetails = () => {
       headerTitle: () => <HeaderTitle>{title}</HeaderTitle>,
     });
   }, [navigation, title]);
-
-  useEffect(() => {
-    if (key) {
-      const isTss = isTSSKey(key);
-      setIsTSSWallet(isTss);
-
-      if (isTss) {
-        logManager.debug(`[TxpDetails] Is TSS wallet: ${isTss}`);
-        const copayersList =
-          wallet.copayers?.map(copayer => ({
-            id: copayer.id,
-            name: copayer.name,
-            signed: false,
-          })) || [];
-        setTssCopayers(copayersList);
-        logManager.debug(
-          `[TxpDetails] Initialized with ${copayersList.length} copayers`,
-        );
-      }
-    }
-  }, [key, wallet]);
 
   const init = async () => {
     try {
@@ -522,56 +519,6 @@ const TransactionProposalDetails = () => {
     }
   };
 
-  const tssCallbacks: TSSSigningCallbacks = {
-    onStatusChange: (status: TSSSigningStatus) => {
-      logManager.debug(`[TxpDetails TSS] Status changed: ${status}`);
-      setTssStatus(status);
-    },
-    onProgressUpdate: (progress: TSSSigningProgress) => {
-      logManager.debug(
-        `[TxpDetails TSS] Progress: Round ${progress.currentRound}/${progress.totalRounds}`,
-      );
-      setTssProgress(progress);
-
-      // When round 1 starts, mark all copayers as joined/signing
-      // TODO remove this when onCopayerStatusChange is added
-      if (progress.currentRound === 1) {
-        setTssCopayers(prev => prev.map(c => ({...c, signed: true})));
-      }
-    },
-    onCopayerStatusChange: (
-      copayerId: string,
-      status: TSSCopayerSignStatus,
-    ) => {
-      // This will never fire - keeping for future when event exist
-      logManager.debug(`[TxpDetails TSS] Copayer ${copayerId} ${status}`);
-      setTssCopayers(prev =>
-        prev.map(c =>
-          c.id === copayerId ? {...c, signed: status === 'signed'} : c,
-        ),
-      );
-    },
-    onRoundUpdate: (
-      round: number,
-      type: 'ready' | 'processed' | 'submitted',
-    ) => {
-      logManager.debug(`[TxpDetails TSS] Round ${round} ${type}`);
-    },
-    onError: (error: Error) => {
-      logManager.error(`[TxpDetails TSS] Error: ${error.message}`);
-      setShowTSSProgressModal(false);
-      setResetSwipeButton(true);
-      showErrorMessage(
-        CustomErrorMessage({
-          errMsg: error.message,
-          title: t('TSS Signing Error'),
-        }),
-      );
-    },
-    onComplete: (signature: string) => {
-      logManager.debug(`[TxpDetails TSS] Signing complete`);
-    },
-  };
   const joinTSSSigning = async () => {
     try {
       logManager.debug(
@@ -712,15 +659,6 @@ const TransactionProposalDetails = () => {
       }
     };
   }, []);
-
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
-
   return (
     <TxpDetailsContainer>
       {isLoading ? (
@@ -842,7 +780,9 @@ const TransactionProposalDetails = () => {
               progress={tssProgress}
               createdBy={wallet.walletName || 'You'}
               date={new Date()}
+              wallet={wallet}
               copayers={tssCopayers}
+              onCopayersInitialized={setTssCopayers}
               isModalVisible={showTSSProgressModal}
               onModalVisibilityChange={setShowTSSProgressModal}
             />
