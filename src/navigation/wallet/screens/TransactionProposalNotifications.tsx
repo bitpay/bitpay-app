@@ -634,6 +634,20 @@ const TransactionProposalNotifications = () => {
 
   return (
     <NotificationsContainer>
+      {isTSSWallet && currentWallet && showTSSProgressModal ? (
+        <TSSProgressTracker
+          status={tssStatus}
+          progress={tssProgress}
+          createdBy={currentWallet.walletName || 'You'}
+          date={new Date()}
+          wallet={currentWallet}
+          copayers={tssCopayers}
+          onCopayersInitialized={setTssCopayers}
+          isModalVisible={showTSSProgressModal}
+          onModalVisibilityChange={setShowTSSProgressModal}
+          hideTracker={true}
+        />
+      ) : null}
       <SectionList
         refreshControl={
           <RefreshControl
@@ -776,20 +790,6 @@ const TransactionProposalNotifications = () => {
               }
             }
           }}
-        />
-      ) : null}
-
-      {isTSSWallet && currentWallet && showTSSProgressModal ? (
-        <TSSProgressTracker
-          status={tssStatus}
-          progress={tssProgress}
-          createdBy={currentWallet.walletName || 'You'}
-          date={new Date()}
-          wallet={currentWallet}
-          copayers={tssCopayers}
-          onCopayersInitialized={setTssCopayers}
-          isModalVisible={showTSSProgressModal}
-          onModalVisibilityChange={setShowTSSProgressModal}
         />
       ) : null}
     </NotificationsContainer>
