@@ -25,6 +25,7 @@ export interface SimplexSellOrderData {
   send_max?: boolean;
   tx_sent_on?: number;
   tx_sent_id?: string;
+  isTSSWallet?: boolean;
 }
 
 export interface SimplexSellIncomingData {

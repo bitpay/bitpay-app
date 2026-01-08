@@ -34,6 +34,8 @@ import {
   TransactionProposal,
   SendMaxInfo,
   Key,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../store/wallet/wallet.models';
 import {
   GetName,
@@ -117,6 +119,11 @@ import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
 import {SellBalanceContainer} from '../styled/SellCryptoCard';
 import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 import {SellCryptoOffer} from '../../components/externalServicesOfferSelector';
+import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
+import {Network} from '../../../../constants';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -214,6 +221,38 @@ const SimplexSellCheckout: React.FC = () => {
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const showTssErrorMessage = useCallback(
+    async (config: BottomNotificationConfig) => {
+      const msg = config?.message || t('An error occurred during TSS signing');
+      const reason = 'TSS Signing Error';
+      const title = config?.title || t('TSS Signing Error');
+      showError(msg, reason, undefined, title);
+    },
+    [dispatch],
+  );
+  const isTSSWallet = isTSSKey(key);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+
+  const tssCallbacks = useTSSCallbacks({
+    wallet,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage: showTssErrorMessage,
+  });
 
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
@@ -532,13 +571,18 @@ const SimplexSellCheckout: React.FC = () => {
     const isUsingHardwareWallet = !!transport;
     let broadcastedTx;
     try {
+      if (isTSSWallet) {
+        setShowTSSProgressModal(true);
+        setTssStatus('initializing');
+      }
+
       if (isUsingHardwareWallet) {
         const {chain, network} = wallet.credentials;
         const configFn = currencyConfigs[chain];
         if (!configFn) {
           throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
-        const params = configFn(network);
+        const params = configFn(network as Network);
         await prepareLedgerApp(
           params.appName,
           transportRef,
@@ -567,8 +611,15 @@ const SimplexSellCheckout: React.FC = () => {
             key,
             wallet,
             ataOwnerAddress,
+            ...(isTSSWallet && {tssCallbacks}),
           }),
         );
+
+        if (isTSSWallet && broadcastedTx?.txid) {
+          setTssStatus('complete');
+          await sleep(1500);
+          setShowTSSProgressModal(false);
+        }
       }
 
       const newData: SimplexSellOrderData = {
@@ -590,6 +641,7 @@ const SimplexSellCheckout: React.FC = () => {
         tx_sent_id: broadcastedTx?.txid,
         quote_id: simplexQuoteOffer.quoteData.quote_id ?? '',
         send_max: useSendMax,
+        isTSSWallet: isTSSWallet,
       };
 
       dispatch(
@@ -644,6 +696,10 @@ const SimplexSellCheckout: React.FC = () => {
         }),
       );
     } catch (err: any) {
+      if (isTSSWallet) {
+        setShowTSSProgressModal(false);
+      }
+
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -956,6 +1012,19 @@ const SimplexSellCheckout: React.FC = () => {
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
+        {isTSSWallet && (
+          <TSSProgressTracker
+            status={tssStatus}
+            progress={tssProgress}
+            createdBy={wallet.walletName || 'You'}
+            date={new Date()}
+            wallet={wallet}
+            copayers={tssCopayers}
+            onCopayersInitialized={setTssCopayers}
+            isModalVisible={showTSSProgressModal}
+            onModalVisibilityChange={setShowTSSProgressModal}
+          />
+        )}
         <RowDataContainer>
           <RowLabel>{t('Selling')}</RowLabel>
           {amountExpected ? (

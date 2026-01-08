@@ -33,6 +33,7 @@ export interface RampSellOrderData {
   send_max?: boolean;
   tx_sent_on?: number;
   tx_sent_id?: string;
+  isTSSWallet?: boolean;
 }
 
 export interface RampSellIncomingData {
@@ -48,6 +49,7 @@ export interface RampSellIncomingData {
   depositWalletAddress?: string;
   txSentOn?: number;
   txSentId?: string;
+  isTSSWallet?: boolean;
 }
 
 export interface RampGetSellQuoteRequestData {
