@@ -8,6 +8,8 @@ import {
   TransactionProposal,
   TxDetails,
   Wallet,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../store/wallet/wallet.models';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
 import {sleep} from '../../../utils/helper-methods';
@@ -76,6 +78,9 @@ import {EIP155_SIGNING_METHODS} from '../../../constants/WalletConnectV2';
 import {formatJsonRpcResult} from '@json-rpc-tools/utils';
 import {GetPrecision} from '../../../store/wallet/utils/currency';
 import {usePaymentSent} from '../../../contexts';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import TSSProgressTracker from '../../wallet/components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
 const HeaderRightContainer = styled.View``;
 
@@ -121,11 +126,41 @@ const WalletConnectConfirm = () => {
   const [accountDisconnected, setAccountDisconnected] = useState(false);
   const [requestDismissed, setRequestDismissed] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
   const [txDetails, setTxDetails] = useState<TxDetails>();
   const [txp, setTxp] = useState<Partial<TransactionProposal> | undefined>();
   const allKeys = useAppSelector(({WALLET}) => WALLET.keys);
   const key = allKeys[wallet?.keyId!];
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const isTSSWallet = isTSSKey(key);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+  const tssCallbacks = useTSSCallbacks({
+    wallet,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage,
+  });
 
   const sessionV2: WCV2SessionType | undefined = useAppSelector(
     ({WALLET_CONNECT_V2}) =>
@@ -202,6 +237,11 @@ const WalletConnectConfirm = () => {
   const feeOptions = GetFeeOptions(wallet.chain);
 
   const approveCallRequest = async () => {
+    if (isTSSWallet) {
+      setShowTSSProgressModal(true);
+      setTssStatus('initializing');
+    }
+
     try {
       const {params, id} = request as WCV2RequestType;
       const {request: requestProps} = params;
@@ -216,6 +256,7 @@ const WalletConnectConfirm = () => {
             key,
             wallet,
             recipient,
+            ...(isTSSWallet && {tssCallbacks}),
           }),
         );
         await dispatch(
@@ -228,6 +269,13 @@ const WalletConnectConfirm = () => {
       } else {
         await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
       }
+
+      if (isTSSWallet) {
+        setTssStatus('complete');
+        await sleep(1500);
+        setShowTSSProgressModal(false);
+      }
+
       dispatch(
         Analytics.track('Sent Crypto', {
           context: 'WalletConnect Confirm',
@@ -240,6 +288,9 @@ const WalletConnectConfirm = () => {
           wallet?.credentials.n > 1 ? t('Proposal created') : t('Payment Sent'),
       });
     } catch (err) {
+      if (isTSSWallet) {
+        setShowTSSProgressModal(false);
+      }
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -262,14 +313,6 @@ const WalletConnectConfirm = () => {
       }
     }
   };
-
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
 
   const rejectCallRequest = useCallback(async () => {
     haptic('impactLight');
@@ -423,6 +466,19 @@ const WalletConnectConfirm = () => {
     <ConfirmContainer>
       <DetailsList>
         <Header>Summary</Header>
+        {isTSSWallet && (
+          <TSSProgressTracker
+            status={tssStatus}
+            progress={tssProgress}
+            createdBy={txDetails?.sendingFrom?.walletName || 'You'}
+            date={new Date()}
+            wallet={wallet}
+            copayers={tssCopayers}
+            onCopayersInitialized={setTssCopayers}
+            isModalVisible={showTSSProgressModal}
+            onModalVisibilityChange={setShowTSSProgressModal}
+          />
+        )}
         <Banner
           height={100}
           type={'warning'}

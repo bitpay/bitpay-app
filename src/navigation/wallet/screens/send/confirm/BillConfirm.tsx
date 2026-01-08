@@ -16,6 +16,8 @@ import {
   TxDetails,
   Wallet,
   Key,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
@@ -82,6 +84,11 @@ import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
 import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
+import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import TSSProgressTracker from '../../../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
+import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
+import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 
 export interface BillPaymentRequest {
   amount: number;
@@ -137,8 +144,38 @@ const BillConfirm: React.FC<
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const isTSSWallet = key ? isTSSKey(key) : false;
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+  const tssCallbacks = useTSSCallbacks({
+    wallet: wallet!,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage,
+  });
 
   const baseEventParams = {
     ...getBillAccountEventParamsForMultipleBills(
@@ -407,6 +444,7 @@ const BillConfirm: React.FC<
             key,
             wallet,
             recipient,
+            ...(isTSSWallet && {tssCallbacks}),
           }),
         )
       : await dispatch(
@@ -419,6 +457,12 @@ const BillConfirm: React.FC<
   };
 
   const handlePaymentSuccess = async () => {
+    if (isTSSWallet) {
+      setTssStatus('complete');
+      await sleep(1500);
+      setShowTSSProgressModal(false);
+    }
+
     showPaymentSent({
       onCloseModal,
       title:
@@ -462,6 +506,10 @@ const BillConfirm: React.FC<
   };
 
   const handlePaymentFailure = async (error: any) => {
+    if (isTSSWallet) {
+      setShowTSSProgressModal(false);
+    }
+
     const handled = dispatch(
       handleSendError({error, onDismiss: () => openWalletSelector(400)}),
     );
@@ -533,6 +581,12 @@ const BillConfirm: React.FC<
     transport,
   }: {transport?: Transport} = {}) => {
     const isUsingHardwareWallet = !!transport;
+
+    if (isTSSWallet) {
+      setShowTSSProgressModal(true);
+      setTssStatus('initializing');
+    }
+
     dispatch(
       Analytics.track('Bill Pay - Clicked Slide to Confirm', baseEventParams),
     );
@@ -601,6 +655,19 @@ const BillConfirm: React.FC<
       <DetailsList>
         <>
           <Header hr>Summary</Header>
+          {isTSSWallet && wallet && (
+            <TSSProgressTracker
+              status={tssStatus}
+              progress={tssProgress}
+              createdBy={sendingFrom?.walletName || 'You'}
+              date={new Date()}
+              wallet={wallet}
+              copayers={tssCopayers}
+              onCopayersInitialized={setTssCopayers}
+              isModalVisible={showTSSProgressModal}
+              onModalVisibilityChange={setShowTSSProgressModal}
+            />
+          )}
           <SendingTo
             recipient={{
               recipientName:
