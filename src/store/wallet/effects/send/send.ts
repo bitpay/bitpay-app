@@ -180,6 +180,10 @@ export const createProposalAndBuildTxDetails =
           tx.signingMethod = 'ecdsa';
         }
 
+        if (wallet.tssKeyId && credentials.chain === 'bch') {
+          tx.signingMethod = 'ecdsa';
+        }
+
         if (
           chain === 'eth' &&
           wallet.transactionHistory?.hasConfirmingTxs &&
