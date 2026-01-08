@@ -224,6 +224,7 @@ interface TSSProgressTrackerProps {
   onModalVisibilityChange?: (visible: boolean) => void;
   wallet?: Wallet;
   onCopayersInitialized?: (copayers: TSSCopayer[]) => void;
+  hideTracker?: boolean;
 }
 
 const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
@@ -236,6 +237,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   wallet,
   onCopayersInitialized,
   onModalVisibilityChange,
+  hideTracker,
 }) => {
   const {t} = useTranslation();
   const theme = useTheme();
@@ -348,29 +350,34 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
 
   return (
     <>
-      <View style={{paddingBottom: 10}}>
-        <ProgressButton
-          activeOpacity={ActiveOpacity}
-          onPress={() => setModalVisible(true)}>
-          <ProgressIndicator status={status}>
-            {status === 'complete' ? (
-              <SuccessIcon width={28} height={28} />
-            ) : (
-              <ClockIcon width={28} height={28} />
-            )}
-          </ProgressIndicator>
-          <View style={{flex: 1, marginRight: 12}}>
-            <ProgressButtonText>{getButtonText()}</ProgressButtonText>
-            <ProgressBarContainer style={{marginTop: 6}}>
-              <ProgressBarFill
-                progress={getProgressPercentage()}
-                complete={status === 'complete'}
-              />
-            </ProgressBarContainer>
-          </View>
-          <ChevronDownSvg width={16} height={16} />
-        </ProgressButton>
-      </View>
+      {!hideTracker ? (
+        <View style={{paddingBottom: 10}}>
+          <ProgressButton
+            activeOpacity={ActiveOpacity}
+            onPress={() => setModalVisible(true)}>
+            <ProgressIndicator status={status}>
+              {status === 'complete' ? (
+                <SuccessIcon width={28} height={28} />
+              ) : (
+                <ClockIcon width={28} height={28} />
+              )}
+            </ProgressIndicator>
+            <View style={{flex: 1, marginRight: 12}}>
+              <ProgressButtonText>{getButtonText()}</ProgressButtonText>
+              <ProgressBarContainer style={{marginTop: 6}}>
+                <ProgressBarFill
+                  progress={getProgressPercentage()}
+                  complete={status === 'complete'}
+                />
+              </ProgressBarContainer>
+            </View>
+            <ChevronDownSvg width={16} height={16} />
+          </ProgressButton>
+        </View>
+      ) : (
+        <></>
+      )}
+
       <SheetModal isVisible={isModalVisible} onBackdropPress={handleClose}>
         <ModalContainer>
           <Header>
