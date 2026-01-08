@@ -2478,6 +2478,7 @@ const ExternalServicesOfferSelector: React.FC<
       );
       setSelectedOffer(_selectedOffer);
       onSelectOffer?.(_selectedOffer);
+      setOfferWarnMsg(undefined);
       setOfferSelectorText(
         _selectedOffer?.label + t(' using ') + paymentMethod?.label,
       );
@@ -2559,6 +2560,7 @@ const ExternalServicesOfferSelector: React.FC<
       if (amountReceiving !== 0 && !isNaN(amountReceiving)) {
         setSelectedOffer(_selectedOffer);
         onSelectOffer?.(_selectedOffer);
+        setOfferWarnMsg(undefined);
         setOfferSelectorText(
           _selectedOffer?.label +
             ' ' +
