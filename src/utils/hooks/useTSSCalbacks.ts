@@ -53,13 +53,11 @@ export const useTSSCallbacks = ({
       // When round 1 starts, mark all copayers as joined/signing
       // TODO remove this when onCopayerStatusChange is properly implemented
       if (progress.currentRound === 1) {
+        logManager.debug(`[TSS Callbacks] Marking copayers as signed`);
         setTssCopayers(prev => {
           // Only update if copayers aren't already signed
           const allSigned = prev.every(c => c.signed);
           if (!allSigned) {
-            logManager.debug(
-              `[TSS Callbacks] Marking all ${prev.length} copayers as signed`,
-            );
             return prev.map(c => ({...c, signed: true}));
           }
           return prev;
