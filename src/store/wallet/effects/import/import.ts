@@ -1638,15 +1638,15 @@ export const startImportTSSFile =
           throw new Error(t('Invalid TSS backup file format.'));
         }
 
-        if (!data.key?.mnemonic) {
-          throw new Error(t('Missing mnemonic in TSS backup.'));
+        if (!data.key) {
+          throw new Error(t('Missing key in TSS backup.'));
         }
 
-        if (!data.key?.keychain) {
-          throw new Error(t('Missing keychain in TSS backup.'));
+        if (!data.credentials || !Array.isArray(data.credentials)) {
+          throw new Error(t('Missing credentials in TSS backup.'));
         }
 
-        logManager.info('[ImportTSS] Starting TSS wallet import...');
+        logManager.info('[ImportTSS] Starting direct TSS wallet import...');
 
         const arrayToBuffer = (arr: any): Buffer | null => {
           if (!arr) return null;
@@ -1663,50 +1663,125 @@ export const startImportTSSFile =
           return null;
         };
 
-        const privateKeyShare = arrayToBuffer(
-          data.key.keychain.privateKeyShare,
-        );
-        const reducedPrivateKeyShare = arrayToBuffer(
-          data.key.keychain.reducedPrivateKeyShare,
-        );
+        if (data.key.keychain) {
+          const privateKeyShare = arrayToBuffer(
+            data.key.keychain.privateKeyShare,
+          );
+          const reducedPrivateKeyShare = arrayToBuffer(
+            data.key.keychain.reducedPrivateKeyShare,
+          );
 
-        if (!privateKeyShare || privateKeyShare.length === 0) {
-          throw new Error(t('Invalid privateKeyShare in backup file.'));
+          if (privateKeyShare) {
+            data.key.keychain.privateKeyShare = privateKeyShare;
+          }
+          if (reducedPrivateKeyShare) {
+            data.key.keychain.reducedPrivateKeyShare = reducedPrivateKeyShare;
+          }
         }
 
-        if (!reducedPrivateKeyShare || reducedPrivateKeyShare.length === 0) {
-          throw new Error(t('Invalid reducedPrivateKeyShare in backup file.'));
+        const BWCProvider = BwcProvider.getInstance();
+
+        const TssKey = BWCProvider.getTssKey();
+        const tssKey = new TssKey(data.key);
+
+        logManager.info('[ImportTSS] TssKey recreated successfully');
+
+        const wallets = await Promise.all(
+          data.credentials.map(async (credObj: any) => {
+            try {
+              const walletClient = BWCProvider.getClient(
+                JSON.stringify(credObj),
+              );
+
+              logManager.info(
+                `[ImportTSS] Recreated wallet client - ${credObj.walletId}`,
+              );
+
+              await new Promise((resolve, reject) =>
+                walletClient.openWallet({}, (err: any, result: any) => {
+                  if (err) {
+                    logManager.warn(
+                      `[ImportTSS] Could not open wallet ${credObj.walletId}:`,
+                      err,
+                    );
+                    return reject(err);
+                  }
+                  resolve(result);
+                }),
+              );
+
+              const status: any = await new Promise((resolve, reject) =>
+                walletClient.getStatus(
+                  {includeExtendedInfo: true},
+                  (err: any, result: any) => {
+                    if (err) {
+                      logManager.warn(
+                        `[ImportTSS] Could not get status for ${credObj.walletId}:`,
+                        err,
+                      );
+                      return reject(err);
+                    }
+                    resolve(result);
+                  },
+                ),
+              );
+
+              const {currencyAbbreviation, currencyName} = dispatch(
+                mapAbbreviationAndName(
+                  walletClient.credentials.coin,
+                  walletClient.credentials.chain,
+                  walletClient.credentials.token?.address,
+                ),
+              );
+
+              const fullWallet = merge(
+                walletClient,
+                status.wallet,
+                buildWalletObj(
+                  {
+                    ...walletClient.credentials,
+                    currencyAbbreviation,
+                    currencyName,
+                  } as any,
+                  tokenOptsByAddress,
+                ),
+              );
+
+              return fullWallet;
+            } catch (error: unknown) {
+              const errMsg =
+                error instanceof Error ? error.message : JSON.stringify(error);
+              logManager.error(
+                `[ImportTSS] Failed to recreate wallet - ${credObj.walletId}: ${errMsg}`,
+              );
+              return undefined;
+            }
+          }),
+        );
+
+        const validWallets = wallets.filter(
+          (w): w is NonNullable<typeof w> => w !== undefined,
+        );
+
+        if (validWallets.length === 0) {
+          throw new Error(t('Failed to recreate any wallets from backup'));
         }
-
-        logManager.info('[ImportTSS] Keyshare conversion successful');
-
-        const opts: Partial<KeyOptions> = {
-          words: normalizeMnemonic(data.key.mnemonic),
-          tssKeychain: {
-            commonKeyChain: data.key.keychain.commonKeyChain,
-            privateKeyShare: privateKeyShare,
-            reducedPrivateKeyShare: reducedPrivateKeyShare,
-          },
-          tssMetadata: data.key.metadata,
-        };
-
-        const importResult = await serverAssistedImport(opts);
 
         const {
           key: _key,
-          wallets,
+          wallets: processedWallets,
           keyName,
         } = findMatchedKeyAndUpdate(
-          importResult.wallets,
-          importResult.key,
+          validWallets,
+          tssKey,
           Object.values(WALLET.keys).filter(k => !k.id.includes('readonly')),
-          opts,
+          {},
         );
 
         const key = buildKeyObj({
           key: _key,
           keyName,
-          wallets: wallets.map(wallet => {
+          wallets: processedWallets.map(wallet => {
             if (notificationsAccepted) {
               dispatch(subscribePushNotifications(wallet, brazeEid!));
             }
