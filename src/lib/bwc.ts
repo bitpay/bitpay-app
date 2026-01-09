@@ -54,6 +54,10 @@ export class BwcProvider {
     return BWC.sjcl;
   }
 
+  public getEncryption() {
+    return BWC.Encryption;
+  }
+
   public getKey() {
     return BWC.Key;
   }

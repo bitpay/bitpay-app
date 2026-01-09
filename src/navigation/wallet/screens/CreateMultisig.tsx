@@ -257,7 +257,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   ): Promise<void> => {
     try {
       showOngoingProcess('CREATING_KEY');
-
+      await sleep(200);
       const {key: tssKey} = await dispatch<any>(
         startCreateTSSKey({
           coin: opts.coin!,

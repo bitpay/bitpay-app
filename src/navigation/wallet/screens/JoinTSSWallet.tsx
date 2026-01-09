@@ -45,6 +45,7 @@ import {ScanScreens} from '../../../navigation/scan/ScanGroup';
 import {removePendingJoinerSession} from '../../../store/wallet/wallet.actions';
 import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
+import { sleep } from '../../../utils/helper-methods';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -281,11 +282,14 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const {
     control,
     handleSubmit,
+    watch,
     formState: {errors, isValid},
   } = useForm<JoinFormValues>({
     mode: 'onChange',
-    defaultValues: {myName: ''},
+    defaultValues: {myName: undefined},
   });
+  const myNameValue = watch('myName');
+  const isFormValid = myNameValue?.trim().length > 0;
 
   const [showSession, setShowSession] = useState(false);
   const [localCopayerName, setLocalCopayerName] = useState('');
@@ -423,7 +427,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     setLocalCopayerName(trimmedCopayerName);
     setShowSession(true);
     setShowProcessing(true);
-
+    await sleep(200)
     try {
       const result = await dispatch(
         generateJoinerSessionId({name: trimmedCopayerName}),
@@ -475,7 +479,16 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
           <Controller
             control={control}
             name="myName"
-            defaultValue=""
+            rules={{
+              required: t('Name is required'),
+              validate: value => {
+                const trimmed = value.trim();
+                if (!trimmed) {
+                  return t('Name is required');
+                }
+                return true;
+              },
+            }}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
                 label={t('YOUR NAME')}
@@ -491,7 +504,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
           <Button
             buttonStyle="primary"
             onPress={handleSubmit(onSubmitStart)}
-            disabled={!isValid}>
+            disabled={!isFormValid}>
             {t('Continue')}
           </Button>
         </CtaContainer>

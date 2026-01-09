@@ -32,6 +32,7 @@ import {logManager} from '../../../../managers/LogManager';
 import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../tabs/TabsStack';
 import WalletCreatedSvg from '../../../../../assets/img/shared-success.svg';
+import {Wallet} from '../../../../store/wallet/wallet.models';
 
 const BWC = BwcProvider.getInstance();
 
@@ -169,72 +170,22 @@ const ExportTSSWallet = () => {
       return null;
     }
 
-    const keychain = key.properties?.keychain;
-    const metadata = key.properties?.metadata;
-
-    const bufferToArray = (buffer: any): number[] | null => {
-      if (!buffer) {
-        logManager.debug('[bufferToArray] buffer is null/undefined');
-        return null;
-      }
-
-      if (Array.isArray(buffer)) {
-        logManager.debug('[bufferToArray] Using Array.isArray path');
-        return buffer;
-      }
-
-      if (Buffer.isBuffer(buffer)) {
-        logManager.debug('[bufferToArray] Using Buffer.isBuffer path');
-        return Array.from(buffer);
-      }
-
-      if (buffer && typeof buffer === 'object' && 'data' in buffer) {
-        if (Array.isArray(buffer.data)) {
-          logManager.debug('[bufferToArray] Using buffer.data array path');
-          return buffer.data;
-        }
-      }
-
-      if (buffer && typeof buffer === 'object') {
-        const keys = Object.keys(buffer);
-        if (keys.length > 0 && keys.every(k => !isNaN(Number(k)))) {
-          logManager.debug('[bufferToArray] Using numeric keys object path');
-          const arr: number[] = [];
-          for (let i = 0; i < keys.length; i++) {
-            if (buffer[i] !== undefined) {
-              arr.push(buffer[i]);
-            }
-          }
-          return arr.length > 0 ? arr : null;
-        }
-      }
-
-      logManager.debug('[bufferToArray] No matching condition, returning null');
-      return null;
-    };
-    if (!keychain) {
-      throw new Error('Keychain data is missing');
-    }
-
     const backup = {
       isTSS: true,
       version: 1,
-      key: {
-        mnemonic: key.properties?.mnemonic,
-        keychain: {
-          commonKeyChain: keychain.commonKeyChain,
-          privateKeyShare: bufferToArray(keychain.privateKeyShare),
-          reducedPrivateKeyShare: bufferToArray(
-            keychain.reducedPrivateKeyShare,
-          ),
-        },
-        metadata: metadata,
-      },
+      key: key.methods.toObj(),
+      credentials: key.wallets.map((wallet: Wallet) =>
+        wallet.credentials.toObj(),
+      ),
     };
 
-    return BWC.getSJCL().encrypt(password, JSON.stringify(backup), {
-      iter: 1000,
-    });
+    const encrypted = BWC.getEncryption().encryptWithPassword(
+      JSON.stringify(backup),
+      password,
+      {iter: 1000},
+    );
+
+    return JSON.stringify(encrypted);
   };
 
   const shareKeyshareFile = async ({password}: {password: string}) => {

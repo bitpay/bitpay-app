@@ -848,6 +848,7 @@ export const joinTSSWithCode =
           key: partyKey,
           wallets: [placeholderWallet],
           keyName: 'My TSSKey',
+          backupComplete: true,
         });
 
         key.tssSession = {
