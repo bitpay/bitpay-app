@@ -21,7 +21,7 @@ const PasskeyBannerContainer = styled(TouchableOpacity)`
   justify-content: center;
   min-height: 100px;
   padding: 16px 35px 16px 76px;
-  margin: 0px ${ScreenGutter} 20px;
+  margin: 8px ${ScreenGutter} 22px;
   position: relative;
   gap: 8px;
 `;
