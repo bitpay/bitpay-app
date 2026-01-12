@@ -1415,7 +1415,7 @@
   "No wallets": "Нет кошельков",
   "No coin wallets available to receive funds.": "Отсутствуют кошельки {{coin}}, на которые можно получать средства.",
   "No wallets available to receive funds.": "No wallets available to receive funds.",
-  "Not supported wallets": "Нет поддерживаемых кошельков",
+  "No supported wallets": "Нет поддерживаемых кошельков",
   "Your keys do not have wallets able to buy crypto": "Для ваших ключей отсутствуют кошельки {{coin}} для покупки криптовалюты",
   "Your keys do not have supported wallets able to buy crypto": "Для ваших ключей отсутствуют поддерживаемые кошельки для покупки криптовалюты",
   "No keys with supported wallets": "Нет ключей с поддерживаемыми кошельками",

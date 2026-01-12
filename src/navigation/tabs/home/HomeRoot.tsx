@@ -75,6 +75,7 @@ import AllocationSection from './components/AllocationSection';
 import {getPortfolioAllocationTotalFiat} from '../../../utils/allocation';
 import type {Key, Wallet} from '../../../store/wallet/wallet.models';
 import type {Rate, Rates} from '../../../store/rate/rate.models';
+import {getCoinAndChainFromCurrencyCode} from '../../bitpay-id/utils/bitpay-id-utils';
 
 export type HomeScreenProps = NativeStackScreenProps<
   TabsStackParamList,
@@ -194,9 +195,22 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
       const rateForDefaultCurrency = rates[key].find(
         ({code}: {code: string}) => code === defaultAltCurrency.isoCode,
       );
-      const option = SupportedCurrencyOptions.find(
-        ({currencyAbbreviation}) => currencyAbbreviation === key,
-      );
+      const {coin: targetCoin, chain: targetChain} =
+        getCoinAndChainFromCurrencyCode(key);
+      const option =
+        SupportedCurrencyOptions.find(
+          ({currencyAbbreviation, chain}) =>
+            currencyAbbreviation === targetCoin && chain === targetChain,
+        ) ||
+        SupportedCurrencyOptions.find(
+          ({tokenAddress, chain}) =>
+            tokenAddress &&
+            tokenAddress.toLowerCase() === targetCoin &&
+            chain === targetChain,
+        ) ||
+        SupportedCurrencyOptions.find(
+          ({currencyAbbreviation}) => currencyAbbreviation === targetCoin,
+        );
 
       if (option && option.chain && option.currencyAbbreviation) {
         const currencyName = getCurrencyAbbreviation(
@@ -210,7 +224,6 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           BitpaySupportedTokens[currencyName]?.properties?.isStableCoin;
 
         if (
-          option &&
           lastDayRateForDefaultCurrency?.rate &&
           rateForDefaultCurrency?.rate &&
           !isStableCoin
@@ -234,7 +247,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             img,
             currencyName,
             currencyAbbreviation,
-            chain: chain ? chain : currencyAbbreviation,
+            chain,
             tokenAddress: tokenAddress,
             average: percentChange,
             currentPrice: rateForDefaultCurrency.rate,
@@ -324,13 +337,18 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         navigation.setParams({
           currencyAbbreviation: undefined,
         });
+        const {coin: targetAbbreviation} =
+          getCoinAndChainFromCurrencyCode(currencyAbbreviation);
         const exchangeRatesSection = memoizedExchangeRates.find(
           ({currencyAbbreviation: abbr}) =>
-            abbr.toLowerCase() === currencyAbbreviation.toLowerCase(),
+            abbr.toLowerCase() === targetAbbreviation,
         );
         if (exchangeRatesSection) {
-          (navigation as any).navigate('PriceCharts', {
-            item: exchangeRatesSection,
+          (navigation as any).navigate('ExchangeRate', {
+            currencyName: exchangeRatesSection.currencyName,
+            currencyAbbreviation: exchangeRatesSection.currencyAbbreviation,
+            chain: exchangeRatesSection.chain,
+            tokenAddress: exchangeRatesSection.tokenAddress,
           });
         }
       }
@@ -385,10 +403,24 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               <HomeSection style={{marginBottom: 25}}>
                 <LinkingButtons
                   receive={{
-                    cta: () => dispatch(receiveCrypto(navigation, 'HomeRoot')),
+                    cta: () => {
+                      dispatch(
+                        Analytics.track('Clicked Receive Crypto', {
+                          context: 'HomeRoot',
+                        }),
+                      );
+                      dispatch(receiveCrypto(navigation, 'HomeRoot'));
+                    },
                   }}
                   send={{
-                    cta: () => dispatch(sendCrypto('HomeRoot')),
+                    cta: () => {
+                      dispatch(
+                        Analytics.track('Clicked Send Crypto', {
+                          context: 'HomeRoot',
+                        }),
+                      );
+                      dispatch(sendCrypto('HomeRoot'));
+                    },
                   }}
                 />
               </HomeSection>

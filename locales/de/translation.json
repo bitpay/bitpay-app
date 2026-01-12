@@ -1414,7 +1414,7 @@
   "No wallets": "Keine Wallets",
   "No coin wallets available to receive funds.": "Keine {{coin}}-Wallets für den Empfang von Geldern verfügbar.",
   "No wallets available to receive funds.": "No wallets available to receive funds.",
-  "Not supported wallets": "Nicht unterstützte Wallets",
+  "No supported wallets": "Nicht unterstützte Wallets",
   "Your keys do not have wallets able to buy crypto": "Ihre Schlüssel haben keine {{coin}}-Wallets zum Kaufen von Krypto",
   "Your keys do not have supported wallets able to buy crypto": "Ihre Schlüssel haben keine unterstützten Wallets zum Kaufen von Krypto",
   "No keys with supported wallets": "Keine Schlüssel mit unterstützten Wallets",

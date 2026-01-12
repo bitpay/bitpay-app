@@ -1,11 +1,6 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {
-  useAppDispatch,
-  useAppSelector,
-  useLogger,
-  useMount,
-} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../store';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
@@ -143,6 +138,21 @@ const ExternalServicesWalletSelector: React.FC<
   const [selectedWallet, setSelectedWallet] = useState<Wallet>();
   const [walletSelectorModalVisible, setWalletSelectorModalVisible] =
     useState(false);
+  const autoSelectAttemptedRef = useRef(false);
+
+  const globalSelectRoute =
+    fromCurrencyAbbreviation && fromChain
+      ? {
+          ...route,
+          params: {
+            ...(route?.params || {}),
+            assetContext: {
+              currencyAbbreviation: fromCurrencyAbbreviation,
+              chain: fromChain,
+            },
+          },
+        }
+      : route;
 
   const walletError = async (
     type?: string,
@@ -186,11 +196,25 @@ const ExternalServicesWalletSelector: React.FC<
         await sleep(500);
         hideOngoingProcess();
       } else {
-        walletError('walletNotSupportedToBuy');
+        walletError(
+          context === 'sellCrypto'
+            ? 'walletNotSupported'
+            : 'walletNotSupportedToBuy',
+        );
       }
     } else {
       const availableKeys = keysList.filter(key => {
-        return key.wallets && keyHasSupportedWallets(key.wallets);
+        if (!key.wallets) {
+          return false;
+        }
+
+        if (context === 'sellCrypto') {
+          return key.wallets.some(
+            w => walletIsSupported(w) && (w.balance?.satSpendable || 0) > 0,
+          );
+        }
+
+        return keyHasSupportedWallets(key.wallets);
       });
 
       if (availableKeys[0]) {
@@ -201,13 +225,33 @@ const ExternalServicesWalletSelector: React.FC<
           walletIsSupported(wallet),
         );
 
+        if (context === 'sellCrypto') {
+          allowedWallets = allowedWallets.filter(
+            wallet => (wallet.balance?.satSpendable || 0) > 0,
+          );
+        }
+
         if (
           fromCurrencyAbbreviation &&
-          buyCryptoSupportedCoins.includes(
-            fromChain
-              ? getExternalServiceSymbol(fromCurrencyAbbreviation, fromChain)
-              : fromCurrencyAbbreviation,
-          )
+          (context === 'sellCrypto'
+            ? sellCryptoSupportedCoinsFullObj?.some(
+                coin =>
+                  coin.symbol ===
+                  (fromChain
+                    ? getExternalServiceSymbol(
+                        fromCurrencyAbbreviation,
+                        fromChain,
+                      )
+                    : fromCurrencyAbbreviation),
+              )
+            : buyCryptoSupportedCoins.includes(
+                fromChain
+                  ? getExternalServiceSymbol(
+                      fromCurrencyAbbreviation,
+                      fromChain,
+                    )
+                  : fromCurrencyAbbreviation,
+              ))
         ) {
           allowedWallets = allowedWallets.filter(
             wallet =>
@@ -220,10 +264,20 @@ const ExternalServicesWalletSelector: React.FC<
           await sleep(500);
           hideOngoingProcess();
         } else {
-          walletError('noWalletsAbleToBuy', fromCurrencyAbbreviation);
+          walletError(
+            context === 'sellCrypto'
+              ? 'noWalletsAbleToSell'
+              : 'noWalletsAbleToBuy',
+            fromCurrencyAbbreviation,
+          );
         }
       } else {
-        walletError('keysNoSupportedWallet', fromCurrencyAbbreviation);
+        walletError(
+          context === 'sellCrypto'
+            ? 'keysNoSupportedWalletToSell'
+            : 'keysNoSupportedWallet',
+          fromCurrencyAbbreviation,
+        );
       }
     }
   };
@@ -236,6 +290,26 @@ const ExternalServicesWalletSelector: React.FC<
   };
 
   const walletIsSupported = (wallet: Wallet): boolean => {
+    if (context === 'sellCrypto') {
+      const symbol = getExternalServiceSymbol(
+        wallet.currencyAbbreviation.toLowerCase(),
+        wallet.chain,
+      );
+      return (
+        wallet.credentials &&
+        wallet.network === 'livenet' &&
+        !!sellCryptoSupportedCoinsFullObj?.some(
+          coin => coin.symbol === symbol,
+        ) &&
+        wallet.isComplete() &&
+        !wallet.hideWallet &&
+        !wallet.hideWalletByAccount &&
+        (!fromCurrencyAbbreviation ||
+          (wallet.currencyAbbreviation === fromCurrencyAbbreviation &&
+            (fromChain ? wallet.chain === fromChain : true)))
+      );
+    }
+
     return (
       wallet.credentials &&
       wallet.network === 'livenet' &&
@@ -318,11 +392,40 @@ const ExternalServicesWalletSelector: React.FC<
     }
   };
 
-  const init = async () => {
-    if (preSetWallet?.id || fromCurrencyAbbreviation) {
-      selectFirstAvailableWallet();
+  useEffect(() => {
+    if (autoSelectAttemptedRef.current) {
+      return;
     }
-  };
+
+    if (!context) {
+      return;
+    }
+
+    if (!(preSetWallet?.id || fromCurrencyAbbreviation)) {
+      return;
+    }
+
+    // When coming from charts/exchange-rate with preselected coin, delay auto-select
+    // until the supported coin lists are available.
+    if (context === 'buyCrypto' && !buyCryptoSupportedCoins?.length) {
+      return;
+    }
+    if (context === 'sellCrypto' && !sellCryptoSupportedCoinsFullObj?.length) {
+      return;
+    }
+
+    autoSelectAttemptedRef.current = true;
+    selectFirstAvailableWallet();
+    // Intentionally only attempt auto-select once per mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    context,
+    preSetWallet?.id,
+    fromCurrencyAbbreviation,
+    fromChain,
+    buyCryptoSupportedCoins?.length,
+    sellCryptoSupportedCoinsFullObj?.length,
+  ]);
 
   const onDismiss = async (
     newWallet?: Wallet,
@@ -382,10 +485,6 @@ const ExternalServicesWalletSelector: React.FC<
     }
   };
 
-  useMount(() => {
-    init();
-  });
-
   return (
     <ExternalServicesWalletSelectorContainer>
       <WalletSelector
@@ -417,7 +516,7 @@ const ExternalServicesWalletSelector: React.FC<
             <WalletSelectorName
               ellipsizeMode="tail"
               numberOfLines={1}
-              style={{fontWeight: 500, color: White}}>
+              style={{fontWeight: '500', color: White}}>
               {t('Choose Crypto')}
             </WalletSelectorName>
           )}
@@ -446,7 +545,7 @@ const ExternalServicesWalletSelector: React.FC<
         fullscreen>
         <GlobalSelectContainer>
           <GlobalSelect
-            route={route}
+            route={globalSelectRoute}
             navigation={navigation}
             modalContext={
               context === 'buyCrypto'

@@ -1415,7 +1415,7 @@
   "No wallets": "ウォレットがありません",
   "No coin wallets available to receive funds.": "資産の受け取りに利用可能な {{coin}} ウォレットがありません。",
   "No wallets available to receive funds.": "No wallets available to receive funds.",
-  "Not supported wallets": "サポートされたウォレットがありません",
+  "No supported wallets": "サポートされたウォレットがありません",
   "Your keys do not have wallets able to buy crypto": "お客様の鍵には暗号資産（仮想通貨）を購入できる {{coin}} ウォレットがありません",
   "Your keys do not have supported wallets able to buy crypto": "お客様の鍵には暗号資産（仮想通貨）の購入が可能なサポートされたウォレットがありません",
   "No keys with supported wallets": "サポートされたウォレットを持つ鍵がありません",

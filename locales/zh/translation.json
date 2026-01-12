@@ -1415,7 +1415,7 @@
   "No wallets": "没有钱包",
   "No coin wallets available to receive funds.": "没有可用于接收资金的 {{coin}} 钱包。",
   "No wallets available to receive funds.": "No wallets available to receive funds.",
-  "Not supported wallets": "钱包不受支持",
+  "No supported wallets": "钱包不受支持",
   "Your keys do not have wallets able to buy crypto": "您的密钥没有能够购买加密货币的 {{coin}} 钱包",
   "Your keys do not have supported wallets able to buy crypto": "您的密钥没有能够购买加密货币的受支持的钱包",
   "No keys with supported wallets": "密钥没有受支持的钱包",
