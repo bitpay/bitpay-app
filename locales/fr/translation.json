@@ -1415,7 +1415,7 @@
   "No wallets": "Portefeuilles",
   "No coin wallets available to receive funds.": "Pas de portefeuilles {{coin}} disponibles pour recevoir des fonds.",
   "No wallets available to receive funds.": "No wallets available to receive funds.",
-  "Not supported wallets": "Aucun portefeuille pris en charge",
+  "No supported wallets": "Aucun portefeuille pris en charge",
   "Your keys do not have wallets able to buy crypto": "Vos clés n'ont pas de portefeuille {{coin}} capables d'acheter de la crypto",
   "Your keys do not have supported wallets able to buy crypto": "Vos clés n'ont pas de portefeuilles pris en charge permettant d'acheter des cryptomonnaies",
   "No keys with supported wallets": "Pas de clés avec les portefeuilles supportés",

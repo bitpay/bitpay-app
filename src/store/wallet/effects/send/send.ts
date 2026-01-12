@@ -2710,9 +2710,17 @@ export const checkBiometricForSending =
   };
 
 export const sendCrypto =
-  (loggerContext: string): Effect<void> =>
+  (
+    loggerContext: string,
+    assetContext?: {
+      currencyAbbreviation: string;
+      chain: string;
+      network?: string;
+      tokenAddress?: string;
+    },
+  ): Effect<void> =>
   (dispatch, getState) => {
-    const keys = getState().WALLET.keys;
+    const keys = getState().WALLET.keys as Record<string, Key>;
     const walletsWithBalance = Object.values(keys)
       .filter(key => key.backupComplete)
       .flatMap(key => key.wallets)
@@ -2737,13 +2745,23 @@ export const sendCrypto =
               action: () => {
                 dispatch(
                   Analytics.track('Clicked Buy Crypto', {
-                    context: 'HomeRoot',
+                    context: loggerContext,
+                    coin: assetContext?.currencyAbbreviation || '',
+                    chain: assetContext?.chain || '',
                   }),
                 );
                 navigationRef.navigate(
                   ExternalServicesScreens.ROOT_BUY_AND_SELL,
                   {
                     context: 'buyCrypto',
+                    ...(assetContext?.currencyAbbreviation &&
+                    assetContext?.chain
+                      ? {
+                          currencyAbbreviation:
+                            assetContext.currencyAbbreviation,
+                          chain: assetContext.chain,
+                        }
+                      : {}),
                   },
                 );
               },
@@ -2763,14 +2781,23 @@ export const sendCrypto =
           context: loggerContext,
         }),
       );
-      navigationRef.navigate('GlobalSelect', {context: 'send'});
+      navigationRef.navigate('GlobalSelect', {context: 'send', assetContext});
     }
   };
 
 export const receiveCrypto =
-  (navigation: NavigationProp<any>, loggerContext: string): Effect<void> =>
+  (
+    navigation: NavigationProp<any>,
+    loggerContext: string,
+    assetContext?: {
+      currencyAbbreviation: string;
+      chain: string;
+      network?: string;
+      tokenAddress?: string;
+    },
+  ): Effect<void> =>
   (dispatch, getState) => {
-    const keys = getState().WALLET.keys;
+    const keys = getState().WALLET.keys as Record<string, Key>;
     if (Object.keys(keys).length === 0) {
       dispatch(
         showBottomNotificationModal({
@@ -2804,7 +2831,10 @@ export const receiveCrypto =
             context: loggerContext,
           }),
         );
-        navigationRef.navigate('GlobalSelect', {context: 'receive'});
+        navigationRef.navigate('GlobalSelect', {
+          context: 'receive',
+          assetContext,
+        });
       }
     }
   };

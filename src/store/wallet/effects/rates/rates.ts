@@ -321,6 +321,9 @@ export const fetchHistoricalRates =
         case 'weth':
           currencyAbbreviation = 'eth';
           break;
+        case 'pol':
+          currencyAbbreviation = 'matic';
+          break;
       }
 
       const cachedRatesByCoin =

@@ -187,7 +187,7 @@ export const startUpdateWalletStatus =
           );
 
           const totalFiatBalance = wallets.reduce(
-            (acc, {balance: {sat}}, index, wallets) =>
+            (acc: number, {balance: {sat}}, index, wallets) =>
               acc +
               convertToFiat(
                 dispatch(
@@ -208,7 +208,7 @@ export const startUpdateWalletStatus =
           );
 
           const totalLastDayFiatBalance = wallets.reduce(
-            (acc, {balance: {sat}}, index, wallets) => {
+            (acc: number, {balance: {sat}}, index, wallets) => {
               const fiatLastDay = convertToFiat(
                 dispatch(
                   toFiat(

@@ -14,12 +14,12 @@ import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {ExternalServicesScreens} from '../../../services/ExternalServicesGroup';
 
-const ButtonsRow = styled.View`
+const ButtonsRow = styled.View<{maxWidth?: number}>`
   justify-content: space-between;
   flex-direction: row;
   align-self: center;
   width: ${WIDTH - 24}px;
-  max-width: 340px;
+  max-width: ${({maxWidth = 340}) => maxWidth}px;
 `;
 
 const ButtonContainer = styled.View`
@@ -125,9 +125,10 @@ interface Props {
     hide?: boolean;
     cta: () => void;
   };
+  maxWidth?: number;
 }
 
-const LinkingButtons = ({buy, sell, receive, send, swap}: Props) => {
+const LinkingButtons = ({buy, sell, receive, send, swap, maxWidth}: Props) => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -212,7 +213,7 @@ const LinkingButtons = ({buy, sell, receive, send, swap}: Props) => {
     },
   ];
   return (
-    <ButtonsRow>
+    <ButtonsRow maxWidth={maxWidth}>
       {buttonsList.map(({key, label, cta, img, hide}: ButtonListProps) =>
         hide ? null : (
           <ButtonContainer key={key}>

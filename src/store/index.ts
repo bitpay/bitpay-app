@@ -77,6 +77,10 @@ import {
   walletConnectV2Reducer,
   walletConnectV2ReduxPersistBlackList,
 } from './wallet-connect-v2/wallet-connect-v2.reducer';
+import {
+  marketStatsReducer,
+  marketStatsReduxPersistBlackList,
+} from './market-stats/market-stats.reducer';
 import {WalletActionTypes} from './wallet/wallet.types';
 import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
 import {AppActionTypes} from './app/app.types';
@@ -253,6 +257,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   ZENLEDGER: ZenledgerReduxPersistBlackList,
   WALLET_CONNECT: [],
   WALLET_CONNECT_V2: walletConnectV2ReduxPersistBlackList,
+  MARKET_STATS: marketStatsReduxPersistBlackList,
 };
 
 /*
@@ -278,6 +283,7 @@ const reducers = {
   ZENLEDGER: zenledgerReducer,
   WALLET_CONNECT: walletConnectReducer,
   WALLET_CONNECT_V2: walletConnectV2Reducer,
+  MARKET_STATS: marketStatsReducer,
 };
 
 const combinedReducer = combineReducers(reducers);

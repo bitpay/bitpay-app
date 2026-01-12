@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState, useEffect} from 'react';
+import React, {useCallback, useMemo, useRef, useState, useEffect} from 'react';
 import styled from 'styled-components/native';
 import {BottomSheetFlashList} from '@gorhom/bottom-sheet';
 import {NavigationProp, RouteProp} from '@react-navigation/native';
@@ -276,6 +276,13 @@ export type GlobalSelectModalContext =
   | 'swapTo'
   | 'paperwallet';
 
+export type AssetContext = {
+  currencyAbbreviation: string;
+  chain: string;
+  network?: string;
+  tokenAddress?: string;
+};
+
 export type GlobalSelectParamList = {
   context: GlobalSelectModalContext;
   recipient?: {
@@ -297,6 +304,7 @@ export type GlobalSelectParamList = {
   };
   amount?: number;
   selectedAccountAddress?: string;
+  assetContext?: AssetContext;
 };
 
 export interface GlobalSelectObj extends SearchableItem {
@@ -577,7 +585,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   route,
 }) => {
   const {t} = useTranslation();
-  let {context, recipient, amount, selectedAccountAddress} = route.params || {};
+  let {context, recipient, amount, selectedAccountAddress, assetContext} =
+    route.params || {};
   if (useAsModal && modalContext) {
     context = modalContext;
   }
@@ -606,6 +615,7 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
   const [receiveWallet, setReceiveWallet] = useState<Wallet>();
   const [cryptoSelectModalVisible, setCryptoSelectModalVisible] =
     useState(false);
+  const autoAdvanceReceiveRef = useRef(false);
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState<
     (GlobalSelectObj | KeyWalletsRowProps | AssetsByChainData)[]
@@ -727,6 +737,33 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
 
   if (livenetOnly) {
     wallets = wallets.filter(wallet => wallet.network === 'livenet');
+  }
+
+  if (assetContext?.currencyAbbreviation && assetContext?.chain) {
+    const filterCurrencyAbbreviation =
+      assetContext.currencyAbbreviation.toLowerCase();
+    const filterChain = assetContext.chain.toLowerCase();
+    const filterNetwork = assetContext.network?.toLowerCase();
+    const filterTokenAddress = assetContext.tokenAddress?.toLowerCase();
+
+    wallets = wallets.filter(wallet => {
+      if (wallet.currencyAbbreviation !== filterCurrencyAbbreviation) {
+        return false;
+      }
+      if (wallet.chain !== filterChain) {
+        return false;
+      }
+      if (filterNetwork && wallet.network !== filterNetwork) {
+        return false;
+      }
+
+      if (filterTokenAddress) {
+        const walletTokenAddress = wallet.tokenAddress?.toLowerCase();
+        return walletTokenAddress === filterTokenAddress;
+      }
+
+      return true;
+    });
   }
 
   if (context === 'coinbase' && useAsModal && customSupportedCurrencies) {
@@ -921,6 +958,40 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
     }
   }, []);
 
+  useEffect(() => {
+    if (autoAdvanceReceiveRef.current) {
+      return;
+    }
+
+    if (context !== 'receive') {
+      return;
+    }
+
+    if (cryptoSelectModalVisible) {
+      return;
+    }
+
+    const currentList = searchVal ? searchResults : dataToDisplay;
+    if (currentList.length !== 1) {
+      return;
+    }
+
+    const onlyItem = currentList[0] as any;
+    if (!onlyItem?.currencyAbbreviation || onlyItem?.accounts) {
+      return;
+    }
+
+    autoAdvanceReceiveRef.current = true;
+    openCryptoSelector(onlyItem as GlobalSelectObj);
+  }, [
+    context,
+    cryptoSelectModalVisible,
+    dataToDisplay,
+    searchResults,
+    searchVal,
+    openCryptoSelector,
+  ]);
+
   const onWalletSelect = useCallback(
     async (wallet: Wallet | undefined, addWalletData?: AddWalletData) => {
       if (useAsModal && globalSelectOnDismiss) {
@@ -984,6 +1055,8 @@ const GlobalSelect: React.FC<GlobalSelectScreenProps | GlobalSelectProps> = ({
         }
       } else if (context === 'send') {
         navigation.navigate('SendTo', {wallet});
+      } else if (context === 'swapFrom') {
+        navigation.navigate('SwapCryptoRoot', {selectedWallet: wallet});
       } else {
         setReceiveWallet(wallet);
       }
