@@ -40,7 +40,7 @@ export type AllocationSlice = {
 };
 
 const Container = styled.View`
-  margin-bottom: 15px;
+  margin-bottom: 18px;
 `;
 
 const Header = styled.View`

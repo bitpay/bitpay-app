@@ -373,11 +373,30 @@ export const updateKeyStatus =
           singleAddress: boolean;
         }> = [];
 
+        const updateBalance = (
+          wallet: Wallet,
+          newBalance: WalletBalance,
+          pendingTxps: any[],
+        ) => {
+          if (dataOnly) {
+            walletUpdates.push({
+              walletId: wallet.id,
+              balance: newBalance,
+              pendingTxps,
+              singleAddress: !!wallet.singleAddress,
+            });
+          } else {
+            wallet.balance = newBalance;
+          }
+
+          return newBalance;
+        };
+
         const balances = uniqBy(key.wallets, 'id').map(wallet => {
           const {balance: cachedBalance, pendingTxps} = wallet;
 
           if (!bulkStatus) {
-            return {
+            const newBalance = {
               ...cachedBalance,
               ...dispatch(
                 buildFiatBalance({
@@ -388,7 +407,9 @@ export const updateKeyStatus =
                   lastDayRates,
                 }),
               ),
-            };
+            } as WalletBalance;
+
+            return updateBalance(wallet, newBalance, pendingTxps);
           }
 
           const {status, success} =
@@ -455,7 +476,7 @@ export const updateKeyStatus =
 
             return newBalance;
           } else {
-            return {
+            const newBalance = {
               ...cachedBalance,
               ...dispatch(
                 buildFiatBalance({
@@ -466,7 +487,9 @@ export const updateKeyStatus =
                   lastDayRates,
                 }),
               ),
-            };
+            } as WalletBalance;
+
+            return updateBalance(wallet, newBalance, pendingTxps);
           }
         });
 

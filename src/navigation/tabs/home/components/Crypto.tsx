@@ -63,7 +63,6 @@ const CryptoContainer = styled.View`
 
 const CarouselContainer = styled.View`
   margin-top: 28px;
-  margin-bottom: 15px;
 `;
 
 const Row = styled.View`
@@ -72,7 +71,6 @@ const Row = styled.View`
 
 const ListViewContainer = styled.View`
   padding: 20px 0 12px 0;
-  margin-bottom: 15px;
 `;
 
 const ButtonContainer = styled.View`
