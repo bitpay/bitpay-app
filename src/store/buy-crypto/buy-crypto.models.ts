@@ -728,7 +728,7 @@ export interface TransakGetSignedUrlRequestData {
   // When true, then the email address will be auto-filled, but the screen will not be skipped. User can edit their email address, basic data like first name & the address. This parameter will be ignored if email or userData are not passed.	Advanced, Look & feel
   isAutoFillUserData?: boolean;
   // Access Token
-  accessToken: string;
+  accessToken: string | undefined;
 }
 
 export interface TransakSignedUrlData {
@@ -740,9 +740,17 @@ export interface TransakAccessTokenData {
   expiresAt: number;
 }
 
+export interface TransakAccessTokenPayload {
+  env: 'sandbox' | 'production';
+  accessToken: string;
+  expiresAt: number;
+}
+
 export interface TransakGetOrderDetailsRequestData {
   env: 'sandbox' | 'production';
   orderId: string;
+  // Access Token
+  accessToken: string | undefined;
 }
 
 export type TransakStatusKey =

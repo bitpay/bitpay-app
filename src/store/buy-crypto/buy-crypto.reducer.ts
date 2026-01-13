@@ -30,7 +30,7 @@ export interface BuyCryptoState {
   transak: {[key in string]: TransakPaymentData};
   wyre: {[key in string]: WyrePaymentData};
   accessToken: {
-    transak: TransakAccessTokenData | undefined;
+    transak: {[key in 'sandbox' | 'production']?: TransakAccessTokenData};
   };
 }
 
@@ -46,7 +46,7 @@ const initialState: BuyCryptoState = {
   transak: {},
   wyre: {},
   accessToken: {
-    transak: undefined,
+    transak: {},
   },
 };
 
@@ -384,7 +384,13 @@ export const buyCryptoReducer = (
         ...state,
         accessToken: {
           ...state.accessToken,
-          transak: action.payload,
+          transak: {
+            ...state.accessToken.transak,
+            [action.payload.env]: {
+              accessToken: action.payload.accessToken,
+              expiresAt: action.payload.expiresAt,
+            },
+          },
         },
       };
 
