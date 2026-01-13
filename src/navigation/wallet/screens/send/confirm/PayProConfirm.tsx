@@ -370,7 +370,7 @@ const PayProConfirm = () => {
     const isUsingHardwareWallet = !!transport;
 
     if (isTSSWallet) {
-      setShowTSSProgressModal(true);
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
       setTssStatus('initializing');
     }
 
@@ -414,6 +414,7 @@ const PayProConfirm = () => {
                 wallet,
                 recipient,
                 ...(isTSSWallet && {tssCallbacks}),
+                ...(isTSSWallet && {setShowTSSProgressModal}),
               }),
             )
           : await dispatch(

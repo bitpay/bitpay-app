@@ -55,6 +55,7 @@ import {
   getSolanaATAs,
   sleep,
   SolanaTokenData,
+  toggleTSSModal,
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
@@ -863,7 +864,10 @@ const buildTransactionProposal =
 
         // bch related
         if (tx.signingMethod) {
-          txp.signingMethod = tx.signingMethod;
+          txp.signingMethod = 'ecdsa';
+          if (wallet!.tssKeyId) {
+            tx.signingMethod = 'ecdsa';
+          }
         }
 
         const verifyExcludedUtxos = (
@@ -1221,6 +1225,7 @@ export const startSendPayment =
     recipient,
     transport,
     tssCallbacks,
+    setShowTSSProgressModal,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
@@ -1228,6 +1233,7 @@ export const startSendPayment =
     recipient?: Recipient;
     transport?: Transport;
     tssCallbacks?: TSSSigningCallbacks;
+    setShowTSSProgressModal?: (show: boolean) => void;
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -1249,6 +1255,7 @@ export const startSendPayment =
                   transport,
                   ataOwnerAddress: txp.ataOwnerAddress,
                   tssCallbacks,
+                  setShowTSSProgressModal,
                 }),
               );
               return resolve(broadcastedTx);
@@ -1278,6 +1285,7 @@ export const publishAndSign =
     signingMultipleProposals,
     ataOwnerAddress,
     tssCallbacks,
+    setShowTSSProgressModal,
   }: {
     txp: TransactionProposal;
     key: Key;
@@ -1288,6 +1296,7 @@ export const publishAndSign =
     signingMultipleProposals?: boolean; // when signing multiple proposals from a wallet we ask for decrypt password and biometric before
     ataOwnerAddress?: string; // only for solana tokens, if the recipient needs to create an associated token account
     tssCallbacks?: TSSSigningCallbacks;
+    setShowTSSProgressModal?: (show: boolean) => void;
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -1295,13 +1304,22 @@ export const publishAndSign =
 
       if (APP.biometricLockActive && !signingMultipleProposals) {
         try {
+          if (setShowTSSProgressModal) {
+            await toggleTSSModal(setShowTSSProgressModal, false);
+          }
           await dispatch(checkBiometricForSending());
+          if (setShowTSSProgressModal) {
+            await toggleTSSModal(setShowTSSProgressModal, true);
+          }
         } catch (error) {
           return reject(error);
         }
       }
 
       if (key.isPrivKeyEncrypted && !signingMultipleProposals) {
+        if (setShowTSSProgressModal) {
+          await toggleTSSModal(setShowTSSProgressModal, false);
+        }
         try {
           password = await new Promise<string>(async (_resolve, _reject) => {
             await sleep(500);
@@ -1327,6 +1345,9 @@ export const publishAndSign =
           });
         } catch (error) {
           return reject(error);
+        }
+        if (setShowTSSProgressModal) {
+          await toggleTSSModal(setShowTSSProgressModal, true);
         }
       }
 
@@ -1398,6 +1419,7 @@ export const publishAndSign =
               wallet,
               txp: txpToSign as TransactionProposal,
               callbacks: tssCallbacks!,
+              password,
             }),
           );
           logManager.debug('success TSS sign [publishAndSign]');

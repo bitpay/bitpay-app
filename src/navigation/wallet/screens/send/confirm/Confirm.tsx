@@ -443,7 +443,7 @@ const Confirm = () => {
     const isUsingHardwareWallet = !!transport;
 
     if (isTSSWallet) {
-      setShowTSSProgressModal(true);
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
       setTssStatus('initializing');
     }
 
@@ -485,6 +485,7 @@ const Confirm = () => {
             recipient,
             transport,
             ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
 

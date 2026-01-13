@@ -868,7 +868,7 @@ const ThorswapCheckout: React.FC = () => {
     let broadcastedTx;
 
     if (isTSSWallet) {
-      setShowTSSProgressModal(true);
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
       setTssStatus('initializing');
     }
 
@@ -907,6 +907,7 @@ const ThorswapCheckout: React.FC = () => {
             key,
             wallet: fromWalletSelected,
             ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
 

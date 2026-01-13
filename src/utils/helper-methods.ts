@@ -1672,3 +1672,14 @@ export const decodeSolanaTxIntructions = async (
     throw err;
   }
 };
+
+export const toggleTSSModal = async (
+  setShowTSSProgressModal: ((show: boolean) => void) | undefined,
+  show: boolean,
+  delayMs: number = 500,
+) => {
+  if (setShowTSSProgressModal) {
+    setShowTSSProgressModal(show);
+    if (delayMs > 0) await sleep(delayMs);
+  }
+};
