@@ -552,7 +552,7 @@ const SimplexSellCheckout: React.FC = () => {
     let broadcastedTx;
     try {
       if (isTSSWallet) {
-        setShowTSSProgressModal(true);
+        if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
         setTssStatus('initializing');
       }
 
@@ -592,6 +592,7 @@ const SimplexSellCheckout: React.FC = () => {
             wallet,
             ataOwnerAddress,
             ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
 

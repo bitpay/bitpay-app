@@ -690,7 +690,9 @@ const TransactionProposalNotifications = () => {
               const key = keys[wallet.keyId];
 
               if (isTSSKey(key)) {
-                setShowTSSProgressModal(true);
+                if (!key.isPrivKeyEncrypted) {
+                  setShowTSSProgressModal(true);
+                }
                 setTssStatus('initializing');
 
                 const txp = txpsToSign[0];
@@ -701,6 +703,7 @@ const TransactionProposalNotifications = () => {
                     wallet,
                     txp,
                     callbacks: tssCallbacks,
+                    setShowTSSProgressModal,
                   }),
                 );
 

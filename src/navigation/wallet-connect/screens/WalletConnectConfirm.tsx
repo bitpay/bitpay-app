@@ -238,7 +238,7 @@ const WalletConnectConfirm = () => {
 
   const approveCallRequest = async () => {
     if (isTSSWallet) {
-      setShowTSSProgressModal(true);
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
       setTssStatus('initializing');
     }
 
@@ -257,6 +257,7 @@ const WalletConnectConfirm = () => {
             wallet,
             recipient,
             ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
         await dispatch(

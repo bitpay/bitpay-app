@@ -45,7 +45,7 @@ import {ScanScreens} from '../../../navigation/scan/ScanGroup';
 import {removePendingJoinerSession} from '../../../store/wallet/wallet.actions';
 import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
-import { sleep } from '../../../utils/helper-methods';
+import {sleep} from '../../../utils/helper-methods';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -427,7 +427,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     setLocalCopayerName(trimmedCopayerName);
     setShowSession(true);
     setShowProcessing(true);
-    await sleep(200)
+    await sleep(200);
     try {
       const result = await dispatch(
         generateJoinerSessionId({name: trimmedCopayerName}),

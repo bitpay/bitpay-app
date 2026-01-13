@@ -11,6 +11,17 @@ import {
 import {logManager} from '../../../../managers/LogManager';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {IsUtxoChain} from '../../utils/currency';
+import {
+  checkEncryptedKeysForEddsaMigration,
+  sleep,
+  toggleTSSModal,
+} from '../../../../utils/helper-methods';
+import {
+  dismissDecryptPasswordModal,
+  showDecryptPasswordModal,
+} from '../../../../store/app/app.actions';
+import {checkEncryptPassword} from '../../utils/wallet';
+import {checkBiometricForSending} from '../send/send';
 
 const BWC = BwcProvider.getInstance();
 
@@ -99,6 +110,7 @@ const signInput = async (params: {
   totalInputs: number;
   callbacks: TSSSigningCallbacks;
   timeout: number;
+  password?: string | undefined;
 }): Promise<string> => {
   const {
     tssKey,
@@ -111,6 +123,7 @@ const signInput = async (params: {
     totalInputs,
     callbacks,
     timeout,
+    password,
   } = params;
 
   const tssSign = new TssSign({
@@ -124,6 +137,7 @@ const signInput = async (params: {
       id: sessionId,
       messageHash,
       derivationPath,
+      password,
     });
   } catch (startError: any) {
     if (startError.message?.startsWith('TSS_ROUND_ALREADY_DONE')) {
@@ -222,9 +236,18 @@ export const startTSSSigning =
     callbacks: TSSSigningCallbacks;
     timeout?: number;
     joiner?: boolean;
+    password?: string | undefined;
   }): Effect<Promise<TransactionProposal>> =>
   async (dispatch, getState): Promise<TransactionProposal> => {
-    const {key, wallet, txp, callbacks, timeout = 300000, joiner} = opts;
+    const {
+      key,
+      wallet,
+      txp,
+      callbacks,
+      timeout = 300000,
+      joiner,
+      password,
+    } = opts;
 
     return new Promise(async (resolve, reject) => {
       try {
@@ -305,6 +328,7 @@ export const startTSSSigning =
             totalInputs: inputPaths.length,
             callbacks,
             timeout,
+            password,
           });
           signatures.push(signature);
         }
@@ -356,12 +380,52 @@ export const joinTSSSigningSession =
     wallet: Wallet;
     txp: TransactionProposal;
     callbacks: TSSSigningCallbacks;
+    setShowTSSProgressModal: (show: boolean) => void;
   }): Effect<Promise<TransactionProposal>> =>
   async (dispatch, getState): Promise<TransactionProposal> => {
-    const {key, wallet, txp, callbacks} = opts;
+    const {APP} = getState();
+    const {key, wallet, txp, callbacks, setShowTSSProgressModal} = opts;
+    let password: string | undefined;
+
+    if (APP.biometricLockActive) {
+      try {
+        await toggleTSSModal(setShowTSSProgressModal, false);
+        await dispatch(checkBiometricForSending());
+      } catch (error) {
+        throw error;
+      }
+      await toggleTSSModal(setShowTSSProgressModal, true);
+    }
 
     logManager.debug(`[TSS Join] Joining signing session for txp: ${txp.id}`);
-
+    if (key.isPrivKeyEncrypted) {
+      try {
+        await toggleTSSModal(setShowTSSProgressModal, false);
+        password = await new Promise<string>(async (_resolve, _reject) => {
+          await sleep(500);
+          dispatch(
+            showDecryptPasswordModal({
+              onSubmitHandler: async (_password: string) => {
+                dispatch(dismissDecryptPasswordModal());
+                await sleep(500);
+                if (checkEncryptPassword(key, _password)) {
+                  dispatch(checkEncryptedKeysForEddsaMigration(key, _password));
+                  _resolve(_password);
+                } else {
+                  _reject('invalid password');
+                }
+              },
+              onCancelHandler: () => {
+                _reject('password canceled');
+              },
+            }),
+          );
+        });
+      } catch (error) {
+        throw error;
+      }
+      await toggleTSSModal(setShowTSSProgressModal, true);
+    }
     // The joiner flow is the same as initiator - they both use startTSSSigning
     return dispatch(
       startTSSSigning({
@@ -370,6 +434,7 @@ export const joinTSSSigningSession =
         txp,
         callbacks,
         joiner: true,
+        password,
       }),
     );
   };

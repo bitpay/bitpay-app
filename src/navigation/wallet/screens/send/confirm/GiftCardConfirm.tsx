@@ -504,7 +504,7 @@ const Confirm = () => {
     const isUsingHardwareWallet = !!transport;
 
     if (isTSSWallet) {
-      setShowTSSProgressModal(true);
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
       setTssStatus('initializing');
     }
 
@@ -557,6 +557,7 @@ const Confirm = () => {
                 wallet,
                 recipient,
                 ...(isTSSWallet && {tssCallbacks}),
+                ...(isTSSWallet && {setShowTSSProgressModal}),
               }),
             )
           : await dispatch(

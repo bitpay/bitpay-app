@@ -524,7 +524,7 @@ const TransactionProposalDetails = () => {
       logManager.debug(
         `[TxpDetails] Joining TSS signing session for txp: ${txp.id}`,
       );
-      setShowTSSProgressModal(true);
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
       setTssStatus('initializing');
 
       const result = await dispatch(
@@ -533,6 +533,7 @@ const TransactionProposalDetails = () => {
           wallet,
           txp,
           callbacks: tssCallbacks,
+          setShowTSSProgressModal,
         }),
       );
 

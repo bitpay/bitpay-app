@@ -617,7 +617,7 @@ const MoonpaySellCheckout: React.FC = () => {
     let broadcastedTx;
 
     if (isTSSWallet) {
-      setShowTSSProgressModal(true);
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
       setTssStatus('initializing');
     }
 
@@ -658,6 +658,7 @@ const MoonpaySellCheckout: React.FC = () => {
             wallet,
             ataOwnerAddress,
             ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
 

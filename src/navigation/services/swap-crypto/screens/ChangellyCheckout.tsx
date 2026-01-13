@@ -735,7 +735,7 @@ const ChangellyCheckout: React.FC = () => {
     const isUsingHardwareWallet = !!transport;
 
     if (isTSSWallet) {
-      setShowTSSProgressModal(true);
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
       setTssStatus('initializing');
     }
 
@@ -776,6 +776,7 @@ const ChangellyCheckout: React.FC = () => {
             wallet: fromWalletSelected,
             ataOwnerAddress,
             ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
 

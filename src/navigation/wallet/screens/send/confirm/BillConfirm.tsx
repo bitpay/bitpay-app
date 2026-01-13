@@ -445,6 +445,7 @@ const BillConfirm: React.FC<
             wallet,
             recipient,
             ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         )
       : await dispatch(
@@ -583,7 +584,7 @@ const BillConfirm: React.FC<
     const isUsingHardwareWallet = !!transport;
 
     if (isTSSWallet) {
-      setShowTSSProgressModal(true);
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
       setTssStatus('initializing');
     }
 
