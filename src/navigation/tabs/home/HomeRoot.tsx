@@ -203,12 +203,6 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             currencyAbbreviation === targetCoin && chain === targetChain,
         ) ||
         SupportedCurrencyOptions.find(
-          ({tokenAddress, chain}) =>
-            tokenAddress &&
-            tokenAddress.toLowerCase() === targetCoin &&
-            chain === targetChain,
-        ) ||
-        SupportedCurrencyOptions.find(
           ({currencyAbbreviation}) => currencyAbbreviation === targetCoin,
         );
 
