@@ -13,10 +13,16 @@ import {SettingsComponent, SettingsContainer} from '../../SettingsRoot';
 import haptic from '../../../../../components/haptic-feedback/haptic';
 import TransakLogo from '../../../../../components/icons/external-services/transak/transak-logo';
 import {
+  TransakAccessTokenData,
+  TransakGetOrderDetailsRequestData,
   TransakIncomingData,
   TransakPaymentData,
 } from '../../../../../store/buy-crypto/buy-crypto.models';
-import {useAppDispatch, useLogger} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../../utils/hooks';
 import {
   showBottomNotificationModal,
   dismissBottomNotificationModal,
@@ -55,6 +61,8 @@ import {Br} from '../../../../../components/styled/Containers';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {Link} from '../../../../../components/styled/Text';
 import cloneDeep from 'lodash.clonedeep';
+import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
+import {RootState} from '../../../../../store';
 
 export interface TransakDetailsProps {
   paymentRequest: TransakPaymentData;
@@ -74,6 +82,12 @@ const TransakDetails: React.FC = () => {
   } = useRoute<RouteProp<{params: TransakDetailsProps}>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
+    ({BUY_CRYPTO}) => BUY_CRYPTO.accessToken?.transak?.[transakEnv],
+  );
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const [status, setStatus] = useState<TransakStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -88,7 +102,7 @@ const TransakDetails: React.FC = () => {
     setStatus(transakGetStatusDetails(paymentRequest.status));
   };
 
-  const getOrderDetails = (force?: boolean) => {
+  const getOrderDetails = async (force?: boolean) => {
     if (
       ['COMPLETED', 'CANCELLED', 'FAILED', 'REFUNDED', 'EXPIRED'].includes(
         paymentRequest.status,
@@ -103,9 +117,79 @@ const TransakDetails: React.FC = () => {
       return;
     }
 
-    const requestData: any = {
+    const nowTimestamp = (Date.now() / 1000) | 0;
+    let _accessToken = accessTokenTransak?.accessToken;
+    let _expiresAt = accessTokenTransak?.expiresAt;
+    if (!_accessToken || !_expiresAt || _expiresAt < nowTimestamp) {
+      try {
+        if (_expiresAt && _expiresAt < nowTimestamp) {
+          logger.debug(
+            'Transak access token expired. Fetching new one from TransakDetails...',
+          );
+        }
+        const keysList: Key[] = Object.values(allKeys).filter(
+          key => key.backupComplete,
+        );
+
+        if (!keysList[0]) {
+          const walletIsSupported = (wallet: Wallet): boolean => {
+            return wallet.credentials && wallet.isComplete();
+          };
+
+          const keyHasSupportedWallets = (wallets: Wallet[]): boolean => {
+            const supportedWallets = wallets.filter(wallet =>
+              walletIsSupported(wallet),
+            );
+            return !!supportedWallets[0];
+          };
+
+          const availableKeys = keysList.filter(key => {
+            return key.wallets && keyHasSupportedWallets(key.wallets);
+          });
+
+          if (availableKeys[0]) {
+            const firstKey = availableKeys[0];
+
+            const firstKeyAllWallets: Wallet[] = firstKey.wallets;
+            let allowedWallets = firstKeyAllWallets.filter(wallet =>
+              walletIsSupported(wallet),
+            );
+
+            const selectedWallet = allowedWallets[0];
+
+            const {data}: {data: TransakAccessTokenData | undefined} =
+              await selectedWallet.transakGetAccessToken({env: transakEnv});
+            if (data?.accessToken) {
+              logger.debug(
+                'Transak access token fetched successfully from TransakDetails.',
+              );
+              dispatch(
+                BuyCryptoActions.updateAccessTokenTransak({
+                  env: transakEnv,
+                  ...data,
+                }),
+              );
+              _accessToken = data.accessToken;
+            }
+          }
+        }
+      } catch (err: any) {
+        let msg: string =
+          'Error fetching Transak access token in TransakDetails';
+        if (typeof err === 'string') {
+          msg = msg + `: ${err}`;
+        } else if (typeof err?.message === 'string') {
+          msg = msg + `: ${err.message}`;
+        }
+        logger.error(`${msg}`);
+        // Continue anyway, as we can generate a new access token in the BWS if needed.
+      }
+    }
+
+    const requestData: TransakGetOrderDetailsRequestData = {
       env: transakEnv,
       orderId: paymentRequest.order_id,
+      accessToken: _accessToken,
     };
 
     transakGetOrderDetails(requestData)

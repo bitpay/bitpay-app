@@ -438,8 +438,8 @@ const BuyAndSellRoot = ({
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
-  const accessTokenTransak: TransakAccessTokenData = useAppSelector(
-    ({BUY_CRYPTO}) => BUY_CRYPTO.accessToken.transak,
+  const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
+    ({BUY_CRYPTO}) => BUY_CRYPTO.accessToken?.transak?.[transakEnv],
   );
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
@@ -2770,6 +2770,38 @@ const BuyAndSellRoot = ({
     const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
     const chain = cloneDeep(selectedWallet.chain);
 
+    const nowTimestamp = (Date.now() / 1000) | 0;
+    let _accessToken = accessTokenTransak?.accessToken;
+    let _expiresAt = accessTokenTransak?.expiresAt;
+    if (!_accessToken || !_expiresAt || _expiresAt < nowTimestamp) {
+      if (_expiresAt && _expiresAt < nowTimestamp) {
+        logger.debug('Transak access token expired. Fetching new one...');
+      }
+      try {
+        const {data}: {data: TransakAccessTokenData | undefined} =
+          await selectedWallet.transakGetAccessToken({env: transakEnv});
+
+        if (data?.accessToken) {
+          logger.debug('Transak access token fetched successfully.');
+          dispatch(
+            BuyCryptoActions.updateAccessTokenTransak({
+              env: transakEnv,
+              ...data,
+            }),
+          );
+          _accessToken = data.accessToken;
+        }
+      } catch (err: any) {
+        logger.error('Error fetching Transak access token');
+        const title = t('Transak Error');
+        const msg = getErrorMessage(err);
+        const reason = 'transakUpdateAccessToken Error';
+        showError(title, msg, reason);
+        setOpeningBrowser(false);
+        return;
+      }
+    }
+
     const newData: TransakPaymentData = {
       address,
       chain: destinationChain,
@@ -2790,23 +2822,6 @@ const BuyAndSellRoot = ({
         transakPaymentData: newData,
       }),
     );
-
-    const nowTimestamp = (Date.now() / 1000) | 0;
-    let _accessToken = accessTokenTransak?.accessToken;
-    if (!_accessToken || accessTokenTransak.expiresAt < nowTimestamp) {
-      try {
-        const {data} = await selectedWallet.transakGetAccessToken('');
-        dispatch(BuyCryptoActions.updateAccessTokenTransak(data));
-        _accessToken = data.accessToken;
-      } catch (err: any) {
-        const title = t('Transak Error');
-        const msg = getErrorMessage(err);
-        const reason = 'transakUpdateAccessToken Error';
-        showError(title, msg, reason);
-        setOpeningBrowser(false);
-        return;
-      }
-    }
 
     dispatch(
       Analytics.track('Requested Crypto Purchase', {
@@ -2871,7 +2886,11 @@ const BuyAndSellRoot = ({
       return;
     }
 
-    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
+    // This offer is opened in an external browser.
+    // Apparently, Transak placed certain restrictions on opening its widgetUrl,
+    // which causes it not to display correctly in the inappBrowser.
+    await Linking.openURL(data.urlWithSignature);
+
     await sleep(500);
     setOpeningBrowser(false);
     navigation.goBack();
