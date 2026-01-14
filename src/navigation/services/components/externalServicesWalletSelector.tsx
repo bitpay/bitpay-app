@@ -27,7 +27,10 @@ import {
   AddWalletData,
   getDecryptPassword,
 } from '../../../store/wallet/effects/create/create';
-import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../../wallet/components/ErrorMessages';
 import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
@@ -41,6 +44,7 @@ import {
   SellCryptoCoin,
 } from '../screens/BuyAndSellRoot';
 import {useOngoingProcess} from '../../../contexts';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -434,6 +438,17 @@ const ExternalServicesWalletSelector: React.FC<
     setWalletSelectorModalVisible(false);
     if (newWallet?.currencyAbbreviation) {
       setWallet(newWallet);
+    } else if (createNewWalletData && isTSSKey(createNewWalletData.key)) {
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: t(
+              'You cannot add new wallets to a TSS wallet key. To create another wallet, please start a new TSS wallet setup.',
+            ),
+            title: t('TSS Wallet Limitation'),
+          }),
+        ),
+      );
     } else if (createNewWalletData) {
       try {
         if (

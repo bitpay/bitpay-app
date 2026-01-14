@@ -384,7 +384,7 @@ const KeySettings = () => {
   const renderListFooterComponent = useCallback(() => {
     return (
       <>
-        {_key && !_key.isReadOnly ? (
+        {_key && !_key.isReadOnly && !isTSSKey(_key) ? (
           <VerticalPadding style={{alignItems: 'center'}}>
             <AddWalletText
               onPress={() => {

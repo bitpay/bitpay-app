@@ -132,6 +132,7 @@ import {
   buildAllocationDataFromWalletRows,
   type AllocationWallet,
 } from '../../../utils/allocation';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -868,17 +869,19 @@ const KeyOverview = () => {
   const renderListFooterComponent = useCallback(() => {
     return (
       <WalletListFooterContainer>
-        <WalletListFooter
-          activeOpacity={ActiveOpacity}
-          onPress={async () => {
-            haptic('impactLight');
-            navigation.navigate('AddingOptions', {
-              key,
-            });
-          }}>
-          <Icons.Add />
-          <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
-        </WalletListFooter>
+        {!isTSSKey(key) ? (
+          <WalletListFooter
+            activeOpacity={ActiveOpacity}
+            onPress={async () => {
+              haptic('impactLight');
+              navigation.navigate('AddingOptions', {
+                key,
+              });
+            }}>
+            <Icons.Add />
+            <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
+          </WalletListFooter>
+        ) : null}
         {/* <Button
           buttonStyle="secondary"
           height={50}

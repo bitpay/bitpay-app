@@ -39,6 +39,7 @@ import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {useOngoingProcess} from '../../../contexts';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -186,21 +187,24 @@ const AccountSettings = () => {
         <HeaderBackButton
           onPress={() => {
             if (hideAccount && context === 'accountDetails') {
+              const baseRoutes = [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
+                },
+              ];
+              const keyOverviewRoute = {
+                name: WalletScreens.KEY_OVERVIEW,
+                params: {id: key.id},
+              };
+              const routes = isTSSKey(key)
+                ? [...baseRoutes]
+                : [...baseRoutes, keyOverviewRoute];
+
               navigation.dispatch(
                 CommonActions.reset({
-                  index: 1,
-                  routes: [
-                    {
-                      name: RootStacks.TABS,
-                      params: {screen: TabsScreens.HOME},
-                    },
-                    {
-                      name: WalletScreens.KEY_OVERVIEW,
-                      params: {
-                        id: key.id,
-                      },
-                    },
-                  ],
+                  index: routes.length - 1,
+                  routes,
                 }),
               );
             } else {
