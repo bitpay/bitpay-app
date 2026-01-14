@@ -54,6 +54,10 @@ import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import AddSvg from './AddSvg';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {Status} from 'bitcore-wallet-client/ts_build/src';
+import {logManager} from '../../../../managers/LogManager';
+import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 
 const CryptoContainer = styled.View`
@@ -239,7 +243,55 @@ export const createHomeCardList = ({
                 : () => {
                     haptic('soft');
                     if (backupComplete) {
-                      navigation.navigate('KeyOverview', {id: key.id});
+                      if (isTSSKey(key)) {
+                        const fullWalletObj = key.wallets[0];
+                        if (
+                          !fullWalletObj.isComplete() &&
+                          fullWalletObj.pendingTssSession
+                        ) {
+                          fullWalletObj.getStatus(
+                            {network: fullWalletObj.network},
+                            (err: any, status: Status) => {
+                              if (err) {
+                                const errStr =
+                                  err instanceof Error
+                                    ? err.message
+                                    : JSON.stringify(err);
+                                logManager.error(
+                                  `error [KeyOverview - onPressItem] [getStatus]: ${errStr}`,
+                                );
+                              } else {
+                                if (status?.wallet?.status === 'complete') {
+                                  fullWalletObj.openWallet({}, () => {
+                                    navigation.navigate('WalletDetails', {
+                                      walletId:
+                                        fullWalletObj.credentials.walletId,
+                                      copayerId:
+                                        fullWalletObj.credentials.copayerId,
+                                      key,
+                                    });
+                                  });
+                                  return;
+                                }
+                                navigation.navigate(WalletScreens.COPAYERS, {
+                                  wallet: fullWalletObj,
+                                  status: status?.wallet,
+                                });
+                              }
+                            },
+                          );
+                        } else {
+                          navigation.navigate(WalletScreens.WALLET_DETAILS, {
+                            key,
+                            walletId: fullWalletObj.credentials.walletId,
+                            copayerId: fullWalletObj.credentials.copayerId,
+                          });
+                        }
+                      } else {
+                        navigation.navigate(WalletScreens.KEY_OVERVIEW, {
+                          id: key.id,
+                        });
+                      }
                     } else {
                       dispatch(
                         showBottomNotificationModal(

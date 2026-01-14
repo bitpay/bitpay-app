@@ -257,7 +257,10 @@ const ExportTSSWallet = () => {
         index: 1,
         routes: [
           {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
-          {name: WalletScreens.KEY_OVERVIEW, params: {id: keyId}},
+          {
+            name: WalletScreens.WALLET_DETAILS,
+            params: {key, walletId: key.wallets[0].id},
+          },
         ],
       }),
     );

@@ -85,6 +85,8 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import cloneDeep from 'lodash.clonedeep';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
+import {TabsScreens} from '../../../navigation/tabs/TabsStack';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 export type AddCustomTokenParamList = {
   key: Key;
@@ -390,36 +392,48 @@ const AddCustomToken = ({
       }
       const wallet = await _addWallet();
       if (!withinReceiveSettings) {
+        const baseRoutes = [
+          {
+            name: RootStacks.TABS,
+            params: {screen: TabsScreens.HOME},
+          },
+        ];
+
+        const keyOverviewRoute = {
+          name: WalletScreens.KEY_OVERVIEW,
+          params: {id: key.id},
+        };
+
+        const accountDetailsRoute = {
+          name: WalletScreens.ACCOUNT_DETAILS,
+          params: {
+            keyId: key.id,
+            selectedAccountAddress,
+          },
+        };
+
+        const walletDetailsRoute = {
+          name: WalletScreens.WALLET_DETAILS,
+          params: {
+            walletId: wallet.id,
+            key,
+            skipInitializeHistory: false,
+          },
+        };
+
+        const routes = isTSSKey(key)
+          ? [...baseRoutes, accountDetailsRoute, walletDetailsRoute]
+          : [
+              ...baseRoutes,
+              keyOverviewRoute,
+              accountDetailsRoute,
+              walletDetailsRoute,
+            ];
+
         navigation.dispatch(
           CommonActions.reset({
-            index: 3,
-            routes: [
-              {
-                name: RootStacks.TABS,
-                params: {screen: getNavigationTabName()},
-              },
-              {
-                name: WalletScreens.KEY_OVERVIEW,
-                params: {
-                  id: key.id,
-                },
-              },
-              {
-                name: WalletScreens.ACCOUNT_DETAILS,
-                params: {
-                  keyId: key.id,
-                  selectedAccountAddress,
-                },
-              },
-              {
-                name: WalletScreens.WALLET_DETAILS,
-                params: {
-                  walletId: wallet.id,
-                  key,
-                  skipInitializeHistory: false, // new wallet might have transactions
-                },
-              },
-            ],
+            index: routes.length - 1,
+            routes,
           }),
         );
       }

@@ -63,7 +63,7 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
         index: 1,
         routes: [
           {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
-          {name: WalletScreens.KEY_OVERVIEW, params: {id: key.id}},
+          {name: WalletScreens.WALLET_DETAILS, params: {id: key.wallets[0].id}},
         ],
       }),
     );
