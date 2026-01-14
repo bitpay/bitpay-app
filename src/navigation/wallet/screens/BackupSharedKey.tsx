@@ -10,7 +10,6 @@ import {
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useAndroidBackHandler} from 'react-navigation-backhandler';
-import {useDispatch} from 'react-redux';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
@@ -23,6 +22,10 @@ import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import BackupKeyShare from '../../../../assets/img/backup-keyshare.svg';
 import Banner from '../../../components/banner/Banner';
+import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
+import {getDecryptPassword} from '../../../store/wallet/effects';
+import {WrongPasswordError} from '../components/ErrorMessages';
+import {useAppDispatch} from '../../../utils/hooks';
 
 type BackupSharedKeyScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -52,7 +55,7 @@ const CtaContainer = styled(_CtaContainer)`
 
 const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
   const {t} = useTranslation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
 
   const {context, key} = route.params;
@@ -69,11 +72,26 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
     );
   };
 
-  const gotoBackup = () => {
-    navigation.navigate(WalletScreens.EXPORT_TSS_WALLET, {
-      context,
-      keyId: key.id,
-    });
+  const gotoBackup = async () => {
+    if (!checkPrivateKeyEncrypted(key)) {
+      navigation.navigate(WalletScreens.EXPORT_TSS_WALLET, {
+        context,
+        keyId: key.id,
+      });
+    } else {
+      try {
+        const decryptPassword = await dispatch(getDecryptPassword(key));
+        navigation.navigate(WalletScreens.EXPORT_TSS_WALLET, {
+          context,
+          keyId: key.id,
+          decryptPassword,
+        });
+      } catch (err: any) {
+        if (err.message === 'invalid password') {
+          dispatch(showBottomNotificationModal(WrongPasswordError()));
+        }
+      }
+    }
   };
 
   useLayoutEffect(() => {

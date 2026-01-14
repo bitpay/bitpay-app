@@ -33,6 +33,8 @@ import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../tabs/TabsStack';
 import WalletCreatedSvg from '../../../../../assets/img/shared-success.svg';
 import {Wallet} from '../../../../store/wallet/wallet.models';
+import {TssKey} from 'bitcore-wallet-client/ts_build/src/lib/tsskey';
+import {checkPrivateKeyEncrypted} from '../../../../store/wallet/utils/wallet';
 
 const BWC = BwcProvider.getInstance();
 
@@ -124,12 +126,13 @@ interface ExportPasswordFieldValues {
 export type ExportTSSWalletParamList = {
   keyId: string;
   context: 'createNewTSSKey' | 'joinTSSKey' | 'backupExistingTSSKey';
+  decryptPassword?: string;
 };
 
 const ExportTSSWallet = () => {
   const {t} = useTranslation();
   const {
-    params: {keyId, context},
+    params: {keyId, context, decryptPassword},
   } = useRoute<RouteProp<WalletGroupParamList, 'ExportTSSWallet'>>();
 
   const dispatch = useAppDispatch();
@@ -169,11 +172,20 @@ const ExportTSSWallet = () => {
     if (!password || !key) {
       return null;
     }
-
+    let keyData;
+    if (!decryptPassword && checkPrivateKeyEncrypted(key)) {
+      throw new Error('Key is encrypted, decryptPassword is required');
+    } else if (decryptPassword && checkPrivateKeyEncrypted(key)) {
+      const tempKey = new TssKey(key.methods.toObj());
+      tempKey.decrypt(decryptPassword);
+      keyData = tempKey.toObj();
+    } else {
+      keyData = key.methods.toObj();
+    }
     const backup = {
       isTSS: true,
       version: 1,
-      key: key.methods.toObj(),
+      key: keyData,
       credentials: key.wallets.map((wallet: Wallet) =>
         wallet.credentials.toObj(),
       ),
@@ -191,6 +203,7 @@ const ExportTSSWallet = () => {
   const shareKeyshareFile = async ({password}: {password: string}) => {
     try {
       setShareButtonState('loading');
+      await sleep(500);
 
       if (Platform.OS === 'android' && Platform.Version < 30) {
         await isAndroidStoragePermissionGranted(dispatch);
