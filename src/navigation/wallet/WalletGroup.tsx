@@ -96,7 +96,9 @@ import {RootState} from '../../store';
 import BackupSharedKeyScreen, {
   BackupSharedKeyParamList,
 } from './screens/BackupSharedKey';
-import ExportTSSWallet from './screens/wallet-settings/ExportTSSWallet';
+import ExportTSSWallet, {
+  ExportTSSWalletParamList,
+} from './screens/wallet-settings/ExportTSSWallet';
 
 interface WalletProps {
   Wallet: typeof Root;
@@ -181,10 +183,7 @@ export type WalletGroupParamList = {
       xPrivKey: string;
     };
   };
-  ExportTSSWallet: {
-    keyId: string;
-    context: 'createNewTSSKey' | 'joinTSSKey' | 'backupExistingTSSKey';
-  };
+  ExportTSSWallet: ExportTSSWalletParamList;
   Addresses: {wallet: WalletModel};
   AllAddresses: AllAddressesParamList;
   ExchangeRate: {
