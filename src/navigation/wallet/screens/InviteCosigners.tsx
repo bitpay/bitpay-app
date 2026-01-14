@@ -21,6 +21,7 @@ import {
   Black,
   NeutralSlate,
   LinkBlue,
+  Midnight,
 } from '../../../styles/colors';
 import {Paragraph, BaseText} from '../../../components/styled/Text';
 import {
@@ -35,14 +36,18 @@ import AddIconBlackSvg from '../../../../assets/img/add-black.svg';
 import AddIconGreySvg from '../../../../assets/img/add-grey.svg';
 import SuccessLightIcon from '../../../../assets/img/check-dark.svg';
 import SuccessDarkIcon from '../../../../assets/img/check.svg';
+import SuccessGreyIcon from '../../../../assets/img/check-grey.svg';
 import ClockLightIcon from '../../../../assets/img/clock-blue.svg';
 import ClockDarkIcon from '../../../../assets/img/clock-light-blue.svg';
-import QrCodeSvg from '../../../../assets/img/qr-code-black.svg';
+import QrCodeSvgBlack from '../../../../assets/img/qr-code-black.svg';
+import QrCodeSvgGrey from '../../../../assets/img/qr-code-grey.svg';
 import ShareIcon from '../../../../assets/img/share-icon.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {useTheme} from 'styled-components/native';
 import {sleep} from '../../../utils/helper-methods';
 import {useNavigation} from '@react-navigation/native';
+import {TouchableOpacity} from '../../../components/base/TouchableOpacity';
+import Back from '../../../components/back/Back';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -105,7 +110,7 @@ const AddButton = styled.View`
   width: 40px;
   height: 40px;
   padding: 8px;
-  border-radius: 12px;
+  border-radius: 50px;
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#F5F5F5')};
   align-items: center;
   justify-content: center;
@@ -115,7 +120,7 @@ const CheckMark = styled.View`
   width: 40px;
   height: 40px;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 50px;
   background-color: ${({theme: {dark}}) => (dark ? '#004D27' : Success25)};
   align-items: center;
   justify-content: center;
@@ -152,6 +157,7 @@ const HeaderButton = styled.TouchableOpacity`
 
 const PlaceholderView = styled.View`
   min-width: 60px;
+  height: 40px;
 `;
 
 const ModalContent = styled.ScrollView`
@@ -169,7 +175,7 @@ const TopSectionContainer = styled.View`
   border-radius: 12px;
   border-width: 1px;
   border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  min-height: 340px;
+  height: 390px;
   justify-content: center;
 `;
 
@@ -202,9 +208,7 @@ const StyledInput = styled(TextInput)`
   padding: 0;
 `;
 
-const ScanButton = styled.TouchableOpacity`
-  padding: 4px;
-`;
+const ScanButton = styled.TouchableOpacity``;
 
 const StatusContainer = styled.View`
   align-items: center;
@@ -233,7 +237,7 @@ const QRSectionContainer = styled.View`
   border-radius: 12px;
   border-width: 1px;
   border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  min-height: 355px;
+  height: 390px;
 `;
 
 const QRContainer = styled.View`
@@ -300,10 +304,37 @@ const StepRow = styled.View`
   align-items: flex-start;
 `;
 
+const StepRowWithButton = styled.View`
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+`;
+
+const StepContentWithButton = styled.View`
+  flex: 1;
+  padding-bottom: 20px;
+  padding-right: 8px;
+`;
+
 const StepRail = styled.View`
   width: 40px;
   align-items: center;
   margin-right: 12px;
+`;
+
+const ContinuePillButton = styled.TouchableOpacity<{disabled?: boolean}>`
+  padding: 6px 14px;
+  border-radius: 16px;
+  background-color: ${({theme: {dark}}) => (dark ? Midnight : Action)};
+  align-self: flex-start;
+  margin-top: 2px;
+`;
+
+const ContinuePillText = styled(BaseText)`
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  color: ${White};
 `;
 
 const StepConnector = styled.View<{completed?: boolean}>`
@@ -360,17 +391,6 @@ const ButtonWrapper = styled.View`
   padding: 0 16px;
   margin-top: 20px;
 `;
-
-const AlreadySharedButton = styled.TouchableOpacity`
-  padding: 8px 16px;
-  align-items: center;
-`;
-
-const AlreadySharedText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-  font-size: 14px;
-  font-weight: 400;
-`;
 export interface InviteCoSignersParamsList {
   keyId: string;
 }
@@ -389,6 +409,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const AddIconSvg = theme.dark ? AddIconGreySvg : AddIconBlackSvg;
   const ClockIconSvg = theme.dark ? ClockDarkIcon : ClockLightIcon;
   const SuccessIcon = theme.dark ? SuccessDarkIcon : SuccessLightIcon;
+  const QrCodeSvg = theme.dark ? QrCodeSvgGrey : QrCodeSvgBlack;
 
   const {keyId} = route.params;
   const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
@@ -408,6 +429,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const [isCeremonyComplete, setIsCeremonyComplete] = useState(false);
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [isInviteShared, setIsInviteShared] = useState(false);
+  const [hasClickedShare, setHasClickedShare] = useState(false);
 
   useEffect(() => {
     if (pendingJoinCode && currentStep === 2) {
@@ -429,7 +451,9 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     if (copayer.status === 'invited') {
       setSelectedCopayer(copayer);
       setPendingJoinCode(copayer.joinCode!);
-      setIsModalVisible(true);
+      setCurrentStep(2);
+      setShowProcessing(false);
+      setIsInviteShared(false);
     } else {
       setSelectedCopayer(copayer);
       setSessionId('');
@@ -437,8 +461,8 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       setShowProcessing(false);
       setPendingJoinCode(null);
       setIsInviteShared(false);
-      setIsModalVisible(true);
     }
+    setIsModalVisible(true);
   };
 
   const handleCloseModal = () => {
@@ -484,6 +508,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       await Share.share({
         message: pendingJoinCode,
       });
+      setHasClickedShare(true);
     } catch (err: any) {
       logger.error(`Share error: ${err.message}`);
     }
@@ -600,32 +625,42 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
 
     if (currentStep === 2 && !showProcessing && !pendingJoinCode) {
       return (
-        <TopSection>
-          <TopSectionContainer>
-            <StatusContainer>
-              <StepIndicator completed={true}>
-                <SuccessIcon />
-              </StepIndicator>
-              <StatusText>{t('Session ID accepted')}</StatusText>
-            </StatusContainer>
-          </TopSectionContainer>
-        </TopSection>
+        <>
+          <TopSection>
+            <TopSectionContainer>
+              <StatusContainer>
+                <StepIndicator completed={true}>
+                  <SuccessIcon />
+                </StepIndicator>
+                <StatusText>{t('Session ID accepted')}</StatusText>
+              </StatusContainer>
+            </TopSectionContainer>
+          </TopSection>
+        </>
       );
     }
 
     if (currentStep === 2 && showProcessing) {
       return (
-        <TopSection>
-          <TopSectionContainer>
-            <StatusContainer>
-              <StepIndicator active={true}>
-                <ClockIconSvg width={28} height={28} />
-              </StepIndicator>
-              <StatusText>{t('Processing...')}</StatusText>
-              <StatusSubText>{t('Creating invite code')}</StatusSubText>
-            </StatusContainer>
-          </TopSectionContainer>
-        </TopSection>
+        <>
+          <TopSection>
+            <TopSectionContainer>
+              <StatusContainer>
+                <StepIndicator active={true}>
+                  <ClockIconSvg width={28} height={28} />
+                </StepIndicator>
+                <StatusText>{t('Processing...')}</StatusText>
+                <StatusSubText>{t('Creating invite code')}</StatusSubText>
+              </StatusContainer>
+              <ShareContainer style={{opacity: 0, pointerEvents: 'none'}}>
+                <ShareButton>
+                  <ShareIcon width={20} height={20} fill={Action} />
+                  <ShareButtonText>{t('Share Invite Code')}</ShareButtonText>
+                </ShareButton>
+              </ShareContainer>
+            </TopSectionContainer>
+          </TopSection>
+        </>
       );
     }
 
@@ -649,11 +684,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
               </ShareContainer>
             </QRSectionContainer>
           </TopSection>
-          <AlreadySharedButton onPress={handleAlreadyShared}>
-            <AlreadySharedText>
-              {t('Shared! Continue to next step')}
-            </AlreadySharedText>
-          </AlreadySharedButton>
         </>
       );
     }
@@ -680,11 +710,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
               </StatusContainer>
             </TopSectionContainer>
           </TopSection>
-          <AlreadySharedButton onPress={handleShareAgain}>
-            <AlreadySharedText>
-              {t('Check Invite Code Again')}
-            </AlreadySharedText>
-          </AlreadySharedButton>
         </>
       );
     }
@@ -718,7 +743,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
             </StepContent>
           </StepRow>
 
-          <StepRow>
+          <StepRowWithButton>
             <StepRail>
               <StepIndicator
                 active={currentStep === 2 && !isInviteShared}
@@ -733,13 +758,25 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
               </StepIndicator>
             </StepRail>
 
-            <StepContent>
+            <StepContentWithButton>
               <StepTitle>{t('Share Invite Code')}</StepTitle>
               <StepSubtitle>
                 {t('Share your invite code with co-signer')}
               </StepSubtitle>
-            </StepContent>
-          </StepRow>
+            </StepContentWithButton>
+
+            {currentStep === 2 && pendingJoinCode && (
+              <ContinuePillButton
+                onPress={handleAlreadyShared}
+                disabled={!hasClickedShare}
+                style={{
+                  opacity: hasClickedShare ? 1 : 0,
+                  pointerEvents: hasClickedShare ? 'auto' : 'none',
+                }}>
+                <ContinuePillText>{t('Next')}</ContinuePillText>
+              </ContinuePillButton>
+            )}
+          </StepRowWithButton>
         </StepsContainer>
       </StepsSection>
     );
@@ -823,11 +860,15 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
                   <CoSignerName>{copayer.name}</CoSignerName>
                   {copayer.status === 'invited' ? (
                     <CheckMark>
-                      <SuccessIcon />
+                      {theme.dark ? (
+                        <SuccessGreyIcon width={24} height={24} />
+                      ) : (
+                        <SuccessIcon width={24} height={24} />
+                      )}
                     </CheckMark>
                   ) : (
                     <AddButton>
-                      <AddIconSvg />
+                      <QrCodeSvg width={28} height={28} />
                     </AddButton>
                   )}
                 </NameRow>
@@ -860,9 +901,15 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
         onRequestClose={handleCloseModal}>
         <ModalContainer>
           <ModalHeader>
-            <PlaceholderView />
+            <PlaceholderView>
+              {currentStep === 3 && isInviteShared && (
+                <TouchableOpacity onPress={handleShareAgain}>
+                  <Back />
+                </TouchableOpacity>
+              )}
+            </PlaceholderView>
             <ModalTitle>{getModalTitle()}</ModalTitle>
-            <HeaderRightContainer>
+            <HeaderRightContainer style={{width: 80}}>
               <Button
                 accessibilityLabel="cancel-button"
                 buttonType={'pill'}

@@ -35,6 +35,7 @@ import WalletCreatedSvg from '../../../../../assets/img/shared-success.svg';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {TssKey} from 'bitcore-wallet-client/ts_build/src/lib/tsskey';
 import {checkPrivateKeyEncrypted} from '../../../../store/wallet/utils/wallet';
+import {IsVMChain} from '../../../../store/wallet/utils/currency';
 
 const BWC = BwcProvider.getInstance();
 
@@ -265,16 +266,38 @@ const ExportTSSWallet = () => {
 
   const handleViewWallet = () => {
     setShowSuccessModal(false);
+
+    const baseRoutes = [
+      {
+        name: RootStacks.TABS,
+        params: {screen: TabsScreens.HOME},
+      },
+    ];
+
+    const AccountDetailsRoute = {
+      name: WalletScreens.ACCOUNT_DETAILS,
+      params: {
+        keyId: key.id,
+        selectedAccountAddress: key.wallets[0]?.receiveAddress,
+      },
+    };
+
+    const walletDetailsRoute = {
+      name: WalletScreens.WALLET_DETAILS,
+      params: {
+        walletId: key.wallets[0].id,
+        key,
+      },
+    };
+
+    const routes = IsVMChain(key.wallets[0].chain)
+      ? [...baseRoutes, AccountDetailsRoute, walletDetailsRoute]
+      : [...baseRoutes, walletDetailsRoute];
+
     navigation.dispatch(
       CommonActions.reset({
-        index: 1,
-        routes: [
-          {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
-          {
-            name: WalletScreens.WALLET_DETAILS,
-            params: {key, walletId: key.wallets[0].id},
-          },
-        ],
+        index: routes.length - 1,
+        routes,
       }),
     );
   };

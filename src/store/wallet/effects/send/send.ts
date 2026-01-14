@@ -865,9 +865,6 @@ const buildTransactionProposal =
         // bch related
         if (tx.signingMethod) {
           txp.signingMethod = 'ecdsa';
-          if (wallet!.tssKeyId) {
-            tx.signingMethod = 'ecdsa';
-          }
         }
 
         const verifyExcludedUtxos = (
@@ -1351,25 +1348,24 @@ export const publishAndSign =
         }
       }
 
-
-      const isTSSSigning = requiresTSSSigning(wallet, key);
-
-      if (isTSSSigning && !tssCallbacks) {
-        tssCallbacks = {
-          onStatusChange: status => logManager.debug(`[TSS] Status: ${status}`),
-          onProgressUpdate: progress =>
-            logManager.debug(`[TSS] Progress: ${JSON.stringify(progress)}`),
-          onCopayerStatusChange: (id, status) =>
-            logManager.debug(`[TSS] Copayer ${id}: ${status}`),
-          onRoundUpdate: (round, type) =>
-            logManager.debug(`[TSS] Round ${round} ${type}`),
-          onError: err => logManager.error(`[TSS] Error: ${err.message}`),
-          onComplete: sig => logManager.debug(`[TSS] Complete`),
-        };
-      }
-
       try {
-      if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
+        const isTSSSigning = requiresTSSSigning(wallet, key);
+
+        if (isTSSSigning && !tssCallbacks) {
+          tssCallbacks = {
+            onStatusChange: status =>
+              logManager.debug(`[TSS] Status: ${status}`),
+            onProgressUpdate: progress =>
+              logManager.debug(`[TSS] Progress: ${JSON.stringify(progress)}`),
+            onCopayerStatusChange: (id, status) =>
+              logManager.debug(`[TSS] Copayer ${id}: ${status}`),
+            onRoundUpdate: (round, type) =>
+              logManager.debug(`[TSS] Round ${round} ${type}`),
+            onError: err => logManager.error(`[TSS] Error: ${err.message}`),
+            onComplete: sig => logManager.debug(`[TSS] Complete`),
+          };
+        }
+        if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
           const xPrivKeyEDDSA = password
             ? key.methods!.get(password, 'EDDSA').xPrivKey
             : key.properties!.xPrivKeyEDDSA;

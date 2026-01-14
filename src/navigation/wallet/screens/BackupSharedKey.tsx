@@ -26,6 +26,7 @@ import {checkPrivateKeyEncrypted} from '../../../store/wallet/utils/wallet';
 import {getDecryptPassword} from '../../../store/wallet/effects';
 import {WrongPasswordError} from '../components/ErrorMessages';
 import {useAppDispatch} from '../../../utils/hooks';
+import {IsVMChain} from '../../../store/wallet/utils/currency';
 
 type BackupSharedKeyScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
@@ -61,13 +62,37 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
   const {context, key} = route.params;
 
   const navigateToKeyOverview = () => {
+    const baseRoutes = [
+      {
+        name: RootStacks.TABS,
+        params: {screen: TabsScreens.HOME},
+      },
+    ];
+
+    const AccountDetailsRoute = {
+      name: WalletScreens.ACCOUNT_DETAILS,
+      params: {
+        keyId: key.id,
+        selectedAccountAddress: key.wallets[0]?.receiveAddress,
+      },
+    };
+
+    const walletDetailsRoute = {
+      name: WalletScreens.WALLET_DETAILS,
+      params: {
+        walletId: key.wallets[0].id,
+        key,
+      },
+    };
+
+    const routes = IsVMChain(key.wallets[0].chain)
+      ? [...baseRoutes, AccountDetailsRoute, walletDetailsRoute]
+      : [...baseRoutes, walletDetailsRoute];
+
     navigation.dispatch(
       CommonActions.reset({
-        index: 1,
-        routes: [
-          {name: RootStacks.TABS, params: {screen: TabsScreens.HOME}},
-          {name: WalletScreens.WALLET_DETAILS, params: {id: key.wallets[0].id}},
-        ],
+        index: routes.length - 1,
+        routes,
       }),
     );
   };

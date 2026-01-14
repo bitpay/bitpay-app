@@ -44,9 +44,9 @@ export interface TSSSigningCallbacks {
 
 export const isTSSKey = (key: Key): boolean => {
   return !!(
-    key.properties?.keychain?.privateKeyShare ||
-    key.properties?.keychain?.reducedPrivateKeyShare ||
-    key.properties?.keychain?.commonKeyChain
+    key?.properties?.keychain?.privateKeyShare ||
+    key?.properties?.keychain?.reducedPrivateKeyShare ||
+    key?.properties?.keychain?.commonKeyChain
   );
 };
 
@@ -277,9 +277,10 @@ export const startTSSSigning =
         const tx = utils.buildTx(txp);
         const txHex = tx.uncheckedSerialize();
         const rawTx = Array.isArray(txHex) ? txHex[0] : txHex;
-        const SIGHASH_TYPE =
-          Bitcore.crypto.Signature.SIGHASH_ALL |
-          Bitcore.crypto.Signature.SIGHASH_FORKID;
+        // TODO: need to remove for BCH
+        // const SIGHASH_TYPE =
+        //   Bitcore.crypto.Signature.SIGHASH_ALL |
+        //   Bitcore.crypto.Signature.SIGHASH_FORKID;
 
         const xPubKey = new Bitcore.HDPublicKey(
           wallet.credentials.clientDerivedPublicKey,
@@ -312,7 +313,7 @@ export const startTSSSigning =
             index: i,
             utxos: txp.inputs,
             pubKey,
-            sigtype: SIGHASH_TYPE,
+            // sigtype: SIGHASH_TYPE,
           });
           const messageHash = Buffer.from(sighashHex, 'hex');
           const sessionId = generateSessionId(txp, derivationPath!, i + 1);
