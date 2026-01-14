@@ -284,6 +284,8 @@ export const startCreateTSSKey =
         backupComplete: true,
       });
 
+      placeholderWallet.id = `pending-tss-${key.id}-${chain}`;
+
       const copayers: TSSCopayerInfo[] = [];
       for (let i = 1; i < n; i++) {
         copayers.push({
@@ -850,6 +852,8 @@ export const joinTSSWithCode =
           keyName: 'My TSSKey',
           backupComplete: true,
         });
+
+        placeholderWallet.id = `pending-tss-${key.id}-${chain}`;
 
         key.tssSession = {
           id: tssKeyGen.id,

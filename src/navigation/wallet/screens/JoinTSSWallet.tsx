@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useLayoutEffect} from 'react';
 import {Share, TextInput} from 'react-native';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -11,8 +11,6 @@ import {
   generateJoinerSessionId,
   joinTSSWithCode,
 } from '../../../store/wallet/effects/create-multisig/create-multisig';
-import {RootStacks} from '../../../Root';
-import {TabsScreens} from '../../tabs/TabsStack';
 import {
   White,
   SlateDark,
@@ -23,6 +21,7 @@ import {
   Slate30,
   Success25,
   LinkBlue,
+  Midnight,
 } from '../../../styles/colors';
 import {BaseText, H5} from '../../../components/styled/Text';
 import {
@@ -32,7 +31,6 @@ import {
 import Button from '../../../components/button/Button';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
-import {useOngoingProcess} from '../../../contexts';
 import {Key} from '../../../store/wallet/wallet.models';
 import ShareIcon from '../../../../assets/img/share-icon.svg';
 import ClockLightIcon from '../../../../assets/img/clock-blue.svg';
@@ -46,6 +44,7 @@ import {removePendingJoinerSession} from '../../../store/wallet/wallet.actions';
 import {Controller, useForm} from 'react-hook-form';
 import BoxInput from '../../../components/form/BoxInput';
 import {sleep} from '../../../utils/helper-methods';
+import HeaderBackButton from '../../../components/back/HeaderBackButton';
 
 const Container = styled.SafeAreaView`
   flex: 1;
@@ -59,12 +58,15 @@ const QRSection = styled.View`
   padding: 24px ${ScreenGutter};
 `;
 
-const QRSectionContainer = styled.View`
-  align-items: center;
+const QRSectionContainer = styled.View<{
+  hideBorder?: boolean;
+  fullWidth?: boolean;
+}>`
   border-radius: 12px;
-  border-width: 1px;
+  border-width: ${({hideBorder}) => (hideBorder ? 0 : 1)}px;
   border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  min-height: 355px;
+  height: 390px;
+  align-items: ${({fullWidth}) => (fullWidth ? 'stretch' : 'center')};
 `;
 
 const QRContainer = styled.View`
@@ -127,6 +129,8 @@ const InviteCodeContainer = styled.View`
   border-radius: 12px;
   padding: 16px;
   min-height: 355px;
+  width: 100%;
+  flex: 1;
 `;
 
 const InviteCodeLabel = styled(BaseText)`
@@ -235,6 +239,33 @@ const StepSubtitle = styled(BaseText)`
   line-height: 20px;
 `;
 
+const StepRowWithButton = styled.View`
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+`;
+
+const StepContentWithButton = styled.View`
+  flex: 1;
+  padding-bottom: 20px;
+  padding-right: 8px;
+`;
+
+const ContinuePillButton = styled.TouchableOpacity`
+  padding: 6px 14px;
+  border-radius: 16px;
+  background-color: ${({theme: {dark}}) => (dark ? Midnight : Action)};
+  align-self: flex-start;
+  margin-top: 2px;
+`;
+
+const ContinuePillText = styled(BaseText)`
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  color: ${White};
+`;
+
 const LoadingContainer = styled.View`
   flex: 1;
   align-items: center;
@@ -248,17 +279,6 @@ const LoadingText = styled(H5)`
 
 const ButtonContainer = styled.View`
   padding: 16px ${ScreenGutter};
-`;
-
-const AlreadySharedButton = styled.TouchableOpacity`
-  padding: 8px 16px;
-  align-items: center;
-`;
-
-const AlreadySharedText = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-  font-size: 14px;
-  font-weight: 400;
 `;
 
 const InputContainer = styled.View`
@@ -313,6 +333,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const [isWalletReady, setIsWalletReady] = useState(false);
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [showProcessing, setShowProcessing] = useState(false);
+  const [hasClickedShare, setHasClickedShare] = useState(false);
 
   useEffect(() => {
     if (sessionId && currentStep === 0) {
@@ -365,6 +386,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       await Share.share({
         message: sessionId,
       });
+      setHasClickedShare(true);
     } catch (err: any) {
       logger.error(`Share error: ${err.message}`);
     }
@@ -462,6 +484,20 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     });
   };
 
+  useLayoutEffect(() => {
+    if (currentStep === 2) {
+      navigation.setOptions({
+        headerLeft: () => (
+          <HeaderBackButton onPress={() => setCurrentStep(1)} />
+        ),
+      });
+    } else {
+      navigation.setOptions({
+        headerLeft: undefined,
+      });
+    }
+  }, [navigation, currentStep]);
+
   if (isLoading) {
     return (
       <Container>
@@ -515,21 +551,33 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const renderTopSection = () => {
     if (currentStep === 0 && showProcessing) {
       return (
-        <QRSection>
-          <QRSectionContainer>
-            <SessionAcceptedContainer>
-              <StepIndicator active={true}>
-                <ClockIconSvg width={28} height={28} />
-              </StepIndicator>
-              <SessionAcceptedText style={{marginTop: 10}}>
-                {t('Processing...')}
-              </SessionAcceptedText>
-              <SessionAcceptedSubText style={{marginTop: 4}}>
-                {t('Creating session ID')}
-              </SessionAcceptedSubText>
-            </SessionAcceptedContainer>
-          </QRSectionContainer>
-        </QRSection>
+        <>
+          <QRSection>
+            <QRSectionContainer>
+              <SessionAcceptedContainer>
+                <StepIndicator active={true}>
+                  <ClockIconSvg width={28} height={28} />
+                </StepIndicator>
+                <SessionAcceptedText style={{marginTop: 10}}>
+                  {t('Processing...')}
+                </SessionAcceptedText>
+                <SessionAcceptedSubText style={{marginTop: 4}}>
+                  {t('Creating session ID')}
+                </SessionAcceptedSubText>
+              </SessionAcceptedContainer>
+              <ShareContainer style={{opacity: 0, pointerEvents: 'none'}}>
+                <ShareButton disabled>
+                  <ShareIcon
+                    width={20}
+                    height={20}
+                    fill={theme.dark ? LinkBlue : Action}
+                  />
+                  <ShareButtonText>{t('Share Session ID')}</ShareButtonText>
+                </ShareButton>
+              </ShareContainer>
+            </QRSectionContainer>
+          </QRSection>
+        </>
       );
     }
 
@@ -559,11 +607,6 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
               </ShareContainer>
             </QRSectionContainer>
           </QRSection>
-          <AlreadySharedButton onPress={() => setCurrentStep(2)}>
-            <AlreadySharedText>
-              {t('Shared! Continue to next step')}
-            </AlreadySharedText>
-          </AlreadySharedButton>
         </>
       );
     }
@@ -571,33 +614,44 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     if (currentStep === 2) {
       // if (showInviteInput) {
       return (
-        <InviteCodeSection>
-          <InviteCodeContainer>
-            <InviteCodeLabel>{t("Leader's Invite Code")}</InviteCodeLabel>
-            <InputWrapper>
-              <StyledInput
-                value={inviteCode}
-                onChangeText={setInviteCode}
-                placeholder=""
-                placeholderTextColor={LuckySevens}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <ScanButton onPress={handleScanQR}>
-                <QrCodeSvg width={24} height={24} />
-              </ScanButton>
-            </InputWrapper>
-            <Button
-              buttonStyle="primary"
-              onPress={handleJoin}
-              disabled={!inviteCode.trim()}>
-              {t('Continue')}
-            </Button>
-          </InviteCodeContainer>
-          <AlreadySharedButton onPress={() => setCurrentStep(1)}>
-            <AlreadySharedText>{t('Check Session ID again')}</AlreadySharedText>
-          </AlreadySharedButton>
-        </InviteCodeSection>
+        <>
+          <QRSection>
+            <QRSectionContainer hideBorder fullWidth>
+              <InviteCodeContainer>
+                <InviteCodeLabel>{t("Leader's Invite Code")}</InviteCodeLabel>
+                <InputWrapper>
+                  <StyledInput
+                    value={inviteCode}
+                    onChangeText={setInviteCode}
+                    placeholder=""
+                    placeholderTextColor={LuckySevens}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <ScanButton onPress={handleScanQR}>
+                    <QrCodeSvg width={24} height={24} />
+                  </ScanButton>
+                </InputWrapper>
+                <Button
+                  buttonStyle="primary"
+                  onPress={handleJoin}
+                  disabled={!inviteCode.trim()}>
+                  {t('Continue')}
+                </Button>
+              </InviteCodeContainer>
+              <ShareContainer style={{opacity: 0, pointerEvents: 'none'}}>
+                <ShareButton disabled>
+                  <ShareIcon
+                    width={20}
+                    height={20}
+                    fill={theme.dark ? LinkBlue : Action}
+                  />
+                  <ShareButtonText>{t('Share Session ID')}</ShareButtonText>
+                </ShareButton>
+              </ShareContainer>
+            </QRSectionContainer>
+          </QRSection>
+        </>
       );
       // }
 
@@ -676,7 +730,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
         <StepsContainer>
           <StepsSectionTitle>{t('Setting Up Your Wallet')}</StepsSectionTitle>
 
-          <StepRow>
+          <StepRowWithButton>
             <StepRail>
               <StepIndicator
                 active={currentStep === 1 || currentStep === 0}
@@ -690,13 +744,25 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
               <StepConnector completed={currentStep > 1} />
             </StepRail>
 
-            <StepContent>
+            <StepContentWithButton>
               <StepTitle>{t('Share Session ID')}</StepTitle>
               <StepSubtitle>
                 {t('Share your session ID with the leader')}
               </StepSubtitle>
-            </StepContent>
-          </StepRow>
+            </StepContentWithButton>
+
+            {currentStep === 1 && sessionId && (
+              <ContinuePillButton
+                onPress={() => setCurrentStep(2)}
+                disabled={!hasClickedShare}
+                style={{
+                  opacity: hasClickedShare ? 1 : 0,
+                  pointerEvents: hasClickedShare ? 'auto' : 'none',
+                }}>
+                <ContinuePillText>{t('Next')}</ContinuePillText>
+              </ContinuePillButton>
+            )}
+          </StepRowWithButton>
 
           <StepRow>
             <StepRail>
