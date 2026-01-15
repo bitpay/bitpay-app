@@ -72,6 +72,8 @@ import {
   Key,
   TransactionProposal,
   Wallet,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../store/wallet/wallet.models';
 import {
   DetailColumn,
@@ -87,6 +89,12 @@ import {useOngoingProcess, usePaymentSent} from '../../../contexts';
 import {logManager} from '../../../managers/LogManager';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import {
+  isTSSKey,
+  joinTSSSigningSession,
+} from '../../../store/wallet/effects/tss-send/tss-send';
+import TSSProgressTracker from '../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
 const TxpDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -123,6 +131,7 @@ const TimelineBorderLeft = styled.View<{isFirst: boolean; isLast: boolean}>`
   width: 1px;
   z-index: -1;
 `;
+
 const TimelineTime = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
@@ -228,6 +237,37 @@ const TransactionProposalDetails = () => {
   const [isForFee, setIsForFee] = useState(false);
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const isTSSWallet = isTSSKey(key);
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+
+  const tssCallbacks = useTSSCallbacks({
+    wallet,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage,
+  });
 
   const title = getDetailsTitle(transaction, wallet);
   let {currencyAbbreviation, chain, network, tokenAddress} = wallet;
@@ -342,7 +382,6 @@ const TransactionProposalDetails = () => {
       setPaymentExpired(true);
       setRemainingTimeStr(t('Expired'));
       if (countDown) {
-        /* later */
         clearInterval(countDown);
       }
       return;
@@ -379,7 +418,6 @@ const TransactionProposalDetails = () => {
       };
       const targetAmount = wallet.balance.sat - (fee + amount);
       setTimeout(() => {
-        // show refresing in wallet details view
         DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
         dispatch(
           waitForTargetAmountAndUpdateWallet({
@@ -481,7 +519,69 @@ const TransactionProposalDetails = () => {
     }
   };
 
+  const joinTSSSigning = async () => {
+    try {
+      logManager.debug(
+        `[TxpDetails] Joining TSS signing session for txp: ${txp.id}`,
+      );
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
+      setTssStatus('initializing');
+
+      const result = await dispatch(
+        joinTSSSigningSession({
+          key,
+          wallet,
+          txp,
+          callbacks: tssCallbacks,
+          setShowTSSProgressModal,
+        }),
+      );
+
+      setTssStatus('complete');
+      await sleep(1500);
+      setShowTSSProgressModal(false);
+
+      // Update wallet status
+      const {fee, amount} = result as {fee: number; amount: number};
+      const targetAmount = wallet.balance.sat - (fee + amount);
+      setTimeout(() => {
+        DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
+        dispatch(
+          waitForTargetAmountAndUpdateWallet({
+            key,
+            wallet,
+            targetAmount,
+          }),
+        );
+      }, 3000);
+
+      showPaymentSent({
+        onCloseModal,
+        title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
+      });
+
+      await sleep(1000);
+      navigation.goBack();
+    } catch (err) {
+      logManager.error(`[TxpDetails] TSS join error: ${err}`);
+      setShowTSSProgressModal(false);
+      setResetSwipeButton(true);
+
+      await showErrorMessage(
+        CustomErrorMessage({
+          errMsg: BWCErrorMessage(err),
+          title: t('Uh oh, something went wrong'),
+        }),
+      );
+    }
+  };
+
   const onSwipeComplete = async () => {
+    if (isTSSWallet) {
+      await joinTSSSigning();
+      return;
+    }
+
     try {
       await sleep(400);
       await dispatch(
@@ -560,15 +660,6 @@ const TransactionProposalDetails = () => {
       }
     };
   }, []);
-
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
-
   return (
     <TxpDetailsContainer>
       {isLoading ? (
@@ -682,14 +773,27 @@ const TransactionProposalDetails = () => {
           <DetailContainer>
             <H6>{t('DETAILS')}</H6>
           </DetailContainer>
-          <Hr />
+          {!isTSSWallet && <Hr />}
+
+          {isTSSWallet && (
+            <TSSProgressTracker
+              status={tssStatus}
+              progress={tssProgress}
+              createdBy={wallet.walletName || 'You'}
+              date={new Date()}
+              wallet={wallet}
+              copayers={tssCopayers}
+              onCopayersInitialized={setTssCopayers}
+              isModalVisible={showTSSProgressModal}
+              onModalVisibilityChange={setShowTSSProgressModal}
+            />
+          )}
 
           {txp.nonce ? (
             <>
               <DetailContainer>
                 <DetailRow>
                   <H7>{t('Nonce')}</H7>
-
                   <H7>{txp.nonce}</H7>
                 </DetailRow>
               </DetailContainer>
@@ -779,7 +883,6 @@ const TransactionProposalDetails = () => {
               <DetailContainer>
                 <DetailRow>
                   <H7>{t('Created by')}</H7>
-
                   <H7>{txp.creatorName}</H7>
                 </DetailRow>
               </DetailContainer>
@@ -808,8 +911,6 @@ const TransactionProposalDetails = () => {
               <Hr />
             </>
           ) : null}
-
-          {/*  TODO: Add Notify unconfirmed transaction  row */}
 
           {payProDetails ? (
             <>
@@ -873,7 +974,13 @@ const TransactionProposalDetails = () => {
       (!txp.payProUrl ||
         (payProDetails && !payproIsLoading && !paymentExpired)) ? (
         <SwipeButton
-          title={lastSigner ? t('Slide to send') : t('Slide to accept')}
+          title={
+            isTSSWallet
+              ? t('Slide to join signing')
+              : lastSigner
+              ? t('Slide to send')
+              : t('Slide to accept')
+          }
           forceReset={resetSwipeButton}
           onSwipeComplete={onSwipeComplete}
         />

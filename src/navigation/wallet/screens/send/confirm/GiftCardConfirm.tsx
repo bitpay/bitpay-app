@@ -21,6 +21,8 @@ import {
   TransactionProposal,
   TxDetails,
   Wallet,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
@@ -96,6 +98,10 @@ import {
 import GiftCardDiscountText from '../../../../../navigation/tabs/shop/components/GiftCardDiscountText';
 import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
 import {useOngoingProcess} from '../../../../../contexts';
+import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import TSSProgressTracker from '../../../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
+import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -204,6 +210,36 @@ const Confirm = () => {
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const isTSSWallet = key ? isTSSKey(key) : false;
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+  const tssCallbacks = useTSSCallbacks({
+    wallet: wallet!,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage,
+  });
 
   const unsoldGiftCard = giftCards.find(
     giftCard => giftCard.invoiceId === txp?.invoiceID,
@@ -466,6 +502,12 @@ const Confirm = () => {
     transport?: Transport;
   }) => {
     const isUsingHardwareWallet = !!transport;
+
+    if (isTSSWallet) {
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
+      setTssStatus('initializing');
+    }
+
     try {
       if (isUsingHardwareWallet) {
         if (txp && wallet && recipient) {
@@ -514,6 +556,8 @@ const Confirm = () => {
                 key,
                 wallet,
                 recipient,
+                ...(isTSSWallet && {tssCallbacks}),
+                ...(isTSSWallet && {setShowTSSProgressModal}),
               }),
             )
           : await dispatch(
@@ -524,8 +568,18 @@ const Confirm = () => {
               ),
             );
       }
+
+      if (isTSSWallet) {
+        setTssStatus('complete');
+        await sleep(1500);
+        setShowTSSProgressModal(false);
+      }
+
       await redeemGiftCardAndNavigateToGiftCardDetails();
     } catch (err: any) {
+      if (isTSSWallet) {
+        setShowTSSProgressModal(false);
+      }
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -707,6 +761,19 @@ const Confirm = () => {
         {wallet || coinbaseAccount ? (
           <>
             <Header hr>Summary</Header>
+            {isTSSWallet && wallet && (
+              <TSSProgressTracker
+                status={tssStatus}
+                progress={tssProgress}
+                createdBy={sendingFrom?.walletName || 'You'}
+                date={new Date()}
+                wallet={wallet}
+                copayers={tssCopayers}
+                onCopayersInitialized={setTssCopayers}
+                isModalVisible={showTSSProgressModal}
+                onModalVisibilityChange={setShowTSSProgressModal}
+              />
+            )}
             <SendingFrom
               sender={sendingFrom!}
               onPress={openWalletSelector}

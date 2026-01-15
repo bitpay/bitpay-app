@@ -9,7 +9,7 @@ import {
   WalletObj,
 } from '../wallet.models';
 import {Rates} from '../../rate/rate.models';
-import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
 import {
   BitpaySupportedCoins,
   BitpaySupportedMaticTokens,
@@ -135,6 +135,7 @@ export const buildWalletObj = (
     hardwareData = {},
     singleAddress,
     receiveAddress,
+    tssKeyId,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -158,6 +159,7 @@ export const buildWalletObj = (
     };
     singleAddress: boolean;
     receiveAddress?: string;
+    tssKeyId?: string;
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
@@ -212,6 +214,34 @@ export const buildWalletObj = (
     hardwareData,
     singleAddress,
     receiveAddress,
+    tssKeyId,
+  };
+};
+
+export const buildTssKeyObj = ({
+  tssKey,
+  wallets,
+  keyName,
+}: {
+  tssKey: any;
+  wallets: Wallet[];
+  keyName?: string;
+}): Key => {
+  const cleanProperties = tssKey.toObj();
+  delete cleanProperties.privateKeyShare;
+  return {
+    id: tssKey.id,
+    wallets,
+    properties: cleanProperties,
+    methods: tssKey,
+    totalBalance: 0,
+    totalBalanceLastDay: 0,
+    isPrivKeyEncrypted: tssKey.isPrivKeyEncrypted(),
+    backupComplete: true,
+    keyName:
+      keyName || `TSS Key (${tssKey.metadata.m}-of-${tssKey.metadata.n})`,
+    hideKeyBalance: false,
+    isReadOnly: false,
   };
 };
 
@@ -875,7 +905,9 @@ export const getAllWalletClients = (keys: {
           key.wallets
             .filter(
               wallet =>
-                !wallet.credentials.token && wallet.credentials.isComplete(),
+                !wallet.credentials.token &&
+                wallet.credentials.isComplete() &&
+                !wallet.pendingTssSession,
             )
             .forEach(walletClient => {
               walletClients.push(walletClient);
@@ -1039,7 +1071,7 @@ export const buildUIFormattedWallet: (
       credentials.n > 1
         ? `- Multisig ${credentials.m}/${credentials.n}`
         : undefined,
-    isComplete: credentials.isComplete(),
+    isComplete: credentials.isComplete() && !wallet.pendingTssSession,
     receiveAddress,
     account: credentials.account,
   } as WalletRowProps;
@@ -1174,7 +1206,8 @@ export const buildAccountList = (
               ?.toLowerCase()
               ?.includes(searchInput.toLowerCase())
           : true,
-        isComplete: wallet.credentials.isComplete(),
+        isComplete:
+          wallet.credentials.isComplete() && !wallet.pendingTssSession,
       };
 
       const allMatch = Object.values(matches).every(Boolean);
@@ -1185,7 +1218,7 @@ export const buildAccountList = (
     }
 
     if (opts?.filterByComplete) {
-      if (!wallet.credentials.isComplete()) {
+      if (!wallet.credentials.isComplete() && wallet.pendingTssSession) {
         return;
       }
     }
@@ -1216,7 +1249,11 @@ export const buildAccountList = (
 
     let accountKey = receiveAddress;
 
-    if (!accountKey && !wallet?.credentials?.isComplete()) {
+    if (
+      !accountKey &&
+      !wallet?.credentials?.isComplete() &&
+      wallet.pendingTssSession
+    ) {
       // Workaround for incomplete multisig wallets
       accountKey = walletId;
     }

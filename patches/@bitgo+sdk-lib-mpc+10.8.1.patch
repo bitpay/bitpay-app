@@ -1,0 +1,780 @@
+diff --git a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js
+index d4075db..f611457 100644
+--- a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js
++++ b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dkg.js
+@@ -51,7 +51,9 @@ class Dkg {
+     }
+     async loadDklsWasm() {
+         if (!this.dklsWasm) {
+-            this.dklsWasm = await Promise.resolve().then(() => __importStar(require('@silencelaboratories/dkls-wasm-ll-node')));
++            const shim = await require('@silencelaboratories/dkls-wasm-ll-web');
++            // await shim.default();
++            this.dklsWasm = shim;
+         }
+     }
+     getDklsWasm() {
+@@ -60,12 +62,13 @@ class Dkg {
+         }
+         return this.dklsWasm;
+     }
+-    _restoreSession() {
++    async _restoreSession() {
+         if (!this.dkgSession) {
+-            this.dkgSession = this.getDklsWasm().KeygenSession.fromBytes(this.dkgSessionBytes);
++            this.dkgSession = await this.getDklsWasm().KeygenSession.fromBytes(this.dkgSessionBytes);
+         }
+     }
+-    _createDKLsRetrofitKeyShare() {
++    async _createDKLsRetrofitKeyShare() {
++
+         if (this.retrofitData) {
+             if (!this.retrofitData.xShare.y || !this.retrofitData.xShare.chaincode || !this.retrofitData.xShare.x) {
+                 throw Error('xShare must have a public key, private share value, and a chaincode.');
+@@ -75,6 +78,7 @@ class Dkg {
+                 xiList.push(Array.from((0, util_1.bigIntToBufferBE)(BigInt(i + 1), 32)));
+             }
+             const secp256k1 = new curves_1.Secp256k1Curve();
++
+             const dklsKeyShare = {
+                 total_parties: this.n,
+                 threshold: this.t,
+@@ -93,14 +97,17 @@ class Dkg {
+                 big_s_list: new Array(this.n).fill(Array.from((0, util_1.bigIntToBufferBE)(secp256k1.basePointMult(BigInt('0x' + this.retrofitData.xShare.x))))),
+                 x_i_list: this.retrofitData.xiList ? this.retrofitData.xiList : xiList,
+             };
+-            this.dklsKeyShareRetrofitObject = this.getDklsWasm().Keyshare.fromBytes((0, cbor_x_1.encode)(dklsKeyShare));
++
++            this.dklsKeyShareRetrofitObject = await this.getDklsWasm().Keyshare.fromBytes((0, cbor_x_1.encode)(dklsKeyShare));
+         }
+     }
+-    _deserializeState() {
++    async _deserializeState() {
+         if (!this.dkgSession) {
+             throw Error('Session not intialized');
+         }
+-        const round = (0, cbor_x_1.decode)(this.dkgSession.toBytes()).round;
++        const sessionBytes = await this.dkgSession.toBytes();
++        const round = (0, cbor_x_1.decode)(sessionBytes).round;
++
+         switch (round) {
+             case 'WaitMsg1':
+                 this.dkgState = types_1.DkgState.Round1;
+@@ -132,38 +139,43 @@ class Dkg {
+         if (this.dkgState != types_1.DkgState.Uninitialized) {
+             throw Error('DKG session already initialized');
+         }
+-        if (typeof window !== 'undefined' &&
+-            /* checks for electron processes */
+-            !window.process &&
+-            !window.process?.['type']) {
+-            /* This is only needed for browsers/web because it uses fetch to resolve the wasm asset for the web */
+-            const initDkls = await Promise.resolve().then(() => __importStar(require('@silencelaboratories/dkls-wasm-ll-web')));
+-            await initDkls.default();
+-        }
+-        this._createDKLsRetrofitKeyShare();
+-        if (this.seed && this.seed.length !== 32) {
+-            throw Error(`Seed should be 32 bytes, got ${this.seed.length}.`);
+-        }
++        await this._createDKLsRetrofitKeyShare();
++          
+         const { KeygenSession } = this.getDklsWasm();
++        
+         if (this.dklsKeyShareRetrofitObject) {
+             this.dkgSession = this.seed
+-                ? KeygenSession.initKeyRotation(this.dklsKeyShareRetrofitObject, new Uint8Array(this.seed))
+-                : KeygenSession.initKeyRotation(this.dklsKeyShareRetrofitObject);
+-        }
+-        else {
++                ? await KeygenSession.initKeyRotation(this.dklsKeyShareRetrofitObject, new Uint8Array(this.seed))
++                : await KeygenSession.initKeyRotation(this.dklsKeyShareRetrofitObject);
++          } else {
+             this.dkgSession = this.seed
+                 ? new KeygenSession(this.n, this.t, this.partyIdx, new Uint8Array(this.seed))
+                 : new KeygenSession(this.n, this.t, this.partyIdx);
+-        }
+-        try {
+-            const payload = this.dkgSession.createFirstMessage().payload;
+-            this.dkgSessionBytes = this.dkgSession.toBytes();
+-            this._deserializeState();
++          }
++          try {
++            const firstMsg = await this.dkgSession.createFirstMessage();
++            
++            let payload;
++            try {
++                payload = await firstMsg.payload();
++            } catch (e1) {
++                try {
++                    payload = firstMsg.payload();
++                } catch (e2) {
++                    payload = firstMsg.payload;
++                }
++            }
++            
++            try { await firstMsg.free?.(); } catch {}
++            
++            this.dkgSessionBytes = await this.dkgSession.toBytes();
++            await this._deserializeState();
++            
+             return {
+                 payload: payload,
+                 from: this.partyIdx,
+             };
+-        }
++          }
+         catch (e) {
+             throw Error(`Error while creating the first message from party ${this.partyIdx}: ${e}`);
+         }
+@@ -189,86 +201,205 @@ class Dkg {
+         const encodedKeyShare = (0, cbor_x_1.encode)(reducedKeyShare);
+         return encodedKeyShare;
+     }
+-    handleIncomingMessages(messagesForIthRound) {
++    async handleIncomingMessages(messagesForIthRound) {
+         let nextRoundMessages = [];
+         let nextRoundDeserializedMessages = { broadcastMessages: [], p2pMessages: [] };
+-        this._restoreSession();
+-        if (!this.dkgSession) {
+-            throw Error('Session not initialized');
+-        }
+-        const { Message } = this.getDklsWasm();
++        
+         try {
+-            if (this.dkgState === types_1.DkgState.Round3) {
+-                const commitmentsUnsorted = messagesForIthRound.p2pMessages
+-                    .map((m) => {
+-                    return { from: m.from, commitment: m.commitment };
+-                })
+-                    .concat([{ from: this.partyIdx, commitment: this.chainCodeCommitment }]);
+-                const commitmentsSorted = commitmentsUnsorted
+-                    .sort((a, b) => {
+-                    return a.from - b.from;
+-                })
+-                    .map((c) => c.commitment);
+-                nextRoundMessages = this.dkgSession.handleMessages(messagesForIthRound.broadcastMessages
+-                    .map((m) => new Message(m.payload, m.from, undefined))
+-                    .concat(messagesForIthRound.p2pMessages.map((m) => new Message(m.payload, m.from, m.to))), commitmentsSorted);
++            await this._restoreSession();
++            
++            if (!this.dkgSession) {
++                throw Error('Session not initialized');
+             }
+-            else {
+-                nextRoundMessages = this.dkgSession.handleMessages(messagesForIthRound.broadcastMessages
+-                    .map((m) => new Message(m.payload, m.from, undefined))
+-                    .concat(messagesForIthRound.p2pMessages.map((m) => new Message(m.payload, m.from, m.to))), undefined);
++            
++            const { Message } = this.getDklsWasm();
++            
++            const broadcastInstances = [];
++            for (const m of messagesForIthRound.broadcastMessages) {
++                const msg = new Message(m.payload, m.from, undefined);
++                
++                if (msg._ready) {
++                    await msg._ready;
++                }
++                
++                broadcastInstances.push(msg);
++            }
++    
++            const p2pInstances = [];
++            for (const m of messagesForIthRound.p2pMessages) {
++                const msg = new Message(m.payload, m.from, m.to);
++                
++                if (msg._ready) {
++                    await msg._ready;
++                }
++                
++                p2pInstances.push(msg);
++            }
++    
++            const allMessages = broadcastInstances.concat(p2pInstances);
++            
++            if (this.dkgState === types_1.DkgState.Round3) {
++                if (!this.dkgSession) {
++                    throw new Error('No hay sesión DKG en Round 3');
++                }
++                
++                if (!this.chainCodeCommitment) {
++                    throw new Error('Missing own chainCodeCommitment in Round 3');
++                }
++                
++                const missingCommitments = messagesForIthRound.p2pMessages.filter(m => !m.commitment);
++                if (missingCommitments.length > 0) {
++                    throw new Error(`Missing commitments from parties: ${missingCommitments.map(m => m.from).join(', ')}`);
++                }
++                
++                const commitments = [];
++                
++                for (let partyId = 0; partyId < this.n; partyId++) {
++                    if (partyId === this.partyIdx) {
++                        commitments.push(this.chainCodeCommitment);
++                    } else {
++                        const msg = messagesForIthRound.p2pMessages.find(m => m.from === partyId);
++                        if (!msg || !msg.commitment) {
++                            throw new Error(`Missing commitment from party ${partyId}`);
++                        }
++                        commitments.push(msg.commitment);
++                    }
++                }
++                
++                nextRoundMessages = await this.dkgSession.handleMessages(
++                    allMessages,
++                    commitments
++                );
++                
++            } else {
++                nextRoundMessages = await this.dkgSession.handleMessages(
++                    allMessages,
++                    undefined
++                );
+             }
++            
+             if (this.dkgState === types_1.DkgState.Round4) {
+-                this.dkgKeyShare = this.dkgSession.keyshare();
+-                this.keyShareBuff = Buffer.from(this.dkgKeyShare.toBytes());
+-                this.dkgKeyShare.free();
+-                if (this.dklsKeyShareRetrofitObject) {
+-                    this.dklsKeyShareRetrofitObject.free();
++                this.dkgKeyShare = await this.dkgSession.keyshare();
++                
++                let keyShareBytes;
++                if (typeof this.dkgKeyShare.toBytes === 'function') {
++                    keyShareBytes = await this.dkgKeyShare.toBytes();
++                } else if (this.dkgKeyShare instanceof Uint8Array) {
++                    keyShareBytes = this.dkgKeyShare;
++                } else if (Array.isArray(this.dkgKeyShare)) {
++                    keyShareBytes = new Uint8Array(this.dkgKeyShare);
++                } else {
++                    throw new Error('Cannot get bytes from keyshare');
++                }
++                
++                this.keyShareBuff = Buffer.from(keyShareBytes);
++                
++                if (typeof this.dkgKeyShare.free === 'function') {
++                    await this.dkgKeyShare.free();
+                 }
++                if (this.dklsKeyShareRetrofitObject?.free) {
++                    await this.dklsKeyShareRetrofitObject.free();
++                }
++                
+                 this.dkgState = types_1.DkgState.Complete;
+                 return { broadcastMessages: [], p2pMessages: [] };
++            } else {
++                await this._deserializeState();
+             }
+-            else {
+-                // Update round data.
+-                this._deserializeState();
+-            }
++            
+             if (this.dkgState === types_1.DkgState.Round2) {
+-                this.chainCodeCommitment = this.dkgSession.calculateChainCodeCommitment();
++                const commitmentResult = this.dkgSession.calculateChainCodeCommitment();
++                
++                if (commitmentResult && typeof commitmentResult.then === 'function') {
++                    this.chainCodeCommitment = await commitmentResult;
++                } else {
++                    this.chainCodeCommitment = commitmentResult;
++                }
++                
++                if (!(this.chainCodeCommitment instanceof Uint8Array)) {
++                    this.chainCodeCommitment = new Uint8Array(this.chainCodeCommitment);
++                }
++            }
++            
++            const p2pMessagesWithPayloads = [];
++            for (const m of nextRoundMessages) {
++                let to_id_value;
++                if (typeof m.to_id === 'function') {
++                    const result = m.to_id();
++                    to_id_value = (result && typeof result.then === 'function') ? await result : result;
++                } else {
++                    to_id_value = m.to_id;
++                }
++                
++                if (to_id_value === undefined) continue;
++                
++                let payload;
++                if (typeof m.payload === 'function') {
++                    const result = m.payload();
++                    payload = (result && typeof result.then === 'function') ? await result : result;
++                } else {
++                    payload = m.payload;
++                }
++                
++                let from_id;
++                if (typeof m.from_id === 'function') {
++                    const result = m.from_id();
++                    from_id = (result && typeof result.then === 'function') ? await result : result;
++                } else {
++                    from_id = m.from_id;
++                }
++                
++                p2pMessagesWithPayloads.push({
++                    payload: new Uint8Array(payload),
++                    from: from_id,
++                    to: to_id_value,
++                    commitment: this.chainCodeCommitment,
++                });
++            }
++            
++            const broadcastMessagesWithPayloads = [];
++            for (const m of nextRoundMessages) {
++                const to_id_value = typeof m.to_id === 'function' ? await m.to_id() : m.to_id;
++                if (to_id_value !== undefined) continue;
++                
++                const payload = await m.payload();
++                const from_id = typeof m.from_id === 'function' ? await m.from_id() : m.from_id;
++                
++                broadcastMessagesWithPayloads.push({
++                    payload: new Uint8Array(payload),
++                    from: from_id,
++                });
+             }
++            
+             nextRoundDeserializedMessages = {
+-                p2pMessages: nextRoundMessages
+-                    .filter((m) => m.to_id !== undefined)
+-                    .map((m) => {
+-                    const p2pReturn = {
+-                        payload: m.payload,
+-                        from: m.from_id,
+-                        to: m.to_id,
+-                        commitment: this.chainCodeCommitment,
+-                    };
+-                    return p2pReturn;
+-                }),
+-                broadcastMessages: nextRoundMessages
+-                    .filter((m) => m.to_id === undefined)
+-                    .map((m) => {
+-                    const broadcastReturn = {
+-                        payload: m.payload,
+-                        from: m.from_id,
+-                    };
+-                    return broadcastReturn;
+-                }),
++                p2pMessages: p2pMessagesWithPayloads,
++                broadcastMessages: broadcastMessagesWithPayloads,
+             };
+-        }
+-        catch (e) {
+-            throw Error(`Error while creating messages from party ${this.partyIdx}, round ${this.dkgState}: ${e}`);
+-        }
+-        finally {
+-            nextRoundMessages.forEach((m) => m.free());
+-            // Session is freed when keyshare is called.
+-            if (this.dkgState !== types_1.DkgState.Complete) {
+-                this.dkgSessionBytes = this.dkgSession.toBytes();
+-                this.dkgSession = undefined;
++            
++        } catch (e) {
++            throw Error(`Error while creating messages from party ${this.partyIdx}, round ${this.dkgState}: ${e.message}`);
++        } finally {
++            for (const m of nextRoundMessages) {
++                if (m && typeof m.free === 'function') {
++                    try {
++                        await m.free();
++                    } catch (err) {
++                    }
++                }
++            }
++            
++            if (this.dkgState !== types_1.DkgState.Round4 && 
++                this.dkgState !== types_1.DkgState.Complete) {
++                try {
++                    this.dkgSessionBytes = await this.dkgSession.toBytes();
++                } catch (serError) {
++                    if (this.dkgState !== types_1.DkgState.Round4) {
++                        throw serError;
++                    }
++                }
+             }
+         }
++        
+         return nextRoundDeserializedMessages;
+     }
+     /**
+@@ -313,7 +444,7 @@ class Dkg {
+         if (sessionData.keyShareBuff) {
+             dkg.keyShareBuff = sessionData.keyShareBuff;
+         }
+-        dkg._restoreSession();
++        await dkg._restoreSession();
+         return dkg;
+     }
+ }
+diff --git a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dsg.js b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dsg.js
+index 42b0316..6be39e6 100644
+--- a/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dsg.js
++++ b/node_modules/@bitgo/sdk-lib-mpc/dist/src/tss/ecdsa-dkls/dsg.js
+@@ -45,27 +45,34 @@ class Dsg {
+         this.messageHash = messageHash;
+         this.dklsWasm = dklsWasm ?? null;
+     }
+-    _restoreSession() {
++    
++    async _restoreSession() {
+         if (!this.dsgSession) {
+-            this.dsgSession = this.getDklsWasm().SignSessionOTVariant.fromBytes(this.dsgSessionBytes);
++            this.dsgSession = await this.getDklsWasm().SignSessionOTVariant.fromBytes(this.dsgSessionBytes);
+         }
+     }
+-    _deserializeState() {
++    
++    async _deserializeState() {
+         if (!this.dsgSession) {
+             throw Error('Session not intialized');
+         }
+-        const round = (0, cbor_x_1.decode)(this.dsgSession.toBytes()).round;
+-        switch (round) {
+-            case 'WaitMsg1':
++        const sessionBytes = await this.dsgSession.toBytes();
++        const round = (0, cbor_x_1.decode)(sessionBytes).round;
++        
++        switch (true) {
++            case round === 'WaitMsg1':
+                 this.dsgState = types_1.DsgState.Round1;
+                 break;
+-            case 'WaitMsg2':
++            case round === 'WaitMsg2':
+                 this.dsgState = types_1.DsgState.Round2;
+                 break;
+-            case 'WaitMsg3':
++            case round === 'WaitMsg3':
+                 this.dsgState = types_1.DsgState.Round3;
+                 break;
+-            case 'Ended':
++            case 'WaitMsg4' in round:
++                this.dsgState = types_1.DsgState.Round4;
++                break;
++            case round === 'Ended':
+                 this.dsgState = types_1.DsgState.Complete;
+                 break;
+             default:
+@@ -73,17 +80,22 @@ class Dsg {
+                 throw Error(`Invalid State: ${round}`);
+         }
+     }
++    
+     async loadDklsWasm() {
+         if (!this.dklsWasm) {
+-            this.dklsWasm = await Promise.resolve().then(() => __importStar(require('@silencelaboratories/dkls-wasm-ll-node')));
++            const shim = await Promise.resolve().then(() => __importStar(require('@silencelaboratories/dkls-wasm-ll-web')));
++            await shim.default();
++            this.dklsWasm = shim;
+         }
+     }
++    
+     getDklsWasm() {
+         if (!this.dklsWasm) {
+             throw Error('DKLS wasm not loaded');
+         }
+         return this.dklsWasm;
+     }
++
+     /**
+      * Returns the current DSG session as a base64 string.
+      * @returns {string} - base64 string of the current DSG session
+@@ -91,6 +103,7 @@ class Dsg {
+     getSession() {
+         return Buffer.from(this.dsgSessionBytes).toString('base64');
+     }
++
+     /**
+      * Sets the DSG session from a base64 string.
+      * @param {string} session - base64 string of the DSG session
+@@ -120,6 +133,7 @@ class Dsg {
+         }
+         this.dsgSessionBytes = sessionBytes;
+     }
++
+     async init() {
+         if (this.dsgState !== types_1.DsgState.Uninitialized) {
+             throw Error('DSG session already initialized');
+@@ -127,140 +141,221 @@ class Dsg {
+         if (!this.dklsWasm) {
+             await this.loadDklsWasm();
+         }
+-        if (typeof window !== 'undefined' &&
+-            /* checks for electron processes */
+-            !window.process &&
+-            !window.process?.['type']) {
+-            /* This is only needed for browsers/web because it uses fetch to resolve the wasm asset for the web */
+-            const initDkls = await Promise.resolve().then(() => __importStar(require('@silencelaboratories/dkls-wasm-ll-web')));
+-            await initDkls.default();
+-        }
++        
+         const { Keyshare, SignSessionOTVariant } = this.getDklsWasm();
+-        const keyShare = Keyshare.fromBytes(this.keyShareBytes);
+-        if (keyShare.partyId !== this.partyIdx) {
+-            throw Error(`Party index: ${this.partyIdx} does not match key share partyId: ${keyShare.partyId} `);
++        const keyShare = await Keyshare.fromBytes(this.keyShareBytes);
++        
++        const keySharePartyId = await keyShare.partyId();
++        
++        if (keySharePartyId !== this.partyIdx) {
++            throw Error(`Party index: ${this.partyIdx} does not match key share partyId: ${keySharePartyId} `);
+         }
++        
+         this.dsgSession = new SignSessionOTVariant(keyShare, this.derivationPath);
++        
+         try {
+-            const payload = this.dsgSession.createFirstMessage().payload;
+-            this._deserializeState();
+-            this.dsgSessionBytes = this.dsgSession.toBytes();
++            const firstMsg = await this.dsgSession.createFirstMessage();
++            
++            const payload = await firstMsg.payload();
++            
++            try { await firstMsg.free?.(); } catch {}
++            
++            await this._deserializeState();
++            this.dsgSessionBytes = await this.dsgSession.toBytes();
+             this.dsgSession = undefined;
++            
+             return {
+                 payload: payload,
+                 from: this.partyIdx,
+             };
+         }
+         catch (e) {
+-            throw Error(`Error while creating the first message from party ${this.partyIdx}: ${e}`);
++            throw Error(`Error while creating the first message from party ${this.partyIdx}: ${e.message}`);
+         }
+     }
++
+     get signature() {
+         if (!this._signature) {
+             throw Error('Can not request signature. Signature not produced yet.');
+         }
+         return this._signature;
+     }
++
+     /**
+      * Ends the DSG session by freeing any heap allocations from wasm. Note that the session is freed if a signature is produced.
+      */
+-    endSession() {
++    async endSession() {
+         if (this._signature) {
+             new Error('Session already ended because combined signature was produced.');
+         }
+         if (this.dsgSession) {
+-            this.dsgSession.free();
++            if (typeof this.dsgSession.free === 'function') {
++                await this.dsgSession.free();
++            }
+         }
+         this.dsgState = types_1.DsgState.Uninitialized;
+     }
++
+     /**
+      * Proccesses incoming messages to this party in the DKLs DSG protocol and
+      * produces messages from this party to other parties for the next round.
+      * @param messagesForIthRound - messages to process the current round
+      * @returns {DeserializedMessages} - messages to send to other parties for the next round
+      */
+-    handleIncomingMessages(messagesForIthRound) {
++    async handleIncomingMessages(messagesForIthRound) {
+         let nextRoundMessages = [];
+         let nextRoundDeserializedMessages = { broadcastMessages: [], p2pMessages: [] };
+-        this._restoreSession();
+-        if (!this.dsgSession) {
+-            throw Error('Session not initialized');
+-        }
+-        const { Message } = this.getDklsWasm();
++        
+         try {
++            await this._restoreSession();
++            
++            if (!this.dsgSession) {
++                throw Error('Session not initialized');
++            }
++            
++            const { Message } = this.getDklsWasm();
++            
+             if (this.dsgState === types_1.DsgState.Round4) {
+                 this.dsgState = types_1.DsgState.Complete;
+-                const combineResult = this.dsgSession.combine(messagesForIthRound.broadcastMessages.map((m) => new Message(m.payload, m.from, undefined)));
++                
++                const messages = [];
++                for (const m of messagesForIthRound.broadcastMessages) {
++                    const msg = new Message(m.payload, m.from, undefined);
++                    
++                    if (msg._ready) {
++                        await msg._ready;
++                    }
++                    
++                    messages.push(msg);
++                }
++                
++                const combineResult = await this.dsgSession.combine(messages);
++                
+                 this._signature = {
+-                    R: combineResult[0],
+-                    S: combineResult[1],
++                    R: Buffer.from(combineResult[0]),
++                    S: Buffer.from(combineResult[1]),
+                 };
++                
+                 return { broadcastMessages: [], p2pMessages: [] };
+             }
+-            else {
+-                nextRoundMessages = this.dsgSession.handleMessages(messagesForIthRound.broadcastMessages
+-                    .map((m) => new Message(m.payload, m.from, undefined))
+-                    .concat(messagesForIthRound.p2pMessages.map((m) => new Message(m.payload, m.from, m.to))));
++            
++            const broadcastInstances = [];
++            for (const m of messagesForIthRound.broadcastMessages) {
++                const msg = new Message(m.payload, m.from, undefined);
++                
++                if (msg._ready) {
++                    await msg._ready;
++                }
++                
++                broadcastInstances.push(msg);
+             }
++
++            const p2pInstances = [];
++            for (const m of messagesForIthRound.p2pMessages) {
++                const msg = new Message(m.payload, m.from, m.to);
++                
++                if (msg._ready) {
++                    await msg._ready;
++                }
++                
++                p2pInstances.push(msg);
++            }
++
++            const allMessages = broadcastInstances.concat(p2pInstances);
++            
++            nextRoundMessages = await this.dsgSession.handleMessages(allMessages);
++            
+             if (this.dsgState === types_1.DsgState.Round3) {
+-                nextRoundMessages = [this.dsgSession.lastMessage(this.messageHash)];
++                nextRoundMessages = [await this.dsgSession.lastMessage(this.messageHash)];
+                 this.dsgState = types_1.DsgState.Round4;
++                
++                const payload = await nextRoundMessages[0].payload();
++                const from_id = await nextRoundMessages[0].from_id();
++                
++                const sessionBytes = await this.dsgSession.toBytes();
++                const signatureR = (0, cbor_x_1.decode)(sessionBytes).round.WaitMsg4.r;
++                
+                 return {
+                     broadcastMessages: [
+                         {
+-                            payload: nextRoundMessages[0].payload,
+-                            from: nextRoundMessages[0].from_id,
+-                            signatureR: (0, cbor_x_1.decode)(this.dsgSession.toBytes()).round.WaitMsg4.r,
++                            payload: new Uint8Array(payload),
++                            from: from_id,
++                            signatureR: signatureR,
+                         },
+                     ],
+                     p2pMessages: [],
+                 };
+-            }
+-            else {
++            } else {
+                 // Update round data.
+-                this._deserializeState();
++                await this._deserializeState();
++            }
++            
++            const p2pMessagesWithPayloads = [];
++            for (const m of nextRoundMessages) {
++                const to_id_value = await m.to_id?.();
++                
++                if (to_id_value === undefined) continue;
++                
++                const payload = await m.payload();
++                const from_id = await m.from_id();
++                
++                p2pMessagesWithPayloads.push({
++                    payload: new Uint8Array(payload),
++                    from: from_id,
++                    to: to_id_value,
++                });
+             }
++            
++            const broadcastMessagesWithPayloads = [];
++            for (const m of nextRoundMessages) {
++                const to_id_value = await m.to_id?.();
++                if (to_id_value !== undefined) continue;
++                
++                const payload = await m.payload();
++                const from_id = await m.from_id();
++                
++                broadcastMessagesWithPayloads.push({
++                    payload: new Uint8Array(payload),
++                    from: from_id,
++                });
++            }
++            
+             nextRoundDeserializedMessages = {
+-                p2pMessages: nextRoundMessages
+-                    .filter((m) => m.to_id !== undefined)
+-                    .map((m) => {
+-                    if (m.to_id === undefined) {
+-                        throw Error('Invalid P2P message, missing to_id.');
+-                    }
+-                    const p2pReturn = {
+-                        payload: m.payload,
+-                        from: m.from_id,
+-                        to: m.to_id,
+-                    };
+-                    return p2pReturn;
+-                }),
+-                broadcastMessages: nextRoundMessages
+-                    .filter((m) => m.to_id === undefined)
+-                    .map((m) => {
+-                    const broadcastReturn = {
+-                        payload: m.payload,
+-                        from: m.from_id,
+-                    };
+-                    return broadcastReturn;
+-                }),
++                p2pMessages: p2pMessagesWithPayloads,
++                broadcastMessages: broadcastMessagesWithPayloads,
+             };
++            
+         }
+         catch (e) {
+             if (e.message.startsWith('Abort the protocol and ban')) {
+                 throw Error('Signing aborted. Please stop all transaction signing from this wallet and contact support@bitgo.com.');
+             }
+-            throw Error(`Error while creating messages from party ${this.partyIdx}, round ${this.dsgState}: ${e}`);
++            throw Error(`Error while creating messages from party ${this.partyIdx}, round ${this.dsgState}: ${e.message}`);
+         }
+         finally {
+-            nextRoundMessages.forEach((m) => m.free());
++            for (const m of nextRoundMessages) {
++                if (m && typeof m.free === 'function') {
++                    try {
++                        await m.free();
++                    } catch (err) {
++                    }
++                }
++            }
++            
+             // Session is freed when combine is called.
+             if (this.dsgState !== types_1.DsgState.Complete) {
+-                this.dsgSessionBytes = this.dsgSession.toBytes();
++                try {
++                    this.dsgSessionBytes = await this.dsgSession.toBytes();
++                } catch (serError) {
++                    if (this.dsgState !== types_1.DsgState.Round4) {
++                        throw serError;
++                    }
++                }
+                 this.dsgSession = undefined;
+             }
+         }
++        
+         return nextRoundDeserializedMessages;
+     }
+ }
+ exports.Dsg = Dsg;
+-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZHNnLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vc3JjL3Rzcy9lY2RzYS1ka2xzL2RzZy50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFDQSxtQ0FBa0g7QUFDbEgsbUNBQWdDO0FBUWhDLE1BQWEsR0FBRztJQVdkLFlBQ0UsUUFBZ0IsRUFDaEIsUUFBZ0IsRUFDaEIsY0FBc0IsRUFDdEIsV0FBbUIsRUFDbkIsUUFBd0I7UUFSaEIsYUFBUSxHQUFhLGdCQUFRLENBQUMsYUFBYSxDQUFDO1FBVXBELElBQUksQ0FBQyxRQUFRLEdBQUcsUUFBUSxDQUFDO1FBQ3pCLElBQUksQ0FBQyxhQUFhLEdBQUcsUUFBUSxDQUFDO1FBQzlCLElBQUksQ0FBQyxjQUFjLEdBQUcsY0FBYyxDQUFDO1FBQ3JDLElBQUksQ0FBQyxXQUFXLEdBQUcsV0FBVyxDQUFDO1FBQy9CLElBQUksQ0FBQyxRQUFRLEdBQUcsUUFBUSxJQUFJLElBQUksQ0FBQztJQUNuQyxDQUFDO0lBRU8sZUFBZTtRQUNyQixJQUFJLENBQUMsSUFBSSxDQUFDLFVBQVUsRUFBRSxDQUFDO1lBQ3JCLElBQUksQ0FBQyxVQUFVLEdBQUcsSUFBSSxDQUFDLFdBQVcsRUFBRSxDQUFDLG9CQUFvQixDQUFDLFNBQVMsQ0FBQyxJQUFJLENBQUMsZUFBZSxDQUFDLENBQUM7UUFDNUYsQ0FBQztJQUNILENBQUM7SUFFTyxpQkFBaUI7UUFDdkIsSUFBSSxDQUFDLElBQUksQ0FBQyxVQUFVLEVBQUUsQ0FBQztZQUNyQixNQUFNLEtBQUssQ0FBQyx3QkFBd0IsQ0FBQyxDQUFDO1FBQ3hDLENBQUM7UUFDRCxNQUFNLEtBQUssR0FBRyxJQUFBLGVBQU0sRUFBQyxJQUFJLENBQUMsVUFBVSxDQUFDLE9BQU8sRUFBRSxDQUFDLENBQUMsS0FBSyxDQUFDO1FBQ3RELFFBQVEsS0FBSyxFQUFFLENBQUM7WUFDZCxLQUFLLFVBQVU7Z0JB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LEtBQUssS0FBSyxTQUFTLENBQUM7cUJBQ3BDLEdBQUcsQ0FBQyxDQUFDLENBQUMsRUFBRSxFQUFFO29CQUNULE1BQU0sZUFBZSxHQUFHO3dCQUN0QixPQUFPLEVBQUUsQ0FBQyxDQUFDLE9BQU87d0JBQ2xCLElBQUksRUFBRSxDQUFDLENBQUMsT0FBTztxQkFDaEIsQ0FBQztvQkFDRixPQUFPLGVBQWUsQ0FBQztnQkFDekIsQ0FBQyxDQUFDO2FBQ0wsQ0FBQztRQUNKLENBQUM7UUFBQyxPQUFPLENBQUMsRUFBRSxDQUFDO1lBQ1gsSUFBSSxDQUFDLENBQUMsT0FBTyxDQUFDLFVBQVUsQ0FBQyw0QkFBNEIsQ0FBQyxFQUFFLENBQUM7Z0JBQ3ZELE1BQU0sS0FBSyxDQUNULHNHQUFzRyxDQUN2RyxDQUFDO1lBQ0osQ0FBQztZQUNELE1BQU0sS0FBSyxDQUFDLDRDQUE0QyxJQUFJLENBQUMsUUFBUSxXQUFXLElBQUksQ0FBQyxRQUFRLEtBQUssQ0FBQyxFQUFFLENBQUMsQ0FBQztRQUN6RyxDQUFDO2dCQUFTLENBQUM7WUFDVCxpQkFBaUIsQ0FBQyxPQUFPLENBQUMsQ0FBQyxDQUFDLEVBQUUsRUFBRSxDQUFDLENBQUMsQ0FBQyxJQUFJLEVBQUUsQ0FBQyxDQUFDO1lBQzNDLDJDQUEyQztZQUMzQyxJQUFJLElBQUksQ0FBQyxRQUFRLEtBQUssZ0JBQVEsQ0FBQyxRQUFRLEVBQUUsQ0FBQztnQkFDeEMsSUFBSSxDQUFDLGVBQWUsR0FBRyxJQUFJLENBQUMsVUFBVSxDQUFDLE9BQU8sRUFBRSxDQUFDO2dCQUNqRCxJQUFJLENBQUMsVUFBVSxHQUFHLFNBQVMsQ0FBQztZQUM5QixDQUFDO1FBQ0gsQ0FBQztRQUNELE9BQU8sNkJBQTZCLENBQUM7SUFDdkMsQ0FBQztDQUNGO0FBOVBELGtCQThQQyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE1lc3NhZ2UsIFNpZ25TZXNzaW9uT1RWYXJpYW50IH0gZnJvbSAnQHNpbGVuY2VsYWJvcmF0b3JpZXMvZGtscy13YXNtLWxsLW5vZGUnO1xuaW1wb3J0IHsgRGVzZXJpYWxpemVkQnJvYWRjYXN0TWVzc2FnZSwgRGVzZXJpYWxpemVkRGtsc1NpZ25hdHVyZSwgRGVzZXJpYWxpemVkTWVzc2FnZXMsIERzZ1N0YXRlIH0gZnJvbSAnLi90eXBlcyc7XG5pbXBvcnQgeyBkZWNvZGUgfSBmcm9tICdjYm9yLXgnO1xuXG50eXBlIE5vZGVXYXNtZXIgPSB0eXBlb2YgaW1wb3J0KCdAc2lsZW5jZWxhYm9yYXRvcmllcy9ka2xzLXdhc20tbGwtbm9kZScpO1xudHlwZSBXZWJXYXNtZXIgPSB0eXBlb2YgaW1wb3J0KCdAc2lsZW5jZWxhYm9yYXRvcmllcy9ka2xzLXdhc20tbGwtd2ViJyk7XG50eXBlIEJ1bmRsZXJXYXNtZXIgPSB0eXBlb2YgaW1wb3J0KCdAc2lsZW5jZWxhYm9yYXRvcmllcy9ka2xzLXdhc20tbGwtYnVuZGxlcicpO1xuXG50eXBlIERrbHNXYXNtID0gTm9kZVdhc21lciB8IFdlYldhc21lciB8IEJ1bmRsZXJXYXNtZXI7XG5cbmV4cG9ydCBjbGFzcyBEc2cge1xuICBwcm90ZWN0ZWQgZHNnU2Vzc2lvbjogU2lnblNlc3Npb25PVFZhcmlhbnQgfCB1bmRlZmluZWQ7XG4gIHByb3RlY3RlZCBkc2dTZXNzaW9uQnl0ZXM6IFVpbnQ4QXJyYXk7XG4gIHByaXZhdGUgX3NpZ25hdHVyZTogRGVzZXJpYWxpemVkRGtsc1NpZ25hdHVyZSB8IHVuZGVmaW5lZDtcbiAgcHJvdGVjdGVkIGtleVNoYXJlQnl0ZXM6IEJ1ZmZlcjtcbiAgcHJvdGVjdGVkIG1lc3NhZ2VIYXNoOiBCdWZmZXI7XG4gIHByb3RlY3RlZCBkZXJpdmF0aW9uUGF0aDogc3RyaW5nO1xuICBwcm90ZWN0ZWQgcGFydHlJZHg6IG51bWJlcjtcbiAgcHJvdGVjdGVkIGRzZ1N0YXRlOiBEc2dTdGF0ZSA9IERzZ1N0YXRlLlVuaW5pdGlhbGl6ZWQ7XG4gIHByb3RlY3RlZCBka2xzV2FzbTogRGtsc1dhc20gfCBudWxsO1xuXG4gIGNvbnN0cnVjdG9yKFxuICAgIGtleVNoYXJlOiBCdWZmZXIsXG4gICAgcGFydHlJZHg6IG51bWJlcixcbiAgICBkZXJpdmF0aW9uUGF0aDogc3RyaW5nLFxuICAgIG1lc3NhZ2VIYXNoOiBCdWZmZXIsXG4gICAgZGtsc1dhc20/OiBCdW5kbGVyV2FzbWVyXG4gICkge1xuICAgIHRoaXMucGFydHlJZHggPSBwYXJ0eUlkeDtcbiAgICB0aGlzLmtleVNoYXJlQnl0ZXMgPSBrZXlTaGFyZTtcbiAgICB0aGlzLmRlcml2YXRpb25QYXRoID0gZGVyaXZhdGlvblBhdGg7XG4gICAgdGhpcy5tZXNzYWdlSGFzaCA9IG1lc3NhZ2VIYXNoO1xuICAgIHRoaXMuZGtsc1dhc20gPSBka2xzV2FzbSA/PyBudWxsO1xuICB9XG5cbiAgcHJpdmF0ZSBfcmVzdG9yZVNlc3Npb24oKSB7XG4gICAgaWYgKCF0aGlzLmRzZ1Nlc3Npb24pIHtcbiAgICAgIHRoaXMuZHNnU2Vzc2lvbiA9IHRoaXMuZ2V0RGtsc1dhc20oKS5TaWduU2Vzc2lvbk9UVmFyaWFudC5mcm9tQnl0ZXModGhpcy5kc2dTZXNzaW9uQnl0ZXMpO1xuICAgIH1cbiAgfVxuXG4gIHByaXZhdGUgX2Rlc2VyaWFsaXplU3RhdGUoKSB7XG4gICAgaWYgKCF0aGlzLmRzZ1Nlc3Npb24pIHtcbiAgICAgIHRocm93IEVycm9yKCdTZXNzaW9uIG5vdCBpbnRpYWxpemVkJyk7XG4gICAgfVxuICAgIGNvbnN0IHJvdW5kID0gZGVjb2RlKHRoaXMuZHNnU2Vzc2lvbi50b0J5dGVzKCkpLnJvdW5kO1xuICAgIHN3aXRjaCAocm91bmQpIHtcbiAgICAgIGNhc2UgJ1dhaXRNc2cxJzpcbiAgICAgICAgdGhpcy5kc2dTdGF0ZSA9IERzZ1N0YXRlLlJvdW5kMTtcbiAgICAgICAgYnJlYWs7XG4gICAgICBjYXNlICdXYWl0TXNnMic6XG4gICAgICAgIHRoaXMuZHNnU3RhdGUgPSBEc2dTdGF0ZS5Sb3VuZDI7XG4gICAgICAgIGJyZWFrO1xuICAgICAgY2FzZSAnV2FpdE1zZzMnOlxuICAgICAgICB0aGlzLmRzZ1N0YXRlID0gRHNnU3RhdGUuUm91bmQzO1xuICAgICAgICBicmVhaztcbiAgICAgIGNhc2UgJ0VuZGVkJzpcbiAgICAgICAgdGhpcy5kc2dTdGF0ZSA9IERzZ1N0YXRlLkNvbXBsZXRlO1xuICAgICAgICBicmVhaztcbiAgICAgIGRlZmF1bHQ6XG4gICAgICAgIHRoaXMuZHNnU3RhdGUgPSBEc2dTdGF0ZS5JbnZhbGlkU3RhdGU7XG4gICAgICAgIHRocm93IEVycm9yKGBJbnZhbGlkIFN0YXRlOiAke3JvdW5kfWApO1xuICAgIH1cbiAgfVxuXG4gIHByaXZhdGUgYXN5bmMgbG9hZERrbHNXYXNtKCk6IFByb21pc2U8dm9pZD4ge1xuICAgIGlmICghdGhpcy5ka2xzV2FzbSkge1xuICAgICAgdGhpcy5ka2xzV2FzbSA9IGF3YWl0IGltcG9ydCgnQHNpbGVuY2VsYWJvcmF0b3JpZXMvZGtscy13YXNtLWxsLW5vZGUnKTtcbiAgICB9XG4gIH1cblxuICBwcml2YXRlIGdldERrbHNXYXNtKCkge1xuICAgIGlmICghdGhpcy5ka2xzV2FzbSkge1xuICAgICAgdGhyb3cgRXJyb3IoJ0RLTFMgd2FzbSBub3QgbG9hZGVkJyk7XG4gICAgfVxuXG4gICAgcmV0dXJuIHRoaXMuZGtsc1dhc207XG4gIH1cblxuICAvKipcbiAgICogUmV0dXJucyB0aGUgY3VycmVudCBEU0cgc2Vzc2lvbiBhcyBhIGJhc2U2NCBzdHJpbmcuXG4gICAqIEByZXR1cm5zIHtzdHJpbmd9IC0gYmFzZTY0IHN0cmluZyBvZiB0aGUgY3VycmVudCBEU0cgc2Vzc2lvblxuICAgKi9cbiAgZ2V0U2Vzc2lvbigpOiBzdHJpbmcge1xuICAgIHJldHVybiBCdWZmZXIuZnJvbSh0aGlzLmRzZ1Nlc3Npb25CeXRlcykudG9TdHJpbmcoJ2Jhc2U2NCcpO1xuICB9XG5cbiAgLyoqXG4gICAqIFNldHMgdGhlIERTRyBzZXNzaW9uIGZyb20gYSBiYXNlNjQgc3RyaW5nLlxuICAgKiBAcGFyYW0ge3N0cmluZ30gc2Vzc2lvbiAtIGJhc2U2NCBzdHJpbmcgb2YgdGhlIERTRyBzZXNzaW9uXG4gICAqL1xuICBhc3luYyBzZXRTZXNzaW9uKHNlc3Npb246IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xuICAgIHRoaXMuZHNnU2Vzc2lvbiA9IHVuZGVmaW5lZDtcbiAgICBpZiAoIXRoaXMuZGtsc1dhc20pIHtcbiAgICAgIGF3YWl0IHRoaXMubG9hZERrbHNXYXNtKCk7XG4gICAgfVxuICAgIGNvbnN0IHNlc3Npb25CeXRlcyA9IG5ldyBVaW50OEFycmF5KEJ1ZmZlci5mcm9tKHNlc3Npb24sICdiYXNlNjQnKSk7XG4gICAgY29uc3Qgcm91bmQgPSBkZWNvZGUoc2Vzc2lvbkJ5dGVzKS5yb3VuZDtcbiAgICBzd2l0Y2ggKHRydWUpIHtcbiAgICAgIGNhc2Ugcm91bmQgPT09ICdXYWl0TXNnMSc6XG4gICAgICAgIHRoaXMuZHNnU3RhdGUgPSBEc2dTdGF0ZS5Sb3VuZDE7XG4gICAgICAgIGJyZWFrO1xuICAgICAgY2FzZSByb3VuZCA9PT0gJ1dhaXRNc2cyJzpcbiAgICAgICAgdGhpcy5kc2dTdGF0ZSA9IERzZ1N0YXRlLlJvdW5kMjtcbiAgICAgICAgYnJlYWs7XG4gICAgICBjYXNlIHJvdW5kID09PSAnV2FpdE1zZzMnOlxuICAgICAgICB0aGlzLmRzZ1N0YXRlID0gRHNnU3RhdGUuUm91bmQzO1xuICAgICAgICBicmVhaztcbiAgICAgIGNhc2UgJ1dhaXRNc2c0JyBpbiByb3VuZDpcbiAgICAgICAgdGhpcy5kc2dTdGF0ZSA9IERzZ1N0YXRlLlJvdW5kNDtcbiAgICAgICAgYnJlYWs7XG4gICAgICBkZWZhdWx0OlxuICAgICAgICB0aHJvdyBFcnJvcihgSW52YWxpZCBTdGF0ZTogJHtyb3VuZH1gKTtcbiAgICB9XG4gICAgdGhpcy5kc2dTZXNzaW9uQnl0ZXMgPSBzZXNzaW9uQnl0ZXM7XG4gIH1cblxuICBhc3luYyBpbml0KCk6IFByb21pc2U8RGVzZXJpYWxpemVkQnJvYWRjYXN0TWVzc2FnZT4ge1xuICAgIGlmICh0aGlzLmRzZ1N0YXRlICE9PSBEc2dTdGF0ZS5VbmluaXRpYWxpemVkKSB7XG4gICAgICB0aHJvdyBFcnJvcignRFNHIHNlc3Npb24gYWxyZWFkeSBpbml0aWFsaXplZCcpO1xuICAgIH1cbiAgICBpZiAoIXRoaXMuZGtsc1dhc20pIHtcbiAgICAgIGF3YWl0IHRoaXMubG9hZERrbHNXYXNtKCk7XG4gICAgfVxuICAgIGlmIChcbiAgICAgIHR5cGVvZiB3aW5kb3cgIT09ICd1bmRlZmluZWQnICYmXG4gICAgICAvKiBjaGVja3MgZm9yIGVsZWN0cm9uIHByb2Nlc3NlcyAqL1xuICAgICAgIXdpbmRvdy5wcm9jZXNzICYmXG4gICAgICAhd2luZG93LnByb2Nlc3M/LlsndHlwZSddXG4gICAgKSB7XG4gICAgICAvKiBUaGlzIGlzIG9ubHkgbmVlZGVkIGZvciBicm93c2Vycy93ZWIgYmVjYXVzZSBpdCB1c2VzIGZldGNoIHRvIHJlc29sdmUgdGhlIHdhc20gYXNzZXQgZm9yIHRoZSB3ZWIgKi9cbiAgICAgIGNvbnN0IGluaXREa2xzID0gYXdhaXQgaW1wb3J0KCdAc2lsZW5jZWxhYm9yYXRvcmllcy9ka2xzLXdhc20tbGwtd2ViJyk7XG4gICAgICBhd2FpdCBpbml0RGtscy5kZWZhdWx0KCk7XG4gICAgfVxuICAgIGNvbnN0IHsgS2V5c2hhcmUsIFNpZ25TZXNzaW9uT1RWYXJpYW50IH0gPSB0aGlzLmdldERrbHNXYXNtKCk7XG4gICAgY29uc3Qga2V5U2hhcmUgPSBLZXlzaGFyZS5mcm9tQnl0ZXModGhpcy5rZXlTaGFyZUJ5dGVzKTtcbiAgICBpZiAoa2V5U2hhcmUucGFydHlJZCAhPT0gdGhpcy5wYXJ0eUlkeCkge1xuICAgICAgdGhyb3cgRXJyb3IoYFBhcnR5IGluZGV4OiAke3RoaXMucGFydHlJZHh9IGRvZXMgbm90IG1hdGNoIGtleSBzaGFyZSBwYXJ0eUlkOiAke2tleVNoYXJlLnBhcnR5SWR9IGApO1xuICAgIH1cbiAgICB0aGlzLmRzZ1Nlc3Npb24gPSBuZXcgU2lnblNlc3Npb25PVFZhcmlhbnQoa2V5U2hhcmUsIHRoaXMuZGVyaXZhdGlvblBhdGgpO1xuICAgIHRyeSB7XG4gICAgICBjb25zdCBwYXlsb2FkID0gdGhpcy5kc2dTZXNzaW9uLmNyZWF0ZUZpcnN0TWVzc2FnZSgpLnBheWxvYWQ7XG4gICAgICB0aGlzLl9kZXNlcmlhbGl6ZVN0YXRlKCk7XG4gICAgICB0aGlzLmRzZ1Nlc3Npb25CeXRlcyA9IHRoaXMuZHNnU2Vzc2lvbi50b0J5dGVzKCk7XG4gICAgICB0aGlzLmRzZ1Nlc3Npb24gPSB1bmRlZmluZWQ7XG4gICAgICByZXR1cm4ge1xuICAgICAgICBwYXlsb2FkOiBwYXlsb2FkLFxuICAgICAgICBmcm9tOiB0aGlzLnBhcnR5SWR4LFxuICAgICAgfTtcbiAgICB9IGNhdGNoIChlKSB7XG4gICAgICB0aHJvdyBFcnJvcihgRXJyb3Igd2hpbGUgY3JlYXRpbmcgdGhlIGZpcnN0IG1lc3NhZ2UgZnJvbSBwYXJ0eSAke3RoaXMucGFydHlJZHh9OiAke2V9YCk7XG4gICAgfVxuICB9XG5cbiAgZ2V0IHNpZ25hdHVyZSgpOiBEZXNlcmlhbGl6ZWREa2xzU2lnbmF0dXJlIHtcbiAgICBpZiAoIXRoaXMuX3NpZ25hdHVyZSkge1xuICAgICAgdGhyb3cgRXJyb3IoJ0NhbiBub3QgcmVxdWVzdCBzaWduYXR1cmUuIFNpZ25hdHVyZSBub3QgcHJvZHVjZWQgeWV0LicpO1xuICAgIH1cbiAgICByZXR1cm4gdGhpcy5fc2lnbmF0dXJlO1xuICB9XG5cbiAgLyoqXG4gICAqIEVuZHMgdGhlIERTRyBzZXNzaW9uIGJ5IGZyZWVpbmcgYW55IGhlYXAgYWxsb2NhdGlvbnMgZnJvbSB3YXNtLiBOb3RlIHRoYXQgdGhlIHNlc3Npb24gaXMgZnJlZWQgaWYgYSBzaWduYXR1cmUgaXMgcHJvZHVjZWQuXG4gICAqL1xuICBlbmRTZXNzaW9uKCk6IHZvaWQge1xuICAgIGlmICh0aGlzLl9zaWduYXR1cmUpIHtcbiAgICAgIG5ldyBFcnJvcignU2Vzc2lvbiBhbHJlYWR5IGVuZGVkIGJlY2F1c2UgY29tYmluZWQgc2lnbmF0dXJlIHdhcyBwcm9kdWNlZC4nKTtcbiAgICB9XG4gICAgaWYgKHRoaXMuZHNnU2Vzc2lvbikge1xuICAgICAgdGhpcy5kc2dTZXNzaW9uLmZyZWUoKTtcbiAgICB9XG4gICAgdGhpcy5kc2dTdGF0ZSA9IERzZ1N0YXRlLlVuaW5pdGlhbGl6ZWQ7XG4gIH1cblxuICAvKipcbiAgICogUHJvY2Nlc3NlcyBpbmNvbWluZyBtZXNzYWdlcyB0byB0aGlzIHBhcnR5IGluIHRoZSBES0xzIERTRyBwcm90b2NvbCBhbmRcbiAgICogcHJvZHVjZXMgbWVzc2FnZXMgZnJvbSB0aGlzIHBhcnR5IHRvIG90aGVyIHBhcnRpZXMgZm9yIHRoZSBuZXh0IHJvdW5kLlxuICAgKiBAcGFyYW0gbWVzc2FnZXNGb3JJdGhSb3VuZCAtIG1lc3NhZ2VzIHRvIHByb2Nlc3MgdGhlIGN1cnJlbnQgcm91bmRcbiAgICogQHJldHVybnMge0Rlc2VyaWFsaXplZE1lc3NhZ2VzfSAtIG1lc3NhZ2VzIHRvIHNlbmQgdG8gb3RoZXIgcGFydGllcyBmb3IgdGhlIG5leHQgcm91bmRcbiAgICovXG4gIGhhbmRsZUluY29taW5nTWVzc2FnZXMobWVzc2FnZXNGb3JJdGhSb3VuZDogRGVzZXJpYWxpemVkTWVzc2FnZXMpOiBEZXNlcmlhbGl6ZWRNZXNzYWdlcyB7XG4gICAgbGV0IG5leHRSb3VuZE1lc3NhZ2VzOiBNZXNzYWdlW10gPSBbXTtcbiAgICBsZXQgbmV4dFJvdW5kRGVzZXJpYWxpemVkTWVzc2FnZXM6IERlc2VyaWFsaXplZE1lc3NhZ2VzID0geyBicm9hZGNhc3RNZXNzYWdlczogW10sIHAycE1lc3NhZ2VzOiBbXSB9O1xuICAgIHRoaXMuX3Jlc3RvcmVTZXNzaW9uKCk7XG4gICAgaWYgKCF0aGlzLmRzZ1Nlc3Npb24pIHtcbiAgICAgIHRocm93IEVycm9yKCdTZXNzaW9uIG5vdCBpbml0aWFsaXplZCcpO1xuICAgIH1cbiAgICBjb25zdCB7IE1lc3NhZ2UgfSA9IHRoaXMuZ2V0RGtsc1dhc20oKTtcbiAgICB0cnkge1xuICAgICAgaWYgKHRoaXMuZHNnU3RhdGUgPT09IERzZ1N0YXRlLlJvdW5kNCkge1xuICAgICAgICB0aGlzLmRzZ1N0YXRlID0gRHNnU3RhdGUuQ29tcGxldGU7XG4gICAgICAgIGNvbnN0IGNvbWJpbmVSZXN1bHQgPSB0aGlzLmRzZ1Nlc3Npb24uY29tYmluZShcbiAgICAgICAgICBtZXNzYWdlc0Zvckl0aFJvdW5kLmJyb2FkY2FzdE1lc3NhZ2VzLm1hcCgobSkgPT4gbmV3IE1lc3NhZ2UobS5wYXlsb2FkLCBtLmZyb20sIHVuZGVmaW5lZCkpXG4gICAgICAgICk7XG4gICAgICAgIHRoaXMuX3NpZ25hdHVyZSA9IHtcbiAgICAgICAgICBSOiBjb21iaW5lUmVzdWx0WzBdLFxuICAgICAgICAgIFM6IGNvbWJpbmVSZXN1bHRbMV0sXG4gICAgICAgIH07XG4gICAgICAgIHJldHVybiB7IGJyb2FkY2FzdE1lc3NhZ2VzOiBbXSwgcDJwTWVzc2FnZXM6IFtdIH07XG4gICAgICB9IGVsc2Uge1xuICAgICAgICBuZXh0Um91bmRNZXNzYWdlcyA9IHRoaXMuZHNnU2Vzc2lvbi5oYW5kbGVNZXNzYWdlcyhcbiAgICAgICAgICBtZXNzYWdlc0Zvckl0aFJvdW5kLmJyb2FkY2FzdE1lc3NhZ2VzXG4gICAgICAgICAgICAubWFwKChtKSA9PiBuZXcgTWVzc2FnZShtLnBheWxvYWQsIG0uZnJvbSwgdW5kZWZpbmVkKSlcbiAgICAgICAgICAgIC5jb25jYXQobWVzc2FnZXNGb3JJdGhSb3VuZC5wMnBNZXNzYWdlcy5tYXAoKG0pID0+IG5ldyBNZXNzYWdlKG0ucGF5bG9hZCwgbS5mcm9tLCBtLnRvKSkpXG4gICAgICAgICk7XG4gICAgICB9XG4gICAgICBpZiAodGhpcy5kc2dTdGF0ZSA9PT0gRHNnU3RhdGUuUm91bmQzKSB7XG4gICAgICAgIG5leHRSb3VuZE1lc3NhZ2VzID0gW3RoaXMuZHNnU2Vzc2lvbi5sYXN0TWVzc2FnZSh0aGlzLm1lc3NhZ2VIYXNoKV07XG4gICAgICAgIHRoaXMuZHNnU3RhdGUgPSBEc2dTdGF0ZS5Sb3VuZDQ7XG4gICAgICAgIHJldHVybiB7XG4gICAgICAgICAgYnJvYWRjYXN0TWVzc2FnZXM6IFtcbiAgICAgICAgICAgIHtcbiAgICAgICAgICAgICAgcGF5bG9hZDogbmV4dFJvdW5kTWVzc2FnZXNbMF0ucGF5bG9hZCxcbiAgICAgICAgICAgICAgZnJvbTogbmV4dFJvdW5kTWVzc2FnZXNbMF0uZnJvbV9pZCxcbiAgICAgICAgICAgICAgc2lnbmF0dXJlUjogZGVjb2RlKHRoaXMuZHNnU2Vzc2lvbi50b0J5dGVzKCkpLnJvdW5kLldhaXRNc2c0LnIsXG4gICAgICAgICAgICB9LFxuICAgICAgICAgIF0sXG4gICAgICAgICAgcDJwTWVzc2FnZXM6IFtdLFxuICAgICAgICB9O1xuICAgICAgfSBlbHNlIHtcbiAgICAgICAgLy8gVXBkYXRlIHJvdW5kIGRhdGEuXG4gICAgICAgIHRoaXMuX2Rlc2VyaWFsaXplU3RhdGUoKTtcbiAgICAgIH1cbiAgICAgIG5leHRSb3VuZERlc2VyaWFsaXplZE1lc3NhZ2VzID0ge1xuICAgICAgICBwMnBNZXNzYWdlczogbmV4dFJvdW5kTWVzc2FnZXNcbiAgICAgICAgICAuZmlsdGVyKChtKSA9PiBtLnRvX2lkICE9PSB1bmRlZmluZWQpXG4gICAgICAgICAgLm1hcCgobSkgPT4ge1xuICAgICAgICAgICAgaWYgKG0udG9faWQgPT09IHVuZGVmaW5lZCkge1xuICAgICAgICAgICAgICB0aHJvdyBFcnJvcignSW52YWxpZCBQMlAgbWVzc2FnZSwgbWlzc2luZyB0b19pZC4nKTtcbiAgICAgICAgICAgIH1cbiAgICAgICAgICAgIGNvbnN0IHAycFJldHVybiA9IHtcbiAgICAgICAgICAgICAgcGF5bG9hZDogbS5wYXlsb2FkLFxuICAgICAgICAgICAgICBmcm9tOiBtLmZyb21faWQsXG4gICAgICAgICAgICAgIHRvOiBtLnRvX2lkLFxuICAgICAgICAgICAgfTtcbiAgICAgICAgICAgIHJldHVybiBwMnBSZXR1cm47XG4gICAgICAgICAgfSksXG4gICAgICAgIGJyb2FkY2FzdE1lc3NhZ2VzOiBuZXh0Um91bmRNZXNzYWdlc1xuICAgICAgICAgIC5maWx0ZXIoKG0pID0+IG0udG9faWQgPT09IHVuZGVmaW5lZClcbiAgICAgICAgICAubWFwKChtKSA9PiB7XG4gICAgICAgICAgICBjb25zdCBicm9hZGNhc3RSZXR1cm4gPSB7XG4gICAgICAgICAgICAgIHBheWxvYWQ6IG0ucGF5bG9hZCxcbiAgICAgICAgICAgICAgZnJvbTogbS5mcm9tX2lkLFxuICAgICAgICAgICAgfTtcbiAgICAgICAgICAgIHJldHVybiBicm9hZGNhc3RSZXR1cm47XG4gICAgICAgICAgfSksXG4gICAgICB9O1xuICAgIH0gY2F0Y2ggKGUpIHtcbiAgICAgIGlmIChlLm1lc3NhZ2Uuc3RhcnRzV2l0aCgnQWJvcnQgdGhlIHByb3RvY29sIGFuZCBiYW4nKSkge1xuICAgICAgICB0aHJvdyBFcnJvcihcbiAgICAgICAgICAnU2lnbmluZyBhYm9ydGVkLiBQbGVhc2Ugc3RvcCBhbGwgdHJhbnNhY3Rpb24gc2lnbmluZyBmcm9tIHRoaXMgd2FsbGV0IGFuZCBjb250YWN0IHN1cHBvcnRAYml0Z28uY29tLidcbiAgICAgICAgKTtcbiAgICAgIH1cbiAgICAgIHRocm93IEVycm9yKGBFcnJvciB3aGlsZSBjcmVhdGluZyBtZXNzYWdlcyBmcm9tIHBhcnR5ICR7dGhpcy5wYXJ0eUlkeH0sIHJvdW5kICR7dGhpcy5kc2dTdGF0ZX06ICR7ZX1gKTtcbiAgICB9IGZpbmFsbHkge1xuICAgICAgbmV4dFJvdW5kTWVzc2FnZXMuZm9yRWFjaCgobSkgPT4gbS5mcmVlKCkpO1xuICAgICAgLy8gU2Vzc2lvbiBpcyBmcmVlZCB3aGVuIGNvbWJpbmUgaXMgY2FsbGVkLlxuICAgICAgaWYgKHRoaXMuZHNnU3RhdGUgIT09IERzZ1N0YXRlLkNvbXBsZXRlKSB7XG4gICAgICAgIHRoaXMuZHNnU2Vzc2lvbkJ5dGVzID0gdGhpcy5kc2dTZXNzaW9uLnRvQnl0ZXMoKTtcbiAgICAgICAgdGhpcy5kc2dTZXNzaW9uID0gdW5kZWZpbmVkO1xuICAgICAgfVxuICAgIH1cbiAgICByZXR1cm4gbmV4dFJvdW5kRGVzZXJpYWxpemVkTWVzc2FnZXM7XG4gIH1cbn1cbiJdfQ==
+\ No newline at end of file

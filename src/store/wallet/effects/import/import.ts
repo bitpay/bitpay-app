@@ -1411,7 +1411,7 @@ const createKeyAndCredentials = async (
       bwcClient.fromString(
         key.createCredentials(undefined, {
           coin,
-          chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
+          chain,
           network,
           account,
           n,
@@ -1432,7 +1432,7 @@ const createKeyAndCredentials = async (
       bwcClient.fromString(
         key.createCredentials(undefined, {
           coin,
-          chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
+          chain,
           network,
           account,
           n,
@@ -1609,3 +1609,225 @@ const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
 
   return wallets;
 };
+
+export const startImportTSSFile =
+  (decryptedBackupText: string): Effect =>
+  async (dispatch, getState): Promise<Key> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const {
+          WALLET,
+          APP: {
+            notificationsAccepted,
+            emailNotifications,
+            brazeEid,
+            defaultLanguage,
+          },
+        } = getState();
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
+
+        const tokenOptsByAddress = {
+          ...BitpaySupportedTokenOptsByAddress,
+          ...tokenOptionsByAddress,
+          ...WALLET.customTokenOptionsByAddress,
+        };
+
+        const data = JSON.parse(decryptedBackupText);
+
+        if (!data.isTSS) {
+          throw new Error(t('Invalid TSS backup file format.'));
+        }
+
+        if (!data.key) {
+          throw new Error(t('Missing key in TSS backup.'));
+        }
+
+        if (!data.credentials || !Array.isArray(data.credentials)) {
+          throw new Error(t('Missing credentials in TSS backup.'));
+        }
+
+        logManager.info('[ImportTSS] Starting direct TSS wallet import...');
+
+        const arrayToBuffer = (arr: any): Buffer | null => {
+          if (!arr) return null;
+          if (Buffer.isBuffer(arr)) return arr;
+          if (Array.isArray(arr)) return Buffer.from(arr);
+          if (
+            arr &&
+            typeof arr === 'object' &&
+            'data' in arr &&
+            Array.isArray(arr.data)
+          ) {
+            return Buffer.from(arr.data);
+          }
+          return null;
+        };
+
+        if (data.key.keychain) {
+          const privateKeyShare = arrayToBuffer(
+            data.key.keychain.privateKeyShare,
+          );
+          const reducedPrivateKeyShare = arrayToBuffer(
+            data.key.keychain.reducedPrivateKeyShare,
+          );
+
+          if (privateKeyShare) {
+            data.key.keychain.privateKeyShare = privateKeyShare;
+          }
+          if (reducedPrivateKeyShare) {
+            data.key.keychain.reducedPrivateKeyShare = reducedPrivateKeyShare;
+          }
+        }
+
+        const BWCProvider = BwcProvider.getInstance();
+
+        const TssKey = BWCProvider.getTssKey();
+        const tssKey = new TssKey(data.key);
+
+        logManager.info('[ImportTSS] TssKey recreated successfully');
+
+        const wallets = await Promise.all(
+          data.credentials.map(async (credObj: any) => {
+            try {
+              const walletClient = BWCProvider.getClient(
+                JSON.stringify(credObj),
+              );
+
+              logManager.info(
+                `[ImportTSS] Recreated wallet client - ${credObj.walletId}`,
+              );
+
+              await new Promise((resolve, reject) =>
+                walletClient.openWallet({}, (err: any, result: any) => {
+                  if (err) {
+                    logManager.warn(
+                      `[ImportTSS] Could not open wallet ${credObj.walletId}:`,
+                      err,
+                    );
+                    return reject(err);
+                  }
+                  resolve(result);
+                }),
+              );
+
+              const status: any = await new Promise((resolve, reject) =>
+                walletClient.getStatus(
+                  {includeExtendedInfo: true},
+                  (err: any, result: any) => {
+                    if (err) {
+                      logManager.warn(
+                        `[ImportTSS] Could not get status for ${credObj.walletId}:`,
+                        err,
+                      );
+                      return reject(err);
+                    }
+                    resolve(result);
+                  },
+                ),
+              );
+
+              const {currencyAbbreviation, currencyName} = dispatch(
+                mapAbbreviationAndName(
+                  walletClient.credentials.coin,
+                  walletClient.credentials.chain,
+                  walletClient.credentials.token?.address,
+                ),
+              );
+
+              const fullWallet = merge(
+                walletClient,
+                status.wallet,
+                buildWalletObj(
+                  {
+                    ...walletClient.credentials,
+                    currencyAbbreviation,
+                    currencyName,
+                  } as any,
+                  tokenOptsByAddress,
+                ),
+              );
+
+              return fullWallet;
+            } catch (error: unknown) {
+              const errMsg =
+                error instanceof Error ? error.message : JSON.stringify(error);
+              logManager.error(
+                `[ImportTSS] Failed to recreate wallet - ${credObj.walletId}: ${errMsg}`,
+              );
+              return undefined;
+            }
+          }),
+        );
+
+        const validWallets = wallets.filter(
+          (w): w is NonNullable<typeof w> => w !== undefined,
+        );
+
+        if (validWallets.length === 0) {
+          throw new Error(t('Failed to recreate any wallets from backup'));
+        }
+
+        const {
+          key: _key,
+          wallets: processedWallets,
+          keyName,
+        } = findMatchedKeyAndUpdate(
+          validWallets,
+          tssKey,
+          Object.values(WALLET.keys).filter(k => !k.id.includes('readonly')),
+          {},
+        );
+
+        const key = buildKeyObj({
+          key: _key,
+          keyName,
+          wallets: processedWallets.map(wallet => {
+            if (notificationsAccepted) {
+              dispatch(subscribePushNotifications(wallet, brazeEid!));
+            }
+            if (
+              emailNotifications &&
+              emailNotifications.accepted &&
+              emailNotifications.email
+            ) {
+              const prefs = {
+                email: emailNotifications.email,
+                language: defaultLanguage,
+                unit: 'btc',
+              };
+              dispatch(subscribeEmailNotifications(wallet, prefs));
+            }
+            const {currencyAbbreviation, currencyName} = dispatch(
+              mapAbbreviationAndName(
+                wallet.credentials.coin,
+                wallet.credentials.chain,
+                wallet.credentials.token?.address,
+              ),
+            );
+            return merge(
+              wallet,
+              buildWalletObj(
+                {...wallet.credentials, currencyAbbreviation, currencyName},
+                tokenOptsByAddress,
+              ),
+            );
+          }),
+          backupComplete: true,
+        });
+
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+
+        logManager.info('[ImportTSS] Successfully imported TSS wallet');
+        resolve(key);
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : JSON.stringify(e);
+        logManager.error(`[ImportTSS] Failed to import: ${errorMsg}`);
+        dispatch(failedImport());
+        reject(e);
+      }
+    });
+  };

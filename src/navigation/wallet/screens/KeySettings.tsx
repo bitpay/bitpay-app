@@ -16,7 +16,7 @@ import {
 } from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletGroupParamList} from '../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {View, ScrollView, FlatList} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
@@ -75,6 +75,7 @@ import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
 import {useTheme} from 'styled-components/native';
 import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -221,6 +222,7 @@ const KeySettings = () => {
           .filter(
             sw =>
               sw.isComplete() &&
+              !sw.pendingTssSession &&
               !_key.wallets.some(ew => ew.id === sw.credentials.walletId),
           )
           .map(syncWallet => {
@@ -236,7 +238,11 @@ const KeySettings = () => {
             return merge(
               syncWallet,
               buildWalletObj(
-                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                {
+                  ...syncWallet.credentials,
+                  currencyAbbreviation,
+                  currencyName,
+                } as any,
                 _tokenOptionsByAddress,
               ),
             );
@@ -317,7 +323,7 @@ const KeySettings = () => {
       const {
         credentials: {walletId},
       } = fullWalletObj;
-      if (!fullWalletObj.isComplete()) {
+      if (!fullWalletObj.isComplete() && fullWalletObj.pendingTssSession) {
         return;
       }
       navigation.navigate('WalletSettings', {
@@ -378,7 +384,7 @@ const KeySettings = () => {
   const renderListFooterComponent = useCallback(() => {
     return (
       <>
-        {_key && !_key.isReadOnly ? (
+        {_key && !_key.isReadOnly && !isTSSKey(_key) ? (
           <VerticalPadding style={{alignItems: 'center'}}>
             <AddWalletText
               onPress={() => {
@@ -395,6 +401,13 @@ const KeySettings = () => {
             <Title>{t('Security')}</Title>
             <Setting
               onPress={() => {
+                if (isTSSKey(_key)) {
+                  navigation.navigate(WalletScreens.BACKUP_SHARED_KEY, {
+                    context: 'backupExistingTSSKey',
+                    key: _key,
+                  });
+                  return;
+                }
                 navigation.navigate('BackupOnboarding', {
                   key: _key,
                   buildEncryptModalConfig,

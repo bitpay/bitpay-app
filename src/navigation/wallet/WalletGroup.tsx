@@ -46,6 +46,8 @@ import CreateMultisig, {
 } from './screens/CreateMultisig';
 import JoinMultisig, {JoinMultisigParamList} from './screens/JoinMultisig';
 import Copayers from './screens/Copayers';
+import InviteCosigners from './screens/InviteCosigners';
+import JoinTSSWallet from './screens/JoinTSSWallet';
 import AddingOptions, {AddingOptionsParamList} from './screens/AddingOptions';
 import UpdateKeyOrWalletName from './screens/UpdateKeyOrWalletName';
 import RequestSpecificAmountQR from './screens/request-specific-amount/RequestSpecificAmountQR';
@@ -89,15 +91,14 @@ import BackupOnboarding, {
 import {Root} from '../../Root';
 import {AccountRowProps} from '../../components/list/AccountListRow';
 import KeyInformation from './screens/KeyInformation';
-import {IsSVMChain, IsVMChain} from '../../store/wallet/utils/currency';
-import {
-  AccountChainsContainer,
-  WIDTH,
-} from '../../components/styled/Containers';
-import Blockie from '../../components/blockie/Blockie';
-import {getEVMAccountName} from '../../store/wallet/utils/wallet';
 import {useAppSelector} from '../../utils/hooks';
 import {RootState} from '../../store';
+import BackupSharedKeyScreen, {
+  BackupSharedKeyParamList,
+} from './screens/BackupSharedKey';
+import ExportTSSWallet, {
+  ExportTSSWalletParamList,
+} from './screens/wallet-settings/ExportTSSWallet';
 
 interface WalletProps {
   Wallet: typeof Root;
@@ -110,6 +111,7 @@ export type WalletGroupParamList = {
   AddCustomToken: AddCustomTokenParamList;
   BackupKey: BackupParamList;
   BackupOnboarding: BackupOnboardingParamList;
+  BackupSharedKey: BackupSharedKeyParamList;
   RecoveryPhrase: RecoveryPhraseParamList;
   VerifyPhrase: VerifyPhraseParamList;
   TermsOfUse: TermsOfUseParamList | undefined;
@@ -149,6 +151,9 @@ export type WalletGroupParamList = {
   CreateMultisig: CreateMultisigParamsList;
   JoinMultisig: JoinMultisigParamList | undefined;
   Copayers: {wallet: WalletModel; status: _Credentials};
+  InviteCosigners: {keyId: string};
+  ShareJoinCode: {keyId: string; partyId: number; joinCode: string};
+  JoinTSSWallet: {copayerName?: string};
   AddingOptions: AddingOptionsParamList;
   RequestSpecificAmountQR: {wallet: WalletModel; requestAmount: number};
   TransactionDetails: {
@@ -178,6 +183,7 @@ export type WalletGroupParamList = {
       xPrivKey: string;
     };
   };
+  ExportTSSWallet: ExportTSSWalletParamList;
   Addresses: {wallet: WalletModel};
   AllAddresses: AllAddressesParamList;
   ExchangeRate: {
@@ -202,6 +208,7 @@ export enum WalletScreens {
   ADD_CUSTOM_TOKEN = 'AddCustomToken',
   BACKUP_KEY = 'BackupKey',
   BACKUP_ONBOARDING = 'BackupOnboarding',
+  BACKUP_SHARED_KEY = 'BackupSharedKey',
   RECOVERY_PHRASE = 'RecoveryPhrase',
   VERIFY_PHRASE = 'VerifyPhrase',
   TERMS_OF_USE = 'TermsOfUse',
@@ -230,6 +237,8 @@ export enum WalletScreens {
   CREATE_MULTISIG = 'CreateMultisig',
   JOIN_MULTISIG = 'JoinMultisig',
   COPAYERS = 'Copayers',
+  INVITE_COSIGNERS = 'InviteCosigners',
+  JOIN_TSS_WALLET = 'JoinTSSWallet',
   ADDING_OPTIONS = 'AddingOptions',
   REQUEST_SPECIFIC_AMOUNT_QR = 'RequestSpecificAmountQR',
   EXPORT_TRANSACTION_HISTORY = 'ExportTransactionHistory',
@@ -240,6 +249,7 @@ export enum WalletScreens {
   KEY_GLOBAL_SELECT = 'KeyGlobalSelect',
   WALLET_INFORMATION = 'WalletInformation',
   EXPORT_WALLET = 'ExportWallet',
+  EXPORT_TSS_WALLET = 'ExportTSSWallet',
   ADDRESSES = 'Addresses',
   ALL_ADDRESSES = 'AllAddresses',
   EXCHANGE_RATE = 'ExchangeRate',
@@ -284,6 +294,13 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.BACKUP_ONBOARDING}
         component={BackupOnboarding}
+      />
+      <Wallet.Screen
+        options={{
+          headerLeft: () => null,
+        }}
+        name={WalletScreens.BACKUP_SHARED_KEY}
+        component={BackupSharedKeyScreen}
       />
       <Wallet.Screen
         name={WalletScreens.RECOVERY_PHRASE}
@@ -404,6 +421,24 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
         component={Copayers}
       />
       <Wallet.Screen
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Invite Co-Signers')}</HeaderTitle>
+          ),
+        }}
+        name={WalletScreens.INVITE_COSIGNERS}
+        component={InviteCosigners}
+      />
+      <Wallet.Screen
+        options={{
+          headerTitle: () => (
+            <HeaderTitle>{t('Join Shared Wallet')}</HeaderTitle>
+          ),
+        }}
+        name={WalletScreens.JOIN_TSS_WALLET}
+        component={JoinTSSWallet}
+      />
+      <Wallet.Screen
         name={WalletScreens.ADDING_OPTIONS}
         component={AddingOptions}
       />
@@ -455,6 +490,10 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       <Wallet.Screen
         name={WalletScreens.EXPORT_WALLET}
         component={ExportWallet}
+      />
+      <Wallet.Screen
+        name={WalletScreens.EXPORT_TSS_WALLET}
+        component={ExportTSSWallet}
       />
       <Wallet.Screen name={WalletScreens.ADDRESSES} component={Addresses} />
       <Wallet.Screen

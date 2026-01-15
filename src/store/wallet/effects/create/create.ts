@@ -4,7 +4,7 @@ import {
   SupportedChains,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
-import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {
@@ -18,7 +18,7 @@ import {
   successCreateKey,
   successUpdateKey,
 } from '../../wallet.actions';
-import API from 'bitcore-wallet-client/ts_build';
+import API from 'bitcore-wallet-client/ts_build/src';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
@@ -223,7 +223,7 @@ export const addWallet =
                     ...associatedWallet.credentials,
                     currencyAbbreviation,
                     currencyName,
-                  },
+                  } as any,
                   tokenOptsByAddress,
                 ),
               ),
@@ -489,7 +489,7 @@ export const createMultipleWallets =
       return merge(
         wallet,
         buildWalletObj(
-          {...wallet.credentials, currencyAbbreviation, currencyName},
+          {...wallet.credentials, currencyAbbreviation, currencyName} as any,
           tokenOpts,
         ),
       );
@@ -533,7 +533,7 @@ const createWallet =
       bwcClient.fromString(
         key.createCredentials(password, {
           coin,
-          chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
+          chain,
           network,
           account,
           n: 1,
@@ -763,7 +763,7 @@ export const createWalletWithOpts =
         bwcClient.fromString(
           key.createCredentials(opts.password, {
             coin: opts.coin || 'btc',
-            chain: opts.chain || 'btc', // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
+            chain: opts.chain || 'btc',
             network: opts.networkName || 'livenet',
             account: opts.account || 0,
             n: opts.n || 1,
