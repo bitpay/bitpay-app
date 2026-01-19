@@ -54,6 +54,7 @@ import {
   getRateByCurrencyName,
   getSolanaTokens,
   sleep,
+  SolanaTokenData,
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
@@ -124,6 +125,7 @@ import {logManager} from '../../../../managers/LogManager';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {ExternalServicesScreens} from '../../../../navigation/services/ExternalServicesGroup';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1109,9 +1111,12 @@ const buildTransactionProposal =
           default:
             let ataAddress: string | undefined;
             if (IsSVMChain(chain) && tx.tokenAddress) {
-              ataAddress = (
-                await getSolanaTokens(tx.toAddress!, wallet?.network)
-              ).find(
+              const toSolanaTokens = await getSolanaTokens(
+                tx.toAddress!,
+                wallet?.network,
+              );
+
+              ataAddress = toSolanaTokens.find(
                 (item: {mintAddress: string}) =>
                   item.mintAddress === tx.tokenAddress,
               )?.ataAddress;
@@ -1122,6 +1127,9 @@ const buildTransactionProposal =
                   feePayer: tx.toAddress!,
                 });
                 txp.ataOwnerAddress = tx.toAddress;
+                logManager.debug(
+                  `Using ATA Address from getOrCreateAssociatedTokenAddress: ${ataAddress}`,
+                );
               }
             }
 
@@ -1160,15 +1168,28 @@ const buildTransactionProposal =
                 }
               }
             } else {
-              const fromSolanaTokens = await getSolanaTokens(
+              const fromSolanaTokens: SolanaTokenData[] = await getSolanaTokens(
                 wallet?.receiveAddress!,
                 wallet?.network,
               );
-              const fromAta = fromSolanaTokens.find((item: any) => {
+              const fromAta = fromSolanaTokens.find((item: SolanaTokenData) => {
                 return item.mintAddress === tx.tokenAddress;
               });
-              txp.fromAta = fromAta?.ataAddress;
-              txp.decimals = fromAta?.decimals;
+
+              if (fromAta) {
+                txp.fromAta = fromAta?.ataAddress;
+                txp.decimals = fromAta?.decimals;
+              } else {
+                const ataAddress = await getOrCreateAssociatedTokenAddress({
+                  mint: tx.tokenAddress!,
+                  feePayer: wallet?.receiveAddress!,
+                });
+                txp.fromAta = ataAddress;
+                logManager.debug(
+                  `Using ATA Address from getOrCreateAssociatedTokenAddress: ${ataAddress}`,
+                );
+              }
+
               if (solanaPayOpts?.memo) {
                 txp.memo = solanaPayOpts.memo;
               }
@@ -2362,7 +2383,7 @@ export const handleCreateTxProposalError =
     proposalErrorProps: ProposalErrorHandlerProps,
     onDismiss?: () => void,
     context?: ProposalErrorHandlerContext,
-  ): Effect<Promise<any>> =>
+  ): Effect<Promise<BottomNotificationConfig>> =>
   async dispatch => {
     try {
       const {err} = proposalErrorProps;

@@ -61,6 +61,7 @@ import {
   getOrCreateAssociatedTokenAddress,
   getSolanaTokens,
   sleep,
+  SolanaTokenData,
 } from '../../../../utils/helper-methods';
 import ChangellyPoliciesModal from '../components/ChangellyPoliciesModal';
 import {
@@ -170,6 +171,7 @@ const ChangellyCheckout: React.FC = () => {
   );
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [txData, setTxData] = useState<any>();
+  const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
 
   const [isConfirmHardwareWalletModalVisible, setConfirmHardwareWalletVisible] =
     useState(false);
@@ -187,7 +189,6 @@ const ChangellyCheckout: React.FC = () => {
   let payinExtraId: string;
   let status: string;
   let payinAddress: string;
-  let ataOwnerAddress: string | undefined;
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
   const transportRef = useRef(hardwareWalletTransport);
@@ -621,36 +622,55 @@ const ChangellyCheckout: React.FC = () => {
               }
             }
           } else if (IsSVMChain(txp.chain!)) {
-            const receiveAddressSolanaTokens = await getSolanaTokens(
-              wallet?.receiveAddress!,
-              wallet?.network,
-            );
-            const ataReceiveAddress = receiveAddressSolanaTokens.find(
-              (item: any) => {
-                return item.mintAddress === txp.tokenAddress;
-              },
-            );
-            txp.fromAta = ataReceiveAddress?.ataAddress;
-            txp.decimals = ataReceiveAddress?.decimals;
+            const receiveAddressSolanaTokens: SolanaTokenData[] =
+              await getSolanaTokens(wallet?.receiveAddress!, wallet?.network);
 
-            if (txp.outputs) {
-              const payinAddressSolanaTokens = await getSolanaTokens(
-                payinAddress,
-                wallet?.network,
-              );
-
-              let ataPayinAddress = payinAddressSolanaTokens.find(
-                (item: any) => {
+            let ataReceiveAddress: SolanaTokenData | undefined;
+            if (receiveAddressSolanaTokens) {
+              ataReceiveAddress = receiveAddressSolanaTokens.find(
+                (item: SolanaTokenData) => {
                   return item.mintAddress === txp.tokenAddress;
                 },
-              )?.ataAddress;
+              );
+            }
+
+            if (ataReceiveAddress) {
+              txp.fromAta = ataReceiveAddress.ataAddress;
+              txp.decimals = ataReceiveAddress.decimals;
+            } else {
+              const _ataReceiveAddress =
+                await getOrCreateAssociatedTokenAddress({
+                  mint: txp.tokenAddress,
+                  feePayer: wallet?.receiveAddress!,
+                });
+              txp.fromAta = _ataReceiveAddress;
+              logger.debug(
+                `Using ATA Address from getOrCreateAssociatedTokenAddress: ${_ataReceiveAddress}`,
+              );
+            }
+
+            if (txp.outputs) {
+              const payinAddressSolanaTokens: SolanaTokenData[] =
+                await getSolanaTokens(payinAddress, wallet?.network);
+
+              let ataPayinAddress: string | undefined;
+              if (payinAddressSolanaTokens) {
+                ataPayinAddress = payinAddressSolanaTokens.find(
+                  (item: SolanaTokenData) => {
+                    return item.mintAddress === txp.tokenAddress;
+                  },
+                )?.ataAddress;
+              }
 
               if (!ataPayinAddress) {
                 ataPayinAddress = await getOrCreateAssociatedTokenAddress({
                   mint: txp.tokenAddress,
                   feePayer: payinAddress,
                 });
-                ataOwnerAddress = payinAddress;
+                setAtaOwnerAddress(payinAddress);
+                logger.debug(
+                  `Using ATA PayinAddress from getOrCreateAssociatedTokenAddress: ${ataPayinAddress}`,
+                );
               }
 
               for (const output of txp.outputs) {

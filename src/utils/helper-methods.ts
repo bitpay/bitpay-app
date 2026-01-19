@@ -1396,16 +1396,16 @@ export const isAndroidStoragePermissionGranted = (
   });
 };
 
+export interface SolanaTokenData {
+  mintAddress: string;
+  ataAddress: string;
+  decimals: number;
+}
+
 export const getSolanaTokens = async (
   address: string,
   network: string = 'livenet',
-): Promise<
-  {
-    mintAddress: string;
-    ataAddress: string;
-    decimals: number;
-  }[]
-> => {
+): Promise<SolanaTokenData[]> => {
   const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
   const url = `${
     // @ts-ignore
@@ -1414,11 +1414,14 @@ export const getSolanaTokens = async (
   try {
     const apiResponse = await axios.get<any>(url);
     if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
-      throw new Error(`No solana tokens found for address: ${address}`);
+      logManager.warn(`No solana tokens found for address: ${address}`);
+      return [];
     }
     return apiResponse.data;
-  } catch (err) {
-    throw err;
+  } catch (err: any) {
+    const msg = err?.response?.data ?? err?.message ?? String(err);
+    logManager.error(`getSolanaTokens Error for ${address}: ${msg}`);
+    return [];
   }
 };
 

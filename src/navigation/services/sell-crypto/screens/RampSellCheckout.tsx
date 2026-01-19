@@ -53,6 +53,7 @@ import {
   getOrCreateAssociatedTokenAddress,
   getSolanaTokens,
   sleep,
+  SolanaTokenData,
 } from '../../../../utils/helper-methods';
 import {
   ItemDivisor,
@@ -176,6 +177,7 @@ const RampSellCheckout: React.FC = () => {
   const [amountExpected, setAmountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
+  const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
 
   const [totalExchangeFee, setTotalExchangeFee] = useState<number>();
   const [paymentExpired, setPaymentExpired] = useState(false);
@@ -196,8 +198,6 @@ const RampSellCheckout: React.FC = () => {
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
-  let status: string;
-  let ataOwnerAddress: string | undefined;
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
   const transportRef = useRef(hardwareWalletTransport);
@@ -460,34 +460,53 @@ const RampSellCheckout: React.FC = () => {
               }
             }
           } else if (IsSVMChain(txp.chain!)) {
-            const receiveAddressSolanaTokens = await getSolanaTokens(
-              wallet?.receiveAddress!,
-              wallet?.network,
-            );
-            const ataReceiveAddress = receiveAddressSolanaTokens.find(
-              (item: any) => {
-                return item.mintAddress === txp.tokenAddress;
-              },
-            );
-            txp.fromAta = ataReceiveAddress?.ataAddress;
-            txp.decimals = ataReceiveAddress?.decimals;
+            const receiveAddressSolanaTokens: SolanaTokenData[] =
+              await getSolanaTokens(wallet?.receiveAddress!, wallet?.network);
+
+            let ataReceiveAddress: SolanaTokenData | undefined;
+            if (receiveAddressSolanaTokens) {
+              ataReceiveAddress = receiveAddressSolanaTokens.find(
+                (item: SolanaTokenData) => {
+                  return item.mintAddress === txp.tokenAddress;
+                },
+              );
+            }
+
+            if (ataReceiveAddress) {
+              txp.fromAta = ataReceiveAddress.ataAddress;
+              txp.decimals = ataReceiveAddress.decimals;
+            } else {
+              const _ataReceiveAddress =
+                await getOrCreateAssociatedTokenAddress({
+                  mint: txp.tokenAddress,
+                  feePayer: wallet?.receiveAddress!,
+                });
+              txp.fromAta = _ataReceiveAddress;
+              logger.debug(
+                `Using ATA Address from getOrCreateAssociatedTokenAddress: ${_ataReceiveAddress}`,
+              );
+            }
 
             if (txp.outputs) {
-              const toAddressSolanaTokens = await getSolanaTokens(
-                toAddress,
-                wallet?.network,
-              );
+              const toAddressSolanaTokens: SolanaTokenData[] =
+                await getSolanaTokens(toAddress, wallet?.network);
 
-              let ataToAddress = toAddressSolanaTokens.find((item: any) => {
-                return item.mintAddress === txp.tokenAddress;
-              })?.ataAddress;
+              let ataToAddress: string | undefined;
+              if (toAddressSolanaTokens) {
+                ataToAddress = toAddressSolanaTokens.find((item: any) => {
+                  return item.mintAddress === txp.tokenAddress;
+                })?.ataAddress;
+              }
 
               if (!ataToAddress) {
                 ataToAddress = await getOrCreateAssociatedTokenAddress({
                   mint: txp.tokenAddress,
                   feePayer: toAddress,
                 });
-                ataOwnerAddress = toAddress;
+                setAtaOwnerAddress(toAddress);
+                logger.debug(
+                  `Using ATA toAddress from getOrCreateAssociatedTokenAddress: ${ataToAddress}`,
+                );
               }
 
               for (const output of txp.outputs) {
