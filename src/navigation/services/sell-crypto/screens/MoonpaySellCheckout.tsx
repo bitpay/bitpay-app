@@ -51,7 +51,7 @@ import {
   getCurrencyAbbreviation,
   getCWCChain,
   getOrCreateAssociatedTokenAddress,
-  getSolanaTokens,
+  getSolanaATAs,
   sleep,
   SolanaTokenData,
 } from '../../../../utils/helper-methods';
@@ -508,7 +508,7 @@ const MoonpaySellCheckout: React.FC = () => {
             }
           } else if (IsSVMChain(txp.chain!)) {
             const receiveAddressSolanaTokens: SolanaTokenData[] =
-              await getSolanaTokens(wallet?.receiveAddress!, wallet?.network);
+              await getSolanaATAs(wallet?.receiveAddress!, wallet?.network);
 
             let ataReceiveAddress: SolanaTokenData | undefined;
             if (receiveAddressSolanaTokens) {
@@ -536,7 +536,7 @@ const MoonpaySellCheckout: React.FC = () => {
 
             if (txp.outputs) {
               const toAddressSolanaTokens: SolanaTokenData[] =
-                await getSolanaTokens(toAddress, wallet?.network);
+                await getSolanaATAs(toAddress, wallet?.network);
 
               let ataToAddress: string | undefined;
               if (toAddressSolanaTokens) {

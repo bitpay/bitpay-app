@@ -1402,7 +1402,7 @@ export interface SolanaTokenData {
   decimals: number;
 }
 
-export const getSolanaTokens = async (
+export const getSolanaATAs = async (
   address: string,
   network: string = 'livenet',
 ): Promise<SolanaTokenData[]> => {
@@ -1414,13 +1414,13 @@ export const getSolanaTokens = async (
   try {
     const apiResponse = await axios.get<any>(url);
     if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
-      logManager.warn(`No solana tokens found for address: ${address}`);
+      logManager.debug(`No solana tokens found for address: ${address}`);
       return [];
     }
     return apiResponse.data;
   } catch (err: any) {
     const msg = err?.response?.data ?? err?.message ?? String(err);
-    logManager.error(`getSolanaTokens Error for ${address}: ${msg}`);
+    logManager.debug(`getSolanaATAs Error for ${address}: ${msg}`);
     return [];
   }
 };

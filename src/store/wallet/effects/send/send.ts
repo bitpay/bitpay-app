@@ -52,7 +52,7 @@ import {
   getFullLinkedWallet,
   getOrCreateAssociatedTokenAddress,
   getRateByCurrencyName,
-  getSolanaTokens,
+  getSolanaATAs,
   sleep,
   SolanaTokenData,
 } from '../../../../utils/helper-methods';
@@ -1111,7 +1111,7 @@ const buildTransactionProposal =
           default:
             let ataAddress: string | undefined;
             if (IsSVMChain(chain) && tx.tokenAddress) {
-              const toSolanaTokens = await getSolanaTokens(
+              const toSolanaTokens = await getSolanaATAs(
                 tx.toAddress!,
                 wallet?.network,
               );
@@ -1168,7 +1168,7 @@ const buildTransactionProposal =
                 }
               }
             } else {
-              const fromSolanaTokens: SolanaTokenData[] = await getSolanaTokens(
+              const fromSolanaTokens: SolanaTokenData[] = await getSolanaATAs(
                 wallet?.receiveAddress!,
                 wallet?.network,
               );
