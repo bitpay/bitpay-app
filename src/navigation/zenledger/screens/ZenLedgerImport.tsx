@@ -287,12 +287,9 @@ const ZenLedgerImport: React.FC = () => {
                               return item.blockchain;
                             })
                             .toString();
-                          Analytics.track(
-                            'ZenLedger Imported Wallet Address',
-                            {
-                              cryptoType: coins,
-                            },
-                          );
+                          Analytics.track('ZenLedger Imported Wallet Address', {
+                            cryptoType: coins,
+                          });
                           dispatch(dismissBottomNotificationModal());
                           await sleep(500);
                           goToZenLedger(requestWallets);
