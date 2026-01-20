@@ -23,6 +23,7 @@ import AuthFormContainer, {
 import styled from 'styled-components/native';
 import {CommonActions} from '@react-navigation/native';
 import {TabsScreens} from '../../tabs/TabsStack';
+import {useAppSelector} from '../../../utils/hooks';
 
 export type TwoFactorPairingParamList = {
   prevCode: string;
@@ -64,6 +65,9 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
   const twoFactorPairingError = useSelector<RootState, string>(
     ({BITPAY_ID}) => BITPAY_ID.twoFactorPairingError || '',
   );
+  const passkeyStatus = useAppSelector(
+    ({BITPAY_ID}) => BITPAY_ID.passkeyStatus,
+  );
   const {
     control,
     formState: {errors, isValid},
@@ -93,7 +97,9 @@ const TwoFactorPairing: React.FC<TwoFactorPairingScreenProps> = ({
           return;
         }
 
-        if (parentNav?.canGoBack()) {
+        if (!passkeyStatus) {
+          navigation.navigate(AuthScreens.SECURE_ACCOUNT);
+        } else if (parentNav?.canGoBack()) {
           parentNav.goBack();
         } else {
           navigationRef.dispatch(
