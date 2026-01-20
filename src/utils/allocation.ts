@@ -57,10 +57,8 @@ export type AllocationRowItem = {
 };
 
 const getAssetKey = (w: AllocationWallet): string => {
-  const chain = (w.chain || '').toLowerCase();
   const coin = (w.currencyAbbreviation || '').toLowerCase();
-  const tokenAddress = w.tokenAddress?.toLowerCase();
-  return tokenAddress ? `${chain}:${coin}:${tokenAddress}` : `${chain}:${coin}`;
+  return coin;
 };
 
 const getAssetColor = (

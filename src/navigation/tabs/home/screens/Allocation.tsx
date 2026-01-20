@@ -192,8 +192,6 @@ export const AllocationRowsList: React.FC<{
                         ? undefined
                         : (option?.imgSrc as unknown as number)
                     }
-                    badgeUri={option?.badgeUri}
-                    badgeSrc={option?.badgeSrc as unknown as number}
                     size={40}
                   />
                 </IconContainer>

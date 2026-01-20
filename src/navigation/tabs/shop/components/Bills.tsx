@@ -147,7 +147,7 @@ export const Bills = () => {
       } else {
         setWaitlistButtonState('loading');
         if (!isJoinedWaitlist) {
-         await dispatch(
+          await dispatch(
             joinWaitlist(user.email, 'BillPay Waitlist', 'bill-pay'),
           );
         }
@@ -271,7 +271,9 @@ export const Bills = () => {
                   ),
                 );
                 dispatch(
-                  Analytics.track('Bill Pay - Clicked I Already Have an Account'),
+                  Analytics.track(
+                    'Bill Pay - Clicked I Already Have an Account',
+                  ),
                 );
               }}>
               {t('I already have an account')}

@@ -147,7 +147,10 @@ const CreateOrImportKey = ({
                   const context = 'onboarding';
                   showOngoingProcess('CREATING_KEY');
                   const createdKey = await dispatch(
-                    startCreateKey(getBaseKeyCreationCoinsAndTokens(), 'onboarding'),
+                    startCreateKey(
+                      getBaseKeyCreationCoinsAndTokens(),
+                      'onboarding',
+                    ),
                   );
 
                   dispatch(
@@ -156,7 +159,9 @@ const CreateOrImportKey = ({
                   hideOngoingProcess();
                   askForTrackingThenNavigate(() => {
                     dispatch(
-                      Analytics.track('Clicked Create New Key', {context: 'onboarding'})
+                      Analytics.track('Clicked Create New Key', {
+                        context: 'onboarding',
+                      }),
                     );
                     navigation.navigate('BackupKey', {
                       context,
@@ -182,7 +187,9 @@ const CreateOrImportKey = ({
               onPress={() => {
                 askForTrackingThenNavigate(() => {
                   dispatch(
-                    Analytics.track('Clicked Import Key', {context: 'onboarding'})
+                    Analytics.track('Clicked Import Key', {
+                      context: 'onboarding',
+                    }),
                   );
                   navigation.navigate('Import', {
                     context: 'onboarding',

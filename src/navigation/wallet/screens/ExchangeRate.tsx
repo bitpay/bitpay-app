@@ -1162,20 +1162,13 @@ const ExchangeRate = () => {
         const matchesCurrency =
           (w.currencyAbbreviation || '').toLowerCase() ===
           assetContext.currencyAbbreviation;
-        const matchesChain =
-          (w.chain || '').toLowerCase() === assetContext.chain;
-        const matchesNetwork = assetContext.network
-          ? (w.network || '').toLowerCase() === assetContext.network
-          : true;
         const matchesTokenAddress = assetContext.tokenAddress
           ? (w.tokenAddress || '').toLowerCase() === assetContext.tokenAddress
           : true;
-        return (
-          matchesCurrency &&
-          matchesChain &&
-          matchesNetwork &&
-          matchesTokenAddress
-        );
+        const matchesChain = assetContext.tokenAddress
+          ? (w.chain || '').toLowerCase() === assetContext.chain
+          : true;
+        return matchesCurrency && matchesTokenAddress && matchesChain;
       })
       .map(wallet => {
         const ui = buildUIFormattedWallet(
@@ -1193,7 +1186,6 @@ const ExchangeRate = () => {
   }, [
     assetContext.chain,
     assetContext.currencyAbbreviation,
-    assetContext.network,
     assetContext.tokenAddress,
     defaultAltCurrency.isoCode,
     dispatch,
