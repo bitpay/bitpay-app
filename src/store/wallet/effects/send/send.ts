@@ -1343,8 +1343,19 @@ export const publishAndSign =
           logManager.debug(
             `success create ata [publishAndSign]: ${JSON.stringify(result)}`,
           );
-        } catch (error) {
-          throw new Error(`Error creating associated token account: ${error}`);
+        } catch (err) {
+          const errorStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logManager.error(`[publishAndSign] err: ${errorStr}`);
+
+          if (errorStr.includes('Transaction simulation failed')) {
+            return reject(
+              new Error(
+                'Your Solana wallet may not have enough SOL to cover network fees and rent-exempt balance. Please add some SOL to your wallet first, then try again.',
+              ),
+            );
+          }
+          return reject(errorStr);
         }
       }
 
