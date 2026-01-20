@@ -52,8 +52,9 @@ import {
   getFullLinkedWallet,
   getOrCreateAssociatedTokenAddress,
   getRateByCurrencyName,
-  getSolanaTokens,
+  getSolanaATAs,
   sleep,
+  SolanaTokenData,
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
@@ -124,6 +125,7 @@ import {logManager} from '../../../../managers/LogManager';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {ExternalServicesScreens} from '../../../../navigation/services/ExternalServicesGroup';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -1109,9 +1111,12 @@ const buildTransactionProposal =
           default:
             let ataAddress: string | undefined;
             if (IsSVMChain(chain) && tx.tokenAddress) {
-              ataAddress = (
-                await getSolanaTokens(tx.toAddress!, wallet?.network)
-              ).find(
+              const toSolanaTokens = await getSolanaATAs(
+                tx.toAddress!,
+                wallet?.network,
+              );
+
+              ataAddress = toSolanaTokens.find(
                 (item: {mintAddress: string}) =>
                   item.mintAddress === tx.tokenAddress,
               )?.ataAddress;
@@ -1122,6 +1127,9 @@ const buildTransactionProposal =
                   feePayer: tx.toAddress!,
                 });
                 txp.ataOwnerAddress = tx.toAddress;
+                logManager.debug(
+                  `Using ATA Address from getOrCreateAssociatedTokenAddress: ${ataAddress}`,
+                );
               }
             }
 
@@ -1160,15 +1168,28 @@ const buildTransactionProposal =
                 }
               }
             } else {
-              const fromSolanaTokens = await getSolanaTokens(
+              const fromSolanaTokens: SolanaTokenData[] = await getSolanaATAs(
                 wallet?.receiveAddress!,
                 wallet?.network,
               );
-              const fromAta = fromSolanaTokens.find((item: any) => {
+              const fromAta = fromSolanaTokens.find((item: SolanaTokenData) => {
                 return item.mintAddress === tx.tokenAddress;
               });
-              txp.fromAta = fromAta?.ataAddress;
-              txp.decimals = fromAta?.decimals;
+
+              if (fromAta) {
+                txp.fromAta = fromAta?.ataAddress;
+                txp.decimals = fromAta?.decimals;
+              } else {
+                const ataAddress = await getOrCreateAssociatedTokenAddress({
+                  mint: tx.tokenAddress!,
+                  feePayer: wallet?.receiveAddress!,
+                });
+                txp.fromAta = ataAddress;
+                logManager.debug(
+                  `Using ATA Address from getOrCreateAssociatedTokenAddress: ${ataAddress}`,
+                );
+              }
+
               if (solanaPayOpts?.memo) {
                 txp.memo = solanaPayOpts.memo;
               }
@@ -1299,8 +1320,8 @@ export const publishAndSign =
         }
       }
 
-      if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
-        try {
+      try {
+        if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
           const xPrivKeyEDDSA = password
             ? key.methods!.get(password, 'EDDSA').xPrivKey
             : key.properties!.xPrivKeyEDDSA;
@@ -1322,12 +1343,8 @@ export const publishAndSign =
           logManager.debug(
             `success create ata [publishAndSign]: ${JSON.stringify(result)}`,
           );
-        } catch (error) {
-          throw new Error(`Error creating associated token account: ${error}`);
+          await sleep(3000);
         }
-      }
-
-      try {
         let publishedTx,
           broadcastedTx: Partial<TransactionProposal> | null = null;
 
@@ -1415,6 +1432,17 @@ export const publishAndSign =
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(`[publishAndSign] err: ${errorStr}`);
+        // workaround for 500 - Transaction simulation failed SOL err from bws
+        if (
+          errorStr.includes('Transaction simulation failed') &&
+          IsSVMChain(txp.chain)
+        ) {
+          return reject(
+            new Error(
+              'Your Solana wallet may not have enough SOL to cover network fees and rent-exempt balance. Please add some SOL to your wallet first, then try again.',
+            ),
+          );
+        }
         // if broadcast fails, remove transaction proposal
         try {
           // except for multisig pending transactions
@@ -2362,7 +2390,7 @@ export const handleCreateTxProposalError =
     proposalErrorProps: ProposalErrorHandlerProps,
     onDismiss?: () => void,
     context?: ProposalErrorHandlerContext,
-  ): Effect<Promise<any>> =>
+  ): Effect<Promise<BottomNotificationConfig>> =>
   async dispatch => {
     try {
       const {err} = proposalErrorProps;
