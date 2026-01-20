@@ -1320,8 +1320,8 @@ export const publishAndSign =
         }
       }
 
-      if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
-        try {
+      try {
+        if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
           const xPrivKeyEDDSA = password
             ? key.methods!.get(password, 'EDDSA').xPrivKey
             : key.properties!.xPrivKeyEDDSA;
@@ -1343,23 +1343,8 @@ export const publishAndSign =
           logManager.debug(
             `success create ata [publishAndSign]: ${JSON.stringify(result)}`,
           );
-        } catch (err) {
-          const errorStr =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          logManager.error(`[publishAndSign] err: ${errorStr}`);
-
-          if (errorStr.includes('Transaction simulation failed')) {
-            return reject(
-              new Error(
-                'Your Solana wallet may not have enough SOL to cover network fees and rent-exempt balance. Please add some SOL to your wallet first, then try again.',
-              ),
-            );
-          }
-          return reject(errorStr);
+          await sleep(3000);
         }
-      }
-
-      try {
         let publishedTx,
           broadcastedTx: Partial<TransactionProposal> | null = null;
 
@@ -1447,6 +1432,17 @@ export const publishAndSign =
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(`[publishAndSign] err: ${errorStr}`);
+        // workaround for 500 - Transaction simulation failed SOL err from bws
+        if (
+          errorStr.includes('Transaction simulation failed') &&
+          IsSVMChain(txp.chain)
+        ) {
+          return reject(
+            new Error(
+              'Your Solana wallet may not have enough SOL to cover network fees and rent-exempt balance. Please add some SOL to your wallet first, then try again.',
+            ),
+          );
+        }
         // if broadcast fails, remove transaction proposal
         try {
           // except for multisig pending transactions
