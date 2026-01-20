@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import {
-  EXCHANGE_RATES_SORT_ORDER,
+  EXCHANGE_RATES_CURRENCIES,
   STATIC_CONTENT_CARDS_ENABLED,
 } from '../../../constants/config';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
@@ -220,7 +220,8 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         if (
           lastDayRateForDefaultCurrency?.rate &&
           rateForDefaultCurrency?.rate &&
-          !isStableCoin
+          !isStableCoin &&
+          EXCHANGE_RATES_CURRENCIES.includes(currencyName)
         ) {
           const {
             id,
@@ -252,10 +253,10 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     }, [] as ExchangeRateItemProps[]);
 
     return result.sort((a, b) => {
-      const indexA = EXCHANGE_RATES_SORT_ORDER.indexOf(
+      const indexA = EXCHANGE_RATES_CURRENCIES.indexOf(
         a.currencyAbbreviation.toLowerCase(),
       );
-      const indexB = EXCHANGE_RATES_SORT_ORDER.indexOf(
+      const indexB = EXCHANGE_RATES_CURRENCIES.indexOf(
         b.currencyAbbreviation.toLowerCase(),
       );
 
