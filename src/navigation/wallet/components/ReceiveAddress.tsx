@@ -289,7 +289,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
   };
 
   const init = () => {
-    if (wallet?.isComplete()) {
+    if (wallet?.isComplete() && !wallet.pendingTssSession) {
       logger.info(`Creating address for wallet: ${wallet.id}`);
       createAddress();
     } else {

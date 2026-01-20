@@ -3,6 +3,7 @@ import {
   CacheFeeLevel,
   CryptoBalance,
   Key,
+  PendingJoinerSession,
   Token,
   TransactionProposal,
   Wallet,
@@ -279,4 +280,15 @@ export const successUpdateWalletBalancesAndStatus = (payload: {
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
   payload,
+});
+
+export const setPendingJoinerSession = (
+  session: PendingJoinerSession | null,
+) => ({
+  type: WalletActionTypes.SET_PENDING_JOINER_SESSION,
+  payload: session,
+});
+
+export const removePendingJoinerSession = () => ({
+  type: WalletActionTypes.REMOVE_PENDING_JOINER_SESSION,
 });

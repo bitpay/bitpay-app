@@ -128,7 +128,9 @@ const TransactModal = () => {
       wallet =>
         !wallet.hideWallet &&
         !wallet.hideWalletByAccount &&
-        wallet.isComplete(),
+        wallet.isComplete() &&
+        !wallet.pendingTssSession &&
+        wallet.balance.sat > 0,
     );
 
   const availableWalletsWithFunds = availableWallets.filter(

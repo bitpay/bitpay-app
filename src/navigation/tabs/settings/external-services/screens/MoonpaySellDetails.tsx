@@ -62,7 +62,7 @@ import {
   MoonpaySellTransactionDetails,
 } from '../../../../../store/sell-crypto/models/moonpay-sell.models';
 import {RootState} from '../../../../../store';
-import {Wallet} from '../../../../../store/wallet/wallet.models';
+import {Key, Wallet} from '../../../../../store/wallet/wallet.models';
 
 export interface MoonpaySellDetailsProps {
   sellOrder: MoonpaySellOrderData;
@@ -82,7 +82,9 @@ const MoonpaySellDetails: React.FC = () => {
   const logger = useLogger();
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const allKeys: {[key: string]: Key} = useAppSelector(
+    ({WALLET}: RootState) => WALLET.keys,
+  );
   const [status, setStatus] = useState<MoonpaySellStatus>({
     statusTitle: undefined,
     statusDescription: undefined,
@@ -526,10 +528,11 @@ const MoonpaySellDetails: React.FC = () => {
                                 transactionId: sellOrder.transaction_id,
                                 externalId: sellOrder.external_id,
                               };
-                            const res =
+                            const _res =
                               await sourceWallet.moonpayCancelSellTransaction(
                                 reqData,
                               );
+                            const res = _res?.body ?? _res;
                             if (res?.statusCode == 204) {
                               // Canceled successfully
                               sellOrder.status = 'bitpayCanceled';

@@ -8,7 +8,14 @@ import {
   SheetParams,
 } from '../../../components/styled/Containers';
 import {Platform, Image, ImageSourcePropType} from 'react-native';
-import {Action, Black, Slate, White} from '../../../styles/colors';
+import {
+  Black,
+  Slate,
+  White,
+  SlateDark,
+  Warning,
+  Caution,
+} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
@@ -32,28 +39,51 @@ const OptionTextContainer = styled.View`
   justify-content: space-around;
   flex-direction: column;
   margin: 0 20px;
+  flex: 1;
 `;
 
 const OptionTitleText = styled(BaseText)`
   font-style: normal;
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 19px;
-  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 22px;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  margin-bottom: 6px;
 `;
 
 const OptionDescriptionText = styled(BaseText)`
   font-style: normal;
   font-weight: 400;
   font-size: 14px;
-  line-height: 19px;
+  line-height: 20px;
   color: ${({theme: {dark}}) => (dark ? Slate : Black)};
   margin-top: 3px;
+`;
+
+const SubDescriptionContainer = styled.View`
+  background-color: ${({theme: {dark}}) => (dark ? '#000000' : '#F5F5F5')};
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 12px;
+`;
+
+const OptionSubDescriptionText = styled(BaseText)`
+  font-style: normal;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 20px;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+`;
+
+const BoldText = styled(BaseText)`
+  font-weight: 700;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 export interface Option {
   img?: ReactElement;
   imgSrc?: ImageSourcePropType;
+  subDescription?: string;
   title?: string;
   description?: string;
   onPress: () => void;
@@ -70,6 +100,17 @@ interface Props extends SheetParams {
   placement?: SheetPlacement;
   paddingHorizontal?: number;
 }
+
+const renderSubDescription = (text: string) => {
+  const parts = text.split(/(\*\*[^*]+\*\*)/);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const boldText = part.slice(2, -2);
+      return <BoldText key={index}>{boldText}</BoldText>;
+    }
+    return part;
+  });
+};
 
 const OptionsSheet = ({
   isVisible,
@@ -105,6 +146,7 @@ const OptionsSheet = ({
               imgSrc,
               title: optionTitle,
               description,
+              subDescription,
               onPress,
               optionElement,
             },
@@ -138,6 +180,13 @@ const OptionsSheet = ({
                       <OptionDescriptionText>
                         {description}
                       </OptionDescriptionText>
+                      {subDescription && (
+                        <SubDescriptionContainer>
+                          <OptionSubDescriptionText>
+                            {renderSubDescription(subDescription)}
+                          </OptionSubDescriptionText>
+                        </SubDescriptionContainer>
+                      )}
                     </OptionTextContainer>
                   </>
                 )}

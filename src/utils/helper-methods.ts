@@ -669,7 +669,11 @@ export const fixWalletAddresses = async ({
   await Promise.all(
     wallets.map(async wallet => {
       try {
-        if (!wallet.receiveAddress && wallet?.credentials?.isComplete()) {
+        if (
+          !wallet.receiveAddress &&
+          wallet?.credentials?.isComplete() &&
+          !wallet.pendingTssSession
+        ) {
           const walletAddress = (await appDispatch<any>(
             createWalletAddress({wallet, newAddress: false, skipDispatch}),
           )) as string;
@@ -1666,5 +1670,16 @@ export const decodeSolanaTxIntructions = async (
     return apiResponse.data.instructions;
   } catch (err) {
     throw err;
+  }
+};
+
+export const toggleTSSModal = async (
+  setShowTSSProgressModal: ((show: boolean) => void) | undefined,
+  show: boolean,
+  delayMs: number = 500,
+) => {
+  if (setShowTSSProgressModal) {
+    setShowTSSProgressModal(show);
+    if (delayMs > 0) await sleep(delayMs);
   }
 };

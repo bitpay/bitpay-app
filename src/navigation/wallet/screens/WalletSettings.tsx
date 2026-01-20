@@ -49,7 +49,8 @@ import {
 import {useTranslation} from 'react-i18next';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
+import {Constants} from 'bitcore-wallet-client/ts_build/src/lib/common';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -290,7 +291,7 @@ const WalletSettings = () => {
           </Setting>
           <Hr />
 
-          {!key.isReadOnly ? (
+          {!key.isReadOnly && !isTSSKey(key) ? (
             <>
               <Setting
                 activeOpacity={ActiveOpacity}

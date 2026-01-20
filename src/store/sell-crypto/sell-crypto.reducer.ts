@@ -96,6 +96,9 @@ export const sellCryptoReducer = (
           tx_sent_id:
             moonpaySellIncomingData.txSentId ??
             state.moonpay[moonpaySellIncomingData.externalId].tx_sent_id,
+          isTSSWallet:
+            moonpaySellIncomingData.isTSSWallet ??
+            state.moonpay[moonpaySellIncomingData.externalId].isTSSWallet,
         };
         return {
           ...state,
@@ -185,6 +188,10 @@ export const sellCryptoReducer = (
           tx_sent_id: setOrDefault(
             rampSellIncomingData.txSentId,
             currentData.tx_sent_id,
+          ),
+          isTSSWallet: setOrDefault(
+            rampSellIncomingData.isTSSWallet,
+            currentData.isTSSWallet,
           ),
         };
 

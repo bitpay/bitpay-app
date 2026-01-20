@@ -150,7 +150,8 @@ const PaperWallet: React.FC<PaperWalletProps> = ({navigation, route}) => {
       wallet =>
         !wallet.hideWallet &&
         !wallet.hideWalletByAccount &&
-        wallet.isComplete(),
+        wallet.isComplete() &&
+        !wallet.pendingTssSession,
     );
 
   const [walletsAvailable, setWalletsAvailable] = useState<Wallet[]>([]);

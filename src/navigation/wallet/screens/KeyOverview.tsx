@@ -75,7 +75,7 @@ import {
 } from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
-import {WalletGroupParamList} from '../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
@@ -132,6 +132,7 @@ import {
   buildAllocationDataFromWalletRows,
   type AllocationWallet,
 } from '../../../utils/allocation';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -329,6 +330,7 @@ const KeyOverview = () => {
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
+
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];
   const hasMultipleKeys =
@@ -524,6 +526,7 @@ const KeyOverview = () => {
           .filter(
             sw =>
               sw.isComplete() &&
+              !sw.pendingTssSession &&
               !key.wallets.some(ew => ew.id === sw.credentials.walletId),
           )
           .map(syncWallet => {
@@ -539,7 +542,11 @@ const KeyOverview = () => {
             return _.merge(
               syncWallet,
               buildWalletObj(
-                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                {
+                  ...syncWallet.credentials,
+                  currencyAbbreviation,
+                  currencyName,
+                } as any,
                 _tokenOptionsByAddress,
               ),
             );
@@ -760,7 +767,7 @@ const KeyOverview = () => {
         k.id === item.wallets[0].id &&
         (!item.copayerId || k.credentials?.copayerId === item.copayerId),
     )!;
-    if (!fullWalletObj.isComplete()) {
+    if (!fullWalletObj.isComplete() && fullWalletObj.pendingTssSession) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
         (err: any, status: Status) => {
@@ -804,7 +811,29 @@ const KeyOverview = () => {
           id={item.id}
           accountItem={item}
           hideBalance={hideAllBalances}
-          onPress={() => onPressItem(item)}
+          onPress={() => {
+            if (key?.tssSession) {
+              const {status, isCreator} = key.tssSession;
+              if (
+                isCreator &&
+                (status === 'collecting_copayers' ||
+                  status === 'ready_to_start' ||
+                  status === 'ceremony_in_progress')
+              ) {
+                navigation.navigate(WalletScreens.INVITE_COSIGNERS, {
+                  keyId: key.id,
+                });
+                return;
+              }
+
+              if (!isCreator && status === 'ceremony_in_progress') {
+                console.log(
+                  '[TSS] Joiner has ceremony in progress - needs to reconnect',
+                );
+              }
+            }
+            onPressItem(item);
+          }}
         />
       );
     },
@@ -840,17 +869,19 @@ const KeyOverview = () => {
   const renderListFooterComponent = useCallback(() => {
     return (
       <WalletListFooterContainer>
-        <WalletListFooter
-          activeOpacity={ActiveOpacity}
-          onPress={async () => {
-            haptic('impactLight');
-            navigation.navigate('AddingOptions', {
-              key,
-            });
-          }}>
-          <Icons.Add />
-          <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
-        </WalletListFooter>
+        {!isTSSKey(key) ? (
+          <WalletListFooter
+            activeOpacity={ActiveOpacity}
+            onPress={async () => {
+              haptic('impactLight');
+              navigation.navigate('AddingOptions', {
+                key,
+              });
+            }}>
+            <Icons.Add />
+            <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
+          </WalletListFooter>
+        ) : null}
         {/* <Button
           buttonStyle="secondary"
           height={50}

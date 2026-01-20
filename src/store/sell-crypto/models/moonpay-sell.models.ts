@@ -30,6 +30,7 @@ export interface MoonpaySellOrderData {
   tx_sent_on?: number;
   tx_sent_id?: string;
   failure_reason?: string; // if status === failed
+  isTSSWallet?: boolean;
 }
 
 export interface MoonpaySellIncomingData {
@@ -46,6 +47,7 @@ export interface MoonpaySellIncomingData {
   txSentOn?: number;
   txSentId?: string;
   failureReason?: string;
+  isTSSWallet?: boolean;
 }
 
 export interface MoonpayCurrencyMetadata {

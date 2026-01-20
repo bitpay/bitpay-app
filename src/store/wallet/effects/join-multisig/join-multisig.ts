@@ -7,7 +7,7 @@ import {
   mapAbbreviationAndName,
 } from '../../utils/wallet';
 import {successCreateKey, successAddWallet} from '../../wallet.actions';
-import API from 'bitcore-wallet-client/ts_build';
+import API from 'bitcore-wallet-client/ts_build/src';
 import {Key, KeyMethods, KeyOptions, Wallet} from '../../wallet.models';
 import {
   subscribePushNotifications,
@@ -81,7 +81,7 @@ export const startJoinMultisig =
             ..._wallet.credentials,
             currencyAbbreviation,
             currencyName,
-          }),
+          } as any),
         ) as Wallet;
 
         const key = buildKeyObj({key: _key, wallets: [wallet]});
@@ -157,7 +157,7 @@ export const addWalletJoinMultisig =
               ...newWallet.credentials,
               currencyAbbreviation,
               currencyName,
-            }),
+            } as any),
           ) as Wallet,
         );
 
@@ -182,7 +182,7 @@ const joinMultisigWallet = (params: {
       bwcClient.fromString(
         key.createCredentials(opts.password, {
           coin: opts.coin,
-          chain: opts.chain, // chain === coin for stored clients. THIS IS NO TRUE ANYMORE
+          chain: opts.chain,
           network: opts.networkName,
           account: opts.account || 0,
           n: opts.n,

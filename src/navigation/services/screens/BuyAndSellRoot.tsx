@@ -2194,7 +2194,8 @@ const BuyAndSellRoot = ({
 
     let data: BanxaCreateOrderData, banxaOrderData: BanxaOrderData;
     try {
-      data = await selectedWallet.banxaCreateOrder(quoteData);
+      const _data = await selectedWallet.banxaCreateOrder(quoteData);
+      data = _data?.body ?? _data;
     } catch (err) {
       setOpeningBrowser(false);
       const title = t('Banxa Error');
@@ -2334,9 +2335,10 @@ const BuyAndSellRoot = ({
 
     let data: MoonpayGetSignedPaymentUrlData;
     try {
-      data = (await selectedWallet.moonpayGetSignedPaymentUrl(
+      const _data: any = await selectedWallet.moonpayGetSignedPaymentUrl(
         quoteData,
-      )) as MoonpayGetSignedPaymentUrlData;
+      );
+      data = _data?.body ?? _data;
     } catch (err) {
       setOpeningBrowser(false);
       const title = t('MoonPay Error');
@@ -2445,7 +2447,8 @@ const BuyAndSellRoot = ({
 
     let data: RampGetSellSignedPaymentUrlData;
     try {
-      data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
+      const _data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
+      data = _data?.body ?? _data;
     } catch (err) {
       setOpeningBrowser(false);
       const title = t('Ramp Network Error');
@@ -2522,7 +2525,8 @@ const BuyAndSellRoot = ({
           enabled: ['ach', 'apple_pay', 'card', 'sepa'],
         },
       };
-      authTokenData = await selectedWallet.sardineGetToken(quoteData);
+      const _authTokenData = await selectedWallet.sardineGetToken(quoteData);
+      authTokenData = _authTokenData?.body ?? _authTokenData;
     } catch (err) {
       setOpeningBrowser(false);
       const title = t('Sardine Error');
@@ -2655,7 +2659,8 @@ const BuyAndSellRoot = ({
     };
 
     simplexPaymentRequest(selectedWallet, address, quoteData, createdOn)
-      .then(async req => {
+      .then(async _req => {
+        const req = _req?.body ?? _req;
         if (req && req.error) {
           const title = t('Simplex Error');
           const reason = 'simplexPaymentRequest Error';
@@ -2864,7 +2869,8 @@ const BuyAndSellRoot = ({
 
     let data: TransakSignedUrlData;
     try {
-      data = await selectedWallet.transakGetSignedPaymentUrl(quoteData);
+      const _data = await selectedWallet.transakGetSignedPaymentUrl(quoteData);
+      data = _data?.body ?? _data;
     } catch (err) {
       const title = t('Transak Error');
       const msg = getErrorMessage(err);
@@ -2996,7 +3002,10 @@ const BuyAndSellRoot = ({
 
     let data: MoonpayGetSellSignedPaymentUrlData;
     try {
-      data = await selectedWallet.moonpayGetSellSignedPaymentUrl(requestData);
+      const _data = await selectedWallet.moonpayGetSellSignedPaymentUrl(
+        requestData,
+      );
+      data = _data?.body ?? _data;
       if (!data?.urlWithSignature) {
         const msg = t(
           'Our partner Moonpay is not currently available. Please try again later.',
@@ -3124,7 +3133,8 @@ const BuyAndSellRoot = ({
 
     let data: RampGetSellSignedPaymentUrlData;
     try {
-      data = await selectedWallet.rampGetSignedPaymentUrl(requestData);
+      const _data = await selectedWallet.rampGetSignedPaymentUrl(requestData);
+      data = _data?.body ?? _data;
       if (!data?.urlWithSignature) {
         const msg = t(
           'Our partner Ramp Network is not currently available. Please try again later.',
@@ -3479,7 +3489,8 @@ const BuyAndSellRoot = ({
 
     selectedWallet
       .simplexSellPaymentRequest(quoteData)
-      .then(async (data: SimplexSellPaymentRequestData) => {
+      .then(async (_data: any) => {
+        const data: SimplexSellPaymentRequestData = _data?.body ?? _data;
         if (data?.error) {
           const msg = getErrorMessage(data.error);
           const reason = 'simplexSellPaymentRequest Error';

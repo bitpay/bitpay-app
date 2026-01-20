@@ -77,7 +77,10 @@ import {
 } from '../../../store/wallet/effects';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {RootState} from '../../../store';
-import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../../wallet/components/ErrorMessages';
 import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transactions/transactions';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -87,6 +90,7 @@ import GlobalSelect, {
 } from '../../wallet/screens/GlobalSelect';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 const AccountContainer = styled.SafeAreaView`
   flex: 1;
@@ -399,7 +403,8 @@ const CoinbaseAccount = ({
           wallet.network === 'livenet' &&
           wallet.currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
           wallet.chain === _chain &&
-          wallet.isComplete(),
+          wallet.isComplete() &&
+          !wallet.pendingTssSession,
       );
 
       if (availableWallets.length) {
@@ -545,7 +550,7 @@ const CoinbaseAccount = ({
     );
     if (newWallet) {
       if (newWallet.credentials) {
-        if (newWallet.isComplete()) {
+        if (newWallet.isComplete() && !newWallet.pendingTssSession) {
           if (allKeys[newWallet.keyId].backupComplete) {
             setSelectedWallet(newWallet);
             await sleep(500);
@@ -623,6 +628,17 @@ const CoinbaseAccount = ({
     setWalletModalVisible(false);
     if (newWallet?.currencyAbbreviation) {
       onSelectedWallet(newWallet);
+    } else if (createNewWalletData && isTSSKey(createNewWalletData.key)) {
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: t(
+              'You cannot add new wallets to a TSS wallet key. To create another wallet, please start a new TSS wallet setup.',
+            ),
+            title: t('TSS Wallet Limitation'),
+          }),
+        ),
+      );
     } else if (createNewWalletData) {
       try {
         if (

@@ -300,7 +300,7 @@ const Addresses = () => {
     try {
       setButtonState('loading');
 
-      if (!wallet.isComplete()) {
+      if (!wallet.isComplete() && wallet.pendingTssSession) {
         setButtonState('failed');
         await sleep(1000);
         setButtonState(null);

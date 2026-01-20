@@ -30,6 +30,8 @@ import {
   TransactionProposal,
   SendMaxInfo,
   Key,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../store/wallet/wallet.models';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {
@@ -114,6 +116,11 @@ import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
+import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
+import {Network} from '../../../../constants';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 export const SwapCheckoutContainer = styled.SafeAreaView`
@@ -179,6 +186,38 @@ const ChangellyCheckout: React.FC = () => {
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const showTssErrorMessage = useCallback(
+    async (config: BottomNotificationConfig) => {
+      const msg = config?.message || t('An error occurred during TSS signing');
+      const reason = 'TSS Signing Error';
+      const title = config?.title || t('TSS Signing Error');
+      showError(msg, reason, undefined, title);
+    },
+    [dispatch],
+  );
+  const isTSSWallet = isTSSKey(key);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+
+  const tssCallbacks = useTSSCallbacks({
+    wallet: fromWalletSelected,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage: showTssErrorMessage,
+  });
 
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
@@ -714,6 +753,12 @@ const ChangellyCheckout: React.FC = () => {
 
   const makePayment = async ({transport}: {transport?: Transport}) => {
     const isUsingHardwareWallet = !!transport;
+
+    if (isTSSWallet) {
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
+      setTssStatus('initializing');
+    }
+
     try {
       if (isUsingHardwareWallet) {
         const {chain, network} = fromWalletSelected.credentials;
@@ -721,7 +766,7 @@ const ChangellyCheckout: React.FC = () => {
         if (!configFn) {
           throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
-        const params = configFn(network);
+        const params = configFn(network as Network);
         await prepareLedgerApp(
           params.appName,
           transportRef,
@@ -744,14 +789,22 @@ const ChangellyCheckout: React.FC = () => {
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        await dispatch(
+        const broadcastedTx = await dispatch(
           publishAndSign({
             txp: ctxp! as TransactionProposal,
             key,
             wallet: fromWalletSelected,
             ataOwnerAddress,
+            ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
+
+        if (isTSSWallet && broadcastedTx?.txid) {
+          setTssStatus('complete');
+          await sleep(1500);
+          setShowTSSProgressModal(false);
+        }
       }
       saveChangellyTx();
 
@@ -779,6 +832,10 @@ const ChangellyCheckout: React.FC = () => {
         }),
       );
     } catch (err: any) {
+      if (isTSSWallet) {
+        setShowTSSProgressModal(false);
+      }
+
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -874,6 +931,7 @@ const ChangellyCheckout: React.FC = () => {
       payinExtraId: txData.payinExtraId,
       totalExchangeFee: totalExchangeFee!,
       status: txData.status,
+      isTSSWallet: isTSSWallet,
     };
 
     dispatch(
@@ -1009,6 +1067,19 @@ const ChangellyCheckout: React.FC = () => {
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
+        {isTSSWallet && (
+          <TSSProgressTracker
+            status={tssStatus}
+            progress={tssProgress}
+            createdBy={fromWalletSelected.walletName || 'You'}
+            date={new Date()}
+            wallet={fromWalletSelected}
+            copayers={tssCopayers}
+            onCopayersInitialized={setTssCopayers}
+            isModalVisible={showTSSProgressModal}
+            onModalVisibilityChange={setShowTSSProgressModal}
+          />
+        )}
         <ItemDivisor />
         <RowDataContainer>
           <RowLabel>{t('Swapping')}</RowLabel>

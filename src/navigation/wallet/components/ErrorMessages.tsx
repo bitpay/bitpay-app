@@ -12,6 +12,7 @@ interface BottomNotificationListType {
 }
 
 const List = styled(BaseText)`
+  line-height: 24px;
   margin-bottom: 10px;
 `;
 
