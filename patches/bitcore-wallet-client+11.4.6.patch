@@ -162,6 +162,39 @@ index ffb28f7..92db28f 100644
          decipher.setAuthTag(authTag);
          let decrypted = decipher.update(ciphertext);
          decrypted = Buffer.concat([decrypted, decipher.final()]);
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/utils.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/common/utils.js
+index e2a71a6..944fc79 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/utils.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/common/utils.js
+@@ -7,6 +7,7 @@ exports.Utils = void 0;
+ const crypto_wallet_core_1 = require("crypto-wallet-core");
+ const json_stable_stringify_1 = __importDefault(require("json-stable-stringify"));
+ const preconditions_1 = require("preconditions");
++const sjcl_1 = __importDefault(require("sjcl")); 
+ const constants_1 = require("./constants");
+ const defaults_1 = require("./defaults");
+ const encryption_1 = require("./encryption");
+@@ -50,7 +51,19 @@ class Utils {
+             return;
+         if (!encryptingKey)
+             throw new Error('Missing encrypting key');
+-        return encryption_1.Encryption.decryptWithKey(ciphertextJson, encryptingKey).toString();
++        
++        try {
++            return encryption_1.Encryption.decryptWithKey(ciphertextJson, encryptingKey).toString();
++        }
++        catch (err) {
++            try {
++                var key = sjcl_1.default.codec.base64.toBits(encryptingKey);
++                return sjcl_1.default.decrypt(key, ciphertextJson);
++            }
++            catch (sjclErr) {
++                throw err;
++            }
++        }
+     }
+     static decryptMessageNoThrow(ciphertextJson, encryptingKey) {
+         if (!encryptingKey)
 diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
 index 43e3f5d..4767846 100644
 --- a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
