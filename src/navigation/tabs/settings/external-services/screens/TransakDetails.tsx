@@ -83,7 +83,7 @@ const TransakDetails: React.FC = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
-    ({BUY_CRYPTO}) => BUY_CRYPTO.accessToken?.transak?.[transakEnv],
+    ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
   );
   const allKeys: {[key: string]: Key} = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys,
@@ -157,8 +157,12 @@ const TransakDetails: React.FC = () => {
 
             const selectedWallet = allowedWallets[0];
 
-            const {data}: {data: TransakAccessTokenData | undefined} =
-              await selectedWallet.transakGetAccessToken({env: transakEnv});
+            let data: TransakAccessTokenData | undefined;
+            const _data = await selectedWallet.transakGetAccessToken({
+              env: transakEnv,
+            });
+            data = _data?.body?.data ?? _data;
+
             if (data?.accessToken) {
               logger.debug(
                 'Transak access token fetched successfully from TransakDetails.',
@@ -170,6 +174,11 @@ const TransakDetails: React.FC = () => {
                 }),
               );
               _accessToken = data.accessToken;
+            } else {
+              const err =
+                'Error fetching Transak access token in TransakDetails. Error: No accessToken provided';
+              logger.error(`${err}`);
+              // Continue anyway, as we can generate a new access token in the BWS if needed.
             }
           }
         }
@@ -184,6 +193,8 @@ const TransakDetails: React.FC = () => {
         logger.error(`${msg}`);
         // Continue anyway, as we can generate a new access token in the BWS if needed.
       }
+    } else {
+      logger.debug('Using cached Transak access token.');
     }
 
     const requestData: TransakGetOrderDetailsRequestData = {
