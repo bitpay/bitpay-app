@@ -13,8 +13,9 @@ import {RampPaymentData} from './models/ramp.models';
 import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
 
 type BuyCryptoReduxPersistBlackList = string[];
-export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
-  [];
+export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList = [
+  'accessToken',
+];
 
 export interface BuyCryptoStateOpts {
   selectedPaymentMethod: PaymentMethodKey | undefined;
@@ -29,7 +30,7 @@ export interface BuyCryptoState {
   simplex: {[key in string]: SimplexPaymentData};
   transak: {[key in string]: TransakPaymentData};
   wyre: {[key in string]: WyrePaymentData};
-  accessToken: {
+  tokens: {
     transak: {[key in 'sandbox' | 'production']?: TransakAccessTokenData};
   };
 }
@@ -45,7 +46,7 @@ const initialState: BuyCryptoState = {
   simplex: {},
   transak: {},
   wyre: {},
-  accessToken: {
+  tokens: {
     transak: {},
   },
 };
@@ -382,10 +383,10 @@ export const buyCryptoReducer = (
     case BuyCryptoActionTypes.ACCESS_TOKEN_TRANSAK:
       return {
         ...state,
-        accessToken: {
-          ...state.accessToken,
+        tokens: {
+          ...state.tokens,
           transak: {
-            ...state.accessToken.transak,
+            ...state.tokens.transak,
             [action.payload.env]: {
               accessToken: action.payload.accessToken,
               expiresAt: action.payload.expiresAt,

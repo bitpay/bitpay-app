@@ -439,7 +439,7 @@ const BuyAndSellRoot = ({
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
   const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
-    ({BUY_CRYPTO}) => BUY_CRYPTO.accessToken?.transak?.[transakEnv],
+    ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
   );
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
@@ -2795,6 +2795,13 @@ const BuyAndSellRoot = ({
             }),
           );
           _accessToken = data.accessToken;
+        } else {
+          const err = t('Could not fetch Transak access token');
+          const title = t('Transak Error');
+          const reason = 'transakGetAccessToken Error: No accessToken provided';
+          showError(title, err, reason);
+          setOpeningBrowser(false);
+          return;
         }
       } catch (err: any) {
         logger.error('Error fetching Transak access token');
@@ -2805,6 +2812,8 @@ const BuyAndSellRoot = ({
         setOpeningBrowser(false);
         return;
       }
+    } else {
+      logger.debug('Using cached Transak access token.');
     }
 
     const newData: TransakPaymentData = {
