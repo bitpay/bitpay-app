@@ -2783,8 +2783,11 @@ const BuyAndSellRoot = ({
         logger.debug('Transak access token expired. Fetching new one...');
       }
       try {
-        const {data}: {data: TransakAccessTokenData | undefined} =
-          await selectedWallet.transakGetAccessToken({env: transakEnv});
+        let data: TransakAccessTokenData | undefined;
+        const _data = await selectedWallet.transakGetAccessToken({
+          env: transakEnv,
+        });
+        data = _data?.body?.data ?? _data;
 
         if (data?.accessToken) {
           logger.debug('Transak access token fetched successfully.');
