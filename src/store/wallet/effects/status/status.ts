@@ -343,15 +343,29 @@ export const updateKeyStatus =
         );
       });
 
-      const credentials = noTokenWallets.map(wallet => {
-        const tokenAddresses = wallet.tokens?.map(
-          address => '0x' + address.split('0x')[1],
-        );
+      const normalizeTokenAddresses = (wallet: any): string[] | undefined => {
+        const tokens: string[] | undefined = wallet.tokens;
+        if (!tokens?.length) return undefined;
 
-        // build tokenAddresses wallet options for getStatusAll
-        walletOptions[wallet.credentials.copayerId] = {
-          tokenAddresses,
-        };
+        const chain = wallet.chain || wallet.credentials?.chain;
+
+        if (chain === 'sol') {
+          return tokens
+            .map(t => t.split('-').pop())
+            .filter((t): t is string => !!t && t.length > 0);
+        }
+
+        return tokens
+          .map(address => {
+            const [, rest] = address.split('0x');
+            return rest ? '0x' + rest : undefined;
+          })
+          .filter((t): t is string => !!t);
+      };
+
+      const credentials = noTokenWallets.map(wallet => {
+        const tokenAddresses = normalizeTokenAddresses(wallet);
+        walletOptions[wallet.credentials.copayerId] = {tokenAddresses};
         return wallet.credentials;
       });
 
