@@ -51,7 +51,7 @@ const Percentage = ({
   const theme = useTheme();
   const isDarkMode = theme.dark;
   const percentageColor = getDifferenceColor(
-    percentageDifference > 0,
+    percentageDifference >= 0,
     isDarkMode,
   );
   const formattedPriceChange =
@@ -60,7 +60,9 @@ const Percentage = ({
       : String(priceChange);
   const shouldShowPriceChange = Boolean(formattedPriceChange?.length);
   const signPrefix = hideSign ? '' : percentageDifference < 0 ? '- ' : '+ ';
-  const percentageValue = `${signPrefix}${Math.abs(percentageDifference)}%`;
+  const formattedPercentageDifference =
+    Math.abs(percentageDifference).toLocaleString('en-US');
+  const percentageValue = `${signPrefix}${formattedPercentageDifference}%`;
   const wrappedPercentageValue = shouldShowPriceChange
     ? `(${percentageValue})`
     : percentageValue;

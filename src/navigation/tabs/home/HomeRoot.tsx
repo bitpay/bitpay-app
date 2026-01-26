@@ -221,7 +221,9 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
           lastDayRateForDefaultCurrency?.rate &&
           rateForDefaultCurrency?.rate &&
           !isStableCoin &&
-          EXCHANGE_RATES_CURRENCIES.includes(currencyName)
+          EXCHANGE_RATES_CURRENCIES.includes(
+            option.currencyAbbreviation.toLowerCase(),
+          )
         ) {
           const {
             id,
