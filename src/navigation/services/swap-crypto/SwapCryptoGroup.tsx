@@ -112,7 +112,7 @@ const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
         name={SwapCryptoScreens.SWAP_CRYPTO_ROOT}
         component={SwapCryptoRoot}
         options={{
-          headerTitle: () => <HeaderTitle>{t('Swap Crypto')}</HeaderTitle>,
+          headerTitle: () => <HeaderTitle>{t('Swap')}</HeaderTitle>,
           headerRight: () => (
             <HeaderRightContainer>
               {swapHistoryData.exchangesWithHistory > 0 ? (
