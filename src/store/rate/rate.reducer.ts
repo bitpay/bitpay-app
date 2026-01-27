@@ -1,32 +1,40 @@
 import {DateRanges, Rates} from './rate.models';
 import {RateActionType, RateActionTypes} from './rate.types';
 import {DEFAULT_DATE_RANGE} from '../../constants/rate';
+import type {FiatRateSeriesCache} from './rate.models';
 
 type RateReduxPersistBlackList = string[];
 export const rateReduxPersistBlackList: RateReduxPersistBlackList = [];
 
+const FIAT_RATE_SERIES_MAX_FIATS_PERSISTED = 1;
+
+const getFiatCodeFromSeriesCacheKey = (
+  cacheKey: string,
+): string | undefined => {
+  if (!cacheKey || typeof cacheKey !== 'string') {
+    return undefined;
+  }
+  const idx = cacheKey.indexOf(':');
+  if (idx <= 0) {
+    return undefined;
+  }
+  return cacheKey.slice(0, idx).toUpperCase();
+};
+
 export interface RateState {
   lastDayRates: Rates;
   rates: Rates;
-  ratesByDateRange: {[key in DateRanges]: Rates};
+  fiatRateSeriesCache: FiatRateSeriesCache;
   balanceCacheKey: {[key in string]: number | undefined};
   ratesCacheKey: {[key in number]: DateRanges | undefined};
-  ratesHistoricalCacheKey: {[key in number]: DateRanges | undefined};
-  cachedValuesFiatCode: string | undefined;
 }
 
 const initialState: RateState = {
   rates: {},
-  ratesByDateRange: {
-    1: {},
-    7: {},
-    30: {},
-  },
   lastDayRates: {},
+  fiatRateSeriesCache: {},
   balanceCacheKey: {},
   ratesCacheKey: {},
-  ratesHistoricalCacheKey: {},
-  cachedValuesFiatCode: undefined,
 };
 
 export const rateReducer = (
@@ -34,6 +42,10 @@ export const rateReducer = (
   action: RateActionType,
 ): RateState => {
   switch (action.type) {
+    case RateActionTypes.CLEAR_RATE_STATE: {
+      return initialState;
+    }
+
     case RateActionTypes.SUCCESS_GET_RATES: {
       const {rates, lastDayRates} = action.payload;
       return {
@@ -47,23 +59,46 @@ export const rateReducer = (
       };
     }
 
-    case RateActionTypes.SUCCESS_GET_HISTORICAL_RATES: {
-      const {
-        ratesByDateRange,
-        dateRange = DEFAULT_DATE_RANGE,
-        fiatCode,
-      } = action.payload;
+    case RateActionTypes.UPSERT_FIAT_RATE_SERIES_CACHE: {
+      const {updates} = action.payload;
+      const fiatRateSeriesCache = {
+        ...state.fiatRateSeriesCache,
+        ...updates,
+      };
+
+      const lastFetchedByFiat: Record<string, number> = {};
+      for (const [cacheKey, series] of Object.entries(fiatRateSeriesCache)) {
+        const fiatCode = getFiatCodeFromSeriesCacheKey(cacheKey);
+        if (!fiatCode) {
+          continue;
+        }
+        const fetchedOn = (series as any)?.fetchedOn;
+        if (typeof fetchedOn !== 'number') {
+          continue;
+        }
+        const prev = lastFetchedByFiat[fiatCode];
+        if (!prev || fetchedOn > prev) {
+          lastFetchedByFiat[fiatCode] = fetchedOn;
+        }
+      }
+
+      const fiatsByRecent = Object.entries(lastFetchedByFiat)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, FIAT_RATE_SERIES_MAX_FIATS_PERSISTED)
+        .map(([fiat]) => fiat);
+      const keepFiats = new Set(fiatsByRecent);
+
+      const prunedFiatRateSeriesCache: FiatRateSeriesCache = {};
+      for (const [cacheKey, series] of Object.entries(fiatRateSeriesCache)) {
+        const fiatCode = getFiatCodeFromSeriesCacheKey(cacheKey);
+        if (!fiatCode || keepFiats.has(fiatCode)) {
+          prunedFiatRateSeriesCache[cacheKey] = series;
+        }
+      }
+
       return {
         ...state,
-        ratesByDateRange: {
-          ...state.ratesByDateRange,
-          [dateRange]: {...ratesByDateRange},
-        },
-        ratesHistoricalCacheKey: {
-          ...state.ratesHistoricalCacheKey,
-          [dateRange]: Date.now(),
-        },
-        cachedValuesFiatCode: fiatCode,
+        fiatRateSeriesCache: prunedFiatRateSeriesCache,
       };
     }
 
@@ -72,17 +107,6 @@ export const rateReducer = (
       return {
         ...state,
         [cacheKey]: {...initialState.ratesCacheKey, [dateRange]: Date.now()},
-      };
-    }
-
-    case RateActionTypes.UPDATE_HISTORICAL_CACHE_KEY: {
-      const {cacheKey, dateRange = DEFAULT_DATE_RANGE} = action.payload;
-      return {
-        ...state,
-        [cacheKey]: {
-          ...initialState.ratesHistoricalCacheKey,
-          [dateRange]: Date.now(),
-        },
       };
     }
 

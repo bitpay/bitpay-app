@@ -170,7 +170,7 @@ export const addWallet =
         const {walletName} = options;
 
         let password: string | undefined = options.password;
-        if (key?.isPrivKeyEncrypted && !password) {
+        if (key?.isPrivKeyEncrypted && !password && !currency.isToken) {
           throw new Error(
             'A password is required to add a wallet when the key is encrypted',
           );

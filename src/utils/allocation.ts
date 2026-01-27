@@ -72,6 +72,10 @@ const getAssetColor = (
     BitpaySupportedCoins[coinKey]?.theme?.coinColor ||
     BitpaySupportedCoins[chainKey]?.theme?.coinColor;
 
+  if (coinKey === 'usdc') {
+    return {light: '#0074D1', dark: '#0074D1'};
+  }
+
   return themeColor
     ? {light: themeColor, dark: themeColor}
     : {light: Slate, dark: SlateDark};

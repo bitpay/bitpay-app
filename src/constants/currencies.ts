@@ -1735,9 +1735,9 @@ export const BitpaySupportedSvmCoins: {[key in string]: CurrencyOpts} = {
       maxMerchantFee: 'urgent',
     },
     theme: {
-      coinColor: '#6b71d6',
-      backgroundColor: '#6b71d6',
-      gradientBackgroundColor: '#6b71d6',
+      coinColor: '#9945FF',
+      backgroundColor: '#9945FF',
+      gradientBackgroundColor: '#9945FF',
     },
   },
 };

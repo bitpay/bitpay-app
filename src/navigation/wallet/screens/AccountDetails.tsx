@@ -1385,7 +1385,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               onPress={copyToClipboard}
               activeOpacity={ActiveOpacity}
               style={{alignSelf: 'center', width: 'auto', height: 25}}>
-              <Badge style={{marginTop: 3}}>
+              <Badge>
                 {formatCryptoAddress(accountItem?.receiveAddress)}
               </Badge>
               <CopyToClipboardContainer>
