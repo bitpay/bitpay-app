@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Platform, ScrollView, View} from 'react-native';
+import {ActivityIndicator, ScrollView, View} from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import _ from 'lodash';
@@ -9,7 +9,6 @@ import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyO
 import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
-  CurrencyOpts,
   SUPPORTED_COINS,
   SUPPORTED_TOKENS,
 } from '../../../../constants/currencies';
@@ -19,23 +18,33 @@ import {
   ProgressBlue,
   Black,
   Slate,
+  SlateDark,
+  LinkBlue,
 } from '../../../../styles/colors';
 import {
   CtaContainer,
   SwapCryptoCard,
   ArrowContainer,
-  SelectorArrowContainer,
-  ActionsContainer,
-  SelectedOptionContainer,
-  SelectedOptionText,
   SelectedOptionCol,
   DataText,
   BottomDataText,
   SpinnerContainer,
   BalanceContainer,
-  AmountCryptoCard,
   AmountText,
-  WalletTextContainer,
+  SwapCardAmountAndWalletContainer,
+  WalletSelector,
+  WalletSelectorLeft,
+  WalletSelectorName,
+  WalletSelectorRight,
+  SwapCardHeaderContainer,
+  SwapCardHeaderTitle,
+  SwapCardBottomRowContainer,
+  SwapCardAccountChainsContainer,
+  WalletBalanceContainer,
+  AmountClickableContainer,
+  ArrowBox,
+  ArrowBoxContainer,
+  OfferContainer,
 } from '../styled/SwapCryptoRoot.styled';
 import {SwapCryptoGroupParamList, SwapCryptoScreens} from '../SwapCryptoGroup';
 import Button from '../../../../components/button/Button';
@@ -67,14 +76,10 @@ import {
   IsVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {getFeeRatePerKb} from '../../../../store/wallet/effects/fee/fee';
-import {
-  Wallet,
-  SendMaxInfo,
-  Token,
-  Key,
-} from '../../../../store/wallet/wallet.models';
+import {Wallet, SendMaxInfo, Key} from '../../../../store/wallet/wallet.models';
 import {changellyGetCurrencies} from '../../../../store/swap-crypto/effects/changelly/changelly';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
+import SwapWalletBalanceSvg from '../../../../../assets/img/swap-crypto/swap-wallet-balance.svg';
 import ArrowDown from '../../../../../assets/img/swap-crypto/down-arrow.svg';
 import InfoSvg from '../../../../../assets/img/info.svg';
 import {AppActions} from '../../../../store/app';
@@ -112,6 +117,7 @@ import {
   ChangellyCurrency,
   ChangellyCurrencyBlockchain,
   ChangellyRateData,
+  ChangellyRateResult,
 } from '../../../../store/swap-crypto/models/changelly.models';
 import {thorswapGetCurrencies} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
 import {
@@ -128,23 +134,18 @@ import {
   SwapCryptoSupportedExchanges,
 } from '../utils/swap-crypto-utils';
 import {SwapCryptoLimits} from '../../../../store/swap-crypto/swap-crypto.models';
-import {
-  AccountChainsContainer,
-  CurrencyImageContainer,
-  ExternalServicesItemTopTitle,
-  ExternalServicesTitleContainer,
-  Row,
-} from '../../../../components/styled/Containers';
-import {H5, H7, ListItemSubText} from '../../../../components/styled/Text';
+import {H7} from '../../../../components/styled/Text';
 import Blockie from '../../../../components/blockie/Blockie';
 import {
   buildUIFormattedWallet,
   getEVMAccountName,
   toFiat,
 } from '../../../../store/wallet/utils/wallet';
-import {BuyCryptoItemTitle} from '../../buy-crypto/styled/BuyCryptoCard';
 import {useOngoingProcess, useTokenContext} from '../../../../contexts';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import SwapCryptoOfferSelector, {
+  SwapCryptoOffer,
+} from '../components/SwapCryptoOfferSelector';
 
 export type SwapCryptoRootScreenParams =
   | {
@@ -269,7 +270,10 @@ const SwapCryptoRoot: React.FC = () => {
     useState<boolean>(false);
   const [useSendMax, setUseSendMax] = useState<boolean>(false);
   const [sendMaxInfo, setSendMaxInfo] = useState<SendMaxInfo | undefined>();
-
+  const [selectedOffer, setSelectedOffer] = useState<
+    SwapCryptoOffer | undefined
+  >();
+  const [offersLoading, setOffersLoading] = useState<boolean>(false);
   let selectedWallet = route.params?.selectedWallet;
   const allSupportedTokens: string[] = [...tokenOptions, ...SUPPORTED_TOKENS];
   const preSetPartner: SwapCryptoExchangeKey | undefined =
@@ -318,7 +322,13 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const canContinue = (): boolean => {
-    return !!toWalletSelected && !!fromWalletSelected && amountFrom > 0;
+    return (
+      !!toWalletSelected &&
+      !!fromWalletSelected &&
+      amountFrom > 0 &&
+      !offersLoading &&
+      !!selectedOffer
+    );
   };
 
   const setSelectedWallet = async (supportedCoins: SwapCryptoCoin[]) => {
@@ -393,6 +403,8 @@ const SwapCryptoRoot: React.FC = () => {
     }
 
     setAmountFrom(0);
+    setSelectedOffer(undefined);
+    setSwapLimits({minAmount: undefined, maxAmount: undefined});
     setFormatedAmountFrom('');
     setUseSendMax(false);
     setSendMaxInfo(undefined);
@@ -467,11 +479,9 @@ const SwapCryptoRoot: React.FC = () => {
 
   const setToWallet = (toWallet: Wallet) => {
     setRateData(undefined);
+    setSelectedOffer(undefined);
+    setSwapLimits({minAmount: undefined, maxAmount: undefined});
     setToWalletSelected(toWallet);
-  };
-
-  const isToWalletEnabled = (): boolean => {
-    return !!fromWalletSelected;
   };
 
   const swapGetLimits = async () => {
@@ -808,6 +818,7 @@ const SwapCryptoRoot: React.FC = () => {
         showError(msg);
         setLoading(false);
         setAmountFrom(0);
+        setSelectedOffer(undefined);
         setFormatedAmountFrom('');
         setUseSendMax(false);
         setSendMaxInfo(undefined);
@@ -843,18 +854,36 @@ const SwapCryptoRoot: React.FC = () => {
       }),
     );
 
-    navigation.navigate(SwapCryptoScreens.SWAP_CRYPTO_OFFERS, {
-      selectedWalletFrom: fromWalletSelected!,
-      coinFrom: fromWalletSelected!.currencyAbbreviation,
-      chainFrom: fromWalletSelected!.chain,
+    // navigation.navigate(SwapCryptoScreens.SWAP_CRYPTO_OFFERS, {
+    //   selectedWalletFrom: fromWalletSelected!,
+    //   coinFrom: fromWalletSelected!.currencyAbbreviation,
+    //   chainFrom: fromWalletSelected!.chain,
+    //   amountFrom: amountFrom,
+    //   selectedWalletTo: toWalletSelected!,
+    //   coinTo: toWalletSelected!.currencyAbbreviation,
+    //   chainTo: toWalletSelected!.chain,
+    //   country: locationData?.countryShortCode,
+    //   swapCryptoConfig: swapCryptoConfig,
+    //   preSetPartner: preSetPartner,
+    //   preLoadPartnersData: swapCryptoExchangesDefault,
+    //   useSendMax: IsERCToken(
+    //     fromWalletSelected!.currencyAbbreviation,
+    //     fromWalletSelected!.chain,
+    //   )
+    //     ? false
+    //     : useSendMax,
+    //   sendMaxInfo: sendMaxInfo,
+    // });
+
+    // TODO: review all this redirection!
+
+    const fixedRateId = (selectedOffer?.quoteData as ChangellyRateResult)?.id;
+
+    navigation.navigate(SwapCryptoScreens.CHANGELLY_CHECKOUT, {
+      fromWalletSelected: fromWalletSelected!,
+      toWalletSelected: toWalletSelected!,
+      fixedRateId: fixedRateId,
       amountFrom: amountFrom,
-      selectedWalletTo: toWalletSelected!,
-      coinTo: toWalletSelected!.currencyAbbreviation,
-      chainTo: toWalletSelected!.chain,
-      country: locationData?.countryShortCode,
-      swapCryptoConfig: swapCryptoConfig,
-      preSetPartner: preSetPartner,
-      preLoadPartnersData: swapCryptoExchangesDefault,
       useSendMax: IsERCToken(
         fromWalletSelected!.currencyAbbreviation,
         fromWalletSelected!.chain,
@@ -1463,222 +1492,222 @@ const SwapCryptoRoot: React.FC = () => {
     <>
       <SwapCryptoContainer>
         <ScrollView>
-          {fromWalletSelected && (
-            <ExternalServicesTitleContainer>
-              <ExternalServicesItemTopTitle>
-                {t('Swap from')}
-              </ExternalServicesItemTopTitle>
-              {IsVMChain(fromWalletSelected.chain) ? (
-                <AccountChainsContainer>
-                  <Blockie size={19} seed={fromWalletSelected.receiveAddress} />
-                  <H7
-                    ellipsizeMode="tail"
-                    numberOfLines={1}
-                    style={{flexShrink: 1}}>
-                    {getEVMAccountName(fromWalletSelected, keys)
-                      ? getEVMAccountName(fromWalletSelected, keys)
-                      : `${
-                          IsSVMChain(fromWalletSelected.chain)
-                            ? 'Solana Account'
-                            : 'EVM Account'
-                        }${
-                          Number(fromWalletSelected.credentials.account) === 0
-                            ? ''
-                            : ` (${fromWalletSelected.credentials.account})`
-                        }`}
-                  </H7>
-                </AccountChainsContainer>
-              ) : null}
-            </ExternalServicesTitleContainer>
-          )}
           <SwapCryptoCard style={{marginTop: 8}}>
-            {!fromWalletSelected && !loadingWalletFromStatus && (
-              <>
-                <BuyCryptoItemTitle>{t('Swap From')}</BuyCryptoItemTitle>
-                <SelectedOptionContainer
-                  style={{backgroundColor: Action}}
-                  disabled={swapCryptoSupportedCoinsFrom?.length === 0}
-                  onPress={() => {
-                    showModal('fromWalletSelector');
-                  }}>
-                  <SelectedOptionText
-                    style={{color: White}}
-                    numberOfLines={1}
-                    ellipsizeMode={'tail'}>
-                    {t('Select Wallet')}
-                  </SelectedOptionText>
-                  <SelectorArrowContainer>
-                    <SelectorArrowRight
-                      {...{width: 13, height: 13, color: White}}
-                    />
-                  </SelectorArrowContainer>
-                </SelectedOptionContainer>
-              </>
-            )}
-            {(fromWalletSelected || loadingWalletFromStatus) && (
-              <>
-                <SelectedOptionContainer
-                  noBackground={true}
-                  style={{paddingLeft: 0, paddingRight: 0}}
-                  onPress={() => {
-                    showModal('fromWalletSelector');
-                  }}>
-                  {fromWalletSelected && !loadingWalletFromStatus ? (
-                    <SelectedOptionCol>
-                      <CurrencyImageContainer>
-                        <CurrencyImage
-                          img={fromWalletSelected.img}
-                          badgeUri={getBadgeImg(
-                            getCurrencyAbbreviation(
-                              fromWalletSelected.currencyAbbreviation,
-                              fromWalletSelected.chain,
-                            ),
-                            fromWalletSelected.chain,
-                          )}
-                          size={45}
-                        />
-                      </CurrencyImageContainer>
-                      <WalletTextContainer>
-                        <H5 ellipsizeMode="tail" numberOfLines={1}>
-                          {fromWalletSelected.walletName
-                            ? fromWalletSelected.walletName
-                            : fromWalletSelected.currencyName}
-                        </H5>
-                        <ListItemSubText
-                          ellipsizeMode="tail"
-                          numberOfLines={1}
-                          style={{
-                            marginTop: Platform.OS === 'ios' ? 2 : 0,
-                          }}>
-                          {fromWalletSelected.currencyAbbreviation.toUpperCase()}
-                        </ListItemSubText>
-                      </WalletTextContainer>
-                    </SelectedOptionCol>
-                  ) : (
+            <SwapCardHeaderContainer
+              noMargin={
+                !fromWalletSelected ||
+                (!IsVMChain(fromWalletSelected.chain) && !toWalletSelected)
+              }>
+              <SwapCardHeaderTitle>{t('From')}</SwapCardHeaderTitle>
+              {fromWalletSelected && IsVMChain(fromWalletSelected.chain) ? (
+                <SwapCardAccountChainsContainer>
+                  {loadingWalletFromStatus ? (
                     <SelectedOptionCol>
                       <SwapCryptoLoadingWalletSkeleton />
                     </SelectedOptionCol>
-                  )}
-                  {fromWalletSelected && !loadingWalletFromStatus ? (
-                    <SelectedOptionCol>
-                      <ArrowContainer>
-                        <SelectorArrowRight
-                          {...{
-                            width: 13,
-                            height: 13,
-                            color: theme.dark ? White : Slate,
-                          }}
-                        />
-                      </ArrowContainer>
-                    </SelectedOptionCol>
-                  ) : null}
-                </SelectedOptionContainer>
-
-                {fromWalletSelected?.balance?.cryptoSpendable &&
-                !loadingWalletFromStatus ? (
-                  <BalanceContainer style={{marginTop: 14}}>
-                    <BottomDataText>
-                      {fromWalletSelected.balance.cryptoSpendable}{' '}
-                      {fromWalletSelected.currencyAbbreviation.toUpperCase()}{' '}
-                      {t('available to swap')}
-                    </BottomDataText>
-                    {fromWalletSelected.balance.cryptoSpendable !==
-                    fromWalletSelected.balance.crypto ? (
-                      <TouchableOpacity
-                        onPress={() => {
-                          logger.debug('Balance info clicked');
-                          openWalletBalanceModal();
-                        }}
-                        style={{marginLeft: 8}}>
-                        <InfoSvg width={20} height={20} />
-                      </TouchableOpacity>
-                    ) : null}
-                  </BalanceContainer>
-                ) : null}
-
-                {loadingWalletFromStatus && <SwapCryptoBalanceSkeleton />}
-              </>
-            )}
-          </SwapCryptoCard>
-
-          {toWalletSelected ? (
-            <>
-              {loadingEnterAmountBtn ? (
-                <SpinnerContainer style={{height: 40}}>
-                  <ActivityIndicator color={ProgressBlue} />
-                </SpinnerContainer>
-              ) : (
-                <>
-                  {!(amountFrom && amountFrom > 0) && !useSendMax ? (
-                    <SelectedOptionContainer
-                      style={{
-                        backgroundColor: Action,
-                        justifyContent: 'center',
-                        marginLeft: 15,
-                        marginRight: 15,
-                      }}
-                      disabled={false}
-                      onPress={() => {
-                        showModal('amount');
-                      }}>
-                      <SelectedOptionCol>
-                        <SelectedOptionText
-                          style={{color: White}}
-                          numberOfLines={1}
-                          ellipsizeMode={'tail'}>
-                          {t('Enter Amount')}
-                        </SelectedOptionText>
-                      </SelectedOptionCol>
-                    </SelectedOptionContainer>
                   ) : (
-                    <AmountCryptoCard>
-                      <Row style={{display: 'flex', justifyContent: 'center'}}>
-                        <TouchableOpacity
+                    <>
+                      <Blockie
+                        size={20}
+                        seed={fromWalletSelected.receiveAddress}
+                      />
+                      <H7
+                        ellipsizeMode="tail"
+                        numberOfLines={1}
+                        style={{flexShrink: 1, marginLeft: 6}}>
+                        {getEVMAccountName(fromWalletSelected, keys)
+                          ? getEVMAccountName(fromWalletSelected, keys)
+                          : `${
+                              IsSVMChain(fromWalletSelected.chain)
+                                ? 'Solana Account'
+                                : 'EVM Account'
+                            }${
+                              Number(fromWalletSelected.credentials.account) ===
+                              0
+                                ? ''
+                                : ` (${fromWalletSelected.credentials.account})`
+                            }`}
+                      </H7>
+                    </>
+                  )}
+                </SwapCardAccountChainsContainer>
+              ) : null}
+            </SwapCardHeaderContainer>
+            <SwapCardAmountAndWalletContainer>
+              {toWalletSelected ? (
+                <>
+                  {loadingEnterAmountBtn ? (
+                    <SpinnerContainer style={{height: 40}}>
+                      <ActivityIndicator color={ProgressBlue} />
+                    </SpinnerContainer>
+                  ) : (
+                    <>
+                      {fromWalletSelected &&
+                      !loadingWalletFromStatus &&
+                      toWalletSelected ? (
+                        <AmountClickableContainer
                           onPress={() => {
                             showModal('amount');
                           }}>
                           {useSendMax ? (
-                            <ActionsContainer>
-                              <DataText>{t('Maximum Amount')}</DataText>
-                            </ActionsContainer>
+                            <DataText>{t('Maximum Amount')}</DataText>
                           ) : (
-                            <View style={{flexDirection: 'column'}}>
-                              <AmountText
-                                numberOfLines={1}
-                                ellipsizeMode="tail">
-                                {amountFrom || 0}
-                              </AmountText>
-                              <DataText
-                                style={{fontSize: 12, textAlign: 'center'}}>
-                                {formatedAmountFrom}
-                              </DataText>
-                            </View>
+                            <AmountText numberOfLines={1} ellipsizeMode="tail">
+                              {amountFrom || '0.00'}
+                            </AmountText>
                           )}
-                        </TouchableOpacity>
-                      </Row>
-                    </AmountCryptoCard>
+                        </AmountClickableContainer>
+                      ) : (
+                        <View />
+                      )}
+                    </>
                   )}
                 </>
+              ) : (
+                <View />
               )}
-            </>
-          ) : null}
+              <WalletSelector
+                style={
+                  !fromWalletSelected && !loadingWalletFromStatus
+                    ? {backgroundColor: Action}
+                    : {}
+                }
+                disabled={swapCryptoSupportedCoinsFrom?.length === 0}
+                key={
+                  swapCryptoSupportedCoinsFrom?.length === 0
+                    ? 'swapFromEnabled'
+                    : 'swapFromDisabled'
+                }
+                onPress={() => {
+                  showModal('fromWalletSelector');
+                }}>
+                <WalletSelectorLeft>
+                  {loadingWalletFromStatus ? (
+                    <SelectedOptionCol>
+                      <SwapCryptoLoadingWalletSkeleton />
+                    </SelectedOptionCol>
+                  ) : (
+                    <>
+                      {fromWalletSelected ? (
+                        <>
+                          <CurrencyImage
+                            img={fromWalletSelected.img}
+                            badgeUri={getBadgeImg(
+                              getCurrencyAbbreviation(
+                                fromWalletSelected.currencyAbbreviation,
+                                fromWalletSelected.chain,
+                              ),
+                              fromWalletSelected.chain,
+                            )}
+                            size={20}
+                          />
+                          <WalletSelectorName
+                            ellipsizeMode="tail"
+                            numberOfLines={1}>
+                            {fromWalletSelected.walletName
+                              ? fromWalletSelected.walletName
+                              : fromWalletSelected.currencyName}
+                          </WalletSelectorName>
+                        </>
+                      ) : (
+                        <WalletSelectorName
+                          ellipsizeMode="tail"
+                          numberOfLines={1}
+                          style={{fontWeight: '500', color: White}}>
+                          {t('Choose Wallet')}
+                        </WalletSelectorName>
+                      )}
+                    </>
+                  )}
+                </WalletSelectorLeft>
+                <WalletSelectorRight>
+                  {loadingWalletFromStatus ? null : (
+                    <ArrowContainer style={{marginRight: 10, marginLeft: 5}}>
+                      <SelectorArrowRight
+                        {...{
+                          width: 7,
+                          height: 11,
+                          color: fromWalletSelected
+                            ? theme.dark
+                              ? Slate
+                              : SlateDark
+                            : White,
+                        }}
+                      />
+                    </ArrowContainer>
+                  )}
+                </WalletSelectorRight>
+              </WalletSelector>
+            </SwapCardAmountAndWalletContainer>
+            {fromWalletSelected ? (
+              <SwapCardBottomRowContainer>
+                <>
+                  <SelectedOptionCol justifyContent="left">
+                    <DataText style={{fontSize: 12, textAlign: 'center'}}>
+                      {formatedAmountFrom}
+                    </DataText>
+                  </SelectedOptionCol>
+                </>
+                <>
+                  <SelectedOptionCol justifyContent="right">
+                    {fromWalletSelected?.balance?.cryptoSpendable ? (
+                      !loadingWalletFromStatus ? (
+                        <>
+                          <WalletBalanceContainer>
+                            <SwapWalletBalanceSvg />
+                          </WalletBalanceContainer>
+                          <BalanceContainer>
+                            <BottomDataText>
+                              {/* TODO: cut the cryptoSpendable to limit the decimals that are displayed */}
+                              {fromWalletSelected.balance.cryptoSpendable}{' '}
+                              {fromWalletSelected.currencyAbbreviation.toUpperCase()}{' '}
+                            </BottomDataText>
+                            {fromWalletSelected.balance.cryptoSpendable ===
+                            fromWalletSelected.balance.crypto ? (
+                              <TouchableOpacity
+                                onPress={() => {
+                                  logger.debug('Balance info clicked');
+                                  openWalletBalanceModal();
+                                }}
+                                style={{marginRight: 8}}>
+                                <InfoSvg width={20} height={20} />
+                              </TouchableOpacity>
+                            ) : null}
+                          </BalanceContainer>
+                        </>
+                      ) : (
+                        <SwapCryptoBalanceSkeleton />
+                      )
+                    ) : null}
+                  </SelectedOptionCol>
+                </>
+              </SwapCardBottomRowContainer>
+            ) : null}
+          </SwapCryptoCard>
 
-          <ArrowContainer>
-            <ArrowDown />
-          </ArrowContainer>
+          <ArrowBoxContainer>
+            <ArrowBox>
+              <ArrowDown fill={theme.dark ? LinkBlue : Action} />
+            </ArrowBox>
+          </ArrowBoxContainer>
 
-          {toWalletSelected && (
-            <ExternalServicesTitleContainer>
-              <ExternalServicesItemTopTitle>
-                {t('Swap to')}
-              </ExternalServicesItemTopTitle>
-              {IsVMChain(toWalletSelected.chain) ? (
-                <AccountChainsContainer>
-                  <Blockie size={19} seed={toWalletSelected.receiveAddress} />
+          <SwapCryptoCard style={{marginTop: 0}}>
+            <SwapCardHeaderContainer
+              noMargin={
+                !toWalletSelected ||
+                (!IsVMChain(toWalletSelected.chain) && !selectedOffer)
+              }>
+              <SwapCardHeaderTitle
+                style={{opacity: !fromWalletSelected ? 0.2 : 1}}>
+                {t('To')}
+              </SwapCardHeaderTitle>
+              {toWalletSelected && IsVMChain(toWalletSelected.chain) ? (
+                <SwapCardAccountChainsContainer>
+                  <Blockie size={20} seed={toWalletSelected.receiveAddress} />
                   <H7
                     ellipsizeMode="tail"
                     numberOfLines={1}
-                    style={{flexShrink: 1}}>
+                    style={{flexShrink: 1, marginLeft: 6}}>
                     {getEVMAccountName(toWalletSelected, keys)
                       ? getEVMAccountName(toWalletSelected, keys)
                       : `${
@@ -1691,54 +1720,52 @@ const SwapCryptoRoot: React.FC = () => {
                             : ` (${toWalletSelected.credentials.account})`
                         }`}
                   </H7>
-                </AccountChainsContainer>
+                </SwapCardAccountChainsContainer>
               ) : null}
-            </ExternalServicesTitleContainer>
-          )}
-          <SwapCryptoCard style={{marginTop: 8}}>
-            {!toWalletSelected && (
-              <>
-                <BuyCryptoItemTitle
-                  style={{opacity: !isToWalletEnabled() ? 0.2 : 1}}>
-                  {t('Swap To')}
-                </BuyCryptoItemTitle>
-                <SelectedOptionContainer
-                  key={isToWalletEnabled() ? 'swapToEnabled' : 'swapToDisabled'}
-                  style={{backgroundColor: Action}}
-                  disabled={!isToWalletEnabled()}
-                  onPress={() => {
-                    if (!isToWalletEnabled()) {
-                      return;
-                    }
-                    showModal('toWalletSelector');
-                  }}>
-                  <SelectedOptionText
-                    style={{color: White}}
-                    numberOfLines={1}
-                    ellipsizeMode={'tail'}>
-                    {t('Select Crypto')}
-                  </SelectedOptionText>
-                  <SelectorArrowContainer>
-                    <SelectorArrowRight
-                      {...{width: 13, height: 13, color: White}}
-                    />
-                  </SelectorArrowContainer>
-                </SelectedOptionContainer>
-              </>
-            )}
-            {toWalletSelected && (
-              <>
-                <SelectedOptionContainer
-                  noBackground={true}
-                  style={{paddingLeft: 0, paddingRight: 0}}
-                  onPress={() => {
-                    if (useDefaultToWallet || !isToWalletEnabled()) {
-                      return;
-                    }
-                    showModal('toWalletSelector');
-                  }}>
-                  <SelectedOptionCol>
-                    <CurrencyImageContainer>
+            </SwapCardHeaderContainer>
+            <SwapCardAmountAndWalletContainer>
+              {toWalletSelected ? (
+                offersLoading ? (
+                  <SpinnerContainer style={{height: 40}}>
+                    <ActivityIndicator color={ProgressBlue} />
+                  </SpinnerContainer>
+                ) : selectedOffer ? (
+                  <AmountClickableContainer onPress={() => {}}>
+                    {selectedOffer?.amountReceiving ? (
+                      <AmountText numberOfLines={1} ellipsizeMode="tail">
+                        {selectedOffer?.amountReceiving || 0}
+                      </AmountText>
+                    ) : null}
+                  </AmountClickableContainer>
+                ) : (
+                  <View>
+                    <AmountText numberOfLines={1} ellipsizeMode="tail">
+                      {'0.00'}
+                    </AmountText>
+                  </View>
+                )
+              ) : (
+                <View />
+              )}
+              <WalletSelector
+                style={
+                  !toWalletSelected
+                    ? {
+                        backgroundColor: Action,
+                        opacity: fromWalletSelected ? 1 : 0.2,
+                      }
+                    : {}
+                }
+                key={fromWalletSelected ? 'swapToEnabled' : 'swapToDisabled'}
+                onPress={() => {
+                  if (useDefaultToWallet || !fromWalletSelected) {
+                    return;
+                  }
+                  showModal('toWalletSelector');
+                }}>
+                <WalletSelectorLeft>
+                  {toWalletSelected ? (
+                    <>
                       <CurrencyImage
                         img={toWalletSelected.img}
                         badgeUri={getBadgeImg(
@@ -1748,43 +1775,107 @@ const SwapCryptoRoot: React.FC = () => {
                           ),
                           toWalletSelected.chain,
                         )}
-                        size={45}
+                        size={20}
                       />
-                    </CurrencyImageContainer>
-                    <WalletTextContainer>
-                      <H5 ellipsizeMode="tail" numberOfLines={1}>
+                      <WalletSelectorName
+                        ellipsizeMode="tail"
+                        numberOfLines={1}>
                         {toWalletSelected.walletName
                           ? toWalletSelected.walletName
                           : toWalletSelected.currencyName}
-                      </H5>
-                      <ListItemSubText
-                        ellipsizeMode="tail"
-                        numberOfLines={1}
-                        style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-                        {toWalletSelected.currencyAbbreviation.toUpperCase()}
-                      </ListItemSubText>
-                    </WalletTextContainer>
-                  </SelectedOptionCol>
-                  <SelectedOptionCol>
-                    <ArrowContainer>
+                      </WalletSelectorName>
+                    </>
+                  ) : (
+                    <WalletSelectorName
+                      ellipsizeMode="tail"
+                      numberOfLines={1}
+                      style={{fontWeight: '500', color: White}}>
+                      {t('Choose Crypto')}
+                    </WalletSelectorName>
+                  )}
+                </WalletSelectorLeft>
+                <WalletSelectorRight>
+                  {loadingWalletFromStatus ? null : (
+                    <ArrowContainer style={{marginRight: 10, marginLeft: 5}}>
                       <SelectorArrowRight
                         {...{
-                          width: 13,
-                          height: 13,
-                          color: theme.dark ? White : Slate,
+                          width: 7,
+                          height: 11,
+                          color: toWalletSelected
+                            ? theme.dark
+                              ? Slate
+                              : SlateDark
+                            : White,
                         }}
                       />
                     </ArrowContainer>
-                  </SelectedOptionCol>
-                  {!rateData?.amountTo && loading && (
-                    <SpinnerContainer>
-                      <ActivityIndicator color={ProgressBlue} />
-                    </SpinnerContainer>
                   )}
-                </SelectedOptionContainer>
-              </>
+                </WalletSelectorRight>
+              </WalletSelector>
+            </SwapCardAmountAndWalletContainer>
+            {toWalletSelected ? (
+              <SwapCardBottomRowContainer>
+                <>
+                  <SelectedOptionCol justifyContent="left">
+                    {selectedOffer?.amountReceivingFiat ? (
+                      <DataText style={{fontSize: 12, textAlign: 'center'}}>
+                        {selectedOffer.amountReceivingFiat}
+                      </DataText>
+                    ) : null}
+                    {/* <Text>{'| |'}</Text> */}
+                  </SelectedOptionCol>
+                </>
+                <>
+                  <SelectedOptionCol justifyContent="right">
+                    {toWalletSelected?.balance?.cryptoSpendable &&
+                    !loadingWalletFromStatus ? (
+                      <>
+                        <WalletBalanceContainer>
+                          <SwapWalletBalanceSvg />
+                        </WalletBalanceContainer>
+                        <BalanceContainer>
+                          <BottomDataText>
+                            {/* TODO: cut the cryptoSpendable to limit the decimals that are displayed */}
+                            {toWalletSelected.balance.cryptoSpendable}{' '}
+                            {toWalletSelected.currencyAbbreviation.toUpperCase()}{' '}
+                          </BottomDataText>
+                        </BalanceContainer>
+                      </>
+                    ) : null}
+                  </SelectedOptionCol>
+                </>
+              </SwapCardBottomRowContainer>
+            ) : null}
+            {!rateData?.amountTo && loading && (
+              <SpinnerContainer>
+                <ActivityIndicator color={ProgressBlue} />
+              </SpinnerContainer>
             )}
           </SwapCryptoCard>
+
+          <OfferContainer>
+            {fromWalletSelected && toWalletSelected && amountFrom ? (
+              <SwapCryptoOfferSelector
+                amountFrom={amountFrom}
+                coinFrom={fromWalletSelected.currencyAbbreviation}
+                chainFrom={fromWalletSelected.chain}
+                coinTo={toWalletSelected.currencyAbbreviation}
+                chainTo={toWalletSelected.chain}
+                selectedWalletFrom={fromWalletSelected}
+                selectedWalletTo={toWalletSelected}
+                swapCryptoConfig={swapCryptoConfig}
+                // country={country ?? 'US'}
+                preSetPartner={preSetPartner}
+                preLoadPartnersData={swapCryptoExchangesDefault}
+                useSendMax={useSendMax}
+                sendMaxInfo={sendMaxInfo}
+                onSelectOffer={setSelectedOffer}
+                setOffersLoading={setOffersLoading}
+                // getWarnMsg={getWarnMsg}
+                swapLimits={swapLimits}
+              />
+            ) : null}
+          </OfferContainer>
 
           <CtaContainer>
             <Button
@@ -1793,7 +1884,9 @@ const SwapCryptoRoot: React.FC = () => {
               onPress={() => {
                 checkIfErc20Token();
               }}>
-              {t('View Offers')}
+              {selectedOffer
+                ? t('Continue with ') + selectedOffer.name
+                : t('Continue')}
             </Button>
           </CtaContainer>
         </ScrollView>
