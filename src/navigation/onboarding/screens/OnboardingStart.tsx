@@ -28,6 +28,7 @@ import ScrollHint, {ScrollHintContainer} from '../components/ScrollHint';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import PaginationDots from '../../../components/pagination-dots/PaginationDots';
 import {useSharedValue} from 'react-native-reanimated';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 type OnboardingStartScreenProps = NativeStackScreenProps<
   OnboardingGroupParamList,
@@ -149,6 +150,11 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   const onLoginPress = () => {
     haptic('impactLight');
     askForTrackingThenNavigate(() => {
+      dispatch(
+        Analytics.track('Clicked Log In', {
+          context: 'onboarding',
+        }),
+      );
       navigation.navigate('Login', {
         onLoginSuccess: async () => {
           haptic('impactLight');
@@ -246,6 +252,14 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           scrollAnimationDuration={1000}
           onProgressChange={(_, index) => {
             progressValue.value = index;
+            askForTrackingThenNavigate(() => {
+              dispatch(
+                Analytics.track(`Swiped Feature`, {
+                  context: 'onboarding',
+                  pageSwiped: index + 1,
+                }),
+              );
+            });
           }}
           onConfigurePanGesture={gesture => gesture.activeOffsetX([-10, 10])}
           renderItem={({item}) => <OnboardingSlide item={item} />}
@@ -286,7 +300,14 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
                 onPress={() => {
                   haptic('impactLight');
                   askForTrackingThenNavigate(() => {
-                    navigation.navigate('CreateAccount');
+                    dispatch(
+                      Analytics.track('Clicked Get Started', {
+                        context: 'onboarding',
+                      }),
+                    );
+                    navigation.navigate('CreateAccount', {
+                      context: 'onboarding',
+                    });
                   });
                 }}>
                 {t('Get Started')}
@@ -314,6 +335,11 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
                 buttonType={'link'}
                 onPress={() => {
                   askForTrackingThenNavigate(() => {
+                    dispatch(
+                      Analytics.track('Clicked Continue without an account', {
+                        context: 'onboarding',
+                      }),
+                    );
                     navigation.navigate('Notifications');
                   });
                 }}>

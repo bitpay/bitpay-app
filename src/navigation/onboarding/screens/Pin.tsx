@@ -28,6 +28,7 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const PinImage = {
   light: (
@@ -68,7 +69,14 @@ const PinScreen = ({
 
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
-    askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
+    askForTrackingThenNavigate(() => {
+      dispatch(
+        Analytics.track('Clicked Skip Protect Wallet', {
+          context: 'onboarding',
+        }),
+      );
+      navigation.navigate('CreateKey');
+    });
   });
 
   useLayoutEffect(() => {

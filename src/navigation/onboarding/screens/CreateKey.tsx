@@ -82,6 +82,11 @@ const CreateOrImportKey = ({
   const onSkipPressRef = useRef(() => {
     haptic('impactLight');
     askForTrackingThenNavigate(() => {
+      dispatch(
+        Analytics.track('Clicked Skip Key Creation', {
+          context: 'onboarding',
+        }),
+      );
       navigation.navigate('TermsOfUse', {context: 'TOUOnly'});
     });
   });
@@ -188,6 +193,11 @@ const CreateOrImportKey = ({
                 askForTrackingThenNavigate(() => {
                   dispatch(
                     Analytics.track('Clicked Import Key', {
+                      context: 'onboarding',
+                    }),
+                  );
+                  dispatch(
+                    Analytics.track('Clicked I already have a Key', {
                       context: 'onboarding',
                     }),
                   );
