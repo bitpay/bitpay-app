@@ -1,0 +1,17 @@
+diff --git a/node_modules/react-native-webassembly/android/build.gradle b/node_modules/react-native-webassembly/android/build.gradle
+index 5643083..9185c73 100644
+--- a/node_modules/react-native-webassembly/android/build.gradle
++++ b/node_modules/react-native-webassembly/android/build.gradle
+@@ -42,9 +42,11 @@ android {
+       cmake {
+         cppFlags "-O2 -frtti -fexceptions -Wall -fstack-protector-all"
+         arguments "-DANDROID_STL=c++_shared"
+-        abiFilters "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
+       }
+     }
++    ndk {
++        abiFilters "arm64-v8a", "x86_64"
++    }
+   }
+   externalNativeBuild {
+     cmake {
