@@ -274,7 +274,11 @@ export const checkLoginWithPasskey =
   };
 
 export const startLogin =
-  ({email, password, gCaptchaResponse}: StartLoginParams): Effect =>
+  ({
+    email,
+    password,
+    gCaptchaResponse,
+  }: StartLoginParams): Effect<Promise<boolean>> =>
   async (dispatch, getState) => {
     try {
       ongoingProcessManager.show('LOGGING_IN');
@@ -297,8 +301,8 @@ export const startLogin =
         );
         session = await AuthApi.fetchSession(APP.network);
       } else {
-        if (!email || !password) {
-          return;
+        if (!email) {
+          return false;
         }
         // authenticate
         logManager.info('[startLogin] Authenticating BitPayID credentials...');
@@ -306,7 +310,7 @@ export const startLogin =
           await AuthApi.login(
             APP.network,
             email,
-            password,
+            password || '',
             BITPAY_ID.session.csrfToken,
             gCaptchaResponse,
           );
@@ -316,7 +320,7 @@ export const startLogin =
         if (twoFactorPending) {
           logManager.debug('[startLogin] Two-factor authentication pending.');
           dispatch(BitPayIdActions.pendingLogin('twoFactorPending', session));
-          return;
+          return false;
         }
 
         if (emailAuthenticationPending) {
@@ -324,7 +328,7 @@ export const startLogin =
           dispatch(
             BitPayIdActions.pendingLogin('emailAuthenticationPending', session),
           );
-          return;
+          return false;
         }
 
         logManager.info(
@@ -359,6 +363,7 @@ export const startLogin =
 
       dispatch(CardActions.isJoinedWaitlist(false));
       dispatch(BitPayIdActions.successLogin(APP.network, session));
+      return true;
     } catch (err: any) {
       let errMsg;
 
@@ -375,6 +380,7 @@ export const startLogin =
       }
 
       dispatch(BitPayIdActions.failedLogin(errMsg));
+      return false;
     } finally {
       ongoingProcessManager.hide();
     }
