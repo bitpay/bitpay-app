@@ -2,7 +2,15 @@ import {Effect} from '../../../index';
 import axios from 'axios';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {SUPPORTED_VM_TOKENS} from '../../../../constants/currencies';
-import {DateRanges, HistoricRate, Rate, Rates} from '../../../rate/rate.models';
+import {
+  FiatRatePoint,
+  FiatRateSeriesCache,
+  FiatRateInterval,
+  HistoricRate,
+  Rate,
+  Rates,
+  getFiatRateSeriesCacheKey,
+} from '../../../rate/rate.models';
 import {isCacheKeyStale} from '../../utils/wallet';
 import {
   HISTORIC_RATES_CACHE_DURATION,
@@ -11,10 +19,9 @@ import {
 import {DEFAULT_DATE_RANGE} from '../../../../constants/rate';
 import {
   failedGetRates,
-  successGetHistoricalRates,
   successGetRates,
+  upsertFiatRateSeriesCache,
   updateCacheKey,
-  updateHistoricalCacheKey,
 } from '../../../rate/rate.actions';
 import {CacheKeys} from '../../../rate/rate.models';
 import moment from 'moment';
@@ -34,6 +41,79 @@ import {IsERCToken, IsSVMChain} from '../../utils/currency';
 import {UpdateAllKeyAndWalletStatusContext} from '../status/status';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
+import type {Key, Wallet} from '../../wallet.models';
+
+const FIAT_RATE_SERIES_BASE_URL = `${BASE_BWS_URL}/v4/fiatrates`;
+
+const FIAT_RATE_SERIES_INTERVAL_DAYS: Record<
+  FiatRateInterval,
+  number | undefined
+> = {
+  '1D': 1,
+  '1W': 7,
+  '1M': 30,
+  '3M': 90,
+  '1Y': 365,
+  '5Y': 1825,
+  ALL: undefined,
+};
+
+const getFiatRateSeriesUrl = (
+  fiatCode: string,
+  interval: FiatRateInterval,
+): string => {
+  const days = FIAT_RATE_SERIES_INTERVAL_DAYS[interval];
+  const codeUpper = (fiatCode || 'USD').toUpperCase();
+  if (!days) {
+    return `${FIAT_RATE_SERIES_BASE_URL}/${codeUpper}`;
+  }
+  return `${FIAT_RATE_SERIES_BASE_URL}/${codeUpper}?days=${days}`;
+};
+
+const getFiatRateSeriesCadenceMs = (
+  points: FiatRatePoint[],
+  interval: FiatRateInterval,
+): number => {
+  if (points.length >= 2) {
+    const last = points[points.length - 1];
+    const prev = points[points.length - 2];
+    const delta = last.ts - prev.ts;
+    if (Number.isFinite(delta) && delta > 0) {
+      return delta;
+    }
+  }
+
+  switch (interval) {
+    case '1D':
+      return 15 * 60 * 1000;
+    case '1W':
+      return 2 * 60 * 60 * 1000;
+    case '1M':
+      return 6 * 60 * 60 * 1000;
+    case '3M':
+    case '1Y':
+    case '5Y':
+    case 'ALL':
+    default:
+      return 24 * 60 * 60 * 1000;
+  }
+};
+
+const dedupeFiatRatePointsByTs = (points: FiatRatePoint[]): FiatRatePoint[] => {
+  const seen = new Set<number>();
+  const out: FiatRatePoint[] = [];
+  for (const p of points) {
+    if (!p || typeof p.ts !== 'number') {
+      continue;
+    }
+    if (seen.has(p.ts)) {
+      continue;
+    }
+    seen.add(p.ts);
+    out.push(p);
+  }
+  return out;
+};
 
 export const startGetRates =
   ({
@@ -138,15 +218,15 @@ export const getContractAddresses =
     } = getState();
     let allTokenAddresses: string[] = [];
 
-    Object.values(keys).forEach(key => {
-      key.wallets.forEach(wallet => {
+    (Object.values(keys) as Key[]).forEach((key: Key) => {
+      key.wallets.forEach((wallet: Wallet) => {
         if (
           chain === wallet.chain &&
           !IsERCToken(wallet.currencyAbbreviation, wallet.chain) &&
           wallet.tokens
         ) {
           // workaround to get linked wallets
-          const tokenAddresses = wallet.tokens.map(t =>
+          const tokenAddresses = wallet.tokens.map((t: string) =>
             t.replace(`${wallet.id}-`, ''),
           );
           allTokenAddresses.push(...tokenAddresses);
@@ -185,8 +265,9 @@ export const getTokenRates =
         };
 
         logManager.info('getTokenRates: selecting alternative currencies');
-        const altCurrencies = altCurrencyList.map(altCurrency =>
-          altCurrency.isoCode.toLowerCase(),
+        const altCurrencies = altCurrencyList.map(
+          (altCurrency: AltCurrenciesRowProps) =>
+            altCurrency.isoCode.toLowerCase(),
         );
         const chunkArray = (array: string[], size: number) => {
           const chunked_arr = [];
@@ -224,7 +305,7 @@ export const getTokenRates =
                   tokenRates[formattedTokenAddress] = [];
                   tokenLastDayRates[formattedTokenAddress] = [];
 
-                  altCurrencies.forEach(altCurrency => {
+                  altCurrencies.forEach((altCurrency: string) => {
                     const rate =
                       dispatch(
                         calculateUsdToAltFiat(
@@ -298,85 +379,171 @@ export const getHistoricFiatRate = (
   });
 };
 
-export const fetchHistoricalRates =
-  (
-    dateRange: DateRanges = DateRanges.Day,
-    currencyAbbreviation?: string,
-    fiatIsoCode: string = 'USD',
-  ): Effect<Promise<Array<Rate>>> =>
+const normalizeFiatRateSeriesCoin = (currencyAbbreviation?: string): string => {
+  switch (currencyAbbreviation?.toLowerCase()) {
+    case 'wbtc':
+      return 'btc';
+    case 'weth':
+      return 'eth';
+    case 'matic':
+    case 'pol':
+      return 'pol';
+    default:
+      return (currencyAbbreviation || '').toLowerCase();
+  }
+};
+
+export const fetchFiatRateSeriesInterval =
+  (args: {
+    fiatCode: string;
+    interval: FiatRateInterval;
+    coinForCacheCheck: string;
+    force?: boolean;
+  }): Effect<Promise<void>> =>
   async (dispatch, getState) => {
-    return new Promise(async (resolve, reject) => {
-      const {
-        RATE: {
-          ratesHistoricalCacheKey,
-          ratesByDateRange: cachedRates,
-          cachedValuesFiatCode,
-        },
-      } = getState();
+    const {fiatCode, interval, coinForCacheCheck, force} = args;
+    const {
+      RATE: {fiatRateSeriesCache},
+    } = getState();
 
-      switch (currencyAbbreviation?.toLowerCase()) {
-        case 'wbtc':
-          currencyAbbreviation = 'btc';
-          break;
-        case 'weth':
-          currencyAbbreviation = 'eth';
-          break;
-        case 'pol':
-          currencyAbbreviation = 'matic';
-          break;
+    const cacheKey = getFiatRateSeriesCacheKey(
+      fiatCode,
+      coinForCacheCheck,
+      interval,
+    );
+    const cached = fiatRateSeriesCache[cacheKey];
+
+    if (
+      !force &&
+      cached?.points?.length &&
+      !isCacheKeyStale(cached.fetchedOn, HISTORIC_RATES_CACHE_DURATION)
+    ) {
+      return;
+    }
+
+    const url = getFiatRateSeriesUrl(fiatCode, interval);
+    const {data} = await axios.get(url);
+    const fetchedOn = Date.now();
+
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return;
+    }
+
+    const updates: FiatRateSeriesCache = {};
+    Object.keys(data as Record<string, unknown>).forEach(coin => {
+      const rawPoints = (data as Record<string, FiatRatePoint[]>)[coin];
+      if (!rawPoints?.length) {
+        return;
       }
 
-      const cachedRatesByCoin =
-        (currencyAbbreviation &&
-          cachedRates[dateRange][currencyAbbreviation.toLowerCase()]) ||
-        [];
-
-      if (
-        !isCacheKeyStale(
-          ratesHistoricalCacheKey[dateRange],
-          HISTORIC_RATES_CACHE_DURATION,
-        ) &&
-        cachedRatesByCoin.length > 0 &&
-        cachedValuesFiatCode?.toUpperCase() === fiatIsoCode?.toUpperCase()
-      ) {
-        logManager.info(
-          `[rates]: using cached rates. currencyAbbreviation: ${currencyAbbreviation} | fiatIsoCode: ${fiatIsoCode}`,
-        );
-        return resolve(cachedRatesByCoin);
-      }
-
-      dispatch(
-        updateHistoricalCacheKey({cacheKey: CacheKeys.HISTORICAL_RATES}),
+      const filtered = rawPoints.filter(
+        p => Number.isFinite(p?.ts) && Number.isFinite(p?.rate),
       );
 
-      try {
-        logManager.info(
-          `[rates]: fetching historical rates for ${fiatIsoCode} period ${dateRange}`,
-        );
-        const firstDateTs =
-          moment().subtract(dateRange, 'days').startOf('hour').unix() * 1000;
-
-        // This pulls ALL coins in one query
-        const url = `${BASE_BWS_URL}/v2/fiatrates/${fiatIsoCode}?ts=${firstDateTs}`;
-        const {data: rates} = await axios.get(url);
-        dispatch(
-          successGetHistoricalRates({
-            ratesByDateRange: rates,
-            dateRange,
-            fiatCode: fiatIsoCode,
-          }),
-        );
-        logManager.info('[rates]: fetched historical rates successfully');
-
-        const ratesByCoin = currencyAbbreviation
-          ? rates[currencyAbbreviation.toLowerCase()]
-          : [];
-        resolve(ratesByCoin);
-      } catch (e) {
-        logManager.error(
-          '[rates]: an error occurred while fetching historical rates.',
-        );
-        reject(e);
+      if (!filtered.length) {
+        return;
       }
+
+      const points = filtered
+        .map(p => ({ts: p.ts, rate: p.rate}))
+        .sort((a, b) => a.ts - b.ts);
+      const deduped = dedupeFiatRatePointsByTs(points);
+      updates[getFiatRateSeriesCacheKey(fiatCode, coin, interval)] = {
+        fetchedOn,
+        points: deduped,
+      };
     });
+
+    if (Object.keys(updates).length) {
+      dispatch(upsertFiatRateSeriesCache({updates}));
+    }
+  };
+
+export const fetchFiatRateSeriesAllIntervals =
+  (args: {
+    fiatCode: string;
+    currencyAbbreviation: string;
+    force?: boolean;
+  }): Effect<Promise<void>> =>
+  async dispatch => {
+    const {fiatCode, currencyAbbreviation, force} = args;
+    const coinForCacheCheck = normalizeFiatRateSeriesCoin(currencyAbbreviation);
+    const intervals: FiatRateInterval[] = ['1D', '1W', '1M', 'ALL'];
+    await Promise.allSettled(
+      intervals.map(interval =>
+        dispatch(
+          fetchFiatRateSeriesInterval({
+            fiatCode,
+            interval,
+            coinForCacheCheck,
+            force,
+          }),
+        ),
+      ),
+    );
+  };
+
+export const refreshFiatRateSeries =
+  (args: {
+    fiatCode: string;
+    currencyAbbreviation: string;
+    interval: FiatRateInterval;
+    spotRate?: number;
+  }): Effect<Promise<boolean>> =>
+  async (dispatch, getState) => {
+    const {fiatCode, currencyAbbreviation, interval, spotRate} = args;
+    const {
+      RATE: {fiatRateSeriesCache},
+    } = getState();
+
+    if (!spotRate || !Number.isFinite(spotRate)) {
+      return false;
+    }
+
+    const coin = normalizeFiatRateSeriesCoin(currencyAbbreviation);
+    const cacheKey = getFiatRateSeriesCacheKey(fiatCode, coin, interval);
+    const cached = fiatRateSeriesCache[cacheKey];
+    if (!cached?.points?.length) {
+      return false;
+    }
+
+    if (interval === 'ALL') {
+      return false;
+    }
+
+    const now = Date.now();
+    const lastTs = cached.points[cached.points.length - 1]?.ts;
+    if (!lastTs) {
+      return false;
+    }
+
+    const cadenceMs = getFiatRateSeriesCadenceMs(cached.points, interval);
+    if (now - lastTs < cadenceMs) {
+      return false;
+    }
+
+    if (cached.points.some((p: FiatRatePoint) => p.ts === now)) {
+      return false;
+    }
+
+    const newPoint: FiatRatePoint = {ts: now, rate: spotRate};
+    let points = [...cached.points, newPoint];
+
+    points = dedupeFiatRatePointsByTs(points);
+    const targetLength = cached.points.length;
+    if (points.length > targetLength) {
+      points = points.slice(points.length - targetLength);
+    }
+
+    dispatch(
+      upsertFiatRateSeriesCache({
+        updates: {
+          [cacheKey]: {
+            fetchedOn: now,
+            points,
+          },
+        },
+      }),
+    );
+    return true;
   };
