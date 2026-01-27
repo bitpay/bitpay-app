@@ -36,12 +36,20 @@ import AuthFormContainer, {
   CheckboxLabel,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 export type CreateAccountScreenParamList = {} | undefined;
+
 type CreateAccountScreenProps = NativeStackScreenProps<
   AuthGroupParamList,
   AuthScreens.CREATE_ACCOUNT
->;
+> & {
+  route: {
+    params?: {
+      context?: string;
+    };
+  };
+};
 
 interface CreateAccountFieldValues {
   givenName: string;
@@ -54,7 +62,9 @@ interface CreateAccountFieldValues {
 
 const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   navigation,
+  route,
 }) => {
+  const context = route?.params?.context;
   const {t} = useTranslation();
   const familyNameRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
@@ -213,6 +223,11 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
         }),
       );
       clearSensitive();
+      dispatch(
+        Analytics.track('Clicked Create Account', {
+          context: context || 'Unknown',
+        }),
+      );
     },
     () => {
       Keyboard.dismiss();

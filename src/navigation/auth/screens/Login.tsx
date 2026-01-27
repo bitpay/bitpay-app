@@ -332,7 +332,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
               buttonStyle={'secondary'}
               accessibilityLabel="create-account-button"
               onPress={() => {
-                navigation.navigate('CreateAccount');
+                navigation.navigate('CreateAccount', {context: 'login'});
               }}
               disabled={loginStatus === 'loading'}
               icon={<IconCreateAccount width={28} height={28} />}>
