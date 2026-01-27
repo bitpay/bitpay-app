@@ -435,7 +435,11 @@ export const getRateByCurrencyName = (
     tokenAddress ?? currencyAbbreviation,
     chain,
   );
-  if (currencyAbbreviation === 'pol' && rates.matic && rates.matic.length > 0) {
+  if (
+    currencyAbbreviation?.toLowerCase() === 'pol' &&
+    rates.matic &&
+    rates.matic.length > 0
+  ) {
     return rates.matic;
   }
   return rates[currencyName] || rates[currencyAbbreviation];
@@ -665,7 +669,11 @@ export const fixWalletAddresses = async ({
   await Promise.all(
     wallets.map(async wallet => {
       try {
-        if (!wallet.receiveAddress && wallet?.credentials?.isComplete()) {
+        if (
+          !wallet.receiveAddress &&
+          wallet?.credentials?.isComplete() &&
+          !wallet.pendingTssSession
+        ) {
           const walletAddress = (await appDispatch<any>(
             createWalletAddress({wallet, newAddress: false, skipDispatch}),
           )) as string;
@@ -1392,16 +1400,16 @@ export const isAndroidStoragePermissionGranted = (
   });
 };
 
-export const getSolanaTokens = async (
+export interface SolanaTokenData {
+  mintAddress: string;
+  ataAddress: string;
+  decimals: number;
+}
+
+export const getSolanaATAs = async (
   address: string,
   network: string = 'livenet',
-): Promise<
-  {
-    mintAddress: string;
-    ataAddress: string;
-    decimals: number;
-  }[]
-> => {
+): Promise<SolanaTokenData[]> => {
   const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
   const url = `${
     // @ts-ignore
@@ -1410,11 +1418,14 @@ export const getSolanaTokens = async (
   try {
     const apiResponse = await axios.get<any>(url);
     if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
-      throw new Error(`No solana tokens found for address: ${address}`);
+      logManager.debug(`No solana tokens found for address: ${address}`);
+      return [];
     }
     return apiResponse.data;
-  } catch (err) {
-    throw err;
+  } catch (err: any) {
+    const msg = err?.response?.data ?? err?.message ?? String(err);
+    logManager.debug(`getSolanaATAs Error for ${address}: ${msg}`);
+    return [];
   }
 };
 
@@ -1659,5 +1670,16 @@ export const decodeSolanaTxIntructions = async (
     return apiResponse.data.instructions;
   } catch (err) {
     throw err;
+  }
+};
+
+export const toggleTSSModal = async (
+  setShowTSSProgressModal: ((show: boolean) => void) | undefined,
+  show: boolean,
+  delayMs: number = 500,
+) => {
+  if (setShowTSSProgressModal) {
+    setShowTSSProgressModal(show);
+    if (delayMs > 0) await sleep(delayMs);
   }
 };

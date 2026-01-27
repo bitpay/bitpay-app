@@ -175,6 +175,7 @@ interface removePaymentRequestTransak {
 interface updateAccessTokenTransak {
   type: typeof BuyCryptoActionTypes.ACCESS_TOKEN_TRANSAK;
   payload: {
+    env: 'sandbox' | 'production';
     accessToken: string;
     expiresAt: number;
   };

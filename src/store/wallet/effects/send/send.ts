@@ -52,8 +52,10 @@ import {
   getFullLinkedWallet,
   getOrCreateAssociatedTokenAddress,
   getRateByCurrencyName,
-  getSolanaTokens,
+  getSolanaATAs,
   sleep,
+  SolanaTokenData,
+  toggleTSSModal,
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
@@ -124,6 +126,12 @@ import {logManager} from '../../../../managers/LogManager';
 import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
 import {ExternalServicesScreens} from '../../../../navigation/services/ExternalServicesGroup';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
+import {
+  requiresTSSSigning,
+  TSSSigningCallbacks,
+  startTSSSigning,
+} from '../tss-send/tss-send';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -170,6 +178,10 @@ export const createProposalAndBuildTxDetails =
         } = getState();
 
         if (wallet.isHardwareWallet && credentials.chain === 'bch') {
+          tx.signingMethod = 'ecdsa';
+        }
+
+        if (wallet.tssKeyId && credentials.chain === 'bch') {
           tx.signingMethod = 'ecdsa';
         }
 
@@ -852,7 +864,7 @@ const buildTransactionProposal =
 
         // bch related
         if (tx.signingMethod) {
-          txp.signingMethod = tx.signingMethod;
+          txp.signingMethod = 'ecdsa';
         }
 
         const verifyExcludedUtxos = (
@@ -1109,9 +1121,12 @@ const buildTransactionProposal =
           default:
             let ataAddress: string | undefined;
             if (IsSVMChain(chain) && tx.tokenAddress) {
-              ataAddress = (
-                await getSolanaTokens(tx.toAddress!, wallet?.network)
-              ).find(
+              const toSolanaTokens = await getSolanaATAs(
+                tx.toAddress!,
+                wallet?.network,
+              );
+
+              ataAddress = toSolanaTokens.find(
                 (item: {mintAddress: string}) =>
                   item.mintAddress === tx.tokenAddress,
               )?.ataAddress;
@@ -1122,6 +1137,9 @@ const buildTransactionProposal =
                   feePayer: tx.toAddress!,
                 });
                 txp.ataOwnerAddress = tx.toAddress;
+                logManager.debug(
+                  `Using ATA Address from getOrCreateAssociatedTokenAddress: ${ataAddress}`,
+                );
               }
             }
 
@@ -1160,15 +1178,28 @@ const buildTransactionProposal =
                 }
               }
             } else {
-              const fromSolanaTokens = await getSolanaTokens(
+              const fromSolanaTokens: SolanaTokenData[] = await getSolanaATAs(
                 wallet?.receiveAddress!,
                 wallet?.network,
               );
-              const fromAta = fromSolanaTokens.find((item: any) => {
+              const fromAta = fromSolanaTokens.find((item: SolanaTokenData) => {
                 return item.mintAddress === tx.tokenAddress;
               });
-              txp.fromAta = fromAta?.ataAddress;
-              txp.decimals = fromAta?.decimals;
+
+              if (fromAta) {
+                txp.fromAta = fromAta?.ataAddress;
+                txp.decimals = fromAta?.decimals;
+              } else {
+                const ataAddress = await getOrCreateAssociatedTokenAddress({
+                  mint: tx.tokenAddress!,
+                  feePayer: wallet?.receiveAddress!,
+                });
+                txp.fromAta = ataAddress;
+                logManager.debug(
+                  `Using ATA Address from getOrCreateAssociatedTokenAddress: ${ataAddress}`,
+                );
+              }
+
               if (solanaPayOpts?.memo) {
                 txp.memo = solanaPayOpts.memo;
               }
@@ -1190,16 +1221,16 @@ export const startSendPayment =
     wallet,
     recipient,
     transport,
+    tssCallbacks,
+    setShowTSSProgressModal,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
-
-    /**
-     * Transport for hardware wallet
-     */
     transport?: Transport;
+    tssCallbacks?: TSSSigningCallbacks;
+    setShowTSSProgressModal?: (show: boolean) => void;
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -1220,6 +1251,8 @@ export const startSendPayment =
                   recipient,
                   transport,
                   ataOwnerAddress: txp.ataOwnerAddress,
+                  tssCallbacks,
+                  setShowTSSProgressModal,
                 }),
               );
               return resolve(broadcastedTx);
@@ -1248,6 +1281,8 @@ export const publishAndSign =
     password,
     signingMultipleProposals,
     ataOwnerAddress,
+    tssCallbacks,
+    setShowTSSProgressModal,
   }: {
     txp: TransactionProposal;
     key: Key;
@@ -1257,6 +1292,8 @@ export const publishAndSign =
     password?: string;
     signingMultipleProposals?: boolean; // when signing multiple proposals from a wallet we ask for decrypt password and biometric before
     ataOwnerAddress?: string; // only for solana tokens, if the recipient needs to create an associated token account
+    tssCallbacks?: TSSSigningCallbacks;
+    setShowTSSProgressModal?: (show: boolean) => void;
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -1264,13 +1301,22 @@ export const publishAndSign =
 
       if (APP.biometricLockActive && !signingMultipleProposals) {
         try {
+          if (setShowTSSProgressModal) {
+            await toggleTSSModal(setShowTSSProgressModal, false);
+          }
           await dispatch(checkBiometricForSending());
+          if (setShowTSSProgressModal) {
+            await toggleTSSModal(setShowTSSProgressModal, true);
+          }
         } catch (error) {
           return reject(error);
         }
       }
 
       if (key.isPrivKeyEncrypted && !signingMultipleProposals) {
+        if (setShowTSSProgressModal) {
+          await toggleTSSModal(setShowTSSProgressModal, false);
+        }
         try {
           password = await new Promise<string>(async (_resolve, _reject) => {
             await sleep(500);
@@ -1297,10 +1343,29 @@ export const publishAndSign =
         } catch (error) {
           return reject(error);
         }
+        if (setShowTSSProgressModal) {
+          await toggleTSSModal(setShowTSSProgressModal, true);
+        }
       }
 
-      if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
-        try {
+      try {
+        const isTSSSigning = requiresTSSSigning(wallet, key);
+
+        if (isTSSSigning && !tssCallbacks) {
+          tssCallbacks = {
+            onStatusChange: status =>
+              logManager.debug(`[TSS] Status: ${status}`),
+            onProgressUpdate: progress =>
+              logManager.debug(`[TSS] Progress: ${JSON.stringify(progress)}`),
+            onCopayerStatusChange: (id, status) =>
+              logManager.debug(`[TSS] Copayer ${id}: ${status}`),
+            onRoundUpdate: (round, type) =>
+              logManager.debug(`[TSS] Round ${round} ${type}`),
+            onError: err => logManager.error(`[TSS] Error: ${err.message}`),
+            onComplete: sig => logManager.debug(`[TSS] Complete`),
+          };
+        }
+        if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
           const xPrivKeyEDDSA = password
             ? key.methods!.get(password, 'EDDSA').xPrivKey
             : key.properties!.xPrivKeyEDDSA;
@@ -1322,20 +1387,19 @@ export const publishAndSign =
           logManager.debug(
             `success create ata [publishAndSign]: ${JSON.stringify(result)}`,
           );
-        } catch (error) {
-          throw new Error(`Error creating associated token account: ${error}`);
+          await sleep(3000);
         }
-      }
 
-      try {
-        let publishedTx,
-          broadcastedTx: Partial<TransactionProposal> | null = null;
+        let publishedTx: TransactionProposal | undefined;
+        let broadcastedTx: Partial<TransactionProposal> | null = null;
 
-        // Already published?
+        // Publish if needed
         if (txp.status !== 'pending' || txp.refreshOnPublish) {
-          publishedTx = await publishTx(wallet, txp);
+          publishedTx = (await publishTx(wallet, txp)) as TransactionProposal;
           logManager.debug('success publish [publishAndSign]');
         }
+
+        const txpToSign = publishedTx || txp;
 
         if (key.isReadOnly && !key.hardwareSource) {
           // read only wallet
@@ -1344,33 +1408,52 @@ export const publishAndSign =
 
         let signedTx: TransactionProposal | null = null;
 
-        if (key.hardwareSource) {
+        if (isTSSSigning) {
+          signedTx = await dispatch(
+            startTSSSigning({
+              key,
+              wallet,
+              txp: txpToSign as TransactionProposal,
+              callbacks: tssCallbacks!,
+              password,
+            }),
+          );
+          logManager.debug('success TSS sign [publishAndSign]');
+        } else if (key.hardwareSource) {
           if (!transport) {
             return reject(
               new Error('No transport provided for hardware signing.'),
             );
           }
-
           signedTx = await signTxWithHardwareWallet(
             transport,
             wallet,
             key,
-            (publishedTx || txp) as TransactionProposal,
+            txpToSign as TransactionProposal,
           );
+          logManager.debug('success hardware sign [publishAndSign]');
         } else {
           signedTx = (await signTx(
             wallet,
             key,
-            publishedTx || txp,
+            txpToSign,
             password,
           )) as TransactionProposal;
+          logManager.debug('success sign [publishAndSign]');
         }
 
-        logManager.debug('success sign [publishAndSign]');
-
         if (signedTx.status === 'accepted') {
+          if (isTSSSigning && tssCallbacks) {
+            tssCallbacks.onStatusChange('broadcasting');
+          }
+
           broadcastedTx = await broadcastTx(wallet, signedTx);
           logManager.debug('success broadcast [publishAndSign]');
+
+          if (isTSSSigning && tssCallbacks) {
+            tssCallbacks.onStatusChange('complete');
+          }
+
           const {fee, amount} = broadcastedTx as {
             fee: number;
             amount: number;
@@ -1415,6 +1498,24 @@ export const publishAndSign =
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(`[publishAndSign] err: ${errorStr}`);
+        // workaround for 500 - Transaction simulation failed SOL err from bws
+        if (
+          errorStr.includes('Transaction simulation failed') &&
+          IsSVMChain(txp.chain)
+        ) {
+          return reject(
+            new Error(
+              'Your Solana wallet may not have enough SOL to cover network fees and rent-exempt balance. Please add some SOL to your wallet first, then try again.',
+            ),
+          );
+        }
+
+        if (isTSSSigning && tssCallbacks) {
+          tssCallbacks.onError(
+            err instanceof Error ? err : new Error(errorStr),
+          );
+        }
+
         // if broadcast fails, remove transaction proposal
         try {
           // except for multisig pending transactions
@@ -1596,42 +1697,9 @@ export const signTx = (
 ): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const promisifiedSign = (
-        keyMethods: KeyMethods | undefined,
-        rootPath: string,
-        txp: any,
-        password: string | undefined,
-      ) => {
-        return new Promise((resolve, reject) => {
-          try {
-            const result = keyMethods?.sign(
-              rootPath,
-              txp,
-              password,
-              (err: any, signatures: string[]) => {
-                if (err) {
-                  return reject(err);
-                }
-                resolve(signatures);
-              },
-            );
-
-            if (result && Array.isArray(result)) {
-              return resolve(result);
-            }
-          } catch (err) {
-            reject(err);
-          }
-        });
-      };
-
       const rootPath = wallet.getRootPath();
-      const signatures = await promisifiedSign(
-        key.methods,
-        rootPath,
-        txp,
-        password,
-      );
+      const signatures = await key.methods?.sign(rootPath, txp, password);
+
       wallet.pushSignatures(
         txp,
         signatures,
@@ -2362,7 +2430,7 @@ export const handleCreateTxProposalError =
     proposalErrorProps: ProposalErrorHandlerProps,
     onDismiss?: () => void,
     context?: ProposalErrorHandlerContext,
-  ): Effect<Promise<any>> =>
+  ): Effect<Promise<BottomNotificationConfig>> =>
   async dispatch => {
     try {
       const {err} = proposalErrorProps;
@@ -2710,9 +2778,17 @@ export const checkBiometricForSending =
   };
 
 export const sendCrypto =
-  (loggerContext: string): Effect<void> =>
+  (
+    loggerContext: string,
+    assetContext?: {
+      currencyAbbreviation: string;
+      chain: string;
+      network?: string;
+      tokenAddress?: string;
+    },
+  ): Effect<void> =>
   (dispatch, getState) => {
-    const keys = getState().WALLET.keys;
+    const keys = getState().WALLET.keys as Record<string, Key>;
     const walletsWithBalance = Object.values(keys)
       .filter(key => key.backupComplete)
       .flatMap(key => key.wallets)
@@ -2720,7 +2796,8 @@ export const sendCrypto =
         wallet =>
           !wallet.hideWallet &&
           !wallet.hideWalletByAccount &&
-          wallet.isComplete(),
+          wallet.isComplete() &&
+          !wallet.pendingTssSession,
       )
       .filter(wallet => wallet.balance.sat > 0);
 
@@ -2737,13 +2814,23 @@ export const sendCrypto =
               action: () => {
                 dispatch(
                   Analytics.track('Clicked Buy Crypto', {
-                    context: 'HomeRoot',
+                    context: loggerContext,
+                    coin: assetContext?.currencyAbbreviation || '',
+                    chain: assetContext?.chain || '',
                   }),
                 );
                 navigationRef.navigate(
                   ExternalServicesScreens.ROOT_BUY_AND_SELL,
                   {
                     context: 'buyCrypto',
+                    ...(assetContext?.currencyAbbreviation &&
+                    assetContext?.chain
+                      ? {
+                          currencyAbbreviation:
+                            assetContext.currencyAbbreviation,
+                          chain: assetContext.chain,
+                        }
+                      : {}),
                   },
                 );
               },
@@ -2763,14 +2850,23 @@ export const sendCrypto =
           context: loggerContext,
         }),
       );
-      navigationRef.navigate('GlobalSelect', {context: 'send'});
+      navigationRef.navigate('GlobalSelect', {context: 'send', assetContext});
     }
   };
 
 export const receiveCrypto =
-  (navigation: NavigationProp<any>, loggerContext: string): Effect<void> =>
+  (
+    navigation: NavigationProp<any>,
+    loggerContext: string,
+    assetContext?: {
+      currencyAbbreviation: string;
+      chain: string;
+      network?: string;
+      tokenAddress?: string;
+    },
+  ): Effect<void> =>
   (dispatch, getState) => {
-    const keys = getState().WALLET.keys;
+    const keys = getState().WALLET.keys as Record<string, Key>;
     if (Object.keys(keys).length === 0) {
       dispatch(
         showBottomNotificationModal({
@@ -2804,7 +2900,10 @@ export const receiveCrypto =
             context: loggerContext,
           }),
         );
-        navigationRef.navigate('GlobalSelect', {context: 'receive'});
+        navigationRef.navigate('GlobalSelect', {
+          context: 'receive',
+          assetContext,
+        });
       }
     }
   };

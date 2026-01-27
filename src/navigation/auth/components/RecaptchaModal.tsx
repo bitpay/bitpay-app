@@ -1,8 +1,8 @@
 import React, {useImperativeHandle, useRef} from 'react';
 import {StyleSheet, View} from 'react-native';
 import WebView, {WebViewMessageEvent} from 'react-native-webview';
-import CookieManager from '@react-native-cookies/cookies';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import {HEIGHT} from '../../../components/styled/Containers';
 import {Action, White} from '../../../styles/colors';
 
 const RECAPTCHA_ID = 'bp-recaptcha';
@@ -92,7 +92,6 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
             webviewRef.current?.injectJavaScript(`
             document.querySelector('#submit-captcha').disabled = true;
           `);
-            CookieManager.clearAll();
             break;
           case 'cancel':
             onCancel?.();
@@ -163,7 +162,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
 
                     button.secondary {
                       background: transparent;
-                      color: ${White};
+                      color: ${White}; 
                       border: 1px solid ${Action};
                     }
 
@@ -184,7 +183,7 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
 
                   </style>
                   <script src="https://www.google.com/recaptcha/api.js?render=explicit&onload=onCaptchaLoad"></script>
-                  <script type="text/javascript">
+                  <script type="text/javascript"> 
                     window.onCaptchaLoad = () => {
                       window.grecaptcha.render('${RECAPTCHA_ID}', {
                         sitekey: '${sitekey}',
@@ -213,19 +212,19 @@ export const RecaptchaModal = React.forwardRef<CaptchaRef, RecaptchaModalProps>(
                           }));
                         },
                       });
-                    };
+                    };        
 
                     window.onCaptchaCancel = () => {
                       window.ReactNativeWebView.postMessage(JSON.stringify({
                         message: 'cancel',
                       }));
                     };
-
+                    
                     window.onload = () => {
                       document.getElementById('captcha-form').style.opacity = '1';
                     }
-
-                  </script>
+                    
+                  </script> 
                 </head>
                 <body>
                   <div id="flex-container">

@@ -7,14 +7,20 @@ import {ArchaxBannerContainer} from '../../components/styled/Containers';
 
 interface ArchaxBannerProps {
   isSmallScreen?: boolean;
+  noMarginTop?: boolean;
 }
 
-const ArchaxBanner: React.FC<ArchaxBannerProps> = ({isSmallScreen}) => {
+const ArchaxBanner: React.FC<ArchaxBannerProps> = ({
+  isSmallScreen,
+  noMarginTop,
+}) => {
   const dispatch = useAppDispatch();
   const insets = useSafeAreaInsets();
 
   return (
-    <ArchaxBannerContainer inset={insets} isSmallScreen={isSmallScreen}>
+    <ArchaxBannerContainer
+      inset={noMarginTop ? undefined : insets}
+      isSmallScreen={isSmallScreen}>
       <ArchaxBannerText isSmallScreen={isSmallScreen}>
         Don't invest unless you're prepared to lose all the money you invest.
         This is a high-risk investment and you should not expect to be protected

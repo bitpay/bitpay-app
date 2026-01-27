@@ -23,6 +23,7 @@ export interface ShopState {
   email: string;
   phone: string;
   phoneCountryInfo: PhoneCountryInfo;
+  isBillPayEnabled: boolean;
   billPayAccounts: {
     [key in Network]: BillPayAccount[];
   };
@@ -46,6 +47,7 @@ export const initialShopState: ShopState = {
     phoneCountryCode: '',
     countryIsoCode: '',
   },
+  isBillPayEnabled: true,
   billPayAccounts: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
@@ -205,6 +207,12 @@ export const shopReducer = (
       return {
         ...state,
         email,
+      };
+
+    case ShopActionTypes.SET_IS_BILL_PAY_ENABLED:
+      return {
+        ...state,
+        isBillPayEnabled: action.payload.isBillPayEnabled,
       };
     case ShopActionTypes.UPDATED_GIFT_CARD_STATUS:
       const {invoiceId: invoiceIdToUpdate, status} = action.payload;

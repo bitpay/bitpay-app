@@ -87,7 +87,10 @@ import {
   AddWalletData,
   getDecryptPassword,
 } from '../../../../store/wallet/effects/create/create';
-import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../../../wallet/components/ErrorMessages';
 import {startUpdateWalletStatus} from '../../../../store/wallet/effects/status/status';
 import SwapCryptoLoadingWalletSkeleton from './SwapCryptoLoadingWalletSkeleton';
 import SwapCryptoBalanceSkeleton from './SwapCryptoBalanceSkeleton';
@@ -141,6 +144,7 @@ import {
 } from '../../../../store/wallet/utils/wallet';
 import {BuyCryptoItemTitle} from '../../buy-crypto/styled/BuyCryptoCard';
 import {useOngoingProcess, useTokenContext} from '../../../../contexts';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 
 export type SwapCryptoRootScreenParams =
   | {
@@ -1374,6 +1378,17 @@ const SwapCryptoRoot: React.FC = () => {
     hideModal('toWalletSelector');
     if (toWallet?.currencyAbbreviation) {
       setToWallet(toWallet);
+    } else if (createToWalletData && isTSSKey(createToWalletData.key)) {
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: t(
+              'You cannot add new wallets to a TSS wallet key. To create another wallet, please start a new TSS wallet setup.',
+            ),
+            title: t('TSS Wallet Limitation'),
+          }),
+        ),
+      );
     } else if (createToWalletData) {
       try {
         if (

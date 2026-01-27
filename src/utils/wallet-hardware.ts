@@ -1,5 +1,5 @@
-import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
-import {Constants} from 'bitcore-wallet-client/ts_build/lib/common';
+import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
+import {Constants} from 'bitcore-wallet-client/ts_build/src/lib/common';
 import {BwcProvider} from '../lib/bwc';
 import {Network} from '../constants';
 

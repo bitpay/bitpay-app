@@ -187,7 +187,7 @@ export const startUpdateWalletStatus =
           );
 
           const totalFiatBalance = wallets.reduce(
-            (acc, {balance: {sat}}, index, wallets) =>
+            (acc: number, {balance: {sat}}, index, wallets) =>
               acc +
               convertToFiat(
                 dispatch(
@@ -208,7 +208,7 @@ export const startUpdateWalletStatus =
           );
 
           const totalLastDayFiatBalance = wallets.reduce(
-            (acc, {balance: {sat}}, index, wallets) => {
+            (acc: number, {balance: {sat}}, index, wallets) => {
               const fiatLastDay = convertToFiat(
                 dispatch(
                   toFiat(
@@ -332,24 +332,40 @@ export const updateKeyStatus =
           wallet => wallet.receiveAddress === accountAddress,
         );
       }
-      // remote token wallets from getStatusAll
+
+      // remove token wallets from getStatusAll
       const noTokenWallets = walletsToUpdate.filter(wallet => {
         return (
           !wallet.credentials.token &&
           !wallet.credentials.multisigEthInfo &&
-          wallet.credentials.isComplete()
+          wallet.credentials.isComplete() &&
+          !wallet.pendingTssSession
         );
       });
 
-      const credentials = noTokenWallets.map(wallet => {
-        const tokenAddresses = wallet.tokens?.map(
-          address => '0x' + address.split('0x')[1],
-        );
+      const normalizeTokenAddresses = (wallet: any): string[] | undefined => {
+        const tokens: string[] | undefined = wallet.tokens;
+        if (!tokens?.length) return undefined;
 
-        // build tokenAddresses wallet options for getStatusAll
-        walletOptions[wallet.credentials.copayerId] = {
-          tokenAddresses,
-        };
+        const chain = wallet.chain || wallet.credentials?.chain;
+
+        if (chain === 'sol') {
+          return tokens
+            .map(t => t.split('-').pop())
+            .filter((t): t is string => !!t && t.length > 0);
+        }
+
+        return tokens
+          .map(address => {
+            const [, rest] = address.split('0x');
+            return rest ? '0x' + rest : undefined;
+          })
+          .filter((t): t is string => !!t);
+      };
+
+      const credentials = noTokenWallets.map(wallet => {
+        const tokenAddresses = normalizeTokenAddresses(wallet);
+        walletOptions[wallet.credentials.copayerId] = {tokenAddresses};
         return wallet.credentials;
       });
 
@@ -373,11 +389,30 @@ export const updateKeyStatus =
           singleAddress: boolean;
         }> = [];
 
+        const updateBalance = (
+          wallet: Wallet,
+          newBalance: WalletBalance,
+          pendingTxps: any[],
+        ) => {
+          if (dataOnly) {
+            walletUpdates.push({
+              walletId: wallet.id,
+              balance: newBalance,
+              pendingTxps,
+              singleAddress: !!wallet.singleAddress,
+            });
+          } else {
+            wallet.balance = newBalance;
+          }
+
+          return newBalance;
+        };
+
         const balances = uniqBy(key.wallets, 'id').map(wallet => {
           const {balance: cachedBalance, pendingTxps} = wallet;
 
           if (!bulkStatus) {
-            return {
+            const newBalance = {
               ...cachedBalance,
               ...dispatch(
                 buildFiatBalance({
@@ -388,7 +423,9 @@ export const updateKeyStatus =
                   lastDayRates,
                 }),
               ),
-            };
+            } as WalletBalance;
+
+            return updateBalance(wallet, newBalance, pendingTxps);
           }
 
           const {status, success} =
@@ -437,14 +474,14 @@ export const updateKeyStatus =
             // Collect wallet updates instead of applying them
             walletUpdates.push({
               walletId: wallet.id,
-              balance: cryptoBalance,
+              balance: newBalance,
               pendingTxps: newPendingTxps,
               singleAddress: status.wallet?.singleAddress,
             });
 
             if (!dataOnly) {
               // properties to update
-              wallet.balance = cryptoBalance;
+              wallet.balance = newBalance;
               wallet.pendingTxps = newPendingTxps;
               wallet.singleAddress = status.wallet?.singleAddress;
             }
@@ -455,7 +492,7 @@ export const updateKeyStatus =
 
             return newBalance;
           } else {
-            return {
+            const newBalance = {
               ...cachedBalance,
               ...dispatch(
                 buildFiatBalance({
@@ -466,7 +503,9 @@ export const updateKeyStatus =
                   lastDayRates,
                 }),
               ),
-            };
+            } as WalletBalance;
+
+            return updateBalance(wallet, newBalance, pendingTxps);
           }
         });
 

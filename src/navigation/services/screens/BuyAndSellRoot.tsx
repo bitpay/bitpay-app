@@ -234,7 +234,6 @@ const CtaContainer = styled.View<{
   justifyCenter?: boolean;
 }>`
   width: 100%;
-  /* margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')}; */
   flex-direction: row;
   justify-content: ${({justifyCenter}) =>
     justifyCenter ? 'center' : 'space-between'};
@@ -439,8 +438,8 @@ const BuyAndSellRoot = ({
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
   const network = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(({BITPAY_ID}) => BITPAY_ID.user[network]);
-  const accessTokenTransak: TransakAccessTokenData = useAppSelector(
-    ({BUY_CRYPTO}) => BUY_CRYPTO.accessToken.transak,
+  const accessTokenTransak: TransakAccessTokenData | undefined = useAppSelector(
+    ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
   );
   const allRates = useAppSelector(({RATE}) => RATE.rates);
   const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
@@ -459,7 +458,11 @@ const BuyAndSellRoot = ({
   const curValRef = useRef('');
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
-  const _isSmallScreen = showArchaxBanner ? true : HEIGHT < 700;
+  const _isSmallScreen = showArchaxBanner
+    ? HEIGHT < 1000
+      ? true
+      : false
+    : HEIGHT < 700;
   const country = locationData?.countryShortCode || 'US';
 
   // Real route params
@@ -2191,7 +2194,8 @@ const BuyAndSellRoot = ({
 
     let data: BanxaCreateOrderData, banxaOrderData: BanxaOrderData;
     try {
-      data = await selectedWallet.banxaCreateOrder(quoteData);
+      const _data = await selectedWallet.banxaCreateOrder(quoteData);
+      data = _data?.body ?? _data;
     } catch (err) {
       setOpeningBrowser(false);
       const title = t('Banxa Error');
@@ -2331,9 +2335,10 @@ const BuyAndSellRoot = ({
 
     let data: MoonpayGetSignedPaymentUrlData;
     try {
-      data = (await selectedWallet.moonpayGetSignedPaymentUrl(
+      const _data: any = await selectedWallet.moonpayGetSignedPaymentUrl(
         quoteData,
-      )) as MoonpayGetSignedPaymentUrlData;
+      );
+      data = _data?.body ?? _data;
     } catch (err) {
       setOpeningBrowser(false);
       const title = t('MoonPay Error');
@@ -2442,7 +2447,8 @@ const BuyAndSellRoot = ({
 
     let data: RampGetSellSignedPaymentUrlData;
     try {
-      data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
+      const _data = await selectedWallet.rampGetSignedPaymentUrl(quoteData);
+      data = _data?.body ?? _data;
     } catch (err) {
       setOpeningBrowser(false);
       const title = t('Ramp Network Error');
@@ -2519,7 +2525,8 @@ const BuyAndSellRoot = ({
           enabled: ['ach', 'apple_pay', 'card', 'sepa'],
         },
       };
-      authTokenData = await selectedWallet.sardineGetToken(quoteData);
+      const _authTokenData = await selectedWallet.sardineGetToken(quoteData);
+      authTokenData = _authTokenData?.body ?? _authTokenData;
     } catch (err) {
       setOpeningBrowser(false);
       const title = t('Sardine Error');
@@ -2652,7 +2659,8 @@ const BuyAndSellRoot = ({
     };
 
     simplexPaymentRequest(selectedWallet, address, quoteData, createdOn)
-      .then(async req => {
+      .then(async _req => {
+        const req = _req?.body ?? _req;
         if (req && req.error) {
           const title = t('Simplex Error');
           const reason = 'simplexPaymentRequest Error';
@@ -2767,6 +2775,50 @@ const BuyAndSellRoot = ({
     const coin = cloneDeep(selectedWallet.currencyAbbreviation).toLowerCase();
     const chain = cloneDeep(selectedWallet.chain);
 
+    const nowTimestamp = (Date.now() / 1000) | 0;
+    let _accessToken = accessTokenTransak?.accessToken;
+    let _expiresAt = accessTokenTransak?.expiresAt;
+    if (!_accessToken || !_expiresAt || _expiresAt < nowTimestamp) {
+      if (_expiresAt && _expiresAt < nowTimestamp) {
+        logger.debug('Transak access token expired. Fetching new one...');
+      }
+      try {
+        let data: TransakAccessTokenData | undefined;
+        const _data = await selectedWallet.transakGetAccessToken({
+          env: transakEnv,
+        });
+        data = _data?.body?.data ?? _data;
+
+        if (data?.accessToken) {
+          logger.debug('Transak access token fetched successfully.');
+          dispatch(
+            BuyCryptoActions.updateAccessTokenTransak({
+              env: transakEnv,
+              ...data,
+            }),
+          );
+          _accessToken = data.accessToken;
+        } else {
+          const err = t('Could not fetch Transak access token');
+          const title = t('Transak Error');
+          const reason = 'transakGetAccessToken Error: No accessToken provided';
+          showError(title, err, reason);
+          setOpeningBrowser(false);
+          return;
+        }
+      } catch (err: any) {
+        logger.error('Error fetching Transak access token');
+        const title = t('Transak Error');
+        const msg = getErrorMessage(err);
+        const reason = 'transakUpdateAccessToken Error';
+        showError(title, msg, reason);
+        setOpeningBrowser(false);
+        return;
+      }
+    } else {
+      logger.debug('Using cached Transak access token.');
+    }
+
     const newData: TransakPaymentData = {
       address,
       chain: destinationChain,
@@ -2787,23 +2839,6 @@ const BuyAndSellRoot = ({
         transakPaymentData: newData,
       }),
     );
-
-    const nowTimestamp = (Date.now() / 1000) | 0;
-    let _accessToken = accessTokenTransak?.accessToken;
-    if (!_accessToken || accessTokenTransak.expiresAt < nowTimestamp) {
-      try {
-        const {data} = await selectedWallet.transakGetAccessToken('');
-        dispatch(BuyCryptoActions.updateAccessTokenTransak(data));
-        _accessToken = data.accessToken;
-      } catch (err: any) {
-        const title = t('Transak Error');
-        const msg = getErrorMessage(err);
-        const reason = 'transakUpdateAccessToken Error';
-        showError(title, msg, reason);
-        setOpeningBrowser(false);
-        return;
-      }
-    }
 
     dispatch(
       Analytics.track('Requested Crypto Purchase', {
@@ -2846,7 +2881,8 @@ const BuyAndSellRoot = ({
 
     let data: TransakSignedUrlData;
     try {
-      data = await selectedWallet.transakGetSignedPaymentUrl(quoteData);
+      const _data = await selectedWallet.transakGetSignedPaymentUrl(quoteData);
+      data = _data?.body ?? _data;
     } catch (err) {
       const title = t('Transak Error');
       const msg = getErrorMessage(err);
@@ -2868,7 +2904,11 @@ const BuyAndSellRoot = ({
       return;
     }
 
-    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
+    // This offer is opened in an external browser.
+    // Apparently, Transak placed certain restrictions on opening its widgetUrl,
+    // which causes it not to display correctly in the inappBrowser.
+    await Linking.openURL(data.urlWithSignature);
+
     await sleep(500);
     setOpeningBrowser(false);
     navigation.goBack();
@@ -2974,7 +3014,10 @@ const BuyAndSellRoot = ({
 
     let data: MoonpayGetSellSignedPaymentUrlData;
     try {
-      data = await selectedWallet.moonpayGetSellSignedPaymentUrl(requestData);
+      const _data = await selectedWallet.moonpayGetSellSignedPaymentUrl(
+        requestData,
+      );
+      data = _data?.body ?? _data;
       if (!data?.urlWithSignature) {
         const msg = t(
           'Our partner Moonpay is not currently available. Please try again later.',
@@ -3102,7 +3145,8 @@ const BuyAndSellRoot = ({
 
     let data: RampGetSellSignedPaymentUrlData;
     try {
-      data = await selectedWallet.rampGetSignedPaymentUrl(requestData);
+      const _data = await selectedWallet.rampGetSignedPaymentUrl(requestData);
+      data = _data?.body ?? _data;
       if (!data?.urlWithSignature) {
         const msg = t(
           'Our partner Ramp Network is not currently available. Please try again later.',
@@ -3457,7 +3501,8 @@ const BuyAndSellRoot = ({
 
     selectedWallet
       .simplexSellPaymentRequest(quoteData)
-      .then(async (data: SimplexSellPaymentRequestData) => {
+      .then(async (_data: any) => {
+        const data: SimplexSellPaymentRequestData = _data?.body ?? _data;
         if (data?.error) {
           const msg = getErrorMessage(data.error);
           const reason = 'simplexSellPaymentRequest Error';
@@ -3804,7 +3849,9 @@ const BuyAndSellRoot = ({
                 : t('Continue')}
             </Button>
           </ButtonContainer>
-          {showArchaxBanner && <ArchaxFooter isSmallScreen={_isSmallScreen} />}
+          {context === 'buyCrypto' && showArchaxBanner && (
+            <ArchaxFooter isSmallScreen={_isSmallScreen} />
+          )}
         </ActionContainer>
       </ViewContainer>
 

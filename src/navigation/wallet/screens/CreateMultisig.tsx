@@ -43,6 +43,7 @@ import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import {
   startCreateKeyMultisig,
+  startCreateTSSKey,
   addWalletMultisig,
   getDecryptPassword,
 } from '../../../store/wallet/effects';
@@ -59,12 +60,15 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../../navigation/tabs/TabsStack';
-import {IsSegwitCoin} from '../../../store/wallet/utils/currency';
+import {IsSegwitCoin, GetName} from '../../../store/wallet/utils/currency';
 import {useOngoingProcess} from '../../../contexts';
+import Banner from '../../../components/banner/Banner';
 
 export interface CreateMultisigParamsList {
+  context: 'addTSSWalletMultisig' | 'addWalletMultisig';
   currency: string;
-  key: Key;
+  chain?: string;
+  key?: Key;
 }
 
 const schema = yup.object().shape({
@@ -76,8 +80,8 @@ const schema = yup.object().shape({
     .positive()
     .integer()
     .min(1)
-    .max(3), // m
-  totalCopayers: yup.number().required().positive().integer().min(2).max(6), // n
+    .max(3),
+  totalCopayers: yup.number().required().positive().integer().min(2).max(6),
 });
 
 export const MultisigContainer = styled.SafeAreaView`
@@ -184,7 +188,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   const {t} = useTranslation();
   const logger = useLogger();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
-  const {currency, key} = route.params;
+  const {currency, chain, key, context} = route.params;
   const segwitSupported = IsSegwitCoin(currency);
   const [showOptions, setShowOptions] = useState(false);
   const [testnetEnabled, setTestnetEnabled] = useState(false);
@@ -194,6 +198,9 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     networkName: 'livenet',
     singleAddress: false,
   });
+
+  const isTSS = context === 'addTSSWalletMultisig';
+
   const {
     control,
     handleSubmit,
@@ -240,20 +247,77 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     opts.networkName = options.networkName;
     opts.singleAddress = options.singleAddress;
     opts.coin = currency?.toLowerCase();
-    opts.chain = opts.coin;
+    opts.chain = chain?.toLowerCase() || opts.coin;
 
     CreateMultisigWallet(opts);
+  };
+
+  const CreateTSSMultisigWallet = async (
+    opts: Partial<KeyOptions>,
+  ): Promise<void> => {
+    try {
+      showOngoingProcess('CREATING_KEY');
+      await sleep(200);
+      const {key: tssKey} = await dispatch<any>(
+        startCreateTSSKey({
+          coin: opts.coin!,
+          chain: opts.chain!,
+          network: opts.networkName!,
+          m: opts.m,
+          n: opts.n,
+          password: opts.password,
+          myName: opts.myName,
+          walletName: opts.name,
+        }),
+      );
+
+      hideOngoingProcess();
+
+      dispatch(
+        Analytics.track('Started TSS Wallet Creation', {
+          coin: currency?.toLowerCase(),
+          type: `${opts.m}-${opts.n}`,
+        }),
+      );
+
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [
+            {
+              name: RootStacks.TABS,
+              params: {screen: TabsScreens.HOME},
+            },
+            {
+              name: WalletScreens.INVITE_COSIGNERS,
+              params: {
+                keyId: tssKey.id,
+              },
+            },
+          ],
+        }),
+      );
+    } catch (e: any) {
+      logger.error(e.message);
+      hideOngoingProcess();
+      await sleep(500);
+      showErrorModal(e.message);
+    }
   };
 
   const CreateMultisigWallet = async (
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
+      if (isTSS) {
+        await CreateTSSMultisigWallet(opts);
+        return;
+      }
+
       if (key) {
         if (key.isPrivKeyEncrypted) {
           opts.password = await dispatch(getDecryptPassword(key));
         }
-
         showOngoingProcess('ADDING_WALLET');
         const wallet = (await dispatch<any>(
           addWalletMultisig({
@@ -261,7 +325,6 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
             opts,
           }),
         )) as Wallet;
-
         dispatch(
           Analytics.track('Created Multisig Wallet', {
             coin: currency?.toLowerCase(),
@@ -269,7 +332,6 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
             addedToExistingKey: true,
           }),
         );
-
         wallet.getStatus(
           {network: wallet.network},
           (err: any, status: Status) => {
@@ -318,7 +380,6 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
         const multisigKey = (await dispatch<any>(
           startCreateKeyMultisig(opts),
         )) as Key;
-
         dispatch(
           Analytics.track('Created Multisig Wallet', {
             coin: currency?.toLowerCase(),
@@ -326,16 +387,13 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
             addedToExistingKey: false,
           }),
         );
-
         dispatch(
           Analytics.track('Created Key', {
             context: 'createMultisig',
             coins: [currency?.toLowerCase()],
           }),
         );
-
         dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
-
         navigation.navigate('BackupKey', {
           context: 'createNewMultisigKey',
           key: multisigKey,
@@ -378,12 +436,6 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
   return (
     <MultisigContainer>
       <ScrollViewContainer>
-        <Paragraph>
-          {t(
-            "Multisig wallets require multisig devices to set up. It takes longer to complete but it's the recommended security configuration for long term storage.",
-          )}
-        </Paragraph>
-
         <InputContainer>
           <Controller
             control={control}
@@ -467,7 +519,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
           render={({field: {value}}) => (
             <OptionContainer>
               <Column>
-                <OptionTitle>{t('Total number of copayers')}</OptionTitle>
+                <OptionTitle>{t('Total number of co-signers')}</OptionTitle>
               </Column>
               <CounterContainer>
                 <RemoveButton
@@ -506,7 +558,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
           <ErrorText>{errors?.totalCopayers?.message}</ErrorText>
         )}
 
-        <CtaContainer>
+        {!isTSS && (
           <AdvancedOptionsContainer>
             <AdvancedOptionsButton
               onPress={() => {
@@ -637,7 +689,19 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
               </AdvancedOptions>
             )}
           </AdvancedOptionsContainer>
-        </CtaContainer>
+        )}
+
+        <Banner
+          type={'info'}
+          title={t("Don't lose access")}
+          description={t(
+            "Your shared wallet uses an M-of-N setup. If the required number of co-signers are lost or unavailable, you will not be able to sign transactions or recover assets. Back up your wallet securely. BitPay can't recover your wallet or access your private keys.",
+          )}
+          link={{
+            text: t('Learn More'),
+            onPress: () => {},
+          }}
+        />
 
         <CtaContainer>
           <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>

@@ -21,15 +21,26 @@ const BillsHome = ({}: NativeStackScreenProps<
   const theme = useTheme();
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const appNetwork = useAppSelector(({APP}) => APP.network);
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
+  const isBillPayEnabled = useAppSelector(({SHOP}) => SHOP.isBillPayEnabled);
+  const accounts = useAppSelector(({SHOP}) => SHOP.billPayAccounts[appNetwork]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const shouldShowPaymentList = !!(
+    user &&
+    !isBillPayEnabled &&
+    accounts.length > 0
+  );
 
   return (
     <TabContainer>
       <HeaderContainer>
-        <HeaderTitle>{t('Pay Bills')}</HeaderTitle>
+        <HeaderTitle>
+          {shouldShowPaymentList ? t('All Payments') : t('Pay Bills')}
+        </HeaderTitle>
       </HeaderContainer>
       <ScrollView
         refreshControl={

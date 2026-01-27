@@ -34,6 +34,13 @@ export interface PercentageProps {
   rangeLabel?: string;
 }
 
+export const getDifferenceColor = (
+  isPositive: boolean,
+  isDarkMode: boolean,
+) => {
+  return isPositive ? (isDarkMode ? '#00954F' : '#004D27') : '#DA3636';
+};
+
 const Percentage = ({
   percentageDifference,
   hideArrow = false,
@@ -43,12 +50,10 @@ const Percentage = ({
 }: PercentageProps) => {
   const theme = useTheme();
   const isDarkMode = theme.dark;
-  const percentageColor =
-    percentageDifference >= 0
-      ? isDarkMode
-        ? '#00954F'
-        : '#004D27'
-      : '#DA3636';
+  const percentageColor = getDifferenceColor(
+    percentageDifference > 0,
+    isDarkMode,
+  );
   const formattedPriceChange =
     priceChange === null || priceChange === undefined
       ? undefined

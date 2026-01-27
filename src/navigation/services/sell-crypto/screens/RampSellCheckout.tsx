@@ -31,6 +31,8 @@ import {
   TransactionProposal,
   SendMaxInfo,
   Key,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../store/wallet/wallet.models';
 import {
   GetName,
@@ -51,8 +53,9 @@ import {
   getCurrencyAbbreviation,
   getCWCChain,
   getOrCreateAssociatedTokenAddress,
-  getSolanaTokens,
+  getSolanaATAs,
   sleep,
+  SolanaTokenData,
 } from '../../../../utils/helper-methods';
 import {
   ItemDivisor,
@@ -119,6 +122,11 @@ import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {rampGetSellTransactionDetails} from '../../../../store/buy-crypto/effects/ramp/ramp';
 import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 import {SellCryptoOffer} from '../../components/externalServicesOfferSelector';
+import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
+import {Network} from '../../../../constants';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -176,6 +184,7 @@ const RampSellCheckout: React.FC = () => {
   const [amountExpected, setAmountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
+  const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
 
   const [totalExchangeFee, setTotalExchangeFee] = useState<number>();
   const [paymentExpired, setPaymentExpired] = useState(false);
@@ -192,12 +201,42 @@ const RampSellCheckout: React.FC = () => {
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
 
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const showTssErrorMessage = useCallback(
+    async (config: BottomNotificationConfig) => {
+      const msg = config?.message || t('An error occurred during TSS signing');
+      const reason = 'TSS Signing Error';
+      const title = config?.title || t('TSS Signing Error');
+      showError(msg, reason, undefined, title);
+    },
+    [dispatch],
+  );
+  const isTSSWallet = isTSSKey(key);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+
+  const tssCallbacks = useTSSCallbacks({
+    wallet,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage: showTssErrorMessage,
+  });
+
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
-  let status: string;
-  let ataOwnerAddress: string | undefined;
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
   const transportRef = useRef(hardwareWalletTransport);
@@ -460,34 +499,53 @@ const RampSellCheckout: React.FC = () => {
               }
             }
           } else if (IsSVMChain(txp.chain!)) {
-            const receiveAddressSolanaTokens = await getSolanaTokens(
-              wallet?.receiveAddress!,
-              wallet?.network,
-            );
-            const ataReceiveAddress = receiveAddressSolanaTokens.find(
-              (item: any) => {
-                return item.mintAddress === txp.tokenAddress;
-              },
-            );
-            txp.fromAta = ataReceiveAddress?.ataAddress;
-            txp.decimals = ataReceiveAddress?.decimals;
+            const receiveAddressSolanaTokens: SolanaTokenData[] =
+              await getSolanaATAs(wallet?.receiveAddress!, wallet?.network);
+
+            let ataReceiveAddress: SolanaTokenData | undefined;
+            if (receiveAddressSolanaTokens) {
+              ataReceiveAddress = receiveAddressSolanaTokens.find(
+                (item: SolanaTokenData) => {
+                  return item.mintAddress === txp.tokenAddress;
+                },
+              );
+            }
+
+            if (ataReceiveAddress) {
+              txp.fromAta = ataReceiveAddress.ataAddress;
+              txp.decimals = ataReceiveAddress.decimals;
+            } else {
+              const _ataReceiveAddress =
+                await getOrCreateAssociatedTokenAddress({
+                  mint: txp.tokenAddress,
+                  feePayer: wallet?.receiveAddress!,
+                });
+              txp.fromAta = _ataReceiveAddress;
+              logger.debug(
+                `Using ATA Address from getOrCreateAssociatedTokenAddress: ${_ataReceiveAddress}`,
+              );
+            }
 
             if (txp.outputs) {
-              const toAddressSolanaTokens = await getSolanaTokens(
-                toAddress,
-                wallet?.network,
-              );
+              const toAddressSolanaTokens: SolanaTokenData[] =
+                await getSolanaATAs(toAddress, wallet?.network);
 
-              let ataToAddress = toAddressSolanaTokens.find((item: any) => {
-                return item.mintAddress === txp.tokenAddress;
-              })?.ataAddress;
+              let ataToAddress: string | undefined;
+              if (toAddressSolanaTokens) {
+                ataToAddress = toAddressSolanaTokens.find((item: any) => {
+                  return item.mintAddress === txp.tokenAddress;
+                })?.ataAddress;
+              }
 
               if (!ataToAddress) {
                 ataToAddress = await getOrCreateAssociatedTokenAddress({
                   mint: txp.tokenAddress,
                   feePayer: toAddress,
                 });
-                ataOwnerAddress = toAddress;
+                setAtaOwnerAddress(toAddress);
+                logger.debug(
+                  `Using ATA toAddress from getOrCreateAssociatedTokenAddress: ${ataToAddress}`,
+                );
               }
 
               for (const output of txp.outputs) {
@@ -528,13 +586,18 @@ const RampSellCheckout: React.FC = () => {
     const isUsingHardwareWallet = !!transport;
     let broadcastedTx;
     try {
+      if (isTSSWallet) {
+        if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
+        setTssStatus('initializing');
+      }
+
       if (isUsingHardwareWallet) {
         const {chain, network} = wallet.credentials;
         const configFn = currencyConfigs[chain];
         if (!configFn) {
           throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
-        const params = configFn(network);
+        const params = configFn(network as Network);
         await prepareLedgerApp(
           params.appName,
           transportRef,
@@ -563,8 +626,16 @@ const RampSellCheckout: React.FC = () => {
             key,
             wallet,
             ataOwnerAddress,
+            ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
+
+        if (isTSSWallet && broadcastedTx?.txid) {
+          setTssStatus('complete');
+          await sleep(1500);
+          setShowTSSProgressModal(false);
+        }
       }
       updateRampTx(txData!, broadcastedTx as Partial<TransactionProposal>);
       showPaymentSent({
@@ -600,6 +671,9 @@ const RampSellCheckout: React.FC = () => {
         }),
       );
     } catch (err: any) {
+      if (isTSSWallet) {
+        setShowTSSProgressModal(false);
+      }
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -691,6 +765,7 @@ const RampSellCheckout: React.FC = () => {
       txSentOn: Date.now(),
       txSentId: broadcastedTx?.txid,
       status: 'bitpayTxSent',
+      isTSSWallet: isTSSWallet,
     };
 
     dispatch(
@@ -898,6 +973,19 @@ const RampSellCheckout: React.FC = () => {
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
+        {isTSSWallet && (
+          <TSSProgressTracker
+            status={tssStatus}
+            progress={tssProgress}
+            createdBy={wallet.walletName || 'You'}
+            date={new Date()}
+            wallet={wallet}
+            copayers={tssCopayers}
+            onCopayersInitialized={setTssCopayers}
+            isModalVisible={showTSSProgressModal}
+            onModalVisibilityChange={setShowTSSProgressModal}
+          />
+        )}
         <RowDataContainer>
           <RowLabel>{t('Selling')}</RowLabel>
           {amountExpected ? (

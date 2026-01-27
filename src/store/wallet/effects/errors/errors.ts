@@ -1,6 +1,7 @@
 import {t} from 'i18next';
 import {Effect} from '../../..';
 import {sleep} from '../../../../utils/helper-methods';
+import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
 import {
   dismissBottomNotificationModal,
   showBottomNotificationModal,
@@ -49,13 +50,29 @@ export const showWalletError =
             })
           : t('No wallets available to receive funds.');
         break;
+      case 'noWalletsAbleToSell':
+        title = t('No wallets');
+        message = coin
+          ? t('No coin wallets available to sell crypto.', {
+              coin: coin.toUpperCase(),
+            })
+          : t('No wallets available to sell crypto.');
+        break;
       case 'keysNoSupportedWallet':
-        title = t('Not supported wallets');
+        title = t('No supported wallets');
         message = coin
           ? t('Your keys do not have wallets able to buy crypto', {
               coin: coin.toUpperCase(),
             })
           : t('Your keys do not have supported wallets able to buy crypto');
+        break;
+      case 'keysNoSupportedWalletToSell':
+        title = t('No supported wallets');
+        message = coin
+          ? t('Your keys do not have wallets able to sell crypto', {
+              coin: coin.toUpperCase(),
+            })
+          : t('Your keys do not have supported wallets able to sell crypto');
         break;
       case 'emptyKeyList':
         title = t('No keys with supported wallets');
@@ -72,6 +89,8 @@ export const showWalletError =
         message = t('Unknown Error');
         break;
     }
+    // Ensure we do not leave the global loader spinning while showing the error.
+    ongoingProcessManager.hide();
     await sleep(1000);
     dispatch(
       showBottomNotificationModal({

@@ -540,6 +540,9 @@ const ExternalServicesOfferSelector: React.FC<
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(
     _paymentMethod as PaymentMethod,
   );
+  const [offerWarnMsg, setOfferWarnMsg] = useState<string | undefined>(
+    getWarnMsg,
+  );
 
   const [withdrawalMethod, setWithdrawalMethod] = useState<
     WithdrawalMethod | undefined
@@ -665,7 +668,7 @@ const ExternalServicesOfferSelector: React.FC<
   const [selectedOfferLoading, setSelectedOfferLoading] =
     useState<boolean>(false);
   const [offerSelectorText, setOfferSelectorText] = useState<string>(
-    t('Set Amount for Best Offer'),
+    t('Set amount for our Best Offer'),
   );
   const [openingBrowser, setOpeningBrowser] = useState(false);
   const [finishedBanxa, setFinishedBanxa] = useState(false);
@@ -809,7 +812,8 @@ const ExternalServicesOfferSelector: React.FC<
 
       selectedWallet
         .banxaGetQuote(requestData)
-        .then((quoteData: BanxaQuoteData) => {
+        .then((data: any) => {
+          const quoteData: BanxaQuoteData = data?.body ?? data;
           if (quoteData?.data?.prices?.[0]?.coin_amount) {
             const data = quoteData.data.prices[0];
 
@@ -966,7 +970,8 @@ const ExternalServicesOfferSelector: React.FC<
 
     selectedWallet
       .moonpayGetQuote(requestData)
-      .then(data => {
+      .then((data: any) => {
+        data = data?.body ?? data;
         if (data?.baseCurrencyAmount) {
           offers.moonpay.amountLimits = {
             min: data.baseCurrency.minBuyAmount,
@@ -1138,9 +1143,8 @@ const ExternalServicesOfferSelector: React.FC<
         env: rampEnv,
       };
 
-      const data: RampQuoteRequestData = await selectedWallet.rampGetQuote(
-        requestData,
-      );
+      const _data: any = await selectedWallet.rampGetQuote(requestData);
+      const data: RampQuoteRequestData = _data?.body ?? _data;
 
       let paymentMethodData: RampQuoteResultForPaymentMethod | undefined;
       if (data?.asset) {
@@ -1339,7 +1343,8 @@ const ExternalServicesOfferSelector: React.FC<
 
       selectedWallet
         .sardineGetQuote(requestData)
-        .then((data: any) => {
+        .then((_data: any) => {
+          const data = _data?.body ?? _data;
           if (data && data.quantity) {
             offers.sardine.outOfLimitMsg = undefined;
             offers.sardine.errorMsg = undefined;
@@ -1474,7 +1479,8 @@ const ExternalServicesOfferSelector: React.FC<
       }
       selectedWallet
         .simplexGetQuote(requestData)
-        .then(data => {
+        .then((_data: any) => {
+          const data = _data?.body ?? _data;
           if (data && data.quote_id) {
             offers.simplex.outOfLimitMsg = undefined;
             offers.simplex.errorMsg = undefined;
@@ -1634,7 +1640,8 @@ const ExternalServicesOfferSelector: React.FC<
 
       selectedWallet
         .transakGetQuote(requestData)
-        .then((data: TransakQuoteData) => {
+        .then((_data: any) => {
+          const data: TransakQuoteData = _data?.body ?? _data;
           if (data?.response?.cryptoAmount) {
             const transakQuoteData = data.response;
             offers.transak.outOfLimitMsg = undefined;
@@ -1758,7 +1765,8 @@ const ExternalServicesOfferSelector: React.FC<
 
     selectedWallet
       .moonpayGetSellQuote(requestData)
-      .then(data => {
+      .then(_data => {
+        const data = _data?.body ?? _data;
         if (data?.baseCurrencyAmount) {
           sellOffers.moonpay.amountLimits = {
             min: data.baseCurrency.minsellAmount,
@@ -1912,7 +1920,8 @@ const ExternalServicesOfferSelector: React.FC<
 
     selectedWallet
       .rampGetSellQuote(requestData)
-      .then((data: RampGetSellQuoteData) => {
+      .then((_data: any) => {
+        const data: RampGetSellQuoteData = _data?.body ?? _data;
         let paymentMethodData: RampSellQuoteResultForPayoutMethod | undefined;
         if (data?.asset) {
           switch (withdrawalMethod?.method) {
@@ -2169,7 +2178,8 @@ const ExternalServicesOfferSelector: React.FC<
 
       selectedWallet
         .simplexGetSellQuote(requestData)
-        .then((data: SimplexGetSellQuoteData) => {
+        .then(_data => {
+          const data: SimplexGetSellQuoteData = _data?.body ?? _data;
           if (data && data.fiat_amount) {
             sellOffers.simplex.outOfLimitMsg = undefined;
             sellOffers.simplex.errorMsg = undefined;
@@ -2341,7 +2351,8 @@ const ExternalServicesOfferSelector: React.FC<
 
   useEffect(() => {
     if (!amount || amount === 0 || isNaN(amount)) {
-      setOfferSelectorText(t('Set Amount for Best Offer'));
+      setOfferSelectorText(t('Set amount for our Best Offer'));
+      setOfferWarnMsg(undefined);
       setSelectedOffer(undefined);
       onSelectOffer?.(undefined);
       setSelectedOfferLoading(false);
@@ -2396,7 +2407,8 @@ const ExternalServicesOfferSelector: React.FC<
       }
     }
 
-    setOfferSelectorText(t('Searching for Best Offer'));
+    setOfferSelectorText(t('Searching for our Best Offer'));
+    setOfferWarnMsg(undefined);
     setSelectedOffer(undefined);
     onSelectOffer?.(undefined);
     setSelectedOfferLoading(true);
@@ -2449,11 +2461,20 @@ const ExternalServicesOfferSelector: React.FC<
     const offersTimeout = setTimeout(() => {
       const offersArray = Object.values(offers);
       const filteredOffers = offersArray.filter(
-        offer => offer.showOffer && offer.amountReceiving,
+        offer =>
+          offer.showOffer &&
+          offer.amountReceiving &&
+          offer.amountReceiving !== '0',
       );
       if (filteredOffers.length === 0) {
+        setOfferWarnMsg(
+          t(
+            'There are currently no offers that satisfy your request. Please try again later.',
+          ),
+        );
         setSelectedOffer(undefined);
         onSelectOffer?.(undefined);
+        setSelectedOfferLoading(false);
         return;
       }
       const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
@@ -2464,9 +2485,23 @@ const ExternalServicesOfferSelector: React.FC<
       );
       setSelectedOffer(_selectedOffer);
       onSelectOffer?.(_selectedOffer);
+      setOfferWarnMsg(undefined);
       setOfferSelectorText(
         _selectedOffer?.label + t(' using ') + paymentMethod?.label,
       );
+
+      dispatch(
+        Analytics.track('Buy - Our Best Offer Loaded', {
+          exchange: _selectedOffer?.key || 'unknown',
+          paymentMethod: paymentMethod?.method || '',
+          fiatAmount: Number(_selectedOffer?.fiatAmount) || '',
+          coin: coin?.toLowerCase() || '',
+          chain: chain?.toLowerCase() || '',
+          fiatCurrency: _selectedOffer?.fiatCurrency || '',
+          cryptoAmount: Number(_selectedOffer?.amountReceiving) || '',
+        }),
+      );
+
       setSelectedOfferLoading(false);
     }, 3500);
 
@@ -2505,11 +2540,20 @@ const ExternalServicesOfferSelector: React.FC<
     const offersTimeout = setTimeout(() => {
       const offersArray = Object.values(sellOffers);
       const filteredOffers = offersArray.filter(
-        offer => offer.showOffer && offer.amountReceiving,
+        offer =>
+          offer.showOffer &&
+          offer.amountReceiving &&
+          offer.amountReceiving !== '0',
       );
       if (filteredOffers.length === 0) {
+        setOfferWarnMsg(
+          t(
+            'There are currently no offers that satisfy your request. Please try again later.',
+          ),
+        );
         setSelectedOffer(undefined);
         onSelectOffer?.(undefined);
+        setSelectedOfferLoading(false);
         return;
       }
       const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
@@ -2523,12 +2567,25 @@ const ExternalServicesOfferSelector: React.FC<
       if (amountReceiving !== 0 && !isNaN(amountReceiving)) {
         setSelectedOffer(_selectedOffer);
         onSelectOffer?.(_selectedOffer);
+        setOfferWarnMsg(undefined);
         setOfferSelectorText(
           _selectedOffer?.label +
             ' ' +
             t('paid to') +
             ' ' +
             withdrawalMethod?.label,
+        );
+
+        dispatch(
+          Analytics.track('Sell - Our Best Offer Loaded', {
+            exchange: _selectedOffer?.key || 'unknown',
+            paymentMethod: paymentMethod?.method || '',
+            fiatAmount: Number(_selectedOffer?.amountReceiving) || '',
+            coin: coin?.toLowerCase() || '',
+            chain: chain?.toLowerCase() || '',
+            fiatCurrency: _selectedOffer?.fiatCurrency || '',
+            cryptoAmount: Number(_selectedOffer?.sellAmount) || '',
+          }),
         );
       } else {
         setSelectedOffer(undefined);
@@ -2545,6 +2602,10 @@ const ExternalServicesOfferSelector: React.FC<
     finishedSimplex,
     updateViewSell,
   ]);
+
+  useEffect(() => {
+    setOfferWarnMsg(getWarnMsg);
+  }, [getWarnMsg]);
 
   const onBackdropPress = () => {
     setOfferSelectorModalVisible(false);
@@ -2578,8 +2639,8 @@ const ExternalServicesOfferSelector: React.FC<
           }
           setOfferSelectorModalVisible(true);
         }}>
-        {getWarnMsg ? (
-          <WarnMsgText>{getWarnMsg}</WarnMsgText>
+        {offerWarnMsg ? (
+          <WarnMsgText>{offerWarnMsg}</WarnMsgText>
         ) : (
           <OfferSelectorContainerLeft>
             <View style={{marginRight: 5}}>
@@ -2588,7 +2649,7 @@ const ExternalServicesOfferSelector: React.FC<
             <OfferSelectorText>{offerSelectorText}</OfferSelectorText>
           </OfferSelectorContainerLeft>
         )}
-        {getWarnMsg ? null : selectedOfferLoading ? (
+        {offerWarnMsg ? null : selectedOfferLoading ? (
           <ActivityIndicatorContainer>
             <ActivityIndicator color={SlateDark} />
           </ActivityIndicatorContainer>

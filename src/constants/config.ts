@@ -167,17 +167,15 @@ export const OPEN_TIMEOUT = 3000;
 export const LISTEN_TIMEOUT = 10000;
 
 // HOME EXCHANGE RATES
-export const EXCHANGE_RATES_SORT_ORDER = [
+export const EXCHANGE_RATES_CURRENCIES = [
   'btc',
   'eth',
-  'usdt', // not available from the endpoint
   'xrp',
   'sol',
-  'usdc', // not available from the endpoint
+  'pol',
   'doge',
   'bch',
-  'shib',
-  'matic',
+  'ltc',
 ];
 
 // Passkey

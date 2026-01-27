@@ -89,7 +89,7 @@ def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
  */
 def reactNativeArchitectures() {
     def value = project.getProperties().get("reactNativeArchitectures")
-    return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+    return value ? value.split(",") : ["x86_64", "arm64-v8a"]
 }
 
 android {
@@ -103,12 +103,15 @@ android {
         applicationId "com.bitpay.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 91212350
-        versionName "14.36.0"
+        versionCode 91212351
+        versionName "14.38.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
 
         // Bundle integrity hash - injected during release build
         buildConfigField "String", "RN_BUNDLE_HASH", "\"${findProperty('RN_BUNDLE_HASH') ?: ''}\""
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
     }
     splits {
         abi {

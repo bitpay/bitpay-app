@@ -1575,7 +1575,7 @@
   "No wallets": "No wallets",
   "No coin wallets available to receive funds.": "No {{coin}} wallets available to receive funds.",
   "No wallets available to receive funds.": "No wallets available to receive funds.",
-  "Not supported wallets": "Not supported wallets",
+  "No supported wallets": "No supported wallets",
   "Your keys do not have wallets able to buy crypto": "Your keys do not have {{coin}} wallets able to buy crypto",
   "Your keys do not have supported wallets able to buy crypto": "Your keys do not have supported wallets able to buy crypto",
   "No keys with supported wallets": "No keys with supported wallets",

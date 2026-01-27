@@ -20,6 +20,11 @@ import {
   useAppSelector,
   useSensitiveRefClear,
 } from '../../../utils/hooks';
+import {
+  isCommonWeakPassword,
+  isLowEntropy,
+  isBasedOnUserData,
+} from '../../../utils/password';
 import {AuthScreens, AuthGroupParamList} from '../AuthGroup';
 import AuthFormContainer, {
   AuthActionRow,
@@ -31,7 +36,6 @@ import AuthFormContainer, {
   CheckboxLabel,
 } from '../components/AuthFormContainer';
 import RecaptchaModal, {CaptchaRef} from '../components/RecaptchaModal';
-import CookieManager from '@react-native-cookies/cookies';
 
 export type CreateAccountScreenParamList = {} | undefined;
 type CreateAccountScreenProps = NativeStackScreenProps<
@@ -71,17 +75,51 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   const captchaRef = useRef<CaptchaRef>(null);
   const {clearSensitive} = useSensitiveRefClear([passwordRef]);
 
+  const passwordComplexityRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
+
   const schema = yup.object().shape({
     givenName: yup.string().required().trim(),
     familyName: yup.string().required().trim(),
     email: yup.string().email().required().trim(),
     password: yup
       .string()
-      .required()
+      .required('Password is required')
+      // 1) Basic complexity
       .matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/,
-        'Must Contain 8 Characters, One Uppercase, One Lowercase, One Number and One Special Case Character',
-      ),
+        passwordComplexityRegex,
+        'Must contain at least 8 characters, one uppercase, one lowercase, one number and one special character',
+      )
+      // 2) Block very common / leaked-like passwords
+      .test(
+        'not-common-password',
+        'Please choose a stronger password.',
+        value => {
+          if (!value) return false;
+          return !isCommonWeakPassword(value);
+        },
+      )
+      // 3) Block passwords based on user data (name / email)
+      .test(
+        'no-user-data-based-password',
+        'Password must not contain your name or email.',
+        function (value) {
+          if (!value) return false;
+
+          const {email, givenName, familyName} = this.parent;
+
+          return !isBasedOnUserData(value, {
+            email,
+            givenName,
+            familyName,
+          });
+        },
+      )
+      // 4) Block low-entropy patterns even if they pass complexity regex
+      .test('no-low-entropy', 'Please choose a stronger password.', value => {
+        if (!value) return false;
+        return !isLowEntropy(value);
+      }),
     agreedToTOSandPP: yup.boolean().oneOf([true], t('Required')),
     agreedToMarketingCommunications: yup.boolean(),
   });
@@ -204,11 +242,6 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
         agreedToMarketingCommunications,
       }),
     );
-  };
-
-  const onCaptchaCancel = () => {
-    setRecaptchaVisible(false);
-    CookieManager.clearAll();
   };
 
   return (
@@ -403,7 +436,7 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
         sitekey={session.noCaptchaKey}
         isVisible={isRecaptchaVisible}
         onResponse={onCaptchaResponse}
-        onCancel={onCaptchaCancel}
+        onCancel={() => setRecaptchaVisible(false)}
       />
     </SafeAreaView>
   );

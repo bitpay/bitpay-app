@@ -11,7 +11,7 @@ import {
   TransakPaymentData,
   TransakIncomingData,
   WyrePaymentData,
-  TransakAccessTokenData,
+  TransakAccessTokenPayload,
 } from './buy-crypto.models';
 import {RampIncomingData, RampPaymentData} from './models/ramp.models';
 import {BuyCryptoStateOpts} from './buy-crypto.reducer';
@@ -143,7 +143,7 @@ export const updatePaymentRequestTransak = (payload: {
 });
 
 export const updateAccessTokenTransak = (
-  payload: TransakAccessTokenData,
+  payload: TransakAccessTokenPayload,
 ): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.ACCESS_TOKEN_TRANSAK,
   payload,

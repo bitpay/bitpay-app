@@ -16,7 +16,10 @@ import {SlateDark, White} from '../../../../styles/colors';
 import {BwcProvider} from '../../../../lib/bwc';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {updateWalletTxHistory} from '../../../../store/wallet/wallet.actions';
-import {RootStacks, getNavigationTabName} from '../../../../Root';
+import {RootStacks} from '../../../../Root';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {IsVMChain} from '../../../../store/wallet/utils/currency';
+import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 
 const ClearTransactionHistoryCacheContainer = styled.SafeAreaView`
   flex: 1;
@@ -81,29 +84,43 @@ const ClearTransactionHistoryCache: React.FC<
             },
           }),
         );
+
+        const baseRoutes = [
+          {
+            name: RootStacks.TABS,
+            params: {screen: TabsScreens.HOME},
+          },
+        ];
+        const keyOverviewRoute = {
+          name: WalletScreens.KEY_OVERVIEW,
+          params: {id: key.id},
+        };
+        const AccountDetailsRoute = {
+          name: WalletScreens.ACCOUNT_DETAILS,
+          params: {
+            keyId: key.id,
+            selectedAccountAddress: key.wallets[0]?.receiveAddress,
+          },
+        };
+        const walletDetailsRoute = {
+          name: WalletScreens.WALLET_DETAILS,
+          params: {
+            walletId: wallet.id,
+            key,
+            skipInitializeHistory: false,
+          },
+        };
+
+        const routes = isTSSKey(key)
+          ? IsVMChain(key.wallets[0].chain)
+            ? [...baseRoutes, AccountDetailsRoute, walletDetailsRoute]
+            : [...baseRoutes, walletDetailsRoute]
+          : [...baseRoutes, keyOverviewRoute, walletDetailsRoute];
+
         navigation.dispatch(
           CommonActions.reset({
-            index: 2,
-            routes: [
-              {
-                name: RootStacks.TABS,
-                params: {screen: getNavigationTabName()},
-              },
-              {
-                name: WalletScreens.KEY_OVERVIEW,
-                params: {
-                  id: key.id,
-                },
-              },
-              {
-                name: WalletScreens.WALLET_DETAILS,
-                params: {
-                  walletId: wallet.id,
-                  key,
-                  skipInitializeHistory: false,
-                },
-              },
-            ],
+            index: routes.length - 1,
+            routes,
           }),
         );
       }

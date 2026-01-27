@@ -17,6 +17,8 @@ import {
   TxDetails,
   TxDetailsFee,
   Wallet,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
@@ -95,6 +97,11 @@ import {RootStacks} from '../../../../../Root';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
 import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
+import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import TSSProgressTracker from '../../../components/TSSProgressTracker';
+import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
+import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
+
 export interface PayProConfirmParamList {
   wallet?: Wallet;
   recipient?: Recipient;
@@ -142,6 +149,36 @@ const PayProConfirm = () => {
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+
+  const _showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const isTSSWallet = key ? isTSSKey(key) : false;
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+  const tssCallbacks = useTSSCallbacks({
+    wallet: wallet!,
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+    showErrorMessage: _showErrorMessage,
+  });
 
   const payProHost = payProOptions.payProUrl
     .replace('https://', '')
@@ -235,7 +272,7 @@ const PayProConfirm = () => {
         checkHighFees(selectedWallet, newTxp, fee);
       }
       dispatch(
-        Analytics.track('BitPay App - Start Merchant Purchase', {
+        Analytics.track('Start Merchant Purchase', {
           merchantBrand: invoice.merchantName,
         }),
       );
@@ -308,7 +345,7 @@ const PayProConfirm = () => {
       await sleep(400);
       hideOngoingProcess();
       dispatch(
-        Analytics.track('BitPay App - Start Merchant Purchase', {
+        Analytics.track('Start Merchant Purchase', {
           merchantBrand: invoice.merchantName,
         }),
       );
@@ -331,6 +368,12 @@ const PayProConfirm = () => {
     transport?: Transport;
   }) => {
     const isUsingHardwareWallet = !!transport;
+
+    if (isTSSWallet) {
+      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
+      setTssStatus('initializing');
+    }
+
     try {
       if (isUsingHardwareWallet) {
         if (txp && wallet && recipient) {
@@ -370,6 +413,8 @@ const PayProConfirm = () => {
                 key,
                 wallet,
                 recipient,
+                ...(isTSSWallet && {tssCallbacks}),
+                ...(isTSSWallet && {setShowTSSProgressModal}),
               }),
             )
           : await dispatch(
@@ -380,6 +425,13 @@ const PayProConfirm = () => {
               ),
             );
       }
+
+      if (isTSSWallet) {
+        setTssStatus('complete');
+        await sleep(1500);
+        setShowTSSProgressModal(false);
+      }
+
       dispatch(
         Analytics.track('Sent Crypto', {
           context: 'PayPro Confirm',
@@ -387,7 +439,7 @@ const PayProConfirm = () => {
         }),
       );
       dispatch(
-        Analytics.track('BitPay App - Purchased Merchant', {
+        Analytics.track('Purchased Merchant', {
           merchantBrand: invoice?.merchantName,
           merchantAmount: invoice?.price,
           merchantCurrency: invoice?.currency,
@@ -459,6 +511,9 @@ const PayProConfirm = () => {
         }
       }
     } catch (err: any) {
+      if (isTSSWallet) {
+        setShowTSSProgressModal(false);
+      }
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -530,7 +585,7 @@ const PayProConfirm = () => {
     }
     toggleThenUntoggle(setResetSwipeButton);
     dispatch(
-      Analytics.track('BitPay App - Failed Merchant Purchase', {
+      Analytics.track('Failed Merchant Purchase', {
         merchantBrand: invoice?.merchantName,
         merchantAmount: invoice?.price,
         merchantCurrency: invoice?.currency,
@@ -616,6 +671,19 @@ const PayProConfirm = () => {
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
           <Header hr>Summary</Header>
+          {isTSSWallet && wallet && (
+            <TSSProgressTracker
+              status={tssStatus}
+              progress={tssProgress}
+              createdBy={sendingFrom?.walletName || 'You'}
+              date={new Date()}
+              wallet={wallet}
+              copayers={tssCopayers}
+              onCopayersInitialized={setTssCopayers}
+              isModalVisible={showTSSProgressModal}
+              onModalVisibilityChange={setShowTSSProgressModal}
+            />
+          )}
           {invoice ? (
             <RemainingTime
               invoiceExpirationTime={invoice.expirationTime}

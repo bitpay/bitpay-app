@@ -23,6 +23,7 @@ import {
   H2,
   H5,
   HeaderTitle,
+  Link,
   ProposalBadge,
 } from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
@@ -55,6 +56,7 @@ import {
   LightBlack,
   NeutralSlate,
   Slate,
+  Slate30,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -73,7 +75,7 @@ import {
 } from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
-import {WalletGroupParamList} from '../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
@@ -121,6 +123,16 @@ import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import Percentage from '../../../components/percentage/Percentage';
+import {getDifferenceColor} from '../../../components/percentage/Percentage';
+import Button from '../../../components/button/Button';
+import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
+import ChevronRightSvg from '../../tabs/home/components/ChevronRightSvg';
+import {HomeSectionTitle} from '../../tabs/home/components/Styled';
+import {
+  buildAllocationDataFromWalletRows,
+  type AllocationWallet,
+} from '../../../utils/allocation';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -181,11 +193,14 @@ const WalletListHeader = styled.View`
 const WalletListFooterContainer = styled.View`
   padding: 10px 10px 100px 10px;
   margin-top: 15px;
+  gap: 12px;
 `;
 
 const WalletListFooter = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
+  margin-bottom: 30px;
+  margin-top: -10px;
 `;
 
 const WalletListFooterText = styled(BaseText)`
@@ -194,6 +209,92 @@ const WalletListFooterText = styled(BaseText)`
   font-weight: 400;
   letter-spacing: 0;
   margin-left: 10px;
+`;
+
+const AddWalletLinkContainer = styled.View`
+  padding: 13px 0;
+  align-items: center;
+  margin-bottom: 15px;
+`;
+
+const AddWalletLink = styled(Link).attrs(() => ({
+  suppressHighlighting: true,
+}))`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+`;
+
+const AddWalletLinkButton = styled(TouchableOpacity)`
+  padding: 0 20px;
+`;
+
+const AllocationHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 10px;
+`;
+
+const AllocationHeaderAction = styled(TouchableOpacity)`
+  padding: 6px;
+`;
+
+const AllocationFooter = styled.View`
+  margin-top: 20px;
+  padding-bottom: 5px;
+`;
+
+const AllocationDivider = styled.View`
+  height: 1px;
+  background-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
+  opacity: 1;
+  margin: 12px 0;
+`;
+
+const AllocationLabel = styled(BaseText)`
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 14px;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+`;
+
+const AllocationValue = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  color: ${({theme}) => theme.colors.text};
+  margin-top: 4px;
+`;
+
+const AllocationRow = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+`;
+
+const AllocationColumn = styled.View`
+  flex: 1;
+`;
+
+const AllocationMetricValue = styled(BaseText)<{positive?: boolean}>`
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 20px;
+  margin-top: 4px;
+  color: ${({positive, theme: {dark}}) => {
+    if (positive === true) {
+      return getDifferenceColor(true, dark);
+    }
+    if (positive === false) {
+      return getDifferenceColor(false, dark);
+    }
+    return dark ? White : SlateDark;
+  }};
 `;
 
 const HeaderTitleContainer = styled.View`
@@ -224,10 +325,12 @@ const KeyOverview = () => {
     ({WALLET}) => WALLET,
   );
   const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
+    useAppSelector(({APP}) => APP);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
+
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];
   const hasMultipleKeys =
@@ -372,6 +475,28 @@ const KeyOverview = () => {
     });
   }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
 
+  const allocationWalletRows: AllocationWallet[] = useMemo(() => {
+    const wallets = (key?.wallets ?? []).filter(
+      w => !w.hideWallet && !w.hideWalletByAccount,
+    );
+    return wallets.map((w: Wallet) => {
+      return {
+        currencyAbbreviation: w.currencyAbbreviation,
+        chain: w.chain,
+        tokenAddress: w.tokenAddress,
+        currencyName: w.currencyName,
+        fiatBalance: (w.balance as any)?.fiat,
+      };
+    });
+  }, [key?.wallets]);
+
+  const allocationData = useMemo(() => {
+    return buildAllocationDataFromWalletRows(
+      allocationWalletRows,
+      defaultAltCurrency.isoCode,
+    );
+  }, [allocationWalletRows, defaultAltCurrency.isoCode]);
+
   const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
@@ -401,6 +526,7 @@ const KeyOverview = () => {
           .filter(
             sw =>
               sw.isComplete() &&
+              !sw.pendingTssSession &&
               !key.wallets.some(ew => ew.id === sw.credentials.walletId),
           )
           .map(syncWallet => {
@@ -416,7 +542,11 @@ const KeyOverview = () => {
             return _.merge(
               syncWallet,
               buildWalletObj(
-                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                {
+                  ...syncWallet.credentials,
+                  currencyAbbreviation,
+                  currencyName,
+                } as any,
                 _tokenOptionsByAddress,
               ),
             );
@@ -637,7 +767,7 @@ const KeyOverview = () => {
         k.id === item.wallets[0].id &&
         (!item.copayerId || k.credentials?.copayerId === item.copayerId),
     )!;
-    if (!fullWalletObj.isComplete()) {
+    if (!fullWalletObj.isComplete() && fullWalletObj.pendingTssSession) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
         (err: any, status: Status) => {
@@ -681,7 +811,29 @@ const KeyOverview = () => {
           id={item.id}
           accountItem={item}
           hideBalance={hideAllBalances}
-          onPress={() => onPressItem(item)}
+          onPress={() => {
+            if (key?.tssSession) {
+              const {status, isCreator} = key.tssSession;
+              if (
+                isCreator &&
+                (status === 'collecting_copayers' ||
+                  status === 'ready_to_start' ||
+                  status === 'ceremony_in_progress')
+              ) {
+                navigation.navigate(WalletScreens.INVITE_COSIGNERS, {
+                  keyId: key.id,
+                });
+                return;
+              }
+
+              if (!isCreator && status === 'ceremony_in_progress') {
+                console.log(
+                  '[TSS] Joiner has ceremony in progress - needs to reconnect',
+                );
+              }
+            }
+            onPressItem(item);
+          }}
         />
       );
     },
@@ -717,21 +869,122 @@ const KeyOverview = () => {
   const renderListFooterComponent = useCallback(() => {
     return (
       <WalletListFooterContainer>
-        <WalletListFooter
-          activeOpacity={ActiveOpacity}
-          onPress={async () => {
-            haptic('impactLight');
-            navigation.navigate('AddingOptions', {
-              key,
-            });
-          }}>
-          <Icons.Add />
-          <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
-        </WalletListFooter>
+        {!isTSSKey(key) ? (
+          <WalletListFooter
+            activeOpacity={ActiveOpacity}
+            onPress={async () => {
+              haptic('impactLight');
+              navigation.navigate('AddingOptions', {
+                key,
+              });
+            }}>
+            <Icons.Add />
+            <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
+          </WalletListFooter>
+        ) : null}
+        {/* <Button
+          buttonStyle="secondary"
+          height={50}
+          buttonOutline
+          onPress={() => (navigation as any).navigate('AllAssets')}>
+          See All Assets
+        </Button>
+
+        <AddWalletLinkContainer>
+          <AddWalletLinkButton
+            activeOpacity={ActiveOpacity}
+            onPress={async () => {
+              haptic('impactLight');
+              navigation.navigate('AddingOptions', {
+                key,
+              });
+            }}>
+            <AddWalletLink>Add Wallet</AddWalletLink>
+          </AddWalletLinkButton>
+        </AddWalletLinkContainer> */}
+
+        {showPortfolioValue && allocationData.totalFiat > 0 ? (
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() =>
+              (navigation as any).navigate('Allocation', {
+                keyId: key.id,
+              })
+            }>
+            <AllocationDonutLegendCard
+              legendItems={allocationData.legendItems}
+              slices={allocationData.slices}
+              style={{marginLeft: 0, marginRight: 0}}
+              header={
+                <AllocationHeader>
+                  <HomeSectionTitle>Allocation</HomeSectionTitle>
+                  <AllocationHeaderAction
+                    activeOpacity={ActiveOpacity}
+                    onPress={() =>
+                      (navigation as any).navigate('Allocation', {
+                        keyId: id,
+                      })
+                    }>
+                    <ChevronRightSvg width={13} height={19} gray />
+                  </AllocationHeaderAction>
+                </AllocationHeader>
+              }
+              footer={
+                <AllocationFooter>
+                  <AllocationLabel>Portfolio Value</AllocationLabel>
+                  <AllocationValue>
+                    {!hideAllBalances
+                      ? formatFiatAmount(
+                          totalBalance,
+                          defaultAltCurrency.isoCode,
+                          {
+                            currencyDisplay: 'symbol',
+                          },
+                        )
+                      : '****'}
+                  </AllocationValue>
+
+                  {/* <AllocationDivider />
+
+                  <AllocationRow>
+                    <AllocationColumn style={{paddingRight: 12}}>
+                      <AllocationLabel>All-Time Gain / Loss ($)</AllocationLabel>
+                      <AllocationMetricValue positive>
+                        {'+$61,199.18  (+672%)'}
+                      </AllocationMetricValue>
+                    </AllocationColumn>
+                    <AllocationColumn style={{paddingLeft: 12}}>
+                      <AllocationLabel style={{textAlign: 'right'}}>
+                        Today's Gain / Loss ($)
+                      </AllocationLabel>
+                      <AllocationMetricValue
+                        positive={false}
+                        style={{textAlign: 'right'}}>
+                        {'-$1,318.11  (-4.27%)'}
+                      </AllocationMetricValue>
+                    </AllocationColumn>
+                  </AllocationRow> */}
+                </AllocationFooter>
+              }
+            />
+          </TouchableOpacity>
+        ) : null}
+
         {showArchaxBanner && <ArchaxFooter />}
       </WalletListFooterContainer>
     );
-  }, []);
+  }, [
+    allocationData.legendItems,
+    allocationData.slices,
+    allocationData.totalFiat,
+    defaultAltCurrency.isoCode,
+    hideAllBalances,
+    id,
+    navigation,
+    showPortfolioValue,
+    showArchaxBanner,
+    totalBalance,
+  ]);
 
   const listEmptyComponent = useMemo(
     () =>

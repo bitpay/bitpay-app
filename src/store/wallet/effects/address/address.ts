@@ -159,7 +159,7 @@ export const createWalletAddress =
           }
           return reject({type: 'GENERAL_ERROR', error: 'No address generated'});
         } catch (err) {
-          throw err;
+          return reject(err);
         }
       }
     });
