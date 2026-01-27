@@ -89,7 +89,7 @@ def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
  */
 def reactNativeArchitectures() {
     def value = project.getProperties().get("reactNativeArchitectures")
-    return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+    return value ? value.split(",") : ["x86_64", "arm64-v8a"]
 }
 
 android {
@@ -106,6 +106,9 @@ android {
         versionCode 91212351
         versionName "14.38.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
     }
     splits {
         abi {

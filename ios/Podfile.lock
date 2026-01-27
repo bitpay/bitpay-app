@@ -2273,6 +2273,36 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-ssl-public-key-pinning (1.2.6):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-RCTNetwork
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - TrustKit
+    - Yoga
   - react-native-text-input-mask (3.1.4):
     - InputMask (~> 6.1.0)
     - React-Core
@@ -3377,6 +3407,7 @@ PODS:
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.10)
   - SocketRocket (0.7.1)
+  - TrustKit (3.0.7)
   - VisionCamera (4.7.2):
     - VisionCamera/Core (= 4.7.2)
     - VisionCamera/React (= 4.7.2)
@@ -3455,6 +3486,7 @@ DEPENDENCIES:
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
+  - react-native-ssl-public-key-pinning (from `../node_modules/react-native-ssl-public-key-pinning`)
   - react-native-text-input-mask (from `../node_modules/react-native-text-input-mask`)
   - react-native-user-agent (from `../node_modules/react-native-user-agent`)
   - react-native-webassembly (from `../node_modules/react-native-webassembly`)
@@ -3532,6 +3564,7 @@ SPEC REPOS:
     - SDWebImage
     - SDWebImageWebPCoder
     - SocketRocket
+    - TrustKit
 
 EXTERNAL SOURCES:
   boost:
@@ -3667,6 +3700,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@shopify/react-native-skia"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
+  react-native-ssl-public-key-pinning:
+    :path: "../node_modules/react-native-ssl-public-key-pinning"
   react-native-text-input-mask:
     :path: "../node_modules/react-native-text-input-mask"
   react-native-user-agent:
@@ -3865,6 +3900,7 @@ SPEC CHECKSUMS:
   react-native-safe-area-context: 6d8a7b750e496e37bda47c938320bf2c734d441f
   react-native-skia: a7e88230b32bbda83f068e4e2612aad68fe169ec
   react-native-slider: 30cea7008de785564de2f4fd064f2deb38614a4a
+  react-native-ssl-public-key-pinning: 95d334ac18bf680595ade2dcec8c599475c1fcd6
   react-native-text-input-mask: 36a546b378fadd2efe1b7484a859d34bc2c80395
   react-native-user-agent: a90a1e839b99801baad67a73dd6f361a52aa3cf1
   react-native-webassembly: bdd67f75a6145cbfdb3ab8de4ee0381f89e6b140
@@ -3926,6 +3962,7 @@ SPEC CHECKSUMS:
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
+  TrustKit: 1050f3ce0595f8ed775f1237b7f590e3a4f93e91
   VisionCamera: 05e4bc4783174689a5878a0797015ab32afae9e4
   Yoga: 93bc00d78638987f9ffd928f4a9f895d3e601bc3
 
