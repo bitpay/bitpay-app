@@ -119,7 +119,11 @@ export interface LimitsOpts {
   };
 }
 
-export type AmountContext = 'buyCrypto' | 'sellCrypto' | 'swapCrypto';
+export type AmountContext =
+  | 'buyCrypto'
+  | 'sellCrypto'
+  | 'swapCrypto'
+  | 'coinbase';
 
 export interface AmountProps {
   cryptoCurrencyAbbreviation?: string;
@@ -189,19 +193,25 @@ const Amount: React.FC<AmountProps> = ({
 
   // flag for primary selector type
   const [rate, setRate] = useState(0);
-  const [amountConfig, updateAmountConfig] = useState({
-    // display amount fiat/crypto
-    displayAmount: '0',
-    displayEquivalentAmount: '0',
-    // amount to be sent to proposal creation (sats)
-    amount: '0',
-    currency: cryptoCurrencyAbbreviation
+  const [currency, setCurrency] = useState(
+    cryptoCurrencyAbbreviation && context !== 'swapCrypto'
       ? cryptoCurrencyAbbreviation
       : fiatCurrency,
-    primaryIsFiat:
+  );
+  const [primaryIsFiat, setPrimaryIsFiat] = useState(
+    context === 'swapCrypto' ||
       !cryptoCurrencyAbbreviation ||
       cryptoCurrencyAbbreviation === fiatCurrency,
-  });
+  );
+  const [displayAmount, setDisplayAmount] = useState('0');
+  const [displayEquivalentAmount, setDisplayEquivalentAmount] = useState(
+    !primaryIsFiat
+      ? formatFiatAmount(0, fiatCurrency, {
+          currencyDisplay: 'symbol',
+        })
+      : '0',
+  );
+  const [amount, setAmount] = useState('0');
   const [useSendMax, setUseSendMax] = useState(false);
   const [limits, setLimits] = useState<Limits>({
     min: undefined,
@@ -210,33 +220,29 @@ const Amount: React.FC<AmountProps> = ({
 
   const swapList = useMemo(() => {
     return cryptoCurrencyAbbreviation
-      ? [
-          ...new Set([
-            formatCurrencyAbbreviation(cryptoCurrencyAbbreviation),
-            fiatCurrency,
-          ]),
-        ]
+      ? primaryIsFiat
+        ? [
+            ...new Set([
+              fiatCurrency,
+              formatCurrencyAbbreviation(cryptoCurrencyAbbreviation) || 'USD',
+            ]),
+          ]
+        : [
+            ...new Set([
+              formatCurrencyAbbreviation(cryptoCurrencyAbbreviation) || 'USD',
+              fiatCurrency,
+            ]),
+          ]
       : [fiatCurrency];
   }, [cryptoCurrencyAbbreviation, fiatCurrency]);
 
-  const {
-    displayAmount,
-    displayEquivalentAmount,
-    amount,
-    currency,
-    primaryIsFiat,
-  } = amountConfig;
 
   const updateAmount = (_val: string) => {
     const val = Number(_val);
 
     if (isNaN(val) || !cryptoCurrencyAbbreviation || !chain) {
-      updateAmountConfig(current => ({
-        ...current,
-        displayAmount: _val,
-        amount: _val,
-      }));
-
+      setDisplayAmount(_val);
+      setAmount(_val);
       return;
     }
 
@@ -258,13 +264,9 @@ const Amount: React.FC<AmountProps> = ({
         ? undefined
         : cryptoCurrencyAbbreviation,
     });
-
-    updateAmountConfig(current => ({
-      ...current,
-      displayAmount: _val,
-      displayEquivalentAmount: primaryIsFiat ? cryptoAmount : fiatAmount,
-      amount: cryptoAmount,
-    }));
+    setDisplayAmount(_val);
+    setDisplayEquivalentAmount(primaryIsFiat ? cryptoAmount : fiatAmount);
+    setAmount(cryptoAmount);
   };
   const updateAmountRef = useRef(updateAmount);
   updateAmountRef.current = updateAmount;
@@ -402,12 +404,18 @@ const Amount: React.FC<AmountProps> = ({
     updateAmount('0');
     // if added for dev (hot reload)
     if (
-      !primaryIsFiat &&
-      getRateByCurrencyName(allRates, currency.toLowerCase(), chain!)
+      (!primaryIsFiat || context === 'swapCrypto') &&
+      cryptoCurrencyAbbreviation &&
+      getRateByCurrencyName(
+        allRates,
+        cryptoCurrencyAbbreviation.toLowerCase(),
+        chain!,
+        tokenAddress,
+      )
     ) {
       const rateByCurrencyName = getRateByCurrencyName(
         allRates,
-        currency.toLowerCase(),
+        cryptoCurrencyAbbreviation.toLowerCase(),
         chain!,
         tokenAddress,
       );
@@ -417,7 +425,7 @@ const Amount: React.FC<AmountProps> = ({
 
       if (!fiatRateData) {
         logger.warn(
-          `There is no fiatRateData for: ${currency.toLowerCase()} (${chain}) and ${fiatCurrency}. Setting rate to 0.`,
+          `There is no fiatRateData for: ${cryptoCurrencyAbbreviation.toLowerCase()} (${chain}) and ${fiatCurrency}. Setting rate to 0.`,
         );
         setRate(0);
         return;
@@ -503,8 +511,9 @@ const Amount: React.FC<AmountProps> = ({
             <Row>
               <AmountEquivText>
                 {displayEquivalentAmount || 0}{' '}
-                {primaryIsFiat &&
-                  formatCurrencyAbbreviation(cryptoCurrencyAbbreviation)}
+                {primaryIsFiat
+                  ? formatCurrencyAbbreviation(cryptoCurrencyAbbreviation)
+                  : null}
               </AmountEquivText>
             </Row>
           ) : null}
@@ -538,17 +547,18 @@ const Amount: React.FC<AmountProps> = ({
                 onChange={(toCurrency: string) => {
                   curValRef.current = '';
                   updateAmountRef.current('0');
-                  updateAmountConfig(current => ({
-                    ...current,
-                    currency: toCurrency,
-                    primaryIsFiat: !primaryIsFiat,
-                    displayAmount: '0',
-                    displayEquivalentAmount: primaryIsFiat
+
+                  const _primaryIsFiat = !primaryIsFiat;
+                  setCurrency(toCurrency);
+                  setPrimaryIsFiat(_primaryIsFiat);
+                  setDisplayAmount('0');
+                  setDisplayEquivalentAmount(
+                    !_primaryIsFiat
                       ? formatFiatAmount(0, fiatCurrency, {
                           currencyDisplay: 'symbol',
                         })
                       : '0',
-                  }));
+                  );
                 }}
               />
             ) : null}
