@@ -665,16 +665,22 @@ export const DklsWorkerHost = () => {
           }
         }
 
-        window.addEventListener('message', (ev) => {
+        function handleIncoming(ev) {
           let data;
           try {
             data = JSON.parse(ev.data);
           } catch (e) {
-            console.log('[WV] onMessage JSON.parse error', e, 'raw-start=', String(ev.data).slice(0, 200));
+            console.log('[WV] JSON.parse error', e, 'raw-start=', String(ev.data).slice(0, 200));
             return;
           }
           onCall(data);
-        });
+        }
+
+        // Android (RN WebView)
+        document.addEventListener('message', handleIncoming);
+
+        // iOS
+        window.addEventListener('message', handleIncoming);
       })();
     </script>
   </body>
