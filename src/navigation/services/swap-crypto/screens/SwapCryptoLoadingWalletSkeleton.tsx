@@ -17,26 +17,17 @@ const SwapCryptoLoadingWalletSkeleton = () => {
           alignItems={'center'}
           justifyContent={'flex-start'}>
           <SkeletonPlaceholder.Item
-            width={50}
-            height={50}
+            width={20}
+            height={20}
             borderRadius={50}
-            marginRight={8}
+            marginRight={5}
           />
           <SkeletonPlaceholder.Item
             flexDirection={'column'}
             alignItems={'center'}
             justifyContent={'flex-start'}
             gap={10}>
-            <SkeletonPlaceholder.Item
-              width={100}
-              height={14}
-              borderRadius={4}
-            />
-            <SkeletonPlaceholder.Item
-              width={100}
-              height={10}
-              borderRadius={4}
-            />
+            <SkeletonPlaceholder.Item width={70} height={14} borderRadius={4} />
           </SkeletonPlaceholder.Item>
         </SkeletonPlaceholder.Item>
       </View>
