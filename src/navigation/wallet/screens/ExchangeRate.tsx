@@ -66,7 +66,6 @@ import type {Key} from '../../../store/wallet/wallet.models';
 import type {RootState} from '../../../store';
 import {
   calculatePercentageDifference,
-  formatCryptoAddress,
   formatFiatAmount,
   getRateByCurrencyName,
   sleep,
@@ -1706,8 +1705,10 @@ const ExchangeRate = () => {
                     {ui.walletName}
                   </WalletName>
                   <WalletSub numberOfLines={1} ellipsizeMode="tail">
-                    {ui.receiveAddress
-                      ? formatCryptoAddress(ui.receiveAddress)
+                    {hideAllBalances
+                      ? '****'
+                      : ui.cryptoBalance
+                      ? ui.cryptoBalance
                       : ''}
                   </WalletSub>
                 </WalletLeft>
