@@ -783,6 +783,12 @@ const RampSellCheckout: React.FC = () => {
         amount: amountExpected,
         fiatAmount: sellOrder?.fiat_receiving_amount,
         fiatCurrency: sellOrder?.fiat_currency?.toLowerCase(),
+        exchangeRate:
+          (sellOrder?.fiat_receiving_amount &&
+            amountExpected &&
+            Number(sellOrder.fiat_receiving_amount) / Number(amountExpected)) ||
+          '',
+        withdrawalMethod: sellOrder?.payment_method || 'unknown',
         exchange: 'ramp',
       }),
     );

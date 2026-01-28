@@ -52,6 +52,7 @@ import {isEuCountry} from '../../../store/location/location.effects';
 import {WithdrawalMethod} from '../sell-crypto/constants/SellCryptoConstants';
 import {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import ArchaxBanner from '../../../components/archax/archax-banner';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -816,10 +817,20 @@ const OfferSelectorModal: React.FC<OfferSelectorModalScreenProps> = ({
         context={modalContext}
         isVisible={paymentMethodModalVisible}
         onPress={paymentMethod => {
-          offers = undefined; // TODO: reload offers based on payment method
+          offers = undefined;
           onPaymentMethodSelected(paymentMethod);
           setPaymentMethodModalVisible(false);
           setUpdateView(Math.random());
+          dispatch(
+            Analytics.track(
+              modalContext === 'buyCrypto'
+                ? 'Buy - Clicked Payment Method'
+                : 'Sell - Clicked Withdrawal Method',
+              {
+                paymentMethod: paymentMethod?.method || '',
+              },
+            ),
+          );
         }}
         onBackdropPress={() => setPaymentMethodModalVisible(false)}
         selectedPaymentMethod={selectedPaymentMethod}

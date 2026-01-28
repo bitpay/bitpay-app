@@ -3785,32 +3785,54 @@ const BuyAndSellRoot = ({
                 !['USD', 'EUR'].includes(defaultAltCurrency.isoCode)
               }
               onPillPress={(pillValue: number | string) => {
-                const pillValueStr = pillValue?.toString();
-                if (pillValueStr) {
-                  if (context === 'buyCrypto') {
-                    curValRef.current = pillValueStr;
-                    updateAmountRef.current(pillValueStr);
-                    setSelectedPillValue(pillValue);
-                  } else if (context === 'sellCrypto') {
-                    if (usingCurrencyIsFiat && typeof pillValue === 'number') {
+                try {
+                  const pillValueStr = pillValue?.toString();
+                  if (pillValueStr) {
+                    if (context === 'buyCrypto') {
                       curValRef.current = pillValueStr;
                       updateAmountRef.current(pillValueStr);
                       setSelectedPillValue(pillValue);
-                    } else if (typeof pillValue === 'number' && rate) {
-                      const rateForPill = rate
-                        ? (pillValue / rate).toFixed(8).replace(/\.?0+$/, '')
-                        : '0';
-                      curValRef.current = rateForPill;
-                      updateAmountRef.current(rateForPill);
-                      setSelectedPillValue(pillValue);
-                    } else if (
-                      typeof pillValue === 'string' &&
-                      pillValue === 'max'
-                    ) {
-                      setSelectedPillValue(pillValue);
-                      sellCryptoSendMax();
+                    } else if (context === 'sellCrypto') {
+                      if (
+                        usingCurrencyIsFiat &&
+                        typeof pillValue === 'number'
+                      ) {
+                        curValRef.current = pillValueStr;
+                        updateAmountRef.current(pillValueStr);
+                        setSelectedPillValue(pillValue);
+                      } else if (typeof pillValue === 'number' && rate) {
+                        const rateForPill = rate
+                          ? (pillValue / rate).toFixed(8).replace(/\.?0+$/, '')
+                          : '0';
+                        curValRef.current = rateForPill;
+                        updateAmountRef.current(rateForPill);
+                        setSelectedPillValue(pillValue);
+                      } else if (
+                        typeof pillValue === 'string' &&
+                        pillValue === 'max'
+                      ) {
+                        setSelectedPillValue(pillValue);
+                        sellCryptoSendMax();
+                      }
                     }
                   }
+
+                  const eventName =
+                    context === 'buyCrypto'
+                      ? 'Buy - Clicked Pre-defined Amount'
+                      : 'Sell - Clicked Pre-defined Amount';
+                  dispatch(
+                    Analytics.track(eventName, {
+                      amount: pillValue,
+                      fiatCurrency: defaultAltCurrency.isoCode,
+                    }),
+                  );
+                } catch (err) {
+                  const errorMsg =
+                    err instanceof Error ? err.message : JSON.stringify(err);
+                  logger.warn(
+                    `An error occurred tapping amount pill: ${errorMsg}`,
+                  );
                 }
               }}
             />
