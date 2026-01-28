@@ -833,17 +833,23 @@ const MoonpaySellCheckout: React.FC = () => {
 
     logger.debug('Updated sell order with: ' + JSON.stringify(dataToUpdate));
 
+    const _fiatAmount =
+      moonpayTxData?.quoteCurrencyAmount || sellOrder?.fiat_receiving_amount;
     dispatch(
       Analytics.track('Successful Crypto Sell', {
         coin: wallet.currencyAbbreviation.toLowerCase(),
         chain: wallet.chain.toLowerCase(),
         amount: amountExpected,
-        fiatAmount:
-          moonpayTxData?.quoteCurrencyAmount ||
-          sellOrder?.fiat_receiving_amount,
+        fiatAmount: _fiatAmount,
         fiatCurrency:
           moonpayTxData?.quoteCurrency?.code?.toLowerCase() ||
           sellOrder?.fiat_currency?.toLowerCase(),
+        exchangeRate:
+          (_fiatAmount &&
+            amountExpected &&
+            Number(_fiatAmount) / Number(amountExpected)) ||
+          '',
+        withdrawalMethod: sellOrder?.payment_method || 'unknown',
         exchange: 'moonpay',
       }),
     );

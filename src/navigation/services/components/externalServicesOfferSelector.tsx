@@ -2638,6 +2638,23 @@ const ExternalServicesOfferSelector: React.FC<
             return;
           }
           setOfferSelectorModalVisible(true);
+          dispatch(
+            Analytics.track(
+              context === 'buyCrypto'
+                ? 'Buy - Clicked Offer & Payment Method'
+                : 'Sell - Clicked Offer & Payment Method',
+              {
+                context,
+                clickedAfterBestOfferLoaded:
+                  !selectedOfferLoading && !!selectedOffer,
+                exchange: selectedOffer?.key || 'none',
+                paymentMethod:
+                  context === 'buyCrypto'
+                    ? paymentMethod?.method || ''
+                    : withdrawalMethod?.method || '',
+              },
+            ),
+          );
         }}>
         {offerWarnMsg ? (
           <WarnMsgText>{offerWarnMsg}</WarnMsgText>

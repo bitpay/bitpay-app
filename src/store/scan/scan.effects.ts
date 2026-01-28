@@ -110,7 +110,6 @@ import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-serv
 import {RampSettingsProps} from '../../navigation/tabs/settings/external-services/screens/RampSettings';
 import {SimplexSettingsProps} from '../../navigation/tabs/settings/external-services/screens/SimplexSettings';
 import {getMoonpaySellFixedCurrencyAbbreviation} from '../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
-import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
 import {SimplexSellIncomingData} from '../sell-crypto/models/simplex-sell.models';
 import {ExternalServicesSettingsScreens} from '../../navigation/tabs/settings/external-services/ExternalServicesGroup';
@@ -121,6 +120,7 @@ import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
 import {BuyAndSellRootProps} from '../../navigation/services/screens/BuyAndSellRoot';
+import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
 
 export const incomingData =
   (
@@ -1639,9 +1639,22 @@ const handleBanxaUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'banxa',
           fiatAmount: order?.fiat_total_amount || '',
+          feeAmount:
+            (order?.fiat_total_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_total_amount) -
+                Number(order.fiat_base_amount)) ||
+            '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
+          cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
+          exchangeRate:
+            (order?.crypto_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+            '',
         }),
       );
     }
@@ -1970,9 +1983,22 @@ const handleMoonpayUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'moonpay',
           fiatAmount: order?.fiat_total_amount || '',
+          feeAmount:
+            (order?.fiat_total_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_total_amount) -
+                Number(order.fiat_base_amount)) ||
+            '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
+          cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
+          exchangeRate:
+            (order?.crypto_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+            '',
         }),
       );
 
@@ -2035,9 +2061,21 @@ const handleRampUri =
       Analytics.track('Purchased Buy Crypto', {
         exchange: 'ramp',
         fiatAmount: order?.fiat_total_amount || '',
+        feeAmount:
+          (order?.fiat_total_amount &&
+            order?.fiat_base_amount &&
+            Number(order.fiat_total_amount) - Number(order.fiat_base_amount)) ||
+          '',
         fiatCurrency: order?.fiat_total_amount_currency || '',
         coin: order?.coin?.toLowerCase() || '',
         chain: order?.chain?.toLowerCase() || '',
+        cryptoAmount: order?.crypto_amount || '',
+        paymentMethod: order?.payment_method || '',
+        exchangeRate:
+          (order?.crypto_amount &&
+            order?.fiat_base_amount &&
+            Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+          '',
       }),
     );
 
@@ -2093,6 +2131,9 @@ const handleSardineUri =
       'fiatTotalAmountCurrency',
       res,
     )!;
+    const paymentMethod = getParameterByName('paymentMethod', res) as
+      | PaymentMethodKey
+      | undefined;
 
     const newData: SardinePaymentData = {
       address,
@@ -2106,6 +2147,7 @@ const handleSardineUri =
       fiat_total_amount: Number(fiatTotalAmount),
       fiat_total_amount_currency: fiatTotalAmountCurrency,
       order_id,
+      payment_method: paymentMethod,
       status,
       user_id: walletId,
     };
@@ -2121,9 +2163,21 @@ const handleSardineUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'sardine',
           fiatAmount: Number(fiatTotalAmount) || '',
+          feeAmount:
+            (Number(fiatTotalAmount) &&
+              Number(fiatBaseAmount) &&
+              Number(fiatTotalAmount) - Number(fiatBaseAmount)) ||
+            '',
           fiatCurrency: fiatTotalAmountCurrency || '',
           coin: coin?.toLowerCase() || '',
           chain: chain?.toLowerCase() || '',
+          cryptoAmount: Number(cryptoAmount) || '',
+          paymentMethod: paymentMethod || '',
+          exchangeRate:
+            (Number(cryptoAmount) &&
+              Number(fiatBaseAmount) &&
+              Number(fiatBaseAmount) / Number(cryptoAmount)) ||
+            '',
         }),
       );
 
@@ -2266,9 +2320,22 @@ const handleSimplexUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'simplex',
           fiatAmount: order?.fiat_total_amount || '',
+          feeAmount:
+            (order?.fiat_total_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_total_amount) -
+                Number(order.fiat_base_amount)) ||
+            '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
+          cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
+          exchangeRate:
+            (order?.crypto_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+            '',
         }),
       );
 
@@ -2326,9 +2393,22 @@ const handleTransakUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'transak',
           fiatAmount: order?.fiat_total_amount || '',
+          feeAmount:
+            (order?.fiat_total_amount &&
+              order?.fiat_base_amount &&
+              Number(order?.fiat_total_amount) -
+                Number(order?.fiat_base_amount)) ||
+            '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
+          cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
+          exchangeRate:
+            (order?.crypto_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+            '',
         }),
       );
     }

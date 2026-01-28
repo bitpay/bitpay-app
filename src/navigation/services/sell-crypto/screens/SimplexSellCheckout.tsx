@@ -656,10 +656,17 @@ const SimplexSellCheckout: React.FC = () => {
           coin: wallet.currencyAbbreviation.toLowerCase(),
           chain: wallet.chain.toLowerCase(),
           amount: amountExpected,
-          fiatAmount: Number(simplexQuoteOffer.quoteData.fiat_amount) || '',
+          fiatAmount: Number(simplexQuoteOffer.quoteData?.fiat_amount) || '',
           fiatCurrency: simplexQuoteOffer.fiatCurrency
             ? cloneDeep(simplexQuoteOffer.fiatCurrency).toLocaleLowerCase()
             : '',
+          exchangeRate:
+            (simplexQuoteOffer.quoteData?.fiat_amount &&
+              amountExpected &&
+              Number(simplexQuoteOffer.quoteData.fiat_amount) /
+                Number(amountExpected)) ||
+            '',
+          withdrawalMethod: paymentMethod ?? 'unknown',
           exchange: 'simplex',
         }),
       );
