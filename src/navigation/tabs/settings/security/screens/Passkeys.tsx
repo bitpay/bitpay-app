@@ -170,7 +170,7 @@ const PasskeyScreen: React.FC = () => {
     return !user || !session || !session?.isAuthenticated;
   };
 
-  const createPasskey = useCallback(async () => {
+  const createPasskey = async () => {
     setShowOptions(false);
     if (listPasskeyCredentials && listPasskeyCredentials.length > 4) {
       logManager.warn('[PasskeyScreen] Reached max number of passkeys'),
@@ -190,13 +190,11 @@ const PasskeyScreen: React.FC = () => {
         );
       return;
     }
-    if (loginRequired()) {
-      logManager.warn(
-        '[PasskeyScreen] User not authenticated. Redirecting to login.',
-      );
-      navigateToLogin();
+    const isAuthorized = await checkUserAuthorized();
+    if (!isAuthorized) {
       return;
     }
+
     if (user && !user.verified) {
       logManager.warn('[PasskeyScreen] Email address not verified');
       // TODO: check that user data is updated before redirecting to verify email screen
@@ -233,9 +231,7 @@ const PasskeyScreen: React.FC = () => {
             actions: [
               {
                 text: t('OK'),
-                action: () => {
-                  dispatch(BitPayIdEffects.startFetchSession());
-                },
+                action: () => {},
               },
             ],
           }),
@@ -299,7 +295,7 @@ const PasskeyScreen: React.FC = () => {
         );
       }
     }
-  }, [user, listPasskeyCredentials]);
+  };
 
   useEffect(() => {
     dispatch(BitPayIdEffects.startFetchSession());
@@ -365,23 +361,31 @@ const PasskeyScreen: React.FC = () => {
   };
 
   const navigateToLogin = () => {
-    if (listPasskeyCredentials && listPasskeyCredentials.length > 0) {
-      logManager.info(
-        '[PasskeyScreen] Passkeys found. Attempting to login with passkey.',
-      );
-      dispatch(BitPayIdEffects.startLogin({}));
-      return;
-    }
     navigation.navigate('Login');
+  };
+
+  const checkUserAuthorized = async (): Promise<boolean> => {
+    if (loginRequired()) {
+      logManager.warn(
+        '[PasskeyScreen] This action requires authorization. Trying to login...',
+      );
+      if (listPasskeyCredentials && listPasskeyCredentials.length > 0) {
+        const userLoggedIn = await dispatch(
+          BitPayIdEffects.startLogin({email: user.email}),
+        );
+        return Promise.resolve(userLoggedIn);
+      } else {
+        navigateToLogin();
+        return Promise.resolve(false);
+      }
+    }
+    return Promise.resolve(true);
   };
 
   const deletePasskey = async () => {
     setIsVisible(false);
-    if (loginRequired()) {
-      logManager.warn(
-        '[PasskeyScreen] Cannot delete passkey because user not authenticated. Redirecting to login.',
-      );
-      navigateToLogin();
+    const isAuthorized = await checkUserAuthorized();
+    if (!isAuthorized) {
       return;
     }
     try {
@@ -393,6 +397,20 @@ const PasskeyScreen: React.FC = () => {
       if (success) {
         setPasskeyId('');
         fetchCredentials();
+        dispatch(
+          showBottomNotificationModal({
+            type: 'success',
+            title: t('Passkey'),
+            message: t('Passkey has been removed successfully.'),
+            enableBackdropDismiss: true,
+            actions: [
+              {
+                text: t('OK'),
+                action: () => {},
+              },
+            ],
+          }),
+        );
       }
     } catch (err: any) {
       logManager.error('[PasskeyScreen] ', err);
