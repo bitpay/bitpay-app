@@ -1649,6 +1649,7 @@ const handleBanxaUri =
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
           cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
           exchangeRate:
             (order?.crypto_amount &&
               order?.fiat_base_amount &&
@@ -1992,6 +1993,7 @@ const handleMoonpayUri =
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
           cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
           exchangeRate:
             (order?.crypto_amount &&
               order?.fiat_base_amount &&
@@ -2068,6 +2070,7 @@ const handleRampUri =
         coin: order?.coin?.toLowerCase() || '',
         chain: order?.chain?.toLowerCase() || '',
         cryptoAmount: order?.crypto_amount || '',
+        paymentMethod: order?.payment_method || '',
         exchangeRate:
           (order?.crypto_amount &&
             order?.fiat_base_amount &&
@@ -2169,6 +2172,7 @@ const handleSardineUri =
           coin: coin?.toLowerCase() || '',
           chain: chain?.toLowerCase() || '',
           cryptoAmount: Number(cryptoAmount) || '',
+          paymentMethod: paymentMethod || '',
           exchangeRate:
             (Number(cryptoAmount) &&
               Number(fiatBaseAmount) &&
@@ -2326,6 +2330,7 @@ const handleSimplexUri =
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
           cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
           exchangeRate:
             (order?.crypto_amount &&
               order?.fiat_base_amount &&
@@ -2398,6 +2403,7 @@ const handleTransakUri =
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
           cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
           exchangeRate:
             (order?.crypto_amount &&
               order?.fiat_base_amount &&
