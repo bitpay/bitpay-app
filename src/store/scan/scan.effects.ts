@@ -110,7 +110,6 @@ import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-serv
 import {RampSettingsProps} from '../../navigation/tabs/settings/external-services/screens/RampSettings';
 import {SimplexSettingsProps} from '../../navigation/tabs/settings/external-services/screens/SimplexSettings';
 import {getMoonpaySellFixedCurrencyAbbreviation} from '../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
-import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
 import {SimplexSellIncomingData} from '../sell-crypto/models/simplex-sell.models';
 import {ExternalServicesSettingsScreens} from '../../navigation/tabs/settings/external-services/ExternalServicesGroup';
@@ -121,6 +120,7 @@ import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
 import {BuyAndSellRootProps} from '../../navigation/services/screens/BuyAndSellRoot';
+import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
 
 export const incomingData =
   (
@@ -2062,8 +2062,7 @@ const handleRampUri =
         feeAmount:
           (order?.fiat_total_amount &&
             order?.fiat_base_amount &&
-            Number(order.fiat_total_amount) -
-              Number(order.fiat_base_amount)) ||
+            Number(order.fiat_total_amount) - Number(order.fiat_base_amount)) ||
           '',
         fiatCurrency: order?.fiat_total_amount_currency || '',
         coin: order?.coin?.toLowerCase() || '',
@@ -2129,6 +2128,9 @@ const handleSardineUri =
       'fiatTotalAmountCurrency',
       res,
     )!;
+    const paymentMethod = getParameterByName('paymentMethod', res) as
+      | PaymentMethodKey
+      | undefined;
 
     const newData: SardinePaymentData = {
       address,
@@ -2142,6 +2144,7 @@ const handleSardineUri =
       fiat_total_amount: Number(fiatTotalAmount),
       fiat_total_amount_currency: fiatTotalAmountCurrency,
       order_id,
+      payment_method: paymentMethod,
       status,
       user_id: walletId,
     };

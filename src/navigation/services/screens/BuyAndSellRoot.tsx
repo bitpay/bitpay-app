@@ -2227,6 +2227,7 @@ const BuyAndSellRoot = ({
       fiat_total_amount: offer.amountCost!,
       fiat_total_amount_currency: offer.fiatCurrency,
       order_id: banxaOrderData.id,
+      payment_method: paymentMethod?.method,
       external_id: banxaExternalId,
       status: 'paymentRequestSent',
       user_id: selectedWallet.id,
@@ -2290,6 +2291,7 @@ const BuyAndSellRoot = ({
       fiat_total_amount: offer.amountCost!,
       fiat_total_amount_currency: offer.fiatCurrency,
       external_id: externalTransactionId,
+      payment_method: paymentMethod?.method,
       status: 'paymentRequestSent',
       user_id: selectedWallet.id,
     };
@@ -2400,6 +2402,7 @@ const BuyAndSellRoot = ({
       fiat_total_amount: offer.amountCost!,
       fiat_total_amount_currency: offer.fiatCurrency,
       external_id: rampExternalId,
+      payment_method: paymentMethod?.method,
       status: 'paymentRequestSent',
       user_id: selectedWallet.id,
     };
@@ -2571,7 +2574,9 @@ const BuyAndSellRoot = ({
       '&fiatTotalAmount=' +
       offer.amountCost +
       '&fiatTotalAmountCurrency=' +
-      offer.fiatCurrency;
+      offer.fiatCurrency +
+      '&paymentMethod=' +
+      paymentMethod.method;
 
     const quoteData: SardinePaymentUrlConfigParams = {
       env: sardineEnv,
@@ -2696,6 +2701,7 @@ const BuyAndSellRoot = ({
           fiat_total_amount_currency: offer.fiatCurrency,
           order_id: req.order_id,
           payment_id: req.payment_id,
+          payment_method: paymentMethod?.method,
           status: 'paymentRequestSent',
           user_id: selectedWallet.id,
         };
@@ -2830,6 +2836,7 @@ const BuyAndSellRoot = ({
       fiat_total_amount: offer.amountCost!,
       fiat_total_amount_currency: offer.fiatCurrency,
       external_id: transakExternalId,
+      payment_method: paymentMethod?.method,
       status: 'paymentRequestSent',
       user_id: selectedWallet.id,
     };

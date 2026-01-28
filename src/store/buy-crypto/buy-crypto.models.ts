@@ -1,3 +1,5 @@
+import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
+
 export interface BuyCryptoLimits {
   min?: number;
   max?: number;
@@ -29,6 +31,7 @@ export interface BanxaPaymentData {
   fiat_total_amount: number;
   fiat_total_amount_currency: string;
   order_id: string; // order id provided by Banxa
+  payment_method?: PaymentMethodKey;
   external_id: string; // bitpay-app custom id
   status: BanxaStatusKey;
   user_id: string;
@@ -287,6 +290,7 @@ export interface MoonpayPaymentData {
   fiat_base_amount: number;
   fiat_total_amount: number;
   fiat_total_amount_currency: string;
+  payment_method?: PaymentMethodKey;
   external_id: string; // bitpay-app custom id
   status: string;
   user_id: string;
@@ -361,6 +365,7 @@ export interface SardinePaymentData {
   fiat_base_amount: number;
   fiat_total_amount: number;
   fiat_total_amount_currency: string;
+  payment_method?: PaymentMethodKey;
   external_id: string; // bitpay-app custom id
   status: string;
   user_id: string;
@@ -434,6 +439,7 @@ export interface SimplexPaymentData {
   fiat_total_amount_currency: string;
   order_id: string;
   payment_id: string;
+  payment_method?: PaymentMethodKey;
   status: 'paymentRequestSent' | 'paymentSentToSimplex' | 'success' | 'failed';
   user_id: string;
 }
@@ -483,6 +489,7 @@ export interface TransakPaymentData {
   status: TransakStatusKey;
   user_id: string;
   order_id?: string;
+  payment_method?: PaymentMethodKey;
   transaction_id?: string;
 }
 
