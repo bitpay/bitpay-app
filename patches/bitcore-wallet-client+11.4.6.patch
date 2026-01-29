@@ -208,6 +208,154 @@ index 43e3f5d..4767846 100644
          x.copayerId = common_1.Utils.xPubToCopayerId(x.chain, x.xPubKey);
          x.publicKeyRing = [
              {
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/key.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/key.js
+index e3648c3..d75d658 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/key.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/key.js
+@@ -57,6 +57,7 @@ const common_1 = require("./common");
+ const credentials_1 = require("./credentials");
+ const errors_1 = require("./errors");
+ const log_1 = __importDefault(require("./log"));
++const sjcl = require('sjcl');
+ const $ = (0, preconditions_1.singleton)();
+ const wordsForLang = {
+     en: bitcore_mnemonic_1.default.Words.ENGLISH,
+@@ -233,7 +234,16 @@ class Key {
+         }
+         if (__classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f")) {
+             __classPrivateFieldGet(this, _Key_instances, "m", _Key_validatePassword).call(this, opts.password);
+-            const mnemonic = common_1.Encryption.decryptWithPassword(__classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f"), opts.password);
++            let mnemonic;
++            try {
++                mnemonic = common_1.Encryption.decryptWithPassword(__classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f"), opts.password);
++            } catch (newEncryptionError) {
++                try {
++                    mnemonic = sjcl.decrypt(opts.password, __classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f"));
++                } catch (sjclError) {
++                    throw newEncryptionError;
++                }
++            }
+             __classPrivateFieldGet(this, _Key_instances, "m", _Key_addKeyFromMnemonic).call(this, algo, mnemonic.toString(), opts);
+             return;
+         }
+@@ -276,12 +286,21 @@ class Key {
+     checkPassword(password, algo) {
+         if (this.isPrivKeyEncrypted(algo)) {
+             try {
+-                common_1.Encryption.decryptWithPassword(__classPrivateFieldGet(this, _Key_instances, "m", _Key_getPrivKeyEncrypted).call(this, { algo }), password);
+-            }
+-            catch {
++                const encryptedKey = __classPrivateFieldGet(this, _Key_instances, "m", _Key_getPrivKeyEncrypted).call(this, { algo });
++                try {
++                    common_1.Encryption.decryptWithPassword(encryptedKey, password);
++                    return true;
++                } catch (newEncryptionError) {
++                    try {
++                        sjcl.decrypt(password, encryptedKey);
++                        return true;
++                    } catch (sjclError) {
++                        return false;
++                    }
++                }
++            } catch {
+                 return false;
+             }
+-            return true;
+         }
+         return null;
+     }
+@@ -296,16 +315,30 @@ class Key {
+             $.checkArgument(password, 'Private keys are encrypted, a password is needed');
+             try {
+                 const xPrivKeyEncrypted = __classPrivateFieldGet(this, _Key_instances, "m", _Key_getPrivKeyEncrypted).call(this, { algo });
+-                key.xPrivKey = common_1.Encryption.decryptWithPassword(xPrivKeyEncrypted, password).toString();
++                try {
++                    key.xPrivKey = common_1.Encryption.decryptWithPassword(xPrivKeyEncrypted, password).toString();
++                } catch (newEncryptionError) {
++                    try {
++                        key.xPrivKey = sjcl.decrypt(password, xPrivKeyEncrypted);
++                    } catch (sjclError) {
++                        throw newEncryptionError;
++                    }
++                }
+                 if (__classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f")) {
+-                    key.mnemonic = common_1.Encryption.decryptWithPassword(__classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f"), password).toString();
++                    try {
++                        key.mnemonic = common_1.Encryption.decryptWithPassword(__classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f"), password).toString();
++                    } catch (newEncryptionError) {
++                        try {
++                            key.mnemonic = sjcl.decrypt(password, __classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f"));
++                        } catch (sjclError) {
++                            throw newEncryptionError;
++                        }
++                    }
+                 }
+-            }
+-            catch {
++            } catch {
+                 throw new Error('Could not decrypt');
+             }
+-        }
+-        else {
++        } else {
+             key.xPrivKey = __classPrivateFieldGet(this, _Key_instances, "m", _Key_getPrivKey).call(this, { algo });
+             key.mnemonic = __classPrivateFieldGet(this, _Key_mnemonic, "f");
+         }
+@@ -338,15 +371,32 @@ class Key {
+         if (!__classPrivateFieldGet(this, _Key_instances, "m", _Key_getPrivKeyEncrypted).call(this, { algo }))
+             throw new Error('Private key is not encrypted');
+         try {
+-            const decryptedPrivKey = common_1.Encryption.decryptWithPassword(__classPrivateFieldGet(this, _Key_instances, "m", _Key_getPrivKeyEncrypted).call(this, { algo }), password).toString();
++            const encryptedPrivKey = __classPrivateFieldGet(this, _Key_instances, "m", _Key_getPrivKeyEncrypted).call(this, { algo });
++            let decryptedPrivKey;
++            try {
++                decryptedPrivKey = common_1.Encryption.decryptWithPassword(encryptedPrivKey, password).toString();
++            } catch (newEncryptionError) {
++                try {
++                    decryptedPrivKey = sjcl.decrypt(password, encryptedPrivKey);
++                } catch (sjclError) {
++                    throw newEncryptionError;
++                }
++            }
+             __classPrivateFieldGet(this, _Key_instances, "m", _Key_setPrivKey).call(this, { algo, value: decryptedPrivKey });
+             if (__classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f")) {
+-                __classPrivateFieldSet(this, _Key_mnemonic, common_1.Encryption.decryptWithPassword(__classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f"), password).toString(), "f");
++                try {
++                    __classPrivateFieldSet(this, _Key_mnemonic, common_1.Encryption.decryptWithPassword(__classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f"), password).toString(), "f");
++                } catch (newEncryptionError) {
++                    try {
++                        __classPrivateFieldSet(this, _Key_mnemonic, sjcl.decrypt(password, __classPrivateFieldGet(this, _Key_mnemonicEncrypted, "f")), "f");
++                    } catch (sjclError) {
++                        throw newEncryptionError;
++                    }
++                }
+             }
+             __classPrivateFieldGet(this, _Key_instances, "m", _Key_setPrivKeyEncrypted).call(this, { algo, value: null });
+             __classPrivateFieldSet(this, _Key_mnemonicEncrypted, null, "f");
+-        }
+-        catch (ex) {
++        } catch (ex) {
+             log_1.default.error('error decrypting:', ex);
+             throw new Error('Could not decrypt');
+         }
+@@ -579,7 +629,16 @@ _Key_xPrivKey = new WeakMap(), _Key_xPrivKeyEncrypted = new WeakMap(), _Key_xPri
+     const encryptedPrivKey = __classPrivateFieldGet(this, _Key_instances, "m", _Key_getPrivKeyEncrypted).call(this, { algo: existingAlgo });
+     if (encryptedPrivKey) {
+         __classPrivateFieldGet(this, _Key_instances, "m", _Key_validatePassword).call(this, opts.password);
+-        const xPriv = common_1.Encryption.decryptWithPassword(encryptedPrivKey, opts.password);
++        let xPriv;
++        try {
++            xPriv = common_1.Encryption.decryptWithPassword(encryptedPrivKey, opts.password);
++        } catch (newEncryptionError) {
++            try {
++                xPriv = sjcl.decrypt(opts.password, encryptedPrivKey);
++            } catch (sjclError) {
++                throw new Error('Could not decrypt existing private key');
++            }
++        }
+         this.setFromExtendedPrivateKey(xPriv, { algo, password: opts.password });
+     }
+     else {
 diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
 index d073bca..cdeaea3 100644
 --- a/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
