@@ -1,5 +1,6 @@
 import {DISABLE_DEVELOPMENT_LOGGING} from '@env';
 import {LogEntry, LogLevel} from '../store/log/log.models';
+import * as Sentry from '@sentry/react-native';
 
 export type LogData = {
   logs: LogEntry[];
@@ -83,9 +84,40 @@ class LogManager {
       }
     }
 
+    const message = messages.join(' ');
+
+    switch (LogLevel[level]) {
+      case 'Debug':
+        Sentry.addBreadcrumb({
+          category: 'log',
+          message,
+          level: 'debug',
+        });
+        break;
+      case 'Info':
+        Sentry.addBreadcrumb({
+          category: 'log',
+          message,
+          level: 'info',
+        });
+        break;
+      case 'Warn':
+        Sentry.addBreadcrumb({
+          category: 'log',
+          message,
+          level: 'warning',
+        });
+        break;
+      case 'Error':
+        Sentry.captureException(new Error(message), {
+          level: 'error',
+        });
+        break;
+    }
+
     this.addLog({
       level,
-      message: messages.join(' '),
+      message,
       timestamp: new Date().toISOString(),
     });
   }
