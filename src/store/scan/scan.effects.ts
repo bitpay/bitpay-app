@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {navigationRef} from '../../Root';
 import {Effect} from '../index';
@@ -2490,7 +2491,6 @@ const findWallet = (
   multisigContractAddress?: string | null,
 ) => {
   let walletIdHash;
-  const sjcl = BwcProvider.getInstance().getSJCL();
 
   const wallets = Object.values(keys).flatMap(k => k.wallets);
 
@@ -2502,11 +2502,15 @@ const findWallet = (
         0,
         lastHyphenPosition,
       );
-      walletIdHash = sjcl.hash.sha256.hash(walletIdWithoutTokenAddress);
+      const hash = crypto.createHash('sha256');
+      hash.update(walletIdWithoutTokenAddress);
+      walletIdHash = hash.digest('hex');
     } else {
-      walletIdHash = sjcl.hash.sha256.hash(w.credentials.walletId);
+      const hash = crypto.createHash('sha256');
+      hash.update(w.credentials.walletId);
+      walletIdHash = hash.digest('hex');
     }
-    return isEqual(walletIdHashed, sjcl.codec.hex.fromBits(walletIdHash));
+    return isEqual(walletIdHashed, walletIdHash);
   });
 
   return wallet;

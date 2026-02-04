@@ -50,10 +50,6 @@ export class BwcProvider {
     return bwc;
   }
 
-  public getSJCL() {
-    return BWC.sjcl;
-  }
-
   public getEncryption() {
     return BWC.Encryption;
   }
@@ -66,10 +62,6 @@ export class BwcProvider {
     return BWC.TssKey;
   }
 
-  public getTssKeyGen() {
-    return BWC.TSSKeyGen;
-  }
-
   public upgradeCredentialsV1(x: any) {
     return BWC.upgradeCredentialsV1(x);
   }
@@ -80,10 +72,6 @@ export class BwcProvider {
 
   public createKey(opts: KeyOpts) {
     return new BWC.Key(opts);
-  }
-
-  public createTssKey(opts: KeyOpts) {
-    return new BWC.TssKey(opts);
   }
 
   public getBitcore() {

@@ -64,6 +64,7 @@ import {useTheme} from 'styled-components';
 import Clipboard from '@react-native-clipboard/clipboard';
 
 const BWCProvider = BwcProvider.getInstance();
+const Encryption = BWCProvider.getEncryption();
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -312,7 +313,10 @@ const FileOrText = () => {
 
     let decryptBackupText: string;
     try {
-      decryptBackupText = BWCProvider.getSJCL().decrypt(password, text);
+      decryptBackupText = Encryption.decryptWithPassword(
+        text,
+        password,
+      ).toString();
     } catch (e: any) {
       logger.error(`Import: could not decrypt file ${e.message}`);
       showErrorModal(t('Could not decrypt file, check your password'));
