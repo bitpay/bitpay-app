@@ -1,10 +1,10 @@
-import React, {useMemo} from 'react';
+import React, {useEffect, useMemo} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {Key} from '../../../store/wallet/wallet.models';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {useTranslation} from 'react-i18next';
-import {useAppDispatch} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
@@ -30,6 +30,41 @@ const MultisigOptions = ({
   const themeType = useThemeType();
 
   const isNonTSSKeyFlow = walletKey && !isTSSKey(walletKey) && !modalType;
+  const tssEnabled = useAppSelector(({WALLET}) => WALLET.tssEnabled);
+
+  useEffect(() => {
+    if (isVisible && !tssEnabled && !isNonTSSKeyFlow && modalType) {
+      if (modalType === 'create') {
+        dispatch(
+          Analytics.track('Clicked Create Multisig Wallet', {
+            context: walletKey ? 'AddingOptions' : 'CreationOptions',
+          }),
+        );
+        closeModal();
+        navigation.navigate('CurrencySelection', {
+          context: 'addWalletMultisig',
+          key: walletKey!,
+        });
+      } else if (modalType === 'join') {
+        dispatch(
+          Analytics.track('Clicked Join Multisig Wallet', {
+            context: walletKey ? 'AddingOptions' : 'CreationOptions',
+          }),
+        );
+        closeModal();
+        navigation.navigate('JoinMultisig', {key: walletKey});
+      }
+    }
+  }, [
+    isVisible,
+    tssEnabled,
+    isNonTSSKeyFlow,
+    modalType,
+    dispatch,
+    navigation,
+    walletKey,
+    closeModal,
+  ]);
 
   const nonTSSOptions: Option[] = useMemo(
     () => [
@@ -90,29 +125,33 @@ const MultisigOptions = ({
           });
         },
       },
-      {
-        title: t('Threshold Signature Wallet'),
-        description: t(
-          'Support for Ethereum (ERC-20) tokens, Bitcoin, Bitcoin Cash, Litecoin, Dogecoin, and XRP. A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
-        ),
-        subDescription: t(
-          "All participants need to be online at the same time to create the wallet and sign transactions. This wallet **can't be imported into other crypto platforms.**",
-        ),
-        onPress: () => {
-          dispatch(
-            Analytics.track('Clicked Create TSS Wallet', {
-              context: walletKey ? 'AddingOptions' : 'CreationOptions',
-            }),
-          );
-          closeModal();
-          navigation.navigate('CurrencySelection', {
-            context: 'addTSSWalletMultisig',
-            key: walletKey!,
-          });
-        },
-      },
+      ...(tssEnabled
+        ? [
+            {
+              title: t('Threshold Signature Wallet'),
+              description: t(
+                'Support for Ethereum (ERC-20) tokens, Bitcoin, Bitcoin Cash, Litecoin, Dogecoin, and XRP. A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
+              ),
+              subDescription: t(
+                "All participants need to be online at the same time to create the wallet and sign transactions. This wallet **can't be imported into other crypto platforms.**",
+              ),
+              onPress: () => {
+                dispatch(
+                  Analytics.track('Clicked Create TSS Wallet', {
+                    context: walletKey ? 'AddingOptions' : 'CreationOptions',
+                  }),
+                );
+                closeModal();
+                navigation.navigate('CurrencySelection', {
+                  context: 'addTSSWalletMultisig',
+                  key: walletKey!,
+                });
+              },
+            },
+          ]
+        : []),
     ],
-    [t, dispatch, navigation, walletKey, closeModal],
+    [t, dispatch, navigation, walletKey, closeModal, tssEnabled],
   );
 
   const joinOptions: Option[] = useMemo(
@@ -132,26 +171,30 @@ const MultisigOptions = ({
           navigation.navigate('JoinMultisig', {key: walletKey});
         },
       },
-      {
-        title: t('Threshold Signature Wallet'),
-        description: t(
-          'Support for Ethereum (ERC-20) tokens, Bitcoin, Bitcoin Cash, Litecoin, Dogecoin, and XRP. A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
-        ),
-        subDescription: t(
-          "All participants need to be online at the same time to create the wallet and sign transactions. This wallet **can't be imported into other crypto platforms.**",
-        ),
-        onPress: () => {
-          dispatch(
-            Analytics.track('Clicked Join TSS Wallet', {
-              context: walletKey ? 'AddingOptions' : 'CreationOptions',
-            }),
-          );
-          closeModal();
-          navigation.navigate(WalletScreens.JOIN_TSS_WALLET, {});
-        },
-      },
+      ...(tssEnabled
+        ? [
+            {
+              title: t('Threshold Signature Wallet'),
+              description: t(
+                'Support for Ethereum (ERC-20) tokens, Bitcoin, Bitcoin Cash, Litecoin, Dogecoin, and XRP. A single private key is split into keyshares across co-signers, combining approvals into one transaction.',
+              ),
+              subDescription: t(
+                "All participants need to be online at the same time to create the wallet and sign transactions. This wallet **can't be imported into other crypto platforms.**",
+              ),
+              onPress: () => {
+                dispatch(
+                  Analytics.track('Clicked Join TSS Wallet', {
+                    context: walletKey ? 'AddingOptions' : 'CreationOptions',
+                  }),
+                );
+                closeModal();
+                navigation.navigate(WalletScreens.JOIN_TSS_WALLET, {});
+              },
+            },
+          ]
+        : []),
     ],
-    [t, dispatch, navigation, walletKey, closeModal],
+    [t, dispatch, navigation, walletKey, closeModal, tssEnabled],
   );
 
   const getOptions = () => {
@@ -167,6 +210,10 @@ const MultisigOptions = ({
     }
     return t('What type of shared wallet?');
   };
+
+  if (!tssEnabled && !isNonTSSKeyFlow && modalType) {
+    return null;
+  }
 
   return (
     <OptionsSheet
