@@ -173,7 +173,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
           'bitpay.com': {
             includeSubdomains: true,
             publicKeyHashes: [SSL_PINS.BITPAY_LEAF, SSL_PINS.GOOGLE_WE1],
-          }
+          },
         });
         logManager.info('SSL certificate pinning initialized successfully');
       } catch (sslError) {

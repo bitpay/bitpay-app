@@ -4,6 +4,7 @@ import {Effect} from '..';
 import {EUCountries} from './location.constants';
 import cloneDeep from 'lodash.clonedeep';
 import {logManager} from '../../managers/LogManager';
+import {NO_CACHE_HEADERS} from '../../constants/config';
 
 export const isEuCountry = (countryShortCode: string | undefined): boolean => {
   if (!countryShortCode) {
@@ -18,10 +19,8 @@ export const getLocationData = (): Effect => async dispatch => {
       'https://bitpay.com/location/ipAddress',
       {
         headers: {
+          ...NO_CACHE_HEADERS,
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          Pragma: 'no-cache',
-          Expires: '0',
         },
       },
     );
