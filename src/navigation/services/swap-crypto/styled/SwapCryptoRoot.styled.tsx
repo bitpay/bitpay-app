@@ -107,17 +107,28 @@ export const SwapCardAccountChainsContainer = styled.View<{
   align-items: center;
   justify-content: space-between;
   flex-shrink: 1;
-  height: 36px;
+  height: 23px;
   border-radius: 27.5px;
   max-width: ${({maxWidth}) => (maxWidth ? `${maxWidth}` : '250px')};
-  padding: ${({padding}) => padding ?? '8px'};
+  padding: ${({padding}) => padding ?? '4px 8px'};
   background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+`;
+
+export const SwapCardAccountText = styled(BaseText)`
+  font-size: 13px;
+  line-height: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  margin-left: 6px;
+  flex-shrink: 1;
+  font-style: normal;
 `;
 
 export const SwapCardHeaderContainer = styled.View<{noMargin?: boolean}>`
   flex: 1;
   flex-direction: row;
-  margin-bottom: ${({noMargin}) => (noMargin ? '0' : '20px')};
+  /* margin-bottom: ${({noMargin}) => (noMargin ? '0' : '20px')}; */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -128,7 +139,7 @@ export const SwapCardAmountAndWalletContainer = styled.View<{
   alignEnd?: boolean;
 }>`
   width: 100%;
-  margin-bottom: 20px;
+  margin: 20px 0px;
   display: flex;
   flex-direction: row;
   align-items: center;

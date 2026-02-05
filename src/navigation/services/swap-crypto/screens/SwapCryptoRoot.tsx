@@ -50,9 +50,9 @@ import {
   ArrowBoxContainer,
   OfferContainer,
   ItemDivisor,
+  SwapCardAccountText,
 } from '../styled/SwapCryptoRoot.styled';
 import {SwapCryptoGroupParamList, SwapCryptoScreens} from '../SwapCryptoGroup';
-import Button from '../../../../components/button/Button';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import FromWalletSelectorModal from '../components/FromWalletSelectorModal';
 import AmountModal from '../../../../components/amount/AmountModal';
@@ -2643,10 +2643,10 @@ const SwapCryptoRoot: React.FC = () => {
                   ) : (
                     <>
                       <Blockie
-                        size={20}
+                        size={12}
                         seed={fromWalletSelected.receiveAddress}
                       />
-                      <H7
+                      <SwapCardAccountText
                         ellipsizeMode="tail"
                         numberOfLines={1}
                         style={{flexShrink: 1, marginLeft: 6}}>
@@ -2662,45 +2662,13 @@ const SwapCryptoRoot: React.FC = () => {
                                 ? ''
                                 : ` (${fromWalletSelected.credentials.account})`
                             }`}
-                      </H7>
+                      </SwapCardAccountText>
                     </>
                   )}
                 </SwapCardAccountChainsContainer>
               ) : null}
             </SwapCardHeaderContainer>
             <SwapCardAmountAndWalletContainer>
-              {toWalletSelected ? (
-                <>
-                  {loadingEnterAmountBtn ? (
-                    <SpinnerContainer style={{height: 40}}>
-                      <ActivityIndicator color={ProgressBlue} />
-                    </SpinnerContainer>
-                  ) : (
-                    <>
-                      {fromWalletSelected &&
-                      !loadingWalletFromStatus &&
-                      toWalletSelected ? (
-                        <AmountClickableContainer
-                          onPress={() => {
-                            showModal('amount');
-                          }}>
-                          {useSendMax ? (
-                            <DataText>{t('Maximum Amount')}</DataText>
-                          ) : (
-                            <AmountText numberOfLines={1} ellipsizeMode="tail">
-                              {amountFrom || '0.00'}
-                            </AmountText>
-                          )}
-                        </AmountClickableContainer>
-                      ) : (
-                        <View />
-                      )}
-                    </>
-                  )}
-                </>
-              ) : (
-                <View />
-              )}
               <WalletSelector
                 style={
                   !fromWalletSelected && !loadingWalletFromStatus
@@ -2773,16 +2741,42 @@ const SwapCryptoRoot: React.FC = () => {
                   )}
                 </WalletSelectorRight>
               </WalletSelector>
+              {toWalletSelected ? (
+                <>
+                  {loadingEnterAmountBtn ? (
+                    <SpinnerContainer style={{height: 40}}>
+                      <ActivityIndicator color={ProgressBlue} />
+                    </SpinnerContainer>
+                  ) : (
+                    <>
+                      {fromWalletSelected &&
+                      !loadingWalletFromStatus &&
+                      toWalletSelected ? (
+                        <AmountClickableContainer
+                          onPress={() => {
+                            showModal('amount');
+                          }}>
+                          {useSendMax ? (
+                            <DataText>{t('Maximum Amount')}</DataText>
+                          ) : (
+                            <AmountText numberOfLines={1} ellipsizeMode="tail">
+                              {amountFrom.toFixed(6).replace(/\.?0+$/, '') ||
+                                '0.00'}
+                            </AmountText>
+                          )}
+                        </AmountClickableContainer>
+                      ) : (
+                        <View />
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                <View />
+              )}
             </SwapCardAmountAndWalletContainer>
             {fromWalletSelected ? (
               <SwapCardBottomRowContainer>
-                <>
-                  <SelectedOptionCol justifyContent="left">
-                    <DataText style={{fontSize: 12, textAlign: 'center'}}>
-                      {formatedAmountFrom}
-                    </DataText>
-                  </SelectedOptionCol>
-                </>
                 <>
                   <SelectedOptionCol justifyContent="right">
                     {fromWalletSelected?.balance?.cryptoSpendable ? (
@@ -2797,7 +2791,7 @@ const SwapCryptoRoot: React.FC = () => {
                               {fromWalletSelected.balance.cryptoSpendable}{' '}
                               {fromWalletSelected.currencyAbbreviation.toUpperCase()}{' '}
                             </BottomDataText>
-                            {fromWalletSelected.balance.cryptoSpendable ===
+                            {fromWalletSelected.balance.cryptoSpendable !==
                             fromWalletSelected.balance.crypto ? (
                               <TouchableOpacity
                                 onPress={() => {
@@ -2814,6 +2808,13 @@ const SwapCryptoRoot: React.FC = () => {
                         <SwapCryptoBalanceSkeleton />
                       )
                     ) : null}
+                  </SelectedOptionCol>
+                </>
+                <>
+                  <SelectedOptionCol justifyContent="left">
+                    <DataText style={{fontSize: 12, textAlign: 'center'}}>
+                      {formatedAmountFrom}
+                    </DataText>
                   </SelectedOptionCol>
                 </>
               </SwapCardBottomRowContainer>
@@ -2838,8 +2839,8 @@ const SwapCryptoRoot: React.FC = () => {
               </SwapCardHeaderTitle>
               {toWalletSelected && IsVMChain(toWalletSelected.chain) ? (
                 <SwapCardAccountChainsContainer>
-                  <Blockie size={20} seed={toWalletSelected.receiveAddress} />
-                  <H7
+                  <Blockie size={12} seed={toWalletSelected.receiveAddress} />
+                  <SwapCardAccountText
                     ellipsizeMode="tail"
                     numberOfLines={1}
                     style={{flexShrink: 1, marginLeft: 6}}>
@@ -2854,34 +2855,11 @@ const SwapCryptoRoot: React.FC = () => {
                             ? ''
                             : ` (${toWalletSelected.credentials.account})`
                         }`}
-                  </H7>
+                  </SwapCardAccountText>
                 </SwapCardAccountChainsContainer>
               ) : null}
             </SwapCardHeaderContainer>
             <SwapCardAmountAndWalletContainer>
-              {toWalletSelected ? (
-                offersLoading ? (
-                  <SpinnerContainer style={{height: 40}}>
-                    <ActivityIndicator color={ProgressBlue} />
-                  </SpinnerContainer>
-                ) : selectedOffer ? (
-                  <AmountClickableContainer onPress={() => {}}>
-                    {selectedOffer?.amountReceiving ? (
-                      <AmountText numberOfLines={1} ellipsizeMode="tail">
-                        {selectedOffer?.amountReceiving || 0}
-                      </AmountText>
-                    ) : null}
-                  </AmountClickableContainer>
-                ) : (
-                  <View>
-                    <AmountText numberOfLines={1} ellipsizeMode="tail">
-                      {'0.00'}
-                    </AmountText>
-                  </View>
-                )
-              ) : (
-                <View />
-              )}
               <WalletSelector
                 style={
                   !toWalletSelected
@@ -2947,19 +2925,32 @@ const SwapCryptoRoot: React.FC = () => {
                   )}
                 </WalletSelectorRight>
               </WalletSelector>
+              {toWalletSelected ? (
+                offersLoading ? (
+                  <SpinnerContainer style={{height: 40}}>
+                    <ActivityIndicator color={ProgressBlue} />
+                  </SpinnerContainer>
+                ) : selectedOffer ? (
+                  <AmountClickableContainer onPress={() => {}}>
+                    {selectedOffer?.amountReceiving ? (
+                      <AmountText numberOfLines={1} ellipsizeMode="tail">
+                        {selectedOffer?.amountReceiving || 0}
+                      </AmountText>
+                    ) : null}
+                  </AmountClickableContainer>
+                ) : (
+                  <View>
+                    <AmountText numberOfLines={1} ellipsizeMode="tail">
+                      {'0.00'}
+                    </AmountText>
+                  </View>
+                )
+              ) : (
+                <View />
+              )}
             </SwapCardAmountAndWalletContainer>
             {toWalletSelected ? (
               <SwapCardBottomRowContainer>
-                <>
-                  <SelectedOptionCol justifyContent="left">
-                    {selectedOffer?.amountReceivingFiat ? (
-                      <DataText style={{fontSize: 12, textAlign: 'center'}}>
-                        {selectedOffer.amountReceivingFiat}
-                      </DataText>
-                    ) : null}
-                    {/* <Text>{'| |'}</Text> */}
-                  </SelectedOptionCol>
-                </>
                 <>
                   <SelectedOptionCol justifyContent="right">
                     {toWalletSelected?.balance?.cryptoSpendable &&
@@ -2977,6 +2968,16 @@ const SwapCryptoRoot: React.FC = () => {
                         </BalanceContainer>
                       </>
                     ) : null}
+                  </SelectedOptionCol>
+                </>
+                <>
+                  <SelectedOptionCol justifyContent="left">
+                    {selectedOffer?.amountReceivingFiat ? (
+                      <DataText style={{fontSize: 12, textAlign: 'center'}}>
+                        {selectedOffer.amountReceivingFiat}
+                      </DataText>
+                    ) : null}
+                    {/* <Text>{'| |'}</Text> */}
                   </SelectedOptionCol>
                 </>
               </SwapCardBottomRowContainer>
