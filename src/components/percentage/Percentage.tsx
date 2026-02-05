@@ -32,6 +32,7 @@ export interface PercentageProps {
   hideSign?: boolean;
   priceChange?: string | number;
   rangeLabel?: string;
+  textStyle?: any;
 }
 
 export const getDifferenceColor = (
@@ -47,6 +48,7 @@ const Percentage = ({
   hideSign = false,
   priceChange,
   rangeLabel,
+  textStyle,
 }: PercentageProps) => {
   const theme = useTheme();
   const isDarkMode = theme.dark;
@@ -77,11 +79,13 @@ const Percentage = ({
           <DecrementArrow style={{marginRight: 5}} />
         ) : null}
         {shouldShowPriceChange ? (
-          <PercentageContainer color={percentageColor} style={{marginRight: 3}}>
+          <PercentageContainer
+            color={percentageColor}
+            style={[textStyle, {marginRight: 3}]}>
             {formattedPriceChange}
           </PercentageContainer>
         ) : null}
-        <PercentageContainer color={percentageColor}>
+        <PercentageContainer color={percentageColor} style={textStyle}>
           {wrappedPercentageValue}
         </PercentageContainer>
         {rangeLabel ? <RangeLabel>{rangeLabel}</RangeLabel> : null}
