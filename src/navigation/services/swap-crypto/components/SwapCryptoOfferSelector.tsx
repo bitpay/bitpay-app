@@ -2,9 +2,7 @@ import React, {memo, useEffect, useRef, useState} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import {
   Caution,
-  LightBlack,
   Slate,
-  Slate10,
   Slate30,
   SlateDark,
   White,
@@ -82,31 +80,15 @@ export const SwapCryptoOfferSelectorContainer = styled.View``;
 
 let unmountView = false;
 
-const OfferSelectorContainer = styled.View<{isSmallScreen?: boolean}>`
-  /* min-height: ${({isSmallScreen}) => (isSmallScreen ? 140 : 165)}px; */
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate10)};
-  border-radius: 12px;
-  margin: 0px 15px 15px 15px;
-  padding: 16px;
-`;
-
 const OfferSelectorClickableRow = styled(TouchableOpacity)`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  height: 40px;
+  height: 48px;
 `;
 
-const OfferSelectorItemRow = styled.View`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const OfferSelectorContainerLeft = styled.View`
+export const OfferSelectorContainerLeft = styled.View`
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
@@ -115,7 +97,7 @@ const OfferSelectorContainerLeft = styled.View`
   min-width: 0;
 `;
 
-const OfferSelectorContainerRight = styled.View`
+export const OfferSelectorContainerRight = styled.View`
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
@@ -124,7 +106,7 @@ const OfferSelectorContainerRight = styled.View`
   min-width: 0;
 `;
 
-const OfferSelectorText = styled(BaseText)`
+export const OfferSelectorText = styled(BaseText)`
   font-size: 16px;
   font-weight: 500;
   line-height: 24px;
@@ -1328,93 +1310,62 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
 
   return (
     <SwapCryptoOfferSelectorContainer>
-      <OfferSelectorContainer isSmallScreen={_isSmallScreen}>
+      <>
         {offerWarnMsg ? (
           <WarnMsgText>{offerWarnMsg}</WarnMsgText>
         ) : (
-          <>
-            <OfferSelectorClickableRow
-              onPress={() => {
-                if (
-                  amountFrom === 0 ||
-                  !amountFrom ||
-                  isNaN(amountFrom) ||
-                  !selectedWalletFrom ||
-                  !selectedWalletTo
-                ) {
-                  return;
-                }
-                const maxWalletAmount = Number(
-                  cloneDeep(
-                    selectedWalletFrom.balance?.cryptoSpendable,
-                    // @ts-ignore
-                  )?.replaceAll(',', ''),
-                );
-                if (
-                  swapLimits &&
-                  ((swapLimits.minAmount &&
-                    amountFrom < swapLimits.minAmount) ||
-                    (swapLimits.maxAmount &&
-                      amountFrom > swapLimits.maxAmount) ||
-                    (maxWalletAmount && amountFrom > maxWalletAmount))
-                ) {
-                  return;
-                }
-                setOfferSelectorModalVisible(true);
-              }}>
-              <OfferSelectorContainerLeft>
-                <OfferSelectorText>{t('Provided by')}</OfferSelectorText>
-              </OfferSelectorContainerLeft>
-              <OfferSelectorContainerRight>
-                <View style={{marginRight: 5}}>
-                  {selectedOffer?.logo ? selectedOffer.logo : null}
-                </View>
-                <OfferSelectedLabel>{selectedOffer?.name}</OfferSelectedLabel>
-                <ArrowContainer style={{marginRight: 5}}>
-                  <SelectorArrowRight
-                    {...{
-                      width: 14,
-                      height: 14,
-                      color: selectedWalletFrom
-                        ? theme.dark
-                          ? Slate
-                          : SlateDark
-                        : White,
-                    }}
-                  />
-                </ArrowContainer>
-              </OfferSelectorContainerRight>
-            </OfferSelectorClickableRow>
-            {/* <ItemDivisor />
-            <OfferSelectorItemRow>
-              <OfferSelectorContainerLeft>
-                <OfferSelectorText>{t('Network Fee')}</OfferSelectorText>
-              </OfferSelectorContainerLeft>
-                <OfferSelectorContainerRight>
-                  <OfferSelectorText>{selectedOffer?.quoteData?.networkFee}</OfferSelectorText>
-                </OfferSelectorContainerRight>
-            </OfferSelectorItemRow>
-            <ItemDivisor />
-            <OfferSelectorItemRow>
-              <OfferSelectorContainerLeft>
-                <OfferSelectorText>{t('Exchange Fee')}</OfferSelectorText>
-              </OfferSelectorContainerLeft>
-                <OfferSelectorContainerRight>
-                  <OfferSelectorText>{selectedOffer?.quoteData?.networkFee}</OfferSelectorText>
-                </OfferSelectorContainerRight>
-            </OfferSelectorItemRow>
-            <ItemDivisor />
-            <OfferSelectorItemRow>
-              <OfferSelectorContainerLeft>
-                <OfferSelectorText>{t('Expires')}</OfferSelectorText>
-              </OfferSelectorContainerLeft>
-                <OfferSelectorContainerRight>
-                  <OfferSelectorText>{selectedOffer?.quoteData?.networkFee}</OfferSelectorText>
-                </OfferSelectorContainerRight>
-            </OfferSelectorItemRow> */}
-          </>
+          <OfferSelectorClickableRow
+            onPress={() => {
+              if (
+                amountFrom === 0 ||
+                !amountFrom ||
+                isNaN(amountFrom) ||
+                !selectedWalletFrom ||
+                !selectedWalletTo
+              ) {
+                return;
+              }
+              const maxWalletAmount = Number(
+                cloneDeep(
+                  selectedWalletFrom.balance?.cryptoSpendable,
+                  // @ts-ignore
+                )?.replaceAll(',', ''),
+              );
+              if (
+                swapLimits &&
+                ((swapLimits.minAmount && amountFrom < swapLimits.minAmount) ||
+                  (swapLimits.maxAmount && amountFrom > swapLimits.maxAmount) ||
+                  (maxWalletAmount && amountFrom > maxWalletAmount))
+              ) {
+                return;
+              }
+              setOfferSelectorModalVisible(true);
+            }}>
+            <OfferSelectorContainerLeft>
+              <OfferSelectorText>{t('Partner')}</OfferSelectorText>
+            </OfferSelectorContainerLeft>
+            <OfferSelectorContainerRight>
+              <View style={{marginRight: 5}}>
+                {selectedOffer?.logo ? selectedOffer.logo : null}
+              </View>
+              <OfferSelectedLabel>{selectedOffer?.name}</OfferSelectedLabel>
+              <ArrowContainer>
+                <SelectorArrowRight
+                  {...{
+                    width: 14,
+                    height: 14,
+                    color: selectedWalletFrom
+                      ? theme.dark
+                        ? Slate
+                        : SlateDark
+                      : White,
+                  }}
+                />
+              </ArrowContainer>
+            </OfferSelectorContainerRight>
+          </OfferSelectorClickableRow>
         )}
-      </OfferSelectorContainer>
+      </>
 
       <SheetModal
         modalLibrary="bottom-sheet"

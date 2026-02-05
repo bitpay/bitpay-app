@@ -13,7 +13,7 @@ import {logManager} from '../../managers/LogManager';
 import {CustomErrorMessage} from '../../navigation/wallet/components/ErrorMessages';
 
 interface UseTSSCallbacksParams {
-  wallet: Wallet;
+  wallet: Wallet | undefined;
   setTssStatus: (status: TSSSigningStatus) => void;
   setTssProgress: (progress: TSSSigningProgress) => void;
   setTssCopayers: any;
