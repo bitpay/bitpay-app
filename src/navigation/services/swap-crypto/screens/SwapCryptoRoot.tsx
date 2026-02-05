@@ -2760,8 +2760,9 @@ const SwapCryptoRoot: React.FC = () => {
                             <DataText>{t('Maximum Amount')}</DataText>
                           ) : (
                             <AmountText numberOfLines={1} ellipsizeMode="tail">
-                              {amountFrom.toFixed(6).replace(/\.?0+$/, '') ||
-                                '0.00'}
+                              {!amountFrom || amountFrom === 0
+                                ? '0.00'
+                                : amountFrom.toFixed(6).replace(/\.?0+$/, '')}
                             </AmountText>
                           )}
                         </AmountClickableContainer>
@@ -2812,7 +2813,7 @@ const SwapCryptoRoot: React.FC = () => {
                 </>
                 <>
                   <SelectedOptionCol justifyContent="left">
-                    <DataText style={{fontSize: 12, textAlign: 'center'}}>
+                    <DataText style={{fontSize: 13, textAlign: 'center'}}>
                       {formatedAmountFrom}
                     </DataText>
                   </SelectedOptionCol>
@@ -2973,7 +2974,7 @@ const SwapCryptoRoot: React.FC = () => {
                 <>
                   <SelectedOptionCol justifyContent="left">
                     {selectedOffer?.amountReceivingFiat ? (
-                      <DataText style={{fontSize: 12, textAlign: 'center'}}>
+                      <DataText style={{fontSize: 13, textAlign: 'center'}}>
                         {selectedOffer.amountReceivingFiat}
                       </DataText>
                     ) : null}
