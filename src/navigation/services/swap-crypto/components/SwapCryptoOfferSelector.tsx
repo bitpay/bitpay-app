@@ -107,10 +107,10 @@ export const OfferSelectorContainerRight = styled.View`
 `;
 
 export const OfferSelectorText = styled(BaseText)`
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 24px;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   flex: 1;
   min-width: 0;
   flex-shrink: 1;
@@ -118,10 +118,10 @@ export const OfferSelectorText = styled(BaseText)`
 `;
 
 const OfferSelectedLabel = styled(BaseText)`
-  font-size: 16px;
+  font-size: 13px;
   line-height: 18px;
   font-weight: 500;
-  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
 
 const WarnMsgText = styled(BaseText)`
