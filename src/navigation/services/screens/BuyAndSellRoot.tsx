@@ -224,6 +224,7 @@ import {
   SimplexSellPaymentRequestReqData,
 } from '../../../store/sell-crypto/models/simplex-sell.models';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {IS_ANDROID} from '../../../constants';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
@@ -3654,7 +3655,7 @@ const BuyAndSellRoot = ({
               </CurrencySuperScript>
             ) : null}
           </Row>
-          {/* This section shows the equivalent amount (in crypto if usingCurrency is fiat / in fiat if usingCurrency is crypto) 
+          {/* This section shows the equivalent amount (in crypto if usingCurrency is fiat / in fiat if usingCurrency is crypto)
               Do not remove commented section*/}
           {usingCurrency &&
           context === 'sellCrypto' &&
@@ -3916,6 +3917,8 @@ const BuyAndSellRoot = ({
             automaticallyAdjustContentInsets
             javaScriptEnabled={true}
             domStorageEnabled={true}
+            cacheEnabled={false}
+            cacheMode={IS_ANDROID ? 'LOAD_NO_CACHE' : undefined}
           />
         </View>
       </Modal>
