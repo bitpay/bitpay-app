@@ -83,6 +83,7 @@ import {
   APP_VERSION,
   BASE_BITPAY_URLS,
   DOWNLOAD_BITPAY_URL,
+  NO_CACHE_HEADERS,
 } from '../../constants/config';
 import {
   updatePortfolioBalance,
@@ -173,7 +174,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
           'bitpay.com': {
             includeSubdomains: true,
             publicKeyHashes: [SSL_PINS.BITPAY_LEAF, SSL_PINS.GOOGLE_WE1],
-          }
+          },
         });
         logManager.info('SSL certificate pinning initialized successfully');
       } catch (sslError) {
@@ -1459,6 +1460,7 @@ export const joinWaitlist =
 
       const config = {
         headers: {
+          ...NO_CACHE_HEADERS,
           'x-csrf-token': session.csrfToken,
         },
       };

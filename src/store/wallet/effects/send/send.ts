@@ -113,6 +113,7 @@ import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Cry
 import {Analytics} from '../../../analytics/analytics.effects';
 import {AppActions} from '../../../app';
 import {Network, URL} from '../../../../constants';
+import {NO_CACHE_HEADERS} from '../../../../constants/config';
 import {WCV2RequestType} from '../../../wallet-connect-v2/wallet-connect-v2.models';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {SupportedTokenOptions} from '../../../../constants/SupportedCurrencyOptions';
@@ -1745,7 +1746,7 @@ const fetchUtxoTxById = async (
     coin === 'bch'
       ? `https://api.fullstack.cash/v5/rawtransactions/getRawTransaction/${txId}`
       : `https://api.blockcypher.com/v1/${coin}/${networkEndpoint}/txs/${txId}?includeHex=true`;
-  const apiResponse = await axios.get<any>(url);
+  const apiResponse = await axios.get<any>(url, {headers: NO_CACHE_HEADERS});
   const txDataHex = coin === 'bch' ? apiResponse?.data : apiResponse?.data?.hex;
   if (!txDataHex) {
     throw new Error('Could not fetch transaction data');

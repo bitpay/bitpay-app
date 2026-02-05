@@ -13,6 +13,7 @@ import {
   PASSKEY_API_AUTH_VERIFY,
   PASSKEY_API_STATUS,
   PASSKEY_API_CREDENTIALS,
+  NO_CACHE_HEADERS,
 } from '../constants/config';
 import {Network} from '../constants';
 import {PasskeyCredential} from '../store/bitpay-id/bitpay-id.models';
@@ -52,6 +53,7 @@ async function remove<T = any>(url: string, token?: string): Promise<T> {
     method: 'DELETE',
     credentials: 'include',
     headers: {
+      ...NO_CACHE_HEADERS,
       'content-type': 'application/json',
       ...(token ? {'x-csrf-token': token} : {}),
     },
@@ -68,6 +70,7 @@ async function post<T = any>(
   const r = await fetch(url, {
     method: 'POST',
     headers: {
+      ...NO_CACHE_HEADERS,
       'content-type': 'application/json',
       ...(token ? {'x-csrf-token': token} : {}),
     },
@@ -82,6 +85,7 @@ async function get<T = any>(url: string, token?: string): Promise<T> {
     method: 'GET',
     credentials: 'include',
     headers: {
+      ...NO_CACHE_HEADERS,
       'content-type': 'application/json',
       ...(token ? {'x-csrf-token': token} : {}),
     },

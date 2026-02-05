@@ -2,7 +2,11 @@ import axios from 'axios';
 import {Platform} from 'react-native';
 import {Effect} from '..';
 import {LogActions} from '../log';
-import {APP_VERSION, BASE_BWS_URL} from '../../constants/config';
+import {
+  APP_VERSION,
+  BASE_BWS_URL,
+  NO_CACHE_HEADERS,
+} from '../../constants/config';
 import {ExternalServicesConfigRequestParams} from './external-services.types';
 import {logManager} from '../../managers/LogManager';
 
@@ -14,6 +18,7 @@ export const getExternalServicesConfig =
     try {
       const config = {
         headers: {
+          ...NO_CACHE_HEADERS,
           'Content-Type': 'application/json',
         },
         params: {
@@ -47,6 +52,7 @@ export const getSpenderApprovalWhitelist =
     try {
       const config = {
         headers: {
+          ...NO_CACHE_HEADERS,
           'Content-Type': 'application/json',
         },
       };

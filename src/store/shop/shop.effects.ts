@@ -4,7 +4,7 @@ import {keyBy} from 'lodash';
 import {ShopActions} from '.';
 import {Effect} from '..';
 import BitPayIdApi from '../../api/bitpay';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import {
   BillPayAccount,
   BillPayInvoiceParams,
@@ -41,9 +41,14 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
           `${baseUrl}/gift-cards/catalog/${country}${
             incentiveLevelId && user ? `/${incentiveLevelId}` : ''
           }`,
+          {headers: NO_CACHE_HEADERS},
         ),
-        axios.get(`${baseUrl}/merchant-directory/directory`),
-        axios.get(`${baseUrl}/merchant-directory/integrations`),
+        axios.get(`${baseUrl}/merchant-directory/directory`, {
+          headers: NO_CACHE_HEADERS,
+        }),
+        axios.get(`${baseUrl}/merchant-directory/integrations`, {
+          headers: NO_CACHE_HEADERS,
+        }),
       ]);
     const {data: availableCardMap} = catalogResponse;
     const {data: categoriesAndCurations} = directoryResponse;
@@ -152,6 +157,7 @@ export const startCreateBillPayInvoice =
       };
       const getInvoiceResponse = await axios.get(
         `${baseUrl}/invoices/${billPayOrder.invoiceId}`,
+        {headers: NO_CACHE_HEADERS},
       );
       const {
         data: {data: invoice},
@@ -193,10 +199,15 @@ export const startCreateGiftCardInvoice =
               }
               return res.data;
             })
-        : await axios.post(`${baseUrl}/gift-cards/pay`, fullParams);
+        : await axios.post(`${baseUrl}/gift-cards/pay`, fullParams, {
+            headers: NO_CACHE_HEADERS,
+          });
       const {data: cardOrder} = createInvoiceResponse as {data: GiftCardOrder};
       const getInvoiceResponse = await axios.get(
         `${baseUrl}/invoices/${cardOrder.invoiceId}`,
+        {
+          headers: NO_CACHE_HEADERS,
+        },
       );
       const {
         data: {data: invoice},
@@ -236,11 +247,15 @@ export const startRedeemGiftCard =
     ) as UnsoldGiftCard;
     const baseUrl = BASE_BITPAY_URLS[APP.network];
     const redeemResponse = await axios
-      .post(`${baseUrl}/gift-cards/redeem`, {
-        accessKey: unredeemedGiftCard.accessKey,
-        clientId: unredeemedGiftCard.clientId,
-        invoiceId: unredeemedGiftCard.invoiceId,
-      })
+      .post(
+        `${baseUrl}/gift-cards/redeem`,
+        {
+          accessKey: unredeemedGiftCard.accessKey,
+          clientId: unredeemedGiftCard.clientId,
+          invoiceId: unredeemedGiftCard.invoiceId,
+        },
+        {headers: NO_CACHE_HEADERS},
+      )
       .catch(err => {
         const errMessage = err.response?.data?.message;
         const pendingMessages = [
@@ -465,10 +480,8 @@ export const startFetchRuntimeSettings =
         {method: 'getRuntimeSettings'},
         {
           headers: {
+            ...NO_CACHE_HEADERS,
             'content-type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            Pragma: 'no-cache',
-            Expires: '0',
           },
         },
       );

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import BitAuth from 'bitauth';
 import {Network} from '../../constants';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import {AppIdentity} from '../../store/app/app.models';
 import {GqlQueryParams, GqlResponse} from './graphql.types';
 
@@ -61,6 +61,7 @@ class GraphQlApi {
   request<T = any>(params: GqlQueryParams<any>) {
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'x-identity': this.identity.pub,
         'x-signature': this.sign(params),
       },

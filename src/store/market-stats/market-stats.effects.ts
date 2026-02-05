@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {Effect} from '../index';
-import {BASE_BWS_URL} from '../../constants/config';
+import {BASE_BWS_URL, NO_CACHE_HEADERS} from '../../constants/config';
 import {logManager} from '../../managers/LogManager';
 import {updateMarketStats} from './market-stats.actions';
 import {MarketStatsItem} from './market-stats.models';
@@ -33,7 +33,7 @@ export const fetchMarketStats =
     try {
       const url = `${BASE_BWS_URL}/v1/marketstats/${fiatCode}?coin=${coin}`;
       logManager.info(`fetchMarketStats: get request to: ${url}`);
-      const {data} = await axios.get(url);
+      const {data} = await axios.get(url, {headers: NO_CACHE_HEADERS});
       const payloadArray = Array.isArray(data) ? data : [];
       const payload = asRecord(payloadArray[0]);
 
