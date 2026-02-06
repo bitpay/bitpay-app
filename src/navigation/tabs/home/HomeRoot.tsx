@@ -442,7 +442,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
                 //     }),
                 //   );
                 // }}
-                >
+              >
                 <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
               </HomeSection>
             ) : null}

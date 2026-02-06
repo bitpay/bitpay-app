@@ -172,7 +172,7 @@ export const EXCHANGE_RATES_CURRENCIES = [
   'eth',
   'xrp',
   'sol',
-  'bch',  
+  'bch',
   'doge',
   'ltc',
   'pol',
