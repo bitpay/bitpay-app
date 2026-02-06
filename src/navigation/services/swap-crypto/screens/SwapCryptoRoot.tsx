@@ -228,6 +228,7 @@ import {
 } from '../styled/SwapCryptoCheckout.styled';
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import SwapCryptoTxDataSkeleton from './SwapCryptoTxDataSkeleton';
+import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
 
 export type SwapCryptoRootScreenParams =
   | {
@@ -3038,6 +3039,24 @@ const SwapCryptoRoot: React.FC = () => {
               </SpinnerContainer>
             )}
           </SwapCryptoCard>
+
+          {fromWalletSelected &&
+            toWalletSelected &&
+            isTSSWallet &&
+            amountFrom && (
+              <TSSProgressTracker
+                status={tssStatus}
+                progress={tssProgress}
+                createdBy={fromWalletSelected?.walletName || 'You'}
+                date={new Date()}
+                wallet={fromWalletSelected}
+                copayers={tssCopayers}
+                onCopayersInitialized={setTssCopayers}
+                isModalVisible={showTSSProgressModal}
+                onModalVisibilityChange={setShowTSSProgressModal}
+                context={'swapCrypto'}
+              />
+            )}
 
           <OfferContainer>
             {fromWalletSelected && toWalletSelected && amountFrom ? (
