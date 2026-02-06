@@ -630,6 +630,8 @@ const SwapCryptoRoot: React.FC = () => {
 
     setAmountFrom(0);
     setSelectedOffer(undefined);
+    setCtxp(undefined);
+    setTxData(undefined);
     setSwapLimits({minAmount: undefined, maxAmount: undefined});
     setFormatedAmountFrom('');
     setUseSendMax(false);
@@ -706,6 +708,8 @@ const SwapCryptoRoot: React.FC = () => {
   const setToWallet = (toWallet: Wallet) => {
     setRateData(undefined);
     setSelectedOffer(undefined);
+    setCtxp(undefined);
+    setTxData(undefined);
     setSwapLimits({minAmount: undefined, maxAmount: undefined});
     setToWalletSelected(toWallet);
   };
@@ -1068,6 +1072,8 @@ const SwapCryptoRoot: React.FC = () => {
         setLoading(false);
         setAmountFrom(0);
         setSelectedOffer(undefined);
+        setCtxp(undefined);
+        setTxData(undefined);
         setFormatedAmountFrom('');
         setUseSendMax(false);
         setSendMaxInfo(undefined);
@@ -2977,7 +2983,11 @@ const SwapCryptoRoot: React.FC = () => {
                 </WalletSelectorRight>
               </WalletSelector>
               {toWalletSelected ? (
-                offersLoading ? (
+                offersLoading ||
+                // Next line is a workaround
+                // The `getQuote` received amount from changelly is not exactly the same as the amount after `createFixTransaction`. This prevents an exchange of amounts between when the quote is obtained and when the transaction is successfully created.
+                (selectedOffer?.key === 'changelly' &&
+                  (loadingCreateTx || !txData)) ? (
                   <SpinnerContainer style={{height: 40}}>
                     <ActivityIndicator color={ProgressBlue} />
                   </SpinnerContainer>
@@ -3313,6 +3323,9 @@ const SwapCryptoRoot: React.FC = () => {
           hideModal('amount');
           setUseSendMax(false);
           setSendMaxInfo(undefined);
+          setCtxp(undefined);
+          setTxData(undefined);
+          setSelectedOffer(undefined);
           setAmountFrom(newAmount);
           const {currencyAbbreviation, chain, tokenAddress} =
             fromWalletSelected!;
@@ -3344,6 +3357,10 @@ const SwapCryptoRoot: React.FC = () => {
           if (!fromWalletSelected) {
             return;
           }
+
+          setCtxp(undefined);
+          setTxData(undefined);
+          setSelectedOffer(undefined);
 
           let newAmount: number | undefined;
 
