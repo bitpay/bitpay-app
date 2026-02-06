@@ -476,7 +476,7 @@ const SwapCryptoRoot: React.FC = () => {
       const msg = config?.message || t('An error occurred during TSS signing');
       const reason = 'TSS Signing Error';
       const title = config?.title || t('TSS Signing Error');
-      showError(msg, reason, undefined, title);
+      showError({msg, reason, title, goBack: true, fireAnalytics: true});
     },
     [dispatch],
   );
@@ -579,7 +579,7 @@ const SwapCryptoRoot: React.FC = () => {
             chain: `${cloneDeep(selectedWallet.chain).toUpperCase()}`,
           },
         );
-        showError(msg);
+        showError({msg});
         selectedWallet = undefined;
         return;
       }
@@ -840,7 +840,7 @@ const SwapCryptoRoot: React.FC = () => {
       );
       hideOngoingProcess();
       await sleep(200);
-      showError(msg);
+      showError({msg});
     }
   };
 
@@ -938,37 +938,59 @@ const SwapCryptoRoot: React.FC = () => {
     });
   };
 
-  const showError = async (
-    msg?: string,
-    title?: string,
-    actions?: any,
-    goBack?: boolean,
-  ) => {
+  const showError = async (opts: {
+    title?: string;
+    msg?: string;
+    actions?: any[];
+    goBack?: boolean;
+    reason?: string;
+    errorMsgLog?: string;
+    fireAnalytics?: boolean;
+  }) => {
     hideOngoingProcess();
     await sleep(400);
     setLoading(false);
     setLoadingEnterAmountBtn(false);
     setLoadingCreateTx(false);
     await sleep(600);
+
+    if (opts?.fireAnalytics) {
+      dispatch(
+        Analytics.track('Failed Crypto Swap', {
+          exchange: selectedOffer?.key || 'unknown',
+          context: 'SwapCryptoRoot',
+          reasonForFailure: opts?.reason || 'unknown',
+          errorMsg: opts?.errorMsgLog || 'unknown',
+          amountFrom: amountFrom || '',
+          fromCoin:
+            fromWalletSelected?.currencyAbbreviation?.toLowerCase() || '',
+          fromChain: fromWalletSelected?.chain?.toLowerCase() || '',
+          toCoin: toWalletSelected?.currencyAbbreviation?.toLowerCase() || '',
+          toChain: toWalletSelected?.chain?.toLowerCase() || '',
+        }),
+      );
+    }
+
     dispatch(
       showBottomNotificationModal({
         type: 'error',
-        title: title ? title : t('Error'),
-        message: msg ? msg : t('Unknown Error'),
-        enableBackdropDismiss: goBack ? false : true,
-        actions: actions
-          ? actions
-          : [
-              {
-                text: t('OK'),
-                action: () => {
-                  if (goBack) {
-                    navigation.goBack();
-                  }
-                },
-                primary: true,
-              },
-            ],
+        title: opts?.title ?? t('Error'),
+        message: opts?.msg ?? t('Unknown Error'),
+        onBackdropDismiss: opts?.goBack ? () => navigation.goBack() : () => {},
+        enableBackdropDismiss: true,
+        actions: opts?.actions ?? [
+          {
+            text: t('OK'),
+            action: async () => {
+              if (opts?.goBack) {
+                dispatch(dismissBottomNotificationModal());
+                await sleep(1000);
+                navigation.goBack();
+              }
+            },
+            primary: true,
+          },
+        ],
       }),
     );
   };
@@ -1041,7 +1063,7 @@ const SwapCryptoRoot: React.FC = () => {
         const msg = t(
           'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
         );
-        showError(msg);
+        showError({msg});
         setLoading(false);
         setAmountFrom(0);
         setSelectedOffer(undefined);
@@ -1604,25 +1626,26 @@ const SwapCryptoRoot: React.FC = () => {
         if (allSupportedCoinsOrdered?.length > 0) {
           setSwapCryptoSupportedCoinsFrom(allSupportedCoinsOrdered);
         } else {
-          logger.error(
-            'Swap crypto getCurrencies Error: allSupportedCoins array is empty',
-          );
+          const reason =
+            'Swap crypto getCurrencies Error: allSupportedCoins array is empty';
+          logger.error(reason);
           const msg = t(
             'Swap Crypto feature is not available at this moment. Please try again later.',
           );
           hideOngoingProcess();
           await sleep(500);
-          showError(msg, undefined, undefined, true);
+          showError({msg, reason, goBack: true, fireAnalytics: true});
         }
       }
     } catch (err) {
+      const reason = 'Swap crypto getCurrencies catch Error';
       logger.error('Swap crypto getCurrencies Error: ' + JSON.stringify(err));
       const msg = t(
         'Swap Crypto feature is not available at this moment. Please try again later.',
       );
       hideOngoingProcess();
       await sleep(500);
-      showError(msg, undefined, undefined, true);
+      showError({msg, reason, goBack: true, fireAnalytics: true});
     }
   };
 
@@ -1690,7 +1713,7 @@ const SwapCryptoRoot: React.FC = () => {
         if (err.message === 'invalid password') {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
         } else {
-          showError(err.message);
+          showError({msg: err.message});
         }
       }
     }
@@ -1776,7 +1799,7 @@ const SwapCryptoRoot: React.FC = () => {
       const msg = t(
         'There was an error while creating the exchange transaction. Please try again later.',
       );
-      showError(msg);
+      showError({msg});
     }
   };
 
@@ -1852,7 +1875,7 @@ const SwapCryptoRoot: React.FC = () => {
             } to ${toWalletSelected.currencyAbbreviation.toLowerCase()}_${
               toWalletSelected.chain
             }`;
-            showError(msg, reason);
+            showError({msg, reason, goBack: true, fireAnalytics: true});
           } else if (
             Math.abs(data.error.code) === 32602 ||
             Math.abs(data.error.code) === 32603
@@ -1867,11 +1890,16 @@ const SwapCryptoRoot: React.FC = () => {
                 'Failed to create transaction for Changelly, please try again later.',
               );
               const reason = 'Rate expired or already used';
-              showError(msg, reason);
+              showError({msg, reason, goBack: true, fireAnalytics: true});
             }
           } else {
             const reason = 'createFixTransaction Error';
-            showError(data.error.message, reason);
+            showError({
+              msg: data.error.message,
+              reason,
+              goBack: true,
+              fireAnalytics: true,
+            });
           }
           return;
         }
@@ -2045,8 +2073,15 @@ const SwapCryptoRoot: React.FC = () => {
         } catch (err: any) {
           const reason = 'createTx Error';
           if (err.code) {
-            // TODO: refactor showError to handle things like ChangellyCheckout.tsx
-            // showError(err.message, reason, err.code, err.title, err.actions);
+            showError({
+              title: err.title,
+              msg: err.message,
+              reason,
+              errorMsgLog: err.code,
+              actions: err.actions,
+              goBack: true,
+              fireAnalytics: true,
+            });
             return;
           }
 
@@ -2061,18 +2096,25 @@ const SwapCryptoRoot: React.FC = () => {
             errorMsgLog = err.message;
           }
 
-          showError(msg, reason, errorMsgLog);
+          showError({
+            msg,
+            reason,
+            errorMsgLog,
+            goBack: true,
+            fireAnalytics: true,
+          });
           return;
         }
       })
       .catch(err => {
+        const reason = 'createFixTransaction Catch Error';
         logger.error(
           'Changelly createFixTransaction Error: ' + JSON.stringify(err),
         );
         const msg = t(
           'Changelly is not available at this moment. Please try again later.',
         );
-        showError(msg);
+        showError({msg, reason, goBack: true, fireAnalytics: true});
         return;
       });
   };
@@ -2295,7 +2337,7 @@ const SwapCryptoRoot: React.FC = () => {
           const msg =
             t('Changelly getFixRateForAmount Error: ') + data.error.message;
           const reason = 'getFixRateForAmount Error';
-          showError(msg, reason);
+          showError({msg, reason, goBack: true, fireAnalytics: true});
           return;
         }
         const fixedRateId = data.result[0].id;
@@ -2339,7 +2381,7 @@ const SwapCryptoRoot: React.FC = () => {
           'Changelly is not available at this moment. Please try again later.',
         );
         const reason = 'getFixRateForAmount Error';
-        showError(msg, reason);
+        showError({msg, reason, goBack: true, fireAnalytics: true});
       });
   };
 
@@ -2462,7 +2504,13 @@ const SwapCryptoRoot: React.FC = () => {
             errorMsgLog = err.message;
             msg = `${msg}.\n${BWCErrorMessage(err)}`;
           }
-          showError(msg, reason, errorMsgLog);
+          showError({
+            msg,
+            reason,
+            errorMsgLog,
+            goBack: true,
+            fireAnalytics: true,
+          });
       }
     }
   };
@@ -2510,7 +2558,8 @@ const SwapCryptoRoot: React.FC = () => {
       }
     } else {
       const msg = t('Uh oh, something went wrong. Please try again later');
-      showError(msg, t('Unsupported hardware wallet'));
+      const reason = 'Unsupported hardware wallet';
+      showError({msg, reason, goBack: true, fireAnalytics: true});
     }
   };
 
