@@ -66,7 +66,6 @@ import type {Key} from '../../../store/wallet/wallet.models';
 import type {RootState} from '../../../store';
 import {
   calculatePercentageDifference,
-  formatCryptoAddress,
   formatFiatAmount,
   getRateByCurrencyName,
   sleep,
@@ -522,7 +521,7 @@ const WalletName = styled(BaseText)`
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
-  line-height: 24px;
+  line-height: 18px;
   color: ${({theme}) => theme.colors.text};
 `;
 
@@ -531,6 +530,7 @@ const WalletSub = styled(BaseText)`
   font-style: normal;
   font-weight: 400;
   line-height: 20px;
+  margin-top: 4px;
   color: ${({theme: {dark}}) => (dark ? Slate30 : LuckySevens)};
 `;
 
@@ -1706,9 +1706,7 @@ const ExchangeRate = () => {
                     {ui.walletName}
                   </WalletName>
                   <WalletSub numberOfLines={1} ellipsizeMode="tail">
-                    {ui.receiveAddress
-                      ? formatCryptoAddress(ui.receiveAddress)
-                      : ''}
+                    {hideAllBalances ? '****' : ui.cryptoBalance ?? ''}
                   </WalletSub>
                 </WalletLeft>
                 <WalletRight>

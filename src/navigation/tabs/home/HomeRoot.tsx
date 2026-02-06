@@ -18,12 +18,10 @@ import {
 } from '../../../store/app/app.actions';
 import {requestBrazeContentRefresh} from '../../../store/app/app.effects';
 import {
-  selectBrazeDoMore,
   selectBrazeMarketingCarousel,
   selectBrazeQuickLinks,
   selectBrazeShopWithCrypto,
 } from '../../../store/app/app.selectors';
-import {selectCardGroups} from '../../../store/card/card.selectors';
 import {getAndDispatchUpdatedWalletBalances} from '../../../store/wallet/effects/status/statusv2';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {SlateDark, White} from '../../../styles/colors';
@@ -34,7 +32,6 @@ import {
 } from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {BalanceUpdateError} from '../../wallet/components/ErrorMessages';
-import DefaultAdvertisements from './components/advertisements/DefaultAdvertisements';
 import Crypto from './components/Crypto';
 import ExchangeRatesList, {
   ExchangeRateItemProps,
@@ -48,10 +45,8 @@ import OffersCarousel from './components/offers/OffersCarousel';
 import MarketingCarousel from './components/MarketingCarousel';
 import PortfolioBalance from './components/PortfolioBalance';
 import DefaultQuickLinks from './components/quick-links/DefaultQuickLinks';
-import QuickLinksCarousel from './components/quick-links/QuickLinksCarousel';
 import {HeaderContainer, HeaderLeftContainer} from './components/Styled';
 import KeyMigrationFailureModal from './components/KeyMigrationFailureModal';
-import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {ProposalBadgeContainer} from '../../../components/styled/Containers';
 import {ProposalBadge} from '../../../components/styled/Text';
 import {
@@ -87,9 +82,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const dispatch = useAppDispatch();
   const {currencyAbbreviation} = route.params || {};
   const theme = useTheme();
-  const themeType = useThemeType();
   const [refreshing, setRefreshing] = useState(false);
-  const brazeDoMore = useAppSelector(selectBrazeDoMore);
   const brazeMarketingCarousel = useAppSelector(selectBrazeMarketingCarousel);
   const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
   const brazeQuickLinks = useAppSelector(selectBrazeQuickLinks);
@@ -107,8 +100,6 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   );
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
   const hasKeys = Object.values(keys).length;
-  const cardGroups = useAppSelector(selectCardGroups as any);
-  const hasCards = cardGroups?.length > 0;
 
   const portfolioAllocationTotalFiat = useMemo(() => {
     return getPortfolioAllocationTotalFiat({
@@ -159,7 +150,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     return brazeMarketingCarousel;
   }, [brazeMarketingCarousel]);
 
-  // Shop with Crypto
+  // Do More
   const memoizedShopWithCryptoCards = useMemo(() => {
     const cardsWithCoverImage = brazeShopWithCrypto.filter(
       card => card.extras?.cover_image,
@@ -171,17 +162,6 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
     return cardsWithCoverImage;
   }, [brazeShopWithCrypto]);
-
-  // Do More
-  const memoizedDoMoreCards = useMemo(() => {
-    if (STATIC_CONTENT_CARDS_ENABLED && !brazeDoMore.length) {
-      return DefaultAdvertisements(themeType).filter(advertisement => {
-        return hasCards ? advertisement.id !== 'card' : true;
-      });
-    }
-
-    return brazeDoMore;
-  }, [brazeDoMore, hasCards, themeType]);
 
   // Exchange Rates
   const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates) as Rates;
@@ -448,20 +428,21 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
               </HomeSection>
             ) : null}
 
-            {/* ////////////////////////////// SHOP WITH CRYPTO */}
+            {/* ////////////////////////////// DO MORE */}
             {memoizedShopWithCryptoCards.length ? (
               <HomeSection
                 style={{marginBottom: -25}}
-                title={t('Shop with Crypto')}
-                action={t('Shop all')}
-                onActionPress={() => {
-                  (navigation as any).navigate('Tabs', {screen: 'Shop'});
-                  dispatch(
-                    Analytics.track('Clicked Shop with Crypto', {
-                      context: 'HomeRoot',
-                    }),
-                  );
-                }}>
+                title={t('Do More')}
+                // action={t('Shop all')}
+                // onActionPress={() => {
+                //   (navigation as any).navigate('Tabs', {screen: 'Shop'});
+                //   dispatch(
+                //     Analytics.track('Clicked Shop with Crypto', {
+                //       context: 'HomeRoot',
+                //     }),
+                //   );
+                // }}
+              >
                 <OffersCarousel contentCards={memoizedShopWithCryptoCards} />
               </HomeSection>
             ) : null}
