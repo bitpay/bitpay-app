@@ -253,6 +253,13 @@ export const SelectedOptionCol = styled.View<{justifyContent?: string}>`
   justify-content: ${({justifyContent}) => justifyContent ?? 'center'};
 `;
 
+export const SwapCurrenciesButton = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+  background-color: ${({theme: {dark}}) => (dark ? Black : White)};
+  border-radius: 100px;
+`;
+
 export const CoinIconContainer = styled.View`
   width: 30px;
   height: 25px;
@@ -263,7 +270,7 @@ export const CoinIconContainer = styled.View`
 
 export const DataText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  font-size: 18px;
+  font-size: 13px;
   text-align: center;
 `;
 

@@ -51,6 +51,7 @@ import {
   OfferContainer,
   ItemDivisor,
   SwapCardAccountText,
+  SwapCurrenciesButton,
 } from '../styled/SwapCryptoRoot.styled';
 import {SwapCryptoGroupParamList, SwapCryptoScreens} from '../SwapCryptoGroup';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
@@ -108,6 +109,7 @@ import {
 import SwapWalletBalanceSvg from '../../../../../assets/img/swap-crypto/swap-wallet-balance.svg';
 import ArrowDown from '../../../../../assets/img/swap-crypto/down-arrow.svg';
 import InfoSvg from '../../../../../assets/img/info.svg';
+import SwapCurrenciesSvg from '../../../../../assets/img/swap-currencies.svg';
 import {AppActions} from '../../../../store/app';
 import {useTranslation} from 'react-i18next';
 import {
@@ -229,6 +231,7 @@ import {
 import Checkbox from '../../../../components/checkbox/Checkbox';
 import SwapCryptoTxDataSkeleton from './SwapCryptoTxDataSkeleton';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
+import SwapCryptoFiatSwitcherIcon from '../../../../components/icons/external-services/swap/SwapCryptoFiatSwitcherIcon';
 
 export type SwapCryptoRootScreenParams =
   | {
@@ -405,6 +408,7 @@ const SwapCryptoRoot: React.FC = () => {
   const [txData, setTxData] = useState<any>();
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const [loadingCreateTx, setLoadingCreateTx] = useState(false);
+  const [displayInFiat, setDisplayInFiat] = useState(true);
 
   const alternativeIsoCode = 'USD';
   let addressFrom: string; // Refund address
@@ -1914,6 +1918,7 @@ const SwapCryptoRoot: React.FC = () => {
         let changellyFee = 0;
         let apiExtraFee = 0;
         let totalExchangeFee = 0;
+        let totalExchangeFeeFiat: string | undefined;
 
         if (data.result.changellyFee && data.result.apiExtraFee) {
           changellyFee = Number(data.result.changellyFee);
@@ -2001,6 +2006,31 @@ const SwapCryptoRoot: React.FC = () => {
                 defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
             },
           );
+
+          try {
+            if (totalExchangeFee >= 0) {
+              totalExchangeFeeFiat = formatFiatAmount(
+                dispatch(
+                  toFiat(
+                    totalExchangeFee * precisionTo.unitToSatoshi,
+                    defaultAltCurrency.isoCode,
+                    toWalletSelected.currencyAbbreviation,
+                    toWalletSelected.chain,
+                    rates,
+                    toWalletSelected.tokenAddress,
+                  ),
+                ),
+                defaultAltCurrency.isoCode,
+                {
+                  currencyDisplay:
+                    defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+                },
+              );
+            }
+          } catch (err) {
+            logger.error('toFiat Error for totalExchangeFeeFiat');
+            // continue anyways
+          }
         }
         status = data.result.status;
 
@@ -2052,6 +2082,32 @@ const SwapCryptoRoot: React.FC = () => {
           );
           setCtxp(ctxp);
           const minerFee = ctxp.fee;
+          let minerFeeFiat: string | undefined;
+
+          try {
+            if (minerFee >= 0) {
+              minerFeeFiat = formatFiatAmount(
+                dispatch(
+                  toFiat(
+                    minerFee,
+                    defaultAltCurrency.isoCode,
+                    BitpaySupportedCoins[fromWalletSelected.chain]?.feeCurrency,
+                    fromWalletSelected.chain,
+                    rates,
+                    fromWalletSelected.tokenAddress,
+                  ),
+                ),
+                defaultAltCurrency.isoCode,
+                {
+                  currencyDisplay:
+                    defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+                },
+              );
+            }
+          } catch (err) {
+            logger.error('toFiat Error for minerFee');
+            // continue anyways
+          }
 
           const _txData = {
             addressFrom,
@@ -2060,7 +2116,9 @@ const SwapCryptoRoot: React.FC = () => {
             status,
             payinAddress,
             totalExchangeFee,
+            totalExchangeFeeFiat,
             minerFee,
+            minerFeeFiat,
             expirationTime,
           };
           setTxData(_txData);
@@ -2812,14 +2870,33 @@ const SwapCryptoRoot: React.FC = () => {
                           onPress={() => {
                             showModal('amount');
                           }}>
-                          {useSendMax ? (
-                            <DataText>{t('Maximum Amount')}</DataText>
-                          ) : (
+                          {displayInFiat ? (
                             <AmountText numberOfLines={1} ellipsizeMode="tail">
                               {!amountFrom || amountFrom === 0
-                                ? '0.00'
-                                : amountFrom.toFixed(6).replace(/\.?0+$/, '')}
+                                ? formatFiatAmount(
+                                    0,
+                                    defaultAltCurrency.isoCode,
+                                  )
+                                : formatedAmountFrom}
                             </AmountText>
+                          ) : (
+                            <>
+                              {useSendMax ? (
+                                <DataText style={{fontSize: 18}}>
+                                  {t('Maximum Amount')}
+                                </DataText>
+                              ) : (
+                                <AmountText
+                                  numberOfLines={1}
+                                  ellipsizeMode="tail">
+                                  {!amountFrom || amountFrom === 0
+                                    ? '0.00'
+                                    : amountFrom
+                                        .toFixed(6)
+                                        .replace(/\.?0+$/, '')}
+                                </AmountText>
+                              )}
+                            </>
                           )}
                         </AmountClickableContainer>
                       ) : (
@@ -2835,7 +2912,7 @@ const SwapCryptoRoot: React.FC = () => {
             {fromWalletSelected ? (
               <SwapCardBottomRowContainer>
                 <>
-                  <SelectedOptionCol justifyContent="right">
+                  <SelectedOptionCol justifyContent="left">
                     {fromWalletSelected?.balance?.cryptoSpendable ? (
                       !loadingWalletFromStatus ? (
                         <>
@@ -2868,10 +2945,51 @@ const SwapCryptoRoot: React.FC = () => {
                   </SelectedOptionCol>
                 </>
                 <>
-                  <SelectedOptionCol justifyContent="left">
-                    <DataText style={{fontSize: 13, textAlign: 'center'}}>
-                      {formatedAmountFrom}
-                    </DataText>
+                  <SelectedOptionCol justifyContent="right">
+                    {displayInFiat ? (
+                      <>
+                        {useSendMax ? (
+                          <DataText
+                            style={{
+                              marginRight: 8,
+                            }}>
+                            {t('Maximum Amount')}
+                          </DataText>
+                        ) : (
+                          <DataText
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                            style={{
+                              marginRight: 8,
+                            }}>
+                            {!amountFrom || amountFrom === 0
+                              ? '0.00' +
+                                ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`
+                              : amountFrom.toFixed(6).replace(/\.?0+$/, '') +
+                                ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`}
+                          </DataText>
+                        )}
+                      </>
+                    ) : (
+                      <DataText
+                        style={{
+                          marginRight: 8,
+                        }}>
+                        {!amountFrom || amountFrom === 0
+                          ? formatFiatAmount(0, defaultAltCurrency.isoCode)
+                          : formatedAmountFrom}
+                      </DataText>
+                    )}
+                    {fromWalletSelected &&
+                    !loadingWalletFromStatus &&
+                    toWalletSelected ? (
+                      <SwapCurrenciesButton
+                        onPress={() => {
+                          setDisplayInFiat(!displayInFiat);
+                        }}>
+                        <SwapCryptoFiatSwitcherIcon width={24} height={24} />
+                      </SwapCurrenciesButton>
+                    ) : null}
                   </SelectedOptionCol>
                 </>
               </SwapCardBottomRowContainer>
@@ -2991,20 +3109,32 @@ const SwapCryptoRoot: React.FC = () => {
                   <SpinnerContainer style={{height: 40}}>
                     <ActivityIndicator color={ProgressBlue} />
                   </SpinnerContainer>
-                ) : selectedOffer ? (
-                  <AmountClickableContainer onPress={() => {}}>
-                    {selectedOffer?.amountReceiving ? (
+                ) : displayInFiat ? (
+                  <>
+                    {selectedOffer?.amountReceivingFiat ? (
                       <AmountText numberOfLines={1} ellipsizeMode="tail">
-                        {selectedOffer?.amountReceiving || 0}
+                        {selectedOffer.amountReceivingFiat}
                       </AmountText>
                     ) : null}
-                  </AmountClickableContainer>
+                  </>
                 ) : (
-                  <View>
-                    <AmountText numberOfLines={1} ellipsizeMode="tail">
-                      {'0.00'}
-                    </AmountText>
-                  </View>
+                  <>
+                    {selectedOffer ? (
+                      <AmountClickableContainer onPress={() => {}}>
+                        {selectedOffer.amountReceiving ? (
+                          <AmountText numberOfLines={1} ellipsizeMode="tail">
+                            {selectedOffer.amountReceiving || 0}
+                          </AmountText>
+                        ) : null}
+                      </AmountClickableContainer>
+                    ) : (
+                      <View>
+                        <AmountText numberOfLines={1} ellipsizeMode="tail">
+                          {'0.00'}
+                        </AmountText>
+                      </View>
+                    )}
+                  </>
                 )
               ) : (
                 <View />
@@ -3013,7 +3143,7 @@ const SwapCryptoRoot: React.FC = () => {
             {toWalletSelected ? (
               <SwapCardBottomRowContainer>
                 <>
-                  <SelectedOptionCol justifyContent="right">
+                  <SelectedOptionCol justifyContent="left">
                     {toWalletSelected?.balance?.cryptoSpendable &&
                     !loadingWalletFromStatus ? (
                       <>
@@ -3032,13 +3162,34 @@ const SwapCryptoRoot: React.FC = () => {
                   </SelectedOptionCol>
                 </>
                 <>
-                  <SelectedOptionCol justifyContent="left">
-                    {selectedOffer?.amountReceivingFiat ? (
-                      <DataText style={{fontSize: 13, textAlign: 'center'}}>
-                        {selectedOffer.amountReceivingFiat}
-                      </DataText>
-                    ) : null}
-                    {/* <Text>{'| |'}</Text> */}
+                  <SelectedOptionCol justifyContent="right">
+                    {displayInFiat ? (
+                      <>
+                        {selectedOffer ? (
+                          <>
+                            {selectedOffer?.amountReceiving ? (
+                              <DataText numberOfLines={1} ellipsizeMode="tail">
+                                {selectedOffer?.amountReceiving +
+                                  ` ${toWalletSelected.currencyAbbreviation.toUpperCase()}`}
+                              </DataText>
+                            ) : null}
+                          </>
+                        ) : (
+                          <DataText numberOfLines={1} ellipsizeMode="tail">
+                            {'0.00' +
+                              ` ${toWalletSelected.currencyAbbreviation.toUpperCase()}`}
+                          </DataText>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {selectedOffer?.amountReceivingFiat ? (
+                          <DataText>
+                            {selectedOffer.amountReceivingFiat}
+                          </DataText>
+                        ) : null}
+                      </>
+                    )}
                   </SelectedOptionCol>
                 </>
               </SwapCardBottomRowContainer>
@@ -3102,15 +3253,22 @@ const SwapCryptoRoot: React.FC = () => {
                       <OfferSelectorContainerRight>
                         {txData && !loadingCreateTx && !offersLoading ? (
                           <OfferSelectorText style={{textAlign: 'right'}}>
-                            {dispatch(
-                              FormatAmountStr(
-                                // @ts-ignore
-                                BitpaySupportedCoins[fromWalletSelected.chain]
-                                  ?.feeCurrency,
-                                fromWalletSelected.chain,
-                                undefined,
-                                txData.minerFee,
-                              ),
+                            {displayInFiat && txData.minerFeeFiat ? (
+                              <>{txData.minerFeeFiat}</>
+                            ) : (
+                              <>
+                                {dispatch(
+                                  FormatAmountStr(
+                                    // @ts-ignore
+                                    BitpaySupportedCoins[
+                                      fromWalletSelected.chain
+                                    ]?.feeCurrency,
+                                    fromWalletSelected.chain,
+                                    undefined,
+                                    txData.minerFee,
+                                  ),
+                                )}
+                              </>
                             )}
                           </OfferSelectorText>
                         ) : (
@@ -3128,8 +3286,14 @@ const SwapCryptoRoot: React.FC = () => {
                       <OfferSelectorContainerRight>
                         {txData && !loadingCreateTx && !offersLoading ? (
                           <OfferSelectorText style={{textAlign: 'right'}}>
-                            {Number(txData.totalExchangeFee).toFixed(6)}{' '}
-                            {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                            {displayInFiat && txData.totalExchangeFeeFiat ? (
+                              <>{txData.totalExchangeFeeFiat}</>
+                            ) : (
+                              <>
+                                {Number(txData.totalExchangeFee).toFixed(6)}{' '}
+                                {toWalletSelected.currencyAbbreviation.toUpperCase()}
+                              </>
+                            )}
                           </OfferSelectorText>
                         ) : (
                           <SwapCryptoTxDataSkeleton />
