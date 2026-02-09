@@ -936,6 +936,7 @@ export const joinTSSWithCode =
         }
 
         const credentials = _tssKey.createCredentials(null, {
+          coin,
           chain,
           network,
           account: 0,
