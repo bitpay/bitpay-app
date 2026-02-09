@@ -1,3 +1,5 @@
+import {PaymentMethodKey} from '../../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
+
 export interface RampPaymentData {
   address: string;
   chain: string;
@@ -9,6 +11,7 @@ export interface RampPaymentData {
   fiat_total_amount: number;
   fiat_total_amount_currency: string;
   external_id: string; // bitpay-app custom id
+  payment_method?: PaymentMethodKey;
   status: string;
   user_id: string;
 }

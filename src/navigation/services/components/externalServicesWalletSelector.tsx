@@ -438,6 +438,18 @@ const ExternalServicesWalletSelector: React.FC<
     setWalletSelectorModalVisible(false);
     if (newWallet?.currencyAbbreviation) {
       setWallet(newWallet);
+      dispatch(
+        Analytics.track(
+          context === 'buyCrypto'
+            ? 'Buy - Clicked Crypto'
+            : 'Sell  - Clicked Crypto',
+          {
+            coin: newWallet.currencyAbbreviation || 'unknown',
+            chain: newWallet.chain || 'unknown',
+            isExistingWallet: true,
+          },
+        ),
+      );
     } else if (createNewWalletData && isTSSKey(createNewWalletData.key)) {
       await dispatch(
         showBottomNotificationModal(
@@ -483,8 +495,22 @@ const ExternalServicesWalletSelector: React.FC<
             coin: createNewWalletData.currency.currencyAbbreviation,
             chain: createNewWalletData.currency.chain,
             isErc20Token: createNewWalletData.currency.isToken,
-            context: 'buyCrypto',
+            context,
           }),
+        );
+        dispatch(
+          Analytics.track(
+            context === 'buyCrypto'
+              ? 'Buy - Clicked Crypto'
+              : 'Sell  - Clicked Crypto',
+            {
+              coin:
+                createNewWalletData?.currency?.currencyAbbreviation ||
+                'unknown',
+              chain: createNewWalletData?.currency?.chain || 'unknown',
+              isExistingWallet: false,
+            },
+          ),
         );
         setWallet(createdToWallet);
         await sleep(300);
