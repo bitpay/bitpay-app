@@ -1461,14 +1461,13 @@ const createKeyAndCredentialsWithFile = async (
   let credentials;
   let key;
   let addressBook;
-  const Key = BWC.getKey();
 
   const data = JSON.parse(decryptBackupText);
   if (data.credentials) {
     try {
       credentials = data.credentials;
       if (data.key) {
-        key = new Key({
+        key = BWC.createKey({
           seedType: 'object',
           seedData: data.key,
         });
@@ -1681,8 +1680,7 @@ export const startImportTSSFile =
 
         const BWCProvider = BwcProvider.getInstance();
 
-        const TssKey = BWCProvider.getTssKey();
-        const tssKey = new TssKey(data.key);
+        const tssKey = BWCProvider.createTssKey(data.key);
 
         logManager.info('[ImportTSS] TssKey recreated successfully');
 

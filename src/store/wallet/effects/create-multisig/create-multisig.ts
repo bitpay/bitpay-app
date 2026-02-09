@@ -225,12 +225,10 @@ export const startCreateTSSKey =
         WALLET: {tokenOptionsByAddress},
       } = getState();
 
-      const BWCKey = BWC.getKey();
-
-      const partyKey = new BWCKey({seedType: 'new'});
+      const partyKey = BWC.createKey({seedType: 'new'});
       logManager.debug('[TSS] Created party key for creator');
 
-      const tssKeyGen = new TssKeyGen({
+      const tssKeyGen = BWC.createKeyGen({
         coin,
         chain,
         network: network as Network,
@@ -351,13 +349,12 @@ export const addCoSignerToTSS =
       const joinerData = decodeJoinerSessionId(opts.joinerSessionId);
       logManager.debug(`[TSS] Adding co-signer party ${opts.partyId}`);
 
-      const BWCKey = BWC.getKey();
-      const partyKey = new BWCKey({
+      const partyKey = BWC.createKey({
         seedType: 'object',
         seedData: key.tssSession.partyKey,
       });
 
-      const tssKeyGen = new TssKeyGen({
+      const tssKeyGen = BWC.createKeyGen({
         coin: key.tssSession.coin,
         chain: key.tssSession.chain,
         network: key.tssSession.network,
@@ -447,13 +444,12 @@ export const startTSSCeremony =
           partyKey,
         } = key.tssSession;
 
-        const BWCKey = BWC.getKey();
-        const restoredPartyKey = new BWCKey({
+        const restoredPartyKey = BWC.createKey({
           seedType: 'object',
           seedData: partyKey,
         });
 
-        const tssKeyGen = new TssKeyGen({
+        const tssKeyGen = BWC.createKeyGen({
           coin,
           chain,
           network,
@@ -712,9 +708,7 @@ export const generateJoinerSessionId =
   }): Effect<Promise<{sessionId: string; partyKey: any}>> =>
   async (dispatch, getState): Promise<{sessionId: string; partyKey: any}> => {
     try {
-      const Key = BWC.getKey();
-
-      const partyKey = new Key({seedType: 'new'});
+      const partyKey = BWC.createKey({seedType: 'new'});
 
       const pubKey = getPubKeyFromKey(partyKey);
 
@@ -769,18 +763,17 @@ export const joinTSSWithCode =
           WALLET: {tokenOptionsByAddress},
         } = getState();
 
-        const BWCKey = BWC.getKey();
         const {myName} = opts;
         const copayerName = myName;
 
-        const partyKey = new BWCKey({
+        const partyKey = BWC.createKey({
           seedType: 'object',
           seedData: opts.partyKey,
         });
 
         logManager.debug('[TSS Join] Party key restored');
 
-        const tempTssKeyGen = new TssKeyGen({
+        const tempTssKeyGen = BWC.createKeyGen({
           coin: 'btc',
           chain: 'btc',
           network: 'livenet',
@@ -800,7 +793,7 @@ export const joinTSSWithCode =
         const coin = BitpaySupportedCoins[chain].coin;
         const network = decoded.network as 'livenet' | 'testnet' | 'regtest';
 
-        const tssKeyGen = new TssKeyGen({
+        const tssKeyGen = BWC.createKeyGen({
           coin,
           chain,
           network: network,

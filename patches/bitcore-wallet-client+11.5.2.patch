@@ -1,0 +1,93 @@
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
+index b5b61de..ece2ab6 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
+@@ -8,10 +8,10 @@ const crypto_1 = __importDefault(require("crypto"));
+ const sjcl_1 = __importDefault(require("sjcl"));
+ const PBKDF2_ITERATIONS = 1000;
+ const DEFAULT_KEY_SIZE = 256;
+-const ALGORITHM = ks => `aes-${ks || DEFAULT_KEY_SIZE}-ccm`;
++const ALGORITHM = ks => `aes-${ks || DEFAULT_KEY_SIZE}-gcm`;
+ const AUTH_TAG_LENGTH = 16;
+ const SALT_LENGTH = 16;
+-const MAX_IV_LENGTH = 13;
++const IV_LENGTH = 12;
+ class EncryptionClass {
+     _optimizeIv(length, iv) {
+         let L = 2;
+@@ -26,15 +26,15 @@ class EncryptionClass {
+     }
+     _baseEncrypt(data, key) {
+         const buf = Buffer.isBuffer(data) ? data : Buffer.from(typeof data === 'string' ? data : JSON.stringify(data), 'utf8');
+-        const iv = this._optimizeIv(buf.length, crypto_1.default.randomBytes(MAX_IV_LENGTH));
+-        const cipher = crypto_1.default.createCipheriv(ALGORITHM(key.length * 8), key, iv, { authTagLength: AUTH_TAG_LENGTH, plaintextLength: buf.length });
++        const iv = crypto_1.default.randomBytes(IV_LENGTH);
++        const cipher = crypto_1.default.createCipheriv(ALGORITHM(key.length * 8), key, iv, { authTagLength: AUTH_TAG_LENGTH });
+         let encrypted = cipher.update(buf);
+         encrypted = Buffer.concat([encrypted, cipher.final()]);
+         return {
+             iv: iv.toString('base64'),
+             v: 1,
+             ts: AUTH_TAG_LENGTH * 8,
+-            mode: 'ccm',
++            mode: 'gcm',
+             adata: '',
+             cipher: 'aes',
+             ct: Buffer.concat([encrypted, cipher.getAuthTag()]).toString('base64')
+@@ -68,8 +68,16 @@ class EncryptionClass {
+         const authTagLength = json.ts / 8;
+         const ciphertext = ct.subarray(0, ct.length - authTagLength);
+         const authTag = ct.subarray(ct.length - authTagLength);
+-        const iv = this._optimizeIv(ciphertext.length, Buffer.from(json.iv, 'base64'));
+-        const decipher = crypto_1.default.createDecipheriv(`${json.cipher}-${json.ks}-${json.mode}`, key, iv, { authTagLength });
++        let iv;
++        let decipher;
++        if (json.mode === 'gcm') {
++            iv = Buffer.from(json.iv, 'base64');
++            decipher = crypto_1.default.createDecipheriv(`${json.cipher}-${json.ks}-${json.mode}`, key, iv, { authTagLength });
++        }
++        else {
++            iv = this._optimizeIv(ciphertext.length, Buffer.from(json.iv, 'base64'));
++            decipher = crypto_1.default.createDecipheriv(`${json.cipher}-${json.ks}-${json.mode}`, key, iv, { authTagLength, plaintextLength: ciphertext.length });
++        }
+         decipher.setAuthTag(authTag);
+         let decrypted = decipher.update(ciphertext);
+         decrypted = Buffer.concat([decrypted, decipher.final()]);
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
+index d073bca..cdeaea3 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
+@@ -118,17 +118,19 @@ class TssKeyGen extends events_1.EventEmitter {
+         _TssKeyGen_subscriptionId.set(this, void 0);
+         _TssKeyGen_subscriptionRunning.set(this, void 0);
+         $.checkArgument(params.chain, 'Missing required param: chain');
++        $.checkArgument(params.coin, 'Missing required param: coin');
+         $.checkArgument(params.network, 'Missing required param: network');
+         $.checkArgument(params.baseUrl, 'Missing required param: baseUrl');
+         $.checkArgument(params.key, 'Missing required param: key');
+         $.checkArgument(params.key instanceof key_1.Key, 'key must be an instance of Key');
+         this.chain = params.chain.toLowerCase();
++        this.coin = params.coin.toLowerCase();
+         this.network = params.network;
+         __classPrivateFieldSet(this, _TssKeyGen_request, new request_1.Request(params.baseUrl, {
+             r: params.request,
+         }), "f");
+         __classPrivateFieldSet(this, _TssKeyGen_key, params.key, "f");
+-        __classPrivateFieldSet(this, _TssKeyGen_credentials, __classPrivateFieldGet(this, _TssKeyGen_key, "f").createCredentials(params.password, { chain: this.chain, network: this.network, n: 1, account: 0 }), "f");
++        __classPrivateFieldSet(this, _TssKeyGen_credentials, __classPrivateFieldGet(this, _TssKeyGen_key, "f").createCredentials(params.password, { coin: this.coin, chain: this.chain, network: this.network, n: 1, account: 0 }), "f");
+         __classPrivateFieldGet(this, _TssKeyGen_request, "f").setCredentials(__classPrivateFieldGet(this, _TssKeyGen_credentials, "f"));
+         __classPrivateFieldSet(this, _TssKeyGen_requestPrivateKey, crypto_wallet_core_1.BitcoreLib.PrivateKey.fromString(__classPrivateFieldGet(this, _TssKeyGen_credentials, "f").requestPrivKey), "f");
+         const baseXPrivKey = __classPrivateFieldGet(this, _TssKeyGen_key, "f").get(params.password).xPrivKey;
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
+index 43e3f5d..4767846 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
+@@ -49,7 +49,7 @@ class Credentials {
+         const entropySource = crypto_wallet_core_1.BitcoreLib.crypto.Hash.sha256(priv.toBuffer()).toString('hex');
+         const b = Buffer.from(entropySource, 'hex');
+         const b2 = crypto_wallet_core_1.BitcoreLib.crypto.Hash.sha256hmac(b, Buffer.from(prefix));
+-        x.personalEncryptingKey = b2.subarray(0, 16).toString('base64');
++        x.personalEncryptingKey = Buffer.from(b2.subarray(0, 16)).toString('base64');
+         x.copayerId = common_1.Utils.xPubToCopayerId(x.chain, x.xPubKey);
+         x.publicKeyRing = [
+             {
