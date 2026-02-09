@@ -2855,7 +2855,7 @@ const SwapCryptoRoot: React.FC = () => {
                   )}
                 </WalletSelectorRight>
               </WalletSelector>
-              {toWalletSelected ? (
+              {toWalletSelected && fromWalletSelected ? (
                 <>
                   {loadingEnterAmountBtn ? (
                     <SpinnerContainer style={{height: 40}}>
@@ -2863,9 +2863,7 @@ const SwapCryptoRoot: React.FC = () => {
                     </SpinnerContainer>
                   ) : (
                     <>
-                      {fromWalletSelected &&
-                      !loadingWalletFromStatus &&
-                      toWalletSelected ? (
+                      {!loadingWalletFromStatus ? (
                         <AmountClickableContainer
                           onPress={() => {
                             showModal('amount');
@@ -2946,40 +2944,48 @@ const SwapCryptoRoot: React.FC = () => {
                 </>
                 <>
                   <SelectedOptionCol justifyContent="right">
-                    {displayInFiat ? (
+                    {fromWalletSelected &&
+                    !loadingWalletFromStatus &&
+                    toWalletSelected ? (
                       <>
-                        {useSendMax ? (
-                          <DataText
-                            style={{
-                              marginRight: 8,
-                            }}>
-                            {t('Maximum Amount')}
-                          </DataText>
+                        {displayInFiat ? (
+                          <>
+                            {useSendMax ? (
+                              <DataText
+                                style={{
+                                  marginRight: 8,
+                                }}>
+                                {t('Maximum Amount')}
+                              </DataText>
+                            ) : (
+                              <DataText
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                                style={{
+                                  marginRight: 8,
+                                }}>
+                                {!amountFrom || amountFrom === 0
+                                  ? '0.00' +
+                                    ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`
+                                  : amountFrom
+                                      .toFixed(6)
+                                      .replace(/\.?0+$/, '') +
+                                    ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`}
+                              </DataText>
+                            )}
+                          </>
                         ) : (
                           <DataText
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
                             style={{
                               marginRight: 8,
                             }}>
                             {!amountFrom || amountFrom === 0
-                              ? '0.00' +
-                                ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`
-                              : amountFrom.toFixed(6).replace(/\.?0+$/, '') +
-                                ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`}
+                              ? formatFiatAmount(0, defaultAltCurrency.isoCode)
+                              : formatedAmountFrom}
                           </DataText>
                         )}
                       </>
-                    ) : (
-                      <DataText
-                        style={{
-                          marginRight: 8,
-                        }}>
-                        {!amountFrom || amountFrom === 0
-                          ? formatFiatAmount(0, defaultAltCurrency.isoCode)
-                          : formatedAmountFrom}
-                      </DataText>
-                    )}
+                    ) : null}
                     {fromWalletSelected &&
                     !loadingWalletFromStatus &&
                     toWalletSelected ? (
@@ -3083,7 +3089,9 @@ const SwapCryptoRoot: React.FC = () => {
                   )}
                 </WalletSelectorLeft>
                 <WalletSelectorRight>
-                  {loadingWalletFromStatus ? null : (
+                  {loadingWalletFromStatus ||
+                  (selectedWallet &&
+                    !selectedWallet?.balance?.satSpendable) ? null : (
                     <ArrowContainer style={{marginRight: 10, marginLeft: 5}}>
                       <SelectorArrowRight
                         {...{
@@ -3115,7 +3123,11 @@ const SwapCryptoRoot: React.FC = () => {
                       <AmountText numberOfLines={1} ellipsizeMode="tail">
                         {selectedOffer.amountReceivingFiat}
                       </AmountText>
-                    ) : null}
+                    ) : (
+                      <AmountText numberOfLines={1} ellipsizeMode="tail">
+                        {formatFiatAmount(0, defaultAltCurrency.isoCode)}
+                      </AmountText>
+                    )}
                   </>
                 ) : (
                   <>
@@ -3163,31 +3175,49 @@ const SwapCryptoRoot: React.FC = () => {
                 </>
                 <>
                   <SelectedOptionCol justifyContent="right">
-                    {displayInFiat ? (
-                      <>
-                        {selectedOffer ? (
-                          <>
-                            {selectedOffer?.amountReceiving ? (
-                              <DataText numberOfLines={1} ellipsizeMode="tail">
-                                {selectedOffer?.amountReceiving +
-                                  ` ${toWalletSelected.currencyAbbreviation.toUpperCase()}`}
-                              </DataText>
-                            ) : null}
-                          </>
-                        ) : (
-                          <DataText numberOfLines={1} ellipsizeMode="tail">
-                            {'0.00' +
-                              ` ${toWalletSelected.currencyAbbreviation.toUpperCase()}`}
-                          </DataText>
-                        )}
-                      </>
+                    {offersLoading ||
+                    // Next line is a workaround
+                    (selectedOffer?.key === 'changelly' &&
+                      (loadingCreateTx || !txData)) ? (
+                      <SwapCryptoTxDataSkeleton />
                     ) : (
                       <>
-                        {selectedOffer?.amountReceivingFiat ? (
-                          <DataText>
-                            {selectedOffer.amountReceivingFiat}
-                          </DataText>
-                        ) : null}
+                        {displayInFiat ? (
+                          <>
+                            {selectedOffer ? (
+                              <>
+                                {selectedOffer?.amountReceiving ? (
+                                  <DataText
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail">
+                                    {selectedOffer?.amountReceiving +
+                                      ` ${toWalletSelected.currencyAbbreviation.toUpperCase()}`}
+                                  </DataText>
+                                ) : null}
+                              </>
+                            ) : (
+                              <DataText numberOfLines={1} ellipsizeMode="tail">
+                                {'0.00' +
+                                  ` ${toWalletSelected.currencyAbbreviation.toUpperCase()}`}
+                              </DataText>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {selectedOffer?.amountReceivingFiat ? (
+                              <DataText>
+                                {selectedOffer.amountReceivingFiat}
+                              </DataText>
+                            ) : (
+                              <DataText numberOfLines={1} ellipsizeMode="tail">
+                                {formatFiatAmount(
+                                  0,
+                                  defaultAltCurrency.isoCode,
+                                )}
+                              </DataText>
+                            )}
+                          </>
+                        )}
                       </>
                     )}
                   </SelectedOptionCol>
