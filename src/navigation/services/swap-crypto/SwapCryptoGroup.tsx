@@ -14,7 +14,6 @@ import ThorswapCheckout, {
 } from './screens/ThorswapCheckout';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import HistoryIcon from '../../../../assets/img/swap-crypto/icon-history.svg';
 import {useAppSelector} from '../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import {Root, navigationRef} from '../../../Root';
@@ -28,6 +27,8 @@ import {ExternalServicesSettingsScreens} from '../../tabs/settings/external-serv
 import SwapCryptoApproveErc20, {
   SwapCryptoApproveErc20Params,
 } from './screens/SwapCryptoApproveErc20';
+import {LightBlack, Slate10} from '../../../styles/colors';
+import SwapHistoryIcon from '../../../components/icons/external-services/swap/SwapHistoryIcon';
 
 interface SwapCryptoProps {
   SwapCrypto: typeof Root;
@@ -62,10 +63,10 @@ export enum SwapCryptoScreens {
 const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
-  const changellyHistory = useAppSelector(
+  const changellyHistory: changellyTxData = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.changelly,
   );
-  const thorswapHistory = useAppSelector(
+  const thorswapHistory: thorswapTxData = useAppSelector(
     ({SWAP_CRYPTO}) => SWAP_CRYPTO.thorswap,
   );
 
@@ -117,6 +118,14 @@ const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
             <HeaderRightContainer>
               {swapHistoryData.exchangesWithHistory > 0 ? (
                 <TouchableOpacity
+                  style={{
+                    borderRadius: 100,
+                    backgroundColor: theme.dark ? LightBlack : Slate10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0,
+                  }}
                   onPress={() => {
                     switch (swapHistoryData.path) {
                       case 'changelly':
@@ -136,7 +145,7 @@ const SwapCryptoGroup = ({SwapCrypto, theme}: SwapCryptoProps) => {
                         break;
                     }
                   }}>
-                  <HistoryIcon width={42} height={42} />
+                  <SwapHistoryIcon width={42} height={42} />
                 </TouchableOpacity>
               ) : null}
             </HeaderRightContainer>
