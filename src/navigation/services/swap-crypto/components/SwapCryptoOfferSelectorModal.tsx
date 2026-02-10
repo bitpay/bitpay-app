@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import styled, {useTheme} from 'styled-components/native';
 import CloseModal from '../../../../../assets/img/close-modal-icon.svg';
 import {Wallet} from '../../../../store/wallet/wallet.models';
@@ -290,17 +290,26 @@ const SwapCryptoOfferSelectorModal: React.FC<
   const {t} = useTranslation();
   const theme = useTheme();
 
-  const [updateView, setUpdateView] = useState<number>(0);
+  const [expandedByKey, setExpandedByKey] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [forceRerender, setForceRerender] = useState(0);
+  useEffect(() => {
+    setForceRerender(f => f + 1);
+  }, [amountFrom, selectedOffer?.amountReceiving]);
 
   const expandCard = (offer: SwapCryptoOffer) => {
     const key = offer.key;
     if (!offer.amountReceiving) {
       return;
     }
-    if (offers?.[key]) {
-      offers[key].expanded = offers[key].expanded ? false : true;
+    if (!offers?.[key]) {
+      return;
     }
-    setUpdateView(Math.random());
+    setExpandedByKey(prev => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   };
 
   return (
@@ -412,7 +421,7 @@ const SwapCryptoOfferSelectorModal: React.FC<
                                 ) : null}
                               </FeesInfoText>
                               <SelectorArrowContainer>
-                                {offer.expanded ? (
+                                {expandedByKey[offer.key] ? (
                                   <ArrowUpSvg {...{width: 11, height: 11}} />
                                 ) : (
                                   <ArrowDownSvg {...{width: 11, height: 11}} />
@@ -444,7 +453,7 @@ const SwapCryptoOfferSelectorModal: React.FC<
                         </OfferDataContainer>
                       ) : null}
 
-                      {offer.expanded ? (
+                      {expandedByKey[offer.key] ? (
                         <>
                           <ItemDivisor style={{marginTop: 20}} />
                           <OfferExpandibleItem>

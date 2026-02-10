@@ -1,12 +1,6 @@
-import React, {memo, useEffect, useRef, useState} from 'react';
+import React, {memo, useEffect, useMemo, useRef, useState} from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {
-  Caution,
-  Slate,
-  Slate30,
-  SlateDark,
-  White,
-} from '../../../../styles/colors';
+import {Caution, Slate, SlateDark, White} from '../../../../styles/colors';
 import {HEIGHT} from '../../../../components/styled/Containers';
 import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
@@ -332,7 +326,11 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
 
   const theme = useTheme();
   const _isSmallScreen = HEIGHT < 700;
-  const [offers, setOffers] = useState(cloneDeep(offersDefault));
+  const initialOffers = useMemo(
+    () => cloneDeep(offersDefault),
+    [swapCryptoConfig, country, coinFrom, chainFrom, coinTo, chainTo],
+  );
+  const [offers, setOffers] = useState(cloneDeep(initialOffers));
   const [switchingThorswapProvider, setSwitchingThorswapProvider] =
     useState(false);
   const [finishedChangelly, setFinishedChangelly] = useState(false);
@@ -1157,7 +1155,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       onSelectOffer?.(undefined);
       setSelectedOfferLoading(false);
       setOffersLoading?.(false);
-      setOffers(offersDefault);
+      setOffers(cloneDeep(initialOffers));
       return;
     }
 
@@ -1169,7 +1167,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       onSelectOffer?.(undefined);
       setSelectedOfferLoading(false);
       setOffersLoading?.(false);
-      setOffers(offersDefault);
+      setOffers(cloneDeep(initialOffers));
       return;
     }
 
@@ -1190,7 +1188,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         onSelectOffer?.(undefined);
         setSelectedOfferLoading(false);
         setOffersLoading?.(false);
-        setOffers(offersDefault);
+        setOffers(cloneDeep(initialOffers));
         return;
       }
     }
@@ -1303,6 +1301,13 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
   useEffect(() => {
     setOfferWarnMsg(getWarnMsg);
   }, [getWarnMsg]);
+
+  useEffect(() => {
+    return () => {
+      logger.debug('Cleanup on unmount...');
+      unmountView = true;
+    };
+  }, []);
 
   const onBackdropPress = () => {
     setOfferSelectorModalVisible(false);
