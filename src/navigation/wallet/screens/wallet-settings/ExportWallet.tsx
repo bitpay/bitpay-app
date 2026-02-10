@@ -42,7 +42,8 @@ import RNFS from 'react-native-fs';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
 import {logManager} from '../../../../managers/LogManager';
 
-const BWC = BwcProvider.getInstance();
+const BWCProvider = BwcProvider.getInstance();
+const Encryption = BWCProvider.getEncryption();
 
 const ExportWalletContainer = styled.SafeAreaView`
   flex: 1;
@@ -166,7 +167,9 @@ const ExportWallet = () => {
 
     backup = JSON.stringify(backup);
 
-    return BWC.getSJCL().encrypt(password, backup, {iter: 1000});
+    return JSON.stringify(
+      Encryption.encryptWithPassword(backup, password, {iter: 1000}),
+    );
   };
 
   const onCopyToClipboard = async ({password}: {password: string}) => {

@@ -58,6 +58,7 @@ import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {Status} from 'bitcore-wallet-client/ts_build/src';
 import {logManager} from '../../../../managers/LogManager';
 import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
+import {IsVMChain} from '../../../../store/wallet/utils/currency';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
 
 const CryptoContainer = styled.View`
@@ -263,13 +264,16 @@ export const createHomeCardList = ({
                               } else {
                                 if (status?.wallet?.status === 'complete') {
                                   fullWalletObj.openWallet({}, () => {
-                                    navigation.navigate('WalletDetails', {
-                                      walletId:
-                                        fullWalletObj.credentials.walletId,
-                                      copayerId:
-                                        fullWalletObj.credentials.copayerId,
-                                      key,
-                                    });
+                                    navigation.navigate(
+                                      WalletScreens.WALLET_DETAILS,
+                                      {
+                                        walletId:
+                                          fullWalletObj.credentials.walletId,
+                                        copayerId:
+                                          fullWalletObj.credentials.copayerId,
+                                        key,
+                                      },
+                                    );
                                   });
                                   return;
                                 }
@@ -281,11 +285,19 @@ export const createHomeCardList = ({
                             },
                           );
                         } else {
-                          navigation.navigate(WalletScreens.WALLET_DETAILS, {
-                            key,
-                            walletId: fullWalletObj.credentials.walletId,
-                            copayerId: fullWalletObj.credentials.copayerId,
-                          });
+                          if (IsVMChain(fullWalletObj.credentials.chain)) {
+                            navigation.navigate(WalletScreens.ACCOUNT_DETAILS, {
+                              keyId: key.id,
+                              selectedAccountAddress:
+                                fullWalletObj.receiveAddress,
+                            });
+                          } else {
+                            navigation.navigate(WalletScreens.WALLET_DETAILS, {
+                              key,
+                              walletId: fullWalletObj.credentials.walletId,
+                              copayerId: fullWalletObj.credentials.copayerId,
+                            });
+                          }
                         }
                       } else {
                         navigation.navigate(WalletScreens.KEY_OVERVIEW, {

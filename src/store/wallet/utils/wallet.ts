@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {
   Key,
   KeyMethods,
@@ -928,7 +929,6 @@ export const findWalletByIdHashed = (
   multisigContractAddress?: string,
 ): Promise<{wallet: Wallet | undefined; keyId: string | undefined}> => {
   let walletIdHash;
-  const sjcl = BwcProvider.getInstance().getSJCL();
   return new Promise(resolve => {
     getAllWalletClients(keys).then(wallets => {
       const wallet = find(wallets, w => {
@@ -942,11 +942,15 @@ export const findWalletByIdHashed = (
             0,
             lastHyphenPosition,
           );
-          walletIdHash = sjcl.hash.sha256.hash(walletIdWithoutTokenAddress);
+          const hash = crypto.createHash('sha256');
+          hash.update(walletIdWithoutTokenAddress);
+          walletIdHash = hash.digest('hex');
         } else {
-          walletIdHash = sjcl.hash.sha256.hash(w.credentials.walletId);
+          const hash = crypto.createHash('sha256');
+          hash.update(w.credentials.walletId);
+          walletIdHash = hash.digest('hex');
         }
-        return isEqual(walletIdHashed, sjcl.codec.hex.fromBits(walletIdHash));
+        return isEqual(walletIdHashed, walletIdHash);
       });
 
       return resolve({wallet, keyId: wallet?.keyId});

@@ -10,7 +10,6 @@ import BitPayLogo from '../../../../assets/img/logos/bitpay-white.svg';
 import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboard';
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
-import {BwcProvider} from '../../../lib/bwc';
 import {AppActions} from '../../../store/app';
 import {BitPay, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
@@ -21,6 +20,7 @@ import {ActiveOpacity} from '../../styled/Containers';
 import {H5} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import PinDots from './PinDots';
+import crypto from 'crypto';
 
 export interface PinModalConfig {
   type: 'set' | 'check';
@@ -59,8 +59,6 @@ const SheetHeaderContainer = styled.View`
   flex-direction: row;
 `;
 
-const BWCProvider = BwcProvider.getInstance();
-const sjcl = BWCProvider.getSJCL();
 const PIN_MAX_VALUE = 9;
 const PIN_MIN_VALUE = 0;
 const PIN_LENGTH = 4;
@@ -68,8 +66,9 @@ const ATTEMPT_LIMIT = 3;
 const ATTEMPT_LOCK_OUT_TIME = 2 * 60;
 
 export const hashPin = (pin: string[]) => {
-  const bits = sjcl.hash.sha256.hash(pin.join(''));
-  return sjcl.codec.hex.fromBits(bits);
+  const hash = crypto.createHash('sha256');
+  hash.update(pin.join(''));
+  return hash.digest('hex');
 };
 
 const headerStyle = {paddingLeft: 25};

@@ -1,4 +1,4 @@
-import BWC from 'bitcore-wallet-client';
+import BWC, {TssKey} from 'bitcore-wallet-client';
 import {Constants} from 'bitcore-wallet-client/ts_build/src/lib/common';
 import {PAYPRO_TRUSTED_KEYS} from '@env';
 import {
@@ -7,6 +7,7 @@ import {
   BASE_BWS_URL,
   BWC_TIMEOUT,
 } from '../constants/config';
+import {KeyOptions} from 'bitcore-wallet-client/ts_build/src/lib/key';
 
 interface KeyOpts {
   seedType: string;
@@ -50,24 +51,8 @@ export class BwcProvider {
     return bwc;
   }
 
-  public getSJCL() {
-    return BWC.sjcl;
-  }
-
   public getEncryption() {
     return BWC.Encryption;
-  }
-
-  public getKey() {
-    return BWC.Key;
-  }
-
-  public getTssKey() {
-    return BWC.TssKey;
-  }
-
-  public getTssKeyGen() {
-    return BWC.TSSKeyGen;
   }
 
   public upgradeCredentialsV1(x: any) {
@@ -78,12 +63,16 @@ export class BwcProvider {
     return BWC.upgradeMultipleCredentialsV1(x);
   }
 
-  public createKey(opts: KeyOpts) {
+  public createKey(opts: KeyOptions) {
     return new BWC.Key(opts);
   }
 
-  public createTssKey(opts: KeyOpts) {
-    return new BWC.TssKey(opts);
+  public createTssKey(opts: TssKey.ITssKey) {
+    return new TssKey.TssKey(opts);
+  }
+
+  public createKeyGen(opts: TssKey.ITssKeyGenConstructorParams) {
+    return new TssKey.TssKeyGen(opts);
   }
 
   public getBitcore() {
