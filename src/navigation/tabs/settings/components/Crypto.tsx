@@ -27,9 +27,11 @@ const Crypto = () => {
   const queuedTransactions = useAppSelector(
     ({WALLET}) => WALLET.queuedTransactions,
   );
+  const tssEnabled = useAppSelector(({WALLET}) => WALLET.tssEnabled);
   const [showInfoUnconfirmed, setShowInfoUnconfirmed] = useState(false);
   const [showInfoCustomizeEvm, setShowInfoCustomizeEvm] = useState(false);
   const [showInfoEthQueued, setShowInfoEthQueued] = useState(false);
+  const [showInfoTss, setShowInfoTss] = useState(false);
   const navigation = useNavigation();
 
   return (
@@ -112,6 +114,31 @@ const Crypto = () => {
           <InfoDescription>
             {t(
               'If enabled, your eth transactions will be queued if there is a pending transaction with a lower account nonce. This is an advanced feature, use cautiously.',
+            )}
+          </InfoDescription>
+        </Info>
+      ) : null}
+      <Hr />
+      <Setting activeOpacity={1} onPress={() => setShowInfoTss(!showInfoTss)}>
+        <SettingTitle>{t('Enable TSS Wallets')}</SettingTitle>
+        <ToggleSwitch
+          onChange={value => {
+            dispatch(WalletActions.setTssEnabled(value));
+            dispatch(
+              Analytics.track('Set TSS Enabled', {
+                value,
+              }),
+            );
+          }}
+          isEnabled={tssEnabled}
+        />
+      </Setting>
+      {showInfoTss ? (
+        <Info>
+          <InfoTriangle />
+          <InfoDescription>
+            {t(
+              'If enabled, you will be able to create and join TSS (Threshold Signature Scheme) wallets. This is an experimental feature.',
             )}
           </InfoDescription>
         </Info>
