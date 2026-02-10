@@ -234,7 +234,7 @@ const Amount: React.FC<AmountProps> = ({
             ]),
           ]
       : [fiatCurrency];
-  }, [cryptoCurrencyAbbreviation, fiatCurrency]);
+  }, [cryptoCurrencyAbbreviation, fiatCurrency, primaryIsFiat]);
 
   const updateAmount = (_val: string) => {
     const val = Number(_val);

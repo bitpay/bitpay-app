@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {ActivityIndicator, ScrollView, View} from 'react-native';
 import {useTheme, useNavigation, useRoute} from '@react-navigation/native';
 import {CommonActions, RouteProp} from '@react-navigation/core';
-import _, {create} from 'lodash';
+import _ from 'lodash';
 import cloneDeep from 'lodash.clonedeep';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
@@ -322,9 +322,10 @@ const OfferSelectorContainer = styled.View<{isSmallScreen?: boolean}>`
 `;
 
 let swapCryptoConfig: SwapCryptoConfig | undefined;
-let countDown: NodeJS.Timeout | undefined;
 
 const SwapCryptoRoot: React.FC = () => {
+  // Timer ref for intervals/timeouts (avoid module scope)
+  const countDownRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const {t} = useTranslation();
   const theme = useTheme();
   const _isSmallScreen = HEIGHT < 700;
@@ -1735,15 +1736,16 @@ const SwapCryptoRoot: React.FC = () => {
     setPaymentExpired(false);
     setExpirationTime(expirationTime);
 
-    countDown = setInterval(() => {
-      setExpirationTime(expirationTime, countDown);
+    // Clear any previous interval
+    if (countDownRef.current) {
+      clearInterval(countDownRef.current);
+    }
+    countDownRef.current = setInterval(() => {
+      setExpirationTime(expirationTime);
     }, 1000);
   };
 
-  const setExpirationTime = (
-    expirationTime: number,
-    countDown?: NodeJS.Timeout,
-  ): void => {
+  const setExpirationTime = (expirationTime: number): void => {
     if (!fromWalletSelected || !toWalletSelected) {
       return;
     }
@@ -1753,9 +1755,9 @@ const SwapCryptoRoot: React.FC = () => {
     if (now > expirationTime) {
       setPaymentExpired(true);
       setRemainingTimeStr('Expired');
-      if (countDown) {
-        /* later */
-        clearInterval(countDown);
+      if (countDownRef.current) {
+        clearInterval(countDownRef.current);
+        countDownRef.current = null;
       }
       dispatch(
         Analytics.track('Failed Crypto Swap', {
@@ -1802,7 +1804,7 @@ const SwapCryptoRoot: React.FC = () => {
     );
 
     try {
-      createFixTransaction(1);
+      await createFixTransaction(1);
     } catch (err) {
       logger.error(
         'Create Changelly Transaction Error: ' + JSON.stringify(err),
@@ -1870,318 +1872,295 @@ const SwapCryptoRoot: React.FC = () => {
       fixedRateId: cloneDeep(_fixedRateId),
     };
 
-    changellyCreateFixTransaction(fromWalletSelected, createFixTxData)
-      .then(async data => {
-        if (data.error) {
-          logger.error(
-            'Changelly createFixTransaction Error: ' + data.error.message,
+    try {
+      const data = await changellyCreateFixTransaction(
+        fromWalletSelected,
+        createFixTxData,
+      );
+      if (data.error) {
+        logger.error(
+          'Changelly createFixTransaction Error: ' + data.error.message,
+        );
+
+        if (data.error.message.includes("Can't exchange this currencies")) {
+          const msg = t(
+            "Can't exchange this currencies, please try again later.",
           );
-
-          if (data.error.message.includes("Can't exchange this currencies")) {
-            const msg = t(
-              "Can't exchange this currencies, please try again later.",
-            );
-            const reason = `Can't exchange this currencies error. Trying to exchange from ${fromWalletSelected.currencyAbbreviation.toLowerCase()}_${
-              fromWalletSelected.chain
-            } to ${toWalletSelected.currencyAbbreviation.toLowerCase()}_${
-              toWalletSelected.chain
-            }`;
-            showError({msg, reason, goBack: true, fireAnalytics: true});
-          } else if (
-            Math.abs(data.error.code) === 32602 ||
-            Math.abs(data.error.code) === 32603
-          ) {
-            logger.debug(
-              'Changelly rateId was expired or already used. Generating a new one',
-            );
-            if (tries < 2) {
-              changellyUpdateReceivingAmount(tries);
-            } else {
-              const msg = t(
-                'Failed to create transaction for Changelly, please try again later.',
-              );
-              const reason = 'Rate expired or already used';
-              showError({msg, reason, goBack: true, fireAnalytics: true});
-            }
-          } else {
-            const reason = 'createFixTransaction Error';
-            showError({
-              msg: data.error.message,
-              reason,
-              goBack: true,
-              fireAnalytics: true,
-            });
-          }
-          return;
-        }
-
-        let changellyFee = 0;
-        let apiExtraFee = 0;
-        let totalExchangeFee = 0;
-        let totalExchangeFeeFiat: string | undefined;
-
-        if (data.result.changellyFee && data.result.apiExtraFee) {
-          changellyFee = Number(data.result.changellyFee);
-          apiExtraFee = Number(data.result.apiExtraFee);
-        } else {
-          try {
-            const transactionData = await changellyGetTransactions(
-              data.result.id,
-            );
-            if (transactionData.result[0]) {
-              if (Number(transactionData.result[0].changellyFee) > 0) {
-                changellyFee = Number(transactionData.result[0].changellyFee);
-              }
-              if (Number(transactionData.result[0].apiExtraFee) > 0) {
-                apiExtraFee = Number(transactionData.result[0].apiExtraFee);
-              }
-            }
-          } catch (e) {
-            logger.warn(
-              `Error getting transactionData with id: ${data.result.id}`,
-            );
-          }
-        }
-
-        if (changellyFee >= 0 && apiExtraFee >= 0) {
-          // changellyFee and apiExtraFee (Bitpay fee) are in percents
-          const receivingPercentage = 100 - changellyFee - apiExtraFee;
-          let exchangeFee =
-            (changellyFee * data.result.amountExpectedTo) / receivingPercentage;
-          let bitpayFee =
-            (apiExtraFee * data.result.amountExpectedTo) / receivingPercentage;
-          totalExchangeFee = exchangeFee + bitpayFee;
-          logger.debug(
-            `Changelly fee: ${exchangeFee} - BitPay fee: ${bitpayFee} - Total fee: ${
-              exchangeFee + bitpayFee
-            }`,
-          );
-        }
-
-        if (
-          fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch' &&
-          fromWalletSelected.chain.toLowerCase() === 'bch'
+          const reason = `Can't exchange this currencies error. Trying to exchange from ${fromWalletSelected.currencyAbbreviation.toLowerCase()}_${
+            fromWalletSelected.chain
+          } to ${toWalletSelected.currencyAbbreviation.toLowerCase()}_${
+            toWalletSelected.chain
+          }`;
+          showError({msg, reason, goBack: true, fireAnalytics: true});
+        } else if (
+          Math.abs(data.error.code) === 32602 ||
+          Math.abs(data.error.code) === 32603
         ) {
-          payinAddress = BWC.getBitcoreCash()
-            .Address(data.result.payinAddress)
-            .toString(true);
-        } else {
-          payinAddress = data.result.payinAddress;
-        }
-
-        payinExtraId = data.result.payinExtraId
-          ? data.result.payinExtraId
-          : undefined; // (destinationTag) Used for coins like: XRP, XLM, EOS, IGNIS, BNB, XMR, ARDOR, DCT, XEM
-        setExchangeTxId(data.result.id);
-        // setAmountExpectedFrom(Number(data.result.amountExpectedFrom));
-        setAmountFrom(Number(data.result.amountExpectedFrom));
-        setAmountTo(Number(data.result.amountExpectedTo));
-        selectedOffer.amountReceiving = Number(data.result.amountExpectedTo)
-          .toFixed(4)
-          .replace(/\.?0+$/, '');
-
-        const precisionTo = dispatch(
-          GetPrecision(
-            toWalletSelected.currencyAbbreviation,
-            toWalletSelected.chain,
-            toWalletSelected.tokenAddress,
-          ),
-        );
-        if (precisionTo) {
-          selectedOffer.amountReceivingFiat = formatFiatAmount(
-            dispatch(
-              toFiat(
-                Number(data.result.amountExpectedTo) *
-                  precisionTo.unitToSatoshi,
-                defaultAltCurrency.isoCode,
-                toWalletSelected.currencyAbbreviation,
-                toWalletSelected.chain,
-                rates,
-                toWalletSelected.tokenAddress,
-              ),
-            ),
-            defaultAltCurrency.isoCode,
-            {
-              currencyDisplay:
-                defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
-            },
+          logger.debug(
+            'Changelly rateId was expired or already used. Generating a new one',
           );
-
-          try {
-            if (totalExchangeFee >= 0) {
-              totalExchangeFeeFiat = formatFiatAmount(
-                dispatch(
-                  toFiat(
-                    totalExchangeFee * precisionTo.unitToSatoshi,
-                    defaultAltCurrency.isoCode,
-                    toWalletSelected.currencyAbbreviation,
-                    toWalletSelected.chain,
-                    rates,
-                    toWalletSelected.tokenAddress,
-                  ),
-                ),
-                defaultAltCurrency.isoCode,
-                {
-                  currencyDisplay:
-                    defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
-                },
-              );
-            }
-          } catch (err) {
-            logger.error('toFiat Error for totalExchangeFeeFiat');
-            // continue anyways
+          if (tries < 2) {
+            changellyUpdateReceivingAmount(tries);
+          } else {
+            const msg = t(
+              'Failed to create transaction for Changelly, please try again later.',
+            );
+            const reason = 'Rate expired or already used';
+            showError({msg, reason, goBack: true, fireAnalytics: true});
           }
+        } else {
+          const reason = 'createFixTransaction Error';
+          showError({
+            msg: data.error.message,
+            reason,
+            goBack: true,
+            fireAnalytics: true,
+          });
         }
-        status = data.result.status;
+        return;
+      }
 
-        // try {
-        //   const rates = await dispatch(startGetRates({}));
-        //   const precision = dispatch(
-        //     GetPrecision(
-        //       toWalletSelected.currencyAbbreviation,
-        //       toWalletSelected.chain,
-        //       toWalletSelected.tokenAddress,
-        //     ),
-        //   );
-        //   const newFiatAmountTo = dispatch(
-        //     toFiat(
-        //       Number(data.result.amountExpectedTo) * precision!.unitToSatoshi,
-        //       alternativeIsoCode,
-        //       toWalletSelected.currencyAbbreviation.toLowerCase(),
-        //       toWalletSelected.chain,
-        //       rates,
-        //       toWalletSelected.tokenAddress,
-        //     ),
-        //   );
-        //   setFiatAmountTo(newFiatAmountTo);
-        // } catch (err) {
-        //   logger.error('toFiat Error');
-        // }
+      let changellyFee = 0;
+      let apiExtraFee = 0;
+      let totalExchangeFee = 0;
+      let totalExchangeFeeFiat: string | undefined;
 
-        paymentTimeControl(data.result.payTill);
-        const expirationTime = data.result.payTill;
+      if (data.result.changellyFee && data.result.apiExtraFee) {
+        changellyFee = Number(data.result.changellyFee);
+        apiExtraFee = Number(data.result.apiExtraFee);
+      } else {
+        try {
+          const transactionData = await changellyGetTransactions(
+            data.result.id,
+          );
+          if (transactionData.result[0]) {
+            if (Number(transactionData.result[0].changellyFee) > 0) {
+              changellyFee = Number(transactionData.result[0].changellyFee);
+            }
+            if (Number(transactionData.result[0].apiExtraFee) > 0) {
+              apiExtraFee = Number(transactionData.result[0].apiExtraFee);
+            }
+          }
+        } catch (e) {
+          logger.warn(
+            `Error getting transactionData with id: ${data.result.id}`,
+          );
+        }
+      }
 
-        const precision = dispatch(
-          GetPrecision(
-            fromWalletSelected.currencyAbbreviation,
-            fromWalletSelected.chain,
-            fromWalletSelected.tokenAddress,
-          ),
+      if (changellyFee >= 0 && apiExtraFee >= 0) {
+        // changellyFee and apiExtraFee (Bitpay fee) are in percents
+        const receivingPercentage = 100 - changellyFee - apiExtraFee;
+        let exchangeFee =
+          (changellyFee * data.result.amountExpectedTo) / receivingPercentage;
+        let bitpayFee =
+          (apiExtraFee * data.result.amountExpectedTo) / receivingPercentage;
+        totalExchangeFee = exchangeFee + bitpayFee;
+        logger.debug(
+          `Changelly fee: ${exchangeFee} - BitPay fee: ${bitpayFee} - Total fee: ${
+            exchangeFee + bitpayFee
+          }`,
         );
-        // To Sat
-        const depositSat = Number(
-          (amountFrom * precision!.unitToSatoshi).toFixed(0),
+      }
+
+      if (
+        fromWalletSelected.currencyAbbreviation.toLowerCase() === 'bch' &&
+        fromWalletSelected.chain.toLowerCase() === 'bch'
+      ) {
+        payinAddress = BWC.getBitcoreCash()
+          .Address(data.result.payinAddress)
+          .toString(true);
+      } else {
+        payinAddress = data.result.payinAddress;
+      }
+
+      payinExtraId = data.result.payinExtraId
+        ? data.result.payinExtraId
+        : undefined; // (destinationTag) Used for coins like: XRP, XLM, EOS, IGNIS, BNB, XMR, ARDOR, DCT, XEM
+      setExchangeTxId(data.result.id);
+      // setAmountExpectedFrom(Number(data.result.amountExpectedFrom));
+      setAmountFrom(Number(data.result.amountExpectedFrom));
+      setAmountTo(Number(data.result.amountExpectedTo));
+      selectedOffer.amountReceiving = Number(data.result.amountExpectedTo)
+        .toFixed(4)
+        .replace(/\.?0+$/, '');
+
+      const precisionTo = dispatch(
+        GetPrecision(
+          toWalletSelected.currencyAbbreviation,
+          toWalletSelected.chain,
+          toWalletSelected.tokenAddress,
+        ),
+      );
+      if (precisionTo) {
+        selectedOffer.amountReceivingFiat = formatFiatAmount(
+          dispatch(
+            toFiat(
+              Number(data.result.amountExpectedTo) * precisionTo.unitToSatoshi,
+              defaultAltCurrency.isoCode,
+              toWalletSelected.currencyAbbreviation,
+              toWalletSelected.chain,
+              rates,
+              toWalletSelected.tokenAddress,
+            ),
+          ),
+          defaultAltCurrency.isoCode,
+          {
+            currencyDisplay:
+              defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+          },
         );
 
         try {
-          const ctxp = await createTx(
-            fromWalletSelected,
-            payinAddress,
-            depositSat,
-            payinExtraId,
-          );
-          setCtxp(ctxp);
-          const minerFee = ctxp.fee;
-          let minerFeeFiat: string | undefined;
-
-          try {
-            if (minerFee >= 0) {
-              minerFeeFiat = formatFiatAmount(
-                dispatch(
-                  toFiat(
-                    minerFee,
-                    defaultAltCurrency.isoCode,
-                    BitpaySupportedCoins[fromWalletSelected.chain]?.feeCurrency,
-                    fromWalletSelected.chain,
-                    rates,
-                    fromWalletSelected.tokenAddress,
-                  ),
+          if (totalExchangeFee >= 0) {
+            totalExchangeFeeFiat = formatFiatAmount(
+              dispatch(
+                toFiat(
+                  totalExchangeFee * precisionTo.unitToSatoshi,
+                  defaultAltCurrency.isoCode,
+                  toWalletSelected.currencyAbbreviation,
+                  toWalletSelected.chain,
+                  rates,
+                  toWalletSelected.tokenAddress,
                 ),
-                defaultAltCurrency.isoCode,
-                {
-                  currencyDisplay:
-                    defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
-                },
-              );
-            }
-          } catch (err) {
-            logger.error('toFiat Error for minerFee');
-            // continue anyways
-          }
-
-          const _txData = {
-            addressFrom,
-            addressTo,
-            payinExtraId,
-            status,
-            payinAddress,
-            totalExchangeFee,
-            totalExchangeFeeFiat,
-            minerFee,
-            minerFeeFiat,
-            expirationTime,
-          };
-          setTxData(_txData);
-
-          setLoadingCreateTx(false);
-          hideOngoingProcess();
-          await sleep(400);
-
-          if (useSendMax) {
-            showSendMaxWarning(
-              ctxp.coin,
-              ctxp.chain,
-              fromWalletSelected.tokenAddress,
+              ),
+              defaultAltCurrency.isoCode,
+              {
+                currencyDisplay:
+                  defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+              },
             );
           }
-          return;
-        } catch (err: any) {
-          const reason = 'createTx Error';
-          if (err.code) {
-            showError({
-              title: err.title,
-              msg: err.message,
-              reason,
-              errorMsgLog: err.code,
-              actions: err.actions,
-              goBack: true,
-              fireAnalytics: true,
-            });
-            return;
+        } catch (err) {
+          logger.error('toFiat Error for totalExchangeFeeFiat');
+          // continue anyways
+        }
+      }
+      status = data.result.status;
+
+      paymentTimeControl(data.result.payTill);
+      const expirationTime = data.result.payTill;
+
+      const precision = dispatch(
+        GetPrecision(
+          fromWalletSelected.currencyAbbreviation,
+          fromWalletSelected.chain,
+          fromWalletSelected.tokenAddress,
+        ),
+      );
+      // To Sat
+      const depositSat = Number(
+        (amountFrom * precision!.unitToSatoshi).toFixed(0),
+      );
+
+      try {
+        const ctxp = await createTx(
+          fromWalletSelected,
+          payinAddress,
+          depositSat,
+          payinExtraId,
+        );
+        setCtxp(ctxp);
+        const minerFee = ctxp.fee;
+        let minerFeeFiat: string | undefined;
+
+        try {
+          if (minerFee >= 0) {
+            minerFeeFiat = formatFiatAmount(
+              dispatch(
+                toFiat(
+                  minerFee,
+                  defaultAltCurrency.isoCode,
+                  BitpaySupportedCoins[fromWalletSelected.chain]?.feeCurrency,
+                  fromWalletSelected.chain,
+                  rates,
+                  fromWalletSelected.tokenAddress,
+                ),
+              ),
+              defaultAltCurrency.isoCode,
+              {
+                currencyDisplay:
+                  defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+              },
+            );
           }
+        } catch (err) {
+          logger.error('toFiat Error for minerFee');
+          // continue anyways
+        }
 
-          let msg = t('Error creating transaction');
-          let errorMsgLog;
+        const _txData = {
+          addressFrom,
+          addressTo,
+          payinExtraId,
+          status,
+          payinAddress,
+          totalExchangeFee,
+          totalExchangeFeeFiat,
+          minerFee,
+          minerFeeFiat,
+          expirationTime,
+        };
+        setTxData(_txData);
 
-          if (typeof err === 'string') {
-            msg = msg + `: ${err}`;
-            errorMsgLog = err;
-          } else if (typeof err?.message === 'string') {
-            msg = msg + `: ${err.message}`;
-            errorMsgLog = err.message;
-          }
+        setLoadingCreateTx(false);
+        hideOngoingProcess();
+        await sleep(400);
 
+        if (useSendMax) {
+          showSendMaxWarning(
+            ctxp.coin,
+            ctxp.chain,
+            fromWalletSelected.tokenAddress,
+          );
+        }
+        return;
+      } catch (err: any) {
+        const reason = 'createTx Error';
+        if (err.code) {
           showError({
-            msg,
+            title: err.title,
+            msg: err.message,
             reason,
-            errorMsgLog,
+            errorMsgLog: err.code,
+            actions: err.actions,
             goBack: true,
             fireAnalytics: true,
           });
           return;
         }
-      })
-      .catch(err => {
-        const reason = 'createFixTransaction Catch Error';
-        logger.error(
-          'Changelly createFixTransaction Error: ' + JSON.stringify(err),
-        );
-        const msg = t(
-          'Changelly is not available at this moment. Please try again later.',
-        );
-        showError({msg, reason, goBack: true, fireAnalytics: true});
+
+        let msg = t('Error creating transaction');
+        let errorMsgLog;
+
+        if (typeof err === 'string') {
+          msg = msg + `: ${err}`;
+          errorMsgLog = err;
+        } else if (typeof err?.message === 'string') {
+          msg = msg + `: ${err.message}`;
+          errorMsgLog = err.message;
+        }
+
+        showError({
+          msg,
+          reason,
+          errorMsgLog,
+          goBack: true,
+          fireAnalytics: true,
+        });
         return;
-      });
+      }
+    } catch (err) {
+      const reason = 'createFixTransaction Catch Error';
+      logger.error(
+        'Changelly createFixTransaction Error: ' + JSON.stringify(err),
+      );
+      const msg = t(
+        'Changelly is not available at this moment. Please try again later.',
+      );
+      showError({msg, reason, goBack: true, fireAnalytics: true});
+      return;
+    }
   };
 
   const createTx = async (
@@ -2375,7 +2354,7 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
-  const changellyUpdateReceivingAmount = (tries: number) => {
+  const changellyUpdateReceivingAmount = async (tries: number) => {
     logger.debug(`changellyUpdateReceivingAmount. tries: ${tries}`);
     if (
       !fromWalletSelected ||
@@ -2396,58 +2375,61 @@ const SwapCryptoRoot: React.FC = () => {
         toWalletSelected.chain,
       ),
     };
-    changellyGetFixRateForAmount(fromWalletSelected, fixRateForAmountData)
-      .then(data => {
-        if (data.error) {
-          const msg =
-            t('Changelly getFixRateForAmount Error: ') + data.error.message;
-          const reason = 'getFixRateForAmount Error';
-          showError({msg, reason, goBack: true, fireAnalytics: true});
-          return;
-        }
-        const fixedRateId = data.result[0].id;
-        setAmountTo(Number(data.result[0].amountTo));
-        selectedOffer.amountReceiving = Number(data.result[0].amountTo)
-          .toFixed(4)
-          .replace(/\.?0+$/, '');
 
-        const precisionTo = dispatch(
-          GetPrecision(
-            toWalletSelected.currencyAbbreviation,
-            toWalletSelected.chain,
-            toWalletSelected.tokenAddress,
-          ),
-        );
-        if (precisionTo) {
-          selectedOffer.amountReceivingFiat = formatFiatAmount(
-            dispatch(
-              toFiat(
-                Number(data.result[0].amountTo) * precisionTo.unitToSatoshi,
-                defaultAltCurrency.isoCode,
-                toWalletSelected.currencyAbbreviation,
-                toWalletSelected.chain,
-                rates,
-                toWalletSelected.tokenAddress,
-              ),
-            ),
-            defaultAltCurrency.isoCode,
-            {
-              currencyDisplay:
-                defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
-            },
-          );
-        }
-
-        createFixTransaction(++tries, fixedRateId);
-      })
-      .catch(err => {
-        logger.error(JSON.stringify(err));
-        let msg = t(
-          'Changelly is not available at this moment. Please try again later.',
-        );
+    try {
+      const data = await changellyGetFixRateForAmount(
+        fromWalletSelected,
+        fixRateForAmountData,
+      );
+      if (data.error) {
+        const msg =
+          t('Changelly getFixRateForAmount Error: ') + data.error.message;
         const reason = 'getFixRateForAmount Error';
         showError({msg, reason, goBack: true, fireAnalytics: true});
-      });
+        return;
+      }
+      const fixedRateId = data.result[0].id;
+      setAmountTo(Number(data.result[0].amountTo));
+      selectedOffer.amountReceiving = Number(data.result[0].amountTo)
+        .toFixed(4)
+        .replace(/\.?0+$/, '');
+
+      const precisionTo = dispatch(
+        GetPrecision(
+          toWalletSelected.currencyAbbreviation,
+          toWalletSelected.chain,
+          toWalletSelected.tokenAddress,
+        ),
+      );
+      if (precisionTo) {
+        selectedOffer.amountReceivingFiat = formatFiatAmount(
+          dispatch(
+            toFiat(
+              Number(data.result[0].amountTo) * precisionTo.unitToSatoshi,
+              defaultAltCurrency.isoCode,
+              toWalletSelected.currencyAbbreviation,
+              toWalletSelected.chain,
+              rates,
+              toWalletSelected.tokenAddress,
+            ),
+          ),
+          defaultAltCurrency.isoCode,
+          {
+            currencyDisplay:
+              defaultAltCurrency.isoCode === 'USD' ? 'symbol' : 'code',
+          },
+        );
+      }
+
+      await createFixTransaction(++tries, fixedRateId);
+    } catch (err) {
+      logger.error(JSON.stringify(err));
+      let msg = t(
+        'Changelly is not available at this moment. Please try again later.',
+      );
+      const reason = 'getFixRateForAmount Error';
+      showError({msg, reason, goBack: true, fireAnalytics: true});
+    }
   };
 
   const makePayment = async ({transport}: {transport?: Transport}) => {
@@ -2682,8 +2664,9 @@ const SwapCryptoRoot: React.FC = () => {
     init();
 
     return () => {
-      if (countDown) {
-        clearInterval(countDown);
+      if (countDownRef.current) {
+        clearInterval(countDownRef.current);
+        countDownRef.current = null;
       }
     };
   }, []);
@@ -2710,8 +2693,9 @@ const SwapCryptoRoot: React.FC = () => {
 
   useEffect(() => {
     if (selectedOffer) {
-      if (countDown) {
-        clearInterval(countDown);
+      if (countDownRef.current) {
+        clearInterval(countDownRef.current);
+        countDownRef.current = null;
       }
       setLoadingCreateTx(true);
       logger.debug(`${selectedOffer.key} offer selected. Creating Tx...`);
@@ -3373,8 +3357,11 @@ const SwapCryptoRoot: React.FC = () => {
                 <Checkbox
                   radio={false}
                   onPress={() => {
-                    setTermsAccepted(!termsAccepted);
-                    setShowCheckTermsMsg(!!termsAccepted);
+                    setTermsAccepted(prevTermsAccepted => {
+                      const nextTermsAccepted = !prevTermsAccepted;
+                      setShowCheckTermsMsg(!nextTermsAccepted);
+                      return nextTermsAccepted;
+                    });
                   }}
                   checked={termsAccepted}
                 />

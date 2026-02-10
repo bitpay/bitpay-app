@@ -10,7 +10,7 @@ const SwapHistorySvg: React.FC<{
 }> = ({isDark, width, height}) => {
   return (
     <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-      <G id="V2" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+      <G id="V2" stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
         <G
           id="SwapHistorySvg-1"
           transform="translate(-314.000000, -25.000000)"
@@ -18,7 +18,7 @@ const SwapHistorySvg: React.FC<{
           <G id="Group-4" transform="translate(314.000000, 25.000000)">
             <G id="Group-8" transform="translate(12, 11)">
               <G id="Group-7" transform="translate(0.00000, 0.000000)">
-                <G id="refresh-01" fill-rule="nonzero">
+                <G id="refresh-01" fillRule="nonzero">
                   <Path
                     d="M18.5455304,8.1728 L17.2524522,0.7352 L14.5828174,3.2936 C13.0217739,2.2 11.1493565,1.6 9.1826087,1.6 C4.11965217,1.6 0,5.548 0,10.4 C0,15.252 4.11965217,19.2 9.1826087,19.2 C12.8339478,19.2 16.1380174,17.128 17.6005565,13.9208 C17.7850435,13.516 17.5922087,13.044 17.1698087,12.8672 C16.7482435,12.692 16.2557217,12.8752 16.0704,13.28 C14.8741565,15.904 12.1702957,17.6 9.1826087,17.6 C5.04041739,17.6 1.66956522,14.3696 1.66956522,10.4 C1.66956522,6.4304 5.04041739,3.2 9.1826087,3.2 C10.7027478,3.2 12.1561043,3.6352 13.3890783,4.4376 L10.7845565,6.9336 L18.5455304,8.1728 Z"
                     id="Path"
