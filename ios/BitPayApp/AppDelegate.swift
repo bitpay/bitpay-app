@@ -86,6 +86,40 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
         URLCache.shared.removeAllCachedResponses()
         URLCache.shared = URLCache(memoryCapacity: 0, diskCapacity: 0, diskPath: nil)
 
+        // GuidePoint - Protect MMKV storage directory with file-level encryption
+        if let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let mmkvURL = documentsURL.appendingPathComponent("mmkv")
+            do {
+                // Ensure directory exists before MMKV initializes so protections apply on first launch
+                if !FileManager.default.fileExists(atPath: mmkvURL.path) {
+                    try FileManager.default.createDirectory(at: mmkvURL, withIntermediateDirectories: true)
+                }
+                // Set file protection: encrypted at rest until first unlock after reboot
+                try FileManager.default.setAttributes(
+                    [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+                    ofItemAtPath: mmkvURL.path
+                )
+                // Exclude from backups
+                var resourceURL = mmkvURL
+                var resourceValues = URLResourceValues()
+                resourceValues.isExcludedFromBackup = true
+                try resourceURL.setResourceValues(resourceValues)
+                #if DEBUG && !targetEnvironment(simulator)
+                // Verify protections were applied correctly (file protection is only supported on physical devices)
+                let attrs = try FileManager.default.attributesOfItem(atPath: mmkvURL.path)
+                let protection = attrs[.protectionKey] as? FileProtectionType
+                assert(protection == .completeUntilFirstUserAuthentication,
+                       "MMKV directory missing file protection!")
+
+                let verifyValues = try mmkvURL.resourceValues(forKeys: [.isExcludedFromBackupKey])
+                assert(verifyValues.isExcludedFromBackup == true,
+                       "MMKV directory not excluded from backups!")
+                #endif
+            } catch {
+                NSLog("BitPay: Failed to set MMKV directory protection: \(error)")
+            }
+        }
+
         // Custom NSURLProtocol to whitelist URL prefixes
         RCTSetCustomNSURLSessionConfigurationProvider {
             let configuration = URLSessionConfiguration.default
