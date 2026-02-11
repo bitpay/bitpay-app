@@ -470,6 +470,7 @@ export const WalletConnectStartModal = memo(() => {
             },
             {
               name: WalletConnectScreens.WC_CONNECTIONS,
+              params: {showSuccessPopup: true},
             },
           ],
         }),
