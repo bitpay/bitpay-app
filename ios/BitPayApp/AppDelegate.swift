@@ -195,6 +195,35 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
       return .now
     }
 
+    // MARK: - Snapshot Privacy
+    // GuidePoint - Clear iOS snapshot images to prevent sensitive data disclosure
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        clearSnapshots()
+    }
+
+    func applicationWillEnterForeground(_ application: UIApplication) {
+        clearSnapshots()
+    }
+
+    private func clearSnapshots() {
+        guard let libraryURL = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first else { return }
+        let snapshotDirs = [
+            libraryURL.appendingPathComponent("SplashBoard/Snapshots"),
+            libraryURL.appendingPathComponent("Caches/Snapshots"),
+        ]
+        for dir in snapshotDirs {
+            guard FileManager.default.fileExists(atPath: dir.path) else { continue }
+            do {
+                let contents = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
+                for item in contents {
+                    try FileManager.default.removeItem(at: item)
+                }
+            } catch {
+                NSLog("BitPay: Failed to clear snapshots at \(dir.path): \(error)")
+            }
+        }
+    }
+
     // MARK: - BitPay App load state helper
     @objc func setBitPayAppLoaded(_ loaded: Bool) {
       isBitPayAppLoaded = loaded
