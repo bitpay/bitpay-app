@@ -86,38 +86,69 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
         URLCache.shared.removeAllCachedResponses()
         URLCache.shared = URLCache(memoryCapacity: 0, diskCapacity: 0, diskPath: nil)
 
-        // GuidePoint - Protect MMKV storage directory with file-level encryption
-        if let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let mmkvURL = documentsURL.appendingPathComponent("mmkv")
-            do {
-                // Ensure directory exists before MMKV initializes so protections apply on first launch
-                if !FileManager.default.fileExists(atPath: mmkvURL.path) {
-                    try FileManager.default.createDirectory(at: mmkvURL, withIntermediateDirectories: true)
-                }
-                // Set file protection: encrypted at rest until first unlock after reboot
-                try FileManager.default.setAttributes(
-                    [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
-                    ofItemAtPath: mmkvURL.path
-                )
-                // Exclude from backups
-                var resourceURL = mmkvURL
-                var resourceValues = URLResourceValues()
-                resourceValues.isExcludedFromBackup = true
-                try resourceURL.setResourceValues(resourceValues)
-                #if DEBUG && !targetEnvironment(simulator)
-                // Verify protections were applied correctly (file protection is only supported on physical devices)
-                let attrs = try FileManager.default.attributesOfItem(atPath: mmkvURL.path)
-                let protection = attrs[.protectionKey] as? FileProtectionType
-                assert(protection == .completeUntilFirstUserAuthentication,
-                       "MMKV directory missing file protection!")
+        // GuidePoint - Protect sensitive storage directories with file-level encryption
+        do {
+            let fileManager = FileManager.default
+            let protection: [FileAttributeKey: Any] = [
+                .protectionKey: FileProtectionType.completeUntilFirstUserAuthentication
+            ]
 
-                let verifyValues = try mmkvURL.resourceValues(forKeys: [.isExcludedFromBackupKey])
-                assert(verifyValues.isExcludedFromBackup == true,
-                       "MMKV directory not excluded from backups!")
-                #endif
-            } catch {
-                NSLog("BitPay: Failed to set MMKV directory protection: \(error)")
+            struct ProtectedPath {
+                let url: URL
+                let createIfMissing: Bool
+                let excludeFromBackup: Bool
+                let label: String
             }
+
+            var paths: [ProtectedPath] = []
+
+            // MMKV storage directory
+            if let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first {
+                paths.append(ProtectedPath(
+                    url: documentsURL.appendingPathComponent("mmkv"),
+                    createIfMissing: true, excludeFromBackup: true, label: "MMKV"))
+            }
+
+            // NSUserDefaults Preferences plist
+            if let libraryURL = fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first,
+               let bundleId = Bundle.main.bundleIdentifier {
+                let prefsURL = libraryURL.appendingPathComponent("Preferences")
+                paths.append(ProtectedPath(
+                    url: prefsURL,
+                    createIfMissing: false, excludeFromBackup: false, label: "Preferences"))
+                paths.append(ProtectedPath(
+                    url: prefsURL.appendingPathComponent("\(bundleId).plist"),
+                    createIfMissing: false, excludeFromBackup: false, label: "Preferences plist"))
+            }
+
+            for path in paths {
+                if path.createIfMissing && !fileManager.fileExists(atPath: path.url.path) {
+                    try fileManager.createDirectory(at: path.url, withIntermediateDirectories: true)
+                }
+                guard fileManager.fileExists(atPath: path.url.path) else { continue }
+
+                try fileManager.setAttributes(protection, ofItemAtPath: path.url.path)
+
+                if path.excludeFromBackup {
+                    var resourceURL = path.url
+                    var resourceValues = URLResourceValues()
+                    resourceValues.isExcludedFromBackup = true
+                    try resourceURL.setResourceValues(resourceValues)
+                }
+
+                #if DEBUG && !targetEnvironment(simulator)
+                let attrs = try fileManager.attributesOfItem(atPath: path.url.path)
+                assert(attrs[.protectionKey] as? FileProtectionType == .completeUntilFirstUserAuthentication,
+                       "\(path.label) missing file protection!")
+                if path.excludeFromBackup {
+                    let verifyValues = try path.url.resourceValues(forKeys: [.isExcludedFromBackupKey])
+                    assert(verifyValues.isExcludedFromBackup == true,
+                           "\(path.label) not excluded from backups!")
+                }
+                #endif
+            }
+        } catch {
+            NSLog("BitPay: Failed to set file protection: \(error)")
         }
 
         // Custom NSURLProtocol to whitelist URL prefixes
