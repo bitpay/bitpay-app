@@ -124,6 +124,7 @@ export interface AppState {
   pinModalConfig: PinModalConfig | undefined;
   pinLockActive: boolean;
   currentPin: string | undefined;
+  currentSalt: string | undefined;
   pinBannedUntil: number | undefined;
   showBlur: boolean;
   colorScheme: ColorSchemeName;
@@ -220,6 +221,7 @@ const initialState: AppState = {
   pinModalConfig: undefined,
   pinLockActive: false,
   currentPin: undefined,
+  currentSalt: undefined,
   pinBannedUntil: undefined,
   showBlur: false,
   colorScheme: null,
@@ -502,6 +504,12 @@ export const appReducer = (
       return {
         ...state,
         currentPin: action.payload,
+      };
+
+    case AppActionTypes.CURRENT_SALT:
+      return {
+        ...state,
+        currentSalt: action.payload,
       };
 
     case AppActionTypes.PIN_BANNED_UNTIL:
