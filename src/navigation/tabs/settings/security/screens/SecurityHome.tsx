@@ -122,6 +122,7 @@ const SecurityHome: React.FC<SecurityHomeProps> = ({navigation}) => {
 
   const removePin = () => {
     dispatch(AppActions.currentPin(undefined));
+    dispatch(AppActions.currentSalt(undefined));
     dispatch(AppActions.pinLockActive(false));
   };
 
