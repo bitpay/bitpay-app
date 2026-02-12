@@ -1,5 +1,5 @@
 diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
-index b5b61de..ece2ab6 100644
+index b5b61de..ec06f57 100644
 --- a/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
 +++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/common/encryption.js
 @@ -8,10 +8,10 @@ const crypto_1 = __importDefault(require("crypto"));
@@ -53,6 +53,36 @@ index b5b61de..ece2ab6 100644
          decipher.setAuthTag(authTag);
          let decrypted = decipher.update(ciphertext);
          decrypted = Buffer.concat([decrypted, decipher.final()]);
+@@ -82,13 +90,15 @@ class EncryptionClass {
+         }
+         catch (err) {
+             try {
+-                return sjcl_1.default.decrypt(key, data);
++                const sjclKey = sjcl_1.default.codec.base64.toBits(typeof key === 'string' ? key : key.toString('base64'));
++                return sjcl_1.default.decrypt(sjclKey, data);
+             }
+             catch {
+                 throw err;
+             }
+         }
+     }
++
+     decryptWithPassword(data, password) {
+         try {
+             const json = typeof data === 'string' ? JSON.parse(data) : data;
+diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
+index 43e3f5d..4767846 100644
+--- a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
++++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
+@@ -49,7 +49,7 @@ class Credentials {
+         const entropySource = crypto_wallet_core_1.BitcoreLib.crypto.Hash.sha256(priv.toBuffer()).toString('hex');
+         const b = Buffer.from(entropySource, 'hex');
+         const b2 = crypto_wallet_core_1.BitcoreLib.crypto.Hash.sha256hmac(b, Buffer.from(prefix));
+-        x.personalEncryptingKey = b2.subarray(0, 16).toString('base64');
++        x.personalEncryptingKey = Buffer.from(b2.subarray(0, 16)).toString('base64');
+         x.copayerId = common_1.Utils.xPubToCopayerId(x.chain, x.xPubKey);
+         x.publicKeyRing = [
+             {
 diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
 index d073bca..cdeaea3 100644
 --- a/node_modules/bitcore-wallet-client/ts_build/src/lib/tsskey.js
@@ -78,16 +108,3 @@ index d073bca..cdeaea3 100644
          __classPrivateFieldGet(this, _TssKeyGen_request, "f").setCredentials(__classPrivateFieldGet(this, _TssKeyGen_credentials, "f"));
          __classPrivateFieldSet(this, _TssKeyGen_requestPrivateKey, crypto_wallet_core_1.BitcoreLib.PrivateKey.fromString(__classPrivateFieldGet(this, _TssKeyGen_credentials, "f").requestPrivKey), "f");
          const baseXPrivKey = __classPrivateFieldGet(this, _TssKeyGen_key, "f").get(params.password).xPrivKey;
-diff --git a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js b/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
-index 43e3f5d..4767846 100644
---- a/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
-+++ b/node_modules/bitcore-wallet-client/ts_build/src/lib/credentials.js
-@@ -49,7 +49,7 @@ class Credentials {
-         const entropySource = crypto_wallet_core_1.BitcoreLib.crypto.Hash.sha256(priv.toBuffer()).toString('hex');
-         const b = Buffer.from(entropySource, 'hex');
-         const b2 = crypto_wallet_core_1.BitcoreLib.crypto.Hash.sha256hmac(b, Buffer.from(prefix));
--        x.personalEncryptingKey = b2.subarray(0, 16).toString('base64');
-+        x.personalEncryptingKey = Buffer.from(b2.subarray(0, 16)).toString('base64');
-         x.copayerId = common_1.Utils.xPubToCopayerId(x.chain, x.xPubKey);
-         x.publicKeyRing = [
-             {
