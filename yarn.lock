@@ -14523,10 +14523,10 @@ react-native-pager-view@6.7.1:
   resolved "https://registry.yarnpkg.com/react-native-pager-view/-/react-native-pager-view-6.7.1.tgz#60d52dedbcc92ee7037a13287ebeed5f74e49df7"
   integrity sha512-cBSr6xw4g5N7Kd3VGWcf+kmaH7iBWb0DXAf2bVo3bXkzBcBbTOmYSvc0LVLHhUPW8nEq5WjT9LCIYAzgF++EXw==
 
-react-native-passkey@3.3.1:
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/react-native-passkey/-/react-native-passkey-3.3.1.tgz#1d0e6d368f9a89df5e015b2de2325477b2021343"
-  integrity sha512-kR3Otud6E1NK1WVk8rpT8VUam1Y+pTUYobOPMd+Lpd1C1GN1wRMz0yLuIyUfbpDyRGTl0DZnDamBXmwaMNy2Mw==
+react-native-passkey@3.3.2:
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/react-native-passkey/-/react-native-passkey-3.3.2.tgz#1efe2c8fc875a9e73ba3f08fe83606bb7b6bb5e7"
+  integrity sha512-YgXERrBlgVHAYkxGPpncB0zoiRQfZyMMMlWfNTYMyKvOS6muFMlhzk6w5lG4FyEEVrvXHGV4AS6twbmt2Rv8GA==
 
 react-native-permissions@5.4.2:
   version "5.4.2"

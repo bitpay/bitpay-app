@@ -2033,7 +2033,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-passkey (3.3.1):
+  - react-native-passkey (3.3.2):
     - boost
     - DoubleConversion
     - fast_float
@@ -3891,7 +3891,7 @@ SPEC CHECKSUMS:
   react-native-mmkv: 31524b627cc06d5099f45c9128d8e918e0a4a71d
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: e17f0602f115f6a6a8953e58f2182dbe8eeb0bd5
-  react-native-passkey: b85aaca917594d530521f484f20fa829bcdcd0f8
+  react-native-passkey: a47610edc6e8a5b829f6679ac169bd9f87e5a51a
   react-native-print: f704aef52d931bfce6d1d84351dbb5232d7ecb89
   react-native-quick-crypto: 96d796b74a7b1d266950d0f631b57818659e138e
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
