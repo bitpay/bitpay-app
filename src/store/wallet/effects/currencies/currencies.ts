@@ -11,7 +11,11 @@ import {
   CurrencyOpts,
   SUPPORTED_VM_TOKENS,
 } from '../../../../constants/currencies';
-import {BASE_BWS_URL, BLOCKCHAIN_EXPLORERS} from '../../../../constants/config';
+import {
+  BASE_BWS_URL,
+  BLOCKCHAIN_EXPLORERS,
+  NO_CACHE_HEADERS,
+} from '../../../../constants/config';
 import {
   addTokenChainSuffix,
   getCurrencyAbbreviation,
@@ -35,6 +39,7 @@ export const startGetTokenOptions =
         try {
           const {data} = await axios.get<{[key in string]: Token}>(
             `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
+            {headers: NO_CACHE_HEADERS},
           );
           tokens = data;
         } catch (error) {

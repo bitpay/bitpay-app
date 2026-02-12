@@ -10,7 +10,11 @@ import {
   IsEVMChain,
 } from '../store/wallet/utils/currency';
 import {Rate, Rates} from '../store/rate/rate.models';
-import {BASE_BITCORE_URL, PROTOCOL_NAME} from '../constants/config';
+import {
+  BASE_BITCORE_URL,
+  PROTOCOL_NAME,
+  NO_CACHE_HEADERS,
+} from '../constants/config';
 import _ from 'lodash';
 import {NavigationProp, StackActions} from '@react-navigation/native';
 import {AppDispatch} from './hooks';
@@ -1416,7 +1420,7 @@ export const getSolanaATAs = async (
     BASE_BITCORE_URL.sol
   }/SOL/${_network}/ata/${address}`;
   try {
-    const apiResponse = await axios.get<any>(url);
+    const apiResponse = await axios.get<any>(url, {headers: NO_CACHE_HEADERS});
     if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
       logManager.debug(`No solana tokens found for address: ${address}`);
       return [];
@@ -1440,7 +1444,7 @@ export const getSolanaTokenInfo = async (
   const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
   const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/token/${splTokenAddress}`;
   try {
-    const apiResponse = await axios.get(url);
+    const apiResponse = await axios.get(url, {headers: NO_CACHE_HEADERS});
     if (!apiResponse?.data) {
       throw new Error(
         `No solana tokens found for splTokenAddress: ${splTokenAddress}`,
@@ -1466,7 +1470,10 @@ export async function sendSolanaTx(
 
   try {
     const resp = await axios.post(url, payload, {
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        ...NO_CACHE_HEADERS,
+        'Content-Type': 'application/json',
+      },
     });
     return {data: resp.data};
   } catch (err: any) {
@@ -1484,9 +1491,8 @@ export const getSolanaBlockTip = async (
 }> => {
   const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
   const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/block/tip`;
-
   try {
-    const apiResponse = await axios.get(url);
+    const apiResponse = await axios.get(url, {headers: NO_CACHE_HEADERS});
     if (!apiResponse?.data) {
       throw new Error(`No block tip data returned for network: ${_network}`);
     }
@@ -1657,6 +1663,7 @@ export const decodeSolanaTxIntructions = async (
   const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/decode`;
   const config = {
     headers: {
+      ...NO_CACHE_HEADERS,
       'Content-Type': 'application/json',
     },
   };

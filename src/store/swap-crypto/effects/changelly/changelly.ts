@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {t} from 'i18next';
-import {BASE_BWS_URL} from '../../../../constants/config';
+import {BASE_BWS_URL, NO_CACHE_HEADERS} from '../../../../constants/config';
 import {generateMessageId} from '../../../../navigation/services/swap-crypto/utils/changelly-utils';
 
 const bwsUri = BASE_BWS_URL;
@@ -15,6 +15,7 @@ export const changellyGetCurrencies = async (full?: boolean) => {
 
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };
@@ -49,6 +50,7 @@ export const changellyGetTransactions = async (exchangeTxId: string) => {
 
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };
@@ -84,6 +86,7 @@ export const changellyGetStatus = async (
 
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };

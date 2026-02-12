@@ -11,6 +11,7 @@ import {
 } from './zenledger.types';
 
 import {ZENLEDGER_CREDENTIALS, ZENLEDGER_API_URL} from './zenledger.constants';
+import {NO_CACHE_HEADERS} from '@/constants/config';
 
 const getAccessToken = async (): Promise<ZenledgerTokenProps> => {
   const url = ZENLEDGER_CREDENTIALS.token_endpoint;
@@ -20,6 +21,7 @@ const getAccessToken = async (): Promise<ZenledgerTokenProps> => {
     grant_type: ZENLEDGER_CREDENTIALS.grant_type,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
   };
   try {
@@ -37,6 +39,7 @@ const getSources = async (
 ): Promise<ZenledgerSourceResponse> => {
   const url = ZENLEDGER_API_URL + '/sources' + '?page=' + page;
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Authorization: 'Bearer ' + token.access_token,
   };
@@ -55,6 +58,7 @@ const getCurrencies = async (
 ): Promise<ZenledgerCurrenciesResponse> => {
   const url = ZENLEDGER_API_URL + '/currencies' + '?page=' + page;
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Authorization: 'Bearer ' + token.access_token,
   };
@@ -75,6 +79,9 @@ const getTaxes = async (
   const headers = {
     'Content-Type': 'application/json',
     Authorization: 'Bearer ' + token.access_token,
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
   };
   try {
     const {data} = await axios.get(url, {headers});
@@ -94,6 +101,7 @@ const createPortfolios = async (
     portfolio: wallets,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Authorization: 'Bearer ' + token.access_token,
   };

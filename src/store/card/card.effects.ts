@@ -17,7 +17,7 @@ import {CardActions} from '.';
 import {TTL} from './card.types';
 import {Card, DebitCardTopUpInvoiceParams} from './card.models';
 import {Invoice} from '../shop/shop.models';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import ApplePushProvisioningModule from '../../lib/apple-push-provisioning/ApplePushProvisioning';
 import {GeneralError} from '../../navigation/wallet/components/ErrorMessages';
 import GooglePushProvisioningModule from '../../lib/google-push-provisioning/GooglePushProvisioning';
@@ -203,6 +203,7 @@ export const startCreateDebitCardTopUpInvoice =
       const {data: invoiceId} = createInvoiceResponse as {data: string};
       const getInvoiceResponse = await axios.get(
         `${baseUrl}/invoices/${invoiceId}`,
+        {headers: NO_CACHE_HEADERS},
       );
       const {
         data: {data: invoice},

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {BASE_BWS_URL} from '../../../../constants/config';
+import {BASE_BWS_URL, NO_CACHE_HEADERS} from '../../../../constants/config';
 import {
   ThorswapCurrency,
   ThorswapGetCurrenciesRequestData,
@@ -17,6 +17,7 @@ export const thorswapGetCurrencies = async (
 
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };
@@ -40,6 +41,7 @@ export const thorswapGetSupportedChains = async (requestData: any) => {
 
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };
@@ -65,6 +67,7 @@ export const thorswapGetSwapTx = async (
 
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };

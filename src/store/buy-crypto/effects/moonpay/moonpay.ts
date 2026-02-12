@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {BASE_BWS_URL} from '../../../../constants/config';
+import {BASE_BWS_URL, NO_CACHE_HEADERS} from '../../../../constants/config';
 import {
   MoonpayGetCurrenciesRequestData,
   MoonpayGetCurrencyLimitsRequestData,
@@ -14,6 +14,7 @@ export const moonpayGetCurrencies = async (
   try {
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };
@@ -37,6 +38,7 @@ export const moonpayGetCurrencyLimits = async (
   try {
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };
@@ -84,6 +86,7 @@ export const moonpayGetTransactionDetails = async (
 
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };
@@ -130,6 +133,7 @@ export const moonpayGetSellTransactionDetails = async (
 
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };

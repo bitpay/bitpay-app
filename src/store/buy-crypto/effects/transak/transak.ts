@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {BASE_BWS_URL} from '../../../../constants/config';
+import {BASE_BWS_URL, NO_CACHE_HEADERS} from '../../../../constants/config';
 import {
   TransakFiatCurrenciesData,
   TransakGetOrderDetailsRequestData,
@@ -14,6 +14,7 @@ export const transakGetFiatCurrencies = async (requestData: {
   try {
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };
@@ -38,6 +39,7 @@ export const transakGetOrderDetails = async (
   try {
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };

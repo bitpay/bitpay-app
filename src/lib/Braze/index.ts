@@ -3,6 +3,7 @@ import axios from 'axios';
 import {BRAZE_MERGE_AND_DELETE_API_KEY, BRAZE_REST_API_ENDPOINT} from '@env';
 import {checkNotifications, RESULTS} from 'react-native-permissions';
 import {NativeModules, Platform} from 'react-native';
+import {NO_CACHE_HEADERS} from '../../constants/config';
 
 const nonCustomAttributes = [
   'country',
@@ -116,6 +117,7 @@ const mergeUsers = async (
     ],
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Authorization: 'Bearer ' + BRAZE_MERGE_AND_DELETE_API_KEY,
   };
@@ -133,6 +135,7 @@ const deleteUser = async (eid: string): Promise<any> => {
     external_ids: [eid],
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Authorization: 'Bearer ' + BRAZE_MERGE_AND_DELETE_API_KEY,
   };

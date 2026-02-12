@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {BASE_BWS_URL} from '../../../../constants/config';
+import {BASE_BWS_URL, NO_CACHE_HEADERS} from '../../../../constants/config';
 import {
   BanxaGetOrderDetailsRequestData,
   BanxaGetPaymentMethodsRequestData,
@@ -15,6 +15,7 @@ export const banxaGetPaymentMethods = async (
   try {
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };
@@ -39,6 +40,7 @@ export const banxaGetOrderDetails = async (
   try {
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'Content-Type': 'application/json',
       },
     };

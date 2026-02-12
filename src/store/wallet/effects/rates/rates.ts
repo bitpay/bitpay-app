@@ -1,6 +1,6 @@
 import {Effect} from '../../../index';
 import axios from 'axios';
-import {BASE_BWS_URL} from '../../../../constants/config';
+import {BASE_BWS_URL, NO_CACHE_HEADERS} from '../../../../constants/config';
 import {SUPPORTED_VM_TOKENS} from '../../../../constants/currencies';
 import {
   FiatRatePoint,
@@ -152,7 +152,9 @@ export const startGetRates =
         logManager.info(
           `startGetRates: get request to: ${BASE_BWS_URL}/v3/fiatrates/`,
         );
-        const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`);
+        const {data: rates} = await axios.get(`${BASE_BWS_URL}/v3/fiatrates/`, {
+          headers: NO_CACHE_HEADERS,
+        });
         logManager.info('startGetRates: success get request');
 
         logManager.info(
@@ -160,6 +162,9 @@ export const startGetRates =
         );
         const {data: lastDayRates} = await axios.get(
           `${BASE_BWS_URL}/v3/fiatrates?ts=${yesterday}`,
+          {
+            headers: NO_CACHE_HEADERS,
+          },
         );
         logManager.info('startGetRates: success get request (yesterday)');
 
@@ -371,7 +376,7 @@ export const getHistoricFiatRate = (
   return new Promise(async (resolve, reject) => {
     try {
       const url = `${BASE_BWS_URL}/v1/fiatrates/${fiatCode}?coin=${currencyAbbreviation}&ts=${ts}`;
-      const {data} = await axios.get(url);
+      const {data} = await axios.get(url, {headers: NO_CACHE_HEADERS});
       resolve(data);
     } catch (e) {
       reject(e);
@@ -422,7 +427,7 @@ export const fetchFiatRateSeriesInterval =
     }
 
     const url = getFiatRateSeriesUrl(fiatCode, interval);
-    const {data} = await axios.get(url);
+    const {data} = await axios.get(url, {headers: NO_CACHE_HEADERS});
     const fetchedOn = Date.now();
 
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
