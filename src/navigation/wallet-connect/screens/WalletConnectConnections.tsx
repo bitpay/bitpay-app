@@ -1,4 +1,4 @@
-import {useNavigation, useTheme} from '@react-navigation/native';
+import {useNavigation, useRoute, useTheme} from '@react-navigation/native';
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import styled from 'styled-components/native';
@@ -95,10 +95,15 @@ const Badge = styled.View`
   background: #ff647c;
 `;
 
+export type WalletConnectConnectionsParamList = {
+  showSuccessPopup?: boolean;
+};
+
 const WalletConnectConnections = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const theme = useTheme();
+  const route = useRoute();
   const [showSessionOptions, setShowSessionOptions] = useState(false);
   const [imageError, setImageError] = useState({});
   const sessions: WCV2SessionType[] = useAppSelector(
@@ -125,6 +130,30 @@ const WalletConnectConnections = () => {
   const dispatch = useAppDispatch();
   const {keys} = useAppSelector(({WALLET}) => WALLET);
   const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
+
+  useEffect(() => {
+    const params = route.params as
+      | WalletConnectConnectionsParamList;
+
+    if (params?.showSuccessPopup) {
+      dispatch(
+        showBottomNotificationModal({
+          type: 'success',
+          title: t('Connected successfully'),
+          message: t('You can now return to the dApp'),
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
+      navigation.setParams({showSuccessPopup: undefined});
+    }
+  }, []);
 
   const ConnectionItem = ({
     peerName,

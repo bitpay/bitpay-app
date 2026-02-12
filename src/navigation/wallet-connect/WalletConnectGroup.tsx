@@ -8,7 +8,9 @@ import WalletConnectIcon from '../../../assets/img/wallet-connect/wallet-connect
 import WalletConnectHome, {
   WalletConnectHomeParamList,
 } from './screens/WalletConnectHome';
-import WalletConnectConnections from './screens/WalletConnectConnections';
+import WalletConnectConnections, {
+  WalletConnectConnectionsParamList,
+} from './screens/WalletConnectConnections';
 import WalletConnectRequestDetails, {
   WalletConnectRequestDetailsParamList,
 } from './screens/WalletConnectRequestDetails';
@@ -48,7 +50,7 @@ export const WalletConnectHeader = () => {
 
 export type WalletConnectGroupParamList = {
   WalletConnectRoot: WalletConnectIntroParamList;
-  WalletConnectConnections: undefined;
+  WalletConnectConnections: WalletConnectConnectionsParamList;
   WalletConnectHome: WalletConnectHomeParamList;
   WalletConnectRequestDetails: WalletConnectRequestDetailsParamList;
   WalletConnectConfirm: WalletConnectConfirmParamList;
