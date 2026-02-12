@@ -509,21 +509,6 @@ export const ChevronContainer = styled.View`
   width: 20px;
 `;
 
-export const ExternalServicesTitleContainer = styled(Row)`
-  margin-top: 8px;
-  margin-left: 16px;
-  margin-right: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  align-content: center;
-`;
-
-export const ExternalServicesItemTopTitle = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : '#434d5a')};
-  line-height: 18px;
-`;
-
 export const AccountChainsContainer = styled(TouchableOpacity)<{
   padding?: string;
   maxWidth?: string;
