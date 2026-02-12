@@ -146,20 +146,20 @@ export const DklsWorkerHost = () => {
         }
 
         function preview(v) {
-          try { 
+          try {
             return JSON.stringify(v, (k, val) => val instanceof Uint8Array ? Array.from(val).slice(0, 16) + '…' : val).slice(0, 300);
           }
-          catch { 
-            return String(v).slice(0, 300); 
+          catch {
+            return String(v).slice(0, 300);
           }
         }
 
-        function isHandle(v) { 
-          return v && typeof v === 'object' && typeof v._id === 'number'; 
+        function isHandle(v) {
+          return v && typeof v === 'object' && typeof v._id === 'number';
         }
 
-        function isPlainMsg(v) { 
-          return v && typeof v === 'object' && ('payload' in v) && ('from_id' in v); 
+        function isPlainMsg(v) {
+          return v && typeof v === 'object' && ('payload' in v) && ('from_id' in v);
         }
 
         window.onerror = function (msg, src, line, col, err) {
@@ -241,7 +241,7 @@ export const DklsWorkerHost = () => {
           if (x == null) return undefined;
           if (x instanceof Uint8Array) return x;
           if (Array.isArray(x)) return new Uint8Array(x);
-          
+
           if (typeof x === "object") {
             const keys = Object.keys(x);
             const isArrayLike = keys.length > 0 && keys.every((k, i) => k === String(i));
@@ -249,9 +249,9 @@ export const DklsWorkerHost = () => {
               return new Uint8Array(Object.values(x));
             }
             throw new Error(
-              "toU8() requires Uint8Array or Array, got object with keys: [" + 
-              keys.slice(0, 5).join(', ') + 
-              (keys.length > 5 ? ', ...' : '') + 
+              "toU8() requires Uint8Array or Array, got object with keys: [" +
+              keys.slice(0, 5).join(', ') +
+              (keys.length > 5 ? ', ...' : '') +
               "]"
             );
           }
@@ -345,7 +345,7 @@ export const DklsWorkerHost = () => {
               if (className === 'SignSessionOTVariant') {
                 console.log('[Worker] Constructing SignSessionOTVariant');
                 console.log('[Worker] Raw args:', args);
-                
+
                 const processedArgs = args.map((arg, idx) => {
                   if (arg && typeof arg === 'object' && typeof arg._id === 'number') {
                     const obj = objects.get(arg._id);
@@ -354,22 +354,22 @@ export const DklsWorkerHost = () => {
                     }
                     return obj;
                   }
-                  
+
                   if (Array.isArray(arg)) {
                     return new Uint8Array(arg);
                   }
-                  
+
                   return arg;
                 });
-                
+
                 console.log('[Worker] Processed args ready');
-                
+
                 const session = new mod.SignSessionOTVariant(...processedArgs);
-                
+
                 const objId = nextId++;
                 objects.set(objId, session);
                 console.log('[Worker] SignSessionOTVariant created with objId:', objId);
-                
+
                 return reply(id, true, { objId });
               }
               if (className === "KeygenSession" && a.length >= 4) {
@@ -410,7 +410,7 @@ export const DklsWorkerHost = () => {
               const { objId, method, args } = data;
               const obj = objects.get(objId);
               if (!obj) throw new Error('Unknown objId ' + objId);
-              
+
               const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(obj), method);
               if (descriptor && descriptor.get) {
                 post({
@@ -424,7 +424,7 @@ export const DklsWorkerHost = () => {
                   return reply(id, true, normed);
                 }).catch(e => reply(id, false, String((e && e.message) || e)));
               }
-              
+
               const fn = obj[method];
               if (typeof fn !== 'function') throw new Error('No method ' + method);
                 if (method === 'toBytes') {
@@ -447,11 +447,11 @@ export const DklsWorkerHost = () => {
 
                 for (let i = 0; i < inMsgs.length; i++) {
                   let m = inMsgs[i];
-                  
+
                   post({
                     id: -996, ok: true,
-                    result: "[DKLS LOG] msg[" + i + "]: type=" + typeOf(m) + 
-                            ", isHandle=" + isHandle(m) + 
+                    result: "[DKLS LOG] msg[" + i + "]: type=" + typeOf(m) +
+                            ", isHandle=" + isHandle(m) +
                             ", isPlain=" + isPlainMsg(m) +
                             ", keys=" + (m && typeof m === 'object' ? Object.keys(m).join(',') : 'N/A')
                   });
@@ -502,12 +502,12 @@ export const DklsWorkerHost = () => {
                     payload: m && m.payload ? 'exists, len=' + (m.payload.length || -1) : 'missing',
                     from_id: m && m.from_id !== undefined ? m.from_id : 'missing',
                   };
-                  
+
                   post({
                     id: -992, ok: false,
                     result: "[DKLS ERROR] msg[" + i + "]: unknown type - " + JSON.stringify(errDetail)
                   });
-                  
+
                   throw new Error('Bad message entry for handleMessages at index ' + i + ': ' + JSON.stringify(errDetail));
                 }
 
@@ -522,7 +522,7 @@ export const DklsWorkerHost = () => {
                     id: -986, ok: true,
                     result: "[DKLS LOG] Converting commitments from Array to Uint8Array..."
                   });
-                  
+
                   commitments = commitments.map((c, idx) => {
                     if (Array.isArray(c)) {
                       const u8 = new Uint8Array(c);
@@ -548,12 +548,12 @@ export const DklsWorkerHost = () => {
                   if (!msg || !(msg instanceof dklsMod.Message)) {
                     throw new Error('outMsgs[' + i + '] its not a valid instance of Message');
                   }
-                  
+
                   try {
                     const payload = msg.payload;
                     const from = msg.from_id;
                     const to = msg.to_id;
-                    
+
                     post({
                       id: -989, ok: true,
                       result: "[DKLS LOG] Message[" + i + "] valid: payload.len=" + payload.length + ", from=" + from + ", to=" + to
@@ -584,11 +584,11 @@ export const DklsWorkerHost = () => {
 
                 for (let i = 0; i < inMsgs.length; i++) {
                   let m = inMsgs[i];
-                  
+
                   post({
                     id: -983, ok: true,
-                    result: "[DKLS LOG] combine msg[" + i + "]: type=" + typeOf(m) + 
-                            ", isHandle=" + isHandle(m) + 
+                    result: "[DKLS LOG] combine msg[" + i + "]: type=" + typeOf(m) +
+                            ", isHandle=" + isHandle(m) +
                             ", keys=" + (m && typeof m === 'object' ? Object.keys(m).join(',') : 'N/A')
                   });
 

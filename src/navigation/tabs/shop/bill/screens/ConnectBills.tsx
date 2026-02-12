@@ -1,6 +1,5 @@
 import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
-import {Platform} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import WebView from 'react-native-webview';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -15,6 +14,7 @@ import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {BillPayAccount} from '../../../../../store/shop/shop.models';
 import {getBillAccountEventParamsForMultipleBills} from '../utils';
 import {useOngoingProcess} from '../../../../../contexts';
+import {IS_ANDROID} from '../../../../../constants';
 
 const ConnectBills = ({
   navigation,
@@ -167,6 +167,8 @@ const ConnectBills = ({
               setIsWebViewShown(true);
             }, 1000);
           }}
+          cacheEnabled={false}
+          cacheMode={IS_ANDROID ? 'LOAD_NO_CACHE' : undefined}
         />
       ) : null}
     </>

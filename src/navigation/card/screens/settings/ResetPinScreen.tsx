@@ -9,6 +9,7 @@ import {CardActions, CardEffects} from '../../../../store/card';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {CardScreens, CardStackParamList} from '../../CardStack';
 import {logManager} from '../../../../managers/LogManager';
+import {IS_ANDROID} from '../../../../constants';
 
 export type ResetPinScreenParamList = {
   id: string;
@@ -247,6 +248,8 @@ const ResetPinScreen: React.FC<
           originWhitelist={['*']}
           javaScriptEnabled={true}
           onMessage={onMessage}
+          cacheEnabled={false}
+          cacheMode={IS_ANDROID ? 'LOAD_NO_CACHE' : undefined}
           injectedJavaScriptBeforeContentLoaded={`(() => {
               window.addEventListener('message', (event) => {
                 const {data, lastEventId, origin, ports} = event;
