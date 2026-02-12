@@ -1,5 +1,5 @@
 import {SettingsComponent} from '../SettingsRoot';
-import React, {useState} from 'react';
+import React, {useCallback} from 'react';
 import {
   InfoTriangle,
   Info,
@@ -12,10 +12,15 @@ import ToggleSwitch from '../../../../components/toggle-switch/ToggleSwitch';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {InfoDescription} from '../../../../components/styled/Text';
 import {useTranslation} from 'react-i18next';
-import {WalletActions} from '../../../../store/wallet';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import {useNavigation} from '@react-navigation/native';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import {
+  setCustomizeNonce,
+  setQueuedTransactions,
+  setTssEnabled,
+  setUseUnconfirmedFunds,
+} from '../../../../store/wallet/wallet.actions';
 
 const Crypto = () => {
   const dispatch = useAppDispatch();
@@ -28,11 +33,55 @@ const Crypto = () => {
     ({WALLET}) => WALLET.queuedTransactions,
   );
   const tssEnabled = useAppSelector(({WALLET}) => WALLET.tssEnabled);
-  const [showInfoUnconfirmed, setShowInfoUnconfirmed] = useState(false);
-  const [showInfoCustomizeEvm, setShowInfoCustomizeEvm] = useState(false);
-  const [showInfoEthQueued, setShowInfoEthQueued] = useState(false);
-  const [showInfoTss, setShowInfoTss] = useState(false);
   const navigation = useNavigation();
+
+  const handleToggleUnconfirmedFunds = useCallback(
+    (value: boolean) => {
+      dispatch(setUseUnconfirmedFunds(value));
+      dispatch(
+        Analytics.track('Set Use Unconfirmed Funds', {
+          useUnconfirmedFunds: value,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleToggleCustomizeNonce = useCallback(
+    (value: boolean) => {
+      dispatch(setCustomizeNonce(value));
+      dispatch(
+        Analytics.track('Set Customize Nonce', {
+          customizeNonce: value,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleToggleQueuedTransactions = useCallback(
+    (value: boolean) => {
+      dispatch(setQueuedTransactions(value));
+      dispatch(
+        Analytics.track('Set Queued Transactions', {
+          queuedTransactions: value,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleToggleTssEnabled = useCallback(
+    (value: boolean) => {
+      dispatch(setTssEnabled(value));
+      dispatch(
+        Analytics.track('Set TSS Enabled', {
+          tssEnabled: value,
+        }),
+      );
+    },
+    [dispatch],
+  );
 
   return (
     <SettingsComponent>
@@ -43,106 +92,69 @@ const Crypto = () => {
         <AngleRight />
       </Setting>
       <Hr />
-      <Setting
-        activeOpacity={1}
-        onPress={() => setShowInfoUnconfirmed(!showInfoUnconfirmed)}>
+      <Setting activeOpacity={1}>
         <SettingTitle>{t('Use Unconfirmed Funds')}</SettingTitle>
         <ToggleSwitch
-          onChange={value => {
-            dispatch(WalletActions.setUseUnconfirmedFunds(value));
-            dispatch(
-              Analytics.track('Set Use Unconfirmed Funds', {
-                value,
-              }),
-            );
-          }}
+          onChange={handleToggleUnconfirmedFunds}
           isEnabled={useUnconfirmedFunds}
         />
       </Setting>
-      {showInfoUnconfirmed ? (
-        <Info>
-          <InfoTriangle />
-          <InfoDescription>
-            {t(
-              'If enabled, wallets will also try to spend unconfirmed funds. However, unconfirmed funds are not allowed for spending with merchants, BitPay Card loads, or BitPay in-app gift card purchases.',
-            )}
-          </InfoDescription>
-        </Info>
-      ) : null}
+      <Info>
+        <InfoTriangle />
+        <InfoDescription>
+          {t(
+            'If enabled, wallets will also try to spend unconfirmed funds. However, unconfirmed funds are not allowed for spending with merchants, BitPay Card loads, or BitPay in-app gift card purchases.',
+          )}
+        </InfoDescription>
+      </Info>
       <Hr />
-      <Setting
-        activeOpacity={1}
-        onPress={() => setShowInfoCustomizeEvm(!showInfoCustomizeEvm)}>
+      <Setting activeOpacity={1}>
         <SettingTitle>{t('Customize Nonce')}</SettingTitle>
         <ToggleSwitch
-          onChange={value => {
-            dispatch(WalletActions.setCustomizeNonce(value));
-            dispatch(
-              Analytics.track('Set Customize Nonce', {
-                value,
-              }),
-            );
-          }}
+          onChange={handleToggleCustomizeNonce}
           isEnabled={customizeNonce}
         />
       </Setting>
-      {showInfoCustomizeEvm ? (
-        <Info>
-          <InfoTriangle />
-          <InfoDescription>
-            {t(
-              'If enabled, the transaction nonce could be changed on the confirm view. This is an advanced feature, use cautiously.',
-            )}
-          </InfoDescription>
-        </Info>
-      ) : null}
+      <Info>
+        <InfoTriangle />
+        <InfoDescription>
+          {t(
+            'If enabled, the transaction nonce could be changed on the confirm view. This is an advanced feature, use cautiously.',
+          )}
+        </InfoDescription>
+      </Info>
       <Hr />
-      <Setting
-        activeOpacity={1}
-        onPress={() => setShowInfoEthQueued(!showInfoEthQueued)}>
+      <Setting activeOpacity={1}>
         <SettingTitle>{t('ETH Queued transactions')}</SettingTitle>
         <ToggleSwitch
-          onChange={value =>
-            dispatch(WalletActions.setQueuedTransactions(value))
-          }
+          onChange={handleToggleQueuedTransactions}
           isEnabled={queuedTransactions}
         />
       </Setting>
-      {showInfoEthQueued ? (
-        <Info>
-          <InfoTriangle />
-          <InfoDescription>
-            {t(
-              'If enabled, your eth transactions will be queued if there is a pending transaction with a lower account nonce. This is an advanced feature, use cautiously.',
-            )}
-          </InfoDescription>
-        </Info>
-      ) : null}
+      <Info>
+        <InfoTriangle />
+        <InfoDescription>
+          {t(
+            'If enabled, your eth transactions will be queued if there is a pending transaction with a lower account nonce. This is an advanced feature, use cautiously.',
+          )}
+        </InfoDescription>
+      </Info>
       <Hr />
-      <Setting activeOpacity={1} onPress={() => setShowInfoTss(!showInfoTss)}>
+      <Setting activeOpacity={1}>
         <SettingTitle>{t('Enable TSS Wallets')}</SettingTitle>
         <ToggleSwitch
-          onChange={value => {
-            dispatch(WalletActions.setTssEnabled(value));
-            dispatch(
-              Analytics.track('Set TSS Enabled', {
-                value,
-              }),
-            );
-          }}
+          onChange={handleToggleTssEnabled}
           isEnabled={tssEnabled}
         />
       </Setting>
-      {showInfoTss ? (
-        <Info>
-          <InfoTriangle />
-          <InfoDescription>
-            {t(
-              'If enabled, you will be able to create and join TSS (Threshold Signature Scheme) wallets. This is an experimental feature.',
-            )}
-          </InfoDescription>
-        </Info>
-      ) : null}
+      <Info>
+        <InfoTriangle />
+        <InfoDescription>
+          {t(
+            'If enabled, you will be able to create and join TSS (Threshold Signature Scheme) wallets. This is an experimental feature.',
+          )}
+        </InfoDescription>
+      </Info>
     </SettingsComponent>
   );
 };

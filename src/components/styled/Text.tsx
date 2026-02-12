@@ -233,6 +233,7 @@ export const InfoHeader = styled.View`
 export const InfoDescription = styled(BaseText)`
   font-size: 16px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  line-height: 24px;
 `;
 
 // creation and add wallet
