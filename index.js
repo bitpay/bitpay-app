@@ -20,7 +20,7 @@ import 'react-native-url-polyfill/auto'; // https://github.com/facebook/react-na
 import {AppInitialization} from './src/AppInitialization';
 import {Analytics} from './src/store/analytics/analytics.effects';
 import {APP_VERSION} from './src/constants/config';
-import {GIT_COMMIT_HASH} from '@env';
+import {GIT_COMMIT_HASH, SENTRY_DSN} from '@env';
 import {LogActions} from './src/store/log';
 import {
   configureReanimatedLogger,
@@ -39,7 +39,33 @@ import {
 } from './src/contexts';
 import {BitPayDarkTheme, BitPayLightTheme} from './src/themes/bitpay';
 import {useAppSelector} from './src/utils/hooks';
-import { DklsWorkerHost } from './src/dkls/DklsWorker';
+import {DklsWorkerHost} from './src/dkls/DklsWorker';
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: SENTRY_DSN,
+  enabled: !__DEV__,
+  sendDefaultPii: false,
+  enableLogs: true,
+  beforeSend(event) {
+    if (event.contexts) {
+      delete event.contexts.trace;
+      delete event.contexts.app;
+    }
+    if (event.tags) {
+      delete event.tags.device;
+      delete event.tags.device_id;
+    }
+    return event;
+  },
+  beforeBreadcrumb(breadcrumb, hint) {
+    // Filter touch events - too verbose could affect performance
+    if (breadcrumb.category === 'touch') {
+      return null;
+    }
+    return breadcrumb;
+  }
+});
 
 const makeErrorHandler = store => (e, isFatal) => {
   if (isFatal) {
@@ -153,12 +179,12 @@ const AppWrapper = () => {
               <OngoingProcessProvider>
                 <BottomSheetModalProvider>
                   <BottomSheetProvider>
-                      <PaymentSentProvider>
-                        <DklsWorkerHost />
-                        <AppInitialization>
-                          <Root />
-                        </AppInitialization>
-                      </PaymentSentProvider>
+                    <PaymentSentProvider>
+                      <DklsWorkerHost />
+                      <AppInitialization>
+                        <Root />
+                      </AppInitialization>
+                    </PaymentSentProvider>
                   </BottomSheetProvider>
                 </BottomSheetModalProvider>
               </OngoingProcessProvider>
@@ -170,4 +196,4 @@ const AppWrapper = () => {
   );
 };
 
-AppRegistry.registerComponent(appName, () => ReduxProvider);
+AppRegistry.registerComponent(appName, () => Sentry.wrap(ReduxProvider));

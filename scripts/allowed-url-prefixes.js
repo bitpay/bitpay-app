@@ -19,6 +19,7 @@ const xcodeProjectPath = `${__dirname}/../ios/BitPayApp.xcodeproj/project.pbxpro
 const androidManifestPath = `${__dirname}/../android/app/src/main/AndroidManifest.xml`;
 const xcodeProjectContent = fs.readFileSync(xcodeProjectPath, 'utf8');
 const androidManifestContent = fs.readFileSync(androidManifestPath, 'utf8');
+const sentryDomain = `https://${new URL(process.env.SENTRY_DSN).hostname}/api/`;
 
 const developmentAssetsPrefix = 'http://localhost:8081';
 
@@ -76,6 +77,7 @@ const allowedUrlPrefixes = [
   'https://api.etherscan.io/v2/api',
   'https://solana-gateway.moralis.io/',
   'https://tokens-data.1inch.io/images/501/',
+  sentryDomain,
 ].concat(developmentOnlyAllowedUrlPrefixes);
 
 const allowedUrlPrefixString = allowedUrlPrefixes.join(',');
