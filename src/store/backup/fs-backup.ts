@@ -32,8 +32,9 @@ export async function backupFileExists(): Promise<boolean> {
     return true;
   }
   try {
-    const cachedBackupExists = await RNFS.exists(FINAL_FILE);
-    return cachedBackupExists;
+    const exists = await RNFS.exists(FINAL_FILE);
+    cachedBackupExists = exists;
+    return exists;
   } catch (_) {
     return false;
   }
@@ -46,6 +47,7 @@ export async function backupPersistRoot(rawJson: string): Promise<void> {
       const parsed = JSON.parse(rawJson);
       delete parsed.RATE;
       delete parsed.SHOP_CATALOG;
+      delete parsed.PORTFOLIO;
       filtered = JSON.stringify(parsed);
     } catch (_) {
       // If parse fails, keep raw json — better to have a backup than none

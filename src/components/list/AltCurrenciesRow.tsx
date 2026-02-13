@@ -7,6 +7,7 @@ import {
   SlateDark,
   White,
   Black,
+  GhostWhite,
 } from '../../styles/colors';
 import {useTheme, css} from 'styled-components/native';
 import {Column} from '../styled/Containers';
@@ -16,7 +17,7 @@ const AltCurrencyContainer = styled.TouchableHighlight<{selected?: boolean}>`
   ${({selected}) =>
     selected &&
     css`
-      background: ${({theme: {dark}}) => (dark ? LightBlack : '#FBFBFF')};
+      background: ${({theme: {dark}}) => (dark ? LightBlack : GhostWhite)};
     `};
   padding: 13px 15px;
 `;
