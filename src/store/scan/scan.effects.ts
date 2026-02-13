@@ -2429,46 +2429,97 @@ const handleTransakUri =
     });
   };
 
+function extractWcUri(incomingUrl: string): string | null {
+  if (incomingUrl.startsWith('wc:')) {
+    return incomingUrl;
+  }
+
+  try {
+    const url = new URL(incomingUrl);
+    const raw = url.searchParams.get('uri');
+
+    if (!raw) {
+      logManager.error('[WC/extractWcUri] No uri parameter found');
+      return null;
+    }
+
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(raw);
+    } catch {
+      decoded = raw;
+    }
+
+    if (!decoded.startsWith('wc:')) {
+      logManager.error('[WC/extractWcUri] URI does not start with wc:');
+      return null;
+    }
+
+    const hasRelayProtocol = decoded.includes('relay-protocol');
+    const hasSymKey = decoded.includes('symKey');
+
+    if (!hasRelayProtocol || !hasSymKey) {
+      const topic = decoded.match(/wc:([^@]+)/)?.[1] || 'unknown';
+      logManager.error(
+        `[WC/extractWcUri] Missing required params. Topic: ${topic}`,
+      );
+      return null;
+    }
+
+    logManager.info('[WC/extractWcUri] Valid URI extracted');
+    return decoded;
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    logManager.error(`[WC/extractWcUri] Error: ${errMsg}`);
+    return null;
+  }
+}
+
 const handleWalletConnectUri =
   (data: string): Effect<void> =>
   async (dispatch, getState) => {
+    const uri = extractWcUri(data);
     try {
-      if (isValidWalletConnectUri(data)) {
-        const {version} = parseUri(data);
-        if (version === 1) {
-          const errMsg = t(
-            'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
-          );
-          throw errMsg;
-        } else {
-          let decodedUri: string;
-          try {
-            const url = new URL(data);
-            const rawUri = url.searchParams.get('uri');
-            try {
-              decodedUri = rawUri ? decodeURIComponent(rawUri) : data;
-            } catch {
-              decodedUri = rawUri || data;
-            }
-            await dispatch(walletConnectV2OnSessionProposal(decodedUri));
-          } catch {
-            await dispatch(walletConnectV2OnSessionProposal(data));
-          }
-          navigationRef.navigate('WalletConnectRoot', {});
-        }
-      } else {
+      if (!uri) {
+        const errMsg = t('Failed to extract valid WalletConnect URI');
+        logManager.error(`[WC/handleWalletConnectUri] ${errMsg}`);
+        throw new Error(errMsg);
+      }
+
+      if (!isValidWalletConnectUri(uri)) {
         const errMsg = t('The URI does not correspond to WalletConnect.');
+        logManager.error(`[WC/handleWalletConnectUri] Validation failed`);
         throw errMsg;
       }
+
+      const {version} = parseUri(uri);
+      logManager.info(`[WC/handleWalletConnectUri] Version: ${version}`);
+
+      if (version === 1) {
+        const errMsg = t(
+          'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+        );
+        logManager.warn(`[WC/handleWalletConnectUri] ${errMsg}`);
+        throw errMsg;
+      }
+
+      logManager.info('[WC/handleWalletConnectUri] Initiating pairing');
+      await dispatch(walletConnectV2OnSessionProposal(uri));
+      navigationRef.navigate('WalletConnectRoot', {});
+      logManager.info('[WC/handleWalletConnectUri] Pairing initiated');
     } catch (e: any) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      logManager.error(`[WC/handleWalletConnectUri] ERROR: ${errMsg}`);
+
       const proposal = getState().WALLET_CONNECT_V2.proposal;
       if (
         typeof e === 'object' &&
         e !== null &&
         e.message?.includes('Pairing already exists:')
       ) {
+        logManager.warn('[WC/handleWalletConnectUri] Pairing already exists');
         if (proposal) {
-          navigationRef.navigate('WalletConnectRoot', {uri: data});
+          navigationRef.navigate('WalletConnectRoot', {uri: uri ?? undefined});
         } else {
           dispatch(
             showBottomNotificationModal(
