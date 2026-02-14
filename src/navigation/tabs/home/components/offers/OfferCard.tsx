@@ -15,6 +15,7 @@ import {logManager} from '../../../../../managers/LogManager';
 import {BaseText} from '../../../../../components/styled/Text';
 import {
   Black,
+  CharcoalBlack,
   LightBlack,
   Slate,
   Slate30,
@@ -185,7 +186,7 @@ const CoverImageFallback = styled.View`
 
 const OfferContent = styled.View`
   padding: 18px 20px 16px;
-  background: ${({theme: {dark}}) => (dark ? '#111' : White)};
+  background: ${({theme: {dark}}) => (dark ? CharcoalBlack : White)};
   border-top-width: 1px;
   border-top-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
 `;

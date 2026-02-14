@@ -172,7 +172,7 @@ import {logManager} from '../../../managers/LogManager';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
 import {AllocationRowsList} from '../../tabs/home/screens/Allocation';
-import {buildAllocationDataFromWalletRows} from '../../../utils/allocation';
+import {buildAllocationDataFromWalletRows} from '../../../utils/portfolio/allocation';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;

@@ -44,6 +44,7 @@ import GhostSvg from '../../../../../assets/img/ghost-cheeky.svg';
 import {useTranslation} from 'react-i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import {isGiftCardDisplayable} from '../../../../lib/gift-cards/gift-card';
+import {GhostWhite} from '../../../../styles/colors';
 
 const ZeroState = styled.View`
   justify-content: center;
@@ -204,7 +205,7 @@ export default ({
     [availableGiftCards, dispatch],
   );
 
-  const underlayColor = theme.dark ? '#121212' : '#fbfbff';
+  const underlayColor = theme.dark ? '#121212' : GhostWhite;
 
   const memoizedCurations = useMemo(
     () => <Curations curations={curations} underlayColor={underlayColor} />,

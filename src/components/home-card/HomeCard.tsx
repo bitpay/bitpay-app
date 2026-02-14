@@ -1,7 +1,13 @@
 import * as React from 'react';
 import {ReactElement, ReactNode} from 'react';
 import styled, {useTheme} from 'styled-components/native';
-import {LightBlack, Slate30, SlateDark, White} from '../../styles/colors';
+import {
+  CharcoalBlack,
+  LightBlack,
+  Slate30,
+  SlateDark,
+  White,
+} from '../../styles/colors';
 import Haptic from '../haptic-feedback/haptic';
 import {
   ActiveOpacity,
@@ -24,7 +30,7 @@ interface BodyProps {
   value?: string;
   pillText?: string;
   needsBackup?: boolean;
-  percentageDifference?: number;
+  percentageDifference?: number | null;
   hideKeyBalance: boolean;
 }
 
@@ -114,8 +120,11 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
       ) : !hideKeyBalance ? (
         <>
           {value && <CardPrice scale={shouldScale(value)}>{value}</CardPrice>}
-          {percentageDifference ? (
-            <Percentage percentageDifference={percentageDifference} />
+          {percentageDifference || percentageDifference === 0 ? (
+            <Percentage
+              percentageDifference={percentageDifference}
+              fractionDigits={2}
+            />
           ) : null}
           {pillText && (
             <CardPill>
@@ -147,7 +156,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
         body={BodyComp}
         footer={FooterComp}
         style={{
-          backgroundColor: theme.dark ? '#111' : White,
+          backgroundColor: theme.dark ? CharcoalBlack : White,
           borderColor: theme.dark ? LightBlack : Slate30,
           borderWidth: 1,
           height: HOME_CARD_HEIGHT,

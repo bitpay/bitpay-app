@@ -71,6 +71,62 @@ export const sleep = (duration: number) =>
 export const titleCasing = (str: string) =>
   `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
 
+export const unitStringToAtomicBigInt = (
+  value: string | undefined,
+  unitDecimals: number,
+): bigint => {
+  try {
+    if (!value || typeof value !== 'string') {
+      return 0n;
+    }
+
+    const trimmed = value.trim().replace(/,/g, '');
+    if (!trimmed) {
+      return 0n;
+    }
+
+    const negative = trimmed.startsWith('-');
+    const normalized = negative ? trimmed.slice(1) : trimmed;
+    const [intPartRaw, fracRaw = ''] = normalized.split('.');
+
+    const sanitizedInt = intPartRaw.replace(/[^0-9]/g, '') || '0';
+    const sanitizedFrac = fracRaw.replace(/[^0-9]/g, '');
+    const fracPadded = (sanitizedFrac + '0'.repeat(unitDecimals)).slice(
+      0,
+      unitDecimals,
+    );
+
+    const intPart = BigInt(sanitizedInt || '0');
+    const fracPart = fracPadded ? BigInt(fracPadded) : 0n;
+    const denom = 10n ** BigInt(unitDecimals);
+    const atomic = intPart * denom + fracPart;
+    return negative ? -atomic : atomic;
+  } catch {
+    return 0n;
+  }
+};
+
+export const atomicToUnitString = (
+  atomic: bigint,
+  unitDecimals: number,
+): string => {
+  const negative = atomic < 0n;
+  const abs = negative ? -atomic : atomic;
+  const denom = 10n ** BigInt(unitDecimals);
+  const intPart = abs / denom;
+  const fracPart = abs % denom;
+
+  if (unitDecimals === 0) {
+    return `${negative ? '-' : ''}${intPart.toString()}`;
+  }
+
+  let frac = fracPart.toString().padStart(unitDecimals, '0');
+  frac = frac.replace(/0+$/, '');
+  const base = intPart.toString();
+  const withFrac = frac.length ? `${base}.${frac}` : base;
+  return `${negative ? '-' : ''}${withFrac}`;
+};
+
 export const changeOpacity = (color: string, targetOpacity: number) => {
   const hex = color.replace('#', '');
 
@@ -365,6 +421,15 @@ export const calculatePercentageDifference = (
   );
 };
 
+export const getLastDayTimestampStartOfHourMs = (
+  nowMs: number = Date.now(),
+): number => {
+  const MS_PER_HOUR = 60 * 60 * 1000;
+  const MS_PER_DAY = 24 * MS_PER_HOUR;
+  const lastDay = nowMs - MS_PER_DAY;
+  return Math.floor(lastDay / MS_PER_HOUR) * MS_PER_HOUR;
+};
+
 export const formatFiatAmountObj = (
   amount: number,
   currency: string = 'USD',
@@ -412,7 +477,22 @@ export const convertToFiat = (
   network === Network.mainnet && !hideWallet && !hideWalletByAccount ? fiat : 0;
 
 export const getErrorString = (err: any): string => {
-  return err instanceof Error ? err.message : JSON.stringify(err);
+  if (err instanceof Error) {
+    return err.message;
+  }
+  if (typeof err === 'string') {
+    return err;
+  }
+  try {
+    const str = JSON.stringify(err);
+    return typeof str === 'string' ? str : String(err);
+  } catch {
+    try {
+      return String(err);
+    } catch {
+      return 'Unknown error';
+    }
+  }
 };
 
 export const getBadgeImg = (

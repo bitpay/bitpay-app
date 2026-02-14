@@ -29,6 +29,14 @@ export const upsertFiatRateSeriesCache = (payload: {
   payload,
 });
 
+export const pruneFiatRateSeriesCache = (payload: {
+  fiatCode: string;
+  keepCoins?: string[];
+}): RateActionType => ({
+  type: RateActionTypes.PRUNE_FIAT_RATE_SERIES_CACHE,
+  payload,
+});
+
 export const clearRateState = (): RateActionType => ({
   type: RateActionTypes.CLEAR_RATE_STATE,
 });

@@ -4,6 +4,7 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Svg, {Circle, G} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
+import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {
   ActiveOpacity,
@@ -17,12 +18,27 @@ import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
 import {
   buildAllocationDataFromWalletRows,
   type AllocationWallet,
-} from '../../../../utils/allocation';
-import {Black, Slate30, SlateDark, White} from '../../../../styles/colors';
+  toAllocationWallet,
+} from '../../../../utils/portfolio/allocation';
+import {
+  getVisibleWalletsFromKeys,
+  walletHasNonZeroLiveBalance,
+} from '../../../../utils/portfolio/assets';
+import {
+  Black,
+  CharcoalBlack,
+  GhostWhite,
+  LightBlack,
+  NeutralSlate,
+  Slate30,
+  SlateDark,
+  White,
+} from '../../../../styles/colors';
 
 export type AllocationLegendItem = {
   key: string;
   label: string;
+  isOther?: boolean;
   value?: string;
   color: {
     light: string;
@@ -131,6 +147,9 @@ const DonutChart = ({
   const theme = useTheme();
   const radius = (size - strokeWidth) / 2;
   const total = slices.reduce((sum, s) => sum + s.value, 0);
+  const hasValidTotal = Number.isFinite(total) && total > 0;
+  const hasSlices = slices.length > 0;
+  const shouldRenderNeutralRing = !hasSlices || !hasValidTotal;
   const segmentBorderColor = theme.dark ? SlateDark : Slate30;
 
   const isSingleSliceFull =
@@ -146,7 +165,93 @@ const DonutChart = ({
   const outerCircumference = 2 * Math.PI * outerEdgeRadius;
   const innerCircumference = 2 * Math.PI * innerEdgeRadius;
   const gapAngle = gap / radius;
+
+  if (shouldRenderNeutralRing) {
+    return (
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <G rotation={-90} originX={size / 2} originY={size / 2}>
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={segmentBorderColor}
+            strokeWidth={strokeWidth}
+            fill="transparent"
+          />
+        </G>
+      </Svg>
+    );
+  }
+
+  const sliceFragments: React.ReactElement[] = [];
   let cumulativeAngle = 0;
+
+  if (!isSingleSliceFull) {
+    for (const slice of slices) {
+      const color = theme.dark ? slice.color.dark : slice.color.light;
+      const segmentAngle = (slice.value / total) * 2 * Math.PI;
+      const adjustedSegmentAngle = Math.max(0, segmentAngle - gapAngle);
+
+      const dashArray = `${adjustedSegmentAngle * radius} ${circumference}`;
+      const dashOffset = -((cumulativeAngle + gapAngle / 2) * radius);
+
+      const outerDashArray = `${
+        adjustedSegmentAngle * outerEdgeRadius
+      } ${outerCircumference}`;
+      const outerDashOffset = -(
+        (cumulativeAngle + gapAngle / 2) *
+        outerEdgeRadius
+      );
+
+      const innerDashArray = `${
+        adjustedSegmentAngle * innerEdgeRadius
+      } ${innerCircumference}`;
+      const innerDashOffset = -(
+        (cumulativeAngle + gapAngle / 2) *
+        innerEdgeRadius
+      );
+
+      cumulativeAngle += segmentAngle;
+
+      sliceFragments.push(
+        <React.Fragment key={slice.key}>
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeDasharray={dashArray}
+            strokeDashoffset={dashOffset}
+            strokeLinecap="butt"
+            fill="transparent"
+          />
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={outerEdgeRadius}
+            stroke={segmentBorderColor}
+            strokeWidth={edgeBorderWidth}
+            strokeDasharray={outerDashArray}
+            strokeDashoffset={outerDashOffset}
+            strokeLinecap="butt"
+            fill="transparent"
+          />
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={innerEdgeRadius}
+            stroke={segmentBorderColor}
+            strokeWidth={edgeBorderWidth}
+            strokeDasharray={innerDashArray}
+            strokeDashoffset={innerDashOffset}
+            strokeLinecap="butt"
+            fill="transparent"
+          />
+        </React.Fragment>,
+      );
+    }
+  }
 
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -189,73 +294,7 @@ const DonutChart = ({
             />
           </>
         ) : null}
-        {slices.map(slice => {
-          if (isSingleSliceFull) {
-            return null;
-          }
-          const color = theme.dark ? slice.color.dark : slice.color.light;
-          const segmentAngle = (slice.value / total) * 2 * Math.PI;
-          const adjustedSegmentAngle = Math.max(0, segmentAngle - gapAngle);
-
-          const dashArray = `${adjustedSegmentAngle * radius} ${circumference}`;
-          const dashOffset = -((cumulativeAngle + gapAngle / 2) * radius);
-
-          const outerDashArray = `${
-            adjustedSegmentAngle * outerEdgeRadius
-          } ${outerCircumference}`;
-          const outerDashOffset = -(
-            (cumulativeAngle + gapAngle / 2) *
-            outerEdgeRadius
-          );
-
-          const innerDashArray = `${
-            adjustedSegmentAngle * innerEdgeRadius
-          } ${innerCircumference}`;
-          const innerDashOffset = -(
-            (cumulativeAngle + gapAngle / 2) *
-            innerEdgeRadius
-          );
-
-          cumulativeAngle += segmentAngle;
-
-          return (
-            <React.Fragment key={slice.key}>
-              <Circle
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                stroke={color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={dashArray}
-                strokeDashoffset={dashOffset}
-                strokeLinecap="butt"
-                fill="transparent"
-              />
-              <Circle
-                cx={size / 2}
-                cy={size / 2}
-                r={outerEdgeRadius}
-                stroke={segmentBorderColor}
-                strokeWidth={edgeBorderWidth}
-                strokeDasharray={outerDashArray}
-                strokeDashoffset={outerDashOffset}
-                strokeLinecap="butt"
-                fill="transparent"
-              />
-              <Circle
-                cx={size / 2}
-                cy={size / 2}
-                r={innerEdgeRadius}
-                stroke={segmentBorderColor}
-                strokeWidth={edgeBorderWidth}
-                strokeDasharray={innerDashArray}
-                strokeDashoffset={innerDashOffset}
-                strokeLinecap="butt"
-                fill="transparent"
-              />
-            </React.Fragment>
-          );
-        })}
+        {sliceFragments}
       </G>
     </Svg>
   );
@@ -270,15 +309,39 @@ export const AllocationDonutLegendCard: React.FC<{
   isLoading?: boolean;
 }> = ({legendItems, slices, style, header, footer, isLoading}) => {
   const theme = useTheme();
+  const {t} = useTranslation();
   const leftColumn = legendItems.slice(0, 3);
   const rightColumn = legendItems.slice(3);
+  const renderLegendColumn = (items: AllocationLegendItem[]) => {
+    return (
+      <LegendColumn>
+        {items.map(item => {
+          const dotColor = theme.dark ? item.color.dark : item.color.light;
+
+          return (
+            <LegendItemRow key={item.key}>
+              <LegendDot color={dotColor} />
+              <LegendText>
+                <LegendCurrencyAbbreviationText>
+                  {item.isOther ? t('Other') : item.label}
+                </LegendCurrencyAbbreviationText>
+                {item.value ? (
+                  <LegendPercentageText>{` ${item.value}`}</LegendPercentageText>
+                ) : null}
+              </LegendText>
+            </LegendItemRow>
+          );
+        })}
+      </LegendColumn>
+    );
+  };
 
   if (isLoading) {
     const holeColor =
       (theme as any)?.colors?.background || (theme.dark ? Black : White);
 
-    const skeletonBackgroundColor = theme.dark ? '#111' : '#F5F7F8';
-    const skeletonHighlightColor = theme.dark ? '#252525' : '#FBFBFF';
+    const skeletonBackgroundColor = theme.dark ? CharcoalBlack : NeutralSlate;
+    const skeletonHighlightColor = theme.dark ? LightBlack : GhostWhite;
     const skeletonRowHeight = 12;
     const skeletonRowWidth = 68;
     const skeletonRowBorderRadius = 2;
@@ -366,45 +429,8 @@ export const AllocationDonutLegendCard: React.FC<{
         </DonutContainer>
 
         <LegendGrid>
-          <LegendColumn>
-            {leftColumn.map(item => {
-              const dotColor = theme.dark ? item.color.dark : item.color.light;
-
-              return (
-                <LegendItemRow key={item.key}>
-                  <LegendDot color={dotColor} />
-                  <LegendText>
-                    <LegendCurrencyAbbreviationText>
-                      {item.label}
-                    </LegendCurrencyAbbreviationText>
-                    {item.value ? (
-                      <LegendPercentageText>{` ${item.value}`}</LegendPercentageText>
-                    ) : null}
-                  </LegendText>
-                </LegendItemRow>
-              );
-            })}
-          </LegendColumn>
-
-          <LegendColumn>
-            {rightColumn.map(item => {
-              const dotColor = theme.dark ? item.color.dark : item.color.light;
-
-              return (
-                <LegendItemRow key={item.key}>
-                  <LegendDot color={dotColor} />
-                  <LegendText>
-                    <LegendCurrencyAbbreviationText>
-                      {item.label}
-                    </LegendCurrencyAbbreviationText>
-                    {item.value ? (
-                      <LegendPercentageText>{` ${item.value}`}</LegendPercentageText>
-                    ) : null}
-                  </LegendText>
-                </LegendItemRow>
-              );
-            })}
-          </LegendColumn>
+          {renderLegendColumn(leftColumn)}
+          {renderLegendColumn(rightColumn)}
         </LegendGrid>
       </ContentRow>
       {footer}
@@ -414,34 +440,25 @@ export const AllocationDonutLegendCard: React.FC<{
 
 const AllocationSection: React.FC = () => {
   const navigation = useNavigation();
+  const {t} = useTranslation();
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+
+  const visibleWallets = useMemo(
+    () => getVisibleWalletsFromKeys(keys, homeCarouselConfig),
+    [keys, homeCarouselConfig],
+  );
 
   const hasAnyVisibleWalletBalance = useMemo(() => {
-    const wallets = (Object.values(keys) as Key[])
-      .flatMap((k: Key) => k.wallets)
-      .filter((w: Wallet) => !w.hideWallet && !w.hideWalletByAccount);
-
-    return wallets.some(
-      (w: Wallet) => (Number((w.balance as any)?.sat) || 0) > 0,
-    );
-  }, [keys]);
+    return visibleWallets.some(walletHasNonZeroLiveBalance);
+  }, [visibleWallets]);
 
   const walletRows: AllocationWallet[] = useMemo(() => {
-    const wallets = (Object.values(keys) as Key[])
-      .flatMap((k: Key) => k.wallets)
-      .filter((w: Wallet) => !w.hideWallet && !w.hideWalletByAccount);
-
-    return wallets.map((w: Wallet) => {
-      return {
-        currencyAbbreviation: w.currencyAbbreviation,
-        chain: w.chain,
-        tokenAddress: w.tokenAddress,
-        currencyName: w.currencyName,
-        fiatBalance: (w.balance as any)?.fiat,
-      };
+    return visibleWallets.map((w: Wallet) => {
+      return toAllocationWallet(w);
     });
-  }, [keys]);
+  }, [visibleWallets]);
 
   const allocationData = useMemo(() => {
     return buildAllocationDataFromWalletRows(
@@ -453,7 +470,7 @@ const AllocationSection: React.FC = () => {
   return (
     <Container>
       <Header>
-        <HomeSectionTitle>Allocation</HomeSectionTitle>
+        <HomeSectionTitle>{t('Allocation')}</HomeSectionTitle>
         <HeaderAction
           activeOpacity={ActiveOpacity}
           hitSlop={{top: 20, bottom: 20, left: 20, right: 20}}
