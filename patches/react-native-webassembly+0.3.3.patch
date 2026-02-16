@@ -1,3 +1,15 @@
+diff --git a/node_modules/react-native-webassembly/android/CMakeLists.txt b/node_modules/react-native-webassembly/android/CMakeLists.txt
+index 0f879e0..e5992c2 100644
+--- a/node_modules/react-native-webassembly/android/CMakeLists.txt
++++ b/node_modules/react-native-webassembly/android/CMakeLists.txt
+@@ -64,6 +64,7 @@ find_package(ReactAndroid REQUIRED CONFIG)
+ 
+ target_link_libraries(
+         cpp
++        "-Wl,-z,max-page-size=16384"
+         ${log-lib}
+         ReactAndroid::jsi
+         android
 diff --git a/node_modules/react-native-webassembly/android/build.gradle b/node_modules/react-native-webassembly/android/build.gradle
 index 5643083..9185c73 100644
 --- a/node_modules/react-native-webassembly/android/build.gradle
