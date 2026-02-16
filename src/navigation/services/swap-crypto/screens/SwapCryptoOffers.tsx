@@ -1377,7 +1377,7 @@ const SwapCryptoOffers: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      logger.debug('Cleanup on unmount...');
+      logger.debug('SwapCryptoOffers cleanup on unmount...');
       unmountView = true;
     };
   }, []);

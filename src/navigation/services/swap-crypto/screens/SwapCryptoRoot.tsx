@@ -56,7 +56,6 @@ import {
 import {SwapCryptoGroupParamList, SwapCryptoScreens} from '../SwapCryptoGroup';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import FromWalletSelectorModal from '../components/FromWalletSelectorModal';
-import AmountModal from '../../../../components/amount/AmountModal';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {
   changellyGetPairsParams,
@@ -109,7 +108,6 @@ import {
 import SwapWalletBalanceSvg from '../../../../../assets/img/swap-crypto/swap-wallet-balance.svg';
 import ArrowDown from '../../../../../assets/img/swap-crypto/down-arrow.svg';
 import InfoSvg from '../../../../../assets/img/info.svg';
-import SwapCurrenciesSvg from '../../../../../assets/img/swap-currencies.svg';
 import {AppActions} from '../../../../store/app';
 import {useTranslation} from 'react-i18next';
 import {
@@ -232,6 +230,7 @@ import Checkbox from '../../../../components/checkbox/Checkbox';
 import SwapCryptoTxDataSkeleton from './SwapCryptoTxDataSkeleton';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
 import SwapCryptoFiatSwitcherIcon from '../../../../components/icons/external-services/swap/SwapCryptoFiatSwitcherIcon';
+import BottomAmountModal from '../components/BottomAmountModal';
 
 export type SwapCryptoRootScreenParams =
   | {
@@ -364,6 +363,7 @@ const SwapCryptoRoot: React.FC = () => {
   const [useDefaultToWallet, setUseDefaultToWallet] = useState<boolean>(false);
   const [toWalletSelected, setToWalletSelected] = useState<Wallet>();
   const [amountFrom, setAmountFrom] = useState<number>(0);
+  const [confirmedAmountFrom, setConfirmedAmountFrom] = useState<number>();
   const [amountTo, setAmountTo] = useState<number>();
   const [formatedAmountFrom, setFormatedAmountFrom] = useState<string>('');
   const [swapCryptoSupportedCoinsFrom, setSwapCryptoSupportedCoinsFrom] =
@@ -397,6 +397,7 @@ const SwapCryptoRoot: React.FC = () => {
     minAmount: undefined,
     maxAmount: undefined,
   });
+  const [selectedPillValue, setSelectedPillValue] = useState<number | string>();
 
   // Checkout props
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
@@ -540,6 +541,53 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
+  // Handle real-time amount changes from AmountModal
+  const handleAmountChange = useCallback(
+    (newAmount: number, fromPill?: boolean, isValid?: boolean) => {
+      setAmountFrom(newAmount);
+
+      if (fromWalletSelected) {
+        const {currencyAbbreviation, chain, tokenAddress} = fromWalletSelected;
+        const precision = dispatch(
+          GetPrecision(currencyAbbreviation, chain, tokenAddress),
+        );
+        if (precision) {
+          const totalSat = newAmount * precision.unitToSatoshi;
+          const formatedAmount = formatFiatAmount(
+            dispatch(
+              toFiat(
+                totalSat,
+                defaultAltCurrency.isoCode,
+                currencyAbbreviation,
+                chain,
+                rates,
+                tokenAddress,
+              ),
+            ),
+            defaultAltCurrency.isoCode,
+          );
+          setFormatedAmountFrom(formatedAmount);
+        }
+      }
+
+      // Clear previous offer data when amount changes
+      setSelectedOffer(undefined);
+      setCtxp(undefined);
+      setTxData(undefined);
+
+      if (fromPill) {
+        hideModal('amount');
+        checkAmount(newAmount);
+      }
+    },
+    [fromWalletSelected, dispatch, defaultAltCurrency.isoCode, rates],
+  );
+
+  const handleOnBackdropPress = useCallback(() => {
+    hideModal('amount');
+    checkAmount(amountFrom);
+  }, [amountFrom]);
+
   const canContinue = useMemo(() => {
     return (
       !!toWalletSelected &&
@@ -634,6 +682,7 @@ const SwapCryptoRoot: React.FC = () => {
     }
 
     setAmountFrom(0);
+    setConfirmedAmountFrom(undefined);
     setSelectedOffer(undefined);
     setCtxp(undefined);
     setTxData(undefined);
@@ -641,6 +690,7 @@ const SwapCryptoRoot: React.FC = () => {
     setFormatedAmountFrom('');
     setUseSendMax(false);
     setSendMaxInfo(undefined);
+    setSelectedPillValue(undefined);
     setLoading(false);
     setLoadingEnterAmountBtn(false);
     setRateData(undefined);
@@ -1053,40 +1103,67 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
-  const checkAmount = () => {
-    if (!fromWalletSelected || !amountFrom) {
-      setLoading(false);
-      return;
-    }
+  const checkAmount = useCallback(
+    (amountFrom: number) => {
+      if (!fromWalletSelected || !amountFrom) {
+        setLoading(false);
+        return;
+      }
 
-    if (fromWalletSelected?.balance?.satSpendable) {
-      const spendableAmount = dispatch(
-        SatToUnit(
-          fromWalletSelected.balance.satSpendable,
-          fromWalletSelected.currencyAbbreviation,
-          fromWalletSelected.chain,
-          fromWalletSelected.tokenAddress,
-        ),
-      );
+      let msg: string | undefined;
+      let amountFromIsInvalid = false;
+      let spendableAmount: number | undefined;
 
-      if (!!spendableAmount && spendableAmount < amountFrom) {
-        const msg = t(
+      if (fromWalletSelected.balance?.satSpendable) {
+        spendableAmount = dispatch(
+          SatToUnit(
+            fromWalletSelected.balance.satSpendable,
+            fromWalletSelected.currencyAbbreviation,
+            fromWalletSelected.chain,
+            fromWalletSelected.tokenAddress,
+          ),
+        );
+      }
+
+      if (spendableAmount && spendableAmount < amountFrom) {
+        msg = t(
           'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
         );
-        showError({msg});
+        amountFromIsInvalid = true;
+      } else if (swapLimits?.minAmount && amountFrom < swapLimits.minAmount) {
+        msg = t(
+          'You are trying to send less than the minimum amount for this exchange.',
+        );
+        amountFromIsInvalid = true;
+      } else if (swapLimits?.maxAmount && amountFrom > swapLimits.maxAmount) {
+        msg = t(
+          'You are trying to send more than the maximum amount for this exchange.',
+        );
+        amountFromIsInvalid = true;
+      } else {
+        msg = undefined;
+        amountFromIsInvalid = false;
+      }
+
+      if (amountFromIsInvalid) {
+        showError({msg: msg});
         setLoading(false);
         setAmountFrom(0);
+        setConfirmedAmountFrom(undefined);
         setSelectedOffer(undefined);
         setCtxp(undefined);
         setTxData(undefined);
         setFormatedAmountFrom('');
         setUseSendMax(false);
         setSendMaxInfo(undefined);
+        setSelectedPillValue(undefined);
         setRateData(undefined);
-        return;
+      } else {
+        setConfirmedAmountFrom(amountFrom);
       }
-    }
-  };
+    },
+    [fromWalletSelected, swapLimits, dispatch, t],
+  );
 
   const checkIfErc20Token = () => {
     const tokensWarn = async () => {
@@ -2074,7 +2151,7 @@ const SwapCryptoRoot: React.FC = () => {
                   BitpaySupportedCoins[fromWalletSelected.chain]?.feeCurrency,
                   fromWalletSelected.chain,
                   rates,
-                  fromWalletSelected.tokenAddress,
+                  undefined,
                 ),
               ),
               defaultAltCurrency.isoCode,
@@ -2688,10 +2765,6 @@ const SwapCryptoRoot: React.FC = () => {
   }, [fromWalletSelected, toWalletSelected]);
 
   useEffect(() => {
-    checkAmount();
-  }, [amountFrom]);
-
-  useEffect(() => {
     if (selectedOffer) {
       if (countDownRef.current) {
         clearInterval(countDownRef.current);
@@ -2853,7 +2926,17 @@ const SwapCryptoRoot: React.FC = () => {
                             showModal('amount');
                           }}>
                           {displayInFiat ? (
-                            <AmountText numberOfLines={1} ellipsizeMode="tail">
+                            <AmountText
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
+                              textLength={
+                                !amountFrom || amountFrom === 0
+                                  ? formatFiatAmount(
+                                      0,
+                                      defaultAltCurrency.isoCode,
+                                    )?.length
+                                  : formatedAmountFrom?.length
+                              }>
                               {!amountFrom || amountFrom === 0
                                 ? formatFiatAmount(
                                     0,
@@ -2862,23 +2945,22 @@ const SwapCryptoRoot: React.FC = () => {
                                 : formatedAmountFrom}
                             </AmountText>
                           ) : (
-                            <>
-                              {useSendMax ? (
-                                <DataText style={{fontSize: 18}}>
-                                  {t('Maximum Amount')}
-                                </DataText>
-                              ) : (
-                                <AmountText
-                                  numberOfLines={1}
-                                  ellipsizeMode="tail">
-                                  {!amountFrom || amountFrom === 0
-                                    ? '0.00'
-                                    : amountFrom
-                                        .toFixed(6)
-                                        .replace(/\.?0+$/, '')}
-                                </AmountText>
-                              )}
-                            </>
+                            <AmountText
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
+                              textLength={
+                                !amountFrom || amountFrom === 0
+                                  ? 4
+                                  : cloneDeep(amountFrom)
+                                      .toFixed(6)
+                                      .replace(/\.?0+$/, '')?.length
+                              }>
+                              {!amountFrom || amountFrom === 0
+                                ? '0'
+                                : cloneDeep(amountFrom)
+                                    .toFixed(6)
+                                    .replace(/\.?0+$/, '')}
+                            </AmountText>
                           )}
                         </AmountClickableContainer>
                       ) : (
@@ -2933,31 +3015,20 @@ const SwapCryptoRoot: React.FC = () => {
                     toWalletSelected ? (
                       <>
                         {displayInFiat ? (
-                          <>
-                            {useSendMax ? (
-                              <DataText
-                                style={{
-                                  marginRight: 8,
-                                }}>
-                                {t('Maximum Amount')}
-                              </DataText>
-                            ) : (
-                              <DataText
-                                numberOfLines={1}
-                                ellipsizeMode="tail"
-                                style={{
-                                  marginRight: 8,
-                                }}>
-                                {!amountFrom || amountFrom === 0
-                                  ? '0.00' +
-                                    ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`
-                                  : amountFrom
-                                      .toFixed(6)
-                                      .replace(/\.?0+$/, '') +
-                                    ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`}
-                              </DataText>
-                            )}
-                          </>
+                          <DataText
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                            style={{
+                              marginRight: 8,
+                            }}>
+                            {!amountFrom || amountFrom === 0
+                              ? '0.00' +
+                                ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`
+                              : cloneDeep(amountFrom)
+                                  .toFixed(6)
+                                  .replace(/\.?0+$/, '') +
+                                ` ${fromWalletSelected.currencyAbbreviation.toUpperCase()}`}
+                          </DataText>
                         ) : (
                           <DataText
                             style={{
@@ -3104,11 +3175,20 @@ const SwapCryptoRoot: React.FC = () => {
                 ) : displayInFiat ? (
                   <>
                     {selectedOffer?.amountReceivingFiat ? (
-                      <AmountText numberOfLines={1} ellipsizeMode="tail">
+                      <AmountText
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        textLength={selectedOffer.amountReceivingFiat?.length}>
                         {selectedOffer.amountReceivingFiat}
                       </AmountText>
                     ) : (
-                      <AmountText numberOfLines={1} ellipsizeMode="tail">
+                      <AmountText
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        textLength={
+                          formatFiatAmount(0, defaultAltCurrency.isoCode)
+                            ?.length
+                        }>
                         {formatFiatAmount(0, defaultAltCurrency.isoCode)}
                       </AmountText>
                     )}
@@ -3118,15 +3198,21 @@ const SwapCryptoRoot: React.FC = () => {
                     {selectedOffer ? (
                       <AmountClickableContainer onPress={() => {}}>
                         {selectedOffer.amountReceiving ? (
-                          <AmountText numberOfLines={1} ellipsizeMode="tail">
+                          <AmountText
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                            textLength={selectedOffer.amountReceiving?.length}>
                             {selectedOffer.amountReceiving || 0}
                           </AmountText>
                         ) : null}
                       </AmountClickableContainer>
                     ) : (
                       <View>
-                        <AmountText numberOfLines={1} ellipsizeMode="tail">
-                          {'0.00'}
+                        <AmountText
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                          textLength={4}>
+                          {'0'}
                         </AmountText>
                       </View>
                     )}
@@ -3218,7 +3304,7 @@ const SwapCryptoRoot: React.FC = () => {
           {fromWalletSelected &&
             toWalletSelected &&
             isTSSWallet &&
-            amountFrom && (
+            amountFrom ? (
               <TSSProgressTracker
                 status={tssStatus}
                 progress={tssProgress}
@@ -3231,13 +3317,16 @@ const SwapCryptoRoot: React.FC = () => {
                 onModalVisibilityChange={setShowTSSProgressModal}
                 context={'swapCrypto'}
               />
-            )}
+            ) : null}
 
           <OfferContainer>
-            {fromWalletSelected && toWalletSelected && amountFrom ? (
+            {fromWalletSelected &&
+            toWalletSelected &&
+            amountFrom &&
+            confirmedAmountFrom ? (
               <OfferSelectorContainer isSmallScreen={_isSmallScreen}>
                 <SwapCryptoOfferSelector
-                  amountFrom={amountFrom}
+                  amountFrom={confirmedAmountFrom}
                   coinFrom={fromWalletSelected.currencyAbbreviation}
                   chainFrom={fromWalletSelected.chain}
                   coinTo={toWalletSelected.currencyAbbreviation}
@@ -3486,7 +3575,8 @@ const SwapCryptoRoot: React.FC = () => {
         </GlobalSelectContainer>
       </SheetModal>
 
-      <AmountModal
+      <BottomAmountModal
+        amountEnteredIsFiat={displayInFiat}
         isVisible={amountModalVisible}
         modalTitle={t('Swap Amount')}
         context={'swapCrypto'}
@@ -3499,97 +3589,68 @@ const SwapCryptoRoot: React.FC = () => {
         cryptoCurrencyAbbreviation={fromWalletSelected?.currencyAbbreviation.toUpperCase()}
         tokenAddress={fromWalletSelected?.tokenAddress}
         chain={fromWalletSelected?.chain}
-        onClose={() => hideModal('amount')}
-        onSubmit={newAmount => {
-          hideModal('amount');
-          setUseSendMax(false);
-          setSendMaxInfo(undefined);
-          setCtxp(undefined);
-          setTxData(undefined);
-          setSelectedOffer(undefined);
-          setAmountFrom(newAmount);
-          const {currencyAbbreviation, chain, tokenAddress} =
-            fromWalletSelected!;
-          const precision = dispatch(
-            GetPrecision(currencyAbbreviation, chain, tokenAddress),
-          );
-          if (!precision) {
-            return;
-          }
-          const totalSat = Number(newAmount) * precision.unitToSatoshi;
-          const formatedAmount = formatFiatAmount(
-            dispatch(
-              toFiat(
-                totalSat,
-                defaultAltCurrency.isoCode,
-                currencyAbbreviation!,
-                chain!,
-                rates,
-                tokenAddress!,
-              ),
-            ),
-            defaultAltCurrency.isoCode,
-          );
-          setFormatedAmountFrom(formatedAmount);
-        }}
-        onSendMaxPressed={async () => {
-          hideModal('amount');
-
-          if (!fromWalletSelected) {
-            return;
-          }
-
-          setCtxp(undefined);
-          setTxData(undefined);
-          setSelectedOffer(undefined);
-
-          let newAmount: number | undefined;
-
-          if (
-            IsERCToken(
-              fromWalletSelected.currencyAbbreviation,
-              fromWalletSelected.chain,
-            )
-          ) {
-            setUseSendMax(true);
+        initialAmount={amountFrom}
+        onAmountChange={handleAmountChange}
+        onBackdropPress={handleOnBackdropPress}
+        pillsOpts={{
+          selectedValue: selectedPillValue,
+          onPillPress: async pillValue => {
+            // Clean previous state related to amount when a pill is pressed
+            setUseSendMax(false);
             setSendMaxInfo(undefined);
-            newAmount = Number(
-              // @ts-ignore
-              fromWalletSelected.balance.cryptoSpendable.replaceAll(',', ''),
-            );
-          } else {
-            setUseSendMax(true);
-            const data = await getSendMaxData();
-            setSendMaxInfo(data);
-            if (data?.amount) {
-              newAmount = dispatch(
-                SatToUnit(
-                  data.amount,
-                  fromWalletSelected.currencyAbbreviation,
-                  fromWalletSelected.chain,
-                  fromWalletSelected.tokenAddress,
-                ),
-              );
-            }
-          }
+            setConfirmedAmountFrom(undefined);
+            setSelectedOffer(undefined);
+            setCtxp(undefined);
+            setTxData(undefined);
 
-          if (newAmount) {
-            setAmountFrom(newAmount);
-            const formatedAmount = formatFiatAmount(
-              dispatch(
-                toFiat(
-                  newAmount,
-                  defaultAltCurrency.isoCode,
+            setSelectedPillValue(pillValue);
+            if (pillValue === 'max') {
+              if (!fromWalletSelected) {
+                return;
+              }
+
+              setCtxp(undefined);
+              setTxData(undefined);
+              setSelectedOffer(undefined);
+
+              let newAmount: number | undefined;
+
+              if (
+                IsERCToken(
                   fromWalletSelected.currencyAbbreviation,
                   fromWalletSelected.chain,
-                  rates,
-                  fromWalletSelected.tokenAddress,
-                ),
-              ),
-              defaultAltCurrency.isoCode,
-            );
-            setFormatedAmountFrom(formatedAmount);
-          }
+                )
+              ) {
+                setUseSendMax(true);
+                setSendMaxInfo(undefined);
+                newAmount = Number(
+                  // @ts-ignore
+                  fromWalletSelected.balance.cryptoSpendable.replaceAll(
+                    ',',
+                    '',
+                  ),
+                );
+              } else {
+                setUseSendMax(true);
+                const data = await getSendMaxData();
+                setSendMaxInfo(data);
+                if (data?.amount) {
+                  newAmount = dispatch(
+                    SatToUnit(
+                      data.amount,
+                      fromWalletSelected.currencyAbbreviation,
+                      fromWalletSelected.chain,
+                      fromWalletSelected.tokenAddress,
+                    ),
+                  );
+                }
+              }
+
+              if (newAmount) {
+                handleAmountChange(newAmount, true);
+              }
+            }
+          },
         }}
       />
     </>

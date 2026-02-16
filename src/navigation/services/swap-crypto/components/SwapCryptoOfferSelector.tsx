@@ -1304,7 +1304,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
 
   useEffect(() => {
     return () => {
-      logger.debug('Cleanup on unmount...');
+      logger.debug('SwapCryptoOfferSelector cleanup on unmount...');
       unmountView = true;
     };
   }, []);

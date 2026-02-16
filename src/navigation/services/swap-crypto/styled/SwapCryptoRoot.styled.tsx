@@ -1,5 +1,6 @@
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
+import {WIDTH} from '../../../../components/styled/Containers';
 import {BaseText, H7} from '../../../../components/styled/Text';
 import {
   SlateDark,
@@ -12,6 +13,21 @@ import {
   LinkBlue,
   Slate30,
 } from '../../../../styles/colors';
+
+const SMALL_SCREEN_WIDTH_THRESHOLD = 420;
+
+// Helper function to calculate font size based on text length
+const getAmountFontSize = (textLength?: number): string => {
+  if (WIDTH >= SMALL_SCREEN_WIDTH_THRESHOLD) {
+    return '32px';
+  }
+  // Dynamic font size for small screens
+  if (!textLength || textLength <= 8) return '32px';
+  if (textLength <= 10) return '26px';
+  if (textLength <= 14) return '22px';
+  if (textLength <= 18) return '18px';
+  return '16px';
+};
 
 export const CtaContainer = styled.View`
   margin: 20px 15px;
@@ -274,12 +290,13 @@ export const DataText = styled(BaseText)`
   text-align: center;
 `;
 
-export const AmountText = styled(BaseText)`
-  font-size: 32px;
+export const AmountText = styled(BaseText)<{textLength?: number}>`
+  font-size: ${({textLength}) => getAmountFontSize(textLength)};
   font-weight: 700;
   letter-spacing: 0px;
   text-align: center;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  flex-shrink: 1;
 `;
 
 export const BottomDataText = styled(BaseText)`
