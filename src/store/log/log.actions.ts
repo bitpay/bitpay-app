@@ -78,7 +78,9 @@ function _log(
         });
         break;
       case 'Error':
-        Sentry.captureException(new Error(message), {
+        Sentry.addBreadcrumb({
+          category: 'log',
+          message: message,
           level: 'error',
         });
         break;

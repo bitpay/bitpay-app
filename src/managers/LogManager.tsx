@@ -109,7 +109,9 @@ class LogManager {
         });
         break;
       case 'Error':
-        Sentry.captureException(new Error(message), {
+        Sentry.addBreadcrumb({
+          category: 'log',
+          message,
           level: 'error',
         });
         break;
@@ -135,6 +137,11 @@ class LogManager {
   }
 
   error(...messages: (string | null | undefined)[]) {
+    this._log(LogLevel.Error, ...messages);
+  }
+
+  captureError(err: Error, ...messages: (string | null | undefined)[]) {
+    Sentry.captureException(err, {level: 'error'});
     this._log(LogLevel.Error, ...messages);
   }
 }
