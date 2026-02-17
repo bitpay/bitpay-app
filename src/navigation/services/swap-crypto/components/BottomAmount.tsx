@@ -81,15 +81,15 @@ export interface LimitsOpts {
   };
 }
 
-export type AmountContext = 'swapCrypto';
+export type BottomAmountContext = 'swapCrypto';
 
-export interface AmountProps {
+export interface BottomAmountProps {
   amountEnteredIsFiat: boolean;
   cryptoCurrencyAbbreviation?: string;
   fiatCurrencyAbbreviation?: string;
   tokenAddress?: string;
   chain?: string;
-  context?: AmountContext;
+  context?: BottomAmountContext;
   buttonState?: ButtonState;
   limitsOpts?: LimitsOpts;
   pillsOpts?: BottomAmountPillsProps;
@@ -109,7 +109,7 @@ export interface AmountProps {
   onSubmit?: (amount: number) => void;
 }
 
-const BottomAmount: React.FC<AmountProps> = ({
+const BottomAmount: React.FC<BottomAmountProps> = ({
   amountEnteredIsFiat,
   initialAmount,
   cryptoCurrencyAbbreviation,
@@ -511,7 +511,7 @@ const BottomAmount: React.FC<AmountProps> = ({
           <VirtualKeyboardContainer>
             <VirtualKeyboard
               onCellPress={onCellPress}
-              showDot={fiatCurrency !== 'JPY'}
+              showDot={!primaryIsFiat || fiatCurrency !== 'JPY'}
               context={'swapCrypto'}
             />
           </VirtualKeyboardContainer>

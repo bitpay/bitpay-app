@@ -26,7 +26,6 @@ import {
   Slate30,
 } from '../../../../styles/colors';
 import {
-  CtaContainer,
   SwapCryptoCard,
   ArrowContainer,
   SelectedOptionCol,
@@ -1190,45 +1189,6 @@ const SwapCryptoRoot: React.FC = () => {
         amountFrom: amountFrom,
       }),
     );
-
-    // navigation.navigate(SwapCryptoScreens.SWAP_CRYPTO_OFFERS, {
-    //   selectedWalletFrom: fromWalletSelected!,
-    //   coinFrom: fromWalletSelected!.currencyAbbreviation,
-    //   chainFrom: fromWalletSelected!.chain,
-    //   amountFrom: amountFrom,
-    //   selectedWalletTo: toWalletSelected!,
-    //   coinTo: toWalletSelected!.currencyAbbreviation,
-    //   chainTo: toWalletSelected!.chain,
-    //   country: locationData?.countryShortCode,
-    //   swapCryptoConfig: swapCryptoConfig,
-    //   preSetPartner: preSetPartner,
-    //   preLoadPartnersData: swapCryptoExchangesDefault,
-    //   useSendMax: IsERCToken(
-    //     fromWalletSelected!.currencyAbbreviation,
-    //     fromWalletSelected!.chain,
-    //   )
-    //     ? false
-    //     : useSendMax,
-    //   sendMaxInfo: sendMaxInfo,
-    // });
-
-    // TODO: review all this redirection!
-
-    const fixedRateId = (selectedOffer?.quoteData as ChangellyRateResult)?.id;
-
-    navigation.navigate(SwapCryptoScreens.CHANGELLY_CHECKOUT, {
-      fromWalletSelected: fromWalletSelected!,
-      toWalletSelected: toWalletSelected!,
-      fixedRateId: fixedRateId,
-      amountFrom: amountFrom,
-      useSendMax: IsERCToken(
-        fromWalletSelected!.currencyAbbreviation,
-        fromWalletSelected!.chain,
-      )
-        ? false
-        : useSendMax,
-      sendMaxInfo: sendMaxInfo,
-    });
   };
 
   const filterChangellyCurrenciesConditions = (
@@ -1839,7 +1799,7 @@ const SwapCryptoRoot: React.FC = () => {
       dispatch(
         Analytics.track('Failed Crypto Swap', {
           exchange: 'changelly',
-          context: 'ChangellyCheckout',
+          context: 'SwapCryptoRoot - ChangellyCheckout',
           reasonForFailure: 'Time to make the payment expired',
           amountFrom: amountFrom || '',
           fromCoin:
@@ -3302,22 +3262,22 @@ const SwapCryptoRoot: React.FC = () => {
           </SwapCryptoCard>
 
           {fromWalletSelected &&
-            toWalletSelected &&
-            isTSSWallet &&
-            amountFrom ? (
-              <TSSProgressTracker
-                status={tssStatus}
-                progress={tssProgress}
-                createdBy={fromWalletSelected?.walletName || 'You'}
-                date={new Date()}
-                wallet={fromWalletSelected}
-                copayers={tssCopayers}
-                onCopayersInitialized={setTssCopayers}
-                isModalVisible={showTSSProgressModal}
-                onModalVisibilityChange={setShowTSSProgressModal}
-                context={'swapCrypto'}
-              />
-            ) : null}
+          toWalletSelected &&
+          isTSSWallet &&
+          amountFrom ? (
+            <TSSProgressTracker
+              status={tssStatus}
+              progress={tssProgress}
+              createdBy={fromWalletSelected?.walletName || 'You'}
+              date={new Date()}
+              wallet={fromWalletSelected}
+              copayers={tssCopayers}
+              onCopayersInitialized={setTssCopayers}
+              isModalVisible={showTSSProgressModal}
+              onModalVisibilityChange={setShowTSSProgressModal}
+              context={'swapCrypto'}
+            />
+          ) : null}
 
           <OfferContainer>
             {fromWalletSelected &&

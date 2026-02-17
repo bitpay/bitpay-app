@@ -98,9 +98,7 @@ const AmountModal: React.FC<AmountModalProps> = props => {
           {modalTitle && !showArchaxBanner ? (
             <ModalHeaderText>{modalTitle}</ModalHeaderText>
           ) : null}
-          {onSendMaxPressed &&
-          (!props.context ||
-            !['sellCrypto', 'swapCrypto'].includes(props.context)) ? (
+          {onSendMaxPressed ? (
             <ModalHeaderRight>
               <Button
                 buttonType="pill"
