@@ -88,6 +88,7 @@ const makeErrorHandler = store => (e, isFatal) => {
     );
     const errStr = e instanceof Error ? e.message : JSON.stringify(e);
     store.dispatch(LogActions.persistLog(LogActions.error(errStr)));
+    Sentry.captureException(e, {level: 'fatal'});
     Alert.alert(
       'Unexpected error occurred',
       `
