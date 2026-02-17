@@ -106,6 +106,7 @@ import {
 } from '../../../../utils/helper-methods';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
+import * as Sentry from '@sentry/react-native';
 
 const BWC = BwcProvider.getInstance();
 const BwcConstants = BWC.getConstants();
@@ -161,6 +162,7 @@ export const startMigrationMMKVStorage =
           LogActions.error('[migrationMMKVStorage] failed - ', errStr),
         ),
       );
+      Sentry.captureException(err, {level: 'error'});
     }
   };
 
@@ -717,6 +719,7 @@ export const startAddEDDSAKey =
             ),
           ),
         );
+        Sentry.captureException(err, {level: 'error'});
       }
     }
     dispatch(
