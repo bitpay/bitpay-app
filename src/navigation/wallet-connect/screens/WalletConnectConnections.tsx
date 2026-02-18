@@ -132,8 +132,7 @@ const WalletConnectConnections = () => {
   const [allKeys, setAllkeys] = useState<KeyWalletsRowProps[]>();
 
   useEffect(() => {
-    const params = route.params as
-      | WalletConnectConnectionsParamList;
+    const params = route.params as WalletConnectConnectionsParamList;
 
     if (params?.showSuccessPopup) {
       dispatch(
