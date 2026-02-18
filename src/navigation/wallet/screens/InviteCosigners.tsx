@@ -429,7 +429,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const [isCeremonyComplete, setIsCeremonyComplete] = useState(false);
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [isInviteShared, setIsInviteShared] = useState(false);
-  const [hasClickedShare, setHasClickedShare] = useState(false);
 
   useEffect(() => {
     if (pendingJoinCode && currentStep === 2) {
@@ -508,7 +507,6 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       await Share.share({
         message: pendingJoinCode,
       });
-      setHasClickedShare(true);
     } catch (err: any) {
       logger.error(`Share error: ${err.message}`);
     }
@@ -614,7 +612,8 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
               <Button
                 buttonStyle="primary"
                 onPress={handleAddCoSigner}
-                disabled={!sessionId.trim()}>
+                disabled={!sessionId.trim()}
+                touchableLibrary={'react-native'}>
                 {t('Continue')}
               </Button>
             </InputContainer>
@@ -703,7 +702,10 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
                   {t('{{name}} added', {name: selectedCopayer?.name || ''})}
                 </StatusText>
                 <ButtonWrapper>
-                  <Button buttonStyle="primary" onPress={handleCloseModal}>
+                  <Button
+                    buttonStyle="primary"
+                    onPress={handleCloseModal}
+                    touchableLibrary={'react-native'}>
                     {isLastCopayer ? t('Continue') : t('Add Another Co-signer')}
                   </Button>
                 </ButtonWrapper>
@@ -766,13 +768,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
             </StepContentWithButton>
 
             {currentStep === 2 && pendingJoinCode && (
-              <ContinuePillButton
-                onPress={handleAlreadyShared}
-                disabled={!hasClickedShare}
-                style={{
-                  opacity: hasClickedShare ? 1 : 0,
-                  pointerEvents: hasClickedShare ? 'auto' : 'none',
-                }}>
+              <ContinuePillButton onPress={handleAlreadyShared}>
                 <ContinuePillText>{t('Next')}</ContinuePillText>
               </ContinuePillButton>
             )}
@@ -824,7 +820,10 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
           </TopSection>
           {isCeremonyComplete && (
             <ButtonContainer>
-              <Button buttonStyle="primary" onPress={handleCeremonyComplete}>
+              <Button
+                buttonStyle="primary"
+                onPress={handleCeremonyComplete}
+                touchableLibrary={'react-native'}>
                 {t('Continue')}
               </Button>
             </ButtonContainer>
@@ -888,7 +887,8 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
           <Button
             buttonStyle="primary"
             onPress={handleStartCeremony}
-            disabled={!allInvited}>
+            disabled={!allInvited}
+            touchableLibrary={'react-native'}>
             {t('Continue')}
           </Button>
         </ButtonContainer>
@@ -916,7 +916,8 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
                 onPress={() => {
                   haptic('impactLight');
                   handleCloseModal();
-                }}>
+                }}
+                touchableLibrary={'react-native'}>
                 {currentStep === 3 ? t('Done') : t('Cancel')}
               </Button>
             </HeaderRightContainer>

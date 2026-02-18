@@ -333,7 +333,6 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const [isWalletReady, setIsWalletReady] = useState(false);
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [showProcessing, setShowProcessing] = useState(false);
-  const [hasClickedShare, setHasClickedShare] = useState(false);
 
   useEffect(() => {
     if (sessionId && currentStep === 0) {
@@ -386,7 +385,6 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       await Share.share({
         message: sessionId,
       });
-      setHasClickedShare(true);
     } catch (err: any) {
       logger.error(`Share error: ${err.message}`);
     }
@@ -752,13 +750,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
             </StepContentWithButton>
 
             {currentStep === 1 && sessionId && (
-              <ContinuePillButton
-                onPress={() => setCurrentStep(2)}
-                disabled={!hasClickedShare}
-                style={{
-                  opacity: hasClickedShare ? 1 : 0,
-                  pointerEvents: hasClickedShare ? 'auto' : 'none',
-                }}>
+              <ContinuePillButton onPress={() => setCurrentStep(2)}>
                 <ContinuePillText>{t('Next')}</ContinuePillText>
               </ContinuePillButton>
             )}

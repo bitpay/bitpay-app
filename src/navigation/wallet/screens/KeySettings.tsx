@@ -400,8 +400,21 @@ const KeySettings = () => {
           <VerticalPadding>
             <Title>{t('Security')}</Title>
             <Setting
-              onPress={() => {
-                if (isTSSKey(_key)) {
+              onPress={async () => {
+                const fullWalletObj = key.wallets[0];
+                if (fullWalletObj.pendingTssSession && key?.tssSession) {
+                  await sleep(500);
+                  await dispatch(
+                    showBottomNotificationModal(
+                      CustomErrorMessage({
+                        errMsg: t(
+                          'Pending TSS session. Retry after session completion.',
+                        ),
+                      }),
+                    ),
+                  );
+                  return;
+                } else if (isTSSKey(_key)) {
                   navigation.navigate(WalletScreens.BACKUP_SHARED_KEY, {
                     context: 'backupExistingTSSKey',
                     key: _key,

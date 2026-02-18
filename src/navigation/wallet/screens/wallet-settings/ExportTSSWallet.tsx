@@ -250,7 +250,8 @@ const ExportTSSWallet = () => {
     } catch (err: any) {
       logManager.debug(`[shareKeyshareFile]: ${err.message}`);
       if (err && err.message === 'User did not share') {
-        setShareButtonState(undefined);
+        setShareButtonState('success');
+        setBackupCompleted(true);
         return;
       } else {
         setShareButtonState('failed');
@@ -392,7 +393,10 @@ const ExportTSSWallet = () => {
             </ModalContent>
 
             <ModalButtonContainer>
-              <Button buttonStyle={'primary'} onPress={handleViewWallet}>
+              <Button
+                buttonStyle={'primary'}
+                onPress={handleViewWallet}
+                touchableLibrary={'react-native'}>
                 {t('View Shared Wallet')}
               </Button>
             </ModalButtonContainer>
