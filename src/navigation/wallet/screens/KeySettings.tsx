@@ -323,7 +323,7 @@ const KeySettings = () => {
       const {
         credentials: {walletId},
       } = fullWalletObj;
-      if (!fullWalletObj.isComplete() && fullWalletObj.pendingTssSession) {
+      if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
         return;
       }
       navigation.navigate('WalletSettings', {
@@ -401,10 +401,9 @@ const KeySettings = () => {
             <Title>{t('Security')}</Title>
             <Setting
               onPress={async () => {
-                const fullWalletObj = key.wallets[0];
-                if (fullWalletObj.pendingTssSession && key?.tssSession) {
-                  await sleep(500);
-                  await dispatch(
+                const fullWalletObj = key.wallets?.[0];
+                if (fullWalletObj?.pendingTssSession && key?.tssSession) {
+                  dispatch(
                     showBottomNotificationModal(
                       CustomErrorMessage({
                         errMsg: t(
@@ -441,45 +440,49 @@ const KeySettings = () => {
 
             <Hr />
 
-            <SettingView style={{paddingLeft: 15, paddingRight: 15}}>
-              <WalletSettingsTitle>
-                {t('Request Encrypt Password')}
-              </WalletSettingsTitle>
+            {!key?.wallets?.[0]?.pendingTssSession ? (
+              <>
+                <SettingView style={{paddingLeft: 15, paddingRight: 15}}>
+                  <WalletSettingsTitle>
+                    {t('Request Encrypt Password')}
+                  </WalletSettingsTitle>
 
-              <RequestEncryptPasswordToggle currentKey={_key} />
-            </SettingView>
+                  <RequestEncryptPasswordToggle currentKey={_key} />
+                </SettingView>
 
-            <Info>
-              <InfoTriangle />
+                <Info>
+                  <InfoTriangle />
 
-              <InfoHeader>
-                <InfoImageContainer infoMargin={'0 8px 0 0'}>
-                  <InfoIcon bgColor={theme.dark ? Slate : undefined} />
-                </InfoImageContainer>
+                  <InfoHeader>
+                    <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                      <InfoIcon bgColor={theme.dark ? Slate : undefined} />
+                    </InfoImageContainer>
 
-                <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
-              </InfoHeader>
-              <InfoDescription>
-                {t(
-                  'This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.',
-                )}
-              </InfoDescription>
+                    <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
+                  </InfoHeader>
+                  <InfoDescription>
+                    {t(
+                      'This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.',
+                    )}
+                  </InfoDescription>
 
-              <VerticalPadding>
-                <TouchableOpacity
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD),
-                    );
-                  }}>
-                  <Link>{t('Learn More')}</Link>
-                </TouchableOpacity>
-              </VerticalPadding>
-            </Info>
+                  <VerticalPadding>
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
+                      onPress={() => {
+                        haptic('impactLight');
+                        dispatch(
+                          openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD),
+                        );
+                      }}>
+                      <Link>{t('Learn More')}</Link>
+                    </TouchableOpacity>
+                  </VerticalPadding>
+                </Info>
 
-            <Hr />
+                <Hr />
+              </>
+            ) : null}
 
             {checkPrivateKeyEncrypted(_key) ? (
               <>
@@ -504,7 +507,7 @@ const KeySettings = () => {
 
         <VerticalPadding>
           <Title>{t('Advanced')}</Title>
-          {_key && !_key.isReadOnly ? (
+          {_key && !_key.isReadOnly && !isTSSKey(_key) ? (
             <>
               <Setting
                 activeOpacity={ActiveOpacity}
@@ -613,7 +616,22 @@ const KeySettings = () => {
           id={item.id}
           accountItem={item}
           accountInfo={accountInfo}
-          onPress={() => onPressItem(item)}
+          onPress={() => {
+            const fullWalletObj = key?.wallets?.[0];
+            if (fullWalletObj?.pendingTssSession && key?.tssSession) {
+              dispatch(
+                showBottomNotificationModal(
+                  CustomErrorMessage({
+                    errMsg: t(
+                      'Pending TSS session. Retry after session completion.',
+                    ),
+                  }),
+                ),
+              );
+              return;
+            }
+            onPressItem(item);
+          }}
         />
       );
     },

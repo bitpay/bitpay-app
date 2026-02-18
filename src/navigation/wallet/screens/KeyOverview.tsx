@@ -767,7 +767,7 @@ const KeyOverview = () => {
         k.id === item.wallets[0].id &&
         (!item.copayerId || k.credentials?.copayerId === item.copayerId),
     )!;
-    if (!fullWalletObj.isComplete() && fullWalletObj.pendingTssSession) {
+    if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
         (err: any, status: Status) => {
@@ -812,26 +812,6 @@ const KeyOverview = () => {
           accountItem={item}
           hideBalance={hideAllBalances}
           onPress={() => {
-            if (key?.tssSession) {
-              const {status, isCreator} = key.tssSession;
-              if (
-                isCreator &&
-                (status === 'collecting_copayers' ||
-                  status === 'ready_to_start' ||
-                  status === 'ceremony_in_progress')
-              ) {
-                navigation.navigate(WalletScreens.INVITE_COSIGNERS, {
-                  keyId: key.id,
-                });
-                return;
-              }
-
-              if (!isCreator && status === 'ceremony_in_progress') {
-                console.log(
-                  '[TSS] Joiner has ceremony in progress - needs to reconnect',
-                );
-              }
-            }
             onPressItem(item);
           }}
         />

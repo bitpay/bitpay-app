@@ -1255,8 +1255,7 @@ export const buildAccountList = (
 
     if (
       !accountKey &&
-      !wallet?.credentials?.isComplete() &&
-      wallet.pendingTssSession
+      (!wallet?.credentials?.isComplete() || wallet.pendingTssSession)
     ) {
       // Workaround for incomplete multisig wallets
       accountKey = walletId;

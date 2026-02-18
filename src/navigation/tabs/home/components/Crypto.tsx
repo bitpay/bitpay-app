@@ -244,60 +244,31 @@ export const createHomeCardList = ({
                 : () => {
                     haptic('soft');
                     if (backupComplete) {
-                      if (isTSSKey(key)) {
-                        const fullWalletObj = key.wallets[0];
-                        if (
-                          !fullWalletObj.isComplete() &&
-                          fullWalletObj.pendingTssSession
-                        ) {
-                          fullWalletObj.getStatus(
-                            {network: fullWalletObj.network},
-                            (err: any, status: Status) => {
-                              if (err) {
-                                const errStr =
-                                  err instanceof Error
-                                    ? err.message
-                                    : JSON.stringify(err);
-                                logManager.error(
-                                  `error [KeyOverview - onPressItem] [getStatus]: ${errStr}`,
-                                );
-                              } else {
-                                if (status?.wallet?.status === 'complete') {
-                                  fullWalletObj.openWallet({}, () => {
-                                    navigation.navigate(
-                                      WalletScreens.WALLET_DETAILS,
-                                      {
-                                        walletId:
-                                          fullWalletObj.credentials.walletId,
-                                        copayerId:
-                                          fullWalletObj.credentials.copayerId,
-                                        key,
-                                      },
-                                    );
-                                  });
-                                  return;
-                                }
-                                navigation.navigate(WalletScreens.COPAYERS, {
-                                  wallet: fullWalletObj,
-                                  status: status?.wallet,
-                                });
-                              }
-                            },
-                          );
+                      const fullWalletObj = key?.wallets?.[0];
+                      if (fullWalletObj?.pendingTssSession && key?.tssSession) {
+                        const {isCreator} = key.tssSession;
+                        if (isCreator) {
+                          navigation.navigate(WalletScreens.INVITE_COSIGNERS, {
+                            keyId: key.id,
+                          });
                         } else {
-                          if (IsVMChain(fullWalletObj.credentials.chain)) {
-                            navigation.navigate(WalletScreens.ACCOUNT_DETAILS, {
-                              keyId: key.id,
-                              selectedAccountAddress:
-                                fullWalletObj.receiveAddress,
-                            });
-                          } else {
-                            navigation.navigate(WalletScreens.WALLET_DETAILS, {
-                              key,
-                              walletId: fullWalletObj.credentials.walletId,
-                              copayerId: fullWalletObj.credentials.copayerId,
-                            });
-                          }
+                          navigation.navigate(WalletScreens.JOIN_TSS_WALLET, {
+                            keyId: key.id,
+                          });
+                        }
+                      } else if (isTSSKey(key)) {
+                        if (IsVMChain(fullWalletObj.credentials.chain)) {
+                          navigation.navigate(WalletScreens.ACCOUNT_DETAILS, {
+                            keyId: key.id,
+                            selectedAccountAddress:
+                              fullWalletObj.receiveAddress,
+                          });
+                        } else {
+                          navigation.navigate(WalletScreens.WALLET_DETAILS, {
+                            key,
+                            walletId: fullWalletObj.credentials.walletId,
+                            copayerId: fullWalletObj.credentials.copayerId,
+                          });
                         }
                       } else {
                         navigation.navigate(WalletScreens.KEY_OVERVIEW, {

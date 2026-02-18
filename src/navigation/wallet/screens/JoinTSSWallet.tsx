@@ -334,6 +334,35 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [showProcessing, setShowProcessing] = useState(false);
 
+  const resumeKeyId = route.params?.keyId;
+
+  useEffect(() => {
+    if (resumeKeyId) {
+      setShowSession(true);
+      setCurrentStep(3);
+      const resumeCeremony = async () => {
+        try {
+          const key = await dispatch(joinTSSWithCode({keyId: resumeKeyId}));
+          setCreatedKey(key);
+          setIsWalletReady(true);
+        } catch (err: any) {
+          logger.error(`[TSS Join - resume] Error: ${err.message}`);
+          dispatch(
+            showBottomNotificationModal({
+              type: 'error',
+              title: t('Error'),
+              message: err.message || t('Failed to resume ceremony'),
+              enableBackdropDismiss: true,
+              actions: [{text: t('OK'), action: () => {}, primary: true}],
+            }),
+          );
+          navigation.goBack();
+        }
+      };
+      resumeCeremony();
+    }
+  }, [resumeKeyId]);
+
   useEffect(() => {
     if (sessionId && currentStep === 0) {
       const timer = setTimeout(() => {

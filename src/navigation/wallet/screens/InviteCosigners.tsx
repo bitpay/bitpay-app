@@ -425,7 +425,9 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const [showProcessing, setShowProcessing] = useState(false);
   const [pendingJoinCode, setPendingJoinCode] = useState<string | null>(null);
 
-  const [isCeremonyStarted, setIsCeremonyStarted] = useState(false);
+  const [isCeremonyStarted, setIsCeremonyStarted] = useState(
+    tssSession?.status === 'ceremony_in_progress',
+  );
   const [isCeremonyComplete, setIsCeremonyComplete] = useState(false);
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [isInviteShared, setIsInviteShared] = useState(false);
@@ -557,6 +559,12 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       );
     }
   };
+
+  useEffect(() => {
+    if (tssSession?.status === 'ceremony_in_progress') {
+      handleStartCeremony();
+    }
+  }, []);
 
   const handleStartCeremony = async () => {
     setIsCeremonyStarted(true);
