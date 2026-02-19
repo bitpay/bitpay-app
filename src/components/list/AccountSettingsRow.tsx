@@ -60,7 +60,7 @@ const AccountSettingsRow = ({accountItem, accountInfo, onPress}: Props) => {
       </CurrencyImageContainer>
       <Column>
         <H5 ellipsizeMode="tail" numberOfLines={1}>
-          {accountName}
+          {accountName || t('[Account Name]')}
         </H5>
       </Column>
 

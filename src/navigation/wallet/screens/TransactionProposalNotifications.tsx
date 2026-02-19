@@ -456,6 +456,7 @@ const TransactionProposalNotifications = () => {
         currencyName,
         keyId,
         credentials: {walletName, m, n, walletId: _walletId},
+        tssMetadata,
       } = fullWalletObj;
 
       const key = keys[fullWalletObj.keyId];
@@ -475,7 +476,11 @@ const TransactionProposalNotifications = () => {
               </Row>
               <ListItemSubText>
                 {formatCurrencyAbbreviation(currencyAbbreviation)}{' '}
-                {n > 1 ? `- Multisig ${m}/${n}` : null}
+                {isTSS && tssMetadata
+                  ? `- Threshold ${tssMetadata.m}/${tssMetadata.m}`
+                  : n > 1
+                  ? `- Multisig ${m}/${n}`
+                  : null}
                 {keyId.includes('readonly') ? '- Read Only' : null}
               </ListItemSubText>
             </CurrencyColumn>

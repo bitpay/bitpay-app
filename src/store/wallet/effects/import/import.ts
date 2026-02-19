@@ -1681,6 +1681,7 @@ export const startImportTSSFile =
         const BWCProvider = BwcProvider.getInstance();
 
         const tssKey = BWCProvider.createTssKey(data.key);
+        const tssMetadata = tssKey.metadata;
 
         logManager.info('[ImportTSS] TssKey recreated successfully');
 
@@ -1740,6 +1741,7 @@ export const startImportTSSFile =
                     ...walletClient.credentials,
                     currencyAbbreviation,
                     currencyName,
+                    tssMetadata,
                   } as any,
                   tokenOptsByAddress,
                 ),
@@ -1805,7 +1807,12 @@ export const startImportTSSFile =
             return merge(
               wallet,
               buildWalletObj(
-                {...wallet.credentials, currencyAbbreviation, currencyName},
+                {
+                  ...wallet.credentials,
+                  currencyAbbreviation,
+                  currencyName,
+                  tssMetadata,
+                } as any,
                 tokenOptsByAddress,
               ),
             );

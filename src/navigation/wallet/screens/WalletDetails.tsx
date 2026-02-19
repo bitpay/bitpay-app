@@ -139,6 +139,7 @@ import {BillPayAccount} from '../../../store/shop/shop.models';
 import debounce from 'lodash.debounce';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -1132,6 +1133,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                         <TypeText>
                           Multisig {fullWalletObj.credentials.m}/
                           {fullWalletObj.credentials.n}
+                        </TypeText>
+                      </TypeContainer>
+                    ) : isTSSKey(key) && fullWalletObj.tssMetadata ? (
+                      <TypeContainer>
+                        <TypeText>
+                          Threshold {fullWalletObj.tssMetadata.m}/
+                          {fullWalletObj.tssMetadata.n}
                         </TypeText>
                       </TypeContainer>
                     ) : null}

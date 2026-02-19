@@ -10,6 +10,7 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   generateJoinerSessionId,
   joinTSSWithCode,
+  validateJoinCode,
 } from '../../../store/wallet/effects/create-multisig/create-multisig';
 import {
   White,
@@ -22,6 +23,7 @@ import {
   Success25,
   LinkBlue,
   Midnight,
+  Caution,
 } from '../../../styles/colors';
 import {BaseText, H5} from '../../../components/styled/Text';
 import {
@@ -159,6 +161,12 @@ const StyledInput = styled(TextInput)`
 
 const ScanButton = styled.TouchableOpacity`
   padding: 4px;
+`;
+
+const ErrorText = styled(BaseText)`
+  color: ${Caution};
+  font-size: 14px;
+  margin-bottom: 12px;
 `;
 
 const StepsSection = styled.View`
@@ -333,6 +341,36 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const [isWalletReady, setIsWalletReady] = useState(false);
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [showProcessing, setShowProcessing] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+
+  const resumeKeyId = route.params?.keyId;
+
+  useEffect(() => {
+    if (resumeKeyId) {
+      setShowSession(true);
+      setCurrentStep(3);
+      const resumeCeremony = async () => {
+        try {
+          const key = await dispatch(joinTSSWithCode({keyId: resumeKeyId}));
+          setCreatedKey(key);
+          setIsWalletReady(true);
+        } catch (err: any) {
+          logger.error(`[TSS Join - resume] Error: ${err.message}`);
+          dispatch(
+            showBottomNotificationModal({
+              type: 'error',
+              title: t('Error'),
+              message: err.message || t('Failed to resume ceremony'),
+              enableBackdropDismiss: true,
+              actions: [{text: t('OK'), action: () => {}, primary: true}],
+            }),
+          );
+          navigation.goBack();
+        }
+      };
+      resumeCeremony();
+    }
+  }, [resumeKeyId]);
 
   useEffect(() => {
     if (sessionId && currentStep === 0) {
@@ -399,16 +437,17 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   };
 
   const handleJoin = async () => {
+    setJoinError(null);
     if (!inviteCode.trim()) {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: t('Error'),
-          message: t('Please enter the Invite Code'),
-          enableBackdropDismiss: true,
-          actions: [{text: t('OK'), action: () => {}, primary: true}],
-        }),
-      );
+      setJoinError(t('Please enter the Invite Code'));
+      return;
+    }
+
+    try {
+      dispatch(validateJoinCode(inviteCode.trim(), partyKey));
+    } catch (err: any) {
+      logger.error(`[TSS Join - validateJoinCode] Error: ${err.message}`);
+      setJoinError(t('Invalid Invite Code. Please verify and try again.'));
       return;
     }
 
@@ -430,15 +469,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
     } catch (err: any) {
       setCurrentStep(2);
       logger.error(`[TSS Join - handleJoin] Error: ${err.message}`);
-      dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: t('Error'),
-          message: err.message || t('Failed to join wallet'),
-          enableBackdropDismiss: true,
-          actions: [{text: t('OK'), action: () => {}, primary: true}],
-        }),
-      );
+      setJoinError(t('Failed to join wallet. Please try again.'));
     }
   };
   const onSubmitStart = async (values: JoinFormValues) => {
@@ -620,7 +651,10 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
                 <InputWrapper>
                   <StyledInput
                     value={inviteCode}
-                    onChangeText={setInviteCode}
+                    onChangeText={text => {
+                      setInviteCode(text);
+                      setJoinError(null);
+                    }}
                     placeholder=""
                     placeholderTextColor={LuckySevens}
                     autoCapitalize="none"
@@ -630,6 +664,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
                     <QrCodeSvg width={24} height={24} />
                   </ScanButton>
                 </InputWrapper>
+                {joinError && <ErrorText>{joinError}</ErrorText>}
                 <Button
                   buttonStyle="primary"
                   onPress={handleJoin}

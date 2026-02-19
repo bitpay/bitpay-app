@@ -164,6 +164,7 @@ export interface WalletObj {
   };
   tssKeyId?: string;
   pendingTssSession?: boolean;
+  tssMetadata?: {id: string; m: number; n: number; partyId: number};
 }
 
 export interface KeyOptions {

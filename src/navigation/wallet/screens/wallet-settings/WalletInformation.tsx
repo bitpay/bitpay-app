@@ -28,6 +28,7 @@ import {useTranslation} from 'react-i18next';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
 
 const InfoContainer = styled.SafeAreaView`
   flex: 1;
@@ -110,6 +111,7 @@ const WalletInformation = () => {
       rootPath,
     },
     tokenAddress,
+    tssMetadata,
   } = wallet;
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
@@ -261,7 +263,9 @@ const WalletInformation = () => {
 
               <InfoLabel>
                 <H7>
-                  {m}-{n}
+                  {isTSSKey(key) && tssMetadata
+                    ? `${tssMetadata.m}-${tssMetadata.n}`
+                    : `${m}-${n}`}
                 </H7>
               </InfoLabel>
             </InfoSettingsRow>

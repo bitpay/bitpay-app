@@ -21,7 +21,7 @@ import {
   formatCurrencyAbbreviation,
   getProtocolName,
 } from '../../utils/helper-methods';
-import {ActivityIndicator, Platform} from 'react-native';
+import {ActivityIndicator, Platform, View} from 'react-native';
 import {ProgressBlue} from '../../styles/colors';
 import {SearchableItem} from '../chain-search/ChainSearch';
 import {IsERCToken, IsVMChain} from '../../store/wallet/utils/currency';
@@ -83,6 +83,7 @@ export interface WalletRowProps extends SearchableItem {
   pendingTxps: TransactionProposal[];
   coinbaseAccount?: CoinbaseAccountProps;
   multisig?: string;
+  threshold?: string;
   isComplete?: boolean;
   receiveAddress?: string;
   account?: number;
@@ -189,6 +190,7 @@ const WalletRow = ({
     isToken,
     network,
     multisig,
+    threshold,
     isScanning,
     isComplete,
   } = wallet;
@@ -247,15 +249,22 @@ const WalletRow = ({
                 ellipsizeMode="tail"
                 numberOfLines={1}
                 style={{marginTop: Platform.OS === 'ios' ? 2 : 0}}>
-                {_currencyAbbreviation} {multisig ? `${multisig} ` : null}
+                {_currencyAbbreviation} {multisig ? `${multisig} ` : null}{' '}
+                {threshold ? `${threshold}` : null}
               </ListItemSubText>
-              <Row style={{alignItems: 'center', marginLeft: 2, marginTop: 2}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginLeft: 2,
+                  marginTop: 2,
+                }}>
                 {buildGasTokenBadge(
                   !IsERCToken(currencyAbbreviation, chain) && IsVMChain(chain),
                 )}
                 {buildTestBadge(network, chain, isToken)}
                 {buildUncompleteBadge(isComplete)}
-              </Row>
+              </View>
             </>
           )}
         </Row>

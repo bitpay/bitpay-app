@@ -268,6 +268,7 @@ export const startCreateTSSKey =
             ...walletClient.credentials,
             currencyAbbreviation,
             currencyName,
+            tssMetadata: {id: sessionId, m, n, partyId: 0},
           } as any,
           tokenOptionsByAddress,
         ),
@@ -430,7 +431,10 @@ export const startTSSCeremony =
           throw new Error('Key not found or no TSS session');
         }
 
-        if (key.tssSession.status !== 'ready_to_start') {
+        if (
+          key.tssSession.status !== 'ready_to_start' &&
+          key.tssSession.status !== 'ceremony_in_progress'
+        ) {
           throw new Error('Not all co-signers have been invited');
         }
 
@@ -477,6 +481,12 @@ export const startTSSCeremony =
           tssKeyGen
             .on('roundready', (r: number) => {
               logManager.debug(`[TSS Ceremony roundready] ${r}`);
+            })
+            .on('roundprocessed', (r: number) =>
+              logManager.debug(`[TSS Ceremony roundprocessed] ${r}`),
+            )
+            .on('roundsubmitted', (r: number) => {
+              logManager.debug(`[TSS Ceremony roundsubmitted] ${r}`);
               try {
                 const currentKey = getState().WALLET.keys[keyId];
                 dispatch(
@@ -492,18 +502,22 @@ export const startTSSCeremony =
                 );
               } catch (e) {}
             })
-            .on('roundprocessed', (r: number) =>
-              logManager.debug(`[TSS Ceremony roundprocessed] ${r}`),
-            )
-            .on('roundsubmitted', (r: number) =>
-              logManager.debug(`[TSS Ceremony roundsubmitted] ${r}`),
-            )
             .on('wallet', (w: any) => {
               logManager.debug(`[TSS Ceremony wallet] ${w?.id}`);
               walletFromBWS = w;
             })
             .on('error', (e: Error) => {
+              if (
+                e.message.includes('TSS_ROUND_MESSAGE_EXISTS') ||
+                e.message.includes('TSS_ROUND_ALREADY_DONE')
+              ) {
+                logManager.debug(
+                  `[TSS Ceremony] ${e.message} - this is a reconnection`,
+                );
+                return;
+              }
               logManager.error(`[TSS Ceremony error] ${e.message}`);
+              tssKeyGen.unsubscribe();
               reject(e);
             })
             .on('complete', () => {
@@ -667,6 +681,7 @@ export const startTSSCeremony =
               ...credentials.toObj(),
               currencyAbbreviation,
               currencyName,
+              tssMetadata: _tssKey.metadata,
             } as any,
             tokenOptionsByAddress,
           ),
@@ -744,11 +759,33 @@ export const clearPendingJoinerSession = (): Effect<void> => dispatch => {
   logManager.debug(`[TSS Join] Cleared pending joiner session`);
 };
 
+export const validateJoinCode =
+  (joinCode: string, partyKey: any): Effect<void> =>
+  () => {
+    const BWC = BwcProvider.getInstance();
+    const restoredKey = BWC.createKey({
+      seedType: 'object',
+      seedData: partyKey,
+    });
+    const tempTssKeyGen = BWC.createKeyGen({
+      coin: 'btc',
+      chain: 'btc',
+      network: 'livenet',
+      baseUrl: BASE_BWS_URL,
+      key: restoredKey,
+    });
+    tempTssKeyGen.checkJoinCode({
+      code: joinCode,
+      opts: {encoding: 'base64'},
+    });
+  };
+
 export const joinTSSWithCode =
   (opts: {
-    joinCode: string;
-    partyKey: any;
-    myName: string;
+    joinCode?: string;
+    partyKey?: any;
+    myName?: string;
+    keyId?: string;
   }): Effect<Promise<Key>> =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
@@ -760,112 +797,179 @@ export const joinTSSWithCode =
             brazeEid,
             defaultLanguage,
           },
-          WALLET: {tokenOptionsByAddress},
+          WALLET: {tokenOptionsByAddress, keys},
         } = getState();
 
-        const {myName} = opts;
-        const copayerName = myName;
+        const isResume = !!opts.keyId;
+        let key: Key;
+        let partyKey: any;
+        let tssKeyGen: any;
+        let coin: string;
+        let chain: string;
+        let network: 'livenet' | 'testnet' | 'regtest';
+        let myName: string;
+        let copayerName: string;
 
-        const partyKey = BWC.createKey({
-          seedType: 'object',
-          seedData: opts.partyKey,
-        });
+        if (isResume) {
+          const existingKey = keys[opts.keyId!];
+          if (!existingKey?.tssSession) {
+            throw new Error('Key not found or no TSS session');
+          }
+          if (existingKey.tssSession.status !== 'ceremony_in_progress') {
+            throw new Error('TSS session is not in ceremony_in_progress state');
+          }
 
-        logManager.debug('[TSS Join] Party key restored');
+          key = existingKey;
+          coin = existingKey.tssSession.coin;
+          chain = existingKey.tssSession.chain;
+          network = existingKey.tssSession.network;
+          myName = existingKey.tssSession.myName;
+          copayerName = myName;
 
-        const tempTssKeyGen = BWC.createKeyGen({
-          coin: 'btc',
-          chain: 'btc',
-          network: 'livenet',
-          baseUrl: BASE_BWS_URL,
-          key: partyKey,
-        });
+          partyKey = BWC.createKey({
+            seedType: 'object',
+            seedData: existingKey.tssSession.partyKey,
+          });
 
-        const decoded = tempTssKeyGen.checkJoinCode({
-          code: opts.joinCode,
-          opts: {encoding: 'base64'},
-        });
-        logManager.debug(
-          `[TSS Join] Decoded joinCode: ${JSON.stringify(decoded)}`,
-        );
+          tssKeyGen = BWC.createKeyGen({
+            coin,
+            chain,
+            network,
+            baseUrl: BASE_BWS_URL,
+            key: partyKey,
+          });
 
-        const chain = decoded.chain.toLowerCase();
-        const coin = BitpaySupportedCoins[chain].coin;
-        const network = decoded.network as 'livenet' | 'testnet' | 'regtest';
+          await tssKeyGen.restoreSession({
+            session: existingKey.tssSession.sessionExport,
+          });
+          logManager.debug(`[TSS Join] Session restored: ${tssKeyGen.id}`);
+        } else {
+          if (!opts.joinCode || !opts.partyKey || !opts.myName) {
+            throw new Error(
+              'joinCode, partyKey, and myName are required for initial join',
+            );
+          }
 
-        const tssKeyGen = BWC.createKeyGen({
-          coin,
-          chain,
-          network: network,
-          baseUrl: BASE_BWS_URL,
-          key: partyKey,
-        });
+          myName = opts.myName;
+          copayerName = myName;
 
-        logManager.debug('[TSS Join] Calling joinKey...');
-        await tssKeyGen.joinKey({
-          code: opts.joinCode,
-          opts: {encoding: 'base64'},
-        });
-        logManager.debug(`[TSS Join] Joined session: ${tssKeyGen.id}`);
+          partyKey = BWC.createKey({
+            seedType: 'object',
+            seedData: opts.partyKey,
+          });
 
-        const m = tssKeyGen.m;
-        const n = tssKeyGen.n;
+          logManager.debug('[TSS Join] Party key restored');
+
+          const tempTssKeyGen = BWC.createKeyGen({
+            coin: 'btc',
+            chain: 'btc',
+            network: 'livenet',
+            baseUrl: BASE_BWS_URL,
+            key: partyKey,
+          });
+
+          const decoded = tempTssKeyGen.checkJoinCode({
+            code: opts.joinCode,
+            opts: {encoding: 'base64'},
+          });
+          logManager.debug(
+            `[TSS Join] Decoded joinCode: ${JSON.stringify(decoded)}`,
+          );
+
+          chain = decoded.chain.toLowerCase();
+          coin = BitpaySupportedCoins[chain].coin;
+          network = decoded.network as 'livenet' | 'testnet' | 'regtest';
+
+          tssKeyGen = BWC.createKeyGen({
+            coin,
+            chain,
+            network: network,
+            baseUrl: BASE_BWS_URL,
+            key: partyKey,
+          });
+
+          logManager.debug('[TSS Join] Calling joinKey...');
+          await tssKeyGen.joinKey({
+            code: opts.joinCode,
+            opts: {encoding: 'base64'},
+          });
+          logManager.debug(`[TSS Join] Joined session: ${tssKeyGen.id}`);
+
+          const m = tssKeyGen.m;
+          const n = tssKeyGen.n;
+
+          const {
+            currencyAbbreviation: placeholderCurrencyAbbreviation,
+            currencyName: placeholderCurrencyName,
+          } = dispatch(mapAbbreviationAndName(coin, chain, undefined));
+
+          const walletClient = BWC.getClient();
+          const tempCredentials = partyKey.createCredentials(null, {
+            coin,
+            chain,
+            network,
+            n: 1,
+            account: 0,
+          });
+          walletClient.fromObj(tempCredentials);
+
+          const placeholderWallet = merge(
+            walletClient,
+            buildWalletObj(
+              {
+                ...walletClient.credentials,
+                currencyAbbreviation: placeholderCurrencyAbbreviation,
+                currencyName: placeholderCurrencyName,
+                tssMetadata: {
+                  id: tssKeyGen.id,
+                  m,
+                  n,
+                  partyId: tssKeyGen.partyId,
+                },
+              } as any,
+              tokenOptionsByAddress,
+            ),
+          ) as Wallet;
+
+          placeholderWallet.pendingTssSession = true;
+
+          key = buildKeyObj({
+            key: partyKey,
+            wallets: [placeholderWallet],
+            keyName: 'My TSSKey',
+            backupComplete: true,
+          });
+
+          placeholderWallet.id = `pending-tss-${key.id}-${chain}`;
+
+          key.tssSession = {
+            id: tssKeyGen.id,
+            partyKey: partyKey.toObj(),
+            sessionExport: tssKeyGen.exportSession(),
+            coin,
+            chain,
+            network,
+            m,
+            n,
+            myName,
+            createdAt: Date.now(),
+            isCreator: false,
+            partyId: tssKeyGen.partyId || 1,
+            status: 'ceremony_in_progress',
+          };
+
+          dispatch(successCreateKey({key}));
+          dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+        }
+
+        const tssSession = key.tssSession;
+        if (!tssSession) {
+          throw new Error('tssSession is missing from key');
+        }
 
         const {currencyAbbreviation, currencyName} = dispatch(
           mapAbbreviationAndName(coin, chain, undefined),
         );
-
-        const walletClient = BWC.getClient();
-        const tempCredentials = partyKey.createCredentials(null, {
-          coin,
-          chain,
-          network,
-          n: 1,
-          account: 0,
-        });
-        walletClient.fromObj(tempCredentials);
-
-        const placeholderWallet = merge(
-          walletClient,
-          buildWalletObj(
-            {
-              ...walletClient.credentials,
-              currencyAbbreviation,
-              currencyName,
-            } as any,
-            tokenOptionsByAddress,
-          ),
-        ) as Wallet;
-
-        placeholderWallet.pendingTssSession = true;
-
-        const key = buildKeyObj({
-          key: partyKey,
-          wallets: [placeholderWallet],
-          keyName: 'My TSSKey',
-          backupComplete: true,
-        });
-
-        placeholderWallet.id = `pending-tss-${key.id}-${chain}`;
-
-        key.tssSession = {
-          id: tssKeyGen.id,
-          partyKey: partyKey.toObj(),
-          sessionExport: tssKeyGen.exportSession(),
-          coin,
-          chain,
-          network,
-          m,
-          n,
-          myName,
-          createdAt: Date.now(),
-          isCreator: false,
-          partyId: tssKeyGen.partyId || 1,
-          status: 'ceremony_in_progress',
-        };
-
-        dispatch(successCreateKey({key}));
-        dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
         let walletFromBWS: any;
 
@@ -873,6 +977,12 @@ export const joinTSSWithCode =
           tssKeyGen
             .on('roundready', (r: number) => {
               logManager.debug(`[TSS Join roundready] ${r}`);
+            })
+            .on('roundprocessed', (r: number) =>
+              logManager.debug(`[TSS Join roundprocessed] ${r}`),
+            )
+            .on('roundsubmitted', (r: number) => {
+              logManager.debug(`[TSS Join roundsubmitted] ${r}`);
               try {
                 const currentKey = getState().WALLET.keys[key.id];
                 if (currentKey?.tssSession) {
@@ -890,12 +1000,6 @@ export const joinTSSWithCode =
                 }
               } catch (e) {}
             })
-            .on('roundprocessed', (r: number) =>
-              logManager.debug(`[TSS Join roundprocessed] ${r}`),
-            )
-            .on('roundsubmitted', (r: number) =>
-              logManager.debug(`[TSS Join roundsubmitted] ${r}`),
-            )
             .on('wallet', (w: any) => {
               logManager.debug(`[TSS Join wallet] ${w?.id}`);
               walletFromBWS = w;
@@ -907,7 +1011,17 @@ export const joinTSSWithCode =
                 );
                 return;
               }
+              if (
+                e.message.includes('TSS_ROUND_MESSAGE_EXISTS') ||
+                e.message.includes('TSS_ROUND_ALREADY_DONE')
+              ) {
+                logManager.debug(
+                  `[TSS Join] ${e.message} - this is a reconnection`,
+                );
+                return;
+              }
               logManager.error(`[TSS Join error] ${e.message}`);
+              tssKeyGen.unsubscribe();
               reject(e);
             })
             .on('complete', () => {
@@ -978,7 +1092,7 @@ export const joinTSSWithCode =
 
                     if (
                       status.wallet?.id === walletFromBWS.id &&
-                      status.wallet?.copayers?.length >= key.tssSession!.n
+                      status.wallet?.copayers?.length >= tssSession.n
                     ) {
                       walletFromBWS = status.wallet;
                       credentials.addWalletInfo(
@@ -1022,27 +1136,21 @@ export const joinTSSWithCode =
             const currentCopayersCount =
               finalWalletClient.credentials?.publicKeyRing?.length || 0;
 
-            if (currentCopayersCount >= key.tssSession!.n) {
+            if (currentCopayersCount >= tssSession.n) {
               logManager.debug(
-                `[TSS Ceremony] All ${
-                  key.tssSession!.n
-                } copayers found after ${attempt} attempt(s)`,
+                `[TSS Ceremony] All ${tssSession.n} copayers found after ${attempt} attempt(s)`,
               );
               break;
             }
 
             if (attempt < maxRetries) {
               logManager.debug(
-                `[TSS Ceremony] Only ${currentCopayersCount}/${
-                  key.tssSession!.n
-                } copayers found, retrying in ${delayMs}ms...`,
+                `[TSS Ceremony] Only ${currentCopayersCount}/${tssSession.n} copayers found, retrying in ${delayMs}ms...`,
               );
               await new Promise(resolve => setTimeout(resolve, delayMs));
             } else {
               logManager.warn(
-                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${
-                  key.tssSession!.n
-                } copayers found. Continuing anyway...`,
+                `[TSS Ceremony] Max retries reached. Only ${currentCopayersCount}/${tssSession.n} copayers found. Continuing anyway...`,
               );
             }
           }
@@ -1076,6 +1184,7 @@ export const joinTSSWithCode =
               ...credentials.toObj(),
               currencyAbbreviation,
               currencyName,
+              tssMetadata: _tssKey.metadata,
             } as any,
             tokenOptionsByAddress,
           ),
@@ -1090,7 +1199,7 @@ export const joinTSSWithCode =
         });
 
         finalKey.tssSession = {
-          ...key.tssSession,
+          ...tssSession,
           status: 'complete',
           sessionExport: undefined,
         };

@@ -1170,7 +1170,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const onPressItem = (walletId: string) => {
     haptic('impactLight');
     const fullWalletObj = findWalletById(keyFullWalletObjs, walletId) as Wallet;
-    if (!fullWalletObj.isComplete() && fullWalletObj.pendingTssSession) {
+    if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
         (err: any, status: Status) => {
