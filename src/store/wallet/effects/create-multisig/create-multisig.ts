@@ -757,6 +757,27 @@ export const clearPendingJoinerSession = (): Effect<void> => dispatch => {
   logManager.debug(`[TSS Join] Cleared pending joiner session`);
 };
 
+export const validateJoinCode =
+  (joinCode: string, partyKey: any): Effect<void> =>
+  () => {
+    const BWC = BwcProvider.getInstance();
+    const restoredKey = BWC.createKey({
+      seedType: 'object',
+      seedData: partyKey,
+    });
+    const tempTssKeyGen = BWC.createKeyGen({
+      coin: 'btc',
+      chain: 'btc',
+      network: 'livenet',
+      baseUrl: BASE_BWS_URL,
+      key: restoredKey,
+    });
+    tempTssKeyGen.checkJoinCode({
+      code: joinCode,
+      opts: {encoding: 'base64'},
+    });
+  };
+
 export const joinTSSWithCode =
   (opts: {
     joinCode?: string;

@@ -22,6 +22,7 @@ import {
   NeutralSlate,
   LinkBlue,
   Midnight,
+  Caution,
 } from '../../../styles/colors';
 import {Paragraph, BaseText} from '../../../components/styled/Text';
 import {
@@ -206,6 +207,12 @@ const StyledInput = styled(TextInput)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   font-size: 16px;
   padding: 0;
+`;
+
+const ErrorText = styled(BaseText)`
+  color: ${Caution};
+  font-size: 14px;
+  margin-bottom: 12px;
 `;
 
 const ScanButton = styled.TouchableOpacity``;
@@ -431,6 +438,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const [isCeremonyComplete, setIsCeremonyComplete] = useState(false);
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [isInviteShared, setIsInviteShared] = useState(false);
+  const [addCoSignerError, setAddCoSignerError] = useState<string | null>(null);
 
   useEffect(() => {
     if (pendingJoinCode && currentStep === 2) {
@@ -474,6 +482,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     setShowProcessing(false);
     setPendingJoinCode(null);
     setIsInviteShared(false);
+    setAddCoSignerError(null);
   };
 
   const handleAlreadyShared = () => {
@@ -515,24 +524,11 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   };
 
   const handleAddCoSigner = async () => {
+    setAddCoSignerError(null);
     if (!sessionId.trim() || !selectedCopayer) {
-      dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: t('Error'),
-          message: t("Please enter the co-signer's Session ID"),
-          enableBackdropDismiss: true,
-          actions: [{text: t('OK'), action: () => {}, primary: true}],
-        }),
-      );
+      setAddCoSignerError(t("Please enter the co-signer's Session ID"));
       return;
     }
-
-    setCurrentStep(2);
-    await sleep(1000);
-
-    setShowProcessing(true);
-    await sleep(1000);
 
     try {
       const {joinCode} = await dispatch(
@@ -544,18 +540,12 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       );
 
       setPendingJoinCode(joinCode);
+      setCurrentStep(2);
+      setShowProcessing(true);
     } catch (err: any) {
-      logger.error(`[TSS] Error adding co-signer: ${err.message}`);
-      setCurrentStep(1);
-      setShowProcessing(false);
-      dispatch(
-        showBottomNotificationModal({
-          type: 'error',
-          title: t('Error'),
-          message: err.message || t('Failed to add co-signer'),
-          enableBackdropDismiss: true,
-          actions: [{text: t('OK'), action: () => {}, primary: true}],
-        }),
+      logger.error(`[TSS] Add co-signer error: ${err.message}`);
+      setAddCoSignerError(
+        t('Invalid Session ID. Please verify and try again.'),
       );
     }
   };
@@ -607,7 +597,10 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
               <InputWrapper>
                 <StyledInput
                   value={sessionId}
-                  onChangeText={setSessionId}
+                  onChangeText={text => {
+                    setSessionId(text);
+                    setAddCoSignerError(null);
+                  }}
                   placeholder=""
                   placeholderTextColor={LuckySevens}
                   autoCapitalize="none"
@@ -617,6 +610,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
                   <QrCodeSvg width={24} height={24} />
                 </ScanButton>
               </InputWrapper>
+              {addCoSignerError && <ErrorText>{addCoSignerError}</ErrorText>}
               <Button
                 buttonStyle="primary"
                 onPress={handleAddCoSigner}
