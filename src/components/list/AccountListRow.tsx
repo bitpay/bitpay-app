@@ -123,6 +123,7 @@ const AccountListRow = ({
     isToken,
     network,
     multisig,
+    threshold,
     isComplete,
     isScanning,
     cryptoBalance,
@@ -193,7 +194,9 @@ const AccountListRow = ({
                 ellipsizeMode="tail"
                 numberOfLines={1}
                 style={{marginTop: 0}}>
-                {`${_currencyAbbreviation} ${multisig ? multisig : ''}`}
+                {`${_currencyAbbreviation} ${multisig ? multisig : ''} ${
+                  threshold ? threshold : ''
+                }`}
               </ListItemSubText>
               <View
                 style={{

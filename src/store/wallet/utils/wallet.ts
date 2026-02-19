@@ -137,6 +137,7 @@ export const buildWalletObj = (
     singleAddress,
     receiveAddress,
     tssKeyId,
+    tssMetadata,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -161,6 +162,7 @@ export const buildWalletObj = (
     singleAddress: boolean;
     receiveAddress?: string;
     tssKeyId?: string;
+    tssMetadata?: {id: string; n: number; m: number; partyId: number};
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
@@ -216,6 +218,7 @@ export const buildWalletObj = (
     singleAddress,
     receiveAddress,
     tssKeyId,
+    tssMetadata,
   };
 };
 
@@ -1035,6 +1038,7 @@ export const buildUIFormattedWallet: (
     hideBalance,
     pendingTxps,
     receiveAddress,
+    tssMetadata,
   } = wallet;
 
   const opts: Omit<getFiatOptions, 'satAmount'> = {
@@ -1075,6 +1079,9 @@ export const buildUIFormattedWallet: (
       credentials.n > 1
         ? `- Multisig ${credentials.m}/${credentials.n}`
         : undefined,
+    threshold: tssMetadata
+      ? `- Threshold ${tssMetadata.m}/${tssMetadata.n}`
+      : undefined,
     isComplete: credentials.isComplete() && !wallet.pendingTssSession,
     receiveAddress,
     account: credentials.account,
