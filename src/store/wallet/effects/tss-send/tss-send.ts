@@ -161,7 +161,7 @@ const signInput = async (params: {
 
     timeoutId = setTimeout(() => {
       tssSign.unsubscribe();
-      rejectSign(new Error(`Timeout signing input ${inputIndex + 1}`));
+      rejectSign(new Error('This proposal has expired, please try again'));
     }, timeout);
 
     tssSign
@@ -217,7 +217,6 @@ const signInput = async (params: {
         logManager.error(
           `[TSS Sign] Input ${inputIndex + 1} Error: ${error.message}`,
         );
-        rejectSign(error);
       });
 
     tssSign.subscribe();
@@ -245,7 +244,7 @@ export const startTSSSigning =
       wallet,
       txp,
       callbacks,
-      timeout = 300000,
+      timeout = 600000,
       joiner,
       password,
     } = opts;
