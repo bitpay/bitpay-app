@@ -23,6 +23,23 @@ const AmountContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
+const TestContainer = styled.View<{isSmallScreen?: boolean}>`
+  margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: center;
+  background-color: ${({theme}) => (theme.dark ? '#121212' : White)};
+  padding: 16px 8px;
+`;
+
+const TestText = styled(BaseText)`
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: ${({theme}) => (theme.dark ? White : '#000000')};
+`;
+
 const CtaContainer = styled.View<{isSmallScreen?: boolean}>`
   /* width: 100%; */
   margin-top: ${({isSmallScreen}) => (isSmallScreen ? 0 : '20px')};
@@ -99,6 +116,7 @@ export interface BottomAmountProps {
   /** Callback fired on each amount change with validity status */
   onAmountChange?: (
     amount: number,
+    displayAmount: string,
     fromPill?: boolean,
     isValid?: boolean,
   ) => void;
@@ -204,7 +222,7 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
       // Check validity based on limits
       const isValid = checkAmountValidity(numericCryptoAmount);
       setIsAmountValid(isValid);
-      onAmountChange(numericCryptoAmount, fromPill, isValid);
+      onAmountChange(numericCryptoAmount, _val, fromPill, isValid);
     }
   };
   const updateAmountRef = useRef(updateAmount);
@@ -266,7 +284,15 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
           : curValRef.current + val;
         break;
       default:
-        newValue = curValRef.current + val;
+        const hasExactlyTwoDecimals = /\.\d{2}$/.test(curValRef.current);
+        const hasExactlySixDecimals = /\.\d{6}$/.test(curValRef.current);
+        if (primaryIsFiat && hasExactlyTwoDecimals) {
+          newValue = curValRef.current;
+        } else if (hasExactlySixDecimals) {
+          newValue = curValRef.current;
+        } else {
+          newValue = curValRef.current + val;
+        }
     }
     curValRef.current = newValue;
     updateAmountRef.current(newValue);
@@ -430,6 +456,16 @@ const BottomAmount: React.FC<BottomAmountProps> = ({
         style={{
           marginTop: 0,
         }}>
+        {/* Uncomment this section to run amount tests */}
+        {/* <TestContainer>
+          <TestText>{`primaryIsFiat: ${primaryIsFiat}`}</TestText>
+          <TestText>{`curValRef.current: ${curValRef.current}`}</TestText>
+          <TestText>{`amount: ${amount}`}</TestText>
+          <TestText>{`displayAmount: ${displayAmount}`}</TestText>
+          <TestText>{`displayEquivalentAmount: ${displayEquivalentAmount}`}</TestText>
+          <TestText>{`limits: ${JSON.stringify(limits)}`}</TestText>
+          <TestText>{`limitsOpts: ${JSON.stringify(limitsOpts)}`}</TestText>
+        </TestContainer> */}
         <CtaContainer isSmallScreen={_isSmallScreen}>
           {pillsOpts ? (
             <BottomAmountPills

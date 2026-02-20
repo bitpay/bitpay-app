@@ -21,7 +21,12 @@ type BottomAmountModalProps = BottomAmountProps & {
   onSendMaxPressed?: () => any;
   initialAmount?: number;
   /** Callback fired on each amount change with validity status */
-  onAmountChange?: (amount: number, isValid: boolean) => void;
+  onAmountChange?: (
+    amount: number,
+    displayAmount: string,
+    fromPill?: boolean,
+    isValid?: boolean,
+  ) => void;
   pillsOpts?: BottomAmountPillsProps;
 };
 

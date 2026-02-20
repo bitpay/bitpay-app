@@ -362,6 +362,7 @@ const SwapCryptoRoot: React.FC = () => {
   const [useDefaultToWallet, setUseDefaultToWallet] = useState<boolean>(false);
   const [toWalletSelected, setToWalletSelected] = useState<Wallet>();
   const [amountFrom, setAmountFrom] = useState<number>(0);
+  const [displayAmount, setDisplayAmount] = useState<string>();
   const [confirmedAmountFrom, setConfirmedAmountFrom] = useState<number>();
   const [amountTo, setAmountTo] = useState<number>();
   const [formatedAmountFrom, setFormatedAmountFrom] = useState<string>('');
@@ -542,8 +543,14 @@ const SwapCryptoRoot: React.FC = () => {
 
   // Handle real-time amount changes from AmountModal
   const handleAmountChange = useCallback(
-    (newAmount: number, fromPill?: boolean, isValid?: boolean) => {
+    (
+      newAmount: number,
+      displayAmount?: string,
+      fromPill?: boolean,
+      isValid?: boolean,
+    ) => {
       setAmountFrom(newAmount);
+      setDisplayAmount(displayAmount);
 
       if (fromWalletSelected) {
         const {currencyAbbreviation, chain, tokenAddress} = fromWalletSelected;
@@ -682,6 +689,7 @@ const SwapCryptoRoot: React.FC = () => {
 
     setAmountFrom(0);
     setConfirmedAmountFrom(undefined);
+    setDisplayAmount(undefined);
     setSelectedOffer(undefined);
     setCtxp(undefined);
     setTxData(undefined);
@@ -1113,6 +1121,7 @@ const SwapCryptoRoot: React.FC = () => {
         setLoading(false);
         setAmountFrom(0);
         setConfirmedAmountFrom(undefined);
+        setDisplayAmount(undefined);
         setSelectedOffer(undefined);
         setCtxp(undefined);
         setTxData(undefined);
@@ -1954,6 +1963,7 @@ const SwapCryptoRoot: React.FC = () => {
       setExchangeTxId(data.result.id);
       // setAmountExpectedFrom(Number(data.result.amountExpectedFrom));
       setAmountFrom(Number(data.result.amountExpectedFrom));
+      setDisplayAmount(undefined);
       setAmountTo(Number(data.result.amountExpectedTo));
       selectedOffer.amountReceiving = Number(data.result.amountExpectedTo)
         .toFixed(4)
@@ -2842,22 +2852,33 @@ const SwapCryptoRoot: React.FC = () => {
                                 : formatedAmountFrom}
                             </AmountText>
                           ) : (
-                            <AmountText
-                              numberOfLines={1}
-                              ellipsizeMode="tail"
-                              textLength={
-                                !amountFrom || amountFrom === 0
-                                  ? 4
-                                  : cloneDeep(amountFrom)
-                                      .toFixed(6)
-                                      .replace(/\.?0+$/, '')?.length
-                              }>
-                              {!amountFrom || amountFrom === 0
-                                ? '0'
-                                : cloneDeep(amountFrom)
-                                    .toFixed(6)
-                                    .replace(/\.?0+$/, '')}
-                            </AmountText>
+                            <>
+                              {amountModalVisible && displayAmount ? (
+                                <AmountText
+                                  numberOfLines={1}
+                                  ellipsizeMode="tail"
+                                  textLength={displayAmount?.length}>
+                                  {displayAmount}
+                                </AmountText>
+                              ) : (
+                                <AmountText
+                                  numberOfLines={1}
+                                  ellipsizeMode="tail"
+                                  textLength={
+                                    !amountFrom || amountFrom === 0
+                                      ? 4
+                                      : cloneDeep(amountFrom)
+                                          .toFixed(6)
+                                          .replace(/\.?0+$/, '')?.length
+                                  }>
+                                  {!amountFrom || amountFrom === 0
+                                    ? '0'
+                                    : cloneDeep(amountFrom)
+                                        .toFixed(6)
+                                        .replace(/\.?0+$/, '')}
+                                </AmountText>
+                              )}
+                            </>
                           )}
                         </AmountClickableContainer>
                       ) : (
@@ -2943,6 +2964,7 @@ const SwapCryptoRoot: React.FC = () => {
                     toWalletSelected ? (
                       <SwapCurrenciesButton
                         onPress={() => {
+                          setDisplayAmount(undefined);
                           setDisplayInFiat(!displayInFiat);
                         }}>
                         <SwapCryptoFiatSwitcherIcon width={24} height={24} />
@@ -3544,7 +3566,7 @@ const SwapCryptoRoot: React.FC = () => {
               }
 
               if (newAmount) {
-                handleAmountChange(newAmount, true);
+                handleAmountChange(newAmount, undefined, true);
               }
             }
           },
