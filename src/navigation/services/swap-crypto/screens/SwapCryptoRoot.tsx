@@ -1066,42 +1066,6 @@ const SwapCryptoRoot: React.FC = () => {
     return linkedWallet;
   };
 
-  const showTokensInfoSheet = () => {
-    const linkedWallet = getLinkedWallet();
-    if (!linkedWallet) {
-      return;
-    }
-
-    const linkedWalletName =
-      linkedWallet?.walletName || linkedWallet?.credentials.walletName;
-
-    dispatch(
-      AppActions.showBottomNotificationModal({
-        type: 'info',
-        title: t('Reminder'),
-        message: t('linkedWalletWarnMsg', {
-          chain: BitpaySupportedCoins[linkedWallet.chain.toLowerCase()].name,
-          chainCoin: linkedWallet.currencyAbbreviation.toUpperCase(),
-          selectedWallet: toWalletSelected?.currencyAbbreviation.toUpperCase(),
-          linkedWalletName: linkedWalletName
-            ? '(' + linkedWalletName + ')'
-            : ' ',
-        }),
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('GOT IT'),
-            action: async () => {
-              await sleep(400);
-              continueToCheckout();
-            },
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
-
   const checkAmount = useCallback(
     (amountFrom: number) => {
       if (!fromWalletSelected || !amountFrom) {
@@ -1163,33 +1127,6 @@ const SwapCryptoRoot: React.FC = () => {
     },
     [fromWalletSelected, swapLimits, dispatch, t],
   );
-
-  const checkIfErc20Token = () => {
-    const tokensWarn = async () => {
-      await sleep(300);
-      showTokensInfoSheet();
-    };
-    if (
-      !!toWalletSelected &&
-      IsERCToken(toWalletSelected.currencyAbbreviation, toWalletSelected.chain)
-    ) {
-      tokensWarn();
-    } else {
-      continueToCheckout();
-    }
-  };
-
-  const continueToCheckout = () => {
-    dispatch(
-      Analytics.track('Swap Crypto Offers', {
-        fromCoin: fromWalletSelected!.currencyAbbreviation,
-        fromChain: fromWalletSelected!.chain,
-        toCoin: toWalletSelected!.currencyAbbreviation,
-        toChain: toWalletSelected!.chain,
-        amountFrom: amountFrom,
-      }),
-    );
-  };
 
   const filterChangellyCurrenciesConditions = (
     currency: ChangellyCurrency,

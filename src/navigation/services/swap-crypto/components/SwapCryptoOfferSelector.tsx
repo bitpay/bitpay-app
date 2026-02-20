@@ -1345,6 +1345,16 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
                 return;
               }
               setOfferSelectorModalVisible(true);
+              dispatch(
+                Analytics.track('Swap Crypto Offers', {
+                  fromCoin:
+                    selectedWalletFrom.currencyAbbreviation?.toLowerCase(),
+                  fromChain: selectedWalletFrom.chain?.toLowerCase(),
+                  toCoin: selectedWalletTo.currencyAbbreviation?.toLowerCase(),
+                  toChain: selectedWalletTo.chain?.toLowerCase(),
+                  amountFrom: amountFrom,
+                }),
+              );
             }}>
             <OfferSelectorContainerLeft>
               <OfferSelectorText>{t('Partner')}</OfferSelectorText>
