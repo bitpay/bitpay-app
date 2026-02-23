@@ -1348,8 +1348,8 @@ export const publishAndSign =
         }
       }
 
+      const isTSSSigning = requiresTSSSigning(wallet, key);
       try {
-        const isTSSSigning = requiresTSSSigning(wallet, key);
 
         if (isTSSSigning && !tssCallbacks) {
           tssCallbacks = {
