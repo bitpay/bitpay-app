@@ -2,7 +2,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useLayoutEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
-import Amount, {AmountContext} from '../../../components/amount/Amount';
+import Amount from '../../../components/amount/Amount';
 import Button, {ButtonState} from '../../../components/button/Button';
 import {HeaderRightContainer} from '../../../components/styled/Containers';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
@@ -43,7 +43,7 @@ export interface AmountScreenParamList {
   customAmountSublabel?: any;
   chain?: string;
   tokenAddress?: string;
-  context?: AmountContext;
+  context?: string;
   headerTitle?:
     | string
     | ((props: HeaderTitleProps) => React.ReactNode)

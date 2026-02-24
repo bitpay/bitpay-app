@@ -27,7 +27,9 @@ import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {BaseText, H4} from '../../../components/styled/Text';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 
-const ProgressButton = styled(TouchableOpacity)`
+const ProgressButton = styled(TouchableOpacity)<{
+  context?: TSSProgressTrackerContext;
+}>`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -35,6 +37,8 @@ const ProgressButton = styled(TouchableOpacity)`
   border-radius: 12px;
   border-width: 1px;
   border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
+  margin: ${({context}) =>
+    context === 'swapCrypto' ? '0 15px 5px 15px' : '0'};
 `;
 
 const ProgressIndicator = styled.View<{status: TSSSigningStatus}>`
@@ -214,6 +218,8 @@ export interface TSSCopayer {
   signed: boolean;
 }
 
+export type TSSProgressTrackerContext = 'swapCrypto';
+
 interface TSSProgressTrackerProps {
   status: TSSSigningStatus;
   progress: TSSSigningProgress;
@@ -225,6 +231,7 @@ interface TSSProgressTrackerProps {
   wallet?: Wallet;
   onCopayersInitialized?: (copayers: TSSCopayer[]) => void;
   hideTracker?: boolean;
+  context?: TSSProgressTrackerContext;
 }
 
 const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
@@ -238,6 +245,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   onCopayersInitialized,
   onModalVisibilityChange,
   hideTracker,
+  context,
 }) => {
   const {t} = useTranslation();
   const theme = useTheme();
@@ -258,7 +266,9 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   const getButtonText = (): string => {
     switch (status) {
       case 'initializing':
-        return t('Waiting to initialize');
+        return context === 'swapCrypto'
+          ? t('TSS Waiting to initialize')
+          : t('Waiting to initialize');
       case 'waiting_for_cosigners':
         return t('Waiting for co-signers');
       case 'signature_generation':
@@ -354,7 +364,8 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
         <View style={{paddingBottom: 10}}>
           <ProgressButton
             activeOpacity={ActiveOpacity}
-            onPress={() => setModalVisible(true)}>
+            onPress={() => setModalVisible(true)}
+            context={context}>
             <ProgressIndicator status={status}>
               {status === 'complete' ? (
                 <SuccessIcon width={28} height={28} />

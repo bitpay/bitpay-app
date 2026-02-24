@@ -28,9 +28,11 @@ const CellContainer = styled.View`
   align-items: center;
 `;
 
+export type KeyboardSizesContext = 'buyCrypto' | 'sellCrypto' | 'swapCrypto';
+
 export const getKeyboardSizes = (
   isSmallScreen?: boolean,
-  context?: 'buyCrypto' | 'sellCrypto',
+  context?: KeyboardSizesContext,
 ) => {
   let sizes = {
     cellValueFontSize: 32.08,
@@ -54,6 +56,22 @@ export const getKeyboardSizes = (
         virtualKeyboardButtonSize: 60,
       };
     }
+  } else if (context === 'swapCrypto') {
+    if (isSmallScreen) {
+      sizes = {
+        cellValueFontSize: 20,
+        cellValuelineHeight: 30,
+        cellContainerHeight: 45,
+        virtualKeyboardButtonSize: 45,
+      };
+    } else {
+      sizes = {
+        cellValueFontSize: 27,
+        cellValuelineHeight: 45,
+        cellContainerHeight: 65,
+        virtualKeyboardButtonSize: 65,
+      };
+    }
   } else {
     // Default case
     if (isSmallScreen) {
@@ -71,7 +89,7 @@ export const getKeyboardSizes = (
 const CellValue = styled(BaseText)<{
   darkModeOnly?: boolean;
   isSmallScreen?: boolean;
-  context?: 'buyCrypto' | 'sellCrypto';
+  context?: KeyboardSizesContext;
 }>`
   font-size: ${({isSmallScreen, context}) =>
     getKeyboardSizes(isSmallScreen, context).cellValueFontSize}px;
@@ -107,7 +125,7 @@ export interface VirtualKeyboardProps {
   showLetters?: boolean;
   showDot?: boolean;
   darkModeOnly?: boolean;
-  context?: 'buyCrypto' | 'sellCrypto';
+  context?: KeyboardSizesContext;
 }
 
 interface CellProps extends Pick<VirtualKeyboardProps, 'onCellPress'> {
@@ -115,7 +133,7 @@ interface CellProps extends Pick<VirtualKeyboardProps, 'onCellPress'> {
   letters?: string;
   backgroundColor: string;
   darkModeOnly?: boolean;
-  context?: 'buyCrypto' | 'sellCrypto';
+  context?: KeyboardSizesContext;
 }
 
 const Cell: React.FC<CellProps> = ({
@@ -155,7 +173,7 @@ interface RowProps
   numArray: NumArray[];
   backgroundColor: string;
   darkModeOnly?: boolean;
-  context?: 'buyCrypto' | 'sellCrypto';
+  context?: KeyboardSizesContext;
 }
 
 const Row: React.FC<RowProps> = ({

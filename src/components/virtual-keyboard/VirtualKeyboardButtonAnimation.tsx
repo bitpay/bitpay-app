@@ -7,14 +7,14 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import {getKeyboardSizes} from './VirtualKeyboard';
+import {getKeyboardSizes, KeyboardSizesContext} from './VirtualKeyboard';
 
 interface RippleProps {
   onPress: () => void;
   backgroundColor?: string;
   onLongPress?: () => void;
   isSmallScreen?: boolean;
-  context?: 'buyCrypto' | 'sellCrypto';
+  context?: KeyboardSizesContext;
   children: React.ReactNode;
 }
 
