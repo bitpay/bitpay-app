@@ -195,7 +195,7 @@ const AddWallet = ({
   const {
     control,
     handleSubmit,
-    formState: {errors},
+    formState: {errors, isSubmitting},
   } = useForm<{walletName: string}>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -212,26 +212,16 @@ const AddWallet = ({
 
   const _addWallet = async ({
     walletName,
+    password,
   }: {
     walletName: string;
+    password?: string;
   }): Promise<Wallet> => {
     return new Promise(async (resolve, reject) => {
       try {
-        let password: string | undefined;
         let account: number | undefined;
         let customAccount = false;
 
-        if (key.isPrivKeyEncrypted) {
-          password = await dispatch(getDecryptPassword(key));
-        }
-
-        dispatch(
-          Analytics.track('Created Basic Wallet', {
-            coin: currencyAbbreviation!.toLowerCase(),
-            isErc20Token: false,
-          }),
-        );
-        showOngoingProcess('ADDING_WALLET');
         // adds wallet and binds to key obj - creates eth wallet if needed
         const wallet = await dispatch(
           addWallet({
@@ -277,24 +267,30 @@ const AddWallet = ({
           // ignore error
         }
 
+        dispatch(
+          Analytics.track('Created Basic Wallet', {
+            coin: currencyAbbreviation!.toLowerCase(),
+            isErc20Token: false,
+          }),
+        );
+
         hideOngoingProcess();
         resolve(wallet);
       } catch (err: any) {
-        if (err.message === 'invalid password') {
-          dispatch(showBottomNotificationModal(WrongPasswordError()));
-        } else {
-          hideOngoingProcess();
-          await sleep(500);
-          showErrorModal(BWCErrorMessage(err));
-          reject(err);
-        }
+        reject(err);
       }
     });
   };
 
   const add = handleSubmit(async ({walletName}) => {
     try {
-      const wallet = await _addWallet({walletName});
+      let password: string | undefined;
+      if (key.isPrivKeyEncrypted) {
+        password = await dispatch(getDecryptPassword(key));
+      }
+      showOngoingProcess('ADDING_WALLET');
+      await sleep(1000);
+      const wallet = await _addWallet({walletName, password});
 
       if (!withinReceiveSettings) {
         navigation.dispatch(
@@ -324,6 +320,13 @@ const AddWallet = ({
         );
       }
     } catch (err: any) {
+      if (err.message === 'invalid password') {
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+      } else {
+        hideOngoingProcess();
+        await sleep(500);
+        showErrorModal(BWCErrorMessage(err));
+      }
       const errstring =
         err instanceof Error
           ? err.message
@@ -518,7 +521,7 @@ const AddWallet = ({
 
         <ButtonContainer>
           <Button
-            disabled={!walletNameValue}
+            disabled={!walletNameValue || isSubmitting}
             onPress={add}
             buttonStyle={'primary'}>
             {t('Add Wallet')}
