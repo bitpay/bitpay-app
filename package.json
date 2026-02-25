@@ -218,6 +218,7 @@
     "@react-native/eslint-config": "0.82.0",
     "@react-native/metro-config": "0.82.0",
     "@react-native/typescript-config": "0.82.0",
+    "@silencelaboratories/dkls-wasm-ll-web": "1.2.0",
     "@storybook/addon-actions": "5.3.21",
     "@storybook/addon-knobs": "5.3.21",
     "@storybook/addon-links": "5.3.21",
