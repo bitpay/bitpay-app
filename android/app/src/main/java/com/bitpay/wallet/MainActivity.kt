@@ -31,7 +31,9 @@ class MainActivity : ReactActivity() {
         DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Verify bundle integrity before loading React Native
+        // Integrity check must run before React Native initialises.
+        // super.onCreate is called first in the failure path so the activity window token
+        // is valid when AlertDialog.Builder tries to attach the dialog.
         if (!BundleIntegrityVerifier.verify(this)) {
             super.onCreate(savedInstanceState)
             BundleIntegrityVerifier.showTamperedAlert(this)

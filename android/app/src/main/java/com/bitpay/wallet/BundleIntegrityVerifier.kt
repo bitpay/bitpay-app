@@ -3,7 +3,6 @@ package com.bitpay.wallet
 import android.app.AlertDialog
 import android.content.Context
 import android.util.Log
-import java.io.InputStream
 import java.security.MessageDigest
 
 /**
@@ -17,7 +16,7 @@ object BundleIntegrityVerifier {
     /**
      * Verifies bundle integrity and returns true if valid.
      * In debug builds, verification is skipped.
-     * If expected hash is not configured, logs a warning but allows launch.
+     * In release builds, an empty hash means the build pipeline broke — launch is rejected.
      */
     fun verify(context: Context): Boolean {
         if (BuildConfig.DEBUG) {
@@ -25,10 +24,12 @@ object BundleIntegrityVerifier {
             return true
         }
 
-        val expectedHash = BuildConfig.RN_BUNDLE_HASH
-        if (expectedHash.isNullOrEmpty()) {
-            Log.w(TAG, "Bundle hash verification not configured. Set RN_BUNDLE_HASH in build.gradle.")
-            return true
+        val expectedHash = BundleHash.EXPECTED
+        if (expectedHash.isEmpty()) {
+            // Fail-closed: a missing hash in release means the generateReleaseBundleHash
+            // Gradle task did not run. Reject the launch rather than silently skip the check.
+            Log.e(TAG, "Bundle hash is not configured — rejecting launch.")
+            return false
         }
 
         return try {
@@ -36,7 +37,9 @@ object BundleIntegrityVerifier {
             val isValid = computedHash.equals(expectedHash, ignoreCase = true)
 
             if (!isValid) {
-                Log.e(TAG, "Bundle integrity check failed. Expected: $expectedHash, Got: $computedHash")
+                // Log failure without revealing the expected hash — an attacker with
+                // logcat access should not learn what value to target.
+                Log.e(TAG, "Bundle integrity check failed.")
             } else {
                 Log.d(TAG, "Bundle integrity verified successfully")
             }
@@ -57,13 +60,18 @@ object BundleIntegrityVerifier {
             .setMessage("This application has been modified and cannot run. Please reinstall from Google Play.")
             .setCancelable(false)
             .setPositiveButton("Close") { _, _ ->
-                android.os.Process.killProcess(android.os.Process.myPid())
+                // finishAffinity clears the entire task stack so Android won't
+                // re-create the activity; exitProcess terminates the VM.
+                if (context is android.app.Activity) {
+                    context.finishAffinity()
+                }
+                kotlin.system.exitProcess(1)
             }
             .show()
     }
 
     private fun calculateBundleHash(context: Context): String {
-        val inputStream: InputStream = context.assets.open(BUNDLE_ASSET_NAME)
+        val inputStream = context.assets.open(BUNDLE_ASSET_NAME)
         val digest = MessageDigest.getInstance("SHA-256")
 
         inputStream.use { stream ->
