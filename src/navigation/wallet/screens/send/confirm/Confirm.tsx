@@ -220,14 +220,12 @@ const Confirm = () => {
     Array<{id: string; name: string; signed: boolean}>
   >([]);
   const tssCallbacks = useTSSCallbacks({
-    wallet,
     setTssStatus,
     setTssProgress,
     setTssCopayers,
     tssCopayers,
     setShowTSSProgressModal,
     setResetSwipeButton,
-    showErrorMessage,
   });
 
   const {
@@ -442,11 +440,6 @@ const Confirm = () => {
   }: {transport?: Transport} = {}) => {
     const isUsingHardwareWallet = !!transport;
 
-    if (isTSSWallet) {
-      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
-      setTssStatus('initializing');
-    }
-
     try {
       if (isUsingHardwareWallet) {
         const {chain, network} = wallet.credentials;
@@ -488,13 +481,8 @@ const Confirm = () => {
             ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
-
-        if (isTSSWallet && result?.txid) {
-          setTssStatus('complete');
-          await sleep(1500);
-          setShowTSSProgressModal(false);
-        }
       }
+
       await sleep(300);
       showPaymentSent({
         title:
@@ -554,9 +542,6 @@ const Confirm = () => {
         }
       }
     } catch (err) {
-      if (isTSSWallet) {
-        setShowTSSProgressModal(false);
-      }
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -731,6 +716,7 @@ const Confirm = () => {
                 onCopayersInitialized={setTssCopayers}
                 isModalVisible={showTSSProgressModal}
                 onModalVisibilityChange={setShowTSSProgressModal}
+                txpCreatorId={wallet.credentials?.copayerId}
               />
             )}
 

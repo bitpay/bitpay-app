@@ -1,6 +1,6 @@
 import {Rect, Svg} from 'react-native-svg';
 import {Theme} from '@react-navigation/native';
-import {LightBlack, White} from '../../../../../../styles/colors';
+import {LightBlack, SlateDark, White} from '../../../../../../styles/colors';
 import React from 'react';
 import styled from 'styled-components/native';
 import {H7} from '../../../../../../components/styled/Text';
@@ -32,7 +32,7 @@ export const CarouselSvg = ({
   focused: boolean;
   theme: Theme;
 }) => {
-  const stroke = focused ? White : theme?.dark ? White : '#434D5A';
+  const stroke = focused ? White : theme?.dark ? White : SlateDark;
   return (
     <Svg width="17" height="10" viewBox="0 0 17 10" fill="none">
       <Rect
@@ -64,7 +64,7 @@ export const ListViewSvg = ({
   focused: boolean;
   theme: Theme;
 }) => {
-  const fill = focused ? White : theme?.dark ? White : '#434D5A';
+  const fill = focused ? White : theme?.dark ? White : SlateDark;
   return (
     <Svg width="15" height="10" viewBox="0 0 15 10" fill="none">
       <Rect x="3" width="12" height="1.5" rx="0.75" fill={fill} />

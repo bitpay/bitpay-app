@@ -1,7 +1,7 @@
 import React from 'react';
 import {Color, Path, Svg} from 'react-native-svg';
 import {useTheme} from 'styled-components/native';
-import {Action, White} from '../../styles/colors';
+import {Action, SlateDark, White} from '../../styles/colors';
 
 interface MinusProps {
   color: Color | null | undefined;
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const Minus: React.FC<MinusProps> = ({color}) => {
-  const fill = color || '#434D5A';
+  const fill = color || SlateDark;
   return (
     <Svg width="10px" height="1px" viewBox="0 0 16 2">
       <Path stroke={fill} strokeWidth={3} d="M16,0 L0,0" />

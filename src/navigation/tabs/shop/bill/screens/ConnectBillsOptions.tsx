@@ -22,6 +22,7 @@ import {AddSvg, SearchSvg, SyncSvg} from '../../components/svg/ShopTabSvgs';
 import styled, {useTheme} from 'styled-components/native';
 import {
   Action,
+  LightBlue,
   Midnight,
   Slate,
   Slate30,
@@ -74,7 +75,7 @@ const DescriptionText = styled(OptionDescription)`
 const ConnectOptionIcon = styled.View<OptionProps>`
   margin-right: 15px;
   background-color: ${({selected, theme}) =>
-    selected ? Action : theme.dark ? Midnight : '#eceffd'};
+    selected ? Action : theme.dark ? Midnight : LightBlue};
   border-radius: 11px;
   height: 44px;
   width: 44px;

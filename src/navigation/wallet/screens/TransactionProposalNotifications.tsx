@@ -156,7 +156,9 @@ const TransactionProposalNotifications = () => {
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
 
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
-  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>(
+    'waiting_for_cosigners',
+  );
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
     totalRounds: 4,
@@ -193,14 +195,12 @@ const TransactionProposalNotifications = () => {
   }, [currentKey]);
 
   const tssCallbacks = useTSSCallbacks({
-    wallet: currentWallet!,
     setTssStatus,
     setTssProgress,
     setTssCopayers,
     tssCopayers,
     setShowTSSProgressModal,
     setResetSwipeButton,
-    showErrorMessage,
   });
 
   let pendingTxps: TransactionProposal[] = wallets.flatMap(w => w.pendingTxps);
@@ -639,7 +639,7 @@ const TransactionProposalNotifications = () => {
 
   return (
     <NotificationsContainer>
-      {isTSSWallet && currentWallet && showTSSProgressModal ? (
+      {isTSSWallet && currentWallet ? (
         <TSSProgressTracker
           status={tssStatus}
           progress={tssProgress}
@@ -651,6 +651,7 @@ const TransactionProposalNotifications = () => {
           isModalVisible={showTSSProgressModal}
           onModalVisibilityChange={setShowTSSProgressModal}
           hideTracker={true}
+          txpCreatorId={txpsToSign[0]?.creatorId}
         />
       ) : null}
       <SectionList
@@ -695,11 +696,6 @@ const TransactionProposalNotifications = () => {
               const key = keys[wallet.keyId];
 
               if (isTSSKey(key)) {
-                if (!key.isPrivKeyEncrypted) {
-                  setShowTSSProgressModal(true);
-                }
-                setTssStatus('initializing');
-
                 const txp = txpsToSign[0];
 
                 await dispatch(
@@ -711,10 +707,6 @@ const TransactionProposalNotifications = () => {
                     setShowTSSProgressModal,
                   }),
                 );
-
-                setTssStatus('complete');
-                await sleep(1500);
-                setShowTSSProgressModal(false);
 
                 dispatch(
                   Analytics.track('Sent Crypto', {
@@ -777,9 +769,6 @@ const TransactionProposalNotifications = () => {
               setTxpChecked({});
               setResetSwipeButton(true);
             } catch (err) {
-              if (isTSSWallet) {
-                setShowTSSProgressModal(false);
-              }
               await sleep(500);
               setResetSwipeButton(true);
               switch (err) {

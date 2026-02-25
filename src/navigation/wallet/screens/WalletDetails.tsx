@@ -61,6 +61,7 @@ import {
   Black,
   LightBlack,
   LuckySevens,
+  Slate30,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -251,7 +252,7 @@ const HeaderSubTitleContainer = styled.View`
 `;
 
 const TypeContainer = styled(HeaderSubTitleContainer)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   padding: 2px 5px;
   border-radius: 3px;
   margin: 10px 4px 0;

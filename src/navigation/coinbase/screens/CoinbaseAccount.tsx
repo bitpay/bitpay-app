@@ -35,6 +35,7 @@ import {
   SlateDark,
   White,
   Black,
+  Slate30,
 } from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
@@ -112,7 +113,7 @@ const HeaderSubTitleContainer = styled.View`
 `;
 
 const TypeContainer = styled(HeaderSubTitleContainer)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   padding: 2px 5px;
   border-radius: 3px;
   margin-top: 5px;
@@ -127,7 +128,7 @@ const TypeText = styled(BaseText)`
 const Type = styled(BaseText)`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   padding: 2px 5px;
   border-radius: 3px;
   margin-top: 5px;

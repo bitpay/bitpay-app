@@ -1,46 +1,44 @@
-import React, {useCallback} from 'react';
-import {useTranslation} from 'react-i18next';
+import {useCallback} from 'react';
 
 import {
   TSSCopayerSignStatus,
   TSSSigningProgress,
   TSSSigningStatus,
-  Wallet,
 } from '../../store/wallet/wallet.models';
-import {BottomNotificationConfig} from '../../components/modal/bottom-notification/BottomNotification';
 import {TSSSigningCallbacks} from '../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../managers/LogManager';
-import {CustomErrorMessage} from '../../navigation/wallet/components/ErrorMessages';
+import {sleep} from '../../utils/helper-methods';
 
 interface UseTSSCallbacksParams {
-  wallet: Wallet | undefined;
   setTssStatus: (status: TSSSigningStatus) => void;
   setTssProgress: (progress: TSSSigningProgress) => void;
   setTssCopayers: any;
   tssCopayers: Array<{id: string; name: string; signed: boolean}>;
   setShowTSSProgressModal: (show: boolean) => void;
   setResetSwipeButton: (reset: boolean) => void;
-  showErrorMessage: (msg: BottomNotificationConfig) => Promise<void>;
 }
 
 export const useTSSCallbacks = ({
-  wallet,
   setTssStatus,
   setTssProgress,
   setTssCopayers,
   tssCopayers,
   setShowTSSProgressModal,
   setResetSwipeButton,
-  showErrorMessage,
 }: UseTSSCallbacksParams): TSSSigningCallbacks => {
-  const {t} = useTranslation();
-
   const onStatusChange = useCallback(
-    (status: TSSSigningStatus) => {
+    async (status: TSSSigningStatus) => {
       logManager.debug(`[TSS Callbacks] Status changed: ${status}`);
       setTssStatus(status);
+      if (status === 'initializing') {
+        setShowTSSProgressModal(true);
+      }
+      if (status === 'complete') {
+        await sleep(1500);
+        setShowTSSProgressModal(false);
+      }
     },
-    [setTssStatus],
+    [setTssStatus, setShowTSSProgressModal],
   );
 
   const onProgressUpdate = useCallback(
@@ -90,16 +88,11 @@ export const useTSSCallbacks = ({
   const onError = useCallback(
     (error: Error) => {
       logManager.error(`[TSS Callbacks] Error: ${error.message}`);
+      setTssStatus('error');
       setShowTSSProgressModal(false);
       setResetSwipeButton(true);
-      showErrorMessage(
-        CustomErrorMessage({
-          errMsg: error.message,
-          title: t('TSS Signing Error'),
-        }),
-      );
     },
-    [setShowTSSProgressModal, setResetSwipeButton, showErrorMessage, t],
+    [setShowTSSProgressModal, setResetSwipeButton],
   );
 
   const onComplete = useCallback((signature: string) => {

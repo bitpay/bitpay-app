@@ -4,7 +4,7 @@ import {ActiveOpacity, Br} from '../../../components/styled/Containers';
 import {BaseText, H3, Paragraph} from '../../../components/styled/Text';
 import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {Action, SlateDark, White} from '../../../styles/colors';
+import {Action, LightBlue, SlateDark, White} from '../../../styles/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
@@ -41,7 +41,7 @@ const ViewBody = styled.View`
 `;
 
 const InstructionBox = styled.View`
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : '#eceffd')};
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
   border-radius: 8px;
   border-width: 1px;
   margin-top: 30px;
@@ -50,7 +50,7 @@ const InstructionBox = styled.View`
 const InstructionBoxHeader = styled.View`
   flex-direction: row;
   border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#eceffd')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
   align-items: center;
 `;
 
@@ -59,7 +59,7 @@ const InstructionBoxHeaderNumberContainer = styled.View`
   margin: 12px 0;
   margin-right: 16px;
   border-right-width: 1px;
-  border-right-color: ${({theme: {dark}}) => (dark ? SlateDark : '#eceffd')};
+  border-right-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
 `;
 
 const InstructionBoxHeaderNumber = styled(BaseText)`

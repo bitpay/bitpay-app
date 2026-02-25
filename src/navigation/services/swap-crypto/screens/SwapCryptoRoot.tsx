@@ -478,15 +478,6 @@ const SwapCryptoRoot: React.FC = () => {
 
   // Threshold Signature Scheme (TSS)
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
-  const showTssErrorMessage = useCallback(
-    async (config: BottomNotificationConfig) => {
-      const msg = config?.message || t('An error occurred during TSS signing');
-      const reason = 'TSS Signing Error';
-      const title = config?.title || t('TSS Signing Error');
-      showError({msg, reason, title, goBack: true, fireAnalytics: true});
-    },
-    [dispatch],
-  );
   const [isTSSWallet, setIsTSSWallet] = useState<boolean>(false);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
@@ -499,14 +490,12 @@ const SwapCryptoRoot: React.FC = () => {
   >([]);
 
   const tssCallbacks = useTSSCallbacks({
-    wallet: fromWalletSelected, // TODO: review if this works with fromWalletSelected being undefined
     setTssStatus,
     setTssProgress,
     setTssCopayers,
     tssCopayers,
     setShowTSSProgressModal,
     setResetSwipeButton,
-    showErrorMessage: showTssErrorMessage,
   });
 
   const showModal = (id: string) => {
@@ -2424,11 +2413,6 @@ const SwapCryptoRoot: React.FC = () => {
     const key = keys[fromWalletSelected.keyId];
     const isUsingHardwareWallet = !!transport;
 
-    if (isTSSWallet) {
-      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
-      setTssStatus('initializing');
-    }
-
     try {
       if (isUsingHardwareWallet) {
         const {chain, network} = fromWalletSelected.credentials;
@@ -2469,12 +2453,6 @@ const SwapCryptoRoot: React.FC = () => {
             ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
-
-        if (isTSSWallet && broadcastedTx?.txid) {
-          setTssStatus('complete');
-          await sleep(1500);
-          setShowTSSProgressModal(false);
-        }
       }
       saveChangellyTx();
 
@@ -2502,10 +2480,6 @@ const SwapCryptoRoot: React.FC = () => {
         }),
       );
     } catch (err: any) {
-      if (isTSSWallet) {
-        setShowTSSProgressModal(false);
-      }
-
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);

@@ -148,6 +148,27 @@ const FileInputText = styled(BaseText)`
   color: ${({theme}) => theme.colors.text};
 `;
 
+const FileChipContainer = styled.View`
+  flex: 1;
+  padding: 6px 10px;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const FileChip = styled.View`
+  padding: 4px 10px;
+  border-radius: 20px;
+  border-width: 1px;
+  border-color: ${({theme}) => (theme.dark ? LinkBlue : Action)};
+  background-color: ${({theme}) => (theme.dark ? Midnight : LightBlue)};
+`;
+
+const FileChipText = styled(BaseText)`
+  font-size: 13px;
+  font-weight: 500;
+  color: ${({theme}) => (theme.dark ? LinkBlue : Action)};
+`;
+
 const FileInputPlaceholder = styled(BaseText)`
   flex: 1;
   padding: 10px;
@@ -216,6 +237,7 @@ const FileOrText = () => {
   const {clearSensitive} = useSensitiveRefClear([plainTextRef]);
 
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
+  const [isFromClipboard, setIsFromClipboard] = useState(false);
   const [fileFocused, setFileFocused] = useState(false);
 
   const {
@@ -413,12 +435,14 @@ const FileOrText = () => {
           const encryptedText = encryptedMatch[0];
           setValue('text', encryptedText);
           setUploadedFileName(result.name || 'file uploaded');
+          setIsFromClipboard(false);
           logManager.debug(
             `[FileOrText] Successfully loaded file: ${result.name}`,
           );
         } else {
           setValue('text', fileContent.trim());
           setUploadedFileName(result.name || 'file uploaded');
+          setIsFromClipboard(false);
         }
       }
     } catch (err) {
@@ -445,11 +469,13 @@ const FileOrText = () => {
 
       if (encryptedMatch) {
         setValue('text', encryptedMatch[0]);
-        setUploadedFileName('pasted text');
+        setUploadedFileName(t('Clipboard'));
+        setIsFromClipboard(true);
         logManager.debug('[FileOrText] Pasted encrypted text from clipboard');
       } else {
         setValue('text', clipboardContent.trim());
-        setUploadedFileName('pasted text');
+        setUploadedFileName(t('Clipboard'));
+        setIsFromClipboard(true);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
@@ -460,6 +486,7 @@ const FileOrText = () => {
 
   const handleClearFile = () => {
     setUploadedFileName('');
+    setIsFromClipboard(false);
     setValue('text', '');
   };
 
@@ -482,9 +509,19 @@ const FileOrText = () => {
 
           <FileInputContainer isFocused={fileFocused} isError={!!fileError}>
             {uploadedFileName ? (
-              <FileInputText numberOfLines={1} ellipsizeMode="tail">
-                {uploadedFileName}
-              </FileInputText>
+              isFromClipboard ? (
+                <FileChipContainer>
+                  <FileChip>
+                    <FileChipText numberOfLines={1} ellipsizeMode="tail">
+                      {uploadedFileName}
+                    </FileChipText>
+                  </FileChip>
+                </FileChipContainer>
+              ) : (
+                <FileInputText numberOfLines={1} ellipsizeMode="tail">
+                  {uploadedFileName}
+                </FileInputText>
+              )
             ) : (
               <FileInputPlaceholder numberOfLines={1} ellipsizeMode="tail" />
             )}

@@ -1350,7 +1350,6 @@ export const publishAndSign =
 
       const isTSSSigning = requiresTSSSigning(wallet, key);
       try {
-
         if (isTSSSigning && !tssCallbacks) {
           tssCallbacks = {
             onStatusChange: status =>
@@ -1511,6 +1510,7 @@ export const publishAndSign =
         }
 
         if (isTSSSigning && tssCallbacks) {
+          tssCallbacks.onStatusChange('error');
           tssCallbacks.onError(
             err instanceof Error ? err : new Error(errorStr),
           );
@@ -1518,8 +1518,8 @@ export const publishAndSign =
 
         // if broadcast fails, remove transaction proposal
         try {
-          // except for multisig pending transactions
-          if (txp.status !== 'pending') {
+          // except for multisig pending transactions (unless TSS, which should always be removed on error)
+          if (txp.status !== 'pending' || isTSSSigning) {
             await removeTxp(wallet, txp);
           }
         } catch (removeTxpErr: any) {
