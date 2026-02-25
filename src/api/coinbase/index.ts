@@ -23,6 +23,7 @@ import {
   COINBASE_CONFIG_API,
   TRANSACTIONS_LIMIT,
 } from './coinbase.constants';
+import {NO_CACHE_HEADERS} from '../../constants/config';
 
 // Redirect URI
 const COINBASE_REDIRECT_URI = COINBASE_CONFIG_API.redirect_uri.mobile;
@@ -96,6 +97,7 @@ const getRefreshToken = async (
     refresh_token: token.refresh_token,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -118,6 +120,7 @@ const getAccessToken = async (code: string): Promise<CoinbaseTokenProps> => {
     redirect_uri: COINBASE_REDIRECT_URI,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -143,6 +146,7 @@ const revokeToken = async (
     client_secret: CREDENTIALS.client_secret,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
     'CB-VERSION': API_VERSION,
@@ -166,6 +170,7 @@ const getAccounts = async (
   const url =
     CREDENTIALS.api_url + '/v2' + '/accounts?order=asc&limit=' + PAGE_LIMIT;
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
     'CB-VERSION': API_VERSION,
@@ -185,6 +190,7 @@ const getAccount = async (
 ): Promise<CoinbaseAccountProps> => {
   const url = CREDENTIALS.api_url + '/v2/accounts/' + id;
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
     'CB-VERSION': API_VERSION,
@@ -207,6 +213,7 @@ const getCurrentUser = async (
   }
   const url = CREDENTIALS.api_url + '/v2/user';
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
     'CB-VERSION': API_VERSION,
@@ -240,6 +247,7 @@ const getTransactions = async (
     url = url + '&starting_after=' + nextStartingAfter;
   }
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
     'CB-VERSION': API_VERSION,
@@ -267,6 +275,7 @@ const getNewAddress = async (
   };
   const url = CREDENTIALS.api_url + '/v2/accounts/' + accountId + '/addresses';
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
     'CB-VERSION': API_VERSION,
@@ -294,6 +303,7 @@ const sendTransaction = async (
   const url =
     CREDENTIALS.api_url + '/v2/accounts/' + accountId + '/transactions';
   let headers: any = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
     'CB-VERSION': API_VERSION,
@@ -327,6 +337,7 @@ const payInvoice = async (
     twoFactorCode,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -344,7 +355,7 @@ const getExchangeRates = async (
   const url =
     CREDENTIALS.api_url + '/v2/exchange-rates' + '?currency=' + currency;
   try {
-    const {data} = await axios.get(url);
+    const {data} = await axios.get(url, {headers: NO_CACHE_HEADERS});
     return data;
   } catch (error: any) {
     throw error.response.data;
@@ -354,7 +365,7 @@ const getExchangeRates = async (
 const getFiatCurrencies = async (): Promise<CoinbaseFiatCurrenciesProps> => {
   const url = CREDENTIALS.api_url + '/v2/currencies';
   try {
-    const {data} = await axios.get(url);
+    const {data} = await axios.get(url, {headers: NO_CACHE_HEADERS});
     return data;
   } catch (error: any) {
     throw error.response.data;
@@ -365,7 +376,7 @@ const getCryptoCurrencies =
   async (): Promise<CoinbaseCryptoCurrenciesProps> => {
     const url = CREDENTIALS.api_url + '/v2/currencies/crypto';
     try {
-      const {data} = await axios.get(url);
+      const {data} = await axios.get(url, {headers: NO_CACHE_HEADERS});
       return data;
     } catch (error: any) {
       throw error.response.data;

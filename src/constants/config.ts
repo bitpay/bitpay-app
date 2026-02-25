@@ -178,6 +178,12 @@ export const EXCHANGE_RATES_CURRENCIES = [
   'pol',
 ];
 
+export const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  Pragma: 'no-cache',
+  Expires: '0',
+};
+
 // Passkey
 export const PASSKEY_API_REGISTER_CHALLENGE =
   '/auth/passkey/register/challenge';

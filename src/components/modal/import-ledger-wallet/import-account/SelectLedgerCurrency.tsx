@@ -50,7 +50,7 @@ import {Platform} from 'react-native';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {CurrencyListIcons} from '../../../../constants/SupportedCurrencyOptions';
 import BitpaySvg from '../../../../../assets/img/wallet/transactions/bitpay.svg';
-import {BASE_BITCORE_URL} from '../../../../constants/config';
+import {BASE_BITCORE_URL, NO_CACHE_HEADERS} from '../../../../constants/config';
 import {startUpdateAllWalletStatusForKey} from '../../../../store/wallet/effects/status/status';
 import RadiatingLineAnimation from './RadiatingLineAnimation';
 import {ErrorDescriptionColumn} from '../components/ErrorDescriptionColumn';
@@ -382,7 +382,9 @@ export const SelectLedgerCurrency: React.FC<Props> = props => {
     }/${chain.toUpperCase()}/mainnet/address/${address}${
       chain.toLowerCase() === 'xrp' ? '' : '/txs'
     }`;
-    const apiResponse = await axios.get<any>(url);
+    const apiResponse = await axios.get<any>(url, {
+      headers: NO_CACHE_HEADERS,
+    });
     const finalTxCount = apiResponse?.data?.length;
 
     if (!finalTxCount) {
