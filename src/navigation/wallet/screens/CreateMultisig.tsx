@@ -205,7 +205,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     control,
     handleSubmit,
     setValue,
-    formState: {errors},
+    formState: {errors, isSubmitting},
   } = useForm({resolver: yupResolver(schema)});
 
   const singleAddressCurrency =
@@ -230,34 +230,51 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     );
   };
 
-  const onSubmit = (formData: {
+  const onSubmit = async (formData: {
     name: string;
     myName: string;
     requiredSignatures: number;
     totalCopayers: number;
   }) => {
-    const {name, myName, requiredSignatures, totalCopayers} = formData;
+    try {
+      let opts: Partial<KeyOptions> = {};
+      if (key) {
+        if (key.isPrivKeyEncrypted) {
+          opts.password = await dispatch(getDecryptPassword(key));
+        }
+        showOngoingProcess('ADDING_WALLET');
+      } else {
+        showOngoingProcess('CREATING_KEY');
+      }
+      await sleep(500);
+      const {name, myName, requiredSignatures, totalCopayers} = formData;
 
-    let opts: Partial<KeyOptions> = {};
-    opts.name = name;
-    opts.myName = myName;
-    opts.m = requiredSignatures;
-    opts.n = totalCopayers;
-    opts.useNativeSegwit = options.useNativeSegwit;
-    opts.networkName = options.networkName;
-    opts.singleAddress = options.singleAddress;
-    opts.coin = currency?.toLowerCase();
-    opts.chain = chain?.toLowerCase() || opts.coin;
-
-    CreateMultisigWallet(opts);
+      opts.name = name;
+      opts.myName = myName;
+      opts.m = requiredSignatures;
+      opts.n = totalCopayers;
+      opts.useNativeSegwit = options.useNativeSegwit;
+      opts.networkName = options.networkName;
+      opts.singleAddress = options.singleAddress;
+      opts.coin = currency?.toLowerCase();
+      opts.chain = chain?.toLowerCase() || opts.coin;
+      await CreateMultisigWallet(opts);
+    } catch (e: any) {
+      logger.error(e.message);
+      hideOngoingProcess();
+      await sleep(500);
+      if (e.message === 'invalid password') {
+        dispatch(showBottomNotificationModal(WrongPasswordError()));
+      } else {
+        showErrorModal(e.message);
+      }
+    }
   };
 
   const CreateTSSMultisigWallet = async (
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      showOngoingProcess('CREATING_KEY');
-      await sleep(200);
       const {key: tssKey} = await dispatch<any>(
         startCreateTSSKey({
           coin: opts.coin!,
@@ -297,119 +314,118 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
           ],
         }),
       );
-    } catch (e: any) {
-      logger.error(e.message);
+    } catch (error: any) {
       hideOngoingProcess();
       await sleep(500);
-      showErrorModal(e.message);
+      const e =
+        (error && error.message) ||
+        t('An unexpected error occurred while creating TSS Multisig Wallet.');
+      dispatch(
+        showBottomNotificationModal({
+          type: 'error',
+          title: t('Something went wrong'),
+          message: e,
+          enableBackdropDismiss: true,
+          actions: [
+            {
+              text: t('OK'),
+              action: () => {},
+              primary: true,
+            },
+          ],
+        }),
+      );
     }
   };
 
   const CreateMultisigWallet = async (
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
-    try {
-      if (isTSS) {
-        await CreateTSSMultisigWallet(opts);
-        return;
-      }
+    if (isTSS) {
+      await CreateTSSMultisigWallet(opts);
+      return;
+    }
 
-      if (key) {
-        if (key.isPrivKeyEncrypted) {
-          opts.password = await dispatch(getDecryptPassword(key));
-        }
-        showOngoingProcess('ADDING_WALLET');
-        const wallet = (await dispatch<any>(
-          addWalletMultisig({
-            key,
-            opts,
-          }),
-        )) as Wallet;
-        dispatch(
-          Analytics.track('Created Multisig Wallet', {
-            coin: currency?.toLowerCase(),
-            type: `${opts.m}-${opts.n}`,
-            addedToExistingKey: true,
-          }),
-        );
-        wallet.getStatus(
-          {network: wallet.network},
-          (err: any, status: Status) => {
-            if (err) {
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 1,
-                  routes: [
-                    {
-                      name: RootStacks.TABS,
-                      params: {screen: TabsScreens.HOME},
-                    },
-                    {
-                      name: WalletScreens.KEY_OVERVIEW,
-                      params: {id: key.id},
-                    },
-                  ],
-                }),
-              );
-            } else {
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 2,
-                  routes: [
-                    {
-                      name: RootStacks.TABS,
-                      params: {screen: TabsScreens.HOME},
-                    },
-                    {
-                      name: WalletScreens.KEY_OVERVIEW,
-                      params: {id: key.id},
-                    },
-                    {
-                      name: WalletScreens.COPAYERS,
-                      params: {wallet: wallet, status: status.wallet},
-                    },
-                  ],
-                }),
-              );
-            }
-            hideOngoingProcess();
-          },
-        );
-      } else {
-        showOngoingProcess('CREATING_KEY');
-        const multisigKey = (await dispatch<any>(
-          startCreateKeyMultisig(opts),
-        )) as Key;
-        dispatch(
-          Analytics.track('Created Multisig Wallet', {
-            coin: currency?.toLowerCase(),
-            type: `${opts.m}-${opts.n}`,
-            addedToExistingKey: false,
-          }),
-        );
-        dispatch(
-          Analytics.track('Created Key', {
-            context: 'createMultisig',
-            coins: [currency?.toLowerCase()],
-          }),
-        );
-        dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
-        navigation.navigate('BackupKey', {
-          context: 'createNewMultisigKey',
-          key: multisigKey,
-        });
-        hideOngoingProcess();
-      }
-    } catch (e: any) {
-      logger.error(e.message);
-      if (e.message === 'invalid password') {
-        dispatch(showBottomNotificationModal(WrongPasswordError()));
-      } else {
-        hideOngoingProcess();
-        await sleep(500);
-        showErrorModal(e.message);
-        return;
-      }
+    if (key) {
+      const wallet = (await dispatch<any>(
+        addWalletMultisig({
+          key,
+          opts,
+        }),
+      )) as Wallet;
+      dispatch(
+        Analytics.track('Created Multisig Wallet', {
+          coin: currency?.toLowerCase(),
+          type: `${opts.m}-${opts.n}`,
+          addedToExistingKey: true,
+        }),
+      );
+      wallet.getStatus(
+        {network: wallet.network},
+        (err: any, status: Status) => {
+          if (err) {
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 1,
+                routes: [
+                  {
+                    name: RootStacks.TABS,
+                    params: {screen: TabsScreens.HOME},
+                  },
+                  {
+                    name: WalletScreens.KEY_OVERVIEW,
+                    params: {id: key.id},
+                  },
+                ],
+              }),
+            );
+          } else {
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 2,
+                routes: [
+                  {
+                    name: RootStacks.TABS,
+                    params: {screen: TabsScreens.HOME},
+                  },
+                  {
+                    name: WalletScreens.KEY_OVERVIEW,
+                    params: {id: key.id},
+                  },
+                  {
+                    name: WalletScreens.COPAYERS,
+                    params: {wallet: wallet, status: status.wallet},
+                  },
+                ],
+              }),
+            );
+          }
+          hideOngoingProcess();
+        },
+      );
+    } else {
+      const multisigKey = (await dispatch<any>(
+        startCreateKeyMultisig(opts),
+      )) as Key;
+      dispatch(
+        Analytics.track('Created Multisig Wallet', {
+          coin: currency?.toLowerCase(),
+          type: `${opts.m}-${opts.n}`,
+          addedToExistingKey: false,
+        }),
+      );
+      dispatch(
+        Analytics.track('Created Key', {
+          context: 'createMultisig',
+          coins: [currency?.toLowerCase()],
+        }),
+      );
+      dispatch(setHomeCarouselConfig({id: multisigKey.id, show: true}));
+      navigation.navigate('BackupKey', {
+        context: 'createNewMultisigKey',
+        key: multisigKey,
+      });
+      hideOngoingProcess();
     }
   };
 
@@ -704,7 +720,10 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
         />
 
         <CtaContainer>
-          <Button buttonStyle={'primary'} onPress={handleSubmit(onSubmit)}>
+          <Button
+            buttonStyle={'primary'}
+            disabled={isSubmitting}
+            onPress={handleSubmit(onSubmit)}>
             {t('Create Wallet')}
           </Button>
         </CtaContainer>
