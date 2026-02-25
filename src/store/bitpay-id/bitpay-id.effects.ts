@@ -39,6 +39,7 @@ import {
 } from '../../store/bitpay-id/bitpay-id.actions';
 import {logManager} from '../../managers/LogManager';
 import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
+import {clearAllCookiesEverywhere} from '../../utils/cookieAuth';
 
 interface StartLoginParams {
   email?: string;
@@ -630,7 +631,7 @@ export const startDisconnectBitPayId =
     try {
       await MixpanelWrapper.reset();
     } catch (err) {
-      logManager.debug('An error occured while clearing Mixpanel data.');
+      logManager.debug('An error occurred while clearing Mixpanel data.');
       logManager.debug(JSON.stringify(err));
     }
 
@@ -638,13 +639,20 @@ export const startDisconnectBitPayId =
       Dosh.clearUser();
     } catch (err) {
       // log but swallow this error
-      logManager.debug('An error occured while clearing Dosh user.');
+      logManager.debug('An error occurred while clearing Dosh user.');
       logManager.debug(JSON.stringify(err));
     }
 
     // Braze doesn't recommend changeUser to a new EID
     // Keep tracking current EID as part of logout
     // until login with a different user or uninstall the app
+
+    try {
+      await clearAllCookiesEverywhere();
+    } catch (err) {
+      logManager.debug('An error occurred while clearing cookies.');
+      logManager.debug(JSON.stringify(err));
+    }
 
     dispatch(BitPayIdActions.bitPayIdDisconnected(APP.network));
     dispatch(CardActions.isJoinedWaitlist(false));

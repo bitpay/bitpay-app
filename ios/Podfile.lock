@@ -41,6 +41,34 @@ PODS:
     - BrazeKit (= 13.2.1)
   - BVLinearGradient (2.6.2):
     - React-Core
+  - CookieManager (6.3.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - DoubleConversion (1.1.6)
   - fast_float (8.0.0)
   - FBLazyVector (0.82.0)
@@ -3422,6 +3450,7 @@ DEPENDENCIES:
   - BrazeKit
   - BrazeUI
   - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
+  - "CookieManager (from `../node_modules/@preeternal/react-native-cookie-manager`)"
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - fast_float (from `../node_modules/react-native/third-party-podspecs/fast_float.podspec`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
@@ -3573,6 +3602,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@braze/react-native-sdk"
   BVLinearGradient:
     :path: "../node_modules/react-native-linear-gradient"
+  CookieManager:
+    :path: "../node_modules/@preeternal/react-native-cookie-manager"
   DoubleConversion:
     :podspec: "../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec"
   fast_float:
@@ -3831,6 +3862,7 @@ SPEC CHECKSUMS:
   BrazeLocation: 1919682502f70d3f215215b9ef2b56836dde4a9e
   BrazeUI: b49f51ff3eb88657d6a97e6b3688e03a7255cbe1
   BVLinearGradient: 34a999fda29036898a09c6a6b728b0b4189e1a44
+  CookieManager: ae06e97a79ea66832add0c8aa501a7986bdbb72d
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
   FBLazyVector: 41b4dd99afd0aad861444ee141abdedaa6c3d238
