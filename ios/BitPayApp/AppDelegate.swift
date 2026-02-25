@@ -7,6 +7,94 @@ import RNBootSplash
 import BrazeKit
 import BrazeUI
 import UserNotifications
+import CryptoKit
+
+// MARK: - Bundle Integrity Verification
+
+// Retained to prevent the security window from being deallocated before the alert is dismissed.
+// UIAlertController presentation is asynchronous, so the window must outlive the presenting call.
+private var securityAlertWindow: UIWindow?
+
+/// Streams a file in 8 KB chunks and returns its SHA256 hex digest.
+/// Avoids loading the entire bundle (~10–30 MB) into memory at once.
+private func sha256Hash(of url: URL) throws -> String {
+    let fileHandle = try FileHandle(forReadingFrom: url)
+    defer { fileHandle.closeFile() }
+
+    var hasher = SHA256()
+    while case let chunk = fileHandle.readData(ofLength: 8_192), !chunk.isEmpty {
+        hasher.update(data: chunk)
+    }
+    return hasher.finalize().compactMap { String(format: "%02x", $0) }.joined()
+}
+
+/// Verifies the integrity of the React Native bundle against the hash embedded at build time.
+private func verifyBundleIntegrity() -> Bool {
+#if DEBUG
+    // Skip verification in debug mode (bundle is served from Metro)
+    return true
+#else
+    // The expected hash is compiled into the Mach-O binary (BundleHash.swift).
+    // The build script replaces the placeholder with the real hash after bundling.
+    // If the placeholder is still present, the build pipeline didn't run correctly.
+    let expectedHash = BundleHash.expected
+    let placeholder = "__RN_BUNDLE_HASH_PLACEHOLDER_"
+    guard !expectedHash.hasPrefix(placeholder), !expectedHash.isEmpty else {
+        NSLog("[Security] Bundle hash placeholder was not replaced — rejecting launch.")
+        return false
+    }
+
+    guard let bundleURL = Bundle.main.url(forResource: "main", withExtension: "jsbundle") else {
+        NSLog("[Security] Could not locate main.jsbundle")
+        return false
+    }
+
+    do {
+        let computedHash = try sha256Hash(of: bundleURL)
+        let isValid = computedHash.lowercased() == expectedHash.lowercased()
+        if !isValid {
+            // Log failure without revealing the expected hash — an attacker with
+            // device console access should not learn what value to target.
+            NSLog("[Security] Bundle integrity check failed.")
+        }
+        return isValid
+    } catch {
+        NSLog("[Security] Error computing bundle hash: %@", error.localizedDescription)
+        return false
+    }
+#endif
+}
+
+/// Shows a blocking security alert and calls abort() when the user dismisses it.
+/// Must be called on the main thread (already guaranteed by didFinishLaunchingWithOptions).
+private func showBundleTamperedAlert() {
+    let alert = UIAlertController(
+        title: "Security Warning",
+        message: "This application has been modified and cannot run. Please reinstall from the App Store.",
+        preferredStyle: .alert
+    )
+    // abort() raises SIGABRT: App Store-compliant and generates a crash log for forensic review.
+    // Preferable to exit() which Apple guidelines discourage.
+    alert.addAction(UIAlertAction(title: "Close", style: .destructive) { _ in
+        abort()
+    })
+
+    // Create a window above all other UI to host the alert.
+    // Stored in securityAlertWindow to prevent ARC from deallocating it before
+    // the async presentation completes and the user dismisses the alert.
+    let window: UIWindow
+    if #available(iOS 13.0, *),
+       let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+        window = UIWindow(windowScene: scene)
+    } else {
+        window = UIWindow(frame: UIScreen.main.bounds)
+    }
+    window.rootViewController = UIViewController()
+    window.windowLevel = .alert + 1
+    window.makeKeyAndVisible()
+    window.rootViewController?.present(alert, animated: true)
+    securityAlertWindow = window
+}
 
 // MARK: - React Native Factory Delegate
 
@@ -51,6 +139,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, BrazeInAppMessageUIDelega
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         AppDelegate.shared = self
+
+        // Verify React Native bundle integrity to prevent tampering.
+        // On failure: show a blocking security window and return early without starting React Native.
+        // We return true (not false) so UIKit doesn't log a spurious launch-URL error.
+        if !verifyBundleIntegrity() {
+            showBundleTamperedAlert()
+            return true
+        }
 
         // 1. React Native setup using factory
         let rnDelegate = ReactNativeDelegate()
