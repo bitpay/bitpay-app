@@ -194,7 +194,7 @@ import SwapCryptoOfferSelector, {
 } from '../components/SwapCryptoOfferSelector';
 import {createWalletAddress} from '../../../../store/wallet/effects/address/address';
 import {BwcProvider} from '../../../../lib/bwc';
-import {HEIGHT} from '../../../../components/styled/Containers';
+import {HEIGHT, WIDTH} from '../../../../components/styled/Containers';
 import ChangellyPoliciesModal from '../components/ChangellyPoliciesModal';
 import {
   ConfirmHardwareWalletModal,
@@ -2753,6 +2753,7 @@ const SwapCryptoRoot: React.FC = () => {
                     ? {backgroundColor: Action}
                     : {}
                 }
+                isBigScreen={WIDTH > 500}
                 disabled={swapCryptoSupportedCoinsFrom?.length === 0}
                 key={
                   swapCryptoSupportedCoinsFrom?.length === 0
@@ -2762,7 +2763,8 @@ const SwapCryptoRoot: React.FC = () => {
                 onPress={() => {
                   showModal('fromWalletSelector');
                 }}>
-                <WalletSelectorLeft>
+                <WalletSelectorLeft
+                  style={fromWalletSelected ? {maxWidth: '85%'} : {}}>
                   {loadingWalletFromStatus ? (
                     <SelectedOptionCol>
                       <SwapCryptoLoadingWalletSkeleton />
@@ -2784,7 +2786,8 @@ const SwapCryptoRoot: React.FC = () => {
                           />
                           <WalletSelectorName
                             ellipsizeMode="tail"
-                            numberOfLines={1}>
+                            numberOfLines={1}
+                            style={{marginRight: 12}}>
                             {fromWalletSelected.walletName
                               ? fromWalletSelected.walletName
                               : fromWalletSelected.currencyName}
@@ -2803,7 +2806,7 @@ const SwapCryptoRoot: React.FC = () => {
                 </WalletSelectorLeft>
                 <WalletSelectorRight>
                   {loadingWalletFromStatus ? null : (
-                    <ArrowContainer style={{marginRight: 10, marginLeft: 5}}>
+                    <ArrowContainer style={{marginRight: 5, marginLeft: 5}}>
                       <SelectorArrowRight
                         {...{
                           width: 7,
@@ -3024,6 +3027,7 @@ const SwapCryptoRoot: React.FC = () => {
                       }
                     : {}
                 }
+                isBigScreen={WIDTH > 500}
                 key={fromWalletSelected ? 'swapToEnabled' : 'swapToDisabled'}
                 onPress={() => {
                   if (useDefaultToWallet || !fromWalletSelected) {
@@ -3031,7 +3035,8 @@ const SwapCryptoRoot: React.FC = () => {
                   }
                   showModal('toWalletSelector');
                 }}>
-                <WalletSelectorLeft>
+                <WalletSelectorLeft
+                  style={toWalletSelected ? {maxWidth: '85%'} : {}}>
                   {toWalletSelected ? (
                     <>
                       <CurrencyImage
@@ -3047,7 +3052,8 @@ const SwapCryptoRoot: React.FC = () => {
                       />
                       <WalletSelectorName
                         ellipsizeMode="tail"
-                        numberOfLines={1}>
+                        numberOfLines={1}
+                        style={{marginRight: 12}}>
                         {toWalletSelected.walletName
                           ? toWalletSelected.walletName
                           : toWalletSelected.currencyName}
@@ -3066,7 +3072,7 @@ const SwapCryptoRoot: React.FC = () => {
                   {loadingWalletFromStatus ||
                   (selectedWallet &&
                     !selectedWallet?.balance?.satSpendable) ? null : (
-                    <ArrowContainer style={{marginRight: 10, marginLeft: 5}}>
+                    <ArrowContainer style={{marginRight: 5, marginLeft: 5}}>
                       <SelectorArrowRight
                         {...{
                           width: 7,

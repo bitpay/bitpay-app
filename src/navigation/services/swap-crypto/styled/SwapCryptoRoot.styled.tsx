@@ -219,7 +219,10 @@ export const SwapCryptoWalletSelectorContainer = styled.View`
   justify-content: center;
 `;
 
-export const WalletSelector = styled(TouchableOpacity)<{disabled?: boolean}>`
+export const WalletSelector = styled(TouchableOpacity)<{
+  disabled?: boolean;
+  isBigScreen?: boolean;
+}>`
   background-color: ${({theme: {dark}}) => (dark ? Black : White)};
   height: 40px;
   border-radius: 27.5px;
@@ -229,6 +232,7 @@ export const WalletSelector = styled(TouchableOpacity)<{disabled?: boolean}>`
   justify-content: space-between;
   padding: 8px;
   min-width: 146px;
+  max-width: ${({isBigScreen}) => (isBigScreen ? '220px' : '185px')};
   opacity: ${({disabled}) => (disabled ? 0.2 : 1)};
 `;
 
@@ -252,6 +256,7 @@ export const WalletSelectorName = styled.Text`
   letter-spacing: 0px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   margin-left: 8px;
+  margin-right: 5px;
 `;
 
 export const SelectedOptionText = styled(BaseText)`
