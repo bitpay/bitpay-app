@@ -106,6 +106,9 @@ android {
         versionCode 91212401
         versionName "14.40.0"
         missingDimensionStrategy 'react-native-camera', 'mlkit'
+
+        // Bundle integrity hash - injected during release build
+        buildConfigField "String", "RN_BUNDLE_HASH", "\"${findProperty('RN_BUNDLE_HASH') ?: ''}\""
         ndk {
             abiFilters "arm64-v8a", "x86_64"
         }
@@ -185,3 +188,29 @@ dependencies {
 }
 
 apply plugin: 'com.google.android.gms.strict-version-matcher-plugin'
+
+// Task to calculate and inject React Native bundle hash for integrity verification
+android.applicationVariants.all { variant ->
+    if (!variant.buildType.isDebuggable()) {
+        def variantName = variant.name.capitalize()
+
+        // Hook into the bundle task to calculate hash after bundling
+        tasks.matching { it.name == "createBundle${variantName}JsAndAssets" }.configureEach { bundleTask ->
+            bundleTask.doLast {
+                def bundleFile = file("${buildDir}/generated/assets/createBundle${variantName}JsAndAssets/index.android.bundle")
+                if (bundleFile.exists()) {
+                    def digest = java.security.MessageDigest.getInstance("SHA-256")
+                    bundleFile.eachByte(8192) { bytes, len ->
+                        digest.update(bytes, 0, len)
+                    }
+                    def hash = digest.digest().encodeHex().toString()
+                    println "Bundle hash for ${variantName}: ${hash}"
+
+                    // Write hash to a properties file for the build to pick up
+                    def propsFile = file("${buildDir}/bundle-hash.properties")
+                    propsFile.text = "RN_BUNDLE_HASH=${hash}"
+                }
+            }
+        }
+    }
+}

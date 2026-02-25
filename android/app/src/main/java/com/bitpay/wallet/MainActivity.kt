@@ -31,6 +31,13 @@ class MainActivity : ReactActivity() {
         DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Verify bundle integrity before loading React Native
+        if (!BundleIntegrityVerifier.verify(this)) {
+            super.onCreate(savedInstanceState)
+            BundleIntegrityVerifier.showTamperedAlert(this)
+            return
+        }
+
         RNBootSplash.init(this, R.style.BootTheme)
         supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
         super.onCreate(savedInstanceState)
