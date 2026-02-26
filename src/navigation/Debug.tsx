@@ -8,7 +8,7 @@ import {RootStackParamList} from '../Root';
 import {RootState} from '../store';
 import {BaseText} from '../components/styled/Text';
 import styled from 'styled-components/native';
-import {Caution, SlateDark, White} from '../styles/colors';
+import {Caution, Slate30, SlateDark, White} from '../styles/colors';
 import {isAndroidStoragePermissionGranted} from '../utils/helper-methods';
 import RNFS from 'react-native-fs';
 import Share, {ShareOptions} from 'react-native-share';
@@ -52,7 +52,7 @@ const DescriptionError = styled(BaseText)`
 
 const LogError = styled(BaseText)`
   font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? '#E1E4E7' : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
 `;
 
 const DebugScreen: React.FC<

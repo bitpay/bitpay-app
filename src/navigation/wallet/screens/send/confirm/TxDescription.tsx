@@ -13,6 +13,7 @@ import {
   LuckySevens,
   NeutralSlate,
   Slate,
+  Slate30,
   White,
 } from '../../../../../styles/colors';
 import CheckSvg from '../../../../../../assets/img/check.svg';
@@ -41,11 +42,11 @@ interface TxDescriptionColors {
 const txDescriptionColors: TxDescriptionColors = {
   border: {
     dark: LuckySevens,
-    light: '#e1e4e7',
+    light: Slate30,
   },
   unfocusedBorder: {
     dark: Black,
-    light: '#e1e4e7',
+    light: Slate30,
   },
   focusedInputBg: {
     dark: 'transparent',

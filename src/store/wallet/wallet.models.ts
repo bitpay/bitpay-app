@@ -362,6 +362,7 @@ export interface TransactionProposal {
   };
   coin: string;
   copayerId: string;
+  creatorId: string;
   createdOn: number;
   customData?: CustomTransactionData;
   deleteLockTime: number;

@@ -22,7 +22,7 @@ import {
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {WalletGroupParamList} from '../WalletGroup';
-import {White, SlateDark} from '../../../styles/colors';
+import {White, SlateDark, Slate30} from '../../../styles/colors';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
@@ -65,7 +65,7 @@ const CopayersContainer = styled(RowContainer)`
   padding: 18px;
   border-style: solid;
   border-bottom-width: 1px;
-  border-bottom-color: ${({theme}) => (theme.dark ? '#434D5A' : '#E1E4E7')};
+  border-bottom-color: ${({theme}) => (theme.dark ? SlateDark : Slate30)};
 `;
 
 const Copayers: React.FC<CopayersProps> = props => {

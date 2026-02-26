@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useLayoutEffect} from 'react';
-import {Share, TextInput} from 'react-native';
+import {Share} from 'react-native';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
@@ -18,25 +18,44 @@ import {
   LuckySevens,
   Action,
   Black,
-  NeutralSlate,
-  Slate30,
-  Success25,
   LinkBlue,
-  Midnight,
-  Caution,
 } from '../../../styles/colors';
 import {BaseText, H5} from '../../../components/styled/Text';
 import {
   CtaContainer,
   ScreenGutter,
+  TSSQRSectionContainer as QRSectionContainer,
+  TSSQRContainer as QRContainer,
+  TSSShareContainer as ShareContainer,
+  TSSShareButtonText as ShareButtonText,
+  TSSStepsSection as StepsSection,
+  TSSStepsContainer as StepsContainer,
+  TSSStepRow as StepRow,
+  TSSStepRowWithButton as StepRowWithButton,
+  TSSStepContentWithButton as StepContentWithButton,
+  TSSStepRail as StepRail,
+  TSSStepIndicator as StepIndicator,
+  TSSStepConnector as StepConnector,
+  TSSStepContent as StepContent,
+  TSSContinuePillButton as ContinuePillButton,
+  TSSContinuePillText as ContinuePillText,
+  TSSInputWrapper as InputWrapper,
+  TSSStyledInput as StyledInput,
+  TSSErrorText as ErrorText,
+  TSSStepsSectionTitle as StepsSectionTitle,
+  TSSStepNumber as StepNumber,
+  TSSStepSubtitle as StepSubtitle,
+  TSSStepTitle as StepTitle,
+  TSSStatusText as SessionAcceptedText,
+  TSSStatusSubText as SessionAcceptedSubText,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
 import ShareIcon from '../../../../assets/img/share-icon.svg';
-import ClockLightIcon from '../../../../assets/img/clock-blue.svg';
-import ClockDarkIcon from '../../../../assets/img/clock-light-blue.svg';
+import ClockLightIcon from '../../../../assets/img/clock-light-outline.svg';
+import ClockDarkIcon from '../../../../assets/img/clock-darkmode-outline.svg';
 import SuccessLightIcon from '../../../../assets/img/check-dark.svg';
 import SuccessDarkIcon from '../../../../assets/img/check.svg';
 import QrCodeLightSvg from '../../../../assets/img/qr-code-black.svg';
@@ -60,26 +79,6 @@ const QRSection = styled.View`
   padding: 24px ${ScreenGutter};
 `;
 
-const QRSectionContainer = styled.View<{
-  hideBorder?: boolean;
-  fullWidth?: boolean;
-}>`
-  border-radius: 12px;
-  border-width: ${({hideBorder}) => (hideBorder ? 0 : 1)}px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-  height: 390px;
-  align-items: ${({fullWidth}) => (fullWidth ? 'stretch' : 'center')};
-`;
-
-const QRContainer = styled.View`
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-  background-color: ${White};
-  border-radius: 12px;
-  margin: 16px;
-`;
-
 const SessionAcceptedContainer = styled.View`
   align-items: center;
   justify-content: center;
@@ -87,40 +86,10 @@ const SessionAcceptedContainer = styled.View`
   flex: 1;
 `;
 
-const SessionAcceptedText = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-`;
-
-const SessionAcceptedSubText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-`;
-
-const ShareContainer = styled.View`
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding-top: 16px;
-  padding-bottom: 16px;
-  border-top-width: 1px;
-  border-top-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-`;
-
 const ShareButton = styled.TouchableOpacity`
   flex-direction: row;
   align-items: center;
   padding: 8px 12px;
-`;
-
-const ShareButtonText = styled(BaseText)`
-  margin-left: 8px;
-  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
-  font-size: 16px;
-  font-weight: 500;
 `;
 
 const InviteCodeSection = styled.View`
@@ -142,136 +111,8 @@ const InviteCodeLabel = styled(BaseText)`
   margin-bottom: 12px;
 `;
 
-const InputWrapper = styled.View`
-  flex-direction: row;
-  align-items: center;
-  border-radius: 8px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? NeutralSlate : Black)};
-  padding: 12px;
-  margin-bottom: 16px;
-`;
-
-const StyledInput = styled(TextInput)`
-  flex: 1;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-size: 16px;
-  padding: 0;
-`;
-
 const ScanButton = styled.TouchableOpacity`
   padding: 4px;
-`;
-
-const ErrorText = styled(BaseText)`
-  color: ${Caution};
-  font-size: 14px;
-  margin-bottom: 12px;
-`;
-
-const StepsSection = styled.View`
-  padding: 24px ${ScreenGutter};
-`;
-
-const StepsContainer = styled.View`
-  padding: 16px;
-  border-radius: 12px;
-  border-width: 1px;
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
-`;
-
-const StepsSectionTitle = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 500;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  margin-bottom: 12px;
-`;
-
-const StepRow = styled.View`
-  flex-direction: row;
-  align-items: flex-start;
-`;
-
-const StepRail = styled.View`
-  width: 40px;
-  align-items: center;
-  margin-right: 12px;
-`;
-
-const StepIndicator = styled.View<{active?: boolean; completed?: boolean}>`
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  background-color: ${({theme: {dark}, active, completed}) =>
-    active
-      ? '#2240C440'
-      : completed
-      ? dark
-        ? '#004D27'
-        : Success25
-      : dark
-      ? '#2A2A2A'
-      : '#F5F5F5'};
-  align-items: center;
-  justify-content: center;
-`;
-
-const StepConnector = styled.View<{completed?: boolean}>`
-  width: 2px;
-  flex-grow: 1;
-  margin-top: 0px;
-  background-color: ${({theme: {dark}, completed}) =>
-    completed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : '#F5F5F5'};
-`;
-
-const StepContent = styled.View`
-  flex: 1;
-  padding-bottom: 20px;
-`;
-
-const StepNumber = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-size: 16px;
-  font-weight: 400;
-`;
-
-const StepTitle = styled(BaseText)`
-  font-size: 16px;
-  font-weight: 400;
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-`;
-
-const StepSubtitle = styled(BaseText)`
-  font-size: 14px;
-  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
-  line-height: 20px;
-`;
-
-const StepRowWithButton = styled.View`
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
-`;
-
-const StepContentWithButton = styled.View`
-  flex: 1;
-  padding-bottom: 20px;
-  padding-right: 8px;
-`;
-
-const ContinuePillButton = styled.TouchableOpacity`
-  padding: 6px 14px;
-  border-radius: 16px;
-  background-color: ${({theme: {dark}}) => (dark ? Midnight : Action)};
-  align-self: flex-start;
-  margin-top: 2px;
-`;
-
-const ContinuePillText = styled(BaseText)`
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 20px;
-  color: ${White};
 `;
 
 const LoadingContainer = styled.View`
@@ -587,10 +428,8 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
                 <StepIndicator active={true}>
                   <ClockIconSvg width={28} height={28} />
                 </StepIndicator>
-                <SessionAcceptedText style={{marginTop: 10}}>
-                  {t('Processing...')}
-                </SessionAcceptedText>
-                <SessionAcceptedSubText style={{marginTop: 4}}>
+                <SessionAcceptedText>{t('Processing...')}</SessionAcceptedText>
+                <SessionAcceptedSubText>
                   {t('Creating session ID')}
                 </SessionAcceptedSubText>
               </SessionAcceptedContainer>

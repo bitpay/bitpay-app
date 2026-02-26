@@ -19,7 +19,7 @@ export const SellCryptoOfferLine = styled.View`
 `;
 
 export const SellCryptoOfferText = styled.Text`
-  color: ${({theme: {dark}}) => (dark ? White : '#434d5a')};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   line-height: 18px;
 `;
 

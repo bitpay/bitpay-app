@@ -290,7 +290,7 @@ export const startCreateTSSKey =
         copayers.push({
           partyId: i,
           pubKey: '',
-          name: `Co-signer ${i}`,
+          name: `Co-Signer ${i}`,
           status: 'pending',
         });
       }
@@ -383,7 +383,7 @@ export const addCoSignerToTSS =
         updatedCopayers[copayerIndex] = {
           ...updatedCopayers[copayerIndex],
           pubKey: joinerData.pubKey,
-          name: joinerData.name || `Co-signer ${opts.partyId}`,
+          name: joinerData.name || `Co-Signer ${opts.partyId}`,
           joinCode,
           status: 'invited',
         };

@@ -12,7 +12,7 @@ import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
 import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
-import {Black, LightBlack, White} from '../../../../styles/colors';
+import {Black, Overlay, White} from '../../../../styles/colors';
 
 interface Props extends SheetParams {
   isVisible: boolean;
@@ -100,8 +100,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
   const defaultBorderRadius = Platform.OS === 'ios' ? 12 : 0;
   const sheetBackgroundColor = useMemo(
     () =>
-      backgroundColor ??
-      (theme.dark ? (fullscreen ? Black : LightBlack) : White),
+      backgroundColor ?? (theme.dark ? (fullscreen ? Black : Overlay) : White),
     [backgroundColor, theme.dark, fullscreen],
   );
 

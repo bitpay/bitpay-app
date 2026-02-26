@@ -13,7 +13,7 @@ import {AppActions} from '../../../../../store/app';
 import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
 import {LanguageList} from '../../../../../constants/LanguageSelectionList';
 import {useTheme} from 'styled-components/native';
-import {SlateDark} from '../../../../../styles/colors';
+import {Slate30, SlateDark} from '../../../../../styles/colors';
 import {useTranslation} from 'react-i18next';
 import {useNavigation} from '@react-navigation/native';
 import {HeaderTitle} from '../../../../../components/styled/Text';
@@ -58,7 +58,7 @@ const LanguageSettings: React.FC = () => {
                 {loading && selected === isoCode ? (
                   <ActivityIndicator
                     size="small"
-                    color={theme.dark ? '#E1E4E7' : SlateDark}
+                    color={theme.dark ? Slate30 : SlateDark}
                     style={{marginEnd: 8}}
                   />
                 ) : (

@@ -212,14 +212,6 @@ const Confirm = () => {
     useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
-
   const isTSSWallet = key ? isTSSKey(key) : false;
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
@@ -231,14 +223,12 @@ const Confirm = () => {
     Array<{id: string; name: string; signed: boolean}>
   >([]);
   const tssCallbacks = useTSSCallbacks({
-    wallet: wallet!,
     setTssStatus,
     setTssProgress,
     setTssCopayers,
     tssCopayers,
     setShowTSSProgressModal,
     setResetSwipeButton,
-    showErrorMessage,
   });
 
   const unsoldGiftCard = giftCards.find(
@@ -503,11 +493,6 @@ const Confirm = () => {
   }) => {
     const isUsingHardwareWallet = !!transport;
 
-    if (isTSSWallet) {
-      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
-      setTssStatus('initializing');
-    }
-
     try {
       if (isUsingHardwareWallet) {
         if (txp && wallet && recipient) {
@@ -569,17 +554,8 @@ const Confirm = () => {
             );
       }
 
-      if (isTSSWallet) {
-        setTssStatus('complete');
-        await sleep(1500);
-        setShowTSSProgressModal(false);
-      }
-
       await redeemGiftCardAndNavigateToGiftCardDetails();
     } catch (err: any) {
-      if (isTSSWallet) {
-        setShowTSSProgressModal(false);
-      }
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -772,6 +748,7 @@ const Confirm = () => {
                 onCopayersInitialized={setTssCopayers}
                 isModalVisible={showTSSProgressModal}
                 onModalVisibilityChange={setShowTSSProgressModal}
+                txpCreatorId={wallet.credentials?.copayerId}
               />
             )}
             <SendingFrom

@@ -197,15 +197,6 @@ const MoonpaySellCheckout: React.FC = () => {
     useState<SimpleConfirmPaymentState | null>(null);
 
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
-  const showTssErrorMessage = useCallback(
-    async (config: BottomNotificationConfig) => {
-      const msg = config?.message || t('An error occurred during TSS signing');
-      const reason = 'TSS Signing Error';
-      const title = config?.title || t('TSS Signing Error');
-      showError(msg, reason, undefined, title);
-    },
-    [dispatch],
-  );
   const isTSSWallet = isTSSKey(key);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
@@ -218,14 +209,12 @@ const MoonpaySellCheckout: React.FC = () => {
   >([]);
 
   const tssCallbacks = useTSSCallbacks({
-    wallet,
     setTssStatus,
     setTssProgress,
     setTssCopayers,
     tssCopayers,
     setShowTSSProgressModal,
     setResetSwipeButton,
-    showErrorMessage: showTssErrorMessage,
   });
 
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
@@ -635,11 +624,6 @@ const MoonpaySellCheckout: React.FC = () => {
     const isUsingHardwareWallet = !!transport;
     let broadcastedTx;
 
-    if (isTSSWallet) {
-      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
-      setTssStatus('initializing');
-    }
-
     try {
       if (isUsingHardwareWallet) {
         const {chain, network} = wallet.credentials;
@@ -680,12 +664,6 @@ const MoonpaySellCheckout: React.FC = () => {
             ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
-
-        if (isTSSWallet && broadcastedTx?.txid) {
-          setTssStatus('complete');
-          await sleep(1500);
-          setShowTSSProgressModal(false);
-        }
       }
       updateMoonpayTx(txData!, broadcastedTx as Partial<TransactionProposal>);
       showPaymentSent({
@@ -1063,6 +1041,7 @@ const MoonpaySellCheckout: React.FC = () => {
             onCopayersInitialized={setTssCopayers}
             isModalVisible={showTSSProgressModal}
             onModalVisibilityChange={setShowTSSProgressModal}
+            txpCreatorId={wallet.credentials?.copayerId}
           />
         )}
         <RowDataContainer>

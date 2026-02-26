@@ -2,6 +2,7 @@ import React from 'react';
 import {Dimensions, Text, Platform} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import styled, {css} from 'styled-components/native';
+import {TextInput} from 'react-native';
 import {
   Feather,
   LightBlack,
@@ -14,6 +15,11 @@ import {
   Action,
   LuckySevens,
   Slate30,
+  Black,
+  Success25,
+  LinkBlue,
+  Midnight,
+  Caution,
 } from '../../styles/colors';
 import {BaseText} from './Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -301,7 +307,7 @@ export const AdvancedOptionsButtonText = styled(BaseText)`
 export const AdvancedOptions = styled.View`
   border-style: solid;
   border-top-width: 1px;
-  border-top-color: ${({theme}) => (theme.dark ? '#434D5A' : '#E1E4E7')};
+  border-top-color: ${({theme}) => (theme.dark ? SlateDark : Slate30)};
 `;
 
 const Gutter = '10px';
@@ -392,7 +398,7 @@ export const SearchRoundContainer = styled.View`
   flex-direction: row;
   display: flex;
   justify-content: space-between;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : '#e1e4e7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   border-radius: 100px;
   align-items: center;
   height: 50px;
@@ -561,4 +567,195 @@ export const ArchaxBannerContainer = styled.View<{
   overflow: hidden;
   margin-top: ${({inset}) => inset?.top ?? 0}px;
   padding: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '16px')};
+`;
+
+export const TSSQRSectionContainer = styled.View<{
+  hideBorder?: boolean;
+  fullWidth?: boolean;
+}>`
+  border-radius: 12px;
+  border-width: ${({hideBorder}) => (hideBorder ? 0 : 1)}px;
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
+  height: 390px;
+  align-items: ${({fullWidth}) => (fullWidth ? 'stretch' : 'center')};
+`;
+
+export const TSSQRContainer = styled.View`
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background-color: ${White};
+  border-radius: 12px;
+  margin: 16px;
+`;
+
+export const TSSShareContainer = styled.View`
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-top-width: 1px;
+  border-top-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
+`;
+
+export const TSSShareButtonText = styled(BaseText)`
+  font-size: 16px;
+  font-weight: 500;
+  color: ${({theme: {dark}}) => (dark ? LinkBlue : Action)};
+  margin-left: 8px;
+`;
+
+export const TSSStepsSection = styled.View`
+  padding: 24px ${ScreenGutter};
+`;
+
+export const TSSStepsContainer = styled.View`
+  padding: 16px;
+  border-radius: 12px;
+  border-width: 1px;
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
+`;
+
+export const TSSStepRow = styled.View`
+  flex-direction: row;
+  align-items: flex-start;
+`;
+
+export const TSSStepRowWithButton = styled.View`
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+`;
+
+export const TSSStepContentWithButton = styled.View`
+  flex: 1;
+  padding-bottom: 20px;
+  padding-right: 8px;
+`;
+
+export const TSSStepRail = styled.View`
+  width: 40px;
+  align-items: center;
+  margin-right: 12px;
+`;
+
+export const TSSStepIndicator = styled.View<{
+  active?: boolean;
+  completed?: boolean;
+}>`
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: ${({theme: {dark}, active, completed}) =>
+    active
+      ? dark
+        ? '#2240C440'
+        : LightBlue
+      : completed
+      ? dark
+        ? '#004D27'
+        : Success25
+      : dark
+      ? '#2A2A2A'
+      : '#F5F5F5'};
+  align-items: center;
+  justify-content: center;
+`;
+
+export const TSSStepConnector = styled.View<{completed?: boolean}>`
+  width: 2px;
+  flex-grow: 1;
+  margin-top: 0px;
+  background-color: ${({theme: {dark}, completed}) =>
+    completed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : '#F5F5F5'};
+`;
+
+export const TSSStepContent = styled.View`
+  flex: 1;
+  padding-bottom: 20px;
+`;
+
+export const TSSContinuePillButton = styled.TouchableOpacity`
+  padding: 8px 16px;
+  border-radius: 50px;
+  background-color: ${({theme: {dark}}) => (dark ? Action : Action)};
+  align-self: flex-start;
+  margin-top: 2px;
+  gap: 8px;
+`;
+
+export const TSSContinuePillText = styled(BaseText)`
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: ${White};
+`;
+
+export const TSSInputWrapper = styled.View`
+  flex-direction: row;
+  align-items: center;
+  border-radius: 8px;
+  border-width: 1px;
+  border-color: ${({theme: {dark}}) => (dark ? NeutralSlate : Black)};
+  padding: 12px;
+  margin-bottom: 16px;
+`;
+
+export const TSSStyledInput = styled(TextInput)`
+  flex: 1;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  font-size: 16px;
+  padding: 0;
+`;
+
+export const TSSErrorText = styled(BaseText)`
+  color: ${Caution};
+  font-size: 14px;
+  margin-bottom: 12px;
+`;
+
+export const TSSStepsSectionTitle = styled(BaseText)`
+  font-size: 20px;
+  font-weight: 600;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  margin-bottom: 12px;
+  line-height: 30px;
+`;
+
+export const TSSStepNumber = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  font-size: 16px;
+  font-weight: 400;
+`;
+
+export const TSSStepTitle = styled(BaseText)`
+  font-size: 16px;
+  font-weight: 500;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  line-height: 24px;
+`;
+
+export const TSSStepSubtitle = styled(BaseText)`
+  font-size: 13px;
+  font-weight: 400;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  line-height: 20px;
+`;
+
+export const TSSStatusText = styled(BaseText)`
+  font-size: 16px;
+  font-weight: 500;
+  color: ${({theme: {dark}}) => (dark ? White : Black)};
+  margin-top: 10px;
+  line-height: 24px;
+`;
+
+export const TSSStatusSubText = styled(BaseText)`
+  font-size: 13px;
+  font-weight: 400;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  margin-top: 4px;
+  line-height: 20px;
 `;

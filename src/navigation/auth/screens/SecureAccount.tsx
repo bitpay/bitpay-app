@@ -6,7 +6,7 @@ import {
   ScreenGutter,
 } from '../../../components/styled/Containers';
 import {BaseText, Paragraph} from '../../../components/styled/Text';
-import {Slate30, SlateDark} from '../../../styles/colors';
+import {Action, LightBlue, Slate30, SlateDark} from '../../../styles/colors';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {CommonActions, useNavigation, useTheme} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
@@ -71,7 +71,7 @@ const IconBadge = styled.View`
   align-items: center;
   justify-content: center;
   background: ${({theme: {dark}}) =>
-    dark ? 'rgba(34, 64, 196, 0.25)' : '#ECEFFD'};
+    dark ? 'rgba(34, 64, 196, 0.25)' : LightBlue};
 `;
 
 const CardContent = styled.View`
@@ -106,7 +106,7 @@ const Dot = styled.View`
   width: 6px;
   height: 6px;
   border-radius: 3px;
-  background: ${({theme: {dark}}) => (dark ? '#4989FF' : '#2240c4')};
+  background: ${({theme: {dark}}) => (dark ? '#4989FF' : Action)};
   margin-right: 8px;
   margin-top: 7px;
 `;

@@ -252,7 +252,7 @@ export const OptionDescription = styled(BaseText)`
 export const Type = styled(BaseText)<{noAutoMarginLeft?: boolean}>`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   padding: 2px 4px;
   border-radius: 3px;
   margin-left: ${({noAutoMarginLeft}) => (noAutoMarginLeft ? 0 : 'auto')};

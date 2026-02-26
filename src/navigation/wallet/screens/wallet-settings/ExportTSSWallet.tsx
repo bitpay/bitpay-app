@@ -107,6 +107,7 @@ const SuccessImageContainer = styled.View`
 const SuccessTitle = styled(H3)`
   margin-bottom: 16px;
   text-align: center;
+  line-height: 47px;
 `;
 
 const SuccessDescription = styled(Paragraph)`

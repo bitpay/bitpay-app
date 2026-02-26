@@ -12,6 +12,7 @@ import {
   BitPay,
   Black,
   LightBlack,
+  LightBlue,
   Midnight,
   Slate30,
   White,
@@ -50,7 +51,7 @@ const HeaderContainer = styled.View`
 `;
 
 const AddressContainer = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? Midnight : '#eceffd')};
+  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
   border-radius: 8px;
   margin: 0;
   flex-direction: row;

@@ -14,6 +14,7 @@ import {
   Black,
   Caution,
   LightBlack,
+  LightBlue,
   LuckySevens,
   NeutralSlate,
   ProgressBlue,
@@ -85,7 +86,7 @@ const Affix = styled.View`
 `;
 
 const Separator = styled.View`
-  border-right-color: ${({theme}) => (theme.dark ? '#45484E' : '#eceffd')};
+  border-right-color: ${({theme}) => (theme.dark ? '#45484E' : LightBlue)};
   border-right-width: 1px;
   border-style: solid;
   height: ${SEPARATOR_HEIGHT}px;

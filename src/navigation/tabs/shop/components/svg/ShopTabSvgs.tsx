@@ -1,7 +1,13 @@
 import React from 'react';
 import {Theme} from '@react-navigation/native';
 import Svg, {Path, Rect, Circle, G} from 'react-native-svg';
-import {Action, LightBlue, Midnight, White} from '../../../../../styles/colors';
+import {
+  Action,
+  LightBlue,
+  Midnight,
+  SlateDark,
+  White,
+} from '../../../../../styles/colors';
 
 const getOptionIconFill = (theme: Theme) => {
   return theme.dark ? White : Action;
@@ -58,7 +64,7 @@ export const ExternalLinkSvg = ({theme}: {theme: Theme}) => {
 };
 
 export const CloseSvg = ({theme}: {theme: Theme}) => {
-  const rectColor = theme.dark ? White : '#434D5A';
+  const rectColor = theme.dark ? White : SlateDark;
   return (
     <Svg width="40" height="40" viewBox="0 0 40 40" fill="none">
       <Rect

@@ -99,7 +99,6 @@ import {CommonActions} from '@react-navigation/native';
 import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
 import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
-import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
 import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
 export interface PayProConfirmParamList {
@@ -151,14 +150,6 @@ const PayProConfirm = () => {
     useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
-  const _showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
-
   const isTSSWallet = key ? isTSSKey(key) : false;
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
@@ -170,14 +161,12 @@ const PayProConfirm = () => {
     Array<{id: string; name: string; signed: boolean}>
   >([]);
   const tssCallbacks = useTSSCallbacks({
-    wallet: wallet!,
     setTssStatus,
     setTssProgress,
     setTssCopayers,
     tssCopayers,
     setShowTSSProgressModal,
     setResetSwipeButton,
-    showErrorMessage: _showErrorMessage,
   });
 
   const payProHost = payProOptions.payProUrl
@@ -369,11 +358,6 @@ const PayProConfirm = () => {
   }) => {
     const isUsingHardwareWallet = !!transport;
 
-    if (isTSSWallet) {
-      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
-      setTssStatus('initializing');
-    }
-
     try {
       if (isUsingHardwareWallet) {
         if (txp && wallet && recipient) {
@@ -424,12 +408,6 @@ const PayProConfirm = () => {
                 twoFactorCode,
               ),
             );
-      }
-
-      if (isTSSWallet) {
-        setTssStatus('complete');
-        await sleep(1500);
-        setShowTSSProgressModal(false);
       }
 
       dispatch(
@@ -511,9 +489,6 @@ const PayProConfirm = () => {
         }
       }
     } catch (err: any) {
-      if (isTSSWallet) {
-        setShowTSSProgressModal(false);
-      }
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
@@ -682,6 +657,7 @@ const PayProConfirm = () => {
               onCopayersInitialized={setTssCopayers}
               isModalVisible={showTSSProgressModal}
               onModalVisibilityChange={setShowTSSProgressModal}
+              txpCreatorId={wallet.credentials?.copayerId}
             />
           )}
           {invoice ? (
