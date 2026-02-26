@@ -1,6 +1,8 @@
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const path = require('path');
 
+const {withSentryConfig} = require('@sentry/react-native/metro');
+
 const {
   resolver: {sourceExts, assetExts},
 } = getDefaultConfig();
@@ -71,17 +73,17 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === 'rpc-websockets') {
     moduleName = 'rpc-websockets/dist/index.browser.mjs';
   }
-  
+
   if (
     moduleName === '@silencelaboratories/dkls-wasm-ll-web' ||
     moduleName.startsWith('@silencelaboratories/dkls-wasm-ll-web/')
   ) {
     moduleName = SHIM_PATH;
-  } 
+  }
 
- if (moduleName === '@@silence-original') moduleName = REAL_SILENCE_PATH;
- if (moduleName === '@@silence-wasm')     moduleName = SILENCE_WASM_PATH;
-  
+  if (moduleName === '@@silence-original') moduleName = REAL_SILENCE_PATH;
+  if (moduleName === '@@silence-wasm') moduleName = SILENCE_WASM_PATH;
+
   return context.resolveRequest(
     context,
     ALIASES[moduleName] ?? moduleName,
@@ -89,4 +91,6 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   );
 };
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+module.exports = withSentryConfig(
+  mergeConfig(getDefaultConfig(__dirname), config),
+);

@@ -86,3 +86,7 @@ vendor/
 #yalc
 .yalc/
 yalc.lock
+
+# Sentry
+ios/sentry.properties
+android/sentry.properties

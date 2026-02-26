@@ -13,6 +13,7 @@ import {ContactRowProps} from '../../components/list/ContactRow';
 import {getErrorString} from '../../utils/helper-methods';
 import {LogActions} from '../log';
 import * as initLogs from '../log/initLogs';
+import * as Sentry from '@sentry/react-native';
 import {
   encryptAppStore,
   decryptAppStore,
@@ -39,6 +40,7 @@ const logTransformFailure = (
         ),
       ),
     );
+    Sentry.captureException(error, {level: 'error'});
   } catch (_) {}
 };
 
@@ -71,6 +73,7 @@ export const bootstrapWallets = (wallets: Wallet[]) => {
           wallet.id
         } - ${getErrorString(err)}`;
         initLogs.add(LogActions.persistLog(LogActions.error(errorLog)));
+        Sentry.captureException(err, {level: 'error'});
       }
     })
     .filter((w): w is NonNullable<typeof w> => w !== undefined);
@@ -111,6 +114,7 @@ export const bootstrapKey = (key: Key, id: string) => {
     } catch (err: unknown) {
       const errorLog = `Failed to bindTssKey - ${id} - ${getErrorString(err)}`;
       initLogs.add(LogActions.persistLog(LogActions.error(errorLog)));
+      Sentry.captureException(err, {level: 'error'});
     }
   } else {
     try {
@@ -128,6 +132,7 @@ export const bootstrapKey = (key: Key, id: string) => {
         err,
       )}`;
       initLogs.add(LogActions.persistLog(LogActions.error(errorLog)));
+      Sentry.captureException(err, {level: 'error'});
     }
   }
 };

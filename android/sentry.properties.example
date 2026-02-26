@@ -1,0 +1,4 @@
+auth.token=YOUR_SENTRY_AUTH_TOKEN_HERE
+defaults.org=bitpay
+defaults.project=bitpay-app
+defaults.url=https://sentry.io/

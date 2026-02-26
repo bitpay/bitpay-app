@@ -90,6 +90,7 @@ import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
 import {logManager} from '../managers/LogManager';
+import * as Sentry from '@sentry/react-native';
 
 export const storage = new MMKV();
 
@@ -153,6 +154,9 @@ const restoreFromBackup = (reason: string): Promise<string | null> => {
               ),
             ),
           );
+          Sentry.captureException(err, {
+            level: 'error',
+          });
         }
         return restored;
       }
@@ -175,6 +179,9 @@ export const reduxStorage: Storage = {
           ),
         ),
       );
+      Sentry.captureException(err, {
+        level: 'error',
+      });
     }
     try {
       if (key === 'persist:root' && typeof value === 'string') {
@@ -211,6 +218,9 @@ export const reduxStorage: Storage = {
           ),
         ),
       );
+      Sentry.captureException(err, {
+        level: 'error',
+      });
       if (key === 'persist:root') {
         // Try backup on MMKV get failure as well
         return restoreFromBackup('getItem error');
@@ -229,6 +239,9 @@ export const reduxStorage: Storage = {
           ),
         ),
       );
+      Sentry.captureException(err, {
+        level: 'error',
+      });
     }
     return Promise.resolve();
   },
@@ -301,6 +314,9 @@ const rootReducer = (state: any, action: AnyAction) => {
       ),
     );
     setTimeout(() => addLog(crashLog), 0);
+    Sentry.captureException(err, {
+      level: 'error',
+    });
     // Return previous state to avoid app crash; if no state, fallback to init
     if (state) {
       return state;
@@ -410,6 +426,9 @@ const getStore = async () => {
               LogActions.error(`Encrypt transform failed - ${errStr}`),
             ),
           );
+          Sentry.captureException(err, {
+            level: 'error',
+          });
         },
         unencryptedStores: ['APP', 'RATE', 'SHOP', 'SHOP_CATALOG', 'WALLET'],
       }),
@@ -545,6 +564,9 @@ export async function getEncryptionKey(): Promise<string> {
         ),
       ),
     );
+    Sentry.captureException(err, {
+      level: 'error',
+    });
   }
 
   logManager.warn('getEncryptionKey: generating new key (no existing key)');
@@ -564,6 +586,9 @@ export async function getEncryptionKey(): Promise<string> {
         ),
       ),
     );
+    Sentry.captureException(err, {
+      level: 'error',
+    });
   }
 
   return newKey;
