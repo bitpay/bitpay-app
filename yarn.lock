@@ -3871,6 +3871,11 @@
   resolved "https://registry.yarnpkg.com/@silencelaboratories/dkls-wasm-ll-node/-/dkls-wasm-ll-node-1.2.0-pre.4.tgz#0f8f9a802d564bb2b36561ac770493d63af146e1"
   integrity sha512-KWHR/6SCa67mrYVPbhNjzoYEKadhQ5cL3UPI4UgtVZEk/Fc5yB0AaYUX3DuWHskxQTvj0mF2shYcZe9OubkvnQ==
 
+"@silencelaboratories/dkls-wasm-ll-web@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@silencelaboratories/dkls-wasm-ll-web/-/dkls-wasm-ll-web-1.2.0.tgz#8ee4e4af18f53f2b816e8505f6a3b0d944919899"
+  integrity sha512-ZOoDpRzKbL0fmval85PGXH5WC0WOpnXoozl8YDBK6o+Lw8JvQ2Y5/xeu+N5PCts1eFGoSyzZycpJXJ9i6x5+nA==
+
 "@silencelaboratories/dkls-wasm-ll-web@1.2.0-pre.4":
   version "1.2.0-pre.4"
   resolved "https://registry.yarnpkg.com/@silencelaboratories/dkls-wasm-ll-web/-/dkls-wasm-ll-web-1.2.0-pre.4.tgz#a6ca7f951c0c2cc682c7390ae7ba12c1b055fcad"

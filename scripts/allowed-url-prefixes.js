@@ -30,7 +30,6 @@ const developmentOnlyAllowedUrlPrefixes =
     : [];
 
 const allowedUrlPrefixes = [
-  'https://unpkg.com/@silencelaboratories/dkls-wasm-ll-web@latest/',
   'https://bitpay.com/',
   'https://test.bitpay.com/',
   'https://staging.bitpay.com/',

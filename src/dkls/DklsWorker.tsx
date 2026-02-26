@@ -1,6 +1,8 @@
 import React, {useRef, useEffect, useState} from 'react';
 import {View, StyleSheet} from 'react-native';
 import {WebView, WebViewMessageEvent} from 'react-native-webview';
+import {DKLS_JS_BASE64} from './vendor/dkls-wasm-js-base64';
+import {DKLS_WASM_BASE64} from './vendor/dkls-wasm-base64';
 
 const WORKER_LOGS_ENABLED = false;
 
@@ -107,9 +109,9 @@ export const DklsWorkerHost = () => {
       http-equiv="Content-Security-Policy"
       content="
         default-src 'none';
-        script-src 'self' https://unpkg.com/@silencelaboratories/dkls-wasm-ll-web@latest/ 'unsafe-inline' 'unsafe-eval';
-        connect-src https://unpkg.com/@silencelaboratories/dkls-wasm-ll-web@latest/;
+        script-src 'self' blob: 'unsafe-inline' 'unsafe-eval';
         worker-src 'self' blob:;
+        connect-src data:;
       "
     />
   </head>
@@ -212,28 +214,25 @@ export const DklsWorkerHost = () => {
         let nextId = 1;
         let dklsMod = null;
 
+        const DKLS_JS_B64 = ${JSON.stringify(DKLS_JS_BASE64)};
+        const DKLS_WASM_B64 = ${JSON.stringify(DKLS_WASM_BASE64)};
+
         async function ensureDkls() {
           if (dklsMod) return dklsMod;
           console.log('[WV] ensureDkls() begin');
+          var jsBlob = new Blob([atob(DKLS_JS_B64)], {type: 'text/javascript'});
+          var jsBlobUrl = URL.createObjectURL(jsBlob);
           try {
-            const JS_URL =
-              "https://unpkg.com/@silencelaboratories/dkls-wasm-ll-web@latest/dkls-wasm-ll-web.js";
-            const WASM_URL =
-              "https://unpkg.com/@silencelaboratories/dkls-wasm-ll-web@latest/dkls-wasm-ll-web_bg.wasm";
-
-            if (
-              !JS_URL.startsWith("https://unpkg.com/@silencelaboratories/dkls-wasm-ll-web@latest/") ||
-              !WASM_URL.startsWith("https://unpkg.com/@silencelaboratories/dkls-wasm-ll-web@latest/")
-            ) {
-              throw new Error("Blocked non-allowlisted URL");
-            }
-
-            const mod = await import(JS_URL);
-            await mod.default(WASM_URL);
+            var mod = await import(jsBlobUrl);
+            // Decode via fetch(data:) so the engine handles base64 natively,
+            // avoiding a large intermediate JS string + per-byte charCodeAt loop.
+            var wasmBuffer = await fetch('data:application/wasm;base64,' + DKLS_WASM_B64)
+              .then(function(r) { return r.arrayBuffer(); });
+            await mod.default(wasmBuffer);
             dklsMod = mod;
             return dklsMod;
-          } catch (e) {
-            throw e;
+          } finally {
+            URL.revokeObjectURL(jsBlobUrl);
           }
         }
 
