@@ -67,7 +67,7 @@ import {
   CoinbaseTokenProps,
 } from '../../../../api/coinbase/coinbase.types';
 import {coinbaseUpdateExchangeRate} from '../../../coinbase/coinbase.effects';
-import {hashPin} from '../../../../components/modal/pin/PinModal';
+import {hashPinLegacy} from '../../../../utils/pin';
 import {navigationRef} from '../../../../Root';
 import {
   CardConfigMap,
@@ -321,7 +321,7 @@ export const startMigration =
         if (lock) {
           const {method, value} = lock;
           if (method === 'pin') {
-            dispatch(currentPin(hashPin(value.split(''))));
+            dispatch(currentPin(hashPinLegacy(value.split(''))));
             dispatch(pinLockActive(true));
           } else if (method === 'fingerprint') {
             dispatch(biometricLockActive(true));

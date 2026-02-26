@@ -59,6 +59,7 @@ export enum AppActionTypes {
   DISMISS_PIN_MODAL = 'APP/DISMISS_PIN_MODAL',
   PIN_LOCK_ACTIVE = 'APP/PIN_LOCK_ACTIVE',
   CURRENT_PIN = 'APP/CURRENT_PIN',
+  CURRENT_SALT = 'APP/CURRENT_SALT',
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
@@ -268,6 +269,11 @@ interface CurrentPin {
   payload: string | undefined;
 }
 
+interface CurrentSalt {
+  type: typeof AppActionTypes.CURRENT_SALT;
+  payload: string | undefined;
+}
+
 interface PinBannedUntil {
   type: typeof AppActionTypes.PIN_BANNED_UNTIL;
   payload: number | undefined;
@@ -461,6 +467,7 @@ export type AppActionType =
   | DismissPinModal
   | PinLockActive
   | CurrentPin
+  | CurrentSalt
   | PinBannedUntil
   | ShowBlur
   | ShowPortfolioValue

@@ -11,16 +11,16 @@ import VirtualKeyboard from '../../../components/virtual-keyboard/VirtualKeyboar
 import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
 import {LOCK_AUTHORIZED_TIME} from '../../../constants/Lock';
 import {AppActions} from '../../../store/app';
-import {BitPay, White} from '../../../styles/colors';
+import {BitPay, Warning75, White} from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import Back from '../../back/Back';
 import haptic from '../../haptic-feedback/haptic';
-import {ActiveOpacity} from '../../styled/Containers';
-import {H5} from '../../styled/Text';
+import {ActiveOpacity, ScreenGutter} from '../../styled/Containers';
+import {H5, H7} from '../../styled/Text';
 import SheetModal from '../base/sheet/SheetModal';
 import PinDots from './PinDots';
-import crypto from 'crypto';
+import {verifyAndMigratePin, createPin, PIN_CONFIG} from '../../../utils/pin';
 
 export interface PinModalConfig {
   type: 'set' | 'check';
@@ -49,6 +49,17 @@ const PinMessage = styled(H5)`
   line-height: 25px;
 `;
 
+const PinMessagesErrorContainer = styled(Animated.View)`
+  align-items: center;
+  text-align: center;
+  margin: 16px 25px;
+`;
+
+const PinMessageError = styled(H7)`
+  color: ${Warning75};
+  font-size: 14px;
+`;
+
 const VirtualKeyboardContainer = styled.View`
   margin-bottom: 5%;
   padding-bottom: 10px;
@@ -58,18 +69,6 @@ const SheetHeaderContainer = styled.View`
   align-items: center;
   flex-direction: row;
 `;
-
-const PIN_MAX_VALUE = 9;
-const PIN_MIN_VALUE = 0;
-const PIN_LENGTH = 4;
-const ATTEMPT_LIMIT = 3;
-const ATTEMPT_LOCK_OUT_TIME = 2 * 60;
-
-export const hashPin = (pin: string[]) => {
-  const hash = crypto.createHash('sha256');
-  hash.update(pin.join(''));
-  return hash.digest('hex');
-};
 
 const headerStyle = {paddingLeft: 25};
 
@@ -85,6 +84,7 @@ const Pin = gestureHandlerRootHOC(
       firstPinEntered: Array<string | undefined>;
     }>({pin: [], firstPinEntered: []});
     const [message, setMessage] = useState<string>(t('Please enter your PIN'));
+    const [messageError, setMessageError] = useState<string | null>(null);
     const [shakeDots, setShakeDots] = useState(false);
     const [showBackButton, setShowBackButton] = useState<boolean>();
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -103,6 +103,7 @@ const Pin = gestureHandlerRootHOC(
 
     // checkPin
     const currentPin = useAppSelector(({APP}) => APP.currentPin);
+    const currentSalt = useAppSelector(({APP}) => APP.currentSalt);
     const pinBannedUntil = useAppSelector(({APP}) => APP.pinBannedUntil);
     const [attempts, setAttempts] = useState<number>(0);
 
@@ -114,9 +115,29 @@ const Pin = gestureHandlerRootHOC(
 
     const checkPin = useCallback(
       async (pinToCheck: Array<string>) => {
-        const pinHash = hashPin(pinToCheck);
+        try {
+          const result = verifyAndMigratePin(
+            pinToCheck,
+            currentPin,
+            currentSalt, // from storage (undefined for legacy users)
+          );
 
-        if (isEqual(currentPin, pinHash)) {
+          if (!result.isValid) {
+            setShakeDots(true);
+            setMessage(t('Incorrect PIN, try again'));
+            setPinStatus({pin: [], firstPinEntered: []});
+            setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
+            return;
+          }
+
+          // Correct PIN
+          if (result.needsMigration) {
+            // Legacy user - save the new salt and hash
+            dispatch(AppActions.currentPin(result.hashedPin));
+            dispatch(AppActions.currentSalt(result.salt));
+            logger.debug('PIN migrated to secure hash');
+          }
+
           dispatch(AppActions.showBlur(false));
           const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
           const authorizedUntil = Number(timeSinceBoot) + LOCK_AUTHORIZED_TIME;
@@ -125,11 +146,8 @@ const Pin = gestureHandlerRootHOC(
           reset();
           onClose?.(true);
           DeviceEventEmitter.emit(DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED);
-        } else {
-          setShakeDots(true);
-          setMessage(t('Incorrect PIN, try again'));
-          setPinStatus({pin: [], firstPinEntered: []});
-          setAttempts(_attempts => _attempts + 1); // Incorrect increment attempts
+        } catch (error) {
+          logger.error(`checkPin error: ${error}`);
         }
       },
       [
@@ -139,6 +157,7 @@ const Pin = gestureHandlerRootHOC(
         setPinStatus,
         setAttempts,
         currentPin,
+        currentSalt,
         t,
       ],
     );
@@ -156,9 +175,10 @@ const Pin = gestureHandlerRootHOC(
       async (newPin: {firstPinEntered: Array<string>; pin: Array<string>}) => {
         try {
           if (isEqual(newPin.firstPinEntered, newPin.pin)) {
+            const {hashedPin, salt} = createPin(newPin.pin);
             dispatch(AppActions.pinLockActive(true));
-            const pinHash = hashPin(newPin.pin);
-            dispatch(AppActions.currentPin(pinHash));
+            dispatch(AppActions.currentPin(hashedPin));
+            dispatch(AppActions.currentSalt(salt));
             dispatch(AppActions.showBlur(false));
             const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
             const authorizedUntil =
@@ -175,7 +195,11 @@ const Pin = gestureHandlerRootHOC(
             reset();
           }
         } catch (err) {
+          const errStr = err instanceof Error ? err.message : String(err);
           logger.error(`setCurrentPin error: ${err}`);
+          setMessageError(errStr);
+          reset();
+          setShakeDots(true);
         }
       },
       [dispatch, setShakeDots, reset, context],
@@ -187,6 +211,7 @@ const Pin = gestureHandlerRootHOC(
           // banned wait for entering new pin
           return;
         }
+        setMessageError(null);
         haptic('soft');
         switch (value) {
           case 'reset':
@@ -203,9 +228,9 @@ const Pin = gestureHandlerRootHOC(
             // Adding new PIN
             setPinStatus(prevValue => {
               if (
-                Number(value) >= PIN_MIN_VALUE &&
-                Number(value) <= PIN_MAX_VALUE &&
-                prevValue.pin.length < PIN_LENGTH
+                Number(value) >= PIN_CONFIG.PIN_MIN_VALUE &&
+                Number(value) <= PIN_CONFIG.PIN_MAX_VALUE &&
+                prevValue.pin.length < PIN_CONFIG.PIN_LENGTH
               ) {
                 const newPin = prevValue.pin.slice();
                 newPin[newPin.length] = value;
@@ -222,7 +247,7 @@ const Pin = gestureHandlerRootHOC(
 
     useEffect(() => {
       const onCellPress = async () => {
-        if (pinStatus.pin.length !== PIN_LENGTH) {
+        if (pinStatus.pin.length !== PIN_CONFIG.PIN_LENGTH) {
           // Waiting for more PIN digits
           return;
         }
@@ -273,10 +298,11 @@ const Pin = gestureHandlerRootHOC(
     useEffect(() => {
       const checkAttempts = async () => {
         try {
-          if (attempts === ATTEMPT_LIMIT) {
+          if (attempts === PIN_CONFIG.ATTEMPT_LIMIT) {
             setAttempts(0);
             const timeSinceBoot = await NativeModules.Timer.getRelativeTime();
-            const bannedUntil = Number(timeSinceBoot) + ATTEMPT_LOCK_OUT_TIME;
+            const bannedUntil =
+              Number(timeSinceBoot) + PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME;
             dispatch(AppActions.pinBannedUntil(bannedUntil));
             const timer = setCountDown(bannedUntil, Number(timeSinceBoot));
             return () => {
@@ -297,8 +323,9 @@ const Pin = gestureHandlerRootHOC(
           if (pinBannedUntil && Number(timeSinceBoot) < pinBannedUntil) {
             const totalSecsToRelease = pinBannedUntil - Number(timeSinceBoot);
             // workaround for inconsistencies between the stored timeSinceBoot with the timeSinceBoot that results after the system been hibernated or suspended
-            if (totalSecsToRelease > ATTEMPT_LOCK_OUT_TIME) {
-              const bannedUntil = Number(timeSinceBoot) + ATTEMPT_LOCK_OUT_TIME;
+            if (totalSecsToRelease > PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME) {
+              const bannedUntil =
+                Number(timeSinceBoot) + PIN_CONFIG.ATTEMPT_LOCK_OUT_TIME;
               dispatch(AppActions.pinBannedUntil(bannedUntil));
               return;
             }
@@ -349,9 +376,12 @@ const Pin = gestureHandlerRootHOC(
             <PinDots
               shakeDots={shakeDots}
               setShakeDots={setShakeDots}
-              pinLength={PIN_LENGTH}
+              pinLength={PIN_CONFIG.PIN_LENGTH}
               pin={pinStatus.pin}
             />
+            <PinMessagesErrorContainer>
+              <PinMessageError>{messageError}</PinMessageError>
+            </PinMessagesErrorContainer>
           </View>
         </UpperContainer>
         <VirtualKeyboardContainer accessibilityLabel="virtual-key-container">

@@ -219,6 +219,11 @@ export const currentPin = (pin: string | undefined): AppActionType => ({
   payload: pin,
 });
 
+export const currentSalt = (salt: string | undefined): AppActionType => ({
+  type: AppActionTypes.CURRENT_SALT,
+  payload: salt,
+});
+
 export const showBlur = (value: boolean): AppActionType => ({
   type: AppActionTypes.SHOW_BLUR,
   payload: value,
