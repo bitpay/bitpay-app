@@ -3,6 +3,7 @@ import styled from 'styled-components/native';
 import {useTheme} from 'styled-components/native';
 import {Column} from '../styled/Containers';
 import {H5, ListItemSubText} from '../styled/Text';
+import {Black, GhostWhite, SlateDark, White} from '../../styles/colors';
 import AngleRight from '../../../assets/img/angle-right.svg';
 import ContactIcon from '../../navigation/tabs/contacts/components/ContactIcon';
 import {getCurrencyAbbreviation} from '../../utils/helper-methods';
@@ -50,7 +51,7 @@ interface Props {
 
 const ContactRow = ({contact, onPress}: Props) => {
   const theme = useTheme();
-  const underlayColor = theme.dark ? '#121212' : '#fbfbff';
+  const underlayColor = theme.dark ? '#121212' : GhostWhite;
   const {coin: _coin, name, email, address, chain, tokenAddress} = contact;
   const coin = getCurrencyAbbreviation(_coin, chain);
   return (

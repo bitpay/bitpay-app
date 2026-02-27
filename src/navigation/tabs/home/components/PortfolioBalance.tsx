@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import styled from 'styled-components/native';
 import {BaseText, H2} from '../../../../components/styled/Text';
-import {Slate30, SlateDark, White} from '../../../../styles/colors';
+import {SlateDark, White} from '../../../../styles/colors';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../../store';
 import {
@@ -19,6 +19,18 @@ import Percentage from '../../../../components/percentage/Percentage';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {maskIfHidden} from '../../../../utils/hideBalances';
+import {
+  getPercentageDifferenceFromPercentRatio,
+  getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
+  getQuoteCurrency,
+  getVisibleKeysFromKeys,
+  getVisibleWalletsFromKeys,
+  hasSnapshotsBeforeMsForWallets,
+  hasSnapshotsForWallets,
+  walletHasNonZeroLiveBalance,
+} from '../../../../utils/portfolio/assets';
+import type {Wallet} from '../../../../store/wallet/wallet.models';
 
 const PortfolioContainer = styled.View`
   justify-content: center;
@@ -59,20 +71,182 @@ const PortfolioBalance = () => {
   const {t} = useTranslation();
   const coinbaseBalance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
-  const portfolioBalance = useSelector(
-    ({WALLET}: RootState) => WALLET.portfolioBalance,
+
+  const keys = useSelector(({WALLET}: RootState) => WALLET.keys);
+  const portfolio = useSelector(({PORTFOLIO}: RootState) => PORTFOLIO);
+  const {rates, lastDayRates, fiatRateSeriesCache} = useSelector(
+    ({RATE}: RootState) => RATE,
   );
 
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
-  const totalBalance: number = portfolioBalance.current + coinbaseBalance;
+  const visibleKeys = useMemo(
+    () => getVisibleKeysFromKeys(keys, homeCarouselConfig),
+    [homeCarouselConfig, keys],
+  );
+
+  const visibleCurrentBalance = useMemo(
+    () =>
+      visibleKeys.reduce((total, key) => total + (key.totalBalance || 0), 0),
+    [visibleKeys],
+  );
+
+  const visibleLastDayBalance = useMemo(
+    () =>
+      visibleKeys.reduce(
+        (total, key) => total + (key.totalBalanceLastDay || 0),
+        0,
+      ),
+    [visibleKeys],
+  );
+
+  const totalBalance: number = visibleCurrentBalance + coinbaseBalance;
 
   const dispatch = useAppDispatch();
-  const percentageDifference = calculatePercentageDifference(
-    portfolioBalance.current,
-    portfolioBalance.lastDay,
+
+  const walletsAcrossKeys: Wallet[] = useMemo(() => {
+    const allWallets = getVisibleWalletsFromKeys(keys, homeCarouselConfig);
+
+    const byId = new Map<string, Wallet>();
+    for (const w of allWallets) {
+      if (!w?.id) {
+        continue;
+      }
+      if (!walletHasNonZeroLiveBalance(w)) {
+        continue;
+      }
+      if (!byId.has(w.id)) {
+        byId.set(w.id, w);
+      }
+    }
+    return Array.from(byId.values());
+  }, [homeCarouselConfig, keys]);
+
+  const legacyPercentageDifference = calculatePercentageDifference(
+    visibleCurrentBalance,
+    visibleLastDayBalance,
   );
+
+  const hasSnapshots = hasSnapshotsForWallets({
+    snapshotsByWalletId: portfolio?.snapshotsByWalletId || {},
+    wallets: walletsAcrossKeys,
+  });
+  const isPopulateInProgress = !!portfolio?.populateStatus?.inProgress;
+  const hasSnapshotsBeforePopulateStarted = useMemo(() => {
+    const startedAt = portfolio?.populateStatus?.startedAt;
+    if (!isPopulateInProgress || typeof startedAt !== 'number') {
+      return true;
+    }
+
+    return hasSnapshotsBeforeMsForWallets({
+      snapshotsByWalletId: portfolio?.snapshotsByWalletId || {},
+      wallets: walletsAcrossKeys,
+      cutoffMs: startedAt,
+    });
+  }, [
+    isPopulateInProgress,
+    portfolio?.populateStatus?.startedAt,
+    portfolio?.snapshotsByWalletId,
+    walletsAcrossKeys,
+  ]);
+  const quoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency: portfolio?.quoteCurrency,
+    defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+  });
+
+  const portfolioPnlPercentageDifference = useMemo(() => {
+    if (!hasSnapshots) {
+      return null;
+    }
+
+    const pnl = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+      snapshotsByWalletId: portfolio?.snapshotsByWalletId || {},
+      wallets: walletsAcrossKeys,
+      quoteCurrency,
+      timeframe: '1D',
+      rates,
+      lastDayRates,
+      fiatRateSeriesCache,
+    });
+
+    if (!pnl.available) {
+      return null;
+    }
+
+    return getPercentageDifferenceFromPercentRatio(pnl.percentRatio);
+  }, [
+    fiatRateSeriesCache,
+    hasSnapshots,
+    lastDayRates,
+    quoteCurrency,
+    portfolio?.snapshotsByWalletId,
+    rates,
+    walletsAcrossKeys,
+  ]);
+
+  const [
+    committedSnapshotPercentageDifference,
+    setCommittedSnapshotPercentage,
+  ] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isPopulateInProgress) {
+      if (!hasSnapshots) {
+        setCommittedSnapshotPercentage(null);
+        return;
+      }
+
+      if (portfolioPnlPercentageDifference !== null) {
+        setCommittedSnapshotPercentage(portfolioPnlPercentageDifference);
+      }
+      return;
+    }
+
+    if (
+      committedSnapshotPercentageDifference === null &&
+      hasSnapshotsBeforePopulateStarted &&
+      portfolioPnlPercentageDifference !== null
+    ) {
+      setCommittedSnapshotPercentage(portfolioPnlPercentageDifference);
+    }
+  }, [
+    committedSnapshotPercentageDifference,
+    hasSnapshots,
+    hasSnapshotsBeforePopulateStarted,
+    isPopulateInProgress,
+    portfolioPnlPercentageDifference,
+  ]);
+
+  const percentageDifference = useMemo(() => {
+    if (!hasSnapshots) {
+      return legacyPercentageDifference;
+    }
+
+    if (isPopulateInProgress) {
+      if (!hasSnapshotsBeforePopulateStarted) {
+        return legacyPercentageDifference;
+      }
+
+      if (committedSnapshotPercentageDifference !== null) {
+        return committedSnapshotPercentageDifference;
+      }
+    }
+
+    if (portfolioPnlPercentageDifference !== null) {
+      return portfolioPnlPercentageDifference;
+    }
+
+    return legacyPercentageDifference;
+  }, [
+    committedSnapshotPercentageDifference,
+    hasSnapshots,
+    hasSnapshotsBeforePopulateStarted,
+    isPopulateInProgress,
+    legacyPercentageDifference,
+    portfolioPnlPercentageDifference,
+  ]);
 
   const showPortfolioBalanceInfoModal = () => {
     dispatch(
@@ -113,7 +287,7 @@ const PortfolioBalance = () => {
                 currencyDisplay: 'symbol',
               })}
             </PortfolioBalanceText>
-            {percentageDifference ? (
+            {percentageDifference || percentageDifference === 0 ? (
               <PercentageWrapper>
                 <Percentage
                   percentageDifference={percentageDifference}
@@ -124,7 +298,7 @@ const PortfolioBalance = () => {
             ) : null}
           </>
         ) : (
-          <HiddenBalance>****</HiddenBalance>
+          <HiddenBalance>{maskIfHidden(true, totalBalance)}</HiddenBalance>
         )}
       </TouchableOpacity>
     </PortfolioContainer>

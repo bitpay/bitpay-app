@@ -33,8 +33,18 @@ export const clearWalletBalances =
             status: {
               balance: {
                 sat: 0,
+                satAvailable: 0,
+                satLocked: 0,
+                satConfirmedLocked: 0,
+                satConfirmed: 0,
+                satConfirmedAvailable: 0,
+                satSpendable: 0,
+                satPending: 0,
                 crypto: '0',
-                fiat: 0,
+                cryptoLocked: '0',
+                cryptoConfirmedLocked: '0',
+                cryptoSpendable: '0',
+                cryptoPending: '0',
               },
               pendingTxps: wallet.pendingTxps,
               singleAddress: wallet.singleAddress,
@@ -56,13 +66,7 @@ export const clearWalletBalances =
     }
 
     // Update portfolio balance
-    dispatch(
-      WalletActions.updatePortfolioBalance({
-        current: 0,
-        lastDay: 0,
-        previous: 0,
-      }),
-    );
+    dispatch(WalletActions.updatePortfolioBalance());
 
     logManager.info('success [clearWalletBalances]: all balances cleared');
   };

@@ -5,8 +5,8 @@ import {
   isCardOffer,
   isDoMore,
   isMarketingCarousel,
-  isQuickLink,
   isShopWithCrypto,
+  sortNewestFirst,
 } from '../../utils/braze';
 
 export const selectBrazeContentCards: AppSelector<ContentCard[]> = ({APP}) =>
@@ -17,17 +17,12 @@ export const selectDismissedMarketingCardIds: AppSelector<string[]> = ({APP}) =>
 
 export const selectBrazeShopWithCrypto = createSelector(
   [selectBrazeContentCards],
-  contentCards => contentCards.filter(isShopWithCrypto),
+  contentCards => contentCards.filter(isShopWithCrypto).sort(sortNewestFirst),
 );
 
 export const selectBrazeDoMore = createSelector(
   [selectBrazeContentCards],
   contentCards => contentCards.filter(isDoMore),
-);
-
-export const selectBrazeQuickLinks = createSelector(
-  [selectBrazeContentCards],
-  contentCards => contentCards.filter(isQuickLink),
 );
 
 export const selectBrazeCardOffers = createSelector(
@@ -38,11 +33,13 @@ export const selectBrazeCardOffers = createSelector(
 export const selectBrazeMarketingCarousel = createSelector(
   [selectBrazeContentCards, selectDismissedMarketingCardIds],
   (contentCards, dismissedIds) =>
-    contentCards.filter(
-      card =>
-        isMarketingCarousel(card) &&
-        (!card.id || !dismissedIds.includes(card.id)),
-    ),
+    contentCards
+      .filter(
+        card =>
+          isMarketingCarousel(card) &&
+          (!card.id || !dismissedIds.includes(card.id)),
+      )
+      .sort(sortNewestFirst),
 );
 
 export const selectNotificationsAccepted: AppSelector<boolean> = ({APP}) =>

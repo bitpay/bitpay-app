@@ -1,9 +1,33 @@
 // @ts-ignore
-import {REGTEST_BASE_BITPAY_URL} from '@env';
+import {
+  REGTEST_BASE_BITPAY_URL,
+  STATIC_CONTENT_CARDS_ENABLED as STATIC_CONTENT_CARDS_ENABLED_ENV,
+} from '@env';
 import {version} from '../../package.json'; // TODO: better way to get version
 import {Network} from '.';
 
-export const STATIC_CONTENT_CARDS_ENABLED = true;
+const parseEnvBoolean = (value: unknown, fallback: boolean): boolean => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (['1', 'true', 'yes', 'y', 'on'].includes(normalized)) {
+      return true;
+    }
+    if (['0', 'false', 'no', 'n', 'off'].includes(normalized)) {
+      return false;
+    }
+  }
+  return fallback;
+};
+
+// Feature flag to enable local/static content cards as fallback when Braze has no content.
+// Defaults to false so behavior remains unchanged unless explicitly enabled via env.
+export const STATIC_CONTENT_CARDS_ENABLED = parseEnvBoolean(
+  STATIC_CONTENT_CARDS_ENABLED_ENV,
+  false,
+);
 export const APP_ANALYTICS_ENABLED = !__DEV__;
 
 // GENERAL

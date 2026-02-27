@@ -1350,7 +1350,6 @@ export const publishAndSign =
 
       const isTSSSigning = requiresTSSSigning(wallet, key);
       try {
-
         if (isTSSSigning && !tssCallbacks) {
           tssCallbacks = {
             onStatusChange: status =>

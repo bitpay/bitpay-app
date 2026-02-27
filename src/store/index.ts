@@ -25,6 +25,8 @@ import {
 import {
   bindWalletKeys,
   transformContacts,
+  transformPortfolioPopulateStatus,
+  transformPortfolioSnapshotSeries,
   encryptSpecificFields,
 } from './transforms/transforms';
 import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
@@ -81,6 +83,11 @@ import {
   marketStatsReducer,
   marketStatsReduxPersistBlackList,
 } from './market-stats/market-stats.reducer';
+import {
+  portfolioReducer,
+  portfolioReduxPersistBlackList,
+} from './portfolio/portfolio.reducer';
+import {removeWalletSnapshots} from './portfolio/portfolio.actions';
 import {WalletActionTypes} from './wallet/wallet.types';
 import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
 import {AppActionTypes} from './app/app.types';
@@ -258,6 +265,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   WALLET_CONNECT: [],
   WALLET_CONNECT_V2: walletConnectV2ReduxPersistBlackList,
   MARKET_STATS: marketStatsReduxPersistBlackList,
+  PORTFOLIO: portfolioReduxPersistBlackList,
 };
 
 /*
@@ -284,6 +292,7 @@ const reducers = {
   WALLET_CONNECT: walletConnectReducer,
   WALLET_CONNECT_V2: walletConnectV2Reducer,
   MARKET_STATS: marketStatsReducer,
+  PORTFOLIO: portfolioReducer,
 };
 
 const combinedReducer = combineReducers(reducers);
@@ -350,6 +359,34 @@ const logger = createLogger({
 const getStore = async () => {
   const middlewares: Middleware[] = [thunkMiddleware as unknown as Middleware];
 
+  const cleanupPortfolioOnDeleteKeyMiddleware: Middleware = store => next => {
+    return (action: AnyAction) => {
+      if (action?.type !== WalletActionTypes.DELETE_KEY) {
+        return next(action);
+      }
+
+      const keyId = action?.payload?.keyId;
+      const walletIds = (() => {
+        if (!keyId || typeof keyId !== 'string') {
+          return [] as string[];
+        }
+        const key = store.getState()?.WALLET?.keys?.[keyId];
+        const wallets = Array.isArray(key?.wallets) ? key.wallets : [];
+        return wallets
+          .map((w: any) => w?.id)
+          .filter((id: any): id is string => typeof id === 'string' && !!id);
+      })();
+
+      const result = next(action);
+
+      if (walletIds.length) {
+        store.dispatch(removeWalletSnapshots({walletIds}));
+      }
+
+      return result;
+    };
+  };
+
   const lastActionMiddleware =
     (): Middleware => () => next => (action: AnyAction) => {
       try {
@@ -363,6 +400,7 @@ const getStore = async () => {
     };
 
   middlewares.push(lastActionMiddleware());
+  middlewares.push(cleanupPortfolioOnDeleteKeyMiddleware);
 
   if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {
     // @ts-ignore
@@ -383,6 +421,8 @@ const getStore = async () => {
     transforms: [
       bindWalletKeys,
       transformContacts,
+      transformPortfolioPopulateStatus,
+      transformPortfolioSnapshotSeries,
       createTransform<RootState, RootState, RootState>((inboundState, key) => {
         // Clear out nested blacklisted fields before encrypting and persisting
         if (typeof key === 'string') {
@@ -411,7 +451,15 @@ const getStore = async () => {
             ),
           );
         },
-        unencryptedStores: ['APP', 'RATE', 'SHOP', 'SHOP_CATALOG', 'WALLET'],
+        unencryptedStores: [
+          'APP',
+          'MARKET_STATS',
+          'PORTFOLIO',
+          'RATE',
+          'SHOP',
+          'SHOP_CATALOG',
+          'WALLET',
+        ],
       }),
     ],
   };

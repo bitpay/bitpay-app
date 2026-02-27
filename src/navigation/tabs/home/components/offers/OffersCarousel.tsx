@@ -10,7 +10,7 @@ const horizontalPadding = Number(ScreenGutter.replace('px', ''));
 const CarouselItemContainer = styled.View`
   padding-left: ${horizontalPadding}px;
   padding-right: 0;
-  padding-top: 20px;
+  padding-top: 15px;
 `;
 
 interface OfferSlidesProps {

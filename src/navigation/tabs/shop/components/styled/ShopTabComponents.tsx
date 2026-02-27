@@ -27,7 +27,7 @@ export const horizontalPadding = 20;
 export const getMastheadGradient = (theme: Theme) => {
   return theme.dark
     ? [theme.colors.background, '#151515']
-    : ['rgba(245, 247, 248, 0)', '#F5F7F8'];
+    : ['rgba(245, 247, 248, 0)', NeutralSlate];
 };
 
 export const ListItemTouchableHighlight = styled.TouchableHighlight`
@@ -113,7 +113,7 @@ export const NoResultsHeader = styled(H4)`
 export const NavIconButtonContainer = styled(TouchableOpacity)`
   align-items: center;
   justify-content: center;
-  background-color: ${({theme}) => (theme.dark ? '#252525' : NeutralSlate)};
+  background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
   border-radius: 50px;
   height: 40px;
   width: 40px;

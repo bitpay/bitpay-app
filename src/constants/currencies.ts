@@ -151,6 +151,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
+    theme: {
+      coinColor: '#dba817',
+      backgroundColor: '#dba817',
+      gradientBackgroundColor: '#dba817',
+    },
   },
   '0x8e870d67f660d95d5be530380d0ec0bd388289e1_e': {
     name: 'Paxos Dollar',
@@ -226,6 +231,11 @@ export const BitpaySupportedEthereumTokens: {[key in string]: CurrencyOpts} = {
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#0074D1',
+      backgroundColor: '#0074D1',
+      gradientBackgroundColor: '#0074D1',
     },
   },
   '0x056fd409e1d7a124bd7017459dfea2f387b6d5cd_e': {
@@ -572,6 +582,11 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
+    theme: {
+      coinColor: '#dba817',
+      backgroundColor: '#dba817',
+      gradientBackgroundColor: '#dba817',
+    },
   },
   '0x2791bca1f2de4661ed88a30c99a7a9449aa84174_m': {
     name: 'USDC.e',
@@ -639,6 +654,11 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#0074D1',
+      backgroundColor: '#0074D1',
+      gradientBackgroundColor: '#0074D1',
     },
   },
   '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063_m': {
@@ -849,6 +869,11 @@ export const BitpaySupportedSolTokens: {[key in string]: CurrencyOpts} = {
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
+    theme: {
+      coinColor: '#0074D1',
+      backgroundColor: '#0074D1',
+      gradientBackgroundColor: '#0074D1',
+    },
   },
   Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB_sol: {
     // Solana is case sensitive
@@ -883,6 +908,11 @@ export const BitpaySupportedSolTokens: {[key in string]: CurrencyOpts} = {
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#089098',
+      backgroundColor: '#089098',
+      gradientBackgroundColor: '#089098',
     },
   },
 };
@@ -924,6 +954,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#0074D1',
+      backgroundColor: '#0074D1',
+      gradientBackgroundColor: '#0074D1',
     },
   },
   '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f_arb': {
@@ -1001,6 +1036,11 @@ export const BitpaySupportedArbTokens: {[key in string]: CurrencyOpts} = {
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
+    theme: {
+      coinColor: '#089098',
+      backgroundColor: '#089098',
+      gradientBackgroundColor: '#089098',
+    },
   },
   '0x82af49447d8a07e3bd95bd0d56f35241523fbab1_arb': {
     name: 'Wrapped Ether',
@@ -1075,6 +1115,11 @@ export const BitpaySupportedBaseTokens: {[key in string]: CurrencyOpts} = {
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#0074D1',
+      backgroundColor: '#0074D1',
+      gradientBackgroundColor: '#0074D1',
     },
   },
   '0x4200000000000000000000000000000000000006_base': {
@@ -1151,6 +1196,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
+    theme: {
+      coinColor: '#0074D1',
+      backgroundColor: '#0074D1',
+      gradientBackgroundColor: '#0074D1',
+    },
   },
   '0x68f180fcce6836688e9084f035309e29bf0a2095_op': {
     name: 'Wrapped Bitcoin',
@@ -1226,6 +1276,11 @@ export const BitpaySupportedOpTokens: {[key in string]: CurrencyOpts} = {
       feeUnitAmount: 1e9,
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
+    },
+    theme: {
+      coinColor: '#089098',
+      backgroundColor: '#089098',
+      gradientBackgroundColor: '#089098',
     },
   },
   '0x4200000000000000000000000000000000000006_op': {
