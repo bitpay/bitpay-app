@@ -1,4 +1,9 @@
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {
+  type NavigationProp,
+  RouteProp,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -19,6 +24,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {Path, Svg} from 'react-native-svg';
+import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
@@ -36,12 +42,17 @@ import {
   HeaderTitle,
   Link,
 } from '../../../components/styled/Text';
-import {BitpaySupportedCoins} from '../../../constants/currencies';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedTokens,
+} from '../../../constants/currencies';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import LinkingButtons from '../../tabs/home/components/LinkingButtons';
 import Loader from '../../../components/loader/Loader';
 import {
   Action,
+  Black,
+  CharcoalBlack,
   LightBlack,
   LightBlue,
   LinkBlue,
@@ -61,17 +72,30 @@ import {
   buildUIFormattedWallet,
   isCacheKeyStale,
 } from '../../../store/wallet/utils/wallet';
-import type {Wallet} from '../../../store/wallet/wallet.models';
-import type {Key} from '../../../store/wallet/wallet.models';
 import type {RootState} from '../../../store';
 import {
+  addTokenChainSuffix,
   calculatePercentageDifference,
+  formatCurrencyAbbreviation,
   formatFiatAmount,
   getRateByCurrencyName,
-  sleep,
 } from '../../../utils/helper-methods';
-import {downsampleTimestamps} from '../../../utils/rate';
-import {findIndex, maxBy, minBy} from 'lodash';
+import {
+  findSupportedCurrencyOptionForAsset,
+  getVisibleWalletsFromKeys,
+  walletHasNonZeroLiveBalance,
+} from '../../../utils/portfolio/assets';
+import {
+  getFiatRateChangeForTimeframe,
+  getFiatRateSeriesIntervalForTimeframe,
+} from '../../../utils/portfolio/rate';
+import {
+  ensureSortedByTsAsc,
+  getMaxRate,
+  getMaxRateFromIndex,
+  lowerBoundByTs,
+} from '../../../utils/portfolio/timeSeries';
+import {normalizeFiatRateSeriesCoin} from '../../../utils/portfolio/core/pnl/rates';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   fetchMarketStats,
@@ -91,7 +115,7 @@ import {
 } from '../../../store/wallet/effects';
 import {getAndDispatchUpdatedWalletBalances} from '../../../store/wallet/effects/status/statusv2';
 import {
-  DateRanges,
+  CachedFiatRateInterval,
   FiatRateInterval,
   FiatRatePoint,
   FIAT_RATE_SERIES_CACHED_INTERVALS,
@@ -99,32 +123,11 @@ import {
 } from '../../../store/rate/rate.models';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../constants/wallet';
-import {logManager} from '../../../managers/LogManager';
-
-interface ChartDisplayDataType {
-  date: Date;
-  value: number;
-}
-
-interface ChartDataType {
-  data: ChartDisplayDataType[];
-  percentChange: number;
-  priceChange: number;
-  maxIndex?: number;
-  maxPoint?: ChartDisplayDataType;
-  minIndex?: number;
-  minPoint?: ChartDisplayDataType;
-}
-
-const defaultDisplayData: ChartDataType = {
-  data: [],
-  percentChange: 0,
-  priceChange: 0,
-  maxIndex: undefined,
-  maxPoint: undefined,
-  minIndex: undefined,
-  minPoint: undefined,
-};
+import useExchangeRateChartData, {
+  type ChartDataType,
+  defaultDisplayData,
+  HISTORIC_TIMEFRAME_WINDOW_MS,
+} from '../hooks/useExchangeRateChartData';
 
 const AxisLabel = ({
   value,
@@ -241,13 +244,6 @@ const MIN_TINY_FRACTION_DIGITS = 4;
 const MAX_TINY_FRACTION_DIGITS = 8;
 const MIN_TINY_DISPLAYABLE = 1 / Math.pow(10, MAX_TINY_FRACTION_DIGITS);
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const HISTORIC_TIMEFRAME_WINDOW_MS: Record<'3M' | '1Y' | '5Y', number> = {
-  '3M': DateRanges.Quarter * MS_PER_DAY,
-  '1Y': DateRanges.Year * MS_PER_DAY,
-  '5Y': DateRanges.FiveYears * MS_PER_DAY,
-};
-
 const formatTinyDecimal = (value: number, decimals: number) => {
   const fixed = value.toFixed(decimals);
   return fixed.replace(/\.0+$/, '').replace(/(\.[0-9]*?)0+$/, '$1');
@@ -309,93 +305,23 @@ const formatSupply = (value: number, maximumFractionDigits = 2) => {
   return decPart ? `${withCommas}.${decPart}` : withCommas;
 };
 
-const getFormattedData = (
-  historicFiatRates: Array<{ts: number; rate: number}>,
-): ChartDataType => {
-  const ratesSorted = [...historicFiatRates].sort((a, b) => a.ts - b.ts);
-  if (!ratesSorted.length) {
-    return defaultDisplayData;
-  }
-  const targetLen = 91;
-  const rates =
-    ratesSorted.length > targetLen
-      ? (downsampleTimestamps({series: ratesSorted}, targetLen, {
-          strategy: 'lttb',
-          mode: 'per_coin',
-        }).series.filter(p => p !== null) as Array<{ts: number; rate: number}>)
-      : ratesSorted;
-  if (rates.length < 2) {
-    const scaledData = rates.map(value => ({
-      date: new Date(value.ts),
-      value: value.rate,
-    }));
-    const maxPoint = maxBy(scaledData, point => point.value);
-    const minPoint = minBy(scaledData, point => point.value);
-    const maxIndex =
-      typeof maxPoint !== 'undefined'
-        ? findIndex(scaledData, maxPoint)
-        : undefined;
-    const minIndex =
-      typeof minPoint !== 'undefined'
-        ? findIndex(scaledData, minPoint)
-        : undefined;
-    return {
-      data: scaledData,
-      percentChange: 0,
-      priceChange: 0,
-      maxIndex,
-      maxPoint,
-      minIndex,
-      minPoint,
-    };
-  }
-  const percentChange = calculatePercentageDifference(
-    rates[rates.length - 1].rate,
-    rates[0].rate,
-  );
-  const scaledData = rates.map(value => ({
-    date: new Date(value.ts),
-    value: value.rate,
-  }));
-  const maxPoint = maxBy(scaledData, point => point.value);
-  const minPoint = minBy(scaledData, point => point.value);
-  const maxIndex =
-    typeof maxPoint !== 'undefined'
-      ? findIndex(scaledData, maxPoint)
-      : undefined;
-  const minIndex =
-    typeof minPoint !== 'undefined'
-      ? findIndex(scaledData, minPoint)
-      : undefined;
-
-  return {
-    data: scaledData,
-    percentChange,
-    priceChange: rates[rates.length - 1].rate - rates[0].rate,
-    maxIndex,
-    maxPoint,
-    minIndex,
-    minPoint,
-  };
-};
-
 const ScreenContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const HeaderRight = styled.View`
-  flex-direction: row;
-  gap: 10px;
-`;
+// const HeaderRight = styled.View`
+//   flex-direction: row;
+//   gap: 10px;
+// `;
 
-const CircleButton = styled(TouchableOpacity)`
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({theme}) => (theme.dark ? '#252525' : '#F5F7F8')};
-`;
+// const CircleButton = styled(TouchableOpacity)`
+//   width: 40px;
+//   height: 40px;
+//   border-radius: 20px;
+//   align-items: center;
+//   justify-content: center;
+//   background-color: ${({theme}) => (theme.dark ? LightBlack : NeutralSlate)};
+// `;
 
 const HeaderTitleText = styled(HeaderTitle)`
   font-size: 20px;
@@ -411,7 +337,6 @@ const AbbreviationLabel = styled(BaseText)`
   font-size: 13px;
   line-height: 18px;
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  text-transform: uppercase;
   font-weight: 400;
   margin-bottom: 2px;
 `;
@@ -502,7 +427,7 @@ const SectionTitle = styled(H5)`
 
 const WalletCard = styled(TouchableOpacity)`
   border: 1px solid ${({theme}) => (theme.dark ? LightBlack : Slate10)};
-  background-color: ${({theme: {dark}}) => (dark ? '#111' : Slate10)};
+  background-color: ${({theme: {dark}}) => (dark ? CharcoalBlack : Slate10)};
   border-radius: 12px;
   margin: 8px ${ScreenGutter};
   flex-direction: row;
@@ -590,7 +515,7 @@ const Divider = styled.View`
 
 const MarketBody = styled.View`
   padding: 14px;
-  background-color: ${({theme: {dark}}) => (dark ? '#111' : Slate10)};
+  background-color: ${({theme: {dark}}) => (dark ? CharcoalBlack : Slate10)};
 `;
 
 const SubSectionTitle = styled(BaseText)`
@@ -636,30 +561,30 @@ const AboutText = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
 `;
 
-const RightIconSvg = ({type}: {type: 'star' | 'bell'}) => {
-  const theme = useTheme();
-  const fill = theme.dark ? Slate30 : SlateDark;
+// const RightIconSvg = ({type}: {type: 'star' | 'bell'}) => {
+//   const theme = useTheme();
+//   const fill = theme.dark ? Slate30 : SlateDark;
 
-  if (type === 'star') {
-    return (
-      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27Z"
-          fill={fill}
-        />
-      </Svg>
-    );
-  }
+//   if (type === 'star') {
+//     return (
+//       <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+//         <Path
+//           d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27Z"
+//           fill={fill}
+//         />
+//       </Svg>
+//     );
+//   }
 
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2Zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5S10.5 3.17 10.5 4v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2Z"
-        fill={fill}
-      />
-    </Svg>
-  );
-};
+//   return (
+//     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+//       <Path
+//         d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2Zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5S10.5 3.17 10.5 4v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2Z"
+//         fill={fill}
+//       />
+//     </Svg>
+//   );
+// };
 
 const ChartSelectionDot = ({
   isActive,
@@ -710,15 +635,34 @@ const ChartSelectionDot = ({
   );
 };
 
+const tokenThemeByCoin: {[key in string]: string} = Object.values(
+  BitpaySupportedTokens,
+).reduce((acc, token) => {
+  const coinKey = (token.coin || '').toLowerCase();
+  const color = token.theme?.coinColor;
+  if (coinKey && color && !acc[coinKey]) {
+    acc[coinKey] = color;
+  }
+  return acc;
+}, {} as {[key in string]: string});
+
 const ExchangeRate = () => {
+  const {t} = useTranslation();
   const theme = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<any>>();
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
+  const homeCarouselConfig = useAppSelector(
+    ({APP}: RootState) => APP.homeCarouselConfig,
+  );
   const rates = useAppSelector(({RATE}: RootState) => RATE.rates);
   const fiatRateSeriesCache = useAppSelector(
     ({RATE}: RootState) => RATE.fiatRateSeriesCache,
   );
+  const fiatRateSeriesCacheRef = useRef(fiatRateSeriesCache);
+  useEffect(() => {
+    fiatRateSeriesCacheRef.current = fiatRateSeriesCache;
+  }, [fiatRateSeriesCache]);
   const defaultAltCurrency = useAppSelector(
     ({APP}: RootState) => APP.defaultAltCurrency,
   );
@@ -751,9 +695,9 @@ const ExchangeRate = () => {
     | undefined
   >(undefined);
 
-  const currencyAbbreviation = (
-    params?.currencyAbbreviation || 'BTC'
-  ).toUpperCase();
+  const currencyAbbreviation = formatCurrencyAbbreviation(
+    params?.currencyAbbreviation || 'BTC',
+  );
   const coinKey = (
     params?.chain ||
     params?.currencyAbbreviation ||
@@ -761,6 +705,30 @@ const ExchangeRate = () => {
   ).toLowerCase();
   const coin = BitpaySupportedCoins[coinKey] ?? BitpaySupportedCoins.btc;
   const currencyName = params?.currencyName || coin.name || 'Bitcoin';
+  const tokenTheme = useMemo(() => {
+    const tokenAddress = params?.tokenAddress;
+    const chain = (params?.chain || '').toLowerCase();
+    const abbr = (params?.currencyAbbreviation || '').toLowerCase();
+
+    if (tokenAddress && chain) {
+      const tokenKey = addTokenChainSuffix(tokenAddress, chain);
+      const strictTheme = BitpaySupportedTokens[tokenKey]?.theme;
+      if (strictTheme) {
+        return strictTheme;
+      }
+    }
+
+    const colorByAbbr = tokenThemeByCoin[abbr];
+    if (colorByAbbr) {
+      return {
+        coinColor: colorByAbbr,
+        backgroundColor: colorByAbbr,
+        gradientBackgroundColor: colorByAbbr,
+      };
+    }
+
+    return undefined;
+  }, [params?.tokenAddress, params?.chain, params?.currencyAbbreviation]);
 
   const assetContext = useMemo(
     () => ({
@@ -783,60 +751,50 @@ const ExchangeRate = () => {
     ],
   );
 
-  const assetCurrencyOption = useMemo(() => {
-    const tokenAddressLower = assetContext.tokenAddress;
-    return (
-      SupportedCurrencyOptions.find(
-        ({currencyAbbreviation, chain, tokenAddress}) =>
-          currencyAbbreviation === assetContext.currencyAbbreviation &&
-          chain === assetContext.chain &&
-          (!tokenAddressLower ||
-            (tokenAddress || '').toLowerCase() === tokenAddressLower),
-      ) ||
-      (tokenAddressLower
-        ? SupportedCurrencyOptions.find(
-            ({tokenAddress}) =>
-              (tokenAddress || '').toLowerCase() === tokenAddressLower,
-          )
-        : undefined) ||
-      SupportedCurrencyOptions.find(
-        ({currencyAbbreviation}) =>
-          currencyAbbreviation === assetContext.currencyAbbreviation,
-      )
-    );
-  }, [
-    assetContext.chain,
-    assetContext.currencyAbbreviation,
-    assetContext.tokenAddress,
-  ]);
-
-  const normalizeFiatRateSeriesCoin = useCallback((abbr?: string): string => {
-    switch ((abbr || '').toLowerCase()) {
-      case 'matic':
-      case 'pol':
-        return 'pol';
-      default:
-        return (abbr || '').toLowerCase();
-    }
-  }, []);
+  const assetCurrencyOption = useMemo(
+    () =>
+      findSupportedCurrencyOptionForAsset({
+        options: SupportedCurrencyOptions,
+        currencyAbbreviation: assetContext.currencyAbbreviation,
+        chain: assetContext.chain,
+        tokenAddress: assetContext.tokenAddress,
+      }),
+    [
+      assetContext.chain,
+      assetContext.currencyAbbreviation,
+      assetContext.tokenAddress,
+    ],
+  );
 
   const selectedFiatCodeUpper = (
     defaultAltCurrency.isoCode || 'USD'
   ).toUpperCase();
   const normalizedCoin = normalizeFiatRateSeriesCoin(
     assetContext.currencyAbbreviation,
-  );
+  ).trim();
+  const hasValidNormalizedCoin = normalizedCoin.length > 0;
+  const isMountedRef = useRef(false);
+  const gestureEndRafRef = useRef<number | null>(null);
+  const allIntervalsFetchRequestIdRef = useRef(0);
+  const allIntervalsFetchInFlightRef = useRef(false);
+  const [allIntervalsFetchCycle, setAllIntervalsFetchCycle] = useState(0);
 
-  const seriesDataInterval: FiatRateInterval = useMemo(() => {
-    switch (selectedTimeframe) {
-      case '3M':
-      case '1Y':
-      case '5Y':
-        return 'ALL';
-      default:
-        return selectedTimeframe;
-    }
-  }, [selectedTimeframe]);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      allIntervalsFetchInFlightRef.current = false;
+      if (gestureEndRafRef.current != null) {
+        cancelAnimationFrame(gestureEndRafRef.current);
+        gestureEndRafRef.current = null;
+      }
+    };
+  }, []);
+
+  const seriesDataInterval = useMemo<CachedFiatRateInterval>(
+    () => getFiatRateSeriesIntervalForTimeframe(selectedTimeframe),
+    [selectedTimeframe],
+  );
 
   const selectedSeriesKey = useMemo(() => {
     return getFiatRateSeriesCacheKey(
@@ -849,23 +807,107 @@ const ExchangeRate = () => {
   const selectedSeries = fiatRateSeriesCache[selectedSeriesKey];
 
   useEffect(() => {
+    const requestId = allIntervalsFetchRequestIdRef.current + 1;
+    allIntervalsFetchRequestIdRef.current = requestId;
+
+    if (!selectedFiatCodeUpper || !hasValidNormalizedCoin) {
+      allIntervalsFetchInFlightRef.current = false;
+      return;
+    }
+
+    const hasFreshAllIntervals = FIAT_RATE_SERIES_CACHED_INTERVALS.every(
+      interval => {
+        const cacheKey = getFiatRateSeriesCacheKey(
+          selectedFiatCodeUpper,
+          normalizedCoin,
+          interval,
+        );
+        const cachedSeries = fiatRateSeriesCacheRef.current[cacheKey];
+        if (!cachedSeries?.fetchedOn) {
+          return false;
+        }
+
+        return !isCacheKeyStale(
+          cachedSeries.fetchedOn,
+          HISTORIC_RATES_CACHE_DURATION,
+        );
+      },
+    );
+    if (hasFreshAllIntervals) {
+      allIntervalsFetchInFlightRef.current = false;
+      return;
+    }
+
+    allIntervalsFetchInFlightRef.current = true;
+
     dispatch(
       fetchFiatRateSeriesAllIntervals({
         fiatCode: selectedFiatCodeUpper,
         currencyAbbreviation: assetContext.currencyAbbreviation,
+        chain: assetContext.tokenAddress ? assetContext.chain : undefined,
+        tokenAddress: assetContext.tokenAddress || undefined,
       }),
-    );
-  }, [assetContext.currencyAbbreviation, dispatch, selectedFiatCodeUpper]);
+    ).finally(() => {
+      if (allIntervalsFetchRequestIdRef.current !== requestId) {
+        return;
+      }
+      allIntervalsFetchInFlightRef.current = false;
+      if (!isMountedRef.current) {
+        return;
+      }
+      setAllIntervalsFetchCycle(current => current + 1);
+    });
+  }, [
+    assetContext.chain,
+    assetContext.currencyAbbreviation,
+    assetContext.tokenAddress,
+    dispatch,
+    hasValidNormalizedCoin,
+    normalizedCoin,
+    selectedFiatCodeUpper,
+  ]);
 
   useEffect(() => {
+    if (!selectedFiatCodeUpper || !hasValidNormalizedCoin) {
+      return;
+    }
+
+    if (allIntervalsFetchInFlightRef.current) {
+      return;
+    }
+
+    const hasFreshPoints = Boolean(
+      selectedSeries?.points?.length &&
+        selectedSeries?.fetchedOn &&
+        !isCacheKeyStale(
+          selectedSeries.fetchedOn,
+          HISTORIC_RATES_CACHE_DURATION,
+        ),
+    );
+    if (hasFreshPoints) {
+      return;
+    }
+
     dispatch(
       fetchFiatRateSeriesInterval({
         fiatCode: selectedFiatCodeUpper,
         interval: seriesDataInterval,
         coinForCacheCheck: normalizedCoin,
+        chain: assetContext.tokenAddress ? assetContext.chain : undefined,
+        tokenAddress: assetContext.tokenAddress || undefined,
       }),
     );
-  }, [dispatch, normalizedCoin, selectedFiatCodeUpper, seriesDataInterval]);
+  }, [
+    allIntervalsFetchCycle,
+    assetContext.chain,
+    assetContext.tokenAddress,
+    dispatch,
+    hasValidNormalizedCoin,
+    normalizedCoin,
+    selectedFiatCodeUpper,
+    selectedSeries,
+    seriesDataInterval,
+  ]);
 
   const altCurrencyIsoCodeUpper = defaultAltCurrency.isoCode?.toUpperCase();
 
@@ -902,110 +944,53 @@ const ExchangeRate = () => {
     rates,
   ]);
 
+  const {
+    pointsForChartRaw,
+    displayData: derivedDisplayData,
+    selectedTimeframeHighValue,
+  } = useExchangeRateChartData({
+    selectedSeriesPoints: selectedSeries?.points,
+    selectedTimeframe,
+    seriesDataInterval,
+    currentFiatRate,
+  });
+
   useEffect(() => {
-    if (selectedSeries?.points?.length) {
-      const pointsToDisplay: FiatRatePoint[] = (() => {
-        if (
-          seriesDataInterval === 'ALL' &&
-          selectedTimeframe !== 'ALL' &&
-          (selectedTimeframe === '3M' ||
-            selectedTimeframe === '1Y' ||
-            selectedTimeframe === '5Y')
-        ) {
-          const now = Date.now();
-          const windowMs =
-            selectedTimeframe === '3M'
-              ? HISTORIC_TIMEFRAME_WINDOW_MS['3M']
-              : selectedTimeframe === '1Y'
-              ? HISTORIC_TIMEFRAME_WINDOW_MS['1Y']
-              : HISTORIC_TIMEFRAME_WINDOW_MS['5Y'];
-          const cutoff = now - windowMs;
-          return selectedSeries.points.filter(
-            (p: FiatRatePoint) => p.ts >= cutoff,
-          );
-        }
-        return selectedSeries.points;
-      })();
-
-      const pointsForChart = (() => {
-        if (
-          !pointsToDisplay.length ||
-          !currentFiatRate ||
-          !Number.isFinite(currentFiatRate)
-        ) {
-          return pointsToDisplay;
-        }
-
-        const lastIdx = pointsToDisplay.length - 1;
-        const last = pointsToDisplay[lastIdx];
-        // Never mutate cached series points in Redux; only override in-memory for rendering.
-        const copy = [...pointsToDisplay];
-        copy[lastIdx] = {...last, rate: currentFiatRate};
-        return copy;
-      })();
-
-      const formattedRates = getFormattedData(pointsForChart);
+    if (
+      typeof pointsForChartRaw !== 'undefined' &&
+      typeof derivedDisplayData !== 'undefined'
+    ) {
       setPrevDisplayData(displayDataRef.current);
-      setDisplayData(formattedRates);
+      setDisplayData(derivedDisplayData);
       setIsChartLoading(false);
       return;
     }
 
     const hasUsableData = !!displayDataRef.current.data.length;
     setIsChartLoading(!hasUsableData);
-  }, [
-    currentFiatRate,
-    selectedSeries?.points,
-    selectedTimeframe,
-    seriesDataInterval,
-  ]);
-
-  const loggedDownsampleLengthsRef = useRef<Record<string, number>>({});
-
-  useEffect(() => {
-    const intervals: FiatRateInterval[] = ['ALL', '1D', '1W', '1M'];
-    for (const interval of intervals) {
-      const cacheKey = getFiatRateSeriesCacheKey(
-        selectedFiatCodeUpper,
-        normalizedCoin,
-        interval,
-      );
-      const series = fiatRateSeriesCache[cacheKey];
-      if (!series?.points?.length || !series.fetchedOn) {
-        continue;
-      }
-
-      if (loggedDownsampleLengthsRef.current[cacheKey] === series.fetchedOn) {
-        continue;
-      }
-
-      const downsampledLen = getFormattedData(series.points).data.length;
-      logManager.info(
-        `[ExchangeRate] downsample length - fiat:${selectedFiatCodeUpper} coin:${normalizedCoin} interval:${interval} raw:${series.points.length} downsampled:${downsampledLen}`,
-      );
-      loggedDownsampleLengthsRef.current[cacheKey] = series.fetchedOn;
-    }
-  }, [fiatRateSeriesCache, normalizedCoin, selectedFiatCodeUpper]);
+  }, [derivedDisplayData, pointsForChartRaw]);
 
   const walletsForAsset = useMemo(() => {
-    const allWallets: Wallet[] = (Object.values(keys) as Key[]).flatMap(
-      k => k.wallets,
-    );
-    const filtered = allWallets
+    const visibleWallets = getVisibleWalletsFromKeys(keys, homeCarouselConfig);
+    const filtered = visibleWallets
       .filter(w => w.network !== Network.testnet)
-      .filter(w => !w.hideWallet && !w.hideWalletByAccount)
-      .filter(w => (w.balance?.sat ?? 0) > 0)
+      .filter(walletHasNonZeroLiveBalance)
       .filter(w => {
+        const isSelectedToken = !!assetContext.tokenAddress;
         const matchesCurrency =
           (w.currencyAbbreviation || '').toLowerCase() ===
           assetContext.currencyAbbreviation;
-        const matchesTokenAddress = assetContext.tokenAddress
-          ? (w.tokenAddress || '').toLowerCase() === assetContext.tokenAddress
-          : true;
-        const matchesChain = assetContext.tokenAddress
-          ? (w.chain || '').toLowerCase() === assetContext.chain
-          : true;
-        return matchesCurrency && matchesTokenAddress && matchesChain;
+        if (!matchesCurrency) {
+          return false;
+        }
+
+        // Asset rows are collapsed across chains. For token assets (like USDC),
+        // include all token wallets with the same ticker across supported chains.
+        if (isSelectedToken) {
+          return !!w.tokenAddress;
+        }
+
+        return true;
       })
       .map(wallet => {
         const ui = buildUIFormattedWallet(
@@ -1021,11 +1006,11 @@ const ExchangeRate = () => {
 
     return filtered;
   }, [
-    assetContext.chain,
     assetContext.currencyAbbreviation,
     assetContext.tokenAddress,
     defaultAltCurrency.isoCode,
     dispatch,
+    homeCarouselConfig,
     keys,
     rates,
   ]);
@@ -1048,6 +1033,10 @@ const ExchangeRate = () => {
           }),
         );
       }
+      if (!hasValidNormalizedCoin) {
+        return;
+      }
+
       const cacheKey = getFiatRateSeriesCacheKey(
         selectedFiatCodeUpper,
         normalizedCoin,
@@ -1065,6 +1054,8 @@ const ExchangeRate = () => {
             interval: seriesDataInterval,
             coinForCacheCheck: normalizedCoin,
             force: true,
+            chain: assetContext.tokenAddress ? assetContext.chain : undefined,
+            tokenAddress: assetContext.tokenAddress || undefined,
           }),
         );
       } else {
@@ -1083,6 +1074,8 @@ const ExchangeRate = () => {
               interval: seriesDataInterval,
               coinForCacheCheck: normalizedCoin,
               force: true,
+              chain: assetContext.tokenAddress ? assetContext.chain : undefined,
+              tokenAddress: assetContext.tokenAddress || undefined,
             }),
           );
         }
@@ -1091,36 +1084,38 @@ const ExchangeRate = () => {
       setIsRefreshing(false);
     }
   }, [
+    assetContext.chain,
     assetContext.currencyAbbreviation,
+    assetContext.tokenAddress,
     currentFiatRate,
     dispatch,
     fiatRateSeriesCache,
     hasWalletsForAsset,
+    hasValidNormalizedCoin,
     normalizedCoin,
     selectedFiatCodeUpper,
-    selectedTimeframe,
     seriesDataInterval,
   ]);
 
   const rangeLabel = useMemo(() => {
     switch (selectedTimeframe) {
       case '1D':
-        return 'Last Day';
+        return t('Last Day');
       case '1W':
-        return 'Past Week';
+        return t('Past Week');
       case '1M':
-        return 'Past Month';
+        return t('Past Month');
       case '3M':
-        return 'Past 3 Months';
+        return t('Past 3 Months');
       case '1Y':
-        return 'Past Year';
+        return t('Past Year');
       case '5Y':
-        return 'Past 5 Years';
+        return t('Past 5 Years');
       case 'ALL':
       default:
-        return 'All-time';
+        return t('All-time');
     }
-  }, [selectedTimeframe]);
+  }, [selectedTimeframe, t]);
 
   const rangeOrSelectedPointLabel = useMemo(() => {
     if (!selectedPoint?.date) {
@@ -1158,57 +1153,107 @@ const ExchangeRate = () => {
 
   const latestPriceValue = currentFiatRate ?? fallbackHistoricalPrice;
 
-  const formattedCurrentPrice = useMemo(() => {
-    const valueToDisplay =
-      selectedPoint?.price ?? latestPriceValue ?? fallbackHistoricalPrice;
-    if (valueToDisplay == null) {
-      return '--';
-    }
+  const formatDisplayPrice = useCallback(
+    (value?: number) => {
+      if (value == null) {
+        return '--';
+      }
 
-    return formatFiatAmount(valueToDisplay, defaultAltCurrency.isoCode, {
-      customPrecision: 'minimal',
-      currencyAbbreviation: assetContext.currencyAbbreviation,
-    });
+      return formatFiatAmount(value, defaultAltCurrency.isoCode, {
+        customPrecision: 'minimal',
+        currencyAbbreviation: assetContext.currencyAbbreviation,
+      });
+    },
+    [assetContext.currencyAbbreviation, defaultAltCurrency.isoCode],
+  );
+
+  const formattedTopPrice = useMemo(() => {
+    return formatDisplayPrice(
+      selectedPoint?.price ?? latestPriceValue ?? fallbackHistoricalPrice,
+    );
   }, [
-    assetContext.currencyAbbreviation,
-    defaultAltCurrency.isoCode,
     fallbackHistoricalPrice,
+    formatDisplayPrice,
     latestPriceValue,
     selectedPoint?.price,
   ]);
 
-  const allIntervalsHighValue = useMemo(() => {
-    const getPointsForInterval = (
-      interval: 'ALL' | '1D' | '1W' | '1M',
-    ): FiatRatePoint[] | undefined => {
-      const cacheKey = getFiatRateSeriesCacheKey(
+  const formattedMarketPrice = useMemo(() => {
+    return formatDisplayPrice(latestPriceValue ?? fallbackHistoricalPrice);
+  }, [fallbackHistoricalPrice, formatDisplayPrice, latestPriceValue]);
+
+  const allIntervalsHighCacheKeys = useMemo(
+    () => ({
+      oneDay: getFiatRateSeriesCacheKey(
         selectedFiatCodeUpper,
         normalizedCoin,
-        interval,
-      );
-      return fiatRateSeriesCache[cacheKey]?.points;
-    };
+        '1D',
+      ),
+      oneWeek: getFiatRateSeriesCacheKey(
+        selectedFiatCodeUpper,
+        normalizedCoin,
+        '1W',
+      ),
+      oneMonth: getFiatRateSeriesCacheKey(
+        selectedFiatCodeUpper,
+        normalizedCoin,
+        '1M',
+      ),
+      all: getFiatRateSeriesCacheKey(
+        selectedFiatCodeUpper,
+        normalizedCoin,
+        'ALL',
+      ),
+    }),
+    [normalizedCoin, selectedFiatCodeUpper],
+  );
 
-    const getHighFromPoints = (
-      points?: FiatRatePoint[],
-    ): number | undefined => {
-      if (!points?.length) {
-        return undefined;
-      }
-      return getFormattedData(points).maxPoint?.value;
-    };
+  const oneDaySeriesForAllIntervalsHigh =
+    fiatRateSeriesCache[allIntervalsHighCacheKeys.oneDay];
+  const oneWeekSeriesForAllIntervalsHigh =
+    fiatRateSeriesCache[allIntervalsHighCacheKeys.oneWeek];
+  const oneMonthSeriesForAllIntervalsHigh =
+    fiatRateSeriesCache[allIntervalsHighCacheKeys.oneMonth];
+  const allSeriesForAllIntervalsHigh =
+    fiatRateSeriesCache[allIntervalsHighCacheKeys.all];
 
+  const oneDayPointsForAllIntervalsHigh = useMemo(
+    () => oneDaySeriesForAllIntervalsHigh?.points,
+    [oneDaySeriesForAllIntervalsHigh?.points],
+  );
+  const oneWeekPointsForAllIntervalsHigh = useMemo(
+    () => oneWeekSeriesForAllIntervalsHigh?.points,
+    [oneWeekSeriesForAllIntervalsHigh?.points],
+  );
+  const oneMonthPointsForAllIntervalsHigh = useMemo(
+    () => oneMonthSeriesForAllIntervalsHigh?.points,
+    [oneMonthSeriesForAllIntervalsHigh?.points],
+  );
+  const allPointsForAllIntervalsHigh = useMemo(
+    () => allSeriesForAllIntervalsHigh?.points,
+    [allSeriesForAllIntervalsHigh?.points],
+  );
+
+  const allIntervalsHighValue = useMemo(() => {
     const maxCandidates: number[] = [];
-    for (const interval of FIAT_RATE_SERIES_CACHED_INTERVALS) {
-      const high = getHighFromPoints(getPointsForInterval(interval));
+    const cachedIntervalPointSets: Array<FiatRatePoint[] | undefined> = [
+      oneDayPointsForAllIntervalsHigh,
+      oneWeekPointsForAllIntervalsHigh,
+      oneMonthPointsForAllIntervalsHigh,
+      allPointsForAllIntervalsHigh,
+    ];
+    for (const points of cachedIntervalPointSets) {
+      const high = getMaxRate(points);
       if (high != null) {
         maxCandidates.push(high);
       }
     }
 
-    const allPoints = getPointsForInterval('ALL');
-    if (allPoints?.length) {
+    if (allPointsForAllIntervalsHigh?.length) {
       const now = Date.now();
+      const allPointsSortedByTs = ensureSortedByTsAsc<FiatRatePoint>(
+        allPointsForAllIntervalsHigh,
+      );
       const derivedWindows: Array<{windowMs: number}> = [
         {windowMs: HISTORIC_TIMEFRAME_WINDOW_MS['3M']},
         {windowMs: HISTORIC_TIMEFRAME_WINDOW_MS['1Y']},
@@ -1216,9 +1261,9 @@ const ExchangeRate = () => {
       ];
 
       for (const {windowMs} of derivedWindows) {
-        const cutoff = now - windowMs;
-        const windowPoints = allPoints.filter(p => p.ts >= cutoff);
-        const high = getHighFromPoints(windowPoints);
+        const cutoffTs = now - windowMs;
+        const startIdx = lowerBoundByTs(allPointsSortedByTs, cutoffTs);
+        const high = getMaxRateFromIndex(allPointsSortedByTs, startIdx);
         if (high != null) {
           maxCandidates.push(high);
         }
@@ -1226,7 +1271,12 @@ const ExchangeRate = () => {
     }
 
     return maxCandidates.length ? Math.max(...maxCandidates) : undefined;
-  }, [fiatRateSeriesCache, normalizedCoin, selectedFiatCodeUpper]);
+  }, [
+    allPointsForAllIntervalsHigh,
+    oneDayPointsForAllIntervalsHigh,
+    oneMonthPointsForAllIntervalsHigh,
+    oneWeekPointsForAllIntervalsHigh,
+  ]);
 
   const formattedAllIntervalsHighPrice = useMemo(() => {
     if (allIntervalsHighValue == null) {
@@ -1243,20 +1293,59 @@ const ExchangeRate = () => {
     defaultAltCurrency.isoCode,
   ]);
 
+  const timeframeChange = useMemo(() => {
+    if (!selectedFiatCodeUpper || !normalizedCoin) {
+      return undefined;
+    }
+
+    return getFiatRateChangeForTimeframe({
+      fiatRateSeriesCache,
+      fiatCode: selectedFiatCodeUpper,
+      currencyAbbreviation: normalizedCoin,
+      timeframe: selectedTimeframe,
+      currentRate: currentFiatRate,
+      method: 'linear',
+    });
+  }, [
+    currentFiatRate,
+    fiatRateSeriesCache,
+    normalizedCoin,
+    selectedFiatCodeUpper,
+    selectedTimeframe,
+  ]);
+
   const percentChangeToDisplay = useMemo(() => {
     if (selectedPoint) {
       return selectedPoint.percentChange;
+    }
+    if (timeframeChange) {
+      return timeframeChange.percentChange;
     }
     if (displayData.data.length) {
       return displayData.percentChange;
     }
     return 0;
-  }, [displayData.data.length, displayData.percentChange, selectedPoint]);
+  }, [
+    displayData.data.length,
+    displayData.percentChange,
+    selectedPoint,
+    timeframeChange,
+  ]);
 
   const priceChangeToDisplay = useMemo(() => {
     if (selectedPoint) {
       return formatFiatAmount(
         selectedPoint.priceChange,
+        defaultAltCurrency.isoCode,
+        {
+          customPrecision: 'minimal',
+          currencyAbbreviation: assetContext.currencyAbbreviation,
+        },
+      );
+    }
+    if (timeframeChange) {
+      return formatFiatAmount(
+        timeframeChange.priceChange,
         defaultAltCurrency.isoCode,
         {
           customPrecision: 'minimal',
@@ -1281,6 +1370,7 @@ const ExchangeRate = () => {
     displayData.data.length,
     displayData.priceChange,
     selectedPoint,
+    timeframeChange,
   ]);
 
   const chartPoints = useMemo(() => {
@@ -1324,20 +1414,23 @@ const ExchangeRate = () => {
   ]);
 
   const MaxAxisLabel = useCallback(() => {
+    const maxAxisLabelValue =
+      selectedTimeframeHighValue ?? displayData.maxPoint?.value;
+
     if (isChartLoading) {
       return null;
     }
     if (
       !displayData.data.length ||
       typeof displayData.maxIndex !== 'number' ||
-      displayData.maxPoint?.value == null
+      maxAxisLabelValue == null
     ) {
       return null;
     }
 
     return (
       <AxisLabel
-        value={displayData.maxPoint.value}
+        value={maxAxisLabelValue}
         index={displayData.maxIndex}
         prevIndex={prevDisplayData.maxIndex}
         arrayLength={displayData.data.length}
@@ -1352,6 +1445,7 @@ const ExchangeRate = () => {
     displayData.maxPoint?.value,
     isChartLoading,
     prevDisplayData.maxIndex,
+    selectedTimeframeHighValue,
   ]);
 
   const onPointSelected = useCallback(
@@ -1359,7 +1453,8 @@ const ExchangeRate = () => {
       if (!gestureStarted.current || !chartPoints.length) {
         return;
       }
-      const baselineValue = chartPoints[0]?.value ?? p.value;
+      const baselineValue =
+        timeframeChange?.baselineRate ?? chartPoints[0]?.value ?? p.value;
       const percentChangeAtPoint = calculatePercentageDifference(
         p.value,
         baselineValue,
@@ -1372,17 +1467,25 @@ const ExchangeRate = () => {
       });
       haptic('impactLight');
     },
-    [chartPoints],
+    [chartPoints, timeframeChange?.baselineRate],
   );
 
-  const onGestureEnd = useCallback(async () => {
+  const onGestureEnd = useCallback(() => {
     if (!gestureStarted.current) {
       return;
     }
-    await sleep(10);
-    gestureStarted.current = false;
-    setSelectedPoint(undefined);
-    haptic('impactLight');
+    if (gestureEndRafRef.current != null) {
+      cancelAnimationFrame(gestureEndRafRef.current);
+    }
+    gestureEndRafRef.current = requestAnimationFrame(() => {
+      gestureEndRafRef.current = null;
+      gestureStarted.current = false;
+      if (!isMountedRef.current) {
+        return;
+      }
+      setSelectedPoint(undefined);
+      haptic('impactLight');
+    });
   }, []);
 
   const onGestureStarted = useCallback(() => {
@@ -1393,15 +1496,7 @@ const ExchangeRate = () => {
     haptic('impactLight');
   }, [chartPoints.length]);
 
-  const marketStatsSymbol = useMemo(() => {
-    const abbreviation = (
-      assetContext.currencyAbbreviation || ''
-    ).toLowerCase();
-    if (abbreviation === 'matic') {
-      return 'pol';
-    }
-    return abbreviation;
-  }, [assetContext.currencyAbbreviation]);
+  const marketStatsSymbol = normalizedCoin;
 
   const marketStatsCacheKey = useMemo(() => {
     return getMarketStatsCacheKey({
@@ -1422,9 +1517,17 @@ const ExchangeRate = () => {
       fetchMarketStats({
         fiatCode: defaultAltCurrency.isoCode,
         coin: marketStatsSymbol,
+        chain: assetContext.tokenAddress ? assetContext.chain : undefined,
+        tokenAddress: assetContext.tokenAddress || undefined,
       }),
     );
-  }, [defaultAltCurrency.isoCode, dispatch, marketStatsSymbol]);
+  }, [
+    assetContext.chain,
+    assetContext.tokenAddress,
+    defaultAltCurrency.isoCode,
+    dispatch,
+    marketStatsSymbol,
+  ]);
 
   const marketHigh52wToDisplay = useMemo(() => {
     if (marketStats?.high52w == null) {
@@ -1488,10 +1591,11 @@ const ExchangeRate = () => {
     assetContext.tokenAddress,
   ]);
 
-  const {coinColor, gradientBackgroundColor} = coin.theme ?? {
-    coinColor: ProgressBlue,
-    gradientBackgroundColor: theme.dark ? 'transparent' : White,
-  };
+  const {coinColor, gradientBackgroundColor} = tokenTheme ??
+    coin.theme ?? {
+      coinColor: ProgressBlue,
+      gradientBackgroundColor: theme.dark ? 'transparent' : White,
+    };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -1536,12 +1640,11 @@ const ExchangeRate = () => {
           <AbbreviationLabel>{currencyAbbreviation}</AbbreviationLabel>
           <PriceText
             isLargeNumber={
-              (formattedAllIntervalsHighPrice || formattedCurrentPrice).length >
-              11
+              (formattedAllIntervalsHighPrice || formattedTopPrice).length > 11
             }>
-            {formattedCurrentPrice}
+            {formattedTopPrice}
           </PriceText>
-          <PercentRow>
+          <PercentRow style={{opacity: isChartLoading ? 0 : 1}}>
             <Percentage
               percentageDifference={percentChangeToDisplay}
               hideArrow
@@ -1569,7 +1672,7 @@ const ExchangeRate = () => {
               TopAxisLabel={MaxAxisLabel}
               BottomAxisLabel={MinAxisLabel}
               SelectionDot={ChartSelectionDot}
-              color={theme.dark && coinColor === '#000000' ? White : coinColor}
+              color={theme.dark && coinColor === Black ? White : coinColor}
               style={{
                 width: WIDTH,
                 height: 200,
@@ -1663,11 +1766,7 @@ const ExchangeRate = () => {
                   }),
                 );
                 dispatch(
-                  receiveCrypto(
-                    navigation as any,
-                    'ExchangeRate',
-                    assetContext,
-                  ),
+                  receiveCrypto(navigation, 'ExchangeRate', assetContext),
                 );
               },
             }}
@@ -1736,7 +1835,7 @@ const ExchangeRate = () => {
                 </View>
                 <MarketTitle>{`${currencyAbbreviation} Market Price`}</MarketTitle>
               </MarketHeaderLeft>
-              <MarketPrice>{formattedCurrentPrice}</MarketPrice>
+              <MarketPrice>{formattedMarketPrice}</MarketPrice>
             </MarketHeader>
             <Divider />
             <MarketBody>
@@ -1787,7 +1886,7 @@ const ExchangeRate = () => {
                   {aboutToDisplay || '--'}
                 </AboutText>
                 <View style={{marginTop: 15}}>
-                  {!!aboutToDisplay ? (
+                  {aboutToDisplay ? (
                     <TouchableOpacity
                       accessibilityRole="button"
                       hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}

@@ -8,12 +8,14 @@ import React, {
 import {
   CommonActions,
   RouteProp,
+  useIsFocused,
   useNavigation,
   useRoute,
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
 import {LogBox, RefreshControl, View} from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -53,6 +55,8 @@ import {
   Wallet,
 } from '../../../store/wallet/wallet.models';
 import {
+  CharcoalBlack,
+  GhostWhite,
   LightBlack,
   NeutralSlate,
   Slate,
@@ -67,7 +71,6 @@ import {
   sleep,
   fixWalletAddresses,
   getEvmGasWallets,
-  calculatePercentageDifference,
 } from '../../../utils/helper-methods';
 import {
   BalanceUpdateError,
@@ -80,7 +83,7 @@ import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
   getDecryptPassword,
-  startGetRates,
+  refreshRatesForPortfolioPnl,
   normalizeMnemonic,
   serverAssistedImport,
 } from '../../../store/wallet/effects';
@@ -131,8 +134,20 @@ import {HomeSectionTitle} from '../../tabs/home/components/Styled';
 import {
   buildAllocationDataFromWalletRows,
   type AllocationWallet,
-} from '../../../utils/allocation';
+} from '../../../utils/portfolio/allocation';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import {
+  buildPortfolioGainLossSummaryFromPortfolioSnapshots,
+  getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
+  getQuoteCurrency,
+  hasSnapshotsBeforeMsForWallets,
+  hasSnapshotsForWallets,
+  isPopulateLoadingForWallets,
+  getLegacyPercentageDifferenceFromTotals,
+  getKeyLastDayPercentageDifference,
+  getPercentageDifferenceFromPercentRatio,
+} from '../../../utils/portfolio/assets';
+import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -297,6 +312,31 @@ const AllocationMetricValue = styled(BaseText)<{positive?: boolean}>`
   }};
 `;
 
+const AllocationMetricSkeleton: React.FC<{
+  align?: 'left' | 'right' | 'center';
+}> = ({align = 'left'}) => {
+  const theme = useTheme();
+  return (
+    <SkeletonPlaceholder
+      backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
+      highlightColor={theme.dark ? LightBlack : GhostWhite}>
+      <SkeletonPlaceholder.Item
+        width={120}
+        height={12}
+        borderRadius={2}
+        marginTop={10}
+        alignSelf={
+          align === 'right'
+            ? 'flex-end'
+            : align === 'center'
+            ? 'center'
+            : 'flex-start'
+        }
+      />
+    </SkeletonPlaceholder>
+  );
+};
+
 const HeaderTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
@@ -316,6 +356,7 @@ const KeyOverview = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const theme = useTheme();
+  const isFocused = useIsFocused();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {tokenOptionsByAddress} = useTokenContext();
@@ -324,9 +365,11 @@ const KeyOverview = () => {
   const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
     ({WALLET}) => WALLET,
   );
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const {rates, fiatRateSeriesCache} = useAppSelector(({RATE}) => RATE);
+  const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates);
   const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
     useAppSelector(({APP}) => APP);
+  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
@@ -462,24 +505,20 @@ const KeyOverview = () => {
     totalBalanceLastDay,
   } = useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
-  const percentageDifference = useMemo(() => {
-    if (!totalBalanceLastDay) {
-      return null;
-    }
-    return calculatePercentageDifference(totalBalance, totalBalanceLastDay);
-  }, [totalBalance, totalBalanceLastDay]);
-
   const memorizedAccountList = useMemo(() => {
     return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
       filterByHideWallet: true,
     });
   }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
 
-  const allocationWalletRows: AllocationWallet[] = useMemo(() => {
-    const wallets = (key?.wallets ?? []).filter(
+  const visibleKeyWallets = useMemo(() => {
+    return (key?.wallets ?? []).filter(
       w => !w.hideWallet && !w.hideWalletByAccount,
     );
-    return wallets.map((w: Wallet) => {
+  }, [key?.wallets]);
+
+  const allocationWalletRows: AllocationWallet[] = useMemo(() => {
+    return visibleKeyWallets.map((w: Wallet) => {
       return {
         currencyAbbreviation: w.currencyAbbreviation,
         chain: w.chain,
@@ -488,7 +527,7 @@ const KeyOverview = () => {
         fiatBalance: (w.balance as any)?.fiat,
       };
     });
-  }, [key?.wallets]);
+  }, [visibleKeyWallets]);
 
   const allocationData = useMemo(() => {
     return buildAllocationDataFromWalletRows(
@@ -496,6 +535,221 @@ const KeyOverview = () => {
       defaultAltCurrency.isoCode,
     );
   }, [allocationWalletRows, defaultAltCurrency.isoCode]);
+
+  const quoteCurrency = useMemo(() => {
+    return getQuoteCurrency({
+      portfolioQuoteCurrency: portfolio.quoteCurrency,
+      defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+    });
+  }, [defaultAltCurrency?.isoCode, portfolio.quoteCurrency]);
+
+  const keyWalletIdsSig = useMemo(() => {
+    return (key?.wallets || [])
+      .map(w => w?.id)
+      .filter((id): id is string => typeof id === 'string' && !!id)
+      .join(',');
+  }, [key?.wallets]);
+
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
+    dispatch(
+      maybePopulatePortfolioForWallets({
+        wallets: key?.wallets || [],
+        quoteCurrency,
+      }) as any,
+    );
+  }, [dispatch, isFocused, keyWalletIdsSig, quoteCurrency]);
+
+  const isKeyPopulateLoading = useMemo(() => {
+    return isPopulateLoadingForWallets({
+      populateStatus: portfolio.populateStatus,
+      wallets: visibleKeyWallets,
+    });
+  }, [portfolio.populateStatus, visibleKeyWallets]);
+
+  const gainLossSummary = useMemo(() => {
+    const summary = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
+      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
+      wallets: visibleKeyWallets,
+      quoteCurrency,
+      rates,
+      lastDayRates,
+      fiatRateSeriesCache,
+    });
+
+    if (summary.today.available) {
+      return summary;
+    }
+
+    const baseline =
+      typeof totalBalanceLastDay === 'number' ? totalBalanceLastDay : 0;
+    const deltaFiat = totalBalance - baseline;
+    const percentRatio = baseline > 0 ? deltaFiat / baseline : 0;
+
+    return {
+      ...summary,
+      today: {
+        ...summary.today,
+        deltaFiat,
+        percentRatio,
+        available: true,
+      },
+    };
+  }, [
+    fiatRateSeriesCache,
+    lastDayRates,
+    portfolio.snapshotsByWalletId,
+    quoteCurrency,
+    rates,
+    totalBalance,
+    totalBalanceLastDay,
+    visibleKeyWallets,
+  ]);
+
+  const portfolioPercentageDifference = useMemo(() => {
+    const pnl = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
+      wallets: visibleKeyWallets,
+      quoteCurrency,
+      timeframe: '1D',
+      rates,
+      lastDayRates,
+      fiatRateSeriesCache,
+    });
+    if (!pnl.available) {
+      return null;
+    }
+    return getPercentageDifferenceFromPercentRatio(pnl.percentRatio);
+  }, [
+    fiatRateSeriesCache,
+    lastDayRates,
+    portfolio.snapshotsByWalletId,
+    quoteCurrency,
+    rates,
+    visibleKeyWallets,
+  ]);
+
+  const legacyPercentageDifference = useMemo(() => {
+    return getLegacyPercentageDifferenceFromTotals({
+      totalBalance,
+      totalBalanceLastDay,
+    });
+  }, [totalBalance, totalBalanceLastDay]);
+
+  const hasKeySnapshots = useMemo(() => {
+    return hasSnapshotsForWallets({
+      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
+      wallets: visibleKeyWallets,
+    });
+  }, [portfolio.snapshotsByWalletId, visibleKeyWallets]);
+
+  const hasKeySnapshotsBeforePopulateStarted = useMemo(() => {
+    const startedAt = portfolio.populateStatus?.startedAt;
+    if (
+      !portfolio.populateStatus?.inProgress ||
+      typeof startedAt !== 'number'
+    ) {
+      return true;
+    }
+    return hasSnapshotsBeforeMsForWallets({
+      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
+      wallets: visibleKeyWallets,
+      cutoffMs: startedAt,
+    });
+  }, [
+    portfolio.populateStatus?.inProgress,
+    portfolio.populateStatus?.startedAt,
+    portfolio.snapshotsByWalletId,
+    visibleKeyWallets,
+  ]);
+
+  const percentageDifference = useMemo(() => {
+    return getKeyLastDayPercentageDifference({
+      totalBalance,
+      hasSnapshots: hasKeySnapshots,
+      hasSnapshotsBeforePopulateStarted: hasKeySnapshotsBeforePopulateStarted,
+      isPopulateLoading: isKeyPopulateLoading,
+      legacyPercentageDifference,
+      portfolioPercentageDifference,
+    });
+  }, [
+    totalBalance,
+    hasKeySnapshots,
+    hasKeySnapshotsBeforePopulateStarted,
+    isKeyPopulateLoading,
+    legacyPercentageDifference,
+    portfolioPercentageDifference,
+  ]);
+
+  const allTimeGainLossText = useMemo(() => {
+    if (!gainLossSummary.total.available) {
+      return null;
+    }
+
+    if (hideAllBalances) {
+      const pctSign = gainLossSummary.total.percentRatio >= 0 ? '+' : '-';
+      const pct = Math.abs(gainLossSummary.total.percentRatio * 100).toFixed(2);
+      return `****  (${pctSign}${pct}%)`;
+    }
+
+    const sign = gainLossSummary.total.deltaFiat >= 0 ? '+' : '-';
+    const pctSign = gainLossSummary.total.percentRatio >= 0 ? '+' : '-';
+    const amt = formatFiatAmount(
+      Math.abs(gainLossSummary.total.deltaFiat),
+      gainLossSummary.quoteCurrency,
+      {
+        customPrecision: 'minimal',
+        currencyDisplay: 'symbol',
+      },
+    );
+    const pct = Math.abs(gainLossSummary.total.percentRatio * 100).toFixed(2);
+    return `${sign}${amt}  (${pctSign}${pct}%)`;
+  }, [
+    gainLossSummary.quoteCurrency,
+    gainLossSummary.total.available,
+    gainLossSummary.total.deltaFiat,
+    gainLossSummary.total.percentRatio,
+    hideAllBalances,
+  ]);
+
+  const allTimeIsPositive = useMemo(() => {
+    return gainLossSummary.total.available
+      ? gainLossSummary.total.deltaFiat >= 0
+      : true;
+  }, [gainLossSummary.total.available, gainLossSummary.total.deltaFiat]);
+
+  const todayGainLossText = useMemo(() => {
+    if (hideAllBalances) {
+      const pctSign = gainLossSummary.today.percentRatio >= 0 ? '+' : '-';
+      const pct = Math.abs(gainLossSummary.today.percentRatio * 100).toFixed(2);
+      return `****  (${pctSign}${pct}%)`;
+    }
+
+    const sign = gainLossSummary.today.deltaFiat >= 0 ? '+' : '-';
+    const pctSign = gainLossSummary.today.percentRatio >= 0 ? '+' : '-';
+    const amt = formatFiatAmount(
+      Math.abs(gainLossSummary.today.deltaFiat),
+      gainLossSummary.quoteCurrency,
+      {
+        customPrecision: 'minimal',
+        currencyDisplay: 'symbol',
+      },
+    );
+    const pct = Math.abs(gainLossSummary.today.percentRatio * 100).toFixed(2);
+    return `${sign}${amt}  (${pctSign}${pct}%)`;
+  }, [
+    gainLossSummary.quoteCurrency,
+    gainLossSummary.today.deltaFiat,
+    gainLossSummary.today.percentRatio,
+    hideAllBalances,
+  ]);
+
+  const todayIsPositive = useMemo(() => {
+    return gainLossSummary.today.deltaFiat >= 0;
+  }, [gainLossSummary.today.deltaFiat]);
 
   const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
@@ -726,7 +980,9 @@ const KeyOverview = () => {
 
     try {
       setIsViewUpdating(true);
-      await dispatch(startGetRates({}));
+      await dispatch(
+        refreshRatesForPortfolioPnl({context: 'homeRootOnRefresh'}) as any,
+      );
       await Promise.all([
         dispatch(
           startUpdateAllWalletStatusForKey({
@@ -849,39 +1105,30 @@ const KeyOverview = () => {
   const renderListFooterComponent = useCallback(() => {
     return (
       <WalletListFooterContainer>
-        {!isTSSKey(key) ? (
-          <WalletListFooter
-            activeOpacity={ActiveOpacity}
-            onPress={async () => {
-              haptic('impactLight');
-              navigation.navigate('AddingOptions', {
-                key,
-              });
-            }}>
-            <Icons.Add />
-            <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
-          </WalletListFooter>
-        ) : null}
-        {/* <Button
+        <Button
           buttonStyle="secondary"
           height={50}
           buttonOutline
-          onPress={() => (navigation as any).navigate('AllAssets')}>
+          onPress={() =>
+            (navigation as any).navigate('AllAssets', {keyId: id})
+          }>
           See All Assets
         </Button>
 
-        <AddWalletLinkContainer>
-          <AddWalletLinkButton
-            activeOpacity={ActiveOpacity}
-            onPress={async () => {
-              haptic('impactLight');
-              navigation.navigate('AddingOptions', {
-                key,
-              });
-            }}>
-            <AddWalletLink>Add Wallet</AddWalletLink>
-          </AddWalletLinkButton>
-        </AddWalletLinkContainer> */}
+        {!isTSSKey(key) ? (
+          <AddWalletLinkContainer>
+            <AddWalletLinkButton
+              activeOpacity={ActiveOpacity}
+              onPress={async () => {
+                haptic('impactLight');
+                navigation.navigate('AddingOptions', {
+                  key,
+                });
+              }}>
+              <AddWalletLink>Add Wallet</AddWalletLink>
+            </AddWalletLinkButton>
+          </AddWalletLinkContainer>
+        ) : null}
 
         {showPortfolioValue && allocationData.totalFiat > 0 ? (
           <TouchableOpacity
@@ -924,26 +1171,43 @@ const KeyOverview = () => {
                       : '****'}
                   </AllocationValue>
 
-                  {/* <AllocationDivider />
+                  <AllocationDivider />
 
                   <AllocationRow>
-                    <AllocationColumn style={{paddingRight: 12}}>
-                      <AllocationLabel>All-Time Gain / Loss ($)</AllocationLabel>
-                      <AllocationMetricValue positive>
-                        {'+$61,199.18  (+672%)'}
-                      </AllocationMetricValue>
-                    </AllocationColumn>
-                    <AllocationColumn style={{paddingLeft: 12}}>
+                    {allTimeGainLossText !== null ? (
+                      <AllocationColumn style={{paddingRight: 12}}>
+                        <AllocationLabel>
+                          All-Time Gain / Loss ($)
+                        </AllocationLabel>
+                        {isKeyPopulateLoading ? (
+                          <AllocationMetricSkeleton />
+                        ) : (
+                          <AllocationMetricValue positive={allTimeIsPositive}>
+                            {allTimeGainLossText}
+                          </AllocationMetricValue>
+                        )}
+                      </AllocationColumn>
+                    ) : null}
+                    <AllocationColumn
+                      style={
+                        allTimeGainLossText !== null
+                          ? {paddingLeft: 12}
+                          : undefined
+                      }>
                       <AllocationLabel style={{textAlign: 'right'}}>
                         Today's Gain / Loss ($)
                       </AllocationLabel>
-                      <AllocationMetricValue
-                        positive={false}
-                        style={{textAlign: 'right'}}>
-                        {'-$1,318.11  (-4.27%)'}
-                      </AllocationMetricValue>
+                      {isKeyPopulateLoading ? (
+                        <AllocationMetricSkeleton align="right" />
+                      ) : (
+                        <AllocationMetricValue
+                          positive={todayIsPositive}
+                          style={{textAlign: 'right'}}>
+                          {todayGainLossText}
+                        </AllocationMetricValue>
+                      )}
                     </AllocationColumn>
-                  </AllocationRow> */}
+                  </AllocationRow>
                 </AllocationFooter>
               }
             />
@@ -957,12 +1221,17 @@ const KeyOverview = () => {
     allocationData.legendItems,
     allocationData.slices,
     allocationData.totalFiat,
+    allTimeGainLossText,
+    allTimeIsPositive,
     defaultAltCurrency.isoCode,
     hideAllBalances,
     id,
+    isKeyPopulateLoading,
     navigation,
     showPortfolioValue,
     showArchaxBanner,
+    todayGainLossText,
+    todayIsPositive,
     totalBalance,
   ]);
 
@@ -997,11 +1266,12 @@ const KeyOverview = () => {
                   currencyDisplay: 'symbol',
                 })}
               </Balance>
-              {percentageDifference ? (
+              {percentageDifference !== null ? (
                 <PercentageWrapper>
                   <Percentage
                     percentageDifference={percentageDifference}
                     hideArrow
+                    fractionDigits={2}
                     rangeLabel={t('Last Day')}
                   />
                 </PercentageWrapper>

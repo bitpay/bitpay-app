@@ -6,7 +6,8 @@ import {startGetRates} from '../../effects';
 import {logManager} from '../../../../managers/LogManager';
 
 export const startWalletStoreInit =
-  (): Effect<Promise<void>> => async (dispatch, getState: () => RootState) => {
+  (): Effect<Promise<{walletInitSuccess: boolean}>> =>
+  async (dispatch, getState: () => RootState) => {
     logManager.info('starting [startWalletStoreInit]');
     try {
       const {WALLET} = getState();
@@ -27,6 +28,7 @@ export const startWalletStoreInit =
 
       dispatch(WalletActions.successWalletStoreInit());
       logManager.info('success [startWalletStoreInit]');
+      return {walletInitSuccess: true};
     } catch (e) {
       let errorStr;
       if (e instanceof Error) {
@@ -36,5 +38,6 @@ export const startWalletStoreInit =
       }
       dispatch(WalletActions.failedWalletStoreInit());
       logManager.error(`failed [startWalletStoreInit]: ${errorStr}`);
+      return {walletInitSuccess: false};
     }
   };

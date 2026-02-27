@@ -5,6 +5,8 @@ import {logManager} from '../../managers/LogManager';
 import {updateMarketStats} from './market-stats.actions';
 import {MarketStatsItem} from './market-stats.models';
 
+const MARKET_STATS_BASE_URL = `${BASE_BWS_URL}/v1/marketstats`;
+
 const asRecord = (value: unknown): Record<string, unknown> | undefined => {
   return value != null && typeof value === 'object'
     ? (value as Record<string, unknown>)
@@ -24,14 +26,22 @@ export const fetchMarketStats =
   (params: {
     fiatCode: string;
     coin: string;
+    chain?: string;
+    tokenAddress?: string;
   }): Effect<Promise<MarketStatsItem | null>> =>
   async dispatch => {
     const fiatCode = (params.fiatCode || '').toUpperCase();
     const coin = (params.coin || '').toLowerCase();
+    const chain = (params.chain || '').toLowerCase();
+    const tokenAddress = params.tokenAddress || '';
     const key = getMarketStatsCacheKey({fiatCode, coin});
 
     try {
-      const url = `${BASE_BWS_URL}/v1/marketstats/${fiatCode}?coin=${coin}`;
+      const chainQuery = chain ? `&chain=${encodeURIComponent(chain)}` : '';
+      const tokenAddressQuery = tokenAddress
+        ? `&tokenAddress=${encodeURIComponent(tokenAddress)}`
+        : '';
+      const url = `${MARKET_STATS_BASE_URL}/${fiatCode}?coin=${coin}${chainQuery}${tokenAddressQuery}`;
       logManager.info(`fetchMarketStats: get request to: ${url}`);
       const {data} = await axios.get(url);
       const payloadArray = Array.isArray(data) ? data : [];

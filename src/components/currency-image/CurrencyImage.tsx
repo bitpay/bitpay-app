@@ -1,5 +1,5 @@
 // renders svg if supported currency or cached png if custom token
-import React, {ReactElement, useMemo, useState} from 'react';
+import React, {ReactElement, useEffect, useMemo, useState} from 'react';
 import {StyleSheet} from 'react-native';
 import {ImageRequireSource} from 'react-native';
 import FastImage from 'react-native-fast-image';
@@ -48,8 +48,13 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
   size = 40,
   blockie,
 }) => {
-  const style = {width: size, height: size};
+  const dimensions = {width: size, height: size};
   const [imageError, setImageError] = useState(false);
+
+  // If a source changes after an error, allow the new source to render again.
+  useEffect(() => {
+    setImageError(false);
+  }, [img, imgSrc]);
 
   const badge = useMemo(
     () =>
@@ -83,12 +88,14 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
   return (
     <CurrencyImageContainer>
       {blockie ? (
-        <Blockie size={size ?? blockie.size} seed={blockie.seed ?? 'random'} />
+        <Blockie size={blockie.size ?? size} seed={blockie.seed ?? 'random'} />
       ) : (!img && !imgSrc) || imageError ? (
-        <DefaultImage {...style} />
+        <DefaultImage {...dimensions} />
+      ) : typeof img === 'function' ? (
+        img(dimensions)
       ) : imgSrc ? (
         <FastImage
-          style={style}
+          style={dimensions}
           source={imgSrc}
           resizeMode={FastImage.resizeMode.cover}
           onError={() => setImageError(true)}
@@ -100,7 +107,7 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
           <ProfileIcon size={20} />
         ) : (
           <FastImage
-            style={style}
+            style={dimensions}
             source={{
               uri: img,
               priority: FastImage.priority.normal,
@@ -110,7 +117,7 @@ export const CurrencyImage: React.FC<CurrencyImageProps> = ({
           />
         )
       ) : (
-        img!(style)
+        <DefaultImage {...dimensions} />
       )}
 
       {badge}

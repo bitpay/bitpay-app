@@ -2,7 +2,12 @@ import React, {useCallback, useState} from 'react';
 import TagSvg from '../../../../../assets/img/tag.svg';
 import styled, {css} from 'styled-components/native';
 import {DirectIntegrationApiObject} from '../../../../store/shop/shop.models';
-import {LightBlack, NeutralSlate} from '../../../../styles/colors';
+import {
+  LightBlack,
+  NeutralSlate,
+  Slate30,
+  LuckySevens,
+} from '../../../../styles/colors';
 import RemoteImage from './RemoteImage';
 import {BaseText, H6, Paragraph} from '../../../../components/styled/Text';
 import {WIDTH} from '../../../../components/styled/Containers';
@@ -42,7 +47,7 @@ const MerchantName = styled(H6)`
 `;
 
 const MerchantDescription = styled(Paragraph)`
-  color: ${({theme}) => (theme.dark ? '#E1E4E7' : '#777777')};
+  color: ${({theme}) => (theme.dark ? Slate30 : LuckySevens)};
   font-size: 12px;
   line-height: 16px;
   margin-top: 8px;

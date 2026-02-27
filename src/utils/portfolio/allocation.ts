@@ -1,8 +1,13 @@
-import type {WalletRowProps} from '../components/list/WalletRow';
-import {formatFiatAmount} from './helper-methods';
-import type {Key, Wallet} from '../store/wallet/wallet.models';
-import {Slate, SlateDark} from '../styles/colors';
-import {BitpaySupportedCoins} from '../constants/currencies';
+import type {WalletRowProps} from '../../components/list/WalletRow';
+import {formatCurrencyAbbreviation, formatFiatAmount} from '../helper-methods';
+import type {Key, Wallet} from '../../store/wallet/wallet.models';
+import type {HomeCarouselConfig} from '../../store/app/app.models';
+import {Slate, SlateDark} from '../../styles/colors';
+import {
+  BitpaySupportedCoins,
+  BitpaySupportedTokens,
+} from '../../constants/currencies';
+import {getVisibleWalletsFromKeys} from './assets';
 
 type AllocationAsset = {
   assetKey: string;
@@ -22,9 +27,20 @@ export type AllocationWallet = Pick<
   | 'fiatBalance'
 >;
 
+export const toAllocationWallet = (w: Wallet): AllocationWallet => {
+  return {
+    currencyAbbreviation: w.currencyAbbreviation,
+    chain: w.chain,
+    tokenAddress: w.tokenAddress,
+    currencyName: w.currencyName,
+    fiatBalance: (w.balance as any)?.fiat,
+  };
+};
+
 export type AllocationLegendItem = {
   key: string;
   label: string;
+  isOther?: boolean;
   value?: string;
   color: {
     light: string;
@@ -56,10 +72,16 @@ export type AllocationRowItem = {
   progress: number;
 };
 
-const getAssetKey = (w: AllocationWallet): string => {
-  const coin = (w.currencyAbbreviation || '').toLowerCase();
-  return coin;
-};
+const tokenThemeByCoin: {[key in string]: string} = Object.values(
+  BitpaySupportedTokens,
+).reduce((acc, token) => {
+  const coinKey = (token.coin || '').toLowerCase();
+  const color = token.theme?.coinColor;
+  if (coinKey && color && !acc[coinKey]) {
+    acc[coinKey] = color;
+  }
+  return acc;
+}, {} as {[key in string]: string});
 
 const getAssetColor = (
   currencyAbbreviation: string,
@@ -70,11 +92,8 @@ const getAssetColor = (
 
   const themeColor =
     BitpaySupportedCoins[coinKey]?.theme?.coinColor ||
-    BitpaySupportedCoins[chainKey]?.theme?.coinColor;
-
-  if (coinKey === 'usdc') {
-    return {light: '#0074D1', dark: '#0074D1'};
-  }
+    BitpaySupportedCoins[chainKey]?.theme?.coinColor ||
+    tokenThemeByCoin[coinKey];
 
   return themeColor
     ? {light: themeColor, dark: themeColor}
@@ -86,6 +105,13 @@ const toPercent = (value: number, total: number): number => {
     return 0;
   }
   return (value / total) * 100;
+};
+
+const formatAllocationPercent = (percent: number): string => {
+  if (percent > 0 && percent < 0.1) {
+    return '<0.1%';
+  }
+  return `${percent.toFixed(1)}%`;
 };
 
 export const buildAllocationDataFromWalletRows = (
@@ -109,7 +135,7 @@ export const buildAllocationDataFromWalletRows = (
       return;
     }
 
-    const assetKey = getAssetKey(w);
+    const assetKey = (w.currencyAbbreviation || '').toLowerCase();
     const existing = byAssetKey.get(assetKey);
     if (existing) {
       existing.fiatValue += fiat;
@@ -132,9 +158,16 @@ export const buildAllocationDataFromWalletRows = (
 
   const totalFiat = assets.reduce((sum, a) => sum + (a.fiatValue || 0), 0);
 
-  const rows: AllocationRowItem[] = assets.map(a => {
+  const assetsWithMetrics = assets.map(a => {
     const percent = toPercent(a.fiatValue, totalFiat);
-    const color = getAssetColor(a.currencyAbbreviation, a.chain);
+    return {
+      ...a,
+      percent,
+      color: getAssetColor(a.currencyAbbreviation, a.chain),
+    };
+  });
+
+  const rows: AllocationRowItem[] = assetsWithMetrics.map(a => {
     return {
       key: a.assetKey,
       currencyAbbreviation: a.currencyAbbreviation,
@@ -144,38 +177,36 @@ export const buildAllocationDataFromWalletRows = (
       fiatAmount: formatFiatAmount(a.fiatValue, defaultAltCurrencyIsoCode, {
         currencyDisplay: 'symbol',
       }),
-      percent: `${percent.toFixed(1)}%`,
-      progress: percent,
-      barColor: color,
+      percent: formatAllocationPercent(a.percent),
+      progress: a.percent,
+      barColor: a.color,
     };
   });
 
   const topN = opts?.topN ?? 5;
   const includeOther = opts?.includeOther ?? true;
 
-  const topAssets = assets.slice(0, topN);
-  const remainderAssets = assets.slice(topN);
+  const topAssets = assetsWithMetrics.slice(0, topN);
+  const remainderAssets = assetsWithMetrics.slice(topN);
   const otherFiat = remainderAssets.reduce(
     (sum, a) => sum + (a.fiatValue || 0),
     0,
   );
 
   const legendItems: AllocationLegendItem[] = topAssets.map(a => {
-    const percent = toPercent(a.fiatValue, totalFiat);
     return {
       key: a.assetKey,
-      label: a.currencyAbbreviation.toUpperCase(),
-      value: `${percent.toFixed(1)}%`,
-      color: getAssetColor(a.currencyAbbreviation, a.chain),
+      label: formatCurrencyAbbreviation(a.currencyAbbreviation || ''),
+      value: formatAllocationPercent(a.percent),
+      color: a.color,
     };
   });
 
   const slices: AllocationSlice[] = topAssets.map(a => {
-    const percent = toPercent(a.fiatValue, totalFiat);
     return {
       key: a.assetKey,
-      value: percent,
-      color: getAssetColor(a.currencyAbbreviation, a.chain),
+      value: a.percent,
+      color: a.color,
     };
   });
 
@@ -183,8 +214,9 @@ export const buildAllocationDataFromWalletRows = (
     const percent = toPercent(otherFiat, totalFiat);
     legendItems.push({
       key: 'other',
-      label: 'Other',
-      value: `${percent.toFixed(1)}%`,
+      label: '',
+      isOther: true,
+      value: formatAllocationPercent(percent),
       color: {light: Slate, dark: SlateDark},
     });
     slices.push({
@@ -204,12 +236,11 @@ export const buildAllocationDataFromWalletRows = (
 
 export const getPortfolioAllocationTotalFiat = (params: {
   keys: Record<string, Key>;
+  homeCarouselConfig?: HomeCarouselConfig[] | undefined;
 }): number => {
-  const {keys} = params;
+  const {keys, homeCarouselConfig} = params;
 
-  const visibleWallets = (Object.values(keys) as Key[])
-    .flatMap((k: Key) => k.wallets)
-    .filter((w: Wallet) => !w.hideWallet && !w.hideWalletByAccount);
+  const visibleWallets = getVisibleWalletsFromKeys(keys, homeCarouselConfig);
 
   return visibleWallets.reduce(
     (sum, w) => sum + (Number((w.balance as any)?.fiat) || 0),

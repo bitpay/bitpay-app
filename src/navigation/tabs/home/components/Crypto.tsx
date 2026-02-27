@@ -1,5 +1,5 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import React, {ReactElement, useEffect, useState} from 'react';
 import Carousel from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import {
@@ -18,7 +18,6 @@ import {
   showDecryptPasswordModal,
 } from '../../../../store/app/app.actions';
 import {
-  calculatePercentageDifference,
   checkEncryptedKeysForEddsaMigration,
   getMnemonic,
   sleep,
@@ -33,6 +32,14 @@ import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
 } from '../../../../store/app/app.models';
+import type {
+  BalanceSnapshot,
+  PortfolioPopulateStatus,
+} from '../../../../store/portfolio/portfolio.models';
+import type {
+  FiatRateSeriesCache,
+  Rates,
+} from '../../../../store/rate/rate.models';
 import {
   CarouselItemContainer,
   HomeSectionTitle,
@@ -48,6 +55,16 @@ import {
   HOME_CARD_HEIGHT,
   HOME_CARD_WIDTH,
 } from '../../../../components/home-card/HomeCard';
+import {
+  getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
+  getLegacyPercentageDifferenceFromTotals,
+  getKeyLastDayPercentageDifference,
+  getPercentageDifferenceFromPercentRatio,
+  getQuoteCurrency,
+  hasSnapshotsBeforeMsForWallets,
+  hasSnapshotsForWallets,
+  isPopulateLoadingForWallets,
+} from '../../../../utils/portfolio/assets';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
@@ -55,8 +72,6 @@ import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import AddSvg from './AddSvg';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
-import {Status} from 'bitcore-wallet-client/ts_build/src';
-import {logManager} from '../../../../managers/LogManager';
 import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
@@ -110,7 +125,7 @@ const CryptoHeaderActions = styled.View`
   gap: 8px;
 `;
 
-const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
+const _renderItem = ({item}: {item: {id: string; component: ReactElement}}) => {
   return <CarouselItemContainer>{item.component}</CarouselItemContainer>;
 };
 
@@ -184,26 +199,46 @@ export const createHomeCardList = ({
   homeCarouselConfig,
   homeCarouselLayoutType,
   hideKeyBalance,
+  portfolioSnapshotsByWalletId,
+  portfolioQuoteCurrency,
+  populateStatus,
+  rates,
+  lastDayRates,
+  fiatRateSeriesCache,
+  defaultAltCurrencyIsoCode,
   context,
   onPress,
   currency,
 }: {
-  navigation: NavigationProp<any>;
+  navigation: any;
   keys: Key[];
   dispatch: AppDispatch;
   linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
   hideKeyBalance: boolean;
+  portfolioSnapshotsByWalletId?: {
+    [walletId: string]: BalanceSnapshot[] | undefined;
+  };
+  portfolioQuoteCurrency?: string;
+  populateStatus?: PortfolioPopulateStatus;
+  rates?: Rates;
+  lastDayRates?: Rates;
+  fiatRateSeriesCache?: FiatRateSeriesCache;
+  defaultAltCurrencyIsoCode?: string;
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
   currency?: any;
 }) => {
-  let list: {id: string; component: JSX.Element}[] = [];
-  const defaults: {id: string; component: JSX.Element}[] = [];
+  let list: {id: string; component: ReactElement}[] = [];
+  const defaults: {id: string; component: ReactElement}[] = [];
   const hasKeys = keys.length;
   const hasGiftCards = false;
   const hasCoinbase = linkedCoinbase;
+  const quoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency,
+    defaultAltCurrencyIsoCode,
+  });
 
   if (hasKeys) {
     const walletCards = keys.map(key => {
@@ -214,14 +249,75 @@ export const createHomeCardList = ({
         backupComplete,
       } = key;
 
-      const percentageDifference = calculatePercentageDifference(
-        totalBalance,
-        totalBalanceLastDay,
-      );
-
       wallets = wallets.filter(
         wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
       );
+
+      const isKeyPopulateLoading = isPopulateLoadingForWallets({
+        populateStatus,
+        wallets,
+      });
+
+      const legacyPercentageDifference =
+        getLegacyPercentageDifferenceFromTotals({
+          totalBalance,
+          totalBalanceLastDay,
+        });
+
+      const portfolioPercentageDifference = (() => {
+        if (!portfolioSnapshotsByWalletId) {
+          return null;
+        }
+
+        const pnl = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+          snapshotsByWalletId: portfolioSnapshotsByWalletId,
+          wallets,
+          quoteCurrency,
+          timeframe: '1D',
+          rates,
+          lastDayRates,
+          fiatRateSeriesCache,
+        });
+
+        if (!pnl.available) {
+          return null;
+        }
+
+        return getPercentageDifferenceFromPercentRatio(pnl.percentRatio);
+      })();
+
+      const hasKeySnapshots = portfolioSnapshotsByWalletId
+        ? hasSnapshotsForWallets({
+            snapshotsByWalletId: portfolioSnapshotsByWalletId,
+            wallets,
+          })
+        : false;
+
+      const hasKeySnapshotsBeforePopulateStarted = (() => {
+        const startedAt = populateStatus?.startedAt;
+        if (!populateStatus?.inProgress || typeof startedAt !== 'number') {
+          return true;
+        }
+        if (!portfolioSnapshotsByWalletId) {
+          return false;
+        }
+        return hasSnapshotsBeforeMsForWallets({
+          snapshotsByWalletId: portfolioSnapshotsByWalletId,
+          wallets,
+          cutoffMs: startedAt,
+        });
+      })();
+
+      const rawPercentageDifference = getKeyLastDayPercentageDifference({
+        totalBalance,
+        hasSnapshots: hasKeySnapshots,
+        hasSnapshotsBeforePopulateStarted: hasKeySnapshotsBeforePopulateStarted,
+        isPopulateLoading: isKeyPopulateLoading,
+        legacyPercentageDifference,
+        portfolioPercentageDifference,
+      });
+      const percentageDifference =
+        totalBalance > 0 ? rawPercentageDifference : null;
 
       return {
         id: key.id,
@@ -328,9 +424,13 @@ const Crypto = () => {
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
+  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const {rates, fiatRateSeriesCache} = useAppSelector(({RATE}) => RATE);
+  const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates);
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
@@ -345,6 +445,13 @@ const Crypto = () => {
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
       hideKeyBalance: hideAllBalances,
+      portfolioSnapshotsByWalletId: portfolio?.snapshotsByWalletId,
+      portfolioQuoteCurrency: portfolio?.quoteCurrency,
+      populateStatus: portfolio?.populateStatus,
+      rates,
+      lastDayRates,
+      fiatRateSeriesCache,
+      defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
     }),
   );
 
@@ -358,6 +465,13 @@ const Crypto = () => {
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
         hideKeyBalance: hideAllBalances,
+        portfolioSnapshotsByWalletId: portfolio?.snapshotsByWalletId,
+        portfolioQuoteCurrency: portfolio?.quoteCurrency,
+        populateStatus: portfolio?.populateStatus,
+        rates,
+        lastDayRates,
+        fiatRateSeriesCache,
+        defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
       }),
     );
   }, [
@@ -368,6 +482,13 @@ const Crypto = () => {
     homeCarouselConfig,
     homeCarouselLayoutType,
     hideAllBalances,
+    portfolio?.quoteCurrency,
+    portfolio?.populateStatus,
+    portfolio?.snapshotsByWalletId,
+    rates,
+    lastDayRates,
+    fiatRateSeriesCache,
+    defaultAltCurrency?.isoCode,
   ]);
 
   if (!hasKeys && !linkedCoinbase) {

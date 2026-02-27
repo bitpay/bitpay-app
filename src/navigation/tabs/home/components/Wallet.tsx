@@ -5,6 +5,7 @@ import {BaseText} from '../../../../components/styled/Text';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {
   Black,
+  CharcoalBlack,
   LightBlack,
   NeutralSlate,
   Slate,
@@ -30,11 +31,12 @@ import {useAppSelector} from '../../../../utils/hooks';
 import {useTranslation} from 'react-i18next';
 import ArrowRightSvg from './ArrowRightSvg';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {maskIfHidden} from '../../../../utils/hideBalances';
 
 interface WalletCardComponentProps {
   wallets: Wallet[];
   totalBalance: number;
-  percentageDifference: number;
+  percentageDifference: number | null;
   onPress: () => void;
   needsBackup: boolean;
   keyName: string | undefined;
@@ -55,7 +57,7 @@ export const ListCard = styled(TouchableOpacity)<{outlineStyle?: boolean}>`
       theme.dark ? (!outlineStyle ? LightBlack : SlateDark) : Slate30
     }`};
   background-color: ${({theme: {dark}, outlineStyle}) =>
-    dark ? (!outlineStyle ? '#111' : 'none') : White};
+    dark ? (!outlineStyle ? CharcoalBlack : 'none') : White};
   border-radius: 12px;
   margin: ${({outlineStyle}) =>
     outlineStyle ? `0px 0px ${ScreenGutter} 0px` : `8px ${ScreenGutter}`};
@@ -247,12 +249,13 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
             <KeyName>{keyName}</KeyName>
           </ListLeftColumn>
           <ListRightColumn>
-            <ListBalance>{hideKeyBalance ? '****' : amount}</ListBalance>
-            {!hideKeyBalance && percentageDifference ? (
+            <ListBalance>{maskIfHidden(hideKeyBalance, amount)}</ListBalance>
+            {!hideKeyBalance && percentageDifference !== null ? (
               <ListPercentageRow>
                 <Percentage
                   percentageDifference={percentageDifference}
                   hideArrow={true}
+                  fractionDigits={2}
                   textStyle={{
                     textAlign: 'right',
                     fontSize: 13,
