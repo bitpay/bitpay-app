@@ -19,7 +19,6 @@ import {
   TransactionProposal,
   Status,
   KeyMethods,
-  Key,
 } from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
 import {
@@ -339,9 +338,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {t} = useTranslation();
   const {selectedAccountAddress, keyId, isSvmAccount} = route.params;
   const [refreshing, setRefreshing] = useState(false);
-  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
-    ({WALLET}) => WALLET,
-  );
+  const key = useAppSelector(({WALLET}: RootState) => WALLET.keys[keyId]);
   const [copied, setCopied] = useState(false);
   const [searchVal, setSearchVal] = useState('');
   const [activeTab, setActiveTab] = useState<AccountDetailsTab>('wallets');
@@ -380,7 +377,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const [showKeyOptions, setShowKeyOptions] = useState(false);
 
   const [searchResultsHistory, setSearchResultsHistory] = useState(
@@ -394,7 +391,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
 
-  const key = keys[keyId];
   const keyFullWalletObjs = uniqBy(
     key.wallets.filter(w => w.receiveAddress === selectedAccountAddress),
     wallet => {
@@ -761,7 +757,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       },
     );
     return () => subscription.remove();
-  }, [keys]);
+  }, [key]);
 
   const keyExtractorAssets = useCallback(
     (item: AssetsByChainData) => item.id,
@@ -1543,8 +1539,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     memorizedAssetsByChainList,
     navigation,
     groupedHistory,
-    searchResultsAssets,
-    searchResultsHistory,
     searchVal,
     selectedChainFilterOption,
     showPortfolioValue,
