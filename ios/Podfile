@@ -89,8 +89,8 @@ target 'BitPayApp' do
 
     # Adds the "Inject Bundle Hash" build phase to BitPayApp.xcodeproj the first time
     # `pod install` is run. The phase runs ios/scripts/inject-bundle-hash.sh after
-    # "Bundle React Native code and images", hashing the built bundle and writing the
-    # result into the app's Info.plist so AppDelegate can verify it at launch.
+    # "Bundle React Native code and images", hashing the built bundle and patching the
+    # result into the compiled app binary by replacing a placeholder string so AppDelegate can verify it at launch.
     #
     # This call modifies BitPayApp.xcodeproj — the change should be committed to git.
     # Subsequent `pod install` runs detect the existing phase and skip the modification.
