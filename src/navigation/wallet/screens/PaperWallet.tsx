@@ -78,7 +78,7 @@ const SelectedOptionCol = styled.View`
 
 const PaperWalletItemTitle = styled.Text`
   margin: 0 0 18px 0;
-  color: ${({theme: {dark}}) => (dark ? White : '#434d5a')};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   line-height: 18px;
 `;
 

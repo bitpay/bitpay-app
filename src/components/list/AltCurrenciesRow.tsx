@@ -7,6 +7,7 @@ import {
   SlateDark,
   White,
   Black,
+  Slate30,
 } from '../../styles/colors';
 import {useTheme, css} from 'styled-components/native';
 import {Column} from '../styled/Containers';
@@ -40,7 +41,7 @@ const AltCurrencyIsoCodeContainer = styled.View<{selected?: boolean}>`
   ${({selected}) =>
     selected &&
     css`
-      background: ${({theme: {dark}}) => (dark ? SlateDark : '#E1E4E7')};
+      background: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
     `};
   width: 60px;
   height: 40px;

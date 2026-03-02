@@ -2,7 +2,7 @@ import React from 'react';
 import {Platform} from 'react-native';
 import {Circle, Color, G, Svg, Rect} from 'react-native-svg';
 import styled, {useTheme} from 'styled-components/native';
-import {LightBlack, NeutralSlate, White} from '../../styles/colors';
+import {LightBlack, NeutralSlate, SlateDark, White} from '../../styles/colors';
 
 interface AddSvgProps {
   color: Color | null | undefined;
@@ -17,7 +17,7 @@ interface Props {
 }
 
 const AddSvg: React.FC<AddSvgProps> = ({color, background, opacity}) => {
-  const fill = color || '#434D5A';
+  const fill = color || SlateDark;
   const backgroundFill = background;
   const circleOpacity = opacity || 0.100000001;
   return (

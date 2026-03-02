@@ -5,7 +5,7 @@ import {SvgUri} from 'react-native-svg';
 import {CardConfig} from '../../../../store/shop/shop.models';
 import {BaseText, H4} from '../../../../components/styled/Text';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
-import {LightBlack} from '../../../../styles/colors';
+import {LightBlack, Slate30} from '../../../../styles/colors';
 import LinearGradient from 'react-native-linear-gradient';
 
 interface GiftCardCreditsItemProps {
@@ -23,7 +23,7 @@ const getBorderColor = (logoBackgroundColor: string, theme: DefaultTheme) => {
     return LightBlack;
   }
   if (!theme.dark && hasWhiteBg(logoBackgroundColor)) {
-    return '#E1E4E7';
+    return Slate30;
   }
   return 'transparent';
 };

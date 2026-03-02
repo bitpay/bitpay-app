@@ -248,7 +248,9 @@ const TransactionProposalDetails = () => {
 
   const isTSSWallet = isTSSKey(key);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
-  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>(
+    'waiting_for_cosigners',
+  );
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
     totalRounds: 4,
@@ -259,14 +261,12 @@ const TransactionProposalDetails = () => {
   >([]);
 
   const tssCallbacks = useTSSCallbacks({
-    wallet,
     setTssStatus,
     setTssProgress,
     setTssCopayers,
     tssCopayers,
     setShowTSSProgressModal,
     setResetSwipeButton,
-    showErrorMessage,
   });
 
   const title = getDetailsTitle(transaction, wallet);
@@ -520,60 +520,40 @@ const TransactionProposalDetails = () => {
   };
 
   const joinTSSSigning = async () => {
-    try {
-      logManager.debug(
-        `[TxpDetails] Joining TSS signing session for txp: ${txp.id}`,
-      );
-      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
-      setTssStatus('initializing');
+    logManager.debug(
+      `[TxpDetails] Joining TSS signing session for txp: ${txp.id}`,
+    );
+    const result = await dispatch(
+      joinTSSSigningSession({
+        key,
+        wallet,
+        txp,
+        callbacks: tssCallbacks,
+        setShowTSSProgressModal,
+      }),
+    );
 
-      const result = await dispatch(
-        joinTSSSigningSession({
+    // Update wallet status
+    const {fee, amount} = result as {fee: number; amount: number};
+    const targetAmount = wallet.balance.sat - (fee + amount);
+    setTimeout(() => {
+      DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
+      dispatch(
+        waitForTargetAmountAndUpdateWallet({
           key,
           wallet,
-          txp,
-          callbacks: tssCallbacks,
-          setShowTSSProgressModal,
+          targetAmount,
         }),
       );
+    }, 3000);
 
-      setTssStatus('complete');
-      await sleep(1500);
-      setShowTSSProgressModal(false);
+    showPaymentSent({
+      onCloseModal,
+      title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
+    });
 
-      // Update wallet status
-      const {fee, amount} = result as {fee: number; amount: number};
-      const targetAmount = wallet.balance.sat - (fee + amount);
-      setTimeout(() => {
-        DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
-        dispatch(
-          waitForTargetAmountAndUpdateWallet({
-            key,
-            wallet,
-            targetAmount,
-          }),
-        );
-      }, 3000);
-
-      showPaymentSent({
-        onCloseModal,
-        title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
-      });
-
-      await sleep(1000);
-      navigation.goBack();
-    } catch (err) {
-      logManager.error(`[TxpDetails] TSS join error: ${err}`);
-      setShowTSSProgressModal(false);
-      setResetSwipeButton(true);
-
-      await showErrorMessage(
-        CustomErrorMessage({
-          errMsg: BWCErrorMessage(err),
-          title: t('Uh oh, something went wrong'),
-        }),
-      );
-    }
+    await sleep(1000);
+    navigation.goBack();
   };
 
   const onSwipeComplete = async () => {
@@ -604,7 +584,6 @@ const TransactionProposalDetails = () => {
       await sleep(1000);
       navigation.goBack();
     } catch (err) {
-      await sleep(500);
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -775,7 +754,7 @@ const TransactionProposalDetails = () => {
           </DetailContainer>
           {!isTSSWallet && <Hr />}
 
-          {isTSSWallet && (
+          {isTSSWallet && transaction && (
             <TSSProgressTracker
               status={tssStatus}
               progress={tssProgress}
@@ -786,6 +765,7 @@ const TransactionProposalDetails = () => {
               onCopayersInitialized={setTssCopayers}
               isModalVisible={showTSSProgressModal}
               onModalVisibilityChange={setShowTSSProgressModal}
+              txpCreatorId={transaction.creatorId}
             />
           )}
 

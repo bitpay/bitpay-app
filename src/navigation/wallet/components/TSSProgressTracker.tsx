@@ -7,6 +7,8 @@ import {
   SlateDark,
   Slate30,
   Success25,
+  Action,
+  LightBlue,
 } from '../../../styles/colors';
 import {useTranslation} from 'react-i18next';
 import {
@@ -19,13 +21,23 @@ import {
   TouchableOpacity,
 } from '@components/base/TouchableOpacity';
 import {GetAmTimeAgo} from '../../../store/wallet/utils/time';
-import ClockLightIcon from '../../../../assets/img/clock-blue.svg';
-import ClockDarkIcon from '../../../../assets/img/clock-light-blue.svg';
-import SuccessLightIcon from '../../../../assets/img/check-dark.svg';
-import SuccessDarkIcon from '../../../../assets/img/check.svg';
+import ClockLightIcon from '../../../../assets/img/clock-light-outline.svg';
+import ClockDarkIcon from '../../../../assets/img/clock-darkmode-outline.svg';
+import SuccessLightIcon from '../../../../assets/img/check-green.svg';
+import RefreshLightIcon from '../../../../assets/img/refresh.svg';
+import RefreshDarkIcon from '../../../../assets/img/refresh-dark.svg';
+import SuccessDarkIcon from '../../../../assets/img/check-light-green.svg';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
 import {BaseText, H4} from '../../../components/styled/Text';
+import {
+  TSSStepRow as StepRow,
+  TSSStepRail as StepRail,
+  TSSStepIndicator as StepIndicator,
+  TSSStepContent as StepContent,
+  TSSStepNumber as StepNumber,
+} from '../../../components/styled/Containers';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import Loader from '../../../components/loader/Loader';
 
 const ProgressButton = styled(TouchableOpacity)<{
   context?: TSSProgressTrackerContext;
@@ -46,7 +58,13 @@ const ProgressIndicator = styled.View<{status: TSSSigningStatus}>`
   height: 40px;
   border-radius: 20px;
   background-color: ${({status, theme: {dark}}) =>
-    status === 'complete' ? (dark ? '#004D27' : Success25) : '#2240C440'};
+    status === 'complete'
+      ? dark
+        ? '#004D27'
+        : Success25
+      : dark
+      ? '#2240C440'
+      : LightBlue};
   align-items: center;
   justify-content: center;
   margin-right: 12px;
@@ -69,7 +87,7 @@ const ProgressBarFill = styled.View<{progress: number; complete?: boolean}>`
   height: 100%;
   width: ${({progress}) => progress}%;
   background-color: ${({complete, theme: {dark}}) =>
-    complete ? (dark ? '#00A651' : '#2FCF6E') : '#2240C4'};
+    complete ? (dark ? '#00A651' : '#2FCF6E') : Action};
   border-radius: 2px;
 `;
 
@@ -82,9 +100,6 @@ const DetailsLabel = styled(BaseText)`
 const ModalContainer = styled.View`
   padding: 20px;
   padding-bottom: 40px;
-  background-color: ${({theme}) => theme.colors.background};
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
 `;
 
 const Header = styled.View`
@@ -100,52 +115,12 @@ const Title = styled(H4)`
 
 const StepsContainer = styled.View``;
 
-const StepRow = styled.View`
-  flex-direction: row;
-  align-items: flex-start;
-`;
-
-const StepRail = styled.View`
-  width: 40px;
-  align-items: center;
-  margin-right: 12px;
-`;
-
 const StepConnector = styled.View<{completed?: boolean; height?: number}>`
   width: 2px;
   height: ${({height}) => height || 20}px;
   margin-top: 0px;
   background-color: ${({theme: {dark}, completed}) =>
-    completed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : '#F5F5F5'};
-`;
-
-const StepIndicator = styled.View<{active?: boolean; completed?: boolean}>`
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  background-color: ${({theme: {dark}, active, completed}) =>
-    active
-      ? '#2240C440'
-      : completed
-      ? dark
-        ? '#004D27'
-        : Success25
-      : dark
-      ? '#2A2A2A'
-      : '#F5F5F5'};
-  align-items: center;
-  justify-content: center;
-`;
-
-const StepContent = styled.View`
-  flex: 1;
-  padding-bottom: 20px;
-`;
-
-const StepNumber = styled(BaseText)`
-  color: ${({theme: {dark}}) => (dark ? White : Black)};
-  font-size: 16px;
-  font-weight: 400;
+    completed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : LightBlue};
 `;
 
 const StepTitle = styled(BaseText)`
@@ -183,7 +158,7 @@ const CopayerIndicator = styled.View<{signed: boolean}>`
   height: 20px;
   border-radius: 10px;
   background-color: ${({signed, theme: {dark}}) =>
-    signed ? (dark ? '#004D27' : Success25) : '#2240C440'};
+    signed ? (dark ? '#004D27' : Success25) : 'transparent'};
   align-items: center;
   justify-content: center;
   margin-right: 8px;
@@ -232,6 +207,7 @@ interface TSSProgressTrackerProps {
   onCopayersInitialized?: (copayers: TSSCopayer[]) => void;
   hideTracker?: boolean;
   context?: TSSProgressTrackerContext;
+  txpCreatorId?: string;
 }
 
 const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
@@ -246,6 +222,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
   onModalVisibilityChange,
   hideTracker,
   context,
+  txpCreatorId,
 }) => {
   const {t} = useTranslation();
   const theme = useTheme();
@@ -262,6 +239,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
 
   const ClockIcon = theme.dark ? ClockDarkIcon : ClockLightIcon;
   const SuccessIcon = theme.dark ? SuccessDarkIcon : SuccessLightIcon;
+  const RefreshIcon = theme.dark ? RefreshDarkIcon : RefreshLightIcon;
 
   const getButtonText = (): string => {
     switch (status) {
@@ -277,6 +255,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
         return t('Broadcast Transaction');
       case 'complete':
         return t('Complete');
+      case 'error':
       default:
         return t('Waiting to initialize');
     }
@@ -358,6 +337,36 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
     }
   }, [wallet, onCopayersInitialized, copayers.length]);
 
+  useEffect(() => {
+    if (!onCopayersInitialized || !txpCreatorId) return;
+    if (!copayers.length) return;
+
+    if (status === 'error') {
+      const hasAnySigned = copayers.some(c => c.signed);
+      if (hasAnySigned) {
+        onCopayersInitialized(copayers.map(c => ({...c, signed: false})));
+      }
+      return;
+    }
+
+    const creatorShouldBeSigned = getStepStatus(0) === 'complete';
+    if (!creatorShouldBeSigned) return;
+
+    let changed = false;
+
+    const nextCopayers = copayers.map(c => {
+      if (c.id !== txpCreatorId) return c;
+      if (c.signed) return c;
+
+      changed = true;
+      return {...c, signed: true};
+    });
+
+    if (changed) {
+      onCopayersInitialized(nextCopayers);
+    }
+  }, [status, txpCreatorId, copayers, onCopayersInitialized]);
+
   return (
     <>
       {!hideTracker ? (
@@ -368,7 +377,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
             context={context}>
             <ProgressIndicator status={status}>
               {status === 'complete' ? (
-                <SuccessIcon width={28} height={28} />
+                <SuccessIcon width={20} height={16} />
               ) : (
                 <ClockIcon width={28} height={28} />
               )}
@@ -389,7 +398,10 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
         <></>
       )}
 
-      <SheetModal isVisible={isModalVisible} onBackdropPress={handleClose}>
+      <SheetModal
+        isVisible={isModalVisible}
+        onBackdropPress={handleClose}
+        modalLibrary="bottom-sheet">
         <ModalContainer>
           <Header>
             <View style={{width: 24}} />
@@ -411,9 +423,11 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                     <StepRail>
                       <StepIndicator active={isActive} completed={isComplete}>
                         {isComplete ? (
-                          <SuccessIcon width={20} height={20} />
+                          <SuccessIcon width={20} height={16} />
+                        ) : isActive && index === 2 ? (
+                          <RefreshIcon width={24} height={24} />
                         ) : isActive ? (
-                          <ClockIcon width={24} height={24} />
+                          <ClockIcon width={28} height={28} />
                         ) : (
                           <StepNumber>{index + 1}</StepNumber>
                         )}
@@ -430,11 +444,13 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                       <View
                         style={{flexDirection: 'row', alignItems: 'center'}}>
                         <StepTitle>{step.title}</StepTitle>
-                        {step.time && status !== 'initializing' && (
-                          <StepTime>
-                            {GetAmTimeAgo(step.time.getTime())}
-                          </StepTime>
-                        )}
+                        {step.time &&
+                          status !== 'initializing' &&
+                          status !== 'error' && (
+                            <StepTime>
+                              {GetAmTimeAgo(step.time.getTime())}
+                            </StepTime>
+                          )}
                       </View>
                       {step.subtitle && (
                         <StepSubtitle>{step.subtitle}</StepSubtitle>
@@ -448,7 +464,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                                 {copayer.signed ? (
                                   <SuccessIcon width={12} height={12} />
                                 ) : (
-                                  <ClockIcon width={12} height={12} />
+                                  <Loader size={16} spinning />
                                 )}
                               </CopayerIndicator>
                               <CopayerName signed={copayer.signed}>

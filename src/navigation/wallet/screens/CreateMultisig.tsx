@@ -697,10 +697,6 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
           description={t(
             "Your shared wallet uses an M-of-N setup. If the required number of co-signers are lost or unavailable, you will not be able to sign transactions or recover assets. Back up your wallet securely. BitPay can't recover your wallet or access your private keys.",
           )}
-          link={{
-            text: t('Learn More'),
-            onPress: () => {},
-          }}
         />
 
         <CtaContainer>

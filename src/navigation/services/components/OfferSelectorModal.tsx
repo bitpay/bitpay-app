@@ -15,6 +15,7 @@ import {
   ProgressBlue,
   Slate30,
   Success25,
+  LightBlue,
 } from '../../../styles/colors';
 import {formatFiatAmount} from '../../../utils/helper-methods';
 import {BuyCryptoExchangeKey} from '../buy-crypto/utils/buy-crypto-utils';
@@ -177,7 +178,7 @@ const BuyCryptoExpandibleCard = styled(TouchableOpacity)<{selected?: boolean}>`
         ? '#2240C440'
         : 'transparent'
       : selected
-      ? '#ECEFFD'
+      ? LightBlue
       : 'transparent'};
   border-radius: 8px;
   margin: 20px 15px 0px 15px;

@@ -3,7 +3,7 @@ import styled from 'styled-components/native';
 import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
 import {BaseText} from '../../../components/styled/Text';
-import {SlateDark, White} from '../../../styles/colors';
+import {Slate30, SlateDark, White} from '../../../styles/colors';
 import CoinbaseBitPayIcon from '../../../../assets/img/coinbase/bc.svg';
 
 import Coinbase from '../../../api/coinbase/index';
@@ -50,7 +50,7 @@ const SubTitle = styled(BaseText)`
   text-align: center;
   font-size: 16px;
   line-height: 22px;
-  color: ${({theme: {dark}}) => (dark ? '#E1E4E7' : SlateDark)};
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
 `;
 
 const CoinbaseIntro = () => {

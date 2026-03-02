@@ -146,7 +146,7 @@ const Label = styled(BaseText)`
   line-height: 18px;
   top: 0;
   left: 20px;
-  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : '#434d5a')};
+  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : SlateDark)};
 `;
 
 const CurrencySelectorContainer = styled.View`

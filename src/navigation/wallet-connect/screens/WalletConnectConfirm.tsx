@@ -152,14 +152,12 @@ const WalletConnectConfirm = () => {
     Array<{id: string; name: string; signed: boolean}>
   >([]);
   const tssCallbacks = useTSSCallbacks({
-    wallet,
     setTssStatus,
     setTssProgress,
     setTssCopayers,
     tssCopayers,
     setShowTSSProgressModal,
     setResetSwipeButton,
-    showErrorMessage,
   });
 
   const sessionV2: WCV2SessionType | undefined = useAppSelector(
@@ -237,11 +235,6 @@ const WalletConnectConfirm = () => {
   const feeOptions = GetFeeOptions(wallet.chain);
 
   const approveCallRequest = async () => {
-    if (isTSSWallet) {
-      if (!key.isPrivKeyEncrypted) setShowTSSProgressModal(true);
-      setTssStatus('initializing');
-    }
-
     try {
       const {params, id} = request as WCV2RequestType;
       const {request: requestProps} = params;
@@ -271,12 +264,6 @@ const WalletConnectConfirm = () => {
         await dispatch(walletConnectV2ApproveCallRequest(request, wallet));
       }
 
-      if (isTSSWallet) {
-        setTssStatus('complete');
-        await sleep(1500);
-        setShowTSSProgressModal(false);
-      }
-
       dispatch(
         Analytics.track('Sent Crypto', {
           context: 'WalletConnect Confirm',
@@ -289,9 +276,6 @@ const WalletConnectConfirm = () => {
           wallet?.credentials.n > 1 ? t('Proposal created') : t('Payment Sent'),
       });
     } catch (err) {
-      if (isTSSWallet) {
-        setShowTSSProgressModal(false);
-      }
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -478,6 +462,7 @@ const WalletConnectConfirm = () => {
             onCopayersInitialized={setTssCopayers}
             isModalVisible={showTSSProgressModal}
             onModalVisibilityChange={setShowTSSProgressModal}
+            txpCreatorId={wallet.credentials?.copayerId}
           />
         )}
         <Banner

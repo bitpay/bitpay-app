@@ -26,7 +26,10 @@ import {findWalletById, isCacheKeyStale, toFiat} from '../../utils/wallet';
 import {BALANCE_CACHE_DURATION} from '../../../../constants/wallet';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
-import {ProcessPendingTxps} from '../transactions/transactions';
+import {
+  ProcessPendingTxps,
+  RemoveTxProposal,
+} from '../transactions/transactions';
 import {FormatAmount} from '../amount/amount';
 import {BwcProvider} from '../../../../lib/bwc';
 import {IsERCToken, IsUtxoChain} from '../../utils/currency';
@@ -1090,7 +1093,7 @@ export const buildPendingTxps =
     if (IsERCToken(wallet.currencyAbbreviation, wallet.chain)) {
       return [];
     }
-    let newPendingTxps = [];
+    let newPendingTxps: TransactionProposal[] = [];
     try {
       if (status.pendingTxps?.length > 0) {
         newPendingTxps = dispatch(
@@ -1101,6 +1104,28 @@ export const buildPendingTxps =
       console.log(
         `Wallet: ${wallet.currencyAbbreviation} - error getting pending txps.`,
       );
+    }
+
+    // Auto-remove TSS proposals created by the current user that are still pending
+    // These are unrecoverable if signing was interrupted (TSS session state is lost)
+    if (wallet.tssKeyId && newPendingTxps.length > 0) {
+      const myId = wallet.credentials.copayerId;
+      const myPendingTssTxps = newPendingTxps.filter(
+        txp => txp.creatorId === myId,
+      );
+
+      if (myPendingTssTxps.length > 0) {
+        for (const txp of myPendingTssTxps) {
+          logManager.debug(
+            `[buildPendingTxps] Removing interrupted TSS proposal ${txp.id}`,
+          );
+          RemoveTxProposal(wallet, txp).catch((err: any) => {
+            logManager.error(
+              `[buildPendingTxps] Failed to remove TSS proposal ${txp.id}: ${err}`,
+            );
+          });
+        }
+      }
     }
 
     return newPendingTxps;

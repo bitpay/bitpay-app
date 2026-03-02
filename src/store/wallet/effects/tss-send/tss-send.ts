@@ -21,14 +21,14 @@ import {
   showDecryptPasswordModal,
 } from '../../../../store/app/app.actions';
 import {checkEncryptPassword} from '../../utils/wallet';
-import {checkBiometricForSending} from '../send/send';
+import {checkBiometricForSending, getTx} from '../send/send';
 
 const BWC = BwcProvider.getInstance();
 
 const {TssSign} = require('bitcore-wallet-client/ts_build/src/lib/tsssign');
 
 export interface TSSSigningCallbacks {
-  onStatusChange: (status: TSSSigningStatus) => void;
+  onStatusChange: (status: TSSSigningStatus) => void | Promise<void>;
   onProgressUpdate: (progress: TSSSigningProgress) => void;
   onCopayerStatusChange: (
     copayerId: string,
@@ -141,7 +141,11 @@ const signInput = async (params: {
       password,
     });
   } catch (startError: any) {
-    if (startError.message?.startsWith('TSS_ROUND_ALREADY_DONE')) {
+    const errorMsg = startError.message || '';
+    if (
+      errorMsg.startsWith('TSS_ROUND_ALREADY_DONE') ||
+      errorMsg.startsWith('TSS_ROUND_MESSAGE_EXISTS')
+    ) {
       const sig = await tssSign.getSignatureFromServer();
       if (sig) {
         logManager.debug(
@@ -362,18 +366,34 @@ export const startTSSSigning =
         }
 
         logManager.debug('[TSS Sign] TSS signing completed successfully');
-        callbacks.onStatusChange('complete');
 
         resolve(signedTXP ?? txp);
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(`[TSS Sign] Error: ${errorStr}`);
-        callbacks.onError(err instanceof Error ? err : new Error(errorStr));
         reject(err);
       }
     });
   };
+
+const pollTxpUntilBroadcast = async (
+  wallet: Wallet,
+  txpId: string,
+): Promise<TransactionProposal> => {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await sleep(3000);
+    try {
+      const updatedTxp = await getTx(wallet, txpId);
+      if (updatedTxp.status === 'broadcasted') {
+        return updatedTxp;
+      }
+    } catch (_) {}
+  }
+  throw new Error(
+    'It seems there was a problem broadcasting the transaction. Please try creating a new one.',
+  );
+};
 
 export const joinTSSSigningSession =
   (opts: {
@@ -428,14 +448,22 @@ export const joinTSSSigningSession =
       await toggleTSSModal(setShowTSSProgressModal, true);
     }
     // The joiner flow is the same as initiator - they both use startTSSSigning
-    return dispatch(
-      startTSSSigning({
-        key,
-        wallet,
-        txp,
-        callbacks,
-        joiner: true,
-        password,
-      }),
-    );
+    try {
+      await dispatch(
+        startTSSSigning({
+          key,
+          wallet,
+          txp,
+          callbacks,
+          joiner: true,
+          password,
+        }),
+      );
+      const broadcastedTxp = await pollTxpUntilBroadcast(wallet, txp.id);
+      await callbacks.onStatusChange('complete');
+      return broadcastedTxp;
+    } catch (err) {
+      callbacks.onStatusChange('error');
+      throw err;
+    }
   };
