@@ -344,7 +344,7 @@ const SwapCryptoRoot: React.FC = () => {
       return getExternalServiceSymbol(symbol.toLowerCase(), chain);
     },
   );
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const route =
     useRoute<
@@ -530,6 +530,69 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
+  const checkAmount = useCallback(
+    (amountFrom: number) => {
+      if (!fromWalletSelected || !amountFrom) {
+        setLoading(false);
+        return;
+      }
+
+      let msg: string | undefined;
+      let amountFromIsInvalid = false;
+      let spendableAmount: number | undefined;
+
+      if (fromWalletSelected.balance?.satSpendable) {
+        spendableAmount = dispatch(
+          SatToUnit(
+            fromWalletSelected.balance.satSpendable,
+            fromWalletSelected.currencyAbbreviation,
+            fromWalletSelected.chain,
+            fromWalletSelected.tokenAddress,
+          ),
+        );
+      }
+
+      if (spendableAmount && spendableAmount < amountFrom) {
+        msg = t(
+          'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
+        );
+        amountFromIsInvalid = true;
+      } else if (swapLimits?.minAmount && amountFrom < swapLimits.minAmount) {
+        msg = t(
+          'You are trying to send less than the minimum amount for this exchange.',
+        );
+        amountFromIsInvalid = true;
+      } else if (swapLimits?.maxAmount && amountFrom > swapLimits.maxAmount) {
+        msg = t(
+          'You are trying to send more than the maximum amount for this exchange.',
+        );
+        amountFromIsInvalid = true;
+      } else {
+        msg = undefined;
+        amountFromIsInvalid = false;
+      }
+
+      if (amountFromIsInvalid) {
+        showError({msg: msg});
+        setLoading(false);
+        setAmountFrom(0);
+        setConfirmedAmountFrom(undefined);
+        setDisplayAmount(undefined);
+        setSelectedOffer(undefined);
+        setCtxp(undefined);
+        setTxData(undefined);
+        setFormatedAmountFrom('');
+        setUseSendMax(false);
+        setSendMaxInfo(undefined);
+        setSelectedPillValue(undefined);
+        setRateData(undefined);
+      } else {
+        setConfirmedAmountFrom(amountFrom);
+      }
+    },
+    [fromWalletSelected, swapLimits, dispatch, t],
+  );
+
   // Handle real-time amount changes from AmountModal
   const handleAmountChange = useCallback(
     (
@@ -575,13 +638,19 @@ const SwapCryptoRoot: React.FC = () => {
         checkAmount(newAmount);
       }
     },
-    [fromWalletSelected, dispatch, defaultAltCurrency.isoCode, rates],
+    [
+      fromWalletSelected,
+      dispatch,
+      defaultAltCurrency.isoCode,
+      rates,
+      checkAmount,
+    ],
   );
 
   const handleOnBackdropPress = useCallback(() => {
     hideModal('amount');
     checkAmount(amountFrom);
-  }, [amountFrom]);
+  }, [amountFrom, checkAmount]);
 
   const canContinue = useMemo(() => {
     return (
@@ -1062,69 +1131,6 @@ const SwapCryptoRoot: React.FC = () => {
 
     return linkedWallet;
   };
-
-  const checkAmount = useCallback(
-    (amountFrom: number) => {
-      if (!fromWalletSelected || !amountFrom) {
-        setLoading(false);
-        return;
-      }
-
-      let msg: string | undefined;
-      let amountFromIsInvalid = false;
-      let spendableAmount: number | undefined;
-
-      if (fromWalletSelected.balance?.satSpendable) {
-        spendableAmount = dispatch(
-          SatToUnit(
-            fromWalletSelected.balance.satSpendable,
-            fromWalletSelected.currencyAbbreviation,
-            fromWalletSelected.chain,
-            fromWalletSelected.tokenAddress,
-          ),
-        );
-      }
-
-      if (spendableAmount && spendableAmount < amountFrom) {
-        msg = t(
-          'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
-        );
-        amountFromIsInvalid = true;
-      } else if (swapLimits?.minAmount && amountFrom < swapLimits.minAmount) {
-        msg = t(
-          'You are trying to send less than the minimum amount for this exchange.',
-        );
-        amountFromIsInvalid = true;
-      } else if (swapLimits?.maxAmount && amountFrom > swapLimits.maxAmount) {
-        msg = t(
-          'You are trying to send more than the maximum amount for this exchange.',
-        );
-        amountFromIsInvalid = true;
-      } else {
-        msg = undefined;
-        amountFromIsInvalid = false;
-      }
-
-      if (amountFromIsInvalid) {
-        showError({msg: msg});
-        setLoading(false);
-        setAmountFrom(0);
-        setConfirmedAmountFrom(undefined);
-        setDisplayAmount(undefined);
-        setSelectedOffer(undefined);
-        setCtxp(undefined);
-        setTxData(undefined);
-        setFormatedAmountFrom('');
-        setUseSendMax(false);
-        setSendMaxInfo(undefined);
-        setSelectedPillValue(undefined);
-        setRateData(undefined);
-      } else {
-        setConfirmedAmountFrom(amountFrom);
-      }
-    },
-    [fromWalletSelected, swapLimits, dispatch, t],
-  );
 
   const filterChangellyCurrenciesConditions = (
     currency: ChangellyCurrency,
