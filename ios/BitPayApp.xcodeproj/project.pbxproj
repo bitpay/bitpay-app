@@ -14,6 +14,7 @@
 		256B92C82AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 256B92C72AC0ED0D00C1DF97 /* bitpay-recovery-phrase-template.pdf */; };
 		4054F0E729AEFAF0009BBC9C /* AllowedUrlPrefixProtocol.mm in Sources */ = {isa = PBXBuildFile; fileRef = 4054F0E529AEFAEF009BBC9C /* AllowedUrlPrefixProtocol.mm */; };
 		523EFC4FD62CB0CD2FBD02FC /* libPods-BitPayApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B1AA7DD4226DBC3478258808 /* libPods-BitPayApp.a */; };
+		52C9714B9004BCE190EA469D /* BundleHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */; };
 		5B31AAFE2786387B002765E1 /* RCTDosh.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AAFD2786387B002765E1 /* RCTDosh.mm */; };
 		5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B31AB5E2786515A002765E1 /* Dosh.swift */; };
 		5B5631782838854000C395A8 /* PassKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B5631772838854000C395A8 /* PassKit.framework */; };
@@ -60,6 +61,7 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = BitPayApp/AppDelegate.swift; sourceTree = "<group>"; };
 		B1AA7DD4226DBC3478258808 /* libPods-BitPayApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BitPayApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCDAB70057C84109A9201936 /* Archivo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Regular.ttf"; path = "../assets/fonts/Archivo-Regular.ttf"; sourceTree = "<group>"; };
+		E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BundleHash.swift; sourceTree = "<group>"; };
 		E639E0380D05420CD0D64119 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		EC0FDD692CC92E90009E1B35 /* InAppMessageModule.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InAppMessageModule.mm; sourceTree = "<group>"; };
 		ECCB92762860B25D00F9CF8B /* SilentPushEvent.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SilentPushEvent.mm; sourceTree = "<group>"; };
@@ -105,6 +107,7 @@
 				5BEA4BEE2838400700AB2121 /* RCTPaymentPass.h */,
 				5BEA4BEF2838402700AB2121 /* RCTPaymentPass.mm */,
 				5D5D40A7E7B5265D652187F9 /* PrivacyInfo.xcprivacy */,
+				E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */,
 			);
 			name = BitPayApp;
 			sourceTree = "<group>";
@@ -336,6 +339,7 @@
 				6D615C4929725FD70063DB8E /* RCTTimer.mm in Sources */,
 				ECCB92782860B25D00F9CF8B /* SilentPushEvent.mm in Sources */,
 				5B31AB5F2786515A002765E1 /* Dosh.swift in Sources */,
+				52C9714B9004BCE190EA469D /* BundleHash.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
