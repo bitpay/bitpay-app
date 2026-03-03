@@ -161,6 +161,16 @@ const ScanRoot = () => {
     ),
   });
 
+  const cameraDevice = useCameraDevice('back');
+
+  useEffect(() => {
+    logger.debug(`Camera permission status: ${hasPermission}`);
+  }, [hasPermission, logger]);
+
+  useEffect(() => {
+    logger.debug(`Camera device exist: ${!!cameraDevice}`);
+  }, [cameraDevice, logger]);
+
   useEffect(() => {
     (async () => {
       // First time opening the app, hasPermission is false. Call requestPermission() now.
@@ -174,10 +184,6 @@ const ScanRoot = () => {
       }
     })();
   }, []);
-
-  logger.debug(`Camera permission status: ${hasPermission}`);
-  const cameraDevice = useCameraDevice('back');
-  logger.debug(`Camera device exist: ${!!cameraDevice}`);
 
   if (cameraDevice == null) {
     return <NoCameraDeviceError />;
