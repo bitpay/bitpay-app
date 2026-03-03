@@ -552,19 +552,40 @@ const SwapCryptoRoot: React.FC = () => {
         );
       }
 
+      logger.debug(
+        `Checking amountFrom ${amountFrom} against spendableAmount ${spendableAmount} and swap limits ${JSON.stringify(
+          swapLimits,
+        )}`,
+      );
+
       if (spendableAmount && spendableAmount < amountFrom) {
         msg = t(
-          'You are trying to send more funds than you have available. Make sure you do not have funds locked by pending transaction proposals or enter a valid amount.',
+          'You are trying to send more funds than you have available (spendableAmount coin). Make sure you do not have funds locked by pending transaction proposals or enter a valid amount. Entered amount: amountFrom coin',
+          {
+            spendableAmount: spendableAmount?.toFixed(8),
+            amountFrom: amountFrom?.toFixed(8),
+            coin: fromWalletSelected?.currencyAbbreviation.toUpperCase(),
+          },
         );
         amountFromIsInvalid = true;
       } else if (swapLimits?.minAmount && amountFrom < swapLimits.minAmount) {
         msg = t(
-          'You are trying to send less than the minimum amount for this exchange.',
+          'You are trying to send less than the minimum amount (minAmount coin) for this exchange. Entered amount: amountFrom coin',
+          {
+            minAmount: swapLimits.minAmount?.toFixed(8),
+            amountFrom: amountFrom?.toFixed(8),
+            coin: fromWalletSelected?.currencyAbbreviation.toUpperCase(),
+          },
         );
         amountFromIsInvalid = true;
       } else if (swapLimits?.maxAmount && amountFrom > swapLimits.maxAmount) {
         msg = t(
-          'You are trying to send more than the maximum amount for this exchange.',
+          'You are trying to send more than the maximum amount (maxAmount coin) for this exchange. Entered amount: amountFrom coin',
+          {
+            maxAmount: swapLimits.maxAmount?.toFixed(8),
+            amountFrom: amountFrom?.toFixed(8),
+            coin: fromWalletSelected?.currencyAbbreviation.toUpperCase(),
+          },
         );
         amountFromIsInvalid = true;
       } else {
