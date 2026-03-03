@@ -24,7 +24,7 @@ import BitPayIdApi from '../../api/bitpay';
 import {ReceivingAddress, SecuritySettings, Session} from './bitpay-id.models';
 import {getCoinAndChainFromCurrencyCode} from '../../navigation/bitpay-id/utils/bitpay-id-utils';
 import axios from 'axios';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import {setBrazeEid, setEmailNotificationsAccepted} from '../app/app.actions';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {DeviceEventEmitter} from 'react-native';
@@ -756,10 +756,16 @@ export const startFetchReceivingAddresses =
               params,
             )
           : await axios
-              .post(`${BASE_BITPAY_URLS[APP.network]}/api/v2`, {
-                method: 'findWalletsByEmail',
-                params: JSON.stringify(params),
-              })
+              .post(
+                `${BASE_BITPAY_URLS[APP.network]}/api/v2`,
+                {
+                  method: 'findWalletsByEmail',
+                  params: JSON.stringify(params),
+                },
+                {
+                  headers: NO_CACHE_HEADERS,
+                },
+              )
               .then(res => res.data?.data || res.data);
         const receivingAddresses = accountAddresses
           .filter(address => address.usedFor?.payToEmail)

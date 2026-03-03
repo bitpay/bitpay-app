@@ -1466,7 +1466,9 @@ export async function sendSolanaTx(
 
   try {
     const resp = await axios.post(url, payload, {
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
     return {data: resp.data};
   } catch (err: any) {
@@ -1484,7 +1486,6 @@ export const getSolanaBlockTip = async (
 }> => {
   const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
   const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/block/tip`;
-
   try {
     const apiResponse = await axios.get(url);
     if (!apiResponse?.data) {

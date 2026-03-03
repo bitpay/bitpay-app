@@ -23,6 +23,7 @@ import {
   COINBASE_CONFIG_API,
   TRANSACTIONS_LIMIT,
 } from './coinbase.constants';
+import {NO_CACHE_HEADERS} from '../../constants/config';
 
 // Redirect URI
 const COINBASE_REDIRECT_URI = COINBASE_CONFIG_API.redirect_uri.mobile;
@@ -96,6 +97,7 @@ const getRefreshToken = async (
     refresh_token: token.refresh_token,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -118,6 +120,7 @@ const getAccessToken = async (code: string): Promise<CoinbaseTokenProps> => {
     redirect_uri: COINBASE_REDIRECT_URI,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -327,6 +330,7 @@ const payInvoice = async (
     twoFactorCode,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };

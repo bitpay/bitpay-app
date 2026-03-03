@@ -48,7 +48,7 @@ import {
   IsValidAddKeyPath,
   IsValidSolanaPay,
 } from '../wallet/utils/validations';
-import {APP_DEEPLINK_PREFIX} from '../../constants/config';
+import {APP_DEEPLINK_PREFIX, NO_CACHE_HEADERS} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {SellCryptoActions} from '../sell-crypto';
 import {
@@ -308,6 +308,7 @@ const goToPayPro =
       const payProOptions = await dispatch(GetPayProOptions(payProUrl));
       const getInvoiceResponse = await axios.get(
         `https://${host}/invoices/${invoiceId}`,
+        {headers: NO_CACHE_HEADERS},
       );
       const {
         data: {data: fetchedInvoice},
@@ -375,6 +376,7 @@ const handleUnlock =
     try {
       const {data: invoice} = await axios.get(
         `https://${host}/invoiceData/${invoiceId}`,
+        {headers: NO_CACHE_HEADERS},
       );
       if (invoice) {
         if (context === 'u') {
@@ -2663,6 +2665,7 @@ export const setBuyerProvidedEmail =
         } = await axios.post(
           `https://${host}/invoiceData/setBuyerProvidedEmail`,
           body,
+          {headers: NO_CACHE_HEADERS},
         );
         if (status === 'success') {
           dispatch(goToPayPro(data, true));

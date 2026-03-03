@@ -11,6 +11,7 @@ import {
 } from './zenledger.types';
 
 import {ZENLEDGER_CREDENTIALS, ZENLEDGER_API_URL} from './zenledger.constants';
+import {NO_CACHE_HEADERS} from '../../constants/config';
 
 const getAccessToken = async (): Promise<ZenledgerTokenProps> => {
   const url = ZENLEDGER_CREDENTIALS.token_endpoint;
@@ -20,6 +21,7 @@ const getAccessToken = async (): Promise<ZenledgerTokenProps> => {
     grant_type: ZENLEDGER_CREDENTIALS.grant_type,
   };
   const headers = {
+    ...NO_CACHE_HEADERS,
     'Content-Type': 'application/json',
   };
   try {
