@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState, useMemo} from 'react';
 import {
   useCameraDevice,
   Camera,
@@ -29,10 +29,6 @@ const ScanGuide = styled.View`
   margin: auto;
   opacity: 0.7;
 `;
-
-interface Props {
-  onScanComplete?: (data: string) => void;
-}
 
 const NoPermissionCameraDeviceError = ({
   showAppSettingsLabel,
@@ -126,39 +122,42 @@ const ScanRoot = () => {
   const [showAppSettingsLabel, setShowAppSettingsLabel] =
     useState<boolean>(false);
 
+  const onCodeScanned = useCallback(
+    async (scannedData: any[]) => {
+      const value = scannedData[0]?.value;
+      if (!value) return;
+
+      navigationRef.goBack();
+
+      if (onScanComplete) {
+        onScanComplete(value);
+        return;
+      }
+
+      try {
+        await dispatch(incomingData(value));
+      } catch (error: any) {
+        dispatch(
+          AppActions.showBottomNotificationModal(
+            CustomErrorMessage({
+              title: t('Error'),
+              errMsg: error?.message || t('Unable to read QR code'),
+            }),
+          ),
+        );
+      }
+    },
+    [dispatch, onScanComplete, t],
+  );
+
+  const debouncedOnCodeScanned = useMemo(
+    () => debounce(onCodeScanned, 800, {leading: true, trailing: false}),
+    [onCodeScanned],
+  );
+
   const codeScanner = useCodeScanner({
     codeTypes: ['qr'],
-    onCodeScanned: debounce(
-      async scannedData => {
-        const value = scannedData[0]?.value;
-        if (!value) {
-          return;
-        }
-        navigationRef.goBack();
-        // if specific handler is passed use that else use generic self deriving handler
-        if (onScanComplete) {
-          onScanComplete(value);
-        } else {
-          try {
-            await dispatch(incomingData(value));
-          } catch (error: any) {
-            dispatch(
-              AppActions.showBottomNotificationModal(
-                CustomErrorMessage({
-                  title: t('Error'),
-                  errMsg: error?.message || t('Unable to read QR code'),
-                }),
-              ),
-            );
-          }
-        }
-      },
-      800,
-      {
-        leading: true,
-        trailing: false,
-      },
-    ),
+    onCodeScanned: debouncedOnCodeScanned,
   });
 
   const cameraDevice = useCameraDevice('back');
