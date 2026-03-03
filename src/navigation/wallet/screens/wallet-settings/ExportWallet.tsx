@@ -148,7 +148,7 @@ const ExportWallet = () => {
     };
 
     let backup: any = {
-      credentials: JSON.parse(wallet.toString(opts)),
+      credentials: JSON.parse(wallet.toString()),
     };
 
     /**----------- Read only wallet ---------------*/

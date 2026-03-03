@@ -56,13 +56,7 @@ export const clearWalletBalances =
     }
 
     // Update portfolio balance
-    dispatch(
-      WalletActions.updatePortfolioBalance({
-        current: 0,
-        lastDay: 0,
-        previous: 0,
-      }),
-    );
+    dispatch(WalletActions.updatePortfolioBalance());
 
     logManager.info('success [clearWalletBalances]: all balances cleared');
   };

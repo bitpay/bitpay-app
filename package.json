@@ -22,6 +22,7 @@
     "build:android:release": "export NODE_OPTIONS=--openssl-legacy-provider && ./scripts/android-release.sh",
     "postbuild:android:release": "yarn reset:prod",
     "lint": "eslint --fix . --ext .js,.jsx,.ts,.tsx",
+    "validate": "tsc --noEmit --skipLibCheck 2>&1 | grep -v node_modules | grep -E 'TS(2304|2693|2349|2351|2448|2554|2307|2454|2305)' && exit 1 || exit 0",
     "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "postinstall": "./scripts/postinstall.sh",
     "clean": "react-native-clean-project",

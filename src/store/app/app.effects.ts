@@ -1031,7 +1031,7 @@ export const handleBwsEvent =
 
 export const resetAllSettings = (): Effect<Promise<void>> => async dispatch => {
   try {
-    await dispatch(AppActions.setColorScheme(null));
+    await dispatch(AppActions.setColorScheme('unspecified'));
     await dispatch(AppActions.showPortfolioValue(true));
     await dispatch(AppActions.toggleHideAllBalances(false));
     // Reset AltCurrency

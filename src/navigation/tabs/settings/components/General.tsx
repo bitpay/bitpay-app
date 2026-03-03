@@ -39,7 +39,7 @@ type SettingItem = {
   title: string;
   type: 'navigation' | 'toggle' | 'button' | 'reset';
   value?: string | boolean;
-  onPress?: () => void;
+  onPress?: (value?: boolean) => void;
   navigationTarget?: keyof SettingsDetailsParamList;
 };
 

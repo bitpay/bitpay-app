@@ -1488,7 +1488,7 @@ const createKeyAndCredentialsWithFile = async (
         // Workaround for bad generated files. Fixed: https://github.com/bitpay/wallet/pull/11872
         data.key.version = '1';
         data.key.mnemonicHasPassphrase = false;
-        key = new Key({
+        key = BWC.createKey({
           seedType: 'object',
           seedData: data.key,
         });

@@ -284,12 +284,14 @@ export const WalletConnectStartModal = memo(() => {
     let proposal: AuthEvt | ProposalEvt;
     let verifyContext: any;
     let pairingTopic: string;
-    let authPayload: AuthTypes.PayloadParams;
-    let proposer: {
-      publicKey: string;
-      metadata: SignClientTypes.Metadata;
-    };
-    let relays: RelayerTypes.ProtocolOptions[];
+    let authPayload: AuthTypes.PayloadParams | undefined;
+    let proposer:
+      | {
+          publicKey: string;
+          metadata: SignClientTypes.Metadata;
+        }
+      | undefined;
+    let relays: RelayerTypes.ProtocolOptions[] | undefined;
     let requiredNamespaces: ProposalTypes.RequiredNamespaces | undefined;
     let optionalNamespaces: ProposalTypes.OptionalNamespaces | undefined;
     let metadata: CoreTypes.Metadata | AuthTypes.Metadata | undefined;
@@ -301,7 +303,7 @@ export const WalletConnectStartModal = memo(() => {
       pairingTopic = proposal.topic;
       authPayload = proposal.params.authPayload;
       metadata = proposal.params.requester?.metadata;
-    } else if (p) {
+    } else {
       proposal = p as ProposalEvt;
       params = proposal.params as ProposalTypes.Struct;
       ({id, verifyContext} = proposal);
@@ -375,7 +377,10 @@ export const WalletConnectStartModal = memo(() => {
                     );
                   }
 
-                  const message = formatAuthMessage({authPayload, iss});
+                  const message = formatAuthMessage({
+                    authPayload: authPayload!,
+                    iss,
+                  });
                   const privKey = (await dispatch<any>(
                     getPrivKey(wallet),
                   )) as string;
@@ -383,7 +388,7 @@ export const WalletConnectStartModal = memo(() => {
                   const eth_signedMessage = await signer.signMessage(message);
 
                   return buildAuthObject(
-                    authPayload,
+                    authPayload!,
                     {t: 'eip191', s: eth_signedMessage},
                     iss,
                   );
