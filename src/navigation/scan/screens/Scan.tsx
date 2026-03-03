@@ -117,7 +117,7 @@ const ScanRoot = () => {
   const dispatch = useAppDispatch();
   const route = useRoute<RouteProp<ScanGroupParamList, ScanScreens.Root>>();
   const {onScanComplete} = route.params || {};
-  const logger = useLogger();
+  const {debug} = useLogger();
   const {hasPermission, requestPermission} = useCameraPermission();
   const [showAppSettingsLabel, setShowAppSettingsLabel] =
     useState<boolean>(false);
@@ -163,26 +163,28 @@ const ScanRoot = () => {
   const cameraDevice = useCameraDevice('back');
 
   useEffect(() => {
-    logger.debug(`Camera permission status: ${hasPermission}`);
-  }, [hasPermission, logger]);
+    debug(`Camera permission status: ${hasPermission}`);
+  }, [hasPermission, debug]);
 
   useEffect(() => {
-    logger.debug(`Camera device exist: ${!!cameraDevice}`);
-  }, [cameraDevice, logger]);
+    debug(`Camera device exist: ${!!cameraDevice}`);
+  }, [cameraDevice, debug]);
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
-      // First time opening the app, hasPermission is false. Call requestPermission() now.
       if (!hasPermission) {
         const request = await requestPermission();
-        logger.debug(`Camera request permission status: ${request}`);
-        // User explicitly denied permission, hasPermission is false and requestPermission() will return false.
-        if (!request) {
-          setShowAppSettingsLabel(true);
-        }
+        debug(`Camera request permission status: ${request}`);
+        if (!request && !cancelled) setShowAppSettingsLabel(true);
       }
     })();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasPermission, requestPermission, debug]);
 
   if (cameraDevice == null) {
     return <NoCameraDeviceError />;
