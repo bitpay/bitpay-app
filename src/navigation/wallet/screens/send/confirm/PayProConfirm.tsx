@@ -645,7 +645,7 @@ const PayProConfirm = () => {
         contentContainerStyle={{paddingBottom: 50}}
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
-          <Header hr>Summary</Header>
+          <Header hr>{t('Summary')}</Header>
           {isTSSWallet && wallet && (
             <TSSProgressTracker
               status={tssStatus}

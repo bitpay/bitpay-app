@@ -7,6 +7,7 @@ import {
   RowContainer,
   BadgeContainer,
 } from '../styled/Containers';
+import {useTranslation} from 'react-i18next';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
 import styled from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
@@ -130,6 +131,7 @@ const AccountListRow = ({
     chain,
   } = wallets[0];
 
+  const {t} = useTranslation();
   const _currencyAbbreviation =
     formatCurrencyAbbreviation(currencyAbbreviation);
 
@@ -220,7 +222,7 @@ const AccountListRow = ({
                   {fiatBalanceFormat}
                 </H5>
               ) : (
-                <H5 style={{marginTop: 8}}>****</H5>
+                <H5 style={{marginTop: 8}}>{t('common.masked')}</H5>
               )}
             </BalanceColumn>
           )
@@ -235,13 +237,13 @@ const AccountListRow = ({
                   {showFiatBalance && (
                     <ListItemSubText textAlign={'right'}>
                       {network === 'testnet'
-                        ? 'Test - No Value'
+                        ? t('Test - No Value')
                         : fiatBalanceFormat}
                     </ListItemSubText>
                   )}
                 </>
               ) : (
-                <H5 style={{marginTop: 8}}>****</H5>
+                <H5 style={{marginTop: 8}}>{t('common.masked')}</H5>
               )}
             </BalanceColumn>
           )

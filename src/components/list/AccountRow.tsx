@@ -1,4 +1,5 @@
 import React, {memo} from 'react';
+import {useTranslation} from 'react-i18next';
 import {CurrencyColumn, ActiveOpacity} from '../styled/Containers';
 import {H5, Badge} from '../styled/Text';
 import styled from 'styled-components/native';
@@ -53,6 +54,7 @@ interface Props {
 }
 
 const AccountRow = ({account, chain, selected, onPress}: Props) => {
+  const {t} = useTranslation();
   return (
     <RowContainer
       activeOpacity={ActiveOpacity}
@@ -60,7 +62,7 @@ const AccountRow = ({account, chain, selected, onPress}: Props) => {
       selected={selected}>
       <CurrencyColumn>
         <H5 ellipsizeMode="tail" numberOfLines={1}>
-          Account {account.accountNumber}
+          {t('account.accountNumber', {accountNumber: account.accountNumber})}
         </H5>
         {account.network !== 'livenet' && (
           <BadgeContainer>
