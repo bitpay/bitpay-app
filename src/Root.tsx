@@ -8,6 +8,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import debounce from 'lodash.debounce';
 import Braze from '@braze/react-native-sdk';
 import React, {useEffect, useMemo, useRef} from 'react';
+import {useStore} from 'react-redux';
 import {
   Appearance,
   AppState,
@@ -279,6 +280,7 @@ export const Root = createNativeStackNavigator<RootStackParamList>();
 
 export default () => {
   const dispatch = useAppDispatch();
+  const reduxStore = useStore();
   const linking = useDeeplinks();
   const urlEventHandler = useUrlEventHandler();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
@@ -300,7 +302,9 @@ export default () => {
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
   );
-  const keys = useAppSelector(({WALLET}) => WALLET.keys) as Keys;
+  // keys is only used in one-time migration effects
+  // avoid Root re-rendering on every wallet balance update.
+  const getKeys = () => (reduxStore.getState() as any).WALLET.keys as Keys;
   const accountEvmCreationMigrationComplete = useAppSelector(
     ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
   );
@@ -708,7 +712,7 @@ export default () => {
 
             // we need to ensure that each wallet has a receive address before we can create the account list.
             const runAddressFix = async () => {
-              const walletsToFix = Object.values(keys).flatMap(key =>
+              const walletsToFix = Object.values(getKeys()).flatMap(key =>
                 key.wallets.filter(
                   wallet =>
                     !wallet.receiveAddress &&
@@ -732,14 +736,14 @@ export default () => {
             // we need to ensure that each evm account has all supported wallets attached.
             const runCompleteEvmWalletsAccountFix = async () => {
               try {
-                if (Object.keys(keys).length === 0) {
+                if (Object.keys(getKeys()).length === 0) {
                   dispatch(setAccountEVMCreationMigrationComplete());
                   return;
                 }
                 showOngoingProcess('GENERAL_AWAITING');
                 await sleep(1000); // give the modal time to show
                 await Promise.all(
-                  Object.values(keys).map(async key => {
+                  Object.values(getKeys()).map(async key => {
                     const evmWallets = getEvmGasWallets(key.wallets);
                     const accountsArray = [
                       ...new Set(
@@ -775,14 +779,14 @@ export default () => {
             // we need to ensure that for each key we have equal svm wallets attached.
             const runCompleteSvmWalletsAccountFix = async () => {
               try {
-                if (Object.keys(keys).length === 0) {
+                if (Object.keys(getKeys()).length === 0) {
                   dispatch(setAccountSVMCreationMigrationComplete());
                   return;
                 }
                 showOngoingProcess('GENERAL_AWAITING');
                 await sleep(1000); // give the modal time to show
                 await Promise.all(
-                  Object.values(keys).map(async key => {
+                  Object.values(getKeys()).map(async key => {
                     if (!key?.properties?.xPrivKeyEDDSA) {
                       logManager.info(
                         'skipping SVM creation — private key is encrypted',
@@ -825,14 +829,14 @@ export default () => {
                 ),
               );
               try {
-                if (Object.keys(keys).length === 0) {
+                if (Object.keys(getKeys()).length === 0) {
                   dispatch(setSvmAddressCreationFixComplete());
                   return;
                 }
                 showOngoingProcess('GENERAL_AWAITING');
                 await sleep(1000);
                 await Promise.all(
-                  Object.values(keys).map(async key => {
+                  Object.values(getKeys()).map(async key => {
                     if (!key?.properties?.xPrivKeyEDDSA) {
                       dispatch(
                         LogActions.persistLog(
