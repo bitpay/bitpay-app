@@ -333,8 +333,12 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
   const [offers, setOffers] = useState(cloneDeep(initialOffers));
   const [switchingThorswapProvider, setSwitchingThorswapProvider] =
     useState(false);
-  const [finishedChangelly, setFinishedChangelly] = useState(false);
-  const [finishedThorswap, setFinishedThorswap] = useState(false);
+  const [finishedChangelly, setFinishedChangelly] = useState<boolean | null>(
+    null,
+  );
+  const [finishedThorswap, setFinishedThorswap] = useState<boolean | null>(
+    null,
+  );
   const [updateView, setUpdateView] = useState<number>(0);
   const [approveThorswapSpenderKey, setApproveThorswapSpenderKey] = useState<
     ThorswapProvider | undefined
@@ -381,7 +385,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
           coin: coinFrom.toUpperCase(),
         },
       );
-      setFinishedChangelly(!finishedChangelly);
+      setFinishedChangelly(true);
       return;
     }
 
@@ -470,7 +474,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       }
 
       logger.debug('Changelly getting quote: SUCCESS');
-      setFinishedChangelly(!finishedChangelly);
+      setFinishedChangelly(true);
     } catch (err) {
       logger.error(
         'Changelly getFixRateForAmount Error: ' + JSON.stringify(err),
@@ -504,7 +508,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     offers.changelly.errorMsg = msg;
     offers.changelly.amountReceiving = undefined;
     offers.changelly.expanded = false;
-    setUpdateView(Math.random());
+    setFinishedChangelly(true);
   };
 
   const getThorswapQuote = async (
@@ -536,7 +540,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
           coin: coinFrom.toUpperCase(),
         },
       );
-      setFinishedThorswap(!finishedThorswap);
+      setFinishedThorswap(true);
       return;
     }
 
@@ -571,8 +575,18 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     }
 
     try {
-      const _data = await selectedWalletFrom.thorswapGetSwapQuote(requestData);
-      const thorswapQuoteData: ThorswapGetSwapQuoteData = _data?.body ?? _data;
+      const THORSWAP_TIMEOUT = 20000; // 20 seconds
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error(t('THORSwap request timed out'))),
+          THORSWAP_TIMEOUT,
+        ),
+      );
+      const requestPromise =
+        selectedWalletFrom.thorswapGetSwapQuote(requestData);
+      const _data = await Promise.race([requestPromise, timeoutPromise]);
+      const thorswapQuoteData: ThorswapGetSwapQuoteData =
+        (_data as any)?.body ?? _data;
 
       // TODO: remove this if(...) when Thorswap team fix the 1inch issue
       // Workaround to prevent an issue from Thorswap in which 1inch v4 is the spender and 1inch v5 is the destination address
@@ -685,7 +699,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         }
 
         logger.debug('Thorswap getting quote: SUCCESS');
-        setFinishedThorswap(!finishedThorswap);
+        setFinishedThorswap(true);
         // }
       } else {
         if (!thorswapQuoteData) {
@@ -789,7 +803,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
     offers.thorswap.amountReceiving = undefined;
     offers.thorswap.expanded = false;
     setSwitchingThorswapProvider(false);
-    setUpdateView(Math.random());
+    setFinishedThorswap(true);
   };
 
   const showError = (title: string, msg: string) => {
@@ -1135,13 +1149,20 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       logger.error(msg);
       showError(title, msg);
     } else {
+      // Reset finished states before starting new quotes
       if (offers.changelly.showOffer) {
+        setFinishedChangelly(false);
         offers.changelly.swapClicked = false;
         getChangellyQuote(selectedWalletFrom, selectedWalletTo);
+      } else {
+        setFinishedChangelly(null); // Not participating
       }
       if (offers.thorswap.showOffer) {
+        setFinishedThorswap(false);
         offers.thorswap.swapClicked = false;
         getThorswapQuote(selectedWalletFrom, selectedWalletTo);
+      } else {
+        setFinishedThorswap(null); // Not participating
       }
     }
   };
@@ -1156,6 +1177,8 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       setSelectedOfferLoading(false);
       setOffersLoading?.(false);
       setOffers(cloneDeep(initialOffers));
+      setFinishedChangelly(null);
+      setFinishedThorswap(null);
       return;
     }
 
@@ -1168,6 +1191,8 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       setSelectedOfferLoading(false);
       setOffersLoading?.(false);
       setOffers(cloneDeep(initialOffers));
+      setFinishedChangelly(null);
+      setFinishedThorswap(null);
       return;
     }
 
@@ -1189,6 +1214,8 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         setSelectedOfferLoading(false);
         setOffersLoading?.(false);
         setOffers(cloneDeep(initialOffers));
+        setFinishedChangelly(null);
+        setFinishedThorswap(null);
         return;
       }
     }
@@ -1206,7 +1233,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
 
     timeoutRef.current = setTimeout(() => {
       init(cloneDeep(selectedWalletFrom), cloneDeep(selectedWalletTo));
-    }, 2000);
+    }, 200);
 
     // Clean up the timeout on unmount
     return () => {
@@ -1242,60 +1269,73 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
       return;
     }
 
-    const offersTimeout = setTimeout(() => {
-      const offersArray = Object.values(offers);
-      const filteredOffers = offersArray.filter(
-        offer =>
-          offer.showOffer &&
-          offer.amountReceiving &&
-          offer.amountReceiving !== '0',
-      );
-      if (filteredOffers.length === 0) {
-        setOfferWarnMsg(
-          t(
-            'There are currently no offers that satisfy your request. Please try again later.',
-          ),
-        );
-        setSelectedOffer(undefined);
-        onSelectOffer?.(undefined);
-        setSelectedOfferLoading(false);
-        setOffersLoading?.(false);
-        return;
-      }
-      const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
-        parseFloat(curr.amountReceiving || '0') >
-        parseFloat(prev.amountReceiving || '0')
-          ? curr
-          : prev,
-      );
+    // Check if all participating exchanges have finished
+    // finishedChangelly/finishedThorswap: null = not participating, false = loading, true = finished
+    const changellyReady =
+      finishedChangelly === null || finishedChangelly === true;
+    const thorswapReady =
+      finishedThorswap === null || finishedThorswap === true;
+    const allExchangesFinished = changellyReady && thorswapReady;
 
-      const amountReceiving = Number(cloneDeep(_selectedOffer.amountReceiving));
-      if (amountReceiving !== 0 && !isNaN(amountReceiving)) {
-        setSelectedOffer(_selectedOffer);
-        onSelectOffer?.(_selectedOffer);
-        setOfferWarnMsg(undefined);
+    // At least one exchange must be participating (not null)
+    const hasParticipatingExchange =
+      finishedChangelly !== null || finishedThorswap !== null;
 
-        dispatch(
-          Analytics.track('Swap - Our Best Offer Loaded', {
-            exchange: _selectedOffer?.key || 'unknown',
-            fiatAmount: Number(_selectedOffer?.amountReceiving) || '',
-            amountFrom: amountFrom,
-            amountTo: offers.changelly.amountReceiving || '',
-            coinFrom: coinFrom?.toLowerCase() || '',
-            chainFrom: chainFrom?.toLowerCase() || '',
-            coinTo: coinTo?.toLowerCase() || '',
-            chainTo: chainTo?.toLowerCase() || '',
-          }),
-        );
-      } else {
-        setSelectedOffer(undefined);
-        onSelectOffer?.(undefined);
-      }
+    if (!allExchangesFinished || !hasParticipatingExchange) {
+      return;
+    }
+
+    // All exchanges have finished, evaluate offers
+    const offersArray = Object.values(offers);
+    const filteredOffers = offersArray.filter(
+      offer =>
+        offer.showOffer &&
+        offer.amountReceiving &&
+        offer.amountReceiving !== '0',
+    );
+    if (filteredOffers.length === 0) {
+      setOfferWarnMsg(
+        t(
+          'There are currently no offers that satisfy your request. Please try again later.',
+        ),
+      );
+      setSelectedOffer(undefined);
+      onSelectOffer?.(undefined);
       setSelectedOfferLoading(false);
       setOffersLoading?.(false);
-    }, 3500);
+      return;
+    }
+    const _selectedOffer = _.clone(filteredOffers).reduce((prev, curr) =>
+      parseFloat(curr.amountReceiving || '0') >
+      parseFloat(prev.amountReceiving || '0')
+        ? curr
+        : prev,
+    );
 
-    return () => clearTimeout(offersTimeout);
+    const amountReceiving = Number(cloneDeep(_selectedOffer.amountReceiving));
+    if (amountReceiving !== 0 && !isNaN(amountReceiving)) {
+      setSelectedOffer(_selectedOffer);
+      onSelectOffer?.(_selectedOffer);
+      setOfferWarnMsg(undefined);
+
+      dispatch(
+        Analytics.track('Swap - Our Best Offer Loaded', {
+          exchange: _selectedOffer?.key || 'unknown',
+          fiatAmount: Number(_selectedOffer?.amountReceiving) || '',
+          amountFrom: amountFrom,
+          amountTo: offers.changelly.amountReceiving || '',
+          coinFrom: coinFrom?.toLowerCase() || '',
+          chainFrom: chainFrom?.toLowerCase() || '',
+          coinTo: coinTo?.toLowerCase() || '',
+          chainTo: chainTo?.toLowerCase() || '',
+        }),
+      );
+    } else {
+      setSelectedOffer(undefined);
+      onSelectOffer?.(undefined);
+    }
+    setSelectedOfferLoading(false);
+    setOffersLoading?.(false);
   }, [finishedChangelly, finishedThorswap, updateView]);
 
   useEffect(() => {

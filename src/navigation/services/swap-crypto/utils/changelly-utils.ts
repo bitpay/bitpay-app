@@ -548,9 +548,12 @@ export const isCoinSupportedByChangelly = (
     : changellySupportedCoins.includes(lowerCoin);
 };
 
+const DEFAULT_CHANGELLY_TIMEOUT = 20000; // 20 seconds
+
 export const changellyGetFixRateForAmount = async (
   wallet: Wallet,
   data: ChangellyFixRateDataType,
+  timeoutMs: number = DEFAULT_CHANGELLY_TIMEOUT,
 ): Promise<any> => {
   try {
     const messageData = {
@@ -561,10 +564,19 @@ export const changellyGetFixRateForAmount = async (
       amountFrom: data.amountFrom,
     };
 
-    const _response = await wallet.changellyGetFixRateForAmount(messageData);
-    const response = _response?.body ?? _response;
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Changelly request timed out')),
+        timeoutMs,
+      ),
+    );
 
-    if (response.id && response?.id !== messageData.id) {
+    const requestPromise = wallet.changellyGetFixRateForAmount(messageData);
+
+    const _response = await Promise.race([requestPromise, timeoutPromise]);
+    const response = (_response as any)?.body ?? _response;
+
+    if (response?.id && response.id !== messageData.id) {
       return Promise.reject(
         t('The response does not match the origin of the request'),
       );
@@ -590,7 +602,7 @@ export const changellyGetPairsParams = async (
     const _response = await wallet.changellyGetPairsParams(messageData);
     const response = _response?.body ?? _response;
 
-    if (response.id && response.id !== messageData.id) {
+    if (response?.id && response.id !== messageData.id) {
       return Promise.reject(
         t('The response does not match the origin of the request'),
       );
@@ -620,7 +632,7 @@ export const changellyCreateFixTransaction = async (
     const _response = await wallet.changellyCreateFixTransaction(messageData);
     const response = _response?.body ?? _response;
 
-    if (response.id && response.id !== messageData.id) {
+    if (response?.id && response.id !== messageData.id) {
       return Promise.reject(
         t('The response does not match the origin of the request'),
       );
