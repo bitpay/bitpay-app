@@ -1172,9 +1172,9 @@ export const joinTSSWithCode =
         }
 
         const walletAddress = (await dispatch<any>(
-          createWalletAddress({wallet: finalWalletClient, newAddress: true}),
+          createWalletAddress({wallet: finalWalletClient, newAddress: false}),
         )) as string;
-        logManager.info(`[TSS Join] New address generated: ${walletAddress}`);
+        logManager.info(`[TSS Join] Address retrieved: ${walletAddress}`);
 
         const finalWallet = merge(
           finalWalletClient,
