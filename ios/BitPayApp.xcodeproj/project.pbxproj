@@ -61,7 +61,7 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = BitPayApp/AppDelegate.swift; sourceTree = "<group>"; };
 		B1AA7DD4226DBC3478258808 /* libPods-BitPayApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-BitPayApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCDAB70057C84109A9201936 /* Archivo-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Archivo-Regular.ttf"; path = "../assets/fonts/Archivo-Regular.ttf"; sourceTree = "<group>"; };
-		E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BundleHash.swift; sourceTree = "<group>"; };
+		E30DDDCF29E5E048D75CCF1A /* BundleHash.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BitPayApp/BundleHash.swift; sourceTree = "<group>"; };
 		E639E0380D05420CD0D64119 /* Pods-BitPayApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BitPayApp.release.xcconfig"; path = "Target Support Files/Pods-BitPayApp/Pods-BitPayApp.release.xcconfig"; sourceTree = "<group>"; };
 		EC0FDD692CC92E90009E1B35 /* InAppMessageModule.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InAppMessageModule.mm; sourceTree = "<group>"; };
 		ECCB92762860B25D00F9CF8B /* SilentPushEvent.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SilentPushEvent.mm; sourceTree = "<group>"; };
