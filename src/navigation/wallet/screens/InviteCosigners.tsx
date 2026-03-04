@@ -390,9 +390,13 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
       setShowProcessing(true);
     } catch (err: any) {
       logger.error(`[TSS] Add co-signer error: ${err.message}`);
-      setAddCoSignerError(
-        t('Invalid Session ID. Please verify and try again.'),
-      );
+      if (err.message === 'This co-signer has already been invited') {
+        setAddCoSignerError(t('This co-signer has already been invited.'));
+      } else {
+        setAddCoSignerError(
+          t('Invalid Session ID. Please verify and try again.'),
+        );
+      }
     }
   };
 
