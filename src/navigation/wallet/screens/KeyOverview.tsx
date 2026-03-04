@@ -767,7 +767,7 @@ const KeyOverview = () => {
         k.id === item.wallets[0].id &&
         (!item.copayerId || k.credentials?.copayerId === item.copayerId),
     )!;
-    if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
+    if (!fullWalletObj.isComplete()) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
         (err: any, status: Status) => {
