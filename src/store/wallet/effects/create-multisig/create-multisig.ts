@@ -102,10 +102,7 @@ export const startCreateKeyMultisig =
         );
         resolve(key);
       } catch (err) {
-        const errorStr =
-          err instanceof Error ? err.message : JSON.stringify(err);
-        logManager.error(`Error create key multisig: ${errorStr}`);
-        reject();
+        reject(err);
       }
     });
   };

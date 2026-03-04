@@ -391,9 +391,10 @@ const RecoveryPhrase = () => {
 
     try {
       setKeyOptions(keyOpts, advancedOptions);
-    } catch (e: any) {
-      logger.error(e.message);
-      showErrorModal(e);
+    } catch (err: any) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
+      showErrorModal(err);
       return;
     }
 
@@ -467,11 +468,12 @@ const RecoveryPhrase = () => {
           source: 'RecoveryPhrase',
         }),
       );
-    } catch (e: any) {
-      logger.error(e.message);
+    } catch (err: any) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
       hideOngoingProcess();
       await sleep(600);
-      showErrorModal(e);
+      showErrorModal(err);
       return;
     }
   };
@@ -493,9 +495,10 @@ const RecoveryPhrase = () => {
 
       try {
         setKeyOptions(keyOpts, advancedOpts);
-      } catch (e: any) {
-        logger.error(e.message);
-        showErrorModal(e);
+      } catch (err: any) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(errMsg);
+        showErrorModal(err);
         return;
       }
 
@@ -547,11 +550,12 @@ const RecoveryPhrase = () => {
       });
       hideOngoingProcess();
       setRecreateWallet(false);
-    } catch (e: any) {
-      logger.error(e.message);
+    } catch (err: any) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
       hideOngoingProcess();
       await sleep(500);
-      showErrorModal(e);
+      showErrorModal(err);
       setRecreateWallet(false);
       return;
     }
