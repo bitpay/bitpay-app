@@ -347,6 +347,14 @@ export const addCoSignerToTSS =
       const joinerData = decodeJoinerSessionId(opts.joinerSessionId);
       logManager.debug(`[TSS] Adding co-signer party ${opts.partyId}`);
 
+      const existingCopayers = key.tssSession.copayers || [];
+      const isDuplicate = existingCopayers.some(
+        c => c.status === 'invited' && c.pubKey === joinerData.pubKey,
+      );
+      if (isDuplicate) {
+        throw new Error('This co-signer has already been invited');
+      }
+
       const partyKey = BWC.createKey({
         seedType: 'object',
         seedData: key.tssSession.partyKey,
