@@ -297,11 +297,12 @@ const FileOrText = () => {
       );
 
       hideOngoingProcess();
-    } catch (e: any) {
-      logger.error(e.message);
+    } catch (err: any) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
       hideOngoingProcess();
       await sleep(1000);
-      showErrorModal(e.message);
+      showErrorModal(errMsg);
     }
   };
 
@@ -412,11 +413,12 @@ const FileOrText = () => {
       );
 
       hideOngoingProcess();
-    } catch (e: any) {
-      logger.error(e.message);
+    } catch (err: any) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
       hideOngoingProcess();
       await sleep(1000);
-      showErrorModal(e.message);
+      showErrorModal(errMsg);
     }
   };
 

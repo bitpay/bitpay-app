@@ -80,7 +80,15 @@ const schema = yup.object().shape({
     .positive()
     .integer()
     .min(1)
-    .max(3),
+    .max(3)
+    .test(
+      'max-copayers',
+      'Required signatures cannot exceed total co-signers',
+      function (value) {
+        const {totalCopayers} = this.parent;
+        return !value || !totalCopayers || value <= totalCopayers;
+      },
+    ),
   totalCopayers: yup.number().required().positive().integer().min(2).max(6),
 });
 
@@ -205,6 +213,7 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
     control,
     handleSubmit,
     setValue,
+    getValues,
     formState: {errors, isSubmitting},
   } = useForm({resolver: yupResolver(schema)});
 
@@ -259,14 +268,15 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
       opts.coin = currency?.toLowerCase();
       opts.chain = chain?.toLowerCase() || opts.coin;
       await CreateMultisigWallet(opts);
-    } catch (e: any) {
-      logger.error(e.message);
+    } catch (err: any) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
       hideOngoingProcess();
       await sleep(500);
-      if (e.message === 'invalid password') {
+      if (err && err.message && err.message === 'invalid password') {
         dispatch(showBottomNotificationModal(WrongPasswordError()));
       } else {
-        showErrorModal(e.message);
+        showErrorModal(errMsg);
       }
     }
   };
@@ -510,7 +520,8 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                   <AddButton
                     onPress={() => {
                       const newValue = value + 1;
-                      if (newValue <= 3) {
+                      const totalCopayers = getValues('totalCopayers');
+                      if (newValue <= 3 && newValue <= totalCopayers) {
                         setValue('requiredSignatures', newValue, {
                           shouldValidate: true,
                         });
@@ -545,6 +556,13 @@ const CreateMultisig: React.FC<CreateMultisigProps> = ({navigation, route}) => {
                       setValue('totalCopayers', newValue, {
                         shouldValidate: true,
                       });
+                      const requiredSignatures =
+                        getValues('requiredSignatures');
+                      if (requiredSignatures > newValue) {
+                        setValue('requiredSignatures', newValue, {
+                          shouldValidate: true,
+                        });
+                      }
                     }
                   }}>
                   <MinusIcon />
