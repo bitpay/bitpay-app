@@ -27,6 +27,7 @@ import TransakLogo from '../../../../components/icons/external-services/transak/
 import {
   Action,
   Black,
+  CharcoalBlack,
   LightBlack,
   SlateDark,
   White,
@@ -57,7 +58,7 @@ interface PaymentMethodsModalProps {
 }
 
 const MenuContainer = styled.View`
-  background: ${({theme: {dark}}) => (dark ? '#111111' : White)};
+  background: ${({theme: {dark}}) => (dark ? CharcoalBlack : White)};
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
   max-height: 75%;

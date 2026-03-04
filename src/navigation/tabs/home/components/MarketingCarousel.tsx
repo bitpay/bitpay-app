@@ -400,19 +400,19 @@ const CopyContainer = styled.View`
 
 const CardTitle = styled(BaseText)`
   color: ${({theme}) => (theme.dark ? White : Black)};
-  font-size: 13px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 24px;
 `;
 
 const CardSubtitle = styled(BaseText)`
   color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
-  font-size: 12px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 400;
-  line-height: 15px;
-  margin-top: 4px;
+  line-height: 20px;
+  margin-top: 0px;
 `;
 
 const CloseButton = styled.TouchableOpacity.attrs({

@@ -15,8 +15,8 @@ import {logManager} from '../../../../../managers/LogManager';
 import {BaseText} from '../../../../../components/styled/Text';
 import {
   Black,
+  CharcoalBlack,
   LightBlack,
-  Slate,
   Slate30,
   SlateDark,
   White,
@@ -38,7 +38,6 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   let description = '';
   let iconSource: Source | null = null;
   let coverImageSource: Source | null = null;
-  let cardImageSource: Source | null = null;
 
   if (isCaptionedContentCard(contentCard)) {
     title = contentCard.title || '';
@@ -51,8 +50,7 @@ const OfferCard: React.FC<OfferCardProps> = props => {
   const coverImage = contentCard.extras?.cover_image;
 
   if (image) {
-    cardImageSource =
-      typeof image === 'string' ? {uri: image} : (image as Source);
+    iconSource = typeof image === 'string' ? {uri: image} : (image as Source);
   }
 
   if (coverImage) {
@@ -60,18 +58,6 @@ const OfferCard: React.FC<OfferCardProps> = props => {
       typeof coverImage === 'string'
         ? {uri: coverImage}
         : (coverImage as Source);
-  }
-
-  if (contentCard.extras?.icon_image) {
-    const icon = contentCard.extras.icon_image as string;
-
-    if (icon) {
-      iconSource = {uri: icon};
-    }
-  }
-
-  if (!iconSource) {
-    iconSource = cardImageSource;
   }
 
   if (!title) {
@@ -107,8 +93,8 @@ const OfferCard: React.FC<OfferCardProps> = props => {
         return;
       }
     } catch (err) {
-      logManager.debug('Something went wrong parsing offer URL: ' + url),
-        logManager.debug(JSON.stringify(err));
+      logManager.debug('Something went wrong parsing offer URL: ' + url);
+      logManager.debug(JSON.stringify(err));
     }
 
     if (openURLInWebView) {
@@ -140,16 +126,14 @@ const OfferCard: React.FC<OfferCardProps> = props => {
         )}
       </CoverImageContainer>
       <OfferContent>
-        <IconWrapper>
-          {iconSource ? (
+        {iconSource ? (
+          <IconWrapper>
             <OfferIcon
               source={iconSource}
               resizeMode={FastImage.resizeMode.contain}
             />
-          ) : (
-            <IconPlaceholder />
-          )}
-        </IconWrapper>
+          </IconWrapper>
+        ) : null}
         <TextContainer>
           {title ? <OfferTitle numberOfLines={2}>{title}</OfferTitle> : null}
           {description ? (
@@ -184,8 +168,8 @@ const CoverImageFallback = styled.View`
 `;
 
 const OfferContent = styled.View`
-  padding: 18px 20px 16px;
-  background: ${({theme: {dark}}) => (dark ? '#111' : White)};
+  padding: 18px 20px 20px;
+  background: ${({theme: {dark}}) => (dark ? CharcoalBlack : White)};
   border-top-width: 1px;
   border-top-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
 `;
@@ -207,25 +191,21 @@ const OfferIcon = styled(FastImage)`
   height: 40px;
 `;
 
-const IconPlaceholder = styled.View`
-  width: 100%;
-  height: 100%;
-`;
-
 const TextContainer = styled.View``;
 
 const OfferTitle = styled(BaseText)`
-  font-size: 13px;
+  font-size: 16px;
+  line-height: 24px;
   font-weight: 600;
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   margin-bottom: 6px;
 `;
 
 const OfferDescription = styled(BaseText)`
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
-  line-height: 15px;
-  color: ${({theme: {dark}}) => (dark ? Slate : SlateDark)};
+  line-height: 20px;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
 `;
 
 export default OfferCard;

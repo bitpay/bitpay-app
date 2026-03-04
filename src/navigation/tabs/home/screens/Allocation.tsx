@@ -1,24 +1,29 @@
-import React, {useLayoutEffect, useMemo} from 'react';
+import React, {useCallback, useLayoutEffect, useMemo} from 'react';
+import {ImageRequireSource, View} from 'react-native';
+import {FlashList, ListRenderItemInfo} from '@shopify/flash-list';
 import styled, {useTheme} from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useTranslation} from 'react-i18next';
 import {RootStackParamList} from '../../../../Root';
 import {useStackScreenOptions} from '../../../utils/headerHelpers';
 import {HeaderTitle, BaseText} from '../../../../components/styled/Text';
 import HeaderBackButton from '../../../../components/back/HeaderBackButton';
-import {SupportedCurrencyOptions} from '../../../../constants/SupportedCurrencyOptions';
+import type {SupportedCurrencyOption} from '../../../../constants/SupportedCurrencyOptions';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {AllocationDonutLegendCard} from '../components/AllocationSection';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {buildAccountList} from '../../../../store/wallet/utils/wallet';
 import type {Key, Wallet} from '../../../../store/wallet/wallet.models';
-import {useTokenContext} from '../../../../contexts';
-import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
-import {addTokenChainSuffix} from '../../../../utils/helper-methods';
+import {formatCurrencyAbbreviation} from '../../../../utils/helper-methods';
 import {
   buildAllocationDataFromWalletRows,
   type AllocationWallet,
-} from '../../../../utils/allocation';
+  toAllocationWallet,
+} from '../../../../utils/portfolio/allocation';
+import {getVisibleWalletsFromKeys} from '../../../../utils/portfolio/assets';
 import {LightBlack, Slate30, SlateDark} from '../../../../styles/colors';
+import {maskIfHidden} from '../../../../utils/hideBalances';
+import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Allocation'>;
 
@@ -41,15 +46,8 @@ const ScreenContainer = styled.SafeAreaView`
   flex: 1;
 `;
 
-const Content = styled.ScrollView`
-  flex: 1;
-`;
-
-const Rows = styled.View`
-  margin: 0px 16px 24px;
-`;
-
 const Row = styled.View`
+  margin: 0 16px;
   padding: 14px 0;
 `;
 
@@ -137,105 +135,123 @@ const ProgressFill = styled.View<{
   border-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
 `;
 
+const ALLOCATION_ROW_ESTIMATED_ITEM_SIZE = 94;
+
+const AllocationRow: React.FC<{
+  item: AllocationRowItem;
+  hideAllBalances: boolean;
+  barColor: string;
+  img?: SupportedCurrencyOption['img'];
+  imgSrc?: ImageRequireSource;
+}> = ({item, hideAllBalances, barColor, img, imgSrc}) => {
+  return (
+    <Row>
+      <RowTop>
+        <RowLeft>
+          <IconContainer>
+            <CurrencyImage img={img} imgSrc={imgSrc} size={40} />
+          </IconContainer>
+          <RowLabels>
+            <AssetName>{item.name}</AssetName>
+            <AssetSymbol>
+              {formatCurrencyAbbreviation(item.currencyAbbreviation || '')}
+            </AssetSymbol>
+          </RowLabels>
+        </RowLeft>
+
+        <RowRight>
+          <FiatAmount>
+            {maskIfHidden(hideAllBalances, item.fiatAmount)}
+          </FiatAmount>
+          <Percent>{item.percent}</Percent>
+        </RowRight>
+      </RowTop>
+
+      <ProgressTrack>
+        <ProgressFill progress={item.progress} color={barColor} />
+      </ProgressTrack>
+    </Row>
+  );
+};
+
 export const AllocationRowsList: React.FC<{
   rows: AllocationRowItem[];
   style?: any;
-}> = ({rows, style}) => {
+  ListHeaderComponent?: React.ReactElement | null;
+  scrollEnabled?: boolean;
+}> = ({rows, style, ListHeaderComponent, scrollEnabled = false}) => {
   const theme = useTheme();
   const hideAllBalances = useAppSelector(({APP}) => APP.hideAllBalances);
-  const {tokenOptionsByAddress} = useTokenContext();
-  const customTokenOptionsByAddress = useAppSelector(
-    ({WALLET}) => WALLET.customTokenOptionsByAddress,
+  const {getAssetIconData} = useAssetIconResolver();
+
+  const renderRow = useCallback(
+    (item: AllocationRowItem) => {
+      const {img, imgSrc} = getAssetIconData(item);
+
+      const barColor = theme.dark ? item.barColor.dark : item.barColor.light;
+
+      return (
+        <AllocationRow
+          item={item}
+          hideAllBalances={hideAllBalances}
+          barColor={barColor}
+          img={img}
+          imgSrc={imgSrc}
+        />
+      );
+    },
+    [getAssetIconData, hideAllBalances, theme.dark],
   );
 
-  const allTokenOptionsByAddress = useMemo(() => {
-    return {
-      ...BitpaySupportedTokenOptsByAddress,
-      ...tokenOptionsByAddress,
-      ...customTokenOptionsByAddress,
-    };
-  }, [customTokenOptionsByAddress, tokenOptionsByAddress]);
+  const renderItem = useCallback(
+    ({item}: ListRenderItemInfo<AllocationRowItem>) => renderRow(item),
+    [renderRow],
+  );
+
+  const keyExtractor = useCallback((item: AllocationRowItem) => item.key, []);
+
+  if (!scrollEnabled) {
+    return (
+      <View style={[{paddingBottom: 24}, style]}>
+        {ListHeaderComponent}
+        {rows.map(item => (
+          <React.Fragment key={item.key}>{renderRow(item)}</React.Fragment>
+        ))}
+      </View>
+    );
+  }
 
   return (
-    <Rows style={style}>
-      {rows.map(item => {
-        const option = SupportedCurrencyOptions.find(o => {
-          const tokenMatch = item.tokenAddress
-            ? o.tokenAddress?.toLowerCase() === item.tokenAddress?.toLowerCase()
-            : true;
-          return (
-            o.currencyAbbreviation === item.currencyAbbreviation &&
-            o.chain === item.chain &&
-            tokenMatch
-          );
-        });
-
-        const tokenKey = item.tokenAddress
-          ? addTokenChainSuffix(item.tokenAddress, item.chain)
-          : undefined;
-        const tokenOpt = tokenKey
-          ? allTokenOptionsByAddress[tokenKey]
-          : undefined;
-        const img = option?.img || (tokenOpt?.logoURI as string | undefined);
-
-        const barColor = theme.dark ? item.barColor.dark : item.barColor.light;
-
-        return (
-          <Row key={item.key}>
-            <RowTop>
-              <RowLeft>
-                <IconContainer>
-                  <CurrencyImage
-                    img={img}
-                    imgSrc={
-                      option?.img
-                        ? undefined
-                        : (option?.imgSrc as unknown as number)
-                    }
-                    size={40}
-                  />
-                </IconContainer>
-                <RowLabels>
-                  <AssetName>{item.name}</AssetName>
-                  <AssetSymbol>
-                    {item.currencyAbbreviation.toUpperCase()}
-                  </AssetSymbol>
-                </RowLabels>
-              </RowLeft>
-
-              <RowRight>
-                <FiatAmount>
-                  {hideAllBalances ? '****' : item.fiatAmount}
-                </FiatAmount>
-                <Percent>{item.percent}</Percent>
-              </RowRight>
-            </RowTop>
-
-            <ProgressTrack>
-              <ProgressFill progress={item.progress} color={barColor} />
-            </ProgressTrack>
-          </Row>
-        );
-      })}
-    </Rows>
+    <FlashList<AllocationRowItem>
+      data={rows}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      ListHeaderComponent={ListHeaderComponent}
+      contentContainerStyle={[{paddingBottom: 24}, style]}
+      estimatedItemSize={ALLOCATION_ROW_ESTIMATED_ITEM_SIZE}
+      maintainVisibleContentPosition={{disabled: true}}
+      scrollEnabled={scrollEnabled}
+    />
   );
 };
 
 const Allocation: React.FC<Props> = ({navigation, route}) => {
   const theme = useTheme();
+  const {t} = useTranslation();
   const commonOptions = useStackScreenOptions(theme);
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys) as Record<string, Key>;
   const {rates} = useAppSelector(({RATE}) => RATE);
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
+  const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       ...commonOptions,
       headerLeft: () => <HeaderBackButton />,
-      headerTitle: () => <HeaderTitle>Allocation</HeaderTitle>,
+      headerTitle: () => <HeaderTitle>{t('Allocation')}</HeaderTitle>,
     });
-  }, [navigation, commonOptions]);
+  }, [navigation, commonOptions, t]);
 
   const walletRows: AllocationWallet[] = useMemo(() => {
     const keyId = route.params?.keyId;
@@ -266,32 +282,19 @@ const Allocation: React.FC<Props> = ({navigation, route}) => {
       );
 
       return wallets.map((w: Wallet) => {
-        return {
-          currencyAbbreviation: w.currencyAbbreviation,
-          chain: w.chain,
-          tokenAddress: w.tokenAddress,
-          currencyName: w.currencyName,
-          fiatBalance: (w.balance as any)?.fiat,
-        };
+        return toAllocationWallet(w);
       });
     }
 
-    const wallets = (Object.values(keys) as Key[])
-      .flatMap((k: Key) => k.wallets)
-      .filter((w: Wallet) => !w.hideWallet && !w.hideWalletByAccount);
+    const wallets = getVisibleWalletsFromKeys(keys, homeCarouselConfig);
 
     return wallets.map((w: Wallet) => {
-      return {
-        currencyAbbreviation: w.currencyAbbreviation,
-        chain: w.chain,
-        tokenAddress: w.tokenAddress,
-        currencyName: w.currencyName,
-        fiatBalance: (w.balance as any)?.fiat,
-      };
+      return toAllocationWallet(w);
     });
   }, [
     defaultAltCurrency.isoCode,
     dispatch,
+    homeCarouselConfig,
     keys,
     rates,
     route.params?.accountAddress,
@@ -305,16 +308,22 @@ const Allocation: React.FC<Props> = ({navigation, route}) => {
     );
   }, [defaultAltCurrency.isoCode, walletRows]);
 
+  const listHeaderComponent = useMemo(() => {
+    return (
+      <AllocationDonutLegendCard
+        legendItems={allocationData.legendItems}
+        slices={allocationData.slices}
+      />
+    );
+  }, [allocationData.legendItems, allocationData.slices]);
+
   return (
     <ScreenContainer>
-      <Content>
-        <AllocationDonutLegendCard
-          legendItems={allocationData.legendItems}
-          slices={allocationData.slices}
-        />
-
-        <AllocationRowsList rows={allocationData.rows} />
-      </Content>
+      <AllocationRowsList
+        rows={allocationData.rows}
+        ListHeaderComponent={listHeaderComponent}
+        scrollEnabled
+      />
     </ScreenContainer>
   );
 };

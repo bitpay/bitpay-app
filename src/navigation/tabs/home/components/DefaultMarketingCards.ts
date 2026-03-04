@@ -5,38 +5,42 @@ import {t} from 'i18next';
 
 const DefaultMarketingCards = (): ClassicContentCard[] => {
   return [
-    // {
-    //   ...DEFAULT_CLASSIC_CONTENT_CARD,
-    //   id: 'dev_marketing_slide_1',
-    //   image: require('../../../../../assets/img/home/offers/amc.png'),
-    //   title: t('Buy movie tickets with crypto'),
-    //   cardDescription: t('Buy an AMC Theatres gift card with crypto.'),
-    //   url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amc%20theatres`,
-    //   openURLInWebView: false,
-    //   extras: {
-    //     feed_type: 'marketing_carousel',
-    //   },
-    // },
-    // {
-    //   ...DEFAULT_CLASSIC_CONTENT_CARD,
-    //   id: 'dev_marketing_slide_2',
-    //   title: t('Grow your crypto with BitPay'),
-    //   cardDescription: t('Discover new ways to buy, swap and spend securely.'),
-    //   openURLInWebView: false,
-    //   extras: {
-    //     feed_type: 'marketing_carousel',
-    //   },
-    // },
-    // {
-    //   ...DEFAULT_CLASSIC_CONTENT_CARD,
-    //   id: 'dev_marketing_slide_3',
-    //   title: t('Learn about crypto with BitPay'),
-    //   cardDescription: t('Enroll in crypto 101.'),
-    //   openURLInWebView: false,
-    //   extras: {
-    //     feed_type: 'marketing_carousel',
-    //   },
-    // },
+    {
+      ...DEFAULT_CLASSIC_CONTENT_CARD,
+      id: 'dev_marketing_slide_1',
+      image: require('../../../../../assets/img/home/offers/amc.png'),
+      title: t('Buy movie tickets with crypto'),
+      cardDescription: t('Buy an AMC Theatres gift card.'),
+      url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amc%20theatres`,
+      openURLInWebView: false,
+      extras: {
+        feed_type: 'marketing_carousel',
+      },
+    },
+    {
+      ...DEFAULT_CLASSIC_CONTENT_CARD,
+      id: 'dev_marketing_slide_2',
+      image: require('../../../../../assets/img/home/offers/amazon.png'),
+      title: t('Pay everyday with crypto'),
+      cardDescription: t('Shop top brands with crypto gift cards.'),
+      url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=amazon.com`,
+      openURLInWebView: false,
+      extras: {
+        feed_type: 'marketing_carousel',
+      },
+    },
+    {
+      ...DEFAULT_CLASSIC_CONTENT_CARD,
+      id: 'dev_marketing_slide_3',
+      image: require('../../../../../assets/img/home/offers/airbnb.png'),
+      title: t('Travel with your crypto'),
+      cardDescription: t('Use crypto to book your next stay.'),
+      url: `${APP_DEEPLINK_PREFIX}giftcard?merchant=airbnb`,
+      openURLInWebView: false,
+      extras: {
+        feed_type: 'marketing_carousel',
+      },
+    },
   ];
 };
 

@@ -1,5 +1,6 @@
 import styled, {useTheme} from 'styled-components/native';
-import * as React from 'react';
+import React, {useMemo} from 'react';
+import {useTranslation} from 'react-i18next';
 import IncrementArrow from '../icons/trend-arrow/IncrementArrow';
 import DecrementArrow from '../icons/trend-arrow/DecrementArrow';
 import {BaseText} from '../styled/Text';
@@ -33,6 +34,7 @@ export interface PercentageProps {
   priceChange?: string | number;
   rangeLabel?: string;
   textStyle?: any;
+  fractionDigits?: number;
 }
 
 export const getDifferenceColor = (
@@ -49,22 +51,48 @@ const Percentage = ({
   priceChange,
   rangeLabel,
   textStyle,
+  fractionDigits,
 }: PercentageProps) => {
   const theme = useTheme();
   const isDarkMode = theme.dark;
-  const percentageColor = getDifferenceColor(
-    percentageDifference >= 0,
-    isDarkMode,
-  );
+  const {i18n} = useTranslation();
+  const locale = i18n?.language;
+
+  const isFiniteDifference = Number.isFinite(percentageDifference);
+  const safeDifference = isFiniteDifference ? percentageDifference : 0;
+  const percentageColor = isFiniteDifference
+    ? getDifferenceColor(safeDifference >= 0, isDarkMode)
+    : isDarkMode
+    ? Slate30
+    : SlateDark;
+
+  const formatter = useMemo(() => {
+    const options: Intl.NumberFormatOptions | undefined =
+      typeof fractionDigits === 'number'
+        ? {
+            minimumFractionDigits: fractionDigits,
+            maximumFractionDigits: fractionDigits,
+          }
+        : undefined;
+    try {
+      return new Intl.NumberFormat(locale || undefined, options);
+    } catch {
+      return new Intl.NumberFormat(undefined, options);
+    }
+  }, [locale, fractionDigits]);
   const formattedPriceChange =
     priceChange === null || priceChange === undefined
       ? undefined
       : String(priceChange);
   const shouldShowPriceChange = Boolean(formattedPriceChange?.length);
-  const signPrefix = hideSign ? '' : percentageDifference < 0 ? '- ' : '+ ';
-  const formattedPercentageDifference =
-    Math.abs(percentageDifference).toLocaleString('en-US');
-  const percentageValue = `${signPrefix}${formattedPercentageDifference}%`;
+  const signPrefix =
+    !isFiniteDifference || hideSign ? '' : safeDifference < 0 ? '- ' : '+ ';
+  const formattedPercentageDifference = isFiniteDifference
+    ? formatter.format(Math.abs(safeDifference))
+    : '--';
+  const percentageValue = isFiniteDifference
+    ? `${signPrefix}${formattedPercentageDifference}%`
+    : '--';
   const wrappedPercentageValue = shouldShowPriceChange
     ? `(${percentageValue})`
     : percentageValue;
@@ -72,10 +100,10 @@ const Percentage = ({
   return (
     <>
       <PercentageRow>
-        {!hideArrow && percentageDifference > 0 ? (
+        {!hideArrow && isFiniteDifference && safeDifference > 0 ? (
           <IncrementArrow style={{marginRight: 5}} />
         ) : null}
-        {!hideArrow && percentageDifference < 0 ? (
+        {!hideArrow && isFiniteDifference && safeDifference < 0 ? (
           <DecrementArrow style={{marginRight: 5}} />
         ) : null}
         {shouldShowPriceChange ? (
