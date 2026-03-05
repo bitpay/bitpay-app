@@ -381,8 +381,9 @@ const pollTxpUntilBroadcast = async (
   wallet: Wallet,
   txpId: string,
 ): Promise<TransactionProposal> => {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    await sleep(3000);
+  const delays = [0, 1000, 2000, 3000, 5000, 5000, 5000];
+  for (const delay of delays) {
+    await sleep(delay);
     try {
       const updatedTxp = await getTx(wallet, txpId);
       if (updatedTxp.status === 'broadcasted') {
