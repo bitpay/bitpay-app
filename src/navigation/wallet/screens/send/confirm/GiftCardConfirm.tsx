@@ -736,7 +736,7 @@ const Confirm = () => {
         <MemoizedGiftCardHeader amount={amount} cardConfig={cardConfig} />
         {wallet || coinbaseAccount ? (
           <>
-            <Header hr>Summary</Header>
+            <Header hr>{t('Summary')}</Header>
             {isTSSWallet && wallet && (
               <TSSProgressTracker
                 status={tssStatus}

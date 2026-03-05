@@ -383,7 +383,7 @@ const Confirm = () => {
               </BalanceContainer>
             ) : null}
 
-            <Header hr>Summary</Header>
+            <Header hr>{t('Summary')}</Header>
             {invoice ? (
               <RemainingTime
                 invoiceExpirationTime={invoice.expirationTime}

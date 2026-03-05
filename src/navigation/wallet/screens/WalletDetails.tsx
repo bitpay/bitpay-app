@@ -1072,7 +1072,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             {formatCurrencyAbbreviation(currencyAbbreviation)}
                           </Balance>
                         ) : (
-                          <H2>****</H2>
+                          <H2>{t('common.masked')}</H2>
                         )}
                       </Row>
                     ) : (

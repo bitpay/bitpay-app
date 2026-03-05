@@ -175,7 +175,7 @@ const AddressModal = ({
           {removalStarted ? (
             <ConfirmText>
               <TextAlign align={'center'} style={{marginBottom: 8}}>
-                <H3>Are you sure?</H3>
+                <H3>{t('Are you sure?')}'</H3>
               </TextAlign>
               <TextAlign align={'center'}>
                 <Disclaimer>

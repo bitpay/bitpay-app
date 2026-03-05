@@ -224,7 +224,7 @@ const CoinbaseWithdrawConfirm = () => {
   return (
     <ConfirmContainer>
       <DetailsList>
-        <Header>Summary</Header>
+        <Header>{t('Summary')}</Header>
         <SendingTo recipient={recipientData} hr />
         <SendingFrom sender={sendingFrom} hr />
         <Amount description={t('Total')} amount={total} />

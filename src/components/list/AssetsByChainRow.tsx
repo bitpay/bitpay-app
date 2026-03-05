@@ -6,6 +6,7 @@ import {
   Row,
   RowContainer,
 } from '../styled/Containers';
+import {useTranslation} from 'react-i18next';
 import {AssetsByChainData} from '../../navigation/wallet/screens/AccountDetails';
 import {View} from 'react-native';
 import {H5} from '../styled/Text';
@@ -65,6 +66,7 @@ const AssetsByChainRow = ({
   const {chain, chainName, fiatBalanceFormat, chainAssetsList, chainImg} =
     accountItem;
   const dispatch = useAppDispatch();
+  const {t} = useTranslation();
   const selectedLocalAssetsDropdown = useAppSelector(
     ({APP}) => APP.selectedLocalAssetsDropdown,
   );
@@ -111,7 +113,7 @@ const AssetsByChainRow = ({
                   {fiatBalanceFormat}
                 </H5>
               ) : (
-                <H5 style={{marginTop: 8}}>****</H5>
+                <H5 style={{marginTop: 8}}>{t('common.masked')}</H5>
               )}
               <ChevronContainer>
                 {showChainAssets[chain] ? (

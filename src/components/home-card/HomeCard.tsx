@@ -124,7 +124,7 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
           )}
         </>
       ) : (
-        <H3>****</H3>
+        <H3>{t('common.masked')}</H3>
       )}
       {description && <CardBodyDesc>{description}</CardBodyDesc>}
     </View>

@@ -435,7 +435,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
-          Confirm
+          {t('Confirm')}
         </Button>
       </CtaContainerAbsolute>
     </KeyboardAvoidingView>
@@ -555,7 +555,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
-          Confirm
+          {t('Confirm')}
         </Button>
       </CtaContainerAbsolute>
     </VerifyPhraseContainer>

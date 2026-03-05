@@ -97,17 +97,19 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
         <TabScreenContainer>
           <TabScreenErrorBody>
             <WarningSvg height={50} width={50} />
-            <H3>Something Went Wrong</H3>
+            <H3>{t('Something Went Wrong')}</H3>
             <TextAlign align={'center'}>
               <Paragraph>
-                We are unable to load this tab. If this error persists, please{' '}
+                {t(
+                  'We are unable to load this tab. If this error persists, please ',
+                )}
                 <Link
                   onPress={() =>
                     Linking.openURL('https://bitpay.com/request-help/wizard')
                   }>
                   {t('contact BitPay Support')}
                 </Link>
-                , and provide the error message below.
+                {t(', and provide the error message below.')}
               </Paragraph>
             </TextAlign>
             <ErrorBox>

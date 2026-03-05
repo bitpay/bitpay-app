@@ -250,7 +250,7 @@ const CoinbaseDashboard = () => {
                 {formatFiatAmount(balance, defaultAltCurrency.isoCode)}
               </Balance>
             ) : (
-              <H2 style={{textAlign: 'center'}}>****</H2>
+              <H2 style={{textAlign: 'center'}}>{t('common.masked')}</H2>
             )}
           </>
         ) : (

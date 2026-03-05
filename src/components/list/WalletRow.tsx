@@ -9,6 +9,7 @@ import {
   BadgeContainer,
 } from '../styled/Containers';
 import {Badge, H5, ListItemSubText} from '../styled/Text';
+import {useTranslation} from 'react-i18next';
 import styled from 'styled-components/native';
 import {CurrencyImage} from '../currency-image/CurrencyImage';
 import {Network} from '../../constants';
@@ -207,6 +208,7 @@ const WalletRow = ({
     supportedTransactionCurrencies?.[invoiceCurrencyAbbreviation];
   const isAvailable = !!currencyConfig;
   const isDisabled = currencyConfig ? !currencyConfig.enabled : false;
+  const {t} = useTranslation();
 
   return (
     <RowContainer
@@ -279,13 +281,13 @@ const WalletRow = ({
               {showFiatBalance && (
                 <ListItemSubText textAlign={'right'}>
                   {network === 'testnet'
-                    ? 'Test - No Value'
+                    ? t('Test - No Value')
                     : fiatBalanceFormat}
                 </ListItemSubText>
               )}
             </>
           ) : (
-            <H5>****</H5>
+            <H5>{t('common.masked')}</H5>
           )}
         </BalanceColumn>
       ) : (

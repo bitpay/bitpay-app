@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {ActiveOpacity, Row} from '../../../components/styled/Containers';
 import {H3} from '../../../components/styled/Text';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
@@ -16,6 +17,7 @@ interface Props {
   onPress: () => void;
 }
 const CoinbaseDropdownOption = ({onPress}: Props) => {
+  const {t} = useTranslation();
   const balance =
     useAppSelector(({COINBASE}) => COINBASE.balance[COINBASE_ENV]) || 0.0;
   const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
@@ -46,7 +48,7 @@ const CoinbaseDropdownOption = ({onPress}: Props) => {
             </Row>
           </>
         ) : (
-          <H3>****</H3>
+          <H3>{t('common.masked')}</H3>
         )}
       </Row>
     </OptionContainer>

@@ -1,5 +1,6 @@
 import {useTheme} from '@react-navigation/native';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {gestureHandlerRootHOC} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import CloseModal from '../../../assets/img/close-modal-icon.svg';
@@ -72,6 +73,7 @@ const AmountModal: React.FC<AmountModalProps> = props => {
     ...amountProps
   } = props;
   const theme = useTheme();
+  const {t} = useTranslation();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
 
   return (
@@ -104,7 +106,7 @@ const AmountModal: React.FC<AmountModalProps> = props => {
                 buttonType="pill"
                 buttonStyle="cancel"
                 onPress={() => onSendMaxPressed()}>
-                Send Max
+                {t('Send Max')}
               </Button>
             </ModalHeaderRight>
           ) : null}

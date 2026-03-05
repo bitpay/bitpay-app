@@ -1373,7 +1373,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     {totalBalance}
                   </Balance>
                 ) : (
-                  <H2>****</H2>
+                  <H2>{t('common.masked')}</H2>
                 )}
               </Row>
             </TouchableOpacity>

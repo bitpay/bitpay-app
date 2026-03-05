@@ -921,7 +921,7 @@ const KeyOverview = () => {
                             currencyDisplay: 'symbol',
                           },
                         )
-                      : '****'}
+                      : t('common.masked')}
                   </AllocationValue>
 
                   {/* <AllocationDivider />
@@ -1008,7 +1008,7 @@ const KeyOverview = () => {
               ) : null}
             </>
           ) : (
-            <H2>****</H2>
+            <H2>{t('common.masked')}</H2>
           )}
         </TouchableOpacity>
       </BalanceContainer>

@@ -628,7 +628,7 @@ const BillConfirm: React.FC<
     <ConfirmContainer>
       <DetailsList>
         <>
-          <Header hr>Summary</Header>
+          <Header hr>{t('Summary')}</Header>
           {isTSSWallet && wallet && (
             <TSSProgressTracker
               status={tssStatus}
