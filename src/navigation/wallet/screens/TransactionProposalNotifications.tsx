@@ -698,6 +698,32 @@ const TransactionProposalNotifications = () => {
               if (isTSSKey(key)) {
                 const txp = txpsToSign[0];
 
+                if (txp.creatorId === wallet.credentials.copayerId) {
+                  await showErrorMessage(
+                    CustomErrorMessage({
+                      errMsg: t(
+                        'This TSS signing session cannot be resumed. Please delete this proposal and create a new transaction.',
+                      ),
+                      title: t('Signing session lost'),
+                    }),
+                  );
+                  setResetSwipeButton(true);
+                  return;
+                }
+
+                if (txp.canBeRemoved) {
+                  await showErrorMessage(
+                    CustomErrorMessage({
+                      errMsg: t(
+                        'This TSS signing session cannot be resumed. Please delete this proposal and create a new transaction.',
+                      ),
+                      title: t('Signing session expired'),
+                    }),
+                  );
+                  setResetSwipeButton(true);
+                  return;
+                }
+
                 await dispatch(
                   joinTSSSigningSession({
                     key,

@@ -1106,28 +1106,6 @@ export const buildPendingTxps =
       );
     }
 
-    // Auto-remove TSS proposals created by the current user that are still pending
-    // These are unrecoverable if signing was interrupted (TSS session state is lost)
-    if (wallet.tssKeyId && newPendingTxps.length > 0) {
-      const myId = wallet.credentials.copayerId;
-      const myPendingTssTxps = newPendingTxps.filter(
-        txp => txp.creatorId === myId,
-      );
-
-      if (myPendingTssTxps.length > 0) {
-        for (const txp of myPendingTssTxps) {
-          logManager.debug(
-            `[buildPendingTxps] Removing interrupted TSS proposal ${txp.id}`,
-          );
-          RemoveTxProposal(wallet, txp).catch((err: any) => {
-            logManager.error(
-              `[buildPendingTxps] Failed to remove TSS proposal ${txp.id}: ${err}`,
-            );
-          });
-        }
-      }
-    }
-
     return newPendingTxps;
   };
 

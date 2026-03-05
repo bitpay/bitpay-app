@@ -247,6 +247,10 @@ const TransactionProposalDetails = () => {
   );
 
   const isTSSWallet = isTSSKey(key);
+  const isTSSSessionUnrecoverable =
+    isTSSWallet &&
+    !!txp &&
+    (txp.creatorId === wallet.credentials.copayerId || !!txp.canBeRemoved);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>(
     'waiting_for_cosigners',
@@ -669,6 +673,15 @@ const TransactionProposalDetails = () => {
             />
           ) : null}
 
+          {!txp.removed && isTSSSessionUnrecoverable ? (
+            <Banner
+              type={'warning'}
+              description={t(
+                'This TSS signing session cannot be resumed. Please delete this proposal and create a new transaction.',
+              )}
+            />
+          ) : null}
+
           {txp.status === 'broadcasted' ? (
             <Banner
               type={'success'}
@@ -704,8 +717,9 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
-          {(!txp.removed && txp.canBeRemoved) ||
-          (txp.status === 'accepted' && !txp.broadcastedOn) ? (
+          {!isTSSWallet &&
+          ((!txp.removed && txp.canBeRemoved) ||
+            (txp.status === 'accepted' && !txp.broadcastedOn)) ? (
             <>
               {!txp.payProUrl && wallet.credentials.n > 1 ? (
                 <Banner
@@ -736,6 +750,17 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
+          {isTSSWallet &&
+          !txp.removed && isTSSSessionUnrecoverable ? (
+            <Button
+              style={{marginTop: 10}}
+              onPress={removePaymentProposal}
+              buttonType={'link'}
+              buttonStyle={'danger'}>
+              {t('Delete payment proposal')}
+            </Button>
+          ) : null}
+
           {!txp.removed &&
           txp.pendingForUs &&
           !paymentExpired &&
@@ -754,7 +779,7 @@ const TransactionProposalDetails = () => {
           </DetailContainer>
           {!isTSSWallet && <Hr />}
 
-          {isTSSWallet && transaction && (
+          {isTSSWallet && transaction && !txp?.canBeRemoved && (
             <TSSProgressTracker
               status={tssStatus}
               progress={tssProgress}
@@ -950,6 +975,7 @@ const TransactionProposalDetails = () => {
       {txp &&
       !txp.removed &&
       txp.pendingForUs &&
+      !isTSSSessionUnrecoverable &&
       !key.isReadOnly &&
       (!txp.payProUrl ||
         (payProDetails && !payproIsLoading && !paymentExpired)) ? (
