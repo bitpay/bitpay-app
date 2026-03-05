@@ -88,12 +88,7 @@ const TransactionProposalRow = ({
     });
     labelLines = 2;
   } else if (toAddress && chain && contactList) {
-    const contactName = GetContactName(
-      toAddress,
-      tokenAddress,
-      chain,
-      contactList,
-    );
+    const contactName = GetContactName(toAddress, tokenAddress, contactList);
     if (contactName) {
       label = t('Sending to contactName', {contactName});
       labelLines = 2;

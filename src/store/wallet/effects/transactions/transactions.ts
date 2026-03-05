@@ -922,7 +922,6 @@ export const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
 export const GetContactName = (
   address: string | undefined,
   tokenAddress: string | undefined,
-  chain: string,
   contactList: any[] = [],
 ) => {
   if (!address || !contactList.length) {
@@ -931,7 +930,6 @@ export const GetContactName = (
   const existsContact = contactList.find(
     contact =>
       contact.address === address &&
-      contact.chain === chain?.toLowerCase() &&
       (!contact.tokenAddress || contact.tokenAddress === tokenAddress),
   );
   if (existsContact) {
@@ -1039,13 +1037,11 @@ export const BuildUiFriendlyList = (
       (isSent || isMoved) &&
       contactList?.length &&
       outputs?.length &&
-      chain &&
-      GetContactName(outputs[0]?.address, tokenAddress, chain, contactList)
+      GetContactName(outputs[0]?.address, tokenAddress, contactList)
     ) {
       contactName = GetContactName(
         outputs[0]?.address,
         tokenAddress,
-        chain,
         contactList,
       );
     }
