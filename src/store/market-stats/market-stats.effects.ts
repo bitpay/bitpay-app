@@ -1,9 +1,17 @@
 import axios from 'axios';
 import {Effect} from '../index';
+import {BASE_FIATRATES_MARKETSTATS_URL_DEVELOPMENT} from '@env';
 import {BASE_BWS_URL} from '../../constants/config';
 import {logManager} from '../../managers/LogManager';
 import {updateMarketStats} from './market-stats.actions';
 import {MarketStatsItem} from './market-stats.models';
+
+const FIATRATES_MARKETSTATS_BASE_URL =
+  __DEV__ && BASE_FIATRATES_MARKETSTATS_URL_DEVELOPMENT
+    ? BASE_FIATRATES_MARKETSTATS_URL_DEVELOPMENT
+    : BASE_BWS_URL;
+
+const MARKET_STATS_BASE_URL = `${FIATRATES_MARKETSTATS_BASE_URL}/v1/marketstats`;
 
 const asRecord = (value: unknown): Record<string, unknown> | undefined => {
   return value != null && typeof value === 'object'
@@ -24,14 +32,22 @@ export const fetchMarketStats =
   (params: {
     fiatCode: string;
     coin: string;
+    chain?: string;
+    tokenAddress?: string;
   }): Effect<Promise<MarketStatsItem | null>> =>
   async dispatch => {
     const fiatCode = (params.fiatCode || '').toUpperCase();
     const coin = (params.coin || '').toLowerCase();
+    const chain = (params.chain || '').toLowerCase();
+    const tokenAddress = params.tokenAddress || '';
     const key = getMarketStatsCacheKey({fiatCode, coin});
 
     try {
-      const url = `${BASE_BWS_URL}/v1/marketstats/${fiatCode}?coin=${coin}`;
+      const chainQuery = chain ? `&chain=${encodeURIComponent(chain)}` : '';
+      const tokenAddressQuery = tokenAddress
+        ? `&tokenAddress=${encodeURIComponent(tokenAddress)}`
+        : '';
+      const url = `${MARKET_STATS_BASE_URL}/${fiatCode}?coin=${coin}${chainQuery}${tokenAddressQuery}`;
       logManager.info(`fetchMarketStats: get request to: ${url}`);
       const {data} = await axios.get(url);
       const payloadArray = Array.isArray(data) ? data : [];

@@ -148,6 +148,7 @@ import {BrazeWrapper} from './lib/Braze';
 import {selectSettingsNotificationState} from './store/app/app.selectors';
 import {HeaderShownContext} from '@react-navigation/elements';
 import PaymentSent from './navigation/wallet/components/PaymentSent';
+import AllAssets from './navigation/tabs/home/screens/AllAssets';
 import Allocation from './navigation/tabs/home/screens/Allocation';
 import {
   getBaseEVMAccountCreationCoinsAndTokens,
@@ -167,6 +168,7 @@ const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabsStackParamList>;
+  AllAssets: {keyId?: string} | undefined;
   Allocation:
     | {
         keyId?: string;
@@ -994,6 +996,14 @@ export default () => {
               component={TabsStack}
               options={{
                 gestureEnabled: false,
+              }}
+            />
+            <Root.Screen
+              name={'AllAssets'}
+              component={AllAssets}
+              options={{
+                ...baseNavigatorOptions,
+                headerShown: true,
               }}
             />
             <Root.Screen

@@ -1,15 +1,27 @@
-import React, {useEffect, useState, useLayoutEffect, useMemo} from 'react';
+import React, {
+  useEffect,
+  useState,
+  useLayoutEffect,
+  useMemo,
+  useCallback,
+} from 'react';
 import Button from '../../../../components/button/Button';
 import AngleRight from '../../../../../assets/img/angle-right.svg';
 import ToggleSwitch from '../../../../components/toggle-switch/ToggleSwitch';
+import {EXCHANGE_RATES_CURRENCIES} from '../../../../constants/config';
 import {AppActions} from '../../../../store/app';
 import {showBottomNotificationModal} from '../../../../store/app/app.actions';
 import {resetAllSettings} from '../../../../store/app/app.effects';
+import {
+  cancelPopulatePortfolio,
+  clearPortfolio,
+  populatePortfolio,
+} from '../../../../store/portfolio';
+import {pruneFiatRateSeriesCache} from '../../../../store/rate/rate.actions';
 import {useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useAppSelector} from '../../../../utils/hooks/useAppSelector';
 import {RootState} from '../../../../store';
-import {LogActions} from '../../../../store/log';
 import {useAppDispatch} from '../../../../utils/hooks/useAppDispatch';
 import {useTranslation} from 'react-i18next';
 import {LanguageList} from '../../../../constants/LanguageSelectionList';
@@ -34,14 +46,39 @@ const SettingsComponent = styled.View`
 
 type Props = NativeStackScreenProps<SettingsDetailsParamList, 'General'>;
 
-type SettingItem = {
-  id: string;
-  title: string;
-  type: 'navigation' | 'toggle' | 'button' | 'reset';
-  value?: string | boolean;
-  onPress?: (value?: boolean) => void;
-  navigationTarget?: keyof SettingsDetailsParamList;
-};
+type SettingsDetailsRouteWithParams = 'Connections' | 'ContactsDetails';
+type SettingsDetailsRouteNoParams = Exclude<
+  keyof SettingsDetailsParamList,
+  SettingsDetailsRouteWithParams
+>;
+
+type SettingItem =
+  | {
+      id: string;
+      title: string;
+      type: 'navigation';
+      navigationTarget: SettingsDetailsRouteNoParams;
+    }
+  | {
+      id: string;
+      title: string;
+      type: 'button';
+      value: string;
+      navigationTarget: SettingsDetailsRouteNoParams;
+    }
+  | {
+      id: string;
+      title: string;
+      type: 'toggle';
+      value: boolean;
+      onPress: (value: boolean) => void;
+    }
+  | {
+      id: string;
+      title: string;
+      type: 'reset';
+      onPress: () => void;
+    };
 
 const General: React.FC<Props> = ({navigation}) => {
   const colorScheme = useAppSelector(({APP}: RootState) => APP.colorScheme);
@@ -56,11 +93,48 @@ const General: React.FC<Props> = ({navigation}) => {
   const selectedAltCurrency = useAppSelector(
     ({APP}: RootState) => APP.defaultAltCurrency,
   );
+  const fiatRateSeriesCache = useAppSelector(
+    ({RATE}: RootState) => RATE.fiatRateSeriesCache,
+  );
   const appLanguage = useAppSelector(({APP}) => APP.defaultLanguage);
   const [appLanguageName, setAppLanguageName] = useState('');
 
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
+
+  const handleToggleShowPortfolio = useCallback(
+    (value: boolean) => {
+      dispatch(AppActions.showPortfolioValue(value));
+      if (!value) {
+        dispatch(cancelPopulatePortfolio());
+        const selectedFiatCode = (
+          selectedAltCurrency?.isoCode || 'USD'
+        ).toUpperCase();
+        const fiatsInCache = new Set<string>();
+        for (const cacheKey of Object.keys(fiatRateSeriesCache || {})) {
+          const separatorIdx = cacheKey.indexOf(':');
+          if (separatorIdx > 0) {
+            fiatsInCache.add(cacheKey.slice(0, separatorIdx).toUpperCase());
+          }
+        }
+        for (const fiatCode of fiatsInCache) {
+          dispatch(
+            pruneFiatRateSeriesCache({
+              fiatCode,
+              keepCoins:
+                fiatCode === selectedFiatCode ? EXCHANGE_RATES_CURRENCIES : [],
+            }),
+          );
+        }
+        dispatch(clearPortfolio());
+        return;
+      }
+      dispatch(
+        populatePortfolio({quoteCurrency: selectedAltCurrency?.isoCode}) as any,
+      );
+    },
+    [dispatch, fiatRateSeriesCache, selectedAltCurrency?.isoCode],
+  );
 
   useEffect(() => {
     LanguageList.forEach(lng => {
@@ -76,7 +150,7 @@ const General: React.FC<Props> = ({navigation}) => {
     });
   }, [navigation, theme, t]);
 
-  const settingsData = useMemo(() => {
+  const settingsData = useMemo<SettingItem[]>(() => {
     return [
       {
         id: 'theme',
@@ -101,8 +175,7 @@ const General: React.FC<Props> = ({navigation}) => {
         title: t('Show Portfolio'),
         type: 'toggle' as const,
         value: showPortfolioValue,
-        onPress: (value: boolean) =>
-          dispatch(AppActions.showPortfolioValue(value)),
+        onPress: handleToggleShowPortfolio,
       },
       {
         id: 'hideBalances',
@@ -162,7 +235,10 @@ const General: React.FC<Props> = ({navigation}) => {
                       );
                     } catch (error) {
                       hideOngoingProcess();
-                      logManager.error('Could not reset settings', error);
+                      logManager.error(
+                        'Could not reset settings',
+                        error instanceof Error ? error.message : String(error),
+                      );
                     }
                   },
                   primary: true,
@@ -184,6 +260,9 @@ const General: React.FC<Props> = ({navigation}) => {
     selectedAltCurrency.name,
     appLanguageName,
     dispatch,
+    handleToggleShowPortfolio,
+    hideOngoingProcess,
+    showOngoingProcess,
   ]);
 
   const renderItem = ({item}: {item: SettingItem}) => {
@@ -193,9 +272,8 @@ const General: React.FC<Props> = ({navigation}) => {
           activeOpacity={item.type === 'toggle' ? 1 : ActiveOpacity}
           onPress={() => {
             if (item.type === 'navigation' || item.type === 'button') {
-              item.navigationTarget &&
-                navigation.navigate(item.navigationTarget);
-            } else if (item.type === 'reset' && item.onPress) {
+              navigation.navigate(item.navigationTarget);
+            } else if (item.type === 'reset') {
               item.onPress();
             }
           }}>
@@ -203,18 +281,15 @@ const General: React.FC<Props> = ({navigation}) => {
           {item.type === 'navigation' && <AngleRight />}
           {item.type === 'toggle' && (
             <ToggleSwitch
-              onChange={value => item.onPress?.(value)}
-              isEnabled={item.value as boolean}
+              onChange={item.onPress}
+              isEnabled={item.value}
             />
           )}
           {item.type === 'button' && (
             <Button
               buttonType={'pill'}
-              onPress={() =>
-                item.navigationTarget &&
-                navigation.navigate(item.navigationTarget)
-              }>
-              {item.value as string}
+              onPress={() => navigation.navigate(item.navigationTarget)}>
+              {item.value}
             </Button>
           )}
         </Setting>
@@ -225,7 +300,7 @@ const General: React.FC<Props> = ({navigation}) => {
 
   return (
     <SettingsComponent>
-      <FlashList
+      <FlashList<SettingItem>
         data={settingsData}
         renderItem={renderItem}
         estimatedItemSize={56}

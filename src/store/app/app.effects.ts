@@ -50,6 +50,11 @@ import {
   startGetRates,
 } from '../wallet/effects';
 import {
+  populatePortfolio,
+  preparePortfolioFiatRateCachesForQuoteCurrencySwitch,
+  setSnapshotBalanceMismatchesByWalletIdUpdates,
+} from '../portfolio';
+import {
   setAnnouncementsAccepted,
   setAppFirstOpenEventComplete,
   setAppFirstOpenEventDate,
@@ -69,6 +74,10 @@ import {
   findWalletByIdHashed,
   getAllWalletClients,
 } from '../wallet/utils/wallet';
+import {
+  getWalletIdsToPopulateFromSnapshots,
+  isFiatLoadingForWallets,
+} from '../../utils/portfolio/assets';
 import {navigationRef, RootStacks, SilentPushEventObj} from '../../Root';
 import {
   startUpdateAllKeyAndWalletStatus,
@@ -201,7 +210,7 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     // init analytics -> post onboarding or migration
     dispatch(initAnalytics());
 
-    dispatch(startWalletStoreInit());
+    const walletInitPromise = dispatch(startWalletStoreInit());
 
     const {
       contactMigrationComplete,
@@ -279,6 +288,86 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(AppActions.successAppInit());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_DATA_INITIALIZED);
     logManager.info('Initialized app successfully.');
+
+    walletInitPromise
+      .then(() => {
+        const stateAfterWalletInit = getState();
+        if (stateAfterWalletInit.APP?.showPortfolioValue === false) {
+          return;
+        }
+        if (stateAfterWalletInit.PORTFOLIO?.populateStatus?.inProgress) {
+          return;
+        }
+
+        const quoteCurrency =
+          stateAfterWalletInit.APP?.defaultAltCurrency?.isoCode ||
+          stateAfterWalletInit.PORTFOLIO?.quoteCurrency ||
+          'USD';
+
+        const snapshotsByWalletId =
+          stateAfterWalletInit.PORTFOLIO?.snapshotsByWalletId || {};
+        const portfolioIsEmpty =
+          !snapshotsByWalletId || Object.keys(snapshotsByWalletId).length === 0;
+
+        const keys = stateAfterWalletInit.WALLET?.keys || {};
+        const wallets = Object.values(keys)
+          .flatMap((k: any) => (k?.wallets ? k.wallets : []))
+          .filter((w: any) => w?.network === Network.mainnet);
+
+        if (!wallets.length) {
+          return;
+        }
+
+        if (portfolioIsEmpty) {
+          dispatch(populatePortfolio({quoteCurrency}));
+          return;
+        }
+
+        const {walletIdsToPopulate, snapshotBalanceMismatchUpdates} =
+          getWalletIdsToPopulateFromSnapshots({
+            wallets,
+            snapshotsByWalletId,
+            previousSnapshotBalanceMismatchesByWalletId:
+              stateAfterWalletInit.PORTFOLIO
+                ?.snapshotBalanceMismatchesByWalletId || {},
+          });
+
+        if (Object.keys(snapshotBalanceMismatchUpdates).length) {
+          dispatch(
+            setSnapshotBalanceMismatchesByWalletIdUpdates(
+              snapshotBalanceMismatchUpdates,
+            ),
+          );
+        }
+
+        const hasFiatLoading = isFiatLoadingForWallets({
+          quoteCurrency,
+          wallets,
+          snapshotsByWalletId,
+          fiatRateSeriesCache:
+            stateAfterWalletInit.RATE?.fiatRateSeriesCache || {},
+        });
+
+        if (hasFiatLoading) {
+          dispatch(
+            preparePortfolioFiatRateCachesForQuoteCurrencySwitch({
+              quoteCurrency,
+            }),
+          );
+          return;
+        }
+
+        if (walletIdsToPopulate.length) {
+          dispatch(
+            populatePortfolio({
+              quoteCurrency,
+              walletIds: walletIdsToPopulate,
+            }),
+          );
+        }
+      })
+      .catch(() => {});
+
     dispatch(AppActions.appInitCompleted());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
   } catch (err: unknown) {

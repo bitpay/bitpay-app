@@ -5,7 +5,7 @@ import {SvgUri} from 'react-native-svg';
 import {CardConfig} from '../../../../store/shop/shop.models';
 import {BaseText, H4} from '../../../../components/styled/Text';
 import {formatFiatAmount} from '../../../../utils/helper-methods';
-import {LightBlack, Slate30} from '../../../../styles/colors';
+import {White, Black, LightBlack, Slate30} from '../../../../styles/colors';
 import LinearGradient from 'react-native-linear-gradient';
 
 interface GiftCardCreditsItemProps {
@@ -67,12 +67,12 @@ const GiftCardAmount = styled(BaseText)<GiftCardCreditsItemProps>`
       flex-grow: 1;
       margin-right: 20px;
       text-align: right;
-      color: ${hasWhiteBg(logoBackgroundColor) ? 'black' : 'white'};
+      color: ${hasWhiteBg(logoBackgroundColor) ? Black : White};
     `}
 `;
 
 const PlaceholderText = styled(H4)`
-  color: white;
+  color: ${White};
   padding: 12px 30px;
 `;
 
@@ -99,7 +99,7 @@ const convertCssGradientToReactNativeGradient = (
 
 export default (props: {cardConfig: CardConfig; amount: number}) => {
   const {cardConfig, amount} = props;
-  const logoBackgroundColor = cardConfig?.logoBackgroundColor || 'black';
+  const logoBackgroundColor = cardConfig?.logoBackgroundColor || Black;
   const {angle, colors, locations} =
     convertCssGradientToReactNativeGradient(logoBackgroundColor);
   const [logoWidth, setLogoWidth] = useState(100);

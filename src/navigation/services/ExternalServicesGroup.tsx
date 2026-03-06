@@ -43,10 +43,10 @@ export enum ExternalServicesScreens {
   SIMPLEX_SELL_CHECKOUT = 'SimplexSellCheckout',
 }
 
-const ExternalServicesGroup: React.FC<ExternalServicesProps> = ({
+const ExternalServicesGroup = ({
   ExternalServices,
   theme,
-}) => {
+}: ExternalServicesProps): React.ReactElement => {
   const commonOptions = useStackScreenOptions(theme);
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const {t} = useTranslation();

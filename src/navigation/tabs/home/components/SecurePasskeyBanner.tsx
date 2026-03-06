@@ -6,14 +6,19 @@ import SecurePasskeyIcon from '../../../../../assets/img/secure-passkey.svg';
 import ArrowRightSvg from './ArrowRightSvg';
 import {TouchableOpacity} from '../../../../components/base/TouchableOpacity';
 import {ScreenGutter} from '../../../../components/styled/Containers';
-import {LightBlack, Slate30, White} from '../../../../styles/colors';
+import {
+  CharcoalBlack,
+  LightBlack,
+  Slate30,
+  White,
+} from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
 import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../../navigation/tabs/TabsStack';
 import {SecurityScreens} from '../../../../navigation/tabs/settings/security/SecurityGroup';
 
 const PasskeyBannerContainer = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? '#111' : White)};
+  background-color: ${({theme: {dark}}) => (dark ? CharcoalBlack : White)};
   border-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   border-width: 1px;
   border-radius: 12px;
