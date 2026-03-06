@@ -7,7 +7,7 @@ import {ScreenGutter} from '../../../../components/styled/Containers';
 import {BaseText} from '../../../../components/styled/Text';
 import VirtualKeyboard from '../../../../components/virtual-keyboard/VirtualKeyboard';
 import {ParseAmount} from '../../../../store/wallet/effects/amount/amount';
-import {Caution, White} from '../../../../styles/colors';
+import {Caution, NeutralSlate, White} from '../../../../styles/colors';
 import {
   formatFiatAmount,
   getRateByCurrencyName,
@@ -47,7 +47,7 @@ const CtaContainer = styled.View<{isSmallScreen?: boolean}>`
   align-items: center;
   flex-direction: row;
   justify-content: center;
-  background-color: ${({theme}) => (theme.dark ? '#121212' : White)};
+  background-color: ${({theme}) => (theme.dark ? '#121212' : NeutralSlate)};
   height: 46.7px;
   padding: 16px 8px;
   box-shadow: 0px -4px 4px rgba(0, 0, 0, 0.05);
