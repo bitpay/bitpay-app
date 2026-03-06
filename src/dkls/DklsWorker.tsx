@@ -109,7 +109,7 @@ export const DklsWorkerHost = () => {
       http-equiv="Content-Security-Policy"
       content="
         default-src 'none';
-        script-src 'self' blob: 'unsafe-inline' 'unsafe-eval';
+        script-src 'self' blob: 'unsafe-inline' 'wasm-unsafe-eval';
         worker-src 'self' blob:;
         connect-src data:;
       "
@@ -173,13 +173,13 @@ export const DklsWorkerHost = () => {
         };
 
         window.onunhandledrejection = function (ev) {
-          var r = String(ev.reason && ev.reason.stack || ev.reason);
+          const r = String(ev.reason && ev.reason.stack || ev.reason);
           post({ id: -4, ok: false, result: "[UNHANDLED] " + r });
         };
 
         post({ id: -2, ok: true, result: "HELLO_FROM_WEBVIEW" });
 
-        var iv = setInterval(function () {
+        const iv = setInterval(function () {
           if (canPost()) {
             clearInterval(iv);
             flush();
@@ -220,13 +220,13 @@ export const DklsWorkerHost = () => {
         async function ensureDkls() {
           if (dklsMod) return dklsMod;
           console.log('[WV] ensureDkls() begin');
-          var jsBlob = new Blob([atob(DKLS_JS_B64)], {type: 'text/javascript'});
-          var jsBlobUrl = URL.createObjectURL(jsBlob);
+          const jsBlob = new Blob([atob(DKLS_JS_B64)], {type: 'text/javascript'});
+          const jsBlobUrl = URL.createObjectURL(jsBlob);
           try {
-            var mod = await import(jsBlobUrl);
+            const mod = await import(jsBlobUrl);
             // Decode via fetch(data:) so the engine handles base64 natively,
             // avoiding a large intermediate JS string + per-byte charCodeAt loop.
-            var wasmBuffer = await fetch('data:application/wasm;base64,' + DKLS_WASM_B64)
+            const wasmBuffer = await fetch('data:application/wasm;base64,' + DKLS_WASM_B64)
               .then(function(r) { return r.arrayBuffer(); });
             await mod.default(wasmBuffer);
             dklsMod = mod;
