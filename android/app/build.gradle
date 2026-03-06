@@ -208,7 +208,7 @@ android.applicationVariants.all { variant ->
         dependsOn bundleTaskName
 
         def bundleFile = new File(buildDir,
-            "generated/assets/${bundleTaskName}/index.android.bundle")
+            "generated/assets/react/${variant.dirName}/index.android.bundle")
         def outputFile = new File(generatedSrcDir, "com/bitpay/wallet/BundleHash.kt")
 
         inputs.file(bundleFile)
