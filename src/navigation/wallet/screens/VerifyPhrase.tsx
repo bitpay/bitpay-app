@@ -65,6 +65,7 @@ const HeaderText = styled(BaseText)`
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
+  line-height: 20px;
 `;
 
 const ValidationBadge = styled.View`

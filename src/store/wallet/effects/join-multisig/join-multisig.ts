@@ -35,12 +35,11 @@ export const startJoinMultisig =
         opts.networkName = walletData.network;
         opts.coin = walletData.coin;
         opts.chain = walletData.coin; // Workaround for BWC
-        /* TODO: opts.n is just used to determinate if the wallet is multisig (m/48'/xx) or single sig (m/44')
+        /* TODO: opts.n and m is just used to determinate if the wallet is multisig (m/48'/xx) or single sig (m/44')
         we should change the name to 'isMultisig'
        */
         opts.n = 2;
-
-        // TODO check if exist
+        opts.m = 2;
 
         const _key = BWC.createKey({
           seedType: 'new',
@@ -115,10 +114,11 @@ export const addWalletJoinMultisig =
         opts.networkName = walletData.network;
         opts.coin = walletData.coin;
         opts.chain = walletData.coin; // Workaround for BWC
-        /* TODO: opts.n is just used to determinate if the wallet is multisig (m/48'/xx) or single sig (m/44')
+        /* TODO: opts.n and opts.m is just used to determinate if the wallet is multisig (m/48'/xx) or single sig (m/44')
         we should change the name to 'isMultisig'
        */
         opts.n = 2;
+        opts.m = 2;
         const newWallet = (await joinMultisigWallet({
           key: key.methods!,
           opts,
@@ -186,16 +186,17 @@ const joinMultisigWallet = (params: {
           network: opts.networkName,
           account: opts.account || 0,
           n: opts.n,
+          m: opts.m,
         }),
       );
 
       bwcClient.joinWallet(
-        opts.invitationCode,
+        opts.invitationCode!,
         opts.myName,
         {
           coin: opts.coin,
         },
-        (err: Error) => {
+        err => {
           if (err) {
             switch (err.name) {
               case 'bwc.ErrorCOPAYER_REGISTERED': {

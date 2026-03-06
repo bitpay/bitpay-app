@@ -750,8 +750,7 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
-          {isTSSWallet &&
-          !txp.removed && isTSSSessionUnrecoverable ? (
+          {isTSSWallet && !txp.removed && isTSSSessionUnrecoverable ? (
             <Button
               style={{marginTop: 10}}
               onPress={removePaymentProposal}
