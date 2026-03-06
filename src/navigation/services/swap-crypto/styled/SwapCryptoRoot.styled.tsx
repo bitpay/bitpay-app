@@ -190,8 +190,8 @@ export const AmountClickableContainer = styled(TouchableOpacity)`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  width: 100%;
-  height: 36px;
+  align-items: flex-end;
+  min-width: 80px;
 `;
 
 export const SelectedOptionContainer = styled(TouchableOpacity)<{
