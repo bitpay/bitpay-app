@@ -163,7 +163,7 @@ export const buildGasTokenBadge = (
 
   return (
     <BadgeContainer>
-      <GasTokenSvg />
+      <GasTokenSvg style={{marginTop: Platform.OS === 'ios' ? -1 : 0}} />
       <Badge>{badgeLabel}</Badge>
     </BadgeContainer>
   );

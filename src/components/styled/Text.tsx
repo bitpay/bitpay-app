@@ -1,5 +1,5 @@
 import React from 'react';
-import {Dimensions, StatusBar, Text} from 'react-native';
+import {Dimensions, Platform, StatusBar, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {
   NeutralSlate,
@@ -202,7 +202,8 @@ export const Badge = styled(BaseText)`
   text-align: center;
   line-height: 12px;
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  padding-top: 1px;
+  text-align: center;
+  ${Platform.OS === 'ios' ? 'margin-top: -1px;' : ''}
 `;
 
 export const ProposalBadge = styled(BaseText)`

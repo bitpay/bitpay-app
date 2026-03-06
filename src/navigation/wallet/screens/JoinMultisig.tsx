@@ -119,6 +119,7 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
         }
 
         showOngoingProcess('JOIN_WALLET');
+        await sleep(1000);
 
         const wallet = (await dispatch<any>(
           addWalletJoinMultisig({
@@ -196,6 +197,7 @@ const JoinMultisig = ({navigation, route}: JoinScreenProps) => {
         );
       } else {
         showOngoingProcess('JOIN_WALLET');
+        await sleep(1000);
 
         const multisigKey = (await dispatch<any>(
           startJoinMultisig(opts),
