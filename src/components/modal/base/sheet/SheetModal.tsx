@@ -13,12 +13,14 @@ import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
 import {Black, Overlay, White} from '../../../../styles/colors';
+import {BackdropPressBehavior} from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 
 interface Props extends SheetParams {
   isVisible: boolean;
   fullscreen?: boolean;
   enableBackdropDismiss?: boolean;
   onBackdropPress: (props?: any) => void;
+  backdropPressBehavior?: BackdropPressBehavior;
   onModalHide?: () => void;
   children?: any;
   modalLibrary?: 'bottom-sheet' | 'modal';
@@ -40,6 +42,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
   fullscreen,
   enableBackdropDismiss,
   onBackdropPress,
+  backdropPressBehavior,
   onModalHide,
   placement,
   modalLibrary = 'modal',
@@ -119,13 +122,21 @@ const SheetModal: React.FC<SheetModalProps> = ({
       <BottomSheetBackdrop
         {...props}
         onPress={onBackdropPress}
-        pressBehavior={enableBackdropDismiss === false ? 'none' : 'close'}
+        pressBehavior={
+          backdropPressBehavior ??
+          (enableBackdropDismiss === false ? 'none' : 'close')
+        }
         disappearsOnIndex={-1}
         appearsOnIndex={0}
         opacity={backdropOpacity}
       />
     ),
-    [enableBackdropDismiss, onBackdropPress, backdropOpacity],
+    [
+      enableBackdropDismiss,
+      onBackdropPress,
+      backdropOpacity,
+      backdropPressBehavior,
+    ],
   );
 
   const handleDismiss = useCallback(() => {
