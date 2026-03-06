@@ -90,7 +90,7 @@ export const ArrowBox = styled.View`
   justify-content: center;
   align-items: center;
   margin-top: -26px;
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 10px;
   width: 40px;
   height: 40px;
