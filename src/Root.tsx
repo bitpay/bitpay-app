@@ -160,6 +160,7 @@ import {isNarrowHeight} from './components/styled/Containers';
 import {useOngoingProcess} from './contexts';
 import {Keys} from './store/wallet/wallet.reducer';
 import {logManager} from './managers/LogManager';
+import * as Sentry from '@sentry/react-native';
 
 const BWC = BwcProvider.getInstance();
 
@@ -916,6 +917,7 @@ export default () => {
                     ),
                   ),
                 );
+                Sentry.captureException(error, {level: 'error'});
                 dispatch(setSvmAddressCreationFixComplete());
                 hideOngoingProcess();
               }
