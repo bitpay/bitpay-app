@@ -25,9 +25,9 @@ import {useAppDispatch} from '../../../../../utils/hooks';
 import Checkbox from '../../../../../components/checkbox/Checkbox';
 import {
   ActiveOpacity,
-  CtaContainerAbsolute,
   HeaderRightContainer,
 } from '../../../../../components/styled/Containers';
+import FooterButtonContainer from '../../../../../components/footer/FooterButtonContainer';
 import {SectionHeaderContainer} from '../../components/styled/ShopTabComponents';
 import Settings from '../../../../../components/settings/Settings';
 import OptionsSheet, {Option} from '../../../../wallet/components/OptionsSheet';
@@ -38,8 +38,7 @@ import {BillAccountPill} from '../components/BillAccountPill';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import {getBillAccountEventParams} from '../utils';
 import {ShopEffects} from '../../../../../store/shop';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
+import {useOngoingProcess} from '../../../../../contexts';
 
 const BillPayOption = styled.View<{hasBorderTop?: boolean}>`
   flex-direction: row;
@@ -78,11 +77,6 @@ const AmountSublabelText = styled(Paragraph)`
   font-size: 14px;
 `;
 
-const FooterButton = styled(CtaContainerAbsolute)`
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  padding-bottom: 30px;
-`;
-
 const getCustomAmountSublabel = (account: BillPayAccount) => {
   return () => (
     <AmountSublabel>
@@ -104,6 +98,7 @@ const PayBill = ({
 }: NativeStackScreenProps<BillGroupParamList, BillScreens.PAY_BILL>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {account} = route.params;
   const [isOptionsSheetVisible, setIsOptionsSheetVisible] = useState(false);
   const [removingBill, setRemovingBill] = useState(false);
@@ -121,10 +116,10 @@ const PayBill = ({
 
   const removeBill = async () => {
     setRemovingBill(true);
-    dispatch(startOnGoingProcessModal('REMOVING_BILL'));
+    showOngoingProcess('REMOVING_BILL');
     await dispatch(ShopEffects.startHideBillPayAccount(account.id));
     await dispatch(ShopEffects.startGetBillPayAccounts());
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     navigation.pop();
     dispatch(Analytics.track('Bill Pay - Removed Bill', baseEventParams));
   };
@@ -153,7 +148,7 @@ const PayBill = ({
     {
       onPress: async () => {
         removeBill().catch(async err => {
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           await sleep(500);
           dispatch(
             AppActions.showBottomNotificationModal(
@@ -402,15 +397,7 @@ const PayBill = ({
           </View>
         </SectionContainer>
       </ScrollView>
-      <FooterButton
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }}>
+      <FooterButtonContainer>
         <Button
           disabled={removingBill}
           onPress={() => {
@@ -429,7 +416,7 @@ const PayBill = ({
           buttonStyle={'primary'}>
           {t('Continue')}
         </Button>
-      </FooterButton>
+      </FooterButtonContainer>
       <OptionsSheet
         isVisible={isOptionsSheetVisible}
         closeModal={() => setIsOptionsSheetVisible(false)}

@@ -3,6 +3,7 @@ import {
   CacheFeeLevel,
   CryptoBalance,
   Key,
+  PendingJoinerSession,
   Token,
   TransactionProposal,
   Wallet,
@@ -41,10 +42,6 @@ export const successAddWallet = (payload: {key: Key}): WalletActionType => ({
   payload,
 });
 
-export const failedAddWallet = (): WalletActionType => ({
-  type: WalletActionTypes.FAILED_ADD_WALLET,
-});
-
 export const successImport = (payload: {key: Key}): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_IMPORT,
   payload,
@@ -71,14 +68,6 @@ export const deleteKey = (payload: {keyId: string}): WalletActionType => ({
   payload,
 });
 
-export const successGetTokenOptions = (payload: {
-  tokenOptionsByAddress: {[key in string]: Token};
-  tokenDataByAddress: {[key in string]: CurrencyOpts};
-}): WalletActionType => ({
-  type: WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS,
-  payload,
-});
-
 export const successGetCustomTokenOptions = (payload: {
   customTokenOptionsByAddress: {[key in string]: Token};
   customTokenDataByAddress: {[key in string]: CurrencyOpts};
@@ -101,14 +90,6 @@ export const successUpdateWalletStatus = (payload: {
   status: WalletStatus;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_UPDATE_WALLET_STATUS,
-  payload,
-});
-
-export const failedUpdateWalletStatus = (payload: {
-  keyId: string;
-  walletId: string;
-}): WalletActionType => ({
-  type: WalletActionTypes.FAILED_UPDATE_WALLET_STATUS,
   payload,
 });
 
@@ -162,15 +143,6 @@ export const updateAccountName = (payload: {
   accountAddress: string;
 }): WalletActionType => ({
   type: WalletActionTypes.UPDATE_ACCOUNT_NAME,
-  payload,
-});
-
-export const setWalletRefreshing = (payload: {
-  keyId: string;
-  walletId: string;
-  isRefreshing: boolean;
-}): WalletActionType => ({
-  type: WalletActionTypes.SET_WALLET_REFRESHING,
   payload,
 });
 
@@ -307,5 +279,21 @@ export const successUpdateWalletBalancesAndStatus = (payload: {
   }>;
 }): WalletActionType => ({
   type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
+  payload,
+});
+
+export const setPendingJoinerSession = (
+  session: PendingJoinerSession | null,
+) => ({
+  type: WalletActionTypes.SET_PENDING_JOINER_SESSION,
+  payload: session,
+});
+
+export const removePendingJoinerSession = () => ({
+  type: WalletActionTypes.REMOVE_PENDING_JOINER_SESSION,
+});
+
+export const setTssEnabled = (payload: boolean): WalletActionType => ({
+  type: WalletActionTypes.SET_TSS_ENABLED,
   payload,
 });

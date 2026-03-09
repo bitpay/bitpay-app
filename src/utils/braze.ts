@@ -49,10 +49,6 @@ export const isShopWithCrypto = (contentCard: ContentCard) => {
   return contentCard.extras.feed_type === 'shop_with_crypto';
 };
 
-export const isQuickLink = (contentCard: ContentCard) => {
-  return contentCard.extras.feed_type === 'quick_links';
-};
-
 export const isDoMore = (contentCard: ContentCard) => {
   return contentCard.extras.feed_type === 'do_more';
 };
@@ -60,3 +56,12 @@ export const isDoMore = (contentCard: ContentCard) => {
 export const isCardOffer = (contentCard: ContentCard) => {
   return contentCard.extras.feed_type === 'card_promotion';
 };
+
+export const isMarketingCarousel = (contentCard: ContentCard) => {
+  return contentCard.extras.feed_type === 'marketing_carousel';
+};
+
+export const sortNewestFirst = <T extends {created?: number}>(
+  a: T,
+  b: T,
+): number => (b.created ?? 0) - (a.created ?? 0);

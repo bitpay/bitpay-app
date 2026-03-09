@@ -35,12 +35,11 @@ import {Key} from '../../../store/wallet/wallet.models';
 import {RootStacks} from '../../../Root';
 import {TabsScreens} from '../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
-import {baseNavigatorOptions} from '../../../constants/NavigationOptions';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useOngoingProcess} from '../../../contexts';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 const AccountSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -91,6 +90,7 @@ const AccountSettings = () => {
   } = useRoute<RouteProp<WalletGroupParamList, 'AccountSettings'>>();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const _key: Key = keys[key.id];
 
@@ -187,21 +187,24 @@ const AccountSettings = () => {
         <HeaderBackButton
           onPress={() => {
             if (hideAccount && context === 'accountDetails') {
+              const baseRoutes = [
+                {
+                  name: RootStacks.TABS,
+                  params: {screen: TabsScreens.HOME},
+                },
+              ];
+              const keyOverviewRoute = {
+                name: WalletScreens.KEY_OVERVIEW,
+                params: {id: key.id},
+              };
+              const routes = isTSSKey(key)
+                ? [...baseRoutes]
+                : [...baseRoutes, keyOverviewRoute];
+
               navigation.dispatch(
                 CommonActions.reset({
-                  index: 1,
-                  routes: [
-                    {
-                      name: RootStacks.TABS,
-                      params: {screen: TabsScreens.HOME},
-                    },
-                    {
-                      name: WalletScreens.KEY_OVERVIEW,
-                      params: {
-                        id: key.id,
-                      },
-                    },
-                  ],
+                  index: routes.length - 1,
+                  routes,
                 }),
               );
             } else {
@@ -240,7 +243,7 @@ const AccountSettings = () => {
 
           <ToggleSwitch
             onChange={async () => {
-              dispatch(startOnGoingProcessModal('LOADING'));
+              showOngoingProcess('LOADING');
               setHideAccount(!hideAccount);
               dispatch(
                 toggleHideAccount({
@@ -259,7 +262,7 @@ const AccountSettings = () => {
               );
               await sleep(1000);
               dispatch(updatePortfolioBalance());
-              dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
             }}
             isEnabled={!!hideAccount}
             isDisabled={!hasVisibleWallet}

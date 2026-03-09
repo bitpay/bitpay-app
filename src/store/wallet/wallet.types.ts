@@ -6,6 +6,7 @@ import {
   TransactionProposal,
   CacheFeeLevel,
   CryptoBalance,
+  PendingJoinerSession,
 } from './wallet.models';
 
 export enum WalletActionTypes {
@@ -21,13 +22,10 @@ export enum WalletActionTypes {
   SET_BACKUP_COMPLETE = 'WALLET/SET_BACKUP_COMPLETE',
   DELETE_KEY = 'WALLET/DELETE_KEY',
   SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD = 'WALLET/SUCCESS_ENCRYPT_OR_DECRYPT_PASSWORD',
-  SUCCESS_GET_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_TOKEN_OPTIONS',
   SUCCESS_GET_CUSTOM_TOKEN_OPTIONS = 'WALLET/SUCCESS_GET_CUSTOM_TOKEN_OPTIONS',
   FAILED_GET_TOKEN_OPTIONS = 'WALLET/FAILED_GET_TOKEN_OPTIONS',
   SUCCESS_ADD_WALLET = 'WALLET/SUCCESS_ADD_WALLET',
-  FAILED_ADD_WALLET = 'WALLET/FAILED_ADD_WALLET',
   SUCCESS_UPDATE_WALLET_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_STATUS',
-  FAILED_UPDATE_WALLET_STATUS = 'WALLET/FAILED_UPDATE_WALLET_STATUS',
   SUCCESS_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEY_TOTAL_BALANCE',
   SUCCESS_UPDATE_KEYS_TOTAL_BALANCE = 'WALLET/SUCCESS_UPDATE_KEYS_TOTAL_BALANCE',
   FAILED_UPDATE_KEY_TOTAL_BALANCE = 'WALLET/FAILED_UPDATE_KEY_TOTAL_BALANCE',
@@ -37,7 +35,6 @@ export enum WalletActionTypes {
   UPDATE_KEY_NAME = 'WALLET/UPDATE_KEY_NAME',
   UPDATE_WALLET_NAME = 'WALLET/UPDATE_WALLET_NAME',
   UPDATE_ACCOUNT_NAME = 'WALLET/UPDATE_ACCOUNT_NAME',
-  SET_WALLET_REFRESHING = 'WALLET/SET_WALLET_REFRESHING',
   SET_WALLET_SCANNING = 'WALLET/SET_WALLET_SCANNING',
   SUCCESS_GET_RECEIVE_ADDRESS = 'WALLET/SUCCESS_GET_RECEIVE_ADDRESS',
   SET_USE_UNCONFIRMED_FUNDS = 'WALLET/SET_USE_UNCONFIRMED_FUNDS',
@@ -58,6 +55,12 @@ export enum WalletActionTypes {
   SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE = 'APP/SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE',
   SET_SVM_ADDRESS_CREATION_FIX_COMPLETE = 'APP/SET_SVM_ADDRESS_CREATION_FIX_COMPLETE',
   SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS = 'WALLET/SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS',
+  SET_PENDING_TSS_SESSION = 'WALLET/SET_PENDING_TSS_SESSION',
+  UPDATE_PENDING_TSS_SESSION = 'WALLET/UPDATE_PENDING_TSS_SESSION',
+  REMOVE_PENDING_TSS_SESSION = 'WALLET/REMOVE_PENDING_TSS_SESSION',
+  SET_PENDING_JOINER_SESSION = 'WALLET/SET_PENDING_JOINER_SESSION',
+  REMOVE_PENDING_JOINER_SESSION = 'WALLET/REMOVE_PENDING_JOINER_SESSION',
+  SET_TSS_ENABLED = 'WALLET/SET_TSS_ENABLED',
 }
 
 interface successWalletStoreInit {
@@ -97,10 +100,6 @@ interface successAddWallet {
   };
 }
 
-interface failedAddWallet {
-  type: typeof WalletActionTypes.FAILED_ADD_WALLET;
-}
-
 interface successImport {
   type: typeof WalletActionTypes.SUCCESS_IMPORT;
   payload: {
@@ -131,14 +130,6 @@ interface deleteKey {
   };
 }
 
-interface successGetTokenOptions {
-  type: typeof WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS;
-  payload: {
-    tokenOptionsByAddress: {[key in string]: Token};
-    tokenDataByAddress: {[key in string]: CurrencyOpts};
-  };
-}
-
 interface successGetCustomTokenOptions {
   type: typeof WalletActionTypes.SUCCESS_GET_CUSTOM_TOKEN_OPTIONS;
   payload: {
@@ -165,14 +156,6 @@ interface successUpdateWalletStatus {
       pendingTxps: TransactionProposal[];
       singleAddress: boolean;
     };
-  };
-}
-
-interface failedUpdateWalletStatus {
-  type: typeof WalletActionTypes.FAILED_UPDATE_WALLET_STATUS;
-  payload: {
-    keyId: string;
-    walletId: string;
   };
 }
 
@@ -233,15 +216,6 @@ interface updateAccountName {
     keyId: string;
     accountAddress: string;
     name: string;
-  };
-}
-
-interface setWalletRefreshing {
-  type: typeof WalletActionTypes.SET_WALLET_REFRESHING;
-  payload: {
-    keyId: string;
-    walletId: string;
-    isRefreshing: boolean;
   };
 }
 
@@ -367,6 +341,21 @@ interface successUpdateWalletBalancesAndStatus {
   };
 }
 
+interface removePendingJoinerSession {
+  type: typeof WalletActionTypes.REMOVE_PENDING_JOINER_SESSION;
+  payload: string;
+}
+
+interface setPendingJoinerSession {
+  type: typeof WalletActionTypes.SET_PENDING_JOINER_SESSION;
+  payload: PendingJoinerSession | null;
+}
+
+interface setTssEnabled {
+  type: typeof WalletActionTypes.SET_TSS_ENABLED;
+  payload: boolean;
+}
+
 export type WalletActionType =
   | successWalletStoreInit
   | failedWalletStoreInit
@@ -375,18 +364,15 @@ export type WalletActionType =
   | successUpdateKey
   | failedUpdateKey
   | successAddWallet
-  | failedAddWallet
   | successImport
   | failedImport
   | setBackupComplete
   | successEncryptOrDecryptPassword
   | deleteKey
-  | successGetTokenOptions
   | successGetCustomTokenOptions
   | failedGetTokenOptions
   | setWalletTermsAccepted
   | successUpdateWalletStatus
-  | failedUpdateWalletStatus
   | successUpdateKeysTotalBalance
   | failedUpdateKeyTotalBalance
   | updatePortfolioBalance
@@ -395,7 +381,6 @@ export type WalletActionType =
   | updateKeyName
   | updateWalletName
   | updateAccountName
-  | setWalletRefreshing
   | setWalletScanning
   | successGetReceiveAddress
   | setUseUnconfirmedFunds
@@ -413,4 +398,7 @@ export type WalletActionType =
   | setAccountEVMCreationMigrationComplete
   | setAccountSVMCreationMigrationComplete
   | setSvmAddressCreationFixComplete
-  | successUpdateWalletBalancesAndStatus;
+  | successUpdateWalletBalancesAndStatus
+  | setPendingJoinerSession
+  | removePendingJoinerSession
+  | setTssEnabled;

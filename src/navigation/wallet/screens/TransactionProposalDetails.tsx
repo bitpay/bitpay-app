@@ -47,14 +47,11 @@ import {
 } from '../../../utils/helper-methods';
 import {GetAmFormatDate, GetAmTimeAgo} from '../../../store/wallet/utils/time';
 import SendToPill from '../components/SendToPill';
-import {SUPPORTED_CURRENCIES} from '../../../constants/currencies';
 import {CurrencyListIcons} from '../../../constants/SupportedCurrencyOptions';
 import DefaultSvg from '../../../../assets/img/currencies/default.svg';
 import SecureLockIcon from '../../../../assets/img/secure-lock.svg';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {
   broadcastTx,
   publishAndSign,
@@ -75,6 +72,8 @@ import {
   Key,
   TransactionProposal,
   Wallet,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../store/wallet/wallet.models';
 import {
   DetailColumn,
@@ -84,10 +83,18 @@ import {
   SendToPillContainer,
 } from './send/confirm/Shared';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {LogActions} from '../../../store/log';
 import {GetPayProDetails} from '../../../store/wallet/effects/paypro/paypro';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {AppActions} from '../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
+import {DeviceEventEmitter} from 'react-native';
+import {DeviceEmitterEvents} from '../../../constants/device-emitter-events';
+import {
+  isTSSKey,
+  joinTSSSigningSession,
+} from '../../../store/wallet/effects/tss-send/tss-send';
+import TSSProgressTracker from '../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
 const TxpDetailsContainer = styled.SafeAreaView`
   flex: 1;
@@ -124,6 +131,7 @@ const TimelineBorderLeft = styled.View<{isFirst: boolean; isLast: boolean}>`
   width: 1px;
   z-index: -1;
 `;
+
 const TimelineTime = styled(H7)`
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
 `;
@@ -227,6 +235,43 @@ const TransactionProposalDetails = () => {
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
   const [lastSigner, setLastSigner] = useState(false);
   const [isForFee, setIsForFee] = useState(false);
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const isTSSWallet = isTSSKey(key);
+  const isTSSSessionUnrecoverable =
+    isTSSWallet &&
+    !!txp &&
+    (txp.creatorId === wallet.credentials.copayerId || !!txp.canBeRemoved);
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>(
+    'waiting_for_cosigners',
+  );
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+
+  const tssCallbacks = useTSSCallbacks({
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+  });
 
   const title = getDetailsTitle(transaction, wallet);
   let {currencyAbbreviation, chain, network, tokenAddress} = wallet;
@@ -276,7 +321,7 @@ const TransactionProposalDetails = () => {
       await sleep(500);
       setIsLoading(false);
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[TransactionProposalDetails] ', e));
+      logManager.error('[TransactionProposalDetails] ', e);
     }
   };
 
@@ -284,7 +329,7 @@ const TransactionProposalDetails = () => {
     try {
       setPayproIsLoading(true);
       await sleep(400);
-      dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
+      showOngoingProcess('FETCHING_PAYMENT_INFO');
       const address = (await dispatch<Promise<string>>(
         createWalletAddress({wallet: wallet, newAddress: false}),
       )) as string;
@@ -303,11 +348,11 @@ const TransactionProposalDetails = () => {
       setPayProDetails(_payProDetails);
       await sleep(500);
       setPayproIsLoading(false);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } catch (err) {
       setPayproIsLoading(false);
       await sleep(1000);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       logger.warn('Error fetching this invoice: ' + BWCErrorMessage(err));
       await sleep(600);
       await dispatch(
@@ -341,7 +386,6 @@ const TransactionProposalDetails = () => {
       setPaymentExpired(true);
       setRemainingTimeStr(t('Expired'));
       if (countDown) {
-        /* later */
         clearInterval(countDown);
       }
       return;
@@ -366,7 +410,7 @@ const TransactionProposalDetails = () => {
   };
 
   const broadcastTxp = async (txp: TransactionProposal) => {
-    dispatch(startOnGoingProcessModal('BROADCASTING_TXP'));
+    showOngoingProcess('BROADCASTING_TXP');
 
     try {
       logger.debug('Trying to broadcast Txp');
@@ -377,23 +421,22 @@ const TransactionProposalDetails = () => {
         amount: number;
       };
       const targetAmount = wallet.balance.sat - (fee + amount);
-
-      dispatch(
-        waitForTargetAmountAndUpdateWallet({
-          key,
-          wallet,
-          targetAmount,
-        }),
-      );
-      await sleep(1000);
-      dispatch(dismissOnGoingProcessModal());
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
-        }),
-      );
+      setTimeout(() => {
+        DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
+        dispatch(
+          waitForTargetAmountAndUpdateWallet({
+            key,
+            wallet,
+            targetAmount,
+          }),
+        );
+      }, 3000);
+      await sleep(300);
+      hideOngoingProcess();
+      showPaymentSent({
+        onCloseModal,
+        title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
+      });
       await sleep(1000);
       navigation.goBack();
     } catch (err: any) {
@@ -405,7 +448,7 @@ const TransactionProposalDetails = () => {
         msg = msg + `: ${err.message}`;
       }
       await sleep(1000);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(600);
       await dispatch(
         showBottomNotificationModal(
@@ -445,7 +488,7 @@ const TransactionProposalDetails = () => {
       );
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[removePaymentProposal] ', e));
+      logManager.error('[removePaymentProposal] ', e);
     }
   };
 
@@ -476,39 +519,75 @@ const TransactionProposalDetails = () => {
       );
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[rejectPaymentProposal] ', e));
+      logManager.error('[rejectPaymentProposal] ', e);
     }
   };
 
-  const onSwipeComplete = async () => {
-    try {
+  const joinTSSSigning = async () => {
+    logManager.debug(
+      `[TxpDetails] Joining TSS signing session for txp: ${txp.id}`,
+    );
+    const result = await dispatch(
+      joinTSSSigningSession({
+        key,
+        wallet,
+        txp,
+        callbacks: tssCallbacks,
+        setShowTSSProgressModal,
+      }),
+    );
+
+    // Update wallet status
+    const {fee, amount} = result as {fee: number; amount: number};
+    const targetAmount = wallet.balance.sat - (fee + amount);
+    setTimeout(() => {
+      DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
       dispatch(
-        startOnGoingProcessModal(
-          lastSigner ? 'SENDING_PAYMENT' : 'ACCEPTING_PAYMENT',
-        ),
+        waitForTargetAmountAndUpdateWallet({
+          key,
+          wallet,
+          targetAmount,
+        }),
       );
+    }, 3000);
+
+    showPaymentSent({
+      onCloseModal,
+      title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
+    });
+
+    await sleep(1000);
+    navigation.goBack();
+  };
+
+  const onSwipeComplete = async () => {
+    if (isTSSWallet) {
+      await joinTSSSigning();
+      return;
+    }
+
+    try {
       await sleep(400);
-      await dispatch(publishAndSign({txp, key, wallet}));
-      await sleep(400);
-      dispatch(dismissOnGoingProcessModal());
+      await dispatch(
+        publishAndSign({
+          txp,
+          key,
+          wallet,
+        }),
+      );
       dispatch(
         Analytics.track('Sent Crypto', {
           context: 'Transaction Proposal Details',
           coin: currencyAbbreviation || '',
         }),
       );
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title: lastSigner ? t('Payment Sent') : t('Payment Accepted'),
+      });
       await sleep(1000);
       navigation.goBack();
     } catch (err) {
-      await sleep(500);
-      dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -533,10 +612,7 @@ const TransactionProposalDetails = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   useEffect(() => {
@@ -567,15 +643,6 @@ const TransactionProposalDetails = () => {
       }
     };
   }, []);
-
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
-
   return (
     <TxpDetailsContainer>
       {isLoading ? (
@@ -603,6 +670,15 @@ const TransactionProposalDetails = () => {
               type={'info'}
               height={60}
               description={t('The payment was removed by creator.')}
+            />
+          ) : null}
+
+          {!txp.removed && isTSSSessionUnrecoverable ? (
+            <Banner
+              type={'warning'}
+              description={t(
+                'This TSS signing session cannot be resumed. Please delete this proposal and create a new transaction.',
+              )}
             />
           ) : null}
 
@@ -641,8 +717,9 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
-          {(!txp.removed && txp.canBeRemoved) ||
-          (txp.status === 'accepted' && !txp.broadcastedOn) ? (
+          {!isTSSWallet &&
+          ((!txp.removed && txp.canBeRemoved) ||
+            (txp.status === 'accepted' && !txp.broadcastedOn)) ? (
             <>
               {!txp.payProUrl && wallet.credentials.n > 1 ? (
                 <Banner
@@ -673,6 +750,16 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
+          {isTSSWallet && !txp.removed && isTSSSessionUnrecoverable ? (
+            <Button
+              style={{marginTop: 10}}
+              onPress={removePaymentProposal}
+              buttonType={'link'}
+              buttonStyle={'danger'}>
+              {t('Delete payment proposal')}
+            </Button>
+          ) : null}
+
           {!txp.removed &&
           txp.pendingForUs &&
           !paymentExpired &&
@@ -689,14 +776,28 @@ const TransactionProposalDetails = () => {
           <DetailContainer>
             <H6>{t('DETAILS')}</H6>
           </DetailContainer>
-          <Hr />
+          {!isTSSWallet && <Hr />}
+
+          {isTSSWallet && transaction && !txp?.canBeRemoved && (
+            <TSSProgressTracker
+              status={tssStatus}
+              progress={tssProgress}
+              createdBy={wallet.walletName || 'You'}
+              date={new Date()}
+              wallet={wallet}
+              copayers={tssCopayers}
+              onCopayersInitialized={setTssCopayers}
+              isModalVisible={showTSSProgressModal}
+              onModalVisibilityChange={setShowTSSProgressModal}
+              txpCreatorId={transaction.creatorId}
+            />
+          )}
 
           {txp.nonce ? (
             <>
               <DetailContainer>
                 <DetailRow>
                   <H7>{t('Nonce')}</H7>
-
                   <H7>{txp.nonce}</H7>
                 </DetailRow>
               </DetailContainer>
@@ -786,7 +887,6 @@ const TransactionProposalDetails = () => {
               <DetailContainer>
                 <DetailRow>
                   <H7>{t('Created by')}</H7>
-
                   <H7>{txp.creatorName}</H7>
                 </DetailRow>
               </DetailContainer>
@@ -815,8 +915,6 @@ const TransactionProposalDetails = () => {
               <Hr />
             </>
           ) : null}
-
-          {/*  TODO: Add Notify unconfirmed transaction  row */}
 
           {payProDetails ? (
             <>
@@ -876,11 +974,18 @@ const TransactionProposalDetails = () => {
       {txp &&
       !txp.removed &&
       txp.pendingForUs &&
+      !isTSSSessionUnrecoverable &&
       !key.isReadOnly &&
       (!txp.payProUrl ||
         (payProDetails && !payproIsLoading && !paymentExpired)) ? (
         <SwipeButton
-          title={lastSigner ? t('Slide to send') : t('Slide to accept')}
+          title={
+            isTSSWallet
+              ? t('Slide to join signing')
+              : lastSigner
+              ? t('Slide to send')
+              : t('Slide to accept')
+          }
           forceReset={resetSwipeButton}
           onSwipeComplete={onSwipeComplete}
         />

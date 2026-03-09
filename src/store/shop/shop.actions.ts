@@ -122,14 +122,17 @@ export const toggledGiftCardArchivedStatus = (payload: {
   payload,
 });
 
-export const toggledSyncGiftCardPurchasesWithBitPayId = (): ShopActionType => ({
-  type: ShopActionTypes.TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID,
-});
-
 export const updatedEmailAddress = (payload: {
   email: string;
 }): ShopActionType => ({
   type: ShopActionTypes.UPDATED_EMAIL_ADDRESS,
+  payload,
+});
+
+export const setIsBillPayEnabled = (payload: {
+  isBillPayEnabled: boolean;
+}): ShopActionType => ({
+  type: ShopActionTypes.SET_IS_BILL_PAY_ENABLED,
   payload,
 });
 

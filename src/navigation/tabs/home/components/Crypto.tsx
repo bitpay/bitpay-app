@@ -1,5 +1,5 @@
 import {NavigationProp, useNavigation} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import React, {ReactElement, useEffect, useState} from 'react';
 import Carousel from 'react-native-reanimated-carousel';
 import styled from 'styled-components/native';
 import {
@@ -18,7 +18,6 @@ import {
   showDecryptPasswordModal,
 } from '../../../../store/app/app.actions';
 import {
-  calculatePercentageDifference,
   checkEncryptedKeysForEddsaMigration,
   getMnemonic,
   sleep,
@@ -33,10 +32,16 @@ import {
   HomeCarouselConfig,
   HomeCarouselLayoutType,
 } from '../../../../store/app/app.models';
+import type {
+  BalanceSnapshot,
+  PortfolioPopulateStatus,
+} from '../../../../store/portfolio/portfolio.models';
+import type {
+  FiatRateSeriesCache,
+  Rates,
+} from '../../../../store/rate/rate.models';
 import {
   CarouselItemContainer,
-  HomeSectionSubtext,
-  HomeSectionSubTitle,
   HomeSectionTitle,
   SectionHeaderContainer,
 } from './Styled';
@@ -44,25 +49,40 @@ import {View} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import CustomizeSvg from './CustomizeSvg';
 import haptic from '../../../../components/haptic-feedback/haptic';
-import {Feather} from '../../../../styles/colors';
 import Button from '../../../../components/button/Button';
 import CoinbaseBalanceCard from '../../../coinbase/components/CoinbaseBalanceCard';
+import {
+  HOME_CARD_HEIGHT,
+  HOME_CARD_WIDTH,
+} from '../../../../components/home-card/HomeCard';
+import {
+  getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
+  getLegacyPercentageDifferenceFromTotals,
+  getKeyLastDayPercentageDifference,
+  getPercentageDifferenceFromPercentRatio,
+  getQuoteCurrency,
+  hasSnapshotsBeforeMsForWallets,
+  hasSnapshotsForWallets,
+  isPopulateLoadingForWallets,
+} from '../../../../utils/portfolio/assets';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {WrongPasswordError} from '../../../wallet/components/ErrorMessages';
 import {useTranslation} from 'react-i18next';
 import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
+import AddSvg from './AddSvg';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
+import {IsVMChain} from '../../../../store/wallet/utils/currency';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
-import {successImport} from '../../../../store/wallet/wallet.actions';
-import {checkEncryptPassword} from '../../../../store/wallet/utils/wallet';
 
 const CryptoContainer = styled.View`
-  background: ${({theme}) => (theme.dark ? '#111111' : Feather)};
-  padding: 10px 0 12px;
+  background: ${({theme}) => theme.colors.background};
+  padding: 5px 0 0px;
 `;
 
 const CarouselContainer = styled.View`
-  margin-top: 10px;
+  margin-top: 28px;
 `;
 
 const Row = styled.View`
@@ -75,10 +95,37 @@ const ListViewContainer = styled.View`
 
 const ButtonContainer = styled.View`
   padding: 20px 0;
-  margin-top: 15px;
 `;
 
-const _renderItem = ({item}: {item: {id: string; component: JSX.Element}}) => {
+const NoKeysSectionHeaderContainer = styled(SectionHeaderContainer)`
+  margin-bottom: 0px;
+`;
+
+const NoKeysButtonWrapper = styled.View`
+  margin-bottom: 15px;
+`;
+
+const CryptoSectionHeaderContainer = styled(SectionHeaderContainer)`
+  margin-bottom: -15px;
+  margin-top: 0px;
+`;
+
+const CryptoHeaderRow = styled(Row)`
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0px;
+`;
+
+const CryptoHeaderTitle = styled(HomeSectionTitle)`
+  flex-grow: 1;
+`;
+
+const CryptoHeaderActions = styled.View`
+  flex-direction: row;
+  gap: 8px;
+`;
+
+const _renderItem = ({item}: {item: {id: string; component: ReactElement}}) => {
   return <CarouselItemContainer>{item.component}</CarouselItemContainer>;
 };
 
@@ -152,26 +199,46 @@ export const createHomeCardList = ({
   homeCarouselConfig,
   homeCarouselLayoutType,
   hideKeyBalance,
+  portfolioSnapshotsByWalletId,
+  portfolioQuoteCurrency,
+  populateStatus,
+  rates,
+  lastDayRates,
+  fiatRateSeriesCache,
+  defaultAltCurrencyIsoCode,
   context,
   onPress,
   currency,
 }: {
-  navigation: NavigationProp<any>;
+  navigation: any;
   keys: Key[];
   dispatch: AppDispatch;
   linkedCoinbase: boolean;
   homeCarouselConfig: HomeCarouselConfig[];
   homeCarouselLayoutType: HomeCarouselLayoutType;
   hideKeyBalance: boolean;
+  portfolioSnapshotsByWalletId?: {
+    [walletId: string]: BalanceSnapshot[] | undefined;
+  };
+  portfolioQuoteCurrency?: string;
+  populateStatus?: PortfolioPopulateStatus;
+  rates?: Rates;
+  lastDayRates?: Rates;
+  fiatRateSeriesCache?: FiatRateSeriesCache;
+  defaultAltCurrencyIsoCode?: string;
   context?: 'keySelector';
   onPress?: (currency: any, selectedKey: Key) => any;
   currency?: any;
 }) => {
-  let list: {id: string; component: JSX.Element}[] = [];
-  const defaults: {id: string; component: JSX.Element}[] = [];
+  let list: {id: string; component: ReactElement}[] = [];
+  const defaults: {id: string; component: ReactElement}[] = [];
   const hasKeys = keys.length;
   const hasGiftCards = false;
   const hasCoinbase = linkedCoinbase;
+  const quoteCurrency = getQuoteCurrency({
+    portfolioQuoteCurrency,
+    defaultAltCurrencyIsoCode,
+  });
 
   if (hasKeys) {
     const walletCards = keys.map(key => {
@@ -182,14 +249,75 @@ export const createHomeCardList = ({
         backupComplete,
       } = key;
 
-      const percentageDifference = calculatePercentageDifference(
-        totalBalance,
-        totalBalanceLastDay,
-      );
-
       wallets = wallets.filter(
         wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
       );
+
+      const isKeyPopulateLoading = isPopulateLoadingForWallets({
+        populateStatus,
+        wallets,
+      });
+
+      const legacyPercentageDifference =
+        getLegacyPercentageDifferenceFromTotals({
+          totalBalance,
+          totalBalanceLastDay,
+        });
+
+      const portfolioPercentageDifference = (() => {
+        if (!portfolioSnapshotsByWalletId) {
+          return null;
+        }
+
+        const pnl = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+          snapshotsByWalletId: portfolioSnapshotsByWalletId,
+          wallets,
+          quoteCurrency,
+          timeframe: '1D',
+          rates,
+          lastDayRates,
+          fiatRateSeriesCache,
+        });
+
+        if (!pnl.available) {
+          return null;
+        }
+
+        return getPercentageDifferenceFromPercentRatio(pnl.percentRatio);
+      })();
+
+      const hasKeySnapshots = portfolioSnapshotsByWalletId
+        ? hasSnapshotsForWallets({
+            snapshotsByWalletId: portfolioSnapshotsByWalletId,
+            wallets,
+          })
+        : false;
+
+      const hasKeySnapshotsBeforePopulateStarted = (() => {
+        const startedAt = populateStatus?.startedAt;
+        if (!populateStatus?.inProgress || typeof startedAt !== 'number') {
+          return true;
+        }
+        if (!portfolioSnapshotsByWalletId) {
+          return false;
+        }
+        return hasSnapshotsBeforeMsForWallets({
+          snapshotsByWalletId: portfolioSnapshotsByWalletId,
+          wallets,
+          cutoffMs: startedAt,
+        });
+      })();
+
+      const rawPercentageDifference = getKeyLastDayPercentageDifference({
+        totalBalance,
+        hasSnapshots: hasKeySnapshots,
+        hasSnapshotsBeforePopulateStarted: hasKeySnapshotsBeforePopulateStarted,
+        isPopulateLoading: isKeyPopulateLoading,
+        legacyPercentageDifference,
+        portfolioPercentageDifference,
+      });
+      const percentageDifference =
+        totalBalance > 0 ? rawPercentageDifference : null;
 
       return {
         id: key.id,
@@ -212,7 +340,37 @@ export const createHomeCardList = ({
                 : () => {
                     haptic('soft');
                     if (backupComplete) {
-                      navigation.navigate('KeyOverview', {id: key.id});
+                      const fullWalletObj = key?.wallets?.[0];
+                      if (fullWalletObj?.pendingTssSession && key?.tssSession) {
+                        const {isCreator} = key.tssSession;
+                        if (isCreator) {
+                          navigation.navigate(WalletScreens.INVITE_COSIGNERS, {
+                            keyId: key.id,
+                          });
+                        } else {
+                          navigation.navigate(WalletScreens.JOIN_TSS_WALLET, {
+                            keyId: key.id,
+                          });
+                        }
+                      } else if (isTSSKey(key)) {
+                        if (IsVMChain(fullWalletObj.credentials.chain)) {
+                          navigation.navigate(WalletScreens.ACCOUNT_DETAILS, {
+                            keyId: key.id,
+                            selectedAccountAddress:
+                              fullWalletObj.receiveAddress,
+                          });
+                        } else {
+                          navigation.navigate(WalletScreens.WALLET_DETAILS, {
+                            key,
+                            walletId: fullWalletObj.credentials.walletId,
+                            copayerId: fullWalletObj.credentials.copayerId,
+                          });
+                        }
+                      } else {
+                        navigation.navigate(WalletScreens.KEY_OVERVIEW, {
+                          id: key.id,
+                        });
+                      }
                     } else {
                       dispatch(
                         showBottomNotificationModal(
@@ -266,9 +424,13 @@ const Crypto = () => {
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(({APP}) => APP.homeCarouselConfig);
+  const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
+  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
+  const {rates, fiatRateSeriesCache} = useAppSelector(({RATE}) => RATE);
+  const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates);
   const homeCarouselLayoutType = useAppSelector(
     ({APP}) => APP.homeCarouselLayoutType,
   );
@@ -283,6 +445,13 @@ const Crypto = () => {
       homeCarouselConfig: homeCarouselConfig || [],
       homeCarouselLayoutType,
       hideKeyBalance: hideAllBalances,
+      portfolioSnapshotsByWalletId: portfolio?.snapshotsByWalletId,
+      portfolioQuoteCurrency: portfolio?.quoteCurrency,
+      populateStatus: portfolio?.populateStatus,
+      rates,
+      lastDayRates,
+      fiatRateSeriesCache,
+      defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
     }),
   );
 
@@ -296,6 +465,13 @@ const Crypto = () => {
         homeCarouselConfig: homeCarouselConfig || [],
         homeCarouselLayoutType,
         hideKeyBalance: hideAllBalances,
+        portfolioSnapshotsByWalletId: portfolio?.snapshotsByWalletId,
+        portfolioQuoteCurrency: portfolio?.quoteCurrency,
+        populateStatus: portfolio?.populateStatus,
+        rates,
+        lastDayRates,
+        fiatRateSeriesCache,
+        defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
       }),
     );
   }, [
@@ -306,49 +482,51 @@ const Crypto = () => {
     homeCarouselConfig,
     homeCarouselLayoutType,
     hideAllBalances,
+    portfolio?.quoteCurrency,
+    portfolio?.populateStatus,
+    portfolio?.snapshotsByWalletId,
+    rates,
+    lastDayRates,
+    fiatRateSeriesCache,
+    defaultAltCurrency?.isoCode,
   ]);
 
   if (!hasKeys && !linkedCoinbase) {
     return (
       <CryptoContainer>
-        <SectionHeaderContainer style={{marginBottom: 0}}>
+        <NoKeysSectionHeaderContainer>
           <Column>
-            <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
-            <Row style={{justifyContent: 'space-between'}}>
-              <HomeSectionSubtext style={{width: '90%'}}>
-                {t(
-                  'You don’t have any crypto. Create a wallet, import a wallet or connect your Coinbase account.',
-                )}
-              </HomeSectionSubtext>
-            </Row>
+            <HomeSectionTitle>{t('Your Crypto')}</HomeSectionTitle>
             <ButtonContainer>
-              <Button
-                style={{marginBottom: 15}}
-                onPress={() => {
-                  dispatch(
-                    Analytics.track('Clicked create, import or join', {
-                      context: 'NoKeysCryptoContainer',
-                    }),
-                  );
-                  navigation.navigate('CreationOptions');
-                }}>
-                {t('Create, import or join a shared wallet')}
-              </Button>
-              <Button
-                style={{marginBottom: 15}}
-                buttonStyle={'secondary'}
-                onPress={() => {
-                  dispatch(
-                    Analytics.track('Clicked Connect Coinbase', {
-                      context: 'NoKeysCryptoContainer',
-                    }),
-                  );
-                  navigation.navigate('CoinbaseRoot');
-                }}>
-                {linkedCoinbase
-                  ? 'Coinbase'
-                  : t('Connect your Coinbase account')}
-              </Button>
+              <NoKeysButtonWrapper>
+                <Button
+                  onPress={() => {
+                    dispatch(
+                      Analytics.track('Clicked create, import or join', {
+                        context: 'NoKeysCryptoContainer',
+                      }),
+                    );
+                    navigation.navigate('CreationOptions');
+                  }}>
+                  {t('Create, import or join a shared wallet')}
+                </Button>
+              </NoKeysButtonWrapper>
+              <NoKeysButtonWrapper>
+                <Button
+                  buttonStyle={'secondary'}
+                  onPress={() => {
+                    dispatch(
+                      Analytics.track('Clicked Connect Coinbase', {
+                        context: 'NoKeysCryptoContainer',
+                      }),
+                    );
+                    navigation.navigate('CoinbaseRoot');
+                  }}>
+                  {linkedCoinbase
+                    ? 'Coinbase'
+                    : t('Connect your Coinbase account')}
+                </Button>
+              </NoKeysButtonWrapper>
               {/*<Button
                 buttonStyle={'secondary'}
                 onPress={() => {
@@ -358,43 +536,49 @@ const Crypto = () => {
                 </Button> */}
             </ButtonContainer>
           </Column>
-        </SectionHeaderContainer>
+        </NoKeysSectionHeaderContainer>
       </CryptoContainer>
     );
   }
 
   return (
     <CryptoContainer>
-      <SectionHeaderContainer style={{marginBottom: 0}}>
-        <Column>
-          <HomeSectionTitle>{t('My Crypto')}</HomeSectionTitle>
-          <Row style={{justifyContent: 'space-between'}}>
-            <HomeSectionSubtext style={{width: '75%'}}>
-              {t(
-                'View your wallets, card balance, connect to Coinbase and more.',
-              )}
-            </HomeSectionSubtext>
+      <CryptoSectionHeaderContainer>
+        <CryptoHeaderRow>
+          <CryptoHeaderTitle>{t('Your Crypto')}</CryptoHeaderTitle>
+          <CryptoHeaderActions>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('soft');
-                navigation.navigate('CustomizeHomeSettings');
+                navigation.navigate('CreationOptions');
               }}>
-              <CustomizeSvg width={37} height={37} />
+              <AddSvg width={40} height={40} />
             </TouchableOpacity>
-          </Row>
-        </Column>
-      </SectionHeaderContainer>
+            <TouchableOpacity
+              activeOpacity={ActiveOpacity}
+              onPress={() => {
+                haptic('soft');
+                // Apply SettingsDetails config so that the custom header is used
+                navigation.navigate('SettingsDetails', {
+                  initialRoute: 'Customize Home',
+                } as any);
+              }}>
+              <CustomizeSvg width={40} height={40} />
+            </TouchableOpacity>
+          </CryptoHeaderActions>
+        </CryptoHeaderRow>
+      </CryptoSectionHeaderContainer>
       {/* ////////////////////////////// CAROUSEL/LISTVIEW */}
       {homeCarouselLayoutType === 'carousel' ? (
-        <CarouselContainer style={{marginBottom: 22}}>
+        <CarouselContainer>
           <Carousel
             loop={false}
             autoFillData={false}
             vertical={false}
             style={{width: WIDTH}}
-            width={190}
-            height={230}
+            width={HOME_CARD_WIDTH + 16}
+            height={HOME_CARD_HEIGHT + 20}
             autoPlay={false}
             data={cardsList.list}
             scrollAnimationDuration={0}
@@ -409,25 +593,6 @@ const Crypto = () => {
           })}
         </ListViewContainer>
       )}
-      {/* ////////////////////////////// CREATE DEFAULTS */}
-      <CarouselContainer>
-        <SectionHeaderContainer style={{marginTop: 0, position: 'absolute'}}>
-          <HomeSectionSubTitle>
-            {t('Expand your Portfolio')}
-          </HomeSectionSubTitle>
-        </SectionHeaderContainer>
-        <Carousel
-          loop={false}
-          vertical={false}
-          style={{width: WIDTH, marginTop: 20}}
-          width={190}
-          height={190 / 2}
-          autoPlay={false}
-          data={cardsList.defaults}
-          enabled={true}
-          renderItem={_renderItem}
-        />
-      </CarouselContainer>
     </CryptoContainer>
   );
 };

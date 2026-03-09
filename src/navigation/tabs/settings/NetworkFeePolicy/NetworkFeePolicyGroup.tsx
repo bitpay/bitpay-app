@@ -19,10 +19,10 @@ export enum NetworkFeePolicySettingsScreens {
   NETWORK_FEE_POLICY = 'NetworkFeePolicy',
 }
 
-const NetworkFeePolicySettingsGroup: React.FC<NetworkFeePolicyProps> = ({
+const NetworkFeePolicySettingsGroup = ({
   NetworkFeePolicySettings,
   theme,
-}) => {
+}: NetworkFeePolicyProps) => {
   const commonOptions = useStackScreenOptions(theme);
   const {t} = useTranslation();
 

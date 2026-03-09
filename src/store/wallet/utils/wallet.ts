@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {
   Key,
   KeyMethods,
@@ -9,7 +10,7 @@ import {
   WalletObj,
 } from '../wallet.models';
 import {Rates} from '../../rate/rate.models';
-import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
 import {
   BitpaySupportedCoins,
   BitpaySupportedMaticTokens,
@@ -135,6 +136,8 @@ export const buildWalletObj = (
     hardwareData = {},
     singleAddress,
     receiveAddress,
+    tssKeyId,
+    tssMetadata,
   }: Credentials & {
     balance?: WalletBalance;
     tokens?: any;
@@ -158,6 +161,8 @@ export const buildWalletObj = (
     };
     singleAddress: boolean;
     receiveAddress?: string;
+    tssKeyId?: string;
+    tssMetadata?: {id: string; n: number; m: number; partyId: number};
   },
   tokenOptsByAddress?: {[key in string]: Token},
 ): WalletObj => {
@@ -203,7 +208,6 @@ export const buildWalletObj = (
     badgeImg: getBadgeImg(_currencyAbbreviation, chain),
     n,
     m,
-    isRefreshing: false,
     isScanning: false,
     hideWallet,
     hideWalletByAccount,
@@ -213,6 +217,35 @@ export const buildWalletObj = (
     hardwareData,
     singleAddress,
     receiveAddress,
+    tssKeyId,
+    tssMetadata,
+  };
+};
+
+export const buildTssKeyObj = ({
+  tssKey,
+  wallets,
+  keyName,
+}: {
+  tssKey: any;
+  wallets: Wallet[];
+  keyName?: string;
+}): Key => {
+  const cleanProperties = tssKey.toObj();
+  delete cleanProperties.privateKeyShare;
+  return {
+    id: tssKey.id,
+    wallets,
+    properties: cleanProperties,
+    methods: tssKey,
+    totalBalance: 0,
+    totalBalanceLastDay: 0,
+    isPrivKeyEncrypted: tssKey.isPrivKeyEncrypted(),
+    backupComplete: true,
+    keyName:
+      keyName || `TSS Key (${tssKey.metadata.m}-of-${tssKey.metadata.n})`,
+    hideKeyBalance: false,
+    isReadOnly: false,
   };
 };
 
@@ -831,6 +864,21 @@ export const isMatchedWallet = (newWallet: Wallet, wallets: Wallet[]) => {
   );
 };
 
+export const getEVMAccountName = (
+  wallet: Wallet,
+  allKeys: {[key: string]: Key},
+) => {
+  if (!wallet?.keyId || !wallet?.receiveAddress) {
+    return undefined;
+  }
+  const selectedKey = allKeys[wallet.keyId];
+  if (!selectedKey?.evmAccountsInfo) {
+    return undefined;
+  }
+  const evmAccountInfo = selectedKey.evmAccountsInfo[wallet.receiveAddress];
+  return evmAccountInfo?.name;
+};
+
 export const findKeyByKeyId = (
   keyId: string,
   keys: {[key in string]: Key},
@@ -861,7 +909,9 @@ export const getAllWalletClients = (keys: {
           key.wallets
             .filter(
               wallet =>
-                !wallet.credentials.token && wallet.credentials.isComplete(),
+                !wallet.credentials.token &&
+                wallet.credentials.isComplete() &&
+                !wallet.pendingTssSession,
             )
             .forEach(walletClient => {
               walletClients.push(walletClient);
@@ -882,7 +932,6 @@ export const findWalletByIdHashed = (
   multisigContractAddress?: string,
 ): Promise<{wallet: Wallet | undefined; keyId: string | undefined}> => {
   let walletIdHash;
-  const sjcl = BwcProvider.getInstance().getSJCL();
   return new Promise(resolve => {
     getAllWalletClients(keys).then(wallets => {
       const wallet = find(wallets, w => {
@@ -896,11 +945,15 @@ export const findWalletByIdHashed = (
             0,
             lastHyphenPosition,
           );
-          walletIdHash = sjcl.hash.sha256.hash(walletIdWithoutTokenAddress);
+          const hash = crypto.createHash('sha256');
+          hash.update(walletIdWithoutTokenAddress);
+          walletIdHash = hash.digest('hex');
         } else {
-          walletIdHash = sjcl.hash.sha256.hash(w.credentials.walletId);
+          const hash = crypto.createHash('sha256');
+          hash.update(w.credentials.walletId);
+          walletIdHash = hash.digest('hex');
         }
-        return isEqual(walletIdHashed, sjcl.codec.hex.fromBits(walletIdHash));
+        return isEqual(walletIdHashed, walletIdHash);
       });
 
       return resolve({wallet, keyId: wallet?.keyId});
@@ -979,13 +1032,13 @@ export const buildUIFormattedWallet: (
     balance,
     credentials,
     keyId,
-    isRefreshing,
     isScanning,
     hideWallet,
     hideWalletByAccount,
     hideBalance,
     pendingTxps,
     receiveAddress,
+    tssMetadata,
   } = wallet;
 
   const opts: Omit<getFiatOptions, 'satAmount'> = {
@@ -1017,7 +1070,6 @@ export const buildUIFormattedWallet: (
     cryptoSpendableBalance: balance.cryptoSpendable,
     cryptoPendingBalance: balance.cryptoPending,
     network,
-    isRefreshing,
     isScanning,
     hideWallet,
     hideWalletByAccount,
@@ -1027,7 +1079,10 @@ export const buildUIFormattedWallet: (
       credentials.n > 1
         ? `- Multisig ${credentials.m}/${credentials.n}`
         : undefined,
-    isComplete: credentials.isComplete(),
+    threshold: tssMetadata
+      ? `- Threshold ${tssMetadata.m}/${tssMetadata.n}`
+      : undefined,
+    isComplete: credentials.isComplete() && !wallet.pendingTssSession,
     receiveAddress,
     account: credentials.account,
   } as WalletRowProps;
@@ -1162,7 +1217,8 @@ export const buildAccountList = (
               ?.toLowerCase()
               ?.includes(searchInput.toLowerCase())
           : true,
-        isComplete: wallet.credentials.isComplete(),
+        isComplete:
+          wallet.credentials.isComplete() && !wallet.pendingTssSession,
       };
 
       const allMatch = Object.values(matches).every(Boolean);
@@ -1173,7 +1229,7 @@ export const buildAccountList = (
     }
 
     if (opts?.filterByComplete) {
-      if (!wallet.credentials.isComplete()) {
+      if (!wallet.credentials.isComplete() && wallet.pendingTssSession) {
         return;
       }
     }
@@ -1204,7 +1260,10 @@ export const buildAccountList = (
 
     let accountKey = receiveAddress;
 
-    if (!accountKey && !wallet?.credentials?.isComplete()) {
+    if (
+      !accountKey &&
+      (!wallet?.credentials?.isComplete() || wallet.pendingTssSession)
+    ) {
       // Workaround for incomplete multisig wallets
       accountKey = walletId;
     }

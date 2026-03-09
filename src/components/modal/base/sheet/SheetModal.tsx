@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState, useMemo} from 'react';
 import {AppState, AppStateStatus, Platform, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
@@ -12,13 +12,15 @@ import {ThemeContext as NavigationThemeContext} from '@react-navigation/native';
 import {BlurContainer} from '../../../blur/Blur';
 import {HEIGHT, SheetParams} from '../../../styled/Containers';
 import BaseModal from '../BaseModal';
-import {Black, LightBlack, White} from '../../../../styles/colors';
+import {Black, Overlay, White} from '../../../../styles/colors';
+import {BackdropPressBehavior} from '@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types';
 
 interface Props extends SheetParams {
   isVisible: boolean;
   fullscreen?: boolean;
   enableBackdropDismiss?: boolean;
   onBackdropPress: (props?: any) => void;
+  backdropPressBehavior?: BackdropPressBehavior;
   onModalHide?: () => void;
   children?: any;
   modalLibrary?: 'bottom-sheet' | 'modal';
@@ -40,6 +42,7 @@ const SheetModal: React.FC<SheetModalProps> = ({
   fullscreen,
   enableBackdropDismiss,
   onBackdropPress,
+  backdropPressBehavior,
   onModalHide,
   placement,
   modalLibrary = 'modal',
@@ -58,18 +61,35 @@ const SheetModal: React.FC<SheetModalProps> = ({
   const theme = useTheme();
 
   const [isModalVisible, setModalVisible] = useState(isVisible);
-  useEffect(() => {
-    function onAppStateChange(status: AppStateStatus) {
+  // Track transitional states to allow immediate re-open after dismiss
+  const isDismissingRef = useRef(false);
+  const pendingOpenRef = useRef(false);
+
+  const onAppStateChange = useCallback(
+    (status: AppStateStatus) => {
       if (isVisible && !fullscreen && status === 'background') {
         setModalVisible(false);
         onBackdropPress();
       }
-    }
+    },
+    [isVisible, fullscreen, onBackdropPress],
+  );
+
+  useEffect(() => {
     setModalVisible(isVisible);
-    if (isVisible && !isModalVisible) {
-      bottomSheetModalRef.current?.present();
-    } else if (!isVisible && isModalVisible) {
-      bottomSheetModalRef.current?.dismiss();
+    // Imperatively control bottom sheet to avoid race conditions between dismiss and present
+    if (modalLibrary === 'bottom-sheet') {
+      if (isVisible && !isModalVisible) {
+        // If a dismiss animation is in progress, queue the open until onDismiss fires
+        if (isDismissingRef.current) {
+          pendingOpenRef.current = true;
+        } else {
+          bottomSheetModalRef.current?.present();
+        }
+      } else if (!isVisible && isModalVisible) {
+        isDismissingRef.current = true;
+        bottomSheetModalRef.current?.dismiss();
+      }
     }
 
     const subscriptionAppStateChange = AppState.addEventListener(
@@ -78,35 +98,79 @@ const SheetModal: React.FC<SheetModalProps> = ({
     );
 
     return () => subscriptionAppStateChange.remove();
-  }, [isVisible, onBackdropPress]);
+  }, [isVisible, isModalVisible, modalLibrary, onAppStateChange]);
 
   const defaultBorderRadius = Platform.OS === 'ios' ? 12 : 0;
-  const sheetBackgroundColor =
-    backgroundColor ?? (theme.dark ? (fullscreen ? Black : LightBlack) : White);
-  const bottomSheetViewStyles = {
-    backgroundColor: sheetBackgroundColor,
-    borderTopLeftRadius: borderRadius ?? defaultBorderRadius,
-    borderTopRightRadius: borderRadius ?? defaultBorderRadius,
-    paddingBottom: bottomInset,
-  };
+  const sheetBackgroundColor = useMemo(
+    () =>
+      backgroundColor ?? (theme.dark ? (fullscreen ? Black : Overlay) : White),
+    [backgroundColor, theme.dark, fullscreen],
+  );
+
+  const bottomSheetViewStyles = useMemo(
+    () => ({
+      backgroundColor: sheetBackgroundColor,
+      borderTopLeftRadius: borderRadius ?? defaultBorderRadius,
+      borderTopRightRadius: borderRadius ?? defaultBorderRadius,
+      paddingBottom: bottomInset,
+    }),
+    [sheetBackgroundColor, borderRadius, defaultBorderRadius, bottomInset],
+  );
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
         {...props}
         onPress={onBackdropPress}
-        pressBehavior={enableBackdropDismiss === false ? 'none' : 'close'}
+        pressBehavior={
+          backdropPressBehavior ??
+          (enableBackdropDismiss === false ? 'none' : 'close')
+        }
         disappearsOnIndex={-1}
         appearsOnIndex={0}
         opacity={backdropOpacity}
       />
     ),
-    [enableBackdropDismiss, onBackdropPress],
+    [
+      enableBackdropDismiss,
+      onBackdropPress,
+      backdropOpacity,
+      backdropPressBehavior,
+    ],
   );
+
+  const handleDismiss = useCallback(() => {
+    // Mark dismiss finished and flush any pending open request immediately
+    isDismissingRef.current = false;
+    if (pendingOpenRef.current) {
+      pendingOpenRef.current = false;
+      // Schedule on next frame to ensure internal state is fully reset
+      requestAnimationFrame(() => {
+        bottomSheetModalRef.current?.present();
+      });
+    }
+    // Maintain parity with BaseModal's onModalHide if provided
+    onModalHide?.();
+  }, [onModalHide]);
+
+  const fullscreenStyles = useMemo(
+    () =>
+      fullscreen
+        ? {
+            ...bottomSheetViewStyles,
+            height: HEIGHT,
+            paddingTop: paddingTop ?? insets.top,
+          }
+        : {...bottomSheetViewStyles, height},
+    [fullscreen, bottomSheetViewStyles, paddingTop, insets.top, height],
+  );
+
+  const themeValue = useMemo(() => theme as any, [theme]);
 
   return modalLibrary === 'bottom-sheet' ? (
     <View testID={'modalBackdrop'}>
       <BottomSheetModal
+        accessible={false}
         stackBehavior={stackBehavior || undefined}
         backdropComponent={renderBackdrop}
         backgroundStyle={{backgroundColor: sheetBackgroundColor}}
@@ -119,20 +183,10 @@ const SheetModal: React.FC<SheetModalProps> = ({
         index={0}
         {...(disableAnimations && {animationConfigs: {duration: 1}})}
         accessibilityLabel={'modalBackdrop'}
+        onDismiss={handleDismiss}
         ref={bottomSheetModalRef}>
-        <NavigationThemeContext.Provider value={theme as any}>
-          <BottomSheetView
-            style={
-              fullscreen
-                ? {
-                    ...bottomSheetViewStyles,
-                    height: HEIGHT,
-                    paddingTop: paddingTop ?? insets.top,
-                  }
-                : {...bottomSheetViewStyles, height}
-            }>
-            {children}
-          </BottomSheetView>
+        <NavigationThemeContext.Provider value={themeValue}>
+          <BottomSheetView style={fullscreenStyles}>{children}</BottomSheetView>
         </NavigationThemeContext.Provider>
       </BottomSheetModal>
     </View>
@@ -165,4 +219,4 @@ const SheetModal: React.FC<SheetModalProps> = ({
   );
 };
 
-export default SheetModal;
+export default React.memo(SheetModal);

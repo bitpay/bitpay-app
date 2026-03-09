@@ -1,5 +1,5 @@
 import React from 'react';
-import {Dimensions, StatusBar, Text} from 'react-native';
+import {Dimensions, Platform, StatusBar, Text} from 'react-native';
 import styled, {css} from 'styled-components/native';
 import {
   NeutralSlate,
@@ -11,7 +11,7 @@ import {
   Slate30,
 } from '../../styles/colors';
 
-export const fontFamily = 'Heebo';
+export const fontFamily = 'Archivo';
 
 export const BaseText = styled.Text`
   color: ${({theme}) => theme.colors.text};
@@ -49,6 +49,7 @@ export const H4 = styled(BaseText)<HeadingProps>`
   font-style: normal;
   font-weight: 500;
   letter-spacing: 0;
+  line-height: 26px;
 `;
 
 export const H5 = styled(BaseText)<HeadingProps>`
@@ -56,12 +57,14 @@ export const H5 = styled(BaseText)<HeadingProps>`
   font-style: normal;
   font-weight: ${({bold = false}) => (bold ? 700 : 500)};
   letter-spacing: 0;
+  line-height: 24px;
 `;
 
 export const H6 = styled(BaseText)<HeadingProps>`
   font-size: 16px;
   font-style: normal;
   font-weight: ${({medium}) => (medium ? 400 : 500)};
+  line-height: 21px;
 `;
 
 export const H7 = styled(BaseText)<HeadingProps>`
@@ -69,6 +72,7 @@ export const H7 = styled(BaseText)<HeadingProps>`
   font-style: normal;
   font-weight: ${({medium = false}) => (medium ? 500 : 400)};
   letter-spacing: 0;
+  line-height: 18px;
 `;
 
 export const SubText = styled(H7)`
@@ -78,7 +82,7 @@ export const SubText = styled(H7)`
 export const ListItemSubText = styled(H7)<{
   textAlign?: 'right' | 'left' | 'center';
 }>`
-  margin-top: 2px;
+  margin-top: 6px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
   text-align: ${({textAlign}) => textAlign || 'left'};
 `;
@@ -198,7 +202,8 @@ export const Badge = styled(BaseText)`
   text-align: center;
   line-height: 12px;
   color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
-  padding-top: 1px;
+  text-align: center;
+  ${Platform.OS === 'ios' ? 'margin-top: -1px;' : ''}
 `;
 
 export const ProposalBadge = styled(BaseText)`
@@ -229,6 +234,7 @@ export const InfoHeader = styled.View`
 export const InfoDescription = styled(BaseText)`
   font-size: 16px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  line-height: 24px;
 `;
 
 // creation and add wallet
@@ -247,7 +253,7 @@ export const OptionDescription = styled(BaseText)`
 export const Type = styled(BaseText)<{noAutoMarginLeft?: boolean}>`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   padding: 2px 4px;
   border-radius: 3px;
   margin-left: ${({noAutoMarginLeft}) => (noAutoMarginLeft ? 0 : 'auto')};
@@ -259,13 +265,15 @@ export const CopyToClipboardText = styled(BaseText)`
   padding: 0 20px 0 10px;
 `;
 
-export const ArchaxBannerText = styled(H7)<{isSmallScreen?: boolean}>`
+export const ArchaxBannerText = styled(BaseText)<{isSmallScreen?: boolean}>`
   color: ${({theme}) => theme.colors.text};
-  font-size: ${({isSmallScreen}) => (isSmallScreen ? '10px' : '14px')};
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '14px')};
 `;
 
 export const ArchaxBannerLink = styled(BaseText)<{isSmallScreen?: boolean}>`
   color: ${({theme}) => (theme.dark ? '#ffffff' : theme.colors.link)};
   text-decoration: underline;
-  font-size: ${({isSmallScreen}) => (isSmallScreen ? '11px' : '14px')};
+  text-decoration-color: ${({theme}) =>
+    theme.dark ? '#ffffff' : theme.colors.link};
+  font-size: ${({isSmallScreen}) => (isSmallScreen ? '8px' : '14px')};
 `;

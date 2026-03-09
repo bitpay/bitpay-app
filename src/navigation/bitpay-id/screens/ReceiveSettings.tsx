@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import _ from 'lodash';
 import uniqBy from 'lodash.uniqby';
@@ -6,11 +6,7 @@ import styled from 'styled-components/native';
 import {useNavigation, useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
-import {
-  ActiveOpacity,
-  Br,
-  CtaContainerAbsolute,
-} from '../../../components/styled/Containers';
+import {ActiveOpacity, Br} from '../../../components/styled/Containers';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {BaseText, H3, H5, Paragraph} from '../../../components/styled/Text';
 import {
@@ -34,11 +30,7 @@ import {
   WalletSelector,
 } from '../../wallet/screens/send/confirm/Shared';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {AppActions} from '../../../store/app';
 import {Key, Wallet} from '../../../store/wallet/wallet.models';
@@ -56,6 +48,8 @@ import {
 } from '../../../constants/currencies';
 import {IsVMChain} from '../../../store/wallet/utils/currency';
 import DefaultImage from '../../../../assets/img/currencies/default.svg';
+import FooterButtonContainer from '../../../components/footer/FooterButtonContainer';
+import {useOngoingProcess} from '../../../contexts';
 
 const ReceiveSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -128,10 +122,6 @@ const UnusedCurrencyIcons = styled.View`
   margin-right: 30px;
 `;
 
-const FooterButton = styled(CtaContainerAbsolute)`
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-`;
-
 const numVisibleCurrencyIcons = 3;
 
 const getReceivingAddressKey = (coin: string, chain: string) => {
@@ -178,6 +168,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   const dispatch = useAppDispatch();
   const navigator = useNavigation();
   const theme = useTheme();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const network = useAppSelector(({APP}) => APP.network);
@@ -199,6 +190,36 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   const [activeAddresses, setActiveAddresses] = useState<
     _.Dictionary<ReceivingAddress>
   >(createAddressMap(receivingAddresses));
+
+  const initialAddressMap = useMemo(
+    () => createAddressMap(receivingAddresses),
+    [receivingAddresses],
+  );
+
+  const hasChanges = useMemo(() => {
+    const initKeys = Object.keys(initialAddressMap);
+    const currKeys = Object.keys(activeAddresses);
+
+    if (initKeys.length !== currKeys.length) {
+      return true;
+    }
+
+    const sortedInit = [...initKeys].sort();
+    const sortedCurr = [...currKeys].sort();
+    for (let i = 0; i < sortedInit.length; i++) {
+      if (sortedInit[i] !== sortedCurr[i]) {
+        return true;
+      }
+    }
+
+    for (const key of initKeys) {
+      if (initialAddressMap[key]?.address !== activeAddresses[key]?.address) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [initialAddressMap, activeAddresses]);
   const uniqueActiveWallets = _.uniqBy(
     Object.values(keys)
       .flatMap(key => key.wallets)
@@ -306,11 +327,11 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   };
 
   const generateAddress = async (wallet: Wallet) => {
-    dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
+    showOngoingProcess('GENERATING_ADDRESS');
     const address = await dispatch(
       createWalletAddress({wallet, newAddress: true}),
     );
-    await dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     setActiveAddresses({
       ...activeAddresses,
       [getReceivingAddressKey(wallet.currencyAbbreviation, wallet.chain)]: {
@@ -341,7 +362,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
   };
 
   const saveAddresses = async (twoFactorCode: string) => {
-    dispatch(startOnGoingProcessModal('SAVING_ADDRESSES'));
+    showOngoingProcess('SAVING_ADDRESSES');
     const newReceivingAddresses = Object.values(activeAddresses);
     await dispatch(
       BitPayIdEffects.startUpdateReceivingAddresses(
@@ -349,7 +370,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
         twoFactorCode,
       ),
     );
-    await dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     return !receivingAddresses.length && newReceivingAddresses.length
       ? navigator.navigate(BitpayIdScreens.RECEIVING_ENABLED)
       : navigation.pop();
@@ -548,7 +569,7 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
               return;
             }
             await generateAddress(wallet).catch(async error => {
-              await dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
               await sleep(400);
               showError({
                 error,
@@ -562,22 +583,33 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
           }}
         />
       </ViewContainer>
-      <FooterButton
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-          marginBottom: -10,
-        }}>
+      <FooterButtonContainer>
         <Button
-          onPress={() =>
+          onPress={() => {
+            if (!hasChanges) {
+              dispatch(
+                showBottomNotificationModal({
+                  type: 'info',
+                  title: t('No changes detected'),
+                  message: t(
+                    "It looks like you haven't made any changes to your receiving addresses yet. Please make some changes before saving.",
+                  ),
+                  enableBackdropDismiss: true,
+                  actions: [
+                    {
+                      text: t('OK'),
+                      action: () => {},
+                      primary: true,
+                    },
+                  ],
+                }),
+              );
+              return;
+            }
             navigator.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
               onSubmit: async (twoFactorCode: string) => {
                 saveAddresses(twoFactorCode).catch(async error => {
-                  dispatch(dismissOnGoingProcessModal());
+                  hideOngoingProcess();
                   await sleep(300);
                   showError({
                     error,
@@ -586,13 +618,12 @@ const ReceiveSettings = ({navigation}: ReceiveSettingsProps) => {
                 });
               },
               twoFactorCodeLength: 6,
-            })
-          }
+            });
+          }}
           buttonStyle={'primary'}>
           {t('Save Defaults')}
         </Button>
-        <Br />
-      </FooterButton>
+      </FooterButtonContainer>
       <AddressModal
         receivingAddress={addressModalActiveAddress}
         onClose={(remove?: boolean) => {

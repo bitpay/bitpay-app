@@ -20,6 +20,7 @@ export enum ShopActionTypes {
   INITIALIZED_UNSOLD_GIFT_CARD = 'SHOP/INITIALIZED_UNSOLD_GIFT_CARD',
   DELETED_UNSOLD_GIFT_CARDS = 'SHOP/DELETED_UNSOLD_GIFT_CARDS',
   UPDATED_EMAIL_ADDRESS = 'SHOP/UPDATED_EMAIL_ADDRESS',
+  SET_IS_BILL_PAY_ENABLED = 'SHOP/SET_IS_BILL_PAY_ENABLED',
   UPDATED_GIFT_CARD_STATUS = 'SHOP/UPDATED_GIFT_CARD_STATUS',
   UPDATED_PHONE = 'SHOP/UPDATED_PHONE',
   REDEEMED_GIFT_CARD = 'SHOP/REDEEMED_GIFT_CARD',
@@ -29,7 +30,6 @@ export enum ShopActionTypes {
   SET_BILL_PAY_PAYMENTS = 'SHOP/SET_BILL_PAY_PAYMENTS',
   CLEARED_BILL_PAY_PAYMENTS = 'SHOP/CLEARED_BILL_PAY_PAYMENTS',
   TOGGLED_GIFT_CARD_ARCHIVED_STATUS = 'SHOP/TOGGLED_GIFT_CARD_ARCHIVED_STATUS',
-  TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID = 'SHOP/TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID',
   CLEARED_GIFT_CARDS = 'SHOP/CLEARED_GIFT_CARDS',
   CLEARED_SHOP_CATALOG_FIELDS = 'SHOP/CLEARED_SHOP_CATALOG_FIELDS',
   IS_JOINED_WAITLIST = 'SHOP/IS_JOINED_WAITLIST',
@@ -120,13 +120,17 @@ interface toggledGiftCardArchivedStatus {
     network: Network;
   };
 }
-interface toggledSyncGiftCardPurchasesWithBitPayId {
-  type: typeof ShopActionTypes.TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID;
-}
 interface updatedEmailAddress {
   type: typeof ShopActionTypes.UPDATED_EMAIL_ADDRESS;
   payload: {
     email: string;
+  };
+}
+
+interface setIsBillPayEnabled {
+  type: typeof ShopActionTypes.SET_IS_BILL_PAY_ENABLED;
+  payload: {
+    isBillPayEnabled: boolean;
   };
 }
 interface updatedGiftCardStatus {
@@ -170,8 +174,8 @@ export type ShopActionType =
   | deletedUnsoldGiftCard
   | redeemedGiftCard
   | toggledGiftCardArchivedStatus
-  | toggledSyncGiftCardPurchasesWithBitPayId
   | updatedEmailAddress
+  | setIsBillPayEnabled
   | updatedGiftCardStatus
   | updatedPhone
   | clearedGiftCards

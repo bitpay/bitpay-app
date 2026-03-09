@@ -17,6 +17,7 @@ import SendLightSvg from '../../../../../assets/img/send-icon-light.svg';
 import ContactsSvg from '../../../../../assets/img/tab-icons/contacts.svg';
 import {
   LightBlack,
+  LightBlue,
   Midnight,
   NeutralSlate,
   SlateDark,
@@ -48,10 +49,8 @@ import {
   PayProPaymentOption,
 } from '../../../../store/wallet/effects/paypro/paypro';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
-import {startOnGoingProcessModal} from '../../../../store/app/app.effects';
 import {
   dismissBottomNotificationModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../../store/app/app.actions';
 import {
@@ -99,6 +98,8 @@ import {AccountRowProps} from '../../../../components/list/AccountListRow';
 import {AssetsByChainData} from '../AccountDetails';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {keyBackupRequired} from '../../../../navigation/tabs/home/components/Crypto';
+import {useOngoingProcess} from '../../../../contexts';
+import {logManager} from '../../../../managers/LogManager';
 
 const SafeAreaView = styled.SafeAreaView`
   flex: 1;
@@ -118,7 +119,7 @@ export const ContactTitleContainer = styled.View`
   flex-direction: row;
   align-items: center;
   padding-bottom: 10px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   border-bottom-width: 1px;
   margin-bottom: 10px;
 `;
@@ -291,6 +292,7 @@ const SendTo = () => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const route = useRoute<RouteProp<WalletGroupParamList, 'SendTo'>>();
 
   const {keys} = useAppSelector(({WALLET}: RootState) => WALLET);
@@ -505,11 +507,11 @@ const SendTo = () => {
     if (data?.type === 'PayPro' || data?.type === 'InvoiceUri') {
       try {
         const invoiceUrl = GetPayProUrl(text);
-        dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_OPTIONS'));
+        showOngoingProcess('FETCHING_PAYMENT_OPTIONS');
 
         const payProOptions = await dispatch(GetPayProOptions(invoiceUrl));
         await sleep(500);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         const invoiceCurrency = getCurrencyCodeFromCoinAndChain(
           GetInvoiceCurrency(currencyAbbreviation).toLowerCase(),
           chain,
@@ -541,7 +543,7 @@ const SendTo = () => {
       } catch (err) {
         const formattedErrMsg = BWCErrorMessage(err);
         await sleep(500);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         logger.warn(formattedErrMsg);
         return Promise.resolve({
           isValid: false,
@@ -617,11 +619,11 @@ const SendTo = () => {
       let address = receiveAddress;
 
       if (!address) {
-        dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
+        showOngoingProcess('GENERATING_ADDRESS');
         address = await dispatch<Promise<string>>(
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
         );
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       }
 
       const recipient = {
@@ -644,7 +646,7 @@ const SendTo = () => {
       );
     } catch (err: any) {
       logger.error(`Send To: ${getErrorString(err)}`);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     }
   };
 
@@ -713,7 +715,7 @@ const SendTo = () => {
                   } catch (err) {
                     const e =
                       err instanceof Error ? err.message : JSON.stringify(err);
-                    dispatch(LogActions.error('[OpenScanner SendTo] ', e));
+                    logManager.error('[OpenScanner SendTo] ', e);
                   }
                 },
               });

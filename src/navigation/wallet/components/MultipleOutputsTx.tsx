@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useMemo} from 'react';
 import {useAppSelector} from '../../../utils/hooks/useAppSelector';
 import {GetCoinAndNetwork} from '../../../store/wallet/effects/address/address';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
@@ -42,6 +42,7 @@ import {
 import {RootState} from '../../../store';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {View} from 'react-native';
+import {useTokenContext} from '../../../contexts';
 
 const MisunderstoodOutputsText = styled(H7)`
   margin-bottom: 5px;
@@ -96,10 +97,12 @@ const MultipleOutputsTx = ({
   let {coin, network, chain} = tx;
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
 
+  const {tokenOptionsByAddress: _tokenOptionsByAddress} = useTokenContext();
+
   const tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ..._tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   });
@@ -134,39 +137,58 @@ const MultipleOutputsTx = ({
     }
   };
 
-  tx.outputs.forEach((output: any) => {
-    const outputAddr = output.toAddress ? output.toAddress : output.address;
-    if (!coin || !network) {
-      const coinAndNetwork = GetCoinAndNetwork(outputAddr, network, chain);
-      coin = coin || coinAndNetwork?.coin;
-      network = network || coinAndNetwork?.network;
-    }
+  const txOutputs = useMemo(() => {
+    if (!tx?.outputs?.length) return [];
 
-    const addressToShow = dispatch(
-      GetProtocolPrefixAddress(coin, network, outputAddr, chain),
-    );
+    let derivedCoin = coin;
+    let derivedNetwork = network;
 
-    output.addressToShow =
-      addressToShow === 'false' ? t('Unparsed address') : addressToShow;
+    return tx.outputs.map((output: any) => {
+      const outputAddr = output.toAddress ?? output.address;
 
-    output.contactName = GetContactName(
-      outputAddr,
-      tokenAddress,
-      chain,
-      contactList,
-    );
-  });
+      if (!derivedCoin || !derivedNetwork) {
+        const cn = GetCoinAndNetwork(outputAddr, derivedNetwork, chain);
+        derivedCoin ||= cn?.coin;
+        derivedNetwork ||= cn?.network;
+      }
+
+      const addressToShow = dispatch(
+        GetProtocolPrefixAddress(
+          derivedCoin,
+          derivedNetwork,
+          outputAddr,
+          chain,
+        ),
+      );
+
+      return {
+        ...output,
+        addressToShow:
+          addressToShow === 'false' ? t('Unparsed address') : addressToShow,
+        contactName: GetContactName(outputAddr, tokenAddress, contactList),
+      };
+    });
+  }, [
+    tx?.outputs,
+    contactList,
+    tokenAddress,
+    chain,
+    coin,
+    network,
+    dispatch,
+    t,
+  ]);
 
   const getDesc = () => {
     return (
-      tx.outputs[0].contactName ||
+      txOutputs[0].contactName ||
       tx.customData?.recipientEmail ||
       tx.customData?.toWalletName ||
-      (tx.outputs[0].addressToShow
+      (txOutputs[0].addressToShow
         ? formatCryptoAddress(
-            tx.outputs[0].toAddress || tx.outputs[0].addressToShow,
+            txOutputs[0].toAddress || txOutputs[0].addressToShow,
           )
-        : formatCryptoAddress(tx.outputs[0].address))
+        : formatCryptoAddress(txOutputs[0].address))
     );
   };
 
@@ -260,30 +282,30 @@ const MultipleOutputsTx = ({
                   ) : (
                     <SendToPill
                       icon={getIcon(
-                        tx.outputs[0].addressToShow
-                          ? tx.outputs[0].addressToShow
-                          : tx.outputs[0].address,
+                        txOutputs[0].addressToShow
+                          ? txOutputs[0].addressToShow
+                          : txOutputs[0].address,
                       )}
                       description={getDesc()}
                       onPress={() =>
                         copyText(
                           tx.customData?.recipientEmail ||
-                            (tx.outputs[0].addressToShow
-                              ? tx.outputs[0].addressToShow
-                              : tx.outputs[0].address),
+                            (txOutputs[0].addressToShow
+                              ? txOutputs[0].addressToShow
+                              : txOutputs[0].address),
                         )
                       }
                     />
                   )}
                 </SendToPillContainer>
 
-                {!tx.outputs[0].contactName ? (
+                {!txOutputs[0].contactName ? (
                   <ContactsIconContainer
                     activeOpacity={ActiveOpacity}
                     onPress={() =>
                       gotoAddContacts({
                         address:
-                          tx.outputs[0].addressToShow || tx.outputs[0].address,
+                          txOutputs[0].addressToShow || txOutputs[0].address,
                         email: tx.customData?.recipientEmail,
                       })
                     }>
@@ -298,9 +320,9 @@ const MultipleOutputsTx = ({
                 <SendToPillContainer>
                   <SendToPill
                     icon={getIcon(
-                      tx.outputs[0].addressToShow ||
-                        tx.outputs[0].address ||
-                        tx.outputs[0].toAddress,
+                      txOutputs[0].addressToShow ||
+                        txOutputs[0].address ||
+                        txOutputs[0].toAddress,
                     )}
                     description={`${tx.recipientCount} Recipients`}
                     onPress={() => setShowMultiOptions(!showMultiOptions)}
@@ -314,7 +336,7 @@ const MultipleOutputsTx = ({
       </DetailContainer>
 
       {tx.hasMultiplesOutputs && showMultiOptions
-        ? tx.outputs.map((output: any, i: number) => (
+        ? txOutputs.map((output: any, i: number) => (
             <RecipientsContainer key={i}>
               <MultiOptionsContainer>
                 <DetailsContainer>

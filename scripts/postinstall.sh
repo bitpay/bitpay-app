@@ -4,3 +4,4 @@ rn-nodeify --yarn --install crypto,buffer,react-native-randombytes,stream,http,h
 node ./scripts/mute-require-cycle-warnings.js
 node ./scripts/multi-modal-patch.js
 node ./scripts/git-commit-hash.js
+node ./scripts/generate-dkls-vendor.js

@@ -6,71 +6,53 @@ import {
 } from '../../../utils/helper-methods';
 import {useNavigation} from '@react-navigation/native';
 import CoinbaseSvg from '../../../../assets/img/logos/coinbase.svg';
-import styled, {useTheme} from 'styled-components/native';
+import styled from 'styled-components/native';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {useAppSelector} from '../../../utils/hooks';
 import {HomeCarouselLayoutType} from '../../../store/app/app.models';
-import {BoxShadow} from '../../tabs/home/components/Styled';
-import {H3} from '../../../components/styled/Text';
-import {LightBlack, White} from '../../../styles/colors';
 import {
   ActiveOpacity,
   Column,
   Row,
-  ScreenGutter,
 } from '../../../components/styled/Containers';
 import {
   BalanceCode,
   BalanceCodeContainer,
+  BalanceContainer,
+  ListCard,
 } from '../../tabs/home/components/Wallet';
-import {Balance, OptionName} from '../../wallet/components/DropdownOption';
-import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {Balance} from '../../wallet/components/DropdownOption';
+import ArrowRightSvg from '../../tabs/home/components/ArrowRightSvg';
+import {BaseText} from '../../../components/styled/Text';
+import {Slate30, SlateDark} from '../../../styles/colors';
 
 interface CoinbaseCardComponentProps {
   layout: HomeCarouselLayoutType;
 }
-
-const ListCard = styled(TouchableOpacity)`
-  background-color: ${({theme: {dark}}) => (dark ? LightBlack : White)};
-  border-radius: 12px;
-  margin: 10px ${ScreenGutter};
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px;
-  height: 75px;
-`;
 
 const HeaderImg = styled.View`
   width: 22px;
   height: 22px;
   align-items: center;
   justify-content: center;
+  margin-right: 0px;
 `;
 
-const HeaderImgList = styled.View`
-  width: 15px;
-  height: 22px;
+const FooterContainer = styled(Row)`
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  width: 100%;
 `;
 
-const HeaderComponent = (
-  <HeaderImg>
-    <CoinbaseSvg width="22" height="22" />
-  </HeaderImg>
-);
-
-const HeaderComponentList = (
-  <HeaderImgList>
-    <CoinbaseSvg width="16" height="16" />
-  </HeaderImgList>
-);
+const CoinbaseLabel = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+  font-size: 12px;
+  font-weight: 400;
+`;
 
 const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
   layout,
 }) => {
-  const theme = useTheme();
   const navigation = useNavigation();
   const onCTAPress = () => {
     navigation.navigate('CoinbaseRoot');
@@ -87,41 +69,79 @@ const CoinbaseBalanceCard: React.FC<CoinbaseCardComponentProps> = ({
   const body = {
     title: 'Coinbase',
     value: formatFiatAmount(balance, defaultAltCurrency.isoCode),
-    hideKeyBalance: false, // TODO: adds this function to Coinbase Settings
+    hideKeyBalance: hideAllBalances,
   };
+
+  const ListRow = styled(Row)`
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  `;
+
+  const ShrinkColumn = styled(Column)`
+    flex-shrink: 1;
+  `;
+
+  const ListHeaderRow = styled(Row)`
+    align-items: center;
+    justify-content: flex-end;
+  `;
+
+  const HeaderColumn = styled(Column)`
+    justify-content: center;
+    align-items: flex-end;
+    margin-right: 12px;
+  `;
+
+  const FooterHeaderImg = styled(HeaderImg)`
+    margin-right: 12px;
+  `;
 
   if (layout === 'listView') {
     return (
-      <ListCard
-        activeOpacity={ActiveOpacity}
-        onPress={onCTAPress}
-        style={!theme.dark ? BoxShadow : null}>
-        <Row style={{alignItems: 'center', justifyContent: 'center'}}>
-          <Column>
-            {HeaderComponentList}
-            <OptionName>Coinbase</OptionName>
-          </Column>
-          <Column style={{justifyContent: 'center', alignItems: 'flex-end'}}>
+      <ListCard activeOpacity={ActiveOpacity} onPress={onCTAPress}>
+        <ListRow>
+          <ShrinkColumn>
+            <CoinbaseLabel>Coinbase</CoinbaseLabel>
             {!hideAllBalances ? (
-              <Balance>
-                {amount}
-                {code ? (
-                  <BalanceCodeContainer>
-                    <BalanceCode>{code}</BalanceCode>
-                  </BalanceCodeContainer>
-                ) : null}
-              </Balance>
+              <BalanceContainer>
+                <Balance>
+                  {amount}
+                  {code ? (
+                    <BalanceCodeContainer>
+                      <BalanceCode>{code}</BalanceCode>
+                    </BalanceCodeContainer>
+                  ) : null}
+                </Balance>
+              </BalanceContainer>
             ) : (
-              <H3>****</H3>
+              <Balance hidden>****</Balance>
             )}
-          </Column>
-        </Row>
+          </ShrinkColumn>
+          <ListHeaderRow>
+            <HeaderColumn>
+              <HeaderImg>
+                <CoinbaseSvg width="20" height="20" />
+              </HeaderImg>
+            </HeaderColumn>
+            <ArrowRightSvg />
+          </ListHeaderRow>
+        </ListRow>
       </ListCard>
     );
   }
 
+  const FooterComponent = (
+    <FooterContainer>
+      <FooterHeaderImg>
+        <CoinbaseSvg width="22" height="22" />
+      </FooterHeaderImg>
+      <ArrowRightSvg />
+    </FooterContainer>
+  );
+
   return (
-    <HomeCard header={HeaderComponent} body={body} onCTAPress={onCTAPress} />
+    <HomeCard body={body} footer={FooterComponent} onCTAPress={onCTAPress} />
   );
 };
 

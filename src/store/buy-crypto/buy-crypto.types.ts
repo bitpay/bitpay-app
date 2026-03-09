@@ -11,9 +11,11 @@ import {
   TransakIncomingData,
   WyrePaymentData,
 } from './buy-crypto.models';
+import {BuyCryptoStateOpts} from './buy-crypto.reducer';
 import {RampIncomingData, RampPaymentData} from './models/ramp.models';
 
 export enum BuyCryptoActionTypes {
+  UPDATE_OPTS = 'BUY_CRYPTO/UPDATE_OPTS',
   SUCCESS_PAYMENT_REQUEST_BANXA = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_BANXA',
   UPDATE_PAYMENT_REQUEST_BANXA = 'BUY_CRYPTO/UPDATE_PAYMENT_REQUEST_BANXA',
   REMOVE_PAYMENT_REQUEST_BANXA = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_BANXA',
@@ -34,6 +36,14 @@ export enum BuyCryptoActionTypes {
   REMOVE_PAYMENT_REQUEST_TRANSAK = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_TRANSAK',
   SUCCESS_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/SUCCESS_PAYMENT_REQUEST_WYRE',
   REMOVE_PAYMENT_REQUEST_WYRE = 'BUY_CRYPTO/REMOVE_PAYMENT_REQUEST_WYRE',
+  ACCESS_TOKEN_TRANSAK = 'BUY_CRYPTO/ACCESS_TOKEN_TRANSAK',
+}
+
+interface updateBuyCryptoOpts {
+  type: typeof BuyCryptoActionTypes.UPDATE_OPTS;
+  payload: {
+    buyCryptoOpts: BuyCryptoStateOpts;
+  };
 }
 
 interface successPaymentRequestBanxa {
@@ -162,6 +172,15 @@ interface removePaymentRequestTransak {
   };
 }
 
+interface updateAccessTokenTransak {
+  type: typeof BuyCryptoActionTypes.ACCESS_TOKEN_TRANSAK;
+  payload: {
+    env: 'sandbox' | 'production';
+    accessToken: string;
+    expiresAt: number;
+  };
+}
+
 interface successPaymentRequestWyre {
   type: typeof BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE;
   payload: {
@@ -177,6 +196,7 @@ interface removePaymentRequestWyre {
 }
 
 export type BuyCryptoActionType =
+  | updateBuyCryptoOpts
   | successPaymentRequestBanxa
   | updatePaymentRequestBanxa
   | removePaymentRequestBanxa
@@ -195,5 +215,6 @@ export type BuyCryptoActionType =
   | successPaymentRequestTransak
   | updatePaymentRequestTransak
   | removePaymentRequestTransak
+  | updateAccessTokenTransak
   | successPaymentRequestWyre
   | removePaymentRequestWyre;

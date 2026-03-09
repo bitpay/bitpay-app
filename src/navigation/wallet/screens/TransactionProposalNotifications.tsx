@@ -33,6 +33,8 @@ import {
   Key,
   TransactionProposal,
   Wallet,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../store/wallet/wallet.models';
 import {RefreshControl, SectionList, View} from 'react-native';
 import TransactionProposalRow from '../../../components/list/TransactionProposalRow';
@@ -47,17 +49,13 @@ import {
   startUpdateAllWalletStatusForKeys,
   startUpdateAllWalletStatusForReadOnlyKeys,
 } from '../../../store/wallet/effects/status/status';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   BalanceUpdateError,
   CustomErrorMessage,
   WrongPasswordError,
 } from '../components/ErrorMessages';
 import Checkbox from '../../../components/checkbox/Checkbox';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BottomNotificationConfig} from '../../../components/modal/bottom-notification/BottomNotification';
 import SwipeButton from '../../../components/swipe-button/SwipeButton';
@@ -66,7 +64,13 @@ import {Analytics} from '../../../store/analytics/analytics.effects';
 import {TransactionIcons} from '../../../constants/TransactionIcons';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../components/haptic-feedback/haptic';
-import {AppActions} from '../../../store/app';
+import {usePaymentSent} from '../../../contexts';
+import {
+  isTSSKey,
+  joinTSSSigningSession,
+} from '../../../store/wallet/effects/tss-send/tss-send';
+import TSSProgressTracker from '../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -149,6 +153,55 @@ const TransactionProposalNotifications = () => {
     },
   );
   const [selectAll, setSelectAll] = useState(false);
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>(
+    'waiting_for_cosigners',
+  );
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const currentWallet = useMemo(() => {
+    if (selectingProposalsWalletId) {
+      return findWalletById(wallets, selectingProposalsWalletId) as Wallet;
+    }
+    return null;
+  }, [selectingProposalsWalletId, wallets]);
+
+  const currentKey = useMemo(() => {
+    if (currentWallet) {
+      return keys[currentWallet.keyId];
+    }
+    return null;
+  }, [currentWallet, keys]);
+
+  const isTSSWallet = useMemo(() => {
+    return currentKey ? isTSSKey(currentKey) : false;
+  }, [currentKey]);
+
+  const tssCallbacks = useTSSCallbacks({
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+  });
 
   let pendingTxps: TransactionProposal[] = wallets.flatMap(w => w.pendingTxps);
 
@@ -354,32 +407,43 @@ const TransactionProposalNotifications = () => {
         setSelectingProposalsWalletId(walletId);
       }
 
+      const wallet = findWalletById(wallets, walletId) as Wallet;
+      const key = keys[wallet.keyId];
+      const isTSS = isTSSKey(key);
+
       if (_.indexOf(txpsToSign, txp) >= 0) {
         _.remove(txpsToSign, txpToSign => {
           return txpToSign.id === txp.id;
         });
         _txpChecked[txp.id] = false;
       } else {
+        // For TSS wallets, only allow one transaction at a time
+        if (isTSS) {
+          setTxpsToSign([]);
+          setTxpChecked({});
+          _txpChecked = {};
+        }
+
         _txpChecked[txp.id] = true;
         _txpsToSign.push(txp);
       }
-      selectingFromAnotherWallet
+      selectingFromAnotherWallet || isTSS
         ? setTxpsToSign(_txpsToSign)
         : setTxpsToSign(txpsToSign.concat(_txpsToSign));
-      selectingFromAnotherWallet
+      selectingFromAnotherWallet || isTSS
         ? setTxpChecked(_txpChecked)
         : setTxpChecked({...txpChecked, ..._txpChecked});
       setSelectAll(false);
     },
-    [setTxpsToSign, setTxpChecked, setSelectAll, txpsToSign, txpChecked],
-  );
-
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
+    [
+      setTxpsToSign,
+      setTxpChecked,
+      setSelectAll,
+      txpsToSign,
+      txpChecked,
+      wallets,
+      keys,
+    ],
   );
 
   const renderTxpByWallet = useCallback(
@@ -392,7 +456,12 @@ const TransactionProposalNotifications = () => {
         currencyName,
         keyId,
         credentials: {walletName, m, n, walletId: _walletId},
+        tssMetadata,
       } = fullWalletObj;
+
+      const key = keys[fullWalletObj.keyId];
+      const isTSS = isTSSKey(key);
+
       return (
         <>
           <RowContainer disabled={true} style={{opacity: 1}}>
@@ -407,11 +476,15 @@ const TransactionProposalNotifications = () => {
               </Row>
               <ListItemSubText>
                 {formatCurrencyAbbreviation(currencyAbbreviation)}{' '}
-                {n > 1 ? `- Multisig ${m}/${n}` : null}
+                {isTSS && tssMetadata
+                  ? `- Threshold ${tssMetadata.m}/${tssMetadata.m}`
+                  : n > 1
+                  ? `- Multisig ${m}/${n}`
+                  : null}
                 {keyId.includes('readonly') ? '- Read Only' : null}
               </ListItemSubText>
             </CurrencyColumn>
-            {item.needSign && item.txps.length > 1 ? (
+            {item.needSign && item.txps.length > 1 && !isTSS ? (
               <TouchableOpacity
                 onPress={() => {
                   haptic('impactLight');
@@ -465,6 +538,7 @@ const TransactionProposalNotifications = () => {
     },
     [
       wallets,
+      keys,
       selectingProposalsWalletId,
       txpChecked,
       txpSelectionChange,
@@ -545,10 +619,7 @@ const TransactionProposalNotifications = () => {
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   useEffect(() => {
@@ -568,6 +639,21 @@ const TransactionProposalNotifications = () => {
 
   return (
     <NotificationsContainer>
+      {isTSSWallet && currentWallet ? (
+        <TSSProgressTracker
+          status={tssStatus}
+          progress={tssProgress}
+          createdBy={currentWallet.walletName || 'You'}
+          date={new Date()}
+          wallet={currentWallet}
+          copayers={tssCopayers}
+          onCopayersInitialized={setTssCopayers}
+          isModalVisible={showTSSProgressModal}
+          onModalVisibilityChange={setShowTSSProgressModal}
+          hideTracker={true}
+          txpCreatorId={txpsToSign[0]?.creatorId}
+        />
+      ) : null}
       <SectionList
         refreshControl={
           <RefreshControl
@@ -603,67 +689,112 @@ const TransactionProposalNotifications = () => {
           forceReset={resetSwipeButton}
           onSwipeComplete={async () => {
             try {
-              dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-              await sleep(400);
               const wallet = findWalletById(
                 wallets,
                 selectingProposalsWalletId,
               ) as Wallet;
               const key = keys[wallet.keyId];
-              const data = (await dispatch<any>(
-                publishAndSignMultipleProposals({
-                  txps: Object.values(txpsToSign),
-                  key,
-                  wallet,
-                }),
-              )) as (TransactionProposal | Error)[];
-              dispatch(dismissOnGoingProcessModal());
-              await sleep(400);
-              const count = countSuccessAndFailed(data);
-              if (count.failed > 0) {
-                const errMsgs = [
-                  `There was problem while trying to sign ${count.failed} of your transactions proposals. Please, try again`,
-                ];
-                data.forEach((element, index) => {
-                  if (element instanceof Error) {
-                    errMsgs.push(
-                      `[ERROR ${index + 1}] ${BWCErrorMessage(element)}`,
-                    );
-                  }
-                });
-                await showErrorMessage(
-                  CustomErrorMessage({
-                    errMsg: errMsgs.join('\n\n'),
-                    title: t('Uh oh, something went wrong'),
+
+              if (isTSSKey(key)) {
+                const txp = txpsToSign[0];
+
+                if (txp.creatorId === wallet.credentials.copayerId) {
+                  await showErrorMessage(
+                    CustomErrorMessage({
+                      errMsg: t(
+                        'This TSS signing session cannot be resumed. Please delete this proposal and create a new transaction.',
+                      ),
+                      title: t('Signing session lost'),
+                    }),
+                  );
+                  setResetSwipeButton(true);
+                  return;
+                }
+
+                if (txp.canBeRemoved) {
+                  await showErrorMessage(
+                    CustomErrorMessage({
+                      errMsg: t(
+                        'This TSS signing session cannot be resumed. Please delete this proposal and create a new transaction.',
+                      ),
+                      title: t('Signing session expired'),
+                    }),
+                  );
+                  setResetSwipeButton(true);
+                  return;
+                }
+
+                await dispatch(
+                  joinTSSSigningSession({
+                    key,
+                    wallet,
+                    txp,
+                    callbacks: tssCallbacks,
+                    setShowTSSProgressModal,
                   }),
                 );
-              }
 
-              if (count.success > 0) {
                 dispatch(
                   Analytics.track('Sent Crypto', {
                     context: 'Transaction Proposal Notifications',
                     coin: wallet.currencyAbbreviation || '',
                   }),
                 );
-                const title =
-                  count.success > 1
-                    ? t('proposals signed', {sucess: count.success})
-                    : t('Proposal signed');
-                dispatch(
-                  AppActions.showPaymentSentModal({
-                    isVisible: true,
+
+                showPaymentSent({
+                  onCloseModal,
+                  title: t('Proposal signed'),
+                });
+              } else {
+                const data = (await dispatch<any>(
+                  publishAndSignMultipleProposals({
+                    txps: Object.values(txpsToSign),
+                    key,
+                    wallet,
+                  }),
+                )) as (TransactionProposal | Error)[];
+                const count = countSuccessAndFailed(data);
+                if (count.failed > 0) {
+                  const errMsgs = [
+                    `There was problem while trying to sign ${count.failed} of your transactions proposals. Please, try again`,
+                  ];
+                  data.forEach((element, index) => {
+                    if (element instanceof Error) {
+                      errMsgs.push(
+                        `[ERROR ${index + 1}] ${BWCErrorMessage(element)}`,
+                      );
+                    }
+                  });
+                  await showErrorMessage(
+                    CustomErrorMessage({
+                      errMsg: errMsgs.join('\n\n'),
+                      title: t('Uh oh, something went wrong'),
+                    }),
+                  );
+                }
+
+                if (count.success > 0) {
+                  dispatch(
+                    Analytics.track('Sent Crypto', {
+                      context: 'Transaction Proposal Notifications',
+                      coin: wallet.currencyAbbreviation || '',
+                    }),
+                  );
+                  const title =
+                    count.success > 1
+                      ? t('proposals signed', {sucess: count.success})
+                      : t('Proposal signed');
+                  showPaymentSent({
                     onCloseModal,
                     title,
-                  }),
-                );
+                  });
+                }
               }
               setSelectingProposalsWalletId('');
               setTxpsToSign([]);
               setTxpChecked({});
               setResetSwipeButton(true);
             } catch (err) {
-              dispatch(dismissOnGoingProcessModal());
               await sleep(500);
               setResetSwipeButton(true);
               switch (err) {

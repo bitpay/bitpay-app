@@ -20,7 +20,6 @@ import {
   SUPPORTED_EVM_COINS,
   SUPPORTED_SVM_COINS,
 } from '../constants/currencies';
-import {LogActions} from '../store/log';
 import {createMultipleWallets} from '../store/wallet/effects';
 import {checkEncryptPassword, toFiat} from '../store/wallet/utils/wallet';
 import {FormatAmount} from '../store/wallet/effects/amount/amount';
@@ -45,19 +44,17 @@ import {
 import {AltCurrenciesRowProps} from '../components/list/AltCurrenciesRow';
 import {Keys} from '../store/wallet/wallet.reducer';
 import {PermissionsAndroid} from 'react-native';
-import {
-  getBase64Encoder,
-  getTransactionDecoder,
-  getCompiledTransactionMessageDecoder,
-} from '@solana/kit';
 import axios from 'axios';
 import {
-  instructionKeys,
-  parseInstructions,
   TransferCheckedTokenInstruction,
   TransferSolInstruction,
-} from './sol-transaction-parser';
+} from './sol-transaction-instruction.types';
 import {successImport} from '../store/wallet/wallet.actions';
+import * as SolKit from '@solana/kit';
+import {BwcProvider} from '../lib/bwc';
+import {findAssociatedTokenPda} from '@solana-program/token-2022';
+import {tokenManager} from '../managers/TokenManager';
+import {logManager} from '../managers/LogManager';
 
 export const suffixChainMap: {[suffix: string]: string} = {
   eth: 'e',
@@ -73,6 +70,86 @@ export const sleep = (duration: number) =>
 
 export const titleCasing = (str: string) =>
   `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
+
+export const unitStringToAtomicBigInt = (
+  value: string | undefined,
+  unitDecimals: number,
+): bigint => {
+  try {
+    if (!value || typeof value !== 'string') {
+      return 0n;
+    }
+
+    const trimmed = value.trim().replace(/,/g, '');
+    if (!trimmed) {
+      return 0n;
+    }
+
+    const negative = trimmed.startsWith('-');
+    const normalized = negative ? trimmed.slice(1) : trimmed;
+    const [intPartRaw, fracRaw = ''] = normalized.split('.');
+
+    const sanitizedInt = intPartRaw.replace(/[^0-9]/g, '') || '0';
+    const sanitizedFrac = fracRaw.replace(/[^0-9]/g, '');
+    const fracPadded = (sanitizedFrac + '0'.repeat(unitDecimals)).slice(
+      0,
+      unitDecimals,
+    );
+
+    const intPart = BigInt(sanitizedInt || '0');
+    const fracPart = fracPadded ? BigInt(fracPadded) : 0n;
+    const denom = 10n ** BigInt(unitDecimals);
+    const atomic = intPart * denom + fracPart;
+    return negative ? -atomic : atomic;
+  } catch {
+    return 0n;
+  }
+};
+
+export const atomicToUnitString = (
+  atomic: bigint,
+  unitDecimals: number,
+): string => {
+  const negative = atomic < 0n;
+  const abs = negative ? -atomic : atomic;
+  const denom = 10n ** BigInt(unitDecimals);
+  const intPart = abs / denom;
+  const fracPart = abs % denom;
+
+  if (unitDecimals === 0) {
+    return `${negative ? '-' : ''}${intPart.toString()}`;
+  }
+
+  let frac = fracPart.toString().padStart(unitDecimals, '0');
+  frac = frac.replace(/0+$/, '');
+  const base = intPart.toString();
+  const withFrac = frac.length ? `${base}.${frac}` : base;
+  return `${negative ? '-' : ''}${withFrac}`;
+};
+
+export const changeOpacity = (color: string, targetOpacity: number) => {
+  const hex = color.replace('#', '');
+
+  const normalizedHex =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map(char => `${char}${char}`)
+          .join('')
+      : hex;
+
+  if (normalizedHex.length !== 6) {
+    return color;
+  }
+
+  const r = parseInt(normalizedHex.substring(0, 2), 16);
+  const g = parseInt(normalizedHex.substring(2, 4), 16);
+  const b = parseInt(normalizedHex.substring(4, 6), 16);
+
+  const opacity = Math.max(0, Math.min(targetOpacity, 1));
+
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
 
 export const parsePath = (path: string) => {
   return {
@@ -344,6 +421,15 @@ export const calculatePercentageDifference = (
   );
 };
 
+export const getLastDayTimestampStartOfHourMs = (
+  nowMs: number = Date.now(),
+): number => {
+  const MS_PER_HOUR = 60 * 60 * 1000;
+  const MS_PER_DAY = 24 * MS_PER_HOUR;
+  const lastDay = nowMs - MS_PER_DAY;
+  return Math.floor(lastDay / MS_PER_HOUR) * MS_PER_HOUR;
+};
+
 export const formatFiatAmountObj = (
   amount: number,
   currency: string = 'USD',
@@ -391,7 +477,22 @@ export const convertToFiat = (
   network === Network.mainnet && !hideWallet && !hideWalletByAccount ? fiat : 0;
 
 export const getErrorString = (err: any): string => {
-  return err instanceof Error ? err.message : JSON.stringify(err);
+  if (err instanceof Error) {
+    return err.message;
+  }
+  if (typeof err === 'string') {
+    return err;
+  }
+  try {
+    const str = JSON.stringify(err);
+    return typeof str === 'string' ? str : String(err);
+  } catch {
+    try {
+      return String(err);
+    } catch {
+      return 'Unknown error';
+    }
+  }
 };
 
 export const getBadgeImg = (
@@ -408,13 +509,17 @@ export const getRateByCurrencyName = (
   rates: Rates,
   currencyAbbreviation: string,
   chain: string,
-  tokenAddress?: string,
+  tokenAddress?: string | null,
 ): Rate[] => {
   const currencyName = getCurrencyAbbreviation(
     tokenAddress ?? currencyAbbreviation,
     chain,
   );
-  if (currencyAbbreviation === 'pol' && rates.matic && rates.matic.length > 0) {
+  if (
+    currencyAbbreviation?.toLowerCase() === 'pol' &&
+    rates.matic &&
+    rates.matic.length > 0
+  ) {
     return rates.matic;
   }
   return rates[currencyName] || rates[currencyAbbreviation];
@@ -644,7 +749,11 @@ export const fixWalletAddresses = async ({
   await Promise.all(
     wallets.map(async wallet => {
       try {
-        if (!wallet.receiveAddress && wallet?.credentials?.isComplete()) {
+        if (
+          !wallet.receiveAddress &&
+          wallet?.credentials?.isComplete() &&
+          !wallet.pendingTssSession
+        ) {
           const walletAddress = (await appDispatch<any>(
             createWalletAddress({wallet, newAddress: false, skipDispatch}),
           )) as string;
@@ -652,10 +761,8 @@ export const fixWalletAddresses = async ({
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        appDispatch(
-          LogActions.error(
-            `Error creating address for wallet ${wallet?.id}-${wallet?.chain}-${wallet?.walletName}: ${errMsg}`,
-          ),
+        logManager.error(
+          `Error creating address for wallet ${wallet?.id}-${wallet?.chain}-${wallet?.walletName}: ${errMsg}`,
         );
       }
     }),
@@ -693,10 +800,8 @@ export const createWalletsForAccounts = async (
         } catch (err) {
           const errMsg =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(
-            LogActions.debug(
-              `Error creating wallet - continue anyway: ${errMsg}`,
-            ),
+          logManager.debug(
+            `Error creating wallet - continue anyway: ${errMsg}`,
           );
         }
       }),
@@ -762,12 +867,13 @@ interface RequestUiValues {
   receiveAmount?: string;
   recipientAddress?: string;
   senderTokenPrice?: number;
+  decodedInstructions?: any;
 }
 
 export const processOtherMethodsRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
-    dispatch(LogActions.debug('processing other method transaction'));
+    logManager.debug('processing other method transaction');
     const {
       WALLET: {keys},
     } = getState();
@@ -798,7 +904,7 @@ export const processOtherMethodsRequest =
         break;
     }
     try {
-      const wallet = Object.values(keys).flatMap(key =>
+      const wallet = Object.values(keys as Keys).flatMap(key =>
         key.wallets.filter(
           wallet =>
             wallet.receiveAddress?.toLowerCase() ===
@@ -815,9 +921,7 @@ export const processOtherMethodsRequest =
           : swapFromChain,
       };
     } catch (error) {
-      dispatch(
-        LogActions.error(`Error processing ${method} request: ${error}`),
-      );
+      logManager.error(`Error processing ${method} request: ${error}`);
       throw error;
     }
   };
@@ -873,7 +977,7 @@ const parseStandardTokenTransactionData = (data?: string) => {
 export const processSolanaSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
-    dispatch(LogActions.debug('processing Solana transaction'));
+    logManager.debug('processing Solana transaction');
     const {
       APP: {defaultAltCurrency},
       RATE: {rates: allRates},
@@ -883,124 +987,54 @@ export const processSolanaSwapRequest =
     const {method} = params.request;
     const swapFromChain = WALLET_CONNECT_SUPPORTED_CHAINS[chainId]?.chain;
     const senderAddress = request?.params?.feePayer || request?.params?.pubkey;
-    const transactionDecoder = getTransactionDecoder();
-    const compiledTransactionMessageDecoder =
-      getCompiledTransactionMessageDecoder();
-    const decodedTransaction = transactionDecoder.decode(
-      getBase64Encoder().encode(request?.params?.transaction),
+    const instructions = await decodeSolanaTxIntructions(
+      request?.params?.transaction,
     );
-    const compiledTransactionMessage = compiledTransactionMessageDecoder.decode(
-      decodedTransaction.messageBytes,
-    );
-    const {
-      staticAccounts,
-      header,
-      instructions: compiledTransactionInstructions,
-    } = compiledTransactionMessage;
-    const accountsWithRoles = staticAccounts.map((address, index) => {
-      const {
-        numSignerAccounts,
-        numReadonlySignerAccounts,
-        numReadonlyNonSignerAccounts,
-      } = header;
-      let role: 'signer' | 'writable' | 'readonly';
-      if (index < numSignerAccounts) {
-        role =
-          index < numSignerAccounts - numReadonlySignerAccounts
-            ? 'signer'
-            : 'readonly';
-      } else {
-        const nonSignerIndex = index - numSignerAccounts;
-        role =
-          nonSignerIndex <
-          staticAccounts.length -
-            numSignerAccounts -
-            numReadonlyNonSignerAccounts
-            ? 'writable'
-            : 'readonly';
-      }
-      return {address, role};
-    });
-    const _instructions = compiledTransactionInstructions.map(ix => {
-      return {
-        programAddress: staticAccounts[ix.programAddressIndex],
-        accounts: ix?.accountIndices?.map(index => accountsWithRoles[index]),
-        data: ix.data,
-      };
-    });
-    const instructions = parseInstructions(_instructions);
-    dispatch(
-      LogActions.debug(
-        `Parsed instructions for ${method} request: ${JSON.stringify(
-          instructions,
-        )}`,
-      ),
-    );
-    const recipientAddresses = new Set();
     let mainToAddress = null;
     let amount = 0;
     let currency = null;
     let tokenAddress: string | undefined;
-    // @ts-ignore
+
+    const instructionKeys = {
+      TRANSFER_SOL: 'transferSol',
+      TRANSFER_CHECKED_TOKEN: 'transferCheckedToken',
+      TRANSFER_TOKEN: 'transferToken',
+      ADVANCE_NONCE_ACCOUNT: 'advanceNonceAccount',
+      MEMO: 'memo',
+      SET_COMPUTE_UNIT_LIMIT: 'setComputeUnitLimit',
+      SET_COMPUTE_UNIT_PRICE: 'setComputeUnitPrice',
+      UNKNOWN: 'unknownInstruction',
+    };
+
+    logManager.debug(`Decoded instructions: ${JSON.stringify(instructions)}`);
+
     if (instructions?.[instructionKeys.TRANSFER_SOL]?.length > 0) {
-      // @ts-ignorex
       const solTransfers = instructions[
         instructionKeys.TRANSFER_SOL
       ] as TransferSolInstruction[];
-      mainToAddress =
-        solTransfers.find(transfer => transfer.destination !== senderAddress)
-          ?.destination || null;
-      for (const transfer of solTransfers) {
-        if (transfer.destination !== senderAddress) {
-          recipientAddresses.add(transfer.destination);
-        }
-      }
-      if (!tokenAddress) {
-        amount = solTransfers.reduce(
-          (sum, transfer) => sum + Number(transfer.amount),
-          0,
-        );
-        currency = 'sol';
-      }
-    }
-    // @ts-ignore
-    if (instructions?.[instructionKeys.TRANSFER_CHECKED_TOKEN]?.length > 0) {
-      // @ts-ignore
-      const allTransfers = instructions[
+      mainToAddress = solTransfers[0].destination;
+      amount = solTransfers.reduce(
+        (sum, transfer) => sum + Number(transfer.amount),
+        0,
+      );
+      currency = 'sol';
+    } else if (
+      instructions?.[instructionKeys.TRANSFER_CHECKED_TOKEN]?.length > 0
+    ) {
+      const checkedTokenTransfer = instructions[
         instructionKeys.TRANSFER_CHECKED_TOKEN
-      ] as TransferCheckedTokenInstruction[];
-      const tokenTransfers = tokenAddress
-        ? allTransfers.filter(
-            transfer =>
-              tokenAddress.toLowerCase() === transfer.mint.toLowerCase(),
-          )
-        : allTransfers;
-      if (tokenAddress || !mainToAddress) {
-        mainToAddress =
-          tokenTransfers.find(
-            transfer => transfer.destination !== senderAddress,
-          )?.destination || null;
-      }
-      for (const transfer of tokenTransfers) {
-        if (transfer.destination !== senderAddress) {
-          recipientAddresses.add(transfer.destination);
-        }
-      }
-      if (tokenAddress) {
-        amount = tokenTransfers.reduce(
-          (sum, transfer) => sum + Number(transfer.amount),
-          0,
-        );
-        // currency = ??; TODO
-      }
+      ] as TransferSolInstruction[];
+      mainToAddress = checkedTokenTransfer[0].destination;
+      amount = checkedTokenTransfer.reduce(
+        (sum, transfer) => sum + Number(transfer.amount),
+        0,
+      );
+      tokenAddress = checkedTokenTransfer[0].mint!;
+      currency = (await getSolanaTokenInfo(tokenAddress)).symbol?.toLowerCase();
     }
 
-    dispatch(
-      LogActions.debug(
-        `amount: ${amount}, recipientAddresses: ${Array.from(
-          recipientAddresses,
-        ).join(', ')}, mainToAddress: ${mainToAddress}`,
-      ),
+    logManager.debug(
+      `amount: ${amount}, mainToAddress: ${mainToAddress}, currency: ${currency}, tokenAddress: ${tokenAddress}`,
     );
 
     if (!mainToAddress || !currency) {
@@ -1013,7 +1047,7 @@ export const processSolanaSwapRequest =
       FormatAmount(
         swapFromCurrencyAbbreviation,
         swapFromChain,
-        undefined,
+        tokenAddress,
         Number(swapAmount),
       ),
     );
@@ -1025,7 +1059,7 @@ export const processSolanaSwapRequest =
         swapFromCurrencyAbbreviation,
         swapFromChain,
         allRates,
-        undefined,
+        tokenAddress,
       ),
     );
 
@@ -1044,11 +1078,10 @@ export const processSolanaSwapRequest =
         senderAddress,
         swapFromCurrencyAbbreviation,
         recipientAddress: mainToAddress,
+        decodedInstructions: instructions,
       };
     } catch (error) {
-      dispatch(
-        LogActions.error(`Error processing ${method} request: ${error}`),
-      );
+      logManager.error(`Error processing ${method} request: ${error}`);
       throw error;
     }
   };
@@ -1057,10 +1090,12 @@ export const processSwapRequest =
   (event: WalletKitTypes.SessionRequest): Effect<Promise<RequestUiValues>> =>
   async (dispatch, getState) => {
     const {
-      WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress, keys},
+      WALLET: {customTokenOptionsByAddress, keys},
       APP: {defaultAltCurrency},
       RATE: {rates: allRates},
     } = getState();
+
+    const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
     const tokenOptions = {
       ...BitpaySupportedTokenOptsByAddress,
@@ -1088,9 +1123,7 @@ export const processSwapRequest =
     try {
       let {transactionData, abi} = parseStandardTokenTransactionData(data);
       if (!transactionData && !abi) {
-        dispatch(
-          LogActions.debug('Continue anyway building a default transaction'),
-        );
+        logManager.debug('Continue anyway building a default transaction');
         return handleDefaultTransaction(
           keys,
           swapFromChain,
@@ -1098,21 +1131,17 @@ export const processSwapRequest =
           method,
           dispatch,
         );
-        // dispatch(
-        //   LogActions.debug(
+        // logManager.debug(
         //     'No standard token data - fetching contract ABI from Etherscan',
-        //   ),
-        // );
+        //   );
         // const _chainId = WC_SUPPORTED_CHAINS[chainId]?.chainId?.toString();
         // abi = await fetchContractAbi(dispatch, _chainId, to);
-        // dispatch(LogActions.debug(`ABI: ${JSON.stringify(abi)}`));
+        // logManager.debug(`ABI: ${JSON.stringify(abi)}`);
         // const contractInterface = new ethers.utils.Interface(abi!);
         // transactionData = contractInterface.parseTransaction({data});
       }
-      dispatch(
-        LogActions.debug(
-          'Decoded transaction data: ' + JSON.stringify(transactionData),
-        ),
+      logManager.debug(
+        'Decoded transaction data: ' + JSON.stringify(transactionData),
       );
       const transactionDataName = transactionData!.name;
       if (transactionDataName === 'execute') {
@@ -1148,10 +1177,8 @@ export const processSwapRequest =
         dispatch,
       );
     } catch (error) {
-      dispatch(LogActions.error(`Error processing swap request: ${error}`));
-      dispatch(
-        LogActions.debug('Continue anyway building a default transaction'),
-      );
+      logManager.error(`Error processing swap request: ${error}`);
+      logManager.debug('Continue anyway building a default transaction');
       return handleDefaultTransaction(
         keys,
         swapFromChain,
@@ -1186,7 +1213,7 @@ const fetchContractAbi = async (
   );
 
   if (isProxyContract) {
-    dispatch(LogActions.debug('Detected EIP-1967 proxy contract'));
+    logManager.debug('Detected EIP-1967 proxy contract');
 
     // EIP-1967 implementation slot
     const implementationSlot =
@@ -1214,7 +1241,7 @@ const handleDefaultTransaction = async (
   transactionDataName: string,
   dispatch: any,
 ) => {
-  dispatch(LogActions.debug(`processing ${transactionDataName} transaction`));
+  logManager.debug(`processing ${transactionDataName} transaction`);
   const wallet = Object.values(keys).flatMap(key =>
     key.wallets.filter(
       wallet =>
@@ -1243,7 +1270,7 @@ const handlePayTransaction = async (
   allRates: Rates,
   senderAddress: string,
 ) => {
-  dispatch(LogActions.debug('processing pay transaction'));
+  logManager.debug('processing pay transaction');
 
   const [
     valueBN,
@@ -1266,11 +1293,7 @@ const handlePayTransaction = async (
 
   if (isMainChainAddress) {
     // Special case for native transfer
-    senderTokenPrice = getRateByCurrencyName(
-      allRates,
-      chain.toLowerCase(),
-      chain,
-    )[0].rate;
+    senderTokenPrice = getRateByCurrencyName(allRates, 'eth', chain)[0].rate;
   } else {
     senderTokenPrice = (
       await dispatch(
@@ -1340,7 +1363,7 @@ const handleExecuteTransaction = async (
   allRates: Rates,
   senderAddress: string,
 ) => {
-  dispatch(LogActions.debug('processing execute transaction'));
+  logManager.debug('processing execute transaction');
   const inputArgs = transactionData.args[1];
   const inputChunks = splitInputsToChunks(inputArgs);
   const relevantChunk = inputChunks.find(chunk => chunk.length === 8);
@@ -1441,17 +1464,13 @@ export const isAndroidStoragePermissionGranted = (
         granted['android.permission.WRITE_EXTERNAL_STORAGE'] ===
           PermissionsAndroid.RESULTS.GRANTED
       ) {
-        dispatch(
-          LogActions.info(
-            '[isAndroidStoragePermissionGranted]: Storage permission granted',
-          ),
+        logManager.info(
+          '[isAndroidStoragePermissionGranted]: Storage permission granted',
         );
         resolve(true);
       } else {
-        dispatch(
-          LogActions.warn(
-            '[isAndroidStoragePermissionGranted]: Storage permission denied',
-          ),
+        logManager.warn(
+          '[isAndroidStoragePermissionGranted]: Storage permission denied',
         );
         throw new Error('Storage permission denied');
       }
@@ -1461,16 +1480,16 @@ export const isAndroidStoragePermissionGranted = (
   });
 };
 
-export const getSolanaTokens = async (
+export interface SolanaTokenData {
+  mintAddress: string;
+  ataAddress: string;
+  decimals: number;
+}
+
+export const getSolanaATAs = async (
   address: string,
   network: string = 'livenet',
-): Promise<
-  {
-    mintAddress: string;
-    ataAddress: string;
-    decimals: number;
-  }[]
-> => {
+): Promise<SolanaTokenData[]> => {
   const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
   const url = `${
     // @ts-ignore
@@ -1478,18 +1497,21 @@ export const getSolanaTokens = async (
   }/SOL/${_network}/ata/${address}`;
   try {
     const apiResponse = await axios.get<any>(url);
-    if (!apiResponse?.data?.length) {
-      throw new Error(`No solana tokens found for address: ${address}`);
+    if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
+      logManager.debug(`No solana tokens found for address: ${address}`);
+      return [];
     }
     return apiResponse.data;
-  } catch (err) {
-    throw err;
+  } catch (err: any) {
+    const msg = err?.response?.data ?? err?.message ?? String(err);
+    logManager.debug(`getSolanaATAs Error for ${address}: ${msg}`);
+    return [];
   }
 };
 
 export const getSolanaTokenInfo = async (
   splTokenAddress: string,
-  network: string = 'mainnet',
+  network: string = 'livenet',
 ): Promise<{
   name: string;
   symbol: string;
@@ -1510,6 +1532,190 @@ export const getSolanaTokenInfo = async (
   }
 };
 
+export async function sendSolanaTx(
+  rawTx: string | Uint8Array,
+  network: string = 'livenet',
+): Promise<{data: any}> {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/tx/send`;
+  const payload = {
+    rawTx,
+    network: 'mainnet',
+    chain: 'SOL',
+  };
+
+  try {
+    const resp = await axios.post(url, payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return {data: resp.data};
+  } catch (err: any) {
+    const msg = err?.response?.data ?? err?.message ?? String(err);
+    throw new Error(`Failed to send transaction: ${msg}`);
+  }
+}
+
+export const getSolanaBlockTip = async (
+  network: string = 'livenet',
+): Promise<{
+  hash: string;
+  height: number;
+  time: string;
+}> => {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/block/tip`;
+  try {
+    const apiResponse = await axios.get(url);
+    if (!apiResponse?.data) {
+      throw new Error(`No block tip data returned for network: ${_network}`);
+    }
+
+    return apiResponse.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+interface CreateAtaTxParams {
+  fromKeyPair: SolKit.KeyPairSigner<string>;
+  owner: string;
+  ata: string;
+  mint: string;
+  blockHash: string;
+  blockHeight: number;
+}
+
+export const createAtaIfNeededTx = ({
+  fromKeyPair,
+  owner,
+  mint,
+  ata,
+  blockHash,
+  blockHeight,
+}: CreateAtaTxParams) => {
+  if (!SolKit.isKeyPairSigner(fromKeyPair)) {
+    throw new Error('fromKeyPair required to implement KeyPairSigner');
+  }
+  if (!(blockHash && blockHeight)) {
+    throw new Error('blockHash and blockHeight required');
+  }
+  const recentBlockhash = {
+    blockhash: blockHash as SolKit.Blockhash,
+    lastValidBlockHeight: BigInt(blockHeight),
+  };
+  const SPLTxProvider = BwcProvider.getInstance()
+    .getCore()
+    .Transactions.get({chain: getCWCChain('sol')});
+  const createAtaIx = SPLTxProvider.constructor.createAtokenInstructions(
+    'createAssociatedTokenIdempotent',
+    {
+      payer: fromKeyPair.address,
+      owner,
+      ata,
+      mint,
+    },
+  );
+  const txMsg = SolKit.pipe(
+    SolKit.createTransactionMessage({version: 'legacy'}),
+    tx => SolKit.setTransactionMessageFeePayerSigner(fromKeyPair, tx),
+    tx =>
+      SolKit.setTransactionMessageLifetimeUsingBlockhash(recentBlockhash, tx),
+    tx => SolKit.appendTransactionMessageInstructions([createAtaIx], tx),
+  );
+  const compiled = SolKit.compileTransaction(txMsg);
+  return SolKit.getBase64EncodedWireTransaction(compiled);
+};
+
+export const getOrCreateAssociatedTokenAddress = async (params: {
+  mint: string;
+  feePayer: string; // owner is the ATA owner
+}): Promise<string> => {
+  const [associatedTokenAddress] = await findAssociatedTokenPda({
+    mint: SolKit.address(params.mint),
+    owner: SolKit.address(params.feePayer),
+    tokenProgram: SolKit.address('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // TODO resolve token program - check for TOKEN_2022_PROGRAM_ADDRESS
+  });
+  return associatedTokenAddress.toString();
+};
+
+async function deriveSolKeyPairSigner(derivation: DerivationInput) {
+  const {xPrivKeyEDDSA, rootPath, network} = derivation;
+  const keyPair = BwcProvider.getInstance()
+    .getCore()
+    .Deriver.derivePrivateKeyWithPath(
+      'sol',
+      network,
+      xPrivKeyEDDSA,
+      rootPath,
+      '',
+    );
+  const privKeyBytes = SolKit.getBase58Encoder().encode(keyPair.privKey!);
+  const signer = await SolKit.createKeyPairSignerFromPrivateKeyBytes(
+    privKeyBytes,
+  );
+  return {signer, rawKeyPair: keyPair};
+}
+
+export interface DerivationInput {
+  xPrivKeyEDDSA: string;
+  rootPath: string;
+  network: string;
+}
+export interface CreateAtaAndSendParams {
+  ataAddress: string;
+  /** address owner that will hold the token account (ATA owner/recipient) */
+  ownerAddress: string;
+  mintAddress: string;
+  derivation: DerivationInput;
+  network?: string;
+}
+
+export interface CreateAtaAndSendResult {
+  ataAddress: string;
+  signature?: string;
+  rawResponse?: any;
+}
+
+export async function createAtaAndSend({
+  ataAddress,
+  ownerAddress,
+  mintAddress,
+  derivation,
+  network = 'livenet',
+}: CreateAtaAndSendParams): Promise<CreateAtaAndSendResult> {
+  const {signer, rawKeyPair} = await deriveSolKeyPairSigner(derivation);
+
+  const {hash, height} = await getSolanaBlockTip(network);
+
+  const base64Tx = createAtaIfNeededTx({
+    fromKeyPair: signer,
+    owner: ownerAddress,
+    mint: mintAddress,
+    ata: ataAddress,
+    blockHash: hash,
+    blockHeight: height,
+  });
+
+  const SPLTxProvider = BwcProvider.getInstance()
+    .getCore()
+    .Transactions.get({chain: getCWCChain('sol')});
+
+  const signedTxBase64 = await SPLTxProvider.sign({
+    tx: base64Tx,
+    key: {privKey: rawKeyPair.privKey!},
+  });
+
+  const {data} = await sendSolanaTx(signedTxBase64, network);
+
+  return {
+    ataAddress,
+    signature: data?.txid,
+    rawResponse: data,
+  };
+}
+
 export const checkEncryptedKeysForEddsaMigration =
   (key: Key, password: string) =>
   async (dispatch: any): Promise<void> => {
@@ -1523,3 +1729,38 @@ export const checkEncryptedKeysForEddsaMigration =
       dispatch(successImport({key}));
     }
   };
+
+export const decodeSolanaTxIntructions = async (
+  rawTx: string,
+  network: string = 'livenet',
+): Promise<any> => {
+  const _network = network === Network.mainnet ? 'mainnet' : 'devnet';
+  const url = `${BASE_BITCORE_URL.sol}/SOL/${_network}/decode`;
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+  try {
+    const apiResponse = await axios.post(url, {rawTx}, config);
+    if (!apiResponse?.data?.instructions) {
+      throw new Error(
+        `Could not decode solana instruction for rawTx: ${rawTx}`,
+      );
+    }
+    return apiResponse.data.instructions;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const toggleTSSModal = async (
+  setShowTSSProgressModal: ((show: boolean) => void) | undefined,
+  show: boolean,
+  delayMs: number = 500,
+) => {
+  if (setShowTSSProgressModal) {
+    setShowTSSProgressModal(show);
+    if (delayMs > 0) await sleep(delayMs);
+  }
+};

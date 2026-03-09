@@ -23,6 +23,7 @@ export interface ShopState {
   email: string;
   phone: string;
   phoneCountryInfo: PhoneCountryInfo;
+  isBillPayEnabled: boolean;
   billPayAccounts: {
     [key in Network]: BillPayAccount[];
   };
@@ -32,7 +33,6 @@ export interface ShopState {
   giftCards: {
     [key in Network]: (GiftCard | UnsoldGiftCard)[];
   };
-  syncGiftCardPurchasesWithBitPayId: boolean;
   isJoinedWaitlist: boolean;
 }
 
@@ -47,6 +47,7 @@ export const initialShopState: ShopState = {
     phoneCountryCode: '',
     countryIsoCode: '',
   },
+  isBillPayEnabled: true,
   billPayAccounts: {
     [Network.mainnet]: [],
     [Network.testnet]: [],
@@ -62,7 +63,6 @@ export const initialShopState: ShopState = {
     [Network.testnet]: [],
     [Network.regtest]: [],
   },
-  syncGiftCardPurchasesWithBitPayId: true,
   isJoinedWaitlist: false,
 };
 
@@ -202,17 +202,17 @@ export const shopReducer = (
           ),
         },
       };
-    case ShopActionTypes.TOGGLED_SYNC_GIFT_CARD_PURCHASES_WITH_BITPAY_ID:
-      return {
-        ...state,
-        syncGiftCardPurchasesWithBitPayId:
-          !state.syncGiftCardPurchasesWithBitPayId,
-      };
     case ShopActionTypes.UPDATED_EMAIL_ADDRESS:
       const {email} = action.payload;
       return {
         ...state,
         email,
+      };
+
+    case ShopActionTypes.SET_IS_BILL_PAY_ENABLED:
+      return {
+        ...state,
+        isBillPayEnabled: action.payload.isBillPayEnabled,
       };
     case ShopActionTypes.UPDATED_GIFT_CARD_STATUS:
       const {invoiceId: invoiceIdToUpdate, status} = action.payload;

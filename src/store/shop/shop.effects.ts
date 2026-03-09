@@ -4,7 +4,7 @@ import {keyBy} from 'lodash';
 import {ShopActions} from '.';
 import {Effect} from '..';
 import BitPayIdApi from '../../api/bitpay';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import {
   BillPayAccount,
   BillPayInvoiceParams,
@@ -24,13 +24,13 @@ import {
 } from '../../lib/gift-cards/gift-card';
 import {DeviceEventEmitter} from 'react-native';
 import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
-import {LogActions} from '../log';
 import {getBillPayAccountDescription} from '../../navigation/tabs/shop/bill/utils';
 import {successFetchCatalog} from '../shop-catalog/shop-catalog.actions';
+import {logManager} from '../../managers/LogManager';
 
 export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
   try {
-    const {APP, BITPAY_ID, LOCATION, SHOP} = getState();
+    const {APP, BITPAY_ID, LOCATION} = getState();
     const baseUrl = BASE_BITPAY_URLS[APP.network];
     const user = BITPAY_ID.user[APP.network];
     const incentiveLevelId = user?.incentiveLevelId;
@@ -39,9 +39,7 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
       await Promise.all([
         axios.get(
           `${baseUrl}/gift-cards/catalog/${country}${
-            incentiveLevelId && SHOP.syncGiftCardPurchasesWithBitPayId
-              ? `/${incentiveLevelId}`
-              : ''
+            incentiveLevelId && user ? `/${incentiveLevelId}` : ''
           }`,
         ),
         axios.get(`${baseUrl}/merchant-directory/directory`),
@@ -59,11 +57,7 @@ export const startFetchCatalog = (): Effect => async (dispatch, getState) => {
     );
   } catch (err) {
     const errStr = err instanceof Error ? err.message : JSON.stringify(err);
-    dispatch(
-      LogActions.error(
-        `failed [startFetchCatalog]: ${errStr} - continue anyway`,
-      ),
-    );
+    logManager.error(`failed [startFetchCatalog]: ${errStr} - continue anyway`);
     dispatch(ShopActions.failedFetchCatalog());
   }
 };
@@ -158,6 +152,7 @@ export const startCreateBillPayInvoice =
       };
       const getInvoiceResponse = await axios.get(
         `${baseUrl}/invoices/${billPayOrder.invoiceId}`,
+        {headers: NO_CACHE_HEADERS},
       );
       const {
         data: {data: invoice},
@@ -179,15 +174,14 @@ export const startCreateGiftCardInvoice =
       const {APP, BITPAY_ID, SHOP} = getState();
       const baseUrl = BASE_BITPAY_URLS[APP.network];
       const user = BITPAY_ID.user[APP.network];
-      const shouldSync = user && SHOP.syncGiftCardPurchasesWithBitPayId;
       const fullParams = {
         ...params,
         ...(cardConfig.emailRequired && {
-          email: shouldSync ? user?.email : SHOP.email,
+          email: user?.email || SHOP.email,
         }),
         ...(cardConfig.phoneRequired && {phone: SHOP.phone}),
       };
-      const createInvoiceResponse = shouldSync
+      const createInvoiceResponse = user
         ? await BitPayIdApi.getInstance()
             .request(
               'createGiftCardInvoice',
@@ -204,6 +198,9 @@ export const startCreateGiftCardInvoice =
       const {data: cardOrder} = createInvoiceResponse as {data: GiftCardOrder};
       const getInvoiceResponse = await axios.get(
         `${baseUrl}/invoices/${cardOrder.invoiceId}`,
+        {
+          headers: NO_CACHE_HEADERS,
+        },
       );
       const {
         data: {data: invoice},
@@ -243,11 +240,15 @@ export const startRedeemGiftCard =
     ) as UnsoldGiftCard;
     const baseUrl = BASE_BITPAY_URLS[APP.network];
     const redeemResponse = await axios
-      .post(`${baseUrl}/gift-cards/redeem`, {
-        accessKey: unredeemedGiftCard.accessKey,
-        clientId: unredeemedGiftCard.clientId,
-        invoiceId: unredeemedGiftCard.invoiceId,
-      })
+      .post(
+        `${baseUrl}/gift-cards/redeem`,
+        {
+          accessKey: unredeemedGiftCard.accessKey,
+          clientId: unredeemedGiftCard.clientId,
+          invoiceId: unredeemedGiftCard.invoiceId,
+        },
+        {headers: NO_CACHE_HEADERS},
+      )
       .catch(err => {
         const errMessage = err.response?.data?.message;
         const pendingMessages = [
@@ -450,13 +451,55 @@ export const startCheckIfBillPayAvailable =
         return res.data.data as any;
       })
       .catch(err => {
-        dispatch(
-          LogActions.error(
-            `failed [startCheckIfBillPayAvailable]: ${err.message}`,
-          ),
+        logManager.error(
+          `failed [startCheckIfBillPayAvailable]: ${err.message}`,
         );
         throw err;
       });
-    dispatch(LogActions.info(`isBillPayAvailable: ${available}`));
+    logManager.info(`isBillPayAvailable: ${available}`);
     return available;
+  };
+
+export const startFetchRuntimeSettings =
+  (): Effect<
+    Promise<{
+      isBillPayEnabled: boolean;
+    }>
+  > =>
+  async dispatch => {
+    try {
+      const response = await axios.post(
+        'https://bitpay.com/api/v2',
+        {method: 'getRuntimeSettings'},
+        {
+          headers: {
+            ...NO_CACHE_HEADERS,
+            'content-type': 'application/json',
+          },
+        },
+      );
+
+      if (response?.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      logManager.info(
+        'success [startFetchRuntimeSettings]: ' +
+          JSON.stringify(response.data.data),
+      );
+      const isBillPayEnabled = !!response?.data?.data?.isBillPayEnabled;
+      dispatch(ShopActions.setIsBillPayEnabled({isBillPayEnabled}));
+      return response.data.data;
+    } catch (err: any) {
+      const apiError = err?.response?.data?.error;
+      const errStr =
+        apiError || (err instanceof Error ? err.message : JSON.stringify(err));
+      logManager.error(`failed [startFetchRuntimeSettings]: ${errStr}`);
+
+      const fallbackResponse = {
+        isBillPayEnabled: true,
+      };
+      dispatch(ShopActions.setIsBillPayEnabled({isBillPayEnabled: true}));
+      return fallbackResponse;
+    }
   };

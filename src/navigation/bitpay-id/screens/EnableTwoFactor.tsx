@@ -2,10 +2,9 @@ import React from 'react';
 import styled from 'styled-components/native';
 import {ActiveOpacity, Br} from '../../../components/styled/Containers';
 import {BaseText, H3, Paragraph} from '../../../components/styled/Text';
-import {t} from 'i18next';
 import {BitpayIdScreens, BitpayIdGroupParamList} from '../BitpayIdGroup';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {Action, SlateDark, White} from '../../../styles/colors';
+import {Action, LightBlue, SlateDark, White} from '../../../styles/colors';
 import QRCode from 'react-native-qrcode-svg';
 import Button from '../../../components/button/Button';
 import BoxInput from '../../../components/form/BoxInput';
@@ -16,9 +15,7 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import {Controller, useForm} from 'react-hook-form';
 import {useNavigation} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BitPayIdEffects} from '../../../store/bitpay-id';
-import {dismissOnGoingProcessModal} from '../../../store/app/app.actions';
 import {AppActions} from '../../../store/app';
 import {CustomErrorMessage} from '../../wallet/components/ErrorMessages';
 import {BASE_BITPAY_URLS} from '../../../constants/config';
@@ -27,6 +24,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {useTranslation} from 'react-i18next';
 import {WalletScreens} from '../../../navigation/wallet/WalletGroup';
+import {useOngoingProcess} from '../../../contexts';
 
 const EnableTwoFactorContainer = styled.SafeAreaView`
   flex: 1;
@@ -43,7 +41,7 @@ const ViewBody = styled.View`
 `;
 
 const InstructionBox = styled.View`
-  border-color: ${({theme: {dark}}) => (dark ? SlateDark : '#eceffd')};
+  border-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
   border-radius: 8px;
   border-width: 1px;
   margin-top: 30px;
@@ -52,7 +50,7 @@ const InstructionBox = styled.View`
 const InstructionBoxHeader = styled.View`
   flex-direction: row;
   border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#eceffd')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
   align-items: center;
 `;
 
@@ -61,7 +59,7 @@ const InstructionBoxHeaderNumberContainer = styled.View`
   margin: 12px 0;
   margin-right: 16px;
   border-right-width: 1px;
-  border-right-color: ${({theme: {dark}}) => (dark ? SlateDark : '#eceffd')};
+  border-right-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
 `;
 
 const InstructionBoxHeaderNumber = styled(BaseText)`
@@ -115,10 +113,11 @@ const schema = yup.object().shape({
   code: yup.string().required().length(TWO_FACTOR_CODE_LENGTH),
 });
 
-const EnableTwoFactor = ({route, navigation}: EnableTwoFactorProps) => {
+const EnableTwoFactor = ({navigation}: EnableTwoFactorProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const network = useAppSelector(({APP}) => APP.network);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const securitySettings = useAppSelector(
     ({BITPAY_ID}) => BITPAY_ID.securitySettings[network],
   );
@@ -165,9 +164,9 @@ const EnableTwoFactor = ({route, navigation}: EnableTwoFactorProps) => {
   };
 
   const toggleTwoFactor = async (twoFactorCode: string) => {
-    dispatch(startOnGoingProcessModal('UPDATING_ACCOUNT'));
+    showOngoingProcess('UPDATING_ACCOUNT');
     await requestTwoFactorChange(twoFactorCode);
-    await dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     if (otpEnabled) {
       navigation.pop(2);
       return;
@@ -185,7 +184,7 @@ const EnableTwoFactor = ({route, navigation}: EnableTwoFactorProps) => {
           ? t('Could not disable two-factor authentication')
           : t('Could not enable two-factor authentication'),
       });
-      await dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       throw error;
     });
   };

@@ -11,8 +11,17 @@ import {
   TransakPaymentData,
   TransakIncomingData,
   WyrePaymentData,
+  TransakAccessTokenPayload,
 } from './buy-crypto.models';
 import {RampIncomingData, RampPaymentData} from './models/ramp.models';
+import {BuyCryptoStateOpts} from './buy-crypto.reducer';
+
+export const updateBuyCryptoOpts = (payload: {
+  buyCryptoOpts: BuyCryptoStateOpts;
+}): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.UPDATE_OPTS,
+  payload,
+});
 
 export const successPaymentRequestBanxa = (payload: {
   banxaPaymentData: BanxaPaymentData;
@@ -130,6 +139,13 @@ export const updatePaymentRequestTransak = (payload: {
   transakIncomingData: TransakIncomingData;
 }): BuyCryptoActionType => ({
   type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_TRANSAK,
+  payload,
+});
+
+export const updateAccessTokenTransak = (
+  payload: TransakAccessTokenPayload,
+): BuyCryptoActionType => ({
+  type: BuyCryptoActionTypes.ACCESS_TOKEN_TRANSAK,
   payload,
 });
 

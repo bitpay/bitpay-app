@@ -1,7 +1,7 @@
 import axios from 'axios';
 import DeviceInfo from 'react-native-device-info';
 import {Network} from '../../constants';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import {Session} from '../../store/bitpay-id/bitpay-id.models';
 import {isAxiosError} from '../../utils/axios';
 import {hashPassword} from '../../utils/password';
@@ -18,6 +18,7 @@ export const AuthApi = {
   async fetchSession(network: Network): Promise<Session> {
     const {data: session} = await axios.get<Session>(
       `${BASE_BITPAY_URLS[network]}/auth/session`,
+      {headers: NO_CACHE_HEADERS},
     );
 
     return session;
@@ -30,10 +31,11 @@ export const AuthApi = {
           'x-csrf-token': csrfToken,
         },
       };
+      const bitpayIdApi = BitPayApi.getInstance();
 
       const {data} = await axios.post<RegisterResponse>(
         `${BASE_BITPAY_URLS[network]}/auth/register`,
-        params,
+        {...params, pubKey: bitpayIdApi.identity.pub},
         config,
       );
 

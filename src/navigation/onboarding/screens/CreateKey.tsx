@@ -11,6 +11,7 @@ import {
   CtaContainer,
   HeaderRightContainer,
   ImageContainer,
+  isNarrowHeight,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -21,20 +22,18 @@ import {useTranslation} from 'react-i18next';
 import {
   useAppDispatch,
   useAppSelector,
-  useLogger,
   useRequestTrackingPermissionHandler,
 } from '../../../utils/hooks';
-import {AppActions} from '../../../store/app';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {getBaseKeyCreationCoinsAndTokens} from '../../../constants/currencies';
 import {
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {sleep} from '../../../utils/helper-methods';
-import {LogActions} from '../../../store/log';
+import {useOngoingProcess} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const CreateKeyContainer = styled.SafeAreaView`
   flex: 1;
@@ -43,13 +42,19 @@ const CreateKeyContainer = styled.SafeAreaView`
 const KeyImage = {
   light: (
     <OnboardingImage
-      style={{width: 212, height: 247}}
+      style={{
+        width: isNarrowHeight ? 142 : 212,
+        height: isNarrowHeight ? 165 : 247,
+      }}
       source={require('../../../../assets/img/onboarding/light/create-wallet.png')}
     />
   ),
   dark: (
     <OnboardingImage
-      style={{width: 189, height: 247}}
+      style={{
+        width: isNarrowHeight ? 126 : 189,
+        height: isNarrowHeight ? 165 : 247,
+      }}
       source={require('../../../../assets/img/onboarding/dark/create-wallet.png')}
     />
   ),
@@ -63,8 +68,8 @@ const CreateOrImportKey = ({
 >) => {
   const {t} = useTranslation();
   const themeType = useThemeType();
-  const logger = useLogger();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const isImportLedgerModalVisible = useAppSelector(
     ({APP}) => APP.isImportLedgerModalVisible,
   );
@@ -77,6 +82,11 @@ const CreateOrImportKey = ({
   const onSkipPressRef = useRef(() => {
     haptic('impactLight');
     askForTrackingThenNavigate(() => {
+      dispatch(
+        Analytics.track('Clicked Skip Key Creation', {
+          context: 'onboarding',
+        }),
+      );
       navigation.navigate('TermsOfUse', {context: 'TOUOnly'});
     });
   });
@@ -103,16 +113,6 @@ const CreateOrImportKey = ({
     navigation.setOptions({
       gestureEnabled: false,
       headerLeft: () => null,
-      headerRight: () => (
-        <HeaderRightContainer>
-          <Button
-            accessibilityLabel="skip-button"
-            buttonType={'pill'}
-            onPress={onSkipPressRef.current}>
-            {t('Skip')}
-          </Button>
-        </HeaderRightContainer>
-      ),
     });
   }, [navigation, t]);
 
@@ -137,7 +137,7 @@ const CreateOrImportKey = ({
           <TextAlign align={'center'}>
             <Paragraph>
               {t(
-                "Store your assets safely and securely with BitPay's non-custodial app. Reminder: you own your keys, so be sure to have a pen and paper handy to write down your 12 words.",
+                "Store your assets safely and securely with BitPay's self-custody app.",
               )}
             </Paragraph>
           </TextAlign>
@@ -150,28 +150,34 @@ const CreateOrImportKey = ({
               onPress={async () => {
                 try {
                   const context = 'onboarding';
-                  await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+                  showOngoingProcess('CREATING_KEY');
                   const createdKey = await dispatch(
-                    startCreateKey(getBaseKeyCreationCoinsAndTokens()),
+                    startCreateKey(
+                      getBaseKeyCreationCoinsAndTokens(),
+                      'onboarding',
+                    ),
                   );
 
                   dispatch(
                     setHomeCarouselConfig({id: createdKey.id, show: true}),
                   );
-                  dispatch(dismissOnGoingProcessModal());
-                  askForTrackingThenNavigate(() =>
+                  hideOngoingProcess();
+                  askForTrackingThenNavigate(() => {
+                    dispatch(
+                      Analytics.track('Clicked Create New Key', {
+                        context: 'onboarding',
+                      }),
+                    );
                     navigation.navigate('BackupKey', {
                       context,
                       key: createdKey,
-                    }),
-                  );
+                    });
+                  });
                 } catch (err: any) {
                   const errstring =
                     err instanceof Error ? err.message : JSON.stringify(err);
-                  dispatch(
-                    LogActions.error(`Error creating key: ${errstring}`),
-                  );
-                  dispatch(dismissOnGoingProcessModal());
+                  logManager.error(`Error creating key: ${errstring}`);
+                  hideOngoingProcess();
                   await sleep(500);
                   showErrorModal(errstring);
                 }
@@ -184,11 +190,21 @@ const CreateOrImportKey = ({
               accessibilityLabel="i-already-have-a-key-button"
               buttonStyle={'secondary'}
               onPress={() => {
-                askForTrackingThenNavigate(() =>
+                askForTrackingThenNavigate(() => {
+                  dispatch(
+                    Analytics.track('Clicked Import Key', {
+                      context: 'onboarding',
+                    }),
+                  );
+                  dispatch(
+                    Analytics.track('Clicked I already have a Key', {
+                      context: 'onboarding',
+                    }),
+                  );
                   navigation.navigate('Import', {
                     context: 'onboarding',
-                  }),
-                );
+                  });
+                });
               }}>
               {t('I already have a Key')}
             </Button>

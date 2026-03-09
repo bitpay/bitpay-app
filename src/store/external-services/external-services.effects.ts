@@ -4,6 +4,7 @@ import {Effect} from '..';
 import {LogActions} from '../log';
 import {APP_VERSION, BASE_BWS_URL} from '../../constants/config';
 import {ExternalServicesConfigRequestParams} from './external-services.types';
+import {logManager} from '../../managers/LogManager';
 
 const bwsUri = BASE_BWS_URL;
 
@@ -28,12 +29,10 @@ export const getExternalServicesConfig =
         },
       };
 
-      dispatch(
-        LogActions.debug(
-          `Getting external services config with params: ${JSON.stringify(
-            config.params,
-          )}`,
-        ),
+      logManager.debug(
+        `Getting external services config with params: ${JSON.stringify(
+          config.params,
+        )}`,
       );
       const {data} = await axios.get(bwsUri + '/v1/services', config);
       return Promise.resolve(data);
@@ -52,7 +51,7 @@ export const getSpenderApprovalWhitelist =
         },
       };
 
-      dispatch(LogActions.debug('Getting spender approval white list'));
+      logManager.debug('Getting spender approval white list');
       const {data} = await axios.get(
         bwsUri + '/v1/services/dex/getSpenderApprovalWhitelist',
         config,

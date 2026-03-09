@@ -10,7 +10,6 @@ import {
   SOLANA_SIGNING_METHODS,
 } from '../../constants/WalletConnectV2';
 import {BwcProvider} from '../../lib/bwc';
-import {LogActions} from '../log';
 import {
   AuthTypes,
   ProposalTypes,
@@ -39,7 +38,6 @@ import {
 } from '../wallet/effects/send/send';
 import {
   dismissDecryptPasswordModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../app/app.actions';
@@ -79,6 +77,8 @@ import {
   getBase58Decoder,
   ReadonlyUint8Array,
 } from '@solana/kit';
+import {logManager} from '../../managers/LogManager';
+import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
 
 const BWC = BwcProvider.getInstance();
 
@@ -118,10 +118,8 @@ export const walletConnectV2approveSessionAuthenticateProposal =
   dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
-        dispatch(
-          LogActions.debug(
-            '[WC-V2/walletConnectV2approveSessionAuthenticateProposal]: approving session authenticate proposal with proposal',
-          ),
+        logManager.debug(
+          '[WC-V2/walletConnectV2approveSessionAuthenticateProposal]: approving session authenticate proposal with proposal',
         );
         const {session} = await web3wallet.approveSessionAuthenticate({
           id,
@@ -148,10 +146,8 @@ export const walletConnectV2approveSessionAuthenticateProposal =
           reason: getSdkError('USER_REJECTED'),
         });
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(
-            `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${errMsg}`,
-          ),
+        logManager.error(
+          `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${errMsg}`,
         );
         reject(err);
       }
@@ -160,10 +156,10 @@ export const walletConnectV2approveSessionAuthenticateProposal =
 
 export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
   try {
-    dispatch(LogActions.info('walletConnectV2Init: starting...'));
+    logManager.info('walletConnectV2Init: starting...');
 
     if (!checkCredentials()) {
-      dispatch(LogActions.error('walletConnectV2Init: credentials not found'));
+      logManager.error('walletConnectV2Init: credentials not found');
       return;
     }
 
@@ -187,16 +183,12 @@ export const walletConnectV2Init = (): Effect => async (dispatch, getState) => {
       }
     });
 
-    dispatch(
-      LogActions.info(
-        '[WC-V2/walletConnectV2Init]: client initialized successfully',
-      ),
+    logManager.info(
+      '[WC-V2/walletConnectV2Init]: client initialized successfully',
     );
   } catch (e) {
-    dispatch(
-      LogActions.error(
-        `[WC-V2/walletConnectV2Init]: an error occurred while initializing client: ${e}`,
-      ),
+    logManager.error(
+      `[WC-V2/walletConnectV2Init]: an error occurred while initializing client: ${e}`,
     );
   }
 };
@@ -215,9 +207,7 @@ export const walletConnectV2OnSessionProposal =
         await web3wallet.pair({uri});
         resolve();
       } catch (e) {
-        dispatch(
-          LogActions.error(`[WC-V2/walletConnectV2OnSessionProposal]: ${e}`),
-        );
+        logManager.error(`[WC-V2/walletConnectV2OnSessionProposal]: ${e}`);
         reject(e);
       }
     });
@@ -237,12 +227,10 @@ export const walletConnectV2ApproveSessionProposal =
   dispatch => {
     return new Promise(async (resolve, reject) => {
       try {
-        dispatch(
-          LogActions.debug(
-            `[WC-V2/walletConnectV2ApproveSessionProposal]: approving session with namesapces: ${JSON.stringify(
-              namespaces,
-            )}`,
-          ),
+        logManager.debug(
+          `[WC-V2/walletConnectV2ApproveSessionProposal]: approving session with namesapces: ${JSON.stringify(
+            namespaces,
+          )}`,
         );
         const session = await web3wallet.approveSession({
           id,
@@ -267,10 +255,8 @@ export const walletConnectV2ApproveSessionProposal =
           reason: getSdkError('USER_REJECTED'),
         });
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(
-            `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${errMsg}`,
-          ),
+        logManager.error(
+          `[WC-V2/walletConnectV2ApproveSessionProposal]: an error occurred while approving session: ${errMsg}`,
         );
         reject(err);
       }
@@ -285,17 +271,13 @@ export const walletConnectV2RejectSessionProposal =
         id,
         reason: getSdkError('USER_REJECTED_METHODS'),
       });
-      dispatch(
-        LogActions.info(
-          '[WC-V2/walletConnectV2RejectSessionProposal]: session proposal rejection',
-        ),
+      logManager.info(
+        '[WC-V2/walletConnectV2RejectSessionProposal]: session proposal rejection',
       );
       dispatch(sessionProposal());
     } catch (e) {
-      dispatch(
-        LogActions.error(
-          '[WC-V2/walletConnectV2RejectSessionProposal]: an error occurred while rejecting session.',
-        ),
+      logManager.error(
+        '[WC-V2/walletConnectV2RejectSessionProposal]: an error occurred while rejecting session.',
       );
     }
   };
@@ -307,24 +289,20 @@ export const walletConnectV2SubscribeToEvents =
       (proposal: WalletKitTypes.EventArguments['session_proposal']) => {
         dispatch(WalletConnectV2Actions.sessionProposal(proposal));
         dispatch(AppActions.showWalletConnectStartModal());
-        dispatch(
-          LogActions.info(
-            `[WC-V2/walletConnectV2OnSessionProposal]: session proposal: ${JSON.stringify(
-              proposal,
-            )}`,
-          ),
+        logManager.info(
+          `[WC-V2/walletConnectV2OnSessionProposal]: session proposal: ${JSON.stringify(
+            proposal,
+          )}`,
         );
       },
     );
     web3wallet.on(
       'session_request',
       async (event: WalletKitTypes.EventArguments['session_request']) => {
-        dispatch(
-          LogActions.info(
-            `[WC-V2/walletConnectV2SubscribeToEvents]: new pending request: ${JSON.stringify(
-              event,
-            )}`,
-          ),
+        logManager.info(
+          `[WC-V2/walletConnectV2SubscribeToEvents]: new pending request: ${JSON.stringify(
+            event,
+          )}`,
         );
 
         const isChainSupported = Object.keys(
@@ -376,10 +354,8 @@ export const walletConnectV2SubscribeToEvents =
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(
-            `[WC-V2/handleAutoApproval]: an error occurred while emiting session event: ${errMsg}`,
-          ),
+        logManager.error(
+          `[WC-V2/handleAutoApproval]: an error occurred while emiting session event: ${errMsg}`,
         );
         const bottomNotificationConfig: BottomNotificationConfig =
           CustomErrorMessage({
@@ -495,18 +471,14 @@ export const walletConnectV2SubscribeToEvents =
           }
           dispatch(WalletConnectV2DeleteSessions(topic));
           dispatch(WalletConnectV2UpdateRequests({topic}));
-          dispatch(
-            LogActions.info(
-              `[WC-V2/walletConnectV2SubscribeToEvents]: session disconnected: ${topic}`,
-            ),
+          logManager.info(
+            `[WC-V2/walletConnectV2SubscribeToEvents]: session disconnected: ${topic}`,
           );
         } catch (err) {
           const errMsg =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(
-            LogActions.error(
-              `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${errMsg}`,
-            ),
+          logManager.error(
+            `[WC-V2/walletConnectV2SubscribeToEvents]: an error occurred while disconnecting session: ${errMsg}`,
           );
         }
       },
@@ -519,12 +491,10 @@ export const walletConnectV2SubscribeToEvents =
         dispatch(WalletConnectV2Actions.sessionProposal(proposal));
         dispatch(AppActions.showWalletConnectStartModal());
         try {
-          dispatch(
-            LogActions.info(
-              `[WC-V2/walletConnectV2SubscribeToEvents] auth request: ${JSON.stringify(
-                proposal,
-              )}`,
-            ),
+          logManager.info(
+            `[WC-V2/walletConnectV2SubscribeToEvents] auth request: ${JSON.stringify(
+              proposal,
+            )}`,
           );
         } catch (error) {}
       },
@@ -535,12 +505,10 @@ export const walletConnectV2SubscribeToEvents =
         event: WalletKitTypes.EventArguments['session_request_expire'],
       ) => {
         try {
-          dispatch(
-            LogActions.info(
-              `[WC-V2/walletConnectV2SubscribeToEvents] session_request_expire: ${JSON.stringify(
-                event,
-              )}`,
-            ),
+          logManager.info(
+            `[WC-V2/walletConnectV2SubscribeToEvents] session_request_expire: ${JSON.stringify(
+              event,
+            )}`,
           );
           const requests: WCV2RequestType[] | undefined =
             getState().WALLET_CONNECT_V2.requests;
@@ -565,12 +533,10 @@ export const walletConnectV2ApproveCallRequest =
       try {
         if (!response) {
           response = await dispatch(approveWCRequest(request, wallet));
-          dispatch(
-            LogActions.info(
-              `[WC-V2/walletConnectV2ApproveCallRequest]: approve response: ${JSON.stringify(
-                response,
-              )}`,
-            ),
+          logManager.info(
+            `[WC-V2/walletConnectV2ApproveCallRequest]: approve response: ${JSON.stringify(
+              response,
+            )}`,
           );
         }
         await web3wallet.respondSessionRequest({
@@ -578,20 +544,16 @@ export const walletConnectV2ApproveCallRequest =
           response,
         });
         dispatch(WalletConnectV2UpdateRequests({id}));
-        dispatch(
-          LogActions.info(
-            '[WC-V2/walletConnectV2ApproveCallRequest]: call request approval',
-          ),
+        logManager.info(
+          '[WC-V2/walletConnectV2ApproveCallRequest]: call request approval',
         );
         await sleep(500);
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2UpdateRequests({id}));
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(
-            `[WC-V2/walletConnectV2ApproveCallRequest]: an error occurred while approving call request: ${errMsg}`,
-          ),
+        logManager.error(
+          `[WC-V2/walletConnectV2ApproveCallRequest]: an error occurred while approving call request: ${errMsg}`,
         );
         reject(err);
       }
@@ -613,19 +575,15 @@ export const walletConnectV2RejectCallRequest =
           response,
         });
         dispatch(WalletConnectV2UpdateRequests({id}));
-        dispatch(
-          LogActions.info(
-            '[WC-V2/walletConnectV2RejectCallRequest]: call request rejection',
-          ),
+        logManager.info(
+          '[WC-V2/walletConnectV2RejectCallRequest]: call request rejection',
         );
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2UpdateRequests({id}));
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(
-            `[WC-V2/walletConnectV2RejectCallRequest]: an error occurred while rejecting call request: ${errMsg}`,
-          ),
+        logManager.error(
+          `[WC-V2/walletConnectV2RejectCallRequest]: an error occurred while rejecting call request: ${errMsg}`,
         );
         reject(err);
       }
@@ -655,19 +613,15 @@ export const walletConnectV2OnDeleteSession =
         }
         dispatch(WalletConnectV2DeleteSessions(topic));
         dispatch(WalletConnectV2UpdateRequests({topic}));
-        dispatch(
-          LogActions.info(
-            '[WC-V2/walletConnectV2OnDeleteSession]: session disconnected',
-          ),
+        logManager.info(
+          '[WC-V2/walletConnectV2OnDeleteSession]: session disconnected',
         );
         resolve();
       } catch (err) {
         dispatch(WalletConnectV2DeleteSessions(topic));
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.warn(
-            `[WC-V2/walletConnectV2OnDeleteSession]: an error occurred while deleting session: ${errMsg}`,
-          ),
+        logManager.warn(
+          `[WC-V2/walletConnectV2OnDeleteSession]: an error occurred while deleting session: ${errMsg}`,
         );
         resolve();
       }
@@ -778,10 +732,8 @@ export const walletConnectV2OnUpdateSession =
       }
 
       if (!hasAccounts) {
-        dispatch(
-          LogActions.info(
-            "[WC-V2/walletConnectV2OnUpdateSession]: session disconnected. Namespaces accounts don't satisfy requiredNamespaces",
-          ),
+        logManager.info(
+          "[WC-V2/walletConnectV2OnUpdateSession]: session disconnected. Namespaces accounts don't satisfy requiredNamespaces",
         );
         await dispatch(walletConnectV2OnDeleteSession(topic, pairingTopic));
         Promise.resolve();
@@ -790,20 +742,16 @@ export const walletConnectV2OnUpdateSession =
           topic,
           namespaces,
         });
-        dispatch(
-          LogActions.info(
-            '[WC-V2/walletConnectV2OnUpdateSession]: session updated',
-          ),
+        logManager.info(
+          '[WC-V2/walletConnectV2OnUpdateSession]: session updated',
         );
         dispatch(WalletConnectV2UpdateSession({...session, ...{namespaces}}));
         Promise.resolve();
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(
-        LogActions.error(
-          `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${errMsg}`,
-        ),
+      logManager.error(
+        `[WC-V2/walletConnectV2OnUpdateSession]: an error occurred while updating session: ${errMsg}`,
       );
       if (
         errMsg.includes('No accounts provided for chain') ||
@@ -899,12 +847,10 @@ const approveWCRequest =
             } else {
               sendTransaction.type = 2;
             }
-            dispatch(
-              LogActions.info(
-                `[WC-V2/approveWCRequest]: ETH_SEND_TRANSACTION: ${JSON.stringify(
-                  sendTransaction,
-                )}`,
-              ),
+            logManager.info(
+              `[WC-V2/approveWCRequest]: ETH_SEND_TRANSACTION: ${JSON.stringify(
+                sendTransaction,
+              )}`,
             );
             const connectedWallet = signer.connect(provider);
             const {hash} = await connectedWallet.sendTransaction(
@@ -1034,7 +980,7 @@ export const getPrivKey =
         if (key.isPrivKeyEncrypted) {
           try {
             password = await new Promise<string>(async (_resolve, _reject) => {
-              dispatch(dismissOnGoingProcessModal()); // dismiss any previous modal
+              ongoingProcessManager.hide(); // dismiss any previous modal
               await sleep(500);
               dispatch(
                 showDecryptPasswordModal({
@@ -1093,18 +1039,12 @@ export const getPrivKey =
             .deriveChild(`${wallet.getRootPath()}/0/0`)
             .privateKey.toString();
         }
-        dispatch(
-          LogActions.info(
-            '[WC-V2/getPrivKey]: got the private key successfully',
-          ),
-        );
+        logManager.info('[WC-V2/getPrivKey]: got the private key successfully');
         resolve(priv);
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(
-            `[WC-V2/getPrivKey]: an error occurred while getting private key: ${errMsg}`,
-          ),
+        logManager.error(
+          `[WC-V2/getPrivKey]: an error occurred while getting private key: ${errMsg}`,
         );
         reject(err);
       }

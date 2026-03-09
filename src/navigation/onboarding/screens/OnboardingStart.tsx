@@ -11,7 +11,7 @@ import {
   ActionContainer,
   CtaContainerAbsolute,
   HeaderRightContainer,
-  HEIGHT,
+  isNarrowHeight,
   WIDTH,
 } from '../../../components/styled/Containers';
 import {Link} from '../../../components/styled/Text';
@@ -28,6 +28,7 @@ import ScrollHint, {ScrollHintContainer} from '../components/ScrollHint';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import PaginationDots from '../../../components/pagination-dots/PaginationDots';
 import {useSharedValue} from 'react-native-reanimated';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 type OnboardingStartScreenProps = NativeStackScreenProps<
   OnboardingGroupParamList,
@@ -53,13 +54,19 @@ const OnboardingImages = {
   spend: {
     light: (
       <OnboardingImage
-        style={{height: 247, width: 217}}
+        style={{
+          height: isNarrowHeight ? 165 : 247,
+          width: isNarrowHeight ? 145 : 217,
+        }}
         source={require('../../../../assets/img/onboarding/light/spend.png')}
       />
     ),
     dark: (
       <OnboardingImage
-        style={{height: 247, width: 200}}
+        style={{
+          height: isNarrowHeight ? 165 : 247,
+          width: isNarrowHeight ? 145 : 217,
+        }}
         source={require('../../../../assets/img/onboarding/dark/spend.png')}
       />
     ),
@@ -67,13 +74,19 @@ const OnboardingImages = {
   wallet: {
     light: (
       <OnboardingImage
-        style={{height: 170, width: 220}}
+        style={{
+          height: isNarrowHeight ? 114 : 170,
+          width: isNarrowHeight ? 147 : 220,
+        }}
         source={require('../../../../assets/img/onboarding/light/wallet.png')}
       />
     ),
     dark: (
       <OnboardingImage
-        style={{height: 170, width: 230}}
+        style={{
+          height: isNarrowHeight ? 114 : 170,
+          width: isNarrowHeight ? 147 : 220,
+        }}
         source={require('../../../../assets/img/onboarding/dark/wallet.png')}
       />
     ),
@@ -81,13 +94,19 @@ const OnboardingImages = {
   swap: {
     light: (
       <OnboardingImage
-        style={{height: 203, width: 210}}
+        style={{
+          height: isNarrowHeight ? 135 : 203,
+          width: isNarrowHeight ? 140 : 210,
+        }}
         source={require('../../../../assets/img/onboarding/light/swap.png')}
       />
     ),
     dark: (
       <OnboardingImage
-        style={{height: 170, width: 200}}
+        style={{
+          height: isNarrowHeight ? 135 : 203,
+          width: isNarrowHeight ? 140 : 210,
+        }}
         source={require('../../../../assets/img/onboarding/dark/swap.png')}
       />
     ),
@@ -116,9 +135,6 @@ const LinkText = styled(Link)`
   font-size: 18px;
 `;
 
-// estimated a number, tweak if neccessary based on the content length
-const scrollEnabledForSmallScreens = HEIGHT < 700;
-
 const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
@@ -134,6 +150,11 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   const onLoginPress = () => {
     haptic('impactLight');
     askForTrackingThenNavigate(() => {
+      dispatch(
+        Analytics.track('Clicked Log In', {
+          context: 'onboarding',
+        }),
+      );
       navigation.navigate('Login', {
         onLoginSuccess: async () => {
           haptic('impactLight');
@@ -217,12 +238,12 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
 
   return (
     <OnboardingContainer accessibilityLabel="onboarding-start-view">
-      <ScrollView scrollEnabled={scrollEnabledForSmallScreens}>
+      <ScrollView scrollEnabled={isNarrowHeight}>
         <Carousel
           loop={false}
           vertical={false}
           width={WIDTH}
-          height={WIDTH * 2}
+          height={WIDTH * 1.2}
           autoPlay={false}
           data={onboardingSlides}
           pagingEnabled={true}
@@ -231,7 +252,16 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           scrollAnimationDuration={1000}
           onProgressChange={(_, index) => {
             progressValue.value = index;
+            askForTrackingThenNavigate(() => {
+              dispatch(
+                Analytics.track(`Swiped Feature`, {
+                  context: 'onboarding',
+                  pageSwiped: index + 1,
+                }),
+              );
+            });
           }}
+          onConfigurePanGesture={gesture => gesture.activeOffsetX([-10, 10])}
           renderItem={({item}) => <OnboardingSlide item={item} />}
         />
         <View style={{height: scrollHintHeight}} />
@@ -270,7 +300,14 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
                 onPress={() => {
                   haptic('impactLight');
                   askForTrackingThenNavigate(() => {
-                    navigation.navigate('CreateAccount');
+                    dispatch(
+                      Analytics.track('Clicked Get Started', {
+                        context: 'onboarding',
+                      }),
+                    );
+                    navigation.navigate('CreateAccount', {
+                      context: 'onboarding',
+                    });
                   });
                 }}>
                 {t('Get Started')}
@@ -298,6 +335,11 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
                 buttonType={'link'}
                 onPress={() => {
                   askForTrackingThenNavigate(() => {
+                    dispatch(
+                      Analytics.track('Clicked Continue without an account', {
+                        context: 'onboarding',
+                      }),
+                    );
                     navigation.navigate('Notifications');
                   });
                 }}>

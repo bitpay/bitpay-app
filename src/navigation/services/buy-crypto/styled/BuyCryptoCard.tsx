@@ -5,6 +5,7 @@ import {
   SlateDark,
   White,
   Slate30,
+  Slate,
 } from '../../../../styles/colors';
 import {BaseText} from '../../../../components/styled/Text';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -67,13 +68,14 @@ export const CoinIconContainer = styled.View`
   align-items: center;
 `;
 
-export const ItemDivisor = styled.View`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
+export const ItemDivisor = styled.View<{selected?: boolean}>`
+  border-bottom-color: ${({theme: {dark}, selected}) =>
+    dark ? LightBlack : Slate};
   border-bottom-width: 1px;
 `;
 
 export const BuyCryptoItemTitle = styled.Text`
   margin: 0 0 18px 0;
-  color: ${({theme: {dark}}) => (dark ? White : '#434d5a')};
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   line-height: 18px;
 `;

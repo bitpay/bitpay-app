@@ -7,10 +7,10 @@ import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {useAppDispatch} from '../../../../utils/hooks';
 import {BleError} from 'react-native-ble-plx';
 import {LedgerIntro} from './LedgerIntro';
-import {LogActions} from '../../../../store/log';
 import {checkPermissionsBLE} from '../utils';
 import {SearchingForDevices} from './SearchingForDevices';
 import {sleep} from '../../../../utils/helper-methods';
+import {logManager} from '../../../../managers/LogManager';
 
 interface Props {
   onPaired: (transport: Transport) => void;
@@ -76,9 +76,7 @@ export const PairDevice: React.FC<Props> = props => {
         errorMsg = JSON.stringify(err);
       }
 
-      dispatch(
-        LogActions.error('An error occurred creating BLE transport:', errorMsg),
-      );
+      logManager.error('An error occurred creating BLE transport:', errorMsg);
     }
 
     if (openedTransport) {
@@ -130,9 +128,7 @@ export const PairDevice: React.FC<Props> = props => {
         errorMsg = JSON.stringify(err);
       }
 
-      dispatch(
-        LogActions.error('An error occurred creating HID transport:', errorMsg),
-      );
+      logManager.error('An error occurred creating HID transport:', errorMsg);
     }
 
     if (openedTransport) {

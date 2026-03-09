@@ -7,7 +7,12 @@ import {
   Header,
   Wrapper,
 } from '../import-ledger-wallet.styled';
-import {Action, NeutralSlate, SlateDark} from '../../../../styles/colors';
+import {
+  Action,
+  LightBlue,
+  NeutralSlate,
+  SlateDark,
+} from '../../../../styles/colors';
 
 interface Props {
   onContinue: () => void;
@@ -31,7 +36,7 @@ const InstructionNumberColumn = styled.View`
 `;
 
 const InstructionNumberIcon = styled.View`
-  background-color: #eceffd;
+  background-color: ${LightBlue};
   border-radius: 40px;
   height: 25px;
   width: 25px;

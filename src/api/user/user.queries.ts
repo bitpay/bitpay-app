@@ -19,6 +19,7 @@ export const basicInfoFields = `
     acknowledgePrivacyNotice
     optInEmailMarketing
   }
+  optInEmailMarketing
   experiments
   referralCode
 `;

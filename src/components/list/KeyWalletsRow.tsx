@@ -3,7 +3,13 @@ import styled from 'styled-components/native';
 import {View} from 'react-native';
 import {Badge, BaseText, H5} from '../styled/Text';
 import KeySvg from '../../../assets/img/key.svg';
-import {LightBlack, Slate30, SlateDark, White} from '../../styles/colors';
+import {
+  LightBlack,
+  LightBlue,
+  Slate30,
+  SlateDark,
+  White,
+} from '../../styles/colors';
 import {Wallet} from '../../store/wallet/wallet.models';
 import {WalletRowProps} from './WalletRow';
 import WalletRow from './WalletRow';
@@ -41,7 +47,7 @@ interface KeyWalletsRowContainerProps {
 const KeyWalletsRowContainer = styled.View<KeyWalletsRowContainerProps>`
   margin-bottom: 0px;
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   border-bottom-width: 0;
   gap: 24px;
 `;
@@ -57,7 +63,7 @@ interface KeyNameContainerProps {
 const KeyNameContainer = styled.View<KeyNameContainerProps>`
   flex-direction: row;
   align-items: center;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? SlateDark : LightBlue)};
   border-bottom-width: ${({noBorder}) => (noBorder ? 0 : 1)}px;
   margin-top: 20px;
   ${({noBorder}) => (noBorder ? 'margin-left: 10px;' : '')}
@@ -99,7 +105,7 @@ const AccountChainsContainer = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
   margin: 0px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   gap: 11px;
 `;
 
@@ -117,13 +123,13 @@ interface AccountContainerProps {
 
 const AccountContainer = styled.View<AccountContainerProps>`
   gap: 12px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333333' : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333333' : LightBlue)};
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
   padding-bottom: 12px;
 `;
 
 const UtxoAccountContainer = styled.View<AccountContainerProps>`
-  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333333' : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333333' : LightBlue)};
   border-bottom-width: ${({isLast}) => (isLast ? 0 : 1)}px;
   padding-bottom: ${({isLast}) => (isLast ? 0 : 12)}px;
   margin-top: ${({isSameChain}) => (isSameChain ? -24 : 0)}px;

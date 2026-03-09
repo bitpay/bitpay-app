@@ -41,6 +41,7 @@ export type WCV2RequestType =
     senderTokenPrice?: number;
     badgeImg?: string | ((props?: any) => ReactElement);
     currencyImg?: string | ((props?: any) => ReactElement);
+    decodedInstructions: any;
   };
 
 export type WCV2SessionType = SessionTypes.Struct & {

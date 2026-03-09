@@ -11,6 +11,7 @@ import {
   CtaContainer,
   HeaderRightContainer,
   ImageContainer,
+  isNarrowHeight,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -27,22 +28,28 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const PinImage = {
   light: (
     <OnboardingImage
-      style={{width: 180, height: 247}}
+      style={{
+        width: isNarrowHeight ? 120 : 180,
+        height: isNarrowHeight ? 165 : 247,
+      }}
       source={require('../../../../assets/img/onboarding/light/pin.png')}
     />
   ),
   dark: (
     <OnboardingImage
-      style={{width: 151, height: 247}}
+      style={{
+        width: isNarrowHeight ? 101 : 151,
+        height: isNarrowHeight ? 165 : 247,
+      }}
       source={require('../../../../assets/img/onboarding/dark/pin.png')}
     />
   ),
 };
-
 const PinContainer = styled.SafeAreaView`
   flex: 1;
   align-items: stretch;
@@ -62,7 +69,14 @@ const PinScreen = ({
 
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
-    askForTrackingThenNavigate(() => navigation.navigate('CreateKey'));
+    askForTrackingThenNavigate(() => {
+      dispatch(
+        Analytics.track('Clicked Skip Protect Wallet', {
+          context: 'onboarding',
+        }),
+      );
+      navigation.navigate('CreateKey');
+    });
   });
 
   useLayoutEffect(() => {

@@ -40,8 +40,10 @@ import {Platform} from 'react-native';
 import Share, {ShareOptions} from 'react-native-share';
 import RNFS from 'react-native-fs';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
+import {logManager} from '../../../../managers/LogManager';
 
-const BWC = BwcProvider.getInstance();
+const BWCProvider = BwcProvider.getInstance();
+const Encryption = BWCProvider.getEncryption();
 
 const ExportWalletContainer = styled.SafeAreaView`
   flex: 1;
@@ -146,7 +148,7 @@ const ExportWallet = () => {
     };
 
     let backup: any = {
-      credentials: JSON.parse(wallet.toString(opts)),
+      credentials: JSON.parse(wallet.toString()),
     };
 
     /**----------- Read only wallet ---------------*/
@@ -165,7 +167,9 @@ const ExportWallet = () => {
 
     backup = JSON.stringify(backup);
 
-    return BWC.getSJCL().encrypt(password, backup, {iter: 1000});
+    return JSON.stringify(
+      Encryption.encryptWithPassword(backup, password, {iter: 1000}),
+    );
   };
 
   const onCopyToClipboard = async ({password}: {password: string}) => {
@@ -224,7 +228,7 @@ const ExportWallet = () => {
       await RNFS.writeFile(filePath, txt, 'utf8');
       await Share.open(opts);
     } catch (err: any) {
-      dispatch(LogActions.debug(`[shareFile]: ${err.message}`));
+      logManager.debug(`[shareFile]: ${err.message}`);
       if (err && err.message === 'User did not share') {
         return;
       } else {
@@ -242,10 +246,10 @@ const ExportWallet = () => {
       },
       (error, event) => {
         if (error) {
-          dispatch(LogActions.error('Error sending email: ' + error));
+          logManager.error('Error sending email: ' + error);
         }
         if (event) {
-          dispatch(LogActions.debug('Email Backup: ' + event));
+          logManager.debug('Email Backup: ' + event);
         }
       },
     );
@@ -279,7 +283,7 @@ const ExportWallet = () => {
       setSendButtonState(undefined);
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[onSendByEmail] ', e));
+      logManager.error('[onSendByEmail] ', e);
       setSendButtonState('failed');
       await sleep(500);
       setSendButtonState(undefined);

@@ -9,8 +9,8 @@ import {
   ActionContainer,
   CtaContainer,
   HeaderRightContainer,
-  HEIGHT,
   ImageContainer,
+  isNarrowHeight,
   TextContainer,
   TitleContainer,
 } from '../../../components/styled/Containers';
@@ -24,6 +24,7 @@ import {useThemeType} from '../../../utils/hooks/useThemeType';
 import {OnboardingGroupParamList, OnboardingScreens} from '../OnboardingGroup';
 import {OnboardingImage} from '../components/Containers';
 import {useTranslation} from 'react-i18next';
+import {Analytics} from '../../../store/analytics/analytics.effects';
 
 const NotificationsContainer = styled.SafeAreaView`
   flex: 1;
@@ -33,20 +34,23 @@ const NotificationsContainer = styled.SafeAreaView`
 const NotificationImage = {
   light: (
     <OnboardingImage
-      style={{width: 190, height: 178}}
+      style={{
+        width: isNarrowHeight ? 127 : 190,
+        height: isNarrowHeight ? 119 : 178,
+      }}
       source={require('../../../../assets/img/onboarding/light/notifications.png')}
     />
   ),
   dark: (
     <OnboardingImage
-      style={{width: 190, height: 170}}
+      style={{
+        width: isNarrowHeight ? 127 : 190,
+        height: isNarrowHeight ? 119 : 178,
+      }}
       source={require('../../../../assets/img/onboarding/dark/notifications.png')}
     />
   ),
 };
-
-// estimated a number, tweak if neccessary based on the content length
-const scrollEnabledForSmallScreens = HEIGHT < 600;
 
 const NotificationsScreen = ({
   navigation,
@@ -64,7 +68,14 @@ const NotificationsScreen = ({
 
   const onSkipPressRef = useRef(async () => {
     haptic('impactLight');
-    await askForTrackingThenNavigate(() => navigation.navigate('Pin'));
+    await askForTrackingThenNavigate(() => {
+      dispatch(
+        Analytics.track('Clicked Skip Notifications', {
+          context: 'onboarding',
+        }),
+      );
+      navigation.navigate('Pin');
+    });
   });
 
   useLayoutEffect(() => {
@@ -88,9 +99,22 @@ const NotificationsScreen = ({
     const setAndNavigate = (accepted: boolean) => {
       haptic('impactLight');
       dispatch(AppEffects.setNotifications(accepted));
-      dispatch(AppEffects.setConfirmTxNotifications(accepted));
-      dispatch(AppEffects.setAnnouncementsNotifications(accepted));
-      askForTrackingThenNavigate(() => navigation.navigate('Pin'));
+      askForTrackingThenNavigate(() => {
+        if (notificationsAccepted) {
+          dispatch(
+            Analytics.track('Clicked Allow Notifications', {
+              context: 'onboarding',
+            }),
+          );
+        } else {
+          dispatch(
+            Analytics.track('Clicked Deny Notifications', {
+              context: 'onboarding',
+            }),
+          );
+        }
+        navigation.navigate('Pin');
+      });
     };
 
     if (!notificationsAccepted) {
@@ -108,7 +132,7 @@ const NotificationsScreen = ({
         contentContainerStyle={{
           alignItems: 'center',
         }}
-        scrollEnabled={scrollEnabledForSmallScreens}>
+        scrollEnabled={isNarrowHeight}>
         <ImageContainer justifyContent={'flex-end'}>
           {NotificationImage[themeType]}
         </ImageContainer>

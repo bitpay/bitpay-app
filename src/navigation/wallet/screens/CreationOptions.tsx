@@ -18,21 +18,21 @@ import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useLogger} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {startCreateKey} from '../../../store/wallet/effects';
 import {
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {sleep} from '../../../utils/helper-methods';
 import {getBaseKeyCreationCoinsAndTokens} from '../../../constants/currencies';
-import {LogActions} from '../../../store/log';
+import {useOngoingProcess} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 type CreationOptionsScreenProps = NativeStackScreenProps<
   WalletGroupParamList,
   WalletScreens.CREATION_OPTIONS
 >;
+
 export interface Option {
   id: string;
   title: string;
@@ -40,13 +40,17 @@ export interface Option {
   cta: () => void;
 }
 
+export type MultisigModalType = 'create' | 'join' | null;
+
 const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
   navigation,
 }) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
-  const [showMultisigOptions, setShowMultisigOptions] = useState(false);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const [multisigModalType, setMultisigModalType] =
+    useState<MultisigModalType>(null);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -71,7 +75,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
               context: 'CreationOptions',
             }),
           );
-          await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+          showOngoingProcess('CREATING_KEY');
           await sleep(500);
           const createdKey = await dispatch(
             startCreateKey(getBaseKeyCreationCoinsAndTokens()),
@@ -80,12 +84,12 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
           dispatch(setHomeCarouselConfig({id: createdKey.id, show: true}));
 
           navigation.navigate('BackupKey', {context, key: createdKey});
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
         } catch (err: any) {
           const errstring =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(LogActions.error(`Error creating key: ${errstring}`));
-          dispatch(dismissOnGoingProcessModal());
+          logManager.error(`Error creating key: ${errstring}`);
+          hideOngoingProcess();
           await sleep(500);
           showErrorModal(errstring);
         }
@@ -107,12 +111,26 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
       },
     },
     {
-      id: 'multisig',
-      title: t('Multisig Wallet'),
+      id: 'addMultisig',
+      title: t('Add Multisig Wallet'),
       description: t(
-        'Requires multiple people or devices and is the most secure',
+        'Create a new wallet that requires multiple signatures for transactions',
       ),
-      cta: () => setShowMultisigOptions(true),
+      cta: () => setMultisigModalType('create'),
+    },
+    {
+      id: 'joinMultisig',
+      title: t('Join Shared Wallet'),
+      description: t(
+        'Join an existing multisig wallet using an invitation from another user',
+      ),
+      cta: () => setMultisigModalType('join'),
+    },
+    {
+      id: 'coinbase',
+      title: t('Coinbase Account'),
+      description: t('Connect your Coinbase account'),
+      cta: () => navigation.navigate('CoinbaseRoot'),
     },
   ];
 
@@ -155,8 +173,9 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
         </OptionListContainer>
       </OptionContainer>
       <MultisigOptions
-        isVisible={showMultisigOptions}
-        setShowMultisigOptions={setShowMultisigOptions}
+        isVisible={multisigModalType !== null}
+        modalType={multisigModalType}
+        closeModal={() => setMultisigModalType(null)}
       />
     </>
   );

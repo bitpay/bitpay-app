@@ -2,12 +2,13 @@ import {Effect, RootState} from '../../../index';
 import {WalletActions} from '../../index';
 import {startGetTokenOptions} from '../currencies/currencies';
 import {getAndDispatchUpdatedWalletBalances} from '../status/statusv2';
-import {LogActions} from '../../../log';
 import {startGetRates} from '../../effects';
+import {logManager} from '../../../../managers/LogManager';
 
 export const startWalletStoreInit =
-  (): Effect<Promise<void>> => async (dispatch, getState: () => RootState) => {
-    dispatch(LogActions.info('starting [startWalletStoreInit]'));
+  (): Effect<Promise<{walletInitSuccess: boolean}>> =>
+  async (dispatch, getState: () => RootState) => {
+    logManager.info('starting [startWalletStoreInit]');
     try {
       const {WALLET} = getState();
 
@@ -26,7 +27,8 @@ export const startWalletStoreInit =
       }
 
       dispatch(WalletActions.successWalletStoreInit());
-      dispatch(LogActions.info('success [startWalletStoreInit]'));
+      logManager.info('success [startWalletStoreInit]');
+      return {walletInitSuccess: true};
     } catch (e) {
       let errorStr;
       if (e instanceof Error) {
@@ -35,6 +37,7 @@ export const startWalletStoreInit =
         errorStr = JSON.stringify(e);
       }
       dispatch(WalletActions.failedWalletStoreInit());
-      dispatch(LogActions.error(`failed [startWalletStoreInit]: ${errorStr}`));
+      logManager.error(`failed [startWalletStoreInit]: ${errorStr}`);
+      return {walletInitSuccess: false};
     }
   };

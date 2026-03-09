@@ -11,6 +11,7 @@ export const NeutralSlate = '#F5F7F8';
 export const Air = '#EBEDF8';
 export const Cloud = '#F2F2F2';
 export const Feather = '#F6F7FC';
+export const GhostWhite = '#FBFBFF';
 
 /* Neutrals */
 /**
@@ -18,6 +19,7 @@ export const Feather = '#F6F7FC';
  */
 export const OledBlack = '#050505';
 export const LightBlack = '#252525';
+export const CharcoalBlack = '#111111';
 export const Black = '#000000';
 export const Grey = '#E7E7E7';
 export const White = '#FFFFFF';
@@ -46,3 +48,6 @@ export const DisabledTextDark = '#656565';
 export const NotificationPrimary = '#1F3AB3';
 export const ProgressBlue = '#4F6EF7';
 export const LinkBlue = '#4989FF';
+export const LightBlue = '#ECEFFD';
+
+export const Overlay = '#111111';

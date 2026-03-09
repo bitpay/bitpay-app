@@ -21,6 +21,8 @@ import {
   TxDetails,
   Utxo,
   Wallet,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
@@ -29,19 +31,14 @@ import {
   showConfirmAmountInfoSheet,
   startSendPayment,
 } from '../../../../../store/wallet/effects/send/send';
+import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import {
   formatCurrencyAbbreviation,
   formatFiatAmount,
   sleep,
 } from '../../../../../utils/helper-methods';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../../../store/app/app.actions';
+import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
+import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 import {
   Amount,
   ConfirmContainer,
@@ -97,7 +94,6 @@ import {
   IsVMChain,
 } from '../../../../../store/wallet/utils/currency';
 import prompt from 'react-native-prompt-android';
-import {Analytics} from '../../../../../store/analytics/analytics.effects';
 import SendingToERC20Warning from '../../../components/SendingToERC20Warning';
 import {HIGH_FEE_LIMIT} from '../../../../../constants/wallet';
 import WarningSvg from '../../../../../../assets/img/warning.svg';
@@ -117,7 +113,9 @@ import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {CommonActions} from '@react-navigation/native';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {RootStacks} from '../../../../../Root';
-import {AppActions} from '../../../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
+import TSSProgressTracker from '../../../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
 const VerticalPadding = styled.View`
   padding: ${ScreenGutter} 0;
@@ -186,6 +184,8 @@ const Confirm = () => {
   const customizeNonce = useAppSelector(({WALLET}) => WALLET.customizeNonce);
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const {isoCode} = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   const key = allKeys[wallet?.keyId!];
   const [resetSwipeButton, setResetSwipeButton] = useState(false);
@@ -199,6 +199,34 @@ const Confirm = () => {
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+
+  const showErrorMessage = useCallback(
+    async (msg: BottomNotificationConfig) => {
+      await sleep(500);
+      dispatch(showBottomNotificationModal(msg));
+    },
+    [dispatch],
+  );
+
+  const isTSSWallet = isTSSKey(key);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+  const tssCallbacks = useTSSCallbacks({
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+  });
 
   const {
     fee: _fee,
@@ -296,8 +324,6 @@ const Confirm = () => {
 
   const isTxLevelAvailable = () => {
     const includedChains = ['btc', 'eth', 'matic', 'arb', 'base', 'op'];
-    // TODO: exclude paypro, coinbase, usingMerchantFee txs,
-    // const {payProUrl} = txDetails;
     return includedChains.includes(chain.toLowerCase());
   };
 
@@ -309,7 +335,7 @@ const Confirm = () => {
     if (newLevel) {
       updateTxProposal({
         feeLevel: newLevel,
-        feePerKb: customFeePerKB, // this will be ignore in select input context
+        feePerKb: customFeePerKB,
       });
     }
   };
@@ -365,7 +391,7 @@ const Confirm = () => {
 
   const updateTxProposal = async (newOpts: any) => {
     try {
-      dispatch(startOnGoingProcessModal('UPDATING_TXP'));
+      showOngoingProcess('UPDATING_TXP');
       const {txDetails: _txDetails, txp: newTxp} = await dispatch(
         createProposalAndBuildTxDetails({
           wallet,
@@ -390,26 +416,23 @@ const Confirm = () => {
       setDestinationTag(_txDetails.destinationTag);
       setMemo(_txDetails.memo);
       await sleep(500);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } catch (err: any) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       const errorMessageConfig = await dispatch(
         handleCreateTxProposalError(err),
       );
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
+          enableBackdropDismiss: true,
         }),
       );
     }
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   const startSendingPayment = async ({
@@ -435,39 +458,38 @@ const Confirm = () => {
         setConfirmHardwareState('sending');
         await sleep(500);
         await dispatch(
-          startSendPayment({txp, key, wallet, recipient, transport}),
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+            transport,
+          }),
         );
         setConfirmHardwareState('complete');
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-        await sleep(500);
-        await dispatch(
-          startSendPayment({txp, key, wallet, recipient, transport}),
+        const result = await dispatch(
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+            transport,
+            ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
+          }),
         );
-        dispatch(dismissOnGoingProcessModal());
       }
 
-      dispatch(
-        Analytics.track('Sent Crypto', {
-          context: 'Confirm',
-          coin: currencyAbbreviation || '',
-        }),
-      );
-
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            wallet.credentials.n > 1
-              ? t('Proposal created')
-              : t('Payment Sent'),
-        }),
-      );
-
-      await sleep(1000);
+      await sleep(300);
+      showPaymentSent({
+        title:
+          wallet.credentials.n > 1 ? t('Proposal created') : t('Payment Sent'),
+        onCloseModal,
+      });
+      await sleep(300);
       if (recipient.type === 'coinbase') {
         navigation.dispatch(StackActions.popToTop());
         navigation.dispatch(StackActions.push('CoinbaseRoot'));
@@ -525,7 +547,6 @@ const Confirm = () => {
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -599,14 +620,6 @@ const Confirm = () => {
     return () => clearTimeout(timer);
   }, [resetSwipeButton]);
 
-  const showErrorMessage = useCallback(
-    async (msg: BottomNotificationConfig) => {
-      await sleep(500);
-      dispatch(showBottomNotificationModal(msg));
-    },
-    [dispatch],
-  );
-
   const checkHighFees = async () => {
     const {feeUnitAmount} = GetFeeUnits(chain);
     let feePerKb: number;
@@ -672,6 +685,16 @@ const Confirm = () => {
     recipientData = sendingTo;
   }
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
     <>
       <ConfirmContainer>
@@ -681,6 +704,22 @@ const Confirm = () => {
           keyboardShouldPersistTaps={'handled'}>
           <DetailsList keyboardShouldPersistTaps={'handled'}>
             <Header>{t('Summary')}</Header>
+
+            {isTSSWallet && (
+              <TSSProgressTracker
+                status={tssStatus}
+                progress={tssProgress}
+                createdBy={sendingFrom.walletName || 'You'}
+                date={new Date()}
+                wallet={wallet}
+                copayers={tssCopayers}
+                onCopayersInitialized={setTssCopayers}
+                isModalVisible={showTSSProgressModal}
+                onModalVisibilityChange={setShowTSSProgressModal}
+                txpCreatorId={wallet.credentials?.copayerId}
+              />
+            )}
+
             {solanaPayOpts ? (
               <>
                 <Hr style={{marginBottom: 15}} />

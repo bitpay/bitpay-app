@@ -6,7 +6,7 @@ import AdvertisementCard from './AdvertisementCard';
 import {BoxShadow} from '../Styled';
 import {useNavigation} from '@react-navigation/native';
 import {useRequireKeyAndWalletRedirect} from '../../../../../utils/hooks/useRequireKeyAndWalletRedirect';
-import {WalletScreens} from '../../../../wallet/WalletGroup';
+import {ExternalServicesScreens} from '../../../../services/ExternalServicesGroup';
 
 interface AdvertisementListProps {
   contentCards: ContentCard[];
@@ -27,12 +27,7 @@ const AdvertisementsList: React.FC<AdvertisementListProps> = props => {
   const navigation = useNavigation();
 
   const buyCryptoCta = useRequireKeyAndWalletRedirect(() => {
-    navigation.navigate(WalletScreens.AMOUNT, {
-      onAmountSelected: (amount: string) => {
-        navigation.navigate('BuyCryptoRoot', {
-          amount: Number(amount),
-        });
-      },
+    navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
       context: 'buyCrypto',
     });
   });

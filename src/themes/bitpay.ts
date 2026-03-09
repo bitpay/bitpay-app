@@ -5,7 +5,6 @@ import {
   BitPay,
   Black,
   LinkBlue,
-  OledBlack,
   SlateDark,
   White,
 } from '../styles/colors';
@@ -41,7 +40,7 @@ export const BitPayDarkTheme: BitPayTheme = {
     ...DarkTheme.colors,
 
     primary: BitPay,
-    background: OledBlack,
+    background: Black,
     card: DarkTheme.colors.card,
     text: White,
     link: LinkBlue,

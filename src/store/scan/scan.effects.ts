@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {WalletScreens} from '../../navigation/wallet/WalletGroup';
 import {navigationRef} from '../../Root';
 import {Effect} from '../index';
@@ -47,7 +48,7 @@ import {
   IsValidAddKeyPath,
   IsValidSolanaPay,
 } from '../wallet/utils/validations';
-import {APP_DEEPLINK_PREFIX} from '../../constants/config';
+import {APP_DEEPLINK_PREFIX, NO_CACHE_HEADERS} from '../../constants/config';
 import {BuyCryptoActions} from '../buy-crypto';
 import {SellCryptoActions} from '../sell-crypto';
 import {
@@ -62,11 +63,7 @@ import {
 } from '../buy-crypto/buy-crypto.models';
 import {RampIncomingData} from '../buy-crypto/models/ramp.models';
 import {LogActions} from '../log';
-import {startOnGoingProcessModal} from '../app/app.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../app/app.actions';
+import {showBottomNotificationModal} from '../app/app.actions';
 import {
   getCurrencyAbbreviation,
   getSolanaTokenInfo,
@@ -114,13 +111,17 @@ import {MoonpaySettingsProps} from '../../navigation/tabs/settings/external-serv
 import {RampSettingsProps} from '../../navigation/tabs/settings/external-services/screens/RampSettings';
 import {SimplexSettingsProps} from '../../navigation/tabs/settings/external-services/screens/SimplexSettings';
 import {getMoonpaySellFixedCurrencyAbbreviation} from '../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
-import {SellCryptoScreens} from '../../navigation/services/sell-crypto/SellCryptoGroup';
 import {SwapCryptoScreens} from '../../navigation/services/swap-crypto/SwapCryptoGroup';
 import {SimplexSellIncomingData} from '../sell-crypto/models/simplex-sell.models';
 import {ExternalServicesSettingsScreens} from '../../navigation/tabs/settings/external-services/ExternalServicesGroup';
 import {BitpaySupportedTokenOptsByAddress} from '../../constants/tokens';
-import {getTokenContractInfo} from '../wallet/effects/status/status';
 import {SolanaPayOpts} from '../../navigation/wallet/screens/send/confirm/Confirm';
+import {tokenManager} from '../../managers/TokenManager';
+import {logManager} from '../../managers/LogManager';
+import {ongoingProcessManager} from '../../managers/OngoingProcessManager';
+import {ExternalServicesScreens} from '../../navigation/services/ExternalServicesGroup';
+import {BuyAndSellRootProps} from '../../navigation/services/screens/BuyAndSellRoot';
+import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
 
 export const incomingData =
   (
@@ -265,7 +266,7 @@ export const incomingData =
         handled = false;
       }
     } catch (err) {
-      dispatch(dismissOnGoingProcessModal());
+      ongoingProcessManager.hide();
       await sleep(300);
       throw err;
     }
@@ -297,23 +298,24 @@ const goToPayPro =
     wallet?: Wallet,
   ): Effect =>
   async dispatch => {
-    dispatch(dismissOnGoingProcessModal());
+    ongoingProcessManager.hide();
     const invoiceId = data.split('/i/')[1].split('?')[0];
     const payProUrl = GetPayProUrl(data);
     const {host} = new URL(payProUrl);
-    dispatch(LogActions.info('[scan] Incoming-data: Payment Protocol request'));
+    logManager.info('[scan] Incoming-data: Payment Protocol request');
     try {
-      dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
+      ongoingProcessManager.show('FETCHING_PAYMENT_INFO');
       const payProOptions = await dispatch(GetPayProOptions(payProUrl));
       const getInvoiceResponse = await axios.get(
         `https://${host}/invoices/${invoiceId}`,
+        {headers: NO_CACHE_HEADERS},
       );
       const {
         data: {data: fetchedInvoice},
       } = getInvoiceResponse as {data: {data: Invoice}};
       const _invoice: Invoice = invoice || fetchedInvoice;
 
-      dispatch(dismissOnGoingProcessModal());
+      ongoingProcessManager.hide();
 
       if (replaceNavigationRoute) {
         navigationRef.dispatch(
@@ -331,7 +333,7 @@ const goToPayPro =
         wallet,
       });
     } catch (e: any) {
-      dispatch(dismissOnGoingProcessModal());
+      ongoingProcessManager.hide();
       dispatch(
         showBottomNotificationModal({
           type: 'warning',
@@ -353,7 +355,7 @@ const goToPayPro =
 const handleUnlock =
   (data: string, wallet?: Wallet): Effect =>
   async dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: BitPay invoice'));
+    logManager.info('[scan] Incoming-data: BitPay invoice');
 
     const invoiceId = data.split('/i/')[1].split('?')[0];
     const network = data.includes('test.bitpay.com')
@@ -374,6 +376,7 @@ const handleUnlock =
     try {
       const {data: invoice} = await axios.get(
         `https://${host}/invoiceData/${invoiceId}`,
+        {headers: NO_CACHE_HEADERS},
       );
       if (invoice) {
         if (context === 'u') {
@@ -384,12 +387,14 @@ const handleUnlock =
               buyerProvidedEmail,
               status,
             },
+            buyer,
           } = invoice;
 
           if (
             emailAddress ||
             buyerProvidedEmail ||
             buyerEmailAddress ||
+            buyer?.email ||
             status !== 'new'
           ) {
             dispatch(goToPayPro(data, undefined, undefined, wallet));
@@ -566,7 +571,7 @@ const goToConfirm =
       if (setButtonState) {
         setButtonState('loading');
       } else {
-        dispatch(startOnGoingProcessModal('CREATING_TXP'));
+        ongoingProcessManager.show('CREATING_TXP');
       }
 
       const {txDetails, txp} = await dispatch(
@@ -580,7 +585,7 @@ const goToConfirm =
       if (setButtonState) {
         setButtonState('success');
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        ongoingProcessManager.hide();
       }
       await sleep(300);
       navigationRef.navigate('Confirm', {
@@ -599,7 +604,7 @@ const goToConfirm =
         setButtonState('failed');
         sleep(1000).then(() => setButtonState?.(null));
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        ongoingProcessManager.hide();
       }
       const errorMessageConfig = await dispatch(
         handleCreateTxProposalError(err),
@@ -680,7 +685,7 @@ export const goToAmount =
 const handlePrivateKey =
   (scannedPrivateKey: string, wallet?: Wallet): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('[scan] Incoming-data: private key'));
+    logManager.info('[scan] Incoming-data: private key');
     navigationRef.navigate(WalletScreens.PAPER_WALLET, {
       scannedPrivateKey,
     });
@@ -689,7 +694,7 @@ const handlePrivateKey =
 const goToAddKey =
   (data?: string): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Go to Add key path', data));
+    logManager.info('[scan] Incoming-data: Go to Add key path', data);
     dispatch(
       Analytics.track('Clicked create, import or join', {
         context: 'DeepLink',
@@ -713,7 +718,7 @@ const goToAddKey =
 const handleBitPayUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('[scan] Incoming-data: BitPay URI', data));
+    logManager.info('[scan] Incoming-data: BitPay URI', data);
 
     // From Braze (push notifications)
     if (data.includes('wallet?')) {
@@ -783,14 +788,16 @@ const handleBitPayUri =
 const handleSolanaPay =
   (data: string, wallet?: Wallet): Effect<void> =>
   async (dispatch, getState) => {
-    dispatch(LogActions.info('[scan] Incoming-data: SolanaPay URI'));
+    logManager.info('[scan] Incoming-data: SolanaPay URI');
 
     const network = getState().APP.network;
     const walletState = getState().WALLET;
+    const {tokenOptionsByAddress: _tokenOptionsByAddress} =
+      tokenManager.getTokenOptions();
 
     const tokenOptionsByAddress: {[key in string]: Token} = {
       ...BitpaySupportedTokenOptsByAddress,
-      ...walletState.tokenOptionsByAddress,
+      ..._tokenOptionsByAddress,
       ...walletState.customTokenOptionsByAddress,
     };
 
@@ -814,18 +821,14 @@ const handleSolanaPay =
         addrData?.coin.toLowerCase() && network === addrData?.network;
 
       if (!isValid) {
-        dispatch(
-          LogActions.warn(
-            `[SolanaPay] Invalid SPL tokenAddress: ${splTokenAddress}`,
-          ),
+        logManager.warn(
+          `[SolanaPay] Invalid SPL tokenAddress: ${splTokenAddress}`,
         );
         return;
       }
 
-      dispatch(
-        LogActions.debug(
-          `[SolanaPay] Valid SPL tokenAddress: ${splTokenAddress}. Getting tokenContractInfo`,
-        ),
+      logManager.debug(
+        `[SolanaPay] Valid SPL tokenAddress: ${splTokenAddress}. Getting tokenContractInfo`,
       );
 
       tokenContractInfo =
@@ -833,10 +836,8 @@ const handleSolanaPay =
           getCurrencyAbbreviation(splTokenAddress, chain)
         ];
       if (!tokenContractInfo) {
-        dispatch(
-          LogActions.debug(
-            '[SolanaPay] Contract info not present in token options - consulting bitcore',
-          ),
+        logManager.debug(
+          '[SolanaPay] Contract info not present in token options - consulting bitcore',
         );
 
         try {
@@ -845,18 +846,14 @@ const handleSolanaPay =
             'livenet',
           );
 
-          dispatch(
-            LogActions.debug(
-              '[SolanaPay] Contract info from bitcore: ' +
-                JSON.stringify(contractInfo),
-            ),
+          logManager.debug(
+            '[SolanaPay] Contract info from bitcore: ' +
+              JSON.stringify(contractInfo),
           );
 
           if (!contractInfo) {
-            dispatch(
-              LogActions.warn(
-                '[SolanaPay] It was not possible to obtain the necessary data for the SPL Token from bitcore',
-              ),
+            logManager.warn(
+              '[SolanaPay] It was not possible to obtain the necessary data for the SPL Token from bitcore',
             );
             await sleep(300);
             dispatch(
@@ -887,10 +884,8 @@ const handleSolanaPay =
         } catch (err) {
           const errorMsg =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(
-            LogActions.warn(
-              `[SolanaPay] It was not possible to obtain the necessary data for the SPL Token from bitcore. Err: ${errorMsg}`,
-            ),
+          logManager.warn(
+            `[SolanaPay] It was not possible to obtain the necessary data for the SPL Token from bitcore. Err: ${errorMsg}`,
           );
           await sleep(300);
           dispatch(
@@ -940,7 +935,7 @@ const handleSolanaPay =
         }),
       );
     } else {
-      dispatch(LogActions.debug('[SolanaPay] Validating amount...'));
+      logManager.debug('[SolanaPay] Validating amount...');
       const isValidSolanaPayAmount = (
         amount: string | null | undefined,
       ): boolean => {
@@ -968,7 +963,7 @@ const handleSolanaPay =
       };
 
       if (isValidSolanaPayAmount(amount)) {
-        dispatch(LogActions.debug('[SolanaPay] Valid amount. Go to confirm.'));
+        logManager.debug('[SolanaPay] Valid amount. Go to confirm.');
         dispatch(
           goToConfirm({
             recipient,
@@ -986,7 +981,7 @@ const handleSolanaPay =
           }),
         );
       } else {
-        dispatch(LogActions.warn('[SolanaPay] Invalid amount'));
+        logManager.warn('[SolanaPay] Invalid amount');
         await sleep(300);
         dispatch(
           showBottomNotificationModal({
@@ -1013,7 +1008,7 @@ const handleSolanaPay =
 const handleBitcoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Bitcoin URI'));
+    logManager.info('[scan] Incoming-data: Bitcoin URI');
     const coin = 'btc';
     const chain = 'btc';
     const parsed = BwcProvider.getInstance().getBitcore().URI(data);
@@ -1041,7 +1036,7 @@ const handleBitcoinUri =
 const handleBitcoinCashUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: BitcoinCash URI'));
+    logManager.info('[scan] Incoming-data: BitcoinCash URI');
     const coin = 'bch';
     const chain = 'bch';
     const parsed = BwcProvider.getInstance().getBitcoreCash().URI(data);
@@ -1075,10 +1070,8 @@ const handleBitcoinCashUri =
 const handleBitcoinCashUriLegacyAddress =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(
-      LogActions.info(
-        '[scan] Incoming-data: BitcoinCash URI with legacy address',
-      ),
+    logManager.info(
+      '[scan] Incoming-data: BitcoinCash URI with legacy address',
     );
     const coin = 'bch';
     const chain = 'bch';
@@ -1088,9 +1081,7 @@ const handleBitcoinCashUriLegacyAddress =
 
     const oldAddr = parsed.address ? parsed.address.toString() : '';
     if (!oldAddr) {
-      dispatch(
-        LogActions.info('[scan] Could not parse Bitcoin Cash legacy address'),
-      );
+      logManager.info('[scan] Could not parse Bitcoin Cash legacy address');
     }
 
     const a = BwcProvider.getInstance()
@@ -1104,11 +1095,7 @@ const handleBitcoinCashUriLegacyAddress =
     const message = parsed.message;
 
     // Translate address
-    dispatch(
-      LogActions.info(
-        '[scan] Legacy Bitcoin Address translated to: ' + address,
-      ),
-    );
+    logManager.info('[scan] Legacy Bitcoin Address translated to: ' + address);
     const recipient = {
       type: 'address',
       currency: coin,
@@ -1131,7 +1118,7 @@ const handleBitcoinCashUriLegacyAddress =
 const handleEthereumUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Ethereum URI'));
+    logManager.info('[scan] Incoming-data: Ethereum URI');
     const coin = 'eth';
     const chain = 'eth';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
@@ -1170,7 +1157,7 @@ const handleEthereumUri =
 const handleMaticUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Matic URI'));
+    logManager.info('[scan] Incoming-data: Matic URI');
     const coin = 'pol';
     const chain = 'matic';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
@@ -1209,7 +1196,7 @@ const handleMaticUri =
 const handleArbUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Arb URI'));
+    logManager.info('[scan] Incoming-data: Arb URI');
     const coin = 'eth';
     const chain = 'arb';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
@@ -1248,7 +1235,7 @@ const handleArbUri =
 const handleBaseUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Base URI'));
+    logManager.info('[scan] Incoming-data: Base URI');
     const coin = 'eth';
     const chain = 'base';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
@@ -1287,7 +1274,7 @@ const handleBaseUri =
 const handleOpUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Op URI'));
+    logManager.info('[scan] Incoming-data: Op URI');
     const coin = 'eth';
     const chain = 'op';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
@@ -1326,7 +1313,7 @@ const handleOpUri =
 const handleSolUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Sol URI'));
+    logManager.info('[scan] Incoming-data: Sol URI');
     const coin = 'sol';
     const chain = 'sol';
     const value = /[\?\&]value=(\d+([\,\.]\d+)?)/i;
@@ -1365,7 +1352,7 @@ const handleSolUri =
 const handleRippleUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Ripple URI'));
+    logManager.info('[scan] Incoming-data: Ripple URI');
     const coin = 'xrp';
     const chain = 'xrp';
     const amountParam = /[\?\&]amount=(\d+([\,\.]\d+)?)/i;
@@ -1401,7 +1388,7 @@ const handleRippleUri =
 const handleDogecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Dogecoin URI'));
+    logManager.info('[scan] Incoming-data: Dogecoin URI');
     const coin = 'doge';
     const chain = 'doge';
     const parsed = BwcProvider.getInstance().getBitcoreDoge().URI(data);
@@ -1431,7 +1418,7 @@ const handleDogecoinUri =
 const handleLitecoinUri =
   (data: string, wallet?: Wallet): Effect<void> =>
   dispatch => {
-    dispatch(LogActions.info('[scan] Incoming-data: Litecoin URI'));
+    logManager.info('[scan] Incoming-data: Litecoin URI');
     const coin = 'ltc';
     const chain = 'ltc';
     const parsed = BwcProvider.getInstance().getBitcoreLtc().URI(data);
@@ -1460,9 +1447,7 @@ const handleLitecoinUri =
 const handleBuyCryptoUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(
-      LogActions.info('Incoming-data (redirect): Buy crypto pre-set: ' + data),
-    );
+    logManager.info('Incoming-data (redirect): Buy crypto pre-set: ' + data);
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
     const partner = getParameterByName('partner', res)?.toLowerCase();
@@ -1506,13 +1491,15 @@ const handleBuyCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: 'BuyCryptoRoot',
+          name: ExternalServicesScreens.ROOT_BUY_AND_SELL,
           params: {
             partner,
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
-          },
+            fromDeeplink: true,
+            context: 'buyCrypto',
+          } as BuyAndSellRootProps,
         },
       ],
     });
@@ -1521,9 +1508,7 @@ const handleBuyCryptoUri =
 const handleSellCryptoUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(
-      LogActions.info('Incoming-data (redirect): Sell crypto pre-set: ' + data),
-    );
+    logManager.info('Incoming-data (redirect): Sell crypto pre-set: ' + data);
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
     const partner = getParameterByName('partner', res)?.toLowerCase();
@@ -1567,14 +1552,15 @@ const handleSellCryptoUri =
           params: {screen: 'Home'},
         },
         {
-          name: SellCryptoScreens.ROOT,
+          name: ExternalServicesScreens.ROOT_BUY_AND_SELL,
           params: {
             partner,
             amount: _amount,
             currencyAbbreviation: coin,
             chain,
             fromDeeplink: true,
-          },
+            context: 'sellCrypto',
+          } as BuyAndSellRootProps,
         },
       ],
     });
@@ -1583,9 +1569,7 @@ const handleSellCryptoUri =
 const handleSwapCryptoUri =
   (data: string): Effect<void> =>
   dispatch => {
-    dispatch(
-      LogActions.info('Incoming-data (redirect): Swap crypto pre-set: ' + data),
-    );
+    logManager.info('Incoming-data (redirect): Swap crypto pre-set: ' + data);
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
     const partner = getParameterByName('partner', res)?.toLowerCase();
@@ -1616,7 +1600,7 @@ const handleSwapCryptoUri =
 const handleBanxaUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Banxa URL: ' + data));
+    logManager.info('Incoming-data (redirect): Banxa URL: ' + data);
     if (
       data.indexOf('banxaCancelled') >= 0 ||
       data.indexOf('banxaFailed') >= 0
@@ -1632,7 +1616,7 @@ const handleBanxaUri =
 
     const banxaExternalId = getParameterByName('externalId', res);
     if (!banxaExternalId) {
-      dispatch(LogActions.warn('No banxaExternalId present. Do not redir'));
+      logManager.warn('No banxaExternalId present. Do not redir');
       return;
     }
 
@@ -1658,9 +1642,22 @@ const handleBanxaUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'banxa',
           fiatAmount: order?.fiat_total_amount || '',
+          feeAmount:
+            (order?.fiat_total_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_total_amount) -
+                Number(order.fiat_base_amount)) ||
+            '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
+          cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
+          exchangeRate:
+            (order?.crypto_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+            '',
         }),
       );
     }
@@ -1683,12 +1680,12 @@ const handleBanxaUri =
 const handleMoonpayUri =
   (data: string): Effect<void> =>
   async (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Moonpay URL: ' + data));
+    logManager.info('Incoming-data (redirect): Moonpay URL: ' + data);
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
     const externalId = getParameterByName('externalId', res);
     if (!externalId) {
-      dispatch(LogActions.warn('No externalId present. Do not redir'));
+      logManager.warn('No externalId present. Do not redir');
       return;
     }
 
@@ -1705,9 +1702,7 @@ const handleMoonpayUri =
       );
 
       if (!depositWalletAddress) {
-        dispatch(
-          LogActions.warn('No depositWalletAddress present. Do not redir'),
-        );
+        logManager.warn('No depositWalletAddress present. Do not redir');
         await sleep(300);
         dispatch(
           showBottomNotificationModal({
@@ -1733,10 +1728,8 @@ const handleMoonpayUri =
       const order = SELL_CRYPTO.moonpay[externalId];
 
       if (!order) {
-        dispatch(
-          LogActions.warn(
-            `No sell order found for externalId: ${externalId}. Do not redir`,
-          ),
+        logManager.warn(
+          `No sell order found for externalId: ${externalId}. Do not redir`,
         );
         await sleep(300);
         dispatch(
@@ -1795,10 +1788,8 @@ const handleMoonpayUri =
             );
             break;
         }
-        dispatch(
-          LogActions.warn(
-            `Sell order status: ${order.status} for externalId: ${externalId}. Do not redir`,
-          ),
+        logManager.warn(
+          `Sell order status: ${order.status} for externalId: ${externalId}. Do not redir`,
         );
         await sleep(300);
         dispatch(
@@ -1824,13 +1815,11 @@ const handleMoonpayUri =
         baseCurrencyCode !==
           getMoonpaySellFixedCurrencyAbbreviation(order.coin, order.chain)
       ) {
-        dispatch(
-          LogActions.warn(
-            `baseCurrencyCode mismatch: ${baseCurrencyCode} !== ${getMoonpaySellFixedCurrencyAbbreviation(
-              order.coin,
-              order.chain,
-            )}. Do not redir`,
-          ),
+        logManager.warn(
+          `baseCurrencyCode mismatch: ${baseCurrencyCode} !== ${getMoonpaySellFixedCurrencyAbbreviation(
+            order.coin,
+            order.chain,
+          )}. Do not redir`,
         );
         await sleep(300);
         dispatch(
@@ -1866,12 +1855,10 @@ const handleMoonpayUri =
         baseCurrencyAmount &&
         Number(baseCurrencyAmount) !== Number(order?.crypto_amount)
       ) {
-        dispatch(
-          LogActions.warn(
-            `baseCurrencyAmount mismatch: ${Number(
-              baseCurrencyAmount,
-            )} !== ${Number(order?.crypto_amount)}. Do not redir`,
-          ),
+        logManager.warn(
+          `baseCurrencyAmount mismatch: ${Number(
+            baseCurrencyAmount,
+          )} !== ${Number(order?.crypto_amount)}. Do not redir`,
         );
         await sleep(300);
         dispatch(
@@ -1932,10 +1919,8 @@ const handleMoonpayUri =
       const fullWalletObj = findWalletById(wallets, order?.wallet_id);
 
       if (!fullWalletObj) {
-        dispatch(
-          LogActions.warn(
-            `No Wallet id (${order?.wallet_id}) present. Do not redir`,
-          ),
+        logManager.warn(
+          `No Wallet id (${order?.wallet_id}) present. Do not redir`,
         );
         await sleep(300);
         dispatch(
@@ -2001,9 +1986,22 @@ const handleMoonpayUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'moonpay',
           fiatAmount: order?.fiat_total_amount || '',
+          feeAmount:
+            (order?.fiat_total_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_total_amount) -
+                Number(order.fiat_base_amount)) ||
+            '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
+          cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
+          exchangeRate:
+            (order?.crypto_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+            '',
         }),
       );
 
@@ -2035,12 +2033,12 @@ const handleMoonpayUri =
 const handleRampUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Ramp URL: ' + data));
+    logManager.info('Incoming-data (redirect): Ramp URL: ' + data);
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
     const rampExternalId = getParameterByName('rampExternalId', res);
     if (!rampExternalId) {
-      dispatch(LogActions.warn('No rampExternalId present. Do not redir'));
+      logManager.warn('No rampExternalId present. Do not redir');
       return;
     }
 
@@ -2066,9 +2064,21 @@ const handleRampUri =
       Analytics.track('Purchased Buy Crypto', {
         exchange: 'ramp',
         fiatAmount: order?.fiat_total_amount || '',
+        feeAmount:
+          (order?.fiat_total_amount &&
+            order?.fiat_base_amount &&
+            Number(order.fiat_total_amount) - Number(order.fiat_base_amount)) ||
+          '',
         fiatCurrency: order?.fiat_total_amount_currency || '',
         coin: order?.coin?.toLowerCase() || '',
         chain: order?.chain?.toLowerCase() || '',
+        cryptoAmount: order?.crypto_amount || '',
+        paymentMethod: order?.payment_method || '',
+        exchangeRate:
+          (order?.crypto_amount &&
+            order?.fiat_base_amount &&
+            Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+          '',
       }),
     );
 
@@ -2099,13 +2109,13 @@ const handleRampUri =
 const handleSardineUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Sardine URL: ' + data));
+    logManager.info('Incoming-data (redirect): Sardine URL: ' + data);
 
     data = data.replace('?order_id', '&order_id');
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
     const sardineExternalId = getParameterByName('sardineExternalId', res);
     if (!sardineExternalId) {
-      dispatch(LogActions.warn('No sardineExternalId present. Do not redir'));
+      logManager.warn('No sardineExternalId present. Do not redir');
       return;
     }
 
@@ -2124,6 +2134,9 @@ const handleSardineUri =
       'fiatTotalAmountCurrency',
       res,
     )!;
+    const paymentMethod = getParameterByName('paymentMethod', res) as
+      | PaymentMethodKey
+      | undefined;
 
     const newData: SardinePaymentData = {
       address,
@@ -2137,6 +2150,7 @@ const handleSardineUri =
       fiat_total_amount: Number(fiatTotalAmount),
       fiat_total_amount_currency: fiatTotalAmountCurrency,
       order_id,
+      payment_method: paymentMethod,
       status,
       user_id: walletId,
     };
@@ -2152,9 +2166,21 @@ const handleSardineUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'sardine',
           fiatAmount: Number(fiatTotalAmount) || '',
+          feeAmount:
+            (Number(fiatTotalAmount) &&
+              Number(fiatBaseAmount) &&
+              Number(fiatTotalAmount) - Number(fiatBaseAmount)) ||
+            '',
           fiatCurrency: fiatTotalAmountCurrency || '',
           coin: coin?.toLowerCase() || '',
           chain: chain?.toLowerCase() || '',
+          cryptoAmount: Number(cryptoAmount) || '',
+          paymentMethod: paymentMethod || '',
+          exchangeRate:
+            (Number(cryptoAmount) &&
+              Number(fiatBaseAmount) &&
+              Number(fiatBaseAmount) / Number(cryptoAmount)) ||
+            '',
         }),
       );
 
@@ -2184,7 +2210,7 @@ const handleSardineUri =
 const handleSimplexUri =
   (data: string): Effect<void> =>
   async (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Simplex URL: ' + data));
+    logManager.info('Incoming-data (redirect): Simplex URL: ' + data);
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
 
@@ -2194,27 +2220,23 @@ const handleSimplexUri =
       // Simplex Sell Crypto Flow
       const externalId = getParameterByName('externalId', res);
       if (!externalId) {
-        dispatch(LogActions.warn('No externalId present. Do not redir'));
+        logManager.warn('No externalId present. Do not redir');
         return;
       }
 
       const success = getParameterByName('success', res);
       const sendMax = getParameterByName('sendMax', res);
 
-      dispatch(
-        LogActions.debug(
-          `Return from Simplex checkout page for Sell Order with externalId: ${externalId} | success: ${success} | sendMax: ${sendMax}`,
-        ),
+      logManager.debug(
+        `Return from Simplex checkout page for Sell Order with externalId: ${externalId} | success: ${success} | sendMax: ${sendMax}`,
       );
 
       const {SELL_CRYPTO} = getState();
       const order = SELL_CRYPTO.simplex[externalId];
 
       if (!order) {
-        dispatch(
-          LogActions.warn(
-            `No sell order found for externalId: ${externalId}. Do not redir`,
-          ),
+        logManager.warn(
+          `No sell order found for externalId: ${externalId}. Do not redir`,
         );
         await sleep(300);
         dispatch(
@@ -2273,7 +2295,7 @@ const handleSimplexUri =
       // Simplex Buy Crypto Flow
       const paymentId = getParameterByName('paymentId', res);
       if (!paymentId) {
-        dispatch(LogActions.warn('No paymentId present. Do not redir'));
+        logManager.warn('No paymentId present. Do not redir');
         return;
       }
 
@@ -2301,9 +2323,22 @@ const handleSimplexUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'simplex',
           fiatAmount: order?.fiat_total_amount || '',
+          feeAmount:
+            (order?.fiat_total_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_total_amount) -
+                Number(order.fiat_base_amount)) ||
+            '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
+          cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
+          exchangeRate:
+            (order?.crypto_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+            '',
         }),
       );
 
@@ -2326,13 +2361,13 @@ const handleSimplexUri =
 const handleTransakUri =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(LogActions.info('Incoming-data (redirect): Transak URL: ' + data));
+    logManager.info('Incoming-data (redirect): Transak URL: ' + data);
 
     const res = data.replace(new RegExp('&amp;', 'g'), '&');
 
     const transakExternalId = getParameterByName('partnerOrderId', res);
     if (!transakExternalId) {
-      dispatch(LogActions.warn('No transakExternalId present. Do not redir'));
+      logManager.warn('No transakExternalId present. Do not redir');
       return;
     }
 
@@ -2361,9 +2396,22 @@ const handleTransakUri =
         Analytics.track('Purchased Buy Crypto', {
           exchange: 'transak',
           fiatAmount: order?.fiat_total_amount || '',
+          feeAmount:
+            (order?.fiat_total_amount &&
+              order?.fiat_base_amount &&
+              Number(order?.fiat_total_amount) -
+                Number(order?.fiat_base_amount)) ||
+            '',
           fiatCurrency: order?.fiat_total_amount_currency || '',
           coin: order?.coin?.toLowerCase() || '',
           chain: order?.chain?.toLowerCase() || '',
+          cryptoAmount: order?.crypto_amount || '',
+          paymentMethod: order?.payment_method || '',
+          exchangeRate:
+            (order?.crypto_amount &&
+              order?.fiat_base_amount &&
+              Number(order.fiat_base_amount) / Number(order.crypto_amount)) ||
+            '',
         }),
       );
     }
@@ -2383,46 +2431,97 @@ const handleTransakUri =
     });
   };
 
+function extractWcUri(incomingUrl: string): string | null {
+  if (incomingUrl.startsWith('wc:')) {
+    return incomingUrl;
+  }
+
+  try {
+    const url = new URL(incomingUrl);
+    const raw = url.searchParams.get('uri');
+
+    if (!raw) {
+      logManager.error('[WC/extractWcUri] No uri parameter found');
+      return null;
+    }
+
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(raw);
+    } catch {
+      decoded = raw;
+    }
+
+    if (!decoded.startsWith('wc:')) {
+      logManager.error('[WC/extractWcUri] URI does not start with wc:');
+      return null;
+    }
+
+    const hasRelayProtocol = decoded.includes('relay-protocol');
+    const hasSymKey = decoded.includes('symKey');
+
+    if (!hasRelayProtocol || !hasSymKey) {
+      const topic = decoded.match(/wc:([^@]+)/)?.[1] || 'unknown';
+      logManager.error(
+        `[WC/extractWcUri] Missing required params. Topic: ${topic}`,
+      );
+      return null;
+    }
+
+    logManager.info('[WC/extractWcUri] Valid URI extracted');
+    return decoded;
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    logManager.error(`[WC/extractWcUri] Error: ${errMsg}`);
+    return null;
+  }
+}
+
 const handleWalletConnectUri =
   (data: string): Effect<void> =>
   async (dispatch, getState) => {
+    const uri = extractWcUri(data);
     try {
-      if (isValidWalletConnectUri(data)) {
-        const {version} = parseUri(data);
-        if (version === 1) {
-          const errMsg = t(
-            'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
-          );
-          throw errMsg;
-        } else {
-          let decodedUri: string;
-          try {
-            const url = new URL(data);
-            const rawUri = url.searchParams.get('uri');
-            try {
-              decodedUri = rawUri ? decodeURIComponent(rawUri) : data;
-            } catch {
-              decodedUri = rawUri || data;
-            }
-            await dispatch(walletConnectV2OnSessionProposal(decodedUri));
-          } catch {
-            await dispatch(walletConnectV2OnSessionProposal(data));
-          }
-          navigationRef.navigate('WalletConnectRoot', {});
-        }
-      } else {
+      if (!uri) {
+        const errMsg = t('Failed to extract valid WalletConnect URI');
+        logManager.error(`[WC/handleWalletConnectUri] ${errMsg}`);
+        throw new Error(errMsg);
+      }
+
+      if (!isValidWalletConnectUri(uri)) {
         const errMsg = t('The URI does not correspond to WalletConnect.');
+        logManager.error(`[WC/handleWalletConnectUri] Validation failed`);
         throw errMsg;
       }
+
+      const {version} = parseUri(uri);
+      logManager.info(`[WC/handleWalletConnectUri] Version: ${version}`);
+
+      if (version === 1) {
+        const errMsg = t(
+          'The URI corresponds to WalletConnect v1.0, which was shut down on June 28.',
+        );
+        logManager.warn(`[WC/handleWalletConnectUri] ${errMsg}`);
+        throw errMsg;
+      }
+
+      logManager.info('[WC/handleWalletConnectUri] Initiating pairing');
+      await dispatch(walletConnectV2OnSessionProposal(uri));
+      navigationRef.navigate('WalletConnectRoot', {});
+      logManager.info('[WC/handleWalletConnectUri] Pairing initiated');
     } catch (e: any) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      logManager.error(`[WC/handleWalletConnectUri] ERROR: ${errMsg}`);
+
       const proposal = getState().WALLET_CONNECT_V2.proposal;
       if (
         typeof e === 'object' &&
         e !== null &&
         e.message?.includes('Pairing already exists:')
       ) {
+        logManager.warn('[WC/handleWalletConnectUri] Pairing already exists');
         if (proposal) {
-          navigationRef.navigate('WalletConnectRoot', {uri: data});
+          navigationRef.navigate('WalletConnectRoot', {uri: uri ?? undefined});
         } else {
           dispatch(
             showBottomNotificationModal(
@@ -2462,10 +2561,8 @@ const handlePlainAddress =
     },
   ): Effect<void> =>
   dispatch => {
-    dispatch(
-      LogActions.info(
-        `[scan] Incoming-data: ${coin.toUpperCase()} chain plain address`,
-      ),
+    logManager.info(
+      `[scan] Incoming-data: ${coin.toUpperCase()} chain plain address`,
     );
     const network = Object.keys(bitcoreLibs).includes(coin)
       ? GetAddressNetwork(address, coin as keyof BitcoreLibs)
@@ -2486,11 +2583,7 @@ const handlePlainAddress =
 const goToImport =
   (importQrCodeData: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(
-      LogActions.info(
-        '[scan] Incoming-data (redirect): QR code export feature',
-      ),
-    );
+    logManager.info('[scan] Incoming-data (redirect): QR code export feature');
     navigationRef.navigate(WalletScreens.IMPORT, {
       importQrCodeData,
     });
@@ -2499,10 +2592,8 @@ const goToImport =
 const goToJoinWallet =
   (data: string): Effect<void> =>
   (dispatch, getState) => {
-    dispatch(
-      LogActions.info(
-        '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
-      ),
+    logManager.info(
+      '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
     );
     const keys = Object.values(getState().WALLET.keys);
     if (!keys.length) {
@@ -2533,7 +2624,6 @@ const findWallet = (
   multisigContractAddress?: string | null,
 ) => {
   let walletIdHash;
-  const sjcl = BwcProvider.getInstance().getSJCL();
 
   const wallets = Object.values(keys).flatMap(k => k.wallets);
 
@@ -2545,11 +2635,15 @@ const findWallet = (
         0,
         lastHyphenPosition,
       );
-      walletIdHash = sjcl.hash.sha256.hash(walletIdWithoutTokenAddress);
+      const hash = crypto.createHash('sha256');
+      hash.update(walletIdWithoutTokenAddress);
+      walletIdHash = hash.digest('hex');
     } else {
-      walletIdHash = sjcl.hash.sha256.hash(w.credentials.walletId);
+      const hash = crypto.createHash('sha256');
+      hash.update(w.credentials.walletId);
+      walletIdHash = hash.digest('hex');
     }
-    return isEqual(walletIdHashed, sjcl.codec.hex.fromBits(walletIdHash));
+    return isEqual(walletIdHashed, walletIdHash);
   });
 
   return wallet;
@@ -2571,6 +2665,7 @@ export const setBuyerProvidedEmail =
         } = await axios.post(
           `https://${host}/invoiceData/setBuyerProvidedEmail`,
           body,
+          {headers: NO_CACHE_HEADERS},
         );
         if (status === 'success') {
           dispatch(goToPayPro(data, true));

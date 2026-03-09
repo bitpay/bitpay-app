@@ -8,6 +8,7 @@ import {
   NeutralSlate,
   LinkBlue,
   Slate,
+  Slate10,
 } from '../../../../styles/colors';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
@@ -88,9 +89,31 @@ export const CheckBoxContainer = styled.View`
   margin: 20px 0 0 0;
 `;
 
+export const SwapCheckBoxContainer = styled.View`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#eaeaea')};
+  background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate10)};
+  border-radius: 12px;
+  margin: 15px;
+  padding: 16px;
+`;
+
 export const CheckBoxCol = styled.View`
   display: flex;
   flex-direction: column;
+`;
+
+export const CheckBoxTextContainer = styled.View``;
+
+export const SwapCheckboxText = styled(BaseText)`
+  color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+  margin: 0px;
+  padding: 0 30px 0 10px;
 `;
 
 export const CheckboxText = styled(BaseText)`

@@ -253,7 +253,7 @@ const Addresses = () => {
         return;
       }
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error(`error [getStatus]: ${e}`);
+      logger.error(`error [Addresses - setUtxos] [getStatus]: ${e}`);
     }
   };
 
@@ -300,7 +300,7 @@ const Addresses = () => {
     try {
       setButtonState('loading');
 
-      if (!wallet.isComplete()) {
+      if (!wallet.isComplete() && wallet.pendingTssSession) {
         setButtonState('failed');
         await sleep(1000);
         setButtonState(null);

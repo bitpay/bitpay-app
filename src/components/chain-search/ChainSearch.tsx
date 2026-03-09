@@ -6,7 +6,7 @@ import {
   SearchRoundInput,
 } from '../../components/styled/Containers';
 import _ from 'lodash';
-import {Action, Slate, White} from '../../styles/colors';
+import {Action, LightBlue, Slate, White} from '../../styles/colors';
 import {BaseText} from '../../components/styled/Text';
 import SearchSvg from '../../../assets/img/search.svg';
 import ChevronDownSvgLight from '../../../assets/img/chevron-down-lightmode.svg';
@@ -44,7 +44,7 @@ export const SearchFilterContainer = styled(TouchableOpacity)`
   height: 32px;
   margin: auto 8px auto 15px;
   border: 1px solid ${({theme: {dark}}) => (dark ? Action : 'transparent')};
-  background: ${({theme: {dark}}) => (dark ? '#2240C440' : '#ECEFFD')};
+  background: ${({theme: {dark}}) => (dark ? '#2240C440' : LightBlue)};
 `;
 
 export const RowFilterContainer = styled.View`

@@ -1,9 +1,12 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components/native';
 import {
   Caution,
   LightBlack,
+  LuckySevens,
   NeutralSlate,
+  Slate10,
+  Slate30,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -25,7 +28,6 @@ import {
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
 import {
-  dismissOnGoingProcessModal,
   setHomeCarouselConfig,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
@@ -35,6 +37,7 @@ import {Controller, useForm} from 'react-hook-form';
 import {
   BaseText,
   H4,
+  H7,
   ImportTitle,
   Paragraph,
   Small,
@@ -53,7 +56,6 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {ImportObj} from '../../../store/scan/scan.models';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {backupRedirect} from '../screens/Backup';
 import {RootState} from '../../../store';
 import Haptic from '../../../components/haptic-feedback/haptic';
@@ -62,6 +64,7 @@ import ChevronUpSvg from '../../../../assets/img/chevron-up.svg';
 import Checkbox from '../../../components/checkbox/Checkbox';
 import {
   fixWalletAddresses,
+  formatCurrencyAbbreviation,
   getAccount,
   getDerivationStrategy,
   getNetworkName,
@@ -73,11 +76,13 @@ import {
 import {DefaultDerivationPath} from '../../../constants/defaultDerivationPath';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
-import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
+import {
+  SupportedCurrencyOption,
+  SupportedCurrencyOptions,
+} from '../../../constants/SupportedCurrencyOptions';
 import Icons from '../components/WalletIcons';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
-import {FlatList, View} from 'react-native';
-import CurrencySelectionRow from '../../../components/list/CurrencySelectionRow';
+import {AppState, FlatList, TextInput, View} from 'react-native';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
 import {
   GetName,
@@ -87,8 +92,14 @@ import {useTranslation} from 'react-i18next';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {IS_ANDROID, IS_IOS} from '../../../constants';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useSensitiveRefClear,
+} from '../../../utils/hooks';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import {useOngoingProcess} from '../../../contexts';
+import haptic from '../../../components/haptic-feedback/haptic';
 
 const ScrollViewContainer = styled(KeyboardAwareScrollView)`
   margin-top: 20px;
@@ -135,7 +146,7 @@ const Label = styled(BaseText)`
   line-height: 18px;
   top: 0;
   left: 20px;
-  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : '#434d5a')};
+  color: ${({theme}) => (theme && theme.dark ? theme.colors.text : SlateDark)};
 `;
 
 const CurrencySelectorContainer = styled.View`
@@ -183,12 +194,34 @@ const CtaContainer = styled(_CtaContainer)`
   padding: 10px 0;
 `;
 
+const CurrencyColumn = styled.View`
+  justify-content: center;
+  margin-right: 8px;
+`;
+
+const CurrencyTitleColumn = styled(CurrencyColumn)`
+  flex: 1 1 auto;
+`;
+
+const CurrencyTitle = styled(H7).attrs(() => ({
+  medium: true,
+}))`
+  margin: 0;
+  padding: 0;
+`;
+
+const CurrencySubTitle = styled(BaseText)`
+  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
+  font-size: 12px;
+`;
+
 const RecoveryPhrase = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const navigation = useNavigation();
   const route = useRoute<RouteProp<WalletGroupParamList, 'Import'>>();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const walletTermsAccepted = useAppSelector(
     ({WALLET}: RootState) => WALLET.walletTermsAccepted,
   );
@@ -206,6 +239,8 @@ const RecoveryPhrase = () => {
     passphrase: undefined as string | undefined,
     isMultisig: false,
   });
+  const wordsRef = useRef<TextInput>(null);
+  const {clearSensitive} = useSensitiveRefClear([wordsRef]);
 
   const {
     control,
@@ -347,6 +382,7 @@ const RecoveryPhrase = () => {
 
   const onSubmit = (formData: {text: string}) => {
     const {text} = formData;
+    clearSensitive();
 
     let keyOpts: Partial<KeyOptions> = {};
 
@@ -355,9 +391,10 @@ const RecoveryPhrase = () => {
 
     try {
       setKeyOptions(keyOpts, advancedOptions);
-    } catch (e: any) {
-      logger.error(e.message);
-      showErrorModal(e);
+    } catch (err: any) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
+      showErrorModal(err);
       return;
     }
 
@@ -375,41 +412,50 @@ const RecoveryPhrase = () => {
     }
   };
 
+  const scanFunds = async (key: Key) => {
+    try {
+      showOngoingProcess('IMPORT_SCANNING_FUNDS');
+      logger.debug('[Scan funds] Get rates (1/4)...');
+      await dispatch(startGetRates({force: true}));
+      logger.debug('[Scan funds] Fix wallet addresses (2/4)...');
+      // workaround for fixing wallets without receive address
+      await fixWalletAddresses({
+        appDispatch: dispatch,
+        wallets: key.wallets,
+      });
+      logger.debug('[Scan funds] Update all wallet status for key (3/4)...');
+      await dispatch(
+        startUpdateAllWalletStatusForKey({
+          key,
+          force: true,
+          createTokenWalletWithFunds: true,
+        }),
+      );
+      hideOngoingProcess();
+      logger.debug('[Scan Funds] Update portfolio balance (4/4)... Finished.');
+      dispatch(updatePortfolioBalance());
+    } catch (error) {
+      hideOngoingProcess();
+      // ignore error
+    }
+  };
+
   const importWallet = async (
     importData: {words?: string | undefined; xPrivKey?: string | undefined},
     opts: Partial<KeyOptions>,
   ): Promise<void> => {
     try {
-      dispatch(startOnGoingProcessModal('IMPORTING'));
+      showOngoingProcess('IMPORTING');
       await sleep(1000);
       const key = !derivationPathEnabled
         ? ((await dispatch<any>(startImportMnemonic(importData, opts))) as Key)
         : ((await dispatch<any>(
             startImportWithDerivationPath(importData, opts),
           )) as Key);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(1000);
-      try {
-        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
-        await dispatch(startGetRates({force: true}));
-        // workaround for fixing wallets without receive address
-        await fixWalletAddresses({
-          appDispatch: dispatch,
-          wallets: key.wallets,
-        });
-        await dispatch(
-          startUpdateAllWalletStatusForKey({
-            key,
-            force: true,
-            createTokenWalletWithFunds: true,
-          }),
-        );
-        await sleep(1000);
-        await dispatch(updatePortfolioBalance());
-      } catch (error) {
-        // ignore error
-      }
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
+      await scanFunds(key);
       backupRedirect({
         context: route.params?.context,
         navigation,
@@ -422,12 +468,12 @@ const RecoveryPhrase = () => {
           source: 'RecoveryPhrase',
         }),
       );
-      dispatch(dismissOnGoingProcessModal());
-    } catch (e: any) {
-      logger.error(e.message);
-      dispatch(dismissOnGoingProcessModal());
+    } catch (err: any) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
+      hideOngoingProcess();
       await sleep(600);
-      showErrorModal(e);
+      showErrorModal(err);
       return;
     }
   };
@@ -449,9 +495,10 @@ const RecoveryPhrase = () => {
 
       try {
         setKeyOptions(keyOpts, advancedOpts);
-      } catch (e: any) {
-        logger.error(e.message);
-        showErrorModal(e);
+      } catch (err: any) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(errMsg);
+        showErrorModal(err);
         return;
       }
 
@@ -468,13 +515,13 @@ const RecoveryPhrase = () => {
         }
       }
 
-      await dispatch(startOnGoingProcessModal('CREATING_KEY'));
+      showOngoingProcess('CREATING_KEY');
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(1000);
       try {
-        dispatch(startOnGoingProcessModal('IMPORT_SCANNING_FUNDS'));
+        showOngoingProcess('IMPORT_SCANNING_FUNDS');
         await dispatch(startGetRates({force: true}));
         // workaround for fixing wallets without receive address
         await fixWalletAddresses({
@@ -501,62 +548,58 @@ const RecoveryPhrase = () => {
         walletTermsAccepted,
         key,
       });
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       setRecreateWallet(false);
-    } catch (e: any) {
-      logger.error(e.message);
-      dispatch(dismissOnGoingProcessModal());
+    } catch (err: any) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
+      hideOngoingProcess();
       await sleep(500);
-      showErrorModal(e);
+      showErrorModal(err);
       setRecreateWallet(false);
       return;
     }
   };
 
   const renderItem = useCallback(
-    ({item}) => {
-      const currencySelected = (
-        _currencyAbbreviation: string,
-        _chain: string,
-      ) => {
-        const _selectedCurrency = CurrencyOptions.filter(
-          currency =>
-            currency.currencyAbbreviation === _currencyAbbreviation &&
-            currency.chain === _chain,
-        );
-        const currencyAbbreviation = _selectedCurrency[0].currencyAbbreviation;
-        const chain = _selectedCurrency[0].chain;
+    ({item}: {item: SupportedCurrencyOption}) => {
+      const {currencyAbbreviation, currencyName, img, badgeUri, chain} = item;
+
+      const onPress = () => {
+        haptic(IS_ANDROID ? 'keyboardPress' : 'impactLight');
+
         const defaultCoin = `default${chain.toUpperCase()}`;
         // @ts-ignore
         const derivationPath = DefaultDerivationPath[defaultCoin];
-        setSelectedCurrency(_selectedCurrency[0]);
+
+        setSelectedCurrency(item);
         setCurrencyModalVisible(false);
-        const advancedOpts = {
+        setAdvancedOptions({
           ...advancedOptions,
           coin: currencyAbbreviation,
           chain,
           derivationPath,
-        };
-        setAdvancedOptions(advancedOpts);
+        });
       };
 
       return (
-        <CurrencySelectionRow
-          currency={item}
-          onToggle={currencySelected}
-          key={item.id}
-          hideCheckbox={true}
-        />
+        <RowContainer
+          accessibilityLabel="currency-selection-row"
+          onPress={onPress}
+          key={item.id}>
+          <CurrencyColumn>
+            <CurrencyImage img={img} badgeUri={badgeUri} />
+          </CurrencyColumn>
+          <CurrencyTitleColumn>
+            <CurrencyTitle>{currencyName}</CurrencyTitle>
+            <CurrencySubTitle>
+              {formatCurrencyAbbreviation(currencyAbbreviation)}
+            </CurrencySubTitle>
+          </CurrencyTitleColumn>
+        </RowContainer>
       );
     },
-    [
-      setSelectedCurrency,
-      setCurrencyModalVisible,
-      setAdvancedOptions,
-      advancedOptions,
-      recreateWallet,
-      setRecreateWallet,
-    ],
+    [advancedOptions],
   );
 
   useEffect(() => {
@@ -564,6 +607,15 @@ const RecoveryPhrase = () => {
       processImportQrCode(route.params.importQrCodeData);
     }
   }, []);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'inactive' || state === 'background') {
+        clearSensitive();
+      }
+    });
+    return () => sub.remove();
+  }, [clearSensitive]);
 
   return (
     <ScrollViewContainer
@@ -603,6 +655,7 @@ const RecoveryPhrase = () => {
           control={control}
           render={({field: {onChange, onBlur, value}}) => (
             <ImportTextInput
+              ref={wordsRef}
               accessibilityLabel="import-text-input"
               multiline
               autoCapitalize={'none'}

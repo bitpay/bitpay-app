@@ -1,4 +1,4 @@
-import React, {ReactChild, useEffect} from 'react';
+import React, {ReactChild, useEffect, useMemo, useCallback} from 'react';
 import {Platform} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import SheetModal from '../base/sheet/SheetModal';
@@ -118,7 +118,7 @@ export const ScrollableBottomNotificationMessageContainer = styled(ScrollView)`
   padding-top: 15px;
 `;
 
-const BottomNotification = () => {
+const BottomNotification = React.memo(() => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -147,64 +147,75 @@ const BottomNotification = () => {
     onBackdropDismiss,
   } = config || {};
 
+  const handleBackdropPress = useCallback(() => {
+    if (enableBackdropDismiss) {
+      dispatch(AppActions.dismissBottomNotificationModal());
+      haptic('impactLight');
+      if (onBackdropDismiss) {
+        onBackdropDismiss();
+      }
+    }
+  }, [enableBackdropDismiss, dispatch, onBackdropDismiss]);
+
+  const markdownStyle = useMemo(
+    () => ({
+      body: {
+        color: theme.colors.text,
+        fontFamily,
+        fontSize: 16,
+        lineHeight: 24,
+      },
+    }),
+    [theme.colors.text],
+  );
+
+  const iconElement = useMemo(() => notificationType[type || 'info'], [type]);
+
+  const actionButtons = useMemo(
+    () =>
+      actions?.map(({primary, action, text}, index) => {
+        const handlePress = async () => {
+          haptic('impactLight');
+          dispatch(AppActions.dismissBottomNotificationModal());
+          await sleep(0);
+          action(rootState);
+        };
+
+        return (
+          <BottomNotificationCta
+            key={index}
+            suppressHighlighting={true}
+            primary={primary}
+            onPress={handlePress}>
+            {text.toUpperCase()}
+          </BottomNotificationCta>
+        );
+      }),
+    [actions, dispatch, rootState],
+  );
+
   return (
     <SheetModal
       modalLibrary={modalLibrary || 'bottom-sheet'}
       enableBackdropDismiss={enableBackdropDismiss}
       isVisible={isVisible}
-      onBackdropPress={() => {
-        if (enableBackdropDismiss) {
-          dispatch(AppActions.dismissBottomNotificationModal());
-          haptic('impactLight');
-          if (onBackdropDismiss) {
-            onBackdropDismiss();
-          }
-        }
-      }}>
+      onBackdropPress={handleBackdropPress}>
       <BottomNotificationContainer>
         <Row>
-          <ImageContainer>{notificationType[type || 'info']}</ImageContainer>
+          <ImageContainer>{iconElement}</ImageContainer>
           <H4>{title}</H4>
         </Row>
         {message ? (
           <MessageContainer>
-            <Markdown
-              style={{
-                body: {
-                  color: theme.colors.text,
-                  fontFamily,
-                  fontSize: 16,
-                  lineHeight: 24,
-                },
-              }}>
-              {message}
-            </Markdown>
+            <Markdown style={markdownStyle}>{message}</Markdown>
           </MessageContainer>
         ) : null}
         {message2 ? message2 : null}
         <BottomNotificationHr />
-        <CtaContainer platform={Platform.OS}>
-          {actions?.length &&
-            actions?.map(({primary, action, text}, index) => {
-              return (
-                <BottomNotificationCta
-                  key={index}
-                  suppressHighlighting={true}
-                  primary={primary}
-                  onPress={async () => {
-                    haptic('impactLight');
-                    dispatch(AppActions.dismissBottomNotificationModal());
-                    await sleep(0);
-                    action(rootState);
-                  }}>
-                  {text.toUpperCase()}
-                </BottomNotificationCta>
-              );
-            })}
-        </CtaContainer>
+        <CtaContainer platform={Platform.OS}>{actionButtons}</CtaContainer>
       </BottomNotificationContainer>
     </SheetModal>
   );
-};
+});
 
 export default BottomNotification;

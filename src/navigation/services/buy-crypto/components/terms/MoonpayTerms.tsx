@@ -10,7 +10,7 @@ import {Link} from '../../../../../components/styled/Text';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import {PaymentMethod} from '../../constants/BuyCryptoConstants';
-import { isEuCountry } from '../../../../../store/location/location.effects';
+import {isEuCountry} from '../../../../../store/location/location.effects';
 
 const MoonpayTerms: React.FC<{
   paymentMethod: PaymentMethod;

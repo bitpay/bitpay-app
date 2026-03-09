@@ -83,6 +83,10 @@ crowdin-credentials.yml
 # Ruby
 vendor/
 
+# Generated DKLS vendor files (base64-encoded JS+WASM artifacts).
+# Regenerated automatically by scripts/generate-dkls-vendor.js via postinstall.sh.
+src/dkls/vendor/
+
 #yalc
 .yalc/
 yalc.lock

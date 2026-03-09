@@ -19,6 +19,7 @@ import {
   SettingsScreens,
 } from './settings/SettingsGroup';
 import {CardHomeScreenProps} from '../card/screens/CardHome';
+import type {HomeScreenProps} from './home/HomeRoot';
 import {HeaderContainer, HeaderLeftContainer} from './home/components/Styled';
 import {H3, Link, Paragraph, TextAlign} from '../../components/styled/Text';
 import WarningSvg from '../../../assets/img/warning.svg';
@@ -79,7 +80,7 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
   options,
 }) => {
   const {t} = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   return (
     <TabContainer>
       {options?.includeHeader ? (
@@ -126,6 +127,7 @@ const TabScreenErrorFallback: React.FC<TabsScreenErrorFallbackProps> = ({
 
 type TabScreenProps =
   | CardHomeScreenProps
+  | HomeScreenProps
   | NativeStackScreenProps<BillGroupParamList, BillScreens.BILLS_HOME>
   | NativeStackScreenProps<ShopStackParamList, ShopScreens.HOME>
   | NativeStackScreenProps<

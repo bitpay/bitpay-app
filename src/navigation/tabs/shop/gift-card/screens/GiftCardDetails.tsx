@@ -34,6 +34,7 @@ import {
   Grey,
   LightBlack,
   NeutralSlate,
+  Slate30,
   SlateDark,
   White,
 } from '../../../../../styles/colors';
@@ -92,7 +93,7 @@ const Amount = styled(BaseText)`
 
 const ClaimCodeBox = styled.View`
   background-color: ${({theme}) => (theme.dark ? '#121212' : NeutralSlate)};
-  border: 1px solid #e1e4e7;
+  border: 1px solid ${Slate30};
   ${({theme}) => (theme.dark ? 'border: none;' : '')}
   border-radius: 12px;
   margin-top: -80px;

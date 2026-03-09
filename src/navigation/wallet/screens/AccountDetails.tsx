@@ -44,9 +44,9 @@ import {
   ProposalBadge,
 } from '../../../components/styled/Text';
 import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   toggleHideAllBalances,
+  setDefaultChainFilterOption,
 } from '../../../store/app/app.actions';
 import {
   formatCryptoAddress,
@@ -91,6 +91,7 @@ import {
   HeaderRightContainer,
   ProposalBadgeContainer,
   ScreenGutter,
+  WIDTH,
 } from '../../../components/styled/Containers';
 import SearchComponent, {
   SearchableItem,
@@ -163,9 +164,14 @@ import {
   BitpaySupportedSvmCoins,
   getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
+import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
+import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
+import {AllocationRowsList} from '../../tabs/home/screens/Allocation';
+import {buildAllocationDataFromWalletRows} from '../../../utils/portfolio/allocation';
 
 export type AccountDetailsScreenParamList = {
   selectedAccountAddress: string;
@@ -203,6 +209,8 @@ export interface AssetsByChainListProps extends SearchableItem {
   chains: string[]; // only used for filter
   data: AssetsByChainData[];
 }
+
+type AccountDetailsTab = 'wallets' | 'allocation' | 'activity';
 
 export interface GroupedHistoryProps extends SearchableItem {
   title: string;
@@ -321,19 +329,30 @@ const CenteredText = styled(BaseText)`
 const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenOptionsByAddress} = useTokenContext();
   const theme = useTheme();
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
+    useAppSelector(({APP}) => APP);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
   const {t} = useTranslation();
   const {selectedAccountAddress, keyId, isSvmAccount} = route.params;
   const [refreshing, setRefreshing] = useState(false);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
+  const key = useAppSelector(({WALLET}: RootState) => WALLET.keys[keyId]);
   const [copied, setCopied] = useState(false);
   const [searchVal, setSearchVal] = useState('');
-  const [showActivityTab, setShowActivityTab] = useState(false);
+  const [activeTab, setActiveTab] = useState<AccountDetailsTab>('wallets');
+
+  useEffect(() => {
+    if (!showPortfolioValue && activeTab === 'allocation') {
+      setActiveTab('wallets');
+    }
+  }, [activeTab, showPortfolioValue]);
+
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
+  const isSmallScreen = WIDTH < 400;
   const network = useAppSelector(({APP}) => APP.network);
   const [history, setHistory] = useState<any[]>([]);
   const [accountTransactionsHistory, setAccountTransactionsHistory] = useState<{
@@ -358,7 +377,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const rates = useAppSelector(({RATE}) => RATE.rates);
   const [showKeyOptions, setShowKeyOptions] = useState(false);
 
   const [searchResultsHistory, setSearchResultsHistory] = useState(
@@ -372,7 +391,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
 
-  const key = keys[keyId];
   const keyFullWalletObjs = uniqBy(
     key.wallets.filter(w => w.receiveAddress === selectedAccountAddress),
     wallet => {
@@ -396,6 +414,16 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
   }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
 
+  useEffect(() => {
+    if (!isSmallScreen || !showPortfolioValue) {
+      return;
+    }
+
+    if (selectedChainFilterOption) {
+      dispatch(setDefaultChainFilterOption(undefined));
+    }
+  }, [dispatch, isSmallScreen, selectedChainFilterOption, showPortfolioValue]);
+
   const accountItem = memorizedAccountList.find(
     a => a.receiveAddress === selectedAccountAddress,
   )!;
@@ -409,7 +437,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ...tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   });
@@ -419,7 +447,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       // To close decrypt modal
       await sleep(500);
     }
-    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
+    showOngoingProcess('SYNCING_WALLETS');
     const opts = {
       words: normalizeMnemonic(mnemonic),
       mnemonic,
@@ -435,6 +463,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           .filter(
             sw =>
               sw.isComplete() &&
+              !sw.pendingTssSession &&
               !key.wallets.some(ew => ew.id === sw.credentials.walletId),
           )
           .map(syncWallet => {
@@ -450,7 +479,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             return _.merge(
               syncWallet,
               buildWalletObj(
-                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                {
+                  ...syncWallet.credentials,
+                  currencyAbbreviation,
+                  currencyName,
+                } as any,
                 _tokenOptionsByAddress,
               ),
             );
@@ -475,7 +508,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           message = t('Your key is already synced');
         }
 
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         dispatch(
           showBottomNotificationModal({
@@ -493,7 +526,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           }),
         );
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         await dispatch(
           showBottomNotificationModal(
@@ -504,7 +537,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         );
       }
     } catch (e) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       await dispatch(
         showBottomNotificationModal(
@@ -536,7 +569,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         if (key.isPrivKeyEncrypted) {
           password = await dispatch(getDecryptPassword(Object.assign({}, key)));
         }
-        await dispatch(startOnGoingProcessModal('ADDING_EVM_CHAINS'));
+        showOngoingProcess('ADDING_EVM_CHAINS');
         const wallets = await dispatch(
           createMultipleWallets({
             key: _key,
@@ -560,7 +593,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           key.wallets.push(...(wallets as Wallet[]));
           dispatch(successAddWallet({key}));
         }
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
       },
     });
   }
@@ -724,14 +757,20 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       },
     );
     return () => subscription.remove();
-  }, [keys]);
+  }, [key]);
 
-  const keyExtractorAssets = useCallback(item => item.id, []);
-  const keyExtractorTransaction = useCallback(
-    item => `${item.txid}+${item.walletId}`,
+  const keyExtractorAssets = useCallback(
+    (item: AssetsByChainData) => item.id,
     [],
   );
-  const pendingTxpsKeyExtractor = useCallback(item => item.id, []);
+  const keyExtractorTransaction = useCallback(
+    (item: {txid: string; walletId: string}) => `${item.txid}+${item.walletId}`,
+    [],
+  );
+  const pendingTxpsKeyExtractor = useCallback(
+    (item: TransactionProposal) => item.id,
+    [],
+  );
 
   const getItemLayout = useCallback(
     (data: any, index: number) => ({
@@ -791,7 +830,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 <KeySvg width={10} height={10} />
                 <CenteredText>{key?.keyName}</CenteredText>
               </Row>
-              <Row style={{alignItems: 'center', gap: 5}}>
+              <Row style={{alignItems: 'center'}}>
                 {checkPrivateKeyEncrypted(key) ? (
                   <View style={{marginRight: 5}}>
                     {theme.dark ? (
@@ -1045,13 +1084,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
+          enableBackdropDismiss: true,
         }),
       );
     }
   };
 
-  const renderTransaction = useCallback(({item}) => {
+  const renderTransaction = useCallback(({item}: {item: any}) => {
     return (
       <TransactionRow
         key={item.txid}
@@ -1105,7 +1144,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     [],
   );
 
-  const renderTxp = useCallback(({item}) => {
+  const renderTxp = useCallback(({item}: {item: any}) => {
     return (
       <TransactionProposalRow
         key={item.id}
@@ -1127,14 +1166,14 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const onPressItem = (walletId: string) => {
     haptic('impactLight');
     const fullWalletObj = findWalletById(keyFullWalletObjs, walletId) as Wallet;
-    if (!fullWalletObj.isComplete()) {
+    if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
         (err: any, status: Status) => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            LogActions.error(`[getStatus] Error: ${errStr}`);
+            logManager.error(`[getStatus] Error: ${errStr}`);
           } else {
             if (status?.wallet?.status === 'complete') {
               fullWalletObj.openWallet({}, () => {
@@ -1188,7 +1227,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     await sleep(1000);
     try {
       await dispatch(startGetRates({}));
-      showActivityTab
+      activeTab === 'activity'
         ? await debouncedLoadHistory(selectedChainFilterOption, true)
         : await dispatch(
             startUpdateAllWalletStatusForKey({
@@ -1206,6 +1245,41 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     setRefreshing(false);
   };
 
+  const ghostTownEmptyState = useMemo(() => {
+    return (
+      <EmptyListContainer>
+        <H5>{t("It's a ghost town in here")}</H5>
+        <GhostSvg style={{marginTop: 20}} />
+      </EmptyListContainer>
+    );
+  }, [t]);
+
+  const accountAllocationData = useMemo(() => {
+    if (activeTab !== 'allocation') {
+      return {
+        totalFiat: 0,
+        legendItems: [],
+        slices: [],
+        rows: [],
+      };
+    }
+
+    const wallets = (accountItem?.wallets || []) as WalletRowProps[];
+    const filteredWallets = selectedChainFilterOption
+      ? wallets.filter(w => w.chain === selectedChainFilterOption)
+      : wallets;
+
+    return buildAllocationDataFromWalletRows(
+      filteredWallets,
+      defaultAltCurrency.isoCode,
+    );
+  }, [
+    activeTab,
+    accountItem?.wallets,
+    defaultAltCurrency.isoCode,
+    selectedChainFilterOption,
+  ]);
+
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
   const listEmptyComponent = useCallback(() => {
@@ -1214,12 +1288,8 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         {!isLoading &&
           isLoading !== undefined &&
           !errorLoadingTxs &&
-          !groupedHistory?.length && (
-            <EmptyListContainer>
-              <H5>{t("It's a ghost town in here")}</H5>
-              <GhostSvg style={{marginTop: 20}} />
-            </EmptyListContainer>
-          )}
+          !groupedHistory?.length &&
+          ghostTownEmptyState}
 
         {!isLoading && isLoading !== undefined && errorLoadingTxs && (
           <EmptyListContainer>
@@ -1229,11 +1299,41 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         )}
       </>
     );
-  }, [isLoading, errorLoadingTxs, groupedHistory]);
+  }, [isLoading, errorLoadingTxs, groupedHistory, ghostTownEmptyState]);
 
   const memorizedAssetsByChainList = useMemo(() => {
     return buildAssetsByChainList(accountItem, defaultAltCurrency.isoCode);
   }, [key, accountItem, defaultAltCurrency.isoCode]);
+
+  const allocationHasAnyBalance = useMemo(() => {
+    const wallets = (accountItem?.wallets || []) as WalletRowProps[];
+    const filteredWallets = selectedChainFilterOption
+      ? wallets.filter(w => w.chain === selectedChainFilterOption)
+      : wallets;
+
+    return filteredWallets.some(w => {
+      const sat = Number((w as any)?.balance?.sat) || 0;
+      const fiat = Number((w as any)?.fiatBalance) || 0;
+      return sat > 0 || fiat > 0;
+    });
+  }, [accountItem?.wallets, selectedChainFilterOption]);
+
+  const isAllocationLoading = useMemo(() => {
+    if (activeTab !== 'allocation') {
+      return false;
+    }
+
+    if (refreshing) {
+      return true;
+    }
+
+    return allocationHasAnyBalance && !accountAllocationData.rows?.length;
+  }, [
+    activeTab,
+    refreshing,
+    allocationHasAnyBalance,
+    accountAllocationData.rows,
+  ]);
 
   const copyToClipboard = () => {
     haptic('impactLight');
@@ -1255,6 +1355,10 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   }, [copied]);
 
   const renderListHeaderComponent = useCallback(() => {
+    const isWalletsTab = activeTab === 'wallets';
+    const isAllocationTab = activeTab === 'allocation';
+    const isActivityTab = activeTab === 'activity';
+
     return (
       <>
         <HeaderContainer>
@@ -1277,9 +1381,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               onPress={copyToClipboard}
               activeOpacity={ActiveOpacity}
               style={{alignSelf: 'center', width: 'auto', height: 25}}>
-              <Badge style={{marginTop: 3}}>
-                {formatCryptoAddress(accountItem?.receiveAddress)}
-              </Badge>
+              <Badge>{formatCryptoAddress(accountItem?.receiveAddress)}</Badge>
               <CopyToClipboardContainer>
                 {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
               </CopyToClipboardContainer>
@@ -1293,15 +1395,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     context: 'AccountDetails',
                   }),
                 );
-                navigation.navigate(WalletScreens.AMOUNT, {
-                  onAmountSelected: async (
-                    amount: string,
-                    setButtonState: any,
-                  ) => {
-                    navigation.navigate('BuyCryptoRoot', {
-                      amount: Number(amount),
-                    });
-                  },
+                navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
                   context: 'buyCrypto',
                 });
               },
@@ -1313,7 +1407,9 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                     context: 'AccountDetails',
                   }),
                 );
-                navigation.navigate('SellCryptoRoot');
+                navigation.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
+                  context: 'sellCrypto',
+                });
               },
             }}
             swap={{
@@ -1367,73 +1463,163 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         <AssetsDataContainer>
           <HeaderListContainer>
             <WalletListHeader
-              isActive={!showActivityTab}
+              isActive={isWalletsTab}
               onPress={() => {
-                setShowActivityTab(false);
+                setActiveTab('wallets');
               }}>
-              <H5>{t('Assets')}</H5>
+              <H5>{t('Wallets')}</H5>
             </WalletListHeader>
+            {showPortfolioValue ? (
+              <WalletListHeader
+                isActive={isAllocationTab}
+                onPress={() => {
+                  setActiveTab('allocation');
+                }}>
+                <H5>{t('Allocation')}</H5>
+              </WalletListHeader>
+            ) : null}
             <WalletListHeader
-              isActive={showActivityTab}
+              isActive={isActivityTab}
               onPress={async () => {
-                setShowActivityTab(true);
+                setActiveTab('activity');
                 await sleep(200);
                 debouncedLoadHistory(selectedChainFilterOption);
               }}>
               <H5>{t('Activity')}</H5>
             </WalletListHeader>
           </HeaderListContainer>
-          {isSvmAccount ? null : (
+          {isSvmAccount || (isSmallScreen && showPortfolioValue) ? null : (
             <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
-              <SearchComponent<
-                GroupedHistoryProps | Partial<AssetsByChainListProps>
-              >
-                searchVal={searchVal}
-                setSearchVal={setSearchVal}
-                searchResults={
-                  !showActivityTab ? searchResultsAssets : searchResultsHistory
-                }
-                //@ts-ignore
-                setSearchResults={
-                  !showActivityTab
-                    ? setSearchResultsAssets
-                    : setSearchResultsHistory
-                }
-                searchFullList={
-                  !showActivityTab ? memorizedAssetsByChainList : groupedHistory
-                }
-                context={
-                  !showActivityTab ? 'accountassetsview' : 'accounthistoryview'
-                }
-              />
+              {isAllocationTab ? (
+                <SearchComponent<Partial<AssetsByChainListProps>>
+                  searchVal={searchVal}
+                  setSearchVal={setSearchVal}
+                  searchResults={searchResultsAssets}
+                  setSearchResults={setSearchResultsAssets}
+                  searchFullList={memorizedAssetsByChainList}
+                  context={'accountassetsview'}
+                />
+              ) : (
+                <SearchComponent<
+                  GroupedHistoryProps | Partial<AssetsByChainListProps>
+                >
+                  searchVal={searchVal}
+                  setSearchVal={setSearchVal}
+                  searchResults={
+                    isWalletsTab ? searchResultsAssets : searchResultsHistory
+                  }
+                  //@ts-ignore
+                  setSearchResults={
+                    isWalletsTab
+                      ? setSearchResultsAssets
+                      : setSearchResultsHistory
+                  }
+                  searchFullList={
+                    isWalletsTab ? memorizedAssetsByChainList : groupedHistory
+                  }
+                  context={
+                    isWalletsTab ? 'accountassetsview' : 'accounthistoryview'
+                  }
+                />
+              )}
             </View>
           )}
         </AssetsDataContainer>
       </>
     );
   }, [
-    showActivityTab,
-    memorizedAssetsByChainList,
-    groupedHistory,
+    activeTab,
+    accountItem?.receiveAddress,
     copied,
+    dispatch,
+    groupedHistory,
     hideAllBalances,
+    isSmallScreen,
+    isSvmAccount,
+    memorizedAssetsByChainList,
+    navigation,
+    groupedHistory,
+    searchVal,
+    selectedChainFilterOption,
+    showPortfolioValue,
+    t,
+    totalBalance,
+  ]);
+
+  const listFooterComponentAllocationTab = useCallback(() => {
+    if (activeTab !== 'allocation') {
+      return null;
+    }
+
+    if (isAllocationLoading) {
+      return (
+        <AllocationDonutLegendCard
+          legendItems={[]}
+          slices={[]}
+          style={{marginLeft: 16, marginRight: 16}}
+          isLoading
+        />
+      );
+    }
+
+    if (!accountAllocationData.rows?.length) {
+      return ghostTownEmptyState;
+    }
+
+    return (
+      <View>
+        <AllocationDonutLegendCard
+          legendItems={accountAllocationData.legendItems}
+          slices={accountAllocationData.slices}
+          style={{marginLeft: 16, marginRight: 16}}
+        />
+        <AllocationRowsList rows={accountAllocationData.rows} />
+      </View>
+    );
+  }, [
+    activeTab,
+    accountAllocationData.legendItems,
+    accountAllocationData.rows,
+    accountAllocationData.slices,
+    ghostTownEmptyState,
+    isAllocationLoading,
   ]);
 
   const renderDataSectionComponent = useMemo(() => {
+    const isAllocationTab = activeTab === 'allocation';
+    const isActivityTab = activeTab === 'activity';
+
+    if (isAllocationTab) {
+      return [];
+    }
+
     if (!searchVal && !selectedChainFilterOption) {
-      return showActivityTab ? groupedHistory : memorizedAssetsByChainList;
+      return isActivityTab ? groupedHistory : memorizedAssetsByChainList;
     } else {
-      return showActivityTab ? searchResultsHistory : searchResultsAssets;
+      return isActivityTab ? searchResultsHistory : searchResultsAssets;
     }
   }, [
     searchVal,
     selectedChainFilterOption,
-    showActivityTab,
+    activeTab,
     searchResultsAssets,
     searchResultsHistory,
     groupedHistory,
     memorizedAssetsByChainList,
   ]);
+
+  const listEmptyComponentForTab = useMemo(() => {
+    return activeTab === 'allocation' ? null : listEmptyComponent;
+  }, [activeTab, listEmptyComponent]);
+
+  const sectionListKeyExtractor = useCallback(
+    (item: any, _index: number) => {
+      return activeTab === 'activity'
+        ? `${item.txid}+${item.walletId}`
+        : item.id;
+    },
+    [activeTab],
+  );
 
   return (
     <AccountDetailsContainer>
@@ -1447,19 +1633,23 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         }
         ListHeaderComponent={renderListHeaderComponent}
         ListFooterComponent={
-          !showActivityTab
+          activeTab === 'wallets'
             ? listFooterComponentAssetsTab
-            : listFooterComponentTxsTab
+            : activeTab === 'activity'
+            ? listFooterComponentTxsTab
+            : listFooterComponentAllocationTab
         }
-        keyExtractor={
-          !showActivityTab ? keyExtractorAssets : keyExtractorTransaction
-        }
+        keyExtractor={sectionListKeyExtractor}
         //@ts-ignore
         sections={renderDataSectionComponent}
         renderItem={
-          !showActivityTab ? memoizedRenderAssetsItem : renderTransaction
+          activeTab === 'wallets'
+            ? memoizedRenderAssetsItem
+            : activeTab === 'activity'
+            ? renderTransaction
+            : () => null
         }
-        {...(showActivityTab && {
+        {...(activeTab === 'activity' && {
           renderSectionHeader,
           stickyHeaderIndices: [groupedHistory?.length],
           stickySectionHeadersEnabled: true,
@@ -1474,7 +1664,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
           onEndReachedThreshold: 0.3,
           maxToRenderPerBatch: 15,
         })}
-        ListEmptyComponent={listEmptyComponent}
+        ListEmptyComponent={listEmptyComponentForTab}
         getItemLayout={getItemLayout}
       />
 

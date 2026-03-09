@@ -1,14 +1,14 @@
 import React, {useLayoutEffect} from 'react';
+import {useTranslation} from 'react-i18next';
 import {Linking, ScrollView} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useTheme} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
+import styled from 'styled-components/native';
 import {MerchantGroupParamList} from '../MerchantGroup';
 import RemoteImage from '../../components/RemoteImage';
-import styled from 'styled-components/native';
-import {
-  CtaContainerAbsolute,
-  WIDTH,
-} from '../../../../../components/styled/Containers';
+import FooterButtonContainer from '../../../../../components/footer/FooterButtonContainer';
+import {WIDTH} from '../../../../../components/styled/Containers';
 import Button from '../../../../../components/button/Button';
 import {
   getMastheadGradient,
@@ -22,8 +22,6 @@ import {
   HeaderTitle,
   Paragraph,
 } from '../../../../../components/styled/Text';
-import {useTheme} from '@react-navigation/native';
-import {useTranslation} from 'react-i18next';
 import HeaderBackButton from '../../../../../components/back/HeaderBackButton';
 
 const MerchantDetailsContainer = styled.SafeAreaView`
@@ -49,10 +47,6 @@ const Divider = styled(SectionDivider)`
 
 const SectionHeader = styled(H5)`
   margin-bottom: 15px;
-`;
-
-const FooterButton = styled(CtaContainerAbsolute)`
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
 `;
 
 const MerchantDetails = ({
@@ -92,21 +86,13 @@ const MerchantDetails = ({
           </ContentContainer>
         </SectionContainer>
       </ScrollView>
-      <FooterButton
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }}>
+      <FooterButtonContainer>
         <Button
           onPress={() => Linking.openURL(directIntegration.link)}
           buttonStyle={'primary'}>
           {t('Go to') + ' ' + directIntegration.displayName}
         </Button>
-      </FooterButton>
+      </FooterButtonContainer>
     </MerchantDetailsContainer>
   );
 };

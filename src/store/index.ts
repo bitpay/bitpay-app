@@ -7,7 +7,6 @@ import {
   combineReducers,
   legacy_createStore as createStore,
   Middleware,
-  StoreEnhancer,
 } from 'redux';
 import {composeWithDevTools} from 'redux-devtools-extension';
 import {createLogger} from 'redux-logger'; // https://github.com/LogRocket/redux-logger
@@ -19,8 +18,15 @@ import {encryptTransform} from 'redux-persist-transform-encrypt'; // https://git
 import thunkMiddleware, {ThunkAction} from 'redux-thunk'; // https://github.com/reduxjs/redux-thunk
 import {Selector} from 'reselect';
 import {
+  backupFileExists,
+  backupPersistRoot,
+  readBackupPersistRoot,
+} from './backup/fs-backup';
+import {
   bindWalletKeys,
   transformContacts,
+  transformPortfolioPopulateStatus,
+  transformPortfolioSnapshotSeries,
   encryptSpecificFields,
 } from './transforms/transforms';
 import {appReducer, appReduxPersistBlackList} from './app/app.reducer';
@@ -50,6 +56,10 @@ import {
   swapCryptoReduxPersistBlackList,
 } from './swap-crypto/swap-crypto.reducer';
 import {
+  ZenledgerReduxPersistBlackList,
+  zenledgerReducer,
+} from './zenledger/zenledger.reducer';
+import {
   walletReducer,
   walletReduxPersistBlackList,
 } from './wallet/wallet.reducer';
@@ -69,17 +79,50 @@ import {
   walletConnectV2Reducer,
   walletConnectV2ReduxPersistBlackList,
 } from './wallet-connect-v2/wallet-connect-v2.reducer';
+import {
+  marketStatsReducer,
+  marketStatsReduxPersistBlackList,
+} from './market-stats/market-stats.reducer';
+import {
+  portfolioReducer,
+  portfolioReduxPersistBlackList,
+} from './portfolio/portfolio.reducer';
+import {removeWalletSnapshots} from './portfolio/portfolio.actions';
+import {WalletActionTypes} from './wallet/wallet.types';
+import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
+import {AppActionTypes} from './app/app.types';
 
 import {Storage} from 'redux-persist';
 import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
-import {
-  ZenledgerReduxPersistBlackList,
-  zenledgerReducer,
-} from './zenledger/zenledger.reducer';
+import {logManager} from '../managers/LogManager';
 
 export const storage = new MMKV();
+
+const FS_BACKUP_TRIGGER_ACTIONS = new Set<string>([
+  WalletActionTypes.SUCCESS_CREATE_KEY,
+  WalletActionTypes.SUCCESS_IMPORT,
+  WalletActionTypes.SUCCESS_ADD_WALLET,
+  WalletActionTypes.DELETE_KEY,
+  WalletActionTypes.UPDATE_KEY_NAME,
+  WalletActionTypes.UPDATE_WALLET_NAME,
+  WalletActionTypes.UPDATE_ACCOUNT_NAME,
+  WalletActionTypes.SYNC_WALLETS,
+  WalletActionTypes.TOGGLE_HIDE_WALLET,
+  WalletActionTypes.TOGGLE_HIDE_ACCOUNT,
+  WalletActionTypes.SET_CUSTOM_TOKENS_MIGRATION_COMPLETE,
+  WalletActionTypes.SET_POLYGON_MIGRATION_COMPLETE,
+  WalletActionTypes.SET_ACCOUNT_EVM_CREATION_MIGRATION_COMPLETE,
+  WalletActionTypes.SET_ACCOUNT_SVM_CREATION_MIGRATION_COMPLETE,
+  WalletActionTypes.SET_SVM_ADDRESS_CREATION_FIX_COMPLETE,
+  BitPayIdActionTypes.COMPLETED_PAIRING,
+  BitPayIdActionTypes.BITPAY_ID_DISCONNECTED,
+  AppActionTypes.PIN_LOCK_ACTIVE,
+  AppActionTypes.BIOMETRIC_LOCK_ACTIVE,
+]);
+
+let backupTriggerAction: string | null = null;
 
 // Module-scoped logger that safely logs before and after store initialization
 let storeDispatch: ((action: AnyAction) => void) | null = null;
@@ -94,8 +137,39 @@ const addLog = (log: AddLog) => {
   } catch (_) {}
 };
 
+const restoreFromBackup = (reason: string): Promise<string | null> => {
+  const startTs = Date.now();
+  return readBackupPersistRoot()
+    .then(restored => {
+      if (restored) {
+        try {
+          // Write back to MMKV to repair store for future runs
+          storage.set('persist:root', restored);
+          addLog(
+            LogActions.info(
+              `MMKV persist:root ${reason} - restored from filesystem backup - durationMs:${
+                Date.now() - startTs
+              }`,
+            ),
+          );
+        } catch (err) {
+          addLog(
+            LogActions.persistLog(
+              LogActions.error(
+                `MMKV restore write-back failed - ${getErrorString(err)}`,
+              ),
+            ),
+          );
+        }
+        return restored;
+      }
+      return null;
+    })
+    .catch(() => null);
+};
+
 export const reduxStorage: Storage = {
-  setItem: (key, value) => {
+  setItem: async (key, value) => {
     try {
       storage.set(key, value);
     } catch (err) {
@@ -109,11 +183,32 @@ export const reduxStorage: Storage = {
         ),
       );
     }
-    return Promise.resolve();
+    try {
+      if (key === 'persist:root' && typeof value === 'string') {
+        const hasBackup = await backupFileExists();
+        if (backupTriggerAction || !hasBackup) {
+          const triggerLabel = backupTriggerAction ?? 'no existing backup';
+          backupPersistRoot(value)
+            .then(() =>
+              addLog(
+                LogActions.debug(
+                  `Backed up store to filesystem, triggered by ${triggerLabel}.`,
+                ),
+              ),
+            )
+            .catch(() => {});
+          backupTriggerAction = null;
+        }
+      }
+    } catch (_) {}
   },
   getItem: key => {
     try {
       const value = storage.getString(key);
+      if (value == null && key === 'persist:root') {
+        // Attempt restore from backup if MMKV has been wiped or is missing
+        return restoreFromBackup('missing');
+      }
       return Promise.resolve(value);
     } catch (err) {
       addLog(
@@ -123,6 +218,10 @@ export const reduxStorage: Storage = {
           ),
         ),
       );
+      if (key === 'persist:root') {
+        // Try backup on MMKV get failure as well
+        return restoreFromBackup('getItem error');
+      }
       return Promise.resolve(null);
     }
   },
@@ -165,6 +264,8 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   ZENLEDGER: ZenledgerReduxPersistBlackList,
   WALLET_CONNECT: [],
   WALLET_CONNECT_V2: walletConnectV2ReduxPersistBlackList,
+  MARKET_STATS: marketStatsReduxPersistBlackList,
+  PORTFOLIO: portfolioReduxPersistBlackList,
 };
 
 /*
@@ -190,6 +291,8 @@ const reducers = {
   ZENLEDGER: zenledgerReducer,
   WALLET_CONNECT: walletConnectReducer,
   WALLET_CONNECT_V2: walletConnectV2Reducer,
+  MARKET_STATS: marketStatsReducer,
+  PORTFOLIO: portfolioReducer,
 };
 
 const combinedReducer = combineReducers(reducers);
@@ -254,9 +357,50 @@ const logger = createLogger({
 });
 
 const getStore = async () => {
-  const middlewares: Middleware[] = [
-    thunkMiddleware as unknown as Middleware,
-  ];
+  const middlewares: Middleware[] = [thunkMiddleware as unknown as Middleware];
+
+  const cleanupPortfolioOnDeleteKeyMiddleware: Middleware = store => next => {
+    return (action: AnyAction) => {
+      if (action?.type !== WalletActionTypes.DELETE_KEY) {
+        return next(action);
+      }
+
+      const keyId = action?.payload?.keyId;
+      const walletIds = (() => {
+        if (!keyId || typeof keyId !== 'string') {
+          return [] as string[];
+        }
+        const key = store.getState()?.WALLET?.keys?.[keyId];
+        const wallets = Array.isArray(key?.wallets) ? key.wallets : [];
+        return wallets
+          .map((w: any) => w?.id)
+          .filter((id: any): id is string => typeof id === 'string' && !!id);
+      })();
+
+      const result = next(action);
+
+      if (walletIds.length) {
+        store.dispatch(removeWalletSnapshots({walletIds}));
+      }
+
+      return result;
+    };
+  };
+
+  const lastActionMiddleware =
+    (): Middleware => () => next => (action: AnyAction) => {
+      try {
+        if (action && typeof action.type === 'string') {
+          if (FS_BACKUP_TRIGGER_ACTIONS.has(action.type)) {
+            backupTriggerAction = action.type;
+          }
+        }
+      } catch (_) {}
+      return next(action);
+    };
+
+  middlewares.push(lastActionMiddleware());
+  middlewares.push(cleanupPortfolioOnDeleteKeyMiddleware);
 
   if (__DEV__ && !(DISABLE_DEVELOPMENT_LOGGING === 'true')) {
     // @ts-ignore
@@ -277,6 +421,8 @@ const getStore = async () => {
     transforms: [
       bindWalletKeys,
       transformContacts,
+      transformPortfolioPopulateStatus,
+      transformPortfolioSnapshotSeries,
       createTransform<RootState, RootState, RootState>((inboundState, key) => {
         // Clear out nested blacklisted fields before encrypting and persisting
         if (typeof key === 'string') {
@@ -305,7 +451,15 @@ const getStore = async () => {
             ),
           );
         },
-        unencryptedStores: ['APP', 'RATE', 'SHOP', 'SHOP_CATALOG', 'WALLET'],
+        unencryptedStores: [
+          'APP',
+          'MARKET_STATS',
+          'PORTFOLIO',
+          'RATE',
+          'SHOP',
+          'SHOP_CATALOG',
+          'WALLET',
+        ],
       }),
     ],
   };
@@ -422,17 +576,13 @@ export async function getEncryptionKey(): Promise<string> {
   const encryptionKeyId = 'bitpay-app-encryption-key';
 
   try {
-    initLogs.add(
-      LogActions.info('getEncryptionKey: attempting to retrieve from Keychain'),
-    );
+    logManager.info('getEncryptionKey: attempting to retrieve from Keychain');
     const existingKey = await Keychain.getGenericPassword({
       service: encryptionKeyId,
     });
 
     if (existingKey && existingKey.password) {
-      initLogs.add(
-        LogActions.info('getEncryptionKey: found existing key in Keychain'),
-      );
+      logManager.info('getEncryptionKey: found existing key in Keychain');
       return existingKey.password;
     }
   } catch (err) {
@@ -445,9 +595,7 @@ export async function getEncryptionKey(): Promise<string> {
     );
   }
 
-  initLogs.add(
-    LogActions.warn('getEncryptionKey: generating new key (no existing key)'),
-  );
+  logManager.warn('getEncryptionKey: generating new key (no existing key)');
   const newKey = getUniqueId();
 
   try {
@@ -455,9 +603,7 @@ export async function getEncryptionKey(): Promise<string> {
     await Keychain.setGenericPassword(encryptionKeyId, newKey, {
       service: encryptionKeyId,
     });
-    initLogs.add(
-      LogActions.info('getEncryptionKey: stored new key in Keychain'),
-    );
+    logManager.info('getEncryptionKey: stored new key in Keychain');
   } catch (err) {
     initLogs.add(
       LogActions.persistLog(

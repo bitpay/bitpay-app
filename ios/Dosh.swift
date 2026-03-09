@@ -16,10 +16,10 @@ struct CustomTheme {
   var interactiveColor: UIColor = UIColor.init(red: 0x22/255, green: 0x40/255, blue: 0xc4/255, alpha: 0xff/255);
   
   // font
-  let boldFontName: String = "Heebo-Bold";
-  let mediumFontName: String = "Heebo-Medium";
-  let regularFontName: String = "Heebo-Regular";
-  let lightFontName: String = "Heebo-Light";
+  let boldFontName: String = "Archivo-Bold";
+  let mediumFontName: String = "Archivo-Medium";
+  let regularFontName: String = "Archivo-Regular";
+  let lightFontName: String = "Archivo-Light";
 }
 
 public class DoshAdapter: NSObject {

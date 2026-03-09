@@ -1,7 +1,7 @@
 import axios from 'axios';
 import BitAuth from 'bitauth';
 import {Network} from '../../constants';
-import {BASE_BITPAY_URLS} from '../../constants/config';
+import {BASE_BITPAY_URLS, NO_CACHE_HEADERS} from '../../constants/config';
 import {AppIdentity} from '../../store/app/app.models';
 import {BpApiResponse} from './bitpay.types';
 
@@ -157,6 +157,7 @@ export class BitPayIdApi {
     const data = {method: 'createToken', params: JSON.stringify(params)};
     const config = {
       headers: {
+        ...NO_CACHE_HEADERS,
         'content-type': 'application/json',
       },
     };

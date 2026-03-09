@@ -12,6 +12,7 @@ import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
+import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory
 import com.zoontek.rnbootsplash.RNBootSplash
 
 class MainActivity : ReactActivity() {
@@ -30,8 +31,18 @@ class MainActivity : ReactActivity() {
         DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Integrity check must run before React Native initialises.
+        // super.onCreate is called first in the failure path so the activity window token
+        // is valid when AlertDialog.Builder tries to attach the dialog.
+        if (!BundleIntegrityVerifier.verify(this)) {
+            super.onCreate(savedInstanceState)
+            BundleIntegrityVerifier.showTamperedAlert(this)
+            return
+        }
+
         RNBootSplash.init(this, R.style.BootTheme)
-        super.onCreate(null)
+        supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
+        super.onCreate(savedInstanceState)
         (application as MainApplication).addActivityToStack(this.javaClass)
 
         window.apply {

@@ -9,6 +9,8 @@
 		<key>Endpoint</key>
 		<string>sdk.iad-05.braze.com</string>
 	</dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -24,7 +26,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>14.34.1</string>
+	<string>14.40.1</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -62,7 +64,7 @@
 			<key>localhost</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true />
+				<true/>
 			</dict>
 		</dict>
 	</dict>
@@ -76,15 +78,17 @@
 	<string>Enabling Face ID allows you quick and secure access to your account.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Tracking is used to identify source of traffic, optimize campaigns, and improve user experiences in the app.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Heebo-Black.ttf</string>
-		<string>Heebo-Bold.ttf</string>
-		<string>Heebo-ExtraBold.ttf</string>
-		<string>Heebo-Light.ttf</string>
-		<string>Heebo-Medium.ttf</string>
-		<string>Heebo-Regular.ttf</string>
-		<string>Heebo-Thin.ttf</string>
+		<string>Archivo-Black.ttf</string>
+		<string>Archivo-Bold.ttf</string>
+		<string>Archivo-ExtraBold.ttf</string>
+		<string>Archivo-Light.ttf</string>
+		<string>Archivo-Medium.ttf</string>
+		<string>Archivo-Regular.ttf</string>
+		<string>Archivo-Thin.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

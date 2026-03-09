@@ -61,6 +61,7 @@ import {
   Black,
   LightBlack,
   LuckySevens,
+  Slate30,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -138,6 +139,8 @@ import {getGiftCardIcons} from '../../../lib/gift-cards/gift-card';
 import {BillPayAccount} from '../../../store/shop/shop.models';
 import debounce from 'lodash.debounce';
 import ArchaxFooter from '../../../components/archax/archax-footer';
+import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -249,7 +252,7 @@ const HeaderSubTitleContainer = styled.View`
 `;
 
 const TypeContainer = styled(HeaderSubTitleContainer)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   padding: 2px 5px;
   border-radius: 3px;
   margin: 10px 4px 0;
@@ -359,10 +362,6 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       ),
     });
   }, [navigation, uiFormattedWallet.walletName, key.keyName]);
-
-  useEffect(() => {
-    setRefreshing(!!fullWalletObj.isRefreshing);
-  }, [fullWalletObj.isRefreshing]);
 
   const ShareAddress = async () => {
     try {
@@ -660,6 +659,16 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     return () => subscription.remove();
   }, [keys]);
 
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      DeviceEmitterEvents.SET_REFRESHING,
+      val => {
+        setRefreshing(!!val);
+      },
+    );
+    return () => subscription.remove();
+  }, []);
+
   const itemSeparatorComponent = useCallback(() => <BorderBottom />, []);
 
   const listFooterComponent = () => {
@@ -792,7 +801,7 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       dispatch(
         showBottomNotificationModal({
           ...errorMessageConfig,
-          enableBackdropDismiss: false,
+          enableBackdropDismiss: true,
         }),
       );
     }
@@ -1127,6 +1136,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                           {fullWalletObj.credentials.n}
                         </TypeText>
                       </TypeContainer>
+                    ) : isTSSKey(key) && fullWalletObj.tssMetadata ? (
+                      <TypeContainer>
+                        <TypeText>
+                          Threshold {fullWalletObj.tssMetadata.m}/
+                          {fullWalletObj.tssMetadata.n}
+                        </TypeText>
+                      </TypeContainer>
                     ) : null}
                     {['xrp', 'sol'].includes(
                       fullWalletObj?.currencyAbbreviation,
@@ -1164,15 +1180,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             chain: fullWalletObj.chain || '',
                           }),
                         );
-                        navigation.navigate(WalletScreens.AMOUNT, {
-                          onAmountSelected: async (amount: string) => {
-                            navigation.navigate('BuyCryptoRoot', {
-                              amount: Number(amount),
-                              fromWallet: fullWalletObj,
-                            });
+                        navigation.navigate(
+                          ExternalServicesScreens.ROOT_BUY_AND_SELL,
+                          {
+                            context: 'buyCrypto',
+                            fromWallet: fullWalletObj,
                           },
-                          context: 'buyCrypto',
-                        });
+                        );
                       },
                     }}
                     sell={{
@@ -1194,9 +1208,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
                             chain: fullWalletObj.chain || '',
                           }),
                         );
-                        navigation.navigate('SellCryptoRoot', {
-                          fromWallet: fullWalletObj,
-                        });
+                        navigation.navigate(
+                          ExternalServicesScreens.ROOT_BUY_AND_SELL,
+                          {
+                            context: 'sellCrypto',
+                            fromWallet: fullWalletObj,
+                          },
+                        );
                       },
                     }}
                     swap={{

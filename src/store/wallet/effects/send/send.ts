@@ -44,14 +44,18 @@ import {
 import {GetInput} from '../transactions/transactions';
 import {
   checkEncryptedKeysForEddsaMigration,
+  createAtaAndSend,
   formatCryptoAddress,
   formatCurrencyAbbreviation,
   formatFiatAmount,
   getCWCChain,
   getFullLinkedWallet,
+  getOrCreateAssociatedTokenAddress,
   getRateByCurrencyName,
-  getSolanaTokens,
+  getSolanaATAs,
   sleep,
+  SolanaTokenData,
+  toggleTSSModal,
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
@@ -76,7 +80,6 @@ import {
   checkingBiometricForSending,
   dismissBottomNotificationModal,
   dismissDecryptPasswordModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   showDecryptPasswordModal,
 } from '../../../app/app.actions';
@@ -94,15 +97,11 @@ import {BwcProvider} from '../../../../lib/bwc';
 import {createWalletAddress, ToCashAddress} from '../address/address';
 import {WalletRowProps} from '../../../../components/list/WalletRow';
 import {t} from 'i18next';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../app/app.effects';
-import {LogActions} from '../../../log';
+import {openUrlWithInAppBrowser} from '../../../app/app.effects';
 import _ from 'lodash';
 import ReactNativeBiometrics, {BiometryTypes} from 'react-native-biometrics';
 import {BiometricErrorNotification} from '../../../../constants/BiometricError';
-import {Platform} from 'react-native';
+import {DeviceEventEmitter, Platform} from 'react-native';
 import {Rates} from '../../../rate/rate.models';
 import {
   getCoinAndChainFromCurrencyCode,
@@ -123,6 +122,16 @@ import {
 } from '../../../../components/modal/import-ledger-wallet/import-account/SelectLedgerCurrency';
 import {BitpaySupportedCoins} from '../../../../constants/currencies';
 import {getERC20TokenPrice} from '../../../moralis/moralis.effects';
+import {logManager} from '../../../../managers/LogManager';
+import {ongoingProcessManager} from '../../../../managers/OngoingProcessManager';
+import {DeviceEmitterEvents} from '../../../../constants/device-emitter-events';
+import {ExternalServicesScreens} from '../../../../navigation/services/ExternalServicesGroup';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
+import {
+  requiresTSSSigning,
+  TSSSigningCallbacks,
+  startTSSSigning,
+} from '../tss-send/tss-send';
 
 export const createProposalAndBuildTxDetails =
   (
@@ -169,6 +178,10 @@ export const createProposalAndBuildTxDetails =
         } = getState();
 
         if (wallet.isHardwareWallet && credentials.chain === 'bch') {
+          tx.signingMethod = 'ecdsa';
+        }
+
+        if (wallet.tssKeyId && credentials.chain === 'bch') {
           tx.signingMethod = 'ecdsa';
         }
 
@@ -321,11 +334,11 @@ const setEthAddressNonce =
         let address = nonceWallet?.receiveAddress;
 
         if (!address) {
-          dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
+          ongoingProcessManager.show('GENERATING_ADDRESS');
           address = await dispatch<Promise<string>>(
             createWalletAddress({wallet: nonceWallet, newAddress: false}),
           );
-          dispatch(dismissOnGoingProcessModal());
+          ongoingProcessManager.hide();
         }
 
         const nonce = await getNonce(nonceWallet, chain, address);
@@ -357,12 +370,10 @@ const setEthAddressNonce =
           }
         }
 
-        dispatch(
-          LogActions.info(
-            `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
-              suggestedNonce! - nonce
-            }`,
-          ),
+        logManager.info(
+          `Using web3 nonce: ${nonce} - Suggested Nonce: ${suggestedNonce} - pending txs: ${
+            suggestedNonce! - nonce
+          }`,
         );
 
         tx.nonce = suggestedNonce;
@@ -371,7 +382,7 @@ const setEthAddressNonce =
       } catch (error: any) {
         const errString =
           error instanceof Error ? error.message : JSON.stringify(error);
-        dispatch(LogActions.error(`Could not get address nonce ${errString}`));
+        logManager.error(`Could not get address nonce ${errString}`);
         return resolve();
       }
     });
@@ -508,7 +519,21 @@ export const buildTxDetails =
             }));
           fee = gasLimit * gasPrice;
         } else {
-          fee = 0.000005 * 1e9; // 0.000005 SOL in lamports default low fee
+          const decodedInstructions = request.decodedInstructions;
+          const computUnitLimit =
+            decodedInstructions?.setComputeUnitLimit?.[0].computeUnitLimit;
+          const computeUnitPrice =
+            decodedInstructions?.setComputeUnitPrice?.[0].microLamports;
+          const isPriority =
+            decodedInstructions?.setComputeUnitPrice?.[0].priority;
+          const SOL_BASE_FEE_LAMPORTS = 5000; // default base fee in lamports
+          if (computUnitLimit && computeUnitPrice && isPriority) {
+            fee =
+              SOL_BASE_FEE_LAMPORTS +
+              (computUnitLimit * computeUnitPrice) / 1000000; // BWS is setting 5000 lamports as fee anyway
+          } else {
+            fee = SOL_BASE_FEE_LAMPORTS;
+          }
         }
       }
       if (proposal) {
@@ -839,7 +864,7 @@ const buildTransactionProposal =
 
         // bch related
         if (tx.signingMethod) {
-          txp.signingMethod = tx.signingMethod;
+          txp.signingMethod = 'ecdsa';
         }
 
         const verifyExcludedUtxos = (
@@ -1066,7 +1091,22 @@ const buildTransactionProposal =
                   }));
                 txp.fee = gasLimit * gasPrice || undefined;
               } else {
-                txp.fee = 0.000005 * 1e9; // 0.000005 SOL in lamports default low fee
+                const decodedInstructions = request.decodedInstructions;
+                const computUnitLimit =
+                  decodedInstructions?.setComputeUnitLimit?.[0]
+                    .computeUnitLimit;
+                const computeUnitPrice =
+                  decodedInstructions?.setComputeUnitPrice?.[0].microLamports;
+                const isPriority =
+                  decodedInstructions?.setComputeUnitPrice?.[0].priority;
+                const SOL_BASE_FEE_LAMPORTS = 5000; // default base fee in lamports
+                if (computUnitLimit && computeUnitPrice && isPriority) {
+                  txp.fee =
+                    SOL_BASE_FEE_LAMPORTS +
+                    (computUnitLimit * computeUnitPrice) / 1000000; // BWS is setting 5000 lamports as fee anyway
+                } else {
+                  txp.fee = SOL_BASE_FEE_LAMPORTS;
+                }
               }
               txp.feeLevel = undefined;
               txp.outputs.push({
@@ -1081,12 +1121,26 @@ const buildTransactionProposal =
           default:
             let ataAddress: string | undefined;
             if (IsSVMChain(chain) && tx.tokenAddress) {
-              ataAddress = (
-                await getSolanaTokens(tx.toAddress!, wallet?.network)
-              ).find(
+              const toSolanaTokens = await getSolanaATAs(
+                tx.toAddress!,
+                wallet?.network,
+              );
+
+              ataAddress = toSolanaTokens.find(
                 (item: {mintAddress: string}) =>
                   item.mintAddress === tx.tokenAddress,
               )?.ataAddress;
+
+              if (!ataAddress) {
+                ataAddress = await getOrCreateAssociatedTokenAddress({
+                  mint: tx.tokenAddress!,
+                  feePayer: tx.toAddress!,
+                });
+                txp.ataOwnerAddress = tx.toAddress;
+                logManager.debug(
+                  `Using ATA Address from getOrCreateAssociatedTokenAddress: ${ataAddress}`,
+                );
+              }
             }
 
             const toAddress =
@@ -1124,15 +1178,28 @@ const buildTransactionProposal =
                 }
               }
             } else {
-              const fromSolanaTokens = await getSolanaTokens(
+              const fromSolanaTokens: SolanaTokenData[] = await getSolanaATAs(
                 wallet?.receiveAddress!,
                 wallet?.network,
               );
-              const fromAta = fromSolanaTokens.find((item: any) => {
+              const fromAta = fromSolanaTokens.find((item: SolanaTokenData) => {
                 return item.mintAddress === tx.tokenAddress;
               });
-              txp.fromAta = fromAta?.ataAddress;
-              txp.decimals = fromAta?.decimals;
+
+              if (fromAta) {
+                txp.fromAta = fromAta?.ataAddress;
+                txp.decimals = fromAta?.decimals;
+              } else {
+                const ataAddress = await getOrCreateAssociatedTokenAddress({
+                  mint: tx.tokenAddress!,
+                  feePayer: wallet?.receiveAddress!,
+                });
+                txp.fromAta = ataAddress;
+                logManager.debug(
+                  `Using ATA Address from getOrCreateAssociatedTokenAddress: ${ataAddress}`,
+                );
+              }
+
               if (solanaPayOpts?.memo) {
                 txp.memo = solanaPayOpts.memo;
               }
@@ -1154,16 +1221,16 @@ export const startSendPayment =
     wallet,
     recipient,
     transport,
+    tssCallbacks,
+    setShowTSSProgressModal,
   }: {
     txp: Partial<TransactionProposal>;
     key: Key;
     wallet: Wallet;
     recipient?: Recipient;
-
-    /**
-     * Transport for hardware wallet
-     */
     transport?: Transport;
+    tssCallbacks?: TSSSigningCallbacks;
+    setShowTSSProgressModal?: (show: boolean) => void;
   }): Effect<Promise<any>> =>
   async dispatch => {
     return new Promise(async (resolve, reject) => {
@@ -1183,6 +1250,9 @@ export const startSendPayment =
                   wallet,
                   recipient,
                   transport,
+                  ataOwnerAddress: txp.ataOwnerAddress,
+                  tssCallbacks,
+                  setShowTSSProgressModal,
                 }),
               );
               return resolve(broadcastedTx);
@@ -1195,7 +1265,7 @@ export const startSendPayment =
       } catch (err) {
         const errString =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`startSendPayment: ${errString}`));
+        logManager.error(`startSendPayment: ${errString}`);
         reject(err);
       }
     });
@@ -1210,6 +1280,9 @@ export const publishAndSign =
     transport,
     password,
     signingMultipleProposals,
+    ataOwnerAddress,
+    tssCallbacks,
+    setShowTSSProgressModal,
   }: {
     txp: TransactionProposal;
     key: Key;
@@ -1218,6 +1291,9 @@ export const publishAndSign =
     transport?: Transport;
     password?: string;
     signingMultipleProposals?: boolean; // when signing multiple proposals from a wallet we ask for decrypt password and biometric before
+    ataOwnerAddress?: string; // only for solana tokens, if the recipient needs to create an associated token account
+    tssCallbacks?: TSSSigningCallbacks;
+    setShowTSSProgressModal?: (show: boolean) => void;
   }): Effect<Promise<Partial<TransactionProposal> | void>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
@@ -1225,16 +1301,24 @@ export const publishAndSign =
 
       if (APP.biometricLockActive && !signingMultipleProposals) {
         try {
+          if (setShowTSSProgressModal) {
+            await toggleTSSModal(setShowTSSProgressModal, false);
+          }
           await dispatch(checkBiometricForSending());
+          if (setShowTSSProgressModal) {
+            await toggleTSSModal(setShowTSSProgressModal, true);
+          }
         } catch (error) {
           return reject(error);
         }
       }
 
       if (key.isPrivKeyEncrypted && !signingMultipleProposals) {
+        if (setShowTSSProgressModal) {
+          await toggleTSSModal(setShowTSSProgressModal, false);
+        }
         try {
           password = await new Promise<string>(async (_resolve, _reject) => {
-            dispatch(dismissOnGoingProcessModal()); // dismiss any previous modal
             await sleep(500);
             dispatch(
               showDecryptPasswordModal({
@@ -1256,21 +1340,65 @@ export const publishAndSign =
               }),
             );
           });
-          dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         } catch (error) {
           return reject(error);
         }
+        if (setShowTSSProgressModal) {
+          await toggleTSSModal(setShowTSSProgressModal, true);
+        }
       }
 
+      const isTSSSigning = requiresTSSSigning(wallet, key);
       try {
-        let publishedTx,
-          broadcastedTx: Partial<TransactionProposal> | null = null;
-
-        // Already published?
-        if (txp.status !== 'pending' || txp.refreshOnPublish) {
-          publishedTx = await publishTx(wallet, txp);
-          dispatch(LogActions.debug('success publish [publishAndSign]'));
+        if (isTSSSigning && !tssCallbacks) {
+          tssCallbacks = {
+            onStatusChange: status =>
+              logManager.debug(`[TSS] Status: ${status}`),
+            onProgressUpdate: progress =>
+              logManager.debug(`[TSS] Progress: ${JSON.stringify(progress)}`),
+            onCopayerStatusChange: (id, status) =>
+              logManager.debug(`[TSS] Copayer ${id}: ${status}`),
+            onRoundUpdate: (round, type) =>
+              logManager.debug(`[TSS] Round ${round} ${type}`),
+            onError: err => logManager.error(`[TSS] Error: ${err.message}`),
+            onComplete: sig => logManager.debug(`[TSS] Complete`),
+          };
         }
+        if (ataOwnerAddress && txp.tokenAddress && IsSVMChain(txp.chain)) {
+          const xPrivKeyEDDSA = password
+            ? key.methods!.get(password, 'EDDSA').xPrivKey
+            : key.properties!.xPrivKeyEDDSA;
+          const opts = {
+            ataAddress: txp.outputs[0].toAddress!,
+            ownerAddress: ataOwnerAddress,
+            mintAddress: txp.tokenAddress,
+            derivation: {
+              xPrivKeyEDDSA,
+              rootPath: wallet.credentials.rootPath,
+              network: wallet.network,
+            },
+            network: txp.network,
+          };
+          logManager.debug(
+            `creating ATA if needed for: ${ataOwnerAddress} - mint: ${txp.tokenAddress}`,
+          );
+          const result = await createAtaAndSend(opts);
+          logManager.debug(
+            `success create ata [publishAndSign]: ${JSON.stringify(result)}`,
+          );
+          await sleep(3000);
+        }
+
+        let publishedTx: TransactionProposal | undefined;
+        let broadcastedTx: Partial<TransactionProposal> | null = null;
+
+        // Publish if needed
+        if (txp.status !== 'pending' || txp.refreshOnPublish) {
+          publishedTx = (await publishTx(wallet, txp)) as TransactionProposal;
+          logManager.debug('success publish [publishAndSign]');
+        }
+
+        const txpToSign = publishedTx || txp;
 
         if (key.isReadOnly && !key.hardwareSource) {
           // read only wallet
@@ -1279,67 +1407,85 @@ export const publishAndSign =
 
         let signedTx: TransactionProposal | null = null;
 
-        if (key.hardwareSource) {
+        if (isTSSSigning) {
+          signedTx = await dispatch(
+            startTSSSigning({
+              key,
+              wallet,
+              txp: txpToSign as TransactionProposal,
+              callbacks: tssCallbacks!,
+              password,
+            }),
+          );
+          logManager.debug('success TSS sign [publishAndSign]');
+        } else if (key.hardwareSource) {
           if (!transport) {
             return reject(
               new Error('No transport provided for hardware signing.'),
             );
           }
-
           signedTx = await signTxWithHardwareWallet(
             transport,
             wallet,
             key,
-            (publishedTx || txp) as TransactionProposal,
+            txpToSign as TransactionProposal,
           );
+          logManager.debug('success hardware sign [publishAndSign]');
         } else {
           signedTx = (await signTx(
             wallet,
             key,
-            publishedTx || txp,
+            txpToSign,
             password,
           )) as TransactionProposal;
+          logManager.debug('success sign [publishAndSign]');
         }
 
-        dispatch(LogActions.debug('success sign [publishAndSign]'));
-
         if (signedTx.status === 'accepted') {
+          if (isTSSSigning && tssCallbacks) {
+            tssCallbacks.onStatusChange('broadcasting');
+          }
+
           broadcastedTx = await broadcastTx(wallet, signedTx);
-          dispatch(LogActions.debug('success broadcast [publishAndSign]'));
+          logManager.debug('success broadcast [publishAndSign]');
+
+          if (isTSSSigning && tssCallbacks) {
+            tssCallbacks.onStatusChange('complete');
+          }
+
           const {fee, amount} = broadcastedTx as {
             fee: number;
             amount: number;
           };
           const targetAmount = wallet.balance.sat - (fee + amount);
 
-          dispatch(
-            waitForTargetAmountAndUpdateWallet({
-              key,
-              wallet,
-              targetAmount,
-              recipient,
-            }),
-          );
+          setTimeout(() => {
+            // show refresing in wallet details view
+            DeviceEventEmitter.emit(DeviceEmitterEvents.SET_REFRESHING, true);
+            dispatch(
+              waitForTargetAmountAndUpdateWallet({
+                key,
+                wallet,
+                targetAmount,
+                recipient,
+              }),
+            );
+          }, 3000);
         } else {
           dispatch(startUpdateWalletStatus({key, wallet, force: true}));
         }
 
         let resultTx = broadcastedTx ? broadcastedTx : signedTx;
-        dispatch(
-          LogActions.info(`resultTx [publishAndSign]: ${resultTx?.txid}`),
-        );
+        logManager.info(`resultTx [publishAndSign]: ${resultTx?.txid}`);
 
-        // Check if ConfirmTx notification is enabled
-        if (APP.confirmedTxAccepted) {
+        if (APP.notificationsAccepted && wallet.chain === 'btc') {
           wallet.txConfirmationSubscribe(
             {txid: resultTx?.id, amount: txp.amount},
             (err: any) => {
               if (err) {
-                dispatch(
-                  LogActions.error(
-                    '[publishAndSign] txConfirmationSubscribe err',
-                    err,
-                  ),
+                logManager.error(
+                  '[publishAndSign] txConfirmationSubscribe err',
+                  err,
                 );
               }
             },
@@ -1350,18 +1496,35 @@ export const publishAndSign =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(LogActions.error(`[publishAndSign] err: ${errorStr}`));
+        logManager.error(`[publishAndSign] err: ${errorStr}`);
+        // workaround for 500 - Transaction simulation failed SOL err from bws
+        if (
+          errorStr.includes('Transaction simulation failed') &&
+          IsSVMChain(txp.chain)
+        ) {
+          return reject(
+            new Error(
+              'Your Solana wallet may not have enough SOL to cover network fees and rent-exempt balance. Please add some SOL to your wallet first, then try again.',
+            ),
+          );
+        }
+
+        if (isTSSSigning && tssCallbacks) {
+          tssCallbacks.onStatusChange('error');
+          tssCallbacks.onError(
+            err instanceof Error ? err : new Error(errorStr),
+          );
+        }
+
         // if broadcast fails, remove transaction proposal
         try {
-          // except for multisig pending transactions
-          if (txp.status !== 'pending') {
+          // except for multisig pending transactions (unless TSS, which should always be removed on error)
+          if (txp.status !== 'pending' || isTSSSigning) {
             await removeTxp(wallet, txp);
           }
         } catch (removeTxpErr: any) {
-          dispatch(
-            LogActions.error(
-              `[publishAndSign] err - Could not delete payment proposal: ${removeTxpErr?.message}`,
-            ),
+          logManager.error(
+            `[publishAndSign] err - Could not delete payment proposal: ${removeTxpErr?.message}`,
           );
         }
         reject(err);
@@ -1400,7 +1563,7 @@ export const publishAndSignMultipleProposals =
         if (key.isPrivKeyEncrypted) {
           try {
             password = await new Promise<string>(async (_resolve, _reject) => {
-              dispatch(dismissOnGoingProcessModal()); // dismiss any previous modal
+              ongoingProcessManager.hide(); // dismiss any previous modal
               await sleep(500);
               dispatch(
                 showDecryptPasswordModal({
@@ -1450,11 +1613,7 @@ export const publishAndSignMultipleProposals =
           } catch (err) {
             const errorStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            dispatch(
-              LogActions.error(
-                `Error signing transaction proposal: ${errorStr}`,
-              ),
-            );
+            logManager.error(`Error signing transaction proposal: ${errorStr}`);
             resultsWithNonce.push(err);
           }
         }
@@ -1476,11 +1635,7 @@ export const publishAndSignMultipleProposals =
           ).catch(err => {
             const errorStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            dispatch(
-              LogActions.error(
-                `Error signing transaction proposal: ${errorStr}`,
-              ),
-            );
+            logManager.error(`Error signing transaction proposal: ${errorStr}`);
             return err;
           }),
         );
@@ -1489,9 +1644,7 @@ export const publishAndSignMultipleProposals =
       } catch (err) {
         const errorStr =
           err instanceof Error ? err.message : JSON.stringify(err);
-        dispatch(
-          LogActions.error(`Error signing transaction proposal: ${errorStr}`),
-        );
+        logManager.error(`Error signing transaction proposal: ${errorStr}`);
         return reject(err);
       }
     });
@@ -1544,42 +1697,9 @@ export const signTx = (
 ): Promise<Partial<TransactionProposal>> => {
   return new Promise(async (resolve, reject) => {
     try {
-      const promisifiedSign = (
-        keyMethods: KeyMethods | undefined,
-        rootPath: string,
-        txp: any,
-        password: string | undefined,
-      ) => {
-        return new Promise((resolve, reject) => {
-          try {
-            const result = keyMethods?.sign(
-              rootPath,
-              txp,
-              password,
-              (err: any, signatures: string[]) => {
-                if (err) {
-                  return reject(err);
-                }
-                resolve(signatures);
-              },
-            );
-
-            if (result && Array.isArray(result)) {
-              return resolve(result);
-            }
-          } catch (err) {
-            reject(err);
-          }
-        });
-      };
-
       const rootPath = wallet.getRootPath();
-      const signatures = await promisifiedSign(
-        key.methods,
-        rootPath,
-        txp,
-        password,
-      );
+      const signatures = await key.methods?.sign(rootPath, txp, password);
+
       wallet.pushSignatures(
         txp,
         signatures,
@@ -2103,6 +2223,9 @@ const generateInsufficientFundsError = (
           formatAvailableAmount,
         },
       );
+  const handleDismiss: () => void =
+    typeof onDismiss === 'function' ? onDismiss : () => {};
+
   return CustomErrorMessage({
     title: t('Insufficient funds'),
     code: BWCErrorName.INSUFFICIENT_FUNDS,
@@ -2117,18 +2240,27 @@ const generateInsufficientFundsError = (
               context: 'errorBottomNotification',
             }),
           );
-          navigationRef.navigate('BuyCryptoRoot', {
+          navigationRef.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
             amount: 100,
             fromWallet: wallet,
+            context: 'buyCrypto',
           });
         },
         primary: true,
+      },
+
+      {
+        text: t('Maybe Later'),
+        action: handleDismiss,
+        primary: false,
       },
     ],
   });
 };
 
 const generateInsufficientConfirmedFundsError = (onDismiss?: () => void) => {
+  const handleDismiss: () => void =
+    typeof onDismiss === 'function' ? onDismiss : () => {};
   return CustomErrorMessage({
     code: BWCErrorName.INSUFFICIENT_FUNDS,
     title: t('Insufficient confirmed funds'),
@@ -2143,6 +2275,11 @@ const generateInsufficientConfirmedFundsError = (onDismiss?: () => void) => {
           navigationRef.navigate('SettingsHome');
         },
         primary: true,
+      },
+      {
+        text: t('Maybe Later'),
+        action: handleDismiss,
+        primary: false,
       },
     ],
   });
@@ -2251,11 +2388,12 @@ const processInsufficientFundsForFee = (
             navigationRef.goBack();
             await sleep(100);
           }
-          navigationRef.navigate('BuyCryptoRoot', {
+          navigationRef.navigate(ExternalServicesScreens.ROOT_BUY_AND_SELL, {
             amount: 100,
             fromWallet: IsERCToken(wallet.currencyAbbreviation, wallet.chain)
               ? linkedWallet
               : wallet,
+            context: 'buyCrypto',
           });
         };
         goToBuyCrypto();
@@ -2292,7 +2430,7 @@ export const handleCreateTxProposalError =
     proposalErrorProps: ProposalErrorHandlerProps,
     onDismiss?: () => void,
     context?: ProposalErrorHandlerContext,
-  ): Effect<Promise<any>> =>
+  ): Effect<Promise<BottomNotificationConfig>> =>
   async dispatch => {
     try {
       const {err} = proposalErrorProps;
@@ -2640,9 +2778,17 @@ export const checkBiometricForSending =
   };
 
 export const sendCrypto =
-  (loggerContext: string): Effect<void> =>
+  (
+    loggerContext: string,
+    assetContext?: {
+      currencyAbbreviation: string;
+      chain: string;
+      network?: string;
+      tokenAddress?: string;
+    },
+  ): Effect<void> =>
   (dispatch, getState) => {
-    const keys = getState().WALLET.keys;
+    const keys = getState().WALLET.keys as Record<string, Key>;
     const walletsWithBalance = Object.values(keys)
       .filter(key => key.backupComplete)
       .flatMap(key => key.wallets)
@@ -2650,7 +2796,8 @@ export const sendCrypto =
         wallet =>
           !wallet.hideWallet &&
           !wallet.hideWalletByAccount &&
-          wallet.isComplete(),
+          wallet.isComplete() &&
+          !wallet.pendingTssSession,
       )
       .filter(wallet => wallet.balance.sat > 0);
 
@@ -2667,17 +2814,25 @@ export const sendCrypto =
               action: () => {
                 dispatch(
                   Analytics.track('Clicked Buy Crypto', {
-                    context: 'HomeRoot',
+                    context: loggerContext,
+                    coin: assetContext?.currencyAbbreviation || '',
+                    chain: assetContext?.chain || '',
                   }),
                 );
-                navigationRef.navigate(WalletScreens.AMOUNT, {
-                  onAmountSelected: (amount: string) => {
-                    navigationRef.navigate('BuyCryptoRoot', {
-                      amount: Number(amount),
-                    });
+                navigationRef.navigate(
+                  ExternalServicesScreens.ROOT_BUY_AND_SELL,
+                  {
+                    context: 'buyCrypto',
+                    ...(assetContext?.currencyAbbreviation &&
+                    assetContext?.chain
+                      ? {
+                          currencyAbbreviation:
+                            assetContext.currencyAbbreviation,
+                          chain: assetContext.chain,
+                        }
+                      : {}),
                   },
-                  context: 'buyCrypto',
-                });
+                );
               },
               primary: true,
             },
@@ -2695,14 +2850,23 @@ export const sendCrypto =
           context: loggerContext,
         }),
       );
-      navigationRef.navigate('GlobalSelect', {context: 'send'});
+      navigationRef.navigate('GlobalSelect', {context: 'send', assetContext});
     }
   };
 
 export const receiveCrypto =
-  (navigation: NavigationProp<any>, loggerContext: string): Effect<void> =>
+  (
+    navigation: NavigationProp<any>,
+    loggerContext: string,
+    assetContext?: {
+      currencyAbbreviation: string;
+      chain: string;
+      network?: string;
+      tokenAddress?: string;
+    },
+  ): Effect<void> =>
   (dispatch, getState) => {
-    const keys = getState().WALLET.keys;
+    const keys = getState().WALLET.keys as Record<string, Key>;
     if (Object.keys(keys).length === 0) {
       dispatch(
         showBottomNotificationModal({
@@ -2736,7 +2900,10 @@ export const receiveCrypto =
             context: loggerContext,
           }),
         );
-        navigationRef.navigate('GlobalSelect', {context: 'receive'});
+        navigationRef.navigate('GlobalSelect', {
+          context: 'receive',
+          assetContext,
+        });
       }
     }
   };

@@ -17,15 +17,11 @@ import {Key, KeyMethods, Wallet} from '../../../store/wallet/wallet.models';
 import {CommonActions, RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import MultisigOptions from './MultisigOptions';
-import {Option} from './CreationOptions';
+import {Option, MultisigModalType} from './CreationOptions';
 import {useTranslation} from 'react-i18next';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   createMultipleWallets,
   getDecryptPassword,
@@ -42,6 +38,9 @@ import {
   sleep,
 } from '../../../utils/helper-methods';
 import {getNavigationTabName, RootStacks} from '../../../Root';
+import {useOngoingProcess} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 export type AddingOptionsParamList = {
   key: Key;
@@ -51,10 +50,14 @@ const AddingOptions: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const route = useRoute<RouteProp<WalletGroupParamList, 'AddingOptions'>>();
   const {key} = route.params;
-  const [showMultisigOptions, setShowMultisigOptions] = useState(false);
+  const [multisigModalType, setMultisigModalType] =
+    useState<MultisigModalType>(null);
+  const [showMultisigModal, setShowMultisigModal] = useState(false);
   const network = useAppSelector(({APP}) => APP.network);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <HeaderTitle>{t('Select Wallet Type')}</HeaderTitle>,
@@ -62,12 +65,30 @@ const AddingOptions: React.FC = () => {
     });
   }, [navigation, t]);
 
-  const optionList: Option[] = [
+  const showErrorModal = (e: string) => {
+    dispatch(
+      showBottomNotificationModal({
+        type: 'warning',
+        title: t('Something went wrong'),
+        message: e,
+        enableBackdropDismiss: true,
+        actions: [
+          {
+            text: t('OK'),
+            action: () => {},
+            primary: true,
+          },
+        ],
+      }),
+    );
+  };
+
+  const standardOptions: Option[] = [
     {
       id: 'utxo-wallet',
-      title: t('UTXO Wallet'),
+      title: t('Single-Currency Wallet'),
       description: t(
-        'Dedicated to a single cryptocurrency like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Perfect for users focusing on one specific coin',
+        'Dedicated to a single cryptocurrency like Bitcoin, Bitcoin Cash, Litecoin, Dogecoin or XRP. Perfect for users focusing on one specific coin',
       ),
       cta: () => {
         dispatch(
@@ -106,7 +127,7 @@ const AddingOptions: React.FC = () => {
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
-          await dispatch(startOnGoingProcessModal('ADDING_EVM_CHAINS'));
+          showOngoingProcess('ADDING_EVM_CHAINS');
           const wallets = await dispatch(
             createMultipleWallets({
               key: _key,
@@ -121,7 +142,7 @@ const AddingOptions: React.FC = () => {
           key.wallets.push(...(wallets as Wallet[]));
 
           dispatch(successAddWallet({key}));
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           navigation.dispatch(
             CommonActions.reset({
               index: 2,
@@ -149,8 +170,8 @@ const AddingOptions: React.FC = () => {
         } catch (err) {
           const errstring =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(LogActions.error(`Error adding account: ${errstring}`));
-          dispatch(dismissOnGoingProcessModal());
+          logManager.error(`Error adding account: ${errstring}`);
+          hideOngoingProcess();
           await sleep(1000);
           showErrorModal(errstring);
         }
@@ -180,15 +201,15 @@ const AddingOptions: React.FC = () => {
             !key?.properties?.xPrivKeyEDDSAEncrypted
           ) {
             try {
-              await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+              showOngoingProcess('ADDING_WALLET');
               await sleep(500);
               key.methods!.addKeyByAlgorithm('EDDSA', {password});
               key.properties = key.methods!.toObj();
             } catch (err) {
-              dispatch(dismissOnGoingProcessModal());
+              hideOngoingProcess();
               const errstring =
                 err instanceof Error ? err.message : JSON.stringify(err);
-              dispatch(LogActions.error(`Error EDDSA key: ${errstring}`));
+              logManager.error(`Error EDDSA key: ${errstring}`);
               showErrorModal(errstring);
               return;
             }
@@ -198,7 +219,7 @@ const AddingOptions: React.FC = () => {
             ({credentials}) => credentials.account,
           );
           const account = accounts.length > 0 ? Math.max(...accounts) + 1 : 0;
-          await dispatch(startOnGoingProcessModal('ADDING_SPL_CHAINS'));
+          showOngoingProcess('ADDING_SPL_CHAINS');
           await sleep(500);
           const wallets = await dispatch(
             createMultipleWallets({
@@ -215,8 +236,8 @@ const AddingOptions: React.FC = () => {
           const _wallets = wallets.filter(Boolean) as Wallet[];
           if (_wallets.length === 0) {
             const err = 'Error adding Solana account';
-            dispatch(LogActions.error(err));
-            dispatch(dismissOnGoingProcessModal());
+            logManager.error(err);
+            hideOngoingProcess();
             showErrorModal(err);
             return;
           }
@@ -224,7 +245,7 @@ const AddingOptions: React.FC = () => {
           key.wallets.push(...(wallets as Wallet[]));
 
           dispatch(successAddWallet({key}));
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           navigation.dispatch(
             CommonActions.reset({
               index: 2,
@@ -260,8 +281,8 @@ const AddingOptions: React.FC = () => {
         } catch (err) {
           const errstring =
             err instanceof Error ? err.message : JSON.stringify(err);
-          dispatch(LogActions.error(`Error adding account: ${errstring}`));
-          dispatch(dismissOnGoingProcessModal());
+          logManager.error(`Error adding account: ${errstring}`);
+          hideOngoingProcess();
           await sleep(1000);
           showErrorModal(errstring);
         }
@@ -269,31 +290,34 @@ const AddingOptions: React.FC = () => {
     },
     {
       id: 'multisig-wallet',
-      title: t('Multisig Wallet'),
+      title: t('Multisignature Wallet'),
       description: t(
-        'Requires multiple approvals for transactions for wallets like Bitcoin, Bitcoin Cash, Litecoin, and Dogecoin. Ideal for shared funds or enhanced security',
+        'Support for Bitcoin, Litecoin, Dogecoin and Bitcoin Cash networks. Each co-signer/device has a unique private key/recovery phrase, and all signatures are recorded directly on the blockchain.',
       ),
-      cta: () => setShowMultisigOptions(true),
+      cta: () => setShowMultisigModal(true),
     },
   ];
 
-  const showErrorModal = (e: string) => {
-    dispatch(
-      showBottomNotificationModal({
-        type: 'warning',
-        title: t('Something went wrong'),
-        message: e,
-        enableBackdropDismiss: true,
-        actions: [
-          {
-            text: t('OK'),
-            action: () => {},
-            primary: true,
-          },
-        ],
-      }),
-    );
-  };
+  const tssOptions: Option[] = [
+    {
+      id: 'addMultisig',
+      title: t('Add Multisig Wallet'),
+      description: t(
+        'Create a new wallet that requires multiple signatures for transactions',
+      ),
+      cta: () => setMultisigModalType('create'),
+    },
+    {
+      id: 'joinMultisig',
+      title: t('Join Shared Wallet'),
+      description: t(
+        'Join an existing multisig wallet using an invitation from another user',
+      ),
+      cta: () => setMultisigModalType('join'),
+    },
+  ];
+
+  const optionList = isTSSKey(key) ? tssOptions : standardOptions;
 
   return (
     <>
@@ -316,11 +340,20 @@ const AddingOptions: React.FC = () => {
           ))}
         </OptionListContainer>
       </OptionContainer>
-      <MultisigOptions
-        isVisible={showMultisigOptions}
-        setShowMultisigOptions={setShowMultisigOptions}
-        walletKey={key}
-      />
+      {isTSSKey(key) ? (
+        <MultisigOptions
+          isVisible={multisigModalType !== null}
+          modalType={multisigModalType}
+          closeModal={() => setMultisigModalType(null)}
+          walletKey={key}
+        />
+      ) : (
+        <MultisigOptions
+          isVisible={showMultisigModal}
+          walletKey={key}
+          closeModal={() => setShowMultisigModal(false)}
+        />
+      )}
     </>
   );
 };

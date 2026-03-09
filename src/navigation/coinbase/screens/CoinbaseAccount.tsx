@@ -35,6 +35,7 @@ import {
   SlateDark,
   White,
   Black,
+  Slate30,
 } from '../../../styles/colors';
 import GhostSvg from '../../../../assets/img/ghost-straight-face.svg';
 import WalletTransactionSkeletonRow from '../../../components/list/WalletTransactionSkeletonRow';
@@ -56,10 +57,7 @@ import {
   coinbaseGetTransactionsByAccount,
   coinbaseGetFiatAmount,
 } from '../../../store/coinbase';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {
   ToCashAddress,
@@ -67,7 +65,6 @@ import {
 } from '../../../store/wallet/effects/address/address';
 import AmountModal from '../../../components/amount/AmountModal';
 import {Wallet} from '../../../store/wallet/wallet.models';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import Icons from '../../wallet/components/WalletIcons';
 import {
   BitpaySupportedUtxoCoins,
@@ -81,7 +78,10 @@ import {
 } from '../../../store/wallet/effects';
 import {SupportedCurrencyOptions} from '../../../constants/SupportedCurrencyOptions';
 import {RootState} from '../../../store';
-import {WrongPasswordError} from '../../wallet/components/ErrorMessages';
+import {
+  CustomErrorMessage,
+  WrongPasswordError,
+} from '../../wallet/components/ErrorMessages';
 import {showWalletError} from '../../../store/wallet/effects/errors/errors';
 import {GroupCoinbaseTransactions} from '../../../store/wallet/effects/transactions/transactions';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -90,6 +90,8 @@ import GlobalSelect, {
   ToWalletSelectorCustomCurrency,
 } from '../../wallet/screens/GlobalSelect';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 const AccountContainer = styled.SafeAreaView`
   flex: 1;
@@ -111,7 +113,7 @@ const HeaderSubTitleContainer = styled.View`
 `;
 
 const TypeContainer = styled(HeaderSubTitleContainer)`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   padding: 2px 5px;
   border-radius: 3px;
   margin-top: 5px;
@@ -126,7 +128,7 @@ const TypeText = styled(BaseText)`
 const Type = styled(BaseText)`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : Slate30)};
   padding: 2px 5px;
   border-radius: 3px;
   margin-top: 5px;
@@ -213,11 +215,10 @@ const CoinbaseAccount = ({
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenDataByAddress} = useTokenContext();
   const {accountId, refresh} = route.params;
   const logger = useLogger();
-  const tokenDataByAddress = useAppSelector(
-    ({WALLET}: RootState) => WALLET.tokenDataByAddress,
-  );
   const allKeys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -403,7 +404,8 @@ const CoinbaseAccount = ({
           wallet.network === 'livenet' &&
           wallet.currencyAbbreviation === _currencyAbbreviation.toLowerCase() &&
           wallet.chain === _chain &&
-          wallet.isComplete(),
+          wallet.isComplete() &&
+          !wallet.pendingTssSession,
       );
 
       if (availableWallets.length) {
@@ -503,7 +505,7 @@ const CoinbaseAccount = ({
     if (!account) {
       return;
     }
-    dispatch(startOnGoingProcessModal('FETCHING_COINBASE_DATA'));
+    showOngoingProcess('FETCHING_COINBASE_DATA');
     dispatch(
       Analytics.track('Clicked Receive', {
         context: 'CoinbaseAccount',
@@ -511,7 +513,7 @@ const CoinbaseAccount = ({
     );
     dispatch(coinbaseCreateAddress(accountId))
       .then(async newAddress => {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         if (!newAddress) {
           return;
         }
@@ -549,7 +551,7 @@ const CoinbaseAccount = ({
     );
     if (newWallet) {
       if (newWallet.credentials) {
-        if (newWallet.isComplete()) {
+        if (newWallet.isComplete() && !newWallet.pendingTssSession) {
           if (allKeys[newWallet.keyId].backupComplete) {
             setSelectedWallet(newWallet);
             await sleep(500);
@@ -627,29 +629,41 @@ const CoinbaseAccount = ({
     setWalletModalVisible(false);
     if (newWallet?.currencyAbbreviation) {
       onSelectedWallet(newWallet);
+    } else if (createNewWalletData && isTSSKey(createNewWalletData.key)) {
+      await dispatch(
+        showBottomNotificationModal(
+          CustomErrorMessage({
+            errMsg: t(
+              'You cannot add new wallets to a TSS wallet key. To create another wallet, please start a new TSS wallet setup.',
+            ),
+            title: t('TSS Wallet Limitation'),
+          }),
+        ),
+      );
     } else if (createNewWalletData) {
       try {
-        if (
-          createNewWalletData.key.isPrivKeyEncrypted &&
-          !(
-            createNewWalletData.currency?.isToken &&
-            createNewWalletData.associatedWallet
-          )
-        ) {
-          logger.debug('Key is Encrypted. Trying to decrypt...');
-          await sleep(500);
-          const password = await dispatch(
-            getDecryptPassword(createNewWalletData.key),
-          );
-          createNewWalletData.options.password = password;
-        } else {
-          logger.debug(
-            'Key is Encrypted, but not neccessary for tokens. Trying to create wallet...',
-          );
+        if (createNewWalletData.key?.isPrivKeyEncrypted) {
+          if (
+            !(
+              createNewWalletData.currency?.isToken &&
+              createNewWalletData.associatedWallet
+            )
+          ) {
+            logger.debug('Key is Encrypted. Trying to decrypt...');
+            await sleep(500);
+            const password = await dispatch(
+              getDecryptPassword(createNewWalletData.key),
+            );
+            createNewWalletData.options.password = password;
+          } else {
+            logger.debug(
+              'Key is Encrypted, but not neccessary for tokens. Trying to create wallet...',
+            );
+          }
         }
 
         await sleep(500);
-        await dispatch(startOnGoingProcessModal('ADDING_WALLET'));
+        showOngoingProcess('ADDING_WALLET');
         const createdToWallet = await dispatch(addWallet(createNewWalletData));
         logger.debug(
           `Added ${createdToWallet?.currencyAbbreviation} wallet from Coinbase`,
@@ -664,10 +678,10 @@ const CoinbaseAccount = ({
         );
         onSelectedWallet(createdToWallet);
         await sleep(300);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
       } catch (err: any) {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         if (err.message === 'invalid password') {
           dispatch(showBottomNotificationModal(WrongPasswordError()));
@@ -773,7 +787,6 @@ const CoinbaseAccount = ({
       />
 
       <SheetModal
-        modalLibrary="bottom-sheet"
         isVisible={walletModalVisible}
         onBackdropPress={() => onDismiss()}
         fullscreen>

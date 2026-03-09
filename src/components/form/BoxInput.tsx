@@ -1,5 +1,10 @@
-import React, {useState} from 'react';
-import {KeyboardTypeOptions, TextInput, TextInputProps} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  AppState,
+  KeyboardTypeOptions,
+  TextInput,
+  TextInputProps,
+} from 'react-native';
 import TextInputMask, {TextInputMaskProps} from 'react-native-text-input-mask';
 import styled, {css} from 'styled-components/native';
 import ObfuscationHide from '../../../assets/img/obfuscation-hide.svg';
@@ -9,6 +14,7 @@ import {
   Black,
   Caution,
   LightBlack,
+  LightBlue,
   LuckySevens,
   NeutralSlate,
   ProgressBlue,
@@ -21,8 +27,8 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 type InputType = 'password' | 'phone' | 'search' | 'number';
 
-const INPUT_HEIGHT = 55;
-const SEPARATOR_HEIGHT = 37;
+export const INPUT_HEIGHT = 55;
+export const SEPARATOR_HEIGHT = 37;
 
 interface InputProps {
   isFocused: boolean;
@@ -80,7 +86,7 @@ const Affix = styled.View`
 `;
 
 const Separator = styled.View`
-  border-right-color: ${({theme}) => (theme.dark ? '#45484E' : '#eceffd')};
+  border-right-color: ${({theme}) => (theme.dark ? '#45484E' : LightBlue)};
   border-right-width: 1px;
   border-style: solid;
   height: ${SEPARATOR_HEIGHT}px;
@@ -218,6 +224,15 @@ const BoxInput = React.forwardRef<
         </IconContainer>
       );
     }
+
+    useEffect(() => {
+      const sub = AppState.addEventListener('change', state => {
+        if (isPassword && (state === 'inactive' || state === 'background')) {
+          props.onChangeText?.('');
+        }
+      });
+      return () => sub.remove();
+    }, [isPassword, props]);
 
     return (
       <>

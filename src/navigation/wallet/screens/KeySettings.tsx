@@ -16,7 +16,7 @@ import {
 } from '../../../components/styled/Text';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
-import {WalletGroupParamList} from '../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {View, ScrollView, FlatList} from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
@@ -34,10 +34,7 @@ import {
 import ChevronRightSvg from '../../../../assets/img/angle-right.svg';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {Slate, SlateDark, White} from '../../../styles/colors';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../store/app/app.effects';
+import {openUrlWithInAppBrowser} from '../../../store/app/app.effects';
 import InfoIcon from '../../../components/icons/info/Info';
 import RequestEncryptPasswordToggle from '../components/RequestEncryptPasswordToggle';
 import {URL} from '../../../constants';
@@ -48,10 +45,7 @@ import {
   fixWalletAddresses,
   sleep,
 } from '../../../utils/helper-methods';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {
   CustomErrorMessage,
   WrongPasswordError,
@@ -80,6 +74,8 @@ import {AccountRowProps} from '../../../components/list/AccountListRow';
 import AccountSettingsRow from '../../../components/list/AccountSettingsRow';
 import {useTheme} from 'styled-components/native';
 import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -138,6 +134,8 @@ const KeySettings = () => {
   const theme = useTheme();
   const {defaultAltCurrency} = useAppSelector(({APP}) => APP);
   const {rates} = useAppSelector(({RATE}) => RATE);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenOptionsByAddress} = useTokenContext();
   const [searchVal, setSearchVal] = useState('');
   const [searchResults, setSearchResults] = useState([] as AccountRowProps[]);
   const selectedChainFilterOption = useAppSelector(
@@ -198,7 +196,7 @@ const KeySettings = () => {
   const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ...tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   });
@@ -208,7 +206,7 @@ const KeySettings = () => {
       // To close decrypt modal
       await sleep(500);
     }
-    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
+    showOngoingProcess('SYNCING_WALLETS');
     const opts = {
       words: normalizeMnemonic(mnemonic),
       mnemonic,
@@ -224,6 +222,7 @@ const KeySettings = () => {
           .filter(
             sw =>
               sw.isComplete() &&
+              !sw.pendingTssSession &&
               !_key.wallets.some(ew => ew.id === sw.credentials.walletId),
           )
           .map(syncWallet => {
@@ -239,7 +238,11 @@ const KeySettings = () => {
             return merge(
               syncWallet,
               buildWalletObj(
-                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                {
+                  ...syncWallet.credentials,
+                  currencyAbbreviation,
+                  currencyName,
+                } as any,
                 _tokenOptionsByAddress,
               ),
             );
@@ -264,7 +267,7 @@ const KeySettings = () => {
           message = t('Your key is already synced');
         }
 
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         dispatch(
           showBottomNotificationModal({
@@ -282,7 +285,7 @@ const KeySettings = () => {
           }),
         );
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         await dispatch(
           showBottomNotificationModal(
@@ -293,7 +296,7 @@ const KeySettings = () => {
         );
       }
     } catch (e) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       await dispatch(
         showBottomNotificationModal(
@@ -320,7 +323,7 @@ const KeySettings = () => {
       const {
         credentials: {walletId},
       } = fullWalletObj;
-      if (!fullWalletObj.isComplete()) {
+      if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
         return;
       }
       navigation.navigate('WalletSettings', {
@@ -381,7 +384,7 @@ const KeySettings = () => {
   const renderListFooterComponent = useCallback(() => {
     return (
       <>
-        {_key && !_key.isReadOnly ? (
+        {_key && !_key.isReadOnly && !isTSSKey(_key) ? (
           <VerticalPadding style={{alignItems: 'center'}}>
             <AddWalletText
               onPress={() => {
@@ -397,7 +400,26 @@ const KeySettings = () => {
           <VerticalPadding>
             <Title>{t('Security')}</Title>
             <Setting
-              onPress={() => {
+              onPress={async () => {
+                const fullWalletObj = key.wallets?.[0];
+                if (fullWalletObj?.pendingTssSession && key?.tssSession) {
+                  dispatch(
+                    showBottomNotificationModal(
+                      CustomErrorMessage({
+                        errMsg: t(
+                          'Pending TSS session. Retry after session completion.',
+                        ),
+                      }),
+                    ),
+                  );
+                  return;
+                } else if (isTSSKey(_key)) {
+                  navigation.navigate(WalletScreens.BACKUP_SHARED_KEY, {
+                    context: 'backupExistingTSSKey',
+                    key: _key,
+                  });
+                  return;
+                }
                 navigation.navigate('BackupOnboarding', {
                   key: _key,
                   buildEncryptModalConfig,
@@ -408,45 +430,59 @@ const KeySettings = () => {
 
             <Hr />
 
-            <SettingView style={{paddingLeft: 15, paddingRight: 15}}>
-              <WalletSettingsTitle>
-                {t('Request Encrypt Password')}
-              </WalletSettingsTitle>
-
-              <RequestEncryptPasswordToggle currentKey={_key} />
-            </SettingView>
-
-            <Info>
-              <InfoTriangle />
-
-              <InfoHeader>
-                <InfoImageContainer infoMargin={'0 8px 0 0'}>
-                  <InfoIcon bgColor={theme.dark ? Slate : undefined} />
-                </InfoImageContainer>
-
-                <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
-              </InfoHeader>
-              <InfoDescription>
-                {t(
-                  'This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.',
-                )}
-              </InfoDescription>
-
-              <VerticalPadding>
-                <TouchableOpacity
-                  activeOpacity={ActiveOpacity}
-                  onPress={() => {
-                    haptic('impactLight');
-                    dispatch(
-                      openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD),
-                    );
-                  }}>
-                  <Link>{t('Learn More')}</Link>
-                </TouchableOpacity>
-              </VerticalPadding>
-            </Info>
+            <Setting
+              onPress={() => {
+                haptic('impactLight');
+                navigation.navigate('KeyInformation');
+              }}>
+              <WalletSettingsTitle>{t('Key Information')}</WalletSettingsTitle>
+            </Setting>
 
             <Hr />
+
+            {!key?.wallets?.[0]?.pendingTssSession ? (
+              <>
+                <SettingView style={{paddingLeft: 15, paddingRight: 15}}>
+                  <WalletSettingsTitle>
+                    {t('Request Encrypt Password')}
+                  </WalletSettingsTitle>
+
+                  <RequestEncryptPasswordToggle currentKey={_key} />
+                </SettingView>
+
+                <Info>
+                  <InfoTriangle />
+
+                  <InfoHeader>
+                    <InfoImageContainer infoMargin={'0 8px 0 0'}>
+                      <InfoIcon bgColor={theme.dark ? Slate : undefined} />
+                    </InfoImageContainer>
+
+                    <InfoTitle>{t('Password Not Recoverable')}</InfoTitle>
+                  </InfoHeader>
+                  <InfoDescription>
+                    {t(
+                      'This password cannot be recovered. If this password is lost, funds can only be recovered by reimporting your 12-word recovery phrase.',
+                    )}
+                  </InfoDescription>
+
+                  <VerticalPadding>
+                    <TouchableOpacity
+                      activeOpacity={ActiveOpacity}
+                      onPress={() => {
+                        haptic('impactLight');
+                        dispatch(
+                          openUrlWithInAppBrowser(URL.HELP_SPENDING_PASSWORD),
+                        );
+                      }}>
+                      <Link>{t('Learn More')}</Link>
+                    </TouchableOpacity>
+                  </VerticalPadding>
+                </Info>
+
+                <Hr />
+              </>
+            ) : null}
 
             {checkPrivateKeyEncrypted(_key) ? (
               <>
@@ -471,7 +507,7 @@ const KeySettings = () => {
 
         <VerticalPadding>
           <Title>{t('Advanced')}</Title>
-          {_key && !_key.isReadOnly ? (
+          {_key && !_key.isReadOnly && !isTSSKey(_key) ? (
             <>
               <Setting
                 activeOpacity={ActiveOpacity}
@@ -580,7 +616,22 @@ const KeySettings = () => {
           id={item.id}
           accountItem={item}
           accountInfo={accountInfo}
-          onPress={() => onPressItem(item)}
+          onPress={() => {
+            const fullWalletObj = key?.wallets?.[0];
+            if (fullWalletObj?.pendingTssSession && key?.tssSession) {
+              dispatch(
+                showBottomNotificationModal(
+                  CustomErrorMessage({
+                    errMsg: t(
+                      'Pending TSS session. Retry after session completion.',
+                    ),
+                  }),
+                ),
+              );
+              return;
+            }
+            onPressItem(item);
+          }}
         />
       );
     },

@@ -1,12 +1,12 @@
-import {CacheKeys, DateRanges, Rates, RatesByDateRange} from './rate.models';
+import {CacheKeys, DateRanges, FiatRateSeriesCache, Rates} from './rate.models';
 
 export enum RateActionTypes {
   SUCCESS_GET_RATES = 'RATE/SUCCESS_GET_RATES',
-  SUCCESS_GET_HISTORICAL_RATES = 'RATE/SUCCESS_GET_HISTORICAL_RATES',
+  UPSERT_FIAT_RATE_SERIES_CACHE = 'RATE/UPSERT_FIAT_RATE_SERIES_CACHE',
+  PRUNE_FIAT_RATE_SERIES_CACHE = 'RATE/PRUNE_FIAT_RATE_SERIES_CACHE',
   FAILED_GET_RATES = 'RATE/FAILED_GET_RATES',
-  FAILED_GET_HISTORICAL_RATES = 'RATE/FAILED_GET_HISTORICAL_RATES',
   UPDATE_CACHE_KEY = 'RATE/UPDATE_CACHE_KEY',
-  UPDATE_HISTORICAL_CACHE_KEY = 'RATE/UPDATE_HISTORICAL_CACHE_KEY',
+  CLEAR_RATE_STATE = 'RATE/CLEAR_RATE_STATE',
 }
 
 interface successGetRates {
@@ -17,21 +17,23 @@ interface successGetRates {
   };
 }
 
-interface successGetHistoricalRates {
-  type: typeof RateActionTypes.SUCCESS_GET_HISTORICAL_RATES;
+interface upsertFiatRateSeriesCache {
+  type: typeof RateActionTypes.UPSERT_FIAT_RATE_SERIES_CACHE;
   payload: {
-    ratesByDateRange?: RatesByDateRange;
-    dateRange?: DateRanges;
-    fiatCode?: string;
+    updates: FiatRateSeriesCache;
+  };
+}
+
+interface pruneFiatRateSeriesCache {
+  type: typeof RateActionTypes.PRUNE_FIAT_RATE_SERIES_CACHE;
+  payload: {
+    fiatCode: string;
+    keepCoins?: string[];
   };
 }
 
 interface failedGetRates {
   type: typeof RateActionTypes.FAILED_GET_RATES;
-}
-
-interface failedGetHistoricalRates {
-  type: typeof RateActionTypes.FAILED_GET_HISTORICAL_RATES;
 }
 
 interface updateCacheKey {
@@ -42,18 +44,14 @@ interface updateCacheKey {
   };
 }
 
-interface updateHistoricalCacheKey {
-  type: typeof RateActionTypes.UPDATE_HISTORICAL_CACHE_KEY;
-  payload: {
-    cacheKey: CacheKeys;
-    dateRange?: DateRanges;
-  };
+interface clearRateState {
+  type: typeof RateActionTypes.CLEAR_RATE_STATE;
 }
 
 export type RateActionType =
   | successGetRates
-  | successGetHistoricalRates
+  | upsertFiatRateSeriesCache
+  | pruneFiatRateSeriesCache
   | failedGetRates
-  | failedGetHistoricalRates
   | updateCacheKey
-  | updateHistoricalCacheKey;
+  | clearRateState;

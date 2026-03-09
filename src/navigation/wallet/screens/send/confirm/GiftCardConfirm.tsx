@@ -1,6 +1,6 @@
 import Transport from '@ledgerhq/hw-transport';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View} from 'react-native';
+import {View, Linking} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -21,6 +21,8 @@ import {
   TransactionProposal,
   TxDetails,
   Wallet,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
@@ -36,11 +38,7 @@ import {
   formatFiatAmount,
   toggleThenUntoggle,
 } from '../../../../../utils/helper-methods';
-import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
+import {openUrlWithInAppBrowser} from '../../../../../store/app/app.effects';
 import RemoteImage from '../../../../tabs/shop/components/RemoteImage';
 import {ShopActions, ShopEffects} from '../../../../../store/shop';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
@@ -98,6 +96,12 @@ import {
   hasVisibleBoost,
 } from '../../../../../lib/gift-cards/gift-card';
 import GiftCardDiscountText from '../../../../../navigation/tabs/shop/components/GiftCardDiscountText';
+import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
+import {useOngoingProcess} from '../../../../../contexts';
+import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import TSSProgressTracker from '../../../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
+import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
 
 export interface GiftCardConfirmParamList {
   amount: number;
@@ -116,6 +120,7 @@ const BoostAppliedText = styled(BaseText)`
 enum GiftCardInvoiceCreationErrors {
   couponExpired = 'This promotion is no longer available.',
   atLeast1USD = 'Invoice price must be at least $1 USD',
+  kycRequired = 'Identity verification is required for this purchase. Please link your account in app settings, and complete identity verification before attempting this purchase.',
 }
 
 const GiftCardHeader = ({
@@ -165,6 +170,8 @@ const Confirm = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation();
   const logger = useLogger();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
   const route =
     useRoute<RouteProp<GiftCardGroupParamList, 'GiftCardConfirm'>>();
   const {
@@ -180,6 +187,9 @@ const Confirm = () => {
   const keys = useAppSelector(({WALLET}) => WALLET.keys);
   const giftCards = useAppSelector(({SHOP}) => SHOP.giftCards[appNetwork]);
   const boostedAmount = getBoostedAmount(cardConfig, amount);
+  const user = useAppSelector(
+    ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
+  );
 
   const [walletSelectorVisible, setWalletSelectorVisible] = useState(false);
   const [key, setKey] = useState(keys[_wallet ? _wallet.keyId : '']);
@@ -200,6 +210,26 @@ const Confirm = () => {
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+
+  const isTSSWallet = key ? isTSSKey(key) : false;
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+  const tssCallbacks = useTSSCallbacks({
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+  });
 
   const unsoldGiftCard = giftCards.find(
     giftCard => giftCard.invoiceId === txp?.invoiceID,
@@ -289,7 +319,7 @@ const Confirm = () => {
     clientId: string;
     transactionCurrency: string;
   }) => {
-    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
+    showOngoingProcess('FETCHING_PAYMENT_INFO');
     dispatch(ShopActions.deletedUnsoldGiftCards({network: appNetwork}));
     const invoiceCreationParams = {
       amount: boostedAmount,
@@ -328,23 +358,56 @@ const Confirm = () => {
   };
 
   const handleCreateGiftCardInvoiceOrTxpError = async (err: any) => {
+    const errorMessage = err.response?.data?.message || err.message;
+    logger.error('Error creating gift card invoice or txp: ' + errorMessage);
     await sleep(400);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     const onDismiss = () => {
-      if (err.message === GiftCardInvoiceCreationErrors.couponExpired) {
+      if (
+        [
+          GiftCardInvoiceCreationErrors.couponExpired,
+          GiftCardInvoiceCreationErrors.kycRequired,
+        ].includes(errorMessage)
+      ) {
         return popToShopHome();
       }
       return openWalletSelector();
     };
-    const errorMessageConfig = await dispatch(
+    let errorMessageConfig: BottomNotificationConfig = await dispatch(
       handleCreateTxProposalError(err, onDismiss),
     );
+    if (errorMessage === GiftCardInvoiceCreationErrors.kycRequired) {
+      const route = user ? 'login' : 'signup';
+      const url = `${BASE_BITPAY_URLS[appNetwork]}/authenticate/${route}?context=eyJ1cmwiOiJpZC92ZXJpZnkifQ==`;
+      errorMessageConfig = {
+        type: 'warning',
+        message: t(
+          'Identify verification is required for this purchase. After verifying your identity, return to the app to complete your purchase.',
+        ),
+        title: t('Identity verification required'),
+        enableBackdropDismiss: false,
+        actions: [
+          {
+            text: t('GET VERIFIED'),
+            action: () => {
+              onDismiss().then(async () => {
+                await Linking.openURL(url);
+              });
+            },
+            primary: true,
+          },
+          {
+            text: t('NEVERMIND'),
+            action: () => onDismiss && onDismiss(),
+          },
+        ],
+      };
+    }
     dispatch(
       AppActions.showBottomNotificationModal({
         ...errorMessageConfig,
         message:
-          err.response?.data?.message ||
-          err.message ||
+          (errorMessageConfig.message === 'Unknown error' && errorMessage) ??
           errorMessageConfig.message,
       }),
     );
@@ -374,7 +437,7 @@ const Confirm = () => {
       updateTxDetails(newTxDetails);
       setInvoice(newInvoice);
       setCoinbaseAccount(selectedCoinbaseAccount);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } catch (err) {
       handleCreateGiftCardInvoiceOrTxpError(err);
     }
@@ -415,7 +478,7 @@ const Confirm = () => {
         address: string;
       });
       setInvoice(newInvoice);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
     } catch (err: any) {
       handleCreateGiftCardInvoiceOrTxpError(err);
     }
@@ -429,6 +492,7 @@ const Confirm = () => {
     transport?: Transport;
   }) => {
     const isUsingHardwareWallet = !!transport;
+
     try {
       if (isUsingHardwareWallet) {
         if (txp && wallet && recipient) {
@@ -448,7 +512,13 @@ const Confirm = () => {
           setConfirmHardwareState('sending');
           await sleep(500);
           await dispatch(
-            startSendPayment({txp, key, wallet, recipient, transport}),
+            startSendPayment({
+              txp,
+              key,
+              wallet,
+              recipient,
+              transport,
+            }),
           );
           setConfirmHardwareState('complete');
           await sleep(1000);
@@ -457,7 +527,6 @@ const Confirm = () => {
           throw new Error('missing txp, wallet, or recipient');
         }
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
         dispatch(
           ShopActions.updatedGiftCardStatus({
             invoiceId: invoice!.id,
@@ -466,7 +535,16 @@ const Confirm = () => {
           }),
         );
         txp && wallet && recipient
-          ? await dispatch(startSendPayment({txp, key, wallet, recipient}))
+          ? await dispatch(
+              startSendPayment({
+                txp,
+                key,
+                wallet,
+                recipient,
+                ...(isTSSWallet && {tssCallbacks}),
+                ...(isTSSWallet && {setShowTSSProgressModal}),
+              }),
+            )
           : await dispatch(
               coinbasePayInvoice(
                 invoice!.id,
@@ -475,6 +553,7 @@ const Confirm = () => {
               ),
             );
       }
+
       await redeemGiftCardAndNavigateToGiftCardDetails();
     } catch (err: any) {
       if (isUsingHardwareWallet) {
@@ -489,7 +568,6 @@ const Confirm = () => {
           network: appNetwork,
         }),
       );
-      dispatch(dismissOnGoingProcessModal());
       await sleep(400);
       const twoFactorRequired =
         coinbaseAccount &&
@@ -509,7 +587,7 @@ const Confirm = () => {
       ShopEffects.startRedeemGiftCard(invoice!.id),
     );
     await sleep(500);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     await sleep(500);
     if (giftCard.status === 'PENDING') {
       dispatch(ShopEffects.waitForConfirmation(giftCard.invoiceId));
@@ -580,7 +658,7 @@ const Confirm = () => {
         try {
           await sendPaymentAndRedeemGiftCard({twoFactorCode});
         } catch (error: any) {
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
           error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
             ? showError({defaultErrorMessage: invalid2faMessage})
@@ -659,6 +737,20 @@ const Confirm = () => {
         {wallet || coinbaseAccount ? (
           <>
             <Header hr>Summary</Header>
+            {isTSSWallet && wallet && (
+              <TSSProgressTracker
+                status={tssStatus}
+                progress={tssProgress}
+                createdBy={sendingFrom?.walletName || 'You'}
+                date={new Date()}
+                wallet={wallet}
+                copayers={tssCopayers}
+                onCopayersInitialized={setTssCopayers}
+                isModalVisible={showTSSProgressModal}
+                onModalVisibilityChange={setShowTSSProgressModal}
+                txpCreatorId={wallet.credentials?.copayerId}
+              />
+            )}
             <SendingFrom
               sender={sendingFrom!}
               onPress={openWalletSelector}

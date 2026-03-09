@@ -1,14 +1,11 @@
-import {Key, Token} from './wallet.models';
+import {Key, PendingJoinerSession, Token} from './wallet.models';
 import {WalletActionType, WalletActionTypes} from './wallet.types';
 import {FeeLevels} from './effects/fee/fee';
 import {CurrencyOpts} from '../../constants/currencies';
 import {checkPrivateKeyEncrypted} from './utils/wallet';
 
 type WalletReduxPersistBlackList = string[];
-export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [
-  'tokenOptionsByAddress',
-  'tokenDataByAddress',
-];
+export const walletReduxPersistBlackList: WalletReduxPersistBlackList = [];
 
 export type Keys = {
   [key in string]: Key;
@@ -17,8 +14,6 @@ export type Keys = {
 export interface WalletState {
   createdOn: number;
   keys: Keys;
-  tokenOptionsByAddress: {[key in string]: Token};
-  tokenDataByAddress: {[key in string]: CurrencyOpts};
   customTokenOptionsByAddress: {[key in string]: Token};
   customTokenOptions: {[key in string]: Token};
   customTokenDataByAddress: {[key in string]: CurrencyOpts};
@@ -40,13 +35,13 @@ export interface WalletState {
   accountEvmCreationMigrationComplete: boolean;
   accountSvmCreationMigrationComplete: boolean;
   svmAddressFixComplete: boolean;
+  pendingJoinerSession: PendingJoinerSession | null;
+  tssEnabled: boolean;
 }
 
 export const initialState: WalletState = {
   createdOn: Date.now(),
   keys: {},
-  tokenOptionsByAddress: {},
-  tokenDataByAddress: {},
   customTokenOptionsByAddress: {},
   customTokenOptions: {},
   customTokenDataByAddress: {},
@@ -76,6 +71,8 @@ export const initialState: WalletState = {
   accountEvmCreationMigrationComplete: false,
   accountSvmCreationMigrationComplete: false,
   svmAddressFixComplete: false,
+  pendingJoinerSession: null,
+  tssEnabled: false,
 };
 
 export const walletReducer = (
@@ -125,7 +122,6 @@ export const walletReducer = (
         if (wallet.id === walletId) {
           wallet.balance = status.balance;
           wallet.pendingTxps = status.pendingTxps;
-          wallet.isRefreshing = false;
           wallet.singleAddress = status.singleAddress;
         }
         return wallet;
@@ -141,29 +137,6 @@ export const walletReducer = (
         balanceCacheKey: {
           ...state.balanceCacheKey,
           [walletId]: Date.now(),
-        },
-      };
-    }
-
-    case WalletActionTypes.FAILED_UPDATE_WALLET_STATUS: {
-      const {keyId, walletId} = action.payload;
-      const keyToUpdate = state.keys[keyId];
-      if (!keyToUpdate) {
-        return state;
-      }
-      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
-        if (wallet.id === walletId) {
-          wallet.isRefreshing = false;
-        }
-        return wallet;
-      });
-      return {
-        ...state,
-        keys: {
-          ...state.keys,
-          [keyId]: {
-            ...keyToUpdate,
-          },
         },
       };
     }
@@ -262,19 +235,6 @@ export const walletReducer = (
           current: state.portfolioBalance.current - balanceToRemove,
           lastDay: state.portfolioBalance.lastDay - balanceToRemove,
           previous: 0,
-        },
-      };
-    }
-
-    case WalletActionTypes.SUCCESS_GET_TOKEN_OPTIONS: {
-      const {tokenOptionsByAddress, tokenDataByAddress} = action.payload;
-      return {
-        ...state,
-        tokenOptionsByAddress: {
-          ...tokenOptionsByAddress,
-        },
-        tokenDataByAddress: {
-          ...tokenDataByAddress,
         },
       };
     }
@@ -379,30 +339,6 @@ export const walletReducer = (
         ...keyToUpdate.evmAccountsInfo[accountAddress],
         name,
       };
-      return {
-        ...state,
-        keys: {
-          ...state.keys,
-          [keyId]: {
-            ...keyToUpdate,
-          },
-        },
-      };
-    }
-
-    case WalletActionTypes.SET_WALLET_REFRESHING: {
-      const {keyId, walletId, isRefreshing} = action.payload;
-      const keyToUpdate = state.keys[keyId];
-      if (!keyToUpdate) {
-        return state;
-      }
-      keyToUpdate.wallets = keyToUpdate.wallets.map(wallet => {
-        if (wallet.id === walletId) {
-          wallet.isRefreshing = isRefreshing;
-        }
-        return wallet;
-      });
-
       return {
         ...state,
         keys: {
@@ -654,7 +590,6 @@ export const walletReducer = (
               if (wallet.id === walletId) {
                 wallet.balance = status.balance;
                 wallet.pendingTxps = status.pendingTxps;
-                wallet.isRefreshing = false;
                 wallet.singleAddress = status.singleAddress;
               }
               return wallet;
@@ -684,6 +619,24 @@ export const walletReducer = (
         },
       };
     }
+
+    case WalletActionTypes.SET_PENDING_JOINER_SESSION:
+      return {
+        ...state,
+        pendingJoinerSession: action.payload,
+      };
+
+    case WalletActionTypes.REMOVE_PENDING_JOINER_SESSION:
+      return {
+        ...state,
+        pendingJoinerSession: null,
+      };
+
+    case WalletActionTypes.SET_TSS_ENABLED:
+      return {
+        ...state,
+        tssEnabled: action.payload,
+      };
 
     default:
       return state;

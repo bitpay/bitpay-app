@@ -3,13 +3,13 @@ const {NODE_ENV} = process.env;
 const prod = NODE_ENV === 'production';
 
 const plugins = [
+  'babel-plugin-transform-import-meta',
   '@babel/plugin-proposal-export-namespace-from',
   '@babel/plugin-transform-shorthand-properties',
   '@babel/plugin-transform-arrow-functions',
   '@babel/plugin-proposal-optional-chaining',
   '@babel/plugin-proposal-nullish-coalescing-operator',
   '@babel/plugin-transform-template-literals',
-  'react-native-reanimated/plugin',
   [
     'module:react-native-dotenv',
     {
@@ -34,6 +34,8 @@ const plugins = [
 if (prod) {
   plugins.push('transform-remove-console');
 }
+
+plugins.push('react-native-worklets/plugin');
 
 module.exports = {
   presets: [

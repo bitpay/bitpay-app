@@ -34,12 +34,15 @@ import {
   TransactionProposal,
   SendMaxInfo,
   Key,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../store/wallet/wallet.models';
 import {
   GetName,
   GetPrecision,
   IsERCToken,
   IsEVMChain,
+  IsSVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {
   FormatAmountStr,
@@ -52,8 +55,10 @@ import {
   getBadgeImg,
   getCurrencyAbbreviation,
   getCWCChain,
-  getSolanaTokens,
+  getOrCreateAssociatedTokenAddress,
+  getSolanaATAs,
   sleep,
+  SolanaTokenData,
 } from '../../../../utils/helper-methods';
 import {
   ItemDivisor,
@@ -70,12 +75,8 @@ import {
   PoliciesText,
   CheckBoxCol,
 } from '../../swap-crypto/styled/SwapCryptoCheckout.styled';
+import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
@@ -115,9 +116,14 @@ import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
 import {GetCoinAndNetwork} from '../../../../store/wallet/effects/address/address';
 import {ValidateCoinAddress} from '../../../../store/wallet/utils/validations';
-import {CryptoOffer} from './SellCryptoOffers';
 import {SellBalanceContainer} from '../styled/SellCryptoCard';
-import {AppActions} from '../../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
+import {SellCryptoOffer} from '../../components/externalServicesOfferSelector';
+import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
+import {Network} from '../../../../constants';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -143,7 +149,7 @@ const ScanButtonContainer = styled(TouchableOpacity)`
 `;
 
 export interface SimplexSellCheckoutProps {
-  simplexQuoteOffer: CryptoOffer;
+  simplexQuoteOffer: SellCryptoOffer;
   wallet: Wallet;
   amount: number;
   externalId: string;
@@ -201,6 +207,7 @@ const SimplexSellCheckout: React.FC = () => {
   const [amountExpected, setAmountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
+  const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
 
   const [totalExchangeFee, setTotalExchangeFee] = useState<number>();
   const [paymentExpired, setPaymentExpired] = useState(false);
@@ -214,6 +221,30 @@ const SimplexSellCheckout: React.FC = () => {
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const isTSSWallet = isTSSKey(key);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+
+  const tssCallbacks = useTSSCallbacks({
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+  });
+
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
 
@@ -435,16 +466,62 @@ const SimplexSellCheckout: React.FC = () => {
                 }
               }
             }
-          } else {
-            const fromSolanaTokens = await getSolanaTokens(
-              wallet?.receiveAddress!,
-              wallet?.network,
-            );
-            const fromAta = fromSolanaTokens.find((item: any) => {
-              return item.mintAddress === txp.tokenAddress;
-            });
-            txp.fromAta = fromAta?.ataAddress;
-            txp.decimals = fromAta?.decimals;
+          } else if (IsSVMChain(txp.chain!)) {
+            const receiveAddressSolanaTokens: SolanaTokenData[] =
+              await getSolanaATAs(wallet?.receiveAddress!, wallet?.network);
+
+            let ataReceiveAddress: SolanaTokenData | undefined;
+            if (receiveAddressSolanaTokens) {
+              ataReceiveAddress = receiveAddressSolanaTokens.find(
+                (item: SolanaTokenData) => {
+                  return item.mintAddress === txp.tokenAddress;
+                },
+              );
+            }
+
+            if (ataReceiveAddress) {
+              txp.fromAta = ataReceiveAddress.ataAddress;
+              txp.decimals = ataReceiveAddress.decimals;
+            } else {
+              const _ataReceiveAddress =
+                await getOrCreateAssociatedTokenAddress({
+                  mint: txp.tokenAddress,
+                  feePayer: wallet?.receiveAddress!,
+                });
+              txp.fromAta = _ataReceiveAddress;
+              logger.debug(
+                `Using ATA Address from getOrCreateAssociatedTokenAddress: ${_ataReceiveAddress}`,
+              );
+            }
+
+            if (txp.outputs) {
+              const toAddressSolanaTokens: SolanaTokenData[] =
+                await getSolanaATAs(toAddress, wallet?.network);
+
+              let ataToAddress: string | undefined;
+              if (toAddressSolanaTokens) {
+                ataToAddress = toAddressSolanaTokens.find((item: any) => {
+                  return item.mintAddress === txp.tokenAddress;
+                })?.ataAddress;
+              }
+
+              if (!ataToAddress) {
+                ataToAddress = await getOrCreateAssociatedTokenAddress({
+                  mint: txp.tokenAddress,
+                  feePayer: toAddress,
+                });
+                setAtaOwnerAddress(toAddress);
+                logger.debug(
+                  `Using ATA toAddress from getOrCreateAssociatedTokenAddress: ${ataToAddress}`,
+                );
+              }
+
+              for (const output of txp.outputs) {
+                if (output.toAddress === toAddress) {
+                  output.toAddress = ataToAddress;
+                }
+              }
+            }
           }
         }
       }
@@ -489,7 +566,7 @@ const SimplexSellCheckout: React.FC = () => {
         if (!configFn) {
           throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
-        const params = configFn(network);
+        const params = configFn(network as Network);
         await prepareLedgerApp(
           params.appName,
           transportRef,
@@ -505,19 +582,21 @@ const SimplexSellCheckout: React.FC = () => {
             key,
             wallet,
             transport,
+            ataOwnerAddress,
           }),
         );
         setConfirmHardwareState('complete');
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-        await sleep(400);
         broadcastedTx = await dispatch(
           publishAndSign({
             txp: ctxp! as TransactionProposal,
             key,
             wallet,
+            ataOwnerAddress,
+            ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
       }
@@ -541,6 +620,7 @@ const SimplexSellCheckout: React.FC = () => {
         tx_sent_id: broadcastedTx?.txid,
         quote_id: simplexQuoteOffer.quoteData.quote_id ?? '',
         send_max: useSendMax,
+        isTSSWallet: isTSSWallet,
       };
 
       dispatch(
@@ -554,27 +634,28 @@ const SimplexSellCheckout: React.FC = () => {
           coin: wallet.currencyAbbreviation.toLowerCase(),
           chain: wallet.chain.toLowerCase(),
           amount: amountExpected,
-          fiatAmount: Number(simplexQuoteOffer.quoteData.fiat_amount) || '',
+          fiatAmount: Number(simplexQuoteOffer.quoteData?.fiat_amount) || '',
           fiatCurrency: simplexQuoteOffer.fiatCurrency
             ? cloneDeep(simplexQuoteOffer.fiatCurrency).toLocaleLowerCase()
             : '',
+          exchangeRate:
+            (simplexQuoteOffer.quoteData?.fiat_amount &&
+              amountExpected &&
+              Number(simplexQuoteOffer.quoteData.fiat_amount) /
+                Number(amountExpected)) ||
+            '',
+          withdrawalMethod: paymentMethod ?? 'unknown',
           exchange: 'simplex',
         }),
       );
 
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
-
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            wallet?.credentials?.n > 1
-              ? t('Payment Sent')
-              : t('Payment Accepted'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title:
+          wallet?.credentials?.n > 1
+            ? t('Payment Sent')
+            : t('Payment Accepted'),
+      });
 
       await sleep(1200);
       const simplexSettingsParams: SimplexSettingsProps = {
@@ -606,7 +687,6 @@ const SimplexSellCheckout: React.FC = () => {
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -623,19 +703,21 @@ const SimplexSellCheckout: React.FC = () => {
           logger.error(JSON.stringify(err));
           let msg = t('Uh oh, something went wrong. Please try again later');
           const reason = 'publishAndSign Error';
-          if (typeof err?.message === 'string') {
+          let errorMsgLog: string | undefined;
+          if (typeof err === 'string') {
+            errorMsgLog = err;
+            msg = `${msg}.\n${BWCErrorMessage(err)}`;
+          } else if (typeof err?.message === 'string') {
+            errorMsgLog = err.message;
             msg = `${msg}.\n${BWCErrorMessage(err)}`;
           }
-          showError(msg, reason);
+          showError(msg, reason, errorMsgLog);
       }
     }
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -747,7 +829,7 @@ const SimplexSellCheckout: React.FC = () => {
     actions?: any[],
   ) => {
     setIsLoading(false);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
 
     let msg = getErrorMsgFromError(err);
 
@@ -775,7 +857,8 @@ const SimplexSellCheckout: React.FC = () => {
         type: 'error',
         title: title ?? t('Error'),
         message: msg ?? t('Unknown Error'),
-        enableBackdropDismiss: false,
+        onBackdropDismiss: () => navigation.goBack(),
+        enableBackdropDismiss: true,
         actions: actions ?? [
           {
             text: t('OK'),
@@ -807,7 +890,7 @@ const SimplexSellCheckout: React.FC = () => {
 
   useEffect(() => {
     if (validAddress && toAddressValue && toAddressValue !== '') {
-      dispatch(startOnGoingProcessModal('CREATING_TXP'));
+      showOngoingProcess('CREATING_TXP');
       setIsLoading(true);
 
       let toAddress = toAddressValue;
@@ -845,7 +928,7 @@ const SimplexSellCheckout: React.FC = () => {
           console.log(ctxp);
           setFee(ctxp.fee);
           setIsLoading(false);
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           await sleep(400);
 
           if (useSendMax) {
@@ -862,7 +945,10 @@ const SimplexSellCheckout: React.FC = () => {
 
           let msg = t('Error creating transaction');
           let errorMsgLog;
-          if (typeof err?.message === 'string') {
+          if (typeof err === 'string') {
+            msg = msg + `: ${err}`;
+            errorMsgLog = err;
+          } else if (typeof err?.message === 'string') {
             msg = msg + `: ${err.message}`;
             errorMsgLog = err.message;
           }
@@ -908,6 +994,20 @@ const SimplexSellCheckout: React.FC = () => {
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
+        {isTSSWallet && (
+          <TSSProgressTracker
+            status={tssStatus}
+            progress={tssProgress}
+            createdBy={wallet.walletName || 'You'}
+            date={new Date()}
+            wallet={wallet}
+            copayers={tssCopayers}
+            onCopayersInitialized={setTssCopayers}
+            isModalVisible={showTSSProgressModal}
+            onModalVisibilityChange={setShowTSSProgressModal}
+            txpCreatorId={wallet.credentials?.copayerId}
+          />
+        )}
         <RowDataContainer>
           <RowLabel>{t('Selling')}</RowLabel>
           {amountExpected ? (

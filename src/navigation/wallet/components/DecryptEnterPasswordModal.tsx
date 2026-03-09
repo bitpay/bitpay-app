@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useCallback, useMemo} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../../store';
 import styled from 'styled-components/native';
@@ -56,7 +56,7 @@ export interface DecryptPasswordConfig {
   description?: string;
 }
 
-const DecryptEnterPasswordModal = () => {
+const DecryptEnterPasswordModal = React.memo(() => {
   const {t} = useTranslation();
   const dispatch = useDispatch();
   const isVisible = useSelector(
@@ -69,13 +69,15 @@ const DecryptEnterPasswordModal = () => {
   const {onSubmitHandler, onCancelHandler, description} =
     decryptPasswordConfig || {};
 
+  const resolver = useMemo(() => yupResolver(schema), []);
+
   const {
     control,
     handleSubmit,
     reset,
     formState: {errors},
   } = useForm<DecryptPasswordFieldValues>({
-    resolver: yupResolver(schema),
+    resolver,
   });
 
   useEffect(() => {
@@ -85,19 +87,43 @@ const DecryptEnterPasswordModal = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible]);
 
-  const dismissModal = () => {
+  const dismissModal = useCallback(() => {
     dispatch(AppActions.dismissDecryptPasswordModal());
     setTimeout(() => {
       dispatch(AppActions.resetDecryptPasswordConfig());
     }, 500); // Wait for modal to close
     onCancelHandler && onCancelHandler();
-  };
+  }, [dispatch, onCancelHandler]);
 
-  const onSubmit = async ({password}: {password: string}) => {
-    Keyboard.dismiss();
-    await sleep(0);
-    onSubmitHandler && onSubmitHandler(password);
-  };
+  const onSubmit = useCallback(
+    async ({password}: {password: string}) => {
+      Keyboard.dismiss();
+      await sleep(0);
+      onSubmitHandler && onSubmitHandler(password);
+    },
+    [onSubmitHandler],
+  );
+
+  const renderPasswordInput = useCallback(
+    ({field: {onChange, onBlur, value}}) => (
+      <BoxInput
+        label={'ENCRYPTION PASSWORD'}
+        type={'password'}
+        onBlur={onBlur}
+        onChangeText={(text: string) => onChange(text)}
+        error={errors.password?.message}
+        value={value}
+      />
+    ),
+    [errors.password?.message],
+  );
+
+  const handleSubmitMemoized = useMemo(
+    () => handleSubmit(onSubmit),
+    [handleSubmit, onSubmit],
+  );
+
+  const useNativeDriverValue = useMemo(() => Platform.OS === 'ios', []);
 
   return (
     <BaseModal
@@ -109,7 +135,7 @@ const DecryptEnterPasswordModal = () => {
       animationOut={'fadeOutDown'}
       onBackdropPress={dismissModal}
       useNativeDriverForBackdrop={true}
-      useNativeDriver={Platform.OS === 'ios'}>
+      useNativeDriver={useNativeDriverValue}>
       <DecryptFormContainer>
         <PasswordFormContainer>
           <HeaderTitle>{t('Enter encryption password')}</HeaderTitle>
@@ -120,16 +146,7 @@ const DecryptEnterPasswordModal = () => {
           <PasswordInputContainer>
             <Controller
               control={control}
-              render={({field: {onChange, onBlur, value}}) => (
-                <BoxInput
-                  label={'ENCRYPTION PASSWORD'}
-                  type={'password'}
-                  onBlur={onBlur}
-                  onChangeText={(text: string) => onChange(text)}
-                  error={errors.password?.message}
-                  value={value}
-                />
-              )}
+              render={renderPasswordInput}
               name="password"
               defaultValue=""
             />
@@ -138,7 +155,7 @@ const DecryptEnterPasswordModal = () => {
           <ActionContainer>
             <Button
               touchableLibrary={'react-native'}
-              onPress={handleSubmit(onSubmit)}>
+              onPress={handleSubmitMemoized}>
               {t('Continue')}
             </Button>
           </ActionContainer>
@@ -154,6 +171,6 @@ const DecryptEnterPasswordModal = () => {
       </DecryptFormContainer>
     </BaseModal>
   );
-};
+});
 
 export default DecryptEnterPasswordModal;

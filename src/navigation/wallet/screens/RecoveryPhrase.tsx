@@ -7,9 +7,9 @@ import {
   Paragraph,
 } from '../../../components/styled/Text';
 import Button from '../../../components/button/Button';
-import {useNavigation} from '@react-navigation/native';
 import {
   ActiveOpacity,
+  CTA_RESERVED,
   CtaContainerAbsolute,
 } from '../../../components/styled/Containers';
 import {
@@ -226,7 +226,10 @@ const RecoveryPhrase = ({navigation, route}: RecoveryPhraseScreenProps) => {
 
   return (
     <RecoveryPhraseContainer accessibilityLabel="recovery-phrase-view">
-      <RecoveryContainer>
+      <RecoveryContainer
+        contentContainerStyle={{
+          paddingBottom: CTA_RESERVED,
+        }}>
         <WarningMessageContainer>
           <WarningMessageTitleContainer>
             <WarningMessageTitle>{t('CONFIDENTIAL')}</WarningMessageTitle>

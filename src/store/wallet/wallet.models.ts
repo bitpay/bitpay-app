@@ -1,6 +1,6 @@
-import API from 'bitcore-wallet-client/ts_build';
+import API from 'bitcore-wallet-client/ts_build/src';
 import {ReactElement} from 'react';
-import {Credentials} from 'bitcore-wallet-client/ts_build/lib/credentials';
+import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
 import {RootState} from '../index';
 import {Invoice} from '../shop/shop.models';
 import {Network} from '../../constants';
@@ -48,6 +48,17 @@ export interface KeyProperties {
   xPrivKeyEncrypted?: string;
   xPrivKeyEDDSAEncrypted?: string;
   mnemonicEncrypted?: string;
+  metadata?: {
+    chain: string;
+    network: string;
+    m: string;
+    n: string;
+  };
+  keychain?: {
+    privateKeyShare: Buffer | {data: number[]};
+    reducedPrivateKeyShare: Buffer | {data: number[]};
+    commonKeyChain: string;
+  };
 }
 
 export interface Key {
@@ -71,6 +82,7 @@ export interface Key {
     };
   };
   hardwareSource?: SupportedHardwareSource;
+  tssSession?: TssSessionData;
 }
 
 export interface Wallet extends WalletObj, API {}
@@ -116,6 +128,7 @@ export interface WalletObj {
   m: number;
   n: number;
   balance: CryptoBalance;
+  copayers: any[];
   singleAddress?: boolean;
   pendingTxps: TransactionProposal[];
   tokenAddress?: string;
@@ -132,7 +145,6 @@ export interface WalletObj {
   img: string | ((props?: any) => ReactElement);
   badgeImg?: string | ((props?: any) => ReactElement);
   receiveAddress?: string;
-  isRefreshing?: boolean;
   isScanning?: boolean;
   transactionHistory?: {
     transactions: any[];
@@ -150,6 +162,9 @@ export interface WalletObj {
      */
     accountPath?: string;
   };
+  tssKeyId?: string;
+  pendingTssSession?: boolean;
+  tssMetadata?: {id: string; m: number; n: number; partyId: number};
 }
 
 export interface KeyOptions {
@@ -180,6 +195,12 @@ export interface KeyOptions {
   password?: string;
   includeTestnetWallets?: boolean;
   includeLegacyWallets?: boolean;
+  tssKeychain?: {
+    commonKeyChain: string;
+    privateKeyShare: Buffer<ArrayBufferLike>;
+    reducedPrivateKeyShare: Buffer<ArrayBufferLike>;
+  };
+  tssMetadata?: any;
 }
 
 export interface Token {
@@ -341,6 +362,7 @@ export interface TransactionProposal {
   };
   coin: string;
   copayerId: string;
+  creatorId: string;
   createdOn: number;
   customData?: CustomTransactionData;
   deleteLockTime: number;
@@ -418,6 +440,7 @@ export interface TransactionProposal {
   fromAta?: string; // spl tokens
   decimals?: number; // spl tokens
   memo?: string; // solana
+  ataOwnerAddress?: string;
 }
 
 export interface TransactionDetailsBuilt extends TransactionProposal {
@@ -547,6 +570,75 @@ export interface Utxo {
   txid: string;
   vout: number;
   checked?: boolean;
+}
+
+export interface JoinerSessionId {
+  pubKey: string;
+  name?: string;
+}
+
+export interface TSSCopayerInfo {
+  partyId: number;
+  pubKey: string;
+  name: string;
+  joinCode?: string;
+  status: 'pending' | 'invited' | 'joined';
+}
+
+export interface TssSessionData {
+  id: string;
+  partyKey: any;
+  sessionExport?: string;
+  coin: string;
+  chain: string;
+  network: string;
+  m: number;
+  n: number;
+  password?: string;
+  myName: string;
+  walletName?: string;
+  createdAt: number;
+  isCreator: boolean;
+  partyId: number;
+  status:
+    | 'collecting_copayers'
+    | 'ready_to_start'
+    | 'ceremony_in_progress'
+    | 'complete';
+  invitationCode?: string;
+  copayers?: TSSCopayerInfo[];
+  creatorPubKey?: string;
+}
+
+export interface PendingJoinerSession {
+  sessionId: string;
+  partyKey: any;
+  copayerName?: string;
+  createdAt: number;
+}
+
+export type TSSSigningStatus =
+  | 'initializing'
+  | 'waiting_for_cosigners'
+  | 'signature_generation'
+  | 'broadcasting'
+  | 'complete'
+  | 'error';
+
+export interface TSSSigningProgress {
+  currentRound: number;
+  totalRounds: number;
+  status: 'pending' | 'processing' | 'complete';
+  message?: string;
+}
+
+export type TSSCopayerSignStatus = 'pending' | 'joined' | 'signed' | 'error';
+
+export interface PendingJoinerSession {
+  sessionId: string;
+  partyKey: any;
+  copayerName?: string;
+  createdAt: number;
 }
 
 /**

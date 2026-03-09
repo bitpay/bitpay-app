@@ -8,12 +8,14 @@ import React, {
 import {
   CommonActions,
   RouteProp,
+  useIsFocused,
   useNavigation,
   useRoute,
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
 import {LogBox, RefreshControl, View} from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
 import haptic from '../../../components/haptic-feedback/haptic';
@@ -23,6 +25,7 @@ import {
   H2,
   H5,
   HeaderTitle,
+  Link,
   ProposalBadge,
 } from '../../../components/styled/Text';
 import Settings from '../../../components/settings/Settings';
@@ -38,7 +41,6 @@ import {RootState} from '../../../store';
 import {
   showBottomNotificationModal,
   toggleHideAllBalances,
-  dismissOnGoingProcessModal,
 } from '../../../store/app/app.actions';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
 import {
@@ -46,10 +48,19 @@ import {
   updatePortfolioBalance,
   syncWallets,
 } from '../../../store/wallet/wallet.actions';
-import {KeyMethods, Status, Wallet} from '../../../store/wallet/wallet.models';
 import {
+  Key,
+  KeyMethods,
+  Status,
+  Wallet,
+} from '../../../store/wallet/wallet.models';
+import {
+  CharcoalBlack,
+  GhostWhite,
   LightBlack,
   NeutralSlate,
+  Slate,
+  Slate30,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -67,12 +78,12 @@ import {
 } from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
-import {WalletGroupParamList} from '../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
   getDecryptPassword,
-  startGetRates,
+  refreshRatesForPortfolioPnl,
   normalizeMnemonic,
   serverAssistedImport,
 } from '../../../store/wallet/effects';
@@ -111,9 +122,32 @@ import {
   getBaseEVMAccountCreationCoinsAndTokens,
 } from '../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
+import {useOngoingProcess, useTokenContext} from '../../../contexts';
+import Percentage from '../../../components/percentage/Percentage';
+import {getDifferenceColor} from '../../../components/percentage/Percentage';
+import Button from '../../../components/button/Button';
+import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
+import ChevronRightSvg from '../../tabs/home/components/ChevronRightSvg';
+import {HomeSectionTitle} from '../../tabs/home/components/Styled';
+import {
+  buildAllocationDataFromWalletRows,
+  type AllocationWallet,
+} from '../../../utils/portfolio/allocation';
+import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import {
+  buildPortfolioGainLossSummaryFromPortfolioSnapshots,
+  getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
+  getQuoteCurrency,
+  hasSnapshotsBeforeMsForWallets,
+  hasSnapshotsForWallets,
+  isPopulateLoadingForWallets,
+  getLegacyPercentageDifferenceFromTotals,
+  getKeyLastDayPercentageDifference,
+  getPercentageDifferenceFromPercentRatio,
+} from '../../../utils/portfolio/assets';
+import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -158,6 +192,10 @@ const BalanceContainer = styled.View`
   align-items: center;
 `;
 
+const PercentageWrapper = styled.View`
+  align-self: center;
+`;
+
 const WalletListHeader = styled.View`
   padding: 10px;
   margin-top: 10px;
@@ -170,11 +208,14 @@ const WalletListHeader = styled.View`
 const WalletListFooterContainer = styled.View`
   padding: 10px 10px 100px 10px;
   margin-top: 15px;
+  gap: 12px;
 `;
 
 const WalletListFooter = styled(TouchableOpacity)`
   flex-direction: row;
   align-items: center;
+  margin-bottom: 30px;
+  margin-top: -10px;
 `;
 
 const WalletListFooterText = styled(BaseText)`
@@ -184,6 +225,117 @@ const WalletListFooterText = styled(BaseText)`
   letter-spacing: 0;
   margin-left: 10px;
 `;
+
+const AddWalletLinkContainer = styled.View`
+  padding: 13px 0;
+  align-items: center;
+  margin-bottom: 15px;
+`;
+
+const AddWalletLink = styled(Link).attrs(() => ({
+  suppressHighlighting: true,
+}))`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+`;
+
+const AddWalletLinkButton = styled(TouchableOpacity)`
+  padding: 0 20px;
+`;
+
+const AllocationHeader = styled.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 10px;
+`;
+
+const AllocationHeaderAction = styled(TouchableOpacity)`
+  padding: 6px;
+`;
+
+const AllocationFooter = styled.View`
+  margin-top: 20px;
+  padding-bottom: 5px;
+`;
+
+const AllocationDivider = styled.View`
+  height: 1px;
+  background-color: ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
+  opacity: 1;
+  margin: 12px 0;
+`;
+
+const AllocationLabel = styled(BaseText)`
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 14px;
+  color: ${({theme: {dark}}) => (dark ? Slate30 : SlateDark)};
+`;
+
+const AllocationValue = styled(BaseText)`
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  color: ${({theme}) => theme.colors.text};
+  margin-top: 4px;
+`;
+
+const AllocationRow = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+`;
+
+const AllocationColumn = styled.View`
+  flex: 1;
+`;
+
+const AllocationMetricValue = styled(BaseText)<{positive?: boolean}>`
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 20px;
+  margin-top: 4px;
+  color: ${({positive, theme: {dark}}) => {
+    if (positive === true) {
+      return getDifferenceColor(true, dark);
+    }
+    if (positive === false) {
+      return getDifferenceColor(false, dark);
+    }
+    return dark ? White : SlateDark;
+  }};
+`;
+
+const AllocationMetricSkeleton: React.FC<{
+  align?: 'left' | 'right' | 'center';
+}> = ({align = 'left'}) => {
+  const theme = useTheme();
+  return (
+    <SkeletonPlaceholder
+      backgroundColor={theme.dark ? CharcoalBlack : NeutralSlate}
+      highlightColor={theme.dark ? LightBlack : GhostWhite}>
+      <SkeletonPlaceholder.Item
+        width={120}
+        height={12}
+        borderRadius={2}
+        marginTop={10}
+        alignSelf={
+          align === 'right'
+            ? 'flex-end'
+            : align === 'center'
+            ? 'center'
+            : 'flex-start'
+        }
+      />
+    </SkeletonPlaceholder>
+  );
+};
 
 const HeaderTitleContainer = styled.View`
   flex-direction: row;
@@ -204,15 +356,24 @@ const KeyOverview = () => {
   const dispatch = useAppDispatch();
   const logger = useLogger();
   const theme = useTheme();
+  const isFocused = useIsFocused();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+  const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {keys} = useAppSelector(({WALLET}) => WALLET);
-  const {rates} = useAppSelector(({RATE}) => RATE);
-  const {defaultAltCurrency, hideAllBalances} = useAppSelector(({APP}) => APP);
+  const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
+    ({WALLET}) => WALLET,
+  );
+  const {rates, fiatRateSeriesCache} = useAppSelector(({RATE}) => RATE);
+  const lastDayRates = useAppSelector(({RATE}) => RATE.lastDayRates);
+  const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
+    useAppSelector(({APP}) => APP);
+  const portfolio = useAppSelector(({PORTFOLIO}) => PORTFOLIO);
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
+
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];
   const hasMultipleKeys =
@@ -319,7 +480,9 @@ const KeyOverview = () => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            logger.error(`error [getStatus]: ${errStr}`);
+            logger.error(
+              `error [KeyOverview - createNewMultisigKey] [getStatus]: ${errStr}`,
+            );
           } else {
             navigation.navigate('Copayers', {
               wallet: key?.wallets[0],
@@ -336,8 +499,11 @@ const KeyOverview = () => {
     updateStatusForKey(false);
   }, []);
 
-  const {wallets = [], totalBalance} =
-    useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
+  const {
+    wallets = [],
+    totalBalance = 0,
+    totalBalanceLastDay,
+  } = useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
   const memorizedAccountList = useMemo(() => {
     return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
@@ -345,10 +511,250 @@ const KeyOverview = () => {
     });
   }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
 
+  const visibleKeyWallets = useMemo(() => {
+    return (key?.wallets ?? []).filter(
+      w => !w.hideWallet && !w.hideWalletByAccount,
+    );
+  }, [key?.wallets]);
+
+  const allocationWalletRows: AllocationWallet[] = useMemo(() => {
+    return visibleKeyWallets.map((w: Wallet) => {
+      return {
+        currencyAbbreviation: w.currencyAbbreviation,
+        chain: w.chain,
+        tokenAddress: w.tokenAddress,
+        currencyName: w.currencyName,
+        fiatBalance: (w.balance as any)?.fiat,
+      };
+    });
+  }, [visibleKeyWallets]);
+
+  const allocationData = useMemo(() => {
+    return buildAllocationDataFromWalletRows(
+      allocationWalletRows,
+      defaultAltCurrency.isoCode,
+    );
+  }, [allocationWalletRows, defaultAltCurrency.isoCode]);
+
+  const quoteCurrency = useMemo(() => {
+    return getQuoteCurrency({
+      portfolioQuoteCurrency: portfolio.quoteCurrency,
+      defaultAltCurrencyIsoCode: defaultAltCurrency?.isoCode,
+    });
+  }, [defaultAltCurrency?.isoCode, portfolio.quoteCurrency]);
+
+  const keyWalletIdsSig = useMemo(() => {
+    return (key?.wallets || [])
+      .map(w => w?.id)
+      .filter((id): id is string => typeof id === 'string' && !!id)
+      .join(',');
+  }, [key?.wallets]);
+
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
+    dispatch(
+      maybePopulatePortfolioForWallets({
+        wallets: key?.wallets || [],
+        quoteCurrency,
+      }) as any,
+    );
+  }, [dispatch, isFocused, keyWalletIdsSig, quoteCurrency]);
+
+  const isKeyPopulateLoading = useMemo(() => {
+    return isPopulateLoadingForWallets({
+      populateStatus: portfolio.populateStatus,
+      wallets: visibleKeyWallets,
+    });
+  }, [portfolio.populateStatus, visibleKeyWallets]);
+
+  const gainLossSummary = useMemo(() => {
+    const summary = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
+      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
+      wallets: visibleKeyWallets,
+      quoteCurrency,
+      rates,
+      lastDayRates,
+      fiatRateSeriesCache,
+    });
+
+    if (summary.today.available) {
+      return summary;
+    }
+
+    const baseline =
+      typeof totalBalanceLastDay === 'number' ? totalBalanceLastDay : 0;
+    const deltaFiat = totalBalance - baseline;
+    const percentRatio = baseline > 0 ? deltaFiat / baseline : 0;
+
+    return {
+      ...summary,
+      today: {
+        ...summary.today,
+        deltaFiat,
+        percentRatio,
+        available: true,
+      },
+    };
+  }, [
+    fiatRateSeriesCache,
+    lastDayRates,
+    portfolio.snapshotsByWalletId,
+    quoteCurrency,
+    rates,
+    totalBalance,
+    totalBalanceLastDay,
+    visibleKeyWallets,
+  ]);
+
+  const portfolioPercentageDifference = useMemo(() => {
+    const pnl = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
+      wallets: visibleKeyWallets,
+      quoteCurrency,
+      timeframe: '1D',
+      rates,
+      lastDayRates,
+      fiatRateSeriesCache,
+    });
+    if (!pnl.available) {
+      return null;
+    }
+    return getPercentageDifferenceFromPercentRatio(pnl.percentRatio);
+  }, [
+    fiatRateSeriesCache,
+    lastDayRates,
+    portfolio.snapshotsByWalletId,
+    quoteCurrency,
+    rates,
+    visibleKeyWallets,
+  ]);
+
+  const legacyPercentageDifference = useMemo(() => {
+    return getLegacyPercentageDifferenceFromTotals({
+      totalBalance,
+      totalBalanceLastDay,
+    });
+  }, [totalBalance, totalBalanceLastDay]);
+
+  const hasKeySnapshots = useMemo(() => {
+    return hasSnapshotsForWallets({
+      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
+      wallets: visibleKeyWallets,
+    });
+  }, [portfolio.snapshotsByWalletId, visibleKeyWallets]);
+
+  const hasKeySnapshotsBeforePopulateStarted = useMemo(() => {
+    const startedAt = portfolio.populateStatus?.startedAt;
+    if (
+      !portfolio.populateStatus?.inProgress ||
+      typeof startedAt !== 'number'
+    ) {
+      return true;
+    }
+    return hasSnapshotsBeforeMsForWallets({
+      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
+      wallets: visibleKeyWallets,
+      cutoffMs: startedAt,
+    });
+  }, [
+    portfolio.populateStatus?.inProgress,
+    portfolio.populateStatus?.startedAt,
+    portfolio.snapshotsByWalletId,
+    visibleKeyWallets,
+  ]);
+
+  const percentageDifference = useMemo(() => {
+    return getKeyLastDayPercentageDifference({
+      totalBalance,
+      hasSnapshots: hasKeySnapshots,
+      hasSnapshotsBeforePopulateStarted: hasKeySnapshotsBeforePopulateStarted,
+      isPopulateLoading: isKeyPopulateLoading,
+      legacyPercentageDifference,
+      portfolioPercentageDifference,
+    });
+  }, [
+    totalBalance,
+    hasKeySnapshots,
+    hasKeySnapshotsBeforePopulateStarted,
+    isKeyPopulateLoading,
+    legacyPercentageDifference,
+    portfolioPercentageDifference,
+  ]);
+
+  const allTimeGainLossText = useMemo(() => {
+    if (!gainLossSummary.total.available) {
+      return null;
+    }
+
+    if (hideAllBalances) {
+      const pctSign = gainLossSummary.total.percentRatio >= 0 ? '+' : '-';
+      const pct = Math.abs(gainLossSummary.total.percentRatio * 100).toFixed(2);
+      return `****  (${pctSign}${pct}%)`;
+    }
+
+    const sign = gainLossSummary.total.deltaFiat >= 0 ? '+' : '-';
+    const pctSign = gainLossSummary.total.percentRatio >= 0 ? '+' : '-';
+    const amt = formatFiatAmount(
+      Math.abs(gainLossSummary.total.deltaFiat),
+      gainLossSummary.quoteCurrency,
+      {
+        customPrecision: 'minimal',
+        currencyDisplay: 'symbol',
+      },
+    );
+    const pct = Math.abs(gainLossSummary.total.percentRatio * 100).toFixed(2);
+    return `${sign}${amt}  (${pctSign}${pct}%)`;
+  }, [
+    gainLossSummary.quoteCurrency,
+    gainLossSummary.total.available,
+    gainLossSummary.total.deltaFiat,
+    gainLossSummary.total.percentRatio,
+    hideAllBalances,
+  ]);
+
+  const allTimeIsPositive = useMemo(() => {
+    return gainLossSummary.total.available
+      ? gainLossSummary.total.deltaFiat >= 0
+      : true;
+  }, [gainLossSummary.total.available, gainLossSummary.total.deltaFiat]);
+
+  const todayGainLossText = useMemo(() => {
+    if (hideAllBalances) {
+      const pctSign = gainLossSummary.today.percentRatio >= 0 ? '+' : '-';
+      const pct = Math.abs(gainLossSummary.today.percentRatio * 100).toFixed(2);
+      return `****  (${pctSign}${pct}%)`;
+    }
+
+    const sign = gainLossSummary.today.deltaFiat >= 0 ? '+' : '-';
+    const pctSign = gainLossSummary.today.percentRatio >= 0 ? '+' : '-';
+    const amt = formatFiatAmount(
+      Math.abs(gainLossSummary.today.deltaFiat),
+      gainLossSummary.quoteCurrency,
+      {
+        customPrecision: 'minimal',
+        currencyDisplay: 'symbol',
+      },
+    );
+    const pct = Math.abs(gainLossSummary.today.percentRatio * 100).toFixed(2);
+    return `${sign}${amt}  (${pctSign}${pct}%)`;
+  }, [
+    gainLossSummary.quoteCurrency,
+    gainLossSummary.today.deltaFiat,
+    gainLossSummary.today.percentRatio,
+    hideAllBalances,
+  ]);
+
+  const todayIsPositive = useMemo(() => {
+    return gainLossSummary.today.deltaFiat >= 0;
+  }, [gainLossSummary.today.deltaFiat]);
+
   const _tokenOptionsByAddress = useAppSelector(({WALLET}: RootState) => {
     return {
       ...BitpaySupportedTokenOptsByAddress,
-      ...WALLET.tokenOptionsByAddress,
+      ...tokenOptionsByAddress,
       ...WALLET.customTokenOptionsByAddress,
     };
   });
@@ -358,7 +764,7 @@ const KeyOverview = () => {
       // To close decrypt modal
       await sleep(500);
     }
-    await dispatch(startOnGoingProcessModal('SYNCING_WALLETS'));
+    showOngoingProcess('SYNCING_WALLETS');
     const opts = {
       words: normalizeMnemonic(mnemonic),
       mnemonic,
@@ -374,6 +780,7 @@ const KeyOverview = () => {
           .filter(
             sw =>
               sw.isComplete() &&
+              !sw.pendingTssSession &&
               !key.wallets.some(ew => ew.id === sw.credentials.walletId),
           )
           .map(syncWallet => {
@@ -389,7 +796,11 @@ const KeyOverview = () => {
             return _.merge(
               syncWallet,
               buildWalletObj(
-                {...syncWallet.credentials, currencyAbbreviation, currencyName},
+                {
+                  ...syncWallet.credentials,
+                  currencyAbbreviation,
+                  currencyName,
+                } as any,
                 _tokenOptionsByAddress,
               ),
             );
@@ -414,7 +825,7 @@ const KeyOverview = () => {
           message = t('Your key is already synced');
         }
 
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         dispatch(
           showBottomNotificationModal({
@@ -432,7 +843,7 @@ const KeyOverview = () => {
           }),
         );
       } else {
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
         await dispatch(
           showBottomNotificationModal(
@@ -443,7 +854,7 @@ const KeyOverview = () => {
         );
       }
     } catch (e) {
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       await dispatch(
         showBottomNotificationModal(
@@ -569,7 +980,9 @@ const KeyOverview = () => {
 
     try {
       setIsViewUpdating(true);
-      await dispatch(startGetRates({}));
+      await dispatch(
+        refreshRatesForPortfolioPnl({context: 'homeRootOnRefresh'}) as any,
+      );
       await Promise.all([
         dispatch(
           startUpdateAllWalletStatusForKey({
@@ -617,7 +1030,9 @@ const KeyOverview = () => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
-            logger.error(`error [getStatus]: ${errStr}`);
+            logger.error(
+              `error [KeyOverview - onPressItem] [getStatus]: ${errStr}`,
+            );
           } else {
             if (status?.wallet?.status === 'complete') {
               fullWalletObj.openWallet({}, () => {
@@ -652,7 +1067,9 @@ const KeyOverview = () => {
           id={item.id}
           accountItem={item}
           hideBalance={hideAllBalances}
-          onPress={() => onPressItem(item)}
+          onPress={() => {
+            onPressItem(item);
+          }}
         />
       );
     },
@@ -688,21 +1105,135 @@ const KeyOverview = () => {
   const renderListFooterComponent = useCallback(() => {
     return (
       <WalletListFooterContainer>
-        <WalletListFooter
-          activeOpacity={ActiveOpacity}
-          onPress={async () => {
-            haptic('impactLight');
-            navigation.navigate('AddingOptions', {
-              key,
-            });
-          }}>
-          <Icons.Add />
-          <WalletListFooterText>{t('Add Wallet')}</WalletListFooterText>
-        </WalletListFooter>
+        <Button
+          buttonStyle="secondary"
+          height={50}
+          buttonOutline
+          onPress={() =>
+            (navigation as any).navigate('AllAssets', {keyId: id})
+          }>
+          See All Assets
+        </Button>
+
+        {!isTSSKey(key) ? (
+          <AddWalletLinkContainer>
+            <AddWalletLinkButton
+              activeOpacity={ActiveOpacity}
+              onPress={async () => {
+                haptic('impactLight');
+                navigation.navigate('AddingOptions', {
+                  key,
+                });
+              }}>
+              <AddWalletLink>Add Wallet</AddWalletLink>
+            </AddWalletLinkButton>
+          </AddWalletLinkContainer>
+        ) : null}
+
+        {showPortfolioValue && allocationData.totalFiat > 0 ? (
+          <TouchableOpacity
+            activeOpacity={ActiveOpacity}
+            onPress={() =>
+              (navigation as any).navigate('Allocation', {
+                keyId: key.id,
+              })
+            }>
+            <AllocationDonutLegendCard
+              legendItems={allocationData.legendItems}
+              slices={allocationData.slices}
+              style={{marginLeft: 0, marginRight: 0}}
+              header={
+                <AllocationHeader>
+                  <HomeSectionTitle>Allocation</HomeSectionTitle>
+                  <AllocationHeaderAction
+                    activeOpacity={ActiveOpacity}
+                    onPress={() =>
+                      (navigation as any).navigate('Allocation', {
+                        keyId: id,
+                      })
+                    }>
+                    <ChevronRightSvg width={13} height={19} gray />
+                  </AllocationHeaderAction>
+                </AllocationHeader>
+              }
+              footer={
+                <AllocationFooter>
+                  <AllocationLabel>Portfolio Value</AllocationLabel>
+                  <AllocationValue>
+                    {!hideAllBalances
+                      ? formatFiatAmount(
+                          totalBalance,
+                          defaultAltCurrency.isoCode,
+                          {
+                            currencyDisplay: 'symbol',
+                          },
+                        )
+                      : '****'}
+                  </AllocationValue>
+
+                  <AllocationDivider />
+
+                  <AllocationRow>
+                    {allTimeGainLossText !== null ? (
+                      <AllocationColumn style={{paddingRight: 12}}>
+                        <AllocationLabel>
+                          All-Time Gain / Loss ($)
+                        </AllocationLabel>
+                        {isKeyPopulateLoading ? (
+                          <AllocationMetricSkeleton />
+                        ) : (
+                          <AllocationMetricValue positive={allTimeIsPositive}>
+                            {allTimeGainLossText}
+                          </AllocationMetricValue>
+                        )}
+                      </AllocationColumn>
+                    ) : null}
+                    <AllocationColumn
+                      style={
+                        allTimeGainLossText !== null
+                          ? {paddingLeft: 12}
+                          : undefined
+                      }>
+                      <AllocationLabel style={{textAlign: 'right'}}>
+                        Today's Gain / Loss ($)
+                      </AllocationLabel>
+                      {isKeyPopulateLoading ? (
+                        <AllocationMetricSkeleton align="right" />
+                      ) : (
+                        <AllocationMetricValue
+                          positive={todayIsPositive}
+                          style={{textAlign: 'right'}}>
+                          {todayGainLossText}
+                        </AllocationMetricValue>
+                      )}
+                    </AllocationColumn>
+                  </AllocationRow>
+                </AllocationFooter>
+              }
+            />
+          </TouchableOpacity>
+        ) : null}
+
         {showArchaxBanner && <ArchaxFooter />}
       </WalletListFooterContainer>
     );
-  }, []);
+  }, [
+    allocationData.legendItems,
+    allocationData.slices,
+    allocationData.totalFiat,
+    allTimeGainLossText,
+    allTimeIsPositive,
+    defaultAltCurrency.isoCode,
+    hideAllBalances,
+    id,
+    isKeyPopulateLoading,
+    navigation,
+    showPortfolioValue,
+    showArchaxBanner,
+    todayGainLossText,
+    todayIsPositive,
+    totalBalance,
+  ]);
 
   const listEmptyComponent = useMemo(
     () =>
@@ -729,11 +1260,23 @@ const KeyOverview = () => {
             dispatch(toggleHideAllBalances());
           }}>
           {!hideAllBalances ? (
-            <Balance scale={shouldScale(totalBalance)}>
-              {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
-                currencyDisplay: 'symbol',
-              })}
-            </Balance>
+            <>
+              <Balance scale={shouldScale(totalBalance)}>
+                {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
+                  currencyDisplay: 'symbol',
+                })}
+              </Balance>
+              {percentageDifference !== null ? (
+                <PercentageWrapper>
+                  <Percentage
+                    percentageDifference={percentageDifference}
+                    hideArrow
+                    fractionDigits={2}
+                    rangeLabel={t('Last Day')}
+                  />
+                </PercentageWrapper>
+              ) : null}
+            </>
           ) : (
             <H2>****</H2>
           )}

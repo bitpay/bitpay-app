@@ -1,6 +1,8 @@
 import Braze from '@braze/react-native-sdk';
 import axios from 'axios';
 import {BRAZE_MERGE_AND_DELETE_API_KEY, BRAZE_REST_API_ENDPOINT} from '@env';
+import {checkNotifications, RESULTS} from 'react-native-permissions';
+import {NativeModules, Platform} from 'react-native';
 
 const nonCustomAttributes = [
   'country',
@@ -120,8 +122,8 @@ const mergeUsers = async (
   try {
     const {data} = await axios.post(url, body, {headers});
     return data;
-  } catch (error: any) {
-    throw error.response.data;
+  } catch (err: any) {
+    throw err.response?.data?.message || err.message || err;
   }
 };
 
@@ -137,8 +139,8 @@ const deleteUser = async (eid: string): Promise<any> => {
   try {
     const {data} = await axios.post(url, body, {headers});
     return data;
-  } catch (error: any) {
-    throw error.response.data;
+  } catch (err: any) {
+    throw err.response?.data?.message || err.message || err;
   }
 };
 
@@ -157,7 +159,7 @@ export const BrazeWrapper = (() => {
       return Promise.resolve();
     },
 
-    identify(
+    async identify(
       userId: string | undefined,
       attributes?: BrazeUserAttributes | undefined,
     ) {
@@ -176,6 +178,18 @@ export const BrazeWrapper = (() => {
 
       if (userId) {
         Braze.changeUser(userId);
+        const {status} = await checkNotifications().catch(() => ({
+          status: null,
+        }));
+        const normalized = status?.toLowerCase?.();
+        const granted =
+          normalized === RESULTS.GRANTED || normalized === RESULTS.LIMITED;
+        if (granted) {
+          Braze.requestPushPermission();
+          if (Platform.OS === 'ios') {
+            await NativeModules.PushPermissionManager.askForPermission();
+          }
+        }
       }
 
       if (attributes) {

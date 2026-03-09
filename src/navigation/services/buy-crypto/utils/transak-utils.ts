@@ -273,7 +273,7 @@ export const getTransakSupportedCurrencies = (): string[] => {
 export const getTransakSelectedPaymentMethodData = (
   transakFiatCurrencies: TransakFiatCurrency[],
   selectedFiatCurrency: string,
-  selectedPaymentMethod: PaymentMethod,
+  selectedPaymentMethod: PaymentMethod | undefined,
 ): TransakPaymentOption | undefined => {
   const transakSelectedFiatCurrency = transakFiatCurrencies.find(
     transakFiatCurrency => {
@@ -290,7 +290,7 @@ export const getTransakSelectedPaymentMethodData = (
 
   let transakSelectedPaymentMethodData: TransakPaymentOption | undefined;
 
-  switch (selectedPaymentMethod.method) {
+  switch (selectedPaymentMethod?.method) {
     // "ach" | "applePay" | "creditCard" | "debitCard" | "sepaBankTransfer" | "other"
     case 'applePay':
       transakSelectedPaymentMethodData =
@@ -367,7 +367,7 @@ export const getTransakChainFormat = (chain: string): string | undefined => {
 };
 
 export const getTransakPaymentMethodFormat = (
-  method: PaymentMethodKey,
+  method: PaymentMethodKey | undefined,
 ): TransakPaymentType | undefined => {
   if (!method) {
     return undefined;

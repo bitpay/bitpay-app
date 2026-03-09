@@ -16,6 +16,8 @@ import {
   TxDetails,
   Wallet,
   Key,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../../store/wallet/wallet.models';
 import SwipeButton from '../../../../../components/swipe-button/SwipeButton';
 import {
@@ -31,8 +33,6 @@ import {
   formatFiatAmount,
   toggleThenUntoggle,
 } from '../../../../../utils/helper-methods';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {ShopEffects} from '../../../../../store/shop';
 import {BuildPayProWalletSelectorList} from '../../../../../store/wallet/utils/wallet';
 import {
@@ -83,6 +83,10 @@ import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../../constants/config';
 import {BitpaySupportedCoins} from '../../../../../constants/currencies';
+import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
+import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import TSSProgressTracker from '../../../components/TSSProgressTracker';
+import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
 export interface BillPaymentRequest {
   amount: number;
@@ -138,6 +142,28 @@ const BillConfirm: React.FC<
     useState<Transport | null>(null);
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
+  const isTSSWallet = key ? isTSSKey(key) : false;
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+  const tssCallbacks = useTSSCallbacks({
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+  });
 
   const baseEventParams = {
     ...getBillAccountEventParamsForMultipleBills(
@@ -257,7 +283,7 @@ const BillConfirm: React.FC<
     clientId: string;
     transactionCurrency: string;
   }) => {
-    dispatch(startOnGoingProcessModal('FETCHING_PAYMENT_INFO'));
+    showOngoingProcess('FETCHING_PAYMENT_INFO');
     const invoiceCreationParams = {
       transactionCurrency,
       payments: billPayments.map(payment => ({
@@ -273,7 +299,7 @@ const BillConfirm: React.FC<
 
   const handleBillPayInvoiceOrTxpError = async (err: any) => {
     await sleep(400);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     const onDismiss = () => openWalletSelector(400);
     const errorMessageConfig = await dispatch(
       handleCreateTxProposalError(err, onDismiss),
@@ -325,7 +351,7 @@ const BillConfirm: React.FC<
       setWallet(undefined);
       setConvenienceFee(serviceFee);
       setSubtotal(totalBillAmount);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(1000);
       dispatch(Analytics.track('Bill Pay - Selected Wallet', baseEventParams));
     } catch (err) {
@@ -390,7 +416,7 @@ const BillConfirm: React.FC<
       });
       setConvenienceFee(serviceFee);
       setSubtotal(totalBillAmount);
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(1000);
       dispatch(Analytics.track('Bill Pay - Selected Wallet', baseEventParams));
     } catch (err: any) {
@@ -399,9 +425,17 @@ const BillConfirm: React.FC<
   };
 
   const sendPayment = async (twoFactorCode?: string) => {
-    dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
     return txp && wallet && recipient
-      ? await dispatch(startSendPayment({txp, key, wallet, recipient}))
+      ? await dispatch(
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+            ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
+          }),
+        )
       : await dispatch(
           coinbasePayInvoice(
             invoice!.id,
@@ -412,19 +446,11 @@ const BillConfirm: React.FC<
   };
 
   const handlePaymentSuccess = async () => {
-    await sleep(400);
-    dispatch(dismissOnGoingProcessModal());
-    await sleep(400);
-    dispatch(
-      AppActions.showPaymentSentModal({
-        isVisible: true,
-        onCloseModal,
-        title:
-          wallet?.credentials?.n > 1
-            ? t('Payment Sent')
-            : t('Payment Accepted'),
-      }),
-    );
+    showPaymentSent({
+      onCloseModal,
+      title:
+        wallet?.credentials?.n > 1 ? t('Payment Sent') : t('Payment Accepted'),
+    });
     dispatch(ShopEffects.startFindBillPayments()).catch(_ => {});
     dispatch(
       Analytics.track('Bill Pay - Successful Bill Paid', {
@@ -439,10 +465,7 @@ const BillConfirm: React.FC<
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   const showError = ({
@@ -493,7 +516,7 @@ const BillConfirm: React.FC<
           navigation.dispatch(StackActions.pop());
           await handlePaymentSuccess();
         } catch (error: any) {
-          dispatch(dismissOnGoingProcessModal());
+          hideOngoingProcess();
           const invalid2faMessage = CoinbaseErrorMessages.twoFactorInvalid;
           error?.message?.includes(CoinbaseErrorMessages.twoFactorInvalid)
             ? showError({defaultErrorMessage: invalid2faMessage})
@@ -537,6 +560,7 @@ const BillConfirm: React.FC<
     transport,
   }: {transport?: Transport} = {}) => {
     const isUsingHardwareWallet = !!transport;
+
     dispatch(
       Analytics.track('Bill Pay - Clicked Slide to Confirm', baseEventParams),
     );
@@ -558,7 +582,13 @@ const BillConfirm: React.FC<
         setConfirmHardwareState('sending');
         await sleep(500);
         await dispatch(
-          startSendPayment({txp, key, wallet, recipient, transport}),
+          startSendPayment({
+            txp,
+            key,
+            wallet,
+            recipient,
+            transport,
+          }),
         );
         setConfirmHardwareState('complete');
         await sleep(1000);
@@ -573,7 +603,6 @@ const BillConfirm: React.FC<
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
       await sleep(400);
       const twoFactorRequired =
         coinbaseAccount &&
@@ -600,6 +629,20 @@ const BillConfirm: React.FC<
       <DetailsList>
         <>
           <Header hr>Summary</Header>
+          {isTSSWallet && wallet && (
+            <TSSProgressTracker
+              status={tssStatus}
+              progress={tssProgress}
+              createdBy={sendingFrom?.walletName || 'You'}
+              date={new Date()}
+              wallet={wallet}
+              copayers={tssCopayers}
+              onCopayersInitialized={setTssCopayers}
+              isModalVisible={showTSSProgressModal}
+              onModalVisibilityChange={setShowTSSProgressModal}
+              txpCreatorId={wallet.credentials?.copayerId}
+            />
+          )}
           <SendingTo
             recipient={{
               recipientName:

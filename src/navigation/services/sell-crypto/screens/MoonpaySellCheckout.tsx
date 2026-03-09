@@ -31,12 +31,15 @@ import {
   TransactionProposal,
   SendMaxInfo,
   Key,
+  TSSSigningStatus,
+  TSSSigningProgress,
 } from '../../../../store/wallet/wallet.models';
 import {
   GetName,
   GetPrecision,
   IsERCToken,
   IsEVMChain,
+  IsSVMChain,
 } from '../../../../store/wallet/utils/currency';
 import {
   FormatAmountStr,
@@ -49,8 +52,10 @@ import {
   getBadgeImg,
   getCurrencyAbbreviation,
   getCWCChain,
-  getSolanaTokens,
+  getOrCreateAssociatedTokenAddress,
+  getSolanaATAs,
   sleep,
+  SolanaTokenData,
 } from '../../../../utils/helper-methods';
 import {
   ItemDivisor,
@@ -67,12 +72,8 @@ import {
   PoliciesText,
   CheckBoxCol,
 } from '../../swap-crypto/styled/SwapCryptoCheckout.styled';
+import {openUrlWithInAppBrowser} from '../../../../store/app/app.effects';
 import {
-  openUrlWithInAppBrowser,
-  startOnGoingProcessModal,
-} from '../../../../store/app/app.effects';
-import {
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
   dismissBottomNotificationModal,
 } from '../../../../store/app/app.actions';
@@ -119,7 +120,12 @@ import {currencyConfigs} from '../../../../components/modal/import-ledger-wallet
 import TransportBLE from '@ledgerhq/react-native-hw-transport-ble';
 import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
-import {AppActions} from '../../../../store/app';
+import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
+import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
+import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
+import {Network} from '../../../../constants';
+import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
 
 // Styled
 export const SellCheckoutContainer = styled.SafeAreaView`
@@ -173,6 +179,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const [amountExpected, setAmountExpected] = useState<number>(amount);
   const [fee, setFee] = useState<number>();
   const [ctxp, setCtxp] = useState<Partial<TransactionProposal>>();
+  const [ataOwnerAddress, setAtaOwnerAddress] = useState<string>();
 
   const [totalExchangeFee, setTotalExchangeFee] = useState<number>();
   const [paymentExpired, setPaymentExpired] = useState(false);
@@ -189,8 +196,31 @@ const MoonpaySellCheckout: React.FC = () => {
   const [confirmHardwareState, setConfirmHardwareState] =
     useState<SimpleConfirmPaymentState | null>(null);
 
+  const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
+  const isTSSWallet = isTSSKey(key);
+  const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
+  const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
+    currentRound: 0,
+    totalRounds: 4,
+    status: 'pending',
+  });
+  const [tssCopayers, setTssCopayers] = useState<
+    Array<{id: string; name: string; signed: boolean}>
+  >([]);
+
+  const tssCallbacks = useTSSCallbacks({
+    setTssStatus,
+    setTssProgress,
+    setTssCopayers,
+    tssCopayers,
+    setShowTSSProgressModal,
+    setResetSwipeButton,
+  });
+
+  const {showPaymentSent, hidePaymentSent} = usePaymentSent();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
   let destinationTag: string | undefined; // handle this if XRP is enabled to sell
-  let status: string;
 
   // use the ref when doing any work that could cause disconnects and cause a new transport to be passed in mid-function
   const transportRef = useRef(hardwareWalletTransport);
@@ -326,7 +356,9 @@ const MoonpaySellCheckout: React.FC = () => {
         )}`,
       );
       try {
-        const sellQuote = await wallet.moonpayGetSellQuote(requestData);
+        const _sellQuote = await wallet.moonpayGetSellQuote(requestData);
+        const sellQuote = _sellQuote?.body ?? _sellQuote;
+
         if (sellQuote?.quoteCurrencyAmount) {
           sellQuote.totalFee = sellQuote.extraFeeAmount + sellQuote.feeAmount;
 
@@ -425,7 +457,7 @@ const MoonpaySellCheckout: React.FC = () => {
         console.log(ctxp);
         setFee(ctxp.fee);
         setIsLoading(false);
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(400);
 
         if (useSendMax) {
@@ -442,7 +474,10 @@ const MoonpaySellCheckout: React.FC = () => {
 
         let msg = t('Error creating transaction');
         let errorMsgLog;
-        if (typeof err?.message === 'string') {
+        if (typeof err === 'string') {
+          msg = msg + `: ${err}`;
+          errorMsgLog = err;
+        } else if (typeof err?.message === 'string') {
           msg = msg + `: ${err.message}`;
           errorMsgLog = err.message;
         }
@@ -501,16 +536,62 @@ const MoonpaySellCheckout: React.FC = () => {
                 }
               }
             }
-          } else {
-            const fromSolanaTokens = await getSolanaTokens(
-              wallet?.receiveAddress!,
-              wallet?.network,
-            );
-            const fromAta = fromSolanaTokens.find((item: any) => {
-              return item.mintAddress === txp.tokenAddress;
-            });
-            txp.fromAta = fromAta?.ataAddress;
-            txp.decimals = fromAta?.decimals;
+          } else if (IsSVMChain(txp.chain!)) {
+            const receiveAddressSolanaTokens: SolanaTokenData[] =
+              await getSolanaATAs(wallet?.receiveAddress!, wallet?.network);
+
+            let ataReceiveAddress: SolanaTokenData | undefined;
+            if (receiveAddressSolanaTokens) {
+              ataReceiveAddress = receiveAddressSolanaTokens.find(
+                (item: SolanaTokenData) => {
+                  return item.mintAddress === txp.tokenAddress;
+                },
+              );
+            }
+
+            if (ataReceiveAddress) {
+              txp.fromAta = ataReceiveAddress.ataAddress;
+              txp.decimals = ataReceiveAddress.decimals;
+            } else {
+              const _ataReceiveAddress =
+                await getOrCreateAssociatedTokenAddress({
+                  mint: txp.tokenAddress,
+                  feePayer: wallet?.receiveAddress!,
+                });
+              txp.fromAta = _ataReceiveAddress;
+              logger.debug(
+                `Using ATA Address from getOrCreateAssociatedTokenAddress: ${_ataReceiveAddress}`,
+              );
+            }
+
+            if (txp.outputs) {
+              const toAddressSolanaTokens: SolanaTokenData[] =
+                await getSolanaATAs(toAddress, wallet?.network);
+
+              let ataToAddress: string | undefined;
+              if (toAddressSolanaTokens) {
+                ataToAddress = toAddressSolanaTokens.find((item: any) => {
+                  return item.mintAddress === txp.tokenAddress;
+                })?.ataAddress;
+              }
+
+              if (!ataToAddress) {
+                ataToAddress = await getOrCreateAssociatedTokenAddress({
+                  mint: txp.tokenAddress,
+                  feePayer: toAddress,
+                });
+                setAtaOwnerAddress(toAddress);
+                logger.debug(
+                  `Using ATA toAddress from getOrCreateAssociatedTokenAddress: ${ataToAddress}`,
+                );
+              }
+
+              for (const output of txp.outputs) {
+                if (output.toAddress === toAddress) {
+                  output.toAddress = ataToAddress;
+                }
+              }
+            }
           }
         }
       }
@@ -542,6 +623,7 @@ const MoonpaySellCheckout: React.FC = () => {
   const makePayment = async ({transport}: {transport?: Transport}) => {
     const isUsingHardwareWallet = !!transport;
     let broadcastedTx;
+
     try {
       if (isUsingHardwareWallet) {
         const {chain, network} = wallet.credentials;
@@ -549,7 +631,7 @@ const MoonpaySellCheckout: React.FC = () => {
         if (!configFn) {
           throw new Error(`Unsupported currency: ${chain.toUpperCase()}`);
         }
-        const params = configFn(network);
+        const params = configFn(network as Network);
         await prepareLedgerApp(
           params.appName,
           transportRef,
@@ -565,43 +647,39 @@ const MoonpaySellCheckout: React.FC = () => {
             key,
             wallet,
             transport,
+            ataOwnerAddress,
           }),
         );
         setConfirmHardwareState('complete');
         await sleep(1000);
         setConfirmHardwareWalletVisible(false);
       } else {
-        dispatch(startOnGoingProcessModal('SENDING_PAYMENT'));
-        await sleep(400);
         broadcastedTx = await dispatch(
           publishAndSign({
             txp: ctxp! as TransactionProposal,
             key,
             wallet,
+            ataOwnerAddress,
+            ...(isTSSWallet && {tssCallbacks}),
+            ...(isTSSWallet && {setShowTSSProgressModal}),
           }),
         );
       }
       updateMoonpayTx(txData!, broadcastedTx as Partial<TransactionProposal>);
-      dispatch(dismissOnGoingProcessModal());
-      await sleep(400);
-
-      dispatch(
-        AppActions.showPaymentSentModal({
-          isVisible: true,
-          onCloseModal,
-          title:
-            wallet?.credentials?.n > 1
-              ? t('Payment Sent')
-              : t('Payment Accepted'),
-        }),
-      );
+      showPaymentSent({
+        onCloseModal,
+        title:
+          wallet?.credentials?.n > 1
+            ? t('Payment Sent')
+            : t('Payment Accepted'),
+      });
 
       await sleep(1200);
       const moonpaySettingsParams: MoonpaySettingsProps = {
         incomingPaymentRequest: {
           externalId: sellCryptoExternalId,
           transactionId: sellOrder?.transaction_id,
-          status,
+          status: 'bitpayTxSent',
           flow: 'sell',
         },
       };
@@ -622,12 +700,16 @@ const MoonpaySellCheckout: React.FC = () => {
         }),
       );
     } catch (err: any) {
+      if (isTSSWallet) {
+        setShowTSSProgressModal(false);
+      }
+
       if (isUsingHardwareWallet) {
         setConfirmHardwareWalletVisible(false);
         setConfirmHardwareState(null);
         err = getLedgerErrorMessage(err);
       }
-      dispatch(dismissOnGoingProcessModal());
+      hideOngoingProcess();
       await sleep(500);
       setResetSwipeButton(true);
       switch (err) {
@@ -644,19 +726,21 @@ const MoonpaySellCheckout: React.FC = () => {
           logger.error(JSON.stringify(err));
           let msg = t('Uh oh, something went wrong. Please try again later');
           const reason = 'publishAndSign Error';
-          if (typeof err?.message === 'string') {
+          let errorMsgLog: string | undefined;
+          if (typeof err === 'string') {
+            errorMsgLog = err;
+            msg = `${msg}.\n${BWCErrorMessage(err)}`;
+          } else if (typeof err?.message === 'string') {
+            errorMsgLog = err.message;
             msg = `${msg}.\n${BWCErrorMessage(err)}`;
           }
-          showError(msg, reason);
+          showError(msg, reason, errorMsgLog);
       }
     }
   };
 
   const onCloseModal = async () => {
-    await sleep(1000);
-    dispatch(AppActions.dismissPaymentSentModal());
-    await sleep(1000);
-    dispatch(AppActions.clearPaymentSentModalOptions());
+    hidePaymentSent();
   };
 
   // on hardware wallet disconnect, just clear the cached transport object
@@ -716,6 +800,7 @@ const MoonpaySellCheckout: React.FC = () => {
         moonpayTxData.quoteCurrency.code,
       ).toUpperCase(),
       totalFee: totalExchangeFee,
+      isTSSWallet: isTSSWallet,
     };
 
     dispatch(
@@ -726,17 +811,23 @@ const MoonpaySellCheckout: React.FC = () => {
 
     logger.debug('Updated sell order with: ' + JSON.stringify(dataToUpdate));
 
+    const _fiatAmount =
+      moonpayTxData?.quoteCurrencyAmount || sellOrder?.fiat_receiving_amount;
     dispatch(
       Analytics.track('Successful Crypto Sell', {
         coin: wallet.currencyAbbreviation.toLowerCase(),
         chain: wallet.chain.toLowerCase(),
         amount: amountExpected,
-        fiatAmount:
-          moonpayTxData?.quoteCurrencyAmount ||
-          sellOrder?.fiat_receiving_amount,
+        fiatAmount: _fiatAmount,
         fiatCurrency:
           moonpayTxData?.quoteCurrency?.code?.toLowerCase() ||
           sellOrder?.fiat_currency?.toLowerCase(),
+        exchangeRate:
+          (_fiatAmount &&
+            amountExpected &&
+            Number(_fiatAmount) / Number(amountExpected)) ||
+          '',
+        withdrawalMethod: sellOrder?.payment_method || 'unknown',
         exchange: 'moonpay',
       }),
     );
@@ -835,7 +926,7 @@ const MoonpaySellCheckout: React.FC = () => {
     actions?: any[],
   ) => {
     setIsLoading(false);
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
 
     let msg = getErrorMsgFromError(err);
 
@@ -861,7 +952,8 @@ const MoonpaySellCheckout: React.FC = () => {
         type: 'error',
         title: title ?? t('Error'),
         message: msg ?? t('Unknown Error'),
-        enableBackdropDismiss: false,
+        onBackdropDismiss: () => navigation.goBack(),
+        enableBackdropDismiss: true,
         actions: actions ?? [
           {
             text: t('OK'),
@@ -887,7 +979,7 @@ const MoonpaySellCheckout: React.FC = () => {
       init();
     };
 
-    dispatch(startOnGoingProcessModal('EXCHANGE_GETTING_DATA'));
+    showOngoingProcess('EXCHANGE_GETTING_DATA');
     if (isToken) {
       useSendMax = false;
     }
@@ -938,6 +1030,20 @@ const MoonpaySellCheckout: React.FC = () => {
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
+        {isTSSWallet && (
+          <TSSProgressTracker
+            status={tssStatus}
+            progress={tssProgress}
+            createdBy={wallet.walletName || 'You'}
+            date={new Date()}
+            wallet={wallet}
+            copayers={tssCopayers}
+            onCopayersInitialized={setTssCopayers}
+            isModalVisible={showTSSProgressModal}
+            onModalVisibilityChange={setShowTSSProgressModal}
+            txpCreatorId={wallet.credentials?.copayerId}
+          />
+        )}
         <RowDataContainer>
           <RowLabel>{t('Selling')}</RowLabel>
           {amountExpected ? (

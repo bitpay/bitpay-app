@@ -36,13 +36,14 @@ import {
 } from '../../wallet.actions';
 import {BWCErrorMessage} from '../../../../constants/BWCError';
 import {t} from 'i18next';
-import {LogActions} from '../../../log';
 import {partition} from 'lodash';
 import {
   BitpaySupportedCoins,
   SUPPORTED_VM_TOKENS,
 } from '../../../../constants/currencies';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
+import {tokenManager} from '../../../../managers/TokenManager';
+import {logManager} from '../../../../managers/LogManager';
 
 const BWC = BwcProvider.getInstance();
 const Errors = BWC.getErrors();
@@ -51,15 +52,16 @@ export const TX_HISTORY_LIMIT = 25;
 export const BWS_TX_HISTORY_LIMIT = 1001;
 
 const GetCoinsForTx = (wallet: Wallet, txId: string): Promise<any> => {
-  const {currencyAbbreviation, network} = wallet;
+  const {currencyAbbreviation, chain, network} = wallet;
   return new Promise((resolve, reject) => {
     wallet.getCoinsForTx(
       {
         coin: currencyAbbreviation,
-        network,
+        chain,
+        network: network as unknown as string,
         txId,
       },
-      (err: Error, response: any) => {
+      (err?: Error, response?: any) => {
         if (err) {
           return reject(err);
         }
@@ -71,7 +73,7 @@ const GetCoinsForTx = (wallet: Wallet, txId: string): Promise<any> => {
 
 export const RemoveTxProposal = (wallet: Wallet, txp: any): Promise<void> => {
   return new Promise((resolve, reject) => {
-    wallet.removeTxProposal(txp, (err: Error) => {
+    wallet.removeTxProposal(txp, (err?: Error) => {
       if (err) {
         return reject(BWCErrorMessage(err));
       }
@@ -82,12 +84,16 @@ export const RemoveTxProposal = (wallet: Wallet, txp: any): Promise<void> => {
 
 export const RejectTxProposal = (wallet: Wallet, txp: any): Promise<any> => {
   return new Promise((resolve, reject) => {
-    wallet.rejectTxProposal(txp, null, (err: Error, rejectedTxp: any) => {
-      if (err) {
-        return reject(BWCErrorMessage(err));
-      }
-      return resolve(rejectedTxp);
-    });
+    wallet.rejectTxProposal(
+      txp,
+      undefined,
+      (err?: Error, rejectedTxp?: any) => {
+        if (err) {
+          return reject(BWCErrorMessage(err));
+        }
+        return resolve(rejectedTxp);
+      },
+    );
   });
 };
 
@@ -145,10 +151,8 @@ export const ProcessPendingTxps =
         ret.push(tx);
       } catch (e) {
         const error = e instanceof Error ? e.message : JSON.stringify(e);
-        dispatch(
-          LogActions.error(
-            `The transaction proposal could not be processed correctly ${tx.id}: ${error}`,
-          ),
+        logManager.error(
+          `The transaction proposal could not be processed correctly ${tx.id}: ${error}`,
         );
       }
     });
@@ -169,8 +173,10 @@ const ProcessTx =
       return tx;
     }
 
-    const {tokenOptionsByAddress, customTokenOptionsByAddress} =
-      getState().WALLET;
+    const {customTokenOptionsByAddress} = getState().WALLET;
+
+    const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
+
     const tokensOptsByAddress = {
       ...BitpaySupportedTokenOptsByAddress,
       ...tokenOptionsByAddress,
@@ -185,16 +191,17 @@ const ProcessTx =
 
     if (txpContractAddress) {
       const matchedToken = Object.values(tokensOptsByAddress).find(
-        ({address}) => {
+        (token: any) => {
+          const address = token?.address;
           if (IsSVMChain(chain)) {
             return txpContractAddress === address;
           }
           return txpContractAddress?.toLowerCase() === address?.toLowerCase();
         },
-      );
+      ) as any;
 
       if (matchedToken?.symbol) {
-        tokenSymbol = matchedToken.symbol.toLowerCase();
+        tokenSymbol = String(matchedToken.symbol).toLowerCase();
         tokenAddress = txpContractAddress;
       }
     }
@@ -204,11 +211,13 @@ const ProcessTx =
     if (tx.outputs?.length) {
       // ThorSwap has OP_RETURN output in the first position with addressTo = 'false'.
       tx.outputs = tx.outputs.filter(o => o.address !== 'false');
-      tx.addressTo = tx.outputs[0].address!;
+      if (tx.outputs.length) {
+        tx.addressTo = tx.outputs[0].address!;
+      }
 
       const outputsNr = tx.outputs.length;
 
-      if (tx.action !== 'received') {
+      if (tx.action !== 'received' && outputsNr > 0) {
         if (outputsNr > 1) {
           tx.recipientCount = outputsNr;
           tx.hasMultiplesOutputs = true;
@@ -225,7 +234,9 @@ const ProcessTx =
           return total + Number(o.amount);
         }, 0);
       }
-      tx.toAddress = tx.outputs[0].toAddress!;
+      if (tx.outputs.length) {
+        tx.toAddress = tx.outputs[0].toAddress!;
+      }
 
       // translate legacy addresses
       if (tx.addressTo && coin === 'ltc') {
@@ -351,7 +362,11 @@ const shouldFilterTx = (tx: any, wallet: Wallet) => {
 };
 
 const ProcessNewTxs =
-  (wallet: Wallet, txs: any[]): Effect<Promise<any>> =>
+  (
+    wallet: Wallet,
+    txs: any[],
+    skipWalletProcessing?: boolean,
+  ): Effect<Promise<any>> =>
   async dispatch => {
     const now = Math.floor(Date.now() / 1000);
     const txHistoryUnique: any = {};
@@ -368,7 +383,15 @@ const ProcessNewTxs =
           continue;
         }
 
-        tx = dispatch(ProcessTx(tx, wallet));
+        if (!skipWalletProcessing) {
+          tx = dispatch(ProcessTx(tx, wallet));
+        }
+
+        // Scam transactions
+        const isERCToken = IsERCToken(tx.coin, tx.chain);
+        if (isERCToken && tx.amount === 0) {
+          continue;
+        }
 
         // no future transactions...
         if (tx.time > now) {
@@ -396,19 +419,11 @@ const ProcessNewTxs =
         if (!txHistoryUnique[`${tx.txid}-${tx.coin}`]) {
           ret.push(tx);
           txHistoryUnique[`${tx.txid}-${tx.coin}`] = true;
-        } else {
-          dispatch(
-            LogActions.info(
-              `Ignoring duplicate TX in history: ${tx.txid}-${tx.coin}`,
-            ),
-          );
         }
       } catch (e) {
         const error = e instanceof Error ? e.message : JSON.stringify(e);
-        dispatch(
-          LogActions.error(
-            `The transaction could not be processed correctly ${tx.txid}: ${error}`,
-          ),
+        logManager.error(
+          `The transaction could not be processed correctly ${tx.txid}: ${error}`,
         );
         continue;
       }
@@ -424,6 +439,7 @@ const GetNewTransactions =
     requestLimit: number,
     lastTransactionId: string | null,
     tries: number = 0,
+    skipWalletProcessing: boolean = false,
   ): Effect<Promise<any>> =>
   dispatch => {
     return new Promise((resolve, reject) => {
@@ -437,13 +453,13 @@ const GetNewTransactions =
           const {transactions, loadMore = false} = result;
 
           let _transactions = transactions.filter(txs => txs);
-          const _newTxs = await dispatch(ProcessNewTxs(wallet, _transactions));
+          const _newTxs = await dispatch(
+            ProcessNewTxs(wallet, _transactions, skipWalletProcessing),
+          );
           newTxs = newTxs.concat(_newTxs);
 
-          dispatch(
-            LogActions.info(
-              `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
-            ),
+          logManager.info(
+            `Merging TXs for: ${wallet.id}. Got: ${newTxs.length} Skip: ${skip} lastTransactionId: ${lastTransactionId} Load more: ${loadMore}`,
           );
 
           return resolve({
@@ -504,7 +520,7 @@ export const GetTransactionHistoryFromServer = (
           ? multisigEthInfo.multisigContractAddress
           : '',
       },
-      (err: Error, _transactions: any) => {
+      (err?: Error, _transactions?: any) => {
         if (err) {
           return reject(err);
         }
@@ -554,7 +570,7 @@ const getMonthName = (time: MomentInput): String => {
   } catch (e) {
     // Fallback to default locale if the language is not supported
     const error = e instanceof Error ? e.message : JSON.stringify(e);
-    LogActions.warn('Error formatting date:', error);
+    logManager.warn('Error formatting date:', error);
     month = moment(time).format('MMMM');
   }
   return month;
@@ -689,10 +705,8 @@ export const GetAccountTransactionHistory =
           accountTransactionsHistory[wallet.id] = transactionHistory;
           return transactionHistory.transactions;
         } catch (error) {
-          dispatch(
-            LogActions.error(
-              `!! Could not update transaction history for ${wallet.id}: ${error}`,
-            ),
+          logManager.error(
+            `!! Could not update transaction history for ${wallet.id}: ${error}`,
           );
           return [];
         }
@@ -702,29 +716,33 @@ export const GetAccountTransactionHistory =
       // filter transactions by txid, but prioritize the one that isERC20 when is not Received
       let transactionsWithoutRepeated = results
         .flat()
-        .reduce((acc, transaction) => {
+        .reduce((acc: any[], transaction: any) => {
           const existingTransaction = acc.find(
-            t => t.txid === transaction.txid,
+            (t: any) => t.txid === transaction.txid,
           );
 
           if (!existingTransaction || IsReceived(transaction.action)) {
             acc.push(transaction);
           } else if (IsERCToken(transaction.coin, transaction.chain)) {
-            const index = acc.findIndex(t => t.txid === transaction.txid);
+            const index = acc.findIndex(
+              (t: any) => t.txid === transaction.txid,
+            );
             acc[index] = transaction;
           }
 
           return acc;
-        }, []);
+        }, [] as any[]);
 
       if (selectedChainFilterOption) {
-        transactionsWithoutRepeated = transactionsWithoutRepeated.filter(tx => {
-          return tx.chain === selectedChainFilterOption;
-        });
+        transactionsWithoutRepeated = transactionsWithoutRepeated.filter(
+          (tx: any) => {
+            return tx.chain === selectedChainFilterOption;
+          },
+        );
       }
 
       allTransactions = transactionsWithoutRepeated.sort(
-        (a, b) =>
+        (a: any, b: any) =>
           new Date(b.time || b.createdOn).getTime() -
           new Date(a.time || a.createdOn).getTime(),
       );
@@ -752,6 +770,9 @@ export const GetTransactionHistory =
     refresh = false,
     contactList = [],
     isAccountDetailsView = false,
+    isExportHistoryView = false,
+    skipWalletProcessing = false,
+    skipUiFriendlyList = false,
   }: {
     wallet: Wallet;
     transactionsHistory: any[];
@@ -759,6 +780,9 @@ export const GetTransactionHistory =
     refresh?: boolean;
     contactList?: any[];
     isAccountDetailsView?: boolean;
+    isExportHistoryView?: boolean;
+    skipWalletProcessing?: boolean;
+    skipUiFriendlyList?: boolean;
   }): Effect<
     Promise<{transactions: any[]; loadMore: boolean; hasConfirmingTxs: boolean}>
   > =>
@@ -784,7 +808,7 @@ export const GetTransactionHistory =
       if (!keyId) {
         keyId = keyId;
       }
-      if (!walletId || !wallet.isComplete()) {
+      if (!walletId || !wallet.isComplete() || wallet.pendingTssSession) {
         return resolve({
           transactions: [],
           loadMore: false,
@@ -804,20 +828,33 @@ export const GetTransactionHistory =
       }
 
       try {
+        const effectiveSkipWalletProcessing =
+          skipWalletProcessing || isExportHistoryView;
+        const tries = 0;
         let {transactions, loadMore} = await dispatch(
-          GetNewTransactions([], skip, wallet, requestLimit, lastTransactionId),
+          GetNewTransactions(
+            [],
+            skip,
+            wallet,
+            requestLimit,
+            lastTransactionId,
+            tries,
+            effectiveSkipWalletProcessing,
+          ),
         );
 
-        // To get transaction list details: icon, description, amount and date
-        transactions = BuildUiFriendlyList(
-          transactions,
-          currencyAbbreviation,
-          chain,
-          contactList,
-          tokenAddress,
-          walletId,
-          isAccountDetailsView,
-        );
+        if (!skipUiFriendlyList) {
+          // To get transaction list details: icon, description, amount and date
+          transactions = BuildUiFriendlyList(
+            transactions,
+            currencyAbbreviation,
+            chain,
+            contactList,
+            tokenAddress,
+            walletId,
+            isAccountDetailsView,
+          );
+        }
 
         const array = transactions
           .concat(transactionsHistory)
@@ -835,7 +872,7 @@ export const GetTransactionHistory =
           const {WALLET} = getState();
           const key = WALLET.keys[keyId];
           if (IsERCToken(currencyAbbreviation, chain) && key) {
-            const linkedWallet = key.wallets.find(({tokens}) =>
+            const linkedWallet = key.wallets.find(({tokens}: any) =>
               tokens?.includes(walletId),
             );
             transactionHistory = linkedWallet?.transactionHistory?.transactions;
@@ -874,11 +911,9 @@ export const GetTransactionHistory =
         const errString =
           err instanceof Error ? err.message : JSON.stringify(err);
 
-        dispatch(
-          LogActions.error(
-            `!! Could not update transaction history for
+        logManager.error(
+          `!! Could not update transaction history for
           ${wallet.id}: ${errString}`,
-          ),
         );
         return reject(err);
       }
@@ -894,7 +929,7 @@ export interface NoteArgs {
 
 export const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
   return new Promise((resolve, reject) => {
-    wallet.editTxNote(args, (err: Error, res: any) => {
+    wallet.editTxNote(args, (err?: Error, res?: any) => {
       if (err) {
         return reject(err);
       }
@@ -908,7 +943,6 @@ export const EditTxNote = (wallet: Wallet, args: NoteArgs): Promise<any> => {
 export const GetContactName = (
   address: string | undefined,
   tokenAddress: string | undefined,
-  chain: string,
   contactList: any[] = [],
 ) => {
   if (!address || !contactList.length) {
@@ -917,7 +951,6 @@ export const GetContactName = (
   const existsContact = contactList.find(
     contact =>
       contact.address === address &&
-      contact.chain === chain?.toLowerCase() &&
       (!contact.tokenAddress || contact.tokenAddress === tokenAddress),
   );
   if (existsContact) {
@@ -960,7 +993,8 @@ export const TxForPaymentFeeEVM = (
 ): boolean => {
   return (
     walletCoin.toLowerCase() !== txCoin.toLowerCase() ||
-    IsZeroAmountEVM(amount, txChain.toLowerCase())
+    (IsZeroAmountEVM(amount, txChain.toLowerCase()) &&
+      !IsERCToken(walletCoin, txChain)) // Ensure walletCoin corresponds to the native chain currency (e.g., ETH, SOL)
   );
 };
 
@@ -1024,13 +1058,11 @@ export const BuildUiFriendlyList = (
       (isSent || isMoved) &&
       contactList?.length &&
       outputs?.length &&
-      chain &&
-      GetContactName(outputs[0]?.address, tokenAddress, chain, contactList)
+      GetContactName(outputs[0]?.address, tokenAddress, contactList)
     ) {
       contactName = GetContactName(
         outputs[0]?.address,
         tokenAddress,
-        chain,
         contactList,
       );
     }
@@ -1268,8 +1300,10 @@ export const buildTransactionDetails =
         } = transaction;
 
         const {
-          WALLET: {tokenOptionsByAddress, customTokenOptionsByAddress},
+          WALLET: {customTokenOptionsByAddress},
         } = getState();
+
+        const {tokenOptionsByAddress} = tokenManager.getTokenOptions();
 
         const tokensOptsByAddress = {
           ...BitpaySupportedTokenOptsByAddress,
@@ -1282,12 +1316,13 @@ export const buildTransactionDetails =
         let tokenSymbol: string | undefined;
 
         if (tokenAddress) {
-          tokenSymbol = Object.values(tokensOptsByAddress)
-            .find(
-              ({address}) =>
-                tokenAddress?.toLowerCase() === address?.toLowerCase(),
-            )
-            ?.symbol.toLowerCase();
+          const matchedToken = Object.values(tokensOptsByAddress).find(
+            (token: any) =>
+              tokenAddress?.toLowerCase() === token?.address?.toLowerCase(),
+          ) as any;
+          if (matchedToken?.symbol) {
+            tokenSymbol = String(matchedToken.symbol).toLowerCase();
+          }
         }
 
         const _fee =
@@ -1343,7 +1378,7 @@ export const buildTransactionDetails =
               minFeeErr instanceof Error
                 ? minFeeErr.message
                 : JSON.stringify(minFeeErr);
-            dispatch(LogActions.error('[GeMinFee] ', e));
+            logManager.error('[GeMinFee] ', e);
           }
         }
 
@@ -1479,8 +1514,8 @@ export const GetUtxos = (wallet: Wallet): Promise<Utxo[]> => {
     wallet.getUtxos(
       {
         coin: wallet.credentials.chain,
-      },
-      (err: any, resp: any) => {
+      } as any,
+      (err?: any, resp?: any) => {
         if (err || !resp || !resp.length) {
           return reject(err ? err : 'No UTXOs');
         }

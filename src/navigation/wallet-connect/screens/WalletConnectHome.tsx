@@ -41,7 +41,6 @@ import {sleep} from '../../../utils/helper-methods';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   dismissBottomNotificationModal,
-  dismissOnGoingProcessModal,
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -183,7 +182,7 @@ const WalletConnectHome = () => {
       notificationRequestId,
     },
   } = useRoute<RouteProp<{params: WalletConnectHomeParamList}>>();
-  const key = keys[keyId];
+  const key = (keys as Keys)[keyId];
   const keyFullWalletObjs = key.wallets.filter(
     w => w.receiveAddress === selectedAccountAddress,
   );
@@ -193,11 +192,13 @@ const WalletConnectHome = () => {
   // version 2
   const sessionV2: WCV2SessionType | undefined = useAppSelector(
     ({WALLET_CONNECT_V2}) =>
-      WALLET_CONNECT_V2.sessions.find(session => session.topic === topic),
+      WALLET_CONNECT_V2.sessions.find(
+        (session: WCV2SessionType) => session.topic === topic,
+      ),
   );
-  let requestsV2 = useAppSelector(({WALLET_CONNECT_V2}) =>
+  let requestsV2: WCV2RequestType[] = useAppSelector(({WALLET_CONNECT_V2}) =>
     WALLET_CONNECT_V2.requests
-      .filter(request => {
+      .filter((request: WCV2RequestType) => {
         const addressFrom = getAddressFrom(request)?.toLowerCase();
         const filterWithAddress = addressFrom
           ? addressFrom === selectedAccountAddress?.toLowerCase()
@@ -234,7 +235,6 @@ const WalletConnectHome = () => {
     try {
       await dispatch(walletConnectV2RejectCallRequest(request));
     } catch (err) {
-      dispatch(dismissOnGoingProcessModal());
       await showErrorMessage(
         CustomErrorMessage({
           errMsg: BWCErrorMessage(err),
@@ -350,7 +350,7 @@ const WalletConnectHome = () => {
       }
 
       navigation.navigate('WalletConnectConfirm', {
-        wallet: wallet,
+        wallet,
         recipient,
         request,
         peerName,

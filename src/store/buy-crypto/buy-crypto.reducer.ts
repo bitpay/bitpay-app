@@ -3,18 +3,26 @@ import {
   MoonpayPaymentData,
   SardinePaymentData,
   SimplexPaymentData,
+  TransakAccessTokenData,
   TransakPaymentData,
   WyrePaymentData,
 } from './buy-crypto.models';
 import {BuyCryptoActionType, BuyCryptoActionTypes} from './buy-crypto.types';
 import {handleWyreStatus} from '../../navigation/services/buy-crypto/utils/wyre-utils';
 import {RampPaymentData} from './models/ramp.models';
+import {PaymentMethodKey} from '../../navigation/services/buy-crypto/constants/BuyCryptoConstants';
 
 type BuyCryptoReduxPersistBlackList = string[];
-export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList =
-  [];
+export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList = [
+  'accessToken',
+];
+
+export interface BuyCryptoStateOpts {
+  selectedPaymentMethod: PaymentMethodKey | undefined;
+}
 
 export interface BuyCryptoState {
+  opts: BuyCryptoStateOpts;
   banxa: {[key in string]: BanxaPaymentData};
   moonpay: {[key in string]: MoonpayPaymentData};
   ramp: {[key in string]: RampPaymentData};
@@ -22,9 +30,15 @@ export interface BuyCryptoState {
   simplex: {[key in string]: SimplexPaymentData};
   transak: {[key in string]: TransakPaymentData};
   wyre: {[key in string]: WyrePaymentData};
+  tokens: {
+    transak: {[key in 'sandbox' | 'production']?: TransakAccessTokenData};
+  };
 }
 
 const initialState: BuyCryptoState = {
+  opts: {
+    selectedPaymentMethod: undefined,
+  },
   banxa: {},
   moonpay: {},
   ramp: {},
@@ -32,6 +46,9 @@ const initialState: BuyCryptoState = {
   simplex: {},
   transak: {},
   wyre: {},
+  tokens: {
+    transak: {},
+  },
 };
 
 export const buyCryptoReducer = (
@@ -39,6 +56,16 @@ export const buyCryptoReducer = (
   action: BuyCryptoActionType,
 ): BuyCryptoState => {
   switch (action.type) {
+    case BuyCryptoActionTypes.UPDATE_OPTS:
+      const {buyCryptoOpts} = action.payload;
+      return {
+        ...state,
+        opts: {
+          ...state.opts,
+          ...buyCryptoOpts,
+        },
+      };
+
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_BANXA:
       const {banxaPaymentData} = action.payload;
       return {
@@ -351,6 +378,21 @@ export const buyCryptoReducer = (
       return {
         ...state,
         transak: {...transakPaymentRequestsList},
+      };
+
+    case BuyCryptoActionTypes.ACCESS_TOKEN_TRANSAK:
+      return {
+        ...state,
+        tokens: {
+          ...state.tokens,
+          transak: {
+            ...state.tokens.transak,
+            [action.payload.env]: {
+              accessToken: action.payload.accessToken,
+              expiresAt: action.payload.expiresAt,
+            },
+          },
+        },
       };
 
     case BuyCryptoActionTypes.SUCCESS_PAYMENT_REQUEST_WYRE:

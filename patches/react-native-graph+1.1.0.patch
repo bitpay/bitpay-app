@@ -10,3 +10,125 @@ index bee225a..2d52f65 100644
      interpolateProgress.value = withSpring(1, {
        mass: 1,
        stiffness: 500,
+diff --git a/node_modules/react-native-graph/src/CreateGraphPath.ts b/node_modules/react-native-graph/src/CreateGraphPath.ts
+index 67e9a2e..fefd332 100644
+--- a/node_modules/react-native-graph/src/CreateGraphPath.ts
++++ b/node_modules/react-native-graph/src/CreateGraphPath.ts
+@@ -2,6 +2,7 @@ import { SkPath, Skia, SkPoint } from '@shopify/react-native-skia'
+ import type { GraphPoint, GraphRange } from './LineGraphProps'
+ 
+ const PIXEL_RATIO = 2
++const DIRECT_POINTS_THRESHOLD = 256
+ 
+ export interface GraphXRange {
+   min: Date
+@@ -160,6 +161,9 @@ function createGraphPathBase({
+     getXInRange(drawingWidth, graphData[graphData.length - 1]!.date, range.x) +
+     horizontalPadding
+ 
++  const useDirectPoints = graphData.length <= DIRECT_POINTS_THRESHOLD
++  let endXForGradient = endX
++
+   const getGraphDataIndex = (pixel: number) =>
+     Math.round(((pixel - startX) / (endX - startX)) * (graphData.length - 1))
+ 
+@@ -168,41 +172,58 @@ function createGraphPathBase({
+     return endX
+   }
+ 
+-  for (
+-    let pixel = startX;
+-    startX <= pixel && pixel <= endX;
+-    pixel = getNextPixelValue(pixel)
+-  ) {
+-    const index = getGraphDataIndex(pixel)
+-
+-    // Draw first point only on the very first pixel
+-    if (index === 0 && pixel !== startX) continue
+-    // Draw last point only on the very last pixel
+-
+-    if (index === graphData.length - 1 && pixel !== endX) continue
+-
+-    if (index !== 0 && index !== graphData.length - 1) {
+-      // Only draw point, when the point is exact
+-      const exactPointX =
+-        getXInRange(drawingWidth, graphData[index]!.date, range.x) +
+-        horizontalPadding
++  if (useDirectPoints) {
++    for (let i = 0; i < graphData.length; i++) {
++      const p = graphData[i]
++      if (p == null) continue
+ 
+-      const isExactPointInsidePixelRatio = Array(PIXEL_RATIO)
+-        .fill(0)
+-        .some((_value, additionalPixel) => {
+-          return pixel + additionalPixel === exactPointX
+-        })
++      const x = drawingWidth * getXPositionInRange(p.date, range.x) + horizontalPadding
++      const y =
++        drawingHeight - drawingHeight * getYPositionInRange(p.value, range.y) + verticalPadding
+ 
+-      if (!isExactPointInsidePixelRatio) continue
++      points.push({ x, y })
++    }
++    const last = points[points.length - 1]
++    if (last != null) {
++      endXForGradient = last.x
++    }
++  } else {
++    for (
++      let pixel = startX;
++      startX <= pixel && pixel <= endX;
++      pixel = getNextPixelValue(pixel)
++    ) {
++      const index = getGraphDataIndex(pixel)
++
++      // Draw first point only on the very first pixel
++      if (index === 0 && pixel !== startX) continue
++      // Draw last point only on the very last pixel
++
++      if (index === graphData.length - 1 && pixel !== endX) continue
++
++      if (index !== 0 && index !== graphData.length - 1) {
++        // Only draw point, when the point is exact
++        const exactPointX =
++          getXInRange(drawingWidth, graphData[index]!.date, range.x) +
++          horizontalPadding
++
++        const isExactPointInsidePixelRatio = Array(PIXEL_RATIO)
++          .fill(0)
++          .some((_value, additionalPixel) => {
++            return pixel + additionalPixel === exactPointX
++          })
++
++        if (!isExactPointInsidePixelRatio) continue
++      }
++
++      const value = graphData[index]!.value
++      const y =
++        drawingHeight -
++        getYInRange(drawingHeight, value, range.y) +
++        verticalPadding
++
++      points.push({ x: pixel, y: y })
+     }
+-
+-    const value = graphData[index]!.value
+-    const y =
+-      drawingHeight -
+-      getYInRange(drawingHeight, value, range.y) +
+-      verticalPadding
+-
+-    points.push({ x: pixel, y: y })
+   }
+ 
+   for (let i = 0; i < points.length; i++) {
+@@ -236,7 +257,7 @@ function createGraphPathBase({
+ 
+   const gradientPath = path.copy()
+ 
+-  gradientPath.lineTo(endX, height + verticalPadding)
++  gradientPath.lineTo(endXForGradient, height + verticalPadding)
+   gradientPath.lineTo(0 + horizontalPadding, height + verticalPadding)
+ 
+   return { path: path, gradientPath: gradientPath }

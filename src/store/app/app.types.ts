@@ -18,7 +18,6 @@ import {WalletKitTypes} from '@reown/walletkit';
 import {SupportedChains} from '../../constants/currencies';
 import {ChainSelectorConfig} from '../../components/modal/chain-selector/ChainSelector';
 import {LocalAssetsDropdown} from '../../components/list/AssetsByChainRow';
-import {PaymentSentModalConfig} from '../../navigation/wallet/components/PaymentSent';
 
 export enum AppActionTypes {
   NETWORK_CHANGED = 'APP/NETWORK_CHANGED',
@@ -30,11 +29,8 @@ export enum AppActionTypes {
   APP_OPENING_WAS_TRACKED = 'APP/OPENING_WAS_TRACKED',
   SET_APP_FIRST_OPEN_EVENT_COMPLETE = 'APP/SET_APP_FIRST_OPEN_EVENT_COMPLETE',
   SET_APP_FIRST_OPEN_DATE = 'APP/SET_APP_FIRST_OPEN_DATE',
-  SET_INTRO_COMPLETED = 'APP/SET_INTRO_COMPLETED',
   SET_ONBOARDING_COMPLETED = 'APP/SET_ONBOARDING_COMPLETED',
   SET_APP_INSTALLED = 'APP/SET_INSTALLED_COMPLETED',
-  SHOW_ONGOING_PROCESS_MODAL = 'APP/SHOW_ONGOING_PROCESS_MODAL',
-  DISMISS_ONGOING_PROCESS_MODAL = 'APP/DISMISS_ONGOING_PROCESS_MODAL',
   SHOW_WALLET_CONNECT_START_MODAL = 'APP/SHOW_WALLET_CONNECT_START_MODAL',
   DISMISS_WALLET_CONNECT_START_MODAL = 'APP/DISMISS_WALLET_CONNECT_START_MODAL',
   SHOW_IN_APP_NOTIFICATION = 'APP/SHOW_IN_APP_NOTIFICATION',
@@ -63,6 +59,7 @@ export enum AppActionTypes {
   DISMISS_PIN_MODAL = 'APP/DISMISS_PIN_MODAL',
   PIN_LOCK_ACTIVE = 'APP/PIN_LOCK_ACTIVE',
   CURRENT_PIN = 'APP/CURRENT_PIN',
+  CURRENT_SALT = 'APP/CURRENT_SALT',
   PIN_BANNED_UNTIL = 'APP/PIN_BANNED_UNTIL',
   SHOW_BLUR = 'APP/SHOW_BLUR',
   SHOW_PORTFOLIO_VALUE = 'APP/SHOW_PORTFOLIO_VALUE',
@@ -97,9 +94,7 @@ export enum AppActionTypes {
   IMPORT_LEDGER_MODAL_TOGGLED = 'APP/IMPORT_LEDGER_MODAL_TOGGLED',
   IN_APP_BROWSER_OPEN = 'APP/IN_APP_BROWSER_OPEN',
   SHOW_ARCHAX_BANNER = 'APP/SHOW_ARCHAX_BANNER',
-  SHOW_PAYMENT_SENT_MODAL = 'APP/SHOW_PAYMENT_SENT_MODAL',
-  DISMISS_PAYMENT_SENT_MODAL = 'APP/DISMISS_PAYMENT_SENT_MODAL',
-  CLEAR_PAYMENT_SENT_MODAL_OPTIONS = 'APP/CLEAR_PAYMENT_SENT_MODAL_OPTIONS',
+  DISMISS_MARKETING_CONTENT_CARD = 'APP/DISMISS_MARKETING_CONTENT_CARD',
 }
 
 interface ImportLedgerModalToggled {
@@ -142,10 +137,6 @@ interface setAppFirstOpenDate {
   payload: number;
 }
 
-interface SetIntroCompleted {
-  type: typeof AppActionTypes.SET_INTRO_COMPLETED;
-}
-
 interface SetOnboardingCompleted {
   type: typeof AppActionTypes.SET_ONBOARDING_COMPLETED;
 }
@@ -153,16 +144,6 @@ interface SetOnboardingCompleted {
 interface setAppInstalled {
   type: typeof AppActionTypes.SET_APP_INSTALLED;
 }
-
-interface ShowOnGoingProcessModal {
-  type: typeof AppActionTypes.SHOW_ONGOING_PROCESS_MODAL;
-  payload: string;
-}
-
-interface DismissOnGoingProcessModal {
-  type: typeof AppActionTypes.DISMISS_ONGOING_PROCESS_MODAL;
-}
-
 interface ShowWalletConnectStartModal {
   type: typeof AppActionTypes.SHOW_WALLET_CONNECT_START_MODAL;
 }
@@ -285,6 +266,11 @@ interface PinLockActive {
 
 interface CurrentPin {
   type: typeof AppActionTypes.CURRENT_PIN;
+  payload: string | undefined;
+}
+
+interface CurrentSalt {
+  type: typeof AppActionTypes.CURRENT_SALT;
   payload: string | undefined;
 }
 
@@ -442,17 +428,9 @@ interface ShowArchaxBanner {
   payload: boolean;
 }
 
-interface ShowPaymentSentModal {
-  type: typeof AppActionTypes.SHOW_PAYMENT_SENT_MODAL;
-  payload: PaymentSentModalConfig;
-}
-
-interface DismissPaymentSentModal {
-  type: typeof AppActionTypes.DISMISS_PAYMENT_SENT_MODAL;
-}
-
-interface ClearPaymentSentModalOptions {
-  type: typeof AppActionTypes.CLEAR_PAYMENT_SENT_MODAL_OPTIONS;
+interface DismissMarketingContentCard {
+  type: typeof AppActionTypes.DISMISS_MARKETING_CONTENT_CARD;
+  payload: string;
 }
 
 export type AppActionType =
@@ -465,11 +443,8 @@ export type AppActionType =
   | setAppFirstOpenEventComplete
   | setAppFirstOpenDate
   | setUserFeedback
-  | SetIntroCompleted
   | SetOnboardingCompleted
   | setAppInstalled
-  | ShowOnGoingProcessModal
-  | DismissOnGoingProcessModal
   | ShowInAppNotification
   | DismissInAppNotification
   | ShowBottomNotificationModal
@@ -492,6 +467,7 @@ export type AppActionType =
   | DismissPinModal
   | PinLockActive
   | CurrentPin
+  | CurrentSalt
   | PinBannedUntil
   | ShowBlur
   | ShowPortfolioValue
@@ -530,6 +506,4 @@ export type AppActionType =
   | ShowWalletConnectStartModal
   | DismissWalletConnectStartModal
   | ShowArchaxBanner
-  | ShowPaymentSentModal
-  | DismissPaymentSentModal
-  | ClearPaymentSentModalOptions;
+  | DismissMarketingContentCard;

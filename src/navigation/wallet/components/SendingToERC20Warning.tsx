@@ -10,6 +10,8 @@ import {
   Action,
   Black,
   LightBlack,
+  LightBlue,
+  Slate30,
   SlateDark,
   White,
 } from '../../../styles/colors';
@@ -77,7 +79,7 @@ export const ContractAddressText = styled(BaseText)`
   font-size: 14px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
   font-weight: 500;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : '#e1e4e7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   border-radius: 19.5px;
   padding: 9px 11px;
 `;
@@ -92,7 +94,7 @@ const SendingToNetworkBadge = styled.View`
   align-items: center;
   flex-direction: row;
   justify-content: flex-start;
-  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : '#e1e4e7')};
+  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
   border-radius: 19.5px;
   padding: 9px 11px;
 `;
@@ -109,7 +111,7 @@ const SendingToDescription = styled(BaseText)`
   color: ${({theme: {dark}}) => (dark ? White : Black)};
   margin: 10px 0px 28px 0px;
   border-bottom-width: 1px;
-  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : '#ECEFFD')};
+  border-bottom-color: ${({theme: {dark}}) => (dark ? LightBlack : LightBlue)};
   line-height: 24px;
 `;
 

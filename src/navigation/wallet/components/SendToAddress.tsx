@@ -14,7 +14,6 @@ import {Caution, NeutralSlate} from '../../../styles/colors';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletGroupParamList} from '../WalletGroup';
-import {startOnGoingProcessModal} from '../../../store/app/app.effects';
 import {Effect, RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
 import debounce from 'lodash.debounce';
@@ -34,10 +33,7 @@ import {
   TranslateToBchCashAddress,
 } from '../../../store/wallet/effects/address/address';
 import {APP_NAME_UPPERCASE} from '../../../constants/config';
-import {
-  dismissOnGoingProcessModal,
-  showBottomNotificationModal,
-} from '../../../store/app/app.actions';
+import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {BchLegacyAddressInfo, Mismatch} from './ErrorMessages';
 import {Recipient} from '../../../store/wallet/wallet.models';
 import KeyWalletsRow, {
@@ -57,7 +53,8 @@ import {
 } from '../../../store/wallet/utils/decode-uri';
 import {sleep} from '../../../utils/helper-methods';
 import {Analytics} from '../../../store/analytics/analytics.effects';
-import {LogActions} from '../../../store/log';
+import {useOngoingProcess} from '../../../contexts';
+import {logManager} from '../../../managers/LogManager';
 
 const SendToAddressContainer = styled.View`
   margin-top: 20px;
@@ -84,6 +81,7 @@ const SendToAddress = () => {
   const {t} = useTranslation();
   const theme = useTheme();
   const logger = useLogger();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const placeHolderTextColor = theme.dark ? NeutralSlate : '#6F7782';
   const [searchInput, setSearchInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -202,11 +200,11 @@ const SendToAddress = () => {
       let address = receiveAddress;
 
       if (!address) {
-        dispatch(startOnGoingProcessModal('GENERATING_ADDRESS'));
+        showOngoingProcess('GENERATING_ADDRESS');
         address = (await dispatch<any>(
           createWalletAddress({wallet: selectedWallet, newAddress: false}),
         )) as string;
-        dispatch(dismissOnGoingProcessModal());
+        hideOngoingProcess();
         await sleep(500);
       }
 
@@ -223,7 +221,7 @@ const SendToAddress = () => {
         : addRecipient(newRecipient);
     } catch (err) {
       const e = err instanceof Error ? err.message : JSON.stringify(err);
-      dispatch(LogActions.error('[SendToWallet] ', e));
+      logManager.error('[SendToWallet] ', e);
     }
   };
 
@@ -283,9 +281,7 @@ const SendToAddress = () => {
                   } catch (err) {
                     const e =
                       err instanceof Error ? err.message : JSON.stringify(err);
-                    dispatch(
-                      LogActions.error('[OpenScanner SendToAddress] ', e),
-                    );
+                    logManager.error('[OpenScanner SendToAddress] ', e);
                   }
                 },
               });

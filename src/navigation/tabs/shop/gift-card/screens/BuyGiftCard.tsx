@@ -16,7 +16,6 @@ import {
 import styled from 'styled-components/native';
 import {
   ActiveOpacity,
-  CtaContainerAbsolute,
   HEIGHT,
   WIDTH,
 } from '../../../../../components/styled/Containers';
@@ -34,6 +33,7 @@ import {
   White,
 } from '../../../../../styles/colors';
 import Button from '../../../../../components/button/Button';
+import FooterButtonContainer from '../../../../../components/footer/FooterButtonContainer';
 import GiftCardDenomSelector from '../../components/GiftCardDenomSelector';
 import GiftCardDenoms, {
   GiftCardDenomText,
@@ -114,11 +114,6 @@ const DescriptionBox = styled.View`
   padding: 20px ${horizontalPadding}px ${Platform.OS === 'android' ? 75 : 50}px;
 `;
 
-const FooterButton = styled(CtaContainerAbsolute)`
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-  padding-bottom: 10px;
-`;
-
 const DenomSelectionContainer = styled.View`
   margin-bottom: 40px;
   margin-top: 26px;
@@ -161,15 +156,11 @@ const BuyGiftCard = ({
   const user = useAppSelector(
     ({APP, BITPAY_ID}) => BITPAY_ID.user[APP.network],
   );
-  const syncGiftCardPurchasesWithBitPayId = useAppSelector(
-    ({SHOP}) => SHOP.syncGiftCardPurchasesWithBitPayId,
-  );
   const savedEmail = useAppSelector(({SHOP}) => SHOP.email);
   const savedPhone = useAppSelector(({SHOP}) => SHOP.phone);
   const savedPhoneCountryInfo = useAppSelector(
     ({SHOP}) => SHOP.phoneCountryInfo,
   );
-  const shouldSync = user && syncGiftCardPurchasesWithBitPayId;
   const [selectedAmountIndex, setSelectedAmountIndex] = useState(
     getMiddleIndex(cardConfig.supportedAmounts || []),
   );
@@ -343,7 +334,7 @@ const BuyGiftCard = ({
   };
 
   const next = (amount: number, phone?: string) => {
-    if (cardConfig.emailRequired && !shouldSync) {
+    if (cardConfig.emailRequired && !user) {
       return navigation.navigate(GiftCardScreens.ENTER_EMAIL, {
         cardConfig,
         initialEmail: savedEmail,
@@ -459,6 +450,7 @@ const BuyGiftCard = ({
                   color: theme.dark ? White : SlateDark,
                   fontFamily,
                   fontSize: 16,
+                  lineHeight: 22.5,
                 },
               }}>
               {cardConfig.description}
@@ -466,19 +458,11 @@ const BuyGiftCard = ({
           </DescriptionBox>
         </DescriptionContainer>
       </ScrollView>
-      <FooterButton
-        background={true}
-        style={{
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-          elevation: 5,
-        }}>
+      <FooterButtonContainer>
         <Button onPress={() => buyGiftCard()} buttonStyle={'primary'}>
           {cardConfig.supportedAmounts ? t('Continue') : t('Buy Gift Card')}
         </Button>
-      </FooterButton>
+      </FooterButtonContainer>
     </BuyGiftCardContainer>
   );
 };

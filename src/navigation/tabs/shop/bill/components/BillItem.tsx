@@ -25,13 +25,12 @@ import {ActiveOpacity} from '../../../../../components/styled/Containers';
 import {useAppDispatch} from '../../../../../utils/hooks';
 import {AppActions} from '../../../../../store/app';
 import {Analytics} from '../../../../../store/analytics/analytics.effects';
-import {startOnGoingProcessModal} from '../../../../../store/app/app.effects';
 import {ShopEffects} from '../../../../../store/shop';
-import {dismissOnGoingProcessModal} from '../../../../../store/app/app.actions';
 import {getBillAccountEventParams} from '../utils';
 import {CustomErrorMessage} from '../../../../wallet/components/ErrorMessages';
 import {InfoSvg} from '../../components/svg/ShopTabSvgs';
 import {useTheme} from 'styled-components/native';
+import {useOngoingProcess} from '../../../../../contexts';
 
 export interface BillItemProps {
   account?: BillPayAccount;
@@ -155,17 +154,18 @@ export default ({
   const dispatch = useAppDispatch();
   const {t} = useTranslation();
   const theme = useTheme();
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
 
   const baseEventParams = getBillAccountEventParams(account, payment);
 
   const removeBill = async () => {
     await sleep(500);
-    dispatch(startOnGoingProcessModal('REMOVING_BILL'));
+    showOngoingProcess('REMOVING_BILL');
     if (account) {
       await dispatch(ShopEffects.startHideBillPayAccount(account.id));
     }
     await dispatch(ShopEffects.startGetBillPayAccounts());
-    dispatch(dismissOnGoingProcessModal());
+    hideOngoingProcess();
     dispatch(Analytics.track('Bill Pay - Removed Bill', baseEventParams));
   };
 
@@ -280,7 +280,7 @@ export default ({
                             text: t('REMOVE BILL'),
                             action: () => {
                               removeBill().catch(async err => {
-                                dispatch(dismissOnGoingProcessModal());
+                                hideOngoingProcess();
                                 await sleep(500);
                                 dispatch(
                                   AppActions.showBottomNotificationModal(

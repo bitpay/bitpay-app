@@ -12,7 +12,7 @@ import {Platform} from 'react-native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {useAppSelector} from '../../utils/hooks';
 import ArchaxBanner from '../archax/archax-banner';
-import {HEIGHT} from '../styled/Containers';
+import {isNarrowHeight} from '../styled/Containers';
 
 const ModalHeaderText = styled(BaseText)`
   font-size: 18px;
@@ -52,15 +52,17 @@ type AmountModalProps = AmountProps & {
   onSendMaxPressed?: () => any;
 };
 
-const AmountModalContainerHOC = gestureHandlerRootHOC(props => {
-  return (
-    <StyledAmountModalContainer platform={Platform.OS}>
-      {props.children}
-    </StyledAmountModalContainer>
-  );
-});
+const AmountModalContainerHOC = gestureHandlerRootHOC(
+  (props: React.PropsWithChildren) => {
+    return (
+      <StyledAmountModalContainer platform={Platform.OS}>
+        {props.children}
+      </StyledAmountModalContainer>
+    );
+  },
+);
 
-const AmountModal: React.VFC<AmountModalProps> = props => {
+const AmountModal: React.FC<AmountModalProps> = props => {
   const {
     onClose,
     onSendMaxPressed,
@@ -71,7 +73,6 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
   } = props;
   const theme = useTheme();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
-  const isSmallScreen = HEIGHT < 700;
 
   return (
     <SheetModal
@@ -80,7 +81,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
       onBackdropPress={onClose}
       fullscreen>
       <AmountModalContainerHOC>
-        {showArchaxBanner && <ArchaxBanner isSmallScreen={isSmallScreen} />}
+        {showArchaxBanner && <ArchaxBanner isSmallScreen={isNarrowHeight} />}
         <ModalHeader>
           <CloseModalButton
             onPress={() => {
@@ -97,9 +98,7 @@ const AmountModal: React.VFC<AmountModalProps> = props => {
           {modalTitle && !showArchaxBanner ? (
             <ModalHeaderText>{modalTitle}</ModalHeaderText>
           ) : null}
-          {onSendMaxPressed &&
-          (!props.context ||
-            !['sellCrypto', 'swapCrypto'].includes(props.context)) ? (
+          {onSendMaxPressed ? (
             <ModalHeaderRight>
               <Button
                 buttonType="pill"

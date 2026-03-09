@@ -16,7 +16,7 @@ import CopiedSvg from '../../../../../assets/img/copied-success.svg';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
-import {LightBlack, White} from '../../../../styles/colors';
+import {LightBlack, LightBlue, White} from '../../../../styles/colors';
 import ShareIcon from '../../../../components/icons/share/Share';
 import {Share} from 'react-native';
 import GhostSvg from '../../../../../assets/img/ghost-straight-face.svg';
@@ -89,7 +89,7 @@ const AddressText = styled(BaseText)`
 `;
 
 const CopyImgContainer = styled.View`
-  border-right-color: #eceffd;
+  border-right-color: ${LightBlue};
   border-right-width: 1px;
   padding-right: 10px;
   height: 25px;

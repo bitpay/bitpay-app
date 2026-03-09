@@ -11,6 +11,7 @@ import {
   SheetContainer,
   ActiveOpacity,
   CloseButtonContainer,
+  isNarrowHeight,
 } from '../../../components/styled/Containers';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {BWCErrorMessage, BWCErrorName} from '../../../constants/BWCError';
@@ -19,6 +20,7 @@ import {
   Action,
   Black,
   LightBlack,
+  LightBlue,
   NeutralSlate,
   White,
 } from '../../../styles/colors';
@@ -76,7 +78,7 @@ const AddressText = styled(BaseText)`
 `;
 
 const CopyImgContainer = styled.View`
-  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : '#ECEFFD')};
+  border-right-color: ${({theme: {dark}}) => (dark ? '#46494E' : LightBlue)};
   border-right-width: 1px;
   padding-right: 10px;
   height: 25px;
@@ -90,8 +92,8 @@ const QRCodeContainer = styled.View`
 
 const QRCodeBackground = styled.View`
   background-color: ${White};
-  width: 225px;
-  height: 225px;
+  width: ${isNarrowHeight ? '190px' : '225px'};
+  height: ${isNarrowHeight ? '190px' : '225px'};
   justify-content: center;
   align-items: center;
   border-radius: 12px;
@@ -121,7 +123,7 @@ const CloseButtonText = styled(Paragraph)`
 const WarningContainer = styled.View`
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : NeutralSlate)};
   border-radius: 4px;
-  padding: 20px;
+  padding: ${isNarrowHeight ? '5px' : '20px'}
   margin-bottom: 20px;
 `;
 
@@ -148,7 +150,7 @@ const WarningDescription = styled(BaseText)<{isToken?: boolean}>`
       padding-bottom: 20px;
       border-bottom-width: 1px;
       border-bottom-color: ${({theme: {dark}}) =>
-        dark ? LightBlack : '#ECEFFD'};
+        dark ? LightBlack : LightBlue};
     `};
 `;
 
@@ -287,7 +289,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
   };
 
   const init = () => {
-    if (wallet?.isComplete()) {
+    if (wallet?.isComplete() && !wallet.pendingTssSession) {
       logger.info(`Creating address for wallet: ${wallet.id}`);
       createAddress();
     } else {
@@ -357,7 +359,7 @@ const ReceiveAddress = ({isVisible, closeModal, wallet, context}: Props) => {
 
             <QRCodeContainer>
               <QRCodeBackground>
-                <QRCode value={address} size={200} />
+                <QRCode value={address} size={isNarrowHeight ? 180 : 200} />
               </QRCodeBackground>
             </QRCodeContainer>
           </>

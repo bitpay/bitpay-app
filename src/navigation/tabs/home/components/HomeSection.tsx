@@ -12,88 +12,111 @@ import {
 } from '../../../../components/styled/Containers';
 import {BaseText, Link} from '../../../../components/styled/Text';
 import {HomeSectionTitle} from './Styled';
-import {LightBlack, LuckySevens, SlateDark} from '../../../../styles/colors';
+import {
+  Action,
+  LightBlue,
+  Midnight,
+  Slate30,
+  SlateDark,
+  White,
+} from '../../../../styles/colors';
+import ChevronRightSvg from './ChevronRightSvg';
 
 interface HomeRowProps {
   title?: string | undefined;
   action?: string | undefined;
   onActionPress?: TouchableWithoutFeedbackProps['onPress'];
-  slimHeader?: boolean;
   style?: StyleProp<ViewStyle>;
-  slimContainer?: boolean;
   label?: string;
   children: React.ReactNode;
 }
 
-const HomeRowContainer = styled.View<{slim?: boolean}>`
-  margin-bottom: ${({slim}) => (slim ? 32 : 28)}px;
+const HomeRowContainer = styled.View`
+  margin-bottom: 10px;
 `;
 
-const Header = styled.View<{slim?: boolean}>`
+const Header = styled.View`
   display: flex;
   flex-direction: row;
-  margin: 0 ${ScreenGutter} ${({slim}) => (slim ? 0 : 12)}px 16px;
+  margin: 0 ${ScreenGutter} 0 16px;
   justify-content: space-between;
   align-items: center;
 `;
 
+const HeaderLeft = styled.View`
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 1;
+`;
+
 const HomeSectionTitleContainer = styled.View`
-  width: 80%;
+  margin-right: 8px;
+  flex-shrink: 1;
 `;
 
 const HeaderLinkContainer = styled.View`
   margin-left: auto;
-`;
-
-const HeaderLink = styled(Link)`
-  font-weight: 500;
-  font-size: 14px;
-`;
-
-const HeaderLabel = styled(BaseText)`
-  font-weight: 500;
-  font-size: 14px;
-  color: ${({theme}) => (theme.dark ? LuckySevens : SlateDark)};
-`;
-
-const HeaderLabelContainer = styled.View`
-  border: 1px solid ${({theme: {dark}}) => (dark ? LightBlack : '#E1E4E7')};
-  padding: 0 8px;
+  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
+  padding: 4px 10px 4px 12px;
   border-radius: 50px;
 `;
 
+const HeaderLink = styled(Link)`
+  color: ${({theme: {dark}}) => (dark ? White : Action)};
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  text-transform: capitalize;
+`;
+
+const HeaderLabel = styled(BaseText)`
+  font-weight: 400;
+  font-size: 12px;
+  color: ${({theme}) => (theme.dark ? Slate30 : SlateDark)};
+`;
+
+const HeaderLabelContainer = styled.View`
+  border: 1px solid ${({theme: {dark}}) => (dark ? SlateDark : Slate30)};
+  padding: 2px 8px;
+  border-radius: 50px;
+  margin-left: 0px;
+`;
+
+const HeaderLinkContent = styled.View`
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+`;
+
 const HomeSection: React.FC<HomeRowProps> = props => {
-  const {
-    title,
-    action,
-    onActionPress,
-    slimHeader,
-    children,
-    style,
-    slimContainer,
-    label,
-  } = props;
+  const {title, action, onActionPress, children, style, label} = props;
 
   return (
-    <HomeRowContainer style={style} slim={slimContainer}>
+    <HomeRowContainer style={style}>
       {title ? (
-        <Header slim={slimHeader}>
-          <HomeSectionTitleContainer>
-            <HomeSectionTitle>{title}</HomeSectionTitle>
-          </HomeSectionTitleContainer>
+        <Header>
+          <HeaderLeft>
+            <HomeSectionTitleContainer>
+              <HomeSectionTitle>{title}</HomeSectionTitle>
+            </HomeSectionTitleContainer>
+            {label ? (
+              <HeaderLabelContainer>
+                <HeaderLabel>{label}</HeaderLabel>
+              </HeaderLabelContainer>
+            ) : null}
+          </HeaderLeft>
           {action ? (
             <HeaderLinkContainer>
               <TouchableOpacity
+                style={{flexDirection: 'row', alignItems: 'center', gap: 7}}
                 activeOpacity={ActiveOpacity}
                 onPress={onActionPress}>
-                <HeaderLink>{action}</HeaderLink>
+                <HeaderLinkContent>
+                  <HeaderLink>{action}</HeaderLink>
+                  <ChevronRightSvg />
+                </HeaderLinkContent>
               </TouchableOpacity>
             </HeaderLinkContainer>
-          ) : null}
-          {label ? (
-            <HeaderLabelContainer>
-              <HeaderLabel>{label}</HeaderLabel>
-            </HeaderLabelContainer>
           ) : null}
         </Header>
       ) : null}

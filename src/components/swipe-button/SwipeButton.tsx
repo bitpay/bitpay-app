@@ -1,12 +1,24 @@
-import React from 'react';
+import React, {useState} from 'react';
 import RNSwipeButton from 'rn-swipe-button';
 import {useTheme} from 'styled-components/native';
-import {NotificationPrimary, White} from '../../styles/colors';
-import BitpayBSvg from '../../../assets/img/logos/bitpay-b.svg';
+import {
+  NotificationPrimary,
+  White,
+  Success,
+  Caution,
+} from '../../styles/colors';
 import SlideArrowSVG from '../../../assets/img/slide-arrow.svg';
 import haptic from '../haptic-feedback/haptic';
 import styled from 'styled-components/native';
 import * as Svg from 'react-native-svg';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import ButtonSpinner from '../button/ButtonSpinner';
+import * as Icons from '../button/ButtonIcons';
 
 export interface SwipeButtonConfig {
   title: string;
@@ -34,6 +46,18 @@ const SlideArrow = styled(SlideArrowSVG)`
   z-index: -1;
 `;
 
+const OverlayContainer = styled.View`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50px;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+`;
+
 const SwipeBitpayLogo = (disabled?: boolean) => {
   const theme = useTheme();
 
@@ -47,6 +71,69 @@ const SwipeBitpayLogo = (disabled?: boolean) => {
   );
 };
 
+const SwipeButtonOverlay: React.FC<{
+  isVisible: boolean;
+  state: 'loading' | 'success' | 'failed';
+}> = ({isVisible, state}) => {
+  const opacity = useSharedValue(0);
+
+  React.useEffect(() => {
+    opacity.value = withTiming(isVisible ? 1 : 0, {
+      duration: 180,
+      easing: Easing.inOut(Easing.ease),
+    });
+  }, [isVisible]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  const getBackgroundColor = () => {
+    switch (state) {
+      case 'success':
+        return Success;
+      case 'failed':
+        return Caution;
+      default:
+        return NotificationPrimary;
+    }
+  };
+
+  const getIcon = () => {
+    switch (state) {
+      case 'success':
+        return <Icons.Check buttonStyle="primary" />;
+      case 'failed':
+        return <Icons.Close buttonStyle="primary" />;
+      case 'loading':
+        return <ButtonSpinner buttonStyle="primary" />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Animated.View
+      style={[
+        animatedStyle,
+        {
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          zIndex: 10,
+        },
+      ]}
+      pointerEvents={isVisible ? 'auto' : 'none'}>
+      <OverlayContainer
+        style={{
+          backgroundColor: getBackgroundColor(),
+        }}>
+        {getIcon()}
+      </OverlayContainer>
+    </Animated.View>
+  );
+};
+
 const SwipeButton = ({
   title,
   onSwipeComplete,
@@ -55,6 +142,10 @@ const SwipeButton = ({
   onSwipeFail,
 }: SwipeButtonConfig) => {
   const theme = useTheme();
+  const [state, setState] = useState<'loading' | null>(null);
+
+  const isLoading = state === 'loading';
+
   return (
     <SwipeButtonContainer>
       <SwipeButtonBackground>
@@ -68,7 +159,15 @@ const SwipeButton = ({
           height={buttonHeight}
           onSwipeFail={onSwipeFail}
           onSwipeStart={() => haptic('longPress')}
-          onSwipeSuccess={onSwipeComplete}
+          onSwipeSuccess={async () => {
+            setState('loading');
+            try {
+              await onSwipeComplete();
+            } catch (_) {
+            } finally {
+              setState(null);
+            }
+          }}
           swipeSuccessThreshold={75}
           railBackgroundColor={'transparent'}
           railFillBorderColor={'#0E258D'}
@@ -86,8 +185,8 @@ const SwipeButton = ({
           title={title}
           titleColor={theme.dark ? (disabled ? '#656565' : White) : White}
           titleStyles={{fontWeight: '500'}}
-          // shouldResetAfterSuccess={true} // Button resets automatically after swipe success
-          // resetAfterSuccessAnimDelay={3000} // Reset after 3s
+          shouldResetAfterSuccess={true} // Button resets automatically after swipe success
+          resetAfterSuccessAnimDelay={1000} // Reset after 1s
           forceReset={(reset: any) => {
             if (forceReset) {
               reset(); // Calling "reset" will reset the swipe thumb.
@@ -96,6 +195,7 @@ const SwipeButton = ({
           disabled={disabled}
         />
         <SlideArrow />
+        <SwipeButtonOverlay isVisible={isLoading} state="loading" />
       </SwipeButtonBackground>
     </SwipeButtonContainer>
   );

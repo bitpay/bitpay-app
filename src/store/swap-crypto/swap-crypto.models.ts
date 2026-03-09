@@ -23,6 +23,7 @@ export interface changellyTxData {
   payinExtraId?: string;
   totalExchangeFee: number;
   status: string;
+  isTSSWallet?: boolean;
   error?: any;
   env?: 'dev' | 'prod';
 }
@@ -46,6 +47,7 @@ export interface thorswapTxData {
   spenderKey: ThorswapProvider;
   slippage?: number;
   status: ThorswapTrackingStatus;
+  isTSSWallet?: boolean;
   error?: any;
   env?: 'dev' | 'prod';
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, TouchableOpacity} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigatorScreenParams, useTheme} from '@react-navigation/native';
 
@@ -85,6 +86,7 @@ export const Tab = createBottomTabNavigator<TabsStackParamList>();
 const TabsStack = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const hasViewedBillsTab = useAppSelector(({APP}) => APP.hasViewedBillsTab);
   useAndroidBackHandler(() => true);
   const TransactionButton = () => null;
@@ -95,8 +97,8 @@ const TabsStack = () => {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: theme.colors.background,
-          height: 60,
-          paddingBottom: 0,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom,
           paddingTop: 8,
         },
         tabBarButton: props => (
