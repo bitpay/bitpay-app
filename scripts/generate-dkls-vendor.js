@@ -164,7 +164,7 @@ function verify(expectedHashes) {
       continue;
     }
 
-    const b64Match = content.match(/export const \w+ =\n  "([A-Za-z0-9+/=]+)";/);
+    const b64Match = content.match(/export const \w+ =\n {2}"([A-Za-z0-9+/=]+)";/);
     if (!b64Match) {
       console.error(`  NO BASE64 CONTENT found in ${filePath}`);
       ok = false;

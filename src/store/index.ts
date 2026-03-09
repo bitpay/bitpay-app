@@ -145,12 +145,10 @@ const restoreFromBackup = (reason: string): Promise<string | null> => {
         try {
           // Write back to MMKV to repair store for future runs
           storage.set('persist:root', restored);
-          addLog(
-            LogActions.info(
-              `MMKV persist:root ${reason} - restored from filesystem backup - durationMs:${
-                Date.now() - startTs
-              }`,
-            ),
+          logManager.info(
+            `MMKV persist:root ${reason} - restored from filesystem backup - durationMs:${
+              Date.now() - startTs
+            }`,
           );
         } catch (err) {
           addLog(
@@ -190,10 +188,8 @@ export const reduxStorage: Storage = {
           const triggerLabel = backupTriggerAction ?? 'no existing backup';
           backupPersistRoot(value)
             .then(() =>
-              addLog(
-                LogActions.debug(
-                  `Backed up store to filesystem, triggered by ${triggerLabel}.`,
-                ),
+              logManager.debug(
+                `Backed up store to filesystem, triggered by ${triggerLabel}.`,
               ),
             )
             .catch(() => {});
@@ -470,17 +466,13 @@ const getStore = async () => {
   const persistLifecycleLogger = (): Middleware => {
     let persistStartTs: number | null = null;
     let firstRehydrateLogged = false;
-    return store => next => (action: AnyAction) => {
+    return _store => next => (action: AnyAction) => {
       if (action && typeof action.type === 'string') {
         if (action.type === 'persist/PERSIST') {
           persistStartTs = Date.now();
           try {
             const keysCount = storage.getAllKeys().length;
-            store.dispatch(
-              LogActions.info(
-                `persist/PERSIST start - storageKeys:${keysCount}`,
-              ),
-            );
+            logManager.info(`persist/PERSIST start - storageKeys:${keysCount}`);
           } catch (_) {}
         } else if (
           action.type === 'persist/REHYDRATE' &&
@@ -505,12 +497,10 @@ const getStore = async () => {
                 } catch (_) {}
               });
             } catch (_) {}
-            store.dispatch(
-              LogActions.info(
-                `persist/REHYDRATE complete - durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
-                  sizeByReduxKey,
-                )}`,
-              ),
+            logManager.info(
+              `persist/REHYDRATE complete - durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
+                sizeByReduxKey,
+              )}`,
             );
           } catch (_) {}
         }

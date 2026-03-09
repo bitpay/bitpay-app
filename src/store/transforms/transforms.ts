@@ -175,7 +175,7 @@ export const bootstrapKey = (key: Key, id: string) => {
       });
 
       const successLog = `bindTssKey - ${id}`;
-      initLogs.add(LogActions.info(successLog));
+      logManager.info(successLog);
       return _key;
     } catch (err: unknown) {
       const errorLog = `Failed to bindTssKey - ${id} - ${getErrorString(err)}`;
