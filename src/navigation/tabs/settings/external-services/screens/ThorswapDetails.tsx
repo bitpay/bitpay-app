@@ -190,7 +190,8 @@ const ThorswapDetails: React.FC = () => {
         showThorswapError(err);
       }
     } catch (err) {
-      logger.error('Thorswap getStatus Error: ' + JSON.stringify(err));
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('Thorswap getStatus Error: ' + errStr);
     }
   };
 
@@ -514,9 +515,7 @@ const ThorswapDetails: React.FC = () => {
                     },
                     {
                       text: t('GO BACK'),
-                      action: () => {
-                        console.log('Removing transaction data CANCELED');
-                      },
+                      action: () => {},
                     },
                   ],
                 }),

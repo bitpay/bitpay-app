@@ -2,7 +2,11 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {useNavigation, useRoute, StackActions} from '@react-navigation/native';
 import {RouteProp} from '@react-navigation/core';
 import {WalletScreens, WalletGroupParamList} from '../../../WalletGroup';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../../utils/hooks';
 import {
   Balance,
   H6,
@@ -89,6 +93,7 @@ const BalanceContainer = styled.View`
 const Confirm = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const navigation = useNavigation();
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
@@ -309,7 +314,12 @@ const Confirm = () => {
   const handlePaymentFailure = async (error: any) => {
     if (wallet && txp) {
       await removeTxp(wallet, txp).catch(removeErr =>
-        console.error('error deleting txp', removeErr),
+        logger.error(
+          'Error deleting txp: ' +
+            (removeErr instanceof Error
+              ? removeErr.message
+              : JSON.stringify(removeErr)),
+        ),
       );
     }
     updateTxDetails(undefined);

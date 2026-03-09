@@ -10,6 +10,7 @@ import {
   OnGoingProcessMessages,
   OngoingProcessState,
 } from '../managers/OngoingProcessManager';
+import {logManager} from '../managers/LogManager';
 
 interface OngoingProcessContextType {
   isVisible: boolean;
@@ -41,7 +42,7 @@ export const OngoingProcessProvider: React.FC<{children: ReactNode}> = ({
 
   useEffect(() => {
     if (!ongoingProcessManager?.subscribe) {
-      console.warn(
+      logManager.warn(
         '[OngoingProcessProvider] ongoingProcessManager.subscribe is not available',
       );
       return;
@@ -52,10 +53,11 @@ export const OngoingProcessProvider: React.FC<{children: ReactNode}> = ({
         setState(newState);
       });
       return unsubscribe;
-    } catch (error) {
-      console.error(
+    } catch (err) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(
         '[OngoingProcessProvider] Error subscribing to ongoingProcessManager:',
-        error,
+        errStr,
       );
     }
   }, []);
@@ -82,7 +84,7 @@ export const useOngoingProcess = () => {
   const context = useContext(OngoingProcessContext);
 
   if (!context) {
-    console.warn(
+    logManager.warn(
       '[useOngoingProcess] Context is not available, returning default data',
     );
     return DEFAULT_ONGOING_PROCESS_STATE;

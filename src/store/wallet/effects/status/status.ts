@@ -66,7 +66,7 @@ export const waitForTargetAmountAndUpdateWallet =
 
       // wait for expected balance
       const interval = setInterval(() => {
-        console.log('waiting for target balance', retry);
+        logManager.debug('waiting for target balance', retry);
         retry++;
 
         if (retry > 5) {
@@ -119,7 +119,7 @@ export const waitForTargetAmountAndUpdateWallet =
                         force: true,
                       }),
                     );
-                    console.log('updated recipient wallet');
+                    logManager.debug('updated recipient wallet');
                   }
                 }
               }
@@ -163,7 +163,7 @@ export const startUpdateWalletStatus =
           !isCacheKeyStale(balanceCacheKey[id], BALANCE_CACHE_DURATION) &&
           !force
         ) {
-          console.log(`Wallet: ${id} - skipping balance update`);
+          logManager.debug(`Wallet: ${id} - skipping balance update`);
           return resolve();
         }
 
@@ -250,7 +250,7 @@ export const startUpdateWalletStatus =
           );
         }
 
-        console.log(`Updated balance: ${currencyAbbreviation} ${id}`);
+        logManager.debug(`Updated balance: ${currencyAbbreviation} ${id}`);
         resolve();
       } catch (err) {
         reject(err);
@@ -325,7 +325,7 @@ export const updateKeyStatus =
         !isCacheKeyStale(balanceCacheKey[key.id], BALANCE_CACHE_DURATION) &&
         !force
       ) {
-        console.log(`Key: ${key.id} - skipping balance update`);
+        logManager.debug(`Key: ${key.id} - skipping balance update`);
         return;
       }
 
@@ -708,7 +708,7 @@ export const startUpdateAllKeyAndWalletStatus =
           !isCacheKeyStale(balanceCacheKey.all, BALANCE_CACHE_DURATION) &&
           !force
         ) {
-          console.log(
+          logManager.debug(
             '[startUpdateAllKeyAndWalletStatus] All: skipping balance update',
           );
           return resolve();
@@ -1112,9 +1112,11 @@ export const buildPendingTxps =
           ProcessPendingTxps(status.pendingTxps, wallet),
         );
       }
-    } catch (error) {
-      console.log(
+    } catch (err) {
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(
         `Wallet: ${wallet.currencyAbbreviation} - error getting pending txps.`,
+        errStr,
       );
     }
 

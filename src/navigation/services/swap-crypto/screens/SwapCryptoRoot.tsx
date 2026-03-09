@@ -728,7 +728,8 @@ const SwapCryptoRoot: React.FC = () => {
           startUpdateWalletStatus({key, wallet: selectedWallet, force: true}),
         );
       } catch (err) {
-        logger.warn('Failed to update balances from Swap Crypto');
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.warn('Failed to update balances from Swap Crypto: ' + errMsg);
       }
       if (selectedWallet.balance?.satSpendable > 0) {
         setFromWallet(selectedWallet, true);
@@ -979,7 +980,8 @@ const SwapCryptoRoot: React.FC = () => {
       }
       setLoadingEnterAmountBtn(false);
     } catch (err) {
-      logger.error('Swap crypto getLimits Error: ' + JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('Swap crypto getLimits Error: ' + errMsg);
       setLoadingEnterAmountBtn(false);
       const msg = t(
         'Swap Crypto feature is not available at this moment. Please try again later.',
@@ -1036,7 +1038,8 @@ const SwapCryptoRoot: React.FC = () => {
       );
       return changellySwapLimits;
     } catch (err) {
-      logger.error('Changelly getPairsParams Error: ' + JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('Changelly getPairsParams Error: ' + errMsg);
     }
   };
 
@@ -1454,7 +1457,8 @@ const SwapCryptoRoot: React.FC = () => {
       swapCryptoConfig = config?.swapCrypto;
       logger.debug('swapCryptoConfig: ' + JSON.stringify(swapCryptoConfig));
     } catch (err) {
-      logger.error('getSwapCryptoConfig Error: ' + JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('getSwapCryptoConfig Error: ' + errMsg);
     }
 
     if (swapCryptoConfig?.disabled) {
@@ -1649,8 +1653,9 @@ const SwapCryptoRoot: React.FC = () => {
         }
       }
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       const reason = 'Swap crypto getCurrencies catch Error';
-      logger.error('Swap crypto getCurrencies Error: ' + JSON.stringify(err));
+      logger.error(reason + ': ' + errMsg);
       const msg = t(
         'Swap Crypto feature is not available at this moment. Please try again later.',
       );
@@ -1805,9 +1810,8 @@ const SwapCryptoRoot: React.FC = () => {
     try {
       await createFixTransaction(1);
     } catch (err) {
-      logger.error(
-        'Create Changelly Transaction Error: ' + JSON.stringify(err),
-      );
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('Create Changelly Transaction Error: ' + errMsg);
       const msg = t(
         'There was an error while creating the exchange transaction. Please try again later.',
       );
@@ -1836,7 +1840,8 @@ const SwapCryptoRoot: React.FC = () => {
         createWalletAddress({wallet: toWalletSelected, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('createFixTransaction: ' + errMsg);
       hideOngoingProcess();
       await sleep(400);
       return;
@@ -2032,7 +2037,9 @@ const SwapCryptoRoot: React.FC = () => {
             );
           }
         } catch (err) {
-          logger.error('toFiat Error for totalExchangeFeeFiat');
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error('toFiat Error for totalExchangeFeeFiat: ' + errMsg);
           // continue anyways
         }
       }
@@ -2085,7 +2092,9 @@ const SwapCryptoRoot: React.FC = () => {
             );
           }
         } catch (err) {
-          logger.error('toFiat Error for minerFee');
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error('toFiat Error for minerFee: ' + errMsg);
           // continue anyways
         }
 
@@ -2151,10 +2160,9 @@ const SwapCryptoRoot: React.FC = () => {
         return;
       }
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       const reason = 'createFixTransaction Catch Error';
-      logger.error(
-        'Changelly createFixTransaction Error: ' + JSON.stringify(err),
-      );
+      logger.error('Changelly createFixTransaction Error: ' + errMsg);
       const msg = t(
         'Changelly is not available at this moment. Please try again later.',
       );
@@ -2423,11 +2431,12 @@ const SwapCryptoRoot: React.FC = () => {
 
       await createFixTransaction(++tries, fixedRateId);
     } catch (err) {
-      logger.error(JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      const reason = 'getFixRateForAmount Error';
+      logger.error(reason + ': ' + errMsg);
       let msg = t(
         'Changelly is not available at this moment. Please try again later.',
       );
-      const reason = 'getFixRateForAmount Error';
       showError({msg, reason, goBack: true, fireAnalytics: true});
     }
   };
@@ -2525,9 +2534,11 @@ const SwapCryptoRoot: React.FC = () => {
         case 'user denied transaction':
           break;
         default:
-          logger.error(JSON.stringify(err));
+          const errMsg =
+            err instanceof Error ? err.message : JSON.stringify(err);
           let msg = t('Uh oh, something went wrong. Please try again later');
           const reason = 'publishAndSign Error';
+          logger.error(reason + ': ' + errMsg);
           let errorMsgLog: string | undefined;
           if (typeof err === 'string') {
             errorMsgLog = err;
@@ -2576,7 +2587,8 @@ const SwapCryptoRoot: React.FC = () => {
         await makePayment({});
       }
     } catch (err) {
-      logger.error('onSwipeComplete Error: ' + JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('onSwipeComplete Error: ' + errMsg);
     }
   };
 

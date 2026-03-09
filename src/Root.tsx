@@ -965,7 +965,12 @@ export default () => {
               .then(item =>
                 dispatch(shortcutListener(item, navigationRef as any)),
               )
-              .catch(console.error);
+              .catch(err =>
+                logManager.error(
+                  'Error initializing QuickActions: ',
+                  err instanceof Error ? err.message : JSON.stringify(err),
+                ),
+              );
             DeviceEventEmitter.addListener(
               'quickActionShortcut',
               (item: ShortcutItem) => {

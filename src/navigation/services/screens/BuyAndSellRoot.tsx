@@ -895,7 +895,8 @@ const BuyAndSellRoot = ({
       setExternalServicesConfig(config);
       logger.debug('buyCryptoConfig: ' + JSON.stringify(buyCryptoConfig));
     } catch (err) {
-      logger.error('getBuyCryptoConfig Error: ' + JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('getBuyCryptoConfig Error: ' + errMsg);
     }
 
     if (buyCryptoConfig?.disabled) {
@@ -1028,7 +1029,8 @@ const BuyAndSellRoot = ({
           .filter(currency => !!currency.name);
 
       setBuyCryptoSupportedCoinsFullObj(initialBuyCryptoSupportedCoinsFullObj);
-    } catch (error) {
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(
         'Buy crypto Error when trying to build the list of supported coins from: ' +
           JSON.stringify(supportedCoins),
@@ -1398,7 +1400,8 @@ const BuyAndSellRoot = ({
       sellCryptoConfig = config?.sellCrypto;
       logger.debug('sellCryptoConfig: ' + JSON.stringify(sellCryptoConfig));
     } catch (err) {
-      logger.error('getSellCryptoConfig Error: ' + JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('getSellCryptoConfig Error: ' + errMsg);
     }
 
     if (sellCryptoConfig?.disabled) {
@@ -1650,7 +1653,8 @@ const BuyAndSellRoot = ({
         }
       }
     } catch (err) {
-      logger.error('Sell crypto getCurrencies Error: ' + JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('Sell crypto getCurrencies Error: ' + errMsg);
       const msg = t(
         'Sell Crypto feature is not available at this moment. Please try again later.',
       );
@@ -1683,7 +1687,8 @@ const BuyAndSellRoot = ({
       try {
         await dispatch(startUpdateWalletStatus({key, wallet, force: true}));
       } catch (err) {
-        logger.warn('Failed to update balances from Sell Crypto');
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.warn('Failed to update balances from Sell Crypto: ' + errMsg);
       }
     }
 
@@ -1829,7 +1834,8 @@ const BuyAndSellRoot = ({
       }
       setLoadingEnterAmountBtn(false);
     } catch (err) {
-      logger.error('Sell crypto getLimits Error: ' + JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error('Sell crypto getLimits Error: ' + errMsg);
       setLoadingEnterAmountBtn(false);
       const msg = t(
         'Sell Crypto feature is not available at this moment. Please try again later.',
@@ -2156,7 +2162,8 @@ const BuyAndSellRoot = ({
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`Banxa createWalletAddress Error: ${errMsg}`);
       const title = t('Banxa Error');
       const msg = getErrorMessage(err);
       const reason = 'createWalletAddress Error';
@@ -2269,7 +2276,8 @@ const BuyAndSellRoot = ({
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(` Moonpay createWalletAddress Error: ${errMsg}`);
       const title = t('MoonPay Error');
       const msg = getErrorMessage(err);
       const reason = 'createWalletAddress Error';
@@ -2379,7 +2387,8 @@ const BuyAndSellRoot = ({
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`Ramp createWalletAddress Error: ${errMsg}`);
       const title = t('Ramp Network Error');
       const msg = getErrorMessage(err);
       const reason = 'createWalletAddress Error';
@@ -2502,7 +2511,8 @@ const BuyAndSellRoot = ({
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`Sardine createWalletAddress Error: ${errMsg}`);
       const title = t('Sardine Error');
       const msg = getErrorMessage(err);
       const reason = 'createWalletAddress Error';
@@ -2649,7 +2659,8 @@ const BuyAndSellRoot = ({
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`Simplex createWalletAddress Error: ${errMsg}`);
       const title = t('Simplex Error');
       const msg = getErrorMessage(err);
       const reason = 'createWalletAddress Error';
@@ -2769,7 +2780,8 @@ const BuyAndSellRoot = ({
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`Transak createWalletAddress Error: ${errMsg}`);
       const title = t('Transak Error');
       const msg = getErrorMessage(err);
       const reason = 'createWalletAddress Error';
@@ -2814,7 +2826,8 @@ const BuyAndSellRoot = ({
           return;
         }
       } catch (err: any) {
-        logger.error('Error fetching Transak access token');
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error('Error fetching Transak access token: ' + errMsg);
         const title = t('Transak Error');
         const msg = getErrorMessage(err);
         const reason = 'transakUpdateAccessToken Error';
@@ -2973,7 +2986,8 @@ const BuyAndSellRoot = ({
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`Moonpay createWalletAddress Error: ${errMsg}`);
       const msg = t('Error when trying to generate wallet address.');
       const title = t('MoonPay Error');
       const reason = 'createWalletAddress Error';
@@ -3102,7 +3116,8 @@ const BuyAndSellRoot = ({
         createWalletAddress({wallet: selectedWallet, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`Ramp createWalletAddress Error: ${errMsg}`);
       const msg = t('Error when trying to generate wallet address.');
       const title = t('Ramp Error');
       const reason = 'createWalletAddress Error';
@@ -3217,10 +3232,9 @@ const BuyAndSellRoot = ({
           event.nativeEvent.data,
         ) as RampOfframpSaleCreatedEvent;
         logger.debug('Successfully parsed!');
-      } catch (error) {
-        logger.error(
-          'Error trying to parse event JSON: ' + JSON.stringify(error),
-        );
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error('Error trying to parse event JSON: ' + errMsg);
         return;
       }
 

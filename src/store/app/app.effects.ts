@@ -689,7 +689,8 @@ export const openUrlWithInAppBrowser =
     try {
       isIabAvailable = await InAppBrowser.isAvailable();
     } catch (err) {
-      console.log(err);
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.debug('[openUrlWithInAppBrowser] Error isAvailable', errStr);
     }
 
     const handler = isIabAvailable ? 'InAppBrowser' : 'external app';
@@ -718,9 +719,9 @@ export const openUrlWithInAppBrowser =
           dispatch(AppActions.setInAppBrowserOpen(false));
           logManager.info(`InAppBrowser closed with type: ${result.type}`);
         } catch (err) {
-          const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${JSON.stringify(
-            err,
-          )}`;
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${errStr}`;
           dispatch(AppActions.setInAppBrowserOpen(false));
           logManager.error(logMsg);
           // if InAppBrowser is available but InAppBrowser.open fails, will try to open an external browser
@@ -733,9 +734,8 @@ export const openUrlWithInAppBrowser =
         await Linking.openURL(url);
       }
     } catch (err) {
-      const logMsg = `Error opening URL ${url} with ${handler}.\n${JSON.stringify(
-        err,
-      )}`;
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      const logMsg = `Error opening URL ${url} with ${handler}.\n${errStr}`;
 
       dispatch(AppActions.setInAppBrowserOpen(false));
       logManager.error(logMsg);
@@ -1073,11 +1073,6 @@ export const handleBwsEvent =
       }
 
       // TODO showInappNotification(data);
-
-      console.log(
-        `BWS Event: ${response.notification_type}: `,
-        JSON.stringify(response),
-      );
 
       const keyObj = await findKeyByKeyId(keyId, keys);
 
@@ -1566,7 +1561,8 @@ export const joinWaitlist =
           break;
       }
     } catch (err) {
-      logManager.error(`Error joining waitlist: ${err}`);
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(`Error joining waitlist: ${errStr}`);
       throw err;
     }
   };
