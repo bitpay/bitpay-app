@@ -1,4 +1,4 @@
-import React, {useState, useLayoutEffect, useEffect} from 'react';
+import React, {useState, useLayoutEffect, useEffect, useCallback} from 'react';
 import {yupResolver} from '@hookform/resolvers/yup';
 import yup from '../../../../lib/yup';
 import styled from 'styled-components/native';
@@ -69,9 +69,10 @@ const ContactsAdd = ({
   const {
     control,
     handleSubmit,
+    clearErrors,
     setError,
     setValue,
-    formState: {errors, dirtyFields},
+    formState: {errors},
   } = useForm<ContactRowProps>({resolver: yupResolver(schema)});
   const {contact, context, onEditComplete} = route.params || {};
 
@@ -109,49 +110,55 @@ const ContactsAdd = ({
     setNetworkValue(network);
     setXrpValidAddress(chain === 'xrp');
   };
-  const processAddress = (address: string) => {
-    if (address) {
-      const coinAndNetwork = GetCoinAndNetwork(address);
-      if (coinAndNetwork) {
-        const isValid = ValidateCoinAddress(
-          address,
-          coinAndNetwork.coin,
-          coinAndNetwork.network,
-        );
-        if (isValid) {
-          setValidValues(
-            address,
-            coinAndNetwork.coin,
-            coinAndNetwork.network,
-            coinAndNetwork.coin,
-          );
-        } else {
-          const isValidTest = ValidateCoinAddress(
-            address,
-            coinAndNetwork.coin,
-            'testnet',
-          );
-          if (isValidTest) {
-            setValidValues(
-              address,
-              coinAndNetwork.coin,
-              'testnet',
-              coinAndNetwork.coin,
-            );
-          }
-        }
-      } else {
-        setAddressValue('');
-        setCoinValue('');
-        setChainValue('');
-        setNetworkValue('');
-        setValidAddress(false);
-        setXrpValidAddress(false);
-      }
-    }
-  };
 
-  const onSubmit = handleSubmit((contact: ContactRowProps) => {
+  const resetAddressState = useCallback(() => {
+    setAddressValue('');
+    setCoinValue('');
+    setChainValue('');
+    setNetworkValue('');
+    setValidAddress(false);
+    setXrpValidAddress(false);
+  }, []);
+
+  const processAddress = useCallback(
+    (rawAddress: string) => {
+      const address = rawAddress.trim();
+
+      if (!address) {
+        resetAddressState();
+        clearErrors('address');
+        return;
+      }
+
+      const coinAndNetwork = GetCoinAndNetwork(address);
+
+      if (!coinAndNetwork) {
+        resetAddressState();
+        return;
+      }
+
+      const {coin, network} = coinAndNetwork;
+
+      const isValidMainnet = ValidateCoinAddress(address, coin, network);
+      if (isValidMainnet) {
+        setValidValues(address, coin, network, coin);
+        clearErrors('address');
+        return;
+      }
+
+      const isValidTestnet = ValidateCoinAddress(address, coin, 'testnet');
+      if (isValidTestnet) {
+        setValidValues(address, coin, 'testnet', coin);
+        clearErrors('address');
+        return;
+      }
+
+      resetAddressState();
+    },
+    [clearErrors, resetAddressState],
+  );
+
+  const onSubmit = handleSubmit((formValues: ContactRowProps) => {
     if (!validAddress) {
       setError('address', {
         type: 'manual',
@@ -160,14 +167,18 @@ const ContactsAdd = ({
       return;
     }
 
-    contact.coin = coinValue;
-    contact.chain = chainValue;
-    contact.network = networkValue;
+    const contactToSave: ContactRowProps = {
+      ...formValues,
+      address: addressValue,
+      coin: coinValue,
+      chain: chainValue,
+      network: networkValue,
+    };
 
     if (context === 'edit') {
-      dispatch(updateContact(contact));
+      dispatch(updateContact(contactToSave));
       navigation.goBack();
-      onEditComplete && onEditComplete(contact);
+      onEditComplete?.(contactToSave);
       return;
     }
 
@@ -179,15 +190,23 @@ const ContactsAdd = ({
       return;
     }
 
+    let notes = contactToSave.notes || '';
+
     if (IsValidEVMAddress(addressValue)) {
-      contact.notes = 'EVM compatible address\n';
+      notes = 'EVM compatible address\n';
     }
 
     if (IsValidSVMAddress(addressValue)) {
-      contact.notes = 'Solana address\n';
+      notes = 'Solana address\n';
     }
 
-    dispatch(createContact(contact));
+    dispatch(
+      createContact({
+        ...contactToSave,
+        notes,
+      }),
+    );
+
     navigation.goBack();
   });
 
@@ -197,24 +216,28 @@ const ContactsAdd = ({
         context: 'contactsAdd',
       }),
     );
+
     navigation.navigate('ScanRoot', {
-      onScanComplete: address => {
-        setValue('address', address, {shouldDirty: true});
-        processAddress(address);
+      onScanComplete: scannedAddress => {
+        const trimmedAddress = scannedAddress.trim();
+        setValue('address', trimmedAddress, {shouldDirty: true});
+        processAddress(trimmedAddress);
       },
     });
   };
 
   useEffect(() => {
-    if (contact) {
-      processAddress(contact.address!!);
-      setValue('address', contact.address!, {shouldDirty: true});
-      setValue('name', contact.name || '');
-      setValue('email', contact.email);
-      setValue('chain', contact.chain!);
-      setValue('destinationTag', contact.tag || contact.destinationTag);
+    if (!contact) {
+      return;
     }
-  }, [contact]);
+
+    processAddress(contact.address!);
+    setValue('address', contact.address!, {shouldDirty: true});
+    setValue('name', contact.name || '');
+    setValue('email', contact.email || '');
+    setValue('chain', contact.chain || '');
+    setValue('destinationTag', contact.tag || contact.destinationTag || '');
+  }, [contact, processAddress, setValue]);
 
   return (
     <Container>
@@ -265,14 +288,13 @@ const ContactsAdd = ({
                   label={t('ADDRESS')}
                   onBlur={onBlur}
                   onChangeText={(newValue: string) => {
-                    const trimmedValue = newValue.trim();
-                    onChange(trimmedValue);
-                    processAddress(trimmedValue);
+                    onChange(newValue);
+                    processAddress(newValue);
                   }}
                   error={errors.address?.message}
                   value={value}
                   suffix={() =>
-                    addressValue && dirtyFields.address ? (
+                    validAddress ? (
                       <AddressBadge>
                         <SuccessIcon />
                       </AddressBadge>
