@@ -127,7 +127,7 @@ export interface WalletObj {
   currencyAbbreviation: string;
   m: number;
   n: number;
-  balance: CryptoBalance;
+  balance: WalletBalance;
   copayers: any[];
   singleAddress?: boolean;
   pendingTxps: TransactionProposal[];

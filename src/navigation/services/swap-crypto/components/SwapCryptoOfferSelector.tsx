@@ -1233,7 +1233,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
 
     timeoutRef.current = setTimeout(() => {
       init(cloneDeep(selectedWalletFrom), cloneDeep(selectedWalletTo));
-    }, 200);
+    }, 100);
 
     // Clean up the timeout on unmount
     return () => {
