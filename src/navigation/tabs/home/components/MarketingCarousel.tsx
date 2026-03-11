@@ -28,7 +28,7 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../../components/haptic-feedback/haptic';
 import {useAppDispatch, useUrlEventHandler} from '../../../../utils/hooks';
 import {AppActions, AppEffects} from '../../../../store/app';
-import {LogActions} from '../../../../store/log';
+import {logManager} from '../../../../managers/LogManager';
 import {
   isCaptionedContentCard,
   isClassicContentCard,
@@ -192,10 +192,10 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
           }
         }
       } catch (err) {
-        dispatch(
-          LogActions.debug('Failed to open marketing slide URL: ' + url),
-        );
-        dispatch(LogActions.debug(JSON.stringify(err)));
+        logManager.debug('Failed to open marketing slide URL: ' + url);
+        const errorMsg =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        logManager.debug(errorMsg);
         Linking.openURL(url).catch(() => {
           dispatch(AppEffects.openUrlWithInAppBrowser(url));
         });
