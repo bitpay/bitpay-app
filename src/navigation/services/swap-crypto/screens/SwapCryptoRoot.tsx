@@ -735,6 +735,51 @@ const SwapCryptoRoot: React.FC = () => {
       } else {
         logger.warn('It was not possible to set the selected wallet');
       }
+    } else {
+      // No pre-selected wallet: pick the wallet with the highest fiat balance
+      // from all keys, only considering wallets whose coin is in supportedCoins
+      let bestWallet: Wallet | undefined;
+      let bestFiatBalance = 0;
+
+      Object.values(keys).forEach(key => {
+        key.wallets.forEach(wallet => {
+          if (
+            !wallet.balance?.fiatSpendable ||
+            wallet.balance.fiatSpendable <= 0
+          ) {
+            return;
+          }
+
+          const symbol = getExternalServiceSymbol(
+            wallet.currencyAbbreviation,
+            wallet.chain,
+          );
+          const isSupported = supportedCoins.some(
+            coin => coin.symbol === symbol,
+          );
+          if (!isSupported) {
+            return;
+          }
+
+          const fiatBalance = wallet.balance.fiatSpendable;
+
+          if (fiatBalance > bestFiatBalance) {
+            bestFiatBalance = fiatBalance;
+            bestWallet = wallet;
+          }
+        });
+      });
+
+      if (bestWallet) {
+        logger.debug(
+          `Best Wallet (${bestWallet.chain}-${bestWallet.currencyAbbreviation}) found with balance: ${bestFiatBalance} ${defaultAltCurrency.isoCode}`,
+        );
+        setFromWallet(bestWallet);
+      } else {
+        logger.debug(
+          'No wallet with positive balance found among supported coins',
+        );
+      }
     }
     hideOngoingProcess();
   };
