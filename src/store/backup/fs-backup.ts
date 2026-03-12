@@ -2,6 +2,7 @@ import RNFS from 'react-native-fs';
 import {LogActions} from '../../store/log';
 import * as initLogs from '../../store/log/initLogs';
 import {getErrorString} from '../../utils/helper-methods';
+import * as Sentry from '@sentry/react-native';
 
 // Use cache directories (CachesDirectoryPath) so backups are NOT included in iCloud/Android Auto Backup
 const BASE_CACHE_DIR = RNFS.CachesDirectoryPath;
@@ -24,6 +25,7 @@ async function ensureDir(): Promise<void> {
         LogActions.error(`Backup ensureDir failed - ${getErrorString(err)}`),
       ),
     );
+    Sentry.captureException(err, {level: 'error'});
   }
 }
 
@@ -77,6 +79,7 @@ export async function backupPersistRoot(rawJson: string): Promise<void> {
             LogActions.error(`Backup rotate failed - ${getErrorString(err)}`),
           ),
         );
+        Sentry.captureException(err, {level: 'error'});
       }
     }
 
@@ -90,6 +93,7 @@ export async function backupPersistRoot(rawJson: string): Promise<void> {
         LogActions.error(`Backup write failed - ${getErrorString(err)}`),
       ),
     );
+    Sentry.captureException(err, {level: 'error'});
     // Cleanup temp if left behind
     try {
       const tmpExists = await RNFS.exists(TEMP_FILE);
@@ -118,6 +122,7 @@ export async function readBackupPersistRoot(): Promise<string | null> {
         LogActions.error(`Backup read final failed - ${getErrorString(err)}`),
       ),
     );
+    Sentry.captureException(err, {level: 'error'});
   }
 
   try {
@@ -137,6 +142,7 @@ export async function readBackupPersistRoot(): Promise<string | null> {
         LogActions.error(`Backup read bak failed - ${getErrorString(err)}`),
       ),
     );
+    Sentry.captureException(err, {level: 'error'});
   }
 
   return null;

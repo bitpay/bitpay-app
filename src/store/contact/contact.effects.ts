@@ -11,6 +11,7 @@ import {migrateContacts} from './contact.actions';
 import {IsValidEVMAddress} from '../wallet/utils/validations';
 import {tokenManager} from '../../managers/TokenManager';
 import {logManager} from '../../managers/LogManager';
+import * as Sentry from '@sentry/react-native';
 
 export const startContactV2Migration =
   (): Effect<Promise<void>> =>
@@ -123,6 +124,7 @@ export const startContactTokenAddressMigration =
             ),
           ),
         );
+        Sentry.captureException(err, {level: 'error'});
         return resolve();
       }
     });
@@ -169,6 +171,7 @@ export const startContactBridgeUsdcMigration =
             ),
           ),
         );
+        Sentry.captureException(err, {level: 'error'});
         return resolve();
       }
     });
@@ -208,6 +211,7 @@ export const startContactPolMigration =
             LogActions.error('[startContactPolMigration] failed - ', errStr),
           ),
         );
+        Sentry.captureException(err, {level: 'error'});
         return resolve();
       }
     });
