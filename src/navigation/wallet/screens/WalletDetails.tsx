@@ -141,6 +141,7 @@ import debounce from 'lodash.debounce';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import {logManager} from '../../../managers/LogManager';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -613,11 +614,13 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
         setIsLoading(false);
       } catch (e) {
+        const errStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logManager.error(
+          '[WalletDetails] Error loading transaction history: ' + errStr,
+        );
         setLoadMore(false);
         setIsLoading(false);
         setErrorLoadingTxs(true);
-
-        console.log('Transaction Update: ', e);
       }
     },
     [history],

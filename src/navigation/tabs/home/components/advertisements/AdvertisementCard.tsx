@@ -132,8 +132,11 @@ const AdvertisementCard: React.FC<AdvertisementCardProps> = props => {
         }
         return;
       } catch (err) {
-        logManager.debug('Something went wrong parsing Do More URL: ' + url),
-          logManager.debug(JSON.stringify(err));
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logManager.debug(
+          'Something went wrong parsing Do More URL: ' + url,
+          errStr,
+        );
       }
     }
 

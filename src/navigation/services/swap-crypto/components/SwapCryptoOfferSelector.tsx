@@ -903,8 +903,9 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         createWalletAddress({wallet: selectedWalletFrom, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       const reason = 'createWalletAddress Error';
+      logger.error(`${reason}: ${errMsg}`);
       showThorswapError(err, reason);
       return;
     }

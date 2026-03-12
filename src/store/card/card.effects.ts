@@ -31,8 +31,12 @@ const DoshWhitelist: string[] = [];
 if (DOSH_WHITELIST) {
   try {
     DoshWhitelist.push(...DOSH_WHITELIST.split(',').map(email => email.trim()));
-  } catch (e) {
-    console.log('Unable to parse DOSH_WHITELIST', e);
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+    logManager.error(
+      'Error parsing DOSH_WHITELIST environment variable',
+      errMsg,
+    );
   }
 }
 
@@ -173,9 +177,8 @@ export const startFetchOverview =
         }),
       );
     } catch (err) {
-      console.log(`Failed to fetch overview for card ${id}`);
-      logManager.error(`Failed to fetch overview for card ${id}`);
-      logManager.error(JSON.stringify(err));
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(`Failed to fetch overview for card ${id}: ${errMsg}`);
       dispatch(CardActions.failedFetchOverview(id));
     } finally {
       ongoingProcessManager.hide();
@@ -209,7 +212,8 @@ export const startCreateDebitCardTopUpInvoice =
       } = getInvoiceResponse as {data: {data: Invoice}};
       return {invoiceId, invoice} as {invoiceId: string; invoice: Invoice};
     } catch (err) {
-      console.error('Error creating debit card top up invoice', err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error('Error creating debit card top up invoice', errMsg);
       throw err;
     }
   };
@@ -547,9 +551,9 @@ export const completeAddApplePaymentPass =
       dispatch(
         Analytics.track('Added card to Apple Wallet', {brand: brand || ''}),
       );
-    } catch (e) {
-      console.error(e);
-      logManager.error(`appleWallet - completeAddPaymentPassError - ${e}`);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(`appleWallet - completeAddPaymentPassError - ${errMsg}`);
       dispatch(showBottomNotificationModal(GeneralError()));
     }
   };
@@ -591,9 +595,9 @@ export const startAddToGooglePay =
           }),
         );
       }
-    } catch (e) {
-      console.error(e);
-      logManager.error(`googlePay - completePushProvisionError - ${e}`);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(`googlePay - completePushProvisionError - ${errMsg}`);
 
       if (e instanceof Error) {
         if (['CANCELED'].includes(e.message)) {

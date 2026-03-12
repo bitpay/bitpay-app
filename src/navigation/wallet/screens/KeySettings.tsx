@@ -76,6 +76,7 @@ import {useTheme} from 'styled-components/native';
 import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import {LogActions} from '../../utils/logging';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -181,8 +182,9 @@ const KeySettings = () => {
           dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(300);
           cta(decryptedKey);
-        } catch (e) {
-          console.log(`Decrypt Error: ${e}`);
+        } catch (e: any) {
+          const errStr = e instanceof Error ? e.message : JSON.stringify(e);
+          Logger.error('[KeySettings] Decrypt Error', errStr);
           await dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(500); // Wait to close Decrypt Password modal
           dispatch(showBottomNotificationModal(WrongPasswordError()));

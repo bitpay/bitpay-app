@@ -253,9 +253,7 @@ const SimplexDetails: React.FC = () => {
                     },
                     {
                       text: t('GO BACK'),
-                      action: () => {
-                        console.log('Removing payment Request CANCELED');
-                      },
+                      action: () => {},
                     },
                   ],
                 }),

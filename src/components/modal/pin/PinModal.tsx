@@ -150,8 +150,10 @@ const Pin = gestureHandlerRootHOC(
           reset();
           onClose?.(true);
           DeviceEventEmitter.emit(DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED);
-        } catch (error) {
-          logger.error(`checkPin error: ${error}`);
+        } catch (err) {
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error(`checkPin error: ${errStr}`);
         }
       },
       [
@@ -199,7 +201,8 @@ const Pin = gestureHandlerRootHOC(
             reset();
           }
         } catch (err) {
-          const errStr = err instanceof Error ? err.message : String(err);
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
           logger.error(`setCurrentPin error: ${err}`);
           setMessageError(errStr);
           reset();
@@ -314,7 +317,9 @@ const Pin = gestureHandlerRootHOC(
             };
           }
         } catch (err) {
-          logger.error(`checkAttempts error: ${err}`);
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error(`checkAttempts error: ${errStr}`);
         }
       };
       checkAttempts();
@@ -341,7 +346,9 @@ const Pin = gestureHandlerRootHOC(
             dispatch(AppActions.pinBannedUntil(undefined));
           }
         } catch (err) {
-          logger.error(`checkIfBanned error: ${err}`);
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          logger.error(`checkIfBanned error: ${errStr}`);
         }
       };
       checkIfBanned();

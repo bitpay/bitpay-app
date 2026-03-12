@@ -413,8 +413,9 @@ export const walletConnectV2SubscribeToEvents =
             ),
           );
         }
-      } catch (error) {
-        console.error(`Error processing request ID ${event.id}:`, error);
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logManager.error(`Error processing request ID ${event.id}: ${errMsg}`);
       }
     };
 
