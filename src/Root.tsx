@@ -3,6 +3,7 @@ import {
   NavigationContainer,
   NavigationState,
   NavigatorScreenParams,
+  useNavigation,
 } from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import debounce from 'lodash.debounce';
@@ -17,6 +18,7 @@ import {
   Linking,
   NativeEventEmitter,
   NativeModules,
+  View,
 } from 'react-native';
 import 'react-native-gesture-handler';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -167,6 +169,7 @@ const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
 // ROOT NAVIGATION CONFIG
 export type RootStackParamList = {
+  StartupGate: undefined;
   Tabs: NavigatorScreenParams<TabsStackParamList>;
   AllAssets: {keyId?: string} | undefined;
   Allocation:
@@ -280,12 +283,480 @@ export const getNavigationTabName = () => {
 
 export const Root = createNativeStackNavigator<RootStackParamList>();
 
+const StartupGate = () => {
+  const navigation = useNavigation<any>();
+  const onboardingCompleted = useAppSelector(
+    ({APP}) => APP.onboardingCompleted,
+  );
+  const appWasInit = useAppSelector(({APP}) => APP.appWasInit);
+  const appColorScheme = useAppSelector(({APP}) => APP.colorScheme);
+  const hasRoutedRef = useRef(false);
+
+  const scheme = appColorScheme || Appearance.getColorScheme();
+  const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
+
+  useEffect(() => {
+    if (!appWasInit || hasRoutedRef.current) {
+      return;
+    }
+
+    hasRoutedRef.current = true;
+
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: onboardingCompleted
+            ? RootStacks.TABS
+            : OnboardingScreens.ONBOARDING_START,
+        },
+      ],
+    });
+  }, [appWasInit, onboardingCompleted, navigation]);
+
+  return <View style={{flex: 1, backgroundColor: theme.colors.background}} />;
+};
+
+const AppNavigator = ({
+  theme,
+  linking,
+  debouncedOnStateChange,
+  pinLockActive,
+  biometricLockActive,
+}: {
+  theme: typeof BitPayDarkTheme;
+  linking: any;
+  debouncedOnStateChange: (state: NavigationState | undefined) => void;
+  pinLockActive: boolean;
+  biometricLockActive: boolean;
+}) => {
+  const dispatch = useAppDispatch();
+  const reduxStore = useStore();
+  const urlEventHandler = useUrlEventHandler();
+  const splashHiddenRef = useRef(false);
+  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
+
+  const onboardingCompleted = useAppSelector(
+    ({APP}) => APP.onboardingCompleted,
+  );
+  const accountEvmCreationMigrationComplete = useAppSelector(
+    ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
+  );
+  const accountSvmCreationMigrationComplete = useAppSelector(
+    ({WALLET}) => WALLET.accountSvmCreationMigrationComplete,
+  );
+  const svmAddressFixComplete = useAppSelector(
+    ({WALLET}) => WALLET.svmAddressFixComplete,
+  );
+
+  const getKeys = () => (reduxStore.getState() as any).WALLET.keys as Keys;
+
+  return (
+    <HeaderShownContext.Provider value>
+      <NavigationContainer
+        ref={navigationRef}
+        theme={theme}
+        linking={linking}
+        onReady={async () => {
+          DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
+
+          dispatch(showBlur(pinLockActive || biometricLockActive));
+
+          logManager.debug(
+            `Biometric Lock Active: ${biometricLockActive} | Pin Lock Active: ${pinLockActive}`,
+          );
+
+          if (pinLockActive) {
+            await sleep(500);
+            dispatch(AppActions.showPinModal({type: 'check'}));
+          } else if (biometricLockActive) {
+            await sleep(500);
+            dispatch(AppActions.showBiometricModal({}));
+          }
+
+          const urlHandler = async () => {
+            if (onboardingCompleted) {
+              const getBrazeInitialUrl = async (): Promise<string> =>
+                new Promise(resolve =>
+                  Braze.getInitialURL(deepLink => resolve(deepLink)),
+                );
+              const [url, brazeUrl] = await Promise.all([
+                Linking.getInitialURL(),
+                getBrazeInitialUrl(),
+              ]);
+              await sleep(10);
+              urlEventHandler({url: url || brazeUrl});
+            }
+          };
+
+          const runAddressFix = async () => {
+            const walletsToFix = Object.values(getKeys()).flatMap(key =>
+              key.wallets.filter(
+                wallet =>
+                  !wallet.receiveAddress &&
+                  wallet?.credentials?.isComplete() &&
+                  !wallet.pendingTssSession,
+              ),
+            );
+            if (walletsToFix.length > 0) {
+              showOngoingProcess('GENERAL_AWAITING');
+              await sleep(1000);
+              await fixWalletAddresses({
+                appDispatch: dispatch,
+                wallets: walletsToFix,
+                skipDispatch: false,
+              });
+              logManager.info('success [runAddressFix]');
+              hideOngoingProcess();
+            }
+          };
+
+          const runCompleteEvmWalletsAccountFix = async () => {
+            try {
+              if (Object.keys(getKeys()).length === 0) {
+                dispatch(setAccountEVMCreationMigrationComplete());
+                return;
+              }
+              showOngoingProcess('GENERAL_AWAITING');
+              await sleep(1000);
+              await Promise.all(
+                Object.values(getKeys()).map(async key => {
+                  const evmWallets = getEvmGasWallets(key.wallets);
+                  const accountsArray = [
+                    ...new Set(
+                      evmWallets.map(wallet => wallet.credentials.account),
+                    ),
+                  ];
+                  const wallets = await createWalletsForAccounts(
+                    dispatch,
+                    accountsArray,
+                    key.methods as KeyMethods,
+                    getBaseEVMAccountCreationCoinsAndTokens(),
+                  );
+                  key.wallets.push(...wallets);
+                  dispatch(successAddWallet({key}));
+                }),
+              );
+              logManager.info('success [runCompleteEvmWalletsAccountFix]');
+              dispatch(setAccountEVMCreationMigrationComplete());
+              hideOngoingProcess();
+            } catch (error) {
+              const errMsg =
+                error instanceof Error ? error.message : JSON.stringify(error);
+              logManager.error(
+                `Error in [runCompleteEvmWalletsAccountFix]: ${errMsg}`,
+              );
+              dispatch(setAccountEVMCreationMigrationComplete());
+              hideOngoingProcess();
+            }
+          };
+
+          const runCompleteSvmWalletsAccountFix = async () => {
+            try {
+              if (Object.keys(getKeys()).length === 0) {
+                dispatch(setAccountSVMCreationMigrationComplete());
+                return;
+              }
+              showOngoingProcess('GENERAL_AWAITING');
+              await sleep(1000);
+              await Promise.all(
+                Object.values(getKeys()).map(async key => {
+                  if (!key?.properties?.xPrivKeyEDDSA) {
+                    logManager.info(
+                      'skipping SVM creation — private key is encrypted',
+                    );
+                    return;
+                  }
+                  const wallets = await createWalletsForAccounts(
+                    dispatch,
+                    [0],
+                    key.methods as KeyMethods,
+                    getBaseSVMAccountCreationCoinsAndTokens(),
+                  );
+                  key.wallets.push(...wallets);
+                  logManager.info(
+                    `success adding SVM account for key: ${key?.id}`,
+                  );
+                  dispatch(successAddWallet({key}));
+                }),
+              );
+              logManager.info('success [runCompleteSvmWalletsAccountFix]');
+              dispatch(setAccountSVMCreationMigrationComplete());
+              hideOngoingProcess();
+            } catch (error) {
+              const errMsg =
+                error instanceof Error ? error.message : JSON.stringify(error);
+              logManager.error(
+                `Error in [runCompleteSvmWalletsAccountFix]: ${errMsg}`,
+              );
+              dispatch(setAccountSVMCreationMigrationComplete());
+              hideOngoingProcess();
+            }
+          };
+
+          const runSvmAddressCreationFix = async () => {
+            dispatch(
+              LogActions.persistLog(
+                LogActions.info('start [runSvmAddressCreationFix]'),
+              ),
+            );
+            try {
+              if (Object.keys(getKeys()).length === 0) {
+                dispatch(setSvmAddressCreationFixComplete());
+                return;
+              }
+              showOngoingProcess('GENERAL_AWAITING');
+              await sleep(1000);
+              await Promise.all(
+                Object.values(getKeys()).map(async key => {
+                  if (!key?.properties?.xPrivKeyEDDSA) {
+                    dispatch(
+                      LogActions.persistLog(
+                        LogActions.info(
+                          'skipping SVM address fix — private key is encrypted',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  for (const wallet of key.wallets) {
+                    if (
+                      wallet.chain?.toLowerCase() !== 'sol' ||
+                      !wallet.credentials.isComplete() ||
+                      wallet.pendingTssSession ||
+                      !wallet.receiveAddress
+                    ) {
+                      continue;
+                    }
+                    const xPrivKeyHex = key.properties!.xPrivKeyEDDSA;
+                    const derivedAddress =
+                      BWC.getCore().Deriver.derivePrivateKeyWithPath(
+                        'SOL',
+                        wallet.network,
+                        xPrivKeyHex,
+                        wallet.credentials.rootPath,
+                        null,
+                      );
+                    if (
+                      derivedAddress &&
+                      derivedAddress?.address !== wallet.receiveAddress
+                    ) {
+                      dispatch(
+                        LogActions.persistLog(
+                          LogActions.debug(
+                            `Invalidating receive address ${wallet.receiveAddress} for wallet ${wallet.id} of key ${key.id} - replacing for correct one: ${derivedAddress.address}`,
+                          ),
+                        ),
+                      );
+                      dispatch(
+                        Analytics.track('Solana Address Creation Fix', {
+                          invalidAddress: wallet.receiveAddress,
+                          validAddress: derivedAddress.address,
+                          walletId: wallet.id,
+                          context: 'solanaAddressCreationFix',
+                        }),
+                      );
+                      dispatch(
+                        successGetReceiveAddress({
+                          keyId: key.id,
+                          walletId: wallet.id,
+                          receiveAddress: derivedAddress.address,
+                        }),
+                      );
+                    }
+                  }
+                }),
+              );
+              dispatch(
+                LogActions.persistLog(
+                  LogActions.info('success [runSvmAddressCreationFix]'),
+                ),
+              );
+              dispatch(setSvmAddressCreationFixComplete());
+              hideOngoingProcess();
+            } catch (error) {
+              const errMsg =
+                error instanceof Error ? error.message : JSON.stringify(error);
+              dispatch(
+                LogActions.persistLog(
+                  LogActions.error(
+                    `Error in [runSvmAddressCreationFix]: ${errMsg}`,
+                  ),
+                ),
+              );
+              dispatch(setSvmAddressCreationFixComplete());
+              hideOngoingProcess();
+            }
+          };
+
+          if (pinLockActive || biometricLockActive) {
+            const subscriptionToPinModalDismissed =
+              DeviceEventEmitter.addListener(
+                DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+                async () => {
+                  subscriptionToPinModalDismissed.remove();
+                  await runAddressFix();
+                  if (!accountEvmCreationMigrationComplete) {
+                    await sleep(1000);
+                    await runCompleteEvmWalletsAccountFix();
+                  }
+                  if (!accountSvmCreationMigrationComplete) {
+                    await sleep(1000);
+                    await runCompleteSvmWalletsAccountFix();
+                  }
+                  if (!svmAddressFixComplete) {
+                    await sleep(1000);
+                    await runSvmAddressCreationFix();
+                  }
+                  urlHandler();
+                },
+              );
+          } else {
+            await runAddressFix();
+            if (!accountEvmCreationMigrationComplete) {
+              await sleep(1000);
+              await runCompleteEvmWalletsAccountFix();
+            }
+            if (!accountSvmCreationMigrationComplete) {
+              await sleep(1000);
+              await runCompleteSvmWalletsAccountFix();
+            }
+            if (!svmAddressFixComplete) {
+              await sleep(1000);
+              await runSvmAddressCreationFix();
+            }
+            urlHandler();
+          }
+
+          logManager.info('QuickActions Initialized');
+          QuickActions.popInitialAction()
+            .then(item =>
+              dispatch(shortcutListener(item, navigationRef as any)),
+            )
+            .catch(console.error);
+
+          DeviceEventEmitter.addListener(
+            'quickActionShortcut',
+            (item: ShortcutItem) => {
+              dispatch(shortcutListener(item, navigationRef as any));
+            },
+          );
+        }}
+        onStateChange={state => {
+          debouncedOnStateChange(state);
+
+          if (splashHiddenRef.current) {
+            return;
+          }
+
+          const currentRoute = navigationRef.getCurrentRoute()?.name;
+
+          if (currentRoute && currentRoute !== 'StartupGate') {
+            splashHiddenRef.current = true;
+
+            setTimeout(() => {
+              RNBootSplash.hide({fade: true}).catch(err => {
+                logManager.error(`RNBootSplash.hide failed: ${String(err)}`);
+              });
+            }, 50);
+          }
+        }}>
+        <Root.Navigator
+          screenOptions={{
+            ...baseNavigatorOptions,
+            headerShown: false,
+            contentStyle: {backgroundColor: theme.colors.background},
+            headerStyle: {
+              backgroundColor: theme.colors.background,
+            },
+          }}
+          initialRouteName="StartupGate">
+          <Root.Screen
+            name="StartupGate"
+            component={StartupGate}
+            options={{animation: 'none', gestureEnabled: false}}
+          />
+          <Root.Screen
+            name={DebugScreens.DEBUG}
+            component={DebugScreen}
+            options={{
+              ...baseNavigatorOptions,
+              gestureEnabled: false,
+            }}
+          />
+          <Root.Screen
+            name={RootStacks.TABS}
+            component={TabsStack}
+            options={{
+              gestureEnabled: false,
+              animation: 'none',
+            }}
+          />
+          <Root.Screen
+            name="AllAssets"
+            component={AllAssets}
+            options={{
+              ...baseNavigatorOptions,
+              headerShown: true,
+            }}
+          />
+          <Root.Screen
+            name="Allocation"
+            component={Allocation}
+            options={{
+              ...baseNavigatorOptions,
+              headerShown: true,
+            }}
+          />
+          {AuthGroup({Auth: Root, theme})}
+          {OnboardingGroup({Onboarding: Root, theme})}
+          {SettingsGroup({Settings: Root})}
+          {BitpayIdGroup({BitpayId: Root, theme})}
+          {WalletGroup({Wallet: Root, theme})}
+          {CardActivationGroup({CardActivation: Root, theme})}
+          {ScanGroup({Scan: Root, theme})}
+          {GiftCardGroup({GiftCard: Root, theme})}
+          {MerchantGroup({Merchant: Root, theme})}
+          {BillGroup({Bill: Root, theme})}
+          {GeneralSettingsGroup({GeneralSettings: Root})}
+          {ContactsGroup({Contacts: Root, theme})}
+          {ExternalServicesSettingsGroup({
+            ExternalServicesSettings: Root,
+            theme,
+          })}
+          {NotificationsSettingsGroup({Notifications: Root, theme})}
+          {NetworkFeePolicySettingsGroup({
+            NetworkFeePolicySettings: Root,
+            theme,
+          })}
+          {AboutGroup({About: Root, theme})}
+          {CoinbaseGroup({Coinbase: Root, theme})}
+          {ExternalServicesGroup({ExternalServices: Root, theme})}
+          {SwapCryptoGroup({SwapCrypto: Root, theme})}
+          {WalletConnectGroup({WalletConnect: Root, theme})}
+          {ZenLedgerGroup({ZenLedger: Root, theme})}
+          {SecurityGroup({Security: Root, theme})}
+        </Root.Navigator>
+
+        <OnGoingProcessModal />
+        <InAppNotification />
+        <BottomNotificationModal />
+        <DecryptEnterPasswordModal />
+        <BlurContainer />
+        <PinModal />
+        <BiometricModal />
+        <WalletConnectStartModal />
+        <ChainSelectorModal />
+        <PaymentSent />
+      </NavigationContainer>
+    </HeaderShownContext.Provider>
+  );
+};
+
 export default () => {
   const dispatch = useAppDispatch();
   const reduxStore = useStore();
   const linking = useDeeplinks();
-  const urlEventHandler = useUrlEventHandler();
-  const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const lastSystemEnabledRef = useRef<boolean | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onboardingCompleted = useAppSelector(
@@ -303,18 +774,6 @@ export default () => {
   );
   const lockAuthorizedUntil = useAppSelector(
     ({APP}) => APP.lockAuthorizedUntil,
-  );
-  // keys is only used in one-time migration effects
-  // avoid Root re-rendering on every wallet balance update.
-  const getKeys = () => (reduxStore.getState() as any).WALLET.keys as Keys;
-  const accountEvmCreationMigrationComplete = useAppSelector(
-    ({WALLET}) => WALLET.accountEvmCreationMigrationComplete,
-  );
-  const accountSvmCreationMigrationComplete = useAppSelector(
-    ({WALLET}) => WALLET.accountSvmCreationMigrationComplete,
-  );
-  const svmAddressFixComplete = useAppSelector(
-    ({WALLET}) => WALLET.svmAddressFixComplete,
   );
   const notificationsState = useAppSelector(selectSettingsNotificationState);
   const pushNotificationsRef = useRef(notificationsState.pushNotifications);
@@ -665,397 +1124,18 @@ export default () => {
   const scheme = appColorScheme || Appearance.getColorScheme();
   const theme = scheme === 'dark' ? BitPayDarkTheme : BitPayLightTheme;
 
-  // ROOT STACKS AND GLOBAL COMPONENTS
-  const initialRoute = onboardingCompleted
-    ? RootStacks.TABS
-    : OnboardingScreens.ONBOARDING_START;
-
   return (
-    <SafeAreaView style={{flex: 1}} edges={['left', 'right']}>
+    <SafeAreaView
+      style={{flex: 1, backgroundColor: theme.colors.background}}
+      edges={['left', 'right']}>
       {showArchaxBanner && <ArchaxBanner isSmallScreen={isNarrowHeight} />}
-      {/* https://github.com/react-navigation/react-navigation/issues/11353#issuecomment-1548114655 */}
-      <HeaderShownContext.Provider value>
-        <NavigationContainer
-          ref={navigationRef}
-          theme={theme}
-          linking={linking}
-          onReady={async () => {
-            DeviceEventEmitter.emit(DeviceEmitterEvents.APP_NAVIGATION_READY);
-
-            dispatch(showBlur(pinLockActive || biometricLockActive));
-            await RNBootSplash.hide({fade: true});
-            // avoid splash conflicting with modal in iOS
-            // https://stackoverflow.com/questions/65359539/showing-a-react-native-modal-right-after-app-startup-freezes-the-screen-in-ios
-            logManager.debug(
-              `Biometric Lock Active: ${biometricLockActive} | Pin Lock Active: ${pinLockActive}`,
-            );
-            if (pinLockActive) {
-              await sleep(500);
-              dispatch(AppActions.showPinModal({type: 'check'}));
-            } else if (biometricLockActive) {
-              await sleep(500);
-              dispatch(AppActions.showBiometricModal({}));
-            }
-
-            const urlHandler = async () => {
-              if (onboardingCompleted) {
-                const getBrazeInitialUrl = async (): Promise<string> =>
-                  new Promise(resolve =>
-                    Braze.getInitialURL(deepLink => resolve(deepLink)),
-                  );
-                const [url, brazeUrl] = await Promise.all([
-                  Linking.getInitialURL(),
-                  getBrazeInitialUrl(),
-                ]);
-                await sleep(10);
-                urlEventHandler({url: url || brazeUrl});
-              }
-            };
-
-            // we need to ensure that each wallet has a receive address before we can create the account list.
-            const runAddressFix = async () => {
-              const walletsToFix = Object.values(getKeys()).flatMap(key =>
-                key.wallets.filter(
-                  wallet =>
-                    !wallet.receiveAddress &&
-                    wallet?.credentials?.isComplete() &&
-                    !wallet.pendingTssSession,
-                ),
-              );
-              if (walletsToFix.length > 0) {
-                showOngoingProcess('GENERAL_AWAITING');
-                await sleep(1000); // give the modal time to show
-                await fixWalletAddresses({
-                  appDispatch: dispatch,
-                  wallets: walletsToFix,
-                  skipDispatch: false,
-                });
-                logManager.info('success [runAddressFix]');
-                hideOngoingProcess();
-              }
-            };
-
-            // we need to ensure that each evm account has all supported wallets attached.
-            const runCompleteEvmWalletsAccountFix = async () => {
-              try {
-                if (Object.keys(getKeys()).length === 0) {
-                  dispatch(setAccountEVMCreationMigrationComplete());
-                  return;
-                }
-                showOngoingProcess('GENERAL_AWAITING');
-                await sleep(1000); // give the modal time to show
-                await Promise.all(
-                  Object.values(getKeys()).map(async key => {
-                    const evmWallets = getEvmGasWallets(key.wallets);
-                    const accountsArray = [
-                      ...new Set(
-                        evmWallets.map(wallet => wallet.credentials.account),
-                      ),
-                    ];
-                    const wallets = await createWalletsForAccounts(
-                      dispatch,
-                      accountsArray,
-                      key.methods as KeyMethods,
-                      getBaseEVMAccountCreationCoinsAndTokens(),
-                    );
-                    key.wallets.push(...wallets);
-                    dispatch(successAddWallet({key}));
-                  }),
-                );
-                logManager.info('success [runCompleteEvmWalletsAccountFix]');
-                dispatch(setAccountEVMCreationMigrationComplete());
-                hideOngoingProcess();
-              } catch (error) {
-                const errMsg =
-                  error instanceof Error
-                    ? error.message
-                    : JSON.stringify(error);
-                logManager.error(
-                  `Error in [runCompleteEvmWalletsAccountFix]: ${errMsg}`,
-                );
-                dispatch(setAccountEVMCreationMigrationComplete());
-                hideOngoingProcess();
-              }
-            };
-
-            // we need to ensure that for each key we have equal svm wallets attached.
-            const runCompleteSvmWalletsAccountFix = async () => {
-              try {
-                if (Object.keys(getKeys()).length === 0) {
-                  dispatch(setAccountSVMCreationMigrationComplete());
-                  return;
-                }
-                showOngoingProcess('GENERAL_AWAITING');
-                await sleep(1000); // give the modal time to show
-                await Promise.all(
-                  Object.values(getKeys()).map(async key => {
-                    if (!key?.properties?.xPrivKeyEDDSA) {
-                      logManager.info(
-                        'skipping SVM creation — private key is encrypted',
-                      );
-                      return;
-                    }
-                    const wallets = await createWalletsForAccounts(
-                      dispatch,
-                      [0],
-                      key.methods as KeyMethods,
-                      getBaseSVMAccountCreationCoinsAndTokens(),
-                    );
-                    key.wallets.push(...wallets);
-                    logManager.info(
-                      `success adding SVM account for key: ${key?.id}`,
-                    );
-                    dispatch(successAddWallet({key}));
-                  }),
-                );
-                logManager.info('success [runCompleteSvmWalletsAccountFix]');
-                dispatch(setAccountSVMCreationMigrationComplete());
-                hideOngoingProcess();
-              } catch (error) {
-                const errMsg =
-                  error instanceof Error
-                    ? error.message
-                    : JSON.stringify(error);
-                logManager.error(
-                  `Error in [runCompleteSvmWalletsAccountFix]: ${errMsg}`,
-                );
-                dispatch(setAccountSVMCreationMigrationComplete());
-                hideOngoingProcess();
-              }
-            };
-
-            const runSvmAddressCreationFix = async () => {
-              dispatch(
-                LogActions.persistLog(
-                  LogActions.info('start [runSvmAddressCreationFix]'),
-                ),
-              );
-              try {
-                if (Object.keys(getKeys()).length === 0) {
-                  dispatch(setSvmAddressCreationFixComplete());
-                  return;
-                }
-                showOngoingProcess('GENERAL_AWAITING');
-                await sleep(1000);
-                await Promise.all(
-                  Object.values(getKeys()).map(async key => {
-                    if (!key?.properties?.xPrivKeyEDDSA) {
-                      dispatch(
-                        LogActions.persistLog(
-                          LogActions.info(
-                            'skipping SVM address fix — private key is encrypted',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                    for (const wallet of key.wallets) {
-                      if (
-                        wallet.chain?.toLowerCase() !== 'sol' ||
-                        !wallet.credentials.isComplete() ||
-                        wallet.pendingTssSession ||
-                        !wallet.receiveAddress
-                      ) {
-                        continue;
-                      }
-                      const xPrivKeyHex = key.properties!.xPrivKeyEDDSA;
-                      const derivedAddress =
-                        BWC.getCore().Deriver.derivePrivateKeyWithPath(
-                          'SOL',
-                          wallet.network,
-                          xPrivKeyHex,
-                          wallet.credentials.rootPath,
-                          null,
-                        );
-                      if (
-                        derivedAddress &&
-                        derivedAddress?.address !== wallet.receiveAddress
-                      ) {
-                        dispatch(
-                          LogActions.persistLog(
-                            LogActions.debug(
-                              `Invalidating receive address ${wallet.receiveAddress} for wallet ${wallet.id} of key ${key.id} - replacing for correct one: ${derivedAddress.address}`,
-                            ),
-                          ),
-                        );
-                        dispatch(
-                          Analytics.track('Solana Address Creation Fix', {
-                            invalidAddress: wallet.receiveAddress,
-                            validAddress: derivedAddress.address,
-                            walletId: wallet.id,
-                            context: 'solanaAddressCreationFix',
-                          }),
-                        );
-                        dispatch(
-                          successGetReceiveAddress({
-                            keyId: key.id,
-                            walletId: wallet.id,
-                            receiveAddress: derivedAddress.address,
-                          }),
-                        );
-                      }
-                    }
-                  }),
-                );
-                dispatch(
-                  LogActions.persistLog(
-                    LogActions.info('success [runSvmAddressCreationFix]'),
-                  ),
-                );
-                dispatch(setSvmAddressCreationFixComplete());
-                hideOngoingProcess();
-              } catch (error) {
-                const errMsg =
-                  error instanceof Error
-                    ? error.message
-                    : JSON.stringify(error);
-                dispatch(
-                  LogActions.persistLog(
-                    LogActions.error(
-                      `Error in [runSvmAddressCreationFix]: ${errMsg}`,
-                    ),
-                  ),
-                );
-                dispatch(setSvmAddressCreationFixComplete());
-                hideOngoingProcess();
-              }
-            };
-
-            if (pinLockActive || biometricLockActive) {
-              const subscriptionToPinModalDismissed =
-                DeviceEventEmitter.addListener(
-                  DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
-                  async () => {
-                    subscriptionToPinModalDismissed.remove();
-                    await runAddressFix();
-                    if (!accountEvmCreationMigrationComplete) {
-                      await sleep(1000);
-                      await runCompleteEvmWalletsAccountFix();
-                    }
-                    if (!accountSvmCreationMigrationComplete) {
-                      await sleep(1000);
-                      await runCompleteSvmWalletsAccountFix();
-                    }
-                    if (!svmAddressFixComplete) {
-                      await sleep(1000);
-                      await runSvmAddressCreationFix();
-                    }
-                    urlHandler();
-                  },
-                );
-            } else {
-              await runAddressFix();
-              if (!accountEvmCreationMigrationComplete) {
-                await sleep(1000);
-                await runCompleteEvmWalletsAccountFix();
-              }
-              if (!accountSvmCreationMigrationComplete) {
-                await sleep(1000);
-                await runCompleteSvmWalletsAccountFix();
-              }
-              if (!svmAddressFixComplete) {
-                await sleep(1000);
-                await runSvmAddressCreationFix();
-              }
-              urlHandler();
-            }
-
-            logManager.info('QuickActions Initialized');
-            QuickActions.popInitialAction()
-              .then(item =>
-                dispatch(shortcutListener(item, navigationRef as any)),
-              )
-              .catch(console.error);
-            DeviceEventEmitter.addListener(
-              'quickActionShortcut',
-              (item: ShortcutItem) => {
-                dispatch(shortcutListener(item, navigationRef as any));
-              },
-            );
-          }}
-          onStateChange={debouncedOnStateChange}>
-          <Root.Navigator
-            screenOptions={{
-              ...baseNavigatorOptions,
-              headerShown: false,
-              headerStyle: {
-                backgroundColor: theme.colors.background,
-              },
-            }}
-            initialRouteName={initialRoute}>
-            <Root.Screen
-              name={DebugScreens.DEBUG}
-              component={DebugScreen}
-              options={{
-                ...baseNavigatorOptions,
-                gestureEnabled: false,
-              }}
-            />
-            <Root.Screen
-              name={RootStacks.TABS}
-              component={TabsStack}
-              options={{
-                gestureEnabled: false,
-              }}
-            />
-            <Root.Screen
-              name={'AllAssets'}
-              component={AllAssets}
-              options={{
-                ...baseNavigatorOptions,
-                headerShown: true,
-              }}
-            />
-            <Root.Screen
-              name={'Allocation'}
-              component={Allocation}
-              options={{
-                ...baseNavigatorOptions,
-                headerShown: true,
-              }}
-            />
-            {AuthGroup({Auth: Root, theme})}
-            {OnboardingGroup({Onboarding: Root, theme})}
-            {SettingsGroup({Settings: Root})}
-            {BitpayIdGroup({BitpayId: Root, theme})}
-            {WalletGroup({Wallet: Root, theme})}
-            {CardActivationGroup({CardActivation: Root, theme})}
-            {ScanGroup({Scan: Root, theme})}
-            {GiftCardGroup({GiftCard: Root, theme})}
-            {MerchantGroup({Merchant: Root, theme})}
-            {BillGroup({Bill: Root, theme})}
-            {GeneralSettingsGroup({GeneralSettings: Root})}
-            {ContactsGroup({Contacts: Root, theme})}
-            {ExternalServicesSettingsGroup({
-              ExternalServicesSettings: Root,
-              theme,
-            })}
-            {NotificationsSettingsGroup({Notifications: Root, theme})}
-            {NetworkFeePolicySettingsGroup({
-              NetworkFeePolicySettings: Root,
-              theme,
-            })}
-            {AboutGroup({About: Root, theme})}
-            {CoinbaseGroup({Coinbase: Root, theme})}
-            {ExternalServicesGroup({ExternalServices: Root, theme})}
-            {SwapCryptoGroup({SwapCrypto: Root, theme})}
-            {WalletConnectGroup({WalletConnect: Root, theme})}
-            {ZenLedgerGroup({ZenLedger: Root, theme})}
-            {SecurityGroup({Security: Root, theme})}
-          </Root.Navigator>
-          <OnGoingProcessModal />
-          <InAppNotification />
-          <BottomNotificationModal />
-          <DecryptEnterPasswordModal />
-          <BlurContainer />
-          <PinModal />
-          <BiometricModal />
-          {/* <ImportLedgerWalletModal /> */}
-          <WalletConnectStartModal />
-          <ChainSelectorModal />
-          <PaymentSent />
-        </NavigationContainer>
-      </HeaderShownContext.Provider>
+      <AppNavigator
+        theme={theme}
+        linking={linking}
+        debouncedOnStateChange={debouncedOnStateChange}
+        pinLockActive={pinLockActive}
+        biometricLockActive={biometricLockActive}
+      />
     </SafeAreaView>
   );
 };
