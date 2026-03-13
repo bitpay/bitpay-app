@@ -151,7 +151,6 @@ import {getExternalServiceSymbol} from '../../utils/external-services-utils';
 import {
   ChangellyCurrency,
   ChangellyCurrencyBlockchain,
-  ChangellyRateData,
   ChangellyRateResult,
 } from '../../../../store/swap-crypto/models/changelly.models';
 import {thorswapGetCurrencies} from '../../../../store/swap-crypto/effects/thorswap/thorswap';
@@ -371,7 +370,6 @@ const SwapCryptoRoot: React.FC = () => {
   const [swapCryptoSupportedCoinsTo, setSwapCryptoSupportedCoinsTo] = useState<
     SwapCryptoCoin[]
   >([]);
-  const [rateData, setRateData] = useState<ChangellyRateData>();
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingEnterAmountBtn, setLoadingEnterAmountBtn] =
     useState<boolean>(false);
@@ -606,7 +604,6 @@ const SwapCryptoRoot: React.FC = () => {
         setUseSendMax(false);
         setSendMaxInfo(undefined);
         setSelectedPillValue(undefined);
-        setRateData(undefined);
       } else {
         setConfirmedAmountFrom(amountFrom);
       }
@@ -738,6 +735,51 @@ const SwapCryptoRoot: React.FC = () => {
       } else {
         logger.warn('It was not possible to set the selected wallet');
       }
+    } else {
+      // No pre-selected wallet: pick the wallet with the highest fiat balance
+      // from all keys, only considering wallets whose coin is in supportedCoins
+      let bestWallet: Wallet | undefined;
+      let bestFiatBalance = 0;
+
+      Object.values(keys).forEach(key => {
+        key.wallets.forEach(wallet => {
+          if (
+            !wallet.balance?.fiatSpendable ||
+            wallet.balance.fiatSpendable <= 0
+          ) {
+            return;
+          }
+
+          const symbol = getExternalServiceSymbol(
+            wallet.currencyAbbreviation,
+            wallet.chain,
+          );
+          const isSupported = supportedCoins.some(
+            coin => coin.symbol === symbol,
+          );
+          if (!isSupported) {
+            return;
+          }
+
+          const fiatBalance = wallet.balance.fiatSpendable;
+
+          if (fiatBalance > bestFiatBalance) {
+            bestFiatBalance = fiatBalance;
+            bestWallet = wallet;
+          }
+        });
+      });
+
+      if (bestWallet) {
+        logger.debug(
+          `Best Wallet (${bestWallet.chain}-${bestWallet.currencyAbbreviation}) found with balance: ${bestFiatBalance} ${defaultAltCurrency.isoCode}`,
+        );
+        setFromWallet(bestWallet);
+      } else {
+        logger.debug(
+          'No wallet with positive balance found among supported coins',
+        );
+      }
     }
     hideOngoingProcess();
   };
@@ -779,7 +821,6 @@ const SwapCryptoRoot: React.FC = () => {
     setSelectedPillValue(undefined);
     setLoading(false);
     setLoadingEnterAmountBtn(false);
-    setRateData(undefined);
 
     let possibleCoinsTo: SwapCryptoCoin[] = [];
 
@@ -847,7 +888,6 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const setToWallet = (toWallet: Wallet) => {
-    setRateData(undefined);
     setSelectedOffer(undefined);
     setCtxp(undefined);
     setTxData(undefined);
@@ -856,11 +896,10 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const swapGetLimits = async () => {
-    setLoadingEnterAmountBtn(true);
-    setRateData(undefined);
     if (!fromWalletSelected || !toWalletSelected) {
       return;
     }
+    setLoadingEnterAmountBtn(true);
 
     const pair =
       getExternalServiceSymbol(
@@ -2823,7 +2862,7 @@ const SwapCryptoRoot: React.FC = () => {
                   )}
                 </WalletSelectorRight>
               </WalletSelector>
-              {toWalletSelected && fromWalletSelected ? (
+              {fromWalletSelected ? (
                 <>
                   {loadingEnterAmountBtn ? (
                     <SpinnerContainer style={{height: 40}}>
@@ -2834,6 +2873,9 @@ const SwapCryptoRoot: React.FC = () => {
                       {!loadingWalletFromStatus ? (
                         <AmountClickableContainer
                           onPress={() => {
+                            if (!fromWalletSelected || !toWalletSelected) {
+                              return;
+                            }
                             showModal('amount');
                           }}>
                           {displayInFiat ? (
@@ -3089,7 +3131,7 @@ const SwapCryptoRoot: React.FC = () => {
                   )}
                 </WalletSelectorRight>
               </WalletSelector>
-              {toWalletSelected ? (
+              {fromWalletSelected ? (
                 offersLoading ||
                 // Next line is a workaround
                 // The `getQuote` received amount from changelly is not exactly the same as the amount after `createFixTransaction`. This prevents an exchange of amounts between when the quote is obtained and when the transaction is successfully created.
@@ -3220,7 +3262,7 @@ const SwapCryptoRoot: React.FC = () => {
                 </>
               </SwapCardBottomRowContainer>
             ) : null}
-            {!rateData?.amountTo && loading && (
+            {loading && (
               <SpinnerContainer>
                 <ActivityIndicator color={ProgressBlue} />
               </SpinnerContainer>
