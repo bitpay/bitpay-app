@@ -17,7 +17,7 @@ import {
   White,
 } from '../../../styles/colors';
 import haptic from '../../haptic-feedback/haptic';
-import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
+import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {StyleSheet, View} from 'react-native';
 import {dismissWalletConnectStartModal} from '../../../store/app/app.actions';
 import {BottomNotificationConfig} from '../bottom-notification/BottomNotification';
@@ -239,6 +239,7 @@ const transformErrorMessage = (error: string) => {
 export const WalletConnectStartModal = memo(() => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const navigation = useNavigation();
   const theme = useTheme();
   const showWalletConnectStartModal = useAppSelector(
@@ -392,8 +393,12 @@ export const WalletConnectStartModal = memo(() => {
                     {t: 'eip191', s: eth_signedMessage},
                     iss,
                   );
-                } catch (e) {
-                  console.error('auth error:', e);
+                } catch (err) {
+                  const errMsg =
+                    err instanceof Error ? err.message : JSON.stringify(err);
+                  logger.error(
+                    'Error during authentication approval: ' + errMsg,
+                  );
                   return null;
                 }
               })(),

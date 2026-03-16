@@ -87,10 +87,8 @@ const ChangellyDetails: React.FC = () => {
     if (swapTx.status === 'finished' && !force) {
       return;
     }
-    console.log('===========changellyGetStatus data enviada : ', swapTx);
     changellyGetStatus(swapTx.exchangeTxId, swapTx.status)
       .then(data => {
-        console.log('===========changellyGetStatus data recibida : ', data);
         if (data.error) {
           logger.error('Changelly getStatus Error: ' + data.error.message);
           return;
@@ -109,8 +107,8 @@ const ChangellyDetails: React.FC = () => {
         }
       })
       .catch(err => {
-        console.log('===========changellyGetStatus err : ', err);
-        logger.error('Changelly getStatus Error: ' + JSON.stringify(err));
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error('Changelly getStatus Error: ' + errStr);
       });
   };
 
@@ -414,9 +412,7 @@ const ChangellyDetails: React.FC = () => {
                     },
                     {
                       text: t('GO BACK'),
-                      action: () => {
-                        console.log('Removing transaction data CANCELED');
-                      },
+                      action: () => {},
                     },
                   ],
                 }),

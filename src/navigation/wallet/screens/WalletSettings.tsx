@@ -22,7 +22,6 @@ import {SlateDark, White} from '../../../styles/colors';
 import ToggleSwitch from '../../../components/toggle-switch/ToggleSwitch';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
-  checkEncryptPassword,
   checkPrivateKeyEncrypted,
   findWalletById,
 } from '../../../store/wallet/utils/wallet';
@@ -51,6 +50,7 @@ import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import {Constants} from 'bitcore-wallet-client/ts_build/src/lib/common';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import {logManager} from '../../../managers/LogManager';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -159,7 +159,8 @@ const WalletSettings = () => {
           await sleep(300);
           cta(combinedKey);
         } catch (e) {
-          console.log(`Decrypt Error: ${e}`);
+          const errStr = e instanceof Error ? e.message : JSON.stringify(e);
+          logManager.debug(`Decrypt Error: ${errStr}`);
           await dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(500); // Wait to close Decrypt Password modal
           dispatch(showBottomNotificationModal(WrongPasswordError()));

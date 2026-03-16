@@ -83,7 +83,8 @@ const RequestEncryptPasswordToggle = ({currentKey: key}: {currentKey: Key}) => {
           }),
         );
       } catch (e) {
-        console.log(`Decrypt Error: ${e}`);
+        const eStr = e instanceof Error ? e.message : JSON.stringify(e);
+        logger.error(`Decrypt Error: ${eStr}`);
         dispatch(AppActions.dismissDecryptPasswordModal());
         await sleep(500); // Wait to close Decrypt Password modal
         dispatch(showBottomNotificationModal(WrongPasswordError()));

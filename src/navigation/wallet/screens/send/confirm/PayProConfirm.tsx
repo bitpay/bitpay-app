@@ -8,7 +8,11 @@ import {
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {WalletScreens, WalletGroupParamList} from '../../../WalletGroup';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../../utils/hooks';
 import SecureLockIcon from '../../../../../../assets/img/secure-lock.svg';
 import {
   Key,
@@ -113,6 +117,7 @@ export interface PayProConfirmParamList {
 const PayProConfirm = () => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const navigation = useNavigation();
   const {showPaymentSent, hidePaymentSent} = usePaymentSent();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
@@ -550,7 +555,12 @@ const PayProConfirm = () => {
     if (!handled) {
       if (wallet && txp) {
         await removeTxp(wallet, txp).catch(removeErr =>
-          console.error('error deleting txp', removeErr),
+          logger.error(
+            'Error deleting txp: ' +
+              (removeErr instanceof Error
+                ? removeErr.message
+                : JSON.stringify(removeErr)),
+          ),
         );
       }
       updateTxDetails(undefined);

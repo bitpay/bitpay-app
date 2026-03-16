@@ -72,6 +72,8 @@ import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import AddSvg from './AddSvg';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {Status} from 'bitcore-wallet-client/ts_build/src';
+import {logManager} from '../../../../managers/LogManager';
 import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
 //import {ConnectLedgerNanoXCard} from './cards/ConnectLedgerNanoX';
@@ -163,7 +165,9 @@ export const keyBackupRequired = (
                       context,
                     });
                   } catch (e) {
-                    console.log(`Decrypt Error: ${e}`);
+                    const eStr =
+                      e instanceof Error ? e.message : JSON.stringify(e);
+                    logManager.error(`Decrypt Error: ${eStr}`);
                     await dispatch(dismissDecryptPasswordModal());
                     await sleep(1000); // Wait to close Decrypt Password modal
                     dispatch(showBottomNotificationModal(WrongPasswordError()));
