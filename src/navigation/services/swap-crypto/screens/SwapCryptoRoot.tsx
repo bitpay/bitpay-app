@@ -229,6 +229,7 @@ import SwapCryptoTxDataSkeleton from './SwapCryptoTxDataSkeleton';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
 import SwapCryptoFiatSwitcherIcon from '../../../../components/icons/external-services/swap/SwapCryptoFiatSwitcherIcon';
 import BottomAmountModal from '../components/BottomAmountModal';
+import {SWAP_CRYPTO_CACHE_TTL} from '../../../../store/swap-crypto/swap-crypto.effects';
 
 export type SwapCryptoRootScreenParams =
   | {
@@ -345,6 +346,7 @@ const SwapCryptoRoot: React.FC = () => {
   );
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
+  const prefetchedOpts = useAppSelector(({SWAP_CRYPTO}) => SWAP_CRYPTO.opts);
   const route =
     useRoute<
       RouteProp<SwapCryptoGroupParamList, SwapCryptoScreens.SWAP_CRYPTO_ROOT>
@@ -396,6 +398,10 @@ const SwapCryptoRoot: React.FC = () => {
     maxAmount: undefined,
   });
   const [selectedPillValue, setSelectedPillValue] = useState<number | string>();
+
+  // Refs to capture raw API responses during conventional fetch (for cache write-back)
+  const changellyRawRef = useRef<ChangellyCurrency[] | undefined>(undefined);
+  const thorswapRawRef = useRef<ThorswapCurrency[] | undefined>(undefined);
 
   // Checkout props
   const [remainingTimeStr, setRemainingTimeStr] = useState<string>('');
@@ -1259,14 +1265,24 @@ const SwapCryptoRoot: React.FC = () => {
     }
   };
 
-  const getChangellyCurrencies = async () => {
-    const changellyCurrenciesData = await changellyGetCurrencies(true);
+  const getChangellyCurrencies = async (
+    cachedRawCurrencies?: ChangellyCurrency[],
+  ) => {
+    let rawResult: ChangellyCurrency[] | undefined;
 
-    if (changellyCurrenciesData?.result?.length) {
+    if (cachedRawCurrencies?.length) {
+      rawResult = cachedRawCurrencies;
+    } else {
+      const changellyCurrenciesData = await changellyGetCurrencies(true);
+      rawResult = changellyCurrenciesData?.result;
+    }
+
+    // Store raw data for cache write-back
+    changellyRawRef.current = rawResult;
+
+    if (rawResult?.length) {
       const changellyCurrenciesDataFixedNames: ChangellyCurrency[] =
-        getChangellyCurrenciesFixedProps(
-          changellyCurrenciesData.result as ChangellyCurrency[],
-        );
+        getChangellyCurrenciesFixedProps(rawResult as ChangellyCurrency[]);
 
       const supportedCoinsWithFixRateEnabled: SwapCryptoCoin[] =
         changellyCurrenciesDataFixedNames
@@ -1355,14 +1371,24 @@ const SwapCryptoRoot: React.FC = () => {
     );
   };
 
-  const getThorswapCurrencies = async () => {
-    const reqData: ThorswapGetCurrenciesRequestData = {
-      env: thorswapEnv,
-      categories: 'all',
-      includeDetails: true,
-    };
-    const thorswapCurrenciesData: ThorswapCurrency[] =
-      await thorswapGetCurrencies(reqData);
+  const getThorswapCurrencies = async (
+    cachedRawCurrencies?: ThorswapCurrency[],
+  ) => {
+    let thorswapCurrenciesData: ThorswapCurrency[];
+
+    if (cachedRawCurrencies?.length) {
+      thorswapCurrenciesData = cachedRawCurrencies;
+    } else {
+      const reqData: ThorswapGetCurrenciesRequestData = {
+        env: thorswapEnv,
+        categories: 'all',
+        includeDetails: true,
+      };
+      thorswapCurrenciesData = await thorswapGetCurrencies(reqData);
+    }
+
+    // Store raw data for cache write-back
+    thorswapRawRef.current = thorswapCurrenciesData;
 
     if (thorswapCurrenciesData?.length) {
       let supportedCoinsWithFixRateEnabled: SwapCryptoCoin[] =
@@ -1480,24 +1506,35 @@ const SwapCryptoRoot: React.FC = () => {
   };
 
   const init = async () => {
-    await sleep(100);
-    showOngoingProcess('GENERAL_AWAITING');
+    const isCacheFresh =
+      !!prefetchedOpts?.fetchedAt &&
+      Date.now() - prefetchedOpts.fetchedAt < SWAP_CRYPTO_CACHE_TTL;
 
-    try {
-      const requestData: ExternalServicesConfigRequestParams = {
-        currentLocationCountry: locationData?.countryShortCode,
-        currentLocationState: locationData?.stateShortCode,
-        bitpayIdLocationCountry: user?.country,
-        bitpayIdLocationState: user?.state,
-      };
-      const config: ExternalServicesConfig = await dispatch(
-        getExternalServicesConfig(requestData),
-      );
-      swapCryptoConfig = config?.swapCrypto;
-      logger.debug('swapCryptoConfig: ' + JSON.stringify(swapCryptoConfig));
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.error('getSwapCryptoConfig Error: ' + errMsg);
+    if (!isCacheFresh) {
+      await sleep(100);
+      showOngoingProcess('GENERAL_AWAITING');
+    }
+
+    if (isCacheFresh && prefetchedOpts?.swapCryptoConfig !== undefined) {
+      swapCryptoConfig = prefetchedOpts.swapCryptoConfig;
+      logger.debug('Using cached swapCryptoConfig');
+    } else {
+      try {
+        const requestData: ExternalServicesConfigRequestParams = {
+          currentLocationCountry: locationData?.countryShortCode,
+          currentLocationState: locationData?.stateShortCode,
+          bitpayIdLocationCountry: user?.country,
+          bitpayIdLocationState: user?.state,
+        };
+        const config: ExternalServicesConfig = await dispatch(
+          getExternalServicesConfig(requestData),
+        );
+        swapCryptoConfig = config?.swapCrypto;
+        logger.debug('swapCryptoConfig: ' + JSON.stringify(swapCryptoConfig));
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error('getSwapCryptoConfig Error: ' + errMsg);
+      }
     }
 
     if (swapCryptoConfig?.disabled) {
@@ -1559,9 +1596,13 @@ const SwapCryptoRoot: React.FC = () => {
     ) => {
       switch (exchange) {
         case 'changelly':
-          return getChangellyCurrencies();
+          return getChangellyCurrencies(
+            isCacheFresh ? prefetchedOpts?.changellyRawCurrencies : undefined,
+          );
         case 'thorswap':
-          return getThorswapCurrencies();
+          return getThorswapCurrencies(
+            isCacheFresh ? prefetchedOpts?.thorswapRawCurrencies : undefined,
+          );
         default:
           return Promise.resolve([]);
       }
@@ -1574,7 +1615,7 @@ const SwapCryptoRoot: React.FC = () => {
     try {
       const responseByExchange = await Promise.allSettled([
         ...getCurrenciesPromises,
-        sleep(400),
+        ...(isCacheFresh ? [] : [sleep(400)]),
       ]);
       const responseByExchangeKey = responseByExchange.map((res, index) => {
         const exchangeKey: SwapCryptoExchangeKey | undefined =
@@ -1679,6 +1720,18 @@ const SwapCryptoRoot: React.FC = () => {
 
         if (allSupportedCoinsOrdered?.length > 0) {
           setSwapCryptoSupportedCoinsFrom(allSupportedCoinsOrdered);
+
+          // Write back to cache so subsequent opens skip network calls
+          if (!isCacheFresh) {
+            dispatch(
+              SwapCryptoActions.setPrefetchedData({
+                swapCryptoConfig,
+                changellyRawCurrencies: changellyRawRef.current,
+                thorswapRawCurrencies: thorswapRawRef.current,
+                fetchedAt: Date.now(),
+              }),
+            );
+          }
         } else {
           const reason =
             'Swap crypto getCurrencies Error: allSupportedCoins array is empty';

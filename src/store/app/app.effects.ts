@@ -125,6 +125,7 @@ import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
 import {goToSellCrypto} from '../sell-crypto/sell-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
+import {prefetchSwapCryptoData} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
@@ -154,6 +155,7 @@ import {
   initializeSslPinning,
   isSslPinningAvailable,
 } from 'react-native-ssl-public-key-pinning';
+import {DirectIntegrationApiObject} from '../shop/shop.models';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -370,6 +372,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(AppActions.appInitCompleted());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
+
+    // Pre-fetch swap crypto config and currencies in background
+    dispatch(prefetchSwapCryptoData());
   } catch (err: unknown) {
     let errorStr;
     if (err instanceof Error) {
@@ -1156,7 +1161,9 @@ export const incomingShopLink =
     const availableGiftCards = getAvailableGiftCards(
       SHOP_CATALOG.availableCardMap,
     );
-    const integrations = Object.values(SHOP_CATALOG.integrations);
+    const integrations = Object.values(
+      SHOP_CATALOG.integrations,
+    ) as DirectIntegrationApiObject[];
     const categories = getCategoriesWithIntegrations(
       Object.values(SHOP_CATALOG.categoriesAndCurations.categories),
       integrations,

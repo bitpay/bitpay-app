@@ -2,10 +2,20 @@ import {
   ThorswapProvider,
   ThorswapTrackingStatus,
 } from '../swap-crypto/models/thorswap.models';
+import {ChangellyCurrency} from './models/changelly.models';
+import {ThorswapCurrency} from './models/thorswap.models';
+import {SwapCryptoConfig} from '../external-services/external-services.types';
 
 export interface SwapCryptoLimits {
   min?: number;
   max?: number;
+}
+
+export interface SwapCryptoPrefetchedData {
+  swapCryptoConfig?: SwapCryptoConfig;
+  changellyRawCurrencies?: ChangellyCurrency[];
+  thorswapRawCurrencies?: ThorswapCurrency[];
+  fetchedAt: number;
 }
 export interface changellyTxData {
   exchangeTxId: string;
