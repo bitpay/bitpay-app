@@ -294,9 +294,7 @@ const SimplexSellDetails: React.FC = () => {
                     },
                     {
                       text: t('GO BACK'),
-                      action: () => {
-                        console.log('Removing sell order CANCELED');
-                      },
+                      action: () => {},
                     },
                   ],
                 }),

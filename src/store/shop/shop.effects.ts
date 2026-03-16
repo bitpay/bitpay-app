@@ -111,7 +111,8 @@ export const startSyncGiftCards =
         ShopActions.setPurchasedGiftCards({giftCards, network: APP.network}),
       );
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(`failed [startSyncGiftCards]: ${errMsg}`);
       throw err;
     }
   };
@@ -159,7 +160,8 @@ export const startCreateBillPayInvoice =
       } = getInvoiceResponse as {data: {data: Invoice}};
       return {...billPayOrder, invoice} as BillPayOrder;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(`failed [startCreateBillPayInvoice]: ${errMsg}`);
       throw err;
     }
   };
@@ -225,7 +227,8 @@ export const startCreateGiftCardInvoice =
       );
       return {...cardOrder, invoice} as GiftCardOrder;
     } catch (err: any) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(`failed [startCreateGiftCardInvoice]: ${errMsg}`);
       dispatch(ShopActions.failedCreateGiftCardInvoice());
       throw err;
     }

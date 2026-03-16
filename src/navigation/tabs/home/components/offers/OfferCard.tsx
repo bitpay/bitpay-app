@@ -93,8 +93,11 @@ const OfferCard: React.FC<OfferCardProps> = props => {
         return;
       }
     } catch (err) {
-      logManager.debug('Something went wrong parsing offer URL: ' + url);
-      logManager.debug(JSON.stringify(err));
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.debug(
+        'Something went wrong parsing offer URL: ' + url,
+        errStr,
+      );
     }
 
     if (openURLInWebView) {

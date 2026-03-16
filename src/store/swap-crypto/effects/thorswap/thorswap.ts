@@ -6,6 +6,7 @@ import {
   ThorswapGetSwapTxData,
   ThorswapGetSwapTxRequestData,
 } from '../../models/thorswap.models';
+import {logManager} from '../../../../managers/LogManager';
 
 const bwsUri = BASE_BWS_URL;
 
@@ -29,7 +30,8 @@ export const thorswapGetCurrencies = async (
 
     return Promise.resolve(data);
   } catch (err) {
-    console.log(err);
+    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+    logManager.error('Error fetching Thorswap supported currencies: ' + errStr);
     return Promise.reject(err);
   }
 };
@@ -52,7 +54,8 @@ export const thorswapGetSupportedChains = async (requestData: any) => {
 
     return Promise.resolve(data);
   } catch (err) {
-    console.log(err);
+    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+    logManager.error('Error fetching Thorswap supported chains: ' + errStr);
     return Promise.reject(err);
   }
 };
@@ -77,7 +80,10 @@ export const thorswapGetSwapTx = async (
 
     return Promise.resolve(data);
   } catch (err) {
-    console.log(err);
+    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+    logManager.error(
+      'Error fetching Thorswap swap transaction data: ' + errStr,
+    );
     return Promise.reject(err);
   }
 };

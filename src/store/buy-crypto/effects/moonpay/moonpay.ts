@@ -5,6 +5,7 @@ import {
   MoonpayGetCurrencyLimitsRequestData,
 } from '../../buy-crypto.models';
 import {moonpaySellEnv} from '../../../../navigation/services/sell-crypto/utils/moonpay-sell-utils';
+import {logManager} from '../../../../managers/LogManager';
 
 const bwsUri = BASE_BWS_URL;
 
@@ -26,7 +27,8 @@ export const moonpayGetCurrencies = async (
 
     return Promise.resolve(data);
   } catch (err) {
-    console.log(err);
+    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+    logManager.error('Error fetching Moonpay currencies: ' + errStr);
     return Promise.reject(err);
   }
 };
@@ -53,7 +55,8 @@ export const moonpayGetCurrencyLimits = async (
       return Promise.resolve(data);
     }
   } catch (err) {
-    console.log(err);
+    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+    logManager.error('Error fetching Moonpay currency limits: ' + errStr);
     return Promise.reject(err);
   }
 };
@@ -65,7 +68,7 @@ export const moonpayGetTransactionDetails = async (
   try {
     if (!transactionId && !externalId) {
       const msg = 'Missing parameters';
-      console.log(msg);
+      logManager.debug('[moonpayGetTransactionDetails]' + msg);
       return Promise.reject(msg);
     }
 
@@ -100,7 +103,8 @@ export const moonpayGetTransactionDetails = async (
       return Promise.resolve(data);
     }
   } catch (err) {
-    console.log(err);
+    const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+    logManager.error('Error fetching Moonpay transaction details: ' + errStr);
     return Promise.reject(err);
   }
 };

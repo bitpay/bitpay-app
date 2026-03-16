@@ -370,9 +370,7 @@ const MoonpayDetails: React.FC = () => {
                     },
                     {
                       text: t('GO BACK'),
-                      action: () => {
-                        console.log('Removing payment Request CANCELED');
-                      },
+                      action: () => {},
                     },
                   ],
                 }),

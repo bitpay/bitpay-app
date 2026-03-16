@@ -10,7 +10,11 @@ import React, {
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {HeaderRightContainer} from '../../../../../components/styled/Containers';
 import {RouteProp, StackActions} from '@react-navigation/core';
-import {useAppDispatch, useAppSelector} from '../../../../../utils/hooks';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useLogger,
+} from '../../../../../utils/hooks';
 import {
   TransactionProposal,
   TxDetails,
@@ -107,6 +111,7 @@ const BillConfirm: React.FC<
 > = ({navigation}) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
+  const logger = useLogger();
   const navigator = useNavigation();
   const route =
     useRoute<RouteProp<BillGroupParamList, BillScreens.BILL_CONFIRM>>();
@@ -495,7 +500,12 @@ const BillConfirm: React.FC<
     if (!handled) {
       if (wallet && txp) {
         await removeTxp(wallet, txp).catch(removeErr =>
-          console.error('error deleting txp', removeErr),
+          logger.error(
+            'Error deleting txp: ' +
+              (removeErr instanceof Error
+                ? removeErr.message
+                : JSON.stringify(removeErr)),
+          ),
         );
       }
       updateTxDetails(undefined);

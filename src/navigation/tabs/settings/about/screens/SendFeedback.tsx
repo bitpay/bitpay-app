@@ -28,7 +28,7 @@ import Rate, {AndroidMarket} from 'react-native-rate';
 import {useTranslation} from 'react-i18next';
 import {APP_VERSION} from '../../../../../constants/config';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {AboutScreens, AboutStackParamList} from '../AboutGroup';
+import {AboutScreens, AboutGroupParamList} from '../AboutGroup';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 
 export type FeedbackRateType = 'love' | 'ok' | 'disappointed' | 'default';
@@ -100,7 +100,7 @@ const LeftIconContainer = styled.View`
 
 const SendFeedback = ({
   route,
-}: NativeStackScreenProps<AboutStackParamList, AboutScreens.SEND_FEEDBACK>) => {
+}: NativeStackScreenProps<AboutGroupParamList, AboutScreens.SEND_FEEDBACK>) => {
   const {t} = useTranslation();
   const dispatch = useAppDispatch();
   const theme = useTheme();

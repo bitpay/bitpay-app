@@ -313,7 +313,9 @@ const Addresses = () => {
         },
         async (err: any) => {
           if (err) {
-            console.log(err);
+            logger.error(
+              '[startScan] error: ' + (err.message || JSON.stringify(err)),
+            );
             setButtonState('failed');
             await sleep(1000);
             setButtonState(null);

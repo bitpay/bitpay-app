@@ -25,7 +25,6 @@ const MerchantCategory = ({
   navigation,
 }: NativeStackScreenProps<MerchantGroupParamList, 'MerchantCategory'>) => {
   const {integrations, category} = route.params;
-  console.log('integrations', integrations);
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => <HeaderBackButton />,

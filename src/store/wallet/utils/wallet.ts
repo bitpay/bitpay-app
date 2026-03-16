@@ -65,6 +65,7 @@ import {
 } from '../../../navigation/wallet/screens/AccountDetails';
 import uniqBy from 'lodash.uniqby';
 import cloneDeep from 'lodash.clonedeep';
+import {logManager} from '../../../managers/LogManager';
 
 export const mapAbbreviationAndName =
   (
@@ -363,7 +364,7 @@ export const toFiat =
 
     if (!ratesPerCurrency) {
       // Rate not found return 0
-      console.log(
+      logManager.debug(
         `[toFiat] Rate not found for currency: ${currencyAbbreviation}`,
       );
       return 0;
@@ -376,7 +377,7 @@ export const toFiat =
 
     if (!fiatRate) {
       // Rate not found for fiat/currency pair
-      console.log(
+      logManager.debug(
         `[toFiat] Rate not found or zero for fiat/currency pair: ${fiatCode} -> ${currencyAbbreviation}`,
       );
       return 0;
@@ -384,7 +385,7 @@ export const toFiat =
 
     if (!precision) {
       // precision not found return 0
-      console.log(
+      logManager.debug(
         `[toFiat] precision not found for currency ${currencyAbbreviation}`,
       );
       return 0;
