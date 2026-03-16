@@ -1,5 +1,5 @@
 import 'react-native-get-random-values'; // must import before @ethersproject/shims
-import 'react-native-quick-crypto';
+import { install as installQuickCrypto } from 'react-native-quick-crypto';
 import '@ethersproject/shims';
 // import 'fast-text-encoding';
 import './shim';
@@ -40,6 +40,9 @@ import {
 import {BitPayDarkTheme, BitPayLightTheme} from './src/themes/bitpay';
 import {useAppSelector} from './src/utils/hooks';
 import { DklsWorkerHost } from './src/dkls/DklsWorker';
+
+
+installQuickCrypto();
 
 const makeErrorHandler = store => (e, isFatal) => {
   if (isFatal) {
