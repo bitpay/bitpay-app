@@ -61,6 +61,34 @@ import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import {Analytics} from '../../../analytics/analytics.effects';
 
+const perfNow = () =>
+  typeof global?.performance !== 'undefined' &&
+  typeof global.performance?.now === 'function'
+    ? global.performance.now()
+    : Date.now();
+
+const perfInfo = (
+  label: string,
+  start: number,
+  extra?: Record<string, unknown>,
+) => {
+  const ms = perfNow() - start;
+  const suffix = extra ? ` | ${JSON.stringify(extra)}` : '';
+  logManager.info(`[CREATEKEY PERF] ${label}: ${ms.toFixed(1)}ms${suffix}`);
+  return ms;
+};
+
+const perfError = (
+  label: string,
+  start: number,
+  extra?: Record<string, unknown>,
+) => {
+  const ms = perfNow() - start;
+  const suffix = extra ? ` | ${JSON.stringify(extra)}` : '';
+  logManager.error(`[CREATEKEY PERF] ${label}: ${ms.toFixed(1)}ms${suffix}`);
+  return ms;
+};
+
 export interface CreateOptions {
   network?: Network;
   account?: number;
@@ -102,14 +130,31 @@ export const startCreateKey =
   ): Effect<Promise<Key>> =>
   async (dispatch, getState) => {
     return new Promise(async (resolve, reject) => {
+      const totalStart = perfNow();
       try {
         const state = getState();
         const network = state.APP.network;
 
+        logManager.info(
+          `[CREATEKEY PERF] createKey.start | ${JSON.stringify({
+            context,
+            network,
+            currenciesCount: currencies?.length ?? 0,
+            currencies: currencies?.map(c => ({
+              chain: c.chain,
+              coin: c.currencyAbbreviation,
+              isToken: c.isToken,
+            })),
+          })}`,
+        );
+
+        const rootKeyStart = perfNow();
         const _key = BWC.createKey({
           seedType: 'new',
         });
+        perfInfo('createKey.BWC.createKey', rootKeyStart);
 
+        const createMultipleWalletsStart = perfNow();
         const wallets = await dispatch(
           createMultipleWallets({
             key: _key,
@@ -119,18 +164,39 @@ export const startCreateKey =
             },
           }),
         );
+        perfInfo(
+          'createKey.createMultipleWallets',
+          createMultipleWalletsStart,
+          {
+            walletCount: wallets?.length ?? 0,
+          },
+        );
 
+        const buildKeyStart = perfNow();
         const key = buildKeyObj({key: _key, wallets});
+        perfInfo('createKey.buildKeyObj', buildKeyStart, {
+          walletCount: key?.wallets?.length ?? 0,
+        });
+
         if (context !== 'onboarding') {
           dispatch(Analytics.track('Created Key'));
         }
+        const dispatchStart = perfNow();
         dispatch(
           successCreateKey({
             key,
           }),
         );
+        perfInfo('createKey.successCreateKey.dispatch', dispatchStart);
+
+        perfInfo('createKey.TOTAL', totalStart, {
+          walletCount: wallets?.length ?? 0,
+        });
         resolve(key);
       } catch (err) {
+        perfError('createKey.TOTAL.ERROR', totalStart, {
+          message: err instanceof Error ? err.message : JSON.stringify(err),
+        });
         reject(err);
       }
     });
@@ -400,6 +466,7 @@ export const createMultipleWallets =
     options: CreateOptions;
   }): Effect<Promise<Wallet[]>> =>
   async (dispatch, getState) => {
+    const totalStart = perfNow();
     const {
       WALLET,
       APP: {
@@ -419,8 +486,28 @@ export const createMultipleWallets =
     const wallets: API[] = [];
     const tokens = currencies.filter(({isToken}) => isToken);
     const coins = currencies.filter(({isToken}) => !isToken);
+
+    logManager.info(
+      `[CREATEKEY PERF] createMultipleWallets.start | ${JSON.stringify({
+        baseCoins: coins.length,
+        tokens: tokens.length,
+        network: options?.network,
+      })}`,
+    );
+
     for (const coin of coins) {
+      const coinStart = perfNow();
       try {
+        logManager.info(
+          `[CREATEKEY PERF] createMultipleWallets.coin.start | ${JSON.stringify(
+            {
+              chain: coin.chain,
+              coin: coin.currencyAbbreviation,
+            },
+          )}`,
+        );
+
+        const walletCreateStart = perfNow();
         const wallet = (await dispatch(
           createWallet({
             key,
@@ -432,15 +519,29 @@ export const createMultipleWallets =
             },
           }),
         )) as Wallet;
+        perfInfo(
+          `createMultipleWallets.createWallet.${coin.chain}.${coin.currencyAbbreviation}`,
+          walletCreateStart,
+          {walletId: wallet?.credentials?.walletId},
+        );
 
+        const addressStart = perfNow();
         const receiveAddress = (await dispatch<any>(
           createWalletAddress({wallet, newAddress: true}),
         )) as string;
+        perfInfo(
+          `createMultipleWallets.createWalletAddress.${coin.chain}.${coin.currencyAbbreviation}`,
+          addressStart,
+          {
+            walletId: wallet?.credentials?.walletId,
+          },
+        );
         logManager.info(`new address generated: ${receiveAddress}`);
         wallet.receiveAddress = receiveAddress;
         wallets.push(wallet);
         for (const token of tokens) {
           if (token.chain === coin.chain) {
+            const tokenStart = perfNow();
             const tokenWallet = await dispatch(
               createTokenWallet(
                 wallet,
@@ -449,19 +550,45 @@ export const createMultipleWallets =
                 tokenOpts,
               ),
             );
+            perfInfo(
+              `createMultipleWallets.createTokenWallet.${token.chain}.${token.currencyAbbreviation}`,
+              tokenStart,
+              {
+                parentWalletId: wallet?.credentials?.walletId,
+                tokenWalletId: (tokenWallet as Wallet | undefined)?.credentials
+                  ?.walletId,
+              },
+            );
             if (tokenWallet) {
               wallets.push(tokenWallet);
             }
           }
         }
+        const chainTokens = tokens.filter(token => token.chain === coin.chain);
+        perfInfo(
+          `createMultipleWallets.coin.TOTAL.${coin.chain}.${coin.currencyAbbreviation}`,
+          coinStart,
+          {
+            walletId: wallet?.credentials?.walletId,
+            tokenCount: chainTokens.length,
+          },
+        );
       } catch (err) {
+        perfError(
+          `createMultipleWallets.coin.ERROR.${coin.chain}.${coin.currencyAbbreviation}`,
+          coinStart,
+          {
+            message: err instanceof Error ? err.message : JSON.stringify(err),
+          },
+        );
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
         logManager.debug(`Error creating wallet - continue anyway: ${errMsg}`);
       }
     }
 
+    const buildStart = perfNow();
     // build out app specific props
-    return wallets.map(wallet => {
+    const result = wallets.map(wallet => {
       // subscribe new wallet to push notifications
       if (notificationsAccepted) {
         dispatch(subscribePushNotifications(wallet, brazeEid!));
@@ -494,6 +621,22 @@ export const createMultipleWallets =
         ),
       );
     });
+
+    perfInfo(
+      'createMultipleWallets.buildWalletObjectsAndSubscriptions',
+      buildStart,
+      {
+        walletCount: result.length,
+      },
+    );
+
+    perfInfo('createMultipleWallets.TOTAL', totalStart, {
+      walletCount: result.length,
+      baseCoins: coins.length,
+      tokens: tokens.length,
+    });
+
+    return result;
   };
 
 /////////////////////////////////////////////////////////////
@@ -513,6 +656,7 @@ const createWallet =
   }): Effect<Promise<API>> =>
   async (dispatch): Promise<API> => {
     return new Promise((resolve, reject) => {
+      const totalStart = perfNow();
       const bwcClient = BWC.getClient();
       const {key, coin: _coin, chain, options, context} = params;
       const coin = _coin === 'pol' ? 'matic' : _coin; // for creating a polygon wallet, we use matic as symbol
@@ -530,21 +674,44 @@ const createWallet =
         ...options,
       };
 
-      bwcClient.fromString(
-        key.createCredentials(password, {
+      logManager.info(
+        `[CREATEKEY PERF] createWallet.start | ${JSON.stringify({
           coin,
           chain,
-          network,
           account,
-          n: 1,
-          m: 1,
-        }),
+          network,
+          context,
+        })}`,
       );
+
+      const credentialsStart = perfNow();
+      const credentials = key.createCredentials(password, {
+        coin,
+        chain,
+        network,
+        account,
+        n: 1,
+        m: 1,
+      });
+      perfInfo(
+        `createWallet.createCredentials.${chain}.${coin}`,
+        credentialsStart,
+        {
+          account,
+        },
+      );
+
+      const fromStringStart = perfNow();
+      bwcClient.fromString(credentials);
+      perfInfo(`createWallet.fromString.${chain}.${coin}`, fromStringStart, {
+        account,
+      });
 
       const name =
         isL2NoSideChainNetwork(chain) && coin === chain
           ? BitpaySupportedCoins[coin].name
           : BitpaySupportedCoins[chain.toLowerCase()].name;
+      const apiStart = perfNow();
       bwcClient.createWallet(
         name,
         'me',
@@ -560,6 +727,15 @@ const createWallet =
         },
         (err: any) => {
           if (err) {
+            perfError(
+              `createWallet.createWalletAPI.ERROR.${chain}.${coin}`,
+              apiStart,
+              {
+                account,
+                name: err?.name,
+                message: err?.message,
+              },
+            );
             switch (err.name) {
               case 'bwc.ErrorCOPAYER_REGISTERED': {
                 if (context === 'WalletConnect') {
@@ -579,6 +755,18 @@ const createWallet =
                     ),
                   );
                 }
+
+                logManager.info(
+                  `[CREATEKEY PERF] createWallet.retry.COPAYER_REGISTERED | ${JSON.stringify(
+                    {
+                      coin,
+                      chain,
+                      previousAccount: account,
+                      nextAccount: account + 1,
+                    },
+                  )}`,
+                );
+
                 return resolve(
                   dispatch(
                     createWallet({
@@ -594,6 +782,17 @@ const createWallet =
 
             reject(err);
           } else {
+            perfInfo(
+              `createWallet.createWalletAPI.${chain}.${coin}`,
+              apiStart,
+              {
+                account,
+              },
+            );
+            perfInfo(`createWallet.TOTAL.${chain}.${coin}`, totalStart, {
+              account,
+              walletId: bwcClient?.credentials?.walletId,
+            });
             logManager.info(`Added Coin: ${chain}: ${coin}`);
             resolve(bwcClient);
           }
@@ -613,7 +812,16 @@ const createTokenWallet =
   ): Effect<Promise<API>> =>
   async (dispatch): Promise<API> => {
     return new Promise((resolve, reject) => {
+      const totalStart = perfNow();
       try {
+        logManager.info(
+          `[CREATEKEY PERF] createTokenWallet.start | ${JSON.stringify({
+            chain: associatedWallet.credentials.chain,
+            parentWalletId: associatedWallet.credentials.walletId,
+            tokenName,
+            tokenAddress,
+          })}`,
+        );
         const bwcClient = BWC.getClient();
         const tokenAddressWithSuffix = addTokenChainSuffix(
           tokenAddress,
@@ -698,7 +906,21 @@ const createTokenWallet =
             resolve(bwcClient);
           },
         );
+        perfInfo(
+          `createTokenWallet.TOTAL.${associatedWallet.credentials.chain}.${tokenName}`,
+          totalStart,
+          {
+            parentWalletId: associatedWallet.credentials.walletId,
+          },
+        );
       } catch (err) {
+        perfError(
+          `createTokenWallet.ERROR.${associatedWallet.credentials.chain}.${tokenName}`,
+          totalStart,
+          {
+            message: err instanceof Error ? err.message : JSON.stringify(err),
+          },
+        );
         const errstring =
           err instanceof Error ? err.message : JSON.stringify(err);
         logManager.error(`Error creating token wallet: ${errstring}`);

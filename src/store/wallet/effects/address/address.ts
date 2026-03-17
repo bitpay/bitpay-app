@@ -6,6 +6,34 @@ import {Effect} from '../../../index';
 import {successGetReceiveAddress} from '../../wallet.actions';
 import {logManager} from '../../../../managers/LogManager';
 
+const perfNow = () =>
+  typeof global?.performance !== 'undefined' &&
+  typeof global.performance?.now === 'function'
+    ? global.performance.now()
+    : Date.now();
+
+const perfInfo = (
+  label: string,
+  start: number,
+  extra?: Record<string, unknown>,
+) => {
+  const ms = perfNow() - start;
+  const suffix = extra ? ` | ${JSON.stringify(extra)}` : '';
+  logManager.info(`[ADDRESS PERF] ${label}: ${ms.toFixed(1)}ms${suffix}`);
+  return ms;
+};
+
+const perfError = (
+  label: string,
+  start: number,
+  extra?: Record<string, unknown>,
+) => {
+  const ms = perfNow() - start;
+  const suffix = extra ? ` | ${JSON.stringify(extra)}` : '';
+  logManager.error(`[ADDRESS PERF] ${label}: ${ms.toFixed(1)}ms${suffix}`);
+  return ms;
+};
+
 const BWC = BwcProvider.getInstance();
 
 const Bitcore = BWC.getBitcore();
@@ -95,11 +123,30 @@ export const createWalletAddress =
           wallet.id.replace(`-${token.address}`, '');
         }
 
+        const totalStart = perfNow();
+        logManager.info(
+          `[ADDRESS PERF] createWalletAddress.start | ${JSON.stringify({
+            walletId: wallet?.credentials?.walletId,
+            coin: wallet?.credentials?.coin,
+            chain: wallet?.credentials?.chain,
+            newAddress,
+          })}`,
+        );
+
         try {
           let addressObj: Address | undefined;
 
           if (!newAddress) {
+            const getLatestMainAddressStart = perfNow();
             addressObj = await getLatestMainAddress(wallet);
+            perfInfo(
+              `createWalletAddress.getLatestMainAddress.${wallet.credentials.chain}.${wallet.credentials.coin}`,
+              getLatestMainAddressStart,
+              {
+                walletId: wallet.credentials.walletId,
+              },
+            );
+
             validateOrThrow(addressObj, network);
 
             if (addressObj?.address) {
@@ -114,15 +161,38 @@ export const createWalletAddress =
                 );
               }
               logManager.info('returned last main address');
+              perfInfo(
+                `createWalletAddress.TOTAL.${wallet.credentials.chain}.${wallet.credentials.coin}`,
+                totalStart,
+                {
+                  walletId: wallet.credentials.walletId,
+                },
+              );
               return resolve(addressObj.address);
             }
           }
           // if no main address, generate a new one
           try {
+            const getNewAddressStart = perfNow();
             addressObj = await getNewAddress(wallet);
+            perfInfo(
+              `createWalletAddress.getNewAddress.${wallet.credentials.chain}.${wallet.credentials.coin}`,
+              getNewAddressStart,
+              {
+                walletId: wallet.credentials.walletId,
+              },
+            );
           } catch (err: any) {
             if (err?.name?.includes?.('MAIN_ADDRESS_GAP_REACHED')) {
+              const getLatestMainAddressStart2 = perfNow();
               const latest = await getLatestMainAddress(wallet);
+              perfInfo(
+                `createWalletAddress.getLatestMainAddress2.${wallet.credentials.chain}.${wallet.credentials.coin}`,
+                getLatestMainAddressStart2,
+                {
+                  walletId: wallet.credentials.walletId,
+                },
+              );
               validateOrThrow(latest, network);
               const receiveAddress = latest.address;
               wallet.receiveAddress = receiveAddress;
@@ -155,6 +225,13 @@ export const createWalletAddress =
               );
             }
             logManager.info('returned new generated address');
+            perfInfo(
+              `createWalletAddress.TOTAL.${wallet.credentials.chain}.${wallet.credentials.coin}`,
+              totalStart,
+              {
+                walletId: wallet.credentials.walletId,
+              },
+            );
             return resolve(addressObj.address);
           }
           return reject({type: 'GENERAL_ERROR', error: 'No address generated'});
