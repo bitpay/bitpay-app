@@ -5,6 +5,7 @@ import {
   parseAtomicToBigint,
 } from '../format';
 import type {FiatRateSeriesCache} from '../fiatRateSeries';
+import {normalizeFiatRateSeriesTokenAddress} from '../fiatRateSeries';
 import {createFiatRateLookup, normalizeFiatRateSeriesCoin} from './rates';
 import {atomicToUnitNumber} from './atomic';
 import type {
@@ -50,8 +51,12 @@ export const getAssetIdFromWallet = (
 ): string => {
   const chain = (wallet.chain || '').toLowerCase();
   const coin = (wallet.currencyAbbreviation || '').toLowerCase();
-  if (wallet.tokenAddress) {
-    return `${chain}:${coin}:${wallet.tokenAddress.toLowerCase()}`;
+  const normalizedTokenAddress = normalizeFiatRateSeriesTokenAddress(
+    chain,
+    wallet.tokenAddress,
+  );
+  if (normalizedTokenAddress) {
+    return `${chain}:${coin}:${normalizedTokenAddress}`;
   }
   return `${chain}:${coin}`;
 };
@@ -1029,6 +1034,10 @@ const createSimulationSetup = (
     coin: rateCoin,
     cache: fiatRateSeriesCache,
     nowMs,
+    chain: args.wallet.tokenAddress
+      ? String(args.wallet.chain || '')
+      : undefined,
+    tokenAddress: args.wallet.tokenAddress,
   });
 
   const feePaidByWallet = (tx: NormalizedTx): boolean =>

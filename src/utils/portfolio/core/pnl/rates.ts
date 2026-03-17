@@ -2,8 +2,12 @@ import type {
   FiatRatePoint,
   FiatRateSeriesCache,
   FiatRateInterval,
+  FiatRateSeriesReaderIdentity,
 } from '../fiatRateSeries';
-import {getFiatRateSeriesCacheKey} from '../fiatRateSeries';
+import {
+  getFiatRateSeriesCacheKey,
+  normalizeFiatRateSeriesCoin,
+} from '../fiatRateSeries';
 import {
   PREF_1D,
   PREF_1W,
@@ -14,17 +18,7 @@ import {
   PREF_ALL,
 } from './intervalPrefs';
 
-export const normalizeFiatRateSeriesCoin = (
-  currencyAbbreviation?: string,
-): string => {
-  switch ((currencyAbbreviation || '').toLowerCase()) {
-    case 'matic':
-    case 'pol':
-      return 'pol';
-    default:
-      return (currencyAbbreviation || '').toLowerCase();
-  }
-};
+export {normalizeFiatRateSeriesCoin};
 
 type Finder = (targetTs: number) => FiatRatePoint | null;
 
@@ -113,17 +107,34 @@ export const createFiatRateLookup = (args: {
   cache: FiatRateSeriesCache;
   nowMs: number;
   bridgeQuoteCurrency?: string;
+  chain?: string;
+  tokenAddress?: string;
 }): FiatRateLookup => {
-  const {quoteCurrency, coin, cache, nowMs, bridgeQuoteCurrency} = args;
+  const {
+    quoteCurrency,
+    coin,
+    cache,
+    nowMs,
+    bridgeQuoteCurrency,
+    chain,
+    tokenAddress,
+  } = args;
+  const identity: FiatRateSeriesReaderIdentity | undefined =
+    chain || tokenAddress
+      ? {
+          chain,
+          tokenAddress,
+        }
+      : undefined;
 
   const keyByInterval: Record<FiatRateInterval, string> = {
-    '1D': getFiatRateSeriesCacheKey(quoteCurrency, coin, '1D'),
-    '1W': getFiatRateSeriesCacheKey(quoteCurrency, coin, '1W'),
-    '1M': getFiatRateSeriesCacheKey(quoteCurrency, coin, '1M'),
-    '3M': getFiatRateSeriesCacheKey(quoteCurrency, coin, '3M'),
-    '1Y': getFiatRateSeriesCacheKey(quoteCurrency, coin, '1Y'),
-    '5Y': getFiatRateSeriesCacheKey(quoteCurrency, coin, '5Y'),
-    ALL: getFiatRateSeriesCacheKey(quoteCurrency, coin, 'ALL'),
+    '1D': getFiatRateSeriesCacheKey(quoteCurrency, coin, '1D', identity),
+    '1W': getFiatRateSeriesCacheKey(quoteCurrency, coin, '1W', identity),
+    '1M': getFiatRateSeriesCacheKey(quoteCurrency, coin, '1M', identity),
+    '3M': getFiatRateSeriesCacheKey(quoteCurrency, coin, '3M', identity),
+    '1Y': getFiatRateSeriesCacheKey(quoteCurrency, coin, '1Y', identity),
+    '5Y': getFiatRateSeriesCacheKey(quoteCurrency, coin, '5Y', identity),
+    ALL: getFiatRateSeriesCacheKey(quoteCurrency, coin, 'ALL', identity),
   };
   const findersByInterval = new Map<FiatRateInterval, Finder>();
 
@@ -171,6 +182,8 @@ export const createFiatRateLookup = (args: {
         coin,
         cache,
         nowMs,
+        chain,
+        tokenAddress,
       });
     }
     return bridgeCoinLookup;

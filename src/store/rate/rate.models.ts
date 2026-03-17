@@ -1,3 +1,12 @@
+import {
+  type FiatRateSeriesAssetIdentity,
+  type FiatRateSeriesReaderIdentity,
+  getFiatRateSeriesAssetKey as getSharedFiatRateSeriesAssetKey,
+  getFiatRateSeriesCacheKey as getSharedFiatRateSeriesCacheKey,
+  parseFiatRateSeriesCacheKey as parseSharedFiatRateSeriesCacheKey,
+} from '../../utils/portfolio/core/fiatRateSeries';
+import {HISTORIC_RATES_CACHE_DURATION} from '../../constants/wallet';
+
 export interface Rate {
   code: string;
   fetchedOn: number;
@@ -53,25 +62,36 @@ export type FiatRateSeriesCache = {
   [key in string]?: FiatRateSeries;
 };
 
+export type FiatRateSeriesCacheEntry = NonNullable<FiatRateSeriesCache[string]>;
+export type {FiatRateSeriesAssetIdentity, FiatRateSeriesReaderIdentity};
+
 export type RatesCacheKey = {
   [key: number]: number | undefined;
 };
+
+export const getFiatRateSeriesAssetKey = getSharedFiatRateSeriesAssetKey;
+export const parseFiatRateSeriesCacheKey = parseSharedFiatRateSeriesCacheKey;
 
 export const getFiatRateSeriesCacheKey = (
   fiatCode: string,
   coin: string,
   interval: FiatRateInterval,
+  identity?: FiatRateSeriesReaderIdentity,
 ): string => {
-  return `${(fiatCode || '').toUpperCase()}:${(
-    coin || ''
-  ).toLowerCase()}:${interval}`;
+  return getSharedFiatRateSeriesCacheKey(fiatCode, coin, interval, identity);
 };
+
+export const getFiatRateSeriesLoadedIntervalKey = getFiatRateSeriesCacheKey;
 
 export const hasValidSeriesForCoin = (args: {
   cache: FiatRateSeriesCache | undefined;
   fiatCodeUpper: string;
   normalizedCoin: string;
   intervals: ReadonlyArray<FiatRateInterval>;
+  requireFresh?: boolean;
+  freshnessDurationSeconds?: number;
+  chain?: string;
+  tokenAddress?: string;
 }): boolean => {
   const fiatCodeUpper = (args.fiatCodeUpper || '').toUpperCase();
   const normalizedCoin = (args.normalizedCoin || '').trim().toLowerCase();
@@ -84,8 +104,13 @@ export const hasValidSeriesForCoin = (args: {
       fiatCodeUpper,
       normalizedCoin,
       interval,
+      {
+        chain: args.chain,
+        tokenAddress: args.tokenAddress,
+      },
     );
-    const points = args.cache?.[cacheKey]?.points;
+    const cachedSeries = args.cache?.[cacheKey];
+    const points = cachedSeries?.points;
     if (!Array.isArray(points) || !points.length) {
       return false;
     }
@@ -95,6 +120,22 @@ export const hasValidSeriesForCoin = (args: {
       )
     ) {
       return false;
+    }
+    if (args.requireFresh) {
+      const freshnessDurationSeconds = Math.max(
+        0,
+        args.freshnessDurationSeconds ?? HISTORIC_RATES_CACHE_DURATION,
+      );
+      const fetchedOn = cachedSeries?.fetchedOn;
+      if (
+        !(
+          typeof fetchedOn === 'number' &&
+          Number.isFinite(fetchedOn) &&
+          Date.now() - fetchedOn <= freshnessDurationSeconds * 1000
+        )
+      ) {
+        return false;
+      }
     }
   }
 

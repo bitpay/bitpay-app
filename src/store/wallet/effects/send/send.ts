@@ -59,10 +59,8 @@ import {
 } from '../../../../utils/helper-methods';
 import {toFiat, checkEncryptPassword} from '../../utils/wallet';
 import {startGetRates} from '../rates/rates';
-import {
-  startUpdateWalletStatus,
-  waitForTargetAmountAndUpdateWallet,
-} from '../status/status';
+import {startUpdateWalletStatus} from '../status/status';
+import {waitForTargetAmountAndUpdateWallet} from '../status/waitForTargetAmountAndUpdateWallet';
 import {
   CustomErrorMessage,
   ExcludedUtxosWarning,

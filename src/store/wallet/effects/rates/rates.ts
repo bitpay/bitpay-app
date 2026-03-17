@@ -109,31 +109,19 @@ const hasValidFiatRateSeriesInCache = (args: {
   coin: string;
   interval: FiatRateInterval;
   requireFresh?: boolean;
-}): boolean => {
-  const hasValidSeries = hasValidSeriesForCoin({
+  chain?: string;
+  tokenAddress?: string;
+}): boolean =>
+  hasValidSeriesForCoin({
     cache: args.fiatRateSeriesCache,
     fiatCodeUpper: args.fiatCode,
     normalizedCoin: args.coin,
     intervals: [args.interval],
+    requireFresh: args.requireFresh,
+    freshnessDurationSeconds: HISTORIC_RATES_CACHE_DURATION,
+    chain: args.chain,
+    tokenAddress: args.tokenAddress,
   });
-  if (!hasValidSeries) {
-    return false;
-  }
-  if (!args.requireFresh) {
-    return true;
-  }
-
-  const cacheKey = getFiatRateSeriesCacheKey(
-    args.fiatCode,
-    args.coin,
-    args.interval,
-  );
-  const fetchedOn = args.fiatRateSeriesCache?.[cacheKey]?.fetchedOn;
-  return (
-    typeof fetchedOn === 'number' &&
-    !isCacheKeyStale(fetchedOn, HISTORIC_RATES_CACHE_DURATION)
-  );
-};
 
 const getFiatRateSeriesCadenceMs = (
   points: FiatRatePoint[],
@@ -228,14 +216,23 @@ const getFiatRateSeriesInFlightKey = (args: {
   fiatCode: string;
   interval: FiatRateInterval;
   coin?: string;
+  chain?: string;
+  tokenAddress?: string;
 }): string => {
   const fiatCodeUpper = (args.fiatCode || '').toUpperCase();
   const normalizedCoin = normalizeFiatRateSeriesCoin(args.coin);
-  // Default v4 requests are shared across callers regardless of target coin.
   if (!normalizedCoin) {
     return `${fiatCodeUpper}:${args.interval}:default`;
   }
-  return `${fiatCodeUpper}:${normalizedCoin}:${args.interval}:coin`;
+  return getFiatRateSeriesCacheKey(
+    fiatCodeUpper,
+    normalizedCoin,
+    args.interval,
+    {
+      chain: args.chain,
+      tokenAddress: args.tokenAddress,
+    },
+  );
 };
 
 const getAllowedCoinsSet = (allowedCoins?: string[]): Set<string> | null => {
@@ -555,6 +552,10 @@ export const fetchFiatRateSeriesInterval =
       fiatCode,
       coinForCacheCheck,
       interval,
+      {
+        chain,
+        tokenAddress,
+      },
     );
     const cached = fiatRateSeriesCache[cacheKey];
     const normalizedCoinForCacheCheck =
@@ -600,6 +601,8 @@ export const fetchFiatRateSeriesInterval =
       fiatCode,
       interval,
       coin: normalizedRequestedCoin || undefined,
+      chain,
+      tokenAddress,
     });
     const allowedCoinsSet = getAllowedCoinsSet(allowedCoins);
 
@@ -695,21 +698,44 @@ export const fetchFiatRateSeriesInterval =
       }
 
       updates = {};
-      Object.keys(responseByCoin).forEach(seriesCoin => {
-        const normalizedSeriesCoin = normalizeFiatRateSeriesCoin(seriesCoin);
-        if (allowedCoinsSet && !allowedCoinsSet.has(normalizedSeriesCoin)) {
-          return;
+      if (normalizedRequestedCoin) {
+        const requestedSeriesPoints =
+          responseByCoin[normalizedRequestedCoin] ??
+          (Array.isArray(data) ? data : undefined);
+        const deduped = sanitizeSortDedupePoints(requestedSeriesPoints);
+        if (deduped.length) {
+          updates[
+            getFiatRateSeriesCacheKey(
+              fiatCode,
+              normalizedRequestedCoin,
+              interval,
+              {
+                chain,
+                tokenAddress,
+              },
+            )
+          ] = {
+            fetchedOn,
+            points: deduped,
+          };
         }
+      } else {
+        Object.keys(responseByCoin).forEach(seriesCoin => {
+          const normalizedSeriesCoin = normalizeFiatRateSeriesCoin(seriesCoin);
+          if (allowedCoinsSet && !allowedCoinsSet.has(normalizedSeriesCoin)) {
+            return;
+          }
 
-        const deduped = sanitizeSortDedupePoints(responseByCoin[seriesCoin]);
-        if (!deduped.length) {
-          return;
-        }
-        updates[getFiatRateSeriesCacheKey(fiatCode, seriesCoin, interval)] = {
-          fetchedOn,
-          points: deduped,
-        };
-      });
+          const deduped = sanitizeSortDedupePoints(responseByCoin[seriesCoin]);
+          if (!deduped.length) {
+            return;
+          }
+          updates[getFiatRateSeriesCacheKey(fiatCode, seriesCoin, interval)] = {
+            fetchedOn,
+            points: deduped,
+          };
+        });
+      }
 
       updateCount = Object.keys(updates).length;
       if (updateCount) {
@@ -740,6 +766,8 @@ export const fetchFiatRateSeriesInterval =
         coin: coinForCacheCheck,
         interval,
         requireFresh: true,
+        chain,
+        tokenAddress,
       });
       if (hasFreshTargetCoinSeries) {
         return true;
@@ -798,6 +826,8 @@ export const fetchFiatRateSeriesInterval =
         interval,
         // Do not let stale cached series block the coin-param refresh fallback.
         requireFresh: true,
+        chain,
+        tokenAddress,
       });
       if (hasTargetCoinSeries) {
         return true;
@@ -882,6 +912,8 @@ export const fetchFiatRateSeriesAllIntervals =
         coin: coinForCacheCheck,
         interval,
         requireFresh: true,
+        chain,
+        tokenAddress,
       });
     });
 
@@ -913,9 +945,18 @@ export const refreshFiatRateSeries =
     currencyAbbreviation: string;
     interval: FiatRateInterval;
     spotRate?: number;
+    chain?: string;
+    tokenAddress?: string;
   }): Effect<Promise<boolean>> =>
   async (dispatch, getState) => {
-    const {fiatCode, currencyAbbreviation, interval, spotRate} = args;
+    const {
+      fiatCode,
+      currencyAbbreviation,
+      interval,
+      spotRate,
+      chain,
+      tokenAddress,
+    } = args;
     const {
       RATE: {fiatRateSeriesCache},
     } = getState();
@@ -925,7 +966,10 @@ export const refreshFiatRateSeries =
     }
 
     const coin = normalizeFiatRateSeriesCoin(currencyAbbreviation);
-    const cacheKey = getFiatRateSeriesCacheKey(fiatCode, coin, interval);
+    const cacheKey = getFiatRateSeriesCacheKey(fiatCode, coin, interval, {
+      chain,
+      tokenAddress,
+    });
     const cached = fiatRateSeriesCache[cacheKey];
     if (!cached?.points?.length) {
       return false;
