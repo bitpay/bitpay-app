@@ -739,6 +739,7 @@ const SwapCryptoRoot: React.FC = () => {
       } else if (selectedWallet.balance?.satSpendable === 0) {
         setToWallet(selectedWallet);
         setUseDefaultToWallet(true);
+        setLoadingWalletFromStatus(false);
       } else {
         logger.warn('It was not possible to set the selected wallet');
       }
@@ -1513,6 +1514,8 @@ const SwapCryptoRoot: React.FC = () => {
     if (!isCacheFresh) {
       await sleep(100);
       showOngoingProcess('GENERAL_AWAITING');
+    } else {
+      setLoadingWalletFromStatus(true);
     }
 
     if (isCacheFresh && prefetchedOpts?.swapCryptoConfig !== undefined) {
@@ -3100,7 +3103,9 @@ const SwapCryptoRoot: React.FC = () => {
                 (!IsVMChain(toWalletSelected.chain) && !selectedOffer)
               }>
               <SwapCardHeaderTitle
-                style={{opacity: !fromWalletSelected ? 0.2 : 1}}>
+                style={{
+                  opacity: !fromWalletSelected && !useDefaultToWallet ? 0.2 : 1,
+                }}>
                 {t('To')}
               </SwapCardHeaderTitle>
               {toWalletSelected && IsVMChain(toWalletSelected.chain) ? (
@@ -3131,9 +3136,12 @@ const SwapCryptoRoot: React.FC = () => {
                   !toWalletSelected
                     ? {
                         backgroundColor: Action,
-                        opacity: fromWalletSelected ? 1 : 0.2,
                       }
                     : {}
+                }
+                disabled={
+                  !fromWalletSelected ||
+                  swapCryptoSupportedCoinsTo?.length === 0
                 }
                 isBigScreen={WIDTH > 500}
                 key={fromWalletSelected ? 'swapToEnabled' : 'swapToDisabled'}
