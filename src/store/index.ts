@@ -87,6 +87,10 @@ import {
   portfolioReducer,
   portfolioReduxPersistBlackList,
 } from './portfolio/portfolio.reducer';
+import {
+  portfolioChartsReducer,
+  portfolioChartsReduxPersistBlackList,
+} from './portfolio-charts/portfolio-charts.reducer';
 import {removeWalletSnapshots} from './portfolio/portfolio.actions';
 import {WalletActionTypes} from './wallet/wallet.types';
 import {BitPayIdActionTypes} from './bitpay-id/bitpay-id.types';
@@ -275,6 +279,7 @@ const reducerPersistBlackLists: Record<keyof typeof reducers, string[]> = {
   WALLET_CONNECT_V2: walletConnectV2ReduxPersistBlackList,
   MARKET_STATS: marketStatsReduxPersistBlackList,
   PORTFOLIO: portfolioReduxPersistBlackList,
+  PORTFOLIO_CHARTS: portfolioChartsReduxPersistBlackList,
 };
 
 /*
@@ -302,6 +307,7 @@ const reducers = {
   WALLET_CONNECT_V2: walletConnectV2Reducer,
   MARKET_STATS: marketStatsReducer,
   PORTFOLIO: portfolioReducer,
+  PORTFOLIO_CHARTS: portfolioChartsReducer,
 };
 
 const combinedReducer = combineReducers(reducers);
@@ -470,6 +476,7 @@ const getStore = async () => {
           'APP',
           'MARKET_STATS',
           'PORTFOLIO',
+          'PORTFOLIO_CHARTS',
           'RATE',
           'SHOP',
           'SHOP_CATALOG',

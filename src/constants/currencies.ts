@@ -621,6 +621,11 @@ export const BitpaySupportedMaticTokens: {[key in string]: CurrencyOpts} = {
       blockTime: 0.2,
       maxMerchantFee: 'urgent',
     },
+    theme: {
+      coinColor: '#0074D1',
+      backgroundColor: '#0074D1',
+      gradientBackgroundColor: '#0074D1',
+    },
   },
   '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359_m': {
     name: 'USDC',

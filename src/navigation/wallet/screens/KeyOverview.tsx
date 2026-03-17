@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -14,10 +15,11 @@ import {
   useTheme,
 } from '@react-navigation/native';
 import {FlashList} from '@shopify/flash-list';
-import {LogBox, RefreshControl, View} from 'react-native';
+import {LogBox, RefreshControl, View, useWindowDimensions} from 'react-native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import styled from 'styled-components/native';
+import {useStore} from 'react-redux';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {
   Balance,
@@ -125,7 +127,8 @@ import {BitpaySupportedTokenOptsByAddress} from '../../../constants/tokens';
 import {BWCErrorMessage} from '../../../constants/BWCError';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
-import Percentage from '../../../components/percentage/Percentage';
+import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import {getDifferenceColor} from '../../../components/percentage/Percentage';
 import Button from '../../../components/button/Button';
 import {AllocationDonutLegendCard} from '../../tabs/home/components/AllocationSection';
@@ -186,8 +189,7 @@ const OverviewContainer = styled.SafeAreaView`
 `;
 
 const BalanceContainer = styled.View`
-  height: 15%;
-  margin-top: 20px;
+  margin-top: 8px;
   padding: 10px 15px;
   align-items: center;
 `;
@@ -354,14 +356,17 @@ const KeyOverview = () => {
   } = useRoute<RouteProp<WalletGroupParamList, 'KeyOverview'>>();
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const reduxStore = useStore();
   const logger = useLogger();
   const theme = useTheme();
   const isFocused = useIsFocused();
+  const {width: windowWidth} = useWindowDimensions();
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {tokenOptionsByAddress} = useTokenContext();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedBalance, setSelectedBalance] = useState<number | undefined>();
   const {keys}: {keys: {[key: string]: Key}} = useAppSelector(
     ({WALLET}) => WALLET,
   );
@@ -373,9 +378,17 @@ const KeyOverview = () => {
   const linkedCoinbase = useAppSelector(
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
+  const timeframeSelectorWidth = getTimeframeSelectorWidth(
+    windowWidth,
+    ScreenGutter,
+  );
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];
+
+  useEffect(() => {
+    setSelectedBalance(undefined);
+  }, [id]);
   const hasMultipleKeys =
     Object.values(keys).filter(k => k.backupComplete).length > 1;
   let pendingTxps: any = [];
@@ -495,9 +508,13 @@ const KeyOverview = () => {
   }, [navigation, key?.wallets, context]);
 
   useEffect(() => {
+    if (!key) {
+      return;
+    }
+
     dispatch(Analytics.track('View Key'));
     updateStatusForKey(false);
-  }, []);
+  }, [dispatch, key?.id]);
 
   const {
     wallets = [],
@@ -550,18 +567,65 @@ const KeyOverview = () => {
       .join(',');
   }, [key?.wallets]);
 
+  // If we try to populate portfolio snapshots while another populate pass is
+  // already running, the thunk may no-op. Track a pending request so we can
+  // retry once populate finishes, preventing the balance chart from getting
+  // stuck in a perpetual loading state.
+  const pendingKeyBalanceChartRefreshRef = useRef(false);
+
+  const maybeRefreshKeyBalanceChart = useCallback(async () => {
+    const state = reduxStore.getState() as RootState;
+    if (state.PORTFOLIO?.populateStatus?.inProgress) {
+      pendingKeyBalanceChartRefreshRef.current = true;
+      return;
+    }
+
+    pendingKeyBalanceChartRefreshRef.current = false;
+    const latestKey = state.WALLET?.keys?.[id] as Key | undefined;
+
+    if (!latestKey?.wallets?.length) {
+      return;
+    }
+
+    const latestQuoteCurrency = getQuoteCurrency({
+      portfolioQuoteCurrency: state.PORTFOLIO?.quoteCurrency,
+      defaultAltCurrencyIsoCode: state.APP?.defaultAltCurrency?.isoCode,
+    }).toUpperCase();
+
+    await dispatch(
+      maybePopulatePortfolioForWallets({
+        // IMPORTANT: re-read the latest Redux wallet objects after any
+        // balance/rate refresh completes so chart snapshot population does not
+        // get stuck using stale wallet balances from the first render.
+        wallets: latestKey.wallets,
+        quoteCurrency: latestQuoteCurrency,
+      }) as any,
+    );
+  }, [dispatch, id, reduxStore]);
+
   useEffect(() => {
     if (!isFocused) {
       return;
     }
 
-    dispatch(
-      maybePopulatePortfolioForWallets({
-        wallets: key?.wallets || [],
-        quoteCurrency,
-      }) as any,
-    );
-  }, [dispatch, isFocused, keyWalletIdsSig, quoteCurrency]);
+    void maybeRefreshKeyBalanceChart();
+  }, [isFocused, keyWalletIdsSig, maybeRefreshKeyBalanceChart, quoteCurrency]);
+
+  useEffect(() => {
+    if (
+      !isFocused ||
+      portfolio.populateStatus?.inProgress ||
+      !pendingKeyBalanceChartRefreshRef.current
+    ) {
+      return;
+    }
+
+    void maybeRefreshKeyBalanceChart();
+  }, [
+    isFocused,
+    maybeRefreshKeyBalanceChart,
+    portfolio.populateStatus?.inProgress,
+  ]);
 
   const isKeyPopulateLoading = useMemo(() => {
     return isPopulateLoadingForWallets({
@@ -968,14 +1032,18 @@ const KeyOverview = () => {
     },
   });
 
-  const onPressTxpBadge = useMemo(
-    () => () => {
-      navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
-    },
-    [],
-  );
+  const onPressTxpBadge = useCallback(() => {
+    if (!key?.id) {
+      return;
+    }
+
+    navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
+  }, [key?.id, navigation]);
 
   const updateStatusForKey = async (forceUpdate?: boolean) => {
+    if (!key) {
+      return;
+    }
     if (isViewUpdating) {
       logger.debug('KeyOverview is updating. Do not start forced updateAll...');
       return;
@@ -997,6 +1065,7 @@ const KeyOverview = () => {
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
+      await maybeRefreshKeyBalanceChart();
       setIsViewUpdating(false);
     } catch (err) {
       setIsViewUpdating(false);
@@ -1006,8 +1075,11 @@ const KeyOverview = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await updateStatusForKey(true);
-    setRefreshing(false);
+    try {
+      await updateStatusForKey(true);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const onPressItem = (item: AccountRowProps) => {
@@ -1079,31 +1151,81 @@ const KeyOverview = () => {
     [key, hideAllBalances],
   );
 
-  const renderListHeaderComponent = useCallback(() => {
+  const listHeaderComponent = useMemo(() => {
     return (
-      <WalletListHeader>
-        <H5>{t('My Wallets')}</H5>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'flex-end',
-            marginRight: -10,
-          }}>
-          <SearchComponent<AccountRowProps>
-            searchVal={searchVal}
-            setSearchVal={setSearchVal}
-            searchResults={searchResults}
-            setSearchResults={searchResults => {
-              setSearchResults(searchResults);
-              setIsLoadingInitial(false);
-            }}
-            searchFullList={memorizedAccountList}
-            context={'keyoverview'}
-          />
-        </View>
-      </WalletListHeader>
+      <>
+        <BalanceContainer>
+          <TouchableOpacity
+            onLongPress={() => {
+              dispatch(toggleHideAllBalances());
+            }}>
+            {!hideAllBalances ? (
+              <Balance scale={shouldScale(totalBalance)}>
+                {formatFiatAmount(
+                  selectedBalance ?? totalBalance,
+                  defaultAltCurrency.isoCode,
+                  {
+                    currencyDisplay: 'symbol',
+                  },
+                )}
+              </Balance>
+            ) : (
+              <H2>****</H2>
+            )}
+          </TouchableOpacity>
+
+          {!hideAllBalances ? (
+            <BalanceHistoryChart
+              wallets={visibleKeyWallets}
+              snapshotsByWalletId={portfolio?.snapshotsByWalletId || {}}
+              quoteCurrency={quoteCurrency}
+              rates={rates}
+              fiatRateSeriesCache={fiatRateSeriesCache}
+              timeframeSelectorWidth={timeframeSelectorWidth}
+              onSelectedBalanceChange={setSelectedBalance}
+            />
+          ) : null}
+        </BalanceContainer>
+
+        <WalletListHeader>
+          <H5>{t('My Wallets')}</H5>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+              marginRight: -10,
+            }}>
+            <SearchComponent<AccountRowProps>
+              searchVal={searchVal}
+              setSearchVal={setSearchVal}
+              searchResults={searchResults}
+              setSearchResults={searchResults => {
+                setSearchResults(searchResults);
+                setIsLoadingInitial(false);
+              }}
+              searchFullList={memorizedAccountList}
+              context={'keyoverview'}
+            />
+          </View>
+        </WalletListHeader>
+      </>
     );
-  }, [key, hideAllBalances]);
+  }, [
+    defaultAltCurrency.isoCode,
+    dispatch,
+    fiatRateSeriesCache,
+    hideAllBalances,
+    memorizedAccountList,
+    portfolio?.snapshotsByWalletId,
+    quoteCurrency,
+    rates,
+    searchResults,
+    searchVal,
+    selectedBalance,
+    t,
+    totalBalance,
+    visibleKeyWallets,
+  ]);
 
   const renderListFooterComponent = useCallback(() => {
     return (
@@ -1258,39 +1380,15 @@ const KeyOverview = () => {
     return !searchVal && !selectedChainFilterOption
       ? memorizedAccountList
       : searchResults;
-  }, [searchResults, selectedChainFilterOption, key]);
+  }, [
+    memorizedAccountList,
+    searchResults,
+    searchVal,
+    selectedChainFilterOption,
+  ]);
 
   return (
     <OverviewContainer>
-      <BalanceContainer>
-        <TouchableOpacity
-          onLongPress={() => {
-            dispatch(toggleHideAllBalances());
-          }}>
-          {!hideAllBalances ? (
-            <>
-              <Balance scale={shouldScale(totalBalance)}>
-                {formatFiatAmount(totalBalance, defaultAltCurrency.isoCode, {
-                  currencyDisplay: 'symbol',
-                })}
-              </Balance>
-              {percentageDifference !== null ? (
-                <PercentageWrapper>
-                  <Percentage
-                    percentageDifference={percentageDifference}
-                    hideArrow
-                    fractionDigits={2}
-                    rangeLabel={t('Last Day')}
-                  />
-                </PercentageWrapper>
-              ) : null}
-            </>
-          ) : (
-            <H2>****</H2>
-          )}
-        </TouchableOpacity>
-      </BalanceContainer>
-
       <FlashList<AccountRowProps>
         refreshControl={
           <RefreshControl
@@ -1299,7 +1397,7 @@ const KeyOverview = () => {
             onRefresh={() => onRefresh()}
           />
         }
-        ListHeaderComponent={renderListHeaderComponent}
+        ListHeaderComponent={listHeaderComponent}
         ListFooterComponent={renderListFooterComponent}
         data={renderDataComponent}
         renderItem={memoizedRenderItem}

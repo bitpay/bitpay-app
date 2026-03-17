@@ -109,7 +109,7 @@ const StorageUsage: React.FC = () => {
   const [appSize, setAppSize] = useState<string>('');
   const [deviceFreeStorage, setDeviceFreeStorage] = useState<string>('');
   const [deviceTotalStorage, setDeviceTotalStorage] = useState<string>('');
-  const [giftCardtStorage, setGiftCardStorage] = useState<string>('');
+  const [giftCardStorage, setGiftCardStorage] = useState<string>('');
   const [walletStorage, setWalletStorage] = useState<string>('');
   const [customTokenStorage, setCustomTokenStorage] = useState<string>('');
   const [contactStorage, setContactStorage] = useState<string>('');
@@ -193,7 +193,7 @@ const StorageUsage: React.FC = () => {
               const data = parsed?.SHOP_CATALOG;
               const bytes = data ? JSON.stringify(data).length : 0;
               setShopCatalogStorage(formatBytes(bytes));
-            } catch (_) {
+            } catch {
               setShopCatalogStorage('0 Bytes');
             }
           } else {
@@ -244,12 +244,12 @@ const StorageUsage: React.FC = () => {
       };
       const _setDataCounterStorage = async () => {
         try {
-          const wallets = Object.values(keys).map(keyItem => {
-            const {wallets} = keyItem as {wallets: Array<unknown>};
-            return wallets.length;
+          const walletCounts = Object.values(keys).map(keyItem => {
+            const {wallets: keyWallets} = keyItem as {wallets: Array<unknown>};
+            return keyWallets.length;
           });
-          const walletsCount = wallets.reduce((a, b) => a + b, 0);
-          setWalletsCount(walletsCount);
+          const totalWalletsCount = walletCounts.reduce((a, b) => a + b, 0);
+          setWalletsCount(totalWalletsCount);
           setGiftCount(giftCards.length);
           setContactCount(contacts.length);
           const _customTokenCount = Object.values(customTokens).length;
@@ -329,23 +329,43 @@ const StorageUsage: React.FC = () => {
 
       const _setPortfolioStorage = async () => {
         try {
-          // Persisted size (redux-persist) is stored as the PORTFOLIO string within persist:root.
+          // Persisted portfolio storage spans both PORTFOLIO and PORTFOLIO_CHARTS within persist:root.
           // This reflects the *on-disk* representation (including any transform/encryption output).
           const root = storage.getString('persist:root');
           if (root) {
             try {
               const parsed = JSON.parse(root);
               const portfolioPersisted = parsed?.PORTFOLIO;
-              if (typeof portfolioPersisted === 'string') {
-                const persistedBytes = await getSize(
-                  RNFS.TemporaryDirectoryPath + '/portfolio-persisted.txt',
-                  portfolioPersisted,
+              const portfolioChartsPersisted = parsed?.PORTFOLIO_CHARTS;
+              if (
+                typeof portfolioPersisted === 'string' ||
+                typeof portfolioChartsPersisted === 'string'
+              ) {
+                const persistedSizes = await Promise.all([
+                  typeof portfolioPersisted === 'string'
+                    ? getSize(
+                        RNFS.TemporaryDirectoryPath +
+                          '/portfolio-persisted.txt',
+                        portfolioPersisted,
+                      )
+                    : Promise.resolve(0),
+                  typeof portfolioChartsPersisted === 'string'
+                    ? getSize(
+                        RNFS.TemporaryDirectoryPath +
+                          '/portfolio-charts-persisted.txt',
+                        portfolioChartsPersisted,
+                      )
+                    : Promise.resolve(0),
+                ]);
+                const persistedBytes = persistedSizes.reduce(
+                  (total, size) => total + size,
+                  0,
                 );
                 setPortfolioPersistedStorage(formatBytes(persistedBytes));
               } else {
                 setPortfolioPersistedStorage('0 Bytes');
               }
-            } catch (_) {
+            } catch {
               setPortfolioPersistedStorage('0 Bytes');
             }
           } else {
@@ -392,8 +412,9 @@ const StorageUsage: React.FC = () => {
   ]);
 
   useEffect(() => {
+    const tripleTapState = tripleTapRef.current;
     return () => {
-      const timer = tripleTapRef.current.timer;
+      const timer = tripleTapState.timer;
       if (timer) {
         clearTimeout(timer);
       }
@@ -446,7 +467,7 @@ const StorageUsage: React.FC = () => {
               {t('Gift Cards')} ({giftCount || '0'})
             </SettingTitle>
 
-            {renderValue(giftCardtStorage)}
+            {renderValue(giftCardStorage)}
           </Setting>
 
           <Hr />

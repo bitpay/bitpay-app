@@ -12,7 +12,7 @@ import React, {
 } from 'react';
 import {RootState} from '../../../store';
 import {useTranslation} from 'react-i18next';
-import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   Wallet,
@@ -31,8 +31,11 @@ import {
   RefreshControl,
   SectionList,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import {
   Badge,
   Balance,
@@ -51,6 +54,7 @@ import {
 import {
   formatCryptoAddress,
   formatCurrencyAbbreviation,
+  formatFiatAmount,
   shouldScale,
   sleep,
   fixWalletAddresses,
@@ -91,7 +95,6 @@ import {
   HeaderRightContainer,
   ProposalBadgeContainer,
   ScreenGutter,
-  WIDTH,
 } from '../../../components/styled/Containers';
 import SearchComponent, {
   SearchableItem,
@@ -236,10 +239,13 @@ const Row = styled.View`
   align-items: flex-end;
 `;
 
-const WalletListHeader = styled(TouchableOpacity)<{
+const WalletListHeader = styled(TouchableOpacity)`
+  padding: 10px;
+`;
+
+const WalletListHeaderLabel = styled.View<{
   isActive: boolean;
 }>`
-  padding: 10px;
   opacity: ${({isActive}) => (isActive ? 1 : 0.4)};
 `;
 
@@ -249,7 +255,7 @@ const CopyToClipboardContainer = styled.View`
 `;
 
 const HeaderContainer = styled.View`
-  margin: 32px 0 24px;
+  margin: 18px 0 24px;
 `;
 
 const TransactionSectionHeaderContainer = styled.View`
@@ -292,7 +298,7 @@ const Value = styled(BaseText)`
 `;
 
 const BalanceContainer = styled.View`
-  padding: 0 15px 40px;
+  padding: 0 15px 22px;
   flex-direction: column;
 `;
 
@@ -325,12 +331,52 @@ const CenteredText = styled(BaseText)`
   margin-left: 4px;
 `;
 
+type AccountAddressBadgeProps = {
+  address?: string;
+};
+
+const AccountAddressBadge = ({address}: AccountAddressBadgeProps) => {
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = useCallback(() => {
+    haptic('impactLight');
+    if (!copied && address) {
+      Clipboard.setString(address);
+      setCopied(true);
+    }
+  }, [address, copied]);
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  return (
+    <BadgeContainerTouchable
+      onPress={copyToClipboard}
+      activeOpacity={ActiveOpacity}
+      style={{alignSelf: 'center', width: 'auto', height: 25}}>
+      <Badge>{formatCryptoAddress(address)}</Badge>
+      <CopyToClipboardContainer>
+        {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
+      </CopyToClipboardContainer>
+    </BadgeContainerTouchable>
+  );
+};
+
 const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const {tokenOptionsByAddress} = useTokenContext();
   const theme = useTheme();
+  const {width: windowWidth} = useWindowDimensions();
   const {defaultAltCurrency, hideAllBalances, showPortfolioValue} =
     useAppSelector(({APP}) => APP);
   const contactList = useAppSelector(({CONTACT}) => CONTACT.list);
@@ -338,7 +384,6 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const {selectedAccountAddress, keyId, isSvmAccount} = route.params;
   const [refreshing, setRefreshing] = useState(false);
   const key = useAppSelector(({WALLET}: RootState) => WALLET.keys[keyId]);
-  const [copied, setCopied] = useState(false);
   const [searchVal, setSearchVal] = useState('');
   const [activeTab, setActiveTab] = useState<AccountDetailsTab>('wallets');
 
@@ -351,7 +396,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
-  const isSmallScreen = WIDTH < 400;
+  const isSmallScreen = windowWidth < 400;
+  const timeframeSelectorWidth = getTimeframeSelectorWidth(
+    windowWidth,
+    ScreenGutter,
+  );
   const network = useAppSelector(({APP}) => APP.network);
   const [history, setHistory] = useState<any[]>([]);
   const [accountTransactionsHistory, setAccountTransactionsHistory] = useState<{
@@ -376,7 +425,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   );
   const [showReceiveAddressBottomModal, setShowReceiveAddressBottomModal] =
     useState(false);
-  const rates = useAppSelector(({RATE}) => RATE.rates);
+  const {rates, fiatRateSeriesCache} = useAppSelector(({RATE}) => RATE);
+  const snapshotsByWalletId = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.snapshotsByWalletId,
+  );
+  const [selectedBalance, setSelectedBalance] = useState<number | undefined>();
   const [showKeyOptions, setShowKeyOptions] = useState(false);
 
   const [searchResultsHistory, setSearchResultsHistory] = useState(
@@ -390,11 +443,15 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     ({COINBASE}) => !!COINBASE.token[COINBASE_ENV],
   );
 
-  const keyFullWalletObjs = uniqBy(
-    key.wallets.filter(w => w.receiveAddress === selectedAccountAddress),
-    wallet => {
-      return wallet.id;
-    },
+  const keyFullWalletObjs = useMemo(
+    () =>
+      uniqBy(
+        key.wallets.filter(w => w.receiveAddress === selectedAccountAddress),
+        wallet => {
+          return wallet.id;
+        },
+      ),
+    [key, selectedAccountAddress],
   );
   let pendingTxps: AccountProposalsProps = {};
   keyFullWalletObjs.forEach(x => {
@@ -426,7 +483,13 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   const accountItem = memorizedAccountList.find(
     a => a.receiveAddress === selectedAccountAddress,
   )!;
-  const totalBalance = accountItem?.fiatBalanceFormat;
+  const totalBalance =
+    typeof selectedBalance === 'number'
+      ? formatFiatAmount(selectedBalance, defaultAltCurrency.isoCode, {
+          currencyDisplay: 'symbol',
+          customPrecision: 'minimal',
+        })
+      : accountItem?.fiatBalanceFormat;
   const hasMultipleAccounts = memorizedAccountList.length > 1;
 
   const accounts = useAppSelector(
@@ -1337,26 +1400,11 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     accountAllocationData.rows,
   ]);
 
-  const copyToClipboard = () => {
-    haptic('impactLight');
-    if (!copied) {
-      Clipboard.setString(accountItem?.receiveAddress);
-      setCopied(true);
-    }
-  };
+  const lockedBalanceCurrencyAbbreviation =
+    accountItem?.wallets?.[1]?.currencyAbbreviation ??
+    accountItem?.wallets?.[0]?.currencyAbbreviation;
 
-  useEffect(() => {
-    if (!copied) {
-      return;
-    }
-    const timer = setTimeout(() => {
-      setCopied(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [copied]);
-
-  const renderListHeaderComponent = useCallback(() => {
+  const listHeaderComponent = useMemo(() => {
     const isWalletsTab = activeTab === 'wallets';
     const isAllocationTab = activeTab === 'allocation';
     const isActivityTab = activeTab === 'activity';
@@ -1379,15 +1427,21 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
                 )}
               </Row>
             </TouchableOpacity>
-            <BadgeContainerTouchable
-              onPress={copyToClipboard}
-              activeOpacity={ActiveOpacity}
-              style={{alignSelf: 'center', width: 'auto', height: 25}}>
-              <Badge>{formatCryptoAddress(accountItem?.receiveAddress)}</Badge>
-              <CopyToClipboardContainer>
-                {!copied ? <CopySvg width={10} /> : <CopiedSvg width={10} />}
-              </CopyToClipboardContainer>
-            </BadgeContainerTouchable>
+
+            {!hideAllBalances ? (
+              <BalanceHistoryChart
+                wallets={keyFullWalletObjs}
+                snapshotsByWalletId={snapshotsByWalletId || {}}
+                quoteCurrency={defaultAltCurrency.isoCode}
+                rates={rates}
+                fiatRateSeriesCache={fiatRateSeriesCache}
+                timeframeSelectorWidth={timeframeSelectorWidth}
+                onSelectedBalanceChange={setSelectedBalance}
+                preChartContent={
+                  <AccountAddressBadge address={accountItem?.receiveAddress} />
+                }
+              />
+            ) : null}
           </BalanceContainer>
           <LinkingButtons
             buy={{
@@ -1455,10 +1509,12 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
 
               <TailContainer>
                 <Value>
-                  {accountItem?.fiatLockedBalanceFormat}{' '}
-                  {formatCurrencyAbbreviation(
-                    key.wallets[1].currencyAbbreviation,
-                  )}
+                  {accountItem?.fiatLockedBalanceFormat}
+                  {lockedBalanceCurrencyAbbreviation
+                    ? ` ${formatCurrencyAbbreviation(
+                        lockedBalanceCurrencyAbbreviation,
+                      )}`
+                    : ''}
                 </Value>
               </TailContainer>
             </LockedBalanceContainer>
@@ -1467,29 +1523,35 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
         <AssetsDataContainer>
           <HeaderListContainer>
             <WalletListHeader
-              isActive={isWalletsTab}
+              activeOpacity={1}
               onPress={() => {
                 setActiveTab('wallets');
               }}>
-              <H5>{t('Wallets')}</H5>
+              <WalletListHeaderLabel isActive={isWalletsTab}>
+                <H5>{t('Wallets')}</H5>
+              </WalletListHeaderLabel>
             </WalletListHeader>
             {showPortfolioValue ? (
               <WalletListHeader
-                isActive={isAllocationTab}
+                activeOpacity={1}
                 onPress={() => {
                   setActiveTab('allocation');
                 }}>
-                <H5>{t('Allocation')}</H5>
+                <WalletListHeaderLabel isActive={isAllocationTab}>
+                  <H5>{t('Allocation')}</H5>
+                </WalletListHeaderLabel>
               </WalletListHeader>
             ) : null}
             <WalletListHeader
-              isActive={isActivityTab}
+              activeOpacity={1}
               onPress={async () => {
                 setActiveTab('activity');
                 await sleep(200);
                 debouncedLoadHistory(selectedChainFilterOption);
               }}>
-              <H5>{t('Activity')}</H5>
+              <WalletListHeaderLabel isActive={isActivityTab}>
+                <H5>{t('Activity')}</H5>
+              </WalletListHeaderLabel>
             </WalletListHeader>
           </HeaderListContainer>
           {isSvmAccount || (isSmallScreen && showPortfolioValue) ? null : (
@@ -1533,19 +1595,27 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     );
   }, [
     activeTab,
+    accountItem?.fiatLockedBalanceFormat,
     accountItem?.receiveAddress,
-    copied,
+    debouncedLoadHistory,
+    defaultAltCurrency.isoCode,
     dispatch,
+    fiatRateSeriesCache,
     groupedHistory,
     hideAllBalances,
     isSmallScreen,
     isSvmAccount,
+    keyFullWalletObjs,
+    lockedBalanceCurrencyAbbreviation,
     memorizedAssetsByChainList,
     navigation,
-    groupedHistory,
+    rates,
+    searchResultsAssets,
+    searchResultsHistory,
     searchVal,
     selectedChainFilterOption,
     showPortfolioValue,
+    snapshotsByWalletId,
     t,
     totalBalance,
   ]);
@@ -1628,6 +1698,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
   return (
     <AccountDetailsContainer>
       <SectionList
+        extraData={activeTab}
         refreshControl={
           <RefreshControl
             tintColor={theme.dark ? White : SlateDark}
@@ -1635,7 +1706,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
             onRefresh={onRefresh}
           />
         }
-        ListHeaderComponent={renderListHeaderComponent}
+        ListHeaderComponent={listHeaderComponent}
         ListFooterComponent={
           activeTab === 'wallets'
             ? listFooterComponentAssetsTab

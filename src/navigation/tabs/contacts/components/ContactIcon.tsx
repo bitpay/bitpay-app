@@ -67,7 +67,9 @@ const ContactIcon: React.FC<ContactIconProps> = ({
     tokenAddress &&
     chain &&
     tokenOptionsByAddress[
-      addTokenChainSuffix(tokenAddress.toLowerCase(), chain)
+      // `addTokenChainSuffix` already lowercases non-SVM chains and must
+      // preserve case-sensitive SVM mint addresses.
+      addTokenChainSuffix(tokenAddress.trim(), chain)
     ];
 
   const img =

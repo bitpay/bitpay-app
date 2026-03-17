@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef} from 'react';
+import {useEffect, useMemo, useRef} from 'react';
 import {useIsFocused} from '@react-navigation/native';
 import {useStore} from 'react-redux';
 import {HISTORIC_RATES_CACHE_DURATION} from '../../../../constants/wallet';
@@ -8,10 +8,7 @@ import type {
   CachedFiatRateInterval,
   Rates,
 } from '../../../../store/rate/rate.models';
-import {
-  FIAT_RATE_SERIES_CACHED_INTERVALS,
-  hasValidSeriesForCoin,
-} from '../../../../store/rate/rate.models';
+import {FIAT_RATE_SERIES_CACHED_INTERVALS} from '../../../../store/rate/rate.models';
 import type {RootState} from '../../../../store';
 import {fetchFiatRateSeriesAllIntervals} from '../../../../store/wallet/effects';
 import type {Key} from '../../../../store/wallet/wallet.models';
@@ -26,8 +23,12 @@ import {
   getVisibleWalletsFromKeys,
   isFiatLoadingForWallets,
 } from '../../../../utils/portfolio/assets';
-import {normalizeFiatRateSeriesCoin} from '../../../../utils/portfolio/core/pnl/rates';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
+import {
+  getHistoricalRateAssetRequestItemsForVisibleWalletGroups,
+  getMissingHistoricalRateAssetRequests,
+  hasHistoricalRateSeriesForAsset,
+} from './portfolioAssetHistoryRequests';
 
 type Args = {
   gainLossMode: GainLossMode;
@@ -159,114 +160,75 @@ const usePortfolioAssetRows = ({gainLossMode, keyId}: Args): Result => {
       }) as any,
     );
   }, [dispatch, isFocused, quoteCurrency, walletIdsSig, wallets]);
-
-  const lastFetchAttemptByQuoteCoinRef = useRef<Record<string, number>>({});
-  const inFlightFetchByQuoteCoinRef = useRef<Set<string>>(new Set());
-  const unsupportedQuoteCoinKeysRef = useRef<Set<string>>(new Set());
+  const lastFetchAttemptByAssetRequestRef = useRef<Record<string, number>>({});
+  const inFlightFetchByAssetRequestRef = useRef<Set<string>>(new Set());
+  const unsupportedAssetRequestKeysRef = useRef<Set<string>>(new Set());
   const lastPopulateTriggerAtRef = useRef<number>(0);
 
-  const shouldFetchAllIntervalsForCoin = useCallback(
-    (
-      coin: string,
-      intervals: ReadonlyArray<CachedFiatRateInterval>,
-    ): boolean => {
-      return !hasValidSeriesForCoin({
-        cache: fiatRateSeriesCache,
-        fiatCodeUpper: (quoteCurrency || 'USD').toUpperCase(),
-        normalizedCoin: coin,
-        intervals,
-      });
-    },
-    [fiatRateSeriesCache, quoteCurrency],
-  );
+  const historicalRateRequestItems = useMemo(() => {
+    return getHistoricalRateAssetRequestItemsForVisibleWalletGroups(
+      wallets,
+      snapshotsByWalletId,
+    );
+  }, [snapshotsByWalletId, wallets]);
 
-  const missingHistoricalCoins = useMemo(() => {
-    const coins = new Set<string>();
-    for (const item of visibleItems) {
-      const coin = normalizeFiatRateSeriesCoin(item.currencyAbbreviation);
-      if (!coin) {
-        continue;
-      }
-      if (shouldFetchAllIntervalsForCoin(coin, CACHED_INTERVALS)) {
-        coins.add(coin);
-      }
-    }
-    return Array.from(coins).sort((a, b) => a.localeCompare(b));
-  }, [shouldFetchAllIntervalsForCoin, visibleItems]);
-
-  const tokenParamsByCoin = useMemo(() => {
-    const paramsByCoin: Record<
-      string,
-      {chain?: string; tokenAddress?: string}
-    > = {};
-    for (const item of visibleItems) {
-      const tokenAddress = item.tokenAddress?.trim();
-      const rawCoin = (item.currencyAbbreviation || '').toLowerCase();
-      const normalizedCoin = normalizeFiatRateSeriesCoin(rawCoin);
-      // Only attach token params when the coin key itself represents
-      // the token symbol (e.g. usdc/usdc.e), not aliases like matic->pol.
-      if (!tokenAddress || rawCoin !== normalizedCoin) {
-        continue;
-      }
-      if (!paramsByCoin[normalizedCoin]) {
-        paramsByCoin[normalizedCoin] = {
-          chain: (item.chain || '').toLowerCase(),
-          tokenAddress,
-        };
-      }
-    }
-    return paramsByCoin;
-  }, [visibleItems]);
+  const missingHistoricalAssetRequests = useMemo(() => {
+    return getMissingHistoricalRateAssetRequests({
+      fiatCode: quoteCurrency,
+      items: historicalRateRequestItems,
+      cache: fiatRateSeriesCache,
+      intervals: CACHED_INTERVALS,
+    });
+  }, [fiatRateSeriesCache, historicalRateRequestItems, quoteCurrency]);
 
   useEffect(() => {
-    const fiatCode = (quoteCurrency || 'USD').toUpperCase();
-    const activeQuoteCoinKeys = new Set(
-      missingHistoricalCoins.map(coin => `${fiatCode}:${coin}`),
+    const activeAssetRequestKeys = new Set(
+      missingHistoricalAssetRequests.map(asset => asset.requestKey),
     );
 
-    const nextLastFetchAttemptByQuoteCoin: Record<string, number> = {};
-    for (const quoteCoinKey of Object.keys(
-      lastFetchAttemptByQuoteCoinRef.current,
+    const nextLastFetchAttemptByAssetRequest: Record<string, number> = {};
+    for (const assetRequestKey of Object.keys(
+      lastFetchAttemptByAssetRequestRef.current,
     )) {
-      if (activeQuoteCoinKeys.has(quoteCoinKey)) {
-        nextLastFetchAttemptByQuoteCoin[quoteCoinKey] =
-          lastFetchAttemptByQuoteCoinRef.current[quoteCoinKey];
+      if (activeAssetRequestKeys.has(assetRequestKey)) {
+        nextLastFetchAttemptByAssetRequest[assetRequestKey] =
+          lastFetchAttemptByAssetRequestRef.current[assetRequestKey];
       }
     }
-    lastFetchAttemptByQuoteCoinRef.current = nextLastFetchAttemptByQuoteCoin;
-  }, [missingHistoricalCoins, quoteCurrency]);
+    lastFetchAttemptByAssetRequestRef.current =
+      nextLastFetchAttemptByAssetRequest;
+  }, [missingHistoricalAssetRequests]);
 
   useEffect(() => {
-    const fiatCode = (quoteCurrency || 'USD').toUpperCase();
-    const activeQuoteCoinKeys = new Set(
-      missingHistoricalCoins.map(coin => `${fiatCode}:${coin}`),
+    const activeAssetRequestKeys = new Set(
+      missingHistoricalAssetRequests.map(asset => asset.requestKey),
     );
 
-    const trackedUnsupported = unsupportedQuoteCoinKeysRef.current;
-    for (const quoteCoinKey of Array.from(trackedUnsupported)) {
-      if (!activeQuoteCoinKeys.has(quoteCoinKey)) {
-        trackedUnsupported.delete(quoteCoinKey);
+    const trackedUnsupported = unsupportedAssetRequestKeysRef.current;
+    for (const assetRequestKey of Array.from(trackedUnsupported)) {
+      if (!activeAssetRequestKeys.has(assetRequestKey)) {
+        trackedUnsupported.delete(assetRequestKey);
       }
     }
-    for (const quoteCoinKey of activeQuoteCoinKeys) {
-      trackedUnsupported.add(quoteCoinKey);
+    for (const assetRequestKey of activeAssetRequestKeys) {
+      trackedUnsupported.add(assetRequestKey);
     }
-  }, [missingHistoricalCoins, quoteCurrency]);
+  }, [missingHistoricalAssetRequests]);
 
   useEffect(() => {
-    const inFlightFetchByQuoteCoin = inFlightFetchByQuoteCoinRef.current;
-    const unsupportedQuoteCoinKeys = unsupportedQuoteCoinKeysRef.current;
+    const inFlightFetchByAssetRequest = inFlightFetchByAssetRequestRef.current;
+    const unsupportedAssetRequestKeys = unsupportedAssetRequestKeysRef.current;
 
     return () => {
-      inFlightFetchByQuoteCoin.clear();
-      lastFetchAttemptByQuoteCoinRef.current = {};
-      unsupportedQuoteCoinKeys.clear();
+      inFlightFetchByAssetRequest.clear();
+      lastFetchAttemptByAssetRequestRef.current = {};
+      unsupportedAssetRequestKeys.clear();
       lastPopulateTriggerAtRef.current = 0;
     };
   }, []);
 
   useEffect(() => {
-    if (!isFocused || !missingHistoricalCoins.length) {
+    if (!isFocused || !missingHistoricalAssetRequests.length) {
       return;
     }
 
@@ -283,55 +245,57 @@ const usePortfolioAssetRows = ({gainLossMode, keyId}: Args): Result => {
       sweepInFlight = true;
       try {
         let hasSupportTransition = false;
-        for (const coin of missingHistoricalCoins) {
+        for (const assetRequest of missingHistoricalAssetRequests) {
           if (cancelled) {
             return;
           }
 
-          const quoteCoinKey = `${fiatCode}:${coin}`;
+          const assetRequestKey = assetRequest.requestKey;
           const wasPreviouslyUnsupported =
-            unsupportedQuoteCoinKeysRef.current.has(quoteCoinKey);
-          unsupportedQuoteCoinKeysRef.current.add(quoteCoinKey);
+            unsupportedAssetRequestKeysRef.current.has(assetRequestKey);
+          unsupportedAssetRequestKeysRef.current.add(assetRequestKey);
 
-          if (inFlightFetchByQuoteCoinRef.current.has(quoteCoinKey)) {
+          if (inFlightFetchByAssetRequestRef.current.has(assetRequestKey)) {
             continue;
           }
 
           const lastAttempt =
-            lastFetchAttemptByQuoteCoinRef.current[quoteCoinKey] || 0;
+            lastFetchAttemptByAssetRequestRef.current[assetRequestKey] || 0;
           if (Date.now() - lastAttempt < minRetryMs) {
             continue;
           }
 
-          inFlightFetchByQuoteCoinRef.current.add(quoteCoinKey);
-          lastFetchAttemptByQuoteCoinRef.current[quoteCoinKey] = Date.now();
+          inFlightFetchByAssetRequestRef.current.add(assetRequestKey);
+          lastFetchAttemptByAssetRequestRef.current[assetRequestKey] =
+            Date.now();
           try {
-            const tokenParams = tokenParamsByCoin[coin];
             await dispatch(
               fetchFiatRateSeriesAllIntervals({
                 fiatCode,
-                currencyAbbreviation: coin,
-                chain: tokenParams?.tokenAddress
-                  ? tokenParams.chain
+                currencyAbbreviation: assetRequest.coin,
+                chain: assetRequest.tokenAddress
+                  ? assetRequest.chain
                   : undefined,
-                tokenAddress: tokenParams?.tokenAddress,
+                tokenAddress: assetRequest.tokenAddress,
               }),
             );
           } finally {
-            inFlightFetchByQuoteCoinRef.current.delete(quoteCoinKey);
+            inFlightFetchByAssetRequestRef.current.delete(assetRequestKey);
           }
 
           const fiatRateSeriesCacheAfterFetch =
             store.getState().RATE?.fiatRateSeriesCache;
-          const isSupportedAfterFetch = hasValidSeriesForCoin({
+          const isSupportedAfterFetch = hasHistoricalRateSeriesForAsset({
             cache: fiatRateSeriesCacheAfterFetch,
-            fiatCodeUpper: fiatCode,
-            normalizedCoin: coin,
+            fiatCode,
             intervals: CACHED_INTERVALS,
+            coin: assetRequest.coin,
+            chain: assetRequest.chain,
+            tokenAddress: assetRequest.tokenAddress,
           });
 
           if (isSupportedAfterFetch) {
-            unsupportedQuoteCoinKeysRef.current.delete(quoteCoinKey);
+            unsupportedAssetRequestKeysRef.current.delete(assetRequestKey);
             if (wasPreviouslyUnsupported) {
               hasSupportTransition = true;
             }
@@ -377,10 +341,9 @@ const usePortfolioAssetRows = ({gainLossMode, keyId}: Args): Result => {
   }, [
     dispatch,
     isFocused,
-    missingHistoricalCoins,
+    missingHistoricalAssetRequests,
     quoteCurrency,
     store,
-    tokenParamsByCoin,
     wallets,
   ]);
 

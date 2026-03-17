@@ -4,10 +4,7 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import styled, {useTheme} from 'styled-components/native';
 import type {RootStackParamList} from '../../../../Root';
-import {
-  FIAT_RATE_SERIES_CACHED_INTERVALS,
-  hasValidSeriesForCoin,
-} from '../../../../store/rate/rate.models';
+import {FIAT_RATE_SERIES_CACHED_INTERVALS} from '../../../../store/rate/rate.models';
 import {TouchableOpacity} from '../../../../components/base/TouchableOpacity';
 import {CurrencyImage} from '../../../../components/currency-image/CurrencyImage';
 import {ActiveOpacity} from '../../../../components/styled/Containers';
@@ -34,8 +31,11 @@ import {
   AssetRowItem,
   canNavigateToExchangeRateForAssetRowItem,
 } from '../../../../utils/portfolio/assets';
-import {normalizeFiatRateSeriesCoin} from '../../../../utils/portfolio/core/pnl/rates';
 import {createSupportedCurrencyOptionLookup} from '../../../../utils/portfolio/supportedCurrencyOptionsLookup';
+import {
+  getHistoricalRateAssetRequestFromItem,
+  hasHistoricalRateSeriesForAsset,
+} from '../hooks/portfolioAssetHistoryRequests';
 
 const supportedCurrencyOptionLookup = createSupportedCurrencyOptionLookup(
   SupportedCurrencyOptions,
@@ -154,22 +154,39 @@ const AssetRow: React.FC<Props> = ({
       tokenAddress: item.tokenAddress,
     });
   }, [item.chain, item.currencyAbbreviation, item.tokenAddress]);
+  const historicalRateRequest = useMemo(() => {
+    return getHistoricalRateAssetRequestFromItem(
+      {
+        currencyAbbreviation: item.currencyAbbreviation,
+        chain: item.chain,
+        tokenAddress: item.tokenAddress,
+      },
+      defaultAltCurrency?.isoCode || 'USD',
+    );
+  }, [
+    defaultAltCurrency?.isoCode,
+    item.chain,
+    item.currencyAbbreviation,
+    item.tokenAddress,
+  ]);
   const hasRate = !!item.hasRate;
   const hasPnl = !!item.hasPnl;
   const showPnlPlaceholder = !!item.showPnlPlaceholder;
   const shouldShowRightSide = hasRate || showPnlPlaceholder;
   const hasHistoricalV4Rates = useMemo(() => {
-    return hasValidSeriesForCoin({
+    if (!historicalRateRequest) {
+      return false;
+    }
+
+    return hasHistoricalRateSeriesForAsset({
       cache: fiatRateSeriesCache,
-      fiatCodeUpper: (defaultAltCurrency?.isoCode || 'USD').toUpperCase(),
-      normalizedCoin: normalizeFiatRateSeriesCoin(item.currencyAbbreviation),
+      fiatCode: defaultAltCurrency?.isoCode || 'USD',
       intervals: FIAT_RATE_SERIES_CACHED_INTERVALS,
+      coin: historicalRateRequest.coin,
+      chain: historicalRateRequest.chain,
+      tokenAddress: historicalRateRequest.tokenAddress,
     });
-  }, [
-    defaultAltCurrency?.isoCode,
-    fiatRateSeriesCache,
-    item.currencyAbbreviation,
-  ]);
+  }, [defaultAltCurrency?.isoCode, fiatRateSeriesCache, historicalRateRequest]);
   const canNavigate = useMemo(() => {
     return (
       hasHistoricalV4Rates &&
