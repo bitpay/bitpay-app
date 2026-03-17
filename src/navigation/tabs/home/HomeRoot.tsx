@@ -62,8 +62,10 @@ import {withErrorFallback} from '../TabScreenErrorFallback';
 import TabContainer from '../TabContainer';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useStore} from 'react-redux';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../../../Root';
+import type {RootState} from '../../../store';
 import {TabsScreens, TabsStackParamList} from '../TabsStack';
 import {
   BitpaySupportedCoins,
@@ -96,6 +98,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
   const dispatch = useAppDispatch();
   const {currencyAbbreviation} = route.params || {};
   const theme = useTheme();
+  const reduxStore = useStore();
   const [refreshing, setRefreshing] = useState(false);
   const brazeMarketingCarousel = useAppSelector(selectBrazeMarketingCarousel);
   const brazeShopWithCrypto = useAppSelector(selectBrazeShopWithCrypto);
@@ -321,10 +324,25 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
         dispatch(requestBrazeContentRefresh()),
       ]);
 
+      const refreshedState = reduxStore.getState() as RootState;
+      const refreshedKeys = refreshedState.WALLET.keys as Record<string, Key>;
+      const refreshedWallets = (Object.values(refreshedKeys) as Key[]).flatMap(
+        (key: Key) => key.wallets || [],
+      );
+      const refreshedQuoteCurrency = getQuoteCurrency({
+        portfolioQuoteCurrency: refreshedState.PORTFOLIO?.quoteCurrency,
+        defaultAltCurrencyIsoCode:
+          refreshedState.APP?.defaultAltCurrency?.isoCode,
+      }).toUpperCase();
+
       await dispatch(
         maybePopulatePortfolioForWallets({
-          wallets,
-          quoteCurrency,
+          // IMPORTANT: read wallets from the latest Redux state after the
+          // balance refresh finishes so portfolio snapshots (and thus the
+          // chart) are repopulated with up-to-date wallet balances and any
+          // newly created token wallets with funds.
+          wallets: refreshedWallets,
+          quoteCurrency: refreshedQuoteCurrency,
         }) as any,
       );
     } catch (err) {
@@ -427,7 +445,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             }>
             {/* ////////////////////////////// PORTFOLIO BALANCE */}
             {showPortfolioValue ? (
-              <HomeSection style={{marginTop: 5, marginBottom: 20}}>
+              <HomeSection style={{marginTop: 20, marginBottom: 20}}>
                 <PortfolioBalance />
               </HomeSection>
             ) : null}

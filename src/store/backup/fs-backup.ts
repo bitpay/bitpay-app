@@ -47,6 +47,7 @@ export async function backupPersistRoot(rawJson: string): Promise<void> {
       const parsed = JSON.parse(rawJson);
       delete parsed.MARKET_STATS;
       delete parsed.PORTFOLIO;
+      delete parsed.PORTFOLIO_CHARTS;
       delete parsed.RATE;
       delete parsed.SHOP_CATALOG;
       filtered = JSON.stringify(parsed);

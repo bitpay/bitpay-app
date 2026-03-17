@@ -17,6 +17,7 @@ import {
   clearPortfolio,
   populatePortfolio,
 } from '../../../../store/portfolio';
+import {clearPortfolioCharts} from '../../../../store/portfolio-charts';
 import {pruneFiatRateSeriesCache} from '../../../../store/rate/rate.actions';
 import {useTheme} from '@react-navigation/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -127,6 +128,7 @@ const General: React.FC<Props> = ({navigation}) => {
           );
         }
         dispatch(clearPortfolio());
+        dispatch(clearPortfolioCharts());
         return;
       }
       dispatch(
@@ -280,10 +282,7 @@ const General: React.FC<Props> = ({navigation}) => {
           <SettingTitle>{item.title}</SettingTitle>
           {item.type === 'navigation' && <AngleRight />}
           {item.type === 'toggle' && (
-            <ToggleSwitch
-              onChange={item.onPress}
-              isEnabled={item.value}
-            />
+            <ToggleSwitch onChange={item.onPress} isEnabled={item.value} />
           )}
           {item.type === 'button' && (
             <Button

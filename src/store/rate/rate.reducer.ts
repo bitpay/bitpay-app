@@ -1,4 +1,5 @@
 import type {FiatRateSeriesCache, Rates, RatesCacheKey} from './rate.models';
+import {parseFiatRateSeriesCacheKey} from './rate.models';
 import {RateActionType, RateActionTypes} from './rate.types';
 import {DEFAULT_DATE_RANGE} from '../../constants/rate';
 
@@ -8,29 +9,11 @@ export const rateReduxPersistBlackList: RateReduxPersistBlackList = [];
 const getFiatCodeFromSeriesCacheKey = (
   cacheKey: string,
 ): string | undefined => {
-  if (!cacheKey || typeof cacheKey !== 'string') {
-    return undefined;
-  }
-  const idx = cacheKey.indexOf(':');
-  if (idx <= 0) {
-    return undefined;
-  }
-  return cacheKey.slice(0, idx).toUpperCase();
+  return parseFiatRateSeriesCacheKey(cacheKey)?.fiatCode;
 };
 
 const getCoinFromSeriesCacheKey = (cacheKey: string): string | undefined => {
-  if (!cacheKey || typeof cacheKey !== 'string') {
-    return undefined;
-  }
-  const first = cacheKey.indexOf(':');
-  if (first <= 0) {
-    return undefined;
-  }
-  const second = cacheKey.indexOf(':', first + 1);
-  if (second <= first + 1) {
-    return undefined;
-  }
-  return cacheKey.slice(first + 1, second).toLowerCase();
+  return parseFiatRateSeriesCacheKey(cacheKey)?.coin;
 };
 
 export interface RateState {

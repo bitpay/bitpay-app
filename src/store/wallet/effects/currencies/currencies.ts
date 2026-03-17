@@ -24,6 +24,20 @@ import merge from 'lodash.merge';
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 
+const TOKEN_OPTIONS_YIELD_EVERY = 150;
+
+const yieldToEventLoop = (): Promise<void> => {
+  return new Promise(resolve => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        setTimeout(resolve, 0);
+      });
+      return;
+    }
+    setTimeout(resolve, 0);
+  });
+};
+
 export const startGetTokenOptions =
   (): Effect<Promise<void>> => async dispatch => {
     try {
@@ -31,13 +45,13 @@ export const startGetTokenOptions =
       let tokenOptionsByAddress: {[key in string]: Token} = {};
       let tokenDataByAddress: {[key in string]: CurrencyOpts} = {};
       for await (const chain of SUPPORTED_VM_TOKENS) {
-        let tokens = {} as {[key in string]: Token};
+        let tokens: Token[] = [];
         try {
-          const {data} = await axios.get<{[key in string]: Token}>(
+          const {data} = await axios.get<Token[]>(
             `${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain}`,
           );
           tokens = data;
-        } catch (error) {
+        } catch {
           logManager.info(
             `request: ${BASE_BWS_URL}/v1/service/oneInch/getTokens/${chain} failed - continue anyway [startGetTokenOptions]`,
           );
@@ -49,11 +63,12 @@ export const startGetTokenOptions =
           return;
         }
 
-        tokens.forEach(token => {
+        for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+          const token = tokens[tokenIndex];
           if (
             BitpaySupportedTokens[getCurrencyAbbreviation(token.address, chain)]
           ) {
-            return;
+            continue;
           } // remove bitpay supported tokens and currencies
           populateTokenInfo({
             chain,
@@ -61,7 +76,12 @@ export const startGetTokenOptions =
             tokenOptionsByAddress,
             tokenDataByAddress,
           });
-        });
+          if (tokenIndex > 0 && tokenIndex % TOKEN_OPTIONS_YIELD_EVERY === 0) {
+            await yieldToEventLoop();
+          }
+        }
+
+        await yieldToEventLoop();
       }
       tokenManager.setTokenOptions({tokenOptionsByAddress, tokenDataByAddress});
       logManager.info('successful [startGetTokenOptions]');

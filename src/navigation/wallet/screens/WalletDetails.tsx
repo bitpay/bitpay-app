@@ -20,9 +20,13 @@ import {
   Share,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
+import {useStore} from 'react-redux';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import styled from 'styled-components/native';
+import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
+import {getTimeframeSelectorWidth} from '../../../components/charts/timeframeSelectorWidth';
 import Settings from '../../../components/settings/Settings';
 import {
   Balance,
@@ -47,6 +51,7 @@ import {
   isSegwit,
   isTaproot,
 } from '../../../store/wallet/utils/wallet';
+import {formatFiatAmount} from '../../../utils/helper-methods';
 import {
   setWalletScanning,
   updatePortfolioBalance,
@@ -89,6 +94,7 @@ import Icons from '../components/WalletIcons';
 import {WalletScreens, WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {startGetRates} from '../../../store/wallet/effects';
+import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 import {createWalletAddress} from '../../../store/wallet/effects/address/address';
 import {
   BuildUiFriendlyList,
@@ -129,6 +135,7 @@ import {
   SUPPORTED_VM_TOKENS,
 } from '../../../constants/currencies';
 import ContactIcon from '../../tabs/contacts/components/ContactIcon';
+import {getAssetTheme} from '../../../utils/portfolio/assetTheme';
 import {
   TransactionIcons,
   TRANSACTION_ICON_SIZE,
@@ -142,6 +149,8 @@ import ArchaxFooter from '../../../components/archax/archax-footer';
 import {ExternalServicesScreens} from '../../services/ExternalServicesGroup';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {logManager} from '../../../managers/LogManager';
+import type {RootState} from '../../../store';
+import {getQuoteCurrency} from '../../../utils/portfolio/assets';
 
 export type WalletDetailsScreenParamList = {
   walletId: string;
@@ -160,13 +169,17 @@ const WalletDetailsContainer = styled.SafeAreaView`
 `;
 
 const HeaderContainer = styled.View`
-  margin: 32px 0 24px;
+  margin: 18px 0 24px;
 `;
 
 const Row = styled.View`
   flex-direction: row;
   justify-content: center;
   align-items: flex-end;
+`;
+
+const CryptoBalanceRow = styled(Row)`
+  margin-top: -5px;
 `;
 
 const TouchableRow = styled(TouchableOpacity)`
@@ -177,7 +190,7 @@ const TouchableRow = styled(TouchableOpacity)`
 `;
 
 const BalanceContainer = styled.View`
-  padding: 0 15px 40px;
+  padding: 0 15px 22px;
   flex-direction: column;
 `;
 
@@ -259,6 +272,15 @@ const TypeContainer = styled(HeaderSubTitleContainer)`
   margin: 10px 4px 0;
 `;
 
+const NetworkBadgeRow = styled(Row)`
+  align-items: center;
+  margin-top: 10px;
+`;
+
+const NetworkBadgeContainer = styled(TypeContainer)`
+  margin: 0 4px 0 0;
+`;
+
 const IconContainer = styled.View`
   margin-right: 5px;
 `;
@@ -266,6 +288,10 @@ const IconContainer = styled.View`
 const TypeText = styled(BaseText)`
   font-size: 12px;
   color: ${({theme: {dark}}) => (dark ? LuckySevens : SlateDark)};
+`;
+
+const CryptoBalanceText = styled(Paragraph)`
+  font-size: 13px;
 `;
 
 const LinkText = styled(Link)`
@@ -306,18 +332,30 @@ const getWalletType = (
 const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
+  const reduxStore = useStore();
   const theme = useTheme();
+  const {width: windowWidth} = useWindowDimensions();
   const {t} = useTranslation();
   const [showWalletOptions, setShowWalletOptions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedFiatBalance, setSelectedFiatBalance] = useState<
+    number | undefined
+  >();
   const {walletId, skipInitializeHistory, copayerId} = route.params;
   const {keys} = useAppSelector(({WALLET}) => WALLET);
-  const {rates} = useAppSelector(({RATE}) => RATE);
+  const {rates, fiatRateSeriesCache} = useAppSelector(({RATE}) => RATE);
+  const snapshotsByWalletId = useAppSelector(
+    ({PORTFOLIO}) => PORTFOLIO.snapshotsByWalletId,
+  );
   const supportedCardMap = useAppSelector(
     ({SHOP_CATALOG}) => SHOP_CATALOG.supportedCardMap,
   );
 
   const locationData = useAppSelector(({LOCATION}) => LOCATION.locationData);
+  const timeframeSelectorWidth = getTimeframeSelectorWidth(
+    windowWidth,
+    ScreenGutter,
+  );
 
   const wallets = Object.values(keys).flatMap(k => k.wallets);
 
@@ -340,6 +378,41 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   const [showBalanceDetailsModal, setShowBalanceDetailsModal] = useState(false);
   const walletType = getWalletType(key, fullWalletObj);
   const showArchaxBanner = useAppSelector(({APP}) => APP.showArchaxBanner);
+
+  const getLatestWalletFromReduxState = useCallback(() => {
+    const state = reduxStore.getState() as RootState;
+    const latestKeys = state.WALLET.keys as Record<string, Key>;
+    const latestWallets = (Object.values(latestKeys) as Key[]).flatMap(
+      (walletKey: Key) => walletKey.wallets || [],
+    );
+    const latestWallet = findWalletById(latestWallets, walletId, copayerId) as
+      | Wallet
+      | undefined;
+
+    return {
+      state,
+      wallet: latestWallet,
+    };
+  }, [copayerId, reduxStore, walletId]);
+
+  const maybeRefreshWalletBalanceChart = useCallback(async () => {
+    const {state, wallet} = getLatestWalletFromReduxState();
+    if (!wallet) {
+      return;
+    }
+
+    const quoteCurrency = getQuoteCurrency({
+      portfolioQuoteCurrency: state.PORTFOLIO?.quoteCurrency,
+      defaultAltCurrencyIsoCode: state.APP?.defaultAltCurrency?.isoCode,
+    }).toUpperCase();
+
+    await dispatch(
+      maybePopulatePortfolioForWallets({
+        wallets: [wallet],
+        quoteCurrency,
+      }) as any,
+    );
+  }, [dispatch, getLatestWalletFromReduxState]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -485,28 +558,33 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     try {
       await dispatch(startGetRates({}));
       await Promise.all([
-        await dispatch(
+        dispatch(
           startUpdateWalletStatus({key, wallet: fullWalletObj, force: true}),
-        ),
-        await debouncedLoadHistory(true),
+        ) as any,
+        debouncedLoadHistory(true) as any,
         sleep(1000),
       ]);
       dispatch(updatePortfolioBalance());
-      setNeedActionTxps(fullWalletObj.pendingTxps);
-      if (fullWalletObj.isScanning) {
+      await maybeRefreshWalletBalanceChart();
+
+      const {wallet: latestWallet} = getLatestWalletFromReduxState();
+      setNeedActionTxps(latestWallet?.pendingTxps || []);
+
+      if (latestWallet?.isScanning || fullWalletObj.isScanning) {
         // cancel scanning if user refreshes in case it's stuck
         dispatch(
           setWalletScanning({
-            keyId: key.id,
-            walletId: fullWalletObj.id,
+            keyId: latestWallet?.keyId || key.id,
+            walletId: latestWallet?.id || fullWalletObj.id,
             isScanning: false,
           }),
         );
       }
     } catch (err) {
       dispatch(showBottomNotificationModal(BalanceUpdateError()));
+    } finally {
+      setRefreshing(false);
     }
-    setRefreshing(false);
   };
 
   const {
@@ -523,10 +601,40 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
     pendingTxps,
   } = uiFormattedWallet;
 
+  const displayedFiatBalanceFormat =
+    typeof selectedFiatBalance === 'number'
+      ? formatFiatAmount(selectedFiatBalance, defaultAltCurrency.isoCode, {
+          currencyDisplay: 'symbol',
+          customPrecision: 'minimal',
+        })
+      : fiatBalanceFormat;
+
   const showFiatBalance =
     // @ts-ignore
     Number(cryptoBalance.replaceAll(',', '')) > 0 &&
     network !== Network.testnet;
+  const formattedCryptoBalance = `${cryptoBalance} ${formatCurrencyAbbreviation(
+    currencyAbbreviation,
+  )}`;
+  const assetTheme = useMemo(
+    () =>
+      getAssetTheme({
+        currencyAbbreviation,
+        chain,
+        tokenAddress,
+      }),
+    [chain, currencyAbbreviation, tokenAddress],
+  );
+  const chartLineColor = useMemo(() => {
+    const coinColor = assetTheme?.coinColor;
+    if (!coinColor) {
+      return undefined;
+    }
+    return theme.dark && coinColor === Black ? White : coinColor;
+  }, [assetTheme, theme.dark]);
+  const chartGradientBackgroundColor = useMemo(() => {
+    return assetTheme?.gradientBackgroundColor;
+  }, [assetTheme]);
 
   const [history, setHistory] = useState<any[]>([]);
   const [groupedHistory, setGroupedHistory] = useState<any[]>([]);
@@ -578,6 +686,10 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
       try {
         setIsLoading(!refresh);
         setErrorLoadingTxs(false);
+        if (!refresh) {
+          // Allow one frame for chart/list loaders to render before heavy history work.
+          await sleep(0);
+        }
 
         const [transactionHistory] = await Promise.all([
           dispatch(
@@ -635,7 +747,8 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
 
   const updateWalletStatusAndProfileBalance = async () => {
     await dispatch(startUpdateWalletStatus({key, wallet: fullWalletObj}));
-    dispatch(updatePortfolioBalance);
+    dispatch(updatePortfolioBalance());
+    await maybeRefreshWalletBalanceChart();
   };
 
   useEffect(() => {
@@ -1047,6 +1160,24 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
   );
 
   const protocolName = getProtocolName(chain, network);
+  const showEvmGasWalletBadge =
+    !!fullWalletObj?.credentials?.token &&
+    IsERCToken(
+      String(currencyAbbreviation || '').toLowerCase(),
+      String(chain || '').toLowerCase(),
+    );
+  const showActivatedBadge =
+    ['xrp'].includes(fullWalletObj?.currencyAbbreviation) &&
+    Number(fullWalletObj?.balance?.cryptoConfirmedLocked) >= 10;
+  const showThresholdBadge =
+    !IsShared(fullWalletObj) && isTSSKey(key) && !!fullWalletObj.tssMetadata;
+  const showSpendableRow = !hideAllBalances && showBalanceDetailsButton();
+  const hasBottomMetadataRow =
+    (!!walletType && !showEvmGasWalletBadge) ||
+    showThresholdBadge ||
+    showActivatedBadge;
+  const hasTopMetadataBadges =
+    !!protocolName || showSpendableRow || hasBottomMetadataRow;
 
   return (
     <WalletDetailsContainer>
@@ -1058,262 +1189,312 @@ const WalletDetails: React.FC<WalletDetailsScreenProps> = ({route}) => {
             onRefresh={onRefresh}
           />
         }
-        ListHeaderComponent={() => {
-          return (
-            <>
-              <HeaderContainer>
-                <BalanceContainer>
-                  <TouchableOpacity
-                    onLongPress={() => {
-                      dispatch(toggleHideAllBalances());
-                    }}>
-                    {!fullWalletObj.isScanning ? (
-                      <Row>
-                        {!hideAllBalances ? (
-                          <Balance scale={shouldScale(cryptoBalance)}>
-                            {cryptoBalance}{' '}
-                            {formatCurrencyAbbreviation(currencyAbbreviation)}
-                          </Balance>
-                        ) : (
-                          <H2>****</H2>
-                        )}
-                      </Row>
-                    ) : (
-                      <View style={{padding: 12}}>
-                        <Row>
-                          <H5>{t('[Scanning Addresses]')}</H5>
-                        </Row>
-                        <Row>
-                          <H5>{t('Please wait...')}</H5>
-                        </Row>
-                      </View>
-                    )}
+        ListHeaderComponent={
+          <>
+            <HeaderContainer>
+              <BalanceContainer>
+                <TouchableOpacity
+                  onLongPress={() => {
+                    dispatch(toggleHideAllBalances());
+                  }}>
+                  {!fullWalletObj.isScanning ? (
                     <Row>
-                      {showFiatBalance &&
-                        !hideAllBalances &&
-                        !fullWalletObj.isScanning && (
-                          <Paragraph>{fiatBalanceFormat}</Paragraph>
-                        )}
+                      {!hideAllBalances ? (
+                        <Balance
+                          scale={shouldScale(
+                            showFiatBalance
+                              ? displayedFiatBalanceFormat
+                              : formattedCryptoBalance,
+                          )}>
+                          {showFiatBalance
+                            ? displayedFiatBalanceFormat
+                            : formattedCryptoBalance}
+                        </Balance>
+                      ) : (
+                        <H2>****</H2>
+                      )}
                     </Row>
-                  </TouchableOpacity>
-                  {!hideAllBalances && showBalanceDetailsButton() && (
-                    <TouchableRow
-                      onPress={() => setShowBalanceDetailsModal(true)}>
-                      <TimerSvg
-                        width={28}
-                        height={15}
-                        fill={theme.dark ? White : Black}
-                      />
-                      <Small>
-                        <Text style={{fontWeight: 'bold'}}>
-                          {cryptoSpendableBalance}{' '}
-                          {formatCurrencyAbbreviation(currencyAbbreviation)}
-                        </Text>
-                        {showFiatBalance && (
-                          <Text> ({fiatSpendableBalanceFormat})</Text>
-                        )}
-                      </Small>
-                    </TouchableRow>
+                  ) : (
+                    <View style={{padding: 12}}>
+                      <Row>
+                        <H5>{t('[Scanning Addresses]')}</H5>
+                      </Row>
+                      <Row>
+                        <H5>{t('Please wait...')}</H5>
+                      </Row>
+                    </View>
                   )}
-                  <Row>
-                    {walletType && (
-                      <TypeContainer>
-                        {walletType.icon ? (
-                          <IconContainer>{walletType.icon}</IconContainer>
-                        ) : null}
-                        <TypeText>{walletType.title}</TypeText>
-                      </TypeContainer>
-                    )}
-                    {protocolName ? (
-                      <TypeContainer>
-                        <IconContainer>
-                          <Icons.Network />
-                        </IconContainer>
-                        <TypeText>{protocolName}</TypeText>
-                      </TypeContainer>
-                    ) : null}
-                    {IsShared(fullWalletObj) ? (
-                      <TypeContainer>
-                        <TypeText>
-                          Multisig {fullWalletObj.credentials.m}/
-                          {fullWalletObj.credentials.n}
-                        </TypeText>
-                      </TypeContainer>
-                    ) : isTSSKey(key) && fullWalletObj.tssMetadata ? (
-                      <TypeContainer>
-                        <TypeText>
-                          Threshold {fullWalletObj.tssMetadata.m}/
-                          {fullWalletObj.tssMetadata.n}
-                        </TypeText>
-                      </TypeContainer>
-                    ) : null}
-                    {['xrp', 'sol'].includes(
-                      fullWalletObj?.currencyAbbreviation,
-                    ) ? (
-                      <TouchableOpacity
-                        onPress={() => setShowBalanceDetailsModal(true)}>
-                        <InfoSvg />
-                      </TouchableOpacity>
-                    ) : null}
-                    {['xrp'].includes(fullWalletObj?.currencyAbbreviation) &&
-                    Number(fullWalletObj?.balance?.cryptoConfirmedLocked) >=
-                      10 ? (
-                      <TypeContainer>
-                        <TypeText>{t('Activated')}</TypeText>
-                      </TypeContainer>
-                    ) : null}
-                  </Row>
-                </BalanceContainer>
+                  <CryptoBalanceRow>
+                    {!hideAllBalances &&
+                      !fullWalletObj.isScanning &&
+                      showFiatBalance && (
+                        <CryptoBalanceText>
+                          {formattedCryptoBalance}
+                        </CryptoBalanceText>
+                      )}
+                  </CryptoBalanceRow>
+                </TouchableOpacity>
 
-                {fullWalletObj ? (
-                  <LinkingButtons
-                    buy={{
-                      hide:
-                        fullWalletObj.network === 'testnet' ||
-                        !isCoinSupportedToBuy(
-                          fullWalletObj.currencyAbbreviation,
-                          fullWalletObj.chain,
-                          locationData?.countryShortCode || 'US',
-                        ),
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Buy Crypto', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                            chain: fullWalletObj.chain || '',
-                          }),
-                        );
-                        navigation.navigate(
-                          ExternalServicesScreens.ROOT_BUY_AND_SELL,
-                          {
-                            context: 'buyCrypto',
-                            fromWallet: fullWalletObj,
-                          },
-                        );
-                      },
-                    }}
-                    sell={{
-                      hide:
-                        !fullWalletObj.balance.sat ||
-                        (fullWalletObj.network === 'testnet' &&
-                          fullWalletObj.currencyAbbreviation !== 'eth' &&
-                          fullWalletObj.chain !== 'eth') ||
-                        !isCoinSupportedToSell(
-                          fullWalletObj.currencyAbbreviation,
-                          fullWalletObj.chain,
-                          locationData?.countryShortCode || 'US',
-                        ),
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Sell Crypto', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                            chain: fullWalletObj.chain || '',
-                          }),
-                        );
-                        navigation.navigate(
-                          ExternalServicesScreens.ROOT_BUY_AND_SELL,
-                          {
-                            context: 'sellCrypto',
-                            fromWallet: fullWalletObj,
-                          },
-                        );
-                      },
-                    }}
-                    swap={{
-                      hide:
-                        fullWalletObj.network === 'testnet' ||
-                        !isCoinSupportedToSwap(
-                          fullWalletObj.currencyAbbreviation,
-                          fullWalletObj.chain,
-                        ),
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Swap Crypto', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                            chain: fullWalletObj.chain || '',
-                          }),
-                        );
-                        navigation.navigate('SwapCryptoRoot', {
-                          selectedWallet: fullWalletObj,
-                        });
-                      },
-                    }}
-                    receive={{
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Receive', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                            chain: fullWalletObj.chain || '',
-                          }),
-                        );
-                        setShowReceiveAddressBottomModal(true);
-                      },
-                    }}
-                    send={{
-                      hide: !fullWalletObj.balance.sat,
-                      cta: () => {
-                        dispatch(
-                          Analytics.track('Clicked Send', {
-                            context: 'WalletDetails',
-                            coin: fullWalletObj.currencyAbbreviation,
-                            chain: fullWalletObj.chain || '',
-                          }),
-                        );
-                        navigation.navigate('SendTo', {wallet: fullWalletObj});
-                      },
-                    }}
+                {!hideAllBalances ? (
+                  <BalanceHistoryChart
+                    wallets={[fullWalletObj]}
+                    snapshotsByWalletId={snapshotsByWalletId || {}}
+                    quoteCurrency={defaultAltCurrency.isoCode}
+                    rates={rates}
+                    fiatRateSeriesCache={fiatRateSeriesCache}
+                    lineColor={chartLineColor}
+                    gradientStartColor={chartGradientBackgroundColor}
+                    showLoaderWhenNoSnapshots={
+                      isLoading === undefined || !!isLoading || refreshing
+                    }
+                    onSelectedBalanceChange={setSelectedFiatBalance}
+                    timeframeSelectorWidth={timeframeSelectorWidth}
+                    changeRowStyle={{marginTop: 2}}
+                    preChartContentTopMargin={12}
+                    preChartContent={
+                      hasTopMetadataBadges ? (
+                        <>
+                          {protocolName ? (
+                            <NetworkBadgeRow>
+                              {showEvmGasWalletBadge && walletType ? (
+                                <NetworkBadgeContainer>
+                                  {walletType.icon ? (
+                                    <IconContainer>
+                                      {walletType.icon}
+                                    </IconContainer>
+                                  ) : null}
+                                  <TypeText>{walletType.title}</TypeText>
+                                </NetworkBadgeContainer>
+                              ) : null}
+                              <NetworkBadgeContainer>
+                                <IconContainer>
+                                  <Icons.Network />
+                                </IconContainer>
+                                <TypeText>{protocolName}</TypeText>
+                              </NetworkBadgeContainer>
+                              {IsShared(fullWalletObj) ? (
+                                <NetworkBadgeContainer>
+                                  <TypeText>
+                                    Multisig {fullWalletObj.credentials.m}/
+                                    {fullWalletObj.credentials.n}
+                                  </TypeText>
+                                </NetworkBadgeContainer>
+                              ) : null}
+                              {['xrp', 'sol'].includes(
+                                fullWalletObj?.currencyAbbreviation,
+                              ) ? (
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    setShowBalanceDetailsModal(true)
+                                  }>
+                                  <InfoSvg />
+                                </TouchableOpacity>
+                              ) : null}
+                            </NetworkBadgeRow>
+                          ) : null}
+                          {showSpendableRow ? (
+                            <TouchableRow
+                              onPress={() => setShowBalanceDetailsModal(true)}>
+                              <TimerSvg
+                                width={28}
+                                height={15}
+                                fill={theme.dark ? White : Black}
+                              />
+                              <Small>
+                                <Text style={{fontWeight: 'bold'}}>
+                                  {cryptoSpendableBalance}{' '}
+                                  {formatCurrencyAbbreviation(
+                                    currencyAbbreviation,
+                                  )}
+                                </Text>
+                                {showFiatBalance && (
+                                  <Text> ({fiatSpendableBalanceFormat})</Text>
+                                )}
+                              </Small>
+                            </TouchableRow>
+                          ) : null}
+                          {hasBottomMetadataRow ? (
+                            <Row>
+                              {walletType && !showEvmGasWalletBadge && (
+                                <TypeContainer>
+                                  {walletType.icon ? (
+                                    <IconContainer>
+                                      {walletType.icon}
+                                    </IconContainer>
+                                  ) : null}
+                                  <TypeText>{walletType.title}</TypeText>
+                                </TypeContainer>
+                              )}
+                              {showThresholdBadge ? (
+                                <TypeContainer>
+                                  <TypeText>
+                                    Threshold {fullWalletObj.tssMetadata.m}/
+                                    {fullWalletObj.tssMetadata.n}
+                                  </TypeText>
+                                </TypeContainer>
+                              ) : null}
+                              {showActivatedBadge ? (
+                                <TypeContainer>
+                                  <TypeText>{t('Activated')}</TypeText>
+                                </TypeContainer>
+                              ) : null}
+                            </Row>
+                          ) : null}
+                        </>
+                      ) : null
+                    }
                   />
                 ) : null}
-              </HeaderContainer>
-              {pendingTxps && pendingTxps[0] ? (
-                <>
-                  <TransactionSectionHeaderContainer>
-                    <H5>
-                      {fullWalletObj.credentials.n > 1
-                        ? t('Pending Proposals')
-                        : t('Unsent Transactions')}
-                    </H5>
-                    <ProposalBadgeContainer onPress={onPressTxpBadge}>
-                      <ProposalBadge>{pendingTxps.length}</ProposalBadge>
-                    </ProposalBadgeContainer>
-                  </TransactionSectionHeaderContainer>
-                  {fullWalletObj.credentials.n > 1 &&
-                  needActionPendingTxps.length > 0
-                    ? renderTxp(needActionPendingTxps)
-                    : needActionUnsentTxps.length > 0
-                    ? renderTxp(needActionUnsentTxps)
-                    : null}
-                </>
-              ) : null}
+              </BalanceContainer>
 
-              {Number(cryptoLockedBalance) > 0 ? (
-                <LockedBalanceContainer
-                  onPress={() => setShowBalanceDetailsModal(true)}>
-                  <HeadContainer>
-                    <Description numberOfLines={1} ellipsizeMode={'tail'}>
-                      {t('Total Locked Balance')}
-                    </Description>
-                  </HeadContainer>
-
-                  <TailContainer>
-                    <Value>
-                      {cryptoLockedBalance}{' '}
-                      {formatCurrencyAbbreviation(currencyAbbreviation)}
-                    </Value>
-                    <Fiat>
-                      {network === 'testnet'
-                        ? t('Test Only - No Value')
-                        : fiatLockedBalanceFormat}
-                    </Fiat>
-                  </TailContainer>
-                </LockedBalanceContainer>
+              {fullWalletObj ? (
+                <LinkingButtons
+                  buy={{
+                    hide:
+                      fullWalletObj.network === 'testnet' ||
+                      !isCoinSupportedToBuy(
+                        fullWalletObj.currencyAbbreviation,
+                        fullWalletObj.chain,
+                        locationData?.countryShortCode || 'US',
+                      ),
+                    cta: () => {
+                      dispatch(
+                        Analytics.track('Clicked Buy Crypto', {
+                          context: 'WalletDetails',
+                          coin: fullWalletObj.currencyAbbreviation,
+                          chain: fullWalletObj.chain || '',
+                        }),
+                      );
+                      navigation.navigate(
+                        ExternalServicesScreens.ROOT_BUY_AND_SELL,
+                        {
+                          context: 'buyCrypto',
+                          fromWallet: fullWalletObj,
+                        },
+                      );
+                    },
+                  }}
+                  sell={{
+                    hide:
+                      !fullWalletObj.balance.sat ||
+                      (fullWalletObj.network === 'testnet' &&
+                        fullWalletObj.currencyAbbreviation !== 'eth' &&
+                        fullWalletObj.chain !== 'eth') ||
+                      !isCoinSupportedToSell(
+                        fullWalletObj.currencyAbbreviation,
+                        fullWalletObj.chain,
+                        locationData?.countryShortCode || 'US',
+                      ),
+                    cta: () => {
+                      dispatch(
+                        Analytics.track('Clicked Sell Crypto', {
+                          context: 'WalletDetails',
+                          coin: fullWalletObj.currencyAbbreviation,
+                          chain: fullWalletObj.chain || '',
+                        }),
+                      );
+                      navigation.navigate(
+                        ExternalServicesScreens.ROOT_BUY_AND_SELL,
+                        {
+                          context: 'sellCrypto',
+                          fromWallet: fullWalletObj,
+                        },
+                      );
+                    },
+                  }}
+                  swap={{
+                    hide:
+                      fullWalletObj.network === 'testnet' ||
+                      !isCoinSupportedToSwap(
+                        fullWalletObj.currencyAbbreviation,
+                        fullWalletObj.chain,
+                      ),
+                    cta: () => {
+                      dispatch(
+                        Analytics.track('Clicked Swap Crypto', {
+                          context: 'WalletDetails',
+                          coin: fullWalletObj.currencyAbbreviation,
+                          chain: fullWalletObj.chain || '',
+                        }),
+                      );
+                      navigation.navigate('SwapCryptoRoot', {
+                        selectedWallet: fullWalletObj,
+                      });
+                    },
+                  }}
+                  receive={{
+                    cta: () => {
+                      dispatch(
+                        Analytics.track('Clicked Receive', {
+                          context: 'WalletDetails',
+                          coin: fullWalletObj.currencyAbbreviation,
+                          chain: fullWalletObj.chain || '',
+                        }),
+                      );
+                      setShowReceiveAddressBottomModal(true);
+                    },
+                  }}
+                  send={{
+                    hide: !fullWalletObj.balance.sat,
+                    cta: () => {
+                      dispatch(
+                        Analytics.track('Clicked Send', {
+                          context: 'WalletDetails',
+                          coin: fullWalletObj.currencyAbbreviation,
+                          chain: fullWalletObj.chain || '',
+                        }),
+                      );
+                      navigation.navigate('SendTo', {wallet: fullWalletObj});
+                    },
+                  }}
+                />
               ) : null}
-            </>
-          );
-        }}
+            </HeaderContainer>
+            {pendingTxps && pendingTxps[0] ? (
+              <>
+                <TransactionSectionHeaderContainer>
+                  <H5>
+                    {fullWalletObj.credentials.n > 1
+                      ? t('Pending Proposals')
+                      : t('Unsent Transactions')}
+                  </H5>
+                  <ProposalBadgeContainer onPress={onPressTxpBadge}>
+                    <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                  </ProposalBadgeContainer>
+                </TransactionSectionHeaderContainer>
+                {fullWalletObj.credentials.n > 1 &&
+                needActionPendingTxps.length > 0
+                  ? renderTxp(needActionPendingTxps)
+                  : needActionUnsentTxps.length > 0
+                  ? renderTxp(needActionUnsentTxps)
+                  : null}
+              </>
+            ) : null}
+
+            {Number(cryptoLockedBalance) > 0 ? (
+              <LockedBalanceContainer
+                onPress={() => setShowBalanceDetailsModal(true)}>
+                <HeadContainer>
+                  <Description numberOfLines={1} ellipsizeMode={'tail'}>
+                    {t('Total Locked Balance')}
+                  </Description>
+                </HeadContainer>
+
+                <TailContainer>
+                  <Value>
+                    {cryptoLockedBalance}{' '}
+                    {formatCurrencyAbbreviation(currencyAbbreviation)}
+                  </Value>
+                  <Fiat>
+                    {network === 'testnet'
+                      ? t('Test Only - No Value')
+                      : fiatLockedBalanceFormat}
+                  </Fiat>
+                </TailContainer>
+              </LockedBalanceContainer>
+            ) : null}
+          </>
+        }
         data={groupedHistory}
         keyExtractor={keyExtractor}
         renderItem={({item}) => {

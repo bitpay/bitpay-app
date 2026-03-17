@@ -3,12 +3,16 @@ import type {
   FiatRateSeriesCache,
   FiatRatePoint,
 } from '../fiatRateSeries';
-import {getFiatRateSeriesCacheKey} from '../fiatRateSeries';
+import {
+  getFiatRateSeriesAssetKey,
+  getFiatRateSeriesCacheKey,
+} from '../fiatRateSeries';
 import {
   formatAtomicAmount,
   getAtomicDecimals,
   parseAtomicToBigint,
 } from '../format';
+import {throwIfAbortSignalAborted} from '../../../abort';
 import type {WalletCredentials} from '../types';
 import type {BalanceSnapshotStored} from './types';
 import {normalizeFiatRateSeriesCoin} from './rates';
@@ -22,9 +26,12 @@ import {
   PREF_ALL,
 } from './intervalPrefs';
 import {atomicToUnitNumber} from './atomic';
+import {
+  getFiatTimeframeSeriesInterval,
+  getFiatTimeframeWindowMs,
+} from '../fiatTimeframes';
 
 const MS_PER_HOUR = 60 * 60 * 1000;
-const MS_PER_DAY = 24 * MS_PER_HOUR;
 
 export type PnlTimeframe = FiatRateInterval;
 
@@ -73,7 +80,7 @@ export type PnlAnalysisPoint = {
 };
 
 export type AssetPnlSummary = {
-  coin: string;
+  rateKey: string;
   displaySymbol: string;
   rateStart: number;
   rateEnd: number;
@@ -92,13 +99,26 @@ export type TotalPnlSummary = {
   pnlPercent: number;
 };
 
+export type PnlAnalysisExtremaPoint = {
+  timestamp: number;
+  totalFiatBalance: number;
+};
+
+export type PnlAnalysisExactExtrema = {
+  min: PnlAnalysisExtremaPoint;
+  max: PnlAnalysisExtremaPoint;
+  minExcludingEnd?: PnlAnalysisExtremaPoint;
+  maxExcludingEnd?: PnlAnalysisExtremaPoint;
+};
+
 export type PnlAnalysisResult = {
   timeframe: PnlTimeframe;
   quoteCurrency: string;
-  driverCoin: string;
-  coins: string[];
+  driverRateKey: string;
+  rateKeys: string[];
   wallets: WalletForAnalysis[];
   points: PnlAnalysisPoint[];
+  exactExtrema?: PnlAnalysisExactExtrema;
 
   assetSummaries: AssetPnlSummary[];
   totalSummary: TotalPnlSummary;
@@ -127,87 +147,76 @@ function buildEvenTimeline(
   return out;
 }
 
-function getWindowMs(timeframe: PnlTimeframe): number {
-  switch (timeframe) {
-    case '1D':
-      return 1 * MS_PER_DAY;
-    case '1W':
-      return 7 * MS_PER_DAY;
-    case '1M':
-      return 30 * MS_PER_DAY;
-    case '3M':
-      return 90 * MS_PER_DAY;
-    case '1Y':
-      return 365 * MS_PER_DAY;
-    case '5Y':
-      return 1825 * MS_PER_DAY;
-    case 'ALL':
-    default:
-      return 0;
-  }
-}
-
 function roundDownToHourMs(tsMs: number): number {
   return Math.floor(tsMs / MS_PER_HOUR) * MS_PER_HOUR;
 }
+
+const FALLBACK_ORDER_BY_TIMEFRAME: Record<
+  PnlTimeframe,
+  readonly FiatRateInterval[]
+> = {
+  '1D': PREF_1D,
+  '1W': PREF_1W,
+  '1M': PREF_1M,
+  '3M': PREF_3M,
+  '1Y': PREF_1Y,
+  '5Y': PREF_5Y,
+  ALL: PREF_ALL,
+};
 
 function getBaselineMs(
   timeframe: PnlTimeframe,
   nowMs: number,
 ): number | undefined {
-  if (timeframe === 'ALL') return undefined;
-  const win = getWindowMs(timeframe);
-  if (!win) return undefined;
-  return roundDownToHourMs(nowMs - win);
+  const windowMs = getFiatTimeframeWindowMs(timeframe);
+  if (typeof windowMs !== 'number') {
+    return undefined;
+  }
+  return roundDownToHourMs(nowMs - windowMs);
 }
 
 function getFallbackOrderForTimeframe(
   timeframe: PnlTimeframe,
 ): readonly FiatRateInterval[] {
-  switch (timeframe) {
-    case '1D':
-      return PREF_1D;
-    case '1W':
-      return PREF_1W;
-    case '1M':
-      return PREF_1M;
-    case '3M':
-      return PREF_3M;
-    case '1Y':
-      return PREF_1Y;
-    case '5Y':
-      return PREF_5Y;
-    case 'ALL':
-    default:
-      // ALL series may be missing for very new wallets unless rates were fetched explicitly.
-      // Prefer widest coverage first, but allow shorter windows for brand-new wallets.
-      return PREF_ALL;
-  }
+  // ALL series may be missing for very new wallets unless rates were fetched explicitly.
+  // Prefer widest coverage first, but allow shorter windows for brand-new wallets.
+  return FALLBACK_ORDER_BY_TIMEFRAME[timeframe];
 }
 
 function getRatePointsFromCache(args: {
   fiatRateSeriesCache: FiatRateSeriesCache;
   quoteCurrency: string;
-  coin: string;
+  rateIdentity: WalletRateIdentity;
   /** Cache interval to query (may differ from timeframe; e.g. 3M/1Y/5Y use ALL in the app) */
   seriesInterval: FiatRateInterval;
   /** Original timeframe (used only for fallback ordering) */
   timeframe: PnlTimeframe;
+  onHistoricalRateDependency?: (cacheKey: string) => void;
 }): FiatRatePoint[] {
-  const {fiatRateSeriesCache, quoteCurrency, coin, timeframe, seriesInterval} =
-    args;
+  const {
+    fiatRateSeriesCache,
+    quoteCurrency,
+    rateIdentity,
+    timeframe,
+    seriesInterval,
+  } = args;
 
   // Ensure the requested seriesInterval is attempted first (e.g. 3M/1Y/5Y use ALL).
   const firstKey = getFiatRateSeriesCacheKey(
     quoteCurrency,
-    coin,
+    rateIdentity.coin,
     seriesInterval,
+    {
+      chain: rateIdentity.chain,
+      tokenAddress: rateIdentity.tokenAddress,
+    },
   );
   const firstSeries = fiatRateSeriesCache?.[firstKey];
   const firstPoints = Array.isArray(firstSeries?.points)
     ? firstSeries.points
     : [];
   if (firstPoints.length) {
+    args.onHistoricalRateDependency?.(firstKey);
     return firstPoints;
   }
 
@@ -217,18 +226,31 @@ function getRatePointsFromCache(args: {
   const fallbackIntervals = getFallbackOrderForTimeframe(timeframe);
   for (const interval of fallbackIntervals) {
     if (interval === seriesInterval) continue;
-    const key = getFiatRateSeriesCacheKey(quoteCurrency, coin, interval);
+    const key = getFiatRateSeriesCacheKey(
+      quoteCurrency,
+      rateIdentity.coin,
+      interval,
+      {
+        chain: rateIdentity.chain,
+        tokenAddress: rateIdentity.tokenAddress,
+      },
+    );
     const series = fiatRateSeriesCache?.[key];
     const points = Array.isArray(series?.points) ? series.points : [];
     if (points.length) {
+      args.onHistoricalRateDependency?.(key);
       return points;
     }
   }
 
   const wantedKey = getFiatRateSeriesCacheKey(
     quoteCurrency,
-    coin,
+    rateIdentity.coin,
     seriesInterval,
+    {
+      chain: rateIdentity.chain,
+      tokenAddress: rateIdentity.tokenAddress,
+    },
   );
   throw new Error(
     `Missing cached rate for ${wantedKey}. Fetch rates first (1D/1W/1M/3M/1Y/5Y/ALL).`,
@@ -281,6 +303,24 @@ type RateSeries = {
   rate: Float64Array;
 };
 
+function findFirstTimestampAtOrAfter(
+  ts: ArrayLike<number>,
+  target: number,
+): number {
+  const len = ts.length;
+  if (!len) return -1;
+
+  let lo = 0;
+  let hi = len;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (ts[mid] < target) lo = mid + 1;
+    else hi = mid;
+  }
+
+  return lo < len ? lo : -1;
+}
+
 function makeNearestRateCursor(series: RateSeries): RateCursor {
   // points must be sorted ascending by ts.
   let lo = 0;
@@ -327,7 +367,14 @@ function makeNearestRateCursor(series: RateSeries): RateCursor {
   };
 }
 
-function buildRateSeries(points: FiatRatePoint[], minTs?: number): RateSeries {
+export const pnlAnalysisInternals = {
+  makeNearestRateCursor,
+};
+
+export function buildRateSeries(
+  points: FiatRatePoint[],
+  minTs?: number,
+): RateSeries {
   const tsList: number[] = [];
   const rateList: number[] = [];
 
@@ -338,8 +385,6 @@ function buildRateSeries(points: FiatRatePoint[], minTs?: number): RateSeries {
     const ts = Number((p as any)?.ts);
     const rate = Number((p as any)?.rate);
     if (!Number.isFinite(ts) || !Number.isFinite(rate)) continue;
-    if (typeof minTs === 'number' && Number.isFinite(minTs) && ts < minTs)
-      continue;
 
     if (ts < prevTs) sorted = false;
     prevTs = ts;
@@ -363,70 +408,557 @@ function buildRateSeries(points: FiatRatePoint[], minTs?: number): RateSeries {
       ts[i] = tsList[j];
       rate[i] = rateList[j];
     }
+    if (typeof minTs === 'number' && Number.isFinite(minTs) && ts.length > 0) {
+      let firstAtOrAfter = findFirstTimestampAtOrAfter(ts, minTs);
+      if (firstAtOrAfter < 0) {
+        return {ts: new Float64Array(0), rate: new Float64Array(0)};
+      }
+      firstAtOrAfter = firstAtOrAfter > 0 ? firstAtOrAfter - 1 : 0;
+      return {
+        ts: ts.slice(firstAtOrAfter),
+        rate: rate.slice(firstAtOrAfter),
+      };
+    }
     return {ts, rate};
+  }
+
+  if (typeof minTs === 'number' && Number.isFinite(minTs)) {
+    let firstAtOrAfter = findFirstTimestampAtOrAfter(tsList, minTs);
+    if (firstAtOrAfter < 0) {
+      return {ts: new Float64Array(0), rate: new Float64Array(0)};
+    }
+    const startIdx = firstAtOrAfter > 0 ? firstAtOrAfter - 1 : 0;
+    return {
+      ts: Float64Array.from(tsList.slice(startIdx)),
+      rate: Float64Array.from(rateList.slice(startIdx)),
+    };
   }
 
   return {ts: Float64Array.from(tsList), rate: Float64Array.from(rateList)};
 }
 
-function findFirstNonZeroBalanceTs(
-  wallets: WalletForAnalysis[],
-): number | null {
+function findOldestSnapshotTs(wallets: WalletForAnalysis[]): number | null {
   let best: number | null = null;
   for (const w of wallets) {
     for (const s of w.snapshots) {
-      const bal = parseAtomicToBigint(s.cryptoBalance);
-      if (bal > 0n) {
-        const ts = Number(s.timestamp);
-        if (!best || ts < best) best = ts;
-        break;
-      }
+      const ts = Number(s.timestamp);
+      if (!Number.isFinite(ts)) continue;
+      if (!best || ts < best) best = ts;
+      break;
+    }
+  }
+  return best;
+}
+
+function findNewestSnapshotTs(wallets: WalletForAnalysis[]): number | null {
+  let best: number | null = null;
+  for (const w of wallets) {
+    for (let i = w.snapshots.length - 1; i >= 0; i--) {
+      const ts = Number(w.snapshots[i]?.timestamp);
+      if (!Number.isFinite(ts)) continue;
+      if (!best || ts > best) best = ts;
+      break;
     }
   }
   return best;
 }
 
 function isSingleAsset(wallets: WalletForAnalysis[]): boolean {
-  const coins = new Set<string>();
+  const rateKeys = new Set<string>();
   for (const w of wallets) {
-    coins.add(normalizeFiatRateSeriesCoin(w.currencyAbbreviation));
-    if (coins.size > 1) return false;
+    rateKeys.add(getWalletRateIdentity(w).key);
+    if (rateKeys.size > 1) return false;
   }
-  return coins.size === 1;
+  return rateKeys.size === 1;
 }
 
-export function buildPnlAnalysisSeries(args: {
+type WalletRateIdentity = {
+  key: string;
+  coin: string;
+  chain?: string;
+  tokenAddress?: string;
+  displaySymbol: string;
+};
+
+const getWalletRateIdentity = (
+  wallet: WalletForAnalysis,
+): WalletRateIdentity => {
+  const coin = normalizeFiatRateSeriesCoin(wallet.currencyAbbreviation);
+  const rawTokenAddress = wallet?.credentials?.token?.address;
+  const tokenAddress =
+    typeof rawTokenAddress === 'string' && rawTokenAddress.trim()
+      ? rawTokenAddress
+      : undefined;
+  const chain =
+    tokenAddress && wallet?.credentials?.chain
+      ? String(wallet.credentials.chain)
+      : undefined;
+
+  return {
+    key: getFiatRateSeriesAssetKey(coin, {
+      chain,
+      tokenAddress,
+    }),
+    coin,
+    ...(chain ? {chain} : {}),
+    ...(tokenAddress ? {tokenAddress} : {}),
+    displaySymbol: String(wallet.currencyAbbreviation || coin).toUpperCase(),
+  };
+};
+
+type ExactExtremaEvent =
+  | {
+      timestamp: number;
+      type: 'rate';
+      rateKey: string;
+      rate: number;
+    }
+  | {
+      timestamp: number;
+      type: 'balance';
+      walletId: string;
+      rateKey: string;
+      units: number;
+    };
+
+type RateTimestampGroup = {
+  timestamp: number;
+  firstRate: number;
+  lastRate: number;
+};
+
+const buildRateTimestampGroups = (series: RateSeries): RateTimestampGroup[] => {
+  const len = series.ts.length;
+  if (!len) {
+    return [];
+  }
+
+  const groups: RateTimestampGroup[] = [];
+  let index = 0;
+
+  while (index < len) {
+    const timestamp = series.ts[index];
+    const firstRate = series.rate[index];
+    let lastRate = firstRate;
+
+    index++;
+    while (index < len && series.ts[index] === timestamp) {
+      lastRate = series.rate[index];
+      index++;
+    }
+
+    groups.push({
+      timestamp,
+      firstRate,
+      lastRate,
+    });
+  }
+
+  return groups;
+};
+
+const getNearestRateSwitchTimestamp = (
+  leftTs: number,
+  rightTs: number,
+): number | undefined => {
+  if (
+    !Number.isFinite(leftTs) ||
+    !Number.isFinite(rightTs) ||
+    rightTs <= leftTs
+  ) {
+    return undefined;
+  }
+
+  return Math.floor((leftTs + rightTs) / 2) + 1;
+};
+
+type CooperativeYieldState = {
+  yieldEveryIterations: number;
+  iterations: number;
+};
+
+const buildCooperativeYieldState = (
+  yieldEveryIterations?: number,
+): CooperativeYieldState => ({
+  yieldEveryIterations:
+    typeof yieldEveryIterations === 'number' &&
+    Number.isFinite(yieldEveryIterations) &&
+    yieldEveryIterations > 0
+      ? Math.floor(yieldEveryIterations)
+      : 0,
+  iterations: 0,
+});
+
+function* maybeYieldForCooperativeWork(
+  state: CooperativeYieldState,
+): Generator<void, void, void> {
+  if (state.yieldEveryIterations <= 0) {
+    return;
+  }
+
+  state.iterations++;
+  if (state.iterations % state.yieldEveryIterations === 0) {
+    yield;
+  }
+}
+
+function* buildRateChangeEventsForExactExtremaGenerator(args: {
+  rateKey: string;
+  series: RateSeries;
+  startTs: number;
+  endTs: number;
+  yieldState: CooperativeYieldState;
+}): Generator<void, ExactExtremaEvent[], void> {
+  const groups = buildRateTimestampGroups(args.series);
+  const events: ExactExtremaEvent[] = [];
+
+  for (let index = 0; index < groups.length; index++) {
+    yield* maybeYieldForCooperativeWork(args.yieldState);
+
+    const group = groups[index];
+    const prevGroup = index > 0 ? groups[index - 1] : undefined;
+
+    if (prevGroup) {
+      const switchTimestamp = getNearestRateSwitchTimestamp(
+        prevGroup.timestamp,
+        group.timestamp,
+      );
+      if (
+        Number.isFinite(switchTimestamp) &&
+        switchTimestamp > args.startTs &&
+        switchTimestamp <= args.endTs
+      ) {
+        events.push({
+          timestamp: switchTimestamp,
+          type: 'rate',
+          rateKey: args.rateKey,
+          rate: group.firstRate,
+        });
+      }
+    }
+
+    if (
+      group.firstRate !== group.lastRate &&
+      group.timestamp > args.startTs &&
+      group.timestamp <= args.endTs
+    ) {
+      events.push({
+        timestamp: group.timestamp,
+        type: 'rate',
+        rateKey: args.rateKey,
+        rate: group.lastRate,
+      });
+    }
+  }
+
+  return events;
+}
+
+const updateExtremaPoint = (
+  current: PnlAnalysisExtremaPoint | undefined,
+  next: PnlAnalysisExtremaPoint,
+  direction: 'min' | 'max',
+): PnlAnalysisExtremaPoint => {
+  if (!current) {
+    return next;
+  }
+
+  if (direction === 'min') {
+    return next.totalFiatBalance < current.totalFiatBalance ? next : current;
+  }
+
+  return next.totalFiatBalance > current.totalFiatBalance ? next : current;
+};
+
+function* buildExactTotalFiatBalanceExtremaGenerator(args: {
+  wallets: WalletForAnalysis[];
+  rateKeys: string[];
+  rateIdentityByWalletId: Map<string, WalletRateIdentity>;
+  rateSeriesByRateKey: Record<string, RateSeries>;
+  startTs: number;
+  endTs: number;
+  getOverrideRate: (rateKey: string) => number | undefined;
+  yieldEveryIterations?: number;
+}): Generator<void, PnlAnalysisExactExtrema | undefined, void> {
+  const startTs = Number(args.startTs);
+  const endTs = Number(args.endTs);
+  if (!Number.isFinite(startTs) || !Number.isFinite(endTs) || endTs < startTs) {
+    return undefined;
+  }
+
+  const unitsByRateKey: Record<string, number> = {};
+  const currentRateByRateKey: Record<string, number> = {};
+  const currentUnitsByWalletId: Record<string, number> = {};
+  const events: ExactExtremaEvent[] = [];
+  const yieldState = buildCooperativeYieldState(args.yieldEveryIterations);
+
+  for (const rateKey of args.rateKeys) {
+    yield* maybeYieldForCooperativeWork(yieldState);
+
+    unitsByRateKey[rateKey] = 0;
+
+    const series = args.rateSeriesByRateKey[rateKey];
+    const startRate = pnlAnalysisInternals
+      .makeNearestRateCursor(series)
+      .getNearest(startTs);
+    if (startRate === undefined) {
+      return undefined;
+    }
+
+    currentRateByRateKey[rateKey] = startRate;
+    events.push(
+      ...(yield* buildRateChangeEventsForExactExtremaGenerator({
+        rateKey,
+        series,
+        startTs,
+        endTs,
+        yieldState,
+      })),
+    );
+  }
+
+  for (const wallet of args.wallets) {
+    yield* maybeYieldForCooperativeWork(yieldState);
+
+    const rateIdentity = args.rateIdentityByWalletId.get(wallet.walletId);
+    if (!rateIdentity?.key) {
+      continue;
+    }
+
+    const snapshots = wallet.snapshots || [];
+    const decimals = getAtomicDecimals(wallet.credentials);
+    const startSnapshotIndex = findLastSnapshotIndexAtOrBefore(
+      snapshots,
+      startTs,
+    );
+    const startUnits = atomicToUnitNumber(
+      startSnapshotIndex >= 0
+        ? parseAtomicToBigint(snapshots[startSnapshotIndex].cryptoBalance)
+        : 0n,
+      decimals,
+    );
+
+    currentUnitsByWalletId[wallet.walletId] = startUnits;
+    unitsByRateKey[rateIdentity.key] =
+      (unitsByRateKey[rateIdentity.key] || 0) + startUnits;
+
+    const nextSnapshotIndex = findFirstSnapshotIndexAfter(snapshots, startTs);
+    for (let i = nextSnapshotIndex; i < snapshots.length; i++) {
+      yield* maybeYieldForCooperativeWork(yieldState);
+
+      const snapshot = snapshots[i];
+      const timestamp = Number(snapshot?.timestamp);
+      if (!Number.isFinite(timestamp) || timestamp > endTs) {
+        break;
+      }
+
+      events.push({
+        timestamp,
+        type: 'balance',
+        walletId: wallet.walletId,
+        rateKey: rateIdentity.key,
+        units: atomicToUnitNumber(
+          parseAtomicToBigint(snapshot.cryptoBalance),
+          decimals,
+        ),
+      });
+    }
+  }
+
+  const computeTotalFiatBalance = (useEndOverrides = false): number => {
+    let totalFiatBalance = 0;
+    for (const rateKey of args.rateKeys) {
+      const overrideRate = useEndOverrides
+        ? args.getOverrideRate(rateKey)
+        : undefined;
+      const rate =
+        typeof overrideRate === 'number' && Number.isFinite(overrideRate)
+          ? overrideRate
+          : currentRateByRateKey[rateKey];
+      totalFiatBalance += (unitsByRateKey[rateKey] || 0) * rate;
+    }
+    return totalFiatBalance;
+  };
+
+  let minPoint: PnlAnalysisExtremaPoint | undefined;
+  let maxPoint: PnlAnalysisExtremaPoint | undefined;
+  let minExcludingEnd: PnlAnalysisExtremaPoint | undefined;
+  let maxExcludingEnd: PnlAnalysisExtremaPoint | undefined;
+
+  const recordPoint = (
+    point: PnlAnalysisExtremaPoint,
+    includeExcludingEnd: boolean,
+  ) => {
+    minPoint = updateExtremaPoint(minPoint, point, 'min');
+    maxPoint = updateExtremaPoint(maxPoint, point, 'max');
+
+    if (!includeExcludingEnd) {
+      return;
+    }
+
+    minExcludingEnd = updateExtremaPoint(minExcludingEnd, point, 'min');
+    maxExcludingEnd = updateExtremaPoint(maxExcludingEnd, point, 'max');
+  };
+
+  if (startTs < endTs) {
+    recordPoint(
+      {
+        timestamp: startTs,
+        totalFiatBalance: computeTotalFiatBalance(false),
+      },
+      true,
+    );
+  }
+
+  yield* maybeYieldForCooperativeWork(yieldState);
+  events.sort((a, b) => a.timestamp - b.timestamp);
+  yield* maybeYieldForCooperativeWork(yieldState);
+
+  let eventIndex = 0;
+  while (eventIndex < events.length) {
+    yield* maybeYieldForCooperativeWork(yieldState);
+
+    const timestamp = events[eventIndex].timestamp;
+    if (timestamp > endTs) {
+      break;
+    }
+
+    while (
+      eventIndex < events.length &&
+      events[eventIndex].timestamp === timestamp
+    ) {
+      const event = events[eventIndex];
+      if (event.type === 'rate') {
+        currentRateByRateKey[event.rateKey] = event.rate;
+      } else {
+        const previousUnits = currentUnitsByWalletId[event.walletId] || 0;
+        const deltaUnits = event.units - previousUnits;
+        currentUnitsByWalletId[event.walletId] = event.units;
+        unitsByRateKey[event.rateKey] =
+          (unitsByRateKey[event.rateKey] || 0) + deltaUnits;
+      }
+      eventIndex++;
+    }
+
+    if (timestamp >= endTs) {
+      continue;
+    }
+
+    recordPoint(
+      {
+        timestamp,
+        totalFiatBalance: computeTotalFiatBalance(false),
+      },
+      true,
+    );
+  }
+
+  recordPoint(
+    {
+      timestamp: endTs,
+      totalFiatBalance: computeTotalFiatBalance(true),
+    },
+    false,
+  );
+
+  if (!minPoint || !maxPoint) {
+    return undefined;
+  }
+
+  return {
+    min: minPoint,
+    max: maxPoint,
+    minExcludingEnd,
+    maxExcludingEnd,
+  };
+}
+
+type BuildPnlAnalysisSeriesArgs = {
   wallets: WalletForAnalysis[];
   timeframe: PnlTimeframe;
   quoteCurrency: string;
   fiatRateSeriesCache: FiatRateSeriesCache;
   /**
-   * Optional current/spot rate overrides per coin (e.g. from app Rates / market stats).
+   * Optional current/spot rate overrides per rate key (e.g. from app Rates / market stats).
    * When provided, the final point in the series will use this rate. This helps
    * ensure % changes match the ExchangeRate screen which uses a "currentRate" override.
    */
-  currentRatesByCoin?: Record<string, number>;
+  currentRatesByRateKey?: Record<string, number>;
   nowMs?: number;
   maxPoints?: number;
-}): PnlAnalysisResult {
+  onHistoricalRateDependency?: (cacheKey: string) => void;
+};
+
+type BuildPnlAnalysisSeriesGeneratorOptions = {
+  yieldEveryPoints?: number;
+  yieldEveryExtremaIterations?: number;
+};
+
+const DEFAULT_ASYNC_YIELD_EVERY_POINTS = 4;
+const DEFAULT_ASYNC_YIELD_EVERY_EXTREMA_ITERATIONS = 256;
+
+const yieldToEventLoop = (): Promise<void> => {
+  return new Promise(resolve => {
+    const setImmediateFn = (
+      globalThis as {
+        setImmediate?: (callback: () => void) => unknown;
+      }
+    ).setImmediate;
+
+    if (typeof setImmediateFn === 'function') {
+      setImmediateFn(resolve);
+      return;
+    }
+
+    setTimeout(resolve, 0);
+  });
+};
+
+function* buildPnlAnalysisSeriesGenerator(
+  args: BuildPnlAnalysisSeriesArgs,
+  options?: BuildPnlAnalysisSeriesGeneratorOptions,
+): Generator<void, PnlAnalysisResult, void> {
+  const yieldEveryPoints =
+    typeof options?.yieldEveryPoints === 'number' &&
+    Number.isFinite(options.yieldEveryPoints) &&
+    options.yieldEveryPoints > 0
+      ? Math.floor(options.yieldEveryPoints)
+      : 0;
+  const yieldEveryExtremaIterations =
+    typeof options?.yieldEveryExtremaIterations === 'number' &&
+    Number.isFinite(options.yieldEveryExtremaIterations) &&
+    options.yieldEveryExtremaIterations > 0
+      ? Math.floor(options.yieldEveryExtremaIterations)
+      : 0;
   const nowMs = typeof args.nowMs === 'number' ? args.nowMs : Date.now();
   const maxPoints = typeof args.maxPoints === 'number' ? args.maxPoints : 91;
 
   const wallets = args.wallets.slice();
   const quoteCurrency = args.quoteCurrency.toUpperCase();
 
-  const coins = Array.from(
-    new Set(
-      wallets.map(w => normalizeFiatRateSeriesCoin(w.currencyAbbreviation)),
-    ),
-  ).sort((a, b) => a.localeCompare(b));
+  const rateIdentitiesByKey = new Map<string, WalletRateIdentity>();
+  const rateIdentityByWalletId = new Map<string, WalletRateIdentity>();
+  for (const wallet of wallets) {
+    const rateIdentity = getWalletRateIdentity(wallet);
+    if (!rateIdentity.key) {
+      continue;
+    }
+    rateIdentityByWalletId.set(wallet.walletId, rateIdentity);
+    if (!rateIdentitiesByKey.has(rateIdentity.key)) {
+      rateIdentitiesByKey.set(rateIdentity.key, rateIdentity);
+    }
+  }
 
-  if (coins.length === 0) {
+  const rateKeys = Array.from(rateIdentitiesByKey.keys()).sort((a, b) =>
+    a.localeCompare(b),
+  );
+
+  if (rateKeys.length === 0) {
     return {
       timeframe: args.timeframe,
       quoteCurrency,
-      driverCoin: '',
-      coins: [],
+      driverRateKey: '',
+      rateKeys: [],
       wallets,
       points: [],
       assetSummaries: [],
@@ -434,43 +966,44 @@ export function buildPnlAnalysisSeries(args: {
     };
   }
 
-  // Driver coin: longest series wins; tie-break alphabetically.
-  let driverCoin = coins[0];
+  // Driver rate key: longest series wins; tie-break alphabetically.
+  let driverRateKey = rateKeys[0];
   let driverLen = -1;
 
   const baselineMs = getBaselineMs(args.timeframe, nowMs);
-  const firstNonZeroMs =
-    args.timeframe === 'ALL' ? findFirstNonZeroBalanceTs(wallets) : null;
+  const oldestSnapshotMs =
+    args.timeframe === 'ALL' ? findOldestSnapshotTs(wallets) : null;
+  const newestSnapshotMs = findNewestSnapshotTs(wallets);
 
   // ExchangeRate screen uses ALL series for 3M/1Y/5Y timeframes. Match that behavior
   // so percent changes are consistent across the app.
-  const seriesInterval: FiatRateInterval = (() => {
-    switch (args.timeframe) {
-      case '3M':
-      case '1Y':
-      case '5Y':
-        return 'ALL';
-      default:
-        return args.timeframe;
-    }
-  })();
+  const seriesInterval = getFiatTimeframeSeriesInterval(args.timeframe);
 
-  // Build compact rate series per coin and compute a strict overlapping window.
+  // Build compact rate series per rate key and compute the latest shared end bound.
   //
   // This avoids the heavy allocation work performed by alignTimestamps/trimTimestamps,
-  // which becomes especially expensive for ALL when multiple coins have long daily histories.
-  const rateSeriesByCoin: Record<string, RateSeries> = {};
+  // which becomes especially expensive for ALL when multiple assets have long daily histories.
+  //
+  // For bounded timeframes, keep one sample before the requested baseline so the
+  // first rendered point can still anchor at the exact timeframe start instead of
+  // jumping forward to the first post-cutoff rate sample.
+  const rateSeriesByRateKey: Record<string, RateSeries> = {};
 
   let overlapStart = Number.NEGATIVE_INFINITY;
   let overlapEnd = Number.POSITIVE_INFINITY;
 
-  for (const coin of coins) {
+  for (const rateKey of rateKeys) {
+    const rateIdentity = rateIdentitiesByKey.get(rateKey);
+    if (!rateIdentity) {
+      continue;
+    }
     const raw = getRatePointsFromCache({
       fiatRateSeriesCache: args.fiatRateSeriesCache,
       quoteCurrency,
-      coin,
+      rateIdentity,
       seriesInterval,
       timeframe: args.timeframe,
+      onHistoricalRateDependency: args.onHistoricalRateDependency,
     });
 
     const series = buildRateSeries(
@@ -479,17 +1012,17 @@ export function buildPnlAnalysisSeries(args: {
     );
     if (!series.ts.length) {
       throw new Error(
-        `Rates exist but no usable points after filtering for ${quoteCurrency}:${coin}:${args.timeframe}.`,
+        `Rates exist but no usable points after filtering for ${quoteCurrency}:${rateKey}:${args.timeframe}.`,
       );
     }
 
-    rateSeriesByCoin[coin] = series;
+    rateSeriesByRateKey[rateKey] = series;
 
     if (
       series.ts.length > driverLen ||
-      (series.ts.length === driverLen && coin < driverCoin)
+      (series.ts.length === driverLen && rateKey < driverRateKey)
     ) {
-      driverCoin = coin;
+      driverRateKey = rateKey;
       driverLen = series.ts.length;
     }
 
@@ -502,75 +1035,59 @@ export function buildPnlAnalysisSeries(args: {
     !Number.isFinite(overlapEnd) ||
     overlapEnd < overlapStart
   ) {
-    throw new Error('No overlapping rate window found across selected coins.');
+    throw new Error(
+      'No overlapping rate window found across selected historical rate keys.',
+    );
   }
 
   const desiredStart =
     args.timeframe === 'ALL'
-      ? firstNonZeroMs ?? overlapStart
+      ? oldestSnapshotMs ?? overlapStart
       : baselineMs ?? overlapStart;
-  const startBound = Math.max(overlapStart, desiredStart);
+  // Requested windows should keep their full start bound. Wallets that do not
+  // exist yet already contribute zero until their first snapshot, so we do not
+  // need to crop the chart to the shortest shared asset history.
+  const startBound = desiredStart;
   const endBound = overlapEnd;
+
+  if (!Number.isFinite(startBound) || endBound < startBound) {
+    throw new Error(
+      `No usable rate window found for ${quoteCurrency}:${args.timeframe}.`,
+    );
+  }
 
   // Always emit exactly maxPoints points (RN graph interpolation expects stable point count).
   const timeline = buildEvenTimeline(startBound, endBound, maxPoints);
   if (!timeline.length)
     throw new Error('Failed to build an analysis timeline.');
-
-  // Nearest-rate cursors, sampled on the shared timeline.
-  const rateCursorByCoin: Record<string, RateCursor> = {};
-  for (const coin of coins) {
-    rateCursorByCoin[coin] = makeNearestRateCursor(rateSeriesByCoin[coin]);
+  if (
+    newestSnapshotMs !== null &&
+    newestSnapshotMs > endBound &&
+    nowMs > timeline[timeline.length - 1]
+  ) {
+    timeline[timeline.length - 1] = nowMs;
   }
 
-  const getOverrideRate = (coin: string): number | undefined => {
-    const overrides = args.currentRatesByCoin;
+  // Nearest-rate cursors, sampled on the shared timeline.
+  const rateCursorByRateKey: Record<string, RateCursor> = {};
+  for (const rateKey of rateKeys) {
+    rateCursorByRateKey[rateKey] = pnlAnalysisInternals.makeNearestRateCursor(
+      rateSeriesByRateKey[rateKey],
+    );
+  }
+
+  const getOverrideRate = (rateKey: string): number | undefined => {
+    const overrides = args.currentRatesByRateKey;
     if (!overrides) return undefined;
-    const v = overrides[coin];
+    const v = overrides[rateKey];
     return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined;
-  };
-
-  const getLinearRateAtTs = (
-    series: RateSeries,
-    tsMs: number,
-  ): number | undefined => {
-    const ts = series.ts;
-    const rate = series.rate;
-    const len = ts.length;
-    if (!len) return undefined;
-
-    // Find first index i such that ts[i] >= tsMs.
-    let lo = 0;
-    let hi = len - 1;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (ts[mid] < tsMs) lo = mid + 1;
-      else hi = mid;
-    }
-
-    const rightIdx = lo;
-    const rightTs = ts[rightIdx];
-    const rightRate = rate[rightIdx];
-    const leftIdx = rightIdx > 0 ? rightIdx - 1 : rightIdx;
-    const leftTs = ts[leftIdx];
-    const leftRate = rate[leftIdx];
-
-    if (rightIdx === 0) return rightRate;
-    if (rightIdx === len - 1 && tsMs >= rightTs) return rightRate;
-    if (rightTs === leftTs) return rightRate;
-    if (tsMs <= leftTs) return leftRate;
-    if (tsMs >= rightTs) return rightRate;
-
-    const ratio = (tsMs - leftTs) / (rightTs - leftTs);
-    const out = leftRate + (rightRate - leftRate) * ratio;
-    return Number.isFinite(out) ? out : undefined;
   };
 
   // Windowed cost basis state (reset to value at interval start).
   // We iterate forward through snapshots during timeline generation so this is O(points + txs).
   type WindowBasisState = {
     walletId: string;
-    coin: string;
+    rateKey: string;
     decimals: number;
     snapshots: BalanceSnapshotStored[];
     nextIdx: number; // next snapshot index to process (> startTs)
@@ -583,16 +1100,17 @@ export function buildPnlAnalysisSeries(args: {
   const singleAsset = isSingleAsset(wallets);
   const points: PnlAnalysisPoint[] = [];
 
-  const baselineRateByCoin: Record<string, number> = {};
-  for (const coin of coins) {
-    const series = rateSeriesByCoin[coin];
-    const r0 = getLinearRateAtTs(series, timeline[0]);
+  const baselineRateByRateKey: Record<string, number> = {};
+  for (const rateKey of rateKeys) {
+    // Keep the baseline anchored to the same sampled rate used by the first
+    // rendered point so the chart always starts at exactly 0 PnL / 0%.
+    const r0 = rateCursorByRateKey[rateKey]?.getNearest(timeline[0]);
     if (r0 === undefined) {
       throw new Error(
-        `Missing ${quoteCurrency}:${coin} rate at ts=${timeline[0]}.`,
+        `Missing ${quoteCurrency}:${rateKey} rate at ts=${timeline[0]}.`,
       );
     }
-    baselineRateByCoin[coin] = r0;
+    baselineRateByRateKey[rateKey] = r0;
   }
 
   const startTs = timeline[0];
@@ -600,7 +1118,10 @@ export function buildPnlAnalysisSeries(args: {
 
   const windowStateByWalletId: Record<string, WindowBasisState> = {};
   for (const w of wallets) {
-    const coin = normalizeFiatRateSeriesCoin(w.currencyAbbreviation);
+    const rateIdentity = rateIdentityByWalletId.get(w.walletId);
+    if (!rateIdentity?.key) {
+      continue;
+    }
     const decimals = getAtomicDecimals(w.credentials);
     const snaps = w.snapshots;
 
@@ -608,12 +1129,12 @@ export function buildPnlAnalysisSeries(args: {
     const unitsAtomic =
       lastIdx >= 0 ? parseAtomicToBigint(snaps[lastIdx].cryptoBalance) : 0n;
     const unitsNumber = atomicToUnitNumber(unitsAtomic, decimals);
-    const startRate = baselineRateByCoin[coin];
+    const startRate = baselineRateByRateKey[rateIdentity.key];
     const basisFiat = unitsNumber * startRate;
 
     windowStateByWalletId[w.walletId] = {
       walletId: w.walletId,
-      coin,
+      rateKey: rateIdentity.key,
       decimals,
       snapshots: snaps,
       nextIdx: findFirstSnapshotIndexAfter(snaps, startTs),
@@ -625,7 +1146,26 @@ export function buildPnlAnalysisSeries(args: {
   }
 
   for (let i = 0; i < timeline.length; i++) {
+    if (yieldEveryPoints > 0 && i > 0 && i % yieldEveryPoints === 0) {
+      yield;
+    }
+
     const ts = timeline[i];
+    const isLastTimelinePoint = i === timeline.length - 1;
+    const rateAtTsByRateKey: Record<string, number> = {};
+
+    for (const rateKey of rateKeys) {
+      const rate = isLastTimelinePoint
+        ? getOverrideRate(rateKey) ??
+          rateCursorByRateKey[rateKey]?.getNearest(ts)
+        : rateCursorByRateKey[rateKey]?.getNearest(ts);
+      if (rate === undefined) {
+        throw new Error(
+          `Missing ${quoteCurrency}:${rateKey} rate at ts=${ts}.`,
+        );
+      }
+      rateAtTsByRateKey[rateKey] = rate;
+    }
 
     const byWalletId: Record<string, WalletPoint> = {};
     let totalFiatBalance = 0;
@@ -634,28 +1174,16 @@ export function buildPnlAnalysisSeries(args: {
     let totalCryptoAtomic: bigint = 0n;
     let totalCryptoCreds: WalletCredentials | null = null;
 
-    // Determine markRate based on driver coin.
-    const driverRate =
-      i === timeline.length - 1
-        ? getOverrideRate(driverCoin) ??
-          rateCursorByCoin[driverCoin]?.getNearest(ts)
-        : rateCursorByCoin[driverCoin]?.getNearest(ts);
-    if (driverRate === undefined) {
-      throw new Error(
-        `Missing ${quoteCurrency}:${driverCoin} rate at ts=${ts}.`,
-      );
-    }
+    // Determine markRate based on the driver rate key.
+    const driverRate = rateAtTsByRateKey[driverRateKey];
 
     for (const w of wallets) {
       const st = windowStateByWalletId[w.walletId];
-      const coin = st.coin;
-      const rate =
-        i === timeline.length - 1
-          ? getOverrideRate(coin) ?? rateCursorByCoin[coin]?.getNearest(ts)
-          : rateCursorByCoin[coin]?.getNearest(ts);
-      if (rate === undefined) {
-        throw new Error(`Missing ${quoteCurrency}:${coin} rate at ts=${ts}.`);
+      if (!st) {
+        continue;
       }
+      const rateKey = st.rateKey;
+      const rate = rateAtTsByRateKey[rateKey];
 
       // Advance window basis state by processing all snapshots up to this timestamp.
       while (st.nextIdx < st.snapshots.length) {
@@ -669,7 +1197,7 @@ export function buildPnlAnalysisSeries(args: {
         if (delta > 0n) {
           let markRate = Number((s as any).markRate);
           if (!Number.isFinite(markRate) || markRate <= 0) {
-            const fallback = rateCursorByCoin[coin]?.getNearest(sTs);
+            const fallback = rateCursorByRateKey[rateKey]?.getNearest(sTs);
             markRate = fallback === undefined ? rate : fallback;
           }
           const deltaUnits = atomicToUnitNumber(delta, st.decimals);
@@ -728,7 +1256,7 @@ export function buildPnlAnalysisSeries(args: {
       const pnlPercent =
         costBasis > 0 ? (unrealizedPnlFiat / costBasis) * 100 : 0;
 
-      const base = baselineRateByCoin[coin] || rate;
+      const base = baselineRateByRateKey[rateKey] || rate;
       const walletRatePct = base > 0 ? ((rate - base) / base) * 100 : 0;
 
       byWalletId[w.walletId] = {
@@ -758,7 +1286,7 @@ export function buildPnlAnalysisSeries(args: {
         ? (totalUnrealizedPnlFiat / totalRemainingCostBasisFiat) * 100
         : 0;
 
-    const driverBase = baselineRateByCoin[driverCoin] || driverRate;
+    const driverBase = baselineRateByRateKey[driverRateKey] || driverRate;
     const ratePercentChange =
       driverBase > 0
         ? ((driverRate - driverBase) / driverBase) * 100
@@ -786,20 +1314,30 @@ export function buildPnlAnalysisSeries(args: {
     });
   }
 
+  const exactExtrema = yield* buildExactTotalFiatBalanceExtremaGenerator({
+    wallets,
+    rateKeys,
+    rateIdentityByWalletId,
+    rateSeriesByRateKey,
+    startTs,
+    endTs,
+    getOverrideRate,
+    yieldEveryIterations: yieldEveryExtremaIterations,
+  });
+
   // Summaries
   const first = points[0];
   const last = points[points.length - 1];
 
-  const assetSummaries: AssetPnlSummary[] = coins.map(coin => {
+  const assetSummaries: AssetPnlSummary[] = rateKeys.map(rateKey => {
+    const rateIdentity = rateIdentitiesByKey.get(rateKey);
     const ids = new Set(
       wallets
-        .filter(
-          w => normalizeFiatRateSeriesCoin(w.currencyAbbreviation) === coin,
-        )
+        .filter(w => rateIdentityByWalletId.get(w.walletId)?.key === rateKey)
         .map(w => w.walletId),
     );
 
-    // Sum windowed PnL + basis for wallets in this coin group.
+    // Sum windowed PnL + basis for wallets in this rate-key group.
     let startPnl = 0;
     let endPnl = 0;
     let endBasis = 0;
@@ -811,18 +1349,20 @@ export function buildPnlAnalysisSeries(args: {
       endBasis += last.byWalletId[w.walletId]?.remainingCostBasisFiat ?? 0;
     }
 
-    const rateStart = baselineRateByCoin[coin];
-    const rateEnd = rateCursorByCoin[coin]?.getNearest(endTs);
+    const rateStart = baselineRateByRateKey[rateKey];
+    const rateEnd = rateCursorByRateKey[rateKey]?.getNearest(endTs);
     if (rateEnd === undefined)
-      throw new Error(`Missing ${quoteCurrency}:${coin} rate at ts=${endTs}.`);
+      throw new Error(
+        `Missing ${quoteCurrency}:${rateKey} rate at ts=${endTs}.`,
+      );
     const rateChange = rateEnd - rateStart;
     const ratePct = rateStart > 0 ? (rateChange / rateStart) * 100 : 0;
 
     const pnlPercent = endBasis > 0 ? (endPnl / endBasis) * 100 : 0;
 
     return {
-      coin,
-      displaySymbol: coin.toUpperCase(),
+      rateKey,
+      displaySymbol: rateIdentity?.displaySymbol || rateKey.toUpperCase(),
       rateStart,
       rateEnd,
       rateChange,
@@ -844,11 +1384,62 @@ export function buildPnlAnalysisSeries(args: {
   return {
     timeframe: args.timeframe,
     quoteCurrency,
-    driverCoin,
-    coins,
+    driverRateKey,
+    rateKeys,
     wallets,
     points,
+    exactExtrema,
     assetSummaries,
     totalSummary,
   };
+}
+
+export function buildPnlAnalysisSeries(
+  args: BuildPnlAnalysisSeriesArgs,
+): PnlAnalysisResult {
+  const generator = buildPnlAnalysisSeriesGenerator(args);
+  let next = generator.next();
+  while (!next.done) {
+    next = generator.next();
+  }
+  return next.value;
+}
+
+export async function buildPnlAnalysisSeriesAsync(
+  args: BuildPnlAnalysisSeriesArgs & {
+    signal?: AbortSignal;
+    yieldEveryPoints?: number;
+    yieldEveryExtremaIterations?: number;
+    yieldControl?: () => Promise<void>;
+  },
+): Promise<PnlAnalysisResult> {
+  const {
+    signal,
+    yieldEveryPoints,
+    yieldEveryExtremaIterations,
+    yieldControl,
+    ...rest
+  } = args;
+  const generator = buildPnlAnalysisSeriesGenerator(rest, {
+    yieldEveryPoints:
+      typeof yieldEveryPoints === 'number'
+        ? yieldEveryPoints
+        : DEFAULT_ASYNC_YIELD_EVERY_POINTS,
+    yieldEveryExtremaIterations:
+      typeof yieldEveryExtremaIterations === 'number'
+        ? yieldEveryExtremaIterations
+        : DEFAULT_ASYNC_YIELD_EVERY_EXTREMA_ITERATIONS,
+  });
+  const yieldFn = yieldControl || yieldToEventLoop;
+
+  throwIfAbortSignalAborted(signal);
+
+  let next = generator.next();
+  while (!next.done) {
+    throwIfAbortSignalAborted(signal);
+    await yieldFn();
+    throwIfAbortSignalAborted(signal);
+    next = generator.next();
+  }
+  return next.value;
 }

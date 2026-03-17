@@ -1,57 +1,65 @@
 import {useMemo} from 'react';
+import type {GraphPoint} from 'react-native-graph';
 import {
   CachedFiatRateInterval,
-  DateRanges,
   FiatRateInterval,
   FiatRatePoint,
   FIAT_RATE_SERIES_TARGET_POINTS,
 } from '../../../store/rate/rate.models';
 import {calculatePercentageDifference} from '../../../utils/helper-methods';
+import {getFiatTimeframeMetadata} from '../../../utils/fiatTimeframes';
+import {
+  normalizeGraphPointsForChart,
+  recomputeMinMaxFromGraphPoints,
+} from '../../../utils/portfolio/chartGraph';
 import {downsampleSeries} from '../../../utils/portfolio/rate';
 import {
   ensureSortedByTsAsc,
-  getMaxRate,
   lowerBoundByTs,
 } from '../../../utils/portfolio/timeSeries';
 
-export interface ChartDisplayDataType {
-  date: Date;
-  value: number;
+export type ChartDisplayDataType = GraphPoint;
+
+export interface ChartExtremaPointType {
+  index: number;
+  point: ChartDisplayDataType;
 }
 
 export interface ChartDataType {
   data: ChartDisplayDataType[];
   percentChange: number;
   priceChange: number;
-  maxIndex?: number;
-  maxPoint?: ChartDisplayDataType;
-  minIndex?: number;
-  minPoint?: ChartDisplayDataType;
+  renderedMaxPoint?: ChartExtremaPointType;
+  renderedMinPoint?: ChartExtremaPointType;
 }
 
 export const defaultDisplayData: ChartDataType = {
   data: [],
   percentChange: 0,
   priceChange: 0,
-  maxIndex: undefined,
-  maxPoint: undefined,
-  minIndex: undefined,
-  minPoint: undefined,
+  renderedMaxPoint: undefined,
+  renderedMinPoint: undefined,
 };
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-export const HISTORIC_TIMEFRAME_WINDOW_MS: Record<'3M' | '1Y' | '5Y', number> =
-  {
-    '3M': DateRanges.Quarter * MS_PER_DAY,
-    '1Y': DateRanges.Year * MS_PER_DAY,
-    '5Y': DateRanges.FiveYears * MS_PER_DAY,
-  };
 const SPOT_RATE_MATCH_EPSILON = 1e-12;
+const buildRenderedExtremaPoint = (
+  index: number,
+  point: ChartDisplayDataType | undefined,
+): ChartExtremaPointType | undefined => {
+  return point ? {index, point} : undefined;
+};
 
-const getFormattedData = (
+type FormatExchangeRateChartDataOptions = {
+  assumeSortedByTsAsc?: boolean;
+};
+
+export const formatExchangeRateChartData = (
   historicFiatRates: Array<{ts: number; rate: number}>,
+  options: FormatExchangeRateChartDataOptions = {},
 ): ChartDataType => {
-  const ratesSorted = ensureSortedByTsAsc(historicFiatRates);
+  const ratesSorted = options.assumeSortedByTsAsc
+    ? historicFiatRates
+    : ensureSortedByTsAsc(historicFiatRates);
   if (!ratesSorted.length) {
     return defaultDisplayData;
   }
@@ -60,41 +68,24 @@ const getFormattedData = (
     strategy: 'lttb',
     mode: 'per_coin',
   });
-  const scaledData = rates.map(value => ({
-    date: new Date(value.ts),
-    value: value.rate,
-  }));
-
-  let maxPoint: ChartDisplayDataType | undefined;
-  let minPoint: ChartDisplayDataType | undefined;
-  let maxIndex: number | undefined;
-  let minIndex: number | undefined;
-
-  for (let index = 0; index < scaledData.length; index++) {
-    const point = scaledData[index];
-    if (Number.isNaN(point.value)) {
-      continue;
-    }
-
-    if (typeof maxPoint === 'undefined' || point.value > maxPoint.value) {
-      maxPoint = point;
-      maxIndex = index;
-    }
-    if (typeof minPoint === 'undefined' || point.value < minPoint.value) {
-      minPoint = point;
-      minIndex = index;
-    }
-  }
+  const scaledData = normalizeGraphPointsForChart(
+    rates.map(value => ({
+      date: new Date(value.ts),
+      value: value.rate,
+    })),
+  ) as ChartDisplayDataType[];
+  const {maxIndex, maxPoint, minIndex, minPoint} =
+    recomputeMinMaxFromGraphPoints(scaledData);
+  const renderedMaxPoint = buildRenderedExtremaPoint(maxIndex, maxPoint);
+  const renderedMinPoint = buildRenderedExtremaPoint(minIndex, minPoint);
 
   if (rates.length < 2) {
     return {
       data: scaledData,
       percentChange: 0,
       priceChange: 0,
-      maxIndex,
-      maxPoint,
-      minIndex,
-      minPoint,
+      renderedMaxPoint,
+      renderedMinPoint,
     };
   }
   const percentChange = calculatePercentageDifference(
@@ -106,10 +97,8 @@ const getFormattedData = (
     data: scaledData,
     percentChange,
     priceChange: rates[rates.length - 1].rate - rates[0].rate,
-    maxIndex,
-    maxPoint,
-    minIndex,
-    minPoint,
+    renderedMaxPoint,
+    renderedMinPoint,
   };
 };
 
@@ -123,7 +112,55 @@ type Args = {
 type Result = {
   pointsForChartRaw: FiatRatePoint[] | undefined;
   displayData: ChartDataType | undefined;
-  selectedTimeframeHighValue: number | undefined;
+};
+
+type PrepareExchangeRateChartPointsArgs = Args & {
+  nowMs?: number;
+};
+
+export const prepareExchangeRateChartPoints = ({
+  selectedSeriesPoints,
+  selectedTimeframe,
+  seriesDataInterval,
+  currentFiatRate,
+  nowMs,
+}: PrepareExchangeRateChartPointsArgs): FiatRatePoint[] | undefined => {
+  if (!selectedSeriesPoints) {
+    return undefined;
+  }
+
+  const pointsSortedByTs = ensureSortedByTsAsc(selectedSeriesPoints);
+  const {windowMs} = getFiatTimeframeMetadata(selectedTimeframe);
+  const pointsToDisplay =
+    seriesDataInterval === 'ALL' && typeof windowMs === 'number'
+      ? pointsSortedByTs.slice(
+          lowerBoundByTs(
+            pointsSortedByTs,
+            (typeof nowMs === 'number' ? nowMs : Date.now()) - windowMs,
+          ),
+        )
+      : pointsSortedByTs;
+
+  if (!pointsToDisplay.length) {
+    return pointsToDisplay;
+  }
+  if (!Number.isFinite(currentFiatRate)) {
+    return pointsToDisplay;
+  }
+
+  const lastIdx = pointsToDisplay.length - 1;
+  const last = pointsToDisplay[lastIdx];
+  if (
+    !last ||
+    Math.abs(last.rate - currentFiatRate) <= SPOT_RATE_MATCH_EPSILON
+  ) {
+    return pointsToDisplay;
+  }
+
+  // Never mutate cached series points in Redux; only override in-memory for rendering.
+  const copy = [...pointsToDisplay];
+  copy[lastIdx] = {...last, rate: currentFiatRate};
+  return copy;
 };
 
 const useExchangeRateChartData = ({
@@ -133,54 +170,12 @@ const useExchangeRateChartData = ({
   currentFiatRate,
 }: Args): Result => {
   const pointsForChartRaw = useMemo<FiatRatePoint[] | undefined>(() => {
-    if (!selectedSeriesPoints) {
-      return undefined;
-    }
-
-    const pointsToDisplay: FiatRatePoint[] = (() => {
-      if (
-        seriesDataInterval === 'ALL' &&
-        selectedTimeframe !== 'ALL' &&
-        (selectedTimeframe === '3M' ||
-          selectedTimeframe === '1Y' ||
-          selectedTimeframe === '5Y')
-      ) {
-        const now = Date.now();
-        const windowMs =
-          selectedTimeframe === '3M'
-            ? HISTORIC_TIMEFRAME_WINDOW_MS['3M']
-            : selectedTimeframe === '1Y'
-            ? HISTORIC_TIMEFRAME_WINDOW_MS['1Y']
-            : HISTORIC_TIMEFRAME_WINDOW_MS['5Y'];
-        const cutoffTs = now - windowMs;
-        const pointsSortedByTs = ensureSortedByTsAsc(selectedSeriesPoints);
-        const startIdx = lowerBoundByTs(pointsSortedByTs, cutoffTs);
-        return pointsSortedByTs.slice(startIdx);
-      }
-      return selectedSeriesPoints;
-    })();
-
-    if (
-      !pointsToDisplay.length ||
-      !currentFiatRate ||
-      !Number.isFinite(currentFiatRate)
-    ) {
-      return pointsToDisplay;
-    }
-
-    const lastIdx = pointsToDisplay.length - 1;
-    const last = pointsToDisplay[lastIdx];
-    if (
-      !last ||
-      Math.abs(last.rate - currentFiatRate) <= SPOT_RATE_MATCH_EPSILON
-    ) {
-      return pointsToDisplay;
-    }
-
-    // Never mutate cached series points in Redux; only override in-memory for rendering.
-    const copy = [...pointsToDisplay];
-    copy[lastIdx] = {...last, rate: currentFiatRate};
-    return copy;
+    return prepareExchangeRateChartPoints({
+      selectedSeriesPoints,
+      selectedTimeframe,
+      seriesDataInterval,
+      currentFiatRate,
+    });
   }, [
     currentFiatRate,
     selectedSeriesPoints,
@@ -192,17 +187,14 @@ const useExchangeRateChartData = ({
     if (typeof pointsForChartRaw === 'undefined') {
       return undefined;
     }
-    return getFormattedData(pointsForChartRaw);
-  }, [pointsForChartRaw]);
-
-  const selectedTimeframeHighValue = useMemo(() => {
-    return getMaxRate(pointsForChartRaw);
+    return formatExchangeRateChartData(pointsForChartRaw, {
+      assumeSortedByTsAsc: true,
+    });
   }, [pointsForChartRaw]);
 
   return {
     pointsForChartRaw,
     displayData,
-    selectedTimeframeHighValue,
   };
 };
 

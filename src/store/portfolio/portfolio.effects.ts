@@ -16,7 +16,7 @@ import {
   GetTransactionHistory,
 } from '../wallet/effects/transactions/transactions';
 import {GetPrecision} from '../wallet/utils/currency';
-import type {Wallet} from '../wallet/wallet.models';
+import type {Key, Wallet} from '../wallet/wallet.models';
 import {
   getRateByCurrencyName,
   getErrorString,
@@ -47,6 +47,7 @@ import {
   getWalletIdsToPopulateFromSnapshots,
   getSnapshotAtomicBalanceFromCryptoBalance,
   getWalletLiveAtomicBalance,
+  walletHasNonZeroLiveBalance,
 } from '../../utils/portfolio/assets';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -137,21 +138,6 @@ const getMainnetWalletsFromKeys = (keys: Record<string, any>): Wallet[] => {
   return Object.values(keys || {})
     .flatMap((k: any) => (k?.wallets ? k.wallets : []))
     .filter((w: Wallet) => w?.network === Network.mainnet);
-};
-
-const walletHasNonZeroLiveBalance = (wallet: Wallet): boolean => {
-  const sat = (wallet as any)?.balance?.sat;
-  if (typeof sat === 'number' && Number.isFinite(sat)) {
-    return sat > 0;
-  }
-
-  const crypto = (wallet as any)?.balance?.crypto;
-  if (typeof crypto === 'string') {
-    const parsed = Number(crypto.replace(/,/g, ''));
-    return Number.isFinite(parsed) ? parsed > 0 : false;
-  }
-
-  return false;
 };
 
 const getWalletLiveFiatBalanceSortValue = (wallet: Wallet): number => {
@@ -340,10 +326,43 @@ export const maybePopulatePortfolioForWallets =
     const prevMismatchesByWalletId =
       state.PORTFOLIO?.snapshotBalanceMismatchesByWalletId || {};
 
-    const walletsScope = Array.isArray(args.wallets) ? args.wallets : [];
-    if (!walletsScope.length) {
+    // Some call sites can hand us wallet objects captured before a balance
+    // refresh finishes. Re-hydrate by id from the latest Redux state so
+    // snapshot repopulation always uses the newest live balances when possible.
+    const walletsScopeInput = Array.isArray(args.wallets) ? args.wallets : [];
+    if (!walletsScopeInput.length) {
       return;
     }
+
+    const walletIdsScope = walletsScopeInput
+      .map(w => String((w as any)?.id || ''))
+      .filter(Boolean);
+
+    const keys = (state.WALLET?.keys || {}) as Record<string, Key>;
+    const allWalletsFromState = (Object.values(keys) as Key[]).flatMap(
+      (walletKey: Key) => walletKey.wallets || [],
+    );
+    const walletsByIdFromState = new Map(
+      allWalletsFromState
+        .filter(w => !!w?.id)
+        .map(w => [String(w.id), w] as const),
+    );
+    const fallbackWalletsById = new Map(
+      walletsScopeInput
+        .filter(w => !!w?.id)
+        .map(w => [String(w.id), w] as const),
+    );
+
+    const walletsScope: Wallet[] = walletIdsScope.length
+      ? Array.from(new Set(walletIdsScope))
+          .map(walletId => {
+            return (
+              walletsByIdFromState.get(walletId) ||
+              fallbackWalletsById.get(walletId)
+            );
+          })
+          .filter((w): w is Wallet => !!w)
+      : walletsScopeInput;
 
     const {walletIdsToPopulate, snapshotBalanceMismatchUpdates} =
       getWalletIdsToPopulateFromSnapshots({
@@ -377,11 +396,11 @@ export const maybePopulatePortfolioForWallets =
     });
 
     if (walletIdsWithCurrentRates.length) {
-      dispatch(
+      await dispatch(
         populatePortfolio({
           quoteCurrency,
           walletIds: walletIdsWithCurrentRates,
-        }),
+        }) as any,
       );
     }
   };
@@ -483,9 +502,18 @@ const ensureFiatRateSeriesInterval = async (args: {
   currencyAbbreviation: string;
   interval: FiatRateInterval;
   allowedCoins?: string[];
+  chain?: string;
+  tokenAddress?: string;
 }): Promise<boolean> => {
-  const {dispatch, fiatCode, currencyAbbreviation, interval, allowedCoins} =
-    args;
+  const {
+    dispatch,
+    fiatCode,
+    currencyAbbreviation,
+    interval,
+    allowedCoins,
+    chain,
+    tokenAddress,
+  } = args;
   const coinForCacheCheck = normalizeFiatRateSeriesCoin(currencyAbbreviation);
   return dispatch(
     fetchFiatRateSeriesInterval({
@@ -493,18 +521,25 @@ const ensureFiatRateSeriesInterval = async (args: {
       interval,
       coinForCacheCheck,
       allowedCoins,
+      chain: tokenAddress ? chain : undefined,
+      tokenAddress,
     }),
   );
 };
 
-const getLoadedFiatRateSeriesIntervalKey = (args: {
+export const getLoadedFiatRateSeriesIntervalKey = (args: {
   fiatCode: string;
   currencyAbbreviation: string;
   interval: FiatRateInterval;
+  chain?: string;
+  tokenAddress?: string;
 }): string => {
   const fiatCode = (args.fiatCode || '').toUpperCase();
   const coin = normalizeFiatRateSeriesCoin(args.currencyAbbreviation);
-  return `${fiatCode}:${coin}:${args.interval}`;
+  return getFiatRateSeriesCacheKey(fiatCode, coin, args.interval, {
+    chain: args.tokenAddress ? args.chain : undefined,
+    tokenAddress: args.tokenAddress,
+  });
 };
 
 const ensureFiatRateSeriesIntervalOnce = async (args: {
@@ -514,6 +549,8 @@ const ensureFiatRateSeriesIntervalOnce = async (args: {
   currencyAbbreviation: string;
   interval: FiatRateInterval;
   allowedCoins?: string[];
+  chain?: string;
+  tokenAddress?: string;
 }): Promise<boolean> => {
   const {
     dispatch,
@@ -522,11 +559,15 @@ const ensureFiatRateSeriesIntervalOnce = async (args: {
     currencyAbbreviation,
     interval,
     allowedCoins,
+    chain,
+    tokenAddress,
   } = args;
   const loadedIntervalKey = getLoadedFiatRateSeriesIntervalKey({
     fiatCode,
     currencyAbbreviation,
     interval,
+    chain,
+    tokenAddress,
   });
   if (loadedIntervals.has(loadedIntervalKey)) {
     return true;
@@ -538,6 +579,8 @@ const ensureFiatRateSeriesIntervalOnce = async (args: {
     currencyAbbreviation,
     interval,
     allowedCoins,
+    chain,
+    tokenAddress,
   });
 };
 
@@ -563,10 +606,15 @@ const hasFiatRateSeriesPointsInCache = (args: {
   fiatCode: string;
   currencyAbbreviation: string;
   interval: FiatRateInterval;
+  chain?: string;
+  tokenAddress?: string;
 }): boolean => {
   const fiatCode = (args.fiatCode || '').toUpperCase();
   const coin = normalizeFiatRateSeriesCoin(args.currencyAbbreviation);
-  const cacheKey = getFiatRateSeriesCacheKey(fiatCode, coin, args.interval);
+  const cacheKey = getFiatRateSeriesCacheKey(fiatCode, coin, args.interval, {
+    chain: args.tokenAddress ? args.chain : undefined,
+    tokenAddress: args.tokenAddress,
+  });
   const series = args.getState().RATE?.fiatRateSeriesCache?.[cacheKey];
   return Array.isArray(series?.points) && series.points.length > 0;
 };
@@ -577,6 +625,8 @@ const ensureWalletHasHistoricalFiatRates = async (args: {
   loadedIntervals: Set<string>;
   fiatCode: string;
   currencyAbbreviation: string;
+  chain?: string;
+  tokenAddress?: string;
 }): Promise<boolean> => {
   if (
     hasFiatRateSeriesPointsInCache({
@@ -584,6 +634,8 @@ const ensureWalletHasHistoricalFiatRates = async (args: {
       fiatCode: args.fiatCode,
       currencyAbbreviation: args.currencyAbbreviation,
       interval: 'ALL',
+      chain: args.tokenAddress ? args.chain : undefined,
+      tokenAddress: args.tokenAddress,
     })
   ) {
     return true;
@@ -595,6 +647,8 @@ const ensureWalletHasHistoricalFiatRates = async (args: {
     fiatCode: args.fiatCode,
     currencyAbbreviation: args.currencyAbbreviation,
     interval: 'ALL',
+    chain: args.tokenAddress ? args.chain : undefined,
+    tokenAddress: args.tokenAddress,
   });
   if (!didFetch) {
     // Best-effort fetch failed; treat as unavailable unless cache already exists.
@@ -603,6 +657,8 @@ const ensureWalletHasHistoricalFiatRates = async (args: {
       fiatCode: args.fiatCode,
       currencyAbbreviation: args.currencyAbbreviation,
       interval: 'ALL',
+      chain: args.tokenAddress ? args.chain : undefined,
+      tokenAddress: args.tokenAddress,
     });
   }
 
@@ -611,6 +667,8 @@ const ensureWalletHasHistoricalFiatRates = async (args: {
     fiatCode: args.fiatCode,
     currencyAbbreviation: args.currencyAbbreviation,
     interval: 'ALL',
+    chain: args.tokenAddress ? args.chain : undefined,
+    tokenAddress: args.tokenAddress,
   });
 };
 
@@ -634,13 +692,28 @@ export const populatePortfolio =
 
     const keys = state.WALLET?.keys || {};
     const wallets = getMainnetWalletsFromKeys(keys);
+    const existingSnapshotsByWalletId =
+      state.PORTFOLIO?.snapshotsByWalletId || {};
 
     const walletIdsFilter = Array.isArray(args?.walletIds)
       ? new Set(args?.walletIds)
       : undefined;
     const walletsToPopulateUnordered = (
       walletIdsFilter ? wallets.filter(w => walletIdsFilter.has(w.id)) : wallets
-    ).filter(walletHasNonZeroLiveBalance);
+    ).filter(wallet => {
+      if (walletHasNonZeroLiveBalance(wallet)) {
+        return true;
+      }
+
+      // When a specific wallet subset is explicitly requested (for example,
+      // after a send drains a wallet to zero), still allow that wallet to be
+      // repopulated if it already has snapshots that now mismatch its live
+      // balance.
+      return !!(
+        walletIdsFilter &&
+        getLatestSnapshot(existingSnapshotsByWalletId[wallet.id])
+      );
+    });
     let walletsToPopulate = sortWalletsByAssetAndBalanceDesc(
       walletsToPopulateUnordered,
     );
@@ -692,6 +765,8 @@ export const populatePortfolio =
               loadedIntervals: preflightLoadedIntervals,
               fiatCode: targetQuoteCurrency,
               currencyAbbreviation: wallet.currencyAbbreviation,
+              chain: wallet.tokenAddress ? wallet.chain : undefined,
+              tokenAddress: wallet.tokenAddress || undefined,
             });
 
       if (typeof cachedHistoricalSupport !== 'boolean') {
@@ -838,6 +913,8 @@ export const populatePortfolio =
                 loadedIntervals,
                 fiatCode: targetQuoteCurrency,
                 currencyAbbreviation: wallet.currencyAbbreviation,
+                chain: wallet.tokenAddress ? wallet.chain : undefined,
+                tokenAddress: wallet.tokenAddress || undefined,
               });
 
         if (typeof cachedHistoricalSupport !== 'boolean') {
@@ -1068,6 +1145,8 @@ export const populatePortfolio =
             fiatCode: quoteCurrency,
             currencyAbbreviation: wallet.currencyAbbreviation,
             interval,
+            chain: wallet.tokenAddress ? wallet.chain : undefined,
+            tokenAddress: wallet.tokenAddress || undefined,
           });
         }
 
