@@ -769,6 +769,39 @@ export const fixWalletAddresses = async ({
   );
 };
 
+const normalizeWalletKeyCoin = (coin: string) => {
+  return coin === 'pol' ? 'matic' : coin;
+};
+
+const buildExistingWalletKeySet = (wallets: Wallet[]) => {
+  return new Set(
+    wallets.map(wallet => {
+      const account = wallet.credentials.account || 0;
+      const chain = wallet.credentials.chain;
+      const coin = normalizeWalletKeyCoin(wallet.credentials.coin);
+      return `${account}:${chain}:${coin}`;
+    }),
+  );
+};
+
+const getMissingCurrenciesForAccount = (
+  account: number,
+  currencies: {
+    chain: string;
+    currencyAbbreviation: string;
+    isToken: boolean;
+    tokenAddress?: string;
+  }[],
+  existingWalletKeySet: Set<string>,
+) => {
+  return currencies.filter(currency => {
+    const chain = currency.chain;
+    const coin = normalizeWalletKeyCoin(currency.currencyAbbreviation);
+    const walletKey = `${account}:${chain}:${coin}`;
+    return !existingWalletKeySet.has(walletKey);
+  });
+};
+
 export const createWalletsForAccounts = async (
   dispatch: any,
   accountsArray: number[],
@@ -779,36 +812,57 @@ export const createWalletsForAccounts = async (
     isToken: boolean;
     tokenAddress?: string;
   }[],
+  existingWallets: Wallet[],
   password?: string,
 ) => {
-  return (
-    await Promise.all(
-      accountsArray.flatMap(async account => {
-        try {
-          const newWallets = (await dispatch(
-            createMultipleWallets({
-              key: key as KeyMethods,
-              currencies,
-              options: {
-                password,
-                account,
-                customAccount: true,
-              },
-            }),
-          )) as Wallet[];
-          return newWallets;
-        } catch (err) {
-          const errMsg =
-            err instanceof Error ? err.message : JSON.stringify(err);
-          logManager.debug(
-            `Error creating wallet - continue anyway: ${errMsg}`,
+  const existingWalletKeySet = buildExistingWalletKeySet(existingWallets);
+
+  const results = await Promise.all(
+    accountsArray.map(async account => {
+      const missingCurrencies = getMissingCurrenciesForAccount(
+        account,
+        currencies,
+        existingWalletKeySet,
+      );
+
+      if (missingCurrencies.length === 0) {
+        return [];
+      }
+
+      try {
+        const newWallets = (await dispatch(
+          createMultipleWallets({
+            key: key as KeyMethods,
+            currencies: missingCurrencies,
+            options: {
+              password,
+              account,
+              customAccount: true,
+            },
+          }),
+        )) as Wallet[];
+
+        newWallets.forEach(wallet => {
+          const walletAccount = wallet.credentials.account || 0;
+          const walletChain = wallet.credentials.chain;
+          const walletCoin = normalizeWalletKeyCoin(wallet.credentials.coin);
+          existingWalletKeySet.add(
+            `${walletAccount}:${walletChain}:${walletCoin}`,
           );
-        }
-      }),
-    )
-  )
-    .flat()
-    .filter(Boolean) as Wallet[];
+        });
+
+        return newWallets;
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logManager.debug(
+          `Error creating wallet for account ${account} - continue anyway: ${errMsg}`,
+        );
+        return [];
+      }
+    }),
+  );
+
+  return results.flat().filter(Boolean) as Wallet[];
 };
 
 export const getVMGasWallets = (wallets: Wallet[]) => {
