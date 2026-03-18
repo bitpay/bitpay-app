@@ -292,34 +292,38 @@ const BalanceHistoryChart = ({
   const scopedSnapshotsVersionRef = useRef<string | undefined>(undefined);
   const fiatRateSeriesCacheRef = useRef(fiatRateSeriesCache);
 
-  const {hasAnySnapshots, hasAnyChartableSnapshots} = useMemo(() => {
-    let totalSnapshotCount = 0;
-    let totalChartableSnapshotCount = 0;
+  const {hasAnySnapshots, hasAnyChartableSnapshots, hasAnyMainnetWallet} =
+    useMemo(() => {
+      let totalSnapshotCount = 0;
+      let totalChartableSnapshotCount = 0;
+      let anyMainnetWallet = false;
 
-    for (const wallet of wallets || []) {
-      const walletId = getPortfolioWalletId(wallet);
-      if (!walletId) {
-        continue;
+      for (const wallet of wallets || []) {
+        const walletId = getPortfolioWalletId(wallet);
+        if (!walletId) {
+          continue;
+        }
+
+        const snapshotCount = getPortfolioWalletSnapshots(
+          snapshotsByWalletId,
+          walletId,
+        ).length;
+        totalSnapshotCount += snapshotCount;
+
+        if (!isPortfolioWalletOnMainnet(wallet)) {
+          continue;
+        }
+
+        anyMainnetWallet = true;
+        totalChartableSnapshotCount += snapshotCount;
       }
 
-      const snapshotCount = getPortfolioWalletSnapshots(
-        snapshotsByWalletId,
-        walletId,
-      ).length;
-      totalSnapshotCount += snapshotCount;
-
-      if (!isPortfolioWalletOnMainnet(wallet)) {
-        continue;
-      }
-
-      totalChartableSnapshotCount += snapshotCount;
-    }
-
-    return {
-      hasAnySnapshots: totalSnapshotCount > 0,
-      hasAnyChartableSnapshots: totalChartableSnapshotCount > 0,
-    };
-  }, [snapshotsByWalletId, wallets]);
+      return {
+        hasAnySnapshots: totalSnapshotCount > 0,
+        hasAnyChartableSnapshots: totalChartableSnapshotCount > 0,
+        hasAnyMainnetWallet: anyMainnetWallet,
+      };
+    }, [snapshotsByWalletId, wallets]);
 
   const getPrepScopedDepIdentityId = useCallback((value: object): number => {
     const existingId = prepScopedDepIdentityIdsRef.current.get(value);
@@ -1363,10 +1367,10 @@ const BalanceHistoryChart = ({
 
   // If there are no chartable snapshots, hide chart UI but still allow callers
   // to render any pre-chart badges/content. Preserve the legacy skeleton only
-  // when there are truly no snapshots yet; non-mainnet-only snapshots should
-  // not show a perpetual loading placeholder.
+  // when a mainnet wallet in scope is still waiting for its first snapshots;
+  // testnet-only scopes should stay hidden even before snapshots exist.
   if (!hasAnyChartableSnapshots) {
-    if (showLoaderWhenNoSnapshots && !hasAnySnapshots) {
+    if (showLoaderWhenNoSnapshots && hasAnyMainnetWallet && !hasAnySnapshots) {
       return (
         <>
           {preChartContent ? (

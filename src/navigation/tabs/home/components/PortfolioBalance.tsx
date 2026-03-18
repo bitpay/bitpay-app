@@ -83,9 +83,9 @@ const PortfolioBalanceTitle = styled(BaseText)`
 `;
 
 const PortfolioBalanceText = styled(BaseText)<{$isCompact?: boolean}>`
-  font-size: ${({$isCompact}) => ($isCompact ? '28px' : '39px')};
+  font-size: ${({$isCompact}) => ($isCompact ? '26px' : '39px')};
   font-weight: 700;
-  line-height: ${({$isCompact}) => ($isCompact ? '40px' : '59px')};
+  line-height: ${({$isCompact}) => ($isCompact ? '38px' : '59px')};
   color: ${({theme}) => theme.colors.text};
   margin: 2px 0;
 `;
