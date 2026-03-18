@@ -89,6 +89,39 @@ const perfError = (
   return ms;
 };
 
+const runWithConcurrency = async <T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> => {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  const runners = Array.from(
+    {length: Math.min(limit, items.length)},
+    async () => {
+      while (true) {
+        const currentIndex = nextIndex++;
+        if (currentIndex >= items.length) {
+          return;
+        }
+        results[currentIndex] = await worker(items[currentIndex], currentIndex);
+      }
+    },
+  );
+
+  await Promise.all(runners);
+  return results;
+};
+
+const shouldHydrateAddressImmediately = (chain: string) => {
+  return ['btc', 'eth', 'matic'].includes(chain);
+};
+
+const defer = (fn: () => void) => {
+  setTimeout(fn, 0);
+};
+
 export interface CreateOptions {
   network?: Network;
   account?: number;
@@ -495,8 +528,9 @@ export const createMultipleWallets =
       })}`,
     );
 
-    for (const coin of coins) {
+    const baseWalletResults = await runWithConcurrency(coins, 3, async coin => {
       const coinStart = perfNow();
+
       try {
         logManager.info(
           `[CREATEKEY PERF] createMultipleWallets.coin.start | ${JSON.stringify(
@@ -525,54 +559,18 @@ export const createMultipleWallets =
           {walletId: wallet?.credentials?.walletId},
         );
 
-        const addressStart = perfNow();
-        const receiveAddress = (await dispatch<any>(
-          createWalletAddress({wallet, newAddress: true}),
-        )) as string;
-        perfInfo(
-          `createMultipleWallets.createWalletAddress.${coin.chain}.${coin.currencyAbbreviation}`,
-          addressStart,
-          {
-            walletId: wallet?.credentials?.walletId,
-          },
-        );
-        logManager.info(`new address generated: ${receiveAddress}`);
-        wallet.receiveAddress = receiveAddress;
-        wallets.push(wallet);
-        for (const token of tokens) {
-          if (token.chain === coin.chain) {
-            const tokenStart = perfNow();
-            const tokenWallet = await dispatch(
-              createTokenWallet(
-                wallet,
-                token.currencyAbbreviation.toLowerCase(),
-                token.tokenAddress!,
-                tokenOpts,
-              ),
-            );
-            perfInfo(
-              `createMultipleWallets.createTokenWallet.${token.chain}.${token.currencyAbbreviation}`,
-              tokenStart,
-              {
-                parentWalletId: wallet?.credentials?.walletId,
-                tokenWalletId: (tokenWallet as Wallet | undefined)?.credentials
-                  ?.walletId,
-              },
-            );
-            if (tokenWallet) {
-              wallets.push(tokenWallet);
-            }
-          }
-        }
         const chainTokens = tokens.filter(token => token.chain === coin.chain);
+
         perfInfo(
-          `createMultipleWallets.coin.TOTAL.${coin.chain}.${coin.currencyAbbreviation}`,
+          `createMultipleWallets.coin.createWalletOnly.${coin.chain}.${coin.currencyAbbreviation}`,
           coinStart,
           {
             walletId: wallet?.credentials?.walletId,
             tokenCount: chainTokens.length,
           },
         );
+
+        return {coin, wallet, chainTokens};
       } catch (err) {
         perfError(
           `createMultipleWallets.coin.ERROR.${coin.chain}.${coin.currencyAbbreviation}`,
@@ -581,31 +579,78 @@ export const createMultipleWallets =
             message: err instanceof Error ? err.message : JSON.stringify(err),
           },
         );
-        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-        logManager.debug(`Error creating wallet - continue anyway: ${errMsg}`);
+        return null;
       }
+    });
+
+    const validBaseWallets = baseWalletResults.filter(Boolean) as Array<{
+      coin: (typeof coins)[number];
+      wallet: Wallet;
+      chainTokens: typeof tokens;
+    }>;
+
+    await runWithConcurrency(validBaseWallets, 3, async ({coin, wallet}) => {
+      if (!shouldHydrateAddressImmediately(wallet.credentials.chain)) {
+        return;
+      }
+
+      const addressStart = perfNow();
+      const receiveAddress = (await dispatch(
+        createWalletAddress({wallet, newAddress: true}),
+      )) as string;
+
+      perfInfo(
+        `createMultipleWallets.createWalletAddress.${coin.chain}.${coin.currencyAbbreviation}`,
+        addressStart,
+        {
+          walletId: wallet?.credentials?.walletId,
+        },
+      );
+
+      wallet.receiveAddress = receiveAddress;
+    });
+
+    for (const result of validBaseWallets) {
+      wallets.push(result.wallet);
+
+      for (const token of result.chainTokens) {
+        const tokenStart = perfNow();
+        const tokenWallet = await dispatch(
+          createTokenWallet(
+            result.wallet,
+            token.currencyAbbreviation.toLowerCase(),
+            token.tokenAddress!,
+            tokenOpts,
+          ),
+        );
+
+        perfInfo(
+          `createMultipleWallets.createTokenWallet.${token.chain}.${token.currencyAbbreviation}`,
+          tokenStart,
+          {
+            parentWalletId: result.wallet?.credentials?.walletId,
+            tokenWalletId: (tokenWallet as Wallet | undefined)?.credentials
+              ?.walletId,
+          },
+        );
+
+        if (tokenWallet) {
+          wallets.push(tokenWallet);
+        }
+      }
+
+      perfInfo(
+        `createMultipleWallets.coin.TOTAL.${result.coin.chain}.${result.coin.currencyAbbreviation}`,
+        totalStart,
+        {
+          walletId: result.wallet?.credentials?.walletId,
+          tokenCount: result.chainTokens.length,
+        },
+      );
     }
 
     const buildStart = perfNow();
-    // build out app specific props
     const result = wallets.map(wallet => {
-      // subscribe new wallet to push notifications
-      if (notificationsAccepted) {
-        dispatch(subscribePushNotifications(wallet, brazeEid!));
-      }
-      // subscribe new wallet to email notifications
-      if (
-        emailNotifications &&
-        emailNotifications.accepted &&
-        emailNotifications.email
-      ) {
-        const prefs = {
-          email: emailNotifications.email,
-          language: defaultLanguage,
-          unit: 'btc', // deprecated
-        };
-        dispatch(subscribeEmailNotifications(wallet, prefs));
-      }
       const {currencyAbbreviation, currencyName} = dispatch(
         mapAbbreviationAndName(
           wallet.credentials.coin,
@@ -613,6 +658,7 @@ export const createMultipleWallets =
           wallet.credentials?.token?.address,
         ),
       );
+
       return merge(
         wallet,
         buildWalletObj(
@@ -629,6 +675,35 @@ export const createMultipleWallets =
         walletCount: result.length,
       },
     );
+
+    defer(() => {
+      result.forEach(wallet => {
+        if (notificationsAccepted) {
+          dispatch(subscribePushNotifications(wallet, brazeEid!));
+        }
+
+        if (
+          emailNotifications &&
+          emailNotifications.accepted &&
+          emailNotifications.email
+        ) {
+          const prefs = {
+            email: emailNotifications.email,
+            language: defaultLanguage,
+            unit: 'btc',
+          };
+          dispatch(subscribeEmailNotifications(wallet, prefs));
+        }
+
+        if (
+          !wallet.receiveAddress &&
+          shouldHydrateAddressImmediately(wallet.credentials.chain) === false &&
+          !wallet.credentials.token
+        ) {
+          dispatch(createWalletAddress({wallet, newAddress: true}));
+        }
+      });
+    });
 
     perfInfo('createMultipleWallets.TOTAL', totalStart, {
       walletCount: result.length,
