@@ -47,7 +47,7 @@ export const isTSSKey = (key: Key): boolean => {
     key?.properties?.keychain?.privateKeyShare ||
     key?.properties?.keychain?.reducedPrivateKeyShare ||
     key?.properties?.keychain?.commonKeyChain ||
-    key.wallets?.some(wallet => wallet.pendingTssSession)
+    key?.wallets?.some(wallet => wallet.pendingTssSession)
   );
 };
 
