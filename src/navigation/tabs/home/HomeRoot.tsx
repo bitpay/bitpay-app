@@ -117,7 +117,8 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     ({APP}) => APP.keyMigrationFailureModalHasBeenShown,
   );
   const showPortfolioValue = useAppSelector(({APP}) => APP.showPortfolioValue);
-  const hasKeys = Object.values(keys).length;
+  const needsBackupKey = !Object.values(keys).filter(key => key.backupComplete)
+    .length;
 
   const portfolioAllocationTotalFiat = useMemo(() => {
     return getPortfolioAllocationTotalFiat({
@@ -433,7 +434,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
             ) : null}
 
             {/* ////////////////////////////// CTA BUY SWAP RECEIVE SEND BUTTONS */}
-            {hasKeys && showPortfolioValue ? (
+            {!needsBackupKey && showPortfolioValue ? (
               <HomeSection style={{marginBottom: 25}}>
                 <LinkingButtons
                   receive={{
