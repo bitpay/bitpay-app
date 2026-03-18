@@ -135,6 +135,27 @@ const perfError = (
   return ms;
 };
 
+const getMissingVmAccounts = (
+  wallets: Wallet[],
+  accountsArray: number[],
+  expectedChainCoins: Array<{chain: string; currencyAbbreviation: string}>,
+) => {
+  const existing = new Set(
+    wallets.map(wallet => {
+      const account = wallet.credentials.account || 0;
+      const chain = wallet.credentials.chain;
+      const coin = wallet.credentials.coin;
+      return `${account}:${chain}:${coin}`;
+    }),
+  );
+
+  return accountsArray.filter(account => {
+    return expectedChainCoins.some(({chain, currencyAbbreviation}) => {
+      return !existing.has(`${account}:${chain}:${currencyAbbreviation}`);
+    });
+  });
+};
+
 const BWC = BwcProvider.getInstance();
 const BwcConstants = BWC.getConstants();
 
@@ -928,18 +949,47 @@ export const startImportMnemonic =
           vmWallets: vmWallets.length,
         });
 
-        const createWalletsForAccountsStart = perfNow();
-        const _wallets = await createWalletsForAccounts(
-          dispatch,
+        const expectedVmWallets = getBaseVMAccountCreationCoinsAndTokens();
+
+        const missingAccounts = getMissingVmAccounts(
+          data.wallets,
           accountsArray,
-          data.key as KeyMethods,
-          getBaseVMAccountCreationCoinsAndTokens(),
+          expectedVmWallets,
+        );
+
+        logManager.info(
+          `[PERF IMPORT OPTIMIZATION] VM account expansion | ${JSON.stringify({
+            totalAccounts: accountsArray.length,
+            missingAccounts: missingAccounts.length,
+            skippedAccounts: accountsArray.length - missingAccounts.length,
+          })}`,
+        );
+
+        const createWalletsForAccountsStart = perfNow();
+        const _wallets =
+          missingAccounts.length > 0
+            ? await createWalletsForAccounts(
+                dispatch,
+                accountsArray,
+                data.key as KeyMethods,
+                getBaseVMAccountCreationCoinsAndTokens(),
+                data.wallets,
+              )
+            : [];
+        logManager.info(
+          `[PERF IMPORT OPTIMIZATION] createWalletsForAccounts input | ${JSON.stringify(
+            {
+              originalAccounts: accountsArray,
+              missingAccounts,
+            },
+          )}`,
         );
         perfInfo(
           'import.createWalletsForAccounts',
           createWalletsForAccountsStart,
           {
             _wallets: _wallets.length,
+            requestedAccounts: missingAccounts.length,
           },
         );
 
@@ -973,10 +1023,41 @@ export const startImportMnemonic =
         }
 
         const buildStart = perfNow();
+        const resultWallets = wallets.map(wallet => {
+          const {currencyAbbreviation, currencyName} = dispatch(
+            mapAbbreviationAndName(
+              wallet.credentials.coin,
+              wallet.credentials.chain,
+              wallet.credentials.token?.address,
+            ),
+          );
+          return merge(
+            wallet,
+            buildWalletObj(
+              {...wallet.credentials, currencyAbbreviation, currencyName},
+              tokenOptsByAddress,
+            ),
+          );
+        });
         const key = buildKeyObj({
           key: _key,
           keyName,
-          wallets: wallets.map(wallet => {
+          wallets: resultWallets,
+          backupComplete: true,
+        });
+        perfInfo('import.buildKeyObjAndWalletObjects', buildStart);
+
+        perfInfo('import.TOTAL', totalStart, {
+          walletCount: data?.wallets?.length ?? 0,
+        });
+
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+        setTimeout(() => {
+          resultWallets.forEach(wallet => {
             // subscribe new wallet to push notifications
             if (notificationsAccepted) {
               dispatch(subscribePushNotifications(wallet, brazeEid!));
@@ -994,34 +1075,8 @@ export const startImportMnemonic =
               };
               dispatch(subscribeEmailNotifications(wallet, prefs));
             }
-            const {currencyAbbreviation, currencyName} = dispatch(
-              mapAbbreviationAndName(
-                wallet.credentials.coin,
-                wallet.credentials.chain,
-                wallet.credentials.token?.address,
-              ),
-            );
-            return merge(
-              wallet,
-              buildWalletObj(
-                {...wallet.credentials, currencyAbbreviation, currencyName},
-                tokenOptsByAddress,
-              ),
-            );
-          }),
-          backupComplete: true,
-        });
-        perfInfo('import.buildKeyObjAndWalletObjects', buildStart);
-
-        perfInfo('import.TOTAL', totalStart, {
-          walletCount: data?.wallets?.length ?? 0,
-        });
-
-        dispatch(
-          successImport({
-            key,
-          }),
-        );
+          });
+        }, 0);
         resolve(key);
       } catch (e) {
         perfError('import.TOTAL.ERROR', totalStart, {

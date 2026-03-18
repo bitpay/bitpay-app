@@ -886,6 +886,7 @@ const KeyOverview = () => {
       accountsArray,
       key.methods as KeyMethods,
       getBaseEVMAccountCreationCoinsAndTokens(),
+      key.wallets,
       password,
     );
 
