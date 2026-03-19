@@ -1398,7 +1398,13 @@ export const publishAndSign =
           logManager.debug('success publish [publishAndSign]');
         }
 
-        const txpToSign = publishedTx || txp;
+        let txpToSign = publishedTx || txp;
+
+        // For deferred-nonce EVM txps, assign fresh nonce from BWS before signing
+        if (txpToSign.deferNonce && IsEVMChain(txpToSign.chain)) {
+          txpToSign = await wallet.assignNonce({ txp: txpToSign });
+          logManager.info(`Deferred nonce: BWS assigned nonce ${txpToSign.nonce} to txp ${txpToSign.id}`);
+        }
 
         if (key.isReadOnly && !key.hardwareSource) {
           // read only wallet
@@ -1595,7 +1601,7 @@ export const publishAndSignMultipleProposals =
           | void
           | Error
         )[] = [];
-        const evmTxsWithNonce = txps.filter(txp => txp.nonce !== undefined);
+        const evmTxsWithNonce = txps.filter(txp => txp.nonce !== undefined || txp.deferNonce);
         evmTxsWithNonce.sort((a, b) => (a.nonce || 0) - (b.nonce || 0));
         for (const txp of evmTxsWithNonce) {
           try {
@@ -1619,7 +1625,7 @@ export const publishAndSignMultipleProposals =
         }
 
         // Process transactions without a nonce concurrently
-        const withoutNonce = txps.filter(txp => txp.nonce === undefined);
+        const withoutNonce = txps.filter(txp => txp.nonce === undefined && !txp.deferNonce);
         const promisesWithoutNonce: Promise<
           Partial<TransactionProposal> | void | Error
         >[] = withoutNonce.map(txp =>

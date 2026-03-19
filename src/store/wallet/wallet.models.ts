@@ -399,6 +399,7 @@ export interface TransactionProposal {
   multisigGnosisContractAddress?: string;
   network: Network;
   nonce?: number;
+  deferNonce?: boolean;
   note?: {
     body?: string;
   };
