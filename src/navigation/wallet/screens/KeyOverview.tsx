@@ -1115,7 +1115,7 @@ const KeyOverview = () => {
           See All Assets
         </Button>
 
-        {!isTSSKey(key) ? (
+        {key && !isTSSKey(key) ? (
           <AddWalletLinkContainer>
             <AddWalletLinkButton
               activeOpacity={ActiveOpacity}

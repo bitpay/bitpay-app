@@ -42,12 +42,12 @@ export interface TSSSigningCallbacks {
   onComplete: (signature: string) => void;
 }
 
-export const isTSSKey = (key: Key): boolean => {
+export const isTSSKey = (key?: Key): boolean => {
   return !!(
     key?.properties?.keychain?.privateKeyShare ||
     key?.properties?.keychain?.reducedPrivateKeyShare ||
     key?.properties?.keychain?.commonKeyChain ||
-    key.wallets?.some(wallet => wallet.pendingTssSession)
+    key?.wallets?.some(wallet => wallet.pendingTssSession)
   );
 };
 
