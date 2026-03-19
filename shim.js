@@ -69,7 +69,7 @@ if (typeof global.base64FromArrayBuffer !== 'function') {
     }
     const b64 = btoa(binary);
     return urlSafe
-      ? b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+      ? b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/[=]/g, '')
       : b64;
   };
   global.base64ToArrayBuffer = function (b64) {
