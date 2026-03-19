@@ -205,7 +205,6 @@ export const addWallet =
             const receiveAddress = (await dispatch<any>(
               createWalletAddress({wallet: associatedWallet, newAddress: true}),
             )) as string;
-            logManager.info(`new address generated: ${receiveAddress}`);
             associatedWallet.receiveAddress = receiveAddress;
 
             const {currencyAbbreviation, currencyName} = dispatch(
@@ -317,7 +316,6 @@ export const addWallet =
           const receiveAddress = (await dispatch<any>(
             createWalletAddress({wallet: newWallet, newAddress: true}),
           )) as string;
-          logManager.info(`new address generated: ${receiveAddress}`);
           newWallet.receiveAddress = receiveAddress;
         }
 
@@ -436,7 +434,6 @@ export const createMultipleWallets =
         const receiveAddress = (await dispatch<any>(
           createWalletAddress({wallet, newAddress: true}),
         )) as string;
-        logManager.info(`new address generated: ${receiveAddress}`);
         wallet.receiveAddress = receiveAddress;
         wallets.push(wallet);
         for (const token of tokens) {
