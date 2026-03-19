@@ -58,3 +58,26 @@ if (typeof localStorage !== 'undefined') {
 // If using the crypto shim, uncomment the following line to ensure
 // crypto is loaded first, so it can populate global.crypto
 // require('crypto')
+
+
+if (typeof global.base64FromArrayBuffer !== 'function') {
+  global.base64FromArrayBuffer = function (arrayBuffer, urlSafe) {
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const b64 = btoa(binary);
+    return urlSafe
+      ? b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+      : b64;
+  };
+  global.base64ToArrayBuffer = function (b64) {
+    const binary = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+  };
+}

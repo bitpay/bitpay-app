@@ -28,4 +28,5 @@ declare module '@env' {
   export const OPSCAN_API_KEY: string;
   export const BASESCAN_API_KEY: string;
   export const TEST_MODE_NETWORK: string;
+  export const SENTRY_DSN: string;
 }

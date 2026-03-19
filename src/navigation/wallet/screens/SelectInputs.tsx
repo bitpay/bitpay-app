@@ -205,7 +205,8 @@ const SelectInputs = () => {
       setLockedUtxos(_.orderBy(_lockedUtxos, 'amount', 'desc'));
       setInputs(_.orderBy(_availableUtxos, 'amount', 'desc'));
     } catch (err) {
-      logger.error(`An error occurred while getting utxos: ${err}`);
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(`An error occurred while getting utxos: ${errStr}`);
     }
   };
 

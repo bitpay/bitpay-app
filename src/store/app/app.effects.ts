@@ -125,6 +125,7 @@ import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
 import {goToSellCrypto} from '../sell-crypto/sell-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
+import {prefetchSwapCryptoData} from '../swap-crypto/swap-crypto.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
@@ -154,6 +155,7 @@ import {
   initializeSslPinning,
   isSslPinningAvailable,
 } from 'react-native-ssl-public-key-pinning';
+import {DirectIntegrationApiObject} from '../shop/shop.models';
 
 // Subscription groups (Braze)
 const PRODUCTS_UPDATES_GROUP_ID = __DEV__
@@ -370,6 +372,9 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
 
     dispatch(AppActions.appInitCompleted());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
+
+    // Pre-fetch swap crypto config and currencies in background
+    dispatch(prefetchSwapCryptoData());
   } catch (err: unknown) {
     let errorStr;
     if (err instanceof Error) {
@@ -689,7 +694,8 @@ export const openUrlWithInAppBrowser =
     try {
       isIabAvailable = await InAppBrowser.isAvailable();
     } catch (err) {
-      console.log(err);
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.debug('[openUrlWithInAppBrowser] Error isAvailable', errStr);
     }
 
     const handler = isIabAvailable ? 'InAppBrowser' : 'external app';
@@ -718,9 +724,9 @@ export const openUrlWithInAppBrowser =
           dispatch(AppActions.setInAppBrowserOpen(false));
           logManager.info(`InAppBrowser closed with type: ${result.type}`);
         } catch (err) {
-          const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${JSON.stringify(
-            err,
-          )}`;
+          const errStr =
+            err instanceof Error ? err.message : JSON.stringify(err);
+          const logMsg = `Error opening URL ${url} with ${handler}. Trying external browser.\n${errStr}`;
           dispatch(AppActions.setInAppBrowserOpen(false));
           logManager.error(logMsg);
           // if InAppBrowser is available but InAppBrowser.open fails, will try to open an external browser
@@ -733,9 +739,8 @@ export const openUrlWithInAppBrowser =
         await Linking.openURL(url);
       }
     } catch (err) {
-      const logMsg = `Error opening URL ${url} with ${handler}.\n${JSON.stringify(
-        err,
-      )}`;
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      const logMsg = `Error opening URL ${url} with ${handler}.\n${errStr}`;
 
       dispatch(AppActions.setInAppBrowserOpen(false));
       logManager.error(logMsg);
@@ -1074,11 +1079,6 @@ export const handleBwsEvent =
 
       // TODO showInappNotification(data);
 
-      console.log(
-        `BWS Event: ${response.notification_type}: `,
-        JSON.stringify(response),
-      );
-
       const keyObj = await findKeyByKeyId(keyId, keys);
 
       switch (response.notification_type) {
@@ -1161,7 +1161,9 @@ export const incomingShopLink =
     const availableGiftCards = getAvailableGiftCards(
       SHOP_CATALOG.availableCardMap,
     );
-    const integrations = Object.values(SHOP_CATALOG.integrations);
+    const integrations = Object.values(
+      SHOP_CATALOG.integrations,
+    ) as DirectIntegrationApiObject[];
     const categories = getCategoriesWithIntegrations(
       Object.values(SHOP_CATALOG.categoriesAndCurations.categories),
       integrations,
@@ -1566,7 +1568,8 @@ export const joinWaitlist =
           break;
       }
     } catch (err) {
-      logManager.error(`Error joining waitlist: ${err}`);
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error(`Error joining waitlist: ${errStr}`);
       throw err;
     }
   };

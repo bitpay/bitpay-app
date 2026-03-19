@@ -454,7 +454,6 @@ const MoonpaySellCheckout: React.FC = () => {
     createTx(wallet, toAddress, depositSat, destinationTag)
       .then(async ctxp => {
         setCtxp(ctxp);
-        console.log(ctxp);
         setFee(ctxp.fee);
         setIsLoading(false);
         hideOngoingProcess();

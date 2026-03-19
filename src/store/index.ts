@@ -97,6 +97,7 @@ import {MMKV} from 'react-native-mmkv';
 import {getErrorString} from '../utils/helper-methods';
 import {AppDispatch} from '../utils/hooks';
 import {logManager} from '../managers/LogManager';
+import * as Sentry from '@sentry/react-native';
 
 export const storage = new MMKV();
 
@@ -145,12 +146,10 @@ const restoreFromBackup = (reason: string): Promise<string | null> => {
         try {
           // Write back to MMKV to repair store for future runs
           storage.set('persist:root', restored);
-          addLog(
-            LogActions.info(
-              `MMKV persist:root ${reason} - restored from filesystem backup - durationMs:${
-                Date.now() - startTs
-              }`,
-            ),
+          logManager.info(
+            `MMKV persist:root ${reason} - restored from filesystem backup - durationMs:${
+              Date.now() - startTs
+            }`,
           );
         } catch (err) {
           addLog(
@@ -160,6 +159,9 @@ const restoreFromBackup = (reason: string): Promise<string | null> => {
               ),
             ),
           );
+          Sentry.captureException(err, {
+            level: 'error',
+          });
         }
         return restored;
       }
@@ -182,6 +184,9 @@ export const reduxStorage: Storage = {
           ),
         ),
       );
+      Sentry.captureException(err, {
+        level: 'error',
+      });
     }
     try {
       if (key === 'persist:root' && typeof value === 'string') {
@@ -190,10 +195,8 @@ export const reduxStorage: Storage = {
           const triggerLabel = backupTriggerAction ?? 'no existing backup';
           backupPersistRoot(value)
             .then(() =>
-              addLog(
-                LogActions.debug(
-                  `Backed up store to filesystem, triggered by ${triggerLabel}.`,
-                ),
+              logManager.debug(
+                `Backed up store to filesystem, triggered by ${triggerLabel}.`,
               ),
             )
             .catch(() => {});
@@ -218,6 +221,9 @@ export const reduxStorage: Storage = {
           ),
         ),
       );
+      Sentry.captureException(err, {
+        level: 'error',
+      });
       if (key === 'persist:root') {
         // Try backup on MMKV get failure as well
         return restoreFromBackup('getItem error');
@@ -236,6 +242,9 @@ export const reduxStorage: Storage = {
           ),
         ),
       );
+      Sentry.captureException(err, {
+        level: 'error',
+      });
     }
     return Promise.resolve();
   },
@@ -310,6 +319,9 @@ const rootReducer = (state: any, action: AnyAction) => {
       ),
     );
     setTimeout(() => addLog(crashLog), 0);
+    Sentry.captureException(err, {
+      level: 'error',
+    });
     // Return previous state to avoid app crash; if no state, fallback to init
     if (state) {
       return state;
@@ -450,6 +462,9 @@ const getStore = async () => {
               LogActions.error(`Encrypt transform failed - ${errStr}`),
             ),
           );
+          Sentry.captureException(err, {
+            level: 'error',
+          });
         },
         unencryptedStores: [
           'APP',
@@ -470,17 +485,13 @@ const getStore = async () => {
   const persistLifecycleLogger = (): Middleware => {
     let persistStartTs: number | null = null;
     let firstRehydrateLogged = false;
-    return store => next => (action: AnyAction) => {
+    return _store => next => (action: AnyAction) => {
       if (action && typeof action.type === 'string') {
         if (action.type === 'persist/PERSIST') {
           persistStartTs = Date.now();
           try {
             const keysCount = storage.getAllKeys().length;
-            store.dispatch(
-              LogActions.info(
-                `persist/PERSIST start - storageKeys:${keysCount}`,
-              ),
-            );
+            logManager.info(`persist/PERSIST start - storageKeys:${keysCount}`);
           } catch (_) {}
         } else if (
           action.type === 'persist/REHYDRATE' &&
@@ -505,12 +516,10 @@ const getStore = async () => {
                 } catch (_) {}
               });
             } catch (_) {}
-            store.dispatch(
-              LogActions.info(
-                `persist/REHYDRATE complete - durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
-                  sizeByReduxKey,
-                )}`,
-              ),
+            logManager.info(
+              `persist/REHYDRATE complete - durationMs:${took} totalSize:${totalSize} sizeByReduxKey:${JSON.stringify(
+                sizeByReduxKey,
+              )}`,
             );
           } catch (_) {}
         }
@@ -593,6 +602,9 @@ export async function getEncryptionKey(): Promise<string> {
         ),
       ),
     );
+    Sentry.captureException(err, {
+      level: 'error',
+    });
   }
 
   logManager.warn('getEncryptionKey: generating new key (no existing key)');
@@ -612,6 +624,9 @@ export async function getEncryptionKey(): Promise<string> {
         ),
       ),
     );
+    Sentry.captureException(err, {
+      level: 'error',
+    });
   }
 
   return newKey;

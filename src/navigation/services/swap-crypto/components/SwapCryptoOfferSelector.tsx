@@ -903,8 +903,9 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
         createWalletAddress({wallet: selectedWalletFrom, newAddress: false}),
       )) as string;
     } catch (err) {
-      console.error(err);
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       const reason = 'createWalletAddress Error';
+      logger.error(`${reason}: ${errMsg}`);
       showThorswapError(err, reason);
       return;
     }
@@ -1233,7 +1234,7 @@ const SwapCryptoOfferSelector: React.FC<SwapCryptoOfferSelectorProps> = ({
 
     timeoutRef.current = setTimeout(() => {
       init(cloneDeep(selectedWalletFrom), cloneDeep(selectedWalletTo));
-    }, 200);
+    }, 100);
 
     // Clean up the timeout on unmount
     return () => {

@@ -69,7 +69,6 @@ import {useTranslation} from 'react-i18next';
 import {BitpayIdScreens} from '../../bitpay-id/BitpayIdGroup';
 import {IsERCToken, IsSVMChain} from '../../../store/wallet/utils/currency';
 import {updatePortfolioBalance} from '../../../store/wallet/wallet.actions';
-import {LogActions} from '../../../store/log';
 import {CommonActions} from '@react-navigation/native';
 import {Analytics} from '../../../store/analytics/analytics.effects';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -327,7 +326,9 @@ const AddCustomToken = ({
           const walletAddress = (await dispatch<any>(
             createWalletAddress({wallet, newAddress: true}),
           )) as string;
-          logManager.info(`new address generated: ${walletAddress}`);
+          logManager.info(
+            `[AddCustomToken] new address generated: ${walletAddress}`,
+          );
         }
 
         try {
@@ -438,7 +439,8 @@ const AddCustomToken = ({
         );
       }
     } catch (err: any) {
-      logManager.error(JSON.stringify(err));
+      const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+      logManager.error('[AddCustomToken] Error adding custom token:', errStr);
     }
   });
 
@@ -522,7 +524,7 @@ const AddCustomToken = ({
         tokenOptionsByAddress?.[getCurrencyAbbreviation(tokenAddress, chain)];
       if (!tokenContractInfo) {
         logManager.debug(
-          'contract info not present in token options - consulting bws',
+          '[AddCustomToken] contract info not present in token options - consulting bws',
         );
         const fullWalletObj = key.wallets.find(
           ({id}) => id === associatedWallet?.id,

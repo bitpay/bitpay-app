@@ -1,6 +1,8 @@
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const path = require('path');
 
+const {withSentryConfig} = require('@sentry/react-native/metro');
+
 const {
   resolver: {sourceExts, assetExts},
 } = getDefaultConfig();
@@ -17,6 +19,7 @@ const SILENCE_WASM_PATH = path.resolve(
 
 const ALIASES = {
   tslib: path.resolve(__dirname, 'node_modules/tslib/tslib.es6.js'),
+  crypto: require.resolve('react-native-quick-crypto'),
 };
 
 /**
@@ -33,7 +36,6 @@ const config = {
     assetExts: assetExts.filter(ext => ext !== 'svg'),
     sourceExts: [...sourceExts, 'svg'],
     alias: {
-      crypto: require.resolve('react-native-quick-crypto'),
       '@silencelaboratories/dkls-wasm-ll-web': SHIM_PATH,
       '@@silence-original': REAL_SILENCE_PATH,
       '@@silence-wasm': SILENCE_WASM_PATH,
@@ -71,17 +73,17 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === 'rpc-websockets') {
     moduleName = 'rpc-websockets/dist/index.browser.mjs';
   }
-  
+
   if (
     moduleName === '@silencelaboratories/dkls-wasm-ll-web' ||
     moduleName.startsWith('@silencelaboratories/dkls-wasm-ll-web/')
   ) {
     moduleName = SHIM_PATH;
-  } 
+  }
 
- if (moduleName === '@@silence-original') moduleName = REAL_SILENCE_PATH;
- if (moduleName === '@@silence-wasm')     moduleName = SILENCE_WASM_PATH;
-  
+  if (moduleName === '@@silence-original') moduleName = REAL_SILENCE_PATH;
+  if (moduleName === '@@silence-wasm')     moduleName = SILENCE_WASM_PATH;
+
   return context.resolveRequest(
     context,
     ALIASES[moduleName] ?? moduleName,
@@ -89,4 +91,6 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   );
 };
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+module.exports = withSentryConfig(
+  mergeConfig(getDefaultConfig(__dirname), config),
+);

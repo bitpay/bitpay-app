@@ -1,4 +1,5 @@
 import i18n from 'i18next';
+import {logManager} from './LogManager';
 
 export type OnGoingProcessMessages =
   | 'GENERAL_AWAITING'
@@ -182,10 +183,11 @@ class OngoingProcessManager {
     this.listeners.forEach(listener => {
       try {
         listener(data);
-      } catch (error) {
-        console.error(
+      } catch (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logManager.error(
           '[OngoingProcessManager] Error notifying listener:',
-          error,
+          errStr,
         );
       }
     });

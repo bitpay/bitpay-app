@@ -640,7 +640,12 @@ const Confirm = () => {
     if (!handled) {
       if (wallet && txp) {
         await removeTxp(wallet, txp).catch(removeErr =>
-          console.error('error deleting txp', removeErr),
+          logger.error(
+            'Error deleting txp: ' +
+              (removeErr instanceof Error
+                ? removeErr.message
+                : JSON.stringify(removeErr)),
+          ),
         );
       }
       updateTxDetails(undefined);

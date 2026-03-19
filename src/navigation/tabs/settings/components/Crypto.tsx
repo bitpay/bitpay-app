@@ -33,6 +33,10 @@ const Crypto = () => {
     ({WALLET}) => WALLET.queuedTransactions,
   );
   const tssEnabled = useAppSelector(({WALLET}) => WALLET.tssEnabled);
+  const isInternalUser = useAppSelector(({APP, BITPAY_ID}) => {
+    const user = BITPAY_ID.user[APP.network];
+    return !!user?.email?.endsWith('@bitpay.com');
+  });
   const navigation = useNavigation();
 
   const handleToggleUnconfirmedFunds = useCallback(
@@ -139,22 +143,26 @@ const Crypto = () => {
           )}
         </InfoDescription>
       </Info>
-      <Hr />
-      <Setting activeOpacity={1}>
-        <SettingTitle>{t('Enable TSS Wallets')}</SettingTitle>
-        <ToggleSwitch
-          onChange={handleToggleTssEnabled}
-          isEnabled={tssEnabled}
-        />
-      </Setting>
-      <Info>
-        <InfoTriangle />
-        <InfoDescription>
-          {t(
-            'If enabled, you will be able to create and join TSS (Threshold Signature Scheme) wallets. This is an experimental feature.',
-          )}
-        </InfoDescription>
-      </Info>
+      {isInternalUser ? (
+        <>
+          <Hr />
+          <Setting activeOpacity={1}>
+            <SettingTitle>{t('Enable TSS Wallets')}</SettingTitle>
+            <ToggleSwitch
+              onChange={handleToggleTssEnabled}
+              isEnabled={tssEnabled}
+            />
+          </Setting>
+          <Info>
+            <InfoTriangle />
+            <InfoDescription>
+              {t(
+                'If enabled, you will be able to create and join TSS (Threshold Signature Scheme) wallets. This is an experimental feature.',
+              )}
+            </InfoDescription>
+          </Info>
+        </>
+      ) : null}
     </SettingsComponent>
   );
 };

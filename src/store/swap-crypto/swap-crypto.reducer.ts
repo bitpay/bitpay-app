@@ -1,18 +1,24 @@
 import {SwapCryptoActionType, SwapCryptoActionTypes} from './swap-crypto.types';
-import {changellyTxData, thorswapTxData} from './swap-crypto.models';
+import {
+  changellyTxData,
+  thorswapTxData,
+  SwapCryptoPrefetchedData,
+} from './swap-crypto.models';
 
 type SwapCryptoReduxPersistBlackList = string[];
 export const swapCryptoReduxPersistBlackList: SwapCryptoReduxPersistBlackList =
-  [];
+  ['opts'];
 
 export interface SwapCryptoState {
   changelly: {[key in string]: changellyTxData};
   thorswap: {[key in string]: thorswapTxData};
+  opts?: SwapCryptoPrefetchedData;
 }
 
 const initialState: SwapCryptoState = {
   changelly: {},
   thorswap: {},
+  opts: undefined,
 };
 
 export const swapCryptoReducer = (
@@ -56,6 +62,12 @@ export const swapCryptoReducer = (
       return {
         ...state,
         thorswap: {...thorswapTxList},
+      };
+
+    case SwapCryptoActionTypes.SET_PREFETCHED_DATA:
+      return {
+        ...state,
+        opts: action.payload,
       };
 
     default:
