@@ -2189,7 +2189,6 @@ const BuyAndSellRoot = ({
     const quoteData: BanxaCreateOrderRequestData = {
       env: banxaEnv,
       account_reference: user?.eid ?? selectedWallet.id,
-      payment_method_id: offer.paymentMethodId,
       source: offer.fiatCurrency,
       source_amount: cloneDeep(offer.fiatAmount).toString(),
       target: getBanxaCoinFormat(coin),
@@ -2199,6 +2198,11 @@ const BuyAndSellRoot = ({
       return_url_on_cancelled: `${APP_DEEPLINK_PREFIX}banxaCancelled?externalId=${banxaExternalId}&status=cancelled`,
       return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFailed?externalId=${banxaExternalId}&status=failed`,
     };
+
+    if (paymentMethod.method !== 'other') {
+      // Prevent sending payment_method_id if we select "other" as the payment method, so that the user can freely choose on the checkout page
+      quoteData.payment_method_id = offer.paymentMethodId;
+    }
 
     let data: BanxaCreateOrderData, banxaOrderData: BanxaOrderData;
     try {
