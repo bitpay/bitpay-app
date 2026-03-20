@@ -108,6 +108,55 @@ import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import * as Sentry from '@sentry/react-native';
 
+const perfNow = () =>
+  typeof global?.performance !== 'undefined' &&
+  typeof global.performance?.now === 'function'
+    ? global.performance.now()
+    : Date.now();
+
+const perfInfo = (
+  label: string,
+  start: number,
+  extra?: Record<string, unknown>,
+) => {
+  const ms = perfNow() - start;
+  const suffix = extra ? ` | ${JSON.stringify(extra)}` : '';
+  logManager.info(`[IMPORT PERF] ${label}: ${ms.toFixed(1)}ms${suffix}`);
+  return ms;
+};
+
+const perfError = (
+  label: string,
+  start: number,
+  extra?: Record<string, unknown>,
+) => {
+  const ms = perfNow() - start;
+  const suffix = extra ? ` | ${JSON.stringify(extra)}` : '';
+  logManager.error(`[IMPORT PERF] ${label}: ${ms.toFixed(1)}ms${suffix}`);
+  return ms;
+};
+
+const getMissingVmAccounts = (
+  wallets: Wallet[],
+  accountsArray: number[],
+  expectedChainCoins: Array<{chain: string; currencyAbbreviation: string}>,
+) => {
+  const existing = new Set(
+    wallets.map(wallet => {
+      const account = wallet.credentials.account || 0;
+      const chain = wallet.credentials.chain;
+      const coin = wallet.credentials.coin;
+      return `${account}:${chain}:${coin}`;
+    }),
+  );
+
+  return accountsArray.filter(account => {
+    return expectedChainCoins.some(({chain, currencyAbbreviation}) => {
+      return !existing.has(`${account}:${chain}:${currencyAbbreviation}`);
+    });
+  });
+};
+
 const BWC = BwcProvider.getInstance();
 const BwcConstants = BWC.getConstants();
 
@@ -851,6 +900,7 @@ export const startImportMnemonic =
   ): Effect =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
+      const totalStart = perfNow();
       try {
         const {
           WALLET,
@@ -869,24 +919,88 @@ export const startImportMnemonic =
           ...WALLET.customTokenOptionsByAddress,
         };
         const {words, xPrivKey} = importData;
+
+        logManager.info(
+          `[IMPORT PERF] import.start | ${JSON.stringify({
+            hasWords: !!words,
+            hasXPrivKey: !!xPrivKey,
+            hasPassphrase: !!opts?.passphrase,
+          })}`,
+        );
+
+        const normalizeStart = perfNow();
         opts.words = normalizeMnemonic(words);
         opts.xPrivKey = xPrivKey;
+        perfInfo('import.normalizeMnemonic', normalizeStart, {
+          hasWords: !!opts.words,
+          hasXPrivKey: !!opts.xPrivKey,
+        });
 
+        const serverImportStart = perfNow();
         const data = await serverAssistedImport(opts);
+        perfInfo('import.serverAssistedImport', serverImportStart, {
+          walletCount: data?.wallets?.length ?? 0,
+        });
+
+        const getEvmGasWalletsStart = perfNow();
         // we need to ensure that each evm/svm account has all supported wallets attached.
         const vmWallets = getEvmGasWallets(data.wallets);
         const accountsArray = [
           ...new Set(vmWallets.map(wallet => wallet.credentials.account)),
         ];
-        const _wallets = await createWalletsForAccounts(
-          dispatch,
+        perfInfo('import.getEvmGasWallets', getEvmGasWalletsStart, {
+          vmWallets: vmWallets.length,
+        });
+
+        const expectedVmWallets = getBaseVMAccountCreationCoinsAndTokens();
+
+        const missingAccounts = getMissingVmAccounts(
+          data.wallets,
           accountsArray,
-          data.key as KeyMethods,
-          getBaseVMAccountCreationCoinsAndTokens(),
+          expectedVmWallets,
         );
+
+        logManager.info(
+          `[PERF IMPORT OPTIMIZATION] VM account expansion | ${JSON.stringify({
+            totalAccounts: accountsArray.length,
+            missingAccounts: missingAccounts.length,
+            skippedAccounts: accountsArray.length - missingAccounts.length,
+          })}`,
+        );
+
+        const createWalletsForAccountsStart = perfNow();
+        const _wallets =
+          missingAccounts.length > 0
+            ? await createWalletsForAccounts(
+                dispatch,
+                accountsArray,
+                data.key as KeyMethods,
+                getBaseVMAccountCreationCoinsAndTokens(),
+                data.wallets,
+              )
+            : [];
+        logManager.info(
+          `[PERF IMPORT OPTIMIZATION] createWalletsForAccounts input | ${JSON.stringify(
+            {
+              originalAccounts: accountsArray,
+              missingAccounts,
+            },
+          )}`,
+        );
+        perfInfo(
+          'import.createWalletsForAccounts',
+          createWalletsForAccountsStart,
+          {
+            _wallets: _wallets.length,
+            requestedAccounts: missingAccounts.length,
+          },
+        );
+
         if (_wallets.length > 0) {
           data.wallets.push(..._wallets);
         }
+
+        const findMatchedKeyAndUpdateStart = perfNow();
         // To Avoid Duplicate wallet import
         const {
           key: _key,
@@ -898,16 +1012,55 @@ export const startImportMnemonic =
           Object.values(WALLET.keys).filter(k => !k.id.includes('readonly')), // Avoid checking readonly keys
           opts,
         );
+        perfInfo(
+          'import.findMatchedKeyAndUpdate',
+          findMatchedKeyAndUpdateStart,
+          {
+            keyId: data.key.id,
+          },
+        );
 
         // To clear encrypt password
         if (opts.keyId && isMatch(_key, WALLET.keys[opts.keyId])) {
           dispatch(deleteKey({keyId: opts.keyId}));
         }
 
+        const buildStart = perfNow();
+        const resultWallets = wallets.map(wallet => {
+          const {currencyAbbreviation, currencyName} = dispatch(
+            mapAbbreviationAndName(
+              wallet.credentials.coin,
+              wallet.credentials.chain,
+              wallet.credentials.token?.address,
+            ),
+          );
+          return merge(
+            wallet,
+            buildWalletObj(
+              {...wallet.credentials, currencyAbbreviation, currencyName},
+              tokenOptsByAddress,
+            ),
+          );
+        });
         const key = buildKeyObj({
           key: _key,
           keyName,
-          wallets: wallets.map(wallet => {
+          wallets: resultWallets,
+          backupComplete: true,
+        });
+        perfInfo('import.buildKeyObjAndWalletObjects', buildStart);
+
+        perfInfo('import.TOTAL', totalStart, {
+          walletCount: data?.wallets?.length ?? 0,
+        });
+
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+        setTimeout(() => {
+          resultWallets.forEach(wallet => {
             // subscribe new wallet to push notifications
             if (notificationsAccepted) {
               dispatch(subscribePushNotifications(wallet, brazeEid!));
@@ -925,31 +1078,13 @@ export const startImportMnemonic =
               };
               dispatch(subscribeEmailNotifications(wallet, prefs));
             }
-            const {currencyAbbreviation, currencyName} = dispatch(
-              mapAbbreviationAndName(
-                wallet.credentials.coin,
-                wallet.credentials.chain,
-                wallet.credentials.token?.address,
-              ),
-            );
-            return merge(
-              wallet,
-              buildWalletObj(
-                {...wallet.credentials, currencyAbbreviation, currencyName},
-                tokenOptsByAddress,
-              ),
-            );
-          }),
-          backupComplete: true,
-        });
-
-        dispatch(
-          successImport({
-            key,
-          }),
-        );
+          });
+        }, 0);
         resolve(key);
       } catch (e) {
+        perfError('import.TOTAL.ERROR', totalStart, {
+          message: e instanceof Error ? e.message : JSON.stringify(e),
+        });
         dispatch(failedImport());
         reject(e);
       }
@@ -1560,43 +1695,82 @@ export const serverAssistedImport = async (
   opts: Partial<KeyOptions>,
 ): Promise<{key: KeyMethods; wallets: Wallet[]}> => {
   return new Promise((resolve, reject) => {
+    const totalStart = perfNow();
     try {
+      logManager.info(
+        `[IMPORT PERF] serverAssistedImport.start | ${JSON.stringify({
+          hasWords: !!opts?.words,
+          hasXPrivKey: !!opts?.xPrivKey,
+          hasPassphrase: !!opts?.passphrase,
+        })}`,
+      );
+
+      const apiStart = perfNow();
       BwcProvider.API.serverAssistedImport(
         opts,
         {baseUrl: BASE_BWS_URL},
         // @ts-ignore
         async (err, key, wallets) => {
           if (err) {
+            perfError('serverAssistedImport.API.ERROR', apiStart, {
+              name: err?.name,
+              message: err?.message,
+            });
             return reject(err);
           }
+          perfInfo('serverAssistedImport.API.callback', apiStart, {
+            walletCount: wallets?.length ?? 0,
+          });
           if (wallets.length === 0) {
+            perfError('serverAssistedImport.EMPTY', totalStart);
             return reject(new Error('WALLET_DOES_NOT_EXIST'));
           } else {
+            const dedupeStart = perfNow();
             // remove duplicate wallets
             wallets = uniqBy(wallets, w => {
               return (w as any).credentials.walletId;
             });
+            perfInfo('serverAssistedImport.dedupeWallets', dedupeStart, {
+              walletCount: wallets.length,
+            });
 
+            const tokensStart = perfNow();
             const tokens: Wallet[] = wallets.filter(
               (wallet: Wallet) => !!wallet.credentials.token,
             );
+            perfInfo('serverAssistedImport.filterTokenWallets', tokensStart, {
+              tokenCount: tokens.length,
+            });
 
             if (tokens && !!tokens.length) {
+              const linkStart = perfNow();
               wallets = linkTokenToWallet(tokens, wallets);
+              perfInfo('serverAssistedImport.linkTokenToWallet', linkStart, {
+                tokenCount: tokens.length,
+              });
             }
+
+            perfInfo('serverAssistedImport.TOTAL', totalStart, {
+              walletCount: wallets.length,
+            });
 
             return resolve({key, wallets});
           }
         },
       );
     } catch (err) {
+      perfError('serverAssistedImport.TOTAL.ERROR', totalStart, {
+        message: err instanceof Error ? err.message : JSON.stringify(err),
+      });
       return reject(err);
     }
   });
 };
 
 const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
+  const totalStart = perfNow();
   tokens.forEach(token => {
+    const tokenStart = perfNow();
     // find the associated wallet to add tokens too
     const associatedWalletId = token.credentials.walletId.split('-0x')[0];
     wallets = wallets.map((wallet: Wallet) => {
@@ -1607,6 +1781,14 @@ const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
       }
       return wallet;
     });
+    perfInfo('linkTokenToWallet.token', tokenStart, {
+      tokenWalletId: token.credentials.walletId,
+      associatedWalletId,
+    });
+  });
+  perfInfo('linkTokenToWallet.TOTAL', totalStart, {
+    tokenCount: tokens.length,
+    walletCount: wallets.length,
   });
 
   return wallets;

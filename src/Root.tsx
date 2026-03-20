@@ -758,6 +758,7 @@ export default () => {
                       accountsArray,
                       key.methods as KeyMethods,
                       getBaseEVMAccountCreationCoinsAndTokens(),
+                      key.wallets,
                     );
                     key.wallets.push(...wallets);
                     dispatch(successAddWallet({key}));
@@ -801,6 +802,7 @@ export default () => {
                       [0],
                       key.methods as KeyMethods,
                       getBaseSVMAccountCreationCoinsAndTokens(),
+                      key.wallets,
                     );
                     key.wallets.push(...wallets);
                     logManager.info(
