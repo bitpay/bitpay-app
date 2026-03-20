@@ -652,9 +652,7 @@ export default () => {
               .map(arg => (typeof arg === 'string' ? arg : JSON.stringify(arg)))
               .join(' ');
             if (message.length < 800) {
-              const logLevel = level === 'fatal' ? 'error' : level;
-              // @ts-ignore
-              logManager[logLevel](`[BWC] ${message}`);
+              console.debug(`[BWC] ${message}`);
             }
           } catch (_) {}
         };
