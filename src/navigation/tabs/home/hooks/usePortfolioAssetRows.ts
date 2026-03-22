@@ -20,6 +20,7 @@ import {
   getDisplayAssetRowItems,
   getPopulateLoadingByAssetKey,
   getQuoteCurrency,
+  getVisibleWalletsForKey,
   getVisibleWalletsFromKeys,
   isFiatLoadingForWallets,
 } from '../../../../utils/portfolio/assets';
@@ -66,7 +67,7 @@ const usePortfolioAssetRows = ({gainLossMode, keyId}: Args): Result => {
 
   const wallets = useMemo(() => {
     if (keyId && keys[keyId]) {
-      return getVisibleWalletsFromKeys({[keyId]: keys[keyId]});
+      return getVisibleWalletsForKey(keys[keyId]);
     }
     return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
   }, [homeCarouselConfig, keyId, keys]);
