@@ -61,7 +61,6 @@ import {
   GhostWhite,
   LightBlack,
   NeutralSlate,
-  Slate,
   Slate30,
   SlateDark,
   White,
@@ -80,7 +79,7 @@ import {
 } from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
-import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
@@ -141,14 +140,9 @@ import {
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {
   buildPortfolioGainLossSummaryFromPortfolioSnapshots,
-  getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
+  getVisibleWalletsForKey,
   getQuoteCurrency,
-  hasSnapshotsBeforeMsForWallets,
-  hasSnapshotsForWallets,
   isPopulateLoadingForWallets,
-  getLegacyPercentageDifferenceFromTotals,
-  getKeyLastDayPercentageDifference,
-  getPercentageDifferenceFromPercentRatio,
 } from '../../../utils/portfolio/assets';
 import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 
@@ -194,10 +188,6 @@ const BalanceContainer = styled.View`
   align-items: center;
 `;
 
-const PercentageWrapper = styled.View`
-  align-self: center;
-`;
-
 const WalletListHeader = styled.View`
   padding: 10px;
   margin-top: 10px;
@@ -211,21 +201,6 @@ const WalletListFooterContainer = styled.View`
   padding: 10px 10px 100px 10px;
   margin-top: 15px;
   gap: 12px;
-`;
-
-const WalletListFooter = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 30px;
-  margin-top: -10px;
-`;
-
-const WalletListFooterText = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  margin-left: 10px;
 `;
 
 const AddWalletLinkContainer = styled.View`
@@ -517,7 +492,6 @@ const KeyOverview = () => {
   }, [dispatch, key?.id]);
 
   const {
-    wallets = [],
     totalBalance = 0,
     totalBalanceLastDay,
   } = useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
@@ -529,10 +503,8 @@ const KeyOverview = () => {
   }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
 
   const visibleKeyWallets = useMemo(() => {
-    return (key?.wallets ?? []).filter(
-      w => !w.hideWallet && !w.hideWalletByAccount,
-    );
-  }, [key?.wallets]);
+    return getVisibleWalletsForKey(key);
+  }, [key]);
 
   const allocationWalletRows: AllocationWallet[] = useMemo(() => {
     return visibleKeyWallets.map((w: Wallet) => {
@@ -560,12 +532,12 @@ const KeyOverview = () => {
     });
   }, [defaultAltCurrency?.isoCode, portfolio.quoteCurrency]);
 
-  const keyWalletIdsSig = useMemo(() => {
-    return (key?.wallets || [])
+  const visibleKeyWalletIdsSig = useMemo(() => {
+    return visibleKeyWallets
       .map(w => w?.id)
       .filter((id): id is string => typeof id === 'string' && !!id)
       .join(',');
-  }, [key?.wallets]);
+  }, [visibleKeyWallets]);
 
   // If we try to populate portfolio snapshots while another populate pass is
   // already running, the thunk may no-op. Track a pending request so we can
@@ -582,8 +554,8 @@ const KeyOverview = () => {
 
     pendingKeyBalanceChartRefreshRef.current = false;
     const latestKey = state.WALLET?.keys?.[id] as Key | undefined;
-
-    if (!latestKey?.wallets?.length) {
+    const latestVisibleWallets = getVisibleWalletsForKey(latestKey);
+    if (!latestVisibleWallets.length) {
       return;
     }
 
@@ -596,8 +568,9 @@ const KeyOverview = () => {
       maybePopulatePortfolioForWallets({
         // IMPORTANT: re-read the latest Redux wallet objects after any
         // balance/rate refresh completes so chart snapshot population does not
-        // get stuck using stale wallet balances from the first render.
-        wallets: latestKey.wallets,
+        // get stuck using stale wallet balances from the first render. Keep the
+        // wallet scope aligned with the wallets visible in KeyOverview.
+        wallets: latestVisibleWallets,
         quoteCurrency: latestQuoteCurrency,
       }) as any,
     );
@@ -609,7 +582,12 @@ const KeyOverview = () => {
     }
 
     void maybeRefreshKeyBalanceChart();
-  }, [isFocused, keyWalletIdsSig, maybeRefreshKeyBalanceChart, quoteCurrency]);
+  }, [
+    isFocused,
+    maybeRefreshKeyBalanceChart,
+    quoteCurrency,
+    visibleKeyWalletIdsSig,
+  ]);
 
   useEffect(() => {
     if (
@@ -673,81 +651,6 @@ const KeyOverview = () => {
     totalBalance,
     totalBalanceLastDay,
     visibleKeyWallets,
-  ]);
-
-  const portfolioPercentageDifference = useMemo(() => {
-    const pnl = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
-      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
-      wallets: visibleKeyWallets,
-      quoteCurrency,
-      timeframe: '1D',
-      rates,
-      lastDayRates,
-      fiatRateSeriesCache,
-    });
-    if (!pnl.available) {
-      return null;
-    }
-    return getPercentageDifferenceFromPercentRatio(pnl.percentRatio);
-  }, [
-    fiatRateSeriesCache,
-    lastDayRates,
-    portfolio.snapshotsByWalletId,
-    quoteCurrency,
-    rates,
-    visibleKeyWallets,
-  ]);
-
-  const legacyPercentageDifference = useMemo(() => {
-    return getLegacyPercentageDifferenceFromTotals({
-      totalBalance,
-      totalBalanceLastDay,
-    });
-  }, [totalBalance, totalBalanceLastDay]);
-
-  const hasKeySnapshots = useMemo(() => {
-    return hasSnapshotsForWallets({
-      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
-      wallets: visibleKeyWallets,
-    });
-  }, [portfolio.snapshotsByWalletId, visibleKeyWallets]);
-
-  const hasKeySnapshotsBeforePopulateStarted = useMemo(() => {
-    const startedAt = portfolio.populateStatus?.startedAt;
-    if (
-      !portfolio.populateStatus?.inProgress ||
-      typeof startedAt !== 'number'
-    ) {
-      return true;
-    }
-    return hasSnapshotsBeforeMsForWallets({
-      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
-      wallets: visibleKeyWallets,
-      cutoffMs: startedAt,
-    });
-  }, [
-    portfolio.populateStatus?.inProgress,
-    portfolio.populateStatus?.startedAt,
-    portfolio.snapshotsByWalletId,
-    visibleKeyWallets,
-  ]);
-
-  const percentageDifference = useMemo(() => {
-    return getKeyLastDayPercentageDifference({
-      totalBalance,
-      hasSnapshots: hasKeySnapshots,
-      hasSnapshotsBeforePopulateStarted: hasKeySnapshotsBeforePopulateStarted,
-      isPopulateLoading: isKeyPopulateLoading,
-      legacyPercentageDifference,
-      portfolioPercentageDifference,
-    });
-  }, [
-    totalBalance,
-    hasKeySnapshots,
-    hasKeySnapshotsBeforePopulateStarted,
-    isKeyPopulateLoading,
-    legacyPercentageDifference,
-    portfolioPercentageDifference,
   ]);
 
   const allTimeGainLossText = useMemo(() => {

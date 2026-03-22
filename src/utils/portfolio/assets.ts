@@ -661,14 +661,64 @@ export const getVisibleKeysFromKeys = (
   return all.filter(k => !hiddenKeyIds.has(k.id));
 };
 
+const getKeyOverviewAccountVisibilityKey = (
+  wallet: Wallet | undefined,
+): string => {
+  let accountKey = toStringOrEmpty(wallet?.receiveAddress);
+  const isComplete =
+    typeof wallet?.credentials?.isComplete === 'function'
+      ? wallet.credentials.isComplete()
+      : true;
+
+  if (!accountKey && (!isComplete || wallet?.pendingTssSession)) {
+    accountKey = toStringOrEmpty(wallet?.credentials?.walletId);
+  }
+
+  return accountKey;
+};
+
+const isWalletVisibleInKeyOverview = (
+  key: Key | undefined,
+  wallet: Wallet | undefined,
+): boolean => {
+  if (!wallet || wallet.hideWallet) {
+    return false;
+  }
+
+  const accountKey = getKeyOverviewAccountVisibilityKey(wallet);
+  if (accountKey && key?.evmAccountsInfo?.[accountKey]?.hideAccount) {
+    return false;
+  }
+
+  return true;
+};
+
+export const getVisibleWalletsForKey = (key: Key | undefined): Wallet[] => {
+  const seenWalletIds = new Set<string>();
+  const uniqueWallets: Wallet[] = [];
+
+  for (const wallet of key?.wallets || []) {
+    const walletId =
+      wallet?.id != null ? String(wallet.id) : '__missing_wallet_id__';
+    if (seenWalletIds.has(walletId)) {
+      continue;
+    }
+
+    seenWalletIds.add(walletId);
+    uniqueWallets.push(wallet);
+  }
+
+  return uniqueWallets.filter(wallet =>
+    isWalletVisibleInKeyOverview(key, wallet),
+  );
+};
+
 export const getVisibleWalletsFromKeys = (
   keys: Record<string, Key> | undefined,
   homeCarouselConfig?: HomeCarouselConfig[] | undefined,
 ): Wallet[] => {
   const visibleKeys = getVisibleKeysFromKeys(keys, homeCarouselConfig);
-  return visibleKeys
-    .flatMap(k => (Array.isArray(k.wallets) ? k.wallets : []))
-    .filter(w => !w.hideWallet && !w.hideWalletByAccount);
+  return visibleKeys.flatMap(getVisibleWalletsForKey);
 };
 
 export const buildWalletIdsByAssetGroupKey = (
