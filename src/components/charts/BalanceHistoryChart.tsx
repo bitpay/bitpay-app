@@ -117,6 +117,15 @@ const PRECOMPUTE_TIMEFRAME_ORDER: FiatRateInterval[] = [
   '1Y',
   '5Y',
 ];
+const BALANCE_CHART_TIMEFRAME_ORDER: FiatRateInterval[] = [
+  '1D',
+  '1W',
+  '1M',
+  '3M',
+  '1Y',
+  '5Y',
+  'ALL',
+];
 const PREP_FX_CACHE_INTERVALS = FIAT_RATE_SERIES_CACHED_INTERVALS;
 const EMPTY_BALANCE_SNAPSHOTS: BalanceSnapshot[] = [];
 
@@ -214,7 +223,7 @@ const BalanceHistoryChart = ({
   wallets,
   snapshotsByWalletId,
   quoteCurrency,
-  initialSelectedTimeframe = 'ALL',
+  initialSelectedTimeframe = '1D',
   rates,
   fiatRateSeriesCache,
   lineColor,
@@ -448,7 +457,13 @@ const BalanceHistoryChart = ({
   }, [selectedTimeframe]);
 
   const fiatChartTimeframeOptions = useMemo(
-    () => getFiatChartTimeframeOptions(t),
+    () =>
+      getFiatChartTimeframeOptions(t).sort((a, b) => {
+        return (
+          BALANCE_CHART_TIMEFRAME_ORDER.indexOf(a.value) -
+          BALANCE_CHART_TIMEFRAME_ORDER.indexOf(b.value)
+        );
+      }),
     [t],
   );
 
