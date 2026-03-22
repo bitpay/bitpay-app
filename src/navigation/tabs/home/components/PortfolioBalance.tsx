@@ -131,7 +131,7 @@ const PortfolioBalance = () => {
   const collapseButtonPressOpacity = useSharedValue(1);
   const [collapseButtonLayout, setCollapseButtonLayout] =
     useState<LayoutRectangle>();
-  const selectedChartTimeframeRef = React.useRef<FiatRateInterval>('ALL');
+  const selectedChartTimeframeRef = React.useRef<FiatRateInterval>('1D');
 
   const visibleKeys = useMemo(
     () => getVisibleKeysFromKeys(keys, homeCarouselConfig),
