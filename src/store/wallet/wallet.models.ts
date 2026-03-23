@@ -1,4 +1,5 @@
 import API from 'bitcore-wallet-client/ts_build/src';
+import type {Status as BwcStatus} from 'bitcore-wallet-client/ts_build/src/lib/api';
 import {ReactElement} from 'react';
 import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
 import {RootState} from '../index';
@@ -234,6 +235,8 @@ export interface Status {
   serverMessages: any[];
   wallet: _Credentials;
 }
+
+export type WalletStatusPayload = BwcStatus['wallet'];
 
 export enum CacheKeys {
   RATES = 'ratesCacheKey',
