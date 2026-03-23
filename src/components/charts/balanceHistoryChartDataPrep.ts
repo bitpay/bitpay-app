@@ -79,7 +79,7 @@ export const buildBalanceHistoryChartRelevantRateCacheAssets = (
 export const buildBalanceHistoryChartPrepFiatRateSeriesCacheKeys = (args: {
   quoteCurrency: string;
   scopedSnapshotsByWalletId: BalanceSnapshotsByWalletId;
-  prepIntervals: FiatRateInterval[];
+  prepIntervals: ReadonlyArray<FiatRateInterval>;
 }): string[] => {
   const targetQuoteCurrency = (args.quoteCurrency || '').toUpperCase();
   if (!targetQuoteCurrency) {

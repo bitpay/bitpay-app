@@ -50,18 +50,12 @@ import {
   updatePortfolioBalance,
   syncWallets,
 } from '../../../store/wallet/wallet.actions';
-import {
-  Key,
-  KeyMethods,
-  Status,
-  Wallet,
-} from '../../../store/wallet/wallet.models';
+import {Key, KeyMethods, Wallet} from '../../../store/wallet/wallet.models';
 import {
   CharcoalBlack,
   GhostWhite,
   LightBlack,
   NeutralSlate,
-  Slate,
   Slate30,
   SlateDark,
   White,
@@ -80,7 +74,7 @@ import {
 } from '../components/ErrorMessages';
 import OptionsSheet, {Option} from '../components/OptionsSheet';
 import Icons from '../components/WalletIcons';
-import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {WalletGroupParamList} from '../WalletGroup';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import SheetModal from '../../../components/modal/base/sheet/SheetModal';
 import {
@@ -98,7 +92,6 @@ import {
   buildWalletObj,
   checkPrivateKeyEncrypted,
 } from '../../../store/wallet/utils/wallet';
-import {each} from 'lodash';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import CoinbaseDropdownOption from '../components/CoinbaseDropdownOption';
 import {Analytics} from '../../../store/analytics/analytics.effects';
@@ -141,14 +134,9 @@ import {
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {
   buildPortfolioGainLossSummaryFromPortfolioSnapshots,
-  getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
+  getVisibleWalletsForKey,
   getQuoteCurrency,
-  hasSnapshotsBeforeMsForWallets,
-  hasSnapshotsForWallets,
   isPopulateLoadingForWallets,
-  getLegacyPercentageDifferenceFromTotals,
-  getKeyLastDayPercentageDifference,
-  getPercentageDifferenceFromPercentRatio,
 } from '../../../utils/portfolio/assets';
 import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 
@@ -194,10 +182,6 @@ const BalanceContainer = styled.View`
   align-items: center;
 `;
 
-const PercentageWrapper = styled.View`
-  align-self: center;
-`;
-
 const WalletListHeader = styled.View`
   padding: 10px;
   margin-top: 10px;
@@ -211,21 +195,6 @@ const WalletListFooterContainer = styled.View`
   padding: 10px 10px 100px 10px;
   margin-top: 15px;
   gap: 12px;
-`;
-
-const WalletListFooter = styled(TouchableOpacity)`
-  flex-direction: row;
-  align-items: center;
-  margin-bottom: 30px;
-  margin-top: -10px;
-`;
-
-const WalletListFooterText = styled(BaseText)`
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  letter-spacing: 0;
-  margin-left: 10px;
 `;
 
 const AddWalletLinkContainer = styled.View`
@@ -385,18 +354,13 @@ const KeyOverview = () => {
 
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const key = keys[id];
+  const viewedKeyId = key?.id;
 
   useEffect(() => {
     setSelectedBalance(undefined);
   }, [id]);
   const hasMultipleKeys =
     Object.values(keys).filter(k => k.backupComplete).length > 1;
-  let pendingTxps: any = [];
-  each(key?.wallets, x => {
-    if (x.pendingTxps) {
-      pendingTxps = pendingTxps.concat(x.pendingTxps);
-    }
-  });
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [searchVal, setSearchVal] = useState('');
   const [isViewUpdating, setIsViewUpdating] = useState(false);
@@ -404,15 +368,48 @@ const KeyOverview = () => {
   const selectedChainFilterOption = useAppSelector(
     ({APP}) => APP.selectedChainFilterOption,
   );
+
+  const memoizedAccountList = useMemo(() => {
+    return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
+      filterByHideWallet: true,
+    });
+  }, [dispatch, key, defaultAltCurrency.isoCode, rates]);
+
+  const pendingTxpCount = useMemo(() => {
+    return (
+      key?.wallets.reduce((count, wallet) => {
+        return count + (wallet.pendingTxps?.length || 0);
+      }, 0) || 0
+    );
+  }, [key?.wallets]);
+
+  const missingChainsAccountsCount = useMemo(() => {
+    const supportedEvmChainCount = Object.keys(BitpaySupportedEvmCoins).length;
+
+    return memoizedAccountList.reduce((count, {chains}) => {
+      return (
+        count +
+        (IsEVMChain(chains[0]) && chains.length !== supportedEvmChainCount
+          ? 1
+          : 0)
+      );
+    }, 0);
+  }, [memoizedAccountList]);
+
+  const hasMissingEvmNetworks = missingChainsAccountsCount > 0;
+
+  const onPressTxpBadge = useCallback(() => {
+    if (!key?.id) {
+      return;
+    }
+
+    navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
+  }, [key?.id, navigation]);
+
   useLayoutEffect(() => {
     if (!key) {
       return;
     }
-    const missingChainsAccounts = memorizedAccountList.filter(
-      ({chains}) =>
-        IsVMChain(chains[0]) &&
-        chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
-    );
 
     navigation.setOptions({
       headerTitle: () => {
@@ -449,16 +446,15 @@ const KeyOverview = () => {
         return (
           <>
             <HeaderRightContainer>
-              {pendingTxps.length ? (
+              {pendingTxpCount ? (
                 <ProposalBadgeContainer
                   touchableLibrary={'react-native-gesture-handler'}
                   style={{marginRight: 10}}
                   onPress={onPressTxpBadge}>
-                  <ProposalBadge>{pendingTxps.length}</ProposalBadge>
+                  <ProposalBadge>{pendingTxpCount}</ProposalBadge>
                 </ProposalBadgeContainer>
               ) : null}
-              {checkPrivateKeyEncrypted(key) &&
-              missingChainsAccounts.length === 0 ? (
+              {checkPrivateKeyEncrypted(key) && !hasMissingEvmNetworks ? (
                 <CogIconContainer
                   onPress={async () => {
                     await sleep(500);
@@ -483,56 +479,48 @@ const KeyOverview = () => {
         );
       },
     });
-  }, [navigation, key, hasMultipleKeys, theme.dark]);
+  }, [
+    navigation,
+    key,
+    hasMultipleKeys,
+    linkedCoinbase,
+    hasMissingEvmNetworks,
+    onPressTxpBadge,
+    pendingTxpCount,
+    theme.dark,
+  ]);
+
+  const firstWallet = key?.wallets?.[0];
 
   useEffect(() => {
-    if (context === 'createNewMultisigKey') {
-      key?.wallets[0].getStatus(
-        {network: key?.wallets[0].network},
-        (err: any, status: Status) => {
-          if (err) {
-            const errStr =
-              err instanceof Error ? err.message : JSON.stringify(err);
-            logger.error(
-              `error [KeyOverview - createNewMultisigKey] [getStatus]: ${errStr}`,
-            );
-          } else {
-            navigation.navigate('Copayers', {
-              wallet: key?.wallets[0],
-              status: status?.wallet,
-            });
-          }
-        },
-      );
-    }
-  }, [navigation, key?.wallets, context]);
-
-  useEffect(() => {
-    if (!key) {
+    if (context !== 'createNewMultisigKey' || !firstWallet) {
       return;
     }
 
-    dispatch(Analytics.track('View Key'));
-    updateStatusForKey(false);
-  }, [dispatch, key?.id]);
-
-  const {
-    wallets = [],
-    totalBalance = 0,
-    totalBalanceLastDay,
-  } = useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
-
-  const memorizedAccountList = useMemo(() => {
-    return buildAccountList(key, defaultAltCurrency.isoCode, rates, dispatch, {
-      filterByHideWallet: true,
+    firstWallet.getStatus({}, (err, status) => {
+      if (err) {
+        const errStr = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.error(
+          `error [KeyOverview - createNewMultisigKey] [getStatus]: ${errStr}`,
+        );
+      } else {
+        if (!status?.wallet) {
+          return;
+        }
+        navigation.navigate('Copayers', {
+          wallet: firstWallet,
+          status: status.wallet,
+        });
+      }
     });
-  }, [dispatch, key, defaultAltCurrency.isoCode, rates, hideAllBalances]);
+  }, [context, firstWallet, logger, navigation]);
+
+  const {totalBalance = 0, totalBalanceLastDay} =
+    useAppSelector(({WALLET}) => WALLET.keys[id]) || {};
 
   const visibleKeyWallets = useMemo(() => {
-    return (key?.wallets ?? []).filter(
-      w => !w.hideWallet && !w.hideWalletByAccount,
-    );
-  }, [key?.wallets]);
+    return getVisibleWalletsForKey(key);
+  }, [key]);
 
   const allocationWalletRows: AllocationWallet[] = useMemo(() => {
     return visibleKeyWallets.map((w: Wallet) => {
@@ -560,12 +548,20 @@ const KeyOverview = () => {
     });
   }, [defaultAltCurrency?.isoCode, portfolio.quoteCurrency]);
 
-  const keyWalletIdsSig = useMemo(() => {
-    return (key?.wallets || [])
-      .map(w => w?.id)
-      .filter((id): id is string => typeof id === 'string' && !!id)
+  const visibleKeyWalletIdsSig = useMemo(() => {
+    return Array.from(
+      new Set(
+        visibleKeyWallets
+          .map(w => w?.id)
+          .filter(
+            (walletId): walletId is string =>
+              typeof walletId === 'string' && !!walletId,
+          ),
+      ),
+    )
+      .sort((a, b) => a.localeCompare(b))
       .join(',');
-  }, [key?.wallets]);
+  }, [visibleKeyWallets]);
 
   // If we try to populate portfolio snapshots while another populate pass is
   // already running, the thunk may no-op. Track a pending request so we can
@@ -582,8 +578,8 @@ const KeyOverview = () => {
 
     pendingKeyBalanceChartRefreshRef.current = false;
     const latestKey = state.WALLET?.keys?.[id] as Key | undefined;
-
-    if (!latestKey?.wallets?.length) {
+    const latestVisibleWallets = getVisibleWalletsForKey(latestKey);
+    if (!latestVisibleWallets.length) {
       return;
     }
 
@@ -596,8 +592,9 @@ const KeyOverview = () => {
       maybePopulatePortfolioForWallets({
         // IMPORTANT: re-read the latest Redux wallet objects after any
         // balance/rate refresh completes so chart snapshot population does not
-        // get stuck using stale wallet balances from the first render.
-        wallets: latestKey.wallets,
+        // get stuck using stale wallet balances from the first render. Keep the
+        // wallet scope aligned with the wallets visible in KeyOverview.
+        wallets: latestVisibleWallets,
         quoteCurrency: latestQuoteCurrency,
       }) as any,
     );
@@ -608,8 +605,13 @@ const KeyOverview = () => {
       return;
     }
 
-    void maybeRefreshKeyBalanceChart();
-  }, [isFocused, keyWalletIdsSig, maybeRefreshKeyBalanceChart, quoteCurrency]);
+    maybeRefreshKeyBalanceChart();
+  }, [
+    isFocused,
+    maybeRefreshKeyBalanceChart,
+    quoteCurrency,
+    visibleKeyWalletIdsSig,
+  ]);
 
   useEffect(() => {
     if (
@@ -620,7 +622,7 @@ const KeyOverview = () => {
       return;
     }
 
-    void maybeRefreshKeyBalanceChart();
+    maybeRefreshKeyBalanceChart();
   }, [
     isFocused,
     maybeRefreshKeyBalanceChart,
@@ -671,81 +673,6 @@ const KeyOverview = () => {
     totalBalance,
     totalBalanceLastDay,
     visibleKeyWallets,
-  ]);
-
-  const portfolioPercentageDifference = useMemo(() => {
-    const pnl = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
-      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
-      wallets: visibleKeyWallets,
-      quoteCurrency,
-      timeframe: '1D',
-      rates,
-      lastDayRates,
-      fiatRateSeriesCache,
-    });
-    if (!pnl.available) {
-      return null;
-    }
-    return getPercentageDifferenceFromPercentRatio(pnl.percentRatio);
-  }, [
-    fiatRateSeriesCache,
-    lastDayRates,
-    portfolio.snapshotsByWalletId,
-    quoteCurrency,
-    rates,
-    visibleKeyWallets,
-  ]);
-
-  const legacyPercentageDifference = useMemo(() => {
-    return getLegacyPercentageDifferenceFromTotals({
-      totalBalance,
-      totalBalanceLastDay,
-    });
-  }, [totalBalance, totalBalanceLastDay]);
-
-  const hasKeySnapshots = useMemo(() => {
-    return hasSnapshotsForWallets({
-      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
-      wallets: visibleKeyWallets,
-    });
-  }, [portfolio.snapshotsByWalletId, visibleKeyWallets]);
-
-  const hasKeySnapshotsBeforePopulateStarted = useMemo(() => {
-    const startedAt = portfolio.populateStatus?.startedAt;
-    if (
-      !portfolio.populateStatus?.inProgress ||
-      typeof startedAt !== 'number'
-    ) {
-      return true;
-    }
-    return hasSnapshotsBeforeMsForWallets({
-      snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
-      wallets: visibleKeyWallets,
-      cutoffMs: startedAt,
-    });
-  }, [
-    portfolio.populateStatus?.inProgress,
-    portfolio.populateStatus?.startedAt,
-    portfolio.snapshotsByWalletId,
-    visibleKeyWallets,
-  ]);
-
-  const percentageDifference = useMemo(() => {
-    return getKeyLastDayPercentageDifference({
-      totalBalance,
-      hasSnapshots: hasKeySnapshots,
-      hasSnapshotsBeforePopulateStarted: hasKeySnapshotsBeforePopulateStarted,
-      isPopulateLoading: isKeyPopulateLoading,
-      legacyPercentageDifference,
-      portfolioPercentageDifference,
-    });
-  }, [
-    totalBalance,
-    hasKeySnapshots,
-    hasKeySnapshotsBeforePopulateStarted,
-    isKeyPopulateLoading,
-    legacyPercentageDifference,
-    portfolioPercentageDifference,
   ]);
 
   const allTimeGainLossText = useMemo(() => {
@@ -966,11 +893,6 @@ const KeyOverview = () => {
     }
   };
 
-  const missingChainsAccounts = memorizedAccountList.filter(
-    ({chains}) =>
-      IsEVMChain(chains[0]) &&
-      chains.length !== Object.keys(BitpaySupportedEvmCoins).length,
-  );
   const keyOptions: Array<Option> = [];
 
   keyOptions.push({
@@ -988,7 +910,7 @@ const KeyOverview = () => {
     },
   });
 
-  if (missingChainsAccounts.length > 0) {
+  if (hasMissingEvmNetworks) {
     keyOptions.push({
       img: <Icons.Wallet width="15" height="15" />,
       title: t('Add Ethereum networks'),
@@ -1029,46 +951,58 @@ const KeyOverview = () => {
     },
   });
 
-  const onPressTxpBadge = useCallback(() => {
-    if (!key?.id) {
+  const updateStatusForKey = useCallback(
+    async (forceUpdate?: boolean) => {
+      if (!key) {
+        return;
+      }
+      if (isViewUpdating) {
+        logger.debug(
+          'KeyOverview is updating. Do not start forced updateAll...',
+        );
+        return;
+      }
+
+      try {
+        setIsViewUpdating(true);
+        await dispatch(
+          refreshRatesForPortfolioPnl({context: 'homeRootOnRefresh'}) as any,
+        );
+        await Promise.all([
+          dispatch(
+            startUpdateAllWalletStatusForKey({
+              key,
+              force: forceUpdate,
+              createTokenWalletWithFunds: forceUpdate,
+            }),
+          ),
+          sleep(1000),
+        ]);
+        dispatch(updatePortfolioBalance());
+        await maybeRefreshKeyBalanceChart();
+        setIsViewUpdating(false);
+      } catch {
+        setIsViewUpdating(false);
+        dispatch(showBottomNotificationModal(BalanceUpdateError()));
+      }
+    },
+    [dispatch, isViewUpdating, key, logger, maybeRefreshKeyBalanceChart],
+  );
+
+  const updateStatusForKeyRef = useRef(updateStatusForKey);
+
+  useEffect(() => {
+    updateStatusForKeyRef.current = updateStatusForKey;
+  }, [updateStatusForKey]);
+
+  useEffect(() => {
+    if (!isFocused || !viewedKeyId) {
       return;
     }
 
-    navigation.navigate('TransactionProposalNotifications', {keyId: key.id});
-  }, [key?.id, navigation]);
-
-  const updateStatusForKey = async (forceUpdate?: boolean) => {
-    if (!key) {
-      return;
-    }
-    if (isViewUpdating) {
-      logger.debug('KeyOverview is updating. Do not start forced updateAll...');
-      return;
-    }
-
-    try {
-      setIsViewUpdating(true);
-      await dispatch(
-        refreshRatesForPortfolioPnl({context: 'homeRootOnRefresh'}) as any,
-      );
-      await Promise.all([
-        dispatch(
-          startUpdateAllWalletStatusForKey({
-            key,
-            force: forceUpdate,
-            createTokenWalletWithFunds: forceUpdate,
-          }),
-        ),
-        sleep(1000),
-      ]);
-      dispatch(updatePortfolioBalance());
-      await maybeRefreshKeyBalanceChart();
-      setIsViewUpdating(false);
-    } catch (err) {
-      setIsViewUpdating(false);
-      dispatch(showBottomNotificationModal(BalanceUpdateError()));
-    }
-  };
+    dispatch(Analytics.track('View Key'));
+    updateStatusForKeyRef.current(false);
+  }, [dispatch, isFocused, viewedKeyId]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -1079,26 +1013,25 @@ const KeyOverview = () => {
     }
   };
 
-  const onPressItem = (item: AccountRowProps) => {
-    haptic('impactLight');
+  const onPressItem = useCallback(
+    (item: AccountRowProps) => {
+      haptic('impactLight');
 
-    if (IsVMChain(item.chains[0])) {
-      navigation.navigate('AccountDetails', {
-        keyId: item.keyId,
-        selectedAccountAddress: item.receiveAddress,
-        isSvmAccount: IsSVMChain(item.chains[0]),
-      });
-      return;
-    }
-    const fullWalletObj = key.wallets.find(
-      k =>
-        k.id === item.wallets[0].id &&
-        (!item.copayerId || k.credentials?.copayerId === item.copayerId),
-    )!;
-    if (!fullWalletObj.isComplete()) {
-      fullWalletObj.getStatus(
-        {network: fullWalletObj.network},
-        (err: any, status: Status) => {
+      if (IsVMChain(item.chains[0])) {
+        navigation.navigate('AccountDetails', {
+          keyId: item.keyId,
+          selectedAccountAddress: item.receiveAddress,
+          isSvmAccount: IsSVMChain(item.chains[0]),
+        });
+        return;
+      }
+      const fullWalletObj = key.wallets.find(
+        k =>
+          k.id === item.wallets[0].id &&
+          (!item.copayerId || k.credentials?.copayerId === item.copayerId),
+      )!;
+      if (!fullWalletObj.isComplete()) {
+        fullWalletObj.getStatus({}, (err, status) => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
@@ -1116,21 +1049,25 @@ const KeyOverview = () => {
               });
               return;
             }
+            if (!status?.wallet) {
+              return;
+            }
             navigation.navigate('Copayers', {
               wallet: fullWalletObj,
-              status: status?.wallet,
+              status: status.wallet,
             });
           }
-        },
-      );
-    } else {
-      navigation.navigate('WalletDetails', {
-        key,
-        walletId: fullWalletObj.credentials.walletId,
-        copayerId: fullWalletObj.credentials.copayerId,
-      });
-    }
-  };
+        });
+      } else {
+        navigation.navigate('WalletDetails', {
+          key,
+          walletId: fullWalletObj.credentials.walletId,
+          copayerId: fullWalletObj.credentials.copayerId,
+        });
+      }
+    },
+    [key, logger, navigation],
+  );
 
   const memoizedRenderItem = useCallback(
     ({item}: {item: AccountRowProps}) => {
@@ -1145,7 +1082,7 @@ const KeyOverview = () => {
         />
       );
     },
-    [key, hideAllBalances],
+    [hideAllBalances, onPressItem],
   );
 
   const listHeaderComponent = useMemo(() => {
@@ -1196,11 +1133,11 @@ const KeyOverview = () => {
               searchVal={searchVal}
               setSearchVal={setSearchVal}
               searchResults={searchResults}
-              setSearchResults={searchResults => {
-                setSearchResults(searchResults);
+              setSearchResults={nextSearchResults => {
+                setSearchResults(nextSearchResults);
                 setIsLoadingInitial(false);
               }}
-              searchFullList={memorizedAccountList}
+              searchFullList={memoizedAccountList}
               context={'keyoverview'}
             />
           </View>
@@ -1212,7 +1149,7 @@ const KeyOverview = () => {
     dispatch,
     fiatRateSeriesCache,
     hideAllBalances,
-    memorizedAccountList,
+    memoizedAccountList,
     portfolio?.snapshotsByWalletId,
     quoteCurrency,
     rates,
@@ -1220,6 +1157,7 @@ const KeyOverview = () => {
     searchVal,
     selectedBalance,
     t,
+    timeframeSelectorWidth,
     totalBalance,
     visibleKeyWallets,
   ]);
@@ -1349,6 +1287,7 @@ const KeyOverview = () => {
     hideAllBalances,
     id,
     isKeyPopulateLoading,
+    key,
     navigation,
     showPortfolioValue,
     showArchaxBanner,
@@ -1370,10 +1309,10 @@ const KeyOverview = () => {
 
   const renderDataComponent = useMemo(() => {
     return !searchVal && !selectedChainFilterOption
-      ? memorizedAccountList
+      ? memoizedAccountList
       : searchResults;
   }, [
-    memorizedAccountList,
+    memoizedAccountList,
     searchResults,
     searchVal,
     selectedChainFilterOption,
@@ -1394,7 +1333,6 @@ const KeyOverview = () => {
         data={renderDataComponent}
         renderItem={memoizedRenderItem}
         ListEmptyComponent={listEmptyComponent}
-        estimatedItemSize={70}
       />
 
       {keyOptions.length > 0 ? (

@@ -18,6 +18,7 @@ import {
 } from '../../../../store/app/app.actions';
 import BalanceHistoryChart from '../../../../components/charts/BalanceHistoryChart';
 import ChartChangeRow from '../../../../components/charts/ChartChangeRow';
+import {DEFAULT_BALANCE_CHART_TIMEFRAME} from '../../../../components/charts/fiatTimeframes';
 import {COINBASE_ENV} from '../../../../api/coinbase/coinbase.constants';
 import {useTranslation} from 'react-i18next';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
@@ -131,7 +132,9 @@ const PortfolioBalance = () => {
   const collapseButtonPressOpacity = useSharedValue(1);
   const [collapseButtonLayout, setCollapseButtonLayout] =
     useState<LayoutRectangle>();
-  const selectedChartTimeframeRef = React.useRef<FiatRateInterval>('ALL');
+  const selectedChartTimeframeRef = React.useRef<FiatRateInterval>(
+    DEFAULT_BALANCE_CHART_TIMEFRAME,
+  );
 
   const visibleKeys = useMemo(
     () => getVisibleKeysFromKeys(keys, homeCarouselConfig),

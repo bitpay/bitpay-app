@@ -20,7 +20,10 @@ import {
   type AllocationWallet,
   toAllocationWallet,
 } from '../../../../utils/portfolio/allocation';
-import {getVisibleWalletsFromKeys} from '../../../../utils/portfolio/assets';
+import {
+  getVisibleWalletsForKey,
+  getVisibleWalletsFromKeys,
+} from '../../../../utils/portfolio/assets';
 import {LightBlack, Slate30, SlateDark} from '../../../../styles/colors';
 import {maskIfHidden} from '../../../../utils/hideBalances';
 import {useAssetIconResolver} from '../hooks/useAssetIconResolver';
@@ -277,9 +280,7 @@ const Allocation: React.FC<Props> = ({navigation, route}) => {
         return (account?.wallets || []) as AllocationWallet[];
       }
 
-      const wallets = key.wallets.filter(
-        w => !w.hideWallet && !w.hideWalletByAccount,
-      );
+      const wallets = getVisibleWalletsForKey(key);
 
       return wallets.map((w: Wallet) => {
         return toAllocationWallet(w);

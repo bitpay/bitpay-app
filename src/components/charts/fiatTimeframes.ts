@@ -1,17 +1,25 @@
 import type {FiatRateInterval} from '../../store/rate/rate.models';
 import {
-  FIAT_TIMEFRAME_VALUES,
   getFiatTimeframeMetadata,
   getFiatTimeframeSeriesInterval,
 } from '../../utils/fiatTimeframes';
 
-export const FIAT_CHART_TIMEFRAME_VALUES: FiatRateInterval[] =
-  FIAT_TIMEFRAME_VALUES.slice();
+export const FIAT_CHART_DISPLAY_ORDER = [
+  '1D',
+  '1W',
+  '1M',
+  '3M',
+  '1Y',
+  '5Y',
+  'ALL',
+] as const satisfies ReadonlyArray<FiatRateInterval>;
+
+export const DEFAULT_BALANCE_CHART_TIMEFRAME = FIAT_CHART_DISPLAY_ORDER[0];
 
 export const getFiatChartTimeframeOptions = (
   t: (key: string) => string,
 ): Array<{label: string; value: FiatRateInterval}> => {
-  return FIAT_CHART_TIMEFRAME_VALUES.map(value => ({
+  return FIAT_CHART_DISPLAY_ORDER.map(value => ({
     value,
     label: t(getFiatTimeframeMetadata(value).displayLabel),
   }));

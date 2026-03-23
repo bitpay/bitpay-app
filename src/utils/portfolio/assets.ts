@@ -20,6 +20,10 @@ import type {Key, Wallet} from '../../store/wallet/wallet.models';
 import {IsSVMChain} from '../../store/wallet/utils/currency';
 import type {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
 import {
+  getWalletStableDeduplicationId,
+  isWalletVisibleForKey,
+} from '../../store/wallet/utils/wallet';
+import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
   BitpaySupportedUtxoCoins,
@@ -54,6 +58,7 @@ import {
   createSupportedCurrencyOptionLookup,
   type SupportedCurrencyOptionLookup,
 } from './supportedCurrencyOptionsLookup';
+import {toStringOrEmpty} from '../text';
 
 export type GainLossMode = FiatRateInterval;
 
@@ -179,9 +184,6 @@ const toNumber = (v: unknown): number => {
   const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) ? n : 0;
 };
-
-const toStringOrEmpty = (value: unknown): string =>
-  value === null || value === undefined ? '' : String(value);
 
 const toOptionalString = (value: unknown): string | undefined => {
   const normalized = toStringOrEmpty(value);
@@ -661,14 +663,31 @@ export const getVisibleKeysFromKeys = (
   return all.filter(k => !hiddenKeyIds.has(k.id));
 };
 
+export const getVisibleWalletsForKey = (key: Key | undefined): Wallet[] => {
+  const seenWalletIds = new Set<string>();
+  const uniqueWallets: Wallet[] = [];
+
+  for (const wallet of key?.wallets || []) {
+    const stableWalletId = getWalletStableDeduplicationId(wallet);
+    if (stableWalletId && seenWalletIds.has(stableWalletId)) {
+      continue;
+    }
+
+    if (stableWalletId) {
+      seenWalletIds.add(stableWalletId);
+    }
+    uniqueWallets.push(wallet);
+  }
+
+  return uniqueWallets.filter(wallet => isWalletVisibleForKey(key, wallet));
+};
+
 export const getVisibleWalletsFromKeys = (
   keys: Record<string, Key> | undefined,
   homeCarouselConfig?: HomeCarouselConfig[] | undefined,
 ): Wallet[] => {
   const visibleKeys = getVisibleKeysFromKeys(keys, homeCarouselConfig);
-  return visibleKeys
-    .flatMap(k => (Array.isArray(k.wallets) ? k.wallets : []))
-    .filter(w => !w.hideWallet && !w.hideWalletByAccount);
+  return visibleKeys.flatMap(getVisibleWalletsForKey);
 };
 
 export const buildWalletIdsByAssetGroupKey = (

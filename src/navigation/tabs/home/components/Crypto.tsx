@@ -61,6 +61,7 @@ import {
   getKeyLastDayPercentageDifference,
   getPercentageDifferenceFromPercentRatio,
   getQuoteCurrency,
+  getVisibleWalletsForKey,
   hasSnapshotsBeforeMsForWallets,
   hasSnapshotsForWallets,
   isPopulateLoadingForWallets,
@@ -72,7 +73,6 @@ import {t} from 'i18next';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import AddSvg from './AddSvg';
 import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
-import {Status} from 'bitcore-wallet-client/ts_build/src';
 import {logManager} from '../../../../managers/LogManager';
 import {WalletScreens} from '../../../../navigation/wallet/WalletGroup';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
@@ -253,9 +253,7 @@ export const createHomeCardList = ({
         backupComplete,
       } = key;
 
-      wallets = wallets.filter(
-        wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
-      );
+      wallets = getVisibleWalletsForKey(key);
 
       const isKeyPopulateLoading = isPopulateLoadingForWallets({
         populateStatus,
