@@ -26,7 +26,7 @@ import CreateEncryptionPassword from './screens/CreateEncryptionPassword';
 import {
   Key,
   Wallet as WalletModel,
-  _Credentials,
+  type WalletStatusPayload,
 } from '../../store/wallet/wallet.models';
 import ExtendedPrivateKey from './screens/ExtendedPrivateKey';
 import DeleteKey from './screens/DeleteKey';
@@ -150,7 +150,7 @@ export type WalletGroupParamList = {
   PayProConfirmTwoFactor: PayProConfirmTwoFactorParamList;
   CreateMultisig: CreateMultisigParamsList;
   JoinMultisig: JoinMultisigParamList | undefined;
-  Copayers: {wallet: WalletModel; status: _Credentials};
+  Copayers: {wallet: WalletModel; status: WalletStatusPayload};
   InviteCosigners: {keyId: string};
   ShareJoinCode: {keyId: string; partyId: number; joinCode: string};
   JoinTSSWallet: {copayerName?: string; keyId?: string};

@@ -61,6 +61,7 @@ import {
   getKeyLastDayPercentageDifference,
   getPercentageDifferenceFromPercentRatio,
   getQuoteCurrency,
+  getVisibleWalletsForKey,
   hasSnapshotsBeforeMsForWallets,
   hasSnapshotsForWallets,
   isPopulateLoadingForWallets,
@@ -266,9 +267,7 @@ export const createHomeCardList = ({
         backupComplete,
       } = key;
 
-      wallets = wallets.filter(
-        wallet => !wallet.hideWallet && !wallet.hideWalletByAccount,
-      );
+      wallets = getVisibleWalletsForKey(key);
 
       const isKeyPopulateLoading = isPopulateLoadingForWallets({
         populateStatus,

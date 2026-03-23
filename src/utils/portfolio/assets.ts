@@ -20,6 +20,10 @@ import type {Key, Wallet} from '../../store/wallet/wallet.models';
 import {IsSVMChain} from '../../store/wallet/utils/currency';
 import type {SupportedCurrencyOption} from '../../constants/SupportedCurrencyOptions';
 import {
+  getWalletStableDeduplicationId,
+  isWalletVisibleForKey,
+} from '../../store/wallet/utils/wallet';
+import {
   BitpaySupportedCoins,
   BitpaySupportedTokens,
   BitpaySupportedUtxoCoins,
@@ -54,6 +58,7 @@ import {
   createSupportedCurrencyOptionLookup,
   type SupportedCurrencyOptionLookup,
 } from './supportedCurrencyOptionsLookup';
+import {toStringOrEmpty} from '../text';
 
 export type GainLossMode = FiatRateInterval;
 
@@ -179,9 +184,6 @@ const toNumber = (v: unknown): number => {
   const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) ? n : 0;
 };
-
-const toStringOrEmpty = (value: unknown): string =>
-  value === null || value === undefined ? '' : String(value);
 
 const toOptionalString = (value: unknown): string | undefined => {
   const normalized = toStringOrEmpty(value);
@@ -661,56 +663,23 @@ export const getVisibleKeysFromKeys = (
   return all.filter(k => !hiddenKeyIds.has(k.id));
 };
 
-const getKeyOverviewAccountVisibilityKey = (
-  wallet: Wallet | undefined,
-): string => {
-  let accountKey = toStringOrEmpty(wallet?.receiveAddress);
-  const isComplete =
-    typeof wallet?.credentials?.isComplete === 'function'
-      ? wallet.credentials.isComplete()
-      : true;
-
-  if (!accountKey && (!isComplete || wallet?.pendingTssSession)) {
-    accountKey = toStringOrEmpty(wallet?.credentials?.walletId);
-  }
-
-  return accountKey;
-};
-
-const isWalletVisibleInKeyOverview = (
-  key: Key | undefined,
-  wallet: Wallet | undefined,
-): boolean => {
-  if (!wallet || wallet.hideWallet) {
-    return false;
-  }
-
-  const accountKey = getKeyOverviewAccountVisibilityKey(wallet);
-  if (accountKey && key?.evmAccountsInfo?.[accountKey]?.hideAccount) {
-    return false;
-  }
-
-  return true;
-};
-
 export const getVisibleWalletsForKey = (key: Key | undefined): Wallet[] => {
   const seenWalletIds = new Set<string>();
   const uniqueWallets: Wallet[] = [];
 
   for (const wallet of key?.wallets || []) {
-    const walletId =
-      wallet?.id != null ? String(wallet.id) : '__missing_wallet_id__';
-    if (seenWalletIds.has(walletId)) {
+    const stableWalletId = getWalletStableDeduplicationId(wallet);
+    if (stableWalletId && seenWalletIds.has(stableWalletId)) {
       continue;
     }
 
-    seenWalletIds.add(walletId);
+    if (stableWalletId) {
+      seenWalletIds.add(stableWalletId);
+    }
     uniqueWallets.push(wallet);
   }
 
-  return uniqueWallets.filter(wallet =>
-    isWalletVisibleInKeyOverview(key, wallet),
-  );
+  return uniqueWallets.filter(wallet => isWalletVisibleForKey(key, wallet));
 };
 
 export const getVisibleWalletsFromKeys = (

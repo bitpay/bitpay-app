@@ -39,11 +39,7 @@ import {
 } from '../../../utils/helper-methods';
 import {WALLET_DISPLAY_LIMIT} from '../../../navigation/tabs/home/components/Wallet';
 import {Network} from '../../../constants';
-import {
-  GetInvoiceCurrency,
-  PayProOptions,
-  PayProPaymentOption,
-} from '../effects/paypro/paypro';
+import {PayProOptions, PayProPaymentOption} from '../effects/paypro/paypro';
 import {Effect} from '../..';
 import {
   CoinbaseAccountProps,
@@ -55,15 +51,14 @@ import {WalletRowProps} from '../../../components/list/WalletRow';
 import {COINBASE_ENV} from '../../../api/coinbase/coinbase.constants';
 import {KeyWalletsRowProps} from '../../../components/list/KeyWalletsRow';
 import {AppDispatch} from '../../../utils/hooks';
+import {toStringOrEmpty} from '../../../utils/text';
 import _, {find, isEqual} from 'lodash';
-import {getCurrencyCodeFromCoinAndChain} from '../../../navigation/bitpay-id/utils/bitpay-id-utils';
 import {Invoice} from '../../../store/shop/shop.models';
 import {AccountRowProps} from '../../../components/list/AccountListRow';
 import {
   AssetsByChainData,
   AssetsByChainListProps,
 } from '../../../navigation/wallet/screens/AccountDetails';
-import uniqBy from 'lodash.uniqby';
 import cloneDeep from 'lodash.clonedeep';
 import {logManager} from '../../../managers/LogManager';
 
@@ -480,7 +475,7 @@ export const GetProtocolPrefixAddress =
     address: string,
     chain: string,
   ): Effect<string> =>
-  dispatch => {
+  _dispatch => {
     if (currencyAbbreviation !== 'bch') {
       return address;
     }
@@ -1137,6 +1132,60 @@ export const buildUIFormattedWallet: (
   return buildUIFormattedWallet;
 };
 
+export const getWalletAccountVisibilityKey = (
+  wallet: Wallet | undefined,
+): string => {
+  let accountKey = toStringOrEmpty(wallet?.receiveAddress);
+  const isComplete =
+    typeof wallet?.credentials?.isComplete === 'function'
+      ? wallet.credentials.isComplete()
+      : true;
+
+  if (!accountKey && (!isComplete || wallet?.pendingTssSession)) {
+    // Incomplete/pending wallets do not always have a receive address yet.
+    accountKey = toStringOrEmpty(wallet?.credentials?.walletId);
+  }
+
+  return accountKey;
+};
+
+export const getWalletStableDeduplicationId = (
+  wallet: Wallet | undefined,
+): string | undefined => {
+  const walletId = toStringOrEmpty(wallet?.id);
+  if (walletId) {
+    return walletId;
+  }
+
+  const credentialsWalletId = toStringOrEmpty(wallet?.credentials?.walletId);
+  return credentialsWalletId || undefined;
+};
+
+export const isWalletVisibleForKey = (
+  key: Key | undefined,
+  wallet: Wallet | undefined,
+): boolean => {
+  if (!wallet || wallet.hideWallet || wallet.hideWalletByAccount) {
+    return false;
+  }
+
+  const isComplete =
+    typeof wallet?.credentials?.isComplete === 'function'
+      ? wallet.credentials.isComplete()
+      : true;
+
+  if (isComplete && !wallet.pendingTssSession) {
+    return true;
+  }
+
+  const accountKey = getWalletAccountVisibilityKey(wallet);
+  if (accountKey && key?.evmAccountsInfo?.[accountKey]?.hideAccount) {
+    return false;
+  }
+
+  return true;
+};
+
 export const buildAccountList = (
   key: Key,
   defaultAltCurrencyIsoCode: string,
@@ -1169,13 +1218,25 @@ export const buildAccountList = (
       currencyDisplay: 'symbol',
     });
 
-  const wallets = uniqBy(
-    opts?.filterByCustomWallets || key?.wallets,
-    wallet => wallet.id,
+  const seenWalletIds = new Set<string>();
+  const wallets = (opts?.filterByCustomWallets || key?.wallets || []).filter(
+    wallet => {
+      const stableWalletId = getWalletStableDeduplicationId(wallet);
+      if (!stableWalletId) {
+        return true;
+      }
+
+      if (seenWalletIds.has(stableWalletId)) {
+        return false;
+      }
+
+      seenWalletIds.add(stableWalletId);
+      return true;
+    },
   );
 
   wallets.forEach(wallet => {
-    if (opts?.filterByHideWallet && wallet.hideWallet) {
+    if (opts?.filterByHideWallet && !isWalletVisibleForKey(key, wallet)) {
       return;
     }
 
@@ -1255,32 +1316,18 @@ export const buildAccountList = (
     const {
       keyId,
       chain,
-      credentials: {account, walletId, n},
+      credentials: {account},
       receiveAddress,
     } = wallet;
-
-    let accountKey = receiveAddress;
-
-    if (
-      !accountKey &&
-      (!wallet?.credentials?.isComplete() || wallet.pendingTssSession)
-    ) {
-      // Workaround for incomplete multisig wallets
-      accountKey = walletId;
-    }
+    const accountKey = getWalletAccountVisibilityKey(wallet);
 
     const isSVMChain = IsSVMChain(chain);
     const isTokensSupportedChain = IsVMChain(chain);
-    const name = key.evmAccountsInfo?.[accountKey!]?.name;
-    const existingAccount = accountMap[accountKey!];
-    const hideAccount = key.evmAccountsInfo?.[accountKey!]?.hideAccount;
-
-    if (opts?.filterByHideWallet && hideAccount) {
-      return;
-    }
+    const name = key.evmAccountsInfo?.[accountKey]?.name;
+    const existingAccount = accountMap[accountKey];
 
     if (!existingAccount) {
-      accountMap[accountKey!] = {
+      accountMap[accountKey] = {
         id: _.uniqueId('account_'),
         keyId,
         chains: [chain],

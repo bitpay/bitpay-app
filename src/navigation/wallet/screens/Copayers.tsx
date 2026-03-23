@@ -14,7 +14,6 @@ import {
   HeaderTitle,
 } from '../../../components/styled/Text';
 import {
-  TitleContainer,
   RowContainer,
   ActiveOpacity,
   CtaContainer,
@@ -27,7 +26,6 @@ import {useNavigation} from '@react-navigation/native';
 import Button from '../../../components/button/Button';
 import {useTranslation} from 'react-i18next';
 import {useLogger} from '../../../utils/hooks';
-import {Status} from '../../../store/wallet/wallet.models';
 
 const CircleCheckIcon = require('../../../../assets/img/circle-check.png');
 interface CopayersProps {
@@ -90,30 +88,52 @@ const Copayers: React.FC<CopayersProps> = props => {
         <HeaderTitle>{`${walletName} [${wallet?.m}-${wallet?.n}]`}</HeaderTitle>
       ),
     });
-  }, [navigation]);
+  }, [
+    navigation,
+    wallet?.credentials?.walletName,
+    wallet?.currencyName,
+    wallet?.m,
+    wallet?.n,
+    wallet?.walletName,
+  ]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await updateWalletStatus();
-    setRefreshing(false);
+    try {
+      await updateWalletStatus();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const updateWalletStatus = () => {
+    if (!wallet) {
+      return Promise.resolve();
+    }
+
     return new Promise<void>(resolve => {
-      wallet?.getStatus({network: wallet?.network}, (err: any, st: Status) => {
+      wallet.getStatus({}, (err, st) => {
         if (err) {
           const errStr =
             err instanceof Error ? err.message : JSON.stringify(err);
           logger.error(`error [updateWalletStatus] [getStatus]: ${errStr}`);
-        } else {
-          setWalletStatus(st?.wallet);
-          if (st?.wallet && st?.wallet?.status === 'complete') {
-            wallet.openWallet({}, () => {
-              navigationRef.goBack();
-            });
-          }
+          resolve();
+          return;
         }
-        return resolve();
+
+        if (!st?.wallet) {
+          resolve();
+          return;
+        }
+
+        setWalletStatus(st.wallet);
+        if (st.wallet.status === 'complete') {
+          wallet.openWallet({}, () => {
+            navigationRef.goBack();
+          });
+        }
+
+        resolve();
       });
     });
   };

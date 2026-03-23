@@ -17,7 +17,6 @@ import {useAppDispatch, useAppSelector} from '../../../utils/hooks';
 import {
   Wallet,
   TransactionProposal,
-  Status,
   KeyMethods,
 } from '../../../store/wallet/wallet.models';
 import styled from 'styled-components/native';
@@ -1234,7 +1233,7 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
     if (!fullWalletObj.isComplete() && fullWalletObj?.pendingTssSession) {
       fullWalletObj.getStatus(
         {network: fullWalletObj.network},
-        (err: any, status: Status) => {
+        (err, status) => {
           if (err) {
             const errStr =
               err instanceof Error ? err.message : JSON.stringify(err);
@@ -1249,9 +1248,12 @@ const AccountDetails: React.FC<AccountDetailsScreenProps> = ({route}) => {
               });
               return;
             }
+            if (!status?.wallet) {
+              return;
+            }
             navigation.navigate('Copayers', {
               wallet: fullWalletObj,
-              status: status?.wallet,
+              status: status.wallet,
             });
           }
         },

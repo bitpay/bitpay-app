@@ -118,6 +118,7 @@ import InteractiveLineChart, {
 import TimeframeSelector from '../../../components/charts/TimeframeSelector';
 import ChartChangeRow from '../../../components/charts/ChartChangeRow';
 import {
+  DEFAULT_BALANCE_CHART_TIMEFRAME,
   formatRangeOrSelectedPointLabel,
   getFiatChartTimeframeOptions,
   getRangeLabelForFiatTimeframe,
@@ -474,8 +475,9 @@ const ExchangeRate = () => {
     ({APP}: RootState) => APP.hideAllBalances,
   );
   const {params} = useRoute<RouteProp<WalletGroupParamList, 'ExchangeRate'>>();
-  const [selectedTimeframe, setSelectedTimeframe] =
-    useState<FiatRateInterval>('ALL');
+  const [selectedTimeframe, setSelectedTimeframe] = useState<FiatRateInterval>(
+    DEFAULT_BALANCE_CHART_TIMEFRAME,
+  );
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);

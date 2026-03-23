@@ -32,6 +32,8 @@ import {
   type PnlAnalysisPoint,
 } from '../../utils/portfolio/core/pnl/analysis';
 import {
+  DEFAULT_BALANCE_CHART_TIMEFRAME,
+  FIAT_CHART_DISPLAY_ORDER,
   getFiatChartTimeframeOptions,
   getRangeLabelForFiatTimeframe,
   getSeriesIntervalForFiatTimeframe,
@@ -109,22 +111,7 @@ import {useStableBalanceHistoryChartAxisLabels} from './useStableBalanceHistoryC
 const CHART_LOADER_DELAY_MS = 150;
 const CHART_COMPUTE_YIELD_EVERY_POINTS = 4;
 const PRECOMPUTE_TIMEFRAME_ORDER: FiatRateInterval[] = [
-  '1D',
-  '1W',
-  '1M',
-  'ALL',
-  '3M',
-  '1Y',
-  '5Y',
-];
-const BALANCE_CHART_TIMEFRAME_ORDER: FiatRateInterval[] = [
-  '1D',
-  '1W',
-  '1M',
-  '3M',
-  '1Y',
-  '5Y',
-  'ALL',
+  ...FIAT_CHART_DISPLAY_ORDER,
 ];
 const PREP_FX_CACHE_INTERVALS = FIAT_RATE_SERIES_CACHED_INTERVALS;
 const EMPTY_BALANCE_SNAPSHOTS: BalanceSnapshot[] = [];
@@ -223,7 +210,7 @@ const BalanceHistoryChart = ({
   wallets,
   snapshotsByWalletId,
   quoteCurrency,
-  initialSelectedTimeframe = '1D',
+  initialSelectedTimeframe = DEFAULT_BALANCE_CHART_TIMEFRAME,
   rates,
   fiatRateSeriesCache,
   lineColor,
@@ -273,8 +260,10 @@ const BalanceHistoryChart = ({
       }
     | undefined
   >(undefined);
-  const [hasCompletedInitialAllLoad, setHasCompletedInitialAllLoad] =
-    useState(false);
+  const [
+    hasCompletedInitialInteractiveLoad,
+    setHasCompletedInitialInteractiveLoad,
+  ] = useState(false);
   const [isChartLoaderVisible, setIsChartLoaderVisible] = useState(false);
 
   const computeGenerationRef = useRef(0);
@@ -457,13 +446,7 @@ const BalanceHistoryChart = ({
   }, [selectedTimeframe]);
 
   const fiatChartTimeframeOptions = useMemo(
-    () =>
-      getFiatChartTimeframeOptions(t).sort((a, b) => {
-        return (
-          BALANCE_CHART_TIMEFRAME_ORDER.indexOf(a.value) -
-          BALANCE_CHART_TIMEFRAME_ORDER.indexOf(b.value)
-        );
-      }),
+    () => getFiatChartTimeframeOptions(t),
     [t],
   );
 
@@ -663,7 +646,7 @@ const BalanceHistoryChart = ({
     hasAnyChartableSnapshots &&
     !!fiatRateSeriesCache &&
     (selectedTimeframeNeedsHistoricalRecompute ||
-      (hasCompletedInitialAllLoad &&
+      (hasCompletedInitialInteractiveLoad &&
         hasAnyBackgroundHistoricalRecomputeNeeded));
 
   useEffect(() => {
@@ -1072,7 +1055,7 @@ const BalanceHistoryChart = ({
     setAnalysisInputs(EMPTY_ANALYSIS_INPUTS(quoteCurrency));
     setAnalysisInputsReadyRevision(undefined);
     setAnalysisInputsErrorRevision(undefined);
-    setHasCompletedInitialAllLoad(false);
+    setHasCompletedInitialInteractiveLoad(false);
     dispatchTimeframeState({
       type: 'resetAll',
       generation,
@@ -1249,7 +1232,7 @@ const BalanceHistoryChart = ({
     if (!inputsReady || !hasAnyChartableSnapshots) {
       return;
     }
-    if (!hasCompletedInitialAllLoad) {
+    if (!hasCompletedInitialInteractiveLoad) {
       return;
     }
 
@@ -1272,7 +1255,7 @@ const BalanceHistoryChart = ({
   }, [
     getComputeDispositionForTimeframe,
     hasAnyChartableSnapshots,
-    hasCompletedInitialAllLoad,
+    hasCompletedInitialInteractiveLoad,
     inputsReady,
     queueTimeframeCompute,
     selectedTimeframe,
@@ -1313,17 +1296,17 @@ const BalanceHistoryChart = ({
     hasAnyChartableSnapshots && isSelectedTimeframePending;
 
   useEffect(() => {
+    if (hasRenderableSelectedSeries && !hasCompletedInitialInteractiveLoad) {
+      setHasCompletedInitialInteractiveLoad(true);
+    }
+
     if (!isChartLoadingRaw) {
       setIsChartLoaderVisible(false);
-      if (!hasCompletedInitialAllLoad && selectedTimeframe === 'ALL') {
-        setHasCompletedInitialAllLoad(true);
-      }
       return;
     }
 
-    const isInitialAllLoad =
-      selectedTimeframe === 'ALL' && !hasCompletedInitialAllLoad;
-    if (isInitialAllLoad) {
+    const isInitialInteractiveLoad = !hasCompletedInitialInteractiveLoad;
+    if (isInitialInteractiveLoad) {
       setIsChartLoaderVisible(true);
       return;
     }
@@ -1334,12 +1317,14 @@ const BalanceHistoryChart = ({
     }, CHART_LOADER_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [hasCompletedInitialAllLoad, isChartLoadingRaw, selectedTimeframe]);
+  }, [
+    hasCompletedInitialInteractiveLoad,
+    hasRenderableSelectedSeries,
+    isChartLoadingRaw,
+  ]);
 
-  const hideGuideLineForInitialAllLoader =
-    selectedTimeframe === 'ALL' &&
-    !hasCompletedInitialAllLoad &&
-    isChartLoaderVisible;
+  const hideGuideLineForInitialInteractiveLoader =
+    !hasCompletedInitialInteractiveLoad && isChartLoaderVisible;
   const hasAnyRenderableSeries =
     !!activeSeries ||
     Object.values(timeframeStateByTimeframe).some(
@@ -1447,7 +1432,7 @@ const BalanceHistoryChart = ({
           gradientBackgroundColor,
           theme.dark ? 'transparent' : White,
         ]}
-        showFirstPointGuideLine={!hideGuideLineForInitialAllLoader}
+        showFirstPointGuideLine={!hideGuideLineForInitialInteractiveLoader}
         isLoading={isChartLoaderVisible}
         hideLineWhileLoading={!hasAnyRenderableSeries}
         enablePanGesture={!isChartLoadingRaw && !disablePanGesture}
