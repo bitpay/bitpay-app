@@ -1,6 +1,6 @@
 import {t} from 'i18next';
+import {Linking} from 'react-native';
 import {BottomNotificationConfig} from '../components/modal/bottom-notification/BottomNotification';
-import {openSettings} from 'react-native-permissions';
 
 export const BiometricErrorNotification = (
   message: string,
@@ -24,7 +24,7 @@ export const BiometricErrorNotification = (
       {
         text: t('Open Settings'),
         action: () => {
-          openSettings('application');
+          Linking.openSettings();
           if (onDismissModal) {
             onDismissModal();
           }
