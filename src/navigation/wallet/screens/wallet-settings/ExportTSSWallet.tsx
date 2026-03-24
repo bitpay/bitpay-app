@@ -33,11 +33,11 @@ import {RootStacks} from '../../../../Root';
 import {TabsScreens} from '../../../tabs/TabsStack';
 import WalletCreatedSvg from '../../../../../assets/img/shared-success.svg';
 import {Wallet} from '../../../../store/wallet/wallet.models';
-import {TssKey} from 'bitcore-wallet-client/ts_build/src/lib/tsskey';
 import {checkPrivateKeyEncrypted} from '../../../../store/wallet/utils/wallet';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
 
 const BWC = BwcProvider.getInstance();
+const TssKey = BWC.getTssKey();
 
 const ExportContainer = styled.SafeAreaView`
   flex: 1;

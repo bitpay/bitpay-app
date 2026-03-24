@@ -28,7 +28,6 @@ import {
   subscribeEmailNotifications,
 } from '../../../app/app.effects';
 import {logManager} from '../../../../managers/LogManager';
-import {TssKeyGen} from 'bitcore-wallet-client/ts_build/src/lib/tsskey';
 import {BASE_BWS_URL} from '../../../../constants/config';
 import {Network} from '../../../../constants';
 import {setHomeCarouselConfig} from '../../../../store/app/app.actions';

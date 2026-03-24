@@ -1,5 +1,7 @@
-import BWC, {TssKey} from 'bitcore-wallet-client';
-import {Constants} from 'bitcore-wallet-client/ts_build/src/lib/common';
+import BWC, {TssKey, TssSign} from '@bitpay-labs/bitcore-wallet-client';
+import {Constants} from '@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/common';
+import Logger from '@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/log';
+import {KeyOptions} from '@bitpay-labs/bitcore-wallet-client/ts_build/src/lib/key';
 import {PAYPRO_TRUSTED_KEYS} from '@env';
 import {
   APP_NAME,
@@ -7,7 +9,6 @@ import {
   BASE_BWS_URL,
   BWC_TIMEOUT,
 } from '../constants/config';
-import {KeyOptions} from 'bitcore-wallet-client/ts_build/src/lib/key';
 
 interface KeyOpts {
   seedType: string;
@@ -67,6 +68,14 @@ export class BwcProvider {
     return new BWC.Key(opts);
   }
 
+  public getTssKey() {
+    return TssKey.TssKey;
+  }
+
+  public getTssSign() {
+    return TssSign.TssSign;
+  }
+
   public createTssKey(opts: TssKey.ITssKey) {
     return new TssKey.TssKey(opts);
   }
@@ -105,6 +114,10 @@ export class BwcProvider {
 
   public getConstants() {
     return Constants;
+  }
+
+  public getLogger() {
+    return Logger;
   }
 
   public getPayProV2() {

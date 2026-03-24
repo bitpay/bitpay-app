@@ -24,8 +24,7 @@ import {checkEncryptPassword} from '../../utils/wallet';
 import {checkBiometricForSending, getTx} from '../send/send';
 
 const BWC = BwcProvider.getInstance();
-
-const {TssSign} = require('bitcore-wallet-client/ts_build/src/lib/tsssign');
+const TssSign = BWC.getTssSign();
 
 export interface TSSSigningCallbacks {
   onStatusChange: (status: TSSSigningStatus) => void | Promise<void>;
@@ -208,7 +207,7 @@ const signInput = async (params: {
           const sig = tssSign.getSignature();
           logManager.debug(
             `[TSS Sign] Input ${inputIndex + 1} Signature from getSignature():`,
-            sig,
+            sig ? JSON.stringify(sig) : null,
           );
 
           const bwsSig = toBwsSignatureFormat(sig, txp.chain);
