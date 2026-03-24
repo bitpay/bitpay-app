@@ -1,17 +1,17 @@
-diff --git a/node_modules/bitcore-tss/ecdsa/keygen.js b/node_modules/bitcore-tss/ecdsa/keygen.js
+diff --git a/node_modules/@bitpay-labs/bitcore-tss/ecdsa/keygen.js b/node_modules/@bitpay-labs/bitcore-tss/ecdsa/keygen.js
 index cb9eccb..9f33573 100644
---- a/node_modules/bitcore-tss/ecdsa/keygen.js
-+++ b/node_modules/bitcore-tss/ecdsa/keygen.js
+--- a/node_modules/@bitpay-labs/bitcore-tss/ecdsa/keygen.js
++++ b/node_modules/@bitpay-labs/bitcore-tss/ecdsa/keygen.js
 @@ -137,6 +137,7 @@ class KeyGen {
      $.checkState(this.#round == 0, 'initJoin must be called before the rounds ');
- 
+
      const unsignedMessageR1 = await this.#dkg.initDkg();
 +
      const serializedMsg = DklsTypes.serializeBroadcastMessage(unsignedMessageR1);
      const signedMessage = await DklsComms.encryptAndAuthOutgoingMessages(
        { broadcastMessages: [serializedMsg], p2pMessages: [] },
 @@ -153,7 +154,7 @@ class KeyGen {
-    * @param {Array<object>} prevRoundMessages 
+    * @param {Array<object>} prevRoundMessages
     * @returns {{ round: number, partyId: number, publicKey: string, p2pMessages: object[], broadcastMessage: object[] }}
     */
 -  nextRound(prevRoundMessages) {
@@ -20,9 +20,9 @@ index cb9eccb..9f33573 100644
      $.checkState(this.#round < 5, 'Signing rounds are over');
      $.checkArgument(Array.isArray(prevRoundMessages), 'prevRoundMessages must be an array');
 @@ -163,17 +164,40 @@ class KeyGen {
- 
+
      const prevRoundIncomingMsgs = DklsComms.decryptAndVerifyIncomingMessages(prevRoundMessages, this.#authKey);
- 
+
 -    const thisRoundMessages = DklsTypes.serializeMessages(
 -      this.#dkg.handleIncomingMessages(DklsTypes.deserializeMessages(prevRoundIncomingMsgs))
 -    );
@@ -69,12 +69,12 @@ index cb9eccb..9f33573 100644
 +    const finalMessage = this._formatMessage(signedMessage);
 +    return finalMessage;
    }
- 
+
    /**
-diff --git a/node_modules/bitcore-tss/ecdsa/sign.js b/node_modules/bitcore-tss/ecdsa/sign.js
+diff --git a/node_modules/@bitpay-labs/bitcore-tss/ecdsa/sign.js b/node_modules/@bitpay-labs/bitcore-tss/ecdsa/sign.js
 index a7d48d1..68c7c9f 100644
---- a/node_modules/bitcore-tss/ecdsa/sign.js
-+++ b/node_modules/bitcore-tss/ecdsa/sign.js
+--- a/node_modules/@bitpay-labs/bitcore-tss/ecdsa/sign.js
++++ b/node_modules/@bitpay-labs/bitcore-tss/ecdsa/sign.js
 @@ -156,7 +156,6 @@ class Sign {
        [],
        this.#authKey
@@ -82,9 +82,9 @@ index a7d48d1..68c7c9f 100644
 -
      return this._formatMessage(signedMessage);
    }
- 
+
 @@ -166,23 +165,24 @@ class Sign {
-    * @param {Array<Object>} prevRoundMessages 
+    * @param {Array<Object>} prevRoundMessages
     * @returns {{ round: number, partyId: number, publicKey: string, p2pMessages: Object[], broadcastMessages: Object[] }}
     */
 -  nextRound(prevRoundMessages) {
@@ -104,14 +104,14 @@ index a7d48d1..68c7c9f 100644
 -
 -    const partyPubKeys = prevRoundMessages.map(m => ({ partyId: m.partyId, publicKey: m.publicKey }));
 +    $.checkArgument(prevRoundMessages.every(msg => msg.partyId !== this.#partyId), 'Messages must not be from yourself');
-+    
++
 +    const prevRndMsg = DklsComms.decryptAndVerifyIncomingMessages(prevRoundMessages, this.#authKey);
 +    const deserializedMessages = DklsTypes.deserializeMessages(prevRndMsg);
 +    const incomingMessages = await this.#dsg.handleIncomingMessages(deserializedMessages);
 +    const thisRoundMessages = await DklsTypes.serializeMessages(incomingMessages);
-+    const partyPubKeys = prevRoundMessages.map(m => ({ 
-+      partyId: m.partyId, 
-+      publicKey: m.publicKey 
++    const partyPubKeys = prevRoundMessages.map(m => ({
++      partyId: m.partyId,
++      publicKey: m.publicKey
 +    }));
      const signedMessage = DklsComms.encryptAndAuthOutgoingMessages(
 -      thisRoundMessage,
@@ -119,10 +119,10 @@ index a7d48d1..68c7c9f 100644
        partyPubKeys,
        this.#authKey
      );
-diff --git a/node_modules/bitcore-tss/ecies/ecies.js b/node_modules/bitcore-tss/ecies/ecies.js
+diff --git a/node_modules/@bitpay-labs/bitcore-tss/ecies/ecies.js b/node_modules/@bitpay-labs/bitcore-tss/ecies/ecies.js
 index 120b696..346e386 100644
---- a/node_modules/bitcore-tss/ecies/ecies.js
-+++ b/node_modules/bitcore-tss/ecies/ecies.js
+--- a/node_modules/@bitpay-labs/bitcore-tss/ecies/ecies.js
++++ b/node_modules/@bitpay-labs/bitcore-tss/ecies/ecies.js
 @@ -16,10 +16,11 @@ function KDF(privateKey, publicKey) {
    const KB = publicKey.point;
    const P = KB.mul(r);
@@ -131,27 +131,27 @@ index 120b696..346e386 100644
 -  const kEkM = Hash.sha512(Sbuf);
 -  const kE = kEkM.subarray(0, 32);
 -  const kM = kEkM.subarray(32, 64);
-+  const Sbuf = Buffer.from(S.toBuffer({ size: 32 }));    
-+  const kEkM = Buffer.from(Hash.sha512(Sbuf)); 
++  const Sbuf = Buffer.from(S.toBuffer({ size: 32 }));
++  const kEkM = Buffer.from(Hash.sha512(Sbuf));
 +   // In RN, subarray may return Uint8Array; force real Buffers:
 +   const kE = Buffer.from(kEkM.subarray(0, 32));
 +   const kM = Buffer.from(kEkM.subarray(32, 64));
    return [kE, kM];
  };
- 
+
 @@ -127,13 +128,13 @@ function decrypt({ payload, privateKey, publicKey, opts = {} }) {
      offset += pub.length;
    }
- 
+
 -  const ivbuf = payload.subarray(offset, offset + 16);
 -  const cipherText = payload.subarray(offset + 16, payload.length - tagLength);
 -  const tag = payload.subarray(payload.length - tagLength, payload.length);
 +  const ivbuf = Buffer.from(payload.subarray(offset, offset + 16));
 +  const cipherText = Buffer.from(payload.subarray(offset + 16, payload.length - tagLength));
 +  const tag = Buffer.from(payload.subarray(payload.length - tagLength, payload.length));
- 
+
    const [kE, kM] = KDF(privateKey, publicKey);
- 
+
 -  const tag2 = Hash.sha256hmac(cipherText, kM).subarray(0, tagLength);
 +  const tag2 = Buffer.from(Hash.sha256hmac(cipherText, kM)).slice(0, tagLength);
    if (tag2.compare(tag) !== 0) {

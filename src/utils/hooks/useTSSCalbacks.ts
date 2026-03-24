@@ -1,5 +1,4 @@
-import {useCallback} from 'react';
-
+import {Dispatch, SetStateAction, useCallback} from 'react';
 import {
   TSSCopayerSignStatus,
   TSSSigningProgress,
@@ -9,10 +8,12 @@ import {TSSSigningCallbacks} from '../../store/wallet/effects/tss-send/tss-send'
 import {logManager} from '../../managers/LogManager';
 import {sleep} from '../../utils/helper-methods';
 
+type TSSCopayer = {id: string; name: string; signed: boolean};
+
 interface UseTSSCallbacksParams {
   setTssStatus: (status: TSSSigningStatus) => void;
   setTssProgress: (progress: TSSSigningProgress) => void;
-  setTssCopayers: any;
+  setTssCopayers: Dispatch<SetStateAction<TSSCopayer[]>>;
   tssCopayers: Array<{id: string; name: string; signed: boolean}>;
   setShowTSSProgressModal: (show: boolean) => void;
   setResetSwipeButton: (reset: boolean) => void;
