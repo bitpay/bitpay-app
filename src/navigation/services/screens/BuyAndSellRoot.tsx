@@ -1142,15 +1142,8 @@ const BuyAndSellRoot = ({
       );
       return;
     }
-
-    // TODO: review if this if(...) is necessary
-    if (fromWallet?.id || fromCurrencyAbbreviation) {
-      // TODO: selectFirstAvailableWallet
-      // selectFirstAvailableWallet();
-    } else {
-      await sleep(500);
-      hideOngoingProcess();
-    }
+    await sleep(600);
+    hideOngoingProcess();
   };
 
   const filterMoonpayCurrenciesConditions = (

@@ -8,15 +8,18 @@ import {
 } from '../../buy-crypto.models';
 
 const bwsUri = BASE_BWS_URL;
+const DEFAULT_BANXA_TIMEOUT = 6000;
 
 export const banxaGetPaymentMethods = async (
   requestData: BanxaGetPaymentMethodsRequestData,
+  timeoutMs: number = DEFAULT_BANXA_TIMEOUT,
 ): Promise<BanxaPaymentMethodsData> => {
   try {
     const config = {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: timeoutMs,
     };
 
     const body = requestData;
