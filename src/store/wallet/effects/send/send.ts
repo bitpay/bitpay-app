@@ -1400,10 +1400,11 @@ export const publishAndSign =
 
         let txpToSign = publishedTx || txp;
 
-        // For deferred-nonce EVM txps, assign fresh nonce from BWS before signing
-        if (txpToSign.deferNonce && IsEVMChain(txpToSign.chain)) {
-          txpToSign = await wallet.assignNonce({ txp: txpToSign });
-          logManager.info(`Deferred nonce: BWS assigned nonce ${txpToSign.nonce} to txp ${txpToSign.id}`);
+        // EVM txps without a nonce need one assigned before signing.
+        // TODO: remove deferNonce check once BWS always defers nonce for EVM chains
+        if ((txpToSign.deferNonce || txpToSign.nonce == null) && IsEVMChain(txpToSign.chain)) {
+          txpToSign = await wallet.prepareTx({ txp: txpToSign });
+          logManager.info(`prepareTx: BWS assigned nonce ${txpToSign.nonce} to txp ${txpToSign.id}`);
         }
 
         if (key.isReadOnly && !key.hardwareSource) {
@@ -1602,7 +1603,7 @@ export const publishAndSignMultipleProposals =
           | void
           | Error
         )[] = [];
-        const evmTxsWithNonce = txps.filter(txp => txp.nonce !== undefined || txp.deferNonce);
+        const evmTxsWithNonce = txps.filter(txp => txp.nonce !== undefined || txp.deferNonce || (txp.nonce == null && IsEVMChain(txp.chain)));
         evmTxsWithNonce.sort((a, b) => (a.nonce || 0) - (b.nonce || 0));
         for (const txp of evmTxsWithNonce) {
           try {
@@ -1626,7 +1627,7 @@ export const publishAndSignMultipleProposals =
         }
 
         // Process transactions without a nonce concurrently
-        const withoutNonce = txps.filter(txp => txp.nonce === undefined && !txp.deferNonce);
+        const withoutNonce = txps.filter(txp => txp.nonce === undefined && !txp.deferNonce && !IsEVMChain(txp.chain));
         const promisesWithoutNonce: Promise<
           Partial<TransactionProposal> | void | Error
         >[] = withoutNonce.map(txp =>
