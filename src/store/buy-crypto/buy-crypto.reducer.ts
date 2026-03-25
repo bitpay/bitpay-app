@@ -1,5 +1,6 @@
 import {
   BanxaPaymentData,
+  LastPurchaseData,
   MoonpayPaymentData,
   SardinePaymentData,
   SimplexPaymentData,
@@ -19,6 +20,7 @@ export const buyCryptoReduxPersistBlackList: BuyCryptoReduxPersistBlackList = [
 
 export interface BuyCryptoStateOpts {
   selectedPaymentMethod: PaymentMethodKey | undefined;
+  lastPurchaseData: LastPurchaseData | undefined;
 }
 
 export interface BuyCryptoState {
@@ -38,6 +40,7 @@ export interface BuyCryptoState {
 const initialState: BuyCryptoState = {
   opts: {
     selectedPaymentMethod: undefined,
+    lastPurchaseData: undefined,
   },
   banxa: {},
   moonpay: {},

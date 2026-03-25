@@ -5,6 +5,18 @@ export interface BuyCryptoLimits {
   max?: number;
 }
 
+export interface LastPurchaseData {
+  coin: string;
+  chain: string;
+  fiatAmount: number;
+  fiatCurrency: string;
+  date: number;
+  partner: string;
+  walletId?: string;
+  keyId?: string;
+  tokenAddress?: string;
+}
+
 export type BanxaStatusKey =
   | 'paymentRequestSent'
   | 'pending'

@@ -2109,6 +2109,17 @@ const BuyAndSellRoot = ({
       BuyCryptoActions.updateBuyCryptoOpts({
         buyCryptoOpts: {
           selectedPaymentMethod: paymentMethod.method,
+          lastPurchaseData: {
+            coin: selectedWallet!.currencyAbbreviation,
+            chain: selectedWallet!.chain,
+            fiatAmount: offer.fiatAmount,
+            fiatCurrency: offer.fiatCurrency.toUpperCase(),
+            date: Date.now(),
+            partner: offer.key,
+            walletId: selectedWallet?.id,
+            keyId: selectedWallet?.keyId,
+            tokenAddress: selectedWallet?.tokenAddress,
+          },
         },
       }),
     );
