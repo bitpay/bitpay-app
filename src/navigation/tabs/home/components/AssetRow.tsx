@@ -212,6 +212,7 @@ const AssetRow: React.FC<Props> = ({
         option.currencyAbbreviation || item.currencyAbbreviation,
       chain: option.chain || item.chain,
       tokenAddress: option.tokenAddress || item.tokenAddress,
+      chartType: 'assetBalanceHistory',
     });
   };
 

@@ -192,6 +192,7 @@ export type WalletGroupParamList = {
     chain: string;
     tokenAddress?: string;
     network?: string;
+    chartType?: 'assetBalanceHistory';
   };
   ClearEncryptPassword: ClearEncryptPasswordParamList;
   SendToOptions: SendToOptionsParamList;
