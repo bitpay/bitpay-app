@@ -456,8 +456,11 @@ const BalanceHistoryChart = ({
   );
 
   const rateFetchAssets = useMemo(() => {
-    return buildBalanceHistoryChartRateFetchAssets(wallets);
-  }, [wallets]);
+    return buildBalanceHistoryChartRateFetchAssets(
+      scopedWallets,
+      scopedSnapshotsByWalletId,
+    );
+  }, [scopedSnapshotsByWalletId, scopedWallets]);
 
   const relevantRateCacheAssets = useMemo(() => {
     return buildBalanceHistoryChartRelevantRateCacheAssets(rateFetchAssets);
