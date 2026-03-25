@@ -45,7 +45,12 @@ import {
 import {useAppDispatch, useMount} from '../../../utils/hooks';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {getBuyCryptoFiatLimits} from '../../../store/buy-crypto/buy-crypto.effects';
+import {
+  calculateAltFiatToUsd,
+  calculateUsdToAltFiat,
+  getBuyCryptoFiatLimits,
+  roundUpNice,
+} from '../../../store/buy-crypto/buy-crypto.effects';
 import KeyEvent from 'react-native-keyevent';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import ExternalServicesOfferSelector, {
@@ -225,6 +230,7 @@ import {
 } from '../../../store/sell-crypto/models/simplex-sell.models';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {IS_ANDROID} from '../../../constants';
+import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
@@ -443,6 +449,9 @@ const BuyAndSellRoot = ({
     ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
   );
   const allRates = useAppSelector(({RATE}) => RATE.rates);
+  const buyCryptoOpts: BuyCryptoStateOpts = useAppSelector(
+    ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.opts,
+  );
   const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
   const tokenOptions = Object.entries(tokenOptionsByAddress).map(
     ([k, {symbol}]) => {
@@ -469,9 +478,79 @@ const BuyAndSellRoot = ({
   // Real route params
   const context = route.params?.context;
   const fromWallet = route.params?.fromWallet;
-  const fromAmount = route.params?.amount
-    ? Number(route.params.amount)
-    : undefined; // deeplink params are strings, ensure this is number so offers will work
+
+  const fromAmount = useMemo(() => {
+    const DEFAULT_USD_VALUE = 200;
+    let initialAmount: number | undefined;
+    const currentFiatCurrency = defaultAltCurrency?.isoCode || 'USD';
+    if (route.params?.amount) {
+      // deeplink params are strings, ensure this is number so offers will work
+      if (currentFiatCurrency !== 'USD') {
+        const _initialAmount = dispatch(
+          calculateUsdToAltFiat(
+            Number(route.params.amount),
+            currentFiatCurrency,
+          ),
+        );
+        initialAmount = _initialAmount
+          ? roundUpNice(_initialAmount)
+          : undefined;
+      } else {
+        initialAmount = Number(route.params.amount);
+      }
+    } else if (context === 'buyCrypto') {
+      if (
+        buyCryptoOpts?.lastPurchaseData?.fiatAmount &&
+        buyCryptoOpts?.lastPurchaseData?.fiatCurrency
+      ) {
+        const {fiatAmount, fiatCurrency} = buyCryptoOpts.lastPurchaseData;
+        if (fiatCurrency === currentFiatCurrency) {
+          initialAmount = fiatAmount;
+        } else if (fiatCurrency === 'USD' && currentFiatCurrency !== 'USD') {
+          const _initialAmount = dispatch(
+            calculateUsdToAltFiat(fiatAmount, currentFiatCurrency),
+          );
+          initialAmount = _initialAmount
+            ? roundUpNice(_initialAmount)
+            : undefined;
+        } else if (fiatCurrency !== 'USD' && currentFiatCurrency === 'USD') {
+          const _initialAmount = dispatch(
+            calculateAltFiatToUsd(fiatAmount, currentFiatCurrency),
+          );
+          initialAmount = _initialAmount
+            ? roundUpNice(_initialAmount)
+            : undefined;
+        } else if (
+          fiatCurrency !== 'USD' &&
+          currentFiatCurrency !== 'USD' &&
+          fiatCurrency !== currentFiatCurrency
+        ) {
+          const _initialAmount = dispatch(
+            calculateAltFiatToUsd(DEFAULT_USD_VALUE, currentFiatCurrency),
+          );
+          initialAmount = _initialAmount
+            ? roundUpNice(_initialAmount)
+            : undefined;
+        } else {
+          initialAmount = undefined;
+        }
+      } else {
+        if (currentFiatCurrency !== 'USD') {
+          const _initialAmount = dispatch(
+            calculateUsdToAltFiat(DEFAULT_USD_VALUE, currentFiatCurrency),
+          );
+          initialAmount = _initialAmount
+            ? roundUpNice(_initialAmount)
+            : undefined;
+        } else {
+          initialAmount = DEFAULT_USD_VALUE;
+        }
+      }
+    }
+
+    return initialAmount;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const fromCurrencyAbbreviation =
     route.params?.currencyAbbreviation?.toLowerCase();
   const fromChain = route.params?.chain?.toLowerCase();
@@ -838,6 +917,7 @@ const BuyAndSellRoot = ({
     }
     if (fromAmount && !isNaN(fromAmount)) {
       // Valid fromAmount
+      curValRef.current = fromAmount.toString();
       updateAmount(fromAmount.toString());
     } else {
       updateAmount('0');
