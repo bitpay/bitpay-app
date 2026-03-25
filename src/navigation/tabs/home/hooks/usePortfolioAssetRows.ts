@@ -26,7 +26,6 @@ import {
 } from '../../../../utils/portfolio/assets';
 import {useAppDispatch, useAppSelector} from '../../../../utils/hooks';
 import {
-  getHistoricalRateAssetRequestItemsForVisibleWalletGroups,
   getMissingHistoricalRateAssetRequests,
   hasHistoricalRateSeriesForAsset,
 } from './portfolioAssetHistoryRequests';
@@ -167,11 +166,8 @@ const usePortfolioAssetRows = ({gainLossMode, keyId}: Args): Result => {
   const lastPopulateTriggerAtRef = useRef<number>(0);
 
   const historicalRateRequestItems = useMemo(() => {
-    return getHistoricalRateAssetRequestItemsForVisibleWalletGroups(
-      wallets,
-      snapshotsByWalletId,
-    );
-  }, [snapshotsByWalletId, wallets]);
+    return visibleItems;
+  }, [visibleItems]);
 
   const missingHistoricalAssetRequests = useMemo(() => {
     return getMissingHistoricalRateAssetRequests({
