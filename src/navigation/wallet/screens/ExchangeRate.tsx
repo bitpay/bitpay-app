@@ -2,6 +2,7 @@ import {
   type NavigationProp,
   RouteProp,
   useNavigation,
+  useIsFocused,
   useRoute,
 } from '@react-navigation/native';
 import React, {
@@ -18,6 +19,7 @@ import {Path, Svg} from 'react-native-svg';
 import {useTranslation} from 'react-i18next';
 import styled, {useTheme} from 'styled-components/native';
 import HeaderBackButton from '../../../components/back/HeaderBackButton';
+import BalanceHistoryChart from '../../../components/charts/BalanceHistoryChart';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {
   ActiveOpacity,
@@ -64,8 +66,10 @@ import {shouldUseCompactFiatAmountText} from '../../../utils/fiatAmountText';
 import {getAssetTheme} from '../../../utils/portfolio/assetTheme';
 import {
   findSupportedCurrencyOptionForAsset,
+  getQuoteCurrency,
+  getWalletsMatchingExchangeRateAsset,
   getVisibleWalletsFromKeys,
-  walletHasNonZeroLiveBalance,
+  isPopulateLoadingForWallets,
 } from '../../../utils/portfolio/assets';
 import {getFiatRateSeriesIntervalForTimeframe} from '../../../utils/portfolio/rate';
 import {getFiatTimeframeMetadata} from '../../../utils/fiatTimeframes';
@@ -93,6 +97,7 @@ import {
   refreshFiatRateSeries,
   startGetRates,
 } from '../../../store/wallet/effects';
+import {maybePopulatePortfolioForWallets} from '../../../store/portfolio';
 import {getAndDispatchUpdatedWalletBalances} from '../../../store/wallet/effects/status/statusv2';
 import {
   CachedFiatRateInterval,
@@ -454,6 +459,7 @@ const ExchangeRate = () => {
   const {t} = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<NavigationProp<any>>();
+  const isFocused = useIsFocused();
   const dispatch = useAppDispatch();
   const keys = useAppSelector(({WALLET}: RootState) => WALLET.keys);
   const homeCarouselConfig = useAppSelector(
@@ -473,10 +479,15 @@ const ExchangeRate = () => {
   const hideAllBalances = useAppSelector(
     ({APP}: RootState) => APP.hideAllBalances,
   );
+  const portfolio = useAppSelector(({PORTFOLIO}: RootState) => PORTFOLIO);
   const {params} = useRoute<RouteProp<WalletGroupParamList, 'ExchangeRate'>>();
+  const isAssetBalanceHistoryMode = params?.chartType === 'assetBalanceHistory';
   const [selectedTimeframe, setSelectedTimeframe] = useState<FiatRateInterval>(
     DEFAULT_BALANCE_CHART_TIMEFRAME,
   );
+  const [selectedAssetBalance, setSelectedAssetBalance] = useState<
+    number | undefined
+  >(undefined);
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -564,6 +575,13 @@ const ExchangeRate = () => {
     ],
   );
 
+  const chartQuoteCurrency = useMemo(() => {
+    return getQuoteCurrency({
+      portfolioQuoteCurrency: portfolio.quoteCurrency,
+      defaultAltCurrencyIsoCode: defaultAltCurrency.isoCode,
+    }).toUpperCase();
+  }, [defaultAltCurrency.isoCode, portfolio.quoteCurrency]);
+
   const selectedFiatCodeUpper = (
     defaultAltCurrency.isoCode || 'USD'
   ).toUpperCase();
@@ -619,6 +637,11 @@ const ExchangeRate = () => {
   const selectedSeries = fiatRateSeriesCache[selectedSeriesKey];
 
   useEffect(() => {
+    if (isAssetBalanceHistoryMode) {
+      allIntervalsFetchInFlightRef.current = false;
+      return;
+    }
+
     const requestId = allIntervalsFetchRequestIdRef.current + 1;
     allIntervalsFetchRequestIdRef.current = requestId;
 
@@ -679,9 +702,14 @@ const ExchangeRate = () => {
     hasValidNormalizedCoin,
     normalizedCoin,
     selectedFiatCodeUpper,
+    isAssetBalanceHistoryMode,
   ]);
 
   useEffect(() => {
+    if (isAssetBalanceHistoryMode) {
+      return;
+    }
+
     if (!selectedFiatCodeUpper || !hasValidNormalizedCoin) {
       return;
     }
@@ -721,6 +749,7 @@ const ExchangeRate = () => {
     selectedFiatCodeUpper,
     selectedSeries,
     seriesDataInterval,
+    isAssetBalanceHistoryMode,
   ]);
 
   const altCurrencyIsoCodeUpper = defaultAltCurrency.isoCode?.toUpperCase();
@@ -760,13 +789,20 @@ const ExchangeRate = () => {
 
   const {pointsForChartRaw, displayData: derivedDisplayData} =
     useExchangeRateChartData({
-      selectedSeriesPoints: selectedSeries?.points,
+      selectedSeriesPoints: isAssetBalanceHistoryMode
+        ? undefined
+        : selectedSeries?.points,
       selectedTimeframe,
       seriesDataInterval,
-      currentFiatRate,
+      currentFiatRate: isAssetBalanceHistoryMode ? undefined : currentFiatRate,
     });
 
   useEffect(() => {
+    if (isAssetBalanceHistoryMode) {
+      setIsChartLoading(false);
+      return;
+    }
+
     if (
       typeof pointsForChartRaw !== 'undefined' &&
       typeof derivedDisplayData !== 'undefined'
@@ -778,30 +814,31 @@ const ExchangeRate = () => {
 
     const hasUsableData = !!displayDataRef.current.data.length;
     setIsChartLoading(!hasUsableData);
-  }, [derivedDisplayData, pointsForChartRaw]);
+  }, [derivedDisplayData, isAssetBalanceHistoryMode, pointsForChartRaw]);
+
+  const assetWallets = useMemo(() => {
+    return getWalletsMatchingExchangeRateAsset({
+      wallets: getVisibleWalletsFromKeys(keys, homeCarouselConfig),
+      currencyAbbreviation: assetContext.currencyAbbreviation,
+      tokenAddress: assetContext.tokenAddress,
+    });
+  }, [
+    assetContext.currencyAbbreviation,
+    assetContext.tokenAddress,
+    homeCarouselConfig,
+    keys,
+  ]);
+
+  const assetWalletIdsSig = useMemo(() => {
+    return assetWallets
+      .map(wallet => wallet.id)
+      .filter((walletId): walletId is string => !!walletId)
+      .sort((a, b) => a.localeCompare(b))
+      .join(',');
+  }, [assetWallets]);
 
   const walletsForAsset = useMemo(() => {
-    const visibleWallets = getVisibleWalletsFromKeys(keys, homeCarouselConfig);
-    const filtered = visibleWallets
-      .filter(w => w.network !== Network.testnet)
-      .filter(walletHasNonZeroLiveBalance)
-      .filter(w => {
-        const isSelectedToken = !!assetContext.tokenAddress;
-        const matchesCurrency =
-          (w.currencyAbbreviation || '').toLowerCase() ===
-          assetContext.currencyAbbreviation;
-        if (!matchesCurrency) {
-          return false;
-        }
-
-        // Asset rows are collapsed across chains. For token assets (like USDC),
-        // include all token wallets with the same ticker across supported chains.
-        if (isSelectedToken) {
-          return !!w.tokenAddress;
-        }
-
-        return true;
-      })
+    return assetWallets
       .map(wallet => {
         const ui = buildUIFormattedWallet(
           wallet,
@@ -813,18 +850,56 @@ const ExchangeRate = () => {
         return {wallet, ui};
       })
       .sort((a, b) => (b.ui.fiatBalance || 0) - (a.ui.fiatBalance || 0));
+  }, [assetWallets, defaultAltCurrency.isoCode, dispatch, rates]);
+  const hasWalletsForAsset = walletsForAsset.length > 0;
 
-    return filtered;
+  const assetTotalFiatBalance = useMemo(() => {
+    return walletsForAsset.reduce((total, {ui}) => {
+      return total + (ui.fiatBalance || 0);
+    }, 0);
+  }, [walletsForAsset]);
+
+  const isAssetBalanceChartLoading = useMemo(() => {
+    return isPopulateLoadingForWallets({
+      populateStatus: portfolio.populateStatus,
+      wallets: assetWallets,
+    });
+  }, [assetWallets, portfolio.populateStatus]);
+
+  useEffect(() => {
+    setSelectedAssetBalance(undefined);
   }, [
+    assetContext.chain,
     assetContext.currencyAbbreviation,
     assetContext.tokenAddress,
-    defaultAltCurrency.isoCode,
-    dispatch,
-    homeCarouselConfig,
-    keys,
-    rates,
+    isAssetBalanceHistoryMode,
   ]);
-  const hasWalletsForAsset = walletsForAsset.length > 0;
+
+  useEffect(() => {
+    if (
+      !isFocused ||
+      !isAssetBalanceHistoryMode ||
+      !assetWallets.length ||
+      portfolio.populateStatus?.inProgress
+    ) {
+      return;
+    }
+
+    dispatch(
+      maybePopulatePortfolioForWallets({
+        wallets: assetWallets,
+        quoteCurrency: chartQuoteCurrency,
+      }),
+    );
+  }, [
+    assetWalletIdsSig,
+    assetWallets,
+    chartQuoteCurrency,
+    dispatch,
+    isAssetBalanceHistoryMode,
+    isFocused,
+    portfolio.populateStatus?.inProgress,
+  ]);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -843,6 +918,19 @@ const ExchangeRate = () => {
           }),
         );
       }
+
+      if (isAssetBalanceHistoryMode) {
+        if (assetWallets.length) {
+          await dispatch(
+            maybePopulatePortfolioForWallets({
+              wallets: assetWallets,
+              quoteCurrency: chartQuoteCurrency,
+            }),
+          );
+        }
+        return;
+      }
+
       if (!hasValidNormalizedCoin) {
         return;
       }
@@ -897,15 +985,18 @@ const ExchangeRate = () => {
       setIsRefreshing(false);
     }
   }, [
+    assetWallets,
     assetContext.chain,
     assetContext.currencyAbbreviation,
     assetContext.tokenAddress,
+    chartQuoteCurrency,
     currentFiatRate,
     dispatch,
     fiatRateSeriesCache,
     hasWalletsForAsset,
     hasValidNormalizedCoin,
     historicalRateIdentity,
+    isAssetBalanceHistoryMode,
     normalizedCoin,
     selectedFiatCodeUpper,
     seriesDataInterval,
@@ -961,6 +1052,24 @@ const ExchangeRate = () => {
     return formatDisplayPrice(latestPriceValue ?? fallbackHistoricalPrice);
   }, [fallbackHistoricalPrice, formatDisplayPrice, latestPriceValue]);
 
+  const selectedAssetBalanceToDisplay = useMemo(() => {
+    if (!hasWalletsForAsset) {
+      return undefined;
+    }
+
+    return selectedAssetBalance ?? assetTotalFiatBalance;
+  }, [assetTotalFiatBalance, hasWalletsForAsset, selectedAssetBalance]);
+
+  const formattedAssetBalance = useMemo(() => {
+    if (selectedAssetBalanceToDisplay == null) {
+      return '--';
+    }
+
+    return formatFiatAmount(selectedAssetBalanceToDisplay, chartQuoteCurrency, {
+      currencyDisplay: 'symbol',
+    });
+  }, [chartQuoteCurrency, selectedAssetBalanceToDisplay]);
+
   const allIntervalsHighValue = useMemo(() => {
     if (!selectedFiatCodeUpper || !normalizedCoin) {
       return undefined;
@@ -1006,11 +1115,20 @@ const ExchangeRate = () => {
     defaultAltCurrency.isoCode,
   ]);
 
-  const shouldUseCompactTopPriceText = useMemo(() => {
+  const shouldUseCompactTopValueText = useMemo(() => {
+    if (isAssetBalanceHistoryMode) {
+      return shouldUseCompactFiatAmountText(formattedAssetBalance);
+    }
+
     return shouldUseCompactFiatAmountText(
       formattedAllIntervalsHighPrice || formattedTopPrice,
     );
-  }, [formattedAllIntervalsHighPrice, formattedTopPrice]);
+  }, [
+    formattedAllIntervalsHighPrice,
+    formattedAssetBalance,
+    formattedTopPrice,
+    isAssetBalanceHistoryMode,
+  ]);
 
   const timeframeChange = useMemo(() => {
     return getExchangeRateTimeframeChange({
@@ -1296,11 +1414,13 @@ const ExchangeRate = () => {
     assetContext.tokenAddress,
   ]);
 
-  const {coinColor, gradientBackgroundColor} = assetTheme ??
+  const {coinColor: rawCoinColor, gradientBackgroundColor} = assetTheme ??
     coin.theme ?? {
       coinColor: ProgressBlue,
       gradientBackgroundColor: theme.dark ? 'transparent' : White,
     };
+  const chartLineColor =
+    theme.dark && rawCoinColor === Black ? White : rawCoinColor;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -1323,41 +1443,68 @@ const ExchangeRate = () => {
         }>
         <TopSection>
           <AbbreviationLabel>{currencyAbbreviation}</AbbreviationLabel>
-          <PriceText isLargeNumber={shouldUseCompactTopPriceText}>
-            {formattedTopPrice}
+          <PriceText isLargeNumber={shouldUseCompactTopValueText}>
+            {isAssetBalanceHistoryMode && hideAllBalances
+              ? '****'
+              : isAssetBalanceHistoryMode
+              ? formattedAssetBalance
+              : formattedTopPrice}
           </PriceText>
-          <ChartChangeRow
-            percent={percentChangeToDisplay}
-            deltaFiatFormatted={priceChangeToDisplay}
-            rangeLabel={rangeOrSelectedPointLabel}
-          />
+          {isAssetBalanceHistoryMode ? null : (
+            <ChartChangeRow
+              percent={percentChangeToDisplay}
+              deltaFiatFormatted={priceChangeToDisplay}
+              rangeLabel={rangeOrSelectedPointLabel}
+            />
+          )}
         </TopSection>
 
-        <InteractiveLineChart
-          points={chartPoints}
-          animated={true}
-          gradientFillColors={[
-            gradientBackgroundColor,
-            theme.dark ? 'transparent' : White,
-          ]}
-          enablePanGesture={true}
-          panGestureDelay={100}
-          onGestureStart={onGestureStarted}
-          onPointSelected={onPointSelected}
-          onGestureEnd={onGestureEnd}
-          TopAxisLabel={MaxAxisLabel}
-          BottomAxisLabel={MinAxisLabel}
-          SelectionDot={ChartSelectionDot}
-          color={theme.dark && coinColor === Black ? White : coinColor}
-          isLoading={isChartLoading}
-        />
+        {isAssetBalanceHistoryMode ? (
+          !hideAllBalances ? (
+            <BalanceHistoryChart
+              wallets={assetWallets}
+              snapshotsByWalletId={portfolio.snapshotsByWalletId || {}}
+              quoteCurrency={chartQuoteCurrency}
+              rates={rates}
+              fiatRateSeriesCache={fiatRateSeriesCache}
+              lineColor={chartLineColor}
+              gradientStartColor={gradientBackgroundColor}
+              showLoaderWhenNoSnapshots={
+                isAssetBalanceChartLoading || isRefreshing
+              }
+              onSelectedBalanceChange={setSelectedAssetBalance}
+              timeframeSelectorHorizontalInset={ScreenGutter}
+            />
+          ) : null
+        ) : (
+          <>
+            <InteractiveLineChart
+              points={chartPoints}
+              animated={true}
+              gradientFillColors={[
+                gradientBackgroundColor,
+                theme.dark ? 'transparent' : White,
+              ]}
+              enablePanGesture={true}
+              panGestureDelay={100}
+              onGestureStart={onGestureStarted}
+              onPointSelected={onPointSelected}
+              onGestureEnd={onGestureEnd}
+              TopAxisLabel={MaxAxisLabel}
+              BottomAxisLabel={MinAxisLabel}
+              SelectionDot={ChartSelectionDot}
+              color={chartLineColor}
+              isLoading={isChartLoading}
+            />
 
-        <TimeframeSelector
-          options={fiatChartTimeframeOptions}
-          selected={selectedTimeframe}
-          horizontalInset={ScreenGutter}
-          onSelect={setSelectedTimeframe}
-        />
+            <TimeframeSelector
+              options={fiatChartTimeframeOptions}
+              selected={selectedTimeframe}
+              horizontalInset={ScreenGutter}
+              onSelect={setSelectedTimeframe}
+            />
+          </>
+        )}
 
         <ActionsContainer>
           <LinkingButtons

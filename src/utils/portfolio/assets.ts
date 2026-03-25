@@ -1183,6 +1183,42 @@ export const walletHasNonZeroLiveBalance = (wallet: Wallet): boolean => {
   return liveAtomicBalance > 0n;
 };
 
+export const getWalletsMatchingExchangeRateAsset = (args: {
+  wallets: Wallet[] | undefined;
+  currencyAbbreviation?: string;
+  tokenAddress?: string;
+}): Wallet[] => {
+  const targetCurrencyAbbreviation = (
+    args.currencyAbbreviation || ''
+  ).toLowerCase();
+  if (!targetCurrencyAbbreviation) {
+    return [];
+  }
+
+  const isTokenSelection = !!toOptionalString(args.tokenAddress);
+
+  return (args.wallets || [])
+    .filter(w => w.network !== Network.testnet)
+    .filter(walletHasNonZeroLiveBalance)
+    .filter(wallet => {
+      const matchesCurrency =
+        getPortfolioWalletCurrencyAbbreviationLower(wallet) ===
+        targetCurrencyAbbreviation;
+      if (!matchesCurrency) {
+        return false;
+      }
+
+      // Asset rows are collapsed across chains. For token assets (like USDC),
+      // aggregate all token wallets with the same ticker across supported
+      // chains instead of narrowing to a single token contract.
+      if (isTokenSelection) {
+        return !!getPortfolioWalletTokenAddress(wallet);
+      }
+
+      return true;
+    });
+};
+
 export const getSnapshotAtomicBalanceFromCryptoBalance = (args: {
   snapshot: BalanceSnapshot | undefined;
   unitDecimals: number;
