@@ -70,7 +70,7 @@ import AllAddresses, {
 import PayProConfirm, {
   PayProConfirmParamList,
 } from './screens/send/confirm/PayProConfirm';
-import ExchangeRate from './screens/ExchangeRate';
+import AssetDetails from './screens/AssetDetails';
 import ClearEncryptPassword, {
   ClearEncryptPasswordParamList,
 } from './screens/ClearEncryptPassword';
@@ -503,7 +503,7 @@ const WalletGroup = ({Wallet, theme}: WalletProps) => {
       />
       <Wallet.Screen
         name={WalletScreens.EXCHANGE_RATE}
-        component={ExchangeRate}
+        component={AssetDetails}
       />
       <Wallet.Screen
         options={{
