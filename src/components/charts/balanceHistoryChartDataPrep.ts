@@ -14,7 +14,10 @@ import type {Wallet} from '../../store/wallet/wallet.models';
 import {
   getPortfolioWalletChainLower,
   getPortfolioWalletCurrencyAbbreviation,
+  getPortfolioWalletId,
+  getPortfolioWalletSnapshots,
   getPortfolioWalletTokenAddressNormalized,
+  isPortfolioWalletOnMainnet,
 } from '../../utils/portfolio/assets';
 import {normalizeFiatRateSeriesCoin} from '../../utils/portfolio/core/pnl/rates';
 
@@ -28,11 +31,21 @@ export type BalanceHistoryChartRateFetchAsset = {
 
 export const buildBalanceHistoryChartRateFetchAssets = (
   wallets?: Wallet[],
+  snapshotsByWalletId?: BalanceSnapshotsByWalletId,
 ): BalanceHistoryChartRateFetchAsset[] => {
   const assets: BalanceHistoryChartRateFetchAsset[] = [];
   const seenAssetKeys = new Set<string>();
 
   for (const wallet of wallets || []) {
+    const walletId = getPortfolioWalletId(wallet);
+    if (!walletId || !isPortfolioWalletOnMainnet(wallet)) {
+      continue;
+    }
+
+    if (!getPortfolioWalletSnapshots(snapshotsByWalletId, walletId).length) {
+      continue;
+    }
+
     const coinForCacheCheck = normalizeFiatRateSeriesCoin(
       getPortfolioWalletCurrencyAbbreviation(wallet),
     );

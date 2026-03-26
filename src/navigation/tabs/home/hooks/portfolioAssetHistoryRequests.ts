@@ -1,9 +1,4 @@
-import {
-  getPortfolioWalletSnapshots,
-  walletHasNonZeroLiveBalance,
-  type AssetRowItem,
-} from '../../../../utils/portfolio/assets';
-import type {BalanceSnapshotsByWalletId} from '../../../../store/portfolio/portfolio.models';
+import {type AssetRowItem} from '../../../../utils/portfolio/assets';
 import type {
   CachedFiatRateInterval,
   FiatRateSeriesCache,
@@ -17,7 +12,6 @@ import {
   normalizeFiatRateSeriesChain,
   normalizeFiatRateSeriesTokenAddress,
 } from '../../../../utils/portfolio/core/fiatRateSeries';
-import type {Wallet} from '../../../../store/wallet/wallet.models';
 
 export type HistoricalRateAssetRequest = {
   requestKey: string;
@@ -30,46 +24,6 @@ export type HistoricalRateAssetIdentityInput = Pick<
   AssetRowItem,
   'currencyAbbreviation' | 'chain' | 'tokenAddress'
 >;
-
-const getWalletCurrencyAbbreviationLower = (wallet: Wallet): string => {
-  return String(wallet?.currencyAbbreviation || '').toLowerCase();
-};
-
-const getWalletChainLower = (wallet: Wallet): string => {
-  return String(wallet?.chain || '').toLowerCase();
-};
-
-const getWalletTokenAddress = (wallet: Wallet): string | undefined => {
-  const tokenAddress = String(wallet?.tokenAddress || '').trim();
-  return tokenAddress || undefined;
-};
-
-const isMainnetWallet = (wallet: Wallet): boolean => {
-  return String(wallet?.network || '').toLowerCase() === 'livenet';
-};
-
-const walletHasStoredSnapshots = (
-  wallet: Wallet,
-  snapshotsByWalletId: BalanceSnapshotsByWalletId,
-): boolean => {
-  const walletId = String(wallet?.id || '');
-  if (!walletId) {
-    return false;
-  }
-
-  return getPortfolioWalletSnapshots(snapshotsByWalletId, walletId).length > 0;
-};
-
-const shouldIncludeWalletInHistoricalRateRequests = (args: {
-  wallet: Wallet;
-  snapshotsByWalletId: BalanceSnapshotsByWalletId;
-}): boolean => {
-  if (walletHasNonZeroLiveBalance(args.wallet)) {
-    return true;
-  }
-
-  return walletHasStoredSnapshots(args.wallet, args.snapshotsByWalletId);
-};
 
 const normalizeHistoricalRateAssetIdentity = (
   identity: HistoricalRateAssetIdentityInput,
@@ -145,76 +99,6 @@ export const getHistoricalRateAssetRequestFromItem = (
     chain: normalized.chain,
     tokenAddress: normalized.tokenAddress,
   };
-};
-
-export const getHistoricalRateAssetRequestItemsForVisibleWalletGroups = (
-  wallets: Wallet[] | undefined,
-  snapshotsByWalletId: BalanceSnapshotsByWalletId,
-): HistoricalRateAssetIdentityInput[] => {
-  const walletsByDisplayGroupKey = new Map<string, Wallet[]>();
-
-  for (const wallet of wallets || []) {
-    if (!isMainnetWallet(wallet)) {
-      continue;
-    }
-
-    const groupKey = getWalletCurrencyAbbreviationLower(wallet);
-    if (!groupKey) {
-      continue;
-    }
-
-    const groupedWallets = walletsByDisplayGroupKey.get(groupKey) || [];
-    groupedWallets.push(wallet);
-    walletsByDisplayGroupKey.set(groupKey, groupedWallets);
-  }
-
-  const requestItemsByAssetKey = new Map<
-    string,
-    HistoricalRateAssetIdentityInput
-  >();
-
-  for (const groupedWallets of walletsByDisplayGroupKey.values()) {
-    if (!groupedWallets.some(walletHasNonZeroLiveBalance)) {
-      continue;
-    }
-
-    for (const wallet of groupedWallets) {
-      if (
-        !shouldIncludeWalletInHistoricalRateRequests({
-          wallet,
-          snapshotsByWalletId,
-        })
-      ) {
-        continue;
-      }
-
-      const normalized = normalizeHistoricalRateAssetIdentity({
-        currencyAbbreviation: getWalletCurrencyAbbreviationLower(wallet),
-        chain: getWalletChainLower(wallet),
-        tokenAddress: getWalletTokenAddress(wallet),
-      });
-      if (!normalized) {
-        continue;
-      }
-
-      const assetKey = getFiatRateSeriesAssetKey(
-        normalized.currencyAbbreviation,
-        {
-          chain: normalized.chain,
-          tokenAddress: normalized.tokenAddress,
-        },
-      );
-      if (!assetKey) {
-        continue;
-      }
-
-      requestItemsByAssetKey.set(assetKey, normalized);
-    }
-  }
-
-  return Array.from(requestItemsByAssetKey.entries())
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([, item]) => item);
 };
 
 export const hasHistoricalRateSeriesForAsset = (args: {

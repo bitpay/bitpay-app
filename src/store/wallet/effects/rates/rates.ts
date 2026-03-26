@@ -82,25 +82,46 @@ const getFiatRateSeriesUrl = (
   const normalizedCoin = normalizeFiatRateSeriesCoin(coin).trim();
   const normalizedChain = (chain || '').trim();
   const normalizedTokenAddress = (tokenAddress || '').trim();
-  const coinQuery = normalizedCoin
-    ? `coin=${encodeURIComponent(normalizedCoin)}`
-    : '';
-  const chainQuery =
-    normalizedCoin && normalizedChain
-      ? `&chain=${encodeURIComponent(normalizedChain)}`
-      : '';
-  const tokenAddressQuery =
-    normalizedCoin && normalizedTokenAddress
-      ? `&tokenAddress=${encodeURIComponent(normalizedTokenAddress)}`
-      : '';
-  if (!days) {
-    return coinQuery
-      ? `${FIAT_RATE_SERIES_BASE_URL}/${codeUpper}?${coinQuery}${chainQuery}${tokenAddressQuery}`
-      : `${FIAT_RATE_SERIES_BASE_URL}/${codeUpper}`;
+  const params = new URLSearchParams();
+  const shouldUseCoinOnlyFallback = normalizedCoin === 'pol';
+  const isTokenRequest = !!normalizedTokenAddress && !shouldUseCoinOnlyFallback;
+
+  if (typeof days === 'number') {
+    params.set('days', String(days));
   }
-  return coinQuery
-    ? `${FIAT_RATE_SERIES_BASE_URL}/${codeUpper}?days=${days}&${coinQuery}${chainQuery}${tokenAddressQuery}`
-    : `${FIAT_RATE_SERIES_BASE_URL}/${codeUpper}?days=${days}`;
+
+  if (isTokenRequest) {
+    if (normalizedChain) {
+      params.set('chain', normalizedChain);
+    }
+    params.set('tokenAddress', normalizedTokenAddress);
+  } else if (normalizedCoin) {
+    params.set('coin', normalizedCoin);
+    if (normalizedChain && !shouldUseCoinOnlyFallback) {
+      params.set('chain', normalizedChain);
+    }
+  }
+
+  const query = params.toString();
+  return query
+    ? `${FIAT_RATE_SERIES_BASE_URL}/${codeUpper}?${query}`
+    : `${FIAT_RATE_SERIES_BASE_URL}/${codeUpper}`;
+};
+
+const getFiatRateSeriesRequestPath = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    const normalizedBase = String(FIATRATES_MARKETSTATS_BASE_URL || '').replace(
+      /\/+$/,
+      '',
+    );
+    if (normalizedBase && url.startsWith(normalizedBase)) {
+      return url.slice(normalizedBase.length);
+    }
+    return url;
+  }
 };
 
 const hasValidFiatRateSeriesInCache = (args: {
@@ -617,6 +638,7 @@ export const fetchFiatRateSeriesInterval =
         chain,
         tokenAddress,
       );
+      const requestPath = getFiatRateSeriesRequestPath(url);
       const contextCoin =
         normalizeFiatRateSeriesCoin(
           normalizedRequestedCoin || coinForCacheCheck,
@@ -653,13 +675,13 @@ export const fetchFiatRateSeriesInterval =
           logManager.error(
             `fetchFiatRateSeriesInterval: v4 fiatrates request failed (${context}) ${getErrorString(
               error,
-            )}${responseSuffix}`,
+            )} | path=${requestPath}${responseSuffix}`,
           );
         } else {
           logManager.error(
             `fetchFiatRateSeriesInterval: unexpected error (${context}) ${getErrorString(
               error,
-            )}`,
+            )} | path=${requestPath}`,
           );
         }
         return;
@@ -676,7 +698,9 @@ export const fetchFiatRateSeriesInterval =
           logManager.error(
             `fetchFiatRateSeriesInterval: coin-specific v4 fiatrates response had invalid shape (${(
               fiatCode || ''
-            ).toUpperCase()}/${normalizedRequestedCoin || coin}/${interval})`,
+            ).toUpperCase()}/${
+              normalizedRequestedCoin || coin
+            }/${interval}) | path=${requestPath}`,
           );
         }
         requestFailed = true;
@@ -750,7 +774,7 @@ export const fetchFiatRateSeriesInterval =
             fiatCode || ''
           ).toUpperCase()}/${
             normalizedRequestedCoin || coin
-          }/${interval}) payloadCoins=[${payloadCoins}]`,
+          }/${interval}) | path=${requestPath} payloadCoins=[${payloadCoins}]`,
         );
       }
     };
