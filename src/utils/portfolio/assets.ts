@@ -2371,6 +2371,7 @@ export const buildAssetRowItemsFromPortfolioSnapshots = (args: {
       totalAtomic,
       repUnitDecimals,
       Math.min(repUnitDecimals, 8),
+      {trimTrailingZeros: false},
     );
 
     rows.push({
