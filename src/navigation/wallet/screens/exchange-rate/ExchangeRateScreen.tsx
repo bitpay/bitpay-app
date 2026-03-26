@@ -248,12 +248,29 @@ const ExchangeRateScreen = ({shared}: ExchangeRateScreenProps) => {
   }, [selectedTimeframe, t]);
 
   const rangeOrSelectedPointLabel = useMemo(() => {
+    const firstTimestamp = selectedSeries?.points?.[0]?.ts;
+    const lastTimestamp =
+      selectedSeries?.points?.[(selectedSeries.points?.length || 1) - 1]?.ts;
+    const displayedRangeMs =
+      typeof firstTimestamp === 'number' &&
+      typeof lastTimestamp === 'number' &&
+      Number.isFinite(firstTimestamp) &&
+      Number.isFinite(lastTimestamp)
+        ? Math.max(0, lastTimestamp - firstTimestamp)
+        : undefined;
+
     return formatRangeOrSelectedPointLabel({
       rangeLabel,
       selectedTimeframe,
       selectedDate: selectedPoint?.date,
+      displayedRangeMs,
     });
-  }, [rangeLabel, selectedPoint?.date, selectedTimeframe]);
+  }, [
+    rangeLabel,
+    selectedPoint?.date,
+    selectedSeries?.points,
+    selectedTimeframe,
+  ]);
 
   const fallbackHistoricalPrice = useMemo(() => {
     if (displayData.data.length) {
