@@ -174,6 +174,7 @@ export function formatBigIntDecimal(
   atomic: bigint,
   decimals: number,
   maxDecimals = decimals,
+  opts?: {trimTrailingZeros?: boolean},
 ): string {
   const sign = atomic < 0n ? '-' : '';
   let abs = atomic < 0n ? -atomic : atomic;
@@ -187,7 +188,9 @@ export function formatBigIntDecimal(
   // Trim or shorten fractional digits.
   const sliceTo = Math.max(0, Math.min(decimals, maxDecimals));
   frac = frac.slice(0, sliceTo);
-  frac = frac.replace(/0+$/, '');
+  if (opts?.trimTrailingZeros !== false) {
+    frac = frac.replace(/0+$/, '');
+  }
 
   return frac ? `${sign}${whole.toString()}.${frac}` : sign + whole.toString();
 }
