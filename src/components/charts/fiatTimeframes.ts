@@ -2,7 +2,13 @@ import type {FiatRateInterval} from '../../store/rate/rate.models';
 import {
   getFiatTimeframeMetadata,
   getFiatTimeframeSeriesInterval,
+  getFiatTimeframeWindowMs,
 } from '../../utils/fiatTimeframes';
+
+const DAY_MS = getFiatTimeframeWindowMs('1D') || 24 * 60 * 60 * 1000;
+const THREE_MONTHS_MS = getFiatTimeframeWindowMs('3M') || 90 * DAY_MS;
+
+export type SelectedPointLabelFormatMode = 'time' | 'dateTime' | 'date';
 
 export const FIAT_CHART_DISPLAY_ORDER = [
   '1D',
@@ -42,6 +48,7 @@ export const formatRangeOrSelectedPointLabel = (args: {
   rangeLabel: string;
   selectedTimeframe: FiatRateInterval;
   selectedDate?: Date;
+  displayedRangeMs?: number;
 }): string => {
   const {rangeLabel, selectedTimeframe, selectedDate} = args;
   if (!selectedDate) {
@@ -49,14 +56,19 @@ export const formatRangeOrSelectedPointLabel = (args: {
   }
 
   const date = selectedDate;
-  if (selectedTimeframe === '1D') {
+  const formatMode = getSelectedPointLabelFormatMode({
+    selectedTimeframe,
+    displayedRangeMs: args.displayedRangeMs,
+  });
+
+  if (formatMode === 'time') {
     return date.toLocaleTimeString([], {
       hour: 'numeric',
       minute: '2-digit',
     });
   }
 
-  if (selectedTimeframe === '1W' || selectedTimeframe === '1M') {
+  if (formatMode === 'dateTime') {
     return date.toLocaleString([], {
       month: 'short',
       day: 'numeric',
@@ -71,4 +83,34 @@ export const formatRangeOrSelectedPointLabel = (args: {
     day: 'numeric',
     year: 'numeric',
   });
+};
+
+export const getSelectedPointLabelFormatMode = (args: {
+  selectedTimeframe: FiatRateInterval;
+  displayedRangeMs?: number;
+}): SelectedPointLabelFormatMode => {
+  if (args.selectedTimeframe === '1D') {
+    return 'time';
+  }
+
+  if (args.selectedTimeframe === '1W' || args.selectedTimeframe === '1M') {
+    return 'dateTime';
+  }
+
+  if (args.selectedTimeframe === 'ALL') {
+    const displayedRangeMs = args.displayedRangeMs;
+    if (
+      typeof displayedRangeMs === 'number' &&
+      Number.isFinite(displayedRangeMs)
+    ) {
+      if (displayedRangeMs < DAY_MS) {
+        return 'time';
+      }
+      if (displayedRangeMs < THREE_MONTHS_MS) {
+        return 'dateTime';
+      }
+    }
+  }
+
+  return 'date';
 };

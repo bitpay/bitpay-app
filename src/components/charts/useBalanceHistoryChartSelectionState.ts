@@ -59,12 +59,33 @@ export const useBalanceHistoryChartSelectionState = (args: {
   }, [args.onSelectedBalanceChangeRef]);
 
   const rangeOrSelectedPointLabel = useMemo(() => {
+    const displayedSeries = args.activeSeries || args.cachedSelectedSeries;
+    const firstTimestamp = displayedSeries?.analysisPoints?.[0]?.timestamp;
+    const lastTimestamp =
+      displayedSeries?.analysisPoints?.[
+        (displayedSeries.analysisPoints?.length || 1) - 1
+      ]?.timestamp;
+    const displayedRangeMs =
+      typeof firstTimestamp === 'number' &&
+      typeof lastTimestamp === 'number' &&
+      Number.isFinite(firstTimestamp) &&
+      Number.isFinite(lastTimestamp)
+        ? Math.max(0, lastTimestamp - firstTimestamp)
+        : undefined;
+
     return formatRangeOrSelectedPointLabel({
       rangeLabel: args.rangeLabel,
       selectedTimeframe: args.displayedTimeframe,
       selectedDate: selectedPoint?.date,
+      displayedRangeMs,
     });
-  }, [args.displayedTimeframe, args.rangeLabel, selectedPoint?.date]);
+  }, [
+    args.activeSeries,
+    args.cachedSelectedSeries,
+    args.displayedTimeframe,
+    args.rangeLabel,
+    selectedPoint?.date,
+  ]);
 
   const displayedAnalysisPoint = useMemo(() => {
     return getDisplayedBalanceHistoryAnalysisPoint({
