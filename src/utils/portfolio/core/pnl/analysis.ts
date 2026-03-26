@@ -125,6 +125,46 @@ export type PnlAnalysisResult = {
   totalSummary: TotalPnlSummary;
 };
 
+const normalizeFirstAllPoint = (
+  points: PnlAnalysisPoint[],
+  exactExtrema: PnlAnalysisExactExtrema | undefined,
+): void => {
+  const first = points[0];
+  if (!first || first.totalRemainingCostBasisFiat <= 0) {
+    return;
+  }
+
+  for (const walletPoint of Object.values(first.byWalletId)) {
+    if (!walletPoint || walletPoint.remainingCostBasisFiat <= 0) {
+      continue;
+    }
+    walletPoint.fiatBalance = walletPoint.remainingCostBasisFiat;
+    walletPoint.unrealizedPnlFiat = 0;
+    walletPoint.pnlPercent = 0;
+  }
+
+  first.totalFiatBalance = first.totalRemainingCostBasisFiat;
+  first.totalUnrealizedPnlFiat = 0;
+  first.totalPnlPercent = 0;
+
+  if (!exactExtrema) {
+    return;
+  }
+
+  const normalizeExtremaPoint = (
+    point: PnlAnalysisExtremaPoint | undefined,
+  ): void => {
+    if (point?.timestamp === first.timestamp) {
+      point.totalFiatBalance = first.totalFiatBalance;
+    }
+  };
+
+  normalizeExtremaPoint(exactExtrema.min);
+  normalizeExtremaPoint(exactExtrema.max);
+  normalizeExtremaPoint(exactExtrema.minExcludingEnd);
+  normalizeExtremaPoint(exactExtrema.maxExcludingEnd);
+};
+
 function buildEvenTimeline(
   startMs: number,
   endMs: number,
@@ -1479,6 +1519,10 @@ function* buildPnlAnalysisSeriesGenerator(
     getOverrideRate,
     yieldEveryIterations: yieldEveryExtremaIterations,
   });
+
+  if (args.timeframe === 'ALL') {
+    normalizeFirstAllPoint(points, exactExtrema);
+  }
 
   // Summaries
   const first = points[0];
