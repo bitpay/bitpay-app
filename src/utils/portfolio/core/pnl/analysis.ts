@@ -32,6 +32,7 @@ import {
 } from '../fiatTimeframes';
 
 const MS_PER_HOUR = 60 * 60 * 1000;
+const MS_PER_DAY = 24 * MS_PER_HOUR;
 
 export type PnlTimeframe = FiatRateInterval;
 
@@ -164,6 +165,57 @@ const FALLBACK_ORDER_BY_TIMEFRAME: Record<
   ALL: PREF_ALL,
 };
 
+type CoveringSeriesInterval = Extract<
+  FiatRateInterval,
+  '1D' | '1W' | '1M' | 'ALL'
+>;
+
+const ALL_FALLBACK_ORDER_BY_SERIES_INTERVAL: Record<
+  CoveringSeriesInterval,
+  readonly FiatRateInterval[]
+> = {
+  '1D': ['1D', '1W', '1M', 'ALL'],
+  '1W': ['1W', '1M', 'ALL', '1D'],
+  '1M': ['1M', 'ALL', '1W', '1D'],
+  ALL: ['ALL', '1M', '1W', '1D'],
+};
+
+function getSmallestCachedIntervalCoveringWindow(
+  windowMs: number,
+): CoveringSeriesInterval {
+  if (!Number.isFinite(windowMs) || windowMs <= 1 * MS_PER_DAY) {
+    return '1D';
+  }
+  if (windowMs <= 7 * MS_PER_DAY) {
+    return '1W';
+  }
+  if (windowMs <= 30 * MS_PER_DAY) {
+    return '1M';
+  }
+  return 'ALL';
+}
+
+function getSeriesIntervalForAnalysisTimeframe(args: {
+  timeframe: PnlTimeframe;
+  nowMs: number;
+  oldestSnapshotMs: number | null;
+}): FiatRateInterval {
+  if (args.timeframe !== 'ALL') {
+    return getFiatTimeframeSeriesInterval(args.timeframe);
+  }
+
+  if (
+    typeof args.oldestSnapshotMs === 'number' &&
+    Number.isFinite(args.oldestSnapshotMs)
+  ) {
+    return getSmallestCachedIntervalCoveringWindow(
+      Math.max(0, args.nowMs - args.oldestSnapshotMs),
+    );
+  }
+
+  return 'ALL';
+}
+
 function getBaselineMs(
   timeframe: PnlTimeframe,
   nowMs: number,
@@ -175,12 +227,23 @@ function getBaselineMs(
   return roundDownToHourMs(nowMs - windowMs);
 }
 
-function getFallbackOrderForTimeframe(
-  timeframe: PnlTimeframe,
-): readonly FiatRateInterval[] {
-  // ALL series may be missing for very new wallets unless rates were fetched explicitly.
-  // Prefer widest coverage first, but allow shorter windows for brand-new wallets.
-  return FALLBACK_ORDER_BY_TIMEFRAME[timeframe];
+function getFallbackOrderForTimeframe(args: {
+  timeframe: PnlTimeframe;
+  seriesInterval: FiatRateInterval;
+}): readonly FiatRateInterval[] {
+  if (args.timeframe === 'ALL') {
+    const order =
+      ALL_FALLBACK_ORDER_BY_SERIES_INTERVAL[
+        args.seriesInterval as CoveringSeriesInterval
+      ];
+    if (order) {
+      return order;
+    }
+  }
+
+  // Prefer the native timeframe ordering for bounded windows, and widen first
+  // for ALL only after the narrowest covering interval has been attempted.
+  return FALLBACK_ORDER_BY_TIMEFRAME[args.timeframe];
 }
 
 function getRatePointsFromCache(args: {
@@ -223,7 +286,10 @@ function getRatePointsFromCache(args: {
   // Prefer the requested interval, then gracefully fall back to other cached windows.
   // This mirrors the general “smallest available series that still covers the window” idea,
   // and keeps the engine resilient when some intervals haven't been fetched yet.
-  const fallbackIntervals = getFallbackOrderForTimeframe(timeframe);
+  const fallbackIntervals = getFallbackOrderForTimeframe({
+    timeframe,
+    seriesInterval,
+  });
   for (const interval of fallbackIntervals) {
     if (interval === seriesInterval) continue;
     const key = getFiatRateSeriesCacheKey(
@@ -292,6 +358,28 @@ function findFirstSnapshotIndexAfter(
     else hi = mid;
   }
   return lo;
+}
+
+function getStoredSnapshotBasisFiat(
+  snapshot: BalanceSnapshotStored | undefined,
+): number | undefined {
+  const basisFiat = Number(snapshot?.remainingCostBasisFiat);
+  return Number.isFinite(basisFiat) && basisFiat >= 0 ? basisFiat : undefined;
+}
+
+function getStoredSnapshotAnchorRate(args: {
+  snapshot: BalanceSnapshotStored | undefined;
+  unitsNumber: number;
+}): number | undefined {
+  const markRate = Number(args.snapshot?.markRate);
+  if (Number.isFinite(markRate) && markRate > 0) {
+    return markRate;
+  }
+
+  const basisFiat = getStoredSnapshotBasisFiat(args.snapshot);
+  return basisFiat !== undefined && args.unitsNumber > 0
+    ? basisFiat / args.unitsNumber
+    : undefined;
 }
 
 type RateCursor = {
@@ -975,9 +1063,13 @@ function* buildPnlAnalysisSeriesGenerator(
     args.timeframe === 'ALL' ? findOldestSnapshotTs(wallets) : null;
   const newestSnapshotMs = findNewestSnapshotTs(wallets);
 
-  // ExchangeRate screen uses ALL series for 3M/1Y/5Y timeframes. Match that behavior
-  // so percent changes are consistent across the app.
-  const seriesInterval = getFiatTimeframeSeriesInterval(args.timeframe);
+  // For ALL, prefer the narrowest cached interval that still covers the
+  // wallet's full age window so young wallets use denser intraday data.
+  const seriesInterval = getSeriesIntervalForAnalysisTimeframe({
+    timeframe: args.timeframe,
+    nowMs,
+    oldestSnapshotMs,
+  });
 
   // Build compact rate series per rate key and compute the latest shared end bound.
   //
@@ -1100,39 +1192,55 @@ function* buildPnlAnalysisSeriesGenerator(
   const singleAsset = isSingleAsset(wallets);
   const points: PnlAnalysisPoint[] = [];
 
-  const baselineRateByRateKey: Record<string, number> = {};
-  for (const rateKey of rateKeys) {
-    // Keep the baseline anchored to the same sampled rate used by the first
-    // rendered point so the chart always starts at exactly 0 PnL / 0%.
-    const r0 = rateCursorByRateKey[rateKey]?.getNearest(timeline[0]);
-    if (r0 === undefined) {
-      throw new Error(
-        `Missing ${quoteCurrency}:${rateKey} rate at ts=${timeline[0]}.`,
-      );
-    }
-    baselineRateByRateKey[rateKey] = r0;
-  }
-
   const startTs = timeline[0];
   const endTs = timeline[timeline.length - 1];
 
-  const windowStateByWalletId: Record<string, WindowBasisState> = {};
+  type InitialWalletSeed = {
+    walletId: string;
+    rateKey: string;
+    decimals: number;
+    snapshots: BalanceSnapshotStored[];
+    nextIdx: number;
+    unitsAtomic: bigint;
+    unitsNumber: number;
+    openingBasisFiat?: number;
+  };
+
+  const initialSeedByWalletId: Record<string, InitialWalletSeed> = {};
+  const openingAnchorRateByRateKey: Record<string, number> = {};
+
   for (const w of wallets) {
     const rateIdentity = rateIdentityByWalletId.get(w.walletId);
     if (!rateIdentity?.key) {
       continue;
     }
+
     const decimals = getAtomicDecimals(w.credentials);
     const snaps = w.snapshots;
-
     const lastIdx = findLastSnapshotIndexAtOrBefore(snaps, startTs);
     const unitsAtomic =
       lastIdx >= 0 ? parseAtomicToBigint(snaps[lastIdx].cryptoBalance) : 0n;
     const unitsNumber = atomicToUnitNumber(unitsAtomic, decimals);
-    const startRate = baselineRateByRateKey[rateIdentity.key];
-    const basisFiat = unitsNumber * startRate;
+    const openingSnapshotAtStart =
+      args.timeframe === 'ALL' &&
+      lastIdx >= 0 &&
+      Number(snaps[lastIdx]?.timestamp) === startTs
+        ? snaps[lastIdx]
+        : undefined;
+    const openingBasisFiat = getStoredSnapshotBasisFiat(openingSnapshotAtStart);
+    const openingAnchorRate = getStoredSnapshotAnchorRate({
+      snapshot: openingSnapshotAtStart,
+      unitsNumber,
+    });
 
-    windowStateByWalletId[w.walletId] = {
+    if (
+      openingAnchorRate !== undefined &&
+      !(rateIdentity.key in openingAnchorRateByRateKey)
+    ) {
+      openingAnchorRateByRateKey[rateIdentity.key] = openingAnchorRate;
+    }
+
+    initialSeedByWalletId[w.walletId] = {
       walletId: w.walletId,
       rateKey: rateIdentity.key,
       decimals,
@@ -1140,6 +1248,49 @@ function* buildPnlAnalysisSeriesGenerator(
       nextIdx: findFirstSnapshotIndexAfter(snaps, startTs),
       unitsAtomic,
       unitsNumber,
+      ...(openingBasisFiat !== undefined ? {openingBasisFiat} : {}),
+    };
+  }
+
+  const baselineRateByRateKey: Record<string, number> = {};
+  for (const rateKey of rateKeys) {
+    const openingAnchorRate = openingAnchorRateByRateKey[rateKey];
+    if (openingAnchorRate !== undefined) {
+      baselineRateByRateKey[rateKey] = openingAnchorRate;
+      continue;
+    }
+
+    // Keep the baseline anchored to the same sampled rate used by the first
+    // rendered point so the chart always starts at exactly 0 PnL / 0%.
+    const r0 = rateCursorByRateKey[rateKey]?.getNearest(startTs);
+    if (r0 === undefined) {
+      throw new Error(
+        `Missing ${quoteCurrency}:${rateKey} rate at ts=${startTs}.`,
+      );
+    }
+    baselineRateByRateKey[rateKey] = r0;
+  }
+
+  const windowStateByWalletId: Record<string, WindowBasisState> = {};
+  for (const w of wallets) {
+    const seed = initialSeedByWalletId[w.walletId];
+    if (!seed) {
+      continue;
+    }
+    const startRate = baselineRateByRateKey[seed.rateKey];
+    const basisFiat =
+      seed.openingBasisFiat !== undefined
+        ? seed.openingBasisFiat
+        : seed.unitsNumber * startRate;
+
+    windowStateByWalletId[w.walletId] = {
+      walletId: w.walletId,
+      rateKey: seed.rateKey,
+      decimals: seed.decimals,
+      snapshots: seed.snapshots,
+      nextIdx: seed.nextIdx,
+      unitsAtomic: seed.unitsAtomic,
+      unitsNumber: seed.unitsNumber,
       unitsDirty: false,
       basisFiat: Number.isFinite(basisFiat) && basisFiat > 0 ? basisFiat : 0,
     };
@@ -1155,10 +1306,14 @@ function* buildPnlAnalysisSeriesGenerator(
     const rateAtTsByRateKey: Record<string, number> = {};
 
     for (const rateKey of rateKeys) {
-      const rate = isLastTimelinePoint
-        ? getOverrideRate(rateKey) ??
-          rateCursorByRateKey[rateKey]?.getNearest(ts)
-        : rateCursorByRateKey[rateKey]?.getNearest(ts);
+      const openingAnchorRate =
+        i === 0 ? openingAnchorRateByRateKey[rateKey] : undefined;
+      const rate =
+        openingAnchorRate ??
+        (isLastTimelinePoint
+          ? getOverrideRate(rateKey) ??
+            rateCursorByRateKey[rateKey]?.getNearest(ts)
+          : rateCursorByRateKey[rateKey]?.getNearest(ts));
       if (rate === undefined) {
         throw new Error(
           `Missing ${quoteCurrency}:${rateKey} rate at ts=${ts}.`,
