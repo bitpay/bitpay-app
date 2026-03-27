@@ -561,12 +561,12 @@ const TransactionProposalDetails = () => {
   };
 
   const onSwipeComplete = async () => {
-    if (isTSSWallet) {
-      await joinTSSSigning();
-      return;
-    }
-
     try {
+      if (isTSSWallet) {
+        await joinTSSSigning();
+        return;
+      }
+
       await sleep(400);
       await dispatch(
         publishAndSign({

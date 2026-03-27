@@ -304,6 +304,9 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
     },
     {
       title: t('Waiting for co-signers'),
+      subtitle: wallet?.tssMetadata?.m
+        ? t('{{m}} signatures required', {m: wallet.tssMetadata.m})
+        : undefined,
       showCopayers: true,
     },
     {
@@ -330,42 +333,12 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
         wallet.copayers?.map(copayer => ({
           id: copayer.id,
           name: copayer.name,
-          signed: false,
+          signed: copayer.id === txpCreatorId,
         })) || [];
 
       onCopayersInitialized(initialCopayers);
     }
-  }, [wallet, onCopayersInitialized, copayers.length]);
-
-  useEffect(() => {
-    if (!onCopayersInitialized || !txpCreatorId) return;
-    if (!copayers.length) return;
-
-    if (status === 'error') {
-      const hasAnySigned = copayers.some(c => c.signed);
-      if (hasAnySigned) {
-        onCopayersInitialized(copayers.map(c => ({...c, signed: false})));
-      }
-      return;
-    }
-
-    const creatorShouldBeSigned = getStepStatus(0) === 'complete';
-    if (!creatorShouldBeSigned) return;
-
-    let changed = false;
-
-    const nextCopayers = copayers.map(c => {
-      if (c.id !== txpCreatorId) return c;
-      if (c.signed) return c;
-
-      changed = true;
-      return {...c, signed: true};
-    });
-
-    if (changed) {
-      onCopayersInitialized(nextCopayers);
-    }
-  }, [status, txpCreatorId, copayers, onCopayersInitialized]);
+  }, [wallet, onCopayersInitialized, copayers.length, txpCreatorId]);
 
   return (
     <>

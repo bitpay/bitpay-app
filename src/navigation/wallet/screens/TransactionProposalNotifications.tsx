@@ -477,7 +477,7 @@ const TransactionProposalNotifications = () => {
               <ListItemSubText>
                 {formatCurrencyAbbreviation(currencyAbbreviation)}{' '}
                 {isTSS && tssMetadata
-                  ? `- Threshold ${tssMetadata.m}/${tssMetadata.m}`
+                  ? `- Threshold ${tssMetadata.m}/${tssMetadata.n}`
                   : n > 1
                   ? `- Multisig ${m}/${n}`
                   : null}
@@ -802,6 +802,10 @@ const TransactionProposalNotifications = () => {
                   dispatch(showBottomNotificationModal(WrongPasswordError()));
                   break;
                 case 'password canceled':
+                  break;
+                case 'biometric check failed':
+                  break;
+                case 'user denied transaction':
                   break;
                 default:
                   await showErrorMessage(

@@ -132,98 +132,119 @@ const signInput = async (params: {
     tssKey: tssKey,
   });
 
-  try {
-    await tssSign.start({
-      id: sessionId,
-      messageHash,
-      derivationPath,
-      password,
-    });
-  } catch (startError: any) {
-    const errorMsg = startError.message || '';
-    if (
-      errorMsg.startsWith('TSS_ROUND_ALREADY_DONE') ||
-      errorMsg.startsWith('TSS_ROUND_MESSAGE_EXISTS')
-    ) {
-      const sig = await tssSign.getSignatureFromServer();
-      if (sig) {
-        logManager.debug(
-          `[TSS Sign] Input ${inputIndex + 1} recovered from server`,
-        );
-        return toBwsSignatureFormat(sig, txp.chain);
-      }
-      throw new Error(
-        'TSS session interrupted. Try deleting this proposal and creating a new one.',
-      );
-    }
-    throw startError;
-  }
+  const signature = await new Promise<string>(
+    async (resolveSign, rejectSign) => {
+      let timeoutId: NodeJS.Timeout | null = null;
 
-  const signature = await new Promise<string>((resolveSign, rejectSign) => {
-    let timeoutId: NodeJS.Timeout | null = null;
+      timeoutId = setTimeout(() => {
+        tssSign.unsubscribe();
+        rejectSign(new Error('This proposal has expired, please try again'));
+      }, timeout);
 
-    timeoutId = setTimeout(() => {
-      tssSign.unsubscribe();
-      rejectSign(new Error('This proposal has expired, please try again'));
-    }, timeout);
-
-    tssSign
-      .on('roundready', (round: number) => {
-        logManager.debug(
-          `[TSS Sign] Input ${inputIndex + 1} Round ${round} ready`,
-        );
-        callbacks.onRoundUpdate(round, 'ready');
-
-        if (round === 1 && inputIndex === 0) {
-          callbacks.onStatusChange('signature_generation');
-        }
-
-        callbacks.onProgressUpdate({
-          currentRound: round,
-          totalRounds: 4,
-          status: 'processing',
-        });
-      })
-      .on('roundprocessed', (round: number) => {
-        logManager.debug(
-          `[TSS Sign] Input ${inputIndex + 1} Round ${round} processed`,
-        );
-        callbacks.onRoundUpdate(round, 'processed');
-      })
-      .on('roundsubmitted', (round: number) => {
-        logManager.debug(
-          `[TSS Sign] Input ${inputIndex + 1} Round ${round} submitted`,
-        );
-        callbacks.onRoundUpdate(round, 'submitted');
-      })
-      .on('complete', () => {
-        logManager.debug(`[TSS Sign] Input ${inputIndex + 1} complete`);
-        try {
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-          }
-
-          const sig = tssSign.getSignature();
-          logManager.debug(
-            `[TSS Sign] Input ${inputIndex + 1} Signature from getSignature():`,
-            sig ? JSON.stringify(sig) : null,
-          );
-
-          const bwsSig = toBwsSignatureFormat(sig, txp.chain);
-          resolveSign(bwsSig);
-        } catch (err: any) {
-          rejectSign(new Error(`Failed to convert signature: ${err.message}`));
-        }
-      })
-      .on('error', (error: Error) => {
-        logManager.error(
-          `[TSS Sign] Input ${inputIndex + 1} Error: ${error.message}`,
-        );
+      tssSign.on('copayerReady', (copayerId: string) => {
+        logManager.debug(`[TSS Sign] Copayer ready: ${copayerId}`);
+        callbacks.onCopayerStatusChange(copayerId, 'signed');
       });
 
-    tssSign.subscribe();
-  });
+      try {
+        await tssSign.start({
+          id: sessionId,
+          messageHash,
+          derivationPath,
+          password,
+        });
+      } catch (startError: any) {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        tssSign.unsubscribe();
+        const errorMsg = (startError as any).message || '';
+        if (
+          errorMsg.startsWith('TSS_ROUND_ALREADY_DONE') ||
+          errorMsg.startsWith('TSS_ROUND_MESSAGE_EXISTS')
+        ) {
+          const sig = await tssSign.getSignatureFromServer();
+          if (sig) {
+            logManager.debug(
+              `[TSS Sign] Input ${inputIndex + 1} recovered from server`,
+            );
+            resolveSign(toBwsSignatureFormat(sig, txp.chain));
+            return;
+          }
+          rejectSign(
+            new Error(
+              'TSS session interrupted. Try deleting this proposal and creating a new one.',
+            ),
+          );
+          return;
+        }
+        rejectSign(startError);
+        return;
+      }
+
+      tssSign
+        .on('roundready', (round: number) => {
+          logManager.debug(
+            `[TSS Sign] Input ${inputIndex + 1} Round ${round} ready`,
+          );
+          callbacks.onRoundUpdate(round, 'ready');
+
+          if (round === 1 && inputIndex === 0) {
+            callbacks.onStatusChange('signature_generation');
+          }
+
+          callbacks.onProgressUpdate({
+            currentRound: round,
+            totalRounds: 4,
+            status: 'processing',
+          });
+        })
+        .on('roundprocessed', (round: number) => {
+          logManager.debug(
+            `[TSS Sign] Input ${inputIndex + 1} Round ${round} processed`,
+          );
+          callbacks.onRoundUpdate(round, 'processed');
+        })
+        .on('roundsubmitted', (round: number) => {
+          logManager.debug(
+            `[TSS Sign] Input ${inputIndex + 1} Round ${round} submitted`,
+          );
+          callbacks.onRoundUpdate(round, 'submitted');
+        })
+        .on('complete', () => {
+          logManager.debug(`[TSS Sign] Input ${inputIndex + 1} complete`);
+          try {
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
+
+            const sig = tssSign.getSignature();
+            logManager.debug(
+              `[TSS Sign] Input ${
+                inputIndex + 1
+              } Signature from getSignature():`,
+              sig ? JSON.stringify(sig) : null,
+            );
+
+            const bwsSig = toBwsSignatureFormat(sig, txp.chain);
+            resolveSign(bwsSig);
+          } catch (err: any) {
+            rejectSign(
+              new Error(`Failed to convert signature: ${err.message}`),
+            );
+          }
+        })
+        .on('error', (error: Error) => {
+          logManager.error(
+            `[TSS Sign] Input ${inputIndex + 1} Error: ${error.message}`,
+          );
+        });
+
+      tssSign.subscribe();
+    },
+  );
 
   tssSign.unsubscribe();
   logManager.debug(`[TSS Sign] Input ${inputIndex + 1} signed successfully`);
