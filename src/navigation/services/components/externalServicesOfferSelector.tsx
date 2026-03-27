@@ -453,6 +453,7 @@ interface ExternalServicesOfferSelectorProps {
       banxaPreloadPaymentMethods: BanxaPaymentMethodsData | undefined;
     };
   };
+  refreshTrigger?: number;
 }
 
 const ExternalServicesOfferSelector: React.FC<
@@ -478,6 +479,7 @@ const ExternalServicesOfferSelector: React.FC<
   sendMaxInfo,
   preSetPartner,
   preLoadPartnersData,
+  refreshTrigger,
 }) => {
   const theme = useTheme();
   const {t} = useTranslation();
@@ -2497,6 +2499,7 @@ const ExternalServicesOfferSelector: React.FC<
     sellLimits,
     paymentMethod,
     withdrawalMethod,
+    refreshTrigger,
   ]);
 
   useEffect(() => {

@@ -286,6 +286,9 @@ export interface MoonpayGetSignedPaymentUrlReqData {
   lockAmount: boolean;
   showWalletAddressForm: boolean;
   paymentMethod?: MoonpayPaymentType;
+  colorCode?: string;
+  theme?: 'dark' | 'light';
+  language?: string;
 }
 
 export interface MoonpayGetSignedPaymentUrlData {
