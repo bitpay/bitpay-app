@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import styled, {useTheme} from 'styled-components/native';
+import {orderBy} from 'lodash';
 import {useAppDispatch, useAppSelector, useLogger} from '../../../utils/hooks';
 import {CurrencyImage} from '../../../components/currency-image/CurrencyImage';
 import {RootState} from '../../../store';
@@ -45,6 +46,8 @@ import {
 } from '../screens/BuyAndSellRoot';
 import {useOngoingProcess} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
+import {HomeCarouselConfig} from '../../../store/app/app.models';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -106,7 +109,7 @@ interface ExternalServicesWalletSelectorScreenProps {
   sellCryptoSupportedCoins: string[] | undefined;
   sellCryptoSupportedCoinsFullObj?: SellCryptoCoin[] | undefined;
   onWalletSelected?: (wallet: Wallet) => void;
-  fromWallet?: any;
+  fromWallet?: Wallet;
   currencyAbbreviation?: string | undefined; // used from charts and deeplinks.
   chain?: string | undefined; // used from charts and deeplinks.
   partner?: BuyCryptoExchangeKey | undefined; // used from deeplinks.
@@ -134,6 +137,12 @@ const ExternalServicesWalletSelector: React.FC<
   const {showOngoingProcess, hideOngoingProcess} = useOngoingProcess();
   const allKeys: {[key: string]: Key} = useAppSelector(
     ({WALLET}: RootState) => WALLET.keys,
+  );
+  const buyCryptoOpts: BuyCryptoStateOpts = useAppSelector(
+    ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.opts,
+  );
+  const homeCarouselConfig: HomeCarouselConfig[] = useAppSelector(
+    ({APP}) => APP.homeCarouselConfig,
   );
 
   const preSetWallet = fromWallet;
@@ -185,7 +194,7 @@ const ExternalServicesWalletSelector: React.FC<
       return;
     }
 
-    if (preSetWallet?.id) {
+    if (preSetWallet?.id || buyCryptoOpts?.lastPurchaseData?.walletId) {
       // Selected wallet from Wallet Details
       let fromWalletData;
       let allWallets: Wallet[] = [];
@@ -194,68 +203,71 @@ const ExternalServicesWalletSelector: React.FC<
         allWallets = [...allWallets, ...key.wallets];
       });
 
-      fromWalletData = allWallets.find(wallet => wallet.id === preSetWallet.id);
+      const walletIdToFind =
+        preSetWallet?.id || buyCryptoOpts?.lastPurchaseData?.walletId;
+      fromWalletData = allWallets.find(wallet => wallet.id === walletIdToFind);
       if (fromWalletData) {
         setWallet(fromWalletData);
         await sleep(500);
         hideOngoingProcess();
       } else {
-        walletError(
-          context === 'sellCrypto'
-            ? 'walletNotSupported'
-            : 'walletNotSupportedToBuy',
+        if (preSetWallet?.id) {
+          walletError(
+            context === 'sellCrypto'
+              ? 'walletNotSupported'
+              : 'walletNotSupportedToBuy',
+          );
+          return;
+        }
+      }
+    }
+
+    let availableKeys = keysList.filter(key => {
+      if (!key.wallets) {
+        return false;
+      }
+
+      if (context === 'sellCrypto') {
+        return key.wallets.some(
+          w => walletIsSupported(w) && (w.balance?.satSpendable || 0) > 0,
         );
       }
-    } else {
-      const availableKeys = keysList.filter(key => {
-        if (!key.wallets) {
-          return false;
-        }
 
-        if (context === 'sellCrypto') {
-          return key.wallets.some(
-            w => walletIsSupported(w) && (w.balance?.satSpendable || 0) > 0,
-          );
-        }
+      return keyHasSupportedWallets(key.wallets);
+    });
 
-        return keyHasSupportedWallets(key.wallets);
-      });
+    // Order availableKeys by APP.homeCarouselConfig
+    if (homeCarouselConfig?.length && availableKeys[0]) {
+      const carouselOrderMap = new Map(
+        homeCarouselConfig.map((item, index) => [item.id, index]),
+      );
+      availableKeys = orderBy(availableKeys, [
+        key => carouselOrderMap.get(key.id) ?? Infinity,
+      ]);
+    }
 
-      if (availableKeys[0]) {
-        const firstKey = availableKeys[0];
+    if (availableKeys[0]) {
+      const firstKey = availableKeys[0];
 
-        const firstKeyAllWallets: Wallet[] = firstKey.wallets;
-        let allowedWallets = firstKeyAllWallets.filter(wallet =>
-          walletIsSupported(wallet),
+      const firstKeyAllWallets: Wallet[] = firstKey.wallets;
+      let allowedWallets = firstKeyAllWallets.filter(wallet =>
+        walletIsSupported(wallet),
+      );
+
+      if (context === 'sellCrypto') {
+        allowedWallets = allowedWallets.filter(
+          wallet => (wallet.balance?.satSpendable || 0) > 0,
         );
-
-        if (context === 'sellCrypto') {
-          allowedWallets = allowedWallets.filter(
-            wallet => (wallet.balance?.satSpendable || 0) > 0,
-          );
-        }
 
         if (
           fromCurrencyAbbreviation &&
-          (context === 'sellCrypto'
-            ? sellCryptoSupportedCoinsFullObj?.some(
-                coin =>
-                  coin.symbol ===
-                  (fromChain
-                    ? getExternalServiceSymbol(
-                        fromCurrencyAbbreviation,
-                        fromChain,
-                      )
-                    : fromCurrencyAbbreviation),
-              )
-            : buyCryptoSupportedCoins.includes(
-                fromChain
-                  ? getExternalServiceSymbol(
-                      fromCurrencyAbbreviation,
-                      fromChain,
-                    )
-                  : fromCurrencyAbbreviation,
-              ))
+          sellCryptoSupportedCoinsFullObj?.some(
+            coin =>
+              coin.symbol ===
+              (fromChain
+                ? getExternalServiceSymbol(fromCurrencyAbbreviation, fromChain)
+                : fromCurrencyAbbreviation),
+          )
         ) {
           allowedWallets = allowedWallets.filter(
             wallet =>
@@ -263,11 +275,38 @@ const ExternalServicesWalletSelector: React.FC<
               (fromChain ? wallet.chain === fromChain : true),
           );
         }
-        if (allowedWallets[0]) {
-          _setSelectedWallet(allowedWallets[0]);
-          await sleep(500);
-          hideOngoingProcess();
-        } else {
+      } else if (context === 'buyCrypto') {
+        const _fromCurrencyAbbreviation =
+          (fromCurrencyAbbreviation ??
+            buyCryptoOpts?.lastPurchaseData?.coin?.toLowerCase()) ||
+          'btc';
+        const _fromChain =
+          (fromCurrencyAbbreviation && fromChain
+            ? fromChain
+            : buyCryptoOpts?.lastPurchaseData?.chain?.toLowerCase()) || 'btc';
+
+        if (
+          _fromCurrencyAbbreviation &&
+          buyCryptoSupportedCoins.includes(
+            _fromChain
+              ? getExternalServiceSymbol(_fromCurrencyAbbreviation, _fromChain)
+              : _fromCurrencyAbbreviation,
+          )
+        ) {
+          allowedWallets = allowedWallets.filter(
+            wallet =>
+              wallet.currencyAbbreviation === _fromCurrencyAbbreviation &&
+              (_fromChain ? wallet.chain === _fromChain : true),
+          );
+        }
+      }
+
+      if (allowedWallets[0]) {
+        _setSelectedWallet(allowedWallets[0]);
+        await sleep(500);
+        hideOngoingProcess();
+      } else {
+        if (fromCurrencyAbbreviation) {
           walletError(
             context === 'sellCrypto'
               ? 'noWalletsAbleToSell'
@@ -275,14 +314,14 @@ const ExternalServicesWalletSelector: React.FC<
             fromCurrencyAbbreviation,
           );
         }
-      } else {
-        walletError(
-          context === 'sellCrypto'
-            ? 'keysNoSupportedWalletToSell'
-            : 'keysNoSupportedWallet',
-          fromCurrencyAbbreviation,
-        );
       }
+    } else {
+      walletError(
+        context === 'sellCrypto'
+          ? 'keysNoSupportedWalletToSell'
+          : 'keysNoSupportedWallet',
+        fromCurrencyAbbreviation,
+      );
     }
   };
 
@@ -314,6 +353,15 @@ const ExternalServicesWalletSelector: React.FC<
       );
     }
 
+    // Case Buy Crypto
+    const _fromCurrencyAbbreviation =
+      fromCurrencyAbbreviation ??
+      buyCryptoOpts?.lastPurchaseData?.coin?.toLowerCase();
+    const _fromChain =
+      fromCurrencyAbbreviation && fromChain
+        ? fromChain
+        : buyCryptoOpts?.lastPurchaseData?.chain?.toLowerCase();
+
     return (
       wallet.credentials &&
       wallet.network === 'livenet' &&
@@ -326,9 +374,9 @@ const ExternalServicesWalletSelector: React.FC<
       wallet.isComplete() &&
       !wallet.hideWallet &&
       !wallet.hideWalletByAccount &&
-      (!fromCurrencyAbbreviation ||
-        (wallet.currencyAbbreviation === fromCurrencyAbbreviation &&
-          (fromChain ? wallet.chain === fromChain : true)))
+      (!_fromCurrencyAbbreviation ||
+        (wallet.currencyAbbreviation === _fromCurrencyAbbreviation &&
+          (_fromChain ? wallet.chain === _fromChain : true)))
     );
   };
 
@@ -405,7 +453,10 @@ const ExternalServicesWalletSelector: React.FC<
       return;
     }
 
-    if (!(preSetWallet?.id || fromCurrencyAbbreviation)) {
+    if (
+      context !== 'buyCrypto' &&
+      !(preSetWallet?.id || fromCurrencyAbbreviation)
+    ) {
       return;
     }
 
