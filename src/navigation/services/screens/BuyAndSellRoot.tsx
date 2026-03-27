@@ -681,7 +681,7 @@ const BuyAndSellRoot = ({
   const [webViewModal, setWebViewModal] = useState<{
     open: boolean;
     url: string | undefined;
-    key?: 'moonpayBuy' | 'rampSell';
+    key?: 'moonpayBuy' | 'moonpaySell' | 'rampSell';
     rampOffer?: SellCryptoOffer;
   }>({open: false, url: undefined});
 
@@ -3225,9 +3225,12 @@ const BuyAndSellRoot = ({
     );
 
     await sleep(300);
-    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
-    await sleep(500);
-    navigation.dispatch(StackActions.popToTop());
+    setWebViewModal({
+      open: true,
+      url: data.urlWithSignature,
+      key: 'moonpaySell',
+    });
+    setOpeningBrowser(false);
   };
 
   const goToRampSellPage = (
@@ -4042,7 +4045,7 @@ const BuyAndSellRoot = ({
         </ActionContainer>
       </ViewContainer>
 
-      {/* Unified WebView Modal (Moonpay Buy / Ramp Sell) */}
+      {/* Unified WebView Modal (Moonpay Buy / Moonpay Sell / Ramp Sell) */}
       <Modal
         deviceHeight={HEIGHT}
         deviceWidth={WIDTH}
@@ -4076,7 +4079,8 @@ const BuyAndSellRoot = ({
             source={{uri: webViewModal.url ?? ''}}
             scrollEnabled={true}
             onShouldStartLoadWithRequest={
-              webViewModal.key === 'moonpayBuy'
+              webViewModal.key === 'moonpayBuy' ||
+              webViewModal.key === 'moonpaySell'
                 ? handleMoonpayBuyNavigation
                 : undefined
             }
@@ -4087,7 +4091,7 @@ const BuyAndSellRoot = ({
                   }
                 : undefined
             }
-            originWhitelist={['https://*', 'bitpay://*']}
+            originWhitelist={['https://*', 'bitpay://*', 'about:*']}
             automaticallyAdjustContentInsets
             allowsInlineMediaPlayback={true}
             javaScriptEnabled={true}
