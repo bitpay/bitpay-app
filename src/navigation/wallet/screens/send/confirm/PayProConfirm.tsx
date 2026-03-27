@@ -667,7 +667,6 @@ const PayProConfirm = () => {
               onCopayersInitialized={setTssCopayers}
               isModalVisible={showTSSProgressModal}
               onModalVisibilityChange={setShowTSSProgressModal}
-              txpCreatorId={wallet.credentials?.copayerId}
             />
           )}
           {invoice ? (
