@@ -51,11 +51,18 @@ Sentry.init({
   sendDefaultPii: false,
   enableLogs: false,
   enableAutoNativeBreadcrumbs: false,
-  autoSessionTracking: false,
   maxBreadcrumbs: 500,
+  // Tracing — 20% sample rate feeds Mobile Vitals + Session Health dashboards
+  tracesSampleRate: 0.2,
+  profilesSampleRate: 1.0,
+  integrations: [
+    Sentry.reactNativeTracingIntegration(),
+    Sentry.hermesProfilingIntegration({
+      platformProfilers: true,
+    }),
+  ],
   beforeSend(event) {
     if (event.contexts) {
-      delete event.contexts.trace;
       delete event.contexts.app;
     }
     if (event.tags) {
