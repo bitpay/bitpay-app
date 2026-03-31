@@ -30,6 +30,12 @@ export const STATIC_CONTENT_CARDS_ENABLED = parseEnvBoolean(
 );
 export const APP_ANALYTICS_ENABLED = !__DEV__;
 
+// AppsFlyer hosts to resolve deep links for.
+export const RESOLVED_DEEP_LINK_HOSTS = [
+  'clicks.bitpay.com',
+  'email.bitpay.com',
+];
+
 // GENERAL
 export const APP_NAME = 'bitpay';
 export const APP_NAME_UPPERCASE = 'BitPay';
