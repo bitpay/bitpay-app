@@ -141,6 +141,18 @@ const StepTime = styled(BaseText)`
   margin-left: auto;
 `;
 
+const TimeAgo: React.FC<{date: Date}> = ({date}) => {
+  const [label, setLabel] = useState(() => GetAmTimeAgo(date.getTime()));
+  useEffect(() => {
+    const interval = setInterval(
+      () => setLabel(GetAmTimeAgo(date.getTime())),
+      60000,
+    );
+    return () => clearInterval(interval);
+  }, [date]);
+  return <StepTime>{label}</StepTime>;
+};
+
 const CopayerList = styled.View`
   margin-top: 0px;
   margin-bottom: 0px;
@@ -419,11 +431,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                         <StepTitle>{step.title}</StepTitle>
                         {step.time &&
                           status !== 'initializing' &&
-                          status !== 'error' && (
-                            <StepTime>
-                              {GetAmTimeAgo(step.time.getTime())}
-                            </StepTime>
-                          )}
+                          status !== 'error' && <TimeAgo date={step.time} />}
                       </View>
                       {step.subtitle && (
                         <StepSubtitle>{step.subtitle}</StepSubtitle>

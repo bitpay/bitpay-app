@@ -783,7 +783,11 @@ const TransactionProposalDetails = () => {
               status={tssStatus}
               progress={tssProgress}
               createdBy={wallet.walletName || 'You'}
-              date={new Date()}
+              date={
+                new Date(
+                  (txp.createdOn ?? txp.time ?? Date.now() / 1000) * 1000,
+                )
+              }
               wallet={wallet}
               copayers={tssCopayers}
               onCopayersInitialized={setTssCopayers}

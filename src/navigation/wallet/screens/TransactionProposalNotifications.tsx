@@ -644,7 +644,13 @@ const TransactionProposalNotifications = () => {
           status={tssStatus}
           progress={tssProgress}
           createdBy={currentWallet.walletName || 'You'}
-          date={new Date()}
+          date={
+            new Date(
+              (txpsToSign[0]?.createdOn ??
+                txpsToSign[0]?.time ??
+                Date.now() / 1000) * 1000,
+            )
+          }
           wallet={currentWallet}
           copayers={tssCopayers}
           onCopayersInitialized={setTssCopayers}
