@@ -1,9 +1,10 @@
-import React, {useEffect, useState} from 'react';
-import {View} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {Animated, Easing, View} from 'react-native';
 import styled, {useTheme} from 'styled-components/native';
 import {
   White,
   Black,
+  Slate,
   SlateDark,
   Slate30,
   Success25,
@@ -28,6 +29,7 @@ import RefreshLightIcon from '../../../../assets/img/refresh.svg';
 import RefreshDarkIcon from '../../../../assets/img/refresh-dark.svg';
 import SuccessDarkIcon from '../../../../assets/img/check-light-green.svg';
 import ChevronDownSvg from '../../../../assets/img/chevron-down.svg';
+import InfoIcon from '../../../components/icons/info/Info';
 import {BaseText, H4} from '../../../components/styled/Text';
 import {
   TSSStepRow as StepRow,
@@ -115,9 +117,10 @@ const Title = styled(H4)`
 
 const StepsContainer = styled.View``;
 
-const StepConnector = styled.View<{completed?: boolean; height?: number}>`
+const StepConnector = styled.View<{completed?: boolean}>`
   width: 2px;
-  height: ${({height}) => height || 20}px;
+  flex: 1;
+  min-height: 20px;
   margin-top: 0px;
   background-color: ${({theme: {dark}, completed}) =>
     completed ? (dark ? '#004D27' : Success25) : dark ? '#2A2A2A' : LightBlue};
@@ -139,6 +142,24 @@ const StepTime = styled(BaseText)`
   color: ${({theme}) => theme.colors.description};
   font-size: 12px;
   margin-left: auto;
+`;
+
+const HelpButton = styled(TouchableOpacity)`
+  margin-left: 6px;
+  padding: 2px 4px;
+`;
+
+const HelpBanner = styled.View`
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: ${({theme: {dark}}) => (dark ? '#1E2A3A' : '#EAF2FF')};
+`;
+
+const HelpBannerText = styled(BaseText)`
+  font-size: 13px;
+  line-height: 19px;
+  color: ${({theme: {dark}}) => (dark ? '#90B4D4' : '#2C5282')};
 `;
 
 const TimeAgo: React.FC<{date: Date}> = ({date}) => {
@@ -248,6 +269,45 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
       setInternalIsVisible(visible);
     }
   };
+
+  const [showSigningHelp, setShowSigningHelp] = useState(false);
+  const signingStartedAt = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (status === 'signature_generation') {
+      if (signingStartedAt.current === null) {
+        signingStartedAt.current = Date.now();
+      }
+      const timer = setTimeout(() => {
+        setShowSigningHelp(true);
+      }, 2 * 60 * 1000);
+      return () => clearTimeout(timer);
+    } else {
+      signingStartedAt.current = null;
+      setShowSigningHelp(false);
+    }
+  }, [status]);
+
+  const spinAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (status === 'signature_generation') {
+      Animated.loop(
+        Animated.timing(spinAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ).start();
+    } else {
+      spinAnim.stopAnimation();
+      spinAnim.setValue(0);
+    }
+  }, [status, spinAnim]);
+  const spinInterpolate = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   const ClockIcon = theme.dark ? ClockDarkIcon : ClockLightIcon;
   const SuccessIcon = theme.dark ? SuccessDarkIcon : SuccessLightIcon;
@@ -400,39 +460,59 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
               const isActive = stepStatus === 'active';
               const isComplete = stepStatus === 'complete';
               const showCopayers = step.showCopayers;
-              const connectorHeight = showCopayers ? 35 * copayers.length : 25;
 
               return (
                 <View key={index}>
-                  <StepRow>
+                  <StepRow style={{alignItems: 'stretch'}}>
                     <StepRail>
                       <StepIndicator active={isActive} completed={isComplete}>
                         {isComplete ? (
                           <SuccessIcon width={20} height={16} />
                         ) : isActive && index === 2 ? (
-                          <RefreshIcon width={24} height={24} />
+                          <Animated.View
+                            style={{transform: [{rotate: spinInterpolate}]}}>
+                            <RefreshIcon width={24} height={24} />
+                          </Animated.View>
                         ) : isActive ? (
                           <ClockIcon width={28} height={28} />
                         ) : (
                           <StepNumber>{index + 1}</StepNumber>
                         )}
                       </StepIndicator>
-                      {index < steps.length - 1 && (
-                        <StepConnector
-                          height={connectorHeight}
-                          completed={getStepStatus(index + 1) !== 'pending'}
-                        />
-                      )}
+                      {index < steps.length - 1 &&
+                        !(index === 2 && showSigningHelp) && (
+                          <StepConnector
+                            completed={getStepStatus(index + 1) !== 'pending'}
+                          />
+                        )}
                     </StepRail>
 
                     <StepContent style={{paddingTop: index >= 2 ? 10 : 5}}>
                       <View
                         style={{flexDirection: 'row', alignItems: 'center'}}>
                         <StepTitle>{step.title}</StepTitle>
+                        {index === 2 && (
+                          <HelpButton
+                            activeOpacity={ActiveOpacity}
+                            onPress={() => setShowSigningHelp(v => !v)}>
+                            <InfoIcon
+                              bgColor={theme.dark ? Slate : undefined}
+                            />
+                          </HelpButton>
+                        )}
                         {step.time &&
                           status !== 'initializing' &&
                           status !== 'error' && <TimeAgo date={step.time} />}
                       </View>
+                      {index === 2 && showSigningHelp && (
+                        <HelpBanner>
+                          <HelpBannerText>
+                            {t(
+                              'All co-signers must have the app open and active during signing. If someone closed the app, they need to reopen it and re-join this proposal from their pending transactions.',
+                            )}
+                          </HelpBannerText>
+                        </HelpBanner>
+                      )}
                       {step.subtitle && (
                         <StepSubtitle>{step.subtitle}</StepSubtitle>
                       )}

@@ -416,7 +416,7 @@ export const addCoSignerToTSS =
   };
 
 export const startTSSCeremony =
-  (keyId: string): Effect<Promise<Key>> =>
+  (keyId: string, onRoundReady?: () => void): Effect<Promise<Key>> =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -485,6 +485,9 @@ export const startTSSCeremony =
           tssKeyGen
             .on('roundready', (r: number) => {
               logManager.debug(`[TSS Ceremony roundready] ${r}`);
+              if (r === 2) {
+                onRoundReady?.();
+              }
             })
             .on('roundprocessed', (r: number) =>
               logManager.debug(`[TSS Ceremony roundprocessed] ${r}`),
@@ -790,6 +793,7 @@ export const joinTSSWithCode =
     partyKey?: any;
     myName?: string;
     keyId?: string;
+    onRoundReady?: () => void;
   }): Effect<Promise<Key>> =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
@@ -981,6 +985,9 @@ export const joinTSSWithCode =
           tssKeyGen
             .on('roundready', (r: number) => {
               logManager.debug(`[TSS Join roundready] ${r}`);
+              if (r === 2) {
+                opts.onRoundReady?.();
+              }
             })
             .on('roundprocessed', (r: number) =>
               logManager.debug(`[TSS Join roundprocessed] ${r}`),
