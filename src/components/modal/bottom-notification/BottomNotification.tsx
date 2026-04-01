@@ -28,6 +28,7 @@ import {Theme, useNavigation, useTheme} from '@react-navigation/native';
 import Markdown from 'react-native-markdown-display';
 import {resetBottomNotificationModalConfig} from '../../../store/app/app.actions';
 import {HEIGHT} from '../../styled/Containers';
+import {TouchableOpacity} from '../../base/TouchableOpacity';
 
 export interface BottomNotificationConfig {
   type: 'success' | 'info' | 'warning' | 'error' | 'question' | 'wait';
@@ -182,13 +183,16 @@ const BottomNotification = React.memo(() => {
         };
 
         return (
-          <BottomNotificationCta
+          <TouchableOpacity
+            style={{minHeight: 30, minWidth: 60}}
             key={index}
-            suppressHighlighting={true}
-            primary={primary}
             onPress={handlePress}>
-            {text.toUpperCase()}
-          </BottomNotificationCta>
+            <BottomNotificationCta
+              suppressHighlighting={true}
+              primary={primary}>
+              {text.toUpperCase()}
+            </BottomNotificationCta>
+          </TouchableOpacity>
         );
       }),
     [actions, dispatch, rootState],
