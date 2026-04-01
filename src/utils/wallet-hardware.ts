@@ -1,11 +1,11 @@
-import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
-import {Constants} from 'bitcore-wallet-client/ts_build/src/lib/common';
+import {Credentials} from '@bitpay-labs/bitcore-wallet-client';
 import {BwcProvider} from '../lib/bwc';
 import {Network} from '../constants';
 
 const BWC = BwcProvider.getInstance();
 const Bitcore = BWC.getBitcore();
 const Utils = BWC.getUtils();
+const Constants = BWC.getConstants();
 
 /**
  * Determine the network from an extended key.

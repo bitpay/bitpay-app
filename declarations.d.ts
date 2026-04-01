@@ -5,6 +5,7 @@ declare module '*.svg' {
 }
 
 declare module '@env' {
+  export const PAYPRO_TRUSTED_KEYS: string;
   export const BASE_FIATRATES_MARKETSTATS_URL_DEVELOPMENT: string;
   export const BRAZE_EXPORT_API_KEY: string;
   export const BRAZE_MERGE_AND_DELETE_API_KEY: string;

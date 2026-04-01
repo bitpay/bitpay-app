@@ -152,6 +152,7 @@ const WarningDescription = styled(BaseText)<{isToken?: boolean}>`
       border-bottom-color: ${({theme: {dark}}) =>
         dark ? LightBlack : LightBlue};
     `};
+  line-height: 20px;
 `;
 
 interface Props {

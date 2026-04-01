@@ -21,11 +21,87 @@ import {
   showDecryptPasswordModal,
 } from '../../../../store/app/app.actions';
 import {checkEncryptPassword} from '../../utils/wallet';
-import {checkBiometricForSending, getTx} from '../send/send';
+import {broadcastTx, checkBiometricForSending, getTx} from '../send/send';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const TSS_SESSION_PREFIX = 'TSS_SIGN_SESSION_';
+
+// exportSession() returns "<sessionId>:<base64SignData>".
+// If sessionId contains colons (e.g. "uuid:m-0-0-input1"), BWC's restoreSession
+// does split(':') and takes only the first two parts, losing the sign data.
+// To avoid this, we strip the sessionId prefix before saving and reconstruct
+// with a colon-free placeholder on load so split(':') always yields [id, signData].
+const extractSignData = (exported: string, sessionId: string): string => {
+  const prefix = sessionId + ':';
+  if (exported.startsWith(prefix)) {
+    return exported.slice(prefix.length);
+  }
+  return exported;
+};
+
+// BWC's restoreSession does split(':') expecting "<id>:<base64SignData>".
+// We pass a colon-free placeholder as id so the split always yields exactly
+// [placeholder, signData]. After restore we override tssSign.id with the real
+// sessionId so subscribe() contacts the correct BWS session.
+const buildSessionForRestore = (signData: string): string => {
+  return `placeholder:${signData}`;
+};
+
+const saveSigningSession = async (
+  sessionId: string,
+  exported: string,
+  round: number,
+): Promise<void> => {
+  try {
+    const key = TSS_SESSION_PREFIX + sessionId;
+    const signData = extractSignData(exported, sessionId);
+    await AsyncStorage.setItem(
+      key,
+      JSON.stringify({signData, round, savedAt: Date.now()}),
+    );
+    logManager.debug(
+      `[TSS Persist] Session saved — sessionId: ${sessionId}, round: ${round}`,
+    );
+  } catch (e: any) {
+    logManager.warn(`[TSS Persist] Failed to save session: ${e?.message}`);
+  }
+};
+
+const loadSigningSession = async (
+  sessionId: string,
+): Promise<{exported: string; round: number} | null> => {
+  try {
+    const key = TSS_SESSION_PREFIX + sessionId;
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    logManager.debug(
+      `[TSS Persist] Found saved session — sessionId: ${sessionId}, round: ${
+        parsed.round
+      }, savedAt: ${new Date(parsed.savedAt).toISOString()}`,
+    );
+    return {
+      exported: buildSessionForRestore(parsed.signData),
+      round: parsed.round,
+    };
+  } catch (e: any) {
+    logManager.warn(`[TSS Persist] Failed to load session: ${e?.message}`);
+    return null;
+  }
+};
+
+const clearSigningSession = async (sessionId: string): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(TSS_SESSION_PREFIX + sessionId);
+  } catch (e: any) {
+    logManager.warn(`[TSS Persist] Failed to clear session: ${e?.message}`);
+  }
+};
 
 const BWC = BwcProvider.getInstance();
-
-const {TssSign} = require('bitcore-wallet-client/ts_build/src/lib/tsssign');
+const TssSign = BWC.getTssSign();
 
 export interface TSSSigningCallbacks {
   onStatusChange: (status: TSSSigningStatus) => void | Promise<void>;
@@ -108,7 +184,6 @@ const signInput = async (params: {
   derivationPath: string;
   sessionId: string;
   inputIndex: number;
-  totalInputs: number;
   callbacks: TSSSigningCallbacks;
   timeout: number;
   password?: string | undefined;
@@ -121,7 +196,6 @@ const signInput = async (params: {
     derivationPath,
     sessionId,
     inputIndex,
-    totalInputs,
     callbacks,
     timeout,
     password,
@@ -133,98 +207,268 @@ const signInput = async (params: {
     tssKey: tssKey,
   });
 
-  try {
-    await tssSign.start({
-      id: sessionId,
-      messageHash,
-      derivationPath,
-      password,
-    });
-  } catch (startError: any) {
-    const errorMsg = startError.message || '';
-    if (
-      errorMsg.startsWith('TSS_ROUND_ALREADY_DONE') ||
-      errorMsg.startsWith('TSS_ROUND_MESSAGE_EXISTS')
-    ) {
-      const sig = await tssSign.getSignatureFromServer();
-      if (sig) {
+  logManager.debug(
+    `[TSS Sign] signInput — sessionId: ${sessionId}, inputIndex: ${inputIndex}`,
+  );
+
+  // Check for a previously saved session (e.g. app was closed mid-signing)
+  const savedSession = await loadSigningSession(sessionId);
+
+  const signature = await new Promise<string>(
+    async (resolveSign, rejectSign) => {
+      let timeoutId: NodeJS.Timeout | null = null;
+
+      timeoutId = setTimeout(() => {
+        tssSign.unsubscribe();
+        clearSigningSession(sessionId);
+        rejectSign(new Error('This proposal has expired, please try again'));
+      }, timeout);
+
+      tssSign.on('copayerReady', (copayerId: string) => {
+        logManager.debug(`[TSS Sign] Copayer ready: ${copayerId}`);
+        callbacks.onCopayerStatusChange(copayerId, 'signed');
+      });
+
+      if (savedSession) {
         logManager.debug(
-          `[TSS Sign] Input ${inputIndex + 1} recovered from server`,
+          `[TSS Sign] Restoring saved session — sessionId: ${sessionId}, lastRound: ${savedSession.round}`,
         );
-        return toBwsSignatureFormat(sig, txp.chain);
-      }
-      throw new Error(
-        'TSS session interrupted. Try deleting this proposal and creating a new one.',
-      );
-    }
-    throw startError;
-  }
-
-  const signature = await new Promise<string>((resolveSign, rejectSign) => {
-    let timeoutId: NodeJS.Timeout | null = null;
-
-    timeoutId = setTimeout(() => {
-      tssSign.unsubscribe();
-      rejectSign(new Error('This proposal has expired, please try again'));
-    }, timeout);
-
-    tssSign
-      .on('roundready', (round: number) => {
-        logManager.debug(
-          `[TSS Sign] Input ${inputIndex + 1} Round ${round} ready`,
-        );
-        callbacks.onRoundUpdate(round, 'ready');
-
-        if (round === 1 && inputIndex === 0) {
-          callbacks.onStatusChange('signature_generation');
-        }
-
-        callbacks.onProgressUpdate({
-          currentRound: round,
-          totalRounds: 4,
-          status: 'processing',
-        });
-      })
-      .on('roundprocessed', (round: number) => {
-        logManager.debug(
-          `[TSS Sign] Input ${inputIndex + 1} Round ${round} processed`,
-        );
-        callbacks.onRoundUpdate(round, 'processed');
-      })
-      .on('roundsubmitted', (round: number) => {
-        logManager.debug(
-          `[TSS Sign] Input ${inputIndex + 1} Round ${round} submitted`,
-        );
-        callbacks.onRoundUpdate(round, 'submitted');
-      })
-      .on('complete', () => {
-        logManager.debug(`[TSS Sign] Input ${inputIndex + 1} complete`);
         try {
+          await tssSign.restoreSession({session: savedSession.exported});
+          tssSign.id = sessionId;
+          logManager.debug(
+            `[TSS Sign] Session restored successfully — resuming from round ${savedSession.round}`,
+          );
+          callbacks.onStatusChange('signature_generation');
+        } catch (restoreError: any) {
+          logManager.warn(
+            `[TSS Sign] Failed to restore session, falling back to start() — error: ${restoreError?.message}`,
+          );
+          await clearSigningSession(sessionId);
+          try {
+            await tssSign.start({
+              id: sessionId,
+              messageHash,
+              derivationPath,
+              password,
+            });
+          } catch (startError: any) {
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
+            tssSign.unsubscribe();
+            const errorMsg = startError?.message || '';
+            logManager.error(
+              `[TSS Sign] start() error after restore failure — error: ${errorMsg}`,
+            );
+            if (
+              errorMsg.startsWith('TSS_ROUND_ALREADY_DONE') ||
+              errorMsg.startsWith('TSS_ROUND_MESSAGE_EXISTS')
+            ) {
+              const sig = await tssSign.getSignatureFromServer();
+              if (sig) {
+                resolveSign(toBwsSignatureFormat(sig, txp.chain));
+                return;
+              }
+            }
+            rejectSign(
+              new Error(
+                'TSS session interrupted. Try deleting this proposal and creating a new one.',
+              ),
+            );
+            return;
+          }
+        }
+      } else {
+        try {
+          await tssSign.start({
+            id: sessionId,
+            messageHash,
+            derivationPath,
+            password,
+          });
+          try {
+            const exported = tssSign.exportSession();
+            await saveSigningSession(sessionId, exported, 0);
+          } catch (exportErr: any) {
+            logManager.warn(
+              `[TSS Persist] Could not export after start(): ${exportErr?.message}`,
+            );
+          }
+        } catch (startError: any) {
           if (timeoutId) {
             clearTimeout(timeoutId);
             timeoutId = null;
           }
+          tssSign.unsubscribe();
+          const errorMsg = startError?.message || '';
+          logManager.error(
+            `[TSS Sign] start() error — sessionId: ${sessionId}, error: ${errorMsg}`,
+          );
+          if (
+            errorMsg.startsWith('TSS_ROUND_ALREADY_DONE') ||
+            errorMsg.startsWith('TSS_ROUND_MESSAGE_EXISTS')
+          ) {
+            // 1) Try to get the completed signature from server
+            const sig = await tssSign.getSignatureFromServer();
+            if (sig) {
+              logManager.debug(
+                `[TSS Sign] Input ${inputIndex + 1} recovered from server`,
+              );
+              resolveSign(toBwsSignatureFormat(sig, txp.chain));
+              return;
+            }
+            // 2) Signature not complete — try to restore saved session and re-subscribe
+            const savedForRetry = await loadSigningSession(sessionId);
+            if (savedForRetry) {
+              try {
+                await tssSign.restoreSession({session: savedForRetry.exported});
+                tssSign.id = sessionId;
+                logManager.debug(
+                  `[TSS Sign] Session restored, re-registering listeners and subscribing`,
+                );
+                timeoutId = setTimeout(() => {
+                  tssSign.unsubscribe();
+                  clearSigningSession(sessionId);
+                  rejectSign(
+                    new Error('This proposal has expired, please try again'),
+                  );
+                }, timeout);
+              } catch (restoreErr: any) {
+                logManager.warn(
+                  `[TSS Sign] Restore failed after ROUND_MESSAGE_EXISTS: ${restoreErr?.message}`,
+                );
+                await clearSigningSession(sessionId);
+                rejectSign(
+                  new Error(
+                    'TSS session interrupted. Try deleting this proposal and creating a new one.',
+                  ),
+                );
+                return;
+              }
+            } else {
+              rejectSign(
+                new Error(
+                  'TSS session interrupted. Try deleting this proposal and creating a new one.',
+                ),
+              );
+              return;
+            }
+          } else {
+            rejectSign(startError);
+            return;
+          }
+        }
+      }
 
-          const sig = tssSign.getSignature();
+      tssSign
+        .on('roundready', (round: number) => {
           logManager.debug(
-            `[TSS Sign] Input ${inputIndex + 1} Signature from getSignature():`,
-            sig,
+            `[TSS Sign] Input ${inputIndex + 1} Round ${round} ready`,
+          );
+          callbacks.onRoundUpdate(round, 'ready');
+
+          if (round === 1 && inputIndex === 0) {
+            callbacks.onStatusChange('signature_generation');
+          }
+
+          callbacks.onProgressUpdate({
+            currentRound: round,
+            totalRounds: 4,
+            status: 'processing',
+          });
+        })
+        .on('roundprocessed', (round: number) => {
+          logManager.debug(
+            `[TSS Sign] Input ${inputIndex + 1} Round ${round} processed`,
+          );
+          callbacks.onRoundUpdate(round, 'processed');
+
+          // Persist after roundprocessed (before submission attempt) so that if the
+          // app closes or submission fails, we have the post-computation state saved.
+          // This gives the best chance of restoring from the correct round on next open.
+          try {
+            const exported = tssSign.exportSession();
+            saveSigningSession(sessionId, exported, round);
+          } catch (exportErr: any) {
+            logManager.debug(
+              `[TSS Sign] exportSession skipped at roundprocessed: ${exportErr?.message}`,
+            );
+          }
+        })
+        .on('roundsubmitted', (round: number) => {
+          logManager.debug(
+            `[TSS Sign] Input ${inputIndex + 1} Round ${round} submitted`,
+          );
+          callbacks.onRoundUpdate(round, 'submitted');
+        })
+        .on('complete', () => {
+          logManager.debug(`[TSS Sign] Input ${inputIndex + 1} complete`);
+          try {
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
+
+            const sig = tssSign.getSignature();
+            logManager.debug(
+              `[TSS Sign] Input ${
+                inputIndex + 1
+              } Signature from getSignature():`,
+              sig ? JSON.stringify(sig) : null,
+            );
+
+            clearSigningSession(sessionId);
+            const bwsSig = toBwsSignatureFormat(sig, txp.chain);
+            resolveSign(bwsSig);
+          } catch (err: any) {
+            rejectSign(
+              new Error(`Failed to convert signature: ${err.message}`),
+            );
+          }
+        })
+        .on('error', async (error: Error) => {
+          logManager.error(
+            `[TSS Sign] Input ${inputIndex + 1} Error: ${error.message}`,
           );
 
-          const bwsSig = toBwsSignatureFormat(sig, txp.chain);
-          resolveSign(bwsSig);
-        } catch (err: any) {
-          rejectSign(new Error(`Failed to convert signature: ${err.message}`));
-        }
-      })
-      .on('error', (error: Error) => {
-        logManager.error(
-          `[TSS Sign] Input ${inputIndex + 1} Error: ${error.message}`,
-        );
-      });
+          const errorMsg = error.message || '';
+          if (
+            errorMsg.startsWith('TSS_ROUND_ALREADY_DONE') ||
+            errorMsg.startsWith('TSS_ROUND_MESSAGE_EXISTS')
+          ) {
+            // The server already has this round (duplicate submission or race condition).
+            // The local DKLS computation may still be running and could complete — do NOT
+            // reject here. Try to recover from server; if not ready, let the flow continue.
+            const sig = await tssSign.getSignatureFromServer();
+            if (sig) {
+              logManager.debug(
+                `[TSS Sign] Recovered signature from server after error event`,
+              );
+              if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+              }
+              tssSign.unsubscribe();
+              clearSigningSession(sessionId);
+              resolveSign(toBwsSignatureFormat(sig, txp.chain));
+            }
+            return;
+          }
 
-    tssSign.subscribe();
-  });
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+          tssSign.unsubscribe();
+          clearSigningSession(sessionId);
+          rejectSign(error);
+        });
+
+      tssSign.subscribe();
+    },
+  );
 
   tssSign.unsubscribe();
   logManager.debug(`[TSS Sign] Input ${inputIndex + 1} signed successfully`);
@@ -239,7 +483,7 @@ export const startTSSSigning =
     txp: TransactionProposal;
     callbacks: TSSSigningCallbacks;
     timeout?: number;
-    joiner?: boolean;
+    isCreator?: boolean;
     password?: string | undefined;
   }): Effect<Promise<TransactionProposal>> =>
   async (dispatch, getState): Promise<TransactionProposal> => {
@@ -249,7 +493,7 @@ export const startTSSSigning =
       txp,
       callbacks,
       timeout = 600000,
-      joiner,
+      isCreator,
       password,
     } = opts;
 
@@ -330,7 +574,6 @@ export const startTSSSigning =
             derivationPath: derivationPath!,
             sessionId,
             inputIndex: i,
-            totalInputs: inputPaths.length,
             callbacks,
             timeout,
             password,
@@ -346,7 +589,7 @@ export const startTSSSigning =
         );
 
         let signedTXP: TransactionProposal | null = null;
-        if (!joiner) {
+        if (isCreator) {
           signedTXP = await new Promise<TransactionProposal>(
             (resolvePush, rejectPush) => {
               wallet.pushSignatures(
@@ -448,21 +691,33 @@ export const joinTSSSigningSession =
       }
       await toggleTSSModal(setShowTSSProgressModal, true);
     }
-    // The joiner flow is the same as initiator - they both use startTSSSigning
+    // Both creator and joiner use startTSSSigning.
+    // Creator calls pushSignatures then broadcasts; joiner polls until broadcast.
+    const isCreator = txp.creatorId === wallet.credentials.copayerId;
     try {
-      await dispatch(
+      const signedTx = await dispatch(
         startTSSSigning({
           key,
           wallet,
           txp,
           callbacks,
-          joiner: true,
+          isCreator,
           password,
         }),
       );
-      const broadcastedTxp = await pollTxpUntilBroadcast(wallet, txp.id);
-      await callbacks.onStatusChange('complete');
-      return broadcastedTxp;
+      if (isCreator) {
+        if (signedTx.status === 'accepted') {
+          const broadcastedTx = await broadcastTx(wallet, signedTx);
+          logManager.debug('[TSS Join] Broadcast complete');
+          await callbacks.onStatusChange('complete');
+          return broadcastedTx as TransactionProposal;
+        }
+        return signedTx;
+      } else {
+        const broadcastedTxp = await pollTxpUntilBroadcast(wallet, txp.id);
+        await callbacks.onStatusChange('complete');
+        return broadcastedTxp;
+      }
     } catch (err) {
       callbacks.onStatusChange('error');
       throw err;

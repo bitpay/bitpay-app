@@ -25,7 +25,7 @@ import {
 } from '../../../styles/colors';
 import {BwcProvider} from '../../../lib/bwc';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
 import {
   startGetRates,
   startImportFile,
@@ -36,8 +36,11 @@ import {
   showBottomNotificationModal,
 } from '../../../store/app/app.actions';
 import {RouteProp} from '@react-navigation/core';
-import {WalletGroupParamList} from '../WalletGroup';
+import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
+import {RootStacks} from '../../../Root';
+import {TabsScreens} from '../../tabs/TabsStack';
 import {backupRedirect} from '../screens/Backup';
+import {IsVMChain} from '../../../store/wallet/utils/currency';
 import {RootState} from '../../../store';
 import {fixWalletAddresses, sleep} from '../../../utils/helper-methods';
 import {startUpdateAllWalletStatusForKey} from '../../../store/wallet/effects/status/status';
@@ -256,9 +259,6 @@ const FileOrText = () => {
       await sleep(1000);
       // @ts-ignore
       const key = await dispatch<Key>(startImportFile(decryptBackupText, opts));
-      hideOngoingProcess();
-      await sleep(1000);
-
       try {
         showOngoingProcess('IMPORT_SCANNING_FUNDS');
         await dispatch(startGetRates({force: true}));
@@ -375,9 +375,6 @@ const FileOrText = () => {
         startImportTSSFile(decryptBackupText),
       )) as Key;
 
-      hideOngoingProcess();
-      await sleep(1000);
-
       try {
         showOngoingProcess('IMPORT_SCANNING_FUNDS');
         await dispatch(startGetRates({force: true}));
@@ -398,12 +395,36 @@ const FileOrText = () => {
 
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
 
-      backupRedirect({
-        context: route.params?.context,
-        navigation,
-        walletTermsAccepted,
-        key,
-      });
+      const firstWallet = key.wallets[0];
+      const baseRoutes = [
+        {
+          name: RootStacks.TABS,
+          params: {screen: TabsScreens.HOME},
+        },
+      ];
+      const accountDetailsRoute = {
+        name: WalletScreens.ACCOUNT_DETAILS,
+        params: {
+          keyId: key.id,
+          selectedAccountAddress: firstWallet?.receiveAddress,
+        },
+      };
+      const walletDetailsRoute = {
+        name: WalletScreens.WALLET_DETAILS,
+        params: {
+          walletId: firstWallet?.id,
+          key,
+        },
+      };
+      const routes = IsVMChain(firstWallet?.chain)
+        ? [...baseRoutes, accountDetailsRoute]
+        : [...baseRoutes, walletDetailsRoute];
+      navigation.dispatch(
+        CommonActions.reset({
+          index: routes.length - 1,
+          routes,
+        }),
+      );
 
       dispatch(
         Analytics.track('Imported Key', {

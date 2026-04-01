@@ -50,6 +50,7 @@ import {
   TSSStatusSubText as StatusSubText,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
+import TypewriterText from '../components/TypewriterText';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key, TSSCopayerInfo} from '../../../store/wallet/wallet.models';
@@ -282,6 +283,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     tssSession?.status === 'ceremony_in_progress',
   );
   const [isCeremonyComplete, setIsCeremonyComplete] = useState(false);
+  const [isCeremonyInRounds, setIsCeremonyInRounds] = useState(false);
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [isInviteShared, setIsInviteShared] = useState(false);
   const [addCoSignerError, setAddCoSignerError] = useState<string | null>(null);
@@ -411,7 +413,9 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     setIsCeremonyComplete(false);
 
     try {
-      const updatedKey = await dispatch(startTSSCeremony(keyId));
+      const updatedKey = await dispatch(
+        startTSSCeremony(keyId, () => setIsCeremonyInRounds(true)),
+      );
       setCreatedKey(updatedKey);
       setIsCeremonyComplete(true);
     } catch (err: any) {
@@ -667,7 +671,13 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
                     </StepIndicator>
                     <StatusText>{t('Creating the wallet')}</StatusText>
                     <StatusSubText>
-                      {t('Preparing the HODL chamber')}
+                      {isCeremonyInRounds ? (
+                        <TypewriterText
+                          text={t('Preparing the HODL chamber')}
+                        />
+                      ) : (
+                        ' '
+                      )}
                     </StatusSubText>
                   </>
                 )}

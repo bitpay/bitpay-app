@@ -431,12 +431,11 @@ const RecoveryPhrase = () => {
           createTokenWalletWithFunds: true,
         }),
       );
-      hideOngoingProcess();
       logger.debug('[Scan Funds] Update portfolio balance (4/4)... Finished.');
       dispatch(updatePortfolioBalance());
-    } catch (error) {
-      hideOngoingProcess();
-      // ignore error
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.error(errMsg);
     }
   };
 
@@ -452,7 +451,6 @@ const RecoveryPhrase = () => {
         : ((await dispatch<any>(
             startImportWithDerivationPath(importData, opts),
           )) as Key);
-      hideOngoingProcess();
       await sleep(1000);
       dispatch(setHomeCarouselConfig({id: key.id, show: true}));
       await scanFunds(key);
@@ -468,6 +466,7 @@ const RecoveryPhrase = () => {
           source: 'RecoveryPhrase',
         }),
       );
+      hideOngoingProcess();
     } catch (err: any) {
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logger.error(errMsg);
@@ -516,10 +515,9 @@ const RecoveryPhrase = () => {
       }
 
       showOngoingProcess('CREATING_KEY');
+      await sleep(1000);
 
       const key = (await dispatch<any>(startCreateKeyWithOpts(keyOpts))) as Key;
-      hideOngoingProcess();
-      await sleep(1000);
       try {
         showOngoingProcess('IMPORT_SCANNING_FUNDS');
         await dispatch(startGetRates({force: true}));

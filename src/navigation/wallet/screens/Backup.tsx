@@ -17,7 +17,7 @@ import haptic from '../../../components/haptic-feedback/haptic';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {WalletGroupParamList, WalletScreens} from '../WalletGroup';
 import {Key} from '../../../store/wallet/wallet.models';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {StackActions} from '@react-navigation/native';
 import {RootState} from '../../../store';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -61,6 +61,11 @@ const BackupContainer = styled.SafeAreaView`
   align-items: center;
 `;
 
+type BackupNavigation = {
+  navigate: (...args: any[]) => void;
+  dispatch: (action: any) => void;
+};
+
 export const backupRedirect = ({
   context,
   navigation,
@@ -68,7 +73,7 @@ export const backupRedirect = ({
   key,
 }: {
   context: string | undefined;
-  navigation: NavigationProp<any>;
+  navigation: BackupNavigation;
   walletTermsAccepted: boolean;
   key?: Key;
 }) => {
