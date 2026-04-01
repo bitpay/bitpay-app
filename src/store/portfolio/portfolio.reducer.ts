@@ -9,6 +9,7 @@ const initialState: PortfolioState = {
   snapshotsByWalletId: {},
   lastPopulatedAt: undefined,
   quoteCurrency: undefined,
+  populateDisabled: false,
   populateStatus: {
     inProgress: false,
     startedAt: undefined,
@@ -43,10 +44,29 @@ export const portfolioReducer = (
     }
   }
 
+  if (state.populateDisabled) {
+    switch (action.type) {
+      case PortfolioActionTypes.CANCEL_POPULATE_PORTFOLIO:
+      case PortfolioActionTypes.START_POPULATE_PORTFOLIO:
+      case PortfolioActionTypes.UPDATE_POPULATE_PROGRESS:
+      case PortfolioActionTypes.SET_WALLET_SNAPSHOTS:
+      case PortfolioActionTypes.REMOVE_WALLET_SNAPSHOTS:
+      case PortfolioActionTypes.SET_SNAPSHOT_BALANCE_MISMATCHES_BY_WALLET_ID_UPDATES:
+      case PortfolioActionTypes.FINISH_POPULATE_PORTFOLIO:
+      case PortfolioActionTypes.FAIL_POPULATE_PORTFOLIO:
+        return state;
+    }
+  }
+
   switch (action.type) {
     case PortfolioActionTypes.CLEAR_PORTFOLIO: {
+      const populateDisabled =
+        typeof action.payload?.populateDisabled === 'boolean'
+          ? action.payload.populateDisabled
+          : state.populateDisabled;
       return {
         ...initialState,
+        populateDisabled,
         snapshotBalanceMismatchesByWalletId: {},
       };
     }

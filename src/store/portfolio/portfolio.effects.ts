@@ -34,6 +34,7 @@ import {normalizeFiatRateSeriesCoin} from '../../utils/portfolio/core/pnl/rates'
 import type {BalanceSnapshotStored} from '../../utils/portfolio/core/pnl/types';
 import {getLatestSnapshot} from '../../utils/portfolio/assets';
 import {
+  clearPortfolio,
   finishPopulatePortfolio,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
   setWalletSnapshots,
@@ -50,6 +51,8 @@ import {
   getSnapshotAtomicBalanceFromCryptoBalance,
   getWalletLiveAtomicBalance,
 } from '../../utils/portfolio/assets';
+import {logManager} from '../../managers/LogManager';
+import {shouldDisablePopulateForLargeHistory} from './portfolio.utils';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const POPULATE_FIAT_RATE_INTERVALS: FiatRateInterval[] = [
@@ -82,6 +85,9 @@ const resolveQuoteCurrency = (
 const isPortfolioEnabled = (state: RootState): boolean =>
   state.APP?.showPortfolioValue !== false;
 
+const isPortfolioPopulateDisabled = (state: RootState): boolean =>
+  state.PORTFOLIO?.populateDisabled === true;
+
 const createPopulateAbortChecker = (getState: () => RootState) => {
   let cancelled = false;
   return () => {
@@ -90,6 +96,10 @@ const createPopulateAbortChecker = (getState: () => RootState) => {
     }
     const currentState = getState();
     if (!isPortfolioEnabled(currentState)) {
+      cancelled = true;
+      return true;
+    }
+    if (isPortfolioPopulateDisabled(currentState)) {
       cancelled = true;
       return true;
     }
@@ -377,6 +387,9 @@ export const maybePopulatePortfolioForWallets =
   async (dispatch, getState) => {
     const state = getState();
     if (!isPortfolioEnabled(state)) {
+      return;
+    }
+    if (isPortfolioPopulateDisabled(state)) {
       return;
     }
     const quoteCurrency = resolveQuoteCurrency(
@@ -673,6 +686,9 @@ export const populatePortfolio =
     if (!isPortfolioEnabled(state)) {
       return;
     }
+    if (isPortfolioPopulateDisabled(state)) {
+      return;
+    }
     if (state.PORTFOLIO?.populateStatus?.inProgress) {
       return;
     }
@@ -957,6 +973,20 @@ export const populatePortfolio =
           bumpTxRequestsMade();
           acc = result?.transactions || acc;
           loadMore = !!result?.loadMore;
+          if (
+            shouldDisablePopulateForLargeHistory({
+              txCount: acc.length,
+              loadMore,
+            })
+          ) {
+            logManager.warn(
+              `[portfolio] populateDisabled triggered for wallet currency=${String(
+                wallet.currencyAbbreviation || 'unknown',
+              )} txCount=${acc.length}`,
+            );
+            dispatch(clearPortfolio({populateDisabled: true}));
+            return;
+          }
           iters++;
 
           if (iters % 2 === 0) {
@@ -1352,6 +1382,9 @@ export const preparePortfolioFiatRateCachesForQuoteCurrencySwitch =
   async (dispatch, getState) => {
     const state = getState();
     if (!isPortfolioEnabled(state)) {
+      return;
+    }
+    if (isPortfolioPopulateDisabled(state)) {
       return;
     }
     if (state.PORTFOLIO?.populateStatus?.inProgress) {
