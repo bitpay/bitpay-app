@@ -50,6 +50,7 @@ import {
   getWalletIdsToPopulateFromSnapshots,
   getSnapshotAtomicBalanceFromCryptoBalance,
   getWalletLiveAtomicBalance,
+  getVisibleWalletsFromKeys,
 } from '../../utils/portfolio/assets';
 import {logManager} from '../../managers/LogManager';
 import {shouldDisablePopulateForLargeHistory} from './portfolio.utils';
@@ -152,10 +153,13 @@ const updateWalletsCompleted = (args: {
   return walletsCompleted;
 };
 
-const getMainnetWalletsFromKeys = (keys: Record<string, any>): Wallet[] => {
-  return Object.values(keys || {})
-    .flatMap((k: any) => (k?.wallets ? k.wallets : []))
-    .filter((w: Wallet) => w?.network === Network.mainnet);
+const getVisibleMainnetWalletsFromState = (state: RootState): Wallet[] => {
+  const keys = state.WALLET?.keys || {};
+  const homeCarouselConfig = state.APP?.homeCarouselConfig;
+
+  return getVisibleWalletsFromKeys(keys, homeCarouselConfig).filter(
+    (w: Wallet) => w?.network === Network.mainnet,
+  );
 };
 
 const walletHasNonZeroLiveBalance = (wallet: Wallet): boolean => {
@@ -697,8 +701,7 @@ export const populatePortfolio =
       state.APP?.defaultAltCurrency?.isoCode,
     );
 
-    const keys = state.WALLET?.keys || {};
-    const wallets = getMainnetWalletsFromKeys(keys);
+    const wallets = getVisibleMainnetWalletsFromState(state);
 
     const walletIdsFilter = Array.isArray(args?.walletIds)
       ? new Set(args?.walletIds)
@@ -1400,8 +1403,7 @@ export const preparePortfolioFiatRateCachesForQuoteCurrencySwitch =
       return;
     }
 
-    const keys = state.WALLET?.keys || {};
-    const wallets = getMainnetWalletsFromKeys(keys);
+    const wallets = getVisibleMainnetWalletsFromState(state);
     const snapshotsByWalletId = state.PORTFOLIO?.snapshotsByWalletId || {};
 
     // Determine which quote currencies are currently used by stored snapshots.
