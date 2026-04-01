@@ -1,5 +1,4 @@
 import {
-  createNavigationContainerRef,
   NavigationContainer,
   NavigationState,
   NavigatorScreenParams,
@@ -160,6 +159,7 @@ import {useOngoingProcess} from './contexts';
 import {Keys} from './store/wallet/wallet.reducer';
 import {logManager} from './managers/LogManager';
 import * as Sentry from '@sentry/react-native';
+import {navigationRef} from './navigation/NavigationService';
 
 const BWC = BwcProvider.getInstance();
 const Logger = BWC.getLogger();
@@ -253,7 +253,7 @@ export type SilentPushEventObj = {
   network?: string;
 };
 
-export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+export {navigationRef};
 export const navigate = (
   name: keyof RootStackParamList,
   params: NavScreenParams,

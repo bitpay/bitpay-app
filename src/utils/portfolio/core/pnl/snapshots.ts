@@ -669,6 +669,8 @@ export type BuildBalanceSnapshotsAsyncOpts = {
   // Yield control to the event loop every N processed txs.
   // Helps keep the JS thread responsive in RN/browser.
   yieldEvery?: number;
+  // Optional hook invoked after a yield so callers can pause background work.
+  onYield?: () => Promise<void> | void;
 };
 
 type TxGroup = {
@@ -1324,6 +1326,15 @@ const yieldToEventLoop = async (): Promise<void> => {
   await new Promise<void>(resolve => setTimeout(resolve, 0));
 };
 
+const yieldControl = async (
+  onYield?: (() => Promise<void> | void) | undefined,
+): Promise<void> => {
+  await yieldToEventLoop();
+  if (typeof onYield === 'function') {
+    await onYield();
+  }
+};
+
 const simulateSnapshotsAsync = async (
   args: BuildBalanceSnapshotsArgs,
   prepared: PreparedTxHistory,
@@ -1342,7 +1353,7 @@ const simulateSnapshotsAsync = async (
     assetId,
   } = prepared;
 
-  const yieldEvery = Math.max(1, Math.floor(asyncOpts.yieldEvery ?? 1000));
+  const yieldEvery = Math.max(1, Math.floor(asyncOpts.yieldEvery ?? 250));
   const setup = createSimulationSetup(args, prepared, feeOverrides);
 
   // 1) Reorder txs that share the same timestamp (+ blockheight) to avoid temporary underflows.
@@ -1390,7 +1401,7 @@ const simulateSnapshotsAsync = async (
       lastRate = processed.markRate;
 
       if (runtime.processedTxs % yieldEvery === 0) {
-        await yieldToEventLoop();
+        await yieldControl(asyncOpts.onYield);
       }
     }
 
@@ -1408,7 +1419,7 @@ const simulateSnapshotsAsync = async (
 
     // Also yield between groups on large wallets (daily groups can be big).
     if (gi % 25 === 0) {
-      await yieldToEventLoop();
+      await yieldControl(asyncOpts.onYield);
     }
   }
 
@@ -1526,6 +1537,7 @@ export async function buildBalanceSnapshotsAsync(
   asyncOpts: BuildBalanceSnapshotsAsyncOpts = {},
 ): Promise<BalanceSnapshotStored[]> {
   const prepared = prepareTxHistory(args);
+  await yieldControl(asyncOpts.onYield);
   const first = await simulateSnapshotsAsync(
     args,
     prepared,
@@ -1542,6 +1554,7 @@ export async function buildBalanceSnapshotsAsync(
     walletBalanceAtomicString: (args.wallet as any)?.balanceAtomic,
   });
   if (overrides) {
+    await yieldControl(asyncOpts.onYield);
     return (
       await simulateSnapshotsAsync(args, prepared, overrides, false, asyncOpts)
     ).out;

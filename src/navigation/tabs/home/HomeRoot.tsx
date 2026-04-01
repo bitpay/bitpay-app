@@ -126,11 +126,14 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
     });
   }, [homeCarouselConfig, keys]);
 
-  const hasAnyVisibleWalletBalance = useMemo(() => {
-    const visibleWallets = getVisibleWalletsFromKeys(keys, homeCarouselConfig);
+  const visibleWallets = useMemo(
+    () => getVisibleWalletsFromKeys(keys, homeCarouselConfig),
+    [homeCarouselConfig, keys],
+  );
 
+  const hasAnyVisibleWalletBalance = useMemo(() => {
     return visibleWallets.some(walletHasNonZeroLiveBalance);
-  }, [homeCarouselConfig, keys]);
+  }, [visibleWallets]);
 
   const showPortfolioAllocationSection =
     portfolioAllocationTotalFiat > 0 || hasAnyVisibleWalletBalance;
@@ -323,7 +326,7 @@ const HomeRoot: React.FC<HomeScreenProps> = ({route, navigation}) => {
 
       await dispatch(
         maybePopulatePortfolioForWallets({
-          wallets,
+          wallets: visibleWallets,
           quoteCurrency,
         }) as any,
       );

@@ -18,6 +18,9 @@ export enum PortfolioActionTypes {
 
 export interface ClearPortfolioAction {
   type: typeof PortfolioActionTypes.CLEAR_PORTFOLIO;
+  payload?: {
+    populateDisabled?: boolean;
+  };
 }
 
 export interface CancelPopulatePortfolioAction {

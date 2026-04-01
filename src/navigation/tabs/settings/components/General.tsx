@@ -126,7 +126,7 @@ const General: React.FC<Props> = ({navigation}) => {
             }),
           );
         }
-        dispatch(clearPortfolio());
+        dispatch(clearPortfolio({populateDisabled: false}));
         return;
       }
       dispatch(
