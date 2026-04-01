@@ -1,7 +1,8 @@
 import {Effect, RootState} from '..';
-import {AppState} from 'react-native';
+import {AppState, DeviceEventEmitter} from 'react-native';
 import {navigationRef} from '../../navigation/NavigationService';
 import {Network} from '../../constants';
+import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
   getFiatRateSeriesCacheKey,
   type FiatRateInterval,
@@ -22,6 +23,7 @@ import type {Wallet} from '../wallet/wallet.models';
 import {
   getRateByCurrencyName,
   getErrorString,
+  sleep,
   atomicToUnitString,
   unitStringToAtomicBigInt,
 } from '../../utils/helper-methods';
@@ -88,6 +90,21 @@ const isPortfolioEnabled = (state: RootState): boolean =>
 
 const isPortfolioPopulateDisabled = (state: RootState): boolean =>
   state.PORTFOLIO?.populateDisabled === true;
+
+const shouldWaitForAppUnlockBeforePortfolioWork = (state: RootState): boolean =>
+  !!(state.APP?.pinLockActive || state.APP?.biometricLockActive) &&
+  !Number.isFinite(Number(state.APP?.lockAuthorizedUntil));
+
+const deferPortfolioWorkUntilAppUnlock = (work: () => void): void => {
+  const subscriptionToAppUnlock = DeviceEventEmitter.addListener(
+    DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+    async () => {
+      subscriptionToAppUnlock.remove();
+      await sleep(3000);
+      work();
+    },
+  );
+};
 
 const createPopulateAbortChecker = (getState: () => RootState) => {
   let cancelled = false;
@@ -396,6 +413,13 @@ export const maybePopulatePortfolioForWallets =
     if (isPortfolioPopulateDisabled(state)) {
       return;
     }
+    if (shouldWaitForAppUnlockBeforePortfolioWork(state)) {
+      deferPortfolioWorkUntilAppUnlock(() => {
+        dispatch(maybePopulatePortfolioForWallets(args));
+      });
+      return;
+    }
+
     const quoteCurrency = resolveQuoteCurrency(
       args.quoteCurrency,
       state.PORTFOLIO?.quoteCurrency,
@@ -691,6 +715,12 @@ export const populatePortfolio =
       return;
     }
     if (isPortfolioPopulateDisabled(state)) {
+      return;
+    }
+    if (shouldWaitForAppUnlockBeforePortfolioWork(state)) {
+      deferPortfolioWorkUntilAppUnlock(() => {
+        dispatch(populatePortfolio(args));
+      });
       return;
     }
     if (state.PORTFOLIO?.populateStatus?.inProgress) {
