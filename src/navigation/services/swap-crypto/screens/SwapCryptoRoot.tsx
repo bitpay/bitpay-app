@@ -138,10 +138,13 @@ import BalanceDetailsModal from '../../../wallet/components/BalanceDetailsModal'
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
 import {
   ExternalServicesConfig,
-  ExternalServicesConfigRequestParams,
   SwapCryptoConfig,
 } from '../../../../store/external-services/external-services.types';
-import {getExternalServicesConfig} from '../../../../store/external-services/external-services.effects';
+import {
+  getExternalServicesConfig,
+  getCachedExternalServicesConfig,
+  isExternalServicesConfigCacheFresh,
+} from '../../../../store/external-services/external-services.effects';
 import {StackActions} from '@react-navigation/native';
 import {Analytics} from '../../../../store/analytics/analytics.effects';
 import styled from 'styled-components/native';
@@ -229,7 +232,11 @@ import SwapCryptoTxDataSkeleton from './SwapCryptoTxDataSkeleton';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
 import SwapCryptoFiatSwitcherIcon from '../../../../components/icons/external-services/swap/SwapCryptoFiatSwitcherIcon';
 import BottomAmountModal from '../components/BottomAmountModal';
-import {SWAP_CRYPTO_CACHE_TTL} from '../../../../store/swap-crypto/swap-crypto.effects';
+import {
+  SWAP_CRYPTO_CACHE_TTL,
+  getSwapCryptoPrefetchedData,
+  setSwapCryptoPrefetchedData,
+} from '../../../../store/swap-crypto/swap-crypto.effects';
 
 export type SwapCryptoRootScreenParams =
   | {
@@ -346,7 +353,7 @@ const SwapCryptoRoot: React.FC = () => {
   );
   const rates = useAppSelector(({RATE}) => RATE.rates);
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
-  const prefetchedOpts = useAppSelector(({SWAP_CRYPTO}) => SWAP_CRYPTO.opts);
+  const prefetchedOpts = getSwapCryptoPrefetchedData();
   const route =
     useRoute<
       RouteProp<SwapCryptoGroupParamList, SwapCryptoScreens.SWAP_CRYPTO_ROOT>
@@ -1518,19 +1525,17 @@ const SwapCryptoRoot: React.FC = () => {
       setLoadingWalletFromStatus(true);
     }
 
+    // Try caches first, then fall back to a network call
     if (isCacheFresh && prefetchedOpts?.swapCryptoConfig !== undefined) {
       swapCryptoConfig = prefetchedOpts.swapCryptoConfig;
-      logger.debug('Using cached swapCryptoConfig');
+      logger.debug('Using cached swapCryptoConfig (prefetch)');
+    } else if (isExternalServicesConfigCacheFresh()) {
+      swapCryptoConfig = getCachedExternalServicesConfig()?.config?.swapCrypto;
+      logger.debug('Using cached swapCryptoConfig (external-services)');
     } else {
       try {
-        const requestData: ExternalServicesConfigRequestParams = {
-          currentLocationCountry: locationData?.countryShortCode,
-          currentLocationState: locationData?.stateShortCode,
-          bitpayIdLocationCountry: user?.country,
-          bitpayIdLocationState: user?.state,
-        };
         const config: ExternalServicesConfig = await dispatch(
-          getExternalServicesConfig(requestData),
+          getExternalServicesConfig(),
         );
         swapCryptoConfig = config?.swapCrypto;
         logger.debug('swapCryptoConfig: ' + JSON.stringify(swapCryptoConfig));
@@ -1726,14 +1731,12 @@ const SwapCryptoRoot: React.FC = () => {
 
           // Write back to cache so subsequent opens skip network calls
           if (!isCacheFresh) {
-            dispatch(
-              SwapCryptoActions.setPrefetchedData({
-                swapCryptoConfig,
-                changellyRawCurrencies: changellyRawRef.current,
-                thorswapRawCurrencies: thorswapRawRef.current,
-                fetchedAt: Date.now(),
-              }),
-            );
+            setSwapCryptoPrefetchedData({
+              swapCryptoConfig,
+              changellyRawCurrencies: changellyRawRef.current,
+              thorswapRawCurrencies: thorswapRawRef.current,
+              fetchedAt: Date.now(),
+            });
           }
         } else {
           const reason =
