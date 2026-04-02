@@ -1,4 +1,4 @@
-import React, {ReactChild, useEffect, useMemo, useCallback} from 'react';
+import React, {ReactNode, useEffect, useMemo, useCallback} from 'react';
 import {Platform} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import SheetModal from '../base/sheet/SheetModal';
@@ -40,7 +40,7 @@ export interface BottomNotificationConfig {
     action: (rootState: RootState) => any;
   }>;
   code?: string;
-  message2?: ReactChild;
+  message2?: ReactNode;
   enableBackdropDismiss: boolean;
   onBackdropDismiss?: () => void;
 }

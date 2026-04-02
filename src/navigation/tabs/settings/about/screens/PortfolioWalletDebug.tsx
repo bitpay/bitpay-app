@@ -557,7 +557,7 @@ const PortfolioWalletDebug = ({
                 'WALLET',
               ],
             });
-            portfolioRaw = decrypt.out(parsed as any, 'PORTFOLIO');
+            portfolioRaw = decrypt.out(parsed as any, 'PORTFOLIO', undefined);
           } catch (e) {
             portfolioRaw = null;
           }
