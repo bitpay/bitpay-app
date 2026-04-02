@@ -87,15 +87,25 @@ export class BitPayIdApi {
     return api;
   }
 
-  static apiCall(token: string, method: string, params?: {[k: string]: any}) {
-    return BitPayIdApi.getInstance()
-      .request(method, token, params)
-      .then(res => {
-        if (res?.data?.error) {
-          throw new Error(res.data.error);
-        }
-        return res.data.data || res.data;
-      });
+  static async apiCall(
+    token: string,
+    method: string,
+    params?: {[k: string]: any},
+  ) {
+    if (!token) {
+      throw new Error(`BitPayIdApi.apiCall(${method}) called without token`);
+    }
+    const res = await BitPayIdApi.getInstance().request(method, token, params);
+
+    if (res?.data?.error) {
+      throw new Error(
+        typeof res.data.error === 'string'
+          ? res.data.error
+          : JSON.stringify(res.data.error),
+      );
+    }
+
+    return res?.data?.data ?? res?.data;
   }
 
   get host(): string {

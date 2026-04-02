@@ -259,8 +259,12 @@ const ShopHome: React.FC<
   useFocusEffect(
     useCallback(() => {
       if (!initialSyncComplete) {
-        dispatch(ShopEffects.startSyncGiftCards());
-        setInitialSyncComplete(true);
+        try {
+          dispatch(ShopEffects.startSyncGiftCards());
+          setInitialSyncComplete(true);
+        } catch (err) {
+          setInitialSyncComplete(true);
+        }
       }
     }, [initialSyncComplete]),
   );
@@ -281,12 +285,16 @@ const ShopHome: React.FC<
               tintColor={theme.dark ? White : SlateDark}
               refreshing={refreshing}
               onRefresh={async () => {
-                setRefreshing(true);
-                await Promise.all([
-                  dispatch(ShopEffects.startSyncGiftCards()),
-                  sleep(600),
-                ]);
-                setRefreshing(false);
+                try {
+                  setRefreshing(true);
+                  await Promise.all([
+                    dispatch(ShopEffects.startSyncGiftCards()),
+                    sleep(600),
+                  ]);
+                  setRefreshing(false);
+                } catch (err) {
+                  setRefreshing(false);
+                }
               }}
             />
           ) : undefined
