@@ -126,7 +126,7 @@ import {ShortcutList} from '../../constants/shortcuts';
 import {goToBuyCrypto} from '../buy-crypto/buy-crypto.effects';
 import {goToSellCrypto} from '../sell-crypto/sell-crypto.effects';
 import {goToSwapCrypto} from '../swap-crypto/swap-crypto.effects';
-import {prefetchSwapCryptoData} from '../swap-crypto/swap-crypto.effects';
+import {prefetchExternalServicesData} from '../external-services/external-services.effects';
 import {receiveCrypto, sendCrypto} from '../wallet/effects/send/send';
 import moment from 'moment';
 import {FeedbackRateType} from '../../navigation/tabs/settings/about/screens/SendFeedback';
@@ -376,8 +376,8 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
     dispatch(AppActions.appInitCompleted());
     DeviceEventEmitter.emit(DeviceEmitterEvents.APP_INIT_COMPLETED);
 
-    // Pre-fetch swap crypto config and currencies in background
-    dispatch(prefetchSwapCryptoData());
+    // Pre-fetch external services config and swap crypto currencies in background
+    dispatch(prefetchExternalServicesData());
   } catch (err: unknown) {
     let errorStr;
     if (err instanceof Error) {
