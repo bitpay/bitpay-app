@@ -46,8 +46,6 @@ Sentry.init({
   dsn: SENTRY_DSN,
   enabled: !__DEV__,
   environment: __DEV__ ? 'development' : 'production',
-  release: APP_VERSION,
-  dist: GIT_COMMIT_HASH,
   sendDefaultPii: false,
   enableLogs: false,
   enableAutoNativeBreadcrumbs: false,
