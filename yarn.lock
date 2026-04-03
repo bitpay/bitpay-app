@@ -14266,10 +14266,10 @@ react-native-animatable@1.4.0:
   dependencies:
     prop-types "^15.8.1"
 
-react-native-appsflyer@6.16.2:
-  version "6.16.2"
-  resolved "https://registry.yarnpkg.com/react-native-appsflyer/-/react-native-appsflyer-6.16.2.tgz#074707a789571673ffa5fafc6518902661023d93"
-  integrity sha512-ggMED0/R2Ypj5TLZNZ/HS9SsUorfsTMguRuH0x6inH+KSZqUghVjOAtQYxPPw3ZDgJBEZLhW9CaLTGd8dECtPQ==
+react-native-appsflyer@6.17.9:
+  version "6.17.9"
+  resolved "https://registry.yarnpkg.com/react-native-appsflyer/-/react-native-appsflyer-6.17.9.tgz#18c520b774166db491de7e26e3c89536840f2e85"
+  integrity sha512-oEddwSsVL8D3ki8ayWZV34GyORAxvL1BXq3mL1xB8Hdfg+xxLyjAXSvWbj0t3E3NJ2KrgLRf/hbTlsPltfo/Uw==
 
 react-native-biometrics@3.0.1:
   version "3.0.1"
