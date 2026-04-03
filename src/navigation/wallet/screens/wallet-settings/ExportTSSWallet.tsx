@@ -7,7 +7,15 @@ import {
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {ScreenGutter} from '../../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  AdvancedOptions,
+  AdvancedOptionsButton,
+  AdvancedOptionsContainer,
+  Column,
+  AdvancedOptionsButtonText,
+  ScreenGutter,
+} from '../../../../components/styled/Containers';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {SlateDark, White, Black, Slate30} from '../../../../styles/colors';
 import yup from '../../../../lib/yup';
@@ -25,6 +33,11 @@ import {
 } from '../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {Platform, Modal} from 'react-native';
+import Haptic from '../../../../components/haptic-feedback/haptic';
+import ChevronUpSvg from '../../../../../assets/img/chevron-up.svg';
+import ChevronDownSvg from '../../../../../assets/img/chevron-down.svg';
+import Checkbox from '../../../../components/checkbox/Checkbox';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Share, {ShareOptions} from 'react-native-share';
 import RNFS from 'react-native-fs';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
@@ -59,6 +72,27 @@ const ExportParagraph = styled(Paragraph)`
 
 const PasswordActionContainer = styled.View`
   margin-top: 20px;
+`;
+
+const AdvancedOptionsText = styled(Paragraph)`
+  color: ${({theme}) => theme.colors.text};
+`;
+
+const RowContainer = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+  padding: 18px;
+`;
+
+const CtaContainer = styled.View`
+  align-self: stretch;
+  flex-direction: column;
+  margin-top: 20px;
+`;
+
+const CheckBoxContainer = styled.View`
+  flex-direction: column;
+  justify-content: center;
 `;
 
 const PasswordInputContainer = styled.View`
@@ -144,6 +178,8 @@ const ExportTSSWallet = () => {
   const [shareButtonState, setShareButtonState] = useState<ButtonState>();
   const [backupCompleted, setBackupCompleted] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const [dontIncludePrivateKey, setDontIncludePrivateKey] = useState(false);
 
   const showContinueButton =
     context === 'createNewTSSKey' || context === 'joinTSSKey';
@@ -184,14 +220,26 @@ const ExportTSSWallet = () => {
     } else {
       keyData = key.methods.toObj();
     }
-    const backup = {
+    const backup: {
+      isTSS: boolean;
+      version: number;
+      key?: any;
+      credentials: any[];
+    } = {
       isTSS: true,
       version: 1,
-      key: keyData,
-      credentials: key.wallets.map((wallet: Wallet) =>
-        wallet.credentials.toObj(),
-      ),
+      credentials: key.wallets.map((wallet: Wallet) => {
+        const credObj = wallet.credentials.toObj();
+        if (dontIncludePrivateKey) {
+          delete credObj.keyId;
+        }
+        return credObj;
+      }),
     };
+
+    if (!dontIncludePrivateKey) {
+      backup.key = keyData;
+    }
 
     const encrypted = BWC.getEncryption().encryptWithPassword(
       JSON.stringify(backup),
@@ -218,7 +266,10 @@ const ExportTSSWallet = () => {
       }
 
       const walletName = key?.wallets?.[0]?.walletName || 'SharedWallet';
-      const filename = `${APP_NAME_UPPERCASE}-Keyshare-${walletName}.txt`;
+      const displayName = dontIncludePrivateKey
+        ? `${walletName} ${t('(No Private Key)')}`
+        : walletName;
+      const filename = `${APP_NAME_UPPERCASE}-Keyshare-${displayName}.txt`;
 
       const rootPath =
         Platform.OS === 'ios'
@@ -229,7 +280,7 @@ const ExportTSSWallet = () => {
 
       const txt = t(
         'Here is the encrypted keyshare backup for wallet: {{name}}\n\n{{keyshare}}\n\nTo import this backup, copy all text between {...}, including the symbols {}',
-        {name: walletName, keyshare: encryptedKeyshare},
+        {name: displayName, keyshare: encryptedKeyshare},
       );
 
       await RNFS.writeFile(filePath, txt, 'utf8');
@@ -349,6 +400,57 @@ const ExportTSSWallet = () => {
               defaultValue=""
             />
           </PasswordInputContainer>
+
+          <CtaContainer>
+            <AdvancedOptionsContainer>
+              <AdvancedOptionsButton
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  Haptic('impactLight');
+                  setShowOptions(!showOptions);
+                }}>
+                {showOptions ? (
+                  <>
+                    <AdvancedOptionsButtonText>
+                      {t('Hide Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                    <ChevronUpSvg />
+                  </>
+                ) : (
+                  <>
+                    <AdvancedOptionsButtonText>
+                      {t('Show Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                    <ChevronDownSvg />
+                  </>
+                )}
+              </AdvancedOptionsButton>
+
+              {showOptions && (
+                <AdvancedOptions>
+                  <RowContainer
+                    activeOpacity={1}
+                    onPress={() => {
+                      setDontIncludePrivateKey(!dontIncludePrivateKey);
+                    }}>
+                    <Column>
+                      <AdvancedOptionsText>
+                        {t('Do not include private key')}
+                      </AdvancedOptionsText>
+                    </Column>
+                    <CheckBoxContainer>
+                      <Checkbox
+                        checked={dontIncludePrivateKey}
+                        onPress={() => {
+                          setDontIncludePrivateKey(!dontIncludePrivateKey);
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  </RowContainer>
+                </AdvancedOptions>
+              )}
+            </AdvancedOptionsContainer>
+          </CtaContainer>
 
           <PasswordActionContainer>
             <Button

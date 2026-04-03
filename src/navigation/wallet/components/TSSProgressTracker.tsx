@@ -405,12 +405,12 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
         wallet.copayers?.map(copayer => ({
           id: copayer.id,
           name: copayer.name,
-          signed: copayer.id === txpCreatorId,
+          signed: false,
         })) || [];
 
       onCopayersInitialized(initialCopayers);
     }
-  }, [wallet, onCopayersInitialized, copayers.length, txpCreatorId]);
+  }, [wallet, onCopayersInitialized, copayers.length]);
 
   return (
     <>
