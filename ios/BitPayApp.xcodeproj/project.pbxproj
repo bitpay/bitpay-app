@@ -189,6 +189,8 @@
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				EBB510F948BF432C893398ED /* Upload Debug Symbols to Sentry */,
+				AF19107D42FF74BA8F0049CF /* Inject Bundle Hash */,
+
 				C3CF03A4A13B8DA5B5BB02BA /* [CP] Embed Pods Frameworks */,
 				A4F9FF5781B0ADEE84C32EAD /* [CP] Copy Pods Resources */,
 			);
@@ -319,6 +321,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-BitPayApp/Pods-BitPayApp-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		AF19107D42FF74BA8F0049CF /* Inject Bundle Hash */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Inject Bundle Hash";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/scripts/inject-bundle-hash.sh\"";
 			showEnvVarsInLog = 0;
 		};
 		C3CF03A4A13B8DA5B5BB02BA /* [CP] Embed Pods Frameworks */ = {

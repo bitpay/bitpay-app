@@ -50,6 +50,7 @@ import {
   TSSStatusSubText as SessionAcceptedSubText,
 } from '../../../components/styled/Containers';
 import Button from '../../../components/button/Button';
+import TypewriterText from '../components/TypewriterText';
 import {useLogger} from '../../../utils/hooks/useLogger';
 import {showBottomNotificationModal} from '../../../store/app/app.actions';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -183,6 +184,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
   const [createdKey, setCreatedKey] = useState<Key | null>(null);
   const [showProcessing, setShowProcessing] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [isCeremonyInRounds, setIsCeremonyInRounds] = useState(false);
 
   const resumeKeyId = route.params?.keyId;
 
@@ -192,7 +194,12 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
       setCurrentStep(3);
       const resumeCeremony = async () => {
         try {
-          const key = await dispatch(joinTSSWithCode({keyId: resumeKeyId}));
+          const key = await dispatch(
+            joinTSSWithCode({
+              keyId: resumeKeyId,
+              onRoundReady: () => setIsCeremonyInRounds(true),
+            }),
+          );
           setCreatedKey(key);
           setIsWalletReady(true);
         } catch (err: any) {
@@ -302,6 +309,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
           joinCode: inviteCode.trim(),
           partyKey,
           myName: copayerName,
+          onRoundReady: () => setIsCeremonyInRounds(true),
         }),
       );
 
@@ -572,7 +580,11 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
                 {t('Waiting for others to join')}
               </SessionAcceptedText>
               <SessionAcceptedSubText style={{marginTop: 4}}>
-                {t('Preparing the HODL chamber')}
+                {isCeremonyInRounds ? (
+                  <TypewriterText text={t('Preparing the HODL chamber')} />
+                ) : (
+                  ' '
+                )}
               </SessionAcceptedSubText>
             </SessionAcceptedContainer>
           </QRSectionContainer>

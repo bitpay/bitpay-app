@@ -4,8 +4,11 @@ import type {
 } from './portfolio.models';
 import {PortfolioActionType, PortfolioActionTypes} from './portfolio.types';
 
-export const clearPortfolio = (): PortfolioActionType => ({
+export const clearPortfolio = (payload?: {
+  populateDisabled?: boolean;
+}): PortfolioActionType => ({
   type: PortfolioActionTypes.CLEAR_PORTFOLIO,
+  payload,
 });
 
 export const cancelPopulatePortfolio = (): PortfolioActionType => ({

@@ -650,7 +650,6 @@ const BillConfirm: React.FC<
               onCopayersInitialized={setTssCopayers}
               isModalVisible={showTSSProgressModal}
               onModalVisibilityChange={setShowTSSProgressModal}
-              txpCreatorId={wallet.credentials?.copayerId}
             />
           )}
           <SendingTo

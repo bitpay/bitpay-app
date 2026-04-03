@@ -477,7 +477,7 @@ const TransactionProposalNotifications = () => {
               <ListItemSubText>
                 {formatCurrencyAbbreviation(currencyAbbreviation)}{' '}
                 {isTSS && tssMetadata
-                  ? `- Threshold ${tssMetadata.m}/${tssMetadata.m}`
+                  ? `- Threshold ${tssMetadata.m}/${tssMetadata.n}`
                   : n > 1
                   ? `- Multisig ${m}/${n}`
                   : null}
@@ -644,7 +644,13 @@ const TransactionProposalNotifications = () => {
           status={tssStatus}
           progress={tssProgress}
           createdBy={currentWallet.walletName || 'You'}
-          date={new Date()}
+          date={
+            new Date(
+              (txpsToSign[0]?.createdOn ??
+                txpsToSign[0]?.time ??
+                Date.now() / 1000) * 1000,
+            )
+          }
           wallet={currentWallet}
           copayers={tssCopayers}
           onCopayersInitialized={setTssCopayers}
@@ -697,33 +703,6 @@ const TransactionProposalNotifications = () => {
 
               if (isTSSKey(key)) {
                 const txp = txpsToSign[0];
-
-                if (txp.creatorId === wallet.credentials.copayerId) {
-                  await showErrorMessage(
-                    CustomErrorMessage({
-                      errMsg: t(
-                        'This TSS signing session cannot be resumed. Please delete this proposal and create a new transaction.',
-                      ),
-                      title: t('Signing session lost'),
-                    }),
-                  );
-                  setResetSwipeButton(true);
-                  return;
-                }
-
-                if (txp.canBeRemoved) {
-                  await showErrorMessage(
-                    CustomErrorMessage({
-                      errMsg: t(
-                        'This TSS signing session cannot be resumed. Please delete this proposal and create a new transaction.',
-                      ),
-                      title: t('Signing session expired'),
-                    }),
-                  );
-                  setResetSwipeButton(true);
-                  return;
-                }
-
                 await dispatch(
                   joinTSSSigningSession({
                     key,
@@ -802,6 +781,10 @@ const TransactionProposalNotifications = () => {
                   dispatch(showBottomNotificationModal(WrongPasswordError()));
                   break;
                 case 'password canceled':
+                  break;
+                case 'biometric check failed':
+                  break;
+                case 'user denied transaction':
                   break;
                 default:
                   await showErrorMessage(

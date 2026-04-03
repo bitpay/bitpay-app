@@ -55,6 +55,7 @@ export interface PortfolioState {
   snapshotsByWalletId: {[walletId: string]: BalanceSnapshot[] | undefined};
   lastPopulatedAt?: number;
   quoteCurrency?: string;
+  populateDisabled: boolean;
   populateStatus: PortfolioPopulateStatus;
   snapshotBalanceMismatchesByWalletId?: {
     [walletId: string]: SnapshotBalanceMismatch | undefined;

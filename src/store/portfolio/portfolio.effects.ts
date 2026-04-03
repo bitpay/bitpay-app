@@ -1,5 +1,8 @@
 import {Effect, RootState} from '..';
+import {AppState, DeviceEventEmitter} from 'react-native';
+import {navigationRef} from '../../navigation/NavigationService';
 import {Network} from '../../constants';
+import {DeviceEmitterEvents} from '../../constants/device-emitter-events';
 import {
   getFiatRateSeriesCacheKey,
   type FiatRateInterval,
@@ -20,6 +23,7 @@ import type {Wallet} from '../wallet/wallet.models';
 import {
   getRateByCurrencyName,
   getErrorString,
+  sleep,
   atomicToUnitString,
   unitStringToAtomicBigInt,
 } from '../../utils/helper-methods';
@@ -32,6 +36,7 @@ import {normalizeFiatRateSeriesCoin} from '../../utils/portfolio/core/pnl/rates'
 import type {BalanceSnapshotStored} from '../../utils/portfolio/core/pnl/types';
 import {getLatestSnapshot} from '../../utils/portfolio/assets';
 import {
+  clearPortfolio,
   finishPopulatePortfolio,
   setSnapshotBalanceMismatchesByWalletIdUpdates,
   setWalletSnapshots,
@@ -47,7 +52,10 @@ import {
   getWalletIdsToPopulateFromSnapshots,
   getSnapshotAtomicBalanceFromCryptoBalance,
   getWalletLiveAtomicBalance,
+  getVisibleWalletsFromKeys,
 } from '../../utils/portfolio/assets';
+import {logManager} from '../../managers/LogManager';
+import {shouldDisablePopulateForLargeHistory} from './portfolio.utils';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const POPULATE_FIAT_RATE_INTERVALS: FiatRateInterval[] = [
@@ -62,6 +70,13 @@ const PORTFOLIO_COMPRESS_OLD_TXS_TO_DAILY_SNAPSHOTS = true;
 const PORTFOLIO_ENABLE_INCREMENTAL_UPDATES = true;
 const PORTFOLIO_INCREMENTAL_MAX_PAGES = 10;
 const PORTFOLIO_INCREMENTAL_RESNAPSHOT_WINDOW_MS = MS_PER_DAY;
+const PORTFOLIO_POPULATE_ALLOWED_ROUTE_NAMES = new Set<string>([
+  'Home',
+  'AllAssets',
+  'Allocation',
+]);
+const PORTFOLIO_POPULATE_PAUSE_POLL_MS = 250;
+const PORTFOLIO_POPULATE_ABORTED_ERROR_MESSAGE = 'PORTFOLIO_POPULATE_ABORTED';
 
 const resolveQuoteCurrency = (
   ...candidates: Array<string | undefined>
@@ -73,6 +88,24 @@ const resolveQuoteCurrency = (
 const isPortfolioEnabled = (state: RootState): boolean =>
   state.APP?.showPortfolioValue !== false;
 
+const isPortfolioPopulateDisabled = (state: RootState): boolean =>
+  state.PORTFOLIO?.populateDisabled === true;
+
+const shouldWaitForAppUnlockBeforePortfolioWork = (state: RootState): boolean =>
+  !!(state.APP?.pinLockActive || state.APP?.biometricLockActive) &&
+  !Number.isFinite(Number(state.APP?.lockAuthorizedUntil));
+
+const deferPortfolioWorkUntilAppUnlock = (work: () => void): void => {
+  const subscriptionToAppUnlock = DeviceEventEmitter.addListener(
+    DeviceEmitterEvents.APP_LOCK_MODAL_DISMISSED,
+    async () => {
+      subscriptionToAppUnlock.remove();
+      await sleep(3000);
+      work();
+    },
+  );
+};
+
 const createPopulateAbortChecker = (getState: () => RootState) => {
   let cancelled = false;
   return () => {
@@ -81,6 +114,10 @@ const createPopulateAbortChecker = (getState: () => RootState) => {
     }
     const currentState = getState();
     if (!isPortfolioEnabled(currentState)) {
+      cancelled = true;
+      return true;
+    }
+    if (isPortfolioPopulateDisabled(currentState)) {
       cancelled = true;
       return true;
     }
@@ -133,10 +170,13 @@ const updateWalletsCompleted = (args: {
   return walletsCompleted;
 };
 
-const getMainnetWalletsFromKeys = (keys: Record<string, any>): Wallet[] => {
-  return Object.values(keys || {})
-    .flatMap((k: any) => (k?.wallets ? k.wallets : []))
-    .filter((w: Wallet) => w?.network === Network.mainnet);
+const getVisibleMainnetWalletsFromState = (state: RootState): Wallet[] => {
+  const keys = state.WALLET?.keys || {};
+  const homeCarouselConfig = state.APP?.homeCarouselConfig;
+
+  return getVisibleWalletsFromKeys(keys, homeCarouselConfig).filter(
+    (w: Wallet) => w?.network === Network.mainnet,
+  );
 };
 
 const walletHasNonZeroLiveBalance = (wallet: Wallet): boolean => {
@@ -257,8 +297,48 @@ const buildSnapshotMismatchUpdate = (args: {
   };
 };
 
-const yieldToEventLoop = async (): Promise<void> => {
+const getPortfolioPopulateRouteName = (): string | undefined => {
+  if (!navigationRef.isReady()) {
+    return undefined;
+  }
+
+  return (
+    navigationRef.getCurrentRoute()?.name ??
+    navigationRef.getState()?.routes?.slice(-1)[0]?.name
+  );
+};
+
+const shouldPausePortfolioPopulate = (): boolean => {
+  const routeName = getPortfolioPopulateRouteName();
+
+  return (
+    AppState.currentState !== 'active' ||
+    !routeName ||
+    !PORTFOLIO_POPULATE_ALLOWED_ROUTE_NAMES.has(routeName)
+  );
+};
+
+const waitForPortfolioWorkSlot = async (
+  shouldAbort?: () => boolean,
+): Promise<boolean> => {
+  while (shouldPausePortfolioPopulate()) {
+    if (shouldAbort?.()) {
+      return false;
+    }
+
+    await new Promise<void>(resolve =>
+      setTimeout(resolve, PORTFOLIO_POPULATE_PAUSE_POLL_MS),
+    );
+  }
+
+  return !shouldAbort?.();
+};
+
+const yieldToEventLoop = async (
+  shouldAbort?: () => boolean,
+): Promise<boolean> => {
   await new Promise<void>(resolve => setTimeout(resolve, 0));
+  return waitForPortfolioWorkSlot(shouldAbort);
 };
 
 const getUtcDayStartMs = (tsMs: number): number => {
@@ -330,6 +410,16 @@ export const maybePopulatePortfolioForWallets =
     if (!isPortfolioEnabled(state)) {
       return;
     }
+    if (isPortfolioPopulateDisabled(state)) {
+      return;
+    }
+    if (shouldWaitForAppUnlockBeforePortfolioWork(state)) {
+      deferPortfolioWorkUntilAppUnlock(() => {
+        dispatch(maybePopulatePortfolioForWallets(args));
+      });
+      return;
+    }
+
     const quoteCurrency = resolveQuoteCurrency(
       args.quoteCurrency,
       state.PORTFOLIO?.quoteCurrency,
@@ -624,6 +714,15 @@ export const populatePortfolio =
     if (!isPortfolioEnabled(state)) {
       return;
     }
+    if (isPortfolioPopulateDisabled(state)) {
+      return;
+    }
+    if (shouldWaitForAppUnlockBeforePortfolioWork(state)) {
+      deferPortfolioWorkUntilAppUnlock(() => {
+        dispatch(populatePortfolio(args));
+      });
+      return;
+    }
     if (state.PORTFOLIO?.populateStatus?.inProgress) {
       return;
     }
@@ -632,8 +731,7 @@ export const populatePortfolio =
       state.APP?.defaultAltCurrency?.isoCode,
     );
 
-    const keys = state.WALLET?.keys || {};
-    const wallets = getMainnetWalletsFromKeys(keys);
+    const wallets = getVisibleMainnetWalletsFromState(state);
 
     const walletIdsFilter = Array.isArray(args?.walletIds)
       ? new Set(args?.walletIds)
@@ -758,6 +856,11 @@ export const populatePortfolio =
       if (shouldAbort()) {
         return;
       }
+
+      if (!(await waitForPortfolioWorkSlot(shouldAbort))) {
+        return;
+      }
+
       dispatch(updatePopulateProgress({currentWalletId: wallet.id}));
       setWalletStatus({dispatch, walletId: wallet.id, status: 'in_progress'});
 
@@ -885,6 +988,9 @@ export const populatePortfolio =
           if (shouldAbort()) {
             return;
           }
+          if (!(await waitForPortfolioWorkSlot(shouldAbort))) {
+            return;
+          }
           const result = await dispatch(
             GetTransactionHistory({
               wallet,
@@ -900,10 +1006,26 @@ export const populatePortfolio =
           bumpTxRequestsMade();
           acc = result?.transactions || acc;
           loadMore = !!result?.loadMore;
+          if (
+            shouldDisablePopulateForLargeHistory({
+              txCount: acc.length,
+              loadMore,
+            })
+          ) {
+            logManager.warn(
+              `[portfolio] populateDisabled triggered for wallet currency=${String(
+                wallet.currencyAbbreviation || 'unknown',
+              )} txCount=${acc.length}`,
+            );
+            dispatch(clearPortfolio({populateDisabled: true}));
+            return;
+          }
           iters++;
 
           if (iters % 2 === 0) {
-            await yieldToEventLoop();
+            if (!(await yieldToEventLoop(shouldAbort))) {
+              return;
+            }
           }
 
           if (typeof incrementalResnapshotCutoffMs === 'number') {
@@ -949,7 +1071,9 @@ export const populatePortfolio =
 
         const txs = acc.filter(tx => tx);
 
-        await yieldToEventLoop();
+        if (!(await yieldToEventLoop(shouldAbort))) {
+          return;
+        }
 
         if (!txs.length) {
           if (existingSnapshots.length) {
@@ -1109,28 +1233,43 @@ export const populatePortfolio =
         const fiatRateSeriesCache = getState().RATE?.fiatRateSeriesCache || {};
 
         let lastProgress = 0;
-        const storedSnaps = await buildBalanceSnapshotsAsync({
-          wallet: walletSummary as any,
-          credentials,
-          txs: txsToProcess,
-          quoteCurrency: walletSnapshotQuoteCurrency,
-          bridgeQuoteCurrency,
-          fiatRateSeriesCache: fiatRateSeriesCache as any,
-          latestSnapshot: latestSnapshotForEngine,
-          compression: {enabled: PORTFOLIO_COMPRESS_OLD_TXS_TO_DAILY_SNAPSHOTS},
-          nowMs,
-          onProgress: p => {
-            const next =
-              typeof (p as any)?.processed === 'number'
-                ? (p as any).processed
-                : 0;
-            const delta = next - lastProgress;
-            if (delta > 0) {
-              bumpTxsProcessed(delta);
-              lastProgress = next;
-            }
+        if (!(await waitForPortfolioWorkSlot(shouldAbort))) {
+          return;
+        }
+        const storedSnaps = await buildBalanceSnapshotsAsync(
+          {
+            wallet: walletSummary as any,
+            credentials,
+            txs: txsToProcess,
+            quoteCurrency: walletSnapshotQuoteCurrency,
+            bridgeQuoteCurrency,
+            fiatRateSeriesCache: fiatRateSeriesCache as any,
+            latestSnapshot: latestSnapshotForEngine,
+            compression: {
+              enabled: PORTFOLIO_COMPRESS_OLD_TXS_TO_DAILY_SNAPSHOTS,
+            },
+            nowMs,
+            onProgress: p => {
+              const next =
+                typeof (p as any)?.processed === 'number'
+                  ? (p as any).processed
+                  : 0;
+              const delta = next - lastProgress;
+              if (delta > 0) {
+                bumpTxsProcessed(delta);
+                lastProgress = next;
+              }
+            },
           },
-        });
+          {
+            yieldEvery: 250,
+            onYield: async () => {
+              if (!(await waitForPortfolioWorkSlot(shouldAbort))) {
+                throw new Error(PORTFOLIO_POPULATE_ABORTED_ERROR_MESSAGE);
+              }
+            },
+          },
+        );
 
         // Ensure our global tx processed counter catches up if onProgress didn't
         // fire at the end.
@@ -1195,6 +1334,9 @@ export const populatePortfolio =
         }
 
         if (snapshots.length) {
+          if (!(await waitForPortfolioWorkSlot(shouldAbort))) {
+            return;
+          }
           snapshots = ensureSnapshotsSortedByTimestamp(snapshots);
           dispatch(setWalletSnapshots({walletId: wallet.id, snapshots}));
         }
@@ -1232,6 +1374,9 @@ export const populatePortfolio =
         });
       } catch (e) {
         const msg = getErrorString(e);
+        if (msg === PORTFOLIO_POPULATE_ABORTED_ERROR_MESSAGE) {
+          return;
+        }
         addPopulateError({dispatch, walletId: wallet.id, message: msg});
         setWalletStatus({dispatch, walletId: wallet.id, status: 'error'});
         walletsCompleted = updateWalletsCompleted({
@@ -1243,7 +1388,7 @@ export const populatePortfolio =
       }
     };
 
-    const concurrency = Math.min(3, walletsToPopulate.length);
+    const concurrency = Math.min(1, walletsToPopulate.length);
     let nextIndex = 0;
     const workers = new Array(concurrency).fill(null).map(async () => {
       while (nextIndex < walletsToPopulate.length) {
@@ -1272,6 +1417,9 @@ export const preparePortfolioFiatRateCachesForQuoteCurrencySwitch =
     if (!isPortfolioEnabled(state)) {
       return;
     }
+    if (isPortfolioPopulateDisabled(state)) {
+      return;
+    }
     if (state.PORTFOLIO?.populateStatus?.inProgress) {
       return;
     }
@@ -1285,8 +1433,7 @@ export const preparePortfolioFiatRateCachesForQuoteCurrencySwitch =
       return;
     }
 
-    const keys = state.WALLET?.keys || {};
-    const wallets = getMainnetWalletsFromKeys(keys);
+    const wallets = getVisibleMainnetWalletsFromState(state);
     const snapshotsByWalletId = state.PORTFOLIO?.snapshotsByWalletId || {};
 
     // Determine which quote currencies are currently used by stored snapshots.

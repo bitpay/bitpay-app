@@ -1276,6 +1276,112 @@
     paillier-bigint "3.3.0"
     secp256k1 "5.0.1"
 
+"@bitpay-labs/bitcore-lib-cash@^11.7.0":
+  version "11.7.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib-cash/-/bitcore-lib-cash-11.7.0.tgz#7cea007b77e12727b62fe1d6041526b66a8c2235"
+  integrity sha512-oXrklfBscqahTL5M3Uzla4Buft6a0jRK1YK6OQI/iTkH1nOP6fkD+p5drmogJP2Ia94zhz0Gk3yzOnTkj3Mb3Q==
+  dependencies:
+    bn.js "=4.11.8"
+    bs58 "^4.0.1"
+    buffer-compare "=1.1.1"
+    elliptic "^6.5.3"
+    inherits "=2.0.1"
+    lodash "^4.17.20"
+
+"@bitpay-labs/bitcore-lib-doge@^11.7.0":
+  version "11.7.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib-doge/-/bitcore-lib-doge-11.7.0.tgz#1f171c5d17ef5f5252c96f6ca46f27c6cd5e5063"
+  integrity sha512-EZWD36CATXxaBteFig97Pwf/uzeR+pBSfwBr1WXpVOAmgx/evrhArWvUkjTtADrgQ8Oeib0UpzMGGMnTwyNDKg==
+  dependencies:
+    bn.js "=4.11.8"
+    bs58 "^4.0.1"
+    buffer-compare "=1.1.1"
+    elliptic "^6.5.3"
+    inherits "=2.0.1"
+    lodash "^4.17.20"
+    scryptsy "2.1.0"
+
+"@bitpay-labs/bitcore-lib-ltc@^11.7.0":
+  version "11.7.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib-ltc/-/bitcore-lib-ltc-11.7.0.tgz#d3222634d055742b442ff1591fe558f58e5f4805"
+  integrity sha512-/SSrRqsNjXD3mAzHYqr1jPULhS5T6IBzNf0owZ2uGUu/c8AvtIc0rsMqKbriUhDFdEkOv9aVtj9IPeb4J8yurg==
+  dependencies:
+    bech32 "=2.0.0"
+    bn.js "=4.11.8"
+    bs58 "^4.0.1"
+    buffer-compare "=1.1.1"
+    elliptic "^6.5.3"
+    inherits "=2.0.1"
+    lodash "^4.17.20"
+    scryptsy "2.1.0"
+
+"@bitpay-labs/bitcore-lib@^11.7.0":
+  version "11.7.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-lib/-/bitcore-lib-11.7.0.tgz#fb5882bf49257dd7fefcf3881453aaea1cc9c9a4"
+  integrity sha512-/9amqQ1Rza/g3gMgOE9hpJpCbbzzPseMP9nY99qSsmTdxzQqfw1kaAkwDvNOPX3EpBuGjbOjwmFJIrtoAggBRA==
+  dependencies:
+    bech32 "=2.0.0"
+    bn.js "=4.11.8"
+    bs58 "^4.0.1"
+    buffer-compare "=1.1.1"
+    elliptic "^6.5.3"
+    inherits "=2.0.1"
+    lodash "^4.17.20"
+
+"@bitpay-labs/bitcore-mnemonic@^11.7.0":
+  version "11.7.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-mnemonic/-/bitcore-mnemonic-11.7.0.tgz#7e6d871ee5be2d1081a9c96c5f3ba73125293e2f"
+  integrity sha512-/93zBk2h1NJsnhST5n/a8eADoulg9tcnTDpQvcc+n8LbHVODqyHAsOftrlm1PjyFiCTc3rvi4SH5XKhVRjlisw==
+  dependencies:
+    "@bitpay-labs/bitcore-lib" "^11.7.0"
+    unorm "^1.4.1"
+
+"@bitpay-labs/bitcore-tss@^11.7.0":
+  version "11.7.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-tss/-/bitcore-tss-11.7.0.tgz#0b314320d97ba61150765514e6bbe15655869016"
+  integrity sha512-PiiPmOUZx2gyQqfHVY1+howzxM+UXo/ZfzQbNvxnfcCis1W70BnIma7H51eh9a6PyAJI9/nRJUJxdylFQi0nPA==
+  dependencies:
+    "@bitgo/sdk-lib-mpc" "^10.1.2"
+    "@bitpay-labs/bitcore-lib" "^11.7.0"
+
+"@bitpay-labs/bitcore-wallet-client@11.7.0":
+  version "11.7.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/bitcore-wallet-client/-/bitcore-wallet-client-11.7.0.tgz#5a27a30e8b71fc35c037e8c6c28802a50c4088d8"
+  integrity sha512-QJtGj+zkt5OKRMzVX25I1YA+hc8aSzZdDHOBk6nvfQ1N2gY0kwad36+cyXswiYkcNPBMqNAD2q0ZpYkzBfH/ow==
+  dependencies:
+    "@bitpay-labs/bitcore-mnemonic" "^11.7.0"
+    "@bitpay-labs/bitcore-tss" "^11.7.0"
+    "@bitpay-labs/crypto-wallet-core" "^11.7.0"
+    async "0.9.2"
+    bip38 "1.4.0"
+    json-stable-stringify "1.0.1"
+    preconditions "2.2.3"
+    sjcl "1.0.8"
+    superagent "5.2.2"
+    typescript "5.7.3"
+    uuid "^11.1.0"
+
+"@bitpay-labs/crypto-wallet-core@^11.7.0":
+  version "11.7.0"
+  resolved "https://registry.yarnpkg.com/@bitpay-labs/crypto-wallet-core/-/crypto-wallet-core-11.7.0.tgz#67104d57af37be8d6a2d6f8a43bf22e4567ac420"
+  integrity sha512-2Px1c2EMmBp50/Zr5X5ycOW3A4DompYwBCqQe85oLYya94acWWiZAvdVWTbGpwui004jI2p3T1bd94ZyS87qbw==
+  dependencies:
+    "@bitpay-labs/bitcore-lib" "^11.7.0"
+    "@bitpay-labs/bitcore-lib-cash" "^11.7.0"
+    "@bitpay-labs/bitcore-lib-doge" "^11.7.0"
+    "@bitpay-labs/bitcore-lib-ltc" "^11.7.0"
+    "@solana-program/compute-budget" "0.7.0"
+    "@solana-program/memo" "0.7.0"
+    "@solana-program/system" "0.7.0"
+    "@solana-program/token" "0.5.1"
+    "@solana/kit" "2.1.0"
+    ed25519-hd-key "^1.3.0"
+    ethers "6.13.5"
+    info "0.0.6-beta.0"
+    ripple-binary-codec "^1.10.0"
+    web3 "4.16.0"
+    xrpl "2.13.0"
+
 "@braze/react-native-sdk@16.1.0":
   version "16.1.0"
   resolved "https://registry.yarnpkg.com/@braze/react-native-sdk/-/react-native-sdk-16.1.0.tgz#d66c838a4eb38d2c5390d3dc4168767d7808a55a"
@@ -6839,91 +6945,6 @@ bitcoinjs-lib@^5.2.0:
     varuint-bitcoin "^1.0.4"
     wif "^2.0.1"
 
-bitcore-lib-cash@^11.5.1:
-  version "11.5.1"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-11.5.1.tgz#29d3a1f0ce9998cf13a6cc2e5443c57019f0b06a"
-  integrity sha512-o4z4FAn7wbgKU38VDdyOd9OEDO1jTths6FQa0RLgxr3zPwTjCXqiqtN+WrytWTGaCt6PJ6MofgsisHy0XWAj+A==
-  dependencies:
-    bn.js "=4.11.8"
-    bs58 "^4.0.1"
-    buffer-compare "=1.1.1"
-    elliptic "^6.5.3"
-    inherits "=2.0.1"
-    lodash "^4.17.20"
-
-bitcore-lib-doge@^11.5.1:
-  version "11.5.1"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-11.5.1.tgz#d11c0260b13acc23030e6d54a9111c6c71f13ab8"
-  integrity sha512-g8B+KwKayGnL1BFIUG8eL20Q2aJ45gNE+GNlhc7iAfPpyCFPQ/9AX0WE4nK3n8H5X9UXo8e/16NUMBYhL2OPog==
-  dependencies:
-    bn.js "=4.11.8"
-    bs58 "^4.0.1"
-    buffer-compare "=1.1.1"
-    elliptic "^6.5.3"
-    inherits "=2.0.1"
-    lodash "^4.17.20"
-    scryptsy "2.1.0"
-
-bitcore-lib-ltc@^11.5.1:
-  version "11.5.1"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-ltc/-/bitcore-lib-ltc-11.5.1.tgz#2775dfa49d5780bb42221620579ea4e43fe833d9"
-  integrity sha512-zRsuz2FQ88PSBWgRAKtGLLHyldTswh9YEG+zLFNtGpn1TR/Px8v6NSvuuAlzELGEXpnlwlHsRLr2FCJ6FTSCTQ==
-  dependencies:
-    bech32 "=2.0.0"
-    bn.js "=4.11.8"
-    bs58 "^4.0.1"
-    buffer-compare "=1.1.1"
-    elliptic "^6.5.3"
-    inherits "=2.0.1"
-    lodash "^4.17.20"
-    scryptsy "2.1.0"
-
-bitcore-lib@^11.5.1:
-  version "11.5.1"
-  resolved "https://registry.yarnpkg.com/bitcore-lib/-/bitcore-lib-11.5.1.tgz#bf5a81abef5ba7850e35bd2ddefcd2c52fbc49cf"
-  integrity sha512-/DjKIY6GzCm8YB3HDGdhP6UtNHGC8KjT7tt7eMz2UNk/Z6AQgMZsyhogSiEq4qpWanP8XeJaRcpbccOJX96MRg==
-  dependencies:
-    bech32 "=2.0.0"
-    bn.js "=4.11.8"
-    bs58 "^4.0.1"
-    buffer-compare "=1.1.1"
-    elliptic "^6.5.3"
-    inherits "=2.0.1"
-    lodash "^4.17.20"
-
-bitcore-mnemonic@^11.5.1:
-  version "11.5.1"
-  resolved "https://registry.yarnpkg.com/bitcore-mnemonic/-/bitcore-mnemonic-11.5.1.tgz#6936c77d838b7e93fa1e9e25d9a3491a77ae8406"
-  integrity sha512-fNSuqDVplJdThD413Y+5RW3ZqhWEZ7ZbVOlIyqPAKg6i2/SkL0d96HbKqjBzmbTERIfetB/fufx5clt87ozi6A==
-  dependencies:
-    bitcore-lib "^11.5.1"
-    unorm "^1.4.1"
-
-bitcore-tss@^11.5.1:
-  version "11.5.1"
-  resolved "https://registry.yarnpkg.com/bitcore-tss/-/bitcore-tss-11.5.1.tgz#87d3c4f4b813847566861ba95ee960c40a46a300"
-  integrity sha512-MYaS/+fZm9AjXeSPSljs9aGZNMCeYlbySLRniKdnbKXRITzMuNrppaA9IJAZVJrJNkXx0GoS7dUkG6jjENKaAg==
-  dependencies:
-    "@bitgo/sdk-lib-mpc" "^10.1.2"
-    bitcore-lib "^11.5.1"
-
-bitcore-wallet-client@11.5.2:
-  version "11.5.2"
-  resolved "https://registry.yarnpkg.com/bitcore-wallet-client/-/bitcore-wallet-client-11.5.2.tgz#764dadbb2ea2659b1765a86bf63cf7a3d416025e"
-  integrity sha512-OFuw9U4gLicx9mTDo8Fm/uwrc9xzqXmyQWhcfeD1Px0E51SLHIPf11MyJRrhka/bIvwLpUg/HZxcXBTrpYeulg==
-  dependencies:
-    async "0.9.2"
-    bip38 "1.4.0"
-    bitcore-mnemonic "^11.5.1"
-    bitcore-tss "^11.5.1"
-    crypto-wallet-core "^11.5.1"
-    json-stable-stringify "1.0.1"
-    preconditions "2.2.3"
-    sjcl "1.0.8"
-    superagent "5.2.2"
-    typescript "5.7.3"
-    uuid "^11.1.0"
-
 bl@^4.0.3, bl@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/bl/-/bl-4.1.0.tgz#451535264182bec2fbbc83a62ab98cf11d9f7b3a"
@@ -7973,27 +7994,6 @@ crypto-js@3.1.9-1:
   version "3.1.9-1"
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
   integrity sha512-W93aKztssqf29OvUlqfikzGyYbD1rpkXvGP9IQ1JchLY3bxaLXZSWYbwrtib2vk8DobrDzX7PIXcDWHp0B6Ymw==
-
-crypto-wallet-core@^11.5.1:
-  version "11.5.1"
-  resolved "https://registry.yarnpkg.com/crypto-wallet-core/-/crypto-wallet-core-11.5.1.tgz#efc976d3f44a6494c110199ac95b538a06b3a63f"
-  integrity sha512-XuzH1NnJNfsLCNHEZ1qfogWMEEPACgw78dpdXTOIygQkQyKe7lNb1qd9qg6ONFGPvkgxo//r0M9f2OA6i7tIYg==
-  dependencies:
-    "@solana-program/compute-budget" "0.7.0"
-    "@solana-program/memo" "0.7.0"
-    "@solana-program/system" "0.7.0"
-    "@solana-program/token" "0.5.1"
-    "@solana/kit" "2.1.0"
-    bitcore-lib "^11.5.1"
-    bitcore-lib-cash "^11.5.1"
-    bitcore-lib-doge "^11.5.1"
-    bitcore-lib-ltc "^11.5.1"
-    ed25519-hd-key "^1.3.0"
-    ethers "6.13.5"
-    info "0.0.6-beta.0"
-    ripple-binary-codec "^1.10.0"
-    web3 "4.16.0"
-    xrpl "2.13.0"
 
 css-color-keywords@^1.0.0:
   version "1.0.0"
@@ -14266,10 +14266,10 @@ react-native-animatable@1.4.0:
   dependencies:
     prop-types "^15.8.1"
 
-react-native-appsflyer@6.16.2:
-  version "6.16.2"
-  resolved "https://registry.yarnpkg.com/react-native-appsflyer/-/react-native-appsflyer-6.16.2.tgz#074707a789571673ffa5fafc6518902661023d93"
-  integrity sha512-ggMED0/R2Ypj5TLZNZ/HS9SsUorfsTMguRuH0x6inH+KSZqUghVjOAtQYxPPw3ZDgJBEZLhW9CaLTGd8dECtPQ==
+react-native-appsflyer@6.17.9:
+  version "6.17.9"
+  resolved "https://registry.yarnpkg.com/react-native-appsflyer/-/react-native-appsflyer-6.17.9.tgz#18c520b774166db491de7e26e3c89536840f2e85"
+  integrity sha512-oEddwSsVL8D3ki8ayWZV34GyORAxvL1BXq3mL1xB8Hdfg+xxLyjAXSvWbj0t3E3NJ2KrgLRf/hbTlsPltfo/Uw==
 
 react-native-biometrics@3.0.1:
   version "3.0.1"

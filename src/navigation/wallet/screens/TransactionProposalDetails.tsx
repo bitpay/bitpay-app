@@ -247,10 +247,6 @@ const TransactionProposalDetails = () => {
   );
 
   const isTSSWallet = isTSSKey(key);
-  const isTSSSessionUnrecoverable =
-    isTSSWallet &&
-    !!txp &&
-    (txp.creatorId === wallet.credentials.copayerId || !!txp.canBeRemoved);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>(
     'waiting_for_cosigners',
@@ -561,12 +557,12 @@ const TransactionProposalDetails = () => {
   };
 
   const onSwipeComplete = async () => {
-    if (isTSSWallet) {
-      await joinTSSSigning();
-      return;
-    }
-
     try {
+      if (isTSSWallet) {
+        await joinTSSSigning();
+        return;
+      }
+
       await sleep(400);
       await dispatch(
         publishAndSign({
@@ -673,15 +669,6 @@ const TransactionProposalDetails = () => {
             />
           ) : null}
 
-          {!txp.removed && isTSSSessionUnrecoverable ? (
-            <Banner
-              type={'warning'}
-              description={t(
-                'This TSS signing session cannot be resumed. Please delete this proposal and create a new transaction.',
-              )}
-            />
-          ) : null}
-
           {txp.status === 'broadcasted' ? (
             <Banner
               type={'success'}
@@ -750,14 +737,25 @@ const TransactionProposalDetails = () => {
             </>
           ) : null}
 
-          {isTSSWallet && !txp.removed && isTSSSessionUnrecoverable ? (
-            <Button
-              style={{marginTop: 10}}
-              onPress={removePaymentProposal}
-              buttonType={'link'}
-              buttonStyle={'danger'}>
-              {t('Delete payment proposal')}
-            </Button>
+          {isTSSWallet ? (
+            <>
+              <Banner
+                type={'info'}
+                description={t(
+                  'If the connection is lost when the signature generation is in progress, the session may become unrecoverable - delete this proposal and create a new one.',
+                )}
+              />
+              {(txp.creatorId === wallet.credentials.copayerId ||
+                txp.canBeRemoved) && (
+                <Button
+                  style={{marginTop: 10}}
+                  onPress={removePaymentProposal}
+                  buttonType={'link'}
+                  buttonStyle={'danger'}>
+                  {t('Delete payment proposal')}
+                </Button>
+              )}
+            </>
           ) : null}
 
           {!txp.removed &&
@@ -778,12 +776,16 @@ const TransactionProposalDetails = () => {
           </DetailContainer>
           {!isTSSWallet && <Hr />}
 
-          {isTSSWallet && transaction && !txp?.canBeRemoved && (
+          {isTSSWallet && transaction && (
             <TSSProgressTracker
               status={tssStatus}
               progress={tssProgress}
               createdBy={wallet.walletName || 'You'}
-              date={new Date()}
+              date={
+                new Date(
+                  (txp.createdOn ?? txp.time ?? Date.now() / 1000) * 1000,
+                )
+              }
               wallet={wallet}
               copayers={tssCopayers}
               onCopayersInitialized={setTssCopayers}
@@ -974,7 +976,6 @@ const TransactionProposalDetails = () => {
       {txp &&
       !txp.removed &&
       txp.pendingForUs &&
-      !isTSSSessionUnrecoverable &&
       !key.isReadOnly &&
       (!txp.payProUrl ||
         (payProDetails && !payproIsLoading && !paymentExpired)) ? (

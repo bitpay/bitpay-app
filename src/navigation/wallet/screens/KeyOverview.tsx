@@ -570,6 +570,8 @@ const KeyOverview = () => {
     });
   }, [portfolio.populateStatus, visibleKeyWallets]);
 
+  const showAllocationGainLossFooter = !portfolio.populateDisabled;
+
   const gainLossSummary = useMemo(() => {
     const summary = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
       snapshotsByWalletId: portfolio.snapshotsByWalletId || {},
@@ -886,6 +888,7 @@ const KeyOverview = () => {
       accountsArray,
       key.methods as KeyMethods,
       getBaseEVMAccountCreationCoinsAndTokens(),
+      key.wallets,
       password,
     );
 
@@ -1171,43 +1174,48 @@ const KeyOverview = () => {
                       : '****'}
                   </AllocationValue>
 
-                  <AllocationDivider />
+                  {showAllocationGainLossFooter ? (
+                    <>
+                      <AllocationDivider />
 
-                  <AllocationRow>
-                    {allTimeGainLossText !== null ? (
-                      <AllocationColumn style={{paddingRight: 12}}>
-                        <AllocationLabel>
-                          All-Time Gain / Loss ($)
-                        </AllocationLabel>
-                        {isKeyPopulateLoading ? (
-                          <AllocationMetricSkeleton />
-                        ) : (
-                          <AllocationMetricValue positive={allTimeIsPositive}>
-                            {allTimeGainLossText}
-                          </AllocationMetricValue>
-                        )}
-                      </AllocationColumn>
-                    ) : null}
-                    <AllocationColumn
-                      style={
-                        allTimeGainLossText !== null
-                          ? {paddingLeft: 12}
-                          : undefined
-                      }>
-                      <AllocationLabel style={{textAlign: 'right'}}>
-                        Today's Gain / Loss ($)
-                      </AllocationLabel>
-                      {isKeyPopulateLoading ? (
-                        <AllocationMetricSkeleton align="right" />
-                      ) : (
-                        <AllocationMetricValue
-                          positive={todayIsPositive}
-                          style={{textAlign: 'right'}}>
-                          {todayGainLossText}
-                        </AllocationMetricValue>
-                      )}
-                    </AllocationColumn>
-                  </AllocationRow>
+                      <AllocationRow>
+                        {allTimeGainLossText !== null ? (
+                          <AllocationColumn style={{paddingRight: 12}}>
+                            <AllocationLabel>
+                              All-Time Gain / Loss ($)
+                            </AllocationLabel>
+                            {isKeyPopulateLoading ? (
+                              <AllocationMetricSkeleton />
+                            ) : (
+                              <AllocationMetricValue
+                                positive={allTimeIsPositive}>
+                                {allTimeGainLossText}
+                              </AllocationMetricValue>
+                            )}
+                          </AllocationColumn>
+                        ) : null}
+                        <AllocationColumn
+                          style={
+                            allTimeGainLossText !== null
+                              ? {paddingLeft: 12}
+                              : undefined
+                          }>
+                          <AllocationLabel style={{textAlign: 'right'}}>
+                            Today's Gain / Loss ($)
+                          </AllocationLabel>
+                          {isKeyPopulateLoading ? (
+                            <AllocationMetricSkeleton align="right" />
+                          ) : (
+                            <AllocationMetricValue
+                              positive={todayIsPositive}
+                              style={{textAlign: 'right'}}>
+                              {todayGainLossText}
+                            </AllocationMetricValue>
+                          )}
+                        </AllocationColumn>
+                      </AllocationRow>
+                    </>
+                  ) : null}
                 </AllocationFooter>
               }
             />

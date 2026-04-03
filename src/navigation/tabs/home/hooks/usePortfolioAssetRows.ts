@@ -70,6 +70,13 @@ const usePortfolioAssetRows = ({gainLossMode, keyId}: Args): Result => {
     return getVisibleWalletsFromKeys(keys, homeCarouselConfig);
   }, [homeCarouselConfig, keyId, keys]);
 
+  const walletIdsSig = useMemo(() => {
+    return wallets
+      .map(w => w?.id)
+      .filter((id): id is string => typeof id === 'string' && !!id)
+      .join(',');
+  }, [wallets]);
+
   const walletIdsByAssetKey = useMemo(() => {
     if (!isPopulateInProgress) {
       return undefined;
@@ -116,7 +123,8 @@ const usePortfolioAssetRows = ({gainLossMode, keyId}: Args): Result => {
     return getDisplayAssetRowItems(items);
   }, [items]);
 
-  const populateLoadingByKeyPrevRef = useRef<Record<string, boolean>>();
+  const populateLoadingByKeyPrevRef =
+    useRef<Record<string, boolean>>(undefined);
   const isPopulateLoadingByKey = useMemo(() => {
     if (!isPopulateInProgress || !walletIdsByAssetKey) {
       return undefined;
@@ -138,6 +146,19 @@ const usePortfolioAssetRows = ({gainLossMode, keyId}: Args): Result => {
   useEffect(() => {
     populateLoadingByKeyPrevRef.current = isPopulateLoadingByKey;
   }, [isPopulateLoadingByKey]);
+
+  useEffect(() => {
+    if (!isFocused || !walletIdsSig) {
+      return;
+    }
+
+    dispatch(
+      maybePopulatePortfolioForWallets({
+        wallets,
+        quoteCurrency,
+      }) as any,
+    );
+  }, [dispatch, isFocused, quoteCurrency, walletIdsSig, wallets]);
 
   const lastFetchAttemptByQuoteCoinRef = useRef<Record<string, number>>({});
   const inFlightFetchByQuoteCoinRef = useRef<Set<string>>(new Set());
