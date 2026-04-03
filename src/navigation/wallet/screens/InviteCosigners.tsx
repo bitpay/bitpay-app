@@ -629,7 +629,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
 
             {currentStep === 2 && pendingJoinCode && (
               <ContinuePillButton onPress={handleAlreadyShared}>
-                <ContinuePillText>{t('Next')}</ContinuePillText>
+                <ContinuePillText>{t('Done')}</ContinuePillText>
               </ContinuePillButton>
             )}
           </StepRowWithButton>
