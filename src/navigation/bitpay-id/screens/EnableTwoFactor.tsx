@@ -133,11 +133,11 @@ const EnableTwoFactor = ({navigation}: EnableTwoFactorProps) => {
     mode: 'onChange',
   });
   const onSubmit = async (twoFactorCode: string) => {
-    toggleTwoFactor(twoFactorCode);
+    return toggleTwoFactor(twoFactorCode);
   };
   const submitForm = async (code: string) => {
     Keyboard.dismiss();
-    await onSubmit(code);
+    await onSubmit(code).catch(() => {});
   };
   const onFormSubmit = handleSubmit(async ({code}) => submitForm(code));
 
@@ -240,7 +240,7 @@ const EnableTwoFactor = ({navigation}: EnableTwoFactorProps) => {
                 onPress={() => {
                   navigator.navigate(WalletScreens.PAY_PRO_CONFIRM_TWO_FACTOR, {
                     onSubmit: async (twoFactorCode: string) => {
-                      toggleTwoFactor(twoFactorCode);
+                      return toggleTwoFactor(twoFactorCode);
                     },
                     twoFactorCodeLength: 6,
                   });
