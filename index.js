@@ -79,7 +79,6 @@ Sentry.init({
   }
 });
 
-
 installQuickCrypto();
 
 const makeErrorHandler = store => (e, isFatal) => {
