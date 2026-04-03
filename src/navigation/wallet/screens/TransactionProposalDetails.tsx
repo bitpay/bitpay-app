@@ -743,12 +743,6 @@ const TransactionProposalDetails = () => {
 
           {isTSSWallet ? (
             <>
-              <Banner
-                type={'info'}
-                description={t(
-                  'If the connection is lost when the signature generation is in progress, the session may become unrecoverable - delete this proposal and create a new one.',
-                )}
-              />
               {(txp.creatorId === wallet.credentials.copayerId ||
                 txp.canBeRemoved) && (
                 <Button
@@ -990,7 +984,7 @@ const TransactionProposalDetails = () => {
         <SwipeButton
           title={
             isTSSWallet
-              ? t('Slide to join signing')
+              ? t('Slide to send')
               : lastSigner
               ? t('Slide to send')
               : t('Slide to accept')

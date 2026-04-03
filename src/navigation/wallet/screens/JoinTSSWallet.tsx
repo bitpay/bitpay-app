@@ -637,7 +637,7 @@ const JoinTSSWallet: React.FC<Props> = ({navigation, route}) => {
 
             {currentStep === 1 && sessionId && (
               <ContinuePillButton onPress={() => setCurrentStep(2)}>
-                <ContinuePillText>{t('Next')}</ContinuePillText>
+                <ContinuePillText>{t('Done')}</ContinuePillText>
               </ContinuePillButton>
             )}
           </StepRowWithButton>
