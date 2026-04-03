@@ -23,6 +23,7 @@ import {
   IsShared,
   TxForPaymentFeeEVM,
   TxActions,
+  IsTSSShared,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
 import {
@@ -597,7 +598,7 @@ const TransactionDetails = () => {
             <MultipleOutputsTx tx={txs} tokenAddress={wallet.tokenAddress} />
           ) : null}
 
-          {txs.creatorName && IsShared(wallet) ? (
+          {txs.creatorName && (IsShared(wallet) || IsTSSShared(wallet)) ? (
             <>
               <DetailContainer>
                 <DetailRow>
