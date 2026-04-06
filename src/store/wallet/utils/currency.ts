@@ -93,6 +93,10 @@ export const IsEVMChain = (chain: string): boolean => {
   return Object.keys(BitpaySupportedEvmCoins).includes(_chain);
 };
 
+export const IsNonceChain = (chain: string): boolean => {
+  return IsEVMChain(chain) || chain.toLowerCase() === 'xrp';
+};
+
 export const IsSVMChain = (chain: string): boolean => {
   const _chain = cloneDeep(chain).toLowerCase();
 
