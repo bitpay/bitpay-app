@@ -4,7 +4,7 @@ import {
   SupportedChains,
 } from '../../../../constants/currencies';
 import {Effect} from '../../../index';
-import {Credentials} from 'bitcore-wallet-client/ts_build/src/lib/credentials';
+import {Credentials} from '@bitpay-labs/bitcore-wallet-client';
 import {BwcProvider} from '../../../../lib/bwc';
 import merge from 'lodash.merge';
 import {
@@ -18,7 +18,7 @@ import {
   successCreateKey,
   successUpdateKey,
 } from '../../wallet.actions';
-import API from 'bitcore-wallet-client/ts_build/src';
+import API from '@bitpay-labs/bitcore-wallet-client';
 import {Key, KeyMethods, KeyOptions, Token, Wallet} from '../../wallet.models';
 import {Network} from '../../../../constants';
 import {BitpaySupportedTokenOptsByAddress} from '../../../../constants/tokens';
@@ -205,7 +205,6 @@ export const addWallet =
             const receiveAddress = (await dispatch<any>(
               createWalletAddress({wallet: associatedWallet, newAddress: true}),
             )) as string;
-            logManager.info(`new address generated: ${receiveAddress}`);
             associatedWallet.receiveAddress = receiveAddress;
 
             const {currencyAbbreviation, currencyName} = dispatch(
@@ -317,7 +316,6 @@ export const addWallet =
           const receiveAddress = (await dispatch<any>(
             createWalletAddress({wallet: newWallet, newAddress: true}),
           )) as string;
-          logManager.info(`new address generated: ${receiveAddress}`);
           newWallet.receiveAddress = receiveAddress;
         }
 
@@ -436,7 +434,6 @@ export const createMultipleWallets =
         const receiveAddress = (await dispatch<any>(
           createWalletAddress({wallet, newAddress: true}),
         )) as string;
-        logManager.info(`new address generated: ${receiveAddress}`);
         wallet.receiveAddress = receiveAddress;
         wallets.push(wallet);
         for (const token of tokens) {

@@ -126,7 +126,7 @@ const General: React.FC<Props> = ({navigation}) => {
             }),
           );
         }
-        dispatch(clearPortfolio());
+        dispatch(clearPortfolio({populateDisabled: false}));
         return;
       }
       dispatch(
@@ -280,10 +280,7 @@ const General: React.FC<Props> = ({navigation}) => {
           <SettingTitle>{item.title}</SettingTitle>
           {item.type === 'navigation' && <AngleRight />}
           {item.type === 'toggle' && (
-            <ToggleSwitch
-              onChange={item.onPress}
-              isEnabled={item.value}
-            />
+            <ToggleSwitch onChange={item.onPress} isEnabled={item.value} />
           )}
           {item.type === 'button' && (
             <Button

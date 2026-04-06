@@ -27,6 +27,7 @@ import {
   SatToUnit,
 } from '../../../store/wallet/effects/amount/amount';
 import {
+  Action,
   BitPay,
   LightBlack,
   Slate10,
@@ -45,7 +46,12 @@ import {
 import {useAppDispatch, useMount} from '../../../utils/hooks';
 import useAppSelector from '../../../utils/hooks/useAppSelector';
 import {useLogger} from '../../../utils/hooks/useLogger';
-import {getBuyCryptoFiatLimits} from '../../../store/buy-crypto/buy-crypto.effects';
+import {
+  calculateAltFiatToUsd,
+  calculateUsdToAltFiat,
+  getBuyCryptoFiatLimits,
+  roundUpNice,
+} from '../../../store/buy-crypto/buy-crypto.effects';
 import KeyEvent from 'react-native-keyevent';
 import ArchaxFooter from '../../../components/archax/archax-footer';
 import ExternalServicesOfferSelector, {
@@ -209,9 +215,12 @@ import {SellCryptoActions} from '../../../store/sell-crypto';
 import {GetProtocolPrefixAddress} from '../../../store/wallet/utils/wallet';
 import {useTheme} from 'styled-components/native';
 import Modal from 'react-native-modal';
-import {Linking, Text, View} from 'react-native';
+import {Linking, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import WebView, {WebViewMessageEvent} from 'react-native-webview';
+import WebView, {
+  WebViewMessageEvent,
+  WebViewNavigation,
+} from 'react-native-webview';
 import {
   RampOfframpSaleCreatedEvent,
   RampSellCreatedEventPayload,
@@ -225,6 +234,7 @@ import {
 } from '../../../store/sell-crypto/models/simplex-sell.models';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {IS_ANDROID} from '../../../constants';
+import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 
 const AmountContainer = styled.SafeAreaView`
   flex: 1;
@@ -314,6 +324,34 @@ const SwapCurrenciesButton = styled(TouchableOpacity)<{
   background-color: ${({theme: {dark}}) => (dark ? LightBlack : Slate10)};
   padding: 5px;
   border-radius: 100px;
+`;
+
+const WebViewModalContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  overflow: scroll;
+`;
+
+const WebViewModalHeader = styled.View<{topInset: number}>`
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  margin-top: ${({topInset}) => topInset}px;
+  height: 50px;
+  background-color: ${({theme: {dark}}) => (dark ? '#1a1a1a' : '#f8f8f8')};
+  justify-content: center;
+  align-items: flex-start;
+  padding-horizontal: 15px;
+  border-bottom-width: 1px;
+  border-bottom-color: ${({theme: {dark}}) => (dark ? '#333' : '#ddd')};
+`;
+
+const WebViewCloseButton = styled(TouchableOpacity)`
+  padding: 10px;
+`;
+
+const WebViewCloseText = styled(BaseText)`
+  font-size: 24px;
+  color: ${({theme: {dark}}) => (dark ? '#ccc' : '#333')};
 `;
 
 export interface Limits {
@@ -443,6 +481,9 @@ const BuyAndSellRoot = ({
     ({BUY_CRYPTO}) => BUY_CRYPTO.tokens?.transak?.[transakEnv],
   );
   const allRates = useAppSelector(({RATE}) => RATE.rates);
+  const buyCryptoOpts: BuyCryptoStateOpts = useAppSelector(
+    ({BUY_CRYPTO}: RootState) => BUY_CRYPTO.opts,
+  );
   const {tokenOptionsByAddress, tokenDataByAddress} = useTokenContext();
   const tokenOptions = Object.entries(tokenOptionsByAddress).map(
     ([k, {symbol}]) => {
@@ -469,9 +510,79 @@ const BuyAndSellRoot = ({
   // Real route params
   const context = route.params?.context;
   const fromWallet = route.params?.fromWallet;
-  const fromAmount = route.params?.amount
-    ? Number(route.params.amount)
-    : undefined; // deeplink params are strings, ensure this is number so offers will work
+
+  const fromAmount = useMemo(() => {
+    const DEFAULT_USD_VALUE = 200;
+    let initialAmount: number | undefined;
+    const currentFiatCurrency = defaultAltCurrency?.isoCode || 'USD';
+    if (route.params?.amount) {
+      // deeplink params are strings, ensure this is number so offers will work
+      if (currentFiatCurrency !== 'USD') {
+        const _initialAmount = dispatch(
+          calculateUsdToAltFiat(
+            Number(route.params.amount),
+            currentFiatCurrency,
+          ),
+        );
+        initialAmount = _initialAmount
+          ? roundUpNice(_initialAmount)
+          : undefined;
+      } else {
+        initialAmount = Number(route.params.amount);
+      }
+    } else if (context === 'buyCrypto') {
+      if (
+        buyCryptoOpts?.lastPurchaseData?.fiatAmount &&
+        buyCryptoOpts?.lastPurchaseData?.fiatCurrency
+      ) {
+        const {fiatAmount, fiatCurrency} = buyCryptoOpts.lastPurchaseData;
+        if (fiatCurrency === currentFiatCurrency) {
+          initialAmount = fiatAmount;
+        } else if (fiatCurrency === 'USD' && currentFiatCurrency !== 'USD') {
+          const _initialAmount = dispatch(
+            calculateUsdToAltFiat(fiatAmount, currentFiatCurrency),
+          );
+          initialAmount = _initialAmount
+            ? roundUpNice(_initialAmount)
+            : undefined;
+        } else if (fiatCurrency !== 'USD' && currentFiatCurrency === 'USD') {
+          const _initialAmount = dispatch(
+            calculateAltFiatToUsd(fiatAmount, currentFiatCurrency),
+          );
+          initialAmount = _initialAmount
+            ? roundUpNice(_initialAmount)
+            : undefined;
+        } else if (
+          fiatCurrency !== 'USD' &&
+          currentFiatCurrency !== 'USD' &&
+          fiatCurrency !== currentFiatCurrency
+        ) {
+          const _initialAmount = dispatch(
+            calculateAltFiatToUsd(DEFAULT_USD_VALUE, currentFiatCurrency),
+          );
+          initialAmount = _initialAmount
+            ? roundUpNice(_initialAmount)
+            : undefined;
+        } else {
+          initialAmount = undefined;
+        }
+      } else {
+        if (currentFiatCurrency !== 'USD') {
+          const _initialAmount = dispatch(
+            calculateUsdToAltFiat(DEFAULT_USD_VALUE, currentFiatCurrency),
+          );
+          initialAmount = _initialAmount
+            ? roundUpNice(_initialAmount)
+            : undefined;
+        } else {
+          initialAmount = DEFAULT_USD_VALUE;
+        }
+      }
+    }
+
+    return initialAmount;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const fromCurrencyAbbreviation =
     route.params?.currencyAbbreviation?.toLowerCase();
   const fromChain = route.params?.chain?.toLowerCase();
@@ -566,11 +677,13 @@ const BuyAndSellRoot = ({
       maxAmount: undefined,
     },
   });
-  const [sellModalVisible, setSellModalVisible] = useState<{
+  const [refreshQuotesTrigger, setRefreshQuotesTrigger] = useState(0);
+  const [webViewModal, setWebViewModal] = useState<{
     open: boolean;
     url: string | undefined;
+    key?: 'moonpayBuy' | 'moonpaySell' | 'rampSell';
     rampOffer?: SellCryptoOffer;
-  }>({open: false, url: undefined, rampOffer: undefined});
+  }>({open: false, url: undefined});
 
   const updateAmount = (_val: string) => {
     const val = Number(_val);
@@ -838,6 +951,7 @@ const BuyAndSellRoot = ({
     }
     if (fromAmount && !isNaN(fromAmount)) {
       // Valid fromAmount
+      curValRef.current = fromAmount.toString();
       updateAmount(fromAmount.toString());
     } else {
       updateAmount('0');
@@ -1062,15 +1176,8 @@ const BuyAndSellRoot = ({
       );
       return;
     }
-
-    // TODO: review if this if(...) is necessary
-    if (fromWallet?.id || fromCurrencyAbbreviation) {
-      // TODO: selectFirstAvailableWallet
-      // selectFirstAvailableWallet();
-    } else {
-      await sleep(500);
-      hideOngoingProcess();
-    }
+    await sleep(600);
+    hideOngoingProcess();
   };
 
   const filterMoonpayCurrenciesConditions = (
@@ -2109,6 +2216,17 @@ const BuyAndSellRoot = ({
       BuyCryptoActions.updateBuyCryptoOpts({
         buyCryptoOpts: {
           selectedPaymentMethod: paymentMethod.method,
+          lastPurchaseData: {
+            coin: selectedWallet!.currencyAbbreviation,
+            chain: selectedWallet!.chain,
+            fiatAmount: offer.fiatAmount,
+            fiatCurrency: offer.fiatCurrency.toUpperCase(),
+            date: Date.now(),
+            partner: offer.key,
+            walletId: selectedWallet?.id,
+            keyId: selectedWallet?.keyId,
+            tokenAddress: selectedWallet?.tokenAddress,
+          },
         },
       }),
     );
@@ -2189,7 +2307,6 @@ const BuyAndSellRoot = ({
     const quoteData: BanxaCreateOrderRequestData = {
       env: banxaEnv,
       account_reference: user?.eid ?? selectedWallet.id,
-      payment_method_id: offer.paymentMethodId,
       source: offer.fiatCurrency,
       source_amount: cloneDeep(offer.fiatAmount).toString(),
       target: getBanxaCoinFormat(coin),
@@ -2199,6 +2316,11 @@ const BuyAndSellRoot = ({
       return_url_on_cancelled: `${APP_DEEPLINK_PREFIX}banxaCancelled?externalId=${banxaExternalId}&status=cancelled`,
       return_url_on_failure: `${APP_DEEPLINK_PREFIX}banxaFailed?externalId=${banxaExternalId}&status=failed`,
     };
+
+    if (paymentMethod.method !== 'other') {
+      // Prevent sending payment_method_id if we select "other" as the payment method, so that the user can freely choose on the checkout page
+      quoteData.payment_method_id = offer.paymentMethodId;
+    }
 
     let data: BanxaCreateOrderData, banxaOrderData: BanxaOrderData;
     try {
@@ -2335,6 +2457,8 @@ const BuyAndSellRoot = ({
         APP_DEEPLINK_PREFIX + `moonpay?externalId=${externalTransactionId}`,
       env: moonpayEnv,
       lockAmount: true,
+      colorCode: Action,
+      theme: theme.dark ? 'dark' : 'light',
       showWalletAddressForm: false,
     };
 
@@ -2358,10 +2482,23 @@ const BuyAndSellRoot = ({
       return;
     }
 
-    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
-    await sleep(500);
+    setWebViewModal({
+      open: true,
+      url: data.urlWithSignature,
+      key: 'moonpayBuy',
+    });
     setOpeningBrowser(false);
-    navigation.goBack();
+  };
+
+  const handleMoonpayBuyNavigation = (event: WebViewNavigation): boolean => {
+    const {url} = event;
+    if (url.startsWith(APP_DEEPLINK_PREFIX)) {
+      setWebViewModal({open: false, url: undefined});
+      Linking.openURL(url);
+      navigation.goBack();
+      return false;
+    }
+    return true;
   };
 
   const goToRampBuyPage = (
@@ -3028,7 +3165,7 @@ const BuyAndSellRoot = ({
         `${useSendMax ? '&sendMax=true' : ''}`,
       refundWalletAddress: address,
       lockAmount: true,
-      colorCode: BitPay,
+      colorCode: Action,
       theme: theme.dark ? 'dark' : 'light',
       quoteCurrencyCode: cloneDeep(offer.fiatCurrency)?.toLowerCase(),
       showWalletAddressForm: false,
@@ -3088,9 +3225,12 @@ const BuyAndSellRoot = ({
     );
 
     await sleep(300);
-    dispatch(openUrlWithInAppBrowser(data.urlWithSignature));
-    await sleep(500);
-    navigation.dispatch(StackActions.popToTop());
+    setWebViewModal({
+      open: true,
+      url: data.urlWithSignature,
+      key: 'moonpaySell',
+    });
+    setOpeningBrowser(false);
   };
 
   const goToRampSellPage = (
@@ -3194,7 +3334,12 @@ const BuyAndSellRoot = ({
 
     try {
       const RampWebView = (url: string) => {
-        setSellModalVisible({open: true, url: url, rampOffer: offer});
+        setWebViewModal({
+          open: true,
+          url: url,
+          key: 'rampSell',
+          rampOffer: offer,
+        });
       };
 
       RampWebView(data.urlWithSignature);
@@ -3301,10 +3446,10 @@ const BuyAndSellRoot = ({
                   const title = t('Ramp Network Error');
                   const reason = 'Contract address mismatch error.';
 
-                  setSellModalVisible({
+                  setWebViewModal({
                     open: false,
-                    url: sellModalVisible?.url,
-                    rampOffer: sellModalVisible?.rampOffer,
+                    url: webViewModal?.url,
+                    rampOffer: webViewModal?.rampOffer,
                   });
                   await sleep(1500);
                   showError(title, errMsg, reason);
@@ -3340,10 +3485,10 @@ const BuyAndSellRoot = ({
                   const title = t('Ramp Network Error');
                   const reason = 'Coin-chain mismatch error.';
 
-                  setSellModalVisible({
+                  setWebViewModal({
                     open: false,
-                    url: sellModalVisible?.url,
-                    rampOffer: sellModalVisible?.rampOffer,
+                    url: webViewModal?.url,
+                    rampOffer: webViewModal?.rampOffer,
                   });
                   await sleep(1500);
                   showError(title, errMsg, reason);
@@ -3440,10 +3585,10 @@ const BuyAndSellRoot = ({
               }),
             );
 
-            setSellModalVisible({
+            setWebViewModal({
               open: false,
-              url: sellModalVisible?.url,
-              rampOffer: sellModalVisible?.rampOffer,
+              url: webViewModal?.url,
+              rampOffer: webViewModal?.rampOffer,
             });
             await sleep(1500);
             navigation.goBack();
@@ -3790,6 +3935,7 @@ const BuyAndSellRoot = ({
               sendMaxInfo={sendMaxInfo}
               onSelectOffer={setSelectedOffer}
               onSelectPaymentMethod={setSelectedPaymentMethod}
+              refreshTrigger={refreshQuotesTrigger}
             />
           ) : null}
           {(context === 'buyCrypto' &&
@@ -3899,71 +4045,68 @@ const BuyAndSellRoot = ({
         </ActionContainer>
       </ViewContainer>
 
+      {/* Unified WebView Modal (Moonpay Buy / Moonpay Sell / Ramp Sell) */}
       <Modal
         deviceHeight={HEIGHT}
         deviceWidth={WIDTH}
         backdropTransitionOutTiming={0}
         backdropOpacity={0.85}
-        // hideModalContentWhileAnimating={hideModalContentWhileAnimating}
         useNativeDriverForBackdrop={true}
         useNativeDriver={true}
         animationIn={'fadeInUp'}
         animationOut={'fadeOutDown'}
-        isVisible={sellModalVisible.open}
+        isVisible={webViewModal.open}
         style={{
           margin: 0,
           padding: 0,
         }}>
-        <View
-          style={{
-            flex: 1,
-            // backgroundColor: '#f8f8f8',
-            justifyContent: 'center',
-            overflow: 'scroll',
-          }}>
-          {/* Close Button */}
-          <View
-            style={{
-              borderTopLeftRadius: 15,
-              borderTopRightRadius: 15,
-              marginTop: insets.top,
-              height: 50,
-              backgroundColor: '#f8f8f8',
-              justifyContent: 'center',
-              alignItems: 'flex-start',
-              paddingHorizontal: 15,
-              borderBottomWidth: 1,
-              borderBottomColor: '#ddd',
-            }}>
-            <TouchableOpacity
-              style={{padding: 10}}
+        <WebViewModalContainer>
+          <WebViewModalHeader topInset={insets.top}>
+            <WebViewCloseButton
               onPress={() => {
-                setSellModalVisible({
-                  open: false,
-                  url: undefined,
-                  rampOffer: undefined,
-                });
+                setWebViewModal({open: false, url: undefined});
+                setOpeningBrowser(false);
+                setButtonState(undefined);
+                setRefreshQuotesTrigger(prev => prev + 1);
               }}>
-              <Text style={{fontSize: 24, color: '#333'}}>✕</Text>
-            </TouchableOpacity>
-          </View>
+              <WebViewCloseText>✕</WebViewCloseText>
+            </WebViewCloseButton>
+          </WebViewModalHeader>
           <WebView
             style={{
               paddingBottom: insets.bottom + 30,
             }}
-            source={{uri: sellModalVisible.url ?? ''}}
+            source={{uri: webViewModal.url ?? ''}}
             scrollEnabled={true}
-            onMessage={(e: WebViewMessageEvent) => {
-              handleRampCheckoutMessage(e, sellModalVisible.rampOffer);
-            }}
-            originWhitelist={['https://*']}
+            onShouldStartLoadWithRequest={
+              webViewModal.key === 'moonpayBuy' ||
+              webViewModal.key === 'moonpaySell'
+                ? handleMoonpayBuyNavigation
+                : undefined
+            }
+            onMessage={
+              webViewModal.key === 'rampSell'
+                ? (e: WebViewMessageEvent) => {
+                    handleRampCheckoutMessage(e, webViewModal.rampOffer);
+                  }
+                : undefined
+            }
+            originWhitelist={['https://*', 'bitpay://*', 'about:*']}
             automaticallyAdjustContentInsets
+            allowsInlineMediaPlayback={true}
             javaScriptEnabled={true}
             domStorageEnabled={true}
             cacheEnabled={false}
             cacheMode={IS_ANDROID ? 'LOAD_NO_CACHE' : undefined}
+            forceDarkOn={IS_ANDROID && theme.dark}
+            injectedJavaScriptBeforeContentLoaded={`
+              document.documentElement.style.colorScheme = '${
+                theme.dark ? 'dark' : 'light'
+              }';
+              true;
+            `}
           />
-        </View>
+        </WebViewModalContainer>
       </Modal>
     </AmountContainer>
   );

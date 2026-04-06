@@ -1,7 +1,7 @@
-diff --git a/node_modules/crypto-wallet-core/ts_build/src/validation/xrp/index.js b/node_modules/crypto-wallet-core/ts_build/src/validation/xrp/index.js
+diff --git a/node_modules/@bitpay-labs/crypto-wallet-core/ts_build/src/validation/xrp/index.js b/node_modules/@bitpay-labs/crypto-wallet-core/ts_build/src/validation/xrp/index.js
 index 59f4b97..fe9df8f 100644
---- a/node_modules/crypto-wallet-core/ts_build/src/validation/xrp/index.js
-+++ b/node_modules/crypto-wallet-core/ts_build/src/validation/xrp/index.js
+--- a/node_modules/@bitpay-labs/crypto-wallet-core/ts_build/src/validation/xrp/index.js
++++ b/node_modules/@bitpay-labs/crypto-wallet-core/ts_build/src/validation/xrp/index.js
 @@ -17,7 +17,7 @@ class XrpValidation {
          const buffer = Buffer.from(base58.decode(address));
          const prefix = buffer.subarray(0, 1);

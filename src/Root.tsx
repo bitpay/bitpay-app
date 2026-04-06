@@ -1,5 +1,4 @@
 import {
-  createNavigationContainerRef,
   NavigationContainer,
   NavigationState,
   NavigatorScreenParams,
@@ -154,15 +153,16 @@ import {
   getBaseEVMAccountCreationCoinsAndTokens,
   getBaseSVMAccountCreationCoinsAndTokens,
 } from './constants/currencies';
-import Logger from 'bitcore-wallet-client/ts_build/src/lib/log';
 import {BwcProvider} from './lib/bwc';
 import {isNarrowHeight} from './components/styled/Containers';
 import {useOngoingProcess} from './contexts';
 import {Keys} from './store/wallet/wallet.reducer';
 import {logManager} from './managers/LogManager';
 import * as Sentry from '@sentry/react-native';
+import {navigationRef} from './navigation/NavigationService';
 
 const BWC = BwcProvider.getInstance();
+const Logger = BWC.getLogger();
 
 const {Timer, SilentPushEvent, InAppMessageModule} = NativeModules;
 
@@ -253,7 +253,7 @@ export type SilentPushEventObj = {
   network?: string;
 };
 
-export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+export {navigationRef};
 export const navigate = (
   name: keyof RootStackParamList,
   params: NavScreenParams,
@@ -652,9 +652,7 @@ export default () => {
               .map(arg => (typeof arg === 'string' ? arg : JSON.stringify(arg)))
               .join(' ');
             if (message.length < 800) {
-              const logLevel = level === 'fatal' ? 'error' : level;
-              // @ts-ignore
-              logManager[logLevel](`[BWC] ${message}`);
+              console.debug(`[BWC] ${message}`);
             }
           } catch (_) {}
         };

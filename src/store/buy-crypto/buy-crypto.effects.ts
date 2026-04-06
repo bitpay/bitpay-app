@@ -114,6 +114,17 @@ export const calculateAnyFiatToAltFiat =
     }
   };
 
+export const roundUpNice = (n: number): number => {
+  // 50 for hundreds, 500 for thousands, 5000 for tens of thousands, etc.
+  // Example 1: roundUpNice(23456.45) = 25000
+  // Example 2: roundUpNice(207.75) = 250
+  if (n <= 0) return 0;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(n)));
+  const step = magnitude / 2;
+  const rounded = Math.ceil(n / step) * step;
+  return rounded;
+};
+
 export const getBuyCryptoFiatLimits =
   (
     exchange?: BuyCryptoExchangeKey,

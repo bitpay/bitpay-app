@@ -1421,6 +1421,7 @@ export const publishAndSign =
               wallet,
               txp: txpToSign as TransactionProposal,
               callbacks: tssCallbacks!,
+              isCreator: true,
               password,
             }),
           );

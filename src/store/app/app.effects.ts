@@ -76,6 +76,7 @@ import {
 } from '../wallet/utils/wallet';
 import {
   getWalletIdsToPopulateFromSnapshots,
+  getVisibleWalletsFromKeys,
   isFiatLoadingForWallets,
 } from '../../utils/portfolio/assets';
 import {navigationRef, RootStacks, SilentPushEventObj} from '../../Root';
@@ -312,9 +313,11 @@ export const startAppInit = (): Effect => async (dispatch, getState) => {
           !snapshotsByWalletId || Object.keys(snapshotsByWalletId).length === 0;
 
         const keys = stateAfterWalletInit.WALLET?.keys || {};
-        const wallets = Object.values(keys)
-          .flatMap((k: any) => (k?.wallets ? k.wallets : []))
-          .filter((w: any) => w?.network === Network.mainnet);
+        const homeCarouselConfig = stateAfterWalletInit.APP?.homeCarouselConfig;
+        const wallets = getVisibleWalletsFromKeys(
+          keys,
+          homeCarouselConfig,
+        ).filter((w: any) => w?.network === Network.mainnet);
 
         if (!wallets.length) {
           return;
