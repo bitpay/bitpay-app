@@ -508,7 +508,7 @@ const TSSProgressTracker: React.FC<TSSProgressTrackerProps> = ({
                         <HelpBanner>
                           <HelpBannerText>
                             {t(
-                              'All co-signers must have the app open and active during signing. If someone closed the app, they need to reopen it and re-join this proposal from their pending transactions.',
+                              'All co-signers must have the app open and active during signing. If the session gets stuck, delete this proposal and create a new one.',
                             )}
                           </HelpBannerText>
                         </HelpBanner>
