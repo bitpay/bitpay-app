@@ -1659,7 +1659,7 @@ const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
 };
 
 export const startImportTSSFile =
-  (decryptedBackupText: string): Effect =>
+  (decryptedBackupText: string, opts: Partial<KeyOptions> = {}): Effect =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -1821,38 +1821,47 @@ export const startImportTSSFile =
           throw new Error(t('Failed to recreate any wallets from backup'));
         }
 
-        let _key: any;
+        const matchedKey = tssKey
+          ? getMatchedKey(
+              tssKey,
+              (Object.values(WALLET.keys) as Key[]).filter(
+                k => !k.id.includes('readonly'),
+              ),
+            )
+          : getReadOnlyKey(Object.values(WALLET.keys) as Key[]);
+
+        let _key: any = tssKey;
         let processedWallets = validWallets;
         let keyName: string | undefined;
 
-        if (tssKey) {
-          const matched = findMatchedKeyAndUpdate(
-            validWallets,
-            tssKey,
-            (Object.values(WALLET.keys) as Key[]).filter(
-              k => !k.id.includes('readonly'),
-            ),
-            {},
+        if (matchedKey && !opts?.keyId) {
+          _key = matchedKey.methods;
+          const alreadyImported = validWallets.every(w =>
+            isMatchedWallet(w, matchedKey.wallets),
           );
-          _key = matched.key;
-          processedWallets = matched.wallets;
-          keyName = matched.keyName;
-        } else {
-          // Read-only: mirror the startImportFile pattern
-          const existingReadOnlyKey = getReadOnlyKey(
-            Object.values(WALLET.keys) as Key[],
-          );
-          if (existingReadOnlyKey) {
-            _key = existingReadOnlyKey.methods;
-            const newWallets = validWallets.filter(
-              w => !isMatchedWallet(w, existingReadOnlyKey.wallets),
-            );
-            if (newWallets.length === 0) {
-              throw new Error(t('The wallet is already in the app.'));
-            }
-            processedWallets = [...newWallets, ...existingReadOnlyKey.wallets];
-            keyName = existingReadOnlyKey.keyName;
+          if (alreadyImported) {
+            throw new Error(t('The wallet is already in the app.'));
           }
+          processedWallets = [
+            ...validWallets.filter(
+              w => !isMatchedWallet(w, matchedKey.wallets),
+            ),
+            ...matchedKey.wallets,
+          ];
+          keyName = matchedKey.keyName;
+        }
+
+        // To clear encrypt password
+        if (opts.keyId && matchedKey) {
+          const newWalletIds = new Set(
+            validWallets.map(w => w.credentials.walletId),
+          );
+          const filteredKeys = matchedKey.wallets.filter(
+            w => !newWalletIds.has(w.credentials.walletId),
+          );
+          filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
+          processedWallets = [...processedWallets, ...filteredKeys];
+          dispatch(deleteKey({keyId: opts.keyId}));
         }
 
         const key = buildKeyObj({
