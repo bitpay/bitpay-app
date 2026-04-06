@@ -1,10 +1,10 @@
 import React from 'react';
 import {useTheme} from 'styled-components/native';
-import {Slate30} from '../../../../styles/colors';
+import {Slate30} from '../../../styles/colors';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {View} from 'react-native';
 
-const SwapCryptoLoadingWalletSkeleton = () => {
+const ExternalServicesLoadingWalletSkeleton = () => {
   const theme = useTheme();
 
   return (
@@ -35,4 +35,4 @@ const SwapCryptoLoadingWalletSkeleton = () => {
   );
 };
 
-export default SwapCryptoLoadingWalletSkeleton;
+export default ExternalServicesLoadingWalletSkeleton;

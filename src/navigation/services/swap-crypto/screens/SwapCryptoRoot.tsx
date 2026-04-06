@@ -132,7 +132,7 @@ import {
   WrongPasswordError,
 } from '../../../wallet/components/ErrorMessages';
 import {startUpdateWalletStatus} from '../../../../store/wallet/effects/status/status';
-import SwapCryptoLoadingWalletSkeleton from './SwapCryptoLoadingWalletSkeleton';
+import ExternalServicesLoadingWalletSkeleton from '../../components/ExternalServicesLoadingWalletSkeleton';
 import SwapCryptoBalanceSkeleton from './SwapCryptoBalanceSkeleton';
 import BalanceDetailsModal from '../../../wallet/components/BalanceDetailsModal';
 import SelectorArrowRight from '../../../../../assets/img/selector-arrow-right.svg';
@@ -2827,7 +2827,7 @@ const SwapCryptoRoot: React.FC = () => {
                 <SwapCardAccountChainsContainer>
                   {loadingWalletFromStatus ? (
                     <SelectedOptionCol>
-                      <SwapCryptoLoadingWalletSkeleton />
+                      <ExternalServicesLoadingWalletSkeleton />
                     </SelectedOptionCol>
                   ) : (
                     <>
@@ -2878,7 +2878,7 @@ const SwapCryptoRoot: React.FC = () => {
                   style={fromWalletSelected ? {maxWidth: '85%'} : {}}>
                   {loadingWalletFromStatus ? (
                     <SelectedOptionCol>
-                      <SwapCryptoLoadingWalletSkeleton />
+                      <ExternalServicesLoadingWalletSkeleton />
                     </SelectedOptionCol>
                   ) : (
                     <>

@@ -12,7 +12,6 @@ import {
   White,
   Black,
   Slate,
-  Slate30,
   LightBlack,
   NeutralSlate,
   SlateDark,
@@ -50,7 +49,7 @@ import {useOngoingProcess} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
 import {BuyCryptoStateOpts} from '../../../store/buy-crypto/buy-crypto.reducer';
 import {HomeCarouselConfig} from '../../../store/app/app.models';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import ExternalServicesLoadingWalletSkeleton from './ExternalServicesLoadingWalletSkeleton';
 
 const GlobalSelectContainer = styled.View`
   flex: 1;
@@ -585,28 +584,7 @@ const ExternalServicesWalletSelector: React.FC<
       {loading ? (
         <WalletSelector disabled>
           <WalletSelectorLeft>
-            <SkeletonPlaceholder
-              backgroundColor={theme.dark ? '#363636' : '#FAFAFB'}
-              highlightColor={theme.dark ? '#575757' : Slate30}>
-              <View>
-                <SkeletonPlaceholder.Item
-                  flexDirection={'row'}
-                  alignItems={'center'}
-                  justifyContent={'flex-start'}>
-                  <SkeletonPlaceholder.Item
-                    width={20}
-                    height={20}
-                    borderRadius={50}
-                    marginRight={5}
-                  />
-                  <SkeletonPlaceholder.Item
-                    width={70}
-                    height={14}
-                    borderRadius={4}
-                  />
-                </SkeletonPlaceholder.Item>
-              </View>
-            </SkeletonPlaceholder>
+            <ExternalServicesLoadingWalletSkeleton />
           </WalletSelectorLeft>
         </WalletSelector>
       ) : (

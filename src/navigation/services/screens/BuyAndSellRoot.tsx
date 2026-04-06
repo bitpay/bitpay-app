@@ -62,11 +62,7 @@ import ExternalServicesAmountPills from '../components/externalServicesAmountPil
 import {AltCurrenciesRowProps} from '../../../components/list/AltCurrenciesRow';
 import {StackActions} from '@react-navigation/native';
 import ExternalServicesWalletSelector from '../components/externalServicesWalletSelector';
-import {
-  Key,
-  SendMaxInfo,
-  Wallet,
-} from '../../../store/wallet/wallet.models';
+import {Key, SendMaxInfo, Wallet} from '../../../store/wallet/wallet.models';
 import {
   BuyCryptoConfig,
   ExternalServicesConfig,
