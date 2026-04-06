@@ -456,7 +456,10 @@ const FileOrText = () => {
       });
 
       if (result.fileCopyUri) {
-        const fileContent = await RNFS.readFile(result.fileCopyUri, 'utf8');
+        const fileContent = await RNFS.readFile(
+          decodeURIComponent(result.fileCopyUri),
+          'utf8',
+        );
         const encryptedMatch = fileContent.match(/\{[^}]+\}/);
 
         if (encryptedMatch) {
