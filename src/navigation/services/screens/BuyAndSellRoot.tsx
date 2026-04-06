@@ -2048,8 +2048,8 @@ const BuyAndSellRoot = ({
   };
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', async () => {
-      console.log('BuyAndSellRoot focused, initializing...');
+    const unsubscribe = navigation.addListener('transitionEnd', async () => {
+      logger.debug('BuyAndSellRoot transitionEnd, initializing...');
       if (context === 'buyCrypto') {
         try {
           await initBuyCrypto();
