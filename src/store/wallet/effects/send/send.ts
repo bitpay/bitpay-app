@@ -91,6 +91,7 @@ import {
   IsSVMChain,
   IsUtxoChain,
   IsEVMChain,
+  IsNonceChain,
 } from '../../utils/currency';
 import {CommonActions, NavigationProp} from '@react-navigation/native';
 import {BwcProvider} from '../../../../lib/bwc';
@@ -1400,10 +1401,10 @@ export const publishAndSign =
 
         let txpToSign = publishedTx || txp;
 
-        // EVM txps without a nonce need one assigned before signing.
-        // TODO: remove deferNonce check once BWS always defers nonce for EVM chains
-        if ((txpToSign.deferNonce || txpToSign.nonce == null) && IsEVMChain(txpToSign.chain)) {
-          txpToSign = await wallet.prepareTx({ txp: txpToSign });
+        // Nonce-based chains (EVM, XRP) without a nonce need one assigned before signing.
+        // TODO: remove deferNonce check once BWS always defers nonce for nonce chains
+        if ((txpToSign.deferNonce || txpToSign.nonce == null) && IsNonceChain(txpToSign.chain)) {
+          txpToSign = (await wallet.prepareTx({ txp: txpToSign })) as TransactionProposal;
           logManager.info(`prepareTx: BWS assigned nonce ${txpToSign.nonce} to txp ${txpToSign.id}`);
         }
 
@@ -1603,9 +1604,9 @@ export const publishAndSignMultipleProposals =
           | void
           | Error
         )[] = [];
-        const evmTxsWithNonce = txps.filter(txp => txp.nonce !== undefined || txp.deferNonce || (txp.nonce == null && IsEVMChain(txp.chain)));
-        evmTxsWithNonce.sort((a, b) => (a.nonce || 0) - (b.nonce || 0));
-        for (const txp of evmTxsWithNonce) {
+        const nonceTxs = txps.filter(txp => txp.nonce !== undefined || txp.deferNonce || (txp.nonce == null && IsNonceChain(txp.chain)));
+        nonceTxs.sort((a, b) => (a.nonce || 0) - (b.nonce || 0));
+        for (const txp of nonceTxs) {
           try {
             const result = await dispatch(
               publishAndSign({
@@ -1627,7 +1628,7 @@ export const publishAndSignMultipleProposals =
         }
 
         // Process transactions without a nonce concurrently
-        const withoutNonce = txps.filter(txp => txp.nonce === undefined && !txp.deferNonce && !IsEVMChain(txp.chain));
+        const withoutNonce = txps.filter(txp => txp.nonce === undefined && !txp.deferNonce && !IsNonceChain(txp.chain));
         const promisesWithoutNonce: Promise<
           Partial<TransactionProposal> | void | Error
         >[] = withoutNonce.map(txp =>
