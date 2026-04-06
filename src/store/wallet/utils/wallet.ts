@@ -246,7 +246,7 @@ export const buildTssKeyObj = ({
     keyName:
       keyName || `TSS Key (${tssKey.metadata.m}-of-${tssKey.metadata.n})`,
     hideKeyBalance: false,
-    isReadOnly: false,
+    isReadOnly: !tssKey,
   };
 };
 

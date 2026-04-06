@@ -58,7 +58,7 @@ const VirtualKeyboardButtonAnimation: React.FC<RippleProps> = ({
   const longPress = Gesture.LongPress()
     .minDuration(1000)
     .onStart(() => {
-      runOnJS(onLongPress ? onLongPress : onPress)();
+      runOnJS(onLongPress)();
     });
 
   // Prefer long press over tap when both could recognize

@@ -131,6 +131,7 @@ import {
   requiresTSSSigning,
   TSSSigningCallbacks,
   startTSSSigning,
+  pollTxpUntilBroadcast,
 } from '../tss-send/tss-send';
 
 export const createProposalAndBuildTxDetails =
@@ -1414,7 +1415,6 @@ export const publishAndSign =
               wallet,
               txp: txpToSign as TransactionProposal,
               callbacks: tssCallbacks!,
-              isCreator: true,
               password,
             }),
           );
@@ -1443,16 +1443,19 @@ export const publishAndSign =
         }
 
         if (signedTx.status === 'accepted') {
-          if (isTSSSigning && tssCallbacks) {
-            tssCallbacks.onStatusChange('broadcasting');
+          if (isTSSSigning) {
+            tssCallbacks?.onStatusChange('broadcasting');
+            try {
+              broadcastedTx = await broadcastTx(wallet, signedTx);
+            } catch (_) {
+              // Another copayer may have already broadcasted — poll for confirmed state.
+              broadcastedTx = await pollTxpUntilBroadcast(wallet, signedTx.id);
+            }
+            tssCallbacks?.onStatusChange('complete');
+          } else {
+            broadcastedTx = await broadcastTx(wallet, signedTx);
           }
-
-          broadcastedTx = await broadcastTx(wallet, signedTx);
           logManager.debug('success broadcast [publishAndSign]');
-
-          if (isTSSSigning && tssCallbacks) {
-            tssCallbacks.onStatusChange('complete');
-          }
 
           const {fee, amount} = broadcastedTx as {
             fee: number;

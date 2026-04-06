@@ -118,13 +118,12 @@ export interface TSSSigningCallbacks {
   onComplete: (signature: string) => void;
 }
 
+export const isTSSWallet = (wallet: Wallet): boolean => {
+  return !!wallet.tssKeyId;
+};
+
 export const isTSSKey = (key: Key): boolean => {
-  return !!(
-    key?.properties?.keychain?.privateKeyShare ||
-    key?.properties?.keychain?.reducedPrivateKeyShare ||
-    key?.properties?.keychain?.commonKeyChain ||
-    key?.wallets?.some(wallet => wallet.pendingTssSession)
-  );
+  return !!key?.wallets?.some(wallet => wallet.tssKeyId) && !key.isReadOnly;
 };
 
 export const requiresTSSSigning = (wallet: Wallet, key: Key): boolean => {
@@ -483,19 +482,10 @@ export const startTSSSigning =
     txp: TransactionProposal;
     callbacks: TSSSigningCallbacks;
     timeout?: number;
-    isCreator?: boolean;
     password?: string | undefined;
   }): Effect<Promise<TransactionProposal>> =>
   async (dispatch, getState): Promise<TransactionProposal> => {
-    const {
-      key,
-      wallet,
-      txp,
-      callbacks,
-      timeout = 600000,
-      isCreator,
-      password,
-    } = opts;
+    const {key, wallet, txp, callbacks, timeout = 600000, password} = opts;
 
     return new Promise(async (resolve, reject) => {
       try {
@@ -588,8 +578,12 @@ export const startTSSSigning =
           `[TSS Sign] All ${signatures.length} signature(s) collected, pushing to BWS`,
         );
 
+        // All signing participants push signatures — not just the creator.
+        // This handles the case where a read-only wallet creates the txp
+        // and the actual signers (who are not the creator) must push.
+        // ignore errors here
         let signedTXP: TransactionProposal | null = null;
-        if (isCreator) {
+        try {
           signedTXP = await new Promise<TransactionProposal>(
             (resolvePush, rejectPush) => {
               wallet.pushSignatures(
@@ -606,6 +600,12 @@ export const startTSSSigning =
               );
             },
           );
+        } catch (error) {
+          logManager.error(
+            `[TSS Sign] Error pushing signatures: ${
+              error instanceof Error ? error.message : JSON.stringify(error)
+            }`,
+          );
         }
 
         logManager.debug('[TSS Sign] TSS signing completed successfully');
@@ -620,7 +620,7 @@ export const startTSSSigning =
     });
   };
 
-const pollTxpUntilBroadcast = async (
+export const pollTxpUntilBroadcast = async (
   wallet: Wallet,
   txpId: string,
 ): Promise<TransactionProposal> => {
@@ -692,8 +692,6 @@ export const joinTSSSigningSession =
       await toggleTSSModal(setShowTSSProgressModal, true);
     }
     // Both creator and joiner use startTSSSigning.
-    // Creator calls pushSignatures then broadcasts; joiner polls until broadcast.
-    const isCreator = txp.creatorId === wallet.credentials.copayerId;
     try {
       const signedTx = await dispatch(
         startTSSSigning({
@@ -701,19 +699,19 @@ export const joinTSSSigningSession =
           wallet,
           txp,
           callbacks,
-          isCreator,
           password,
         }),
       );
-      if (isCreator) {
-        if (signedTx.status === 'accepted') {
-          const broadcastedTx = await broadcastTx(wallet, signedTx);
-          logManager.debug('[TSS Join] Broadcast complete');
-          await callbacks.onStatusChange('complete');
-          return broadcastedTx as TransactionProposal;
-        }
-        return signedTx;
-      } else {
+      try {
+        const broadcastedTx = await broadcastTx(wallet, signedTx);
+        logManager.debug('[TSS Join] Broadcast complete');
+        await callbacks.onStatusChange('complete');
+        return broadcastedTx as TransactionProposal;
+      } catch (_) {
+        // Another participant may have broadcasted already — poll for it.
+        logManager.debug(
+          '[TSS Join] Broadcast failed, polling for broadcasted status',
+        );
         const broadcastedTxp = await pollTxpUntilBroadcast(wallet, txp.id);
         await callbacks.onStatusChange('complete');
         return broadcastedTxp;
