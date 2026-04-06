@@ -184,7 +184,10 @@ import {
   usePaymentSent,
   useTokenContext,
 } from '../../../../contexts';
-import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {
+  isTSSKey,
+  isTSSWallet,
+} from '../../../../store/wallet/effects/tss-send/tss-send';
 import SwapCryptoOfferSelector, {
   OfferSelectorContainerLeft,
   OfferSelectorContainerRight,
@@ -482,7 +485,6 @@ const SwapCryptoRoot: React.FC = () => {
 
   // Threshold Signature Scheme (TSS)
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
-  const [isTSSWallet, setIsTSSWallet] = useState<boolean>(false);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
@@ -2580,8 +2582,8 @@ const SwapCryptoRoot: React.FC = () => {
             key,
             wallet: fromWalletSelected,
             ataOwnerAddress,
-            ...(isTSSWallet && {tssCallbacks}),
-            ...(isTSSWallet && {setShowTSSProgressModal}),
+            ...(isTSSWallet(fromWalletSelected) && {tssCallbacks}),
+            ...(isTSSWallet(fromWalletSelected) && {setShowTSSProgressModal}),
           }),
         );
       }
@@ -2729,7 +2731,7 @@ const SwapCryptoRoot: React.FC = () => {
       payinExtraId: txData.payinExtraId,
       totalExchangeFee: txData.totalExchangeFee!,
       status: txData.status,
-      isTSSWallet: isTSSWallet,
+      isTSSWallet: isTSSWallet(fromWalletSelected),
     };
 
     dispatch(
@@ -2768,12 +2770,6 @@ const SwapCryptoRoot: React.FC = () => {
       setSelectedWallet(swapCryptoSupportedCoinsFrom);
     }
   }, [swapCryptoSupportedCoinsFrom]);
-
-  useEffect(() => {
-    setIsTSSWallet(
-      fromWalletSelected ? isTSSKey(keys[fromWalletSelected.keyId]) : false,
-    );
-  }, [fromWalletSelected]);
 
   useEffect(() => {
     swapGetLimits();
@@ -3354,7 +3350,7 @@ const SwapCryptoRoot: React.FC = () => {
 
           {fromWalletSelected &&
           toWalletSelected &&
-          isTSSWallet &&
+          isTSSWallet(fromWalletSelected) &&
           amountFrom ? (
             <TSSProgressTracker
               status={tssStatus}

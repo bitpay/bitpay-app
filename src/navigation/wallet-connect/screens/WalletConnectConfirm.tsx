@@ -78,7 +78,7 @@ import {EIP155_SIGNING_METHODS} from '../../../constants/WalletConnectV2';
 import {formatJsonRpcResult} from '@json-rpc-tools/utils';
 import {GetPrecision} from '../../../store/wallet/utils/currency';
 import {usePaymentSent} from '../../../contexts';
-import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
+import {isTSSWallet} from '../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../wallet/components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../utils/hooks/useTSSCalbacks';
 
@@ -141,7 +141,6 @@ const WalletConnectConfirm = () => {
     [dispatch],
   );
 
-  const isTSSWallet = isTSSKey(key);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
@@ -249,8 +248,8 @@ const WalletConnectConfirm = () => {
             key,
             wallet,
             recipient,
-            ...(isTSSWallet && {tssCallbacks}),
-            ...(isTSSWallet && {setShowTSSProgressModal}),
+            ...(isTSSWallet(wallet) && {tssCallbacks}),
+            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
           }),
         );
         await dispatch(
@@ -451,7 +450,7 @@ const WalletConnectConfirm = () => {
     <ConfirmContainer>
       <DetailsList>
         <Header>Summary</Header>
-        {isTSSWallet && (
+        {wallet && isTSSWallet(wallet) && (
           <TSSProgressTracker
             status={tssStatus}
             progress={tssProgress}

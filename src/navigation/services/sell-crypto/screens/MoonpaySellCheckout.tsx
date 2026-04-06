@@ -122,7 +122,7 @@ import TransportHID from '@ledgerhq/react-native-hid';
 import {LISTEN_TIMEOUT, OPEN_TIMEOUT} from '../../../../constants/config';
 import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
-import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {isTSSWallet} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
 import {Network} from '../../../../constants';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
@@ -197,7 +197,6 @@ const MoonpaySellCheckout: React.FC = () => {
     useState<SimpleConfirmPaymentState | null>(null);
 
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
-  const isTSSWallet = isTSSKey(key);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
@@ -659,8 +658,8 @@ const MoonpaySellCheckout: React.FC = () => {
             key,
             wallet,
             ataOwnerAddress,
-            ...(isTSSWallet && {tssCallbacks}),
-            ...(isTSSWallet && {setShowTSSProgressModal}),
+            ...(isTSSWallet(wallet) && {tssCallbacks}),
+            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
           }),
         );
       }
@@ -699,7 +698,7 @@ const MoonpaySellCheckout: React.FC = () => {
         }),
       );
     } catch (err: any) {
-      if (isTSSWallet) {
+      if (isTSSWallet(wallet)) {
         setShowTSSProgressModal(false);
       }
 
@@ -799,7 +798,7 @@ const MoonpaySellCheckout: React.FC = () => {
         moonpayTxData.quoteCurrency.code,
       ).toUpperCase(),
       totalFee: totalExchangeFee,
-      isTSSWallet: isTSSWallet,
+      isTSSWallet: isTSSWallet(wallet),
     };
 
     dispatch(
@@ -1029,7 +1028,7 @@ const MoonpaySellCheckout: React.FC = () => {
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
-        {isTSSWallet && (
+        {wallet && isTSSWallet(wallet) && (
           <TSSProgressTracker
             status={tssStatus}
             progress={tssProgress}
