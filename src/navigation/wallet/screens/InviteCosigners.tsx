@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {ScrollView, Modal, Share} from 'react-native';
+import {ScrollView, Modal, Share, useWindowDimensions} from 'react-native';
 import styled from 'styled-components/native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useTranslation} from 'react-i18next';
@@ -19,8 +19,11 @@ import {
   Slate30,
   Success25,
   Black,
+  LightBlue,
+  BitPay,
+  Midnight,
 } from '../../../styles/colors';
-import {Paragraph, BaseText} from '../../../components/styled/Text';
+import {BaseText} from '../../../components/styled/Text';
 import {
   HeaderRightContainer,
   ScreenGutter,
@@ -245,6 +248,51 @@ const ButtonWrapper = styled.View`
   padding: 0 16px;
   margin-top: 20px;
 `;
+
+const SessionIdHelpBanner = styled.View`
+  margin-top: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
+`;
+
+const SessionIdHelpTitle = styled(BaseText)`
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 600;
+  color: ${({theme: {dark}}) => (dark ? White : BitPay)};
+`;
+
+const HelpStepRow = styled.View`
+  flex-direction: row;
+  align-items: flex-start;
+  margin-bottom: 10px;
+`;
+
+const HelpStepBubble = styled.View`
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  margin-top: 1px;
+  background-color: ${({theme: {dark}}) => (dark ? SlateDark : BitPay)};
+`;
+
+const HelpStepBubbleText = styled(BaseText)`
+  font-size: 11px;
+  font-weight: 700;
+  color: ${White};
+`;
+
+const HelpStepText = styled(BaseText)`
+  flex: 1;
+  font-size: 13px;
+  line-height: 19px;
+  color: ${({theme: {dark}}) => (dark ? White : BitPay)};
+`;
 export interface InviteCoSignersParamsList {
   keyId: string;
 }
@@ -265,11 +313,15 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
   const SuccessIcon = theme.dark ? SuccessDarkIcon : SuccessLightIcon;
   const QrCodeSvg = theme.dark ? QrCodeSvgGrey : QrCodeSvgBlack;
 
+  const {height: screenHeight} = useWindowDimensions();
+  const isSmallScreen = screenHeight < 700;
+
   const {keyId} = route.params;
   const key = useAppSelector(({WALLET}) => WALLET.keys[keyId]);
   const tssSession = key?.tssSession;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [showSessionIdHelp, setShowSessionIdHelp] = useState(true);
   const [selectedCopayer, setSelectedCopayer] = useState<TSSCopayerInfo | null>(
     null,
   );
@@ -331,6 +383,7 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
     setPendingJoinCode(null);
     setIsInviteShared(false);
     setAddCoSignerError(null);
+    setShowSessionIdHelp(true);
   };
 
   const handleAlreadyShared = () => {
@@ -458,6 +511,9 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
                   onChangeText={text => {
                     setSessionId(text);
                     setAddCoSignerError(null);
+                    if (text.trim()) {
+                      setShowSessionIdHelp(false);
+                    }
                   }}
                   placeholder=""
                   placeholderTextColor={LuckySevens}
@@ -469,6 +525,88 @@ const InviteCosigners: React.FC<Props> = ({route}) => {
                 </ScanButton>
               </InputWrapper>
               {addCoSignerError && <ErrorText>{addCoSignerError}</ErrorText>}
+              <SessionIdHelpBanner>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setShowSessionIdHelp(v => !v)}>
+                  <SessionIdHelpTitle
+                    style={{fontSize: isSmallScreen ? 11 : 13}}>
+                    {t('How to find the Session ID?')}
+                  </SessionIdHelpTitle>
+                </TouchableOpacity>
+                {showSessionIdHelp && (
+                  <>
+                    {[
+                      t(
+                        'Ask the co-signer who is joining the wallet to open the app.',
+                      ),
+                      <>
+                        {t('Tap the ')}
+                        <HelpStepText
+                          style={{
+                            fontWeight: '700',
+                            fontSize: isSmallScreen ? 11 : 13,
+                          }}>
+                          +
+                        </HelpStepText>
+                        {t(' icon next to ')}
+                        <HelpStepText
+                          style={{
+                            fontWeight: '700',
+                            fontSize: isSmallScreen ? 11 : 13,
+                          }}>
+                          {t('Your Crypto')}
+                        </HelpStepText>
+                        {'.'}
+                      </>,
+                      <>
+                        {t('Select ')}
+                        <HelpStepText
+                          style={{
+                            fontWeight: '700',
+                            fontSize: isSmallScreen ? 11 : 13,
+                          }}>
+                          {t('Join Shared Wallet')}
+                        </HelpStepText>
+                        {'.'}
+                      </>,
+                      <>
+                        {t('Choose ')}
+                        <HelpStepText
+                          style={{
+                            fontWeight: '700',
+                            fontSize: isSmallScreen ? 11 : 13,
+                          }}>
+                          {t('Threshold Signature Wallet')}
+                        </HelpStepText>
+                        {'.'}
+                      </>,
+                      t(
+                        'After the co-signer enters their name, the Session ID will be displayed and ready to share.',
+                      ),
+                    ].map((text, i, arr) => (
+                      <HelpStepRow
+                        key={i}
+                        style={{
+                          marginTop: i === 0 ? (isSmallScreen ? 6 : 10) : 0,
+                          marginBottom:
+                            i === arr.length - 1 ? 0 : isSmallScreen ? 4 : 10,
+                        }}>
+                        <HelpStepBubble>
+                          <HelpStepBubbleText
+                            style={{fontSize: isSmallScreen ? 10 : 11}}>
+                            {i + 1}
+                          </HelpStepBubbleText>
+                        </HelpStepBubble>
+                        <HelpStepText
+                          style={{fontSize: isSmallScreen ? 11 : 13}}>
+                          {text}
+                        </HelpStepText>
+                      </HelpStepRow>
+                    ))}
+                  </>
+                )}
+              </SessionIdHelpBanner>
               <Button
                 buttonStyle="primary"
                 onPress={handleAddCoSigner}
