@@ -10,6 +10,8 @@ import {
   Success25,
   Action,
   LightBlue,
+  BitPay,
+  Midnight,
 } from '../../../styles/colors';
 import {useTranslation} from 'react-i18next';
 import {
@@ -153,13 +155,13 @@ const HelpBanner = styled.View`
   margin-top: 8px;
   padding: 10px 12px;
   border-radius: 8px;
-  background-color: ${({theme: {dark}}) => (dark ? '#1E2A3A' : '#EAF2FF')};
+  background-color: ${({theme: {dark}}) => (dark ? Midnight : LightBlue)};
 `;
 
 const HelpBannerText = styled(BaseText)`
   font-size: 13px;
   line-height: 19px;
-  color: ${({theme: {dark}}) => (dark ? '#90B4D4' : '#2C5282')};
+  color: ${({theme: {dark}}) => (dark ? White : BitPay)};
 `;
 
 const TimeAgo: React.FC<{date: Date}> = ({date}) => {
