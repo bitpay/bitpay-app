@@ -599,8 +599,8 @@ export const startAddToGooglePay =
       const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
       logManager.error(`googlePay - completePushProvisionError - ${errMsg}`);
 
-      if (e instanceof Error) {
-        if (['CANCELED'].includes(e.message)) {
+      if (err instanceof Error) {
+        if (['CANCELED'].includes(err.message)) {
           return;
         }
       }

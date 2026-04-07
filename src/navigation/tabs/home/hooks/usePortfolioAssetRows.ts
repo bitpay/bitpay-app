@@ -123,7 +123,8 @@ const usePortfolioAssetRows = ({gainLossMode, keyId}: Args): Result => {
     return getDisplayAssetRowItems(items);
   }, [items]);
 
-  const populateLoadingByKeyPrevRef = useRef<Record<string, boolean>>();
+  const populateLoadingByKeyPrevRef =
+    useRef<Record<string, boolean>>(undefined);
   const isPopulateLoadingByKey = useMemo(() => {
     if (!isPopulateInProgress || !walletIdsByAssetKey) {
       return undefined;
