@@ -108,6 +108,27 @@ import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import * as Sentry from '@sentry/react-native';
 
+const getMissingVmAccounts = (
+  wallets: Wallet[],
+  accountsArray: number[],
+  expectedChainCoins: Array<{chain: string; currencyAbbreviation: string}>,
+) => {
+  const existing = new Set(
+    wallets.map(wallet => {
+      const account = wallet.credentials.account || 0;
+      const chain = wallet.credentials.chain;
+      const coin = wallet.credentials.coin;
+      return `${account}:${chain}:${coin}`;
+    }),
+  );
+
+  return accountsArray.filter(account => {
+    return expectedChainCoins.some(({chain, currencyAbbreviation}) => {
+      return !existing.has(`${account}:${chain}:${currencyAbbreviation}`);
+    });
+  });
+};
+
 const BWC = BwcProvider.getInstance();
 const BwcConstants = BWC.getConstants();
 
@@ -869,24 +890,41 @@ export const startImportMnemonic =
           ...WALLET.customTokenOptionsByAddress,
         };
         const {words, xPrivKey} = importData;
+
         opts.words = normalizeMnemonic(words);
         opts.xPrivKey = xPrivKey;
 
         const data = await serverAssistedImport(opts);
+
         // we need to ensure that each evm/svm account has all supported wallets attached.
         const vmWallets = getEvmGasWallets(data.wallets);
         const accountsArray = [
           ...new Set(vmWallets.map(wallet => wallet.credentials.account)),
         ];
-        const _wallets = await createWalletsForAccounts(
-          dispatch,
+
+        const expectedVmWallets = getBaseVMAccountCreationCoinsAndTokens();
+
+        const missingAccounts = getMissingVmAccounts(
+          data.wallets,
           accountsArray,
-          data.key as KeyMethods,
-          getBaseVMAccountCreationCoinsAndTokens(),
+          expectedVmWallets,
         );
+
+        const _wallets =
+          missingAccounts.length > 0
+            ? await createWalletsForAccounts(
+                dispatch,
+                accountsArray,
+                data.key as KeyMethods,
+                getBaseVMAccountCreationCoinsAndTokens(),
+                data.wallets,
+              )
+            : [];
+
         if (_wallets.length > 0) {
           data.wallets.push(..._wallets);
         }
+
         // To Avoid Duplicate wallet import
         const {
           key: _key,
@@ -904,10 +942,36 @@ export const startImportMnemonic =
           dispatch(deleteKey({keyId: opts.keyId}));
         }
 
+        const resultWallets = wallets.map(wallet => {
+          const {currencyAbbreviation, currencyName} = dispatch(
+            mapAbbreviationAndName(
+              wallet.credentials.coin,
+              wallet.credentials.chain,
+              wallet.credentials.token?.address,
+            ),
+          );
+          return merge(
+            wallet,
+            buildWalletObj(
+              {...wallet.credentials, currencyAbbreviation, currencyName},
+              tokenOptsByAddress,
+            ),
+          );
+        });
         const key = buildKeyObj({
           key: _key,
           keyName,
-          wallets: wallets.map(wallet => {
+          wallets: resultWallets,
+          backupComplete: true,
+        });
+
+        dispatch(
+          successImport({
+            key,
+          }),
+        );
+        setTimeout(() => {
+          resultWallets.forEach(wallet => {
             // subscribe new wallet to push notifications
             if (notificationsAccepted) {
               dispatch(subscribePushNotifications(wallet, brazeEid!));
@@ -925,29 +989,8 @@ export const startImportMnemonic =
               };
               dispatch(subscribeEmailNotifications(wallet, prefs));
             }
-            const {currencyAbbreviation, currencyName} = dispatch(
-              mapAbbreviationAndName(
-                wallet.credentials.coin,
-                wallet.credentials.chain,
-                wallet.credentials.token?.address,
-              ),
-            );
-            return merge(
-              wallet,
-              buildWalletObj(
-                {...wallet.credentials, currencyAbbreviation, currencyName},
-                tokenOptsByAddress,
-              ),
-            );
-          }),
-          backupComplete: true,
-        });
-
-        dispatch(
-          successImport({
-            key,
-          }),
-        );
+          });
+        }, 0);
         resolve(key);
       } catch (e) {
         dispatch(failedImport());

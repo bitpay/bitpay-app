@@ -30,4 +30,6 @@ declare module '@env' {
   export const BASESCAN_API_KEY: string;
   export const TEST_MODE_NETWORK: string;
   export const SENTRY_DSN: string;
+  export const REGTEST_BASE_BITPAY_URL: string;
+  export const STATIC_CONTENT_CARDS_ENABLED: string;
 }

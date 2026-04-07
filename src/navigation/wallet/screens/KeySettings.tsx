@@ -53,9 +53,7 @@ import {
 import {
   buildAccountList,
   buildWalletObj,
-  checkEncryptPassword,
   checkPrivateKeyEncrypted,
-  generateKeyExportCode,
   mapAbbreviationAndName,
 } from '../../../store/wallet/utils/wallet';
 import {Key} from '../../../store/wallet/wallet.models';
@@ -76,7 +74,7 @@ import {useTheme} from 'styled-components/native';
 import {IsSVMChain, IsVMChain} from '../../../store/wallet/utils/currency';
 import {useOngoingProcess, useTokenContext} from '../../../contexts';
 import {isTSSKey} from '../../../store/wallet/effects/tss-send/tss-send';
-import {LogActions} from '../../utils/logging';
+import {logManager} from '../../../managers/LogManager';
 
 const WalletSettingsContainer = styled.SafeAreaView`
   flex: 1;
@@ -184,7 +182,7 @@ const KeySettings = () => {
           cta(decryptedKey);
         } catch (e: any) {
           const errStr = e instanceof Error ? e.message : JSON.stringify(e);
-          Logger.error('[KeySettings] Decrypt Error', errStr);
+          logManager.error('[KeySettings] Decrypt Error', errStr);
           await dispatch(AppActions.dismissDecryptPasswordModal());
           await sleep(500); // Wait to close Decrypt Password modal
           dispatch(showBottomNotificationModal(WrongPasswordError()));

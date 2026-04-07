@@ -1,7 +1,7 @@
 PODS:
-  - AppsFlyerFramework (6.16.2):
-    - AppsFlyerFramework/Main (= 6.16.2)
-  - AppsFlyerFramework/Main (6.16.2)
+  - AppsFlyerFramework (6.17.9):
+    - AppsFlyerFramework/Main (= 6.17.9)
+  - AppsFlyerFramework/Main (6.17.9)
   - boost (1.84.0)
   - braze-react-native-sdk (16.1.0):
     - boost
@@ -1931,8 +1931,8 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
-  - react-native-appsflyer (6.16.2):
-    - AppsFlyerFramework (= 6.16.2)
+  - react-native-appsflyer (6.17.9):
+    - AppsFlyerFramework (= 6.17.9)
     - React
   - react-native-biometrics (3.0.1):
     - React-Core
@@ -3920,7 +3920,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  AppsFlyerFramework: fe5303bffcdfd941d5f570c2d21eaaea982e7bdc
+  AppsFlyerFramework: 4f9a8237d40e9093941aef760cd77d606238aedd
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   braze-react-native-sdk: b3bd4594310a390c12beb06b02bf0fbbfcbca7e0
   BrazeKit: dc74d3969d42e3f890461fe842e9422480269774
@@ -3975,7 +3975,7 @@ SPEC CHECKSUMS:
   React-logger: 2021eb67660b673cc654635832136fbbf2c79103
   React-Mapbuffer: 9bda44c983f9c683047546a338ebe9a21020babd
   React-microtasksnativemodule: 9b52faf56750d7e3c67d9cf96b650f14c31524c2
-  react-native-appsflyer: d52a08a5e687e4c2aca78519b0e258e1a82fad0a
+  react-native-appsflyer: 29efeef14176da773b44bbe09531ae4fdd55793f
   react-native-biometrics: 352e5a794bfffc46a0c86725ea7dc62deb085bdc
   react-native-ble-plx: 37a065e8604e03af88b725d1c4e8cb4c9a48c651
   react-native-blur: ba0e9ad6274783c8d45f42da82acae02e25784ad
