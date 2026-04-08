@@ -127,7 +127,8 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
         context !== 'backupExistingTSSKey' ? (
           <HeaderRightContainer>
             <Button
-              accessibilityLabel="skip-button"
+              testID="skip-button"
+              accessibilityLabel="Skip backup"
               buttonType={'pill'}
               onPress={async () => {
                 haptic('impactLight');
@@ -163,7 +164,7 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
   useAndroidBackHandler(() => true);
 
   return (
-    <BackupContainer accessibilityLabel="backup-shared-key-container">
+    <BackupContainer testID="backup-shared-key-container">
       <ScrollViewContainer>
         <ContentContainer>
           <ImageContainer style={{marginTop: 32, marginBottom: 32}}>
@@ -197,7 +198,8 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
 
         <CtaContainer>
           <Button
-            accessibilityLabel="backup-shared-wallet-button"
+            testID="backup-shared-wallet-button"
+            accessibilityLabel="Backup shared wallet"
             buttonStyle={'primary'}
             onPress={gotoBackup}>
             {t('Backup Shared Wallet')}

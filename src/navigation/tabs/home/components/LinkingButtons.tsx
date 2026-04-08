@@ -219,6 +219,8 @@ const LinkingButtons = ({buy, sell, receive, send, swap, maxWidth}: Props) => {
           <ButtonContainer key={key}>
             <LinkButton
               activeOpacity={ActiveOpacity}
+              testID={`${key}-button`}
+              accessibilityLabel={titleCasing(label)}
               disabled={
                 ['buy', 'sell', 'swap'].includes(key) &&
                 (!appWasInit || !tokensDataLoaded)

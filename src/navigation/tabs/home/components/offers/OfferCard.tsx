@@ -117,7 +117,9 @@ const OfferCard: React.FC<OfferCardProps> = props => {
     <OfferWrapper
       activeOpacity={0.9}
       onPress={_onPress}
-      accessibilityRole="button">
+      accessibilityRole="button"
+      testID={`home-offer-card-button-${contentCard.id}`}
+      accessibilityLabel={title ? `${title} offer` : 'View offer'}>
       <CoverImageContainer>
         {coverImageSource ? (
           <CoverImage

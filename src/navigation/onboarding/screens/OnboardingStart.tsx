@@ -180,14 +180,16 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
         <HeaderRightContainer>
           {isPaired ? (
             <Button
-              accessibilityLabel="log-out-button"
+              testID="log-out-button"
+              accessibilityLabel="Log out"
               buttonType="pill"
               onPress={onLogoutPressRef.current}>
               {t('Log Out')}
             </Button>
           ) : (
             <Button
-              accessibilityLabel="log-in-button"
+              testID="log-in-button"
+              accessibilityLabel="Log in"
               buttonType={'pill'}
               onPress={onLoginPressRef.current}>
               {t('Log In')}
@@ -237,7 +239,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
   ];
 
   return (
-    <OnboardingContainer accessibilityLabel="onboarding-start-view">
+    <OnboardingContainer testID="onboarding-start-view">
       <ScrollView scrollEnabled={isNarrowHeight}>
         <Carousel
           loop={false}
@@ -272,7 +274,7 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
       </ScrollHintContainer>
 
       <CtaContainerAbsolute
-        accessibilityLabel="cta-container"
+        testID="cta-container"
         onLayout={e => {
           setScrollHintHeight(e.nativeEvent.layout.height + 20);
         }}>
@@ -295,7 +297,8 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           <Column>
             {!isPaired ? (
               <Button
-                accessibilityLabel="get-started-button"
+                testID="get-started-button"
+                accessibilityLabel="Get started"
                 buttonStyle={'primary'}
                 onPress={() => {
                   haptic('impactLight');
@@ -314,7 +317,8 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
               </Button>
             ) : (
               <Button
-                accessibilityLabel="continue-button"
+                testID="continue-button"
+                accessibilityLabel="Continue"
                 buttonStyle={'primary'}
                 onPress={() => {
                   haptic('impactLight');
@@ -331,7 +335,8 @@ const OnboardingStart = ({navigation}: OnboardingStartScreenProps) => {
           <Row>
             <ActionContainer>
               <Button
-                accessibilityLabel="continue-without-an-account-button"
+                testID="continue-without-an-account-button"
+                accessibilityLabel="Continue without an account"
                 buttonType={'link'}
                 onPress={() => {
                   askForTrackingThenNavigate(() => {

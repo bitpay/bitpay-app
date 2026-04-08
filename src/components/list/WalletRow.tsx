@@ -211,6 +211,8 @@ const WalletRow = ({
   return (
     <RowContainer
       activeOpacity={ActiveOpacity}
+      testID={`wallet-row-${wallet.currencyAbbreviation}-${wallet.id}`}
+      accessibilityLabel={`${walletName || currencyName} wallet`}
       onPress={onPress}
       style={{borderBottomWidth: isLast || !hideIcon ? 0 : 1}}
       noBorder={noBorder}

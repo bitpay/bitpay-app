@@ -186,6 +186,8 @@ const BottomNotification = React.memo(() => {
           <TouchableOpacity
             style={{minHeight: 30, minWidth: 60}}
             key={index}
+            testID={`bottom-notification-${primary ? 'primary' : 'secondary'}-action-button`}
+            accessibilityLabel={text}
             onPress={handlePress}>
             <BottomNotificationCta
               suppressHighlighting={true}

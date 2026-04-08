@@ -337,7 +337,11 @@ const ContactsDetails = ({
           <Hr />
           <Detail>
             <Title>{t('Address')}</Title>
-            <AddressContainer onPress={copyToClipboard} activeOpacity={0.7}>
+            <AddressContainer
+              onPress={copyToClipboard}
+              activeOpacity={0.7}
+              testID="contacts-details-copy-address-button"
+              accessibilityLabel="Copy address">
               <CopyImgContainer>
                 {copied ? <CopiedSvg width={17} /> : null}
               </CopyImgContainer>
@@ -398,7 +402,11 @@ const ContactsDetails = ({
         onBackdropPress={() => setShowIconOptions(false)}>
         <ModalContainer>
           {contactOptions.map(({img, title: optionTitle, onPress}, index) => (
-            <OptionContainer key={index} onPress={onPress}>
+            <OptionContainer
+              key={index}
+              testID={`contacts-details-option-${optionTitle.toLowerCase().replace(/\s+/g, '-')}-button`}
+              accessibilityLabel={optionTitle}
+              onPress={onPress}>
               <OptionIconContainer>{img}</OptionIconContainer>
               <OptionTextContainer>
                 <OptionTitleText>{optionTitle}</OptionTitleText>

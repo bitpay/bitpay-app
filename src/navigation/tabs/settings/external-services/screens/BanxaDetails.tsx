@@ -392,6 +392,8 @@ const BanxaDetails: React.FC = () => {
                     {t('Having problems with Banxa?')}
                   </LabelTipText>
                   <TouchableOpacity
+                    testID="banxa-support-link"
+                    accessibilityLabel="Contact Banxa support"
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -430,6 +432,8 @@ const BanxaDetails: React.FC = () => {
                   )}
               </LabelTipText>
               <TouchableOpacity
+                testID="banxa-read-more-link"
+                accessibilityLabel="Read more about order timing"
                 onPress={() => {
                   haptic('impactLight');
                   dispatch(
@@ -444,6 +448,8 @@ const BanxaDetails: React.FC = () => {
               </TouchableOpacity>
               <Br />
               <TouchableOpacity
+                testID="banxa-payment-status-link"
+                accessibilityLabel="Check Banxa payment status"
                 onPress={() => {
                   haptic('impactLight');
                   dispatch(
@@ -461,6 +467,8 @@ const BanxaDetails: React.FC = () => {
 
           <ColumnDataContainer>
             <TouchableOpacity
+              testID="banxa-copy-deposit-address-button"
+              accessibilityLabel="Copy deposit address"
               onPress={() => {
                 copyText(paymentRequest.address);
                 setCopiedDepositAddress(true);
@@ -480,6 +488,8 @@ const BanxaDetails: React.FC = () => {
           {!!paymentRequest.order_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="banxa-copy-order-id-button"
+                accessibilityLabel="Copy order ID"
                 onPress={() => {
                   copyText(paymentRequest.order_id!);
                   setCopiedOrderId(true);
@@ -500,6 +510,8 @@ const BanxaDetails: React.FC = () => {
           {!!paymentRequest.ref && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="banxa-copy-order-number-button"
+                accessibilityLabel="Copy order number"
                 onPress={() => {
                   copyText(paymentRequest.ref?.toString()!);
                   setCopiedReferenceId(true);
@@ -520,6 +532,8 @@ const BanxaDetails: React.FC = () => {
           {!!paymentRequest.transaction_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="banxa-copy-transaction-id-button"
+                accessibilityLabel="Copy transaction ID"
                 onPress={() => {
                   copyText(paymentRequest.transaction_id!);
                   setCopiedTransactionId(true);
@@ -538,6 +552,8 @@ const BanxaDetails: React.FC = () => {
           )}
 
           <RemoveCta
+            testID="banxa-remove-payment-request-button"
+            accessibilityLabel="Remove payment request"
             onPress={async () => {
               haptic('impactLight');
               dispatch(

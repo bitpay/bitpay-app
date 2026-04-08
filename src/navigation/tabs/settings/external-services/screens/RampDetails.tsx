@@ -155,6 +155,8 @@ const RampDetails: React.FC = () => {
                 )}
               </LabelTipText>
               <TouchableOpacity
+                testID="ramp-payment-status-link"
+                accessibilityLabel="Check payment status"
                 onPress={() => {
                   haptic('impactLight');
                   dispatch(
@@ -180,6 +182,8 @@ const RampDetails: React.FC = () => {
                     {t('What is the status of my payment?')}{' '}
                   </LabelTipText>
                   <TouchableOpacity
+                    testID="ramp-transaction-faq-link"
+                    accessibilityLabel="View transaction FAQ"
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -197,6 +201,8 @@ const RampDetails: React.FC = () => {
 
           <ColumnDataContainer>
             <TouchableOpacity
+              testID="ramp-copy-deposit-address-button"
+              accessibilityLabel="Ramp copy deposit address button"
               onPress={() => {
                 copyText(paymentRequest.address);
                 setCopiedDepositAddress(true);
@@ -214,6 +220,8 @@ const RampDetails: React.FC = () => {
           </ColumnDataContainer>
 
           <RemoveCta
+            testID="ramp-remove-payment-request-button"
+            accessibilityLabel="Ramp remove payment request button"
             onPress={async () => {
               haptic('impactLight');
               dispatch(

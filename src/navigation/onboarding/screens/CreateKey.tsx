@@ -161,7 +161,7 @@ const CreateOrImportKey = ({
     }
   }, [isImportLedgerModalVisible]);
   return (
-    <CreateKeyContainer accessibilityLabel="create-key-view">
+    <CreateKeyContainer testID="create-key-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -181,10 +181,11 @@ const CreateOrImportKey = ({
             </Paragraph>
           </TextAlign>
         </TextContainer>
-        <CtaContainer accessibilityLabel="cta-container">
+        <CtaContainer testID="cta-container">
           <ActionContainer>
             <Button
-              accessibilityLabel="create-a-key-button"
+              testID="create-a-key-button"
+              accessibilityLabel="Create a key"
               buttonStyle={'primary'}
               onPress={onCreateKeyPress}>
               {t('Create a Key')}
@@ -192,7 +193,8 @@ const CreateOrImportKey = ({
           </ActionContainer>
           <ActionContainer>
             <Button
-              accessibilityLabel="i-already-have-a-key-button"
+              testID="i-already-have-a-key-button"
+              accessibilityLabel="I already have a key"
               buttonStyle={'secondary'}
               onPress={() => {
                 askForTrackingThenNavigate(() => {

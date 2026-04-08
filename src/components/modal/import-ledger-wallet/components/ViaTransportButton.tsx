@@ -47,6 +47,8 @@ export const ViaBluetoothButton: React.FC<ViaTransportButtonProps> = props => {
   return (
     <ConnectButton
       activeOpacity={ActiveOpacity}
+      testID="ledger-connect-bluetooth-button"
+      accessibilityLabel="Connect via Bluetooth"
       secondary={secondary}
       {...rest}>
       <ButtonIcon>
@@ -66,6 +68,8 @@ export const ViaUsbButton: React.FC<ViaTransportButtonProps> = props => {
   return (
     <ConnectButton
       activeOpacity={ActiveOpacity}
+      testID="ledger-connect-usb-button"
+      accessibilityLabel="Connect via USB"
       secondary={secondary}
       {...rest}>
       <ButtonIcon>

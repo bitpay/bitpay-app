@@ -76,6 +76,7 @@ const Checkbox: React.FC<Props> = ({
       }}
       // @ts-ignore --> testing
       testID="checkbox"
+      accessibilityLabel="Checkbox"
       outerStyle={{
         ...baseStyles,
         borderColor: 'transparent',

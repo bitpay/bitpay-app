@@ -207,7 +207,8 @@ const BillConfirm: React.FC<
       headerRight: () => (
         <HeaderRightContainer>
           <Button
-            accessibilityLabel="cancel-button"
+            testID="cancel-button"
+            accessibilityLabel="Cancel"
             buttonType={'pill'}
             onPress={() => {
               haptic('impactLight');

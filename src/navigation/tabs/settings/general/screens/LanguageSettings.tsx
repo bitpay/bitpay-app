@@ -53,7 +53,10 @@ const LanguageSettings: React.FC = () => {
         {LanguageList.map(({name, isoCode}) => {
           return (
             <View key={isoCode}>
-              <Setting onPress={() => setSelected(isoCode)}>
+              <Setting
+                testID={`settings-language-${isoCode}-row`}
+                accessibilityLabel={name}
+                onPress={() => setSelected(isoCode)}>
                 <SettingTitle>{name}</SettingTitle>
                 {loading && selected === isoCode ? (
                   <ActivityIndicator

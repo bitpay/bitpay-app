@@ -99,7 +99,8 @@ const CurrencySelectionRow: React.FC<CurrencySelectionRowProps> = ({
   return (
     <RowContainer
       style={{borderWidth: 0, marginBottom: 0}}
-      accessibilityLabel="currency-selection-row"
+      testID={`currency-selection-row-${currencyAbbreviation}-${chain}`}
+      accessibilityLabel={`${currencyName} currency selection`}
       onPress={onPress}>
       <CurrencyColumn>
         <CurrencyImage img={img} imgSrc={imgSrc} badgeUri={badgeUri} />

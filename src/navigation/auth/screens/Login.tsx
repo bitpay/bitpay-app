@@ -251,14 +251,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
   };
 
   return (
-    <LoginContainer accessibilityLabel="login-view">
-      <AuthFormContainer accessibilityLabel="auth-form-container">
+    <LoginContainer testID="login-view">
+      <AuthFormContainer testID="auth-form-container">
         <AuthRowContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                accessibilityLabel="email-box-input"
+                testID="email-box-input"
+                accessibilityLabel="Email address"
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
                 onBlur={onBlur}
@@ -282,7 +283,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                accessibilityLabel="password-box-input"
+                testID="password-box-input"
+                accessibilityLabel="Password"
                 ref={passwordRef}
                 placeholder={'strongPassword123'}
                 label={t('PASSWORD')}
@@ -300,11 +302,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
           />
         </AuthRowContainer>
 
-        <AuthActionsContainer accessibilityLabel="auth-cta-container">
+        <AuthActionsContainer testID="auth-cta-container">
           <AuthActionRow>
             <Button
               buttonStyle={'secondary'}
-              accessibilityLabel="login-button"
+              testID="login-button"
+              accessibilityLabel="Log in"
               onPress={onSubmit}
               disabled={!isDirty}>
               {t('Log In')}
@@ -320,7 +323,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
           <AuthActionRow style={{marginBottom: 16}}>
             <Button
               buttonStyle={'secondary'}
-              accessibilityLabel="login-button"
+              testID="login-passkey-button"
+              accessibilityLabel="Log in with passkey"
               onPress={loginWithPasskey}
               disabled={loginStatus === 'loading'}
               icon={<PasskeyPersonSetup width={28} height={28} />}>
@@ -330,7 +334,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
           <AuthActionRow>
             <Button
               buttonStyle={'secondary'}
-              accessibilityLabel="create-account-button"
+              testID="create-account-button"
+              accessibilityLabel="Create an account"
               onPress={() => {
                 navigation.navigate('CreateAccount', {context: 'login'});
               }}
@@ -352,7 +357,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({navigation, route}) => {
       </AuthFormContainer>
       <FooterContainer>
         <FooterLink
-          accessibilityLabel="trouble-logging-in-button"
+          testID="trouble-logging-in-button"
+          accessibilityLabel="Trouble logging in"
           onPress={() => onTroubleLoggingIn()}>
           {t('Trouble logging in?')}
         </FooterLink>

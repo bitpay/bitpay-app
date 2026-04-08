@@ -245,6 +245,8 @@ const MoonpayDetails: React.FC = () => {
                 )}
               </LabelTipText>
               <TouchableOpacity
+                testID="moonpay-payment-status-link"
+                accessibilityLabel="Check Moonpay payment status"
                 onPress={() => {
                   haptic('impactLight');
                   dispatch(
@@ -270,6 +272,8 @@ const MoonpayDetails: React.FC = () => {
                     {t('Having problems with Moonpay?')}{' '}
                   </LabelTipText>
                   <TouchableOpacity
+                    testID="moonpay-support-link"
+                    accessibilityLabel="Contact Moonpay support"
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -289,6 +293,8 @@ const MoonpayDetails: React.FC = () => {
 
           <ColumnDataContainer>
             <TouchableOpacity
+              testID="moonpay-copy-deposit-address-button"
+              accessibilityLabel="Copy deposit address"
               onPress={() => {
                 copyText(paymentRequest.address);
                 setCopiedDepositAddress(true);
@@ -308,6 +314,8 @@ const MoonpayDetails: React.FC = () => {
           {!!paymentRequest.transaction_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="moonpay-copy-transaction-id-button"
+                accessibilityLabel="Copy transaction ID"
                 onPress={() => {
                   copyText(paymentRequest.transaction_id!);
                   setCopiedTransactionId(true);
@@ -327,6 +335,8 @@ const MoonpayDetails: React.FC = () => {
 
           <ColumnDataContainer>
             <TouchableOpacity
+              testID="moonpay-copy-external-transaction-id-button"
+              accessibilityLabel="Copy external transaction ID"
               onPress={() => {
                 copyText(paymentRequest.external_id);
                 setCopiedExternalId(true);
@@ -344,6 +354,8 @@ const MoonpayDetails: React.FC = () => {
           </ColumnDataContainer>
 
           <RemoveCta
+            testID="moonpay-remove-payment-request-button"
+            accessibilityLabel="Moonpay remove payment request button"
             onPress={async () => {
               haptic('impactLight');
               dispatch(

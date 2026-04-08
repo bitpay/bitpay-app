@@ -272,11 +272,15 @@ const PortfolioBalance = () => {
     <PortfolioContainer>
       <PortfolioBalanceHeader
         activeOpacity={ActiveOpacity}
+        testID="portfolio-balance-info-button"
+        accessibilityLabel="Portfolio balance info"
         onPress={showPortfolioBalanceInfoModal}>
         <PortfolioBalanceTitle>{t('Portfolio Balance')}</PortfolioBalanceTitle>
         <InfoSvg width={16} height={16} />
       </PortfolioBalanceHeader>
       <TouchableOpacity
+        testID="portfolio-balance-toggle"
+        accessibilityLabel="Toggle balance visibility"
         onLongPress={() => {
           dispatch(toggleHideAllBalances());
         }}>
