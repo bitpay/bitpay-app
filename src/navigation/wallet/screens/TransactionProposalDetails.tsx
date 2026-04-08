@@ -695,6 +695,8 @@ const TransactionProposalDetails = () => {
                 description={t('Payment accepted, but not yet broadcasted.')}
               />
               <Button
+                testID="txp-details-broadcast-payment-button"
+                accessibilityLabel="Txp details broadcast payment button"
                 onPress={() => {
                   broadcastTxp(txp);
                 }}
@@ -728,6 +730,8 @@ const TransactionProposalDetails = () => {
                 />
               ) : null}
               <Button
+                testID="txp-details-delete-proposal-button"
+                accessibilityLabel="Txp details delete proposal button"
                 style={{marginTop: 10}}
                 onPress={removePaymentProposal}
                 buttonType={'link'}
@@ -748,6 +752,8 @@ const TransactionProposalDetails = () => {
               {(txp.creatorId === wallet.credentials.copayerId ||
                 txp.canBeRemoved) && (
                 <Button
+                  testID="txp-details-tss-delete-proposal-button"
+                  accessibilityLabel="Txp details tss delete proposal button"
                   style={{marginTop: 10}}
                   onPress={removePaymentProposal}
                   buttonType={'link'}
@@ -764,6 +770,8 @@ const TransactionProposalDetails = () => {
           !txp.multisigContractAddress &&
           wallet.credentials.n > 1 ? (
             <Button
+              testID="txp-details-reject-proposal-button"
+              accessibilityLabel="Txp details reject proposal button"
               onPress={rejectPaymentProposal}
               buttonType={'link'}
               buttonStyle={'danger'}>

@@ -274,7 +274,8 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
               </CardTouchable>
               <CloseButton
                 activeOpacity={ActiveOpacity}
-                accessibilityLabel="dismiss-marketing-carousel"
+                testID="dismiss-marketing-carousel"
+                accessibilityLabel="Dismiss marketing card"
                 onPressIn={() => {
                   skipNextCardPressRef.current = true;
                 }}
@@ -340,8 +341,9 @@ const MarketingCarousel: React.FC<MarketingCarouselProps> = ({
             <Dot
               key={slide.card.id || `marketing-slide-${index}`}
               active={index === activeIndex}
-              accessibilityLabel={`marketing-carousel-slide-${index + 1}`}
+              testID={`marketing-carousel-slide-${index + 1}`}
               accessibilityRole="button"
+              accessibilityLabel={`Go to slide ${index + 1}`}
               onPress={() => {
                 if (index !== activeIndex) {
                   carouselRef.current?.scrollTo({index, animated: true});

@@ -448,7 +448,8 @@ export const AddByDerivationPath: React.FC<Props> = props => {
 
       <DescriptionRow>
         <BoxInput
-          accessibilityLabel="derivation-path-box-input"
+          testID="derivation-path-box-input"
+          accessibilityLabel="Derivation path"
           label={undefined}
           onChangeText={setDerivationPath}
           defaultValue={derivationPath}
@@ -456,13 +457,19 @@ export const AddByDerivationPath: React.FC<Props> = props => {
       </DescriptionRow>
 
       <ActionsRow>
-        <Button state={continueButtonState} onPress={onContinue}>
+        <Button
+          state={continueButtonState}
+          testID="ledger-derivation-path-continue-button"
+          accessibilityLabel="Continue"
+          onPress={onContinue}>
           Continue
         </Button>
       </ActionsRow>
       <ActionsRow>
         <Button
           buttonType={'link'}
+          testID="ledger-derivation-path-go-back-button"
+          accessibilityLabel="Go back"
           onPress={props.onAddByDerivationPathSelected}>
           Go Back
         </Button>

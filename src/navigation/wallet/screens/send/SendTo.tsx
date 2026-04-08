@@ -689,6 +689,8 @@ const SendTo = () => {
       <ScrollView keyboardShouldPersistTaps={'handled'}>
         <SearchContainer>
           <SearchInput
+            testID="send-to-address-input"
+            accessibilityLabel="Recipient address"
             placeholder={t('Search contact or enter address')}
             placeholderTextColor={placeHolderTextColor}
             value={searchInput}
@@ -698,6 +700,8 @@ const SendTo = () => {
             }}
           />
           <TouchableOpacity
+            testID="send-to-scan-qr-button"
+            accessibilityLabel="Send to scan qr button"
             activeOpacity={0.75}
             onPress={() => {
               haptic('impactLight');
@@ -726,6 +730,8 @@ const SendTo = () => {
 
         {searchIsEmailAddress ? (
           <TouchableOpacity
+            testID="send-to-email-send-button"
+            accessibilityLabel="Send to email send button"
             activeOpacity={ActiveOpacity}
             onPress={async () => {
               const email = searchInput.toLowerCase();

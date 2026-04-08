@@ -158,6 +158,8 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
         <OptionListContainer>
           {optionList.map(({cta, id, title, description}: Option) => (
             <OptionList
+              testID={`creation-options-${id}-button`}
+              accessibilityLabel={title}
               activeOpacity={ActiveOpacity}
               onPress={() => {
                 haptic('impactLight');

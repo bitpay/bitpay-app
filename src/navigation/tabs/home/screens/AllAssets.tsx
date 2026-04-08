@@ -176,6 +176,8 @@ const AllAssets: React.FC<Props> = ({navigation, route}) => {
             autoCapitalize="none"
             autoCorrect={false}
             onChangeText={setQuery}
+            testID="all-assets-search-input"
+            accessibilityLabel="Search assets"
           />
         </SearchInputContainer>
 

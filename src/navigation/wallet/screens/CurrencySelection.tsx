@@ -338,7 +338,8 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
         context === 'onboarding' && (
           <HeaderRightContainer>
             <Button
-              accessibilityLabel="skip-button"
+              testID="skip-button"
+              accessibilityLabel="Skip"
               buttonType={'pill'}
               onPress={() => {
                 haptic('impactLight');
@@ -441,7 +442,7 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
   );
 
   return (
-    <CurrencySelectionContainer accessibilityLabel="currency-selection-container">
+    <CurrencySelectionContainer testID="currency-selection-container">
       {allListItems.length > 0 ? (
         <ListContainer>
           <FlatList<CurrencySelectionListItem>
@@ -464,7 +465,8 @@ const CurrencySelection = ({route}: CurrencySelectionScreenProps) => {
             marginTop: 16,
           }}>
           <Button
-            accessibilityLabel="on-cta-press-button"
+            testID="on-cta-press-button"
+            accessibilityLabel="Add wallet"
             onPress={onCtaPress}
             buttonStyle={'primary'}>
             {ctaTitle || t('Continue')}

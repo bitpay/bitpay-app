@@ -291,6 +291,8 @@ const SardineDetails: React.FC = () => {
                     {t('Having problems with Sardine?')}
                   </LabelTipText>
                   <TouchableOpacity
+                    testID="sardine-support-link"
+                    accessibilityLabel="Contact support"
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -310,6 +312,8 @@ const SardineDetails: React.FC = () => {
 
           <ColumnDataContainer>
             <TouchableOpacity
+              testID="sardine-copy-deposit-address-button"
+              accessibilityLabel="Sardine copy deposit address button"
               onPress={() => {
                 copyText(paymentRequest.address);
                 setCopiedDepositAddress(true);
@@ -329,6 +333,8 @@ const SardineDetails: React.FC = () => {
           {!!paymentRequest.order_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="sardine-copy-order-id-button"
+                accessibilityLabel="Sardine copy order id button"
                 onPress={() => {
                   copyText(paymentRequest.order_id!);
                   setCopiedOrderId(true);
@@ -349,6 +355,8 @@ const SardineDetails: React.FC = () => {
           {!!paymentRequest.external_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="sardine-copy-reference-id-button"
+                accessibilityLabel="Sardine copy reference id button"
                 onPress={() => {
                   copyText(paymentRequest.external_id!);
                   setCopiedReferenceId(true);
@@ -369,6 +377,8 @@ const SardineDetails: React.FC = () => {
           {!!paymentRequest.transaction_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="sardine-copy-transaction-id-button"
+                accessibilityLabel="Sardine copy transaction id button"
                 onPress={() => {
                   copyText(paymentRequest.transaction_id!);
                   setCopiedTransactionId(true);
@@ -387,6 +397,8 @@ const SardineDetails: React.FC = () => {
           )}
 
           <RemoveCta
+            testID="sardine-remove-payment-request-button"
+            accessibilityLabel="Sardine remove payment request button"
             onPress={async () => {
               haptic('impactLight');
               dispatch(

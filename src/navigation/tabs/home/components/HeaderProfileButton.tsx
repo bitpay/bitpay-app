@@ -16,6 +16,8 @@ const ProfileButton: React.FC = () => {
   return (
     <HeaderButtonContainer>
       <TouchableOpacity
+        testID="profile-button"
+        accessibilityLabel="Profile"
         onPress={() => {
           user
             ? navigation.navigate('BitPayIdProfile')

@@ -296,7 +296,8 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
     return () => (
       <HeaderRightContainer>
         <Button
-          accessibilityLabel="cancel-button"
+          testID="cancel-button"
+          accessibilityLabel="Cancel"
           buttonType={'pill'}
           onPress={onPressHeaderCancelRef.current}>
           {t('Cancel')}
@@ -315,7 +316,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
 
   return isNarrowHeight ? (
     <KeyboardAvoidingView
-      accessibilityLabel="verify-phrase-container"
+      testID="verify-phrase-container"
       style={{flex: 1}}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={0}>
@@ -432,7 +433,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
           </VerifyPhraseField>
         </VerifyPhraseForm>
       </KeyboardAwareScrollView>
-      <CtaContainerAbsolute accessibilityLabel="cta-container">
+      <CtaContainerAbsolute testID="cta-container">
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
@@ -441,7 +442,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
       </CtaContainerAbsolute>
     </KeyboardAvoidingView>
   ) : (
-    <VerifyPhraseContainer accessibilityLabel="verify-phrase-container">
+    <VerifyPhraseContainer testID="verify-phrase-container">
       <HeaderContainerLargeMargin>
         <HeaderText>
           {t(
@@ -552,7 +553,7 @@ const VerifyPhrase: React.FC<VerifyPhraseScreenProps> = ({route}) => {
         </VerifyPhraseField>
       </VerifyPhraseFormFlex>
 
-      <CtaContainerAbsolute accessibilityLabel="cta-container">
+      <CtaContainerAbsolute testID="cta-container">
         <Button
           disabled={!word1Validation || !word2Validation || !word3Validation}
           onPress={handleSubmit(checkAnswer)}>
