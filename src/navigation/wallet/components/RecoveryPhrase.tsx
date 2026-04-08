@@ -683,7 +683,7 @@ const RecoveryPhrase = () => {
         </CuationText>
         <CtaContainer>
           <AdvancedOptionsContainer testID="advanced-options-container">
-          accessibilityLabel="Advanced options container"
+            accessibilityLabel="Advanced options container"
             <AdvancedOptionsButton
               testID="show-advanced-options"
               accessibilityLabel="Show advanced options"
@@ -707,7 +707,6 @@ const RecoveryPhrase = () => {
                 </>
               )}
             </AdvancedOptionsButton>
-
             {showAdvancedOptions && !derivationPathEnabled && (
               <AdvancedOptions>
                 <RowContainer
@@ -719,7 +718,7 @@ const RecoveryPhrase = () => {
                     <OptionTitle>{t('Include Testnet Wallets')}</OptionTitle>
                   </Column>
                   <CheckBoxContainer testID="include-testnet-wallet-checkbox">
-                  accessibilityLabel="Include testnet wallets"
+                    accessibilityLabel="Include testnet wallets"
                     <Checkbox
                       checked={includeTestnetWallets}
                       onPress={() => {
@@ -730,7 +729,6 @@ const RecoveryPhrase = () => {
                 </RowContainer>
               </AdvancedOptions>
             )}
-
             {showAdvancedOptions && !derivationPathEnabled && (
               <AdvancedOptions>
                 <RowContainer
@@ -742,7 +740,7 @@ const RecoveryPhrase = () => {
                     <OptionTitle>{t('Include Legacy Wallets')}</OptionTitle>
                   </Column>
                   <CheckBoxContainer testID="include-legacy-wallet-checkbox">
-                  accessibilityLabel="Include legacy wallets"
+                    accessibilityLabel="Include legacy wallets"
                     <Checkbox
                       checked={includeLegacyWallets}
                       onPress={() => {
@@ -753,7 +751,6 @@ const RecoveryPhrase = () => {
                 </RowContainer>
               </AdvancedOptions>
             )}
-
             {showAdvancedOptions && (
               <AdvancedOptions>
                 <RowContainer
@@ -765,7 +762,7 @@ const RecoveryPhrase = () => {
                     <OptionTitle>{t('Specify Derivation Path')}</OptionTitle>
                   </Column>
                   <CheckBoxContainer testID="specify-derivation-path-checkbox">
-                  accessibilityLabel="Specify derivation path"
+                    accessibilityLabel="Specify derivation path"
                     <Checkbox
                       checked={derivationPathEnabled}
                       onPress={() => {
@@ -776,7 +773,6 @@ const RecoveryPhrase = () => {
                 </RowContainer>
               </AdvancedOptions>
             )}
-
             {showAdvancedOptions && derivationPathEnabled && (
               <AdvancedOptions>
                 <CurrencySelectorContainer>
@@ -815,7 +811,6 @@ const RecoveryPhrase = () => {
                 </CurrencySelectorContainer>
               </AdvancedOptions>
             )}
-
             <SheetModal
               isVisible={currencyModalVisible}
               onBackdropPress={() => setCurrencyModalVisible(false)}>
@@ -831,7 +826,6 @@ const RecoveryPhrase = () => {
                 />
               </CurrencySelectionModalContainer>
             </SheetModal>
-
             {showAdvancedOptions && derivationPathEnabled && (
               <AdvancedOptions>
                 <InputContainer>
@@ -850,7 +844,6 @@ const RecoveryPhrase = () => {
                 </InputContainer>
               </AdvancedOptions>
             )}
-
             {showAdvancedOptions &&
               derivationPathEnabled &&
               advancedOptions.derivationPath ===
@@ -868,7 +861,7 @@ const RecoveryPhrase = () => {
                       <OptionTitle>{t('Shared Wallet')}</OptionTitle>
                     </Column>
                     <CheckBoxContainer testID="shared-wallet-checkbox">
-                    accessibilityLabel="Shared wallet"
+                      accessibilityLabel="Shared wallet"
                       <Checkbox
                         checked={advancedOptions.isMultisig}
                         onPress={() => {
@@ -882,7 +875,6 @@ const RecoveryPhrase = () => {
                   </RowContainer>
                 </AdvancedOptions>
               )}
-
             {showAdvancedOptions && (
               <AdvancedOptions>
                 <InputContainer>

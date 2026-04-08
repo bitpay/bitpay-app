@@ -403,8 +403,10 @@ const AddWallet = ({
 
           {showOptions && nativeSegwitCurrency && (
             <AdvancedOptions>
-              <RowContainer testID="add-wallet-segwit-toggle" onPress={() => toggleUseNativeSegwit()}>
-              accessibilityLabel="Use native SegWit"
+              <RowContainer
+                testID="add-wallet-segwit-toggle"
+                onPress={() => toggleUseNativeSegwit()}>
+                accessibilityLabel="Use native SegWit"
                 <Column>
                   <OptionTitle>Segwit</OptionTitle>
                 </Column>
@@ -420,8 +422,10 @@ const AddWallet = ({
 
           {showOptions && taprootCurrency && (
             <AdvancedOptions>
-              <RowContainer testID="add-wallet-taproot-toggle" onPress={() => toggleUseTaproot()}>
-              accessibilityLabel="Use Taproot"
+              <RowContainer
+                testID="add-wallet-taproot-toggle"
+                onPress={() => toggleUseTaproot()}>
+                accessibilityLabel="Use Taproot"
                 <Column>
                   <OptionTitle>Taproot</OptionTitle>
                 </Column>

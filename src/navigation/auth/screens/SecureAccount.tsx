@@ -264,7 +264,10 @@ export const SecureAccountScreen = () => {
             )}
           </HeaderText>
         </HeaderTextContainer>
-        <CardPressable testID="secure-account-setup-passkey-button" accessibilityLabel="Set up a passkey" onPress={goToPasskeySetup}>
+        <CardPressable
+          testID="secure-account-setup-passkey-button"
+          accessibilityLabel="Set up a passkey"
+          onPress={goToPasskeySetup}>
           <CardTitleContainer>
             <IconBadge>
               {dark ? (
@@ -301,7 +304,10 @@ export const SecureAccountScreen = () => {
           </CardContent>
         </CardPressable>
 
-        <CardPressable testID="secure-account-setup-two-factor-button" accessibilityLabel="Set up two-factor authentication" onPress={goToTwoFactorSetup}>
+        <CardPressable
+          testID="secure-account-setup-two-factor-button"
+          accessibilityLabel="Set up two-factor authentication"
+          onPress={goToTwoFactorSetup}>
           <CardTitleContainer>
             <IconBadge>
               {dark ? (

@@ -688,8 +688,10 @@ const TransactionDetails = () => {
             <DetailRow>
               <H7>{t('Transaction ID')}</H7>
 
-              <CopyTransactionId testID="transaction-details-copy-txid-button" onPress={() => copyText(txs.txid!)}>
-              accessibilityLabel="Transaction details copy txid button"
+              <CopyTransactionId
+                testID="transaction-details-copy-txid-button"
+                onPress={() => copyText(txs.txid!)}>
+                accessibilityLabel="Transaction details copy txid button"
                 <CopyImgContainer>
                   {copied ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainer>
@@ -724,8 +726,11 @@ const TransactionDetails = () => {
           </VerticalSpace>
 
           <VerticalSpace>
-            <Button testID="transaction-details-view-on-blockchain-button" buttonStyle={'secondary'} onPress={goToBlockchain}>
-            accessibilityLabel="Transaction details view on blockchain button"
+            <Button
+              testID="transaction-details-view-on-blockchain-button"
+              buttonStyle={'secondary'}
+              onPress={goToBlockchain}>
+              accessibilityLabel="Transaction details view on blockchain button"
               {t('View On Blockchain')}
             </Button>
           </VerticalSpace>
