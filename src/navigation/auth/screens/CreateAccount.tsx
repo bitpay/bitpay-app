@@ -260,14 +260,15 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
   };
 
   return (
-    <SafeAreaView accessibilityLabel="create-account-view">
-      <AuthFormContainer accessibilityLabel="auth-form-container">
+    <SafeAreaView testID="create-account-view">
+      <AuthFormContainer testID="auth-form-container">
         <AuthRowContainer>
           <Controller
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                accessibilityLabel="first-name-box-input"
+                testID="first-name-box-input"
+                accessibilityLabel="First name"
                 placeholder={'Satoshi'}
                 label={t('FIRST NAME')}
                 onBlur={onBlur}
@@ -289,7 +290,8 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                accessibilityLabel="last-name-box-input"
+                testID="last-name-box-input"
+                accessibilityLabel="Last name"
                 ref={familyNameRef}
                 placeholder={'Nakamoto'}
                 label={t('LAST NAME')}
@@ -312,7 +314,8 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                accessibilityLabel="email-box-input"
+                testID="email-box-input"
+                accessibilityLabel="Email address"
                 ref={emailRef}
                 placeholder={'satoshi@example.com'}
                 label={t('EMAIL')}
@@ -335,7 +338,8 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             control={control}
             render={({field: {onChange, onBlur, value}}) => (
               <BoxInput
-                accessibilityLabel="password-box-input"
+                testID="password-box-input"
+                accessibilityLabel="Password"
                 ref={passwordRef}
                 type="password"
                 placeholder={'strongPassword123'}
@@ -356,8 +360,10 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             control={control}
             render={({field}) => (
               <>
-                <CheckboxControl accessibilityLabel="agreed-terms-of-use-checkbox">
+                <CheckboxControl testID="agreed-terms-of-use-checkbox">
                   <Checkbox
+                    testID="create-account-agree-terms-checkbox"
+                    accessibilityLabel="Agree to terms of use and privacy policy"
                     onPress={() =>
                       setValue('agreedToTOSandPP', !field.value, {
                         shouldValidate: true,
@@ -400,8 +406,10 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             control={control}
             render={({field}) => (
               <>
-                <CheckboxControl accessibilityLabel="agreed-marketing-checkbox">
+                <CheckboxControl testID="agreed-marketing-checkbox">
                   <Checkbox
+                    testID="create-account-agree-marketing-checkbox"
+                    accessibilityLabel="Agree to receive promotional emails"
                     onPress={() =>
                       setValue('agreedToMarketingCommunications', !field.value)
                     }
@@ -421,10 +429,11 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
           />
         </AuthRowContainer>
 
-        <AuthActionsContainer accessibilityLabel="auth-cta-container">
+        <AuthActionsContainer testID="auth-cta-container">
           <AuthActionRow>
             <Button
-              accessibilityLabel="create-account-button"
+              testID="create-account-button"
+              accessibilityLabel="Create account"
               onPress={onSubmit}>
               {t('Create Account')}
             </Button>
@@ -434,7 +443,8 @@ const CreateAccountScreen: React.FC<CreateAccountScreenProps> = ({
             <AuthActionText>
               {t('Already have an account?')}{' '}
               <Link
-                accessibilityLabel="login-button"
+                testID="login-button"
+                accessibilityLabel="Log in"
                 onPress={() => {
                   navigation.navigate('Login');
                 }}>

@@ -235,6 +235,8 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
     return (
       <ListWalletCard
         activeOpacity={ActiveOpacity}
+        testID={`wallet-card-${keyName}`}
+        accessibilityLabel={`${keyName} wallet`}
         onPress={onPress}
         outlineStyle={context === 'keySelector'}>
         <ListRow>

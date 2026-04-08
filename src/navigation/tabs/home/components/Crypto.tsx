@@ -552,6 +552,8 @@ const Crypto = () => {
           <CryptoHeaderActions>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
+              testID="my-crypto-add-button"
+              accessibilityLabel="Add crypto wallet"
               onPress={() => {
                 haptic('soft');
                 navigation.navigate('CreationOptions');
@@ -560,6 +562,8 @@ const Crypto = () => {
             </TouchableOpacity>
             <TouchableOpacity
               activeOpacity={ActiveOpacity}
+              testID="my-crypto-customize-button"
+              accessibilityLabel="Customize home"
               onPress={() => {
                 haptic('soft');
                 // Apply SettingsDetails config so that the custom header is used

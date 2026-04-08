@@ -849,6 +849,8 @@ const Confirm = () => {
 
                   <VerticalPadding>
                     <TouchableOpacity
+                      testID="confirm-destination-tag-learn-more-button"
+                      accessibilityLabel="Confirm destination tag learn more button"
                       activeOpacity={ActiveOpacity}
                       onPress={() => {
                         haptic('impactLight');

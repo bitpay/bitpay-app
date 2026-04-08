@@ -133,7 +133,8 @@ const BackupScreen = ({route}: BackupScreenProps) => {
       headerRight: () => (
         <HeaderRightContainer>
           <Button
-            accessibilityLabel="skip-button"
+            testID="skip-button"
+            accessibilityLabel="Skip backup"
             buttonType={'pill'}
             onPress={async () => {
               haptic('impactLight');
@@ -175,7 +176,7 @@ const BackupScreen = ({route}: BackupScreenProps) => {
   useAndroidBackHandler(() => true);
 
   return (
-    <BackupContainer accessibilityLabel="backup-container">
+    <BackupContainer testID="backup-container">
       <ImageContainer>{BackupImage[themeType]}</ImageContainer>
       <TitleContainer>
         <TextAlign align={'center'}>
@@ -193,7 +194,8 @@ const BackupScreen = ({route}: BackupScreenProps) => {
       </TextContainer>
       <CtaContainer>
         <Button
-          accessibilityLabel="go-to-backup-button"
+          testID="go-to-backup-button"
+          accessibilityLabel="Backup your recovery phrase"
           buttonStyle={'primary'}
           onPress={gotoBackup}>
           {t('Backup your Recovery Phrase')}

@@ -122,7 +122,11 @@ const ExchangeRateItem = ({
   );
 
   return (
-    <RowContainer activeOpacity={ActiveOpacity} onPress={onPress}>
+    <RowContainer
+      activeOpacity={ActiveOpacity}
+      testID={`home-exchange-rate-item-${item.id}`}
+      accessibilityLabel={`${currencyName} exchange rate`}
+      onPress={onPress}>
       <CurrencyImageContainer style={{width: 40, height: 40}}>
         <CurrencyImage img={img} size={40} />
       </CurrencyImageContainer>

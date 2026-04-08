@@ -118,7 +118,7 @@ const OnboardingFinishModal: React.FC = () => {
 
   return (
     <Modal
-      accessibilityLabel="onboarding-finish-view"
+      testID="onboarding-finish-view"
       isVisible={isVisible}
       backdropOpacity={0.4}
       animationIn={'fadeInUp'}

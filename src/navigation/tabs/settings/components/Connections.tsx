@@ -99,7 +99,10 @@ const Connections = () => {
 
   return (
     <SettingsComponent>
-      <Setting onPress={() => goToCoinbase()}>
+      <Setting
+        testID="settings-connections-coinbase-row"
+        accessibilityLabel="Coinbase"
+        onPress={() => goToCoinbase()}>
         <ConnectionItemContainer>
           <ConnectionIconContainer>
             <CoinbaseSvg width={30} height={25} />
@@ -109,7 +112,10 @@ const Connections = () => {
         <AngleRight />
       </Setting>
       <Hr />
-      <Setting onPress={() => goToMethod()}>
+      <Setting
+        testID="settings-connections-method-row"
+        accessibilityLabel="Method bill pay"
+        onPress={() => goToMethod()}>
         <ConnectionItemContainer>
           <ConnectionIconContainer style={{marginLeft: 6, marginRight: 9}}>
             <Image source={MethodIcon} />
@@ -120,6 +126,8 @@ const Connections = () => {
       </Setting>
       <Hr />
       <Setting
+        testID="settings-connections-walletconnect-row"
+        accessibilityLabel="WalletConnect"
         onPress={() => {
           haptic('impactLight');
           goToWalletConnect();
@@ -134,6 +142,8 @@ const Connections = () => {
       </Setting>
       <Hr />
       <Setting
+        testID="settings-connections-zenledger-row"
+        accessibilityLabel="ZenLedger taxes"
         onPress={() => {
           haptic('impactLight');
           dispatch(

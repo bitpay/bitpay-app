@@ -81,6 +81,8 @@ const AssetsSection: React.FC = () => {
           buttonStyle="secondary"
           height={50}
           buttonOutline
+          testID="home-see-all-assets-button"
+          accessibilityLabel="See all assets"
           onPress={() => navigation.navigate('AllAssets')}>
           {t('See All Assets')}
         </Button>
