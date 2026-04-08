@@ -252,6 +252,7 @@ const ExportTSSWallet = () => {
   };
 
   const shareKeyshareFile = async ({password}: {password: string}) => {
+    let filePath: string | undefined;
     try {
       setShareButtonState('loading');
       await sleep(500);
@@ -272,12 +273,9 @@ const ExportTSSWallet = () => {
         : walletName;
       const filename = `${APP_NAME_UPPERCASE}-Keyshare-${displayName}.txt`;
 
-      const rootPath =
-        Platform.OS === 'ios'
-          ? RNFS.LibraryDirectoryPath
-          : RNFS.TemporaryDirectoryPath;
+      const rootPath = RNFS.TemporaryDirectoryPath;
 
-      const filePath = `${rootPath}/${filename}`;
+      filePath = `${rootPath}/${filename}`;
 
       const txt = t(
         'Here is the encrypted keyshare backup for wallet: {{name}}\n\n{{keyshare}}\n\nTo import this backup, copy all text between {...}, including the symbols {}',
@@ -295,6 +293,8 @@ const ExportTSSWallet = () => {
 
       await Share.open(opts);
 
+      RNFS.unlink(filePath).catch(() => {});
+
       setShareButtonState('success');
       await sleep(500);
       setShareButtonState(undefined);
@@ -303,6 +303,9 @@ const ExportTSSWallet = () => {
       dispatch(WalletActions.setBackupComplete(keyId));
     } catch (err: any) {
       logManager.debug(`[shareKeyshareFile]: ${err.message}`);
+      if (filePath) {
+        RNFS.unlink(filePath).catch(() => {});
+      }
       if (err && err.message === 'User did not share') {
         setShareButtonState('success');
         setBackupCompleted(true);
