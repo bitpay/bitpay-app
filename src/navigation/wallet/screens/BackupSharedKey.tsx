@@ -85,7 +85,9 @@ const BackupSharedKeyScreen = ({route}: BackupSharedKeyScreenProps) => {
       },
     };
 
-    const routes = IsVMChain(key.wallets[0].chain)
+    const routes = !key.backupComplete
+      ? [...baseRoutes]
+      : IsVMChain(key.wallets[0].chain)
       ? [...baseRoutes, AccountDetailsRoute]
       : [...baseRoutes, walletDetailsRoute];
 

@@ -48,6 +48,7 @@ import WalletCreatedSvg from '../../../../../assets/img/shared-success.svg';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {checkPrivateKeyEncrypted} from '../../../../store/wallet/utils/wallet';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
+import {WalletActions} from '../../../../store/wallet';
 
 const BWC = BwcProvider.getInstance();
 const TssKey = BWC.getTssKey();
@@ -299,6 +300,7 @@ const ExportTSSWallet = () => {
       setShareButtonState(undefined);
 
       setBackupCompleted(true);
+      dispatch(WalletActions.setBackupComplete(keyId));
     } catch (err: any) {
       logManager.debug(`[shareKeyshareFile]: ${err.message}`);
       if (err && err.message === 'User did not share') {
@@ -343,7 +345,9 @@ const ExportTSSWallet = () => {
       },
     };
 
-    const routes = IsVMChain(key.wallets[0].chain)
+    const routes = !key.backupComplete
+      ? [...baseRoutes]
+      : IsVMChain(key.wallets[0].chain)
       ? [...baseRoutes, AccountDetailsRoute]
       : [...baseRoutes, walletDetailsRoute];
 
