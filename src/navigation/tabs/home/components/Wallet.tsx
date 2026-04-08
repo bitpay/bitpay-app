@@ -43,6 +43,7 @@ interface WalletCardComponentProps {
   layout: HomeCarouselLayoutType;
   hideKeyBalance: boolean;
   context?: 'keySelector';
+  pendingTssSession?: boolean;
 }
 
 export const HeaderImg = styled.View`
@@ -200,6 +201,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
   hideKeyBalance,
   layout,
   context,
+  pendingTssSession,
 }) => {
   const {t} = useTranslation();
   const defaultAltCurrency = useAppSelector(({APP}) => APP.defaultAltCurrency);
@@ -241,7 +243,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         outlineStyle={context === 'keySelector'}>
         <ListRow>
           <ListLeftColumn>
-            {needsBackup ? (
+            {needsBackup && !pendingTssSession ? (
               <NeedBackupRow>
                 <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
               </NeedBackupRow>
@@ -293,6 +295,7 @@ const WalletCardComponent: React.FC<WalletCardComponentProps> = ({
         percentageDifference,
         needsBackup,
         hideKeyBalance,
+        pendingTssSession,
       }}
       footer={CardFooter}
       onCTAPress={onPress}
