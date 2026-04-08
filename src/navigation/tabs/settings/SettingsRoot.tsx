@@ -139,7 +139,9 @@ const SettingsHome: React.FC<SettingsHomeProps> = ({route, navigation}) => {
       <View>
         <Setting
           activeOpacity={ActiveOpacity}
-          testID={`settings-${item.id.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-row`}
+          testID={`settings-${item.id
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')}-row`}
           accessibilityLabel={item.title}
           onPress={() => {
             navigation.navigate('SettingsDetails', {

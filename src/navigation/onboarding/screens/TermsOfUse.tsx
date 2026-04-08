@@ -124,7 +124,10 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
       statement: (
         <StatementText>
           {t('I have read, understood and accepted the')}{' '}
-          <StatementLink testID="terms-of-use-wallet-link" accessibilityLabel="Wallet terms of use" onPress={() => Linking.openURL(URL.TOU_WALLET)}>
+          <StatementLink
+            testID="terms-of-use-wallet-link"
+            accessibilityLabel="Wallet terms of use"
+            onPress={() => Linking.openURL(URL.TOU_WALLET)}>
             {t('Wallet Terms of Use.')}
           </StatementLink>
         </StatementText>
