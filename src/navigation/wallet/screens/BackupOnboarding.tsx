@@ -157,7 +157,7 @@ const BackupOnboarding: React.FC = () => {
   );
 
   return (
-    <BackupOnboardingContainer accessibilityLabel="backup-onbloarding-view">
+    <BackupOnboardingContainer testID="backup-onbloarding-view">
       <ScrollView
         contentContainerStyle={{
           alignItems: 'center',
@@ -190,7 +190,8 @@ const BackupOnboarding: React.FC = () => {
         }}>
         <ActionContainer>
           <Button
-            accessibilityLabel="write-down-backup-button"
+            testID="write-down-backup-button"
+            accessibilityLabel="Write down recovery phrase"
             buttonStyle={'primary'}
             onPress={async () => {
               haptic('impactLight');
@@ -228,7 +229,8 @@ const BackupOnboarding: React.FC = () => {
         </ActionContainer>
         <ActionContainer>
           <Button
-            accessibilityLabel="print-backup-button"
+            testID="print-backup-button"
+            accessibilityLabel="Print recovery template"
             buttonStyle={'secondary'}
             onPress={() => {
               printBackupTemplate();

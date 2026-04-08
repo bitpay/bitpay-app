@@ -124,7 +124,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
       statement: (
         <StatementText>
           {t('I have read, understood and accepted the')}{' '}
-          <StatementLink onPress={() => Linking.openURL(URL.TOU_WALLET)}>
+          <StatementLink testID="terms-of-use-wallet-link" accessibilityLabel="Wallet terms of use" onPress={() => Linking.openURL(URL.TOU_WALLET)}>
             {t('Wallet Terms of Use.')}
           </StatementLink>
         </StatementText>
@@ -163,7 +163,7 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
   };
 
   return (
-    <TermsOfUseContainer accessibilityLabel="terms-of-use-container">
+    <TermsOfUseContainer testID="terms-of-use-container">
       <ScrollView>
         <TermsContainer>
           <StatementText>{t('I understand that:')}</StatementText>
@@ -173,9 +173,10 @@ const TermsOfUse: React.FC<TermsOfUseScreenProps> = ({route, navigation}) => {
         </TermsContainer>
       </ScrollView>
 
-      <CtaContainerAbsolute accessibilityLabel="cta-container">
+      <CtaContainerAbsolute testID="cta-container">
         <Button
-          accessibilityLabel="agree-and-continue-button"
+          testID="agree-and-continue-button"
+          accessibilityLabel="Agree and continue"
           onPress={() => {
             askForTrackingThenNavigate(async () => {
               if (agreed.length >= 2) {

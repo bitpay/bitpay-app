@@ -2856,6 +2856,8 @@ const SwapCryptoRoot: React.FC = () => {
             </SwapCardHeaderContainer>
             <SwapCardAmountAndWalletContainer>
               <WalletSelector
+                testID="swap-crypto-from-wallet-selector"
+                accessibilityLabel="Select wallet to swap from"
                 style={
                   !fromWalletSelected && !loadingWalletFromStatus
                     ? {backgroundColor: Action}
@@ -2940,6 +2942,8 @@ const SwapCryptoRoot: React.FC = () => {
                     <>
                       {!loadingWalletFromStatus ? (
                         <AmountClickableContainer
+                          testID="swap-crypto-enter-amount-button"
+                          accessibilityLabel="Swap crypto enter amount button"
                           onPress={() => {
                             if (!fromWalletSelected || !toWalletSelected) {
                               return;
@@ -3024,6 +3028,8 @@ const SwapCryptoRoot: React.FC = () => {
                             {fromWalletSelected.balance.cryptoSpendable !==
                             fromWalletSelected.balance.crypto ? (
                               <TouchableOpacity
+                                testID="swap-crypto-balance-info-button"
+                                accessibilityLabel="Swap crypto balance info button"
                                 onPress={() => {
                                   logger.debug('Balance info clicked');
                                   openWalletBalanceModal();
@@ -3077,6 +3083,8 @@ const SwapCryptoRoot: React.FC = () => {
                     !loadingWalletFromStatus &&
                     toWalletSelected ? (
                       <SwapCurrenciesButton
+                        testID="swap-crypto-toggle-fiat-display-button"
+                        accessibilityLabel="Swap crypto toggle fiat display button"
                         onPress={() => {
                           setDisplayAmount(undefined);
                           setDisplayInFiat(!displayInFiat);
@@ -3132,6 +3140,8 @@ const SwapCryptoRoot: React.FC = () => {
             </SwapCardHeaderContainer>
             <SwapCardAmountAndWalletContainer>
               <WalletSelector
+                testID="swap-crypto-to-wallet-selector"
+                accessibilityLabel="Select wallet to swap to"
                 style={
                   !toWalletSelected
                     ? {
@@ -3485,6 +3495,8 @@ const SwapCryptoRoot: React.FC = () => {
               ) : null}
               <SwapCheckBoxContainer>
                 <Checkbox
+                  testID="swap-crypto-changelly-terms-checkbox"
+                  accessibilityLabel="Accept Changelly terms"
                   radio={false}
                   onPress={() => {
                     setTermsAccepted(prevTermsAccepted => {
@@ -3501,6 +3513,8 @@ const SwapCryptoRoot: React.FC = () => {
                       'I acknowledge completion of my transaction may be subject to AML/KYC verification by Changelly. Review Changelly policies ',
                     )}
                     <PoliciesText
+                      testID="swap-crypto-changelly-policies-link"
+                      accessibilityLabel="View Changelly policies"
                       onPress={() => setChangellyPoliciesModalVisible(true)}>
                       {t('here')}
                     </PoliciesText>
@@ -3533,6 +3547,8 @@ const SwapCryptoRoot: React.FC = () => {
           <>
             {!canContinue ? (
               <TouchableOpacity
+                testID="swap-crypto-slide-to-swap-button"
+                accessibilityLabel="Swap crypto slide to swap button"
                 onPress={() => {
                   scrollViewRef?.current?.scrollToEnd({animated: true});
                   setShowCheckTermsMsg(true);

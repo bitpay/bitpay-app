@@ -127,7 +127,8 @@ const DecryptEnterPasswordModal = React.memo(() => {
 
   return (
     <BaseModal
-      accessibilityLabel="enter-encryption-password"
+      testID="enter-encryption-password"
+      accessibilityLabel="Enter encryption password"
       id={'enterEncryptionPassword'}
       isVisible={isVisible}
       backdropOpacity={0.4}

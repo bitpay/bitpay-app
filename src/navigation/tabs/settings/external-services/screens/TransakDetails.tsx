@@ -465,6 +465,8 @@ const TransakDetails: React.FC = () => {
                     {t('Having problems with Transak?')}
                   </LabelTipText>
                   <TouchableOpacity
+                    testID="transak-support-link"
+                    accessibilityLabel="Contact support"
                     onPress={() => {
                       haptic('impactLight');
                       dispatch(
@@ -484,6 +486,8 @@ const TransakDetails: React.FC = () => {
 
           <ColumnDataContainer>
             <TouchableOpacity
+              testID="transak-copy-deposit-address-button"
+              accessibilityLabel="Transak copy deposit address button"
               onPress={() => {
                 copyText(paymentRequest.address);
                 setCopiedDepositAddress(true);
@@ -503,6 +507,8 @@ const TransakDetails: React.FC = () => {
           {!!paymentRequest.order_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="transak-copy-order-id-button"
+                accessibilityLabel="Transak copy order id button"
                 onPress={() => {
                   copyText(paymentRequest.order_id!);
                   setCopiedOrderId(true);
@@ -523,6 +529,8 @@ const TransakDetails: React.FC = () => {
           {!!paymentRequest.external_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="transak-copy-reference-id-button"
+                accessibilityLabel="Transak copy reference id button"
                 onPress={() => {
                   copyText(paymentRequest.external_id!);
                   setCopiedReferenceId(true);
@@ -543,6 +551,8 @@ const TransakDetails: React.FC = () => {
           {!!paymentRequest.transaction_id && (
             <ColumnDataContainer>
               <TouchableOpacity
+                testID="transak-copy-transaction-id-button"
+                accessibilityLabel="Transak copy transaction id button"
                 onPress={() => {
                   copyText(paymentRequest.transaction_id!);
                   setCopiedTransactionId(true);
@@ -561,6 +571,8 @@ const TransakDetails: React.FC = () => {
           )}
 
           <RemoveCta
+            testID="transak-remove-payment-request-button"
+            accessibilityLabel="Transak remove payment request button"
             onPress={async () => {
               haptic('impactLight');
               dispatch(

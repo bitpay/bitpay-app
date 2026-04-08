@@ -299,7 +299,10 @@ const ContactsAdd = ({
                         <SuccessIcon />
                       </AddressBadge>
                     ) : (
-                      <ScanButtonContainer onPress={goToScan}>
+                      <ScanButtonContainer
+                        testID="contacts-add-scan-address-button"
+                        accessibilityLabel="Scan address QR code"
+                        onPress={goToScan}>
                         <ScanSvg />
                       </ScanButtonContainer>
                     )
@@ -344,7 +347,10 @@ const ContactsAdd = ({
         </InputContainer>
 
         <ActionContainer>
-          <Button onPress={onSubmit}>
+          <Button
+            testID="contacts-add-submit-button"
+            accessibilityLabel={contact ? 'Save contact' : 'Add contact'}
+            onPress={onSubmit}>
             {contact ? t('Save Contact') : t('Add Contact')}
           </Button>
         </ActionContainer>
