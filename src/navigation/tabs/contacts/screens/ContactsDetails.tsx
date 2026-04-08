@@ -404,7 +404,9 @@ const ContactsDetails = ({
           {contactOptions.map(({img, title: optionTitle, onPress}, index) => (
             <OptionContainer
               key={index}
-              testID={`contacts-details-option-${optionTitle.toLowerCase().replace(/\s+/g, '-')}-button`}
+              testID={`contacts-details-option-${optionTitle
+                .toLowerCase()
+                .replace(/\s+/g, '-')}-button`}
               accessibilityLabel={optionTitle}
               onPress={onPress}>
               <OptionIconContainer>{img}</OptionIconContainer>

@@ -161,7 +161,9 @@ export const SelectWalletsToImport: React.FC<Props> = props => {
         <RowContainerWithoutBorders
           key={index}
           testID={`ledger-wallet-select-row-${index}`}
-          accessibilityLabel={`${uiFormattedWallet.walletName || uiFormattedWallet.currencyName} wallet`}
+          accessibilityLabel={`${
+            uiFormattedWallet.walletName || uiFormattedWallet.currencyName
+          } wallet`}
           onPress={() => onPress(uiFormattedWallet)}>
           <Column style={{maxWidth: '90%'}}>
             <WalletRow
