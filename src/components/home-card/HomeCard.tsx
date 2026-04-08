@@ -32,6 +32,7 @@ interface BodyProps {
   needsBackup?: boolean;
   percentageDifference?: number | null;
   hideKeyBalance: boolean;
+  pendingTssSession?: boolean;
 }
 
 interface HomeCardProps {
@@ -108,12 +109,13 @@ const HomeCard: React.FC<HomeCardProps> = ({body, footer, onCTAPress}) => {
     description,
     needsBackup,
     hideKeyBalance,
+    pendingTssSession,
   } = body;
 
   const BodyComp = (
     <View>
       {title && <CardBodyHeader>{title}</CardBodyHeader>}
-      {needsBackup ? (
+      {needsBackup && !pendingTssSession ? (
         <Row>
           <NeedBackupText>{t('Needs Backup')}</NeedBackupText>
         </Row>
