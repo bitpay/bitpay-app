@@ -12909,10 +12909,13 @@ mixin-deep@^1.2.0:
     for-in "^1.0.2"
     is-extendable "^1.0.1"
 
-mixpanel-react-native@2.3.1:
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/mixpanel-react-native/-/mixpanel-react-native-2.3.1.tgz#43cd7565dfbc1cafde71de6cca008fd56d06f7eb"
-  integrity sha512-BfkZNkokPIttPW0uTEivm6B8iPUO+pwASFz1IEzyVDSNqaUYOXi66RL0K/ouHPqXJc80rnIuNnDjZ3FtFV9CVQ==
+mixpanel-react-native@3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/mixpanel-react-native/-/mixpanel-react-native-3.3.0.tgz#b2d948145245405220778f0e81bcb3caed71f10d"
+  integrity sha512-V6egF5dAAjJImRtO2utHcYav3knqY/WaVOwxwZe65QBYSZt738OswST6fdzlon1B1KEqU03kYiTCp3uUqRZ5UQ==
+  dependencies:
+    react-native-get-random-values "^1.9.0"
+    uuid "^9.0.1"
 
 mkdirp-classic@^0.5.2, mkdirp-classic@^0.5.3:
   version "0.5.3"
@@ -14386,7 +14389,7 @@ react-native-gesture-handler@2.28.0:
     hoist-non-react-statics "^3.3.0"
     invariant "^2.2.4"
 
-react-native-get-random-values@1.11.0:
+react-native-get-random-values@1.11.0, react-native-get-random-values@^1.9.0:
   version "1.11.0"
   resolved "https://registry.yarnpkg.com/react-native-get-random-values/-/react-native-get-random-values-1.11.0.tgz#1ca70d1271f4b08af92958803b89dccbda78728d"
   integrity sha512-4BTbDbRmS7iPdhYLRcz3PGFIpFJBwNZg9g42iwa2P6FOv9vZj/xJc678RZXnLNZzd0qd7Q3CCF6Yd+CU2eoXKQ==
@@ -17201,6 +17204,11 @@ uuid@^8.3.2:
   version "8.3.2"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
+
+uuid@^9.0.1:
+  version "9.0.1"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.1.tgz#e188d4c8853cc722220392c424cd637f32293f30"
+  integrity sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==
 
 v8-to-istanbul@^9.0.1:
   version "9.3.0"
