@@ -405,8 +405,8 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-segwit-toggle"
-                onPress={() => toggleUseNativeSegwit()}>
                 accessibilityLabel="Use native SegWit"
+                onPress={() => toggleUseNativeSegwit()}>
                 <Column>
                   <OptionTitle>Segwit</OptionTitle>
                 </Column>
@@ -424,8 +424,8 @@ const AddWallet = ({
             <AdvancedOptions>
               <RowContainer
                 testID="add-wallet-taproot-toggle"
-                onPress={() => toggleUseTaproot()}>
                 accessibilityLabel="Use Taproot"
+                onPress={() => toggleUseTaproot()}>
                 <Column>
                   <OptionTitle>Taproot</OptionTitle>
                 </Column>
