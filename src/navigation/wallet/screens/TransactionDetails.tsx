@@ -690,8 +690,8 @@ const TransactionDetails = () => {
 
               <CopyTransactionId
                 testID="transaction-details-copy-txid-button"
-                onPress={() => copyText(txs.txid!)}>
                 accessibilityLabel="Transaction details copy txid button"
+                onPress={() => copyText(txs.txid!)}>
                 <CopyImgContainer>
                   {copied ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainer>
@@ -728,9 +728,9 @@ const TransactionDetails = () => {
           <VerticalSpace>
             <Button
               testID="transaction-details-view-on-blockchain-button"
+              accessibilityLabel="Transaction details view on blockchain button"
               buttonStyle={'secondary'}
               onPress={goToBlockchain}>
-              accessibilityLabel="Transaction details view on blockchain button"
               {t('View On Blockchain')}
             </Button>
           </VerticalSpace>
