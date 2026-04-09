@@ -243,7 +243,7 @@ export const getBanxaSelectedPaymentMethodData = (
       );
       break;
     case 'other':
-      selectedBanxaPMData = banxaPaymentMethods[0];
+      selectedBanxaPMData = undefined;
       break;
     default:
       selectedBanxaPMData = undefined;

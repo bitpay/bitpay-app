@@ -189,6 +189,8 @@ export interface BanxaCreateOrderRequestData {
   email?: string;
   // Customer's mobile number. This will pre-populate the customers' mobile number field when they are redirected to Banxa checkout
   mobile?: string;
+  // Bitpay's side selected paymentMethodKey
+  payment_method?: PaymentMethodKey;
 }
 
 export interface BanxaOrderData {

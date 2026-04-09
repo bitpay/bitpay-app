@@ -83,6 +83,8 @@ export const getErrorMessage = (err: any): string => {
         } else if (err.error.message) {
           msg = err.error.message;
         }
+      } else if (err?.response?.data?.message) {
+        msg = err.response.data.message;
       } else if (err.message) {
         msg = err.message;
       }
