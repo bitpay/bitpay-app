@@ -682,8 +682,9 @@ const RecoveryPhrase = () => {
           {t('This process may take a few minutes to complete.')}
         </CuationText>
         <CtaContainer>
-          <AdvancedOptionsContainer testID="advanced-options-container">
-            accessibilityLabel="Advanced options container"
+          <AdvancedOptionsContainer
+            testID="advanced-options-container"
+            accessibilityLabel="Advanced options container">
             <AdvancedOptionsButton
               testID="show-advanced-options"
               accessibilityLabel="Show advanced options"
@@ -717,8 +718,9 @@ const RecoveryPhrase = () => {
                   <Column>
                     <OptionTitle>{t('Include Testnet Wallets')}</OptionTitle>
                   </Column>
-                  <CheckBoxContainer testID="include-testnet-wallet-checkbox">
-                    accessibilityLabel="Include testnet wallets"
+                  <CheckBoxContainer
+                    testID="include-testnet-wallet-checkbox"
+                    accessibilityLabel="Include testnet wallets">
                     <Checkbox
                       checked={includeTestnetWallets}
                       onPress={() => {
@@ -739,8 +741,9 @@ const RecoveryPhrase = () => {
                   <Column>
                     <OptionTitle>{t('Include Legacy Wallets')}</OptionTitle>
                   </Column>
-                  <CheckBoxContainer testID="include-legacy-wallet-checkbox">
-                    accessibilityLabel="Include legacy wallets"
+                  <CheckBoxContainer
+                    testID="include-legacy-wallet-checkbox"
+                    accessibilityLabel="Include legacy wallets">
                     <Checkbox
                       checked={includeLegacyWallets}
                       onPress={() => {
@@ -761,8 +764,9 @@ const RecoveryPhrase = () => {
                   <Column>
                     <OptionTitle>{t('Specify Derivation Path')}</OptionTitle>
                   </Column>
-                  <CheckBoxContainer testID="specify-derivation-path-checkbox">
-                    accessibilityLabel="Specify derivation path"
+                  <CheckBoxContainer
+                    testID="specify-derivation-path-checkbox"
+                    accessibilityLabel="Specify derivation path">
                     <Checkbox
                       checked={derivationPathEnabled}
                       onPress={() => {
@@ -860,8 +864,9 @@ const RecoveryPhrase = () => {
                     <Column>
                       <OptionTitle>{t('Shared Wallet')}</OptionTitle>
                     </Column>
-                    <CheckBoxContainer testID="shared-wallet-checkbox">
-                      accessibilityLabel="Shared wallet"
+                    <CheckBoxContainer
+                      testID="shared-wallet-checkbox"
+                      accessibilityLabel="Shared wallet">
                       <Checkbox
                         checked={advancedOptions.isMultisig}
                         onPress={() => {
