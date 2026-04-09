@@ -23,6 +23,7 @@ import {
   IsShared,
   TxForPaymentFeeEVM,
   TxActions,
+  IsTSSShared,
 } from '../../../store/wallet/effects/transactions/transactions';
 import styled from 'styled-components/native';
 import {
@@ -597,7 +598,7 @@ const TransactionDetails = () => {
             <MultipleOutputsTx tx={txs} tokenAddress={wallet.tokenAddress} />
           ) : null}
 
-          {txs.creatorName && IsShared(wallet) ? (
+          {txs.creatorName && (IsShared(wallet) || IsTSSShared(wallet)) ? (
             <>
               <DetailContainer>
                 <DetailRow>
@@ -687,8 +688,10 @@ const TransactionDetails = () => {
             <DetailRow>
               <H7>{t('Transaction ID')}</H7>
 
-              <CopyTransactionId testID="transaction-details-copy-txid-button" onPress={() => copyText(txs.txid!)}>
-              accessibilityLabel="Transaction details copy txid button"
+              <CopyTransactionId
+                testID="transaction-details-copy-txid-button"
+                onPress={() => copyText(txs.txid!)}>
+                accessibilityLabel="Transaction details copy txid button"
                 <CopyImgContainer>
                   {copied ? <CopiedSvg width={17} /> : null}
                 </CopyImgContainer>
@@ -723,8 +726,11 @@ const TransactionDetails = () => {
           </VerticalSpace>
 
           <VerticalSpace>
-            <Button testID="transaction-details-view-on-blockchain-button" buttonStyle={'secondary'} onPress={goToBlockchain}>
-            accessibilityLabel="Transaction details view on blockchain button"
+            <Button
+              testID="transaction-details-view-on-blockchain-button"
+              buttonStyle={'secondary'}
+              onPress={goToBlockchain}>
+              accessibilityLabel="Transaction details view on blockchain button"
               {t('View On Blockchain')}
             </Button>
           </VerticalSpace>

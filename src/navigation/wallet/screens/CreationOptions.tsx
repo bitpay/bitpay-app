@@ -112,7 +112,7 @@ const CreationOptions: React.FC<CreationOptionsScreenProps> = ({
     },
     {
       id: 'addMultisig',
-      title: t('Add Multisig Wallet'),
+      title: t('Add Shared Wallet'),
       description: t(
         'Create a new wallet that requires multiple signatures for transactions',
       ),

@@ -242,11 +242,11 @@ export const buildTssKeyObj = ({
     totalBalance: 0,
     totalBalanceLastDay: 0,
     isPrivKeyEncrypted: tssKey.isPrivKeyEncrypted(),
-    backupComplete: true,
+    backupComplete: false,
     keyName:
       keyName || `TSS Key (${tssKey.metadata.m}-of-${tssKey.metadata.n})`,
     hideKeyBalance: false,
-    isReadOnly: false,
+    isReadOnly: !tssKey,
   };
 };
 

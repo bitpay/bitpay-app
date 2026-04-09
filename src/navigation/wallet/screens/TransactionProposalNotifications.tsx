@@ -66,7 +66,7 @@ import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import haptic from '../../../components/haptic-feedback/haptic';
 import {usePaymentSent} from '../../../contexts';
 import {
-  isTSSKey,
+  isTSSWallet,
   joinTSSSigningSession,
 } from '../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../components/TSSProgressTracker';
@@ -182,17 +182,6 @@ const TransactionProposalNotifications = () => {
     }
     return null;
   }, [selectingProposalsWalletId, wallets]);
-
-  const currentKey = useMemo(() => {
-    if (currentWallet) {
-      return keys[currentWallet.keyId];
-    }
-    return null;
-  }, [currentWallet, keys]);
-
-  const isTSSWallet = useMemo(() => {
-    return currentKey ? isTSSKey(currentKey) : false;
-  }, [currentKey]);
 
   const tssCallbacks = useTSSCallbacks({
     setTssStatus,
@@ -408,8 +397,7 @@ const TransactionProposalNotifications = () => {
       }
 
       const wallet = findWalletById(wallets, walletId) as Wallet;
-      const key = keys[wallet.keyId];
-      const isTSS = isTSSKey(key);
+      const isTSS = isTSSWallet(wallet);
 
       if (_.indexOf(txpsToSign, txp) >= 0) {
         _.remove(txpsToSign, txpToSign => {
@@ -459,8 +447,7 @@ const TransactionProposalNotifications = () => {
         tssMetadata,
       } = fullWalletObj;
 
-      const key = keys[fullWalletObj.keyId];
-      const isTSS = isTSSKey(key);
+      const isTSS = isTSSWallet(fullWalletObj);
 
       return (
         <>
@@ -639,7 +626,7 @@ const TransactionProposalNotifications = () => {
 
   return (
     <NotificationsContainer>
-      {isTSSWallet && currentWallet ? (
+      {currentWallet && isTSSWallet(currentWallet) ? (
         <TSSProgressTracker
           status={tssStatus}
           progress={tssProgress}
@@ -701,7 +688,7 @@ const TransactionProposalNotifications = () => {
               ) as Wallet;
               const key = keys[wallet.keyId];
 
-              if (isTSSKey(key)) {
+              if (isTSSWallet(wallet)) {
                 const txp = txpsToSign[0];
                 await dispatch(
                   joinTSSSigningSession({

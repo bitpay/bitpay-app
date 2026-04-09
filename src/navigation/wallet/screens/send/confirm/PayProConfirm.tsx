@@ -101,7 +101,7 @@ import {RootStacks} from '../../../../../Root';
 import {TabsScreens} from '../../../../tabs/TabsStack';
 import {CommonActions} from '@react-navigation/native';
 import {useOngoingProcess, usePaymentSent} from '../../../../../contexts';
-import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import {isTSSWallet} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 
@@ -155,7 +155,6 @@ const PayProConfirm = () => {
     useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
-  const isTSSWallet = key ? isTSSKey(key) : false;
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
@@ -402,8 +401,8 @@ const PayProConfirm = () => {
                 key,
                 wallet,
                 recipient,
-                ...(isTSSWallet && {tssCallbacks}),
-                ...(isTSSWallet && {setShowTSSProgressModal}),
+                ...(isTSSWallet(wallet) && {tssCallbacks}),
+                ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
               }),
             )
           : await dispatch(
@@ -433,7 +432,9 @@ const PayProConfirm = () => {
       showPaymentSent({
         onCloseModal,
         title:
-          wallet?.credentials.n > 1 ? t('Proposal created') : t('Payment Sent'),
+          wallet && wallet?.credentials.n > 1
+            ? t('Proposal created')
+            : t('Payment Sent'),
       });
 
       await sleep(1000);
@@ -656,7 +657,7 @@ const PayProConfirm = () => {
         keyboardShouldPersistTaps={'handled'}>
         <DetailsList keyboardShouldPersistTaps={'handled'}>
           <Header hr>Summary</Header>
-          {isTSSWallet && wallet && (
+          {wallet && isTSSWallet(wallet) && (
             <TSSProgressTracker
               status={tssStatus}
               progress={tssProgress}

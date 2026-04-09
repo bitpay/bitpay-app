@@ -1439,6 +1439,7 @@ const createKeyAndCredentials = async (
   const network = opts.networkName || 'livenet';
   const account = opts.account || 0;
   const n = opts.n || 1;
+  const m = opts.m || 1;
 
   const bwcClient = BWC.getClient(undefined);
 
@@ -1461,6 +1462,7 @@ const createKeyAndCredentials = async (
           network,
           account,
           n,
+          m,
         }),
       );
     } catch (e) {
@@ -1482,6 +1484,7 @@ const createKeyAndCredentials = async (
           network,
           account,
           n,
+          m,
         }),
       );
     } catch (e) {
@@ -1656,7 +1659,7 @@ const linkTokenToWallet = (tokens: Wallet[], wallets: Wallet[]) => {
 };
 
 export const startImportTSSFile =
-  (decryptedBackupText: string): Effect =>
+  (decryptedBackupText: string, opts: Partial<KeyOptions> = {}): Effect =>
   async (dispatch, getState): Promise<Key> => {
     return new Promise(async (resolve, reject) => {
       try {
@@ -1683,53 +1686,58 @@ export const startImportTSSFile =
           throw new Error(t('Invalid TSS backup file format.'));
         }
 
-        if (!data.key) {
-          throw new Error(t('Missing key in TSS backup.'));
-        }
-
         if (!data.credentials || !Array.isArray(data.credentials)) {
           throw new Error(t('Missing credentials in TSS backup.'));
         }
 
         logManager.info('[ImportTSS] Starting direct TSS wallet import...');
 
-        const arrayToBuffer = (arr: any): Buffer | null => {
-          if (!arr) return null;
-          if (Buffer.isBuffer(arr)) return arr;
-          if (Array.isArray(arr)) return Buffer.from(arr);
-          if (
-            arr &&
-            typeof arr === 'object' &&
-            'data' in arr &&
-            Array.isArray(arr.data)
-          ) {
-            return Buffer.from(arr.data);
-          }
-          return null;
-        };
-
-        if (data.key.keychain) {
-          const privateKeyShare = arrayToBuffer(
-            data.key.keychain.privateKeyShare,
-          );
-          const reducedPrivateKeyShare = arrayToBuffer(
-            data.key.keychain.reducedPrivateKeyShare,
-          );
-
-          if (privateKeyShare) {
-            data.key.keychain.privateKeyShare = privateKeyShare;
-          }
-          if (reducedPrivateKeyShare) {
-            data.key.keychain.reducedPrivateKeyShare = reducedPrivateKeyShare;
-          }
-        }
-
         const BWCProvider = BwcProvider.getInstance();
 
-        const tssKey = BWCProvider.createTssKey(data.key);
-        const tssMetadata = tssKey.metadata;
+        let tssKey: any;
+        let tssMetadata: any;
 
-        logManager.info('[ImportTSS] TssKey recreated successfully');
+        if (data.key) {
+          const arrayToBuffer = (arr: any): Buffer | null => {
+            if (!arr) return null;
+            if (Buffer.isBuffer(arr)) return arr;
+            if (Array.isArray(arr)) return Buffer.from(arr);
+            if (
+              arr &&
+              typeof arr === 'object' &&
+              'data' in arr &&
+              Array.isArray(arr.data)
+            ) {
+              return Buffer.from(arr.data);
+            }
+            return null;
+          };
+
+          if (data.key.keychain) {
+            const privateKeyShare = arrayToBuffer(
+              data.key.keychain.privateKeyShare,
+            );
+            const reducedPrivateKeyShare = arrayToBuffer(
+              data.key.keychain.reducedPrivateKeyShare,
+            );
+
+            if (privateKeyShare) {
+              data.key.keychain.privateKeyShare = privateKeyShare;
+            }
+            if (reducedPrivateKeyShare) {
+              data.key.keychain.reducedPrivateKeyShare = reducedPrivateKeyShare;
+            }
+          }
+
+          tssKey = BWCProvider.createTssKey(data.key);
+          tssMetadata = tssKey.metadata;
+
+          logManager.info('[ImportTSS] TssKey recreated successfully');
+        } else {
+          logManager.info(
+            '[ImportTSS] Read-only TSS backup — skipping key reconstruction',
+          );
+        }
 
         const wallets = await Promise.all(
           data.credentials.map(async (credObj: any) => {
@@ -1813,16 +1821,48 @@ export const startImportTSSFile =
           throw new Error(t('Failed to recreate any wallets from backup'));
         }
 
-        const {
-          key: _key,
-          wallets: processedWallets,
-          keyName,
-        } = findMatchedKeyAndUpdate(
-          validWallets,
-          tssKey,
-          Object.values(WALLET.keys).filter(k => !k.id.includes('readonly')),
-          {},
-        );
+        const matchedKey = tssKey
+          ? getMatchedKey(
+              tssKey,
+              (Object.values(WALLET.keys) as Key[]).filter(
+                k => !k.id.includes('readonly'),
+              ),
+            )
+          : getReadOnlyKey(Object.values(WALLET.keys) as Key[]);
+
+        let _key: any = tssKey;
+        let processedWallets = validWallets;
+        let keyName: string | undefined;
+
+        if (matchedKey && !opts?.keyId) {
+          _key = matchedKey.methods;
+          const alreadyImported = validWallets.every(w =>
+            isMatchedWallet(w, matchedKey.wallets),
+          );
+          if (alreadyImported) {
+            throw new Error(t('The wallet is already in the app.'));
+          }
+          processedWallets = [
+            ...validWallets.filter(
+              w => !isMatchedWallet(w, matchedKey.wallets),
+            ),
+            ...matchedKey.wallets,
+          ];
+          keyName = matchedKey.keyName;
+        }
+
+        // To clear encrypt password
+        if (opts.keyId && matchedKey) {
+          const newWalletIds = new Set(
+            validWallets.map(w => w.credentials.walletId),
+          );
+          const filteredKeys = matchedKey.wallets.filter(
+            w => !newWalletIds.has(w.credentials.walletId),
+          );
+          filteredKeys.forEach(w => (w.credentials.keyId = w.keyId = _key.id));
+          processedWallets = [...processedWallets, ...filteredKeys];
+          dispatch(deleteKey({keyId: opts.keyId}));
+        }
 
         const key = buildKeyObj({
           key: _key,

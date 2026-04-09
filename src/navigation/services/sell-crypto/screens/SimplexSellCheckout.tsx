@@ -120,7 +120,7 @@ import {SellBalanceContainer} from '../styled/SellCryptoCard';
 import {useOngoingProcess, usePaymentSent} from '../../../../contexts';
 import {SellCryptoOffer} from '../../components/externalServicesOfferSelector';
 import TSSProgressTracker from '../../../wallet/components/TSSProgressTracker';
-import {isTSSKey} from '../../../../store/wallet/effects/tss-send/tss-send';
+import {isTSSWallet} from '../../../../store/wallet/effects/tss-send/tss-send';
 import {useTSSCallbacks} from '../../../../utils/hooks/useTSSCalbacks';
 import {Network} from '../../../../constants';
 import {BottomNotificationConfig} from '../../../../components/modal/bottom-notification/BottomNotification';
@@ -223,7 +223,6 @@ const SimplexSellCheckout: React.FC = () => {
     useState<SimpleConfirmPaymentState | null>(null);
 
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
-  const isTSSWallet = isTSSKey(key);
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
@@ -595,8 +594,8 @@ const SimplexSellCheckout: React.FC = () => {
             key,
             wallet,
             ataOwnerAddress,
-            ...(isTSSWallet && {tssCallbacks}),
-            ...(isTSSWallet && {setShowTSSProgressModal}),
+            ...(isTSSWallet(wallet) && {tssCallbacks}),
+            ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
           }),
         );
       }
@@ -620,7 +619,7 @@ const SimplexSellCheckout: React.FC = () => {
         tx_sent_id: broadcastedTx?.txid,
         quote_id: simplexQuoteOffer.quoteData.quote_id ?? '',
         send_max: useSendMax,
-        isTSSWallet: isTSSWallet,
+        isTSSWallet: isTSSWallet(wallet),
       };
 
       dispatch(
@@ -993,7 +992,7 @@ const SimplexSellCheckout: React.FC = () => {
         <RowDataContainer>
           <H5>{t('SUMMARY')}</H5>
         </RowDataContainer>
-        {isTSSWallet && (
+        {wallet && isTSSWallet(wallet) && (
           <TSSProgressTracker
             status={tssStatus}
             progress={tssProgress}

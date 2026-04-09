@@ -276,7 +276,7 @@ export const startCreateTSSKey =
         key: partyKey,
         wallets: [placeholderWallet],
         keyName: 'My TSSKey',
-        backupComplete: true,
+        backupComplete: false,
       });
 
       placeholderWallet.id = `pending-tss-${key.id}-${chain}`;
@@ -945,7 +945,7 @@ export const joinTSSWithCode =
             key: partyKey,
             wallets: [placeholderWallet],
             keyName: 'My TSSKey',
-            backupComplete: true,
+            backupComplete: false,
           });
 
           placeholderWallet.id = `pending-tss-${key.id}-${chain}`;

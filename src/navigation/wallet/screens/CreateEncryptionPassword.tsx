@@ -38,6 +38,7 @@ const Paragraph = styled(BaseText)`
   font-weight: normal;
   font-size: 16px;
   color: ${({theme: {dark}}) => (dark ? White : SlateDark)};
+  line-height: 22px;
 `;
 
 const PasswordFormContainer = styled.View`

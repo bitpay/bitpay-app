@@ -18,6 +18,7 @@ import {
 } from '../../../styles/colors';
 import {sleep} from '../../../utils/helper-methods';
 import {TouchableOpacity} from '@components/base/TouchableOpacity';
+import AngleRight from '../../../../assets/img/angle-right.svg';
 
 const OptionsTitleContainer = styled.View`
   margin-bottom: 25px;
@@ -88,6 +89,7 @@ export interface Option {
   description?: string;
   onPress: () => void;
   optionElement?: any;
+  showChevron?: boolean;
 }
 
 type SheetPlacement = 'top' | 'bottom';
@@ -149,6 +151,7 @@ const OptionsSheet = ({
               subDescription,
               onPress,
               optionElement,
+              showChevron,
             },
             index,
           ) => {
@@ -188,6 +191,12 @@ const OptionsSheet = ({
                         </SubDescriptionContainer>
                       )}
                     </OptionTextContainer>
+                    {showChevron && (
+                      <OptionIconContainer
+                        style={{justifyContent: 'flex-start', paddingTop: 4}}>
+                        <AngleRight />
+                      </OptionIconContainer>
+                    )}
                   </>
                 )}
               </OptionContainer>

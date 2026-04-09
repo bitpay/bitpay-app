@@ -98,7 +98,7 @@ import {
 import GiftCardDiscountText from '../../../../../navigation/tabs/shop/components/GiftCardDiscountText';
 import {BottomNotificationConfig} from '../../../../../components/modal/bottom-notification/BottomNotification';
 import {useOngoingProcess} from '../../../../../contexts';
-import {isTSSKey} from '../../../../../store/wallet/effects/tss-send/tss-send';
+import {isTSSWallet} from '../../../../../store/wallet/effects/tss-send/tss-send';
 import TSSProgressTracker from '../../../components/TSSProgressTracker';
 import {useTSSCallbacks} from '../../../../../utils/hooks/useTSSCalbacks';
 import {showBottomNotificationModal} from '../../../../../store/app/app.actions';
@@ -212,7 +212,6 @@ const Confirm = () => {
     useState<SimpleConfirmPaymentState | null>(null);
   const [showTSSProgressModal, setShowTSSProgressModal] = useState(false);
 
-  const isTSSWallet = key ? isTSSKey(key) : false;
   const [tssStatus, setTssStatus] = useState<TSSSigningStatus>('initializing');
   const [tssProgress, setTssProgress] = useState<TSSSigningProgress>({
     currentRound: 0,
@@ -541,8 +540,8 @@ const Confirm = () => {
                 key,
                 wallet,
                 recipient,
-                ...(isTSSWallet && {tssCallbacks}),
-                ...(isTSSWallet && {setShowTSSProgressModal}),
+                ...(isTSSWallet(wallet) && {tssCallbacks}),
+                ...(isTSSWallet(wallet) && {setShowTSSProgressModal}),
               }),
             )
           : await dispatch(
@@ -742,7 +741,7 @@ const Confirm = () => {
         {wallet || coinbaseAccount ? (
           <>
             <Header hr>Summary</Header>
-            {isTSSWallet && wallet && (
+            {wallet && isTSSWallet(wallet) && (
               <TSSProgressTracker
                 status={tssStatus}
                 progress={tssProgress}

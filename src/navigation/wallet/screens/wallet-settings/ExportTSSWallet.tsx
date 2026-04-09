@@ -7,7 +7,15 @@ import {
 } from '../../../../components/styled/Text';
 import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import styled from 'styled-components/native';
-import {ScreenGutter} from '../../../../components/styled/Containers';
+import {
+  ActiveOpacity,
+  AdvancedOptions,
+  AdvancedOptionsButton,
+  AdvancedOptionsContainer,
+  Column,
+  AdvancedOptionsButtonText,
+  ScreenGutter,
+} from '../../../../components/styled/Containers';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {SlateDark, White, Black, Slate30} from '../../../../styles/colors';
 import yup from '../../../../lib/yup';
@@ -25,6 +33,11 @@ import {
 } from '../../../../utils/helper-methods';
 import {useTranslation} from 'react-i18next';
 import {Platform, Modal} from 'react-native';
+import Haptic from '../../../../components/haptic-feedback/haptic';
+import ChevronUpSvg from '../../../../../assets/img/chevron-up.svg';
+import ChevronDownSvg from '../../../../../assets/img/chevron-down.svg';
+import Checkbox from '../../../../components/checkbox/Checkbox';
+import {TouchableOpacity} from '@components/base/TouchableOpacity';
 import Share, {ShareOptions} from 'react-native-share';
 import RNFS from 'react-native-fs';
 import {APP_NAME_UPPERCASE} from '../../../../constants/config';
@@ -35,6 +48,7 @@ import WalletCreatedSvg from '../../../../../assets/img/shared-success.svg';
 import {Wallet} from '../../../../store/wallet/wallet.models';
 import {checkPrivateKeyEncrypted} from '../../../../store/wallet/utils/wallet';
 import {IsVMChain} from '../../../../store/wallet/utils/currency';
+import {WalletActions} from '../../../../store/wallet';
 
 const BWC = BwcProvider.getInstance();
 const TssKey = BWC.getTssKey();
@@ -59,6 +73,27 @@ const ExportParagraph = styled(Paragraph)`
 
 const PasswordActionContainer = styled.View`
   margin-top: 20px;
+`;
+
+const AdvancedOptionsText = styled(Paragraph)`
+  color: ${({theme}) => theme.colors.text};
+`;
+
+const RowContainer = styled(TouchableOpacity)`
+  flex-direction: row;
+  align-items: center;
+  padding: 18px;
+`;
+
+const CtaContainer = styled.View`
+  align-self: stretch;
+  flex-direction: column;
+  margin-top: 20px;
+`;
+
+const CheckBoxContainer = styled.View`
+  flex-direction: column;
+  justify-content: center;
 `;
 
 const PasswordInputContainer = styled.View`
@@ -144,6 +179,8 @@ const ExportTSSWallet = () => {
   const [shareButtonState, setShareButtonState] = useState<ButtonState>();
   const [backupCompleted, setBackupCompleted] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const [dontIncludePrivateKey, setDontIncludePrivateKey] = useState(false);
 
   const showContinueButton =
     context === 'createNewTSSKey' || context === 'joinTSSKey';
@@ -184,14 +221,26 @@ const ExportTSSWallet = () => {
     } else {
       keyData = key.methods.toObj();
     }
-    const backup = {
+    const backup: {
+      isTSS: boolean;
+      version: number;
+      key?: any;
+      credentials: any[];
+    } = {
       isTSS: true,
       version: 1,
-      key: keyData,
-      credentials: key.wallets.map((wallet: Wallet) =>
-        wallet.credentials.toObj(),
-      ),
+      credentials: key.wallets.map((wallet: Wallet) => {
+        const credObj = wallet.credentials.toObj();
+        if (dontIncludePrivateKey) {
+          delete credObj.keyId;
+        }
+        return credObj;
+      }),
     };
+
+    if (!dontIncludePrivateKey) {
+      backup.key = keyData;
+    }
 
     const encrypted = BWC.getEncryption().encryptWithPassword(
       JSON.stringify(backup),
@@ -203,6 +252,7 @@ const ExportTSSWallet = () => {
   };
 
   const shareKeyshareFile = async ({password}: {password: string}) => {
+    let filePath: string | undefined;
     try {
       setShareButtonState('loading');
       await sleep(500);
@@ -218,18 +268,18 @@ const ExportTSSWallet = () => {
       }
 
       const walletName = key?.wallets?.[0]?.walletName || 'SharedWallet';
-      const filename = `${APP_NAME_UPPERCASE}-Keyshare-${walletName}.txt`;
+      const displayName = dontIncludePrivateKey
+        ? `${walletName} ${t('(No Private Key)')}`
+        : walletName;
+      const filename = `${APP_NAME_UPPERCASE}-Keyshare-${displayName}.txt`;
 
-      const rootPath =
-        Platform.OS === 'ios'
-          ? RNFS.LibraryDirectoryPath
-          : RNFS.TemporaryDirectoryPath;
+      const rootPath = RNFS.TemporaryDirectoryPath;
 
-      const filePath = `${rootPath}/${filename}`;
+      filePath = `${rootPath}/${filename}`;
 
       const txt = t(
         'Here is the encrypted keyshare backup for wallet: {{name}}\n\n{{keyshare}}\n\nTo import this backup, copy all text between {...}, including the symbols {}',
-        {name: walletName, keyshare: encryptedKeyshare},
+        {name: displayName, keyshare: encryptedKeyshare},
       );
 
       await RNFS.writeFile(filePath, txt, 'utf8');
@@ -243,13 +293,19 @@ const ExportTSSWallet = () => {
 
       await Share.open(opts);
 
+      RNFS.unlink(filePath).catch(() => {});
+
       setShareButtonState('success');
       await sleep(500);
       setShareButtonState(undefined);
 
       setBackupCompleted(true);
+      dispatch(WalletActions.setBackupComplete(keyId));
     } catch (err: any) {
       logManager.debug(`[shareKeyshareFile]: ${err.message}`);
+      if (filePath) {
+        RNFS.unlink(filePath).catch(() => {});
+      }
       if (err && err.message === 'User did not share') {
         setShareButtonState('success');
         setBackupCompleted(true);
@@ -292,7 +348,9 @@ const ExportTSSWallet = () => {
       },
     };
 
-    const routes = IsVMChain(key.wallets[0].chain)
+    const routes = !key.backupComplete
+      ? [...baseRoutes]
+      : IsVMChain(key.wallets[0].chain)
       ? [...baseRoutes, AccountDetailsRoute]
       : [...baseRoutes, walletDetailsRoute];
 
@@ -349,6 +407,57 @@ const ExportTSSWallet = () => {
               defaultValue=""
             />
           </PasswordInputContainer>
+
+          <CtaContainer>
+            <AdvancedOptionsContainer>
+              <AdvancedOptionsButton
+                activeOpacity={ActiveOpacity}
+                onPress={() => {
+                  Haptic('impactLight');
+                  setShowOptions(!showOptions);
+                }}>
+                {showOptions ? (
+                  <>
+                    <AdvancedOptionsButtonText>
+                      {t('Hide Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                    <ChevronUpSvg />
+                  </>
+                ) : (
+                  <>
+                    <AdvancedOptionsButtonText>
+                      {t('Show Advanced Options')}
+                    </AdvancedOptionsButtonText>
+                    <ChevronDownSvg />
+                  </>
+                )}
+              </AdvancedOptionsButton>
+
+              {showOptions && (
+                <AdvancedOptions>
+                  <RowContainer
+                    activeOpacity={1}
+                    onPress={() => {
+                      setDontIncludePrivateKey(!dontIncludePrivateKey);
+                    }}>
+                    <Column>
+                      <AdvancedOptionsText>
+                        {t('Do not include private key')}
+                      </AdvancedOptionsText>
+                    </Column>
+                    <CheckBoxContainer>
+                      <Checkbox
+                        checked={dontIncludePrivateKey}
+                        onPress={() => {
+                          setDontIncludePrivateKey(!dontIncludePrivateKey);
+                        }}
+                      />
+                    </CheckBoxContainer>
+                  </RowContainer>
+                </AdvancedOptions>
+              )}
+            </AdvancedOptionsContainer>
+          </CtaContainer>
 
           <PasswordActionContainer>
             <Button
