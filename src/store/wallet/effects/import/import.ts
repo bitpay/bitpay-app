@@ -107,6 +107,11 @@ import {
 import {tokenManager} from '../../../../managers/TokenManager';
 import {logManager} from '../../../../managers/LogManager';
 import * as Sentry from '@sentry/react-native';
+import {
+  importProgressEvents,
+  ongoingProcessManager,
+} from '../../../../managers/OngoingProcessManager';
+import {EventEmitter} from 'events';
 
 const getMissingVmAccounts = (
   wallets: Wallet[],
@@ -1607,33 +1612,99 @@ export const serverAssistedImport = async (
 ): Promise<{key: KeyMethods; wallets: Wallet[]}> => {
   return new Promise((resolve, reject) => {
     try {
+      const events = new EventEmitter();
+
+      // Queue ensures every event is shown for at least MIN_DISPLAY_MS
+      const MIN_DISPLAY_MS = 2000;
+      const eventQueue: Array<{evt: string; data?: any}> = [];
+      let draining = false;
+      let onQueueEmpty: (() => void) | null = null;
+
+      const drainQueue = () => {
+        const item = eventQueue.shift();
+        if (!item) {
+          draining = false;
+          onQueueEmpty?.();
+          onQueueEmpty = null;
+          return;
+        }
+        draining = true;
+        ongoingProcessManager.show(item.evt as any, item.data);
+        setTimeout(drainQueue, MIN_DISPLAY_MS);
+      };
+
+      const waitForQueue = (): Promise<void> => {
+        if (!draining && eventQueue.length === 0) {
+          return Promise.resolve();
+        }
+        return new Promise<void>(res => {
+          onQueueEmpty = res;
+        });
+      };
+
+      const VISIBLE_EVENTS = new Set([
+        'findingCopayers',
+        'foundCopayers',
+        'gettingStatuses',
+        'gatheringWalletsInfos',
+        'walletInfo.gatheringTokens',
+      ]);
+
+      const eventIterations: Record<string, number> = {};
+
+      importProgressEvents.forEach(evt => {
+        events.on(evt, (data?: any) => {
+          if (!VISIBLE_EVENTS.has(evt)) {
+            return;
+          }
+          eventIterations[evt] = (eventIterations[evt] ?? 0) + 1;
+          const iteration = eventIterations[evt];
+          const baseData =
+            typeof data === 'object' && data !== null ? data : {};
+          const countData = typeof data === 'number' ? {count: data} : {};
+          eventQueue.push({evt, data: {...baseData, ...countData, iteration}});
+          if (!draining) {
+            drainQueue();
+          }
+        });
+      });
+
+      events.on(
+        'done',
+        async ({key, clients}: {key: KeyMethods; clients: Wallet[]}) => {
+          // Wait for all queued messages to display before resolving
+          await waitForQueue();
+
+          let wallets = clients;
+          if (wallets.length === 0) {
+            return reject(new Error('WALLET_DOES_NOT_EXIST'));
+          }
+          // remove duplicate wallets
+          wallets = uniqBy(wallets, w => {
+            return (w as any).credentials.walletId;
+          });
+
+          const tokens: Wallet[] = wallets.filter(
+            (wallet: Wallet) => !!wallet.credentials.token,
+          );
+
+          if (tokens && !!tokens.length) {
+            wallets = linkTokenToWallet(tokens, wallets);
+          }
+
+          return resolve({key, wallets});
+        },
+      );
+
+      events.on('error', async (err: Error) => {
+        await waitForQueue();
+        reject(err);
+      });
+
       BwcProvider.API.serverAssistedImport(
         opts,
         {baseUrl: BASE_BWS_URL},
-        // @ts-ignore
-        async (err, key, wallets) => {
-          if (err) {
-            return reject(err);
-          }
-          if (wallets.length === 0) {
-            return reject(new Error('WALLET_DOES_NOT_EXIST'));
-          } else {
-            // remove duplicate wallets
-            wallets = uniqBy(wallets, w => {
-              return (w as any).credentials.walletId;
-            });
-
-            const tokens: Wallet[] = wallets.filter(
-              (wallet: Wallet) => !!wallet.credentials.token,
-            );
-
-            if (tokens && !!tokens.length) {
-              wallets = linkTokenToWallet(tokens, wallets);
-            }
-
-            return resolve({key, wallets});
-          }
-        },
+        events,
       );
     } catch (err) {
       return reject(err);
