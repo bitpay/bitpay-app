@@ -746,7 +746,7 @@ const ExternalServicesOfferSelector: React.FC<
       paymentMethod,
     );
 
-    if (!banxaSelectedPaymentMethodData) {
+    if (paymentMethod.method !== 'other' && !banxaSelectedPaymentMethodData) {
       const msg = t(
         'Banxa currently does not support operations with the selected combination crypto(coin)-fiat(fiatCurrency)-paymentMethod(paymentMethod).',
         {
@@ -762,32 +762,34 @@ const ExternalServicesOfferSelector: React.FC<
       return;
     }
 
-    offers.banxa.paymentMethodId = banxaSelectedPaymentMethodData.id;
+    offers.banxa.paymentMethodId = banxaSelectedPaymentMethodData?.id;
 
-    try {
-      const banxaCurrencyLimitsData =
-        banxaSelectedPaymentMethodData.transaction_limits.find(
-          tx_limit =>
-            tx_limit.fiat_code.toUpperCase() ===
-            offers.banxa.fiatCurrency.toUpperCase(),
+    if (banxaSelectedPaymentMethodData?.transaction_limits) {
+      try {
+        const banxaCurrencyLimitsData =
+          banxaSelectedPaymentMethodData.transaction_limits.find(
+            tx_limit =>
+              tx_limit.fiat_code.toUpperCase() ===
+              offers.banxa.fiatCurrency.toUpperCase(),
+          );
+
+        offers.banxa.amountLimits = {
+          min: banxaCurrencyLimitsData
+            ? Number(banxaCurrencyLimitsData.min)
+            : getBanxaFiatAmountLimits().min,
+          max: banxaCurrencyLimitsData
+            ? Number(banxaCurrencyLimitsData.max)
+            : getBanxaFiatAmountLimits().max,
+        };
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+        logger.debug(
+          `Error getting Banxa transaction limits. Setting default values. Error: ${errMsg}`,
         );
-
-      offers.banxa.amountLimits = {
-        min: banxaCurrencyLimitsData
-          ? Number(banxaCurrencyLimitsData.min)
-          : getBanxaFiatAmountLimits().min,
-        max: banxaCurrencyLimitsData
-          ? Number(banxaCurrencyLimitsData.max)
-          : getBanxaFiatAmountLimits().max,
-      };
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      logger.debug(
-        `Error getting Banxa transaction limits. Setting default values. Error: ${errMsg}`,
-      );
-      offers.banxa.amountLimits = dispatch(
-        getBuyCryptoFiatLimits('banxa', offers.banxa.fiatCurrency),
-      );
+        offers.banxa.amountLimits = dispatch(
+          getBuyCryptoFiatLimits('banxa', offers.banxa.fiatCurrency),
+        );
+      }
     }
 
     if (
