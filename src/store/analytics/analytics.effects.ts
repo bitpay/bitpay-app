@@ -103,32 +103,8 @@ export const Analytics = (() => {
             logManager.debug('Failed to initialize Mixpanel SDK.', errMsg);
           });
 
-        await AppsFlyerWrapper.init()
-          .then(() => {
-            logManager.debug('Successfully initialized AppsFlyer SDK');
-            // Configure AppsFlyer to handle wrapped deeplinks
-            AppsFlyerWrapper.configureResolvedDeepLinks(
-              ['clicks.bitpay.com', 'email.bitpay.com'],
-              () => {
-                logManager.debug(
-                  'AppsFlyer SDK configured to handle wrapped deeplinks',
-                );
-              },
-              (err: any) => {
-                const errMsg =
-                  err instanceof Error ? err.message : JSON.stringify(err);
-                logManager.error(
-                  'AppsFlyer SDK failed to configure wrapped deeplinks: ' +
-                    errMsg,
-                );
-              },
-            );
-          })
-          .catch(err => {
-            const errMsg =
-              err instanceof Error ? err.message : JSON.stringify(err);
-            logManager.error('AppsFlyer SDK failed to initialize: ' + errMsg);
-          });
+        // AppsFlyer
+        await AppsFlyerWrapper.init();
       }
 
       _isInitialized = true;
