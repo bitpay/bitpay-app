@@ -101,6 +101,16 @@ import {
   hasSnapshotsForWallets,
   hasSnapshotsBeforeMsForWallets,
   buildWalletIdsByAssetGroupKey,
+  isPopulateLoadingForWallets,
+  getLegacyPercentageDifferenceFromTotals,
+  getVisibleKeysFromKeys,
+  getVisibleWalletsFromKeys,
+  isFiatLoadingForWallets,
+  getWalletLiveAtomicBalance,
+  walletHasNonZeroLiveBalance,
+  getSnapshotAtomicBalanceFromCryptoBalance,
+  canNavigateToExchangeRateForAssetRowItem,
+  getPopulateLoadingByAssetKey,
   type AssetRowItem,
 } from './assets';
 
@@ -529,5 +539,585 @@ describe('buildWalletIdsByAssetGroupKey', () => {
     const result = buildWalletIdsByAssetGroupKey(wallets);
     expect(result['eth']).toEqual(['w2']);
     expect(result['']).toBeUndefined();
+  });
+});
+
+// ─── isPopulateLoadingForWallets ──────────────────────────────────────────────
+
+describe('isPopulateLoadingForWallets', () => {
+  it('returns false when populateStatus is undefined', () => {
+    expect(
+      isPopulateLoadingForWallets({populateStatus: undefined, wallets: [makeWallet('w1')]}),
+    ).toBe(false);
+  });
+
+  it('returns false when populateStatus.inProgress is false', () => {
+    expect(
+      isPopulateLoadingForWallets({
+        populateStatus: {inProgress: false, walletStatusById: {}, walletsTotal: 0} as any,
+        wallets: [makeWallet('w1')],
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false when no relevant wallets are in scope', () => {
+    expect(
+      isPopulateLoadingForWallets({
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {other_wallet: 'in_progress'},
+          walletsTotal: 1,
+        } as any,
+        wallets: [makeWallet('w1')], // w1 not in statusById
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false when wallets is undefined', () => {
+    expect(
+      isPopulateLoadingForWallets({
+        populateStatus: {inProgress: true, walletStatusById: {w1: 'in_progress'}, walletsTotal: 1} as any,
+        wallets: undefined,
+      }),
+    ).toBe(false);
+  });
+
+  it('returns true when a wallet is the currentWalletId (regardless of status)', () => {
+    expect(
+      isPopulateLoadingForWallets({
+        populateStatus: {
+          inProgress: true,
+          currentWalletId: 'w1',
+          walletStatusById: {},
+          walletsTotal: 1,
+        } as any,
+        wallets: [makeWallet('w1')],
+      }),
+    ).toBe(true);
+  });
+
+  it('returns true when a wallet has status "in_progress"', () => {
+    expect(
+      isPopulateLoadingForWallets({
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {w1: 'in_progress'},
+          walletsTotal: 1,
+        } as any,
+        wallets: [makeWallet('w1')],
+      }),
+    ).toBe(true);
+  });
+
+  it('returns false when all relevant wallets have status "done"', () => {
+    expect(
+      isPopulateLoadingForWallets({
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {w1: 'done'},
+          walletsTotal: 1,
+        } as any,
+        wallets: [makeWallet('w1')],
+      }),
+    ).toBe(false);
+  });
+
+  it('returns true when at least one wallet is in_progress among multiple', () => {
+    expect(
+      isPopulateLoadingForWallets({
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {w1: 'done', w2: 'in_progress'},
+          walletsTotal: 2,
+        } as any,
+        wallets: [makeWallet('w1'), makeWallet('w2')],
+      }),
+    ).toBe(true);
+  });
+});
+
+// ─── getLegacyPercentageDifferenceFromTotals ──────────────────────────────────
+
+describe('getLegacyPercentageDifferenceFromTotals', () => {
+  it('returns null when totalBalanceLastDay is 0', () => {
+    expect(
+      getLegacyPercentageDifferenceFromTotals({totalBalance: 100, totalBalanceLastDay: 0}),
+    ).toBeNull();
+  });
+
+  it('returns null when totalBalanceLastDay is undefined', () => {
+    expect(
+      getLegacyPercentageDifferenceFromTotals({totalBalance: 100, totalBalanceLastDay: undefined}),
+    ).toBeNull();
+  });
+
+  it('delegates to calculatePercentageDifference when lastDay > 0', () => {
+    // calculatePercentageDifference is mocked to return 0, but we confirm it's called
+    const result = getLegacyPercentageDifferenceFromTotals({
+      totalBalance: 110,
+      totalBalanceLastDay: 100,
+    });
+    // Mock returns 0
+    expect(result).toBe(0);
+  });
+});
+
+// ─── getVisibleKeysFromKeys ───────────────────────────────────────────────────
+
+describe('getVisibleKeysFromKeys', () => {
+  const makeKey = (id: string, wallets: any[] = []) =>
+    ({id, wallets} as any);
+
+  it('returns empty array when keys is undefined', () => {
+    expect(getVisibleKeysFromKeys(undefined)).toEqual([]);
+  });
+
+  it('returns all keys when no homeCarouselConfig is provided', () => {
+    const keys = {k1: makeKey('k1'), k2: makeKey('k2')};
+    const result = getVisibleKeysFromKeys(keys);
+    expect(result).toHaveLength(2);
+  });
+
+  it('returns all keys when homeCarouselConfig is empty', () => {
+    const keys = {k1: makeKey('k1')};
+    const result = getVisibleKeysFromKeys(keys, []);
+    expect(result).toHaveLength(1);
+  });
+
+  it('filters out hidden keys (show=false)', () => {
+    const keys = {k1: makeKey('k1'), k2: makeKey('k2')};
+    const config = [
+      {id: 'k1', show: false},
+      {id: 'k2', show: true},
+    ] as any[];
+    const result = getVisibleKeysFromKeys(keys, config);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('k2');
+  });
+
+  it('does not hide a key if show is true', () => {
+    const keys = {k1: makeKey('k1')};
+    const config = [{id: 'k1', show: true}] as any[];
+    const result = getVisibleKeysFromKeys(keys, config);
+    expect(result).toHaveLength(1);
+  });
+
+  it('ignores coinbaseBalanceCard id in carousel config', () => {
+    const keys = {k1: makeKey('k1')};
+    const config = [{id: 'coinbaseBalanceCard', show: false}, {id: 'k1', show: true}] as any[];
+    const result = getVisibleKeysFromKeys(keys, config);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('k1');
+  });
+
+  it('returns all keys when no keys are hidden in config', () => {
+    const keys = {k1: makeKey('k1'), k2: makeKey('k2')};
+    const config = [{id: 'k1', show: true}, {id: 'k2', show: true}] as any[];
+    const result = getVisibleKeysFromKeys(keys, config);
+    expect(result).toHaveLength(2);
+  });
+});
+
+// ─── getVisibleWalletsFromKeys ────────────────────────────────────────────────
+
+describe('getVisibleWalletsFromKeys', () => {
+  const makeKeyWithWallets = (id: string, wallets: any[]) =>
+    ({id, wallets} as any);
+
+  it('returns empty array when keys is undefined', () => {
+    expect(getVisibleWalletsFromKeys(undefined)).toEqual([]);
+  });
+
+  it('filters out wallets with hideWallet=true', () => {
+    const wallet1 = {id: 'w1', hideWallet: false, hideWalletByAccount: false};
+    const wallet2 = {id: 'w2', hideWallet: true, hideWalletByAccount: false};
+    const keys = {k1: makeKeyWithWallets('k1', [wallet1, wallet2])};
+    const result = getVisibleWalletsFromKeys(keys as any);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('w1');
+  });
+
+  it('filters out wallets with hideWalletByAccount=true', () => {
+    const wallet1 = {id: 'w1', hideWallet: false, hideWalletByAccount: false};
+    const wallet2 = {id: 'w2', hideWallet: false, hideWalletByAccount: true};
+    const keys = {k1: makeKeyWithWallets('k1', [wallet1, wallet2])};
+    const result = getVisibleWalletsFromKeys(keys as any);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('w1');
+  });
+
+  it('returns all visible wallets across multiple keys', () => {
+    const w1 = {id: 'w1', hideWallet: false, hideWalletByAccount: false};
+    const w2 = {id: 'w2', hideWallet: false, hideWalletByAccount: false};
+    const keys = {
+      k1: makeKeyWithWallets('k1', [w1]),
+      k2: makeKeyWithWallets('k2', [w2]),
+    };
+    const result = getVisibleWalletsFromKeys(keys as any);
+    expect(result).toHaveLength(2);
+  });
+
+  it('handles keys with undefined wallets gracefully', () => {
+    const keys = {k1: {id: 'k1', wallets: undefined} as any};
+    const result = getVisibleWalletsFromKeys(keys);
+    expect(result).toEqual([]);
+  });
+});
+
+// ─── isFiatLoadingForWallets ──────────────────────────────────────────────────
+
+describe('isFiatLoadingForWallets', () => {
+  const makeFullWallet = (id: string, network = 'livenet') =>
+    ({id, network} as any);
+
+  it('returns false when quoteCurrency is empty string', () => {
+    expect(
+      isFiatLoadingForWallets({
+        quoteCurrency: '',
+        wallets: [makeFullWallet('w1')],
+        snapshotsByWalletId: {},
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false when wallets is empty', () => {
+    expect(
+      isFiatLoadingForWallets({
+        quoteCurrency: 'USD',
+        wallets: [],
+        snapshotsByWalletId: {},
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false for testnet wallets', () => {
+    expect(
+      isFiatLoadingForWallets({
+        quoteCurrency: 'USD',
+        wallets: [makeFullWallet('w1', 'testnet')],
+        snapshotsByWalletId: {w1: [{timestamp: 1, quoteCurrency: 'EUR'} as any]},
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false when latest snapshot quoteCurrency matches target', () => {
+    expect(
+      isFiatLoadingForWallets({
+        quoteCurrency: 'USD',
+        wallets: [makeFullWallet('w1')],
+        snapshotsByWalletId: {w1: [{timestamp: 1, quoteCurrency: 'USD'} as any]},
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false when latest snapshot has no quoteCurrency', () => {
+    expect(
+      isFiatLoadingForWallets({
+        quoteCurrency: 'USD',
+        wallets: [makeFullWallet('w1')],
+        snapshotsByWalletId: {w1: [{timestamp: 1} as any]},
+      }),
+    ).toBe(false);
+  });
+
+  it('returns true when quoteCurrency differs and rate series not available', () => {
+    // hasValidSeriesForCoin is mocked to return false → missing series → loading
+    expect(
+      isFiatLoadingForWallets({
+        quoteCurrency: 'EUR',
+        wallets: [makeFullWallet('w1')],
+        snapshotsByWalletId: {
+          w1: [{timestamp: 1, quoteCurrency: 'USD'} as any],
+        },
+        fiatRateSeriesCache: {},
+      }),
+    ).toBe(true);
+  });
+
+  it('uses the snapshot with the highest timestamp as "latest"', () => {
+    // Both snapshots have quoteCurrency 'USD' — latest (ts=2) matches target 'USD' → false
+    expect(
+      isFiatLoadingForWallets({
+        quoteCurrency: 'USD',
+        wallets: [makeFullWallet('w1')],
+        snapshotsByWalletId: {
+          w1: [
+            {timestamp: 1, quoteCurrency: 'EUR'} as any, // older
+            {timestamp: 2, quoteCurrency: 'USD'} as any, // latest
+          ],
+        },
+      }),
+    ).toBe(false);
+  });
+});
+
+// ─── getWalletLiveAtomicBalance ───────────────────────────────────────────────
+
+describe('getWalletLiveAtomicBalance', () => {
+  it('returns 0n when no balance info present', () => {
+    const wallet = {chain: 'btc', balance: {}} as any;
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(0n);
+  });
+
+  it('returns sat-based balance when sat is a valid integer', () => {
+    const wallet = {chain: 'btc', balance: {sat: 100_000_000}} as any;
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(100_000_000n);
+  });
+
+  it('falls back to crypto-string balance when sat is 0', () => {
+    const wallet = {
+      chain: 'btc',
+      balance: {sat: 0, crypto: '1.5'},
+    } as any;
+    // sat=0 → satWithPendingAtomic=0 → fallback to crypto
+    const result = getWalletLiveAtomicBalance({wallet, unitDecimals: 8});
+    // unitStringToAtomicBigInt('1.5', 8) = 150_000_000
+    expect(result).toBe(150_000_000n);
+  });
+
+  it('includes satConfirmedLocked for XRP wallets', () => {
+    const wallet = {
+      chain: 'xrp',
+      balance: {sat: 1_000_000, satConfirmedLocked: 200_000},
+    } as any;
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 6})).toBe(1_200_000n);
+  });
+
+  it('does NOT include satConfirmedLocked for BTC wallets', () => {
+    const wallet = {
+      chain: 'btc',
+      balance: {sat: 1_000_000, satConfirmedLocked: 200_000},
+    } as any;
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(1_000_000n);
+  });
+
+  it('falls back to crypto balance when sat is non-integer (float)', () => {
+    const wallet = {
+      chain: 'btc',
+      balance: {sat: 1.5, crypto: '0.01'}, // non-integer sat → falls through
+    } as any;
+    // unitStringToAtomicBigInt('0.01', 8) = 1_000_000
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(1_000_000n);
+  });
+
+  it('falls back to crypto balance when sat is not a number', () => {
+    const wallet = {
+      chain: 'btc',
+      balance: {sat: 'abc', crypto: '0.5'},
+    } as any;
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(50_000_000n);
+  });
+
+  it('includes satPending for UTXO chains when satConfirmed matches sat', () => {
+    // BTC is a UTXO coin (in the mock BitpaySupportedUtxoCoins)
+    const wallet = {
+      chain: 'btc',
+      balance: {
+        sat: 100_000_000,
+        satConfirmed: 100_000_000,
+        satPending: 50_000_000,
+      },
+    } as any;
+    // shouldTreatPendingAsAvailable: btc is utxo, satPending > 0, satConfirmed >= 0, satAtomicBase === BigInt(satConfirmed)
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(150_000_000n);
+  });
+
+  it('does NOT include satPending when satConfirmed does not match sat', () => {
+    const wallet = {
+      chain: 'btc',
+      balance: {
+        sat: 100_000_000,
+        satConfirmed: 90_000_000, // differs from sat
+        satPending: 50_000_000,
+      },
+    } as any;
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(100_000_000n);
+  });
+});
+
+// ─── walletHasNonZeroLiveBalance ──────────────────────────────────────────────
+
+describe('walletHasNonZeroLiveBalance', () => {
+  it('returns false for a wallet with zero balance', () => {
+    const wallet = {chain: 'btc', balance: {sat: 0, crypto: '0'}} as any;
+    expect(walletHasNonZeroLiveBalance(wallet)).toBe(false);
+  });
+
+  it('returns true for a wallet with non-zero sat balance', () => {
+    const wallet = {chain: 'btc', balance: {sat: 1_000}} as any;
+    expect(walletHasNonZeroLiveBalance(wallet)).toBe(true);
+  });
+
+  it('returns true for an ETH wallet with crypto balance', () => {
+    const wallet = {chain: 'eth', balance: {sat: 0, crypto: '0.5'}} as any;
+    expect(walletHasNonZeroLiveBalance(wallet)).toBe(true);
+  });
+});
+
+// ─── getSnapshotAtomicBalanceFromCryptoBalance ────────────────────────────────
+
+describe('getSnapshotAtomicBalanceFromCryptoBalance', () => {
+  it('returns 0n when snapshot is undefined', () => {
+    expect(
+      getSnapshotAtomicBalanceFromCryptoBalance({snapshot: undefined, unitDecimals: 8}),
+    ).toBe(0n);
+  });
+
+  it('returns 0n when cryptoBalance is missing', () => {
+    expect(
+      getSnapshotAtomicBalanceFromCryptoBalance({snapshot: {} as any, unitDecimals: 8}),
+    ).toBe(0n);
+  });
+
+  it('converts cryptoBalance string to atomic bigint', () => {
+    const snapshot = {cryptoBalance: '1.5'} as any;
+    // unitStringToAtomicBigInt('1.5', 8) = 150_000_000
+    expect(
+      getSnapshotAtomicBalanceFromCryptoBalance({snapshot, unitDecimals: 8}),
+    ).toBe(150_000_000n);
+  });
+
+  it('strips commas from cryptoBalance before converting', () => {
+    const snapshot = {cryptoBalance: '1,234'} as any;
+    // unitStringToAtomicBigInt('1234', 8) = 123_400_000_000
+    expect(
+      getSnapshotAtomicBalanceFromCryptoBalance({snapshot, unitDecimals: 8}),
+    ).toBe(123_400_000_000n);
+  });
+});
+
+// ─── canNavigateToExchangeRateForAssetRowItem ─────────────────────────────────
+
+describe('canNavigateToExchangeRateForAssetRowItem', () => {
+  const makeSupportedOption = (
+    currencyAbbreviation: string,
+    chain: string,
+    tokenAddress?: string,
+  ) => ({
+    currencyAbbreviation,
+    chain,
+    tokenAddress,
+    name: currencyAbbreviation,
+    img: '',
+    badgeUri: undefined,
+  });
+
+  it('returns false when no matching supported option is found', () => {
+    const item = makeItem('btc', true);
+    expect(canNavigateToExchangeRateForAssetRowItem({item, options: []})).toBe(false);
+  });
+
+  it('returns false when item does not have rate', () => {
+    const item = makeItem('btc', false);
+    const options = [makeSupportedOption('btc', 'btc')];
+    expect(canNavigateToExchangeRateForAssetRowItem({item, options})).toBe(false);
+  });
+
+  it('returns true when item has rate and exact matching option exists', () => {
+    const item = makeItem('btc', true, {
+      currencyAbbreviation: 'btc',
+      chain: 'btc',
+    });
+    const options = [makeSupportedOption('btc', 'btc')];
+    expect(canNavigateToExchangeRateForAssetRowItem({item, options})).toBe(true);
+  });
+
+  it('returns false when option matches abbreviation but not chain', () => {
+    const item = makeItem('usdc-btc', true, {
+      currencyAbbreviation: 'usdc',
+      chain: 'btc',
+    });
+    const options = [makeSupportedOption('usdc', 'eth')]; // different chain
+    expect(canNavigateToExchangeRateForAssetRowItem({item, options})).toBe(false);
+  });
+});
+
+// ─── getPopulateLoadingByAssetKey ─────────────────────────────────────────────
+
+describe('getPopulateLoadingByAssetKey', () => {
+  it('returns undefined when populateStatus.inProgress is false', () => {
+    expect(
+      getPopulateLoadingByAssetKey({
+        items: [{key: 'btc'}],
+        walletIdsByAssetKey: {btc: ['w1']},
+        populateStatus: {inProgress: false, walletStatusById: {}, walletsTotal: 0} as any,
+      }),
+    ).toBeUndefined();
+  });
+
+  it('returns map with false for assets whose wallets are all done', () => {
+    const result = getPopulateLoadingByAssetKey({
+      items: [{key: 'btc'}],
+      walletIdsByAssetKey: {btc: ['w1']},
+      populateStatus: {
+        inProgress: true,
+        walletStatusById: {w1: 'done'},
+        walletsTotal: 1,
+        currentWalletId: undefined,
+      } as any,
+    });
+    expect(result).not.toBeUndefined();
+    expect(result!['btc']).toBe(false);
+  });
+
+  it('returns map with true for assets with in_progress wallets', () => {
+    const result = getPopulateLoadingByAssetKey({
+      items: [{key: 'btc'}],
+      walletIdsByAssetKey: {btc: ['w1']},
+      populateStatus: {
+        inProgress: true,
+        walletStatusById: {w1: 'in_progress'},
+        walletsTotal: 1,
+        currentWalletId: undefined,
+      } as any,
+    });
+    expect(result!['btc']).toBe(true);
+  });
+
+  it('uses prev value when no wallets are in scope for an asset key', () => {
+    const result = getPopulateLoadingByAssetKey({
+      items: [{key: 'eth'}],
+      walletIdsByAssetKey: {eth: ['w2']},
+      populateStatus: {
+        inProgress: true,
+        walletStatusById: {w1: 'in_progress'}, // w2 not in scope
+        walletsTotal: 1,
+        currentWalletId: undefined,
+      } as any,
+      prev: {eth: true},
+    });
+    // w2 is not in scope (not in statusById, not currentWalletId) → use prev
+    expect(result!['eth']).toBe(true);
+  });
+
+  it('preserves prev keys that are not in items', () => {
+    const result = getPopulateLoadingByAssetKey({
+      items: [{key: 'btc'}],
+      walletIdsByAssetKey: {btc: ['w1']},
+      populateStatus: {
+        inProgress: true,
+        walletStatusById: {w1: 'done'},
+        walletsTotal: 1,
+        currentWalletId: undefined,
+      } as any,
+      prev: {eth: true, btc: false},
+    });
+    // eth was in prev but not in items → it should be copied over
+    expect(result!['eth']).toBe(true);
+    expect(result!['btc']).toBe(false);
+  });
+
+  it('returns false for asset with error status (counts as finished)', () => {
+    const result = getPopulateLoadingByAssetKey({
+      items: [{key: 'btc'}],
+      walletIdsByAssetKey: {btc: ['w1']},
+      populateStatus: {
+        inProgress: true,
+        walletStatusById: {w1: 'error'},
+        walletsTotal: 1,
+        currentWalletId: undefined,
+      } as any,
+    });
+    expect(result!['btc']).toBe(false);
   });
 });

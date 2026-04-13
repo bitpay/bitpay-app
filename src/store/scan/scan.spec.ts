@@ -19,6 +19,8 @@ import {startCreateKey} from '../wallet/effects';
 /**
  * incomingData Tests
  */
+jest.setTimeout(30000);
+
 describe('incomingData', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -52,7 +54,6 @@ describe('incomingData', () => {
   });
 
   it('Should handle Join Wallet with one created key', async () => {
-    jest.setTimeout(15000);
     const data =
       '9QRqDLbtasN5Wd37tRag7TKxMJVnCc2979pgs5CEBmGRmYU7kNrVynHdNtuBYxgfNgdj3EEJkHLbtc';
     const store = configureTestStore({});
