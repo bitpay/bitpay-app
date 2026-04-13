@@ -864,19 +864,19 @@ describe('mapAbbreviationAndName', () => {
 
   it('maps pax to usdp', () => {
     const dispatch = makeDispatch() as any;
-    const result = mapAbbreviationAndName('pax', 'eth', undefined)(dispatch);
+    const result = (mapAbbreviationAndName('pax', 'eth', undefined) as any)(dispatch);
     expect(result.currencyAbbreviation).toBe('usdp');
   });
 
   it('maps matic to pol', () => {
     const dispatch = makeDispatch() as any;
-    const result = mapAbbreviationAndName('matic', 'matic', undefined)(dispatch);
+    const result = (mapAbbreviationAndName('matic', 'matic', undefined) as any)(dispatch);
     expect(result.currencyAbbreviation).toBe('pol');
   });
 
   it('passes through unknown coin unchanged', () => {
     const dispatch = makeDispatch() as any;
-    const result = mapAbbreviationAndName('btc', 'btc', undefined)(dispatch);
+    const result = (mapAbbreviationAndName('btc', 'btc', undefined) as any)(dispatch);
     expect(result.currencyAbbreviation).toBe('btc');
   });
 });
@@ -892,12 +892,12 @@ describe('GetProtocolPrefixAddress', () => {
   };
 
   it('returns address unchanged for non-bch coin', () => {
-    const result = GetProtocolPrefixAddress('btc', 'mainnet', '1ABCxyz', 'btc')(dispatchFn as any);
+    const result = (GetProtocolPrefixAddress('btc', 'mainnet', '1ABCxyz', 'btc') as any)(dispatchFn as any);
     expect(result).toBe('1ABCxyz');
   });
 
   it('prefixes address for bch coin', () => {
-    const result = GetProtocolPrefixAddress('bch', 'livenet', 'qABC', 'bch')(dispatchFn as any);
+    const result = (GetProtocolPrefixAddress('bch', 'livenet', 'qABC', 'bch') as any)(dispatchFn as any);
     // GetProtocolPrefix returns the prefix from BitpaySupportedCoins for bch/livenet
     expect(typeof result).toBe('string');
     expect(result).toContain('qABC');
@@ -922,7 +922,7 @@ describe('toFiat', () => {
       if (typeof effect === 'function') return effect(dispatch, makeGetState());
       return effect;
     };
-    const result = toFiat(100000, 'USD', 'btc', 'btc', {}, undefined)(dispatch as any);
+    const result = (toFiat(100000, 'USD', 'btc', 'btc', {}, undefined) as any)(dispatch as any);
     expect(result).toBe(0);
   });
 
@@ -932,7 +932,7 @@ describe('toFiat', () => {
       return effect;
     };
     const rates = makeRates();
-    const result = toFiat(100000, 'EUR', 'btc', 'btc', rates, undefined)(dispatch as any);
+    const result = (toFiat(100000, 'EUR', 'btc', 'btc', rates, undefined) as any)(dispatch as any);
     expect(result).toBe(0);
   });
 
@@ -943,7 +943,7 @@ describe('toFiat', () => {
     };
     const rates = makeRates();
     // 100000000 sat * (1/1e8) * 50000 = 50000 USD
-    const result = toFiat(100000000, 'USD', 'btc', 'btc', rates, undefined)(dispatch as any);
+    const result = (toFiat(100000000, 'USD', 'btc', 'btc', rates, undefined) as any)(dispatch as any);
     expect(typeof result).toBe('number');
     expect(result).toBeCloseTo(50000, 0);
   });
@@ -953,7 +953,7 @@ describe('toFiat', () => {
       if (typeof effect === 'function') return effect(dispatch, makeGetState());
       return effect;
     };
-    const result = toFiat(100000000, 'USD', 'btc', 'btc', {}, undefined, 30000)(dispatch as any);
+    const result = (toFiat(100000000, 'USD', 'btc', 'btc', {}, undefined, 30000) as any)(dispatch as any);
     expect(typeof result).toBe('number');
     expect(result).toBeCloseTo(30000, 0);
   });
@@ -966,7 +966,7 @@ describe('toFiat', () => {
     const rates: any = {
       btc: [{code: 'USD', fetchedOn: 0, name: 'US Dollar', rate: 0, ts: 0}],
     };
-    const result = toFiat(100000, 'USD', 'btc', 'btc', rates, undefined)(dispatch as any);
+    const result = (toFiat(100000, 'USD', 'btc', 'btc', rates, undefined) as any)(dispatch as any);
     expect(result).toBe(0);
   });
 });
