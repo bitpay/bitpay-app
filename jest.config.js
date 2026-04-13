@@ -29,6 +29,7 @@ module.exports = {
     '^uuid$': require.resolve('uuid'),
     '^paillier-bigint$': '<rootDir>/node_modules/paillier-bigint/dist/cjs/index.node.cjs',
     '^bigint-crypto-utils$': '<rootDir>/node_modules/bigint-crypto-utils/dist/cjs/index.node.cjs',
+    '^@env$': '<rootDir>/test/mock.js',
   },
   roots: ['<rootDir>/src/'],
   collectCoverageFrom: [
