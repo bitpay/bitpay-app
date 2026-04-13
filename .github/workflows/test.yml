@@ -23,7 +23,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Check formatting
-        run: yarn prettier --check "src/**/*.{js,jsx,ts,tsx}"
+        run: yarn prettier:check
 
   types:
     name: Types
