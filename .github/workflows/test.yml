@@ -8,6 +8,9 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -16,14 +19,30 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: '.node-version'
           cache: 'yarn'
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Check formatting
+        run: yarn prettier --check "src/**/*.{js,jsx,ts,tsx}"
+
+      - name: Validate types
+        run: yarn validate
+
       - name: Run tests
         run: yarn test:ci
+
+      - name: Lint (changed lines only)
+        if: github.event_name == 'pull_request'
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          eslint_flags: '--ext .js,.jsx,.ts,.tsx src/'
+          fail_on_error: true
+          filter_mode: diff_context
 
       - name: Upload coverage report
         if: always()
