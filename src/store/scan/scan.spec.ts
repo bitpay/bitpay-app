@@ -1,5 +1,5 @@
-import * as logActions from '../log/log.actions';
 import * as appActions from '../app/app.actions';
+import {logManager} from '../../managers/LogManager';
 import * as Root from '../../Root';
 import * as PayPro from '../wallet/effects/paypro/paypro';
 import {incomingData} from './scan.effects';
@@ -10,7 +10,10 @@ import {
   GetAddressNetwork,
   bitcoreLibs,
 } from '../wallet/effects/address/address';
-import {BitpaySupportedEvmCoins} from '@/constants/currencies';
+import {
+  BitpaySupportedEvmCoins,
+  BitpaySupportedSvmCoins,
+} from '@/constants/currencies';
 import {startCreateKey} from '../wallet/effects';
 
 /**
@@ -36,7 +39,7 @@ describe('incomingData', () => {
     const data =
       '9QRqDLbtasN5Wd37tRag7TKxMJVnCc2979pgs5CEBmGRmYU7kNrVynHdNtuBYxgfNgdj3EEJkHLbtc';
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promiseResult = await store.dispatch(incomingData(data));
     expect(loggerSpy).toHaveBeenCalledWith(
@@ -49,6 +52,7 @@ describe('incomingData', () => {
   });
 
   it('Should handle Join Wallet with one created key', async () => {
+    jest.setTimeout(15000);
     const data =
       '9QRqDLbtasN5Wd37tRag7TKxMJVnCc2979pgs5CEBmGRmYU7kNrVynHdNtuBYxgfNgdj3EEJkHLbtc';
     const store = configureTestStore({});
@@ -57,7 +61,7 @@ describe('incomingData', () => {
         {chain: 'btc', currencyAbbreviation: 'btc', isToken: false},
       ]),
     );
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promiseResult = await store.dispatch(incomingData(data));
     expect(loggerSpy).toHaveBeenCalledWith(
@@ -84,7 +88,7 @@ describe('incomingData', () => {
         {chain: 'btc', currencyAbbreviation: 'btc', isToken: false},
       ]),
     );
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promiseResult = await store.dispatch(incomingData(data));
     expect(loggerSpy).toHaveBeenCalledWith(
@@ -100,7 +104,7 @@ describe('incomingData', () => {
     const data =
       'RTpopkn5KBnkxuT7x4ummDKx3Lu1LvbntddBC4ssDgaqP7DkojT8ccxaFQEXY4f3huFyMewhHZLbtc';
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const promiseResult = await store.dispatch(incomingData(data));
     expect(loggerSpy).toHaveBeenCalledWith(
       '[scan] Incoming-data (redirect): Code to join to a multisig wallet',
@@ -116,7 +120,7 @@ describe('incomingData', () => {
       '1|sick arch glare wheat anchor innocent garbage tape raccoon already obey ability|null|null|false|null',
     ];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -214,7 +218,7 @@ describe('incomingData', () => {
     const store = configureTestStore({});
     const mockData = {data: 'Your mock response data'}; // Your mock response
     (axios.get as jest.Mock).mockResolvedValue(mockData);
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const payproSpy = jest.spyOn(PayPro, 'GetPayProOptions');
     (
       payproSpy as jest.MockedFunction<typeof PayPro.GetPayProOptions>
@@ -322,7 +326,7 @@ describe('incomingData', () => {
       },
     }; // Your mock response
     (axios.get as jest.Mock).mockResolvedValue(mockData);
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const payproSpy = jest.spyOn(PayPro, 'GetPayProOptions');
     (
       payproSpy as jest.MockedFunction<typeof PayPro.GetPayProOptions>
@@ -380,7 +384,7 @@ describe('incomingData', () => {
       },
     }; // Your mock response
     (axios.get as jest.Mock).mockResolvedValue(mockData);
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const payproSpy = jest.spyOn(PayPro, 'GetPayProOptions');
     (
@@ -444,7 +448,7 @@ describe('incomingData', () => {
       },
     }; // Your mock response
     (axios.get as jest.Mock).mockResolvedValue(mockData);
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const payproSpy = jest.spyOn(PayPro, 'GetPayProOptions');
     (
       payproSpy as jest.MockedFunction<typeof PayPro.GetPayProOptions>
@@ -472,7 +476,7 @@ describe('incomingData', () => {
     const store = configureTestStore({});
     const mockData = {data: 'Your mock response data'}; // Your mock response
     (axios.get as jest.Mock).mockResolvedValue(mockData);
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const payproSpy = jest.spyOn(PayPro, 'GetPayProOptions');
     (
       payproSpy as jest.MockedFunction<typeof PayPro.GetPayProOptions>
@@ -513,7 +517,7 @@ describe('incomingData', () => {
       'CcnxtMfvBHGTwoKGPSuezEuYNpGPJH6tjN',
     ];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -524,7 +528,7 @@ describe('incomingData', () => {
     for (let i = 0; i < 2; i++) {
       expect(loggerSpy).toHaveBeenNthCalledWith(
         i + 1,
-        '[scan] Incoming-data: bch plain address',
+        '[scan] Incoming-data: BCH chain plain address',
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
         context: 'scanner',
@@ -540,6 +544,7 @@ describe('incomingData', () => {
             feePerKb: undefined,
             message: '',
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
           },
           type: 'address',
         },
@@ -550,7 +555,7 @@ describe('incomingData', () => {
   it('Should handle ETH plain Address', async () => {
     const data = ['0xb506c911deE6379e3d4c4d0F4A429a70523960Fd'];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -561,7 +566,7 @@ describe('incomingData', () => {
     for (let i = 0; i < 1; i++) {
       expect(loggerSpy).toHaveBeenNthCalledWith(
         i + 1,
-        '[scan] Incoming-data: EVM plain address',
+        '[scan] Incoming-data: ETH chain plain address',
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
         context: 'scanner',
@@ -575,6 +580,7 @@ describe('incomingData', () => {
           network: undefined, // for showing testnet and livenet wallets
           opts: {
             showEVMWalletsAndTokens: true,
+            showSVMWalletsAndTokens: false,
             feePerKb: undefined,
             message: '',
           },
@@ -587,7 +593,7 @@ describe('incomingData', () => {
   it('Should handle MATIC plain Address', async () => {
     const data = ['0x0be264522706C703a2c6dDb61488F309a510eA26'];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -598,7 +604,7 @@ describe('incomingData', () => {
     for (let i = 0; i < 1; i++) {
       expect(loggerSpy).toHaveBeenNthCalledWith(
         i + 1,
-        '[scan] Incoming-data: EVM plain address',
+        '[scan] Incoming-data: ETH chain plain address',
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
         context: 'scanner',
@@ -612,6 +618,7 @@ describe('incomingData', () => {
           network: undefined, // for showing testnet and livenet wallets
           opts: {
             showEVMWalletsAndTokens: true,
+            showSVMWalletsAndTokens: false,
             feePerKb: undefined,
             message: '',
           },
@@ -624,7 +631,7 @@ describe('incomingData', () => {
   it('Should handle XRP plain Address', async () => {
     const data = ['rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR'];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -635,7 +642,7 @@ describe('incomingData', () => {
     for (let i = 0; i < 1; i++) {
       expect(loggerSpy).toHaveBeenNthCalledWith(
         i + 1,
-        '[scan] Incoming-data: xrp plain address',
+        '[scan] Incoming-data: XRP chain plain address',
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
         context: 'scanner',
@@ -649,6 +656,7 @@ describe('incomingData', () => {
           network: undefined, // for showing testnet and livenet wallets
           opts: {
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
             feePerKb: undefined,
             message: '',
           },
@@ -661,7 +669,7 @@ describe('incomingData', () => {
   it('Should handle DOGECOIN plain Address', async () => {
     const data = ['DQmgVRe3RJLz6UNoy1hkjuKdYCWCP6VXSW'];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -672,7 +680,7 @@ describe('incomingData', () => {
     for (let i = 0; i < 1; i++) {
       expect(loggerSpy).toHaveBeenNthCalledWith(
         i + 1,
-        '[scan] Incoming-data: doge plain address',
+        '[scan] Incoming-data: DOGE chain plain address',
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
         context: 'scanner',
@@ -686,6 +694,7 @@ describe('incomingData', () => {
           network: 'livenet',
           opts: {
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
             feePerKb: undefined,
             message: '',
           },
@@ -701,7 +710,7 @@ describe('incomingData', () => {
       'ltc1qesyhcljmtnfge44j7kcc0jvqxzcy4r4gz84m9l3etym2kndqwtxsakkxma',
     ];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -712,7 +721,7 @@ describe('incomingData', () => {
     for (let i = 0; i < 2; i++) {
       expect(loggerSpy).toHaveBeenNthCalledWith(
         i + 1,
-        '[scan] Incoming-data: ltc plain address',
+        '[scan] Incoming-data: LTC chain plain address',
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
         context: 'scanner',
@@ -726,6 +735,7 @@ describe('incomingData', () => {
           network: 'livenet',
           opts: {
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
             feePerKb: undefined,
             message: '',
           },
@@ -748,17 +758,17 @@ describe('incomingData', () => {
         network: 'livenet',
       },
       {
-        log: '[scan] Incoming-data: bch plain address',
+        log: '[scan] Incoming-data: BCH chain plain address',
         network: 'livenet',
       },
       {
-        log: '[scan] Incoming-data: bch plain address',
+        log: '[scan] Incoming-data: BCH chain plain address',
         network: 'testnet',
       },
     ];
 
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -784,6 +794,7 @@ describe('incomingData', () => {
           network: expected[i].network, // for showing testnet and livenet wallets
           opts: {
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
             feePerKb: undefined,
             message: '',
           },
@@ -796,7 +807,7 @@ describe('incomingData', () => {
   it('Should handle ETH URI as address without amount', async () => {
     const data = ['ethereum:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd'];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -823,6 +834,7 @@ describe('incomingData', () => {
             feePerKb: undefined,
             message: '',
             showEVMWalletsAndTokens: true,
+            showSVMWalletsAndTokens: false,
           },
           type: 'address',
         },
@@ -833,7 +845,7 @@ describe('incomingData', () => {
   it('Should handle XRP URI as address without amount', async () => {
     const data = ['ripple:rh3VLyj1GbQjX7eA15BwUagEhSrPHmLkSR'];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -855,6 +867,7 @@ describe('incomingData', () => {
           destinationTag: undefined,
           opts: {
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
             feePerKb: undefined,
             message: '',
           },
@@ -870,7 +883,7 @@ describe('incomingData', () => {
       'dogecoin:nVj1YZn1Mx1Q4JaxEXQMFJAmqGBQQsYvRS',
     ];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -892,6 +905,7 @@ describe('incomingData', () => {
           network: i === 0 ? 'livenet' : 'testnet',
           opts: {
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
             feePerKb: undefined,
             message: '',
           },
@@ -907,7 +921,7 @@ describe('incomingData', () => {
       'litecoin:tltc1q0hpcxfptshfddxuzpewrm4kp8528y5jk9nc4ur',
     ];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -929,6 +943,7 @@ describe('incomingData', () => {
           network: i === 0 ? 'livenet' : 'testnet',
           opts: {
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
             feePerKb: undefined,
             message: '',
           },
@@ -953,6 +968,8 @@ describe('incomingData', () => {
               message: '',
               feePerKb: undefined,
               showEVMWalletsAndTokens: true,
+              showSVMWalletsAndTokens: false,
+              solanaPayOpts: undefined,
             },
             type: 'address',
           },
@@ -971,6 +988,8 @@ describe('incomingData', () => {
               feePerKb: 400000000000000,
               message: '',
               showEVMWalletsAndTokens: true,
+              showSVMWalletsAndTokens: false,
+              solanaPayOpts: undefined,
             },
             type: 'address',
           },
@@ -979,7 +998,7 @@ describe('incomingData', () => {
     ];
 
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -1010,10 +1029,13 @@ describe('incomingData', () => {
           recipient: {
             address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
             chain: 'matic',
-            currency: 'matic',
+            currency: 'pol',
             opts: {
+              feePerKb: undefined,
               message: '',
-              showEVMWalletsAndTokens: true,
+              showEVMWalletsAndTokens: false,
+              showSVMWalletsAndTokens: false,
+              solanaPayOpts: undefined,
             },
             type: 'address',
           },
@@ -1027,11 +1049,13 @@ describe('incomingData', () => {
           recipient: {
             address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
             chain: 'matic',
-            currency: 'matic',
+            currency: 'pol',
             opts: {
               feePerKb: 400000000000000,
               message: '',
-              showEVMWalletsAndTokens: true,
+              showEVMWalletsAndTokens: false,
+              showSVMWalletsAndTokens: false,
+              solanaPayOpts: undefined,
             },
             type: 'address',
           },
@@ -1040,7 +1064,7 @@ describe('incomingData', () => {
     ];
 
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -1073,8 +1097,11 @@ describe('incomingData', () => {
             chain: 'xrp',
             currency: 'xrp',
             opts: {
+              feePerKb: undefined,
               message: '',
               showEVMWalletsAndTokens: false,
+              showSVMWalletsAndTokens: false,
+              solanaPayOpts: undefined,
             },
             type: 'address',
             destinationTag: undefined,
@@ -1091,8 +1118,11 @@ describe('incomingData', () => {
             chain: 'xrp',
             currency: 'xrp',
             opts: {
+              feePerKb: undefined,
               message: '',
               showEVMWalletsAndTokens: false,
+              showSVMWalletsAndTokens: false,
+              solanaPayOpts: undefined,
             },
             type: 'address',
             destinationTag: 123456,
@@ -1101,7 +1131,7 @@ describe('incomingData', () => {
       },
     ];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -1142,7 +1172,7 @@ describe('incomingData', () => {
     ];
 
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -1172,6 +1202,8 @@ describe('incomingData', () => {
             feePerKb: undefined,
             message: '',
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
+            solanaPayOpts: undefined,
           },
         },
       });
@@ -1192,7 +1224,7 @@ describe('incomingData', () => {
       {amount: 1},
     ];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -1218,8 +1250,11 @@ describe('incomingData', () => {
           network: 'livenet',
           type: 'address',
           opts: {
-            showEVMWalletsAndTokens: false,
+            feePerKb: undefined,
             message,
+            showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
+            solanaPayOpts: undefined,
           },
         },
       });
@@ -1229,7 +1264,7 @@ describe('incomingData', () => {
   it('Should Handle Bitcoin Cash URI with legacy address', async () => {
     const data = 'bitcoincash:1ML5KKKrJEHw3fQqhhajQjHWkh3yKhNZpa';
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const result = await store.dispatch(incomingData(data));
     expect(result).toStrictEqual(true);
@@ -1266,6 +1301,7 @@ describe('incomingData', () => {
           feePerKb: undefined,
           message: '',
           showEVMWalletsAndTokens: false,
+          showSVMWalletsAndTokens: false,
         },
       },
     });
@@ -1275,7 +1311,7 @@ describe('incomingData', () => {
   it.skip('Should Handle Testnet Bitcoin Cash URI with legacy address', async () => {
     const data = 'bchtest:mu7ns6LXun5rQiyTJx7yY1QxTzndob4bhJ';
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const result = await store.dispatch(incomingData(data));
     expect(result).toStrictEqual(true);
@@ -1331,7 +1367,7 @@ describe('incomingData', () => {
       'bitpay:0x0be264522706C703a2c6dDb61488F309a510eA26?coin=usdc&chain=matic&amount=0.0002&message=asd',
     ];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -1366,6 +1402,8 @@ describe('incomingData', () => {
       }
       const showEVMWalletsAndTokens =
         !!BitpaySupportedEvmCoins[coin.toLowerCase()];
+      const showSVMWalletsAndTokens =
+        !!BitpaySupportedSvmCoins[coin.toLowerCase()];
       expect(loggerSpy).toHaveBeenNthCalledWith(
         i + 1,
         '[scan] Incoming-data: BitPay URI',
@@ -1382,8 +1420,10 @@ describe('incomingData', () => {
           type: 'address',
           opts: {
             showEVMWalletsAndTokens,
+            showSVMWalletsAndTokens,
             message,
             feePerKb,
+            solanaPayOpts: undefined,
           },
         },
       });
@@ -1438,7 +1478,7 @@ describe('incomingData', () => {
     ];
     const expected = ['livenet', 'testnet'];
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promises: any[] = [];
     data.forEach(element =>
@@ -1449,7 +1489,7 @@ describe('incomingData', () => {
     for (let i = 0; i < 2; i++) {
       expect(loggerSpy).toHaveBeenNthCalledWith(
         i + 1,
-        '[scan] Incoming-data: btc plain address',
+        '[scan] Incoming-data: BTC chain plain address',
       );
       expect(navigationSpy).toHaveBeenNthCalledWith(i + 1, 'GlobalSelect', {
         context: 'scanner',
@@ -1463,6 +1503,7 @@ describe('incomingData', () => {
             feePerKb: undefined,
             message: '',
             showEVMWalletsAndTokens: false,
+            showSVMWalletsAndTokens: false,
           },
         },
       });
@@ -1472,7 +1513,7 @@ describe('incomingData', () => {
   it('Should handle private keys and redir to PaperWallet page [testnet]', async () => {
     const data = 'cQ8jwsnoGCwfgpbaqUnPy5eC11SCgEbK8GybFjn7R81zdUJCMbh3';
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promiseResult = await store.dispatch(incomingData(data));
     expect(loggerSpy).toHaveBeenCalledWith('[scan] Incoming-data: private key');
@@ -1485,7 +1526,7 @@ describe('incomingData', () => {
   it('Should handle private keys and redir to PaperWallet page [livenet]', async () => {
     const data = 'KxF1dRg147vdwM5v9k74Jz4Qv6Wi1uxQwkWXZ5TwdzspUWz7jA7F';
     const store = configureTestStore({});
-    const loggerSpy = jest.spyOn(logActions, 'info');
+    const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
     const promiseResult = await store.dispatch(incomingData(data));
     expect(loggerSpy).toHaveBeenCalledWith('[scan] Incoming-data: private key');

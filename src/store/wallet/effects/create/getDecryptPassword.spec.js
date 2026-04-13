@@ -6,6 +6,13 @@ import {
 } from '../../../app/app.actions';
 import {checkEncryptPassword} from '../../utils/wallet';
 
+// checkEncryptedKeysForEddsaMigration was added after this test was written.
+// Mock it as a no-op to prevent crashes when tests use fake string keys.
+jest.mock('../../../../utils/helper-methods', () => ({
+  ...jest.requireActual('../../../../utils/helper-methods'),
+  checkEncryptedKeysForEddsaMigration: jest.fn(() => () => Promise.resolve()),
+}));
+
 /**
  * Mock showDecryptPasswordModal and Spy on dismissDecryptPasswordModal
  */
