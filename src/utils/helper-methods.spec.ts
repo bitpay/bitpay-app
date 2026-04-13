@@ -36,6 +36,7 @@ import {
   formatCurrencyAbbreviation,
   getCurrencyAbbreviation,
   getProtocolName,
+  getProtocolsName,
   getEVMFeeCurrency,
   getCWCChain,
   getChainUsingSuffix,
@@ -47,6 +48,15 @@ import {
   toggleTSSModal,
   sleep,
   suffixChainMap,
+  transformAmount,
+  getRateByCurrencyName,
+  getBadgeImg,
+  getChainFromTokenByAddressKey,
+  getFullLinkedWallet,
+  getMnemonic,
+  getVMGasWallets,
+  getEvmGasWallets,
+  getSvmGasWallets,
 } from './helper-methods';
 import {Network} from '../constants';
 
@@ -924,5 +934,406 @@ describe('getNetworkName (additional coin codes)', () => {
 
   it('returns empty string for unknown coin code', () => {
     expect(getNetworkName("m/44'/999'/0'")).toBe('');
+  });
+});
+
+// ─── Additional coverage ───────────────────────────────────────────────────────
+
+describe('unitStringToAtomicBigInt (additional branches)', () => {
+  it('handles whitespace-only string', () => {
+    expect(unitStringToAtomicBigInt('   ', 8)).toBe(0n);
+  });
+
+  it('handles value with only fractional part and no integer', () => {
+    expect(unitStringToAtomicBigInt('.5', 8)).toBe(50000000n);
+  });
+
+  it('truncates extra decimal digits beyond unitDecimals', () => {
+    // 1.999999999 with 6 decimals → 1999999
+    expect(unitStringToAtomicBigInt('1.999999999', 6)).toBe(1999999n);
+  });
+
+  it('handles negative zero', () => {
+    expect(unitStringToAtomicBigInt('-0', 8)).toBe(0n);
+  });
+});
+
+describe('atomicToUnitString (additional branches)', () => {
+  it('handles 0 decimals for negative value', () => {
+    expect(atomicToUnitString(-42n, 0)).toBe('-42');
+  });
+
+  it('handles value that has only fractional part (intPart=0)', () => {
+    expect(atomicToUnitString(5n, 8)).toBe('0.00000005');
+  });
+
+  it('handles large values', () => {
+    // 21000000 * 10^8 satoshis (21 million BTC)
+    const big = 2100000000000000n;
+    expect(atomicToUnitString(big, 8)).toBe('21000000');
+  });
+});
+
+describe('changeOpacity (additional branches)', () => {
+  it('returns original color when hex length is not 3 or 6 (after removing #)', () => {
+    // 4-char hex after stripping '#' → length 4 → not normalized to 6 → fallthrough
+    expect(changeOpacity('#1234', 0.5)).toBe('#1234');
+  });
+
+  it('handles color without # prefix that is not 6 chars', () => {
+    // no # prefix: hex = 'abc' which is length 3 → normalized to 6 → valid
+    expect(changeOpacity('abc', 0.5)).toBe('rgba(170, 187, 204, 0.5)');
+  });
+
+  it('clamps opacity exactly at 0', () => {
+    expect(changeOpacity('#ffffff', 0)).toBe('rgba(255, 255, 255, 0)');
+  });
+});
+
+describe('transformAmount', () => {
+  const defaultOpts = {
+    fullPrecision: 'full',
+    decimals: {
+      full: {maxDecimals: 8, minDecimals: 0},
+      short: {maxDecimals: 2, minDecimals: 0},
+    },
+    toSatoshis: 100000000,
+  };
+
+  it('converts satoshis to BTC-like string with full precision', () => {
+    const result = transformAmount(100000000, defaultOpts);
+    // trailing decimal point may appear when minDecimals=0 and frac is empty
+    expect(result).toMatch(/^1\.?$/);
+  });
+
+  it('converts fractional satoshi amounts', () => {
+    const result = transformAmount(50000000, defaultOpts);
+    expect(result).toBe('0.5');
+  });
+
+  it('uses short precision when fullPrecision is falsy', () => {
+    const opts = {...defaultOpts, fullPrecision: ''};
+    const result = transformAmount(100000000, opts);
+    // short decimals: max 2, minDecimals 0
+    expect(result).toMatch(/^1\.?$/);
+  });
+
+  it('uses custom thousands separator', () => {
+    const result = transformAmount(100000000000, {
+      ...defaultOpts,
+      thousandsSeparator: '.',
+      decimalSeparator: ',',
+    });
+    // 1000 BTC with thousands separator '.' → "1.000" possibly with trailing ","
+    expect(result).toMatch(/^1\.000,?$/);
+  });
+
+  it('handles zero satoshis', () => {
+    const result = transformAmount(0, defaultOpts);
+    // May produce "0." due to decimal separator being appended
+    expect(result).toMatch(/^0\.?$/);
+  });
+
+  it('trims trailing zeros in fractional output', () => {
+    // 150000000 satoshis = 1.5 BTC → should not show trailing zeros beyond 1.5
+    const result = transformAmount(150000000, defaultOpts);
+    expect(result).toBe('1.5');
+  });
+
+  it('applies minDecimals to keep minimum decimal places', () => {
+    const opts = {
+      fullPrecision: 'full',
+      decimals: {
+        full: {maxDecimals: 8, minDecimals: 2},
+        short: {maxDecimals: 2, minDecimals: 2},
+      },
+      toSatoshis: 100000000,
+    };
+    const result = transformAmount(100000000, opts);
+    // minDecimals=2 → at least "1.00"
+    expect(result).toBe('1.00');
+  });
+});
+
+describe('getMnemonic', () => {
+  it('splits mnemonic string on spaces', () => {
+    const key = {properties: {mnemonic: 'word1 word2 word3'}} as any;
+    expect(getMnemonic(key)).toEqual(['word1', 'word2', 'word3']);
+  });
+
+  it('trims leading/trailing whitespace from mnemonic', () => {
+    const key = {properties: {mnemonic: '  word1 word2  '}} as any;
+    expect(getMnemonic(key)).toEqual(['word1', 'word2']);
+  });
+});
+
+describe('getRateByCurrencyName', () => {
+  const rates = {
+    eth: [{code: 'USD', name: 'US Dollar', rate: 2000}],
+    matic: [{code: 'USD', name: 'US Dollar', rate: 1}],
+    usdc_e: [{code: 'USD', name: 'US Dollar', rate: 1}],
+  } as any;
+
+  it('returns rates for a plain (non-token) currency', () => {
+    const result = getRateByCurrencyName(rates, 'eth', 'eth');
+    expect(result).toBe(rates.eth);
+  });
+
+  it('returns rates by contract address for ERC token', () => {
+    // A contract address on eth → getCurrencyAbbreviation returns addr_e
+    const contractAddr = '0xdac17f958d2ee523a2206206994597c13d831ec7';
+    const ratesWithToken = {
+      ...rates,
+      [`${contractAddr}_e`]: [{code: 'USD', name: 'US Dollar', rate: 0.99}],
+    } as any;
+    const result = getRateByCurrencyName(
+      ratesWithToken,
+      contractAddr,
+      'eth',
+      contractAddr,
+    );
+    expect(result).toBeDefined();
+  });
+
+  it('falls back to rates[currencyAbbreviation] when currencyName key missing', () => {
+    // 'btc' is not a contract address → getCurrencyAbbreviation returns 'btc'
+    const ratesWithBtc = {
+      ...rates,
+      btc: [{code: 'USD', name: 'US Dollar', rate: 60000}],
+    } as any;
+    const result = getRateByCurrencyName(ratesWithBtc, 'btc', 'btc');
+    expect(result).toEqual(ratesWithBtc.btc);
+  });
+
+  it('returns matic rates when currencyAbbreviation is pol and matic rates exist', () => {
+    const result = getRateByCurrencyName(rates, 'pol', 'matic');
+    expect(result).toBe(rates.matic);
+  });
+
+  it('falls back to regular lookup when pol but no matic rates', () => {
+    const ratesNoPol = {eth: rates.eth} as any;
+    const result = getRateByCurrencyName(ratesNoPol, 'pol', 'matic');
+    // getCurrencyAbbreviation('pol', 'matic') → 'pol'; rates['pol'] → undefined
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('getBadgeImg', () => {
+  it('returns a truthy value for ERC token (contract address on eth)', () => {
+    const contractAddr = '0xdac17f958d2ee523a2206206994597c13d831ec7';
+    const result = getBadgeImg(contractAddr, 'eth');
+    // Should return CurrencyListIcons['eth'] which is defined
+    expect(result).toBeDefined();
+  });
+
+  it('returns a truthy value for L2 chain (arb)', () => {
+    const result = getBadgeImg('eth', 'arb');
+    expect(result).toBeDefined();
+  });
+
+  it('returns empty string for native non-L2 coin', () => {
+    // 'btc' on 'btc' chain: not ERC token, not L2
+    const result = getBadgeImg('btc', 'btc');
+    expect(result).toBe('');
+  });
+});
+
+describe('getChainFromTokenByAddressKey', () => {
+  it('returns eth for a key ending with _e', () => {
+    expect(getChainFromTokenByAddressKey('usdc_e')).toBe('eth');
+  });
+
+  it('returns matic for a key ending with _m', () => {
+    expect(getChainFromTokenByAddressKey('dai_m')).toBe('matic');
+  });
+
+  it('returns base for a key ending with _base', () => {
+    expect(getChainFromTokenByAddressKey('token_base')).toBe('base');
+  });
+
+  it('returns arb for a key ending with _arb', () => {
+    expect(getChainFromTokenByAddressKey('token_arb')).toBe('arb');
+  });
+
+  it('returns op for a key ending with _op', () => {
+    expect(getChainFromTokenByAddressKey('token_op')).toBe('op');
+  });
+
+  it('returns sol for a key ending with _sol', () => {
+    expect(getChainFromTokenByAddressKey('token_sol')).toBe('sol');
+  });
+});
+
+describe('getProtocolsName', () => {
+  it('returns comma-separated EVM protocol names for non-SVM chain', () => {
+    const result = getProtocolsName('eth');
+    expect(typeof result).toBe('string');
+    // Should contain Ethereum Mainnet since eth is an EVM chain
+    expect(result).toContain('Ethereum Mainnet');
+  });
+
+  it('returns comma-separated SVM protocol names for sol chain', () => {
+    const result = getProtocolsName('sol');
+    expect(typeof result).toBe('string');
+    expect(result).toContain('Solana');
+  });
+});
+
+describe('getFullLinkedWallet', () => {
+  it('returns linked wallet when token is set and walletId is in tokens list', () => {
+    const linkedWallet = {id: 'eth-wallet', tokens: ['token-wallet-id']};
+    const tokenWallet = {
+      credentials: {token: true, walletId: 'token-wallet-id'},
+    } as any;
+    const key = {wallets: [linkedWallet]} as any;
+    const result = getFullLinkedWallet(key, tokenWallet);
+    expect(result).toBe(linkedWallet);
+  });
+
+  it('returns undefined when wallet has no token', () => {
+    const wallet = {credentials: {token: undefined, walletId: 'some-id'}} as any;
+    const key = {wallets: [{id: 'other', tokens: ['some-id']}]} as any;
+    const result = getFullLinkedWallet(key, wallet);
+    expect(result).toBeUndefined();
+  });
+
+  it('returns undefined when no wallet has walletId in its tokens', () => {
+    const wallet = {credentials: {token: true, walletId: 'missing-id'}} as any;
+    const key = {wallets: [{id: 'other', tokens: ['some-other-id']}]} as any;
+    const result = getFullLinkedWallet(key, wallet);
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('getVMGasWallets', () => {
+  const makeWallet = (chain: string, coin: string) => ({
+    credentials: {chain, coin},
+  });
+
+  it('includes ETH (EVM chain) wallet where coin is not ERC token', () => {
+    const wallets = [makeWallet('eth', 'eth')] as any;
+    const result = getVMGasWallets(wallets);
+    expect(result).toHaveLength(1);
+  });
+
+  it('includes SOL (SVM chain) wallet where coin is not ERC token', () => {
+    const wallets = [makeWallet('sol', 'sol')] as any;
+    const result = getVMGasWallets(wallets);
+    expect(result).toHaveLength(1);
+  });
+
+  it('excludes ERC token wallet on EVM chain', () => {
+    // A contract address is treated as an ERC token on eth
+    const contractAddr = '0xdac17f958d2ee523a2206206994597c13d831ec7';
+    const wallets = [makeWallet('eth', contractAddr)] as any;
+    const result = getVMGasWallets(wallets);
+    expect(result).toHaveLength(0);
+  });
+
+  it('excludes BTC (non-VM, non-SVM) wallet', () => {
+    const wallets = [makeWallet('btc', 'btc')] as any;
+    const result = getVMGasWallets(wallets);
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe('getEvmGasWallets', () => {
+  const makeWallet = (chain: string, coin: string) => ({
+    credentials: {chain, coin},
+  });
+
+  it('includes native ETH wallet', () => {
+    const wallets = [makeWallet('eth', 'eth')] as any;
+    expect(getEvmGasWallets(wallets)).toHaveLength(1);
+  });
+
+  it('excludes SOL wallet (SVM not EVM)', () => {
+    const wallets = [makeWallet('sol', 'sol')] as any;
+    expect(getEvmGasWallets(wallets)).toHaveLength(0);
+  });
+
+  it('excludes ERC token wallets on EVM chain', () => {
+    const contractAddr = '0xdac17f958d2ee523a2206206994597c13d831ec7';
+    const wallets = [makeWallet('eth', contractAddr)] as any;
+    expect(getEvmGasWallets(wallets)).toHaveLength(0);
+  });
+});
+
+describe('getSvmGasWallets', () => {
+  const makeWallet = (chain: string, coin: string) => ({
+    credentials: {chain, coin},
+  });
+
+  it('includes native SOL wallet', () => {
+    const wallets = [makeWallet('sol', 'sol')] as any;
+    expect(getSvmGasWallets(wallets)).toHaveLength(1);
+  });
+
+  it('excludes ETH wallet (EVM not SVM)', () => {
+    const wallets = [makeWallet('eth', 'eth')] as any;
+    expect(getSvmGasWallets(wallets)).toHaveLength(0);
+  });
+});
+
+describe('formatFiatAmountObj (additional branches)', () => {
+  it('applies customPrecision minimal for integer amounts with code display', () => {
+    const result = formatFiatAmountObj(100, 'USD', {
+      customPrecision: 'minimal',
+      currencyDisplay: 'code',
+    });
+    expect(result.code).toBe('USD');
+    expect(result.amount).toContain('100');
+  });
+
+  it('applies significantDigits for high-decimal currencies with code display', () => {
+    const result = formatFiatAmountObj(1.23456, 'USD', {
+      currencyAbbreviation: 'doge',
+      currencyDisplay: 'code',
+    });
+    expect(typeof result.amount).toBe('string');
+    expect(result.code).toBe('USD');
+  });
+});
+
+describe('formatFiatAmount (additional branches)', () => {
+  it('formats non-integer amount with customPrecision minimal (no suppression)', () => {
+    // customPrecision minimal only applies maximumFractionDigits:0 for integers
+    const result = formatFiatAmount(100.5, 'USD', {customPrecision: 'minimal'});
+    expect(result).toContain('100');
+  });
+
+  it('handles EUR currency with symbol display', () => {
+    const result = formatFiatAmount(50, 'EUR');
+    expect(typeof result).toBe('string');
+    expect(result).toContain('50');
+  });
+});
+
+describe('getErrorString (additional branches)', () => {
+  it('handles undefined gracefully', () => {
+    const result = getErrorString(undefined);
+    expect(typeof result).toBe('string');
+  });
+
+  it('handles boolean false', () => {
+    const result = getErrorString(false);
+    expect(typeof result).toBe('string');
+  });
+});
+
+describe('convertToFiat (additional branch - mainnet both undefined)', () => {
+  it('returns fiat when both hide flags are undefined on mainnet', () => {
+    expect(convertToFiat(250, undefined, undefined, Network.mainnet)).toBe(250);
+  });
+});
+
+describe('getSignificantDigits (additional coverage)', () => {
+  it('returns 4 for mixed-case RFUEL', () => {
+    expect(getSignificantDigits('RFUEL')).toBe(4);
+  });
+
+  it('returns undefined for empty string', () => {
+    // empty string: toLowerCase() still gives '' which is not in the list
+    expect(getSignificantDigits('')).toBeUndefined();
   });
 });

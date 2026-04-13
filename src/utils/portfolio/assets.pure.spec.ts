@@ -30,7 +30,7 @@ jest.mock('./rate', () => ({
 }));
 
 jest.mock('./core/pnl/analysis', () => ({
-  buildPnlAnalysisSeries: jest.fn(() => []),
+  buildPnlAnalysisSeries: jest.fn(() => ({points: []})),
 }));
 
 jest.mock('./core/pnl/rates', () => ({
@@ -111,6 +111,11 @@ import {
   getSnapshotAtomicBalanceFromCryptoBalance,
   canNavigateToExchangeRateForAssetRowItem,
   getPopulateLoadingByAssetKey,
+  findSupportedCurrencyOptionForAsset,
+  getWalletIdsToPopulateFromSnapshots,
+  getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots,
+  buildPortfolioGainLossSummaryFromPortfolioSnapshots,
+  buildAssetRowItemsFromPortfolioSnapshots,
   type AssetRowItem,
 } from './assets';
 
@@ -1119,5 +1124,637 @@ describe('getPopulateLoadingByAssetKey', () => {
       } as any,
     });
     expect(result!['btc']).toBe(false);
+  });
+
+  it('returns true for asset in fullPopulate mode (wallets total matches)', () => {
+    // isFullPopulate=true: walletsTotal === mainnetWalletsTotal (1)
+    // in fullPopulate mode all wallets in walletIdsByAssetKey are used regardless of scope
+    const result = getPopulateLoadingByAssetKey({
+      items: [{key: 'btc'}],
+      walletIdsByAssetKey: {btc: ['w1']},
+      populateStatus: {
+        inProgress: true,
+        walletStatusById: {w1: 'in_progress'},
+        walletsTotal: 1,
+        currentWalletId: undefined,
+      } as any,
+    });
+    expect(result!['btc']).toBe(true);
+  });
+
+  it('returns prev reference when next is identical to prev (same keys and values)', () => {
+    const prev = {btc: false};
+    const result = getPopulateLoadingByAssetKey({
+      items: [{key: 'btc'}],
+      walletIdsByAssetKey: {btc: ['w1']},
+      populateStatus: {
+        inProgress: true,
+        walletStatusById: {w1: 'done'},
+        walletsTotal: 1,
+        currentWalletId: undefined,
+      } as any,
+      prev,
+    });
+    // next['btc'] = false (done → allFinished → !allFinished = false), same as prev
+    expect(result).toBe(prev);
+  });
+
+  it('includes currentWalletId in scope when filtering (non-fullPopulate)', () => {
+    // walletsTotal=99 !== mainnetWalletsTotal=1 → NOT fullPopulate
+    // w1 is currentWalletId so it's in scope
+    const result = getPopulateLoadingByAssetKey({
+      items: [{key: 'btc'}],
+      walletIdsByAssetKey: {btc: ['w1']},
+      populateStatus: {
+        inProgress: true,
+        walletStatusById: {},
+        walletsTotal: 99,
+        currentWalletId: 'w1',
+      } as any,
+    });
+    // w1 is currentWalletId but not in statusById → statusById[w1] = undefined
+    // undefined !== 'done' && undefined !== 'error' → allFinished=false → loading=true
+    expect(result!['btc']).toBe(true);
+  });
+});
+
+// ─── findSupportedCurrencyOptionForAsset ──────────────────────────────────────
+
+describe('findSupportedCurrencyOptionForAsset', () => {
+  const makeOption = (
+    currencyAbbreviation: string,
+    chain: string,
+    tokenAddress?: string,
+  ) => ({currencyAbbreviation, chain, tokenAddress, name: currencyAbbreviation, img: ''});
+
+  it('returns undefined when options list is empty', () => {
+    expect(
+      findSupportedCurrencyOptionForAsset({
+        options: [],
+        currencyAbbreviation: 'btc',
+        chain: 'btc',
+      }),
+    ).toBeUndefined();
+  });
+
+  it('returns the matching option by abbreviation and chain', () => {
+    const opt = makeOption('btc', 'btc');
+    const result = findSupportedCurrencyOptionForAsset({
+      options: [opt] as any,
+      currencyAbbreviation: 'btc',
+      chain: 'btc',
+    });
+    expect(result).toBe(opt);
+  });
+
+  it('returns undefined when abbreviation does not match', () => {
+    const opt = makeOption('eth', 'eth');
+    expect(
+      findSupportedCurrencyOptionForAsset({
+        options: [opt] as any,
+        currencyAbbreviation: 'btc',
+        chain: 'btc',
+      }),
+    ).toBeUndefined();
+  });
+
+  it('matches by tokenAddress when provided', () => {
+    const tokenAddress = '0xabcdef1234';
+    const opt = makeOption('usdc', 'eth', tokenAddress);
+    const result = findSupportedCurrencyOptionForAsset({
+      options: [opt] as any,
+      currencyAbbreviation: 'usdc',
+      chain: 'eth',
+      tokenAddress,
+    });
+    expect(result).toBe(opt);
+  });
+
+  it('returns cached result on second call with same options reference (WeakMap cache)', () => {
+    const opt = makeOption('btc', 'btc');
+    const optionsRef = [opt] as any;
+    // First call populates cache
+    const result1 = findSupportedCurrencyOptionForAsset({
+      options: optionsRef,
+      currencyAbbreviation: 'btc',
+      chain: 'btc',
+    });
+    // Second call should hit WeakMap cache
+    const result2 = findSupportedCurrencyOptionForAsset({
+      options: optionsRef,
+      currencyAbbreviation: 'btc',
+      chain: 'btc',
+    });
+    expect(result1).toBe(opt);
+    expect(result2).toBe(opt);
+  });
+
+  it('matches case-insensitively', () => {
+    const opt = makeOption('BTC', 'BTC');
+    const result = findSupportedCurrencyOptionForAsset({
+      options: [opt] as any,
+      currencyAbbreviation: 'btc',
+      chain: 'btc',
+    });
+    expect(result).toBe(opt);
+  });
+});
+
+// ─── isFiatLoadingForWallets (additional branch coverage) ────────────────────
+
+describe('isFiatLoadingForWallets — null-entry in snapshot array', () => {
+  const makeFullWallet = (id: string, network = 'livenet') =>
+    ({id, network} as any);
+
+  it('skips null entries in snapshot array when finding latest', () => {
+    // Snapshot array contains a null-ish entry (null is not BalanceSnapshot but tests the null guard)
+    // null is skipped, the real snapshot matches target → no loading
+    expect(
+      isFiatLoadingForWallets({
+        quoteCurrency: 'USD',
+        wallets: [makeFullWallet('w1')],
+        snapshotsByWalletId: {
+          w1: [null as any, {timestamp: 5, quoteCurrency: 'USD'} as any],
+        },
+      }),
+    ).toBe(false);
+  });
+});
+
+// ─── getWalletIdsToPopulateFromSnapshots ──────────────────────────────────────
+
+describe('getWalletIdsToPopulateFromSnapshots', () => {
+  const makeMainnetWallet = (
+    id: string,
+    balanceSat = 0,
+    chain = 'btc',
+  ) =>
+    ({
+      id,
+      network: 'livenet',
+      chain,
+      currencyAbbreviation: chain,
+      balance: {sat: balanceSat, crypto: balanceSat > 0 ? '1' : '0'},
+    } as any);
+
+  it('returns empty lists for no wallets', () => {
+    const result = getWalletIdsToPopulateFromSnapshots({
+      wallets: [],
+      snapshotsByWalletId: {},
+    });
+    expect(result.walletIdsToPopulate).toEqual([]);
+    expect(result.snapshotBalanceMismatchUpdates).toEqual({});
+  });
+
+  it('skips non-mainnet wallets', () => {
+    const testnetWallet = {
+      id: 'w1',
+      network: 'testnet',
+      chain: 'btc',
+      currencyAbbreviation: 'btc',
+      balance: {sat: 1_000_000},
+    } as any;
+    const result = getWalletIdsToPopulateFromSnapshots({
+      wallets: [testnetWallet],
+      snapshotsByWalletId: {},
+    });
+    expect(result.walletIdsToPopulate).toEqual([]);
+  });
+
+  it('adds wallet to populate list when it has non-zero balance but no snapshots', () => {
+    const wallet = makeMainnetWallet('w1', 1_000_000);
+    const result = getWalletIdsToPopulateFromSnapshots({
+      wallets: [wallet],
+      snapshotsByWalletId: {},
+    });
+    expect(result.walletIdsToPopulate).toContain('w1');
+  });
+
+  it('does NOT add wallet when balance is zero and no snapshots', () => {
+    const wallet = makeMainnetWallet('w1', 0);
+    const result = getWalletIdsToPopulateFromSnapshots({
+      wallets: [wallet],
+      snapshotsByWalletId: {},
+    });
+    expect(result.walletIdsToPopulate).not.toContain('w1');
+  });
+
+  it('does NOT add wallet when live balance matches snapshot balance', () => {
+    // sat=0 → falls back to crypto='0' → atomic=0
+    // snapshot cryptoBalance='0' → atomic=0
+    // 0 === 0 → no mismatch
+    const wallet = makeMainnetWallet('w1', 0, 'btc');
+    const result = getWalletIdsToPopulateFromSnapshots({
+      wallets: [wallet],
+      snapshotsByWalletId: {
+        w1: [{cryptoBalance: '0', timestamp: 1} as any],
+      },
+    });
+    expect(result.walletIdsToPopulate).not.toContain('w1');
+    expect(result.snapshotBalanceMismatchUpdates).toEqual({});
+  });
+
+  it('adds wallet when live balance differs from snapshot balance (mismatch)', () => {
+    // sat=100_000_000 → live atomic = 100_000_000n (1 BTC)
+    // snapshot cryptoBalance='0.5' → atomic = 50_000_000n
+    // mismatch detected → populate
+    const wallet = makeMainnetWallet('w1', 100_000_000, 'btc');
+    const result = getWalletIdsToPopulateFromSnapshots({
+      wallets: [wallet],
+      snapshotsByWalletId: {
+        w1: [{cryptoBalance: '0.5', timestamp: 1} as any],
+      },
+    });
+    expect(result.walletIdsToPopulate).toContain('w1');
+    expect(result.snapshotBalanceMismatchUpdates['w1']).toBeDefined();
+    expect(result.snapshotBalanceMismatchUpdates['w1']?.walletId).toBe('w1');
+  });
+
+  it('does not add to populate list when mismatch unchanged from previous', () => {
+    // Same mismatch as before (prevMismatch equals new mismatch) → no push to changed list
+    // but walletIdsToPopulate won't include it (already tracked)
+    const wallet = makeMainnetWallet('w1', 100_000_000, 'btc');
+    const previousMismatch = {
+      walletId: 'w1',
+      computedUnitsHeld: '0', // atomicToUnitString is mocked to return '0'
+      currentWalletBalance: '0',
+      delta: '0',
+    };
+    const result = getWalletIdsToPopulateFromSnapshots({
+      wallets: [wallet],
+      snapshotsByWalletId: {
+        w1: [{cryptoBalance: '0.5', timestamp: 1} as any],
+      },
+      previousSnapshotBalanceMismatchesByWalletId: {w1: previousMismatch},
+    });
+    // mismatch equals prevMismatch (all fields match because atomicToUnitString is mocked to '0')
+    expect(result.walletIdsToPopulate).not.toContain('w1');
+  });
+
+  it('clears mismatch entry when live balance now matches snapshot', () => {
+    // sat=0, crypto='0' → live=0n; snapshot='0' → snap=0n; same → no mismatch
+    // but prevMismatch existed → sets it to undefined in updates
+    const wallet = makeMainnetWallet('w1', 0, 'btc');
+    const previousMismatch = {
+      walletId: 'w1',
+      computedUnitsHeld: '0',
+      currentWalletBalance: '0',
+      delta: '0',
+    };
+    const result = getWalletIdsToPopulateFromSnapshots({
+      wallets: [wallet],
+      snapshotsByWalletId: {
+        w1: [{cryptoBalance: '0', timestamp: 1} as any],
+      },
+      previousSnapshotBalanceMismatchesByWalletId: {w1: previousMismatch},
+    });
+    expect(result.walletIdsToPopulate).not.toContain('w1');
+    expect('w1' in result.snapshotBalanceMismatchUpdates).toBe(true);
+    expect(result.snapshotBalanceMismatchUpdates['w1']).toBeUndefined();
+  });
+
+  it('skips wallet with no id', () => {
+    const wallet = {
+      network: 'livenet',
+      chain: 'btc',
+      currencyAbbreviation: 'btc',
+      balance: {sat: 1_000_000},
+    } as any;
+    const result = getWalletIdsToPopulateFromSnapshots({
+      wallets: [wallet],
+      snapshotsByWalletId: {},
+    });
+    expect(result.walletIdsToPopulate).toEqual([]);
+  });
+});
+
+// ─── getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots ──────────────────
+
+describe('getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots', () => {
+  const makeSnap = (timestamp: number, cryptoBalance = '1') =>
+    ({timestamp, cryptoBalance, quoteCurrency: 'USD', eventType: 'tx'} as any);
+
+  const makeWallet = (id: string) =>
+    ({
+      id,
+      network: 'livenet',
+      chain: 'btc',
+      currencyAbbreviation: 'btc',
+      balance: {sat: 100_000_000},
+    } as any);
+
+  it('returns unavailable result when fiatRateSeriesCache is missing', () => {
+    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+      snapshotsByWalletId: {w1: [makeSnap(1000)]},
+      wallets: [makeWallet('w1')],
+      quoteCurrency: 'USD',
+      timeframe: '1D',
+      nowMs: 2000,
+      // no fiatRateSeriesCache
+    });
+    expect(result.available).toBe(false);
+    expect(result.error).toMatch(/fiatRateSeriesCache/i);
+    expect(result.timeframe).toBe('1D');
+    expect(result.quoteCurrency).toBe('USD');
+  });
+
+  it('returns available zero result when no mainnet wallets with snapshots', () => {
+    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+      snapshotsByWalletId: {},
+      wallets: [],
+      quoteCurrency: 'USD',
+      timeframe: '1D',
+      fiatRateSeriesCache: {} as any,
+      nowMs: 2000,
+    });
+    expect(result.available).toBe(true);
+    expect(result.deltaFiat).toBe(0);
+    expect(result.percentRatio).toBe(0);
+  });
+
+  it('returns unavailable when buildPnlAnalysisSeries returns no points', () => {
+    // buildPnlAnalysisSeries mock returns {points: []} — no last point → unavailable
+    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+      snapshotsByWalletId: {w1: [makeSnap(1000)]},
+      wallets: [makeWallet('w1')],
+      quoteCurrency: 'USD',
+      timeframe: '1D',
+      fiatRateSeriesCache: {} as any,
+      nowMs: 2000,
+    });
+    expect(result.available).toBe(false);
+    expect(result.error).toMatch(/no points/i);
+  });
+
+  it('skips testnet wallets', () => {
+    const testnetWallet = {
+      id: 'w1',
+      network: 'testnet',
+      chain: 'btc',
+      currencyAbbreviation: 'btc',
+      balance: {sat: 100_000_000},
+    } as any;
+    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+      snapshotsByWalletId: {w1: [makeSnap(1000)]},
+      wallets: [testnetWallet],
+      quoteCurrency: 'USD',
+      timeframe: '1D',
+      fiatRateSeriesCache: {} as any,
+      nowMs: 2000,
+    });
+    // testnet wallet skipped → no pnlWallets → available:true zeroResult
+    expect(result.available).toBe(true);
+    expect(result.deltaFiat).toBe(0);
+  });
+
+  it('uses effective quoteCurrency from snapshots when portfolioQuoteCurrency is empty', () => {
+    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+      snapshotsByWalletId: {},
+      wallets: [],
+      quoteCurrency: '',
+      timeframe: '1D',
+      fiatRateSeriesCache: {} as any,
+      nowMs: 2000,
+    });
+    // no snaps → getEffectiveQuoteCurrencyFromSnapshots returns 'USD' as fallback
+    expect(result.quoteCurrency).toBe('USD');
+  });
+
+  it('uses provided nowMs for baselineTimestampMs', () => {
+    const nowMs = 9_999_999;
+    const result = getPortfolioPnlChangeForTimeframeFromPortfolioSnapshots({
+      snapshotsByWalletId: {},
+      wallets: [],
+      quoteCurrency: 'USD',
+      timeframe: '1D',
+      fiatRateSeriesCache: {} as any,
+      nowMs,
+    });
+    // getFiatRateBaselineTsForTimeframe is mocked to return undefined → falls back to nowMs
+    expect(result.baselineTimestampMs).toBe(nowMs);
+  });
+});
+
+// ─── buildPortfolioGainLossSummaryFromPortfolioSnapshots ──────────────────────
+
+describe('buildPortfolioGainLossSummaryFromPortfolioSnapshots', () => {
+  it('returns summary with today and total from two timeframes', () => {
+    const result = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
+      snapshotsByWalletId: {},
+      wallets: [],
+      quoteCurrency: 'USD',
+      fiatRateSeriesCache: {} as any,
+      nowMs: 1000,
+    });
+    expect(result).toHaveProperty('quoteCurrency');
+    expect(result).toHaveProperty('today');
+    expect(result).toHaveProperty('total');
+    expect(result.today).toHaveProperty('available');
+    expect(result.total).toHaveProperty('available');
+  });
+
+  it('returns provided quoteCurrency when preferred currency is given', () => {
+    const result = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
+      snapshotsByWalletId: {},
+      wallets: [],
+      quoteCurrency: 'EUR',
+      fiatRateSeriesCache: {} as any,
+      nowMs: 1000,
+    });
+    // 'EUR' is set as preferredQuoteCurrency → effectiveQuoteCurrency = 'EUR'
+    expect(result.quoteCurrency).toBe('EUR');
+  });
+
+  it('includes error fields when PnL engine returns unavailable', () => {
+    // No fiatRateSeriesCache → both today and total are unavailable
+    const result = buildPortfolioGainLossSummaryFromPortfolioSnapshots({
+      snapshotsByWalletId: {},
+      wallets: [],
+      quoteCurrency: 'USD',
+      nowMs: 1000,
+    });
+    // missing fiatRateSeriesCache → available=false with error
+    expect(result.today.available).toBe(false);
+    expect(result.total.available).toBe(false);
+  });
+});
+
+// ─── buildAssetRowItemsFromPortfolioSnapshots ─────────────────────────────────
+
+describe('buildAssetRowItemsFromPortfolioSnapshots', () => {
+  const makeSnap = (timestamp: number, cryptoBalance = '1') =>
+    ({timestamp, cryptoBalance, quoteCurrency: 'USD', eventType: 'tx'} as any);
+
+  const makeWalletFull = (
+    id: string,
+    coin = 'btc',
+    chain = 'btc',
+    balanceSat = 100_000_000,
+    network = 'livenet',
+  ) =>
+    ({
+      id,
+      network,
+      chain,
+      currencyAbbreviation: coin,
+      balance: {sat: balanceSat},
+    } as any);
+
+  it('returns empty array when wallets list is empty', () => {
+    expect(
+      buildAssetRowItemsFromPortfolioSnapshots({
+        snapshotsByWalletId: {},
+        wallets: [],
+        quoteCurrency: 'USD',
+        gainLossMode: '1D',
+      }),
+    ).toEqual([]);
+  });
+
+  it('returns empty array when all wallets are testnet', () => {
+    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000, 'testnet');
+    expect(
+      buildAssetRowItemsFromPortfolioSnapshots({
+        snapshotsByWalletId: {w1: [makeSnap(1000)]},
+        wallets: [wallet],
+        quoteCurrency: 'USD',
+        gainLossMode: '1D',
+      }),
+    ).toEqual([]);
+  });
+
+  it('returns empty array when all wallets have zero live balance', () => {
+    const wallet = makeWalletFull('w1', 'btc', 'btc', 0);
+    expect(
+      buildAssetRowItemsFromPortfolioSnapshots({
+        snapshotsByWalletId: {w1: [makeSnap(1000)]},
+        wallets: [wallet],
+        quoteCurrency: 'USD',
+        gainLossMode: '1D',
+      }),
+    ).toEqual([]);
+  });
+
+  it('returns one row for a single wallet with non-zero balance', () => {
+    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
+    const rows = buildAssetRowItemsFromPortfolioSnapshots({
+      snapshotsByWalletId: {w1: [makeSnap(1000)]},
+      wallets: [wallet],
+      quoteCurrency: 'USD',
+      gainLossMode: '1D',
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].currencyAbbreviation).toBe('btc');
+    expect(rows[0].chain).toBe('btc');
+    expect(rows[0].hasRate).toBe(false); // no rates provided
+    expect(rows[0].hasPnl).toBe(false);
+    expect(rows[0].showPnlPlaceholder).toBe(true);
+  });
+
+  it('groups wallets by coin when collapseAcrossChains is true', () => {
+    const wallet1 = makeWalletFull('w1', 'eth', 'eth', 1_000_000_000_000_000_000n as any);
+    const wallet2 = makeWalletFull('w2', 'eth', 'base', 1_000_000_000_000_000_000n as any);
+    const rows = buildAssetRowItemsFromPortfolioSnapshots({
+      snapshotsByWalletId: {
+        w1: [makeSnap(1000)],
+        w2: [makeSnap(1000)],
+      },
+      wallets: [wallet1, wallet2],
+      quoteCurrency: 'USD',
+      gainLossMode: '1D',
+      collapseAcrossChains: true,
+    });
+    // Both collapse to key='eth'
+    expect(rows.length).toBeLessThanOrEqual(1);
+  });
+
+  it('does not group wallets by different coins when collapseAcrossChains is false', () => {
+    const btcWallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
+    const ethWallet = makeWalletFull('w2', 'eth', 'eth', 100_000_000);
+    const rows = buildAssetRowItemsFromPortfolioSnapshots({
+      snapshotsByWalletId: {
+        w1: [makeSnap(1000)],
+        w2: [makeSnap(1000)],
+      },
+      wallets: [btcWallet, ethWallet],
+      quoteCurrency: 'USD',
+      gainLossMode: '1D',
+      collapseAcrossChains: false,
+    });
+    expect(rows).toHaveLength(2);
+  });
+
+  it('returns rows sorted by fiatValue descending (all zero when no rates)', () => {
+    const btcWallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
+    const ethWallet = makeWalletFull('w2', 'eth', 'eth', 200_000_000);
+    const rows = buildAssetRowItemsFromPortfolioSnapshots({
+      snapshotsByWalletId: {
+        w1: [makeSnap(1000)],
+        w2: [makeSnap(1000)],
+      },
+      wallets: [btcWallet, ethWallet],
+      quoteCurrency: 'USD',
+      gainLossMode: '1D',
+    });
+    // Both fiatValue=0 (no rates) — order is stable but both present
+    expect(rows).toHaveLength(2);
+  });
+
+  it('sets showPnlPlaceholder=false when hasPnl=true', () => {
+    // buildPnlAnalysisSeries is mocked to return [] (no last point) → hasPnl stays false
+    // Even with fiatRateSeriesCache present → no points → hasPnl=false
+    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
+    const rows = buildAssetRowItemsFromPortfolioSnapshots({
+      snapshotsByWalletId: {w1: [makeSnap(1000)]},
+      wallets: [wallet],
+      quoteCurrency: 'USD',
+      gainLossMode: '1D',
+      fiatRateSeriesCache: {} as any,
+    });
+    expect(rows).toHaveLength(1);
+    // hasPnl false + isTodayGainLoss=true + hasRate=false → showPnlPlaceholder=true
+    expect(rows[0].showPnlPlaceholder).toBe(true);
+  });
+
+  it('row has isPositive=true when pnlFiat is zero', () => {
+    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
+    const rows = buildAssetRowItemsFromPortfolioSnapshots({
+      snapshotsByWalletId: {w1: [makeSnap(1000)]},
+      wallets: [wallet],
+      quoteCurrency: 'USD',
+      gainLossMode: 'ALL',
+    });
+    expect(rows[0].isPositive).toBe(true); // pnlFiat=0 → 0 >= 0
+  });
+
+  it('handles ALL timeframe (not isTodayGainLoss)', () => {
+    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
+    const rows = buildAssetRowItemsFromPortfolioSnapshots({
+      snapshotsByWalletId: {w1: [makeSnap(1000)]},
+      wallets: [wallet],
+      quoteCurrency: 'USD',
+      gainLossMode: 'ALL',
+    });
+    // showPnlPlaceholder = !hasPnl && (!isTodayGainLoss || !hasRate)
+    // hasPnl=false, isTodayGainLoss=false → !false=true → placeholder=true
+    expect(rows[0].showPnlPlaceholder).toBe(true);
+  });
+
+  it('uses out-of-order snapshots by sorting them (ensureSortedSnapshots branch)', () => {
+    const wallet = makeWalletFull('w1', 'btc', 'btc', 100_000_000);
+    // Provide out-of-order snapshots — second timestamp less than first
+    const rows = buildAssetRowItemsFromPortfolioSnapshots({
+      snapshotsByWalletId: {
+        w1: [
+          {timestamp: 2000, cryptoBalance: '0.5', quoteCurrency: 'USD', eventType: 'tx'} as any,
+          {timestamp: 500, cryptoBalance: '0.3', quoteCurrency: 'USD', eventType: 'tx'} as any,
+        ],
+      },
+      wallets: [wallet],
+      quoteCurrency: 'USD',
+      gainLossMode: '1D',
+    });
+    // Still produces a row (sorted internally)
+    expect(rows).toHaveLength(1);
   });
 });

@@ -2,7 +2,7 @@ import * as appActions from '../app/app.actions';
 import {logManager} from '../../managers/LogManager';
 import * as Root from '../../Root';
 import * as PayPro from '../wallet/effects/paypro/paypro';
-import {incomingData} from './scan.effects';
+import {incomingData, setBuyerProvidedEmail, goToAmount} from './scan.effects';
 import configureTestStore from '@test/store';
 import axios from 'axios';
 import {BwcProvider} from '@/lib/bwc';
@@ -1535,5 +1535,429 @@ describe('incomingData', () => {
     expect(navigationSpy).toHaveBeenNthCalledWith(1, 'PaperWallet', {
       scannedPrivateKey: 'KxF1dRg147vdwM5v9k74Jz4Qv6Wi1uxQwkWXZ5TwdzspUWz7jA7F',
     });
+  });
+
+  it('Should return false for unrecognized data', async () => {
+    const data = 'this is not a valid uri or address';
+    const store = configureTestStore({});
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(false);
+  });
+
+  it('Should not handle SOL plain address when @solana/kit is mocked (IsValidSVMAddress returns false)', async () => {
+    // @solana/kit is mocked as {} in tests — the `address()` function is not present.
+    // SolValidation.validateAddress() therefore throws and returns false.
+    // So a raw Solana address (44-char base58) is unrecognized by incomingData.
+    const data = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+    const store = configureTestStore({});
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(false);
+  });
+
+  it('Should handle ARB URI as address without amount', async () => {
+    // ARB validation uses regex /arbitrum/i, so the URI prefix must be "arbitrum:"
+    // currency is 'eth' and BitpaySupportedEvmCoins['eth'] is truthy → showEVMWalletsAndTokens: true
+    const data = ['arbitrum:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd'];
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+    const promises: any[] = [];
+    data.forEach(element =>
+      promises.push(store.dispatch(incomingData(element))),
+    );
+    const promisesResult = await Promise.all(promises);
+    expect(promisesResult).toStrictEqual([true]);
+    expect(loggerSpy).toHaveBeenNthCalledWith(1, '[scan] Incoming-data: Arb URI');
+    expect(navigationSpy).toHaveBeenNthCalledWith(1, 'GlobalSelect', {
+      context: 'scanner',
+      recipient: {
+        address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
+        chain: 'arb',
+        currency: 'eth',
+        opts: {
+          showEVMWalletsAndTokens: true, // eth is in BitpaySupportedEvmCoins
+          showSVMWalletsAndTokens: false,
+          feePerKb: undefined,
+          message: '',
+        },
+        type: 'address',
+      },
+    });
+  });
+
+  it('Should handle BASE URI as address without amount', async () => {
+    // BASE validation uses regex /base/i, so "base:" prefix works
+    // currency is 'eth' and BitpaySupportedEvmCoins['eth'] is truthy → showEVMWalletsAndTokens: true
+    const data = ['base:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd'];
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+    const promises: any[] = [];
+    data.forEach(element =>
+      promises.push(store.dispatch(incomingData(element))),
+    );
+    const promisesResult = await Promise.all(promises);
+    expect(promisesResult).toStrictEqual([true]);
+    expect(loggerSpy).toHaveBeenNthCalledWith(1, '[scan] Incoming-data: Base URI');
+    expect(navigationSpy).toHaveBeenNthCalledWith(1, 'GlobalSelect', {
+      context: 'scanner',
+      recipient: {
+        address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
+        chain: 'base',
+        currency: 'eth',
+        opts: {
+          showEVMWalletsAndTokens: true, // eth is in BitpaySupportedEvmCoins
+          showSVMWalletsAndTokens: false,
+          feePerKb: undefined,
+          message: '',
+        },
+        type: 'address',
+      },
+    });
+  });
+
+  it('Should handle OP URI as address without amount', async () => {
+    // OP validation uses regex /optimism/i, so "optimism:" prefix is needed
+    // currency is 'eth' and BitpaySupportedEvmCoins['eth'] is truthy → showEVMWalletsAndTokens: true
+    const data = ['optimism:0xb506c911deE6379e3d4c4d0F4A429a70523960Fd'];
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationSpy = jest.spyOn(Root.navigationRef, 'navigate');
+    const promises: any[] = [];
+    data.forEach(element =>
+      promises.push(store.dispatch(incomingData(element))),
+    );
+    const promisesResult = await Promise.all(promises);
+    expect(promisesResult).toStrictEqual([true]);
+    expect(loggerSpy).toHaveBeenNthCalledWith(1, '[scan] Incoming-data: Op URI');
+    expect(navigationSpy).toHaveBeenNthCalledWith(1, 'GlobalSelect', {
+      context: 'scanner',
+      recipient: {
+        address: '0xb506c911deE6379e3d4c4d0F4A429a70523960Fd',
+        chain: 'op',
+        currency: 'eth',
+        opts: {
+          showEVMWalletsAndTokens: true, // eth is in BitpaySupportedEvmCoins
+          showSVMWalletsAndTokens: false,
+          feePerKb: undefined,
+          message: '',
+        },
+        type: 'address',
+      },
+    });
+  });
+
+  it('Should handle SolanaPay URI (solana: prefix intercepts IsValidSolUri)', async () => {
+    // solana: URIs always match IsValidSolanaPay when the address is valid (PublicKey mock never throws),
+    // so they are dispatched to handleSolanaPay, not handleSolUri
+    const data = ['solana:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'];
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const promises: any[] = [];
+    data.forEach(element =>
+      promises.push(store.dispatch(incomingData(element))),
+    );
+    const promisesResult = await Promise.all(promises);
+    expect(promisesResult).toStrictEqual([true]);
+    expect(loggerSpy).toHaveBeenNthCalledWith(1, '[scan] Incoming-data: SolanaPay URI');
+  });
+
+  it('Should handle buyCrypto URI and reset navigation', async () => {
+    const data = 'bitpay://buy?coin=btc&chain=btc&amount=100';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Incoming-data (redirect): Buy crypto pre-set'),
+    );
+    expect(navigationResetSpy).toHaveBeenCalled();
+  });
+
+  it('Should handle sellCrypto URI and reset navigation', async () => {
+    const data = 'bitpay://sell?coin=btc&chain=btc&amount=100';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Incoming-data (redirect): Sell crypto pre-set'),
+    );
+    expect(navigationResetSpy).toHaveBeenCalled();
+  });
+
+  it('Should handle swapCrypto URI and reset navigation', async () => {
+    const data = 'bitpay://swap?partner=thorswap';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Incoming-data (redirect): Swap crypto pre-set'),
+    );
+    expect(navigationResetSpy).toHaveBeenCalled();
+  });
+
+  it('Should handle banxa URI that is cancelled — early return without navigation', async () => {
+    const data = 'bitpay://banxaCancelled?something=1';
+    const store = configureTestStore({});
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(navigationResetSpy).not.toHaveBeenCalled();
+  });
+
+  it('Should handle banxa URI with no externalId — logs warn and returns early', async () => {
+    const data = 'bitpay://banxa?someOtherParam=123';
+    const store = configureTestStore({});
+    const loggerWarnSpy = jest.spyOn(logManager, 'warn');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'No banxaExternalId present. Do not redir',
+    );
+    expect(navigationResetSpy).not.toHaveBeenCalled();
+  });
+
+  it('Should handle banxa URI with externalId and reset navigation', async () => {
+    const data = 'bitpay://banxa?externalId=abc123&orderStatus=pending';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Incoming-data (redirect): Banxa URL'),
+    );
+    expect(navigationResetSpy).toHaveBeenCalled();
+  });
+
+  it('Should handle moonpay URI with no externalId — logs warn and returns early', async () => {
+    const data = 'bitpay://moonpay?someOtherParam=123';
+    const store = configureTestStore({});
+    const loggerWarnSpy = jest.spyOn(logManager, 'warn');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'No externalId present. Do not redir',
+    );
+    expect(navigationResetSpy).not.toHaveBeenCalled();
+  });
+
+  it('Should handle moonpay buy URI with externalId and reset navigation', async () => {
+    const data =
+      'bitpay://moonpay?externalId=ext123&transactionId=tx456&transactionStatus=completed';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Incoming-data (redirect): Moonpay URL'),
+    );
+    expect(navigationResetSpy).toHaveBeenCalled();
+  });
+
+  it('Should handle ramp URI with no rampExternalId — logs warn and returns early', async () => {
+    const data = 'bitpay://ramp?someOtherParam=123';
+    const store = configureTestStore({});
+    const loggerWarnSpy = jest.spyOn(logManager, 'warn');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'No rampExternalId present. Do not redir',
+    );
+    expect(navigationResetSpy).not.toHaveBeenCalled();
+  });
+
+  it('Should handle ramp URI with rampExternalId and reset navigation', async () => {
+    const data = 'bitpay://ramp?rampExternalId=ramp123&walletId=w1&status=success';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Incoming-data (redirect): Ramp URL'),
+    );
+    expect(navigationResetSpy).toHaveBeenCalled();
+  });
+
+  it('Should handle sardine URI with no sardineExternalId — logs warn and returns early', async () => {
+    const data = 'bitpay://sardine?someOtherParam=123';
+    const store = configureTestStore({});
+    const loggerWarnSpy = jest.spyOn(logManager, 'warn');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'No sardineExternalId present. Do not redir',
+    );
+    expect(navigationResetSpy).not.toHaveBeenCalled();
+  });
+
+  it('Should handle simplex URI with no paymentId (buy flow) — logs warn and returns early', async () => {
+    const data = 'bitpay://simplex?someOtherParam=123';
+    const store = configureTestStore({});
+    const loggerWarnSpy = jest.spyOn(logManager, 'warn');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'No paymentId present. Do not redir',
+    );
+    expect(navigationResetSpy).not.toHaveBeenCalled();
+  });
+
+  it('Should handle simplex buy URI with paymentId and reset navigation', async () => {
+    const data =
+      'bitpay://simplex?paymentId=pay123&quoteId=q456&userId=u789&success=true';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Incoming-data (redirect): Simplex URL'),
+    );
+    expect(navigationResetSpy).toHaveBeenCalled();
+  });
+
+  it('Should handle transak URI with no transakExternalId — logs warn and returns early', async () => {
+    const data = 'bitpay://transak?someOtherParam=123';
+    const store = configureTestStore({});
+    const loggerWarnSpy = jest.spyOn(logManager, 'warn');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'No transakExternalId present. Do not redir',
+    );
+    expect(navigationResetSpy).not.toHaveBeenCalled();
+  });
+
+  it('Should handle transak URI with transakExternalId and reset navigation', async () => {
+    const data =
+      'bitpay://transak?partnerOrderId=ord123&orderId=t456&status=completed';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Incoming-data (redirect): Transak URL'),
+    );
+    expect(navigationResetSpy).toHaveBeenCalled();
+  });
+
+  it('Should handle AddKey path URI and reset navigation', async () => {
+    const data = 'bitpay://addKey';
+    const store = configureTestStore({});
+    const loggerSpy = jest.spyOn(logManager, 'info');
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    expect(loggerSpy).toHaveBeenCalledWith(
+      '[scan] Incoming-data: Go to Add key path',
+      data,
+    );
+    expect(navigationResetSpy).toHaveBeenCalled();
+  });
+
+  it('Should handle buyCrypto URI with non-UTXO coin (no chain) — coin becomes undefined', async () => {
+    // eth is not a UTXO chain, so without chain param the coin should be dropped
+    const data = 'bitpay://buy?coin=eth&amount=50';
+    const store = configureTestStore({});
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    const resetCall = navigationResetSpy.mock.calls[0][0] as any;
+    const params = resetCall?.routes?.[1]?.params;
+    expect(params?.currencyAbbreviation).toBeUndefined();
+  });
+
+  it('Should handle sellCrypto URI with UTXO coin but no chain — chain becomes coin', async () => {
+    const data = 'bitpay://sell?coin=btc&amount=50';
+    const store = configureTestStore({});
+    const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');
+    const promiseResult = await store.dispatch(incomingData(data));
+    expect(promiseResult).toBe(true);
+    const resetCall = navigationResetSpy.mock.calls[0][0] as any;
+    const params = resetCall?.routes?.[1]?.params;
+    expect(params?.chain).toBe('btc');
+  });
+});
+
+describe('setBuyerProvidedEmail', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('Should resolve and navigate to PayPro when status is success', async () => {
+    const invoiceUrl = 'https://bitpay.com/i/TestInvoiceId123';
+    const email = 'test@example.com';
+
+    const mockPayProOptions: PayPro.PayProOptions = {
+      paymentId: '10',
+      time: '10',
+      expires: '2019-11-05T16:29:31.754Z',
+      memo: 'test memo',
+      payProUrl: 'https://bitpay.com/i/TestInvoiceId123',
+      paymentOptions: [],
+      verified: true,
+    };
+
+    const store = configureTestStore({});
+
+    (axios.post as jest.Mock).mockResolvedValue({
+      data: {status: 'success'},
+    });
+
+    const payproSpy = jest.spyOn(PayPro, 'GetPayProOptions');
+    (
+      payproSpy as jest.MockedFunction<typeof PayPro.GetPayProOptions>
+    ).mockImplementation(() => () => Promise.resolve(mockPayProOptions));
+
+    (axios.get as jest.Mock).mockResolvedValue({
+      data: {data: {}},
+    });
+
+    await expect(
+      store.dispatch(setBuyerProvidedEmail(invoiceUrl, email)),
+    ).resolves.toBeUndefined();
+  });
+
+  it('Should reject when status is not success', async () => {
+    const invoiceUrl = 'https://bitpay.com/i/TestInvoiceId123';
+    const email = 'test@example.com';
+
+    const store = configureTestStore({});
+
+    (axios.post as jest.Mock).mockResolvedValue({
+      data: {status: 'error'},
+    });
+
+    await expect(
+      store.dispatch(setBuyerProvidedEmail(invoiceUrl, email)),
+    ).rejects.toBeUndefined();
+  });
+
+  it('Should reject when axios.post throws', async () => {
+    const invoiceUrl = 'https://bitpay.com/i/TestInvoiceId123';
+    const email = 'test@example.com';
+
+    const store = configureTestStore({});
+
+    (axios.post as jest.Mock).mockRejectedValue(new Error('network error'));
+
+    await expect(
+      store.dispatch(setBuyerProvidedEmail(invoiceUrl, email)),
+    ).rejects.toBeUndefined();
   });
 });
