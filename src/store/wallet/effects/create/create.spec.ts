@@ -24,7 +24,12 @@ import {Network} from '../../../../constants';
 // ---------------------------------------------------------------------------
 
 jest.mock('../../../../managers/LogManager', () => ({
-  logManager: {info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn()},
+  logManager: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+  },
 }));
 
 jest.mock('../../../../managers/TokenManager', () => ({
@@ -33,7 +38,9 @@ jest.mock('../../../../managers/TokenManager', () => ({
 
 jest.mock('../../../../utils/helper-methods', () => ({
   sleep: jest.fn(() => Promise.resolve()),
-  addTokenChainSuffix: jest.fn((addr: string, chain: string) => `${addr}_e.${chain}`),
+  addTokenChainSuffix: jest.fn(
+    (addr: string, chain: string) => `${addr}_e.${chain}`,
+  ),
   checkEncryptedKeysForEddsaMigration: jest.fn(() => () => Promise.resolve()),
   isL2NoSideChainNetwork: jest.fn(() => false),
   getAccount: jest.fn(() => 0),
@@ -84,14 +91,18 @@ jest.mock('../../utils/wallet', () => ({
 
 // Mock createWalletAddress
 jest.mock('../address/address', () => ({
-  createWalletAddress: jest.fn(() => () => Promise.resolve('mock-receive-address')),
+  createWalletAddress: jest.fn(
+    () => () => Promise.resolve('mock-receive-address'),
+  ),
 }));
 
 // Mock status effects
 jest.mock('../status/status', () => ({
   startUpdateAllKeyAndWalletStatus: jest.fn(() => () => Promise.resolve()),
   startUpdateWalletStatus: jest.fn(() => () => Promise.resolve()),
-  getTokenContractInfo: jest.fn(() => Promise.resolve({symbol: 'MOCK', name: 'Mock Token', decimals: 18})),
+  getTokenContractInfo: jest.fn(() =>
+    Promise.resolve({symbol: 'MOCK', name: 'Mock Token', decimals: 18}),
+  ),
 }));
 
 // Mock currency utils
@@ -99,7 +110,9 @@ jest.mock('../../utils/currency', () => ({
   IsERCToken: jest.fn(() => false),
   IsSegwitCoin: jest.fn((coin: string) => coin === 'btc'),
   IsSVMChain: jest.fn(() => false),
-  IsVMChain: jest.fn((chain: string) => ['eth', 'matic', 'sol'].includes(chain)),
+  IsVMChain: jest.fn((chain: string) =>
+    ['eth', 'matic', 'sol'].includes(chain),
+  ),
   GetPrecision: jest.fn(() => ({unitDecimals: 8})),
 }));
 
@@ -120,7 +133,9 @@ jest.mock('../currencies/currencies', () => ({
 const mockBwcClient = {
   fromString: jest.fn(),
   fromObj: jest.fn(),
-  createWallet: jest.fn((name: any, me: any, m: any, n: any, opts: any, cb: any) => cb(null)),
+  createWallet: jest.fn(
+    (name: any, me: any, m: any, n: any, opts: any, cb: any) => cb(null),
+  ),
   credentials: {
     coin: 'btc',
     chain: 'btc',
@@ -283,7 +298,9 @@ describe('startCreateKey', () => {
 
     // Errors in individual wallet creation are swallowed → result still resolves
     const result = await store.dispatch(
-      startCreateKey([{chain: 'btc', currencyAbbreviation: 'btc', isToken: false}]),
+      startCreateKey([
+        {chain: 'btc', currencyAbbreviation: 'btc', isToken: false},
+      ]),
     );
 
     expect(result).toBeDefined();
@@ -362,9 +379,12 @@ describe('createWalletWithOpts', () => {
   });
 
   it('rejects on generic error from createWallet', async () => {
-    const genericError = Object.assign(new Error('generic wallet error'), {name: 'bwc.ErrorOTHER'});
+    const genericError = Object.assign(new Error('generic wallet error'), {
+      name: 'bwc.ErrorOTHER',
+    });
     mockBwcClient.createWallet.mockImplementationOnce(
-      (_n: any, _me: any, _m: any, _nn: any, _opts: any, cb: any) => cb(genericError),
+      (_n: any, _me: any, _m: any, _nn: any, _opts: any, cb: any) =>
+        cb(genericError),
     );
 
     const store = configureTestStore(baseState);
@@ -380,7 +400,10 @@ describe('createWalletWithOpts', () => {
   });
 
   it('increments account and retries on COPAYER_REGISTERED error', async () => {
-    const copayerError = {name: 'bwc.ErrorCOPAYER_REGISTERED', message: 'registered'};
+    const copayerError = {
+      name: 'bwc.ErrorCOPAYER_REGISTERED',
+      message: 'registered',
+    };
     let callCount = 0;
     mockBwcClient.createWallet.mockImplementation(
       (_n: any, _me: any, _m: any, _nn: any, _opts: any, cb: any) => {
@@ -412,9 +435,13 @@ describe('createWalletWithOpts', () => {
   });
 
   it('rejects when COPAYER_REGISTERED and account >= 20', async () => {
-    const copayerError = {name: 'bwc.ErrorCOPAYER_REGISTERED', message: 'registered'};
+    const copayerError = {
+      name: 'bwc.ErrorCOPAYER_REGISTERED',
+      message: 'registered',
+    };
     mockBwcClient.createWallet.mockImplementation(
-      (_n: any, _me: any, _m: any, _nn: any, _opts: any, cb: any) => cb(copayerError),
+      (_n: any, _me: any, _m: any, _nn: any, _opts: any, cb: any) =>
+        cb(copayerError),
     );
 
     const store = configureTestStore(baseState);
@@ -478,7 +505,9 @@ describe('detectAndCreateTokensForEachEvmWallet', () => {
     IsVMChain.mockReturnValue(true);
     IsERCToken.mockReturnValue(false);
 
-    const {getERC20TokenBalanceByWallet} = require('../../../moralis/moralis.effects');
+    const {
+      getERC20TokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
     getERC20TokenBalanceByWallet.mockReturnValue(() => Promise.resolve([]));
 
     const wallet = makeMockWallet({chain: 'eth', currencyAbbreviation: 'eth'});
@@ -504,7 +533,9 @@ describe('detectAndCreateTokensForEachEvmWallet', () => {
     ).resolves.toBeUndefined();
 
     // No moralis calls since all wallets are ERC tokens
-    const {getERC20TokenBalanceByWallet} = require('../../../moralis/moralis.effects');
+    const {
+      getERC20TokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
     expect(getERC20TokenBalanceByWallet).not.toHaveBeenCalled();
   });
 
@@ -521,7 +552,9 @@ describe('detectAndCreateTokensForEachEvmWallet', () => {
       store.dispatch(detectAndCreateTokensForEachEvmWallet({key})),
     ).resolves.toBeUndefined();
 
-    const {getERC20TokenBalanceByWallet} = require('../../../moralis/moralis.effects');
+    const {
+      getERC20TokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
     expect(getERC20TokenBalanceByWallet).not.toHaveBeenCalled();
   });
 
@@ -530,15 +563,22 @@ describe('detectAndCreateTokensForEachEvmWallet', () => {
     IsVMChain.mockReturnValue(true);
     IsERCToken.mockReturnValue(false);
 
-    const {getERC20TokenBalanceByWallet} = require('../../../moralis/moralis.effects');
+    const {
+      getERC20TokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
     getERC20TokenBalanceByWallet.mockReturnValue(() => Promise.resolve([]));
 
-    const wallet = makeMockWallet({chain: 'matic', currencyAbbreviation: 'matic'});
+    const wallet = makeMockWallet({
+      chain: 'matic',
+      currencyAbbreviation: 'matic',
+    });
     const key: any = {id: 'key-1', wallets: [wallet]};
 
     const store = configureTestStore(baseState);
     // Pass chain='eth' → matic wallet should be filtered out
-    await store.dispatch(detectAndCreateTokensForEachEvmWallet({key, chain: 'eth'}));
+    await store.dispatch(
+      detectAndCreateTokensForEachEvmWallet({key, chain: 'eth'}),
+    );
 
     expect(getERC20TokenBalanceByWallet).not.toHaveBeenCalled();
   });
@@ -559,10 +599,15 @@ describe('detectAndCreateTokensForEachEvmWallet', () => {
     const store = configureTestStore(baseState);
     // tokenAddress matches existing → wallet filtered out → no moralis call
     await store.dispatch(
-      detectAndCreateTokensForEachEvmWallet({key, tokenAddress: '0xexistingtoken'}),
+      detectAndCreateTokensForEachEvmWallet({
+        key,
+        tokenAddress: '0xexistingtoken',
+      }),
     );
 
-    const {getERC20TokenBalanceByWallet} = require('../../../moralis/moralis.effects');
+    const {
+      getERC20TokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
     expect(getERC20TokenBalanceByWallet).not.toHaveBeenCalled();
   });
 
@@ -571,7 +616,9 @@ describe('detectAndCreateTokensForEachEvmWallet', () => {
     IsVMChain.mockReturnValue(true);
     IsERCToken.mockReturnValue(false);
 
-    const {getERC20TokenBalanceByWallet} = require('../../../moralis/moralis.effects');
+    const {
+      getERC20TokenBalanceByWallet,
+    } = require('../../../moralis/moralis.effects');
     getERC20TokenBalanceByWallet.mockReturnValue(() =>
       Promise.reject(new Error('moralis down')),
     );

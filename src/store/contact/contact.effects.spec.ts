@@ -73,7 +73,9 @@ describe('startContactMigration', () => {
 
   it('adds chain = coin for an OtherBitpaySupportedCoin (e.g. xrp)', async () => {
     const store = configureTestStore({});
-    store.dispatch(createContact(makeContact({coin: 'xrp', chain: '', address: '0xXRP'})));
+    store.dispatch(
+      createContact(makeContact({coin: 'xrp', chain: '', address: '0xXRP'})),
+    );
 
     await store.dispatch(startContactMigration());
 
@@ -84,7 +86,9 @@ describe('startContactMigration', () => {
   it('falls back to "eth" for an unknown coin', async () => {
     const store = configureTestStore({});
     store.dispatch(
-      createContact(makeContact({coin: 'unknowncoin', chain: '', address: '0xUNK'})),
+      createContact(
+        makeContact({coin: 'unknowncoin', chain: '', address: '0xUNK'}),
+      ),
     );
 
     await store.dispatch(startContactMigration());
@@ -95,7 +99,9 @@ describe('startContactMigration', () => {
 
   it('resolves even when contact list is empty', async () => {
     const store = configureTestStore({});
-    await expect(store.dispatch(startContactMigration())).resolves.toBeUndefined();
+    await expect(
+      store.dispatch(startContactMigration()),
+    ).resolves.toBeUndefined();
     expect(store.getState().CONTACT.list).toHaveLength(0);
   });
 });
@@ -111,8 +117,18 @@ describe('startContactV2Migration', () => {
     const store = configureTestStore({
       CONTACT: {
         list: [
-          makeContact({address: sharedAddress, name: 'Alice', coin: 'eth', chain: 'eth'}),
-          makeContact({address: sharedAddress, name: 'Bob', coin: 'eth', chain: 'eth'}),
+          makeContact({
+            address: sharedAddress,
+            name: 'Alice',
+            coin: 'eth',
+            chain: 'eth',
+          }),
+          makeContact({
+            address: sharedAddress,
+            name: 'Bob',
+            coin: 'eth',
+            chain: 'eth',
+          }),
         ],
       },
     });
@@ -164,7 +180,9 @@ describe('startContactV2Migration', () => {
 
   it('resolves even when contact list is empty', async () => {
     const store = configureTestStore({});
-    await expect(store.dispatch(startContactV2Migration())).resolves.toBeUndefined();
+    await expect(
+      store.dispatch(startContactV2Migration()),
+    ).resolves.toBeUndefined();
   });
 });
 
@@ -221,7 +239,9 @@ describe('startContactTokenAddressMigration', () => {
 
     const store = configureTestStore({
       CONTACT: {
-        list: [makeContact({coin: 'btc', chain: 'btc', tokenAddress: undefined})],
+        list: [
+          makeContact({coin: 'btc', chain: 'btc', tokenAddress: undefined}),
+        ],
       },
     });
 
@@ -343,7 +363,9 @@ describe('startContactPolMigration', () => {
   it('renames coin from "matic" to "pol"', async () => {
     const store = configureTestStore({
       CONTACT: {
-        list: [makeContact({address: '0xMATIC', coin: 'matic', chain: 'matic'})],
+        list: [
+          makeContact({address: '0xMATIC', coin: 'matic', chain: 'matic'}),
+        ],
       },
     });
 

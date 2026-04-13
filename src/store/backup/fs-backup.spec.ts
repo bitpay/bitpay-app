@@ -14,7 +14,9 @@ import RNFS from 'react-native-fs';
 // would pull in the bwc/bitcore-lib chain and cause duplicate-instance errors
 // when jest.isolateModules re-requires the module.
 jest.mock('../../utils/helper-methods', () => ({
-  getErrorString: jest.fn((err: any) => (err instanceof Error ? err.message : String(err))),
+  getErrorString: jest.fn((err: any) =>
+    err instanceof Error ? err.message : String(err),
+  ),
   sleep: jest.fn(() => Promise.resolve()),
 }));
 
@@ -64,7 +66,9 @@ describe('backupFileExists', () => {
 
   it('returns false when RNFS.exists throws', async () => {
     const {backupFileExists} = getFreshModule();
-    (mockedRNFS.exists as jest.Mock).mockRejectedValueOnce(new Error('fs error'));
+    (mockedRNFS.exists as jest.Mock).mockRejectedValueOnce(
+      new Error('fs error'),
+    );
     expect(await backupFileExists()).toBe(false);
   });
 
@@ -106,7 +110,9 @@ describe('backupPersistRoot', () => {
     await backupPersistRoot(raw);
 
     expect(mockedRNFS.writeFile).toHaveBeenCalledTimes(1);
-    const written = JSON.parse((mockedRNFS.writeFile as jest.Mock).mock.calls[0][1]);
+    const written = JSON.parse(
+      (mockedRNFS.writeFile as jest.Mock).mock.calls[0][1],
+    );
     expect(written.MARKET_STATS).toBeUndefined();
     expect(written.PORTFOLIO).toBeUndefined();
     expect(written.RATE).toBeUndefined();
@@ -128,7 +134,7 @@ describe('backupPersistRoot', () => {
     const {backupPersistRoot} = getFreshModule();
     (mockedRNFS.exists as jest.Mock)
       .mockResolvedValueOnce(false) // ensureDir: BASE_DIR not exists → mkdir
-      .mockResolvedValue(false);    // final file does not exist
+      .mockResolvedValue(false); // final file does not exist
     await backupPersistRoot('{}');
     expect(mockedRNFS.mkdir).toHaveBeenCalledTimes(1);
   });
@@ -136,8 +142,8 @@ describe('backupPersistRoot', () => {
   it('skips mkdir when the directory already exists', async () => {
     const {backupPersistRoot} = getFreshModule();
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true)  // ensureDir: dir exists
-      .mockResolvedValue(false);    // no final file
+      .mockResolvedValueOnce(true) // ensureDir: dir exists
+      .mockResolvedValue(false); // no final file
     await backupPersistRoot('{}');
     expect(mockedRNFS.mkdir).not.toHaveBeenCalled();
   });
@@ -145,8 +151,8 @@ describe('backupPersistRoot', () => {
   it('rotates final→backup and moves temp→final when final exists but backup does not', async () => {
     const {backupPersistRoot} = getFreshModule();
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true)   // ensureDir: dir exists
-      .mockResolvedValueOnce(true)   // finalExists = true
+      .mockResolvedValueOnce(true) // ensureDir: dir exists
+      .mockResolvedValueOnce(true) // finalExists = true
       .mockResolvedValueOnce(false); // bakExists = false → no unlink
     await backupPersistRoot('{}');
     expect(mockedRNFS.unlink).not.toHaveBeenCalled();
@@ -156,8 +162,8 @@ describe('backupPersistRoot', () => {
   it('unlinks old backup before rotating when both final and backup exist', async () => {
     const {backupPersistRoot} = getFreshModule();
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true)  // ensureDir: dir exists
-      .mockResolvedValueOnce(true)  // finalExists = true
+      .mockResolvedValueOnce(true) // ensureDir: dir exists
+      .mockResolvedValueOnce(true) // finalExists = true
       .mockResolvedValueOnce(true); // bakExists = true → unlink
     await backupPersistRoot('{}');
     expect(mockedRNFS.unlink).toHaveBeenCalledTimes(1);
@@ -167,8 +173,8 @@ describe('backupPersistRoot', () => {
   it('still moves temp→final even when the final→backup rotation throws', async () => {
     const {backupPersistRoot} = getFreshModule();
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true)   // ensureDir: dir exists
-      .mockResolvedValueOnce(true)   // finalExists
+      .mockResolvedValueOnce(true) // ensureDir: dir exists
+      .mockResolvedValueOnce(true) // finalExists
       .mockResolvedValueOnce(false); // bakExists = false
     (mockedRNFS.moveFile as jest.Mock)
       .mockRejectedValueOnce(new Error('rotate failed'))
@@ -179,9 +185,11 @@ describe('backupPersistRoot', () => {
 
   it('cleans up temp file when writeFile throws', async () => {
     const {backupPersistRoot} = getFreshModule();
-    (mockedRNFS.writeFile as jest.Mock).mockRejectedValueOnce(new Error('write error'));
+    (mockedRNFS.writeFile as jest.Mock).mockRejectedValueOnce(
+      new Error('write error'),
+    );
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true)  // ensureDir: dir exists
+      .mockResolvedValueOnce(true) // ensureDir: dir exists
       .mockResolvedValueOnce(true); // tmpExists = true → unlink temp
     await backupPersistRoot('{}');
     expect(mockedRNFS.unlink).toHaveBeenCalledTimes(1);
@@ -189,11 +197,15 @@ describe('backupPersistRoot', () => {
 
   it('does not throw even if temp file cleanup also fails', async () => {
     const {backupPersistRoot} = getFreshModule();
-    (mockedRNFS.writeFile as jest.Mock).mockRejectedValueOnce(new Error('write error'));
+    (mockedRNFS.writeFile as jest.Mock).mockRejectedValueOnce(
+      new Error('write error'),
+    );
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true)  // ensureDir: dir exists
+      .mockResolvedValueOnce(true) // ensureDir: dir exists
       .mockResolvedValueOnce(true); // tmpExists = true
-    (mockedRNFS.unlink as jest.Mock).mockRejectedValueOnce(new Error('unlink error'));
+    (mockedRNFS.unlink as jest.Mock).mockRejectedValueOnce(
+      new Error('unlink error'),
+    );
     await expect(backupPersistRoot('{}')).resolves.toBeUndefined();
   });
 });
@@ -220,7 +232,7 @@ describe('readBackupPersistRoot', () => {
     const {readBackupPersistRoot} = getFreshModule();
     const bakJson = '{"WALLET":{}}';
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true)  // final exists
+      .mockResolvedValueOnce(true) // final exists
       .mockResolvedValueOnce(true); // bak exists
     (mockedRNFS.readFile as jest.Mock)
       .mockResolvedValueOnce('not valid json')
@@ -231,16 +243,18 @@ describe('readBackupPersistRoot', () => {
   it('returns null when final read throws and backup does not exist', async () => {
     const {readBackupPersistRoot} = getFreshModule();
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true)   // final exists
+      .mockResolvedValueOnce(true) // final exists
       .mockResolvedValueOnce(false); // bak does not exist
-    (mockedRNFS.readFile as jest.Mock).mockRejectedValueOnce(new Error('read error'));
+    (mockedRNFS.readFile as jest.Mock).mockRejectedValueOnce(
+      new Error('read error'),
+    );
     expect(await readBackupPersistRoot()).toBeNull();
   });
 
   it('returns null when backup file data is also invalid JSON', async () => {
     const {readBackupPersistRoot} = getFreshModule();
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(true)  // final exists
+      .mockResolvedValueOnce(true) // final exists
       .mockResolvedValueOnce(true); // bak exists
     (mockedRNFS.readFile as jest.Mock)
       .mockResolvedValueOnce('bad json')
@@ -251,7 +265,7 @@ describe('readBackupPersistRoot', () => {
   it('returns null when neither final nor backup file exists', async () => {
     const {readBackupPersistRoot} = getFreshModule();
     (mockedRNFS.exists as jest.Mock)
-      .mockResolvedValueOnce(false)  // final does not exist
+      .mockResolvedValueOnce(false) // final does not exist
       .mockResolvedValueOnce(false); // bak does not exist
     expect(await readBackupPersistRoot()).toBeNull();
   });
@@ -261,7 +275,9 @@ describe('readBackupPersistRoot', () => {
     (mockedRNFS.exists as jest.Mock)
       .mockResolvedValueOnce(false) // final does not exist
       .mockResolvedValueOnce(true); // bak exists
-    (mockedRNFS.readFile as jest.Mock).mockRejectedValueOnce(new Error('bak read error'));
+    (mockedRNFS.readFile as jest.Mock).mockRejectedValueOnce(
+      new Error('bak read error'),
+    );
     expect(await readBackupPersistRoot()).toBeNull();
   });
 

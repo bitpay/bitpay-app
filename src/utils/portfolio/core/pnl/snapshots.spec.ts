@@ -86,17 +86,30 @@ function ts(dateStr: string): number {
 }
 
 /** Build a received tx object. */
-function receivedTx(txid: string, amount: number, time: number): Record<string, any> {
+function receivedTx(
+  txid: string,
+  amount: number,
+  time: number,
+): Record<string, any> {
   return {txid, action: 'received', amount, time};
 }
 
 /** Build a sent tx object. */
-function sentTx(txid: string, amount: number, fees: number, time: number): Record<string, any> {
+function sentTx(
+  txid: string,
+  amount: number,
+  fees: number,
+  time: number,
+): Record<string, any> {
   return {txid, action: 'sent', amount, fees, time};
 }
 
 /** Build a moved tx object. */
-function movedTx(txid: string, fees: number, time: number): Record<string, any> {
+function movedTx(
+  txid: string,
+  fees: number,
+  time: number,
+): Record<string, any> {
   return {txid, action: 'moved', amount: 0, fees, time};
 }
 
@@ -107,13 +120,21 @@ const RATE = 50_000; // $50,000 per BTC
 describe('getAssetIdFromWallet', () => {
   it('returns chain:coin for a native coin', () => {
     expect(
-      getAssetIdFromWallet({chain: 'btc', currencyAbbreviation: 'btc', tokenAddress: undefined}),
+      getAssetIdFromWallet({
+        chain: 'btc',
+        currencyAbbreviation: 'btc',
+        tokenAddress: undefined,
+      }),
     ).toBe('btc:btc');
   });
 
   it('returns chain:coin for an ETH wallet', () => {
     expect(
-      getAssetIdFromWallet({chain: 'eth', currencyAbbreviation: 'eth', tokenAddress: undefined}),
+      getAssetIdFromWallet({
+        chain: 'eth',
+        currencyAbbreviation: 'eth',
+        tokenAddress: undefined,
+      }),
     ).toBe('eth:eth');
   });
 
@@ -129,19 +150,31 @@ describe('getAssetIdFromWallet', () => {
 
   it('lowercases chain and coin', () => {
     expect(
-      getAssetIdFromWallet({chain: 'ETH', currencyAbbreviation: 'USDC', tokenAddress: undefined}),
+      getAssetIdFromWallet({
+        chain: 'ETH',
+        currencyAbbreviation: 'USDC',
+        tokenAddress: undefined,
+      }),
     ).toBe('eth:usdc');
   });
 
   it('handles empty chain and coin gracefully', () => {
     expect(
-      getAssetIdFromWallet({chain: '', currencyAbbreviation: '', tokenAddress: undefined}),
+      getAssetIdFromWallet({
+        chain: '',
+        currencyAbbreviation: '',
+        tokenAddress: undefined,
+      }),
     ).toBe(':');
   });
 
   it('handles undefined chain and coin gracefully', () => {
     expect(
-      getAssetIdFromWallet({chain: undefined as any, currencyAbbreviation: undefined as any, tokenAddress: undefined}),
+      getAssetIdFromWallet({
+        chain: undefined as any,
+        currencyAbbreviation: undefined as any,
+        tokenAddress: undefined,
+      }),
     ).toBe(':');
   });
 });
@@ -168,7 +201,9 @@ describe('extractTxIdFromSnapshotId', () => {
 
   it('extracts a txid that itself contains colons', () => {
     // Our fallback ID format: "time:action:amount:fees"
-    expect(extractTxIdFromSnapshotId('tx:1234:sent:500:10')).toBe('1234:sent:500:10');
+    expect(extractTxIdFromSnapshotId('tx:1234:sent:500:10')).toBe(
+      '1234:sent:500:10',
+    );
   });
 
   it('returns null when there is nothing after "tx:"', () => {
@@ -232,13 +267,21 @@ describe('computeBalanceSnapshotComputed', () => {
       ...baseStored,
       cryptoBalance: '50000000', // 0.5 BTC
     };
-    const result = computeBalanceSnapshotComputed(baseStored, BTC_CREDS, prevStored);
+    const result = computeBalanceSnapshotComputed(
+      baseStored,
+      BTC_CREDS,
+      prevStored,
+    );
     // 1 BTC - 0.5 BTC = +0.5 BTC = +50,000,000 satoshis
     expect(result.balanceDeltaAtomic).toBe('50000000');
   });
 
   it('uses 0n as prevAtomic when prevSnapshot is absent', () => {
-    const result = computeBalanceSnapshotComputed(baseStored, BTC_CREDS, undefined);
+    const result = computeBalanceSnapshotComputed(
+      baseStored,
+      BTC_CREDS,
+      undefined,
+    );
     // 100000000 - 0 = 100000000
     expect(result.balanceDeltaAtomic).toBe('100000000');
   });
@@ -320,7 +363,11 @@ describe('buildBalanceSnapshots – single received tx', () => {
 
   it('snapshot has correct walletId, chain, coin, network', () => {
     const args = makeArgs({
-      wallet: makeSummary({walletId: 'mywallet', chain: 'btc', currencyAbbreviation: 'btc'}),
+      wallet: makeSummary({
+        walletId: 'mywallet',
+        chain: 'btc',
+        currencyAbbreviation: 'btc',
+      }),
       txs: [receivedTx('txabc', 100_000_000, txTime)],
     });
     const [snap] = buildBalanceSnapshots(args);
@@ -396,7 +443,9 @@ describe('buildBalanceSnapshots – sent tx after received', () => {
     const result = buildBalanceSnapshots(args);
     const first = result[0];
     const second = result[1];
-    expect(BigInt(first.cryptoBalance)).toBeGreaterThan(BigInt(second.cryptoBalance));
+    expect(BigInt(first.cryptoBalance)).toBeGreaterThan(
+      BigInt(second.cryptoBalance),
+    );
   });
 
   it('deduplicates transactions with the same txid', () => {
@@ -445,7 +494,11 @@ describe('buildBalanceSnapshots – failed EVM tx', () => {
 
   it('failed tx with status=false only deducts fees', () => {
     const args = makeArgs({
-      wallet: makeSummary({chain: 'eth', currencyAbbreviation: 'eth', network: 'livenet'}),
+      wallet: makeSummary({
+        chain: 'eth',
+        currencyAbbreviation: 'eth',
+        network: 'livenet',
+      }),
       credentials: ETH_CREDS,
       txs: [
         // receive 1 ETH first
@@ -499,7 +552,11 @@ describe('buildBalanceSnapshots – failed EVM tx', () => {
           action: 'sent',
           amount: 500_000_000_000_000_000n,
           time: time2,
-          receipt: {status: 0, gasUsed: '21000', effectiveGasPrice: '1000000000'},
+          receipt: {
+            status: 0,
+            gasUsed: '21000',
+            effectiveGasPrice: '1000000000',
+          },
         },
       ],
     });
@@ -518,7 +575,11 @@ describe('buildBalanceSnapshots – failed EVM tx', () => {
           action: 'sent',
           amount: 500_000_000_000_000_000n,
           time: time2,
-          receipt: {status: '0x0', gasUsed: '21000', effectiveGasPrice: '1000000000'},
+          receipt: {
+            status: '0x0',
+            gasUsed: '21000',
+            effectiveGasPrice: '1000000000',
+          },
         },
       ],
     });
@@ -730,7 +791,9 @@ describe('buildBalanceSnapshots – fee override reconciliation', () => {
 
     const startBalance = '1000000000000000000'; // 1 ETH
     // If fees were actually less, the end balance would be higher
-    const trueEndBalance = String(BigInt(startBalance) - BigInt(overEstimatedFee / 2));
+    const trueEndBalance = String(
+      BigInt(startBalance) - BigInt(overEstimatedFee / 2),
+    );
 
     const args = makeArgs({
       wallet: {
@@ -789,7 +852,7 @@ describe('buildBalanceSnapshots – tx ordering / underflow prevention', () => {
     const args = makeArgs({
       txs: [
         sentTx('tx_send', 50_000_000, 1_000, sameTime), // processed 2nd
-        receivedTx('tx_recv', 100_000_000, sameTime),  // should be processed 1st
+        receivedTx('tx_recv', 100_000_000, sameTime), // should be processed 1st
       ],
     });
     const result = buildBalanceSnapshots(args);
@@ -897,7 +960,8 @@ describe('buildBalanceSnapshots – EVM fee handling', () => {
     expect(result).toHaveLength(2);
     // After send: 1e18 - 5e17 - fee
     const finalBal = BigInt(result[1].cryptoBalance);
-    const expectedBal = 1_000_000_000_000_000_000n - 500_000_000_000_000_000n - expectedFee;
+    const expectedBal =
+      1_000_000_000_000_000_000n - 500_000_000_000_000_000n - expectedFee;
     // Close enough — the mock may collapse small precision differences
     expect(finalBal).toBe(expectedBal < 0n ? 0n : expectedBal);
   });
@@ -1026,8 +1090,16 @@ describe('buildBalanceSnapshots – tx sort order', () => {
   it('sorts txs by transactionIndex when block and timestamp are equal', () => {
     const args = makeArgs({
       txs: [
-        {...receivedTx('tx1', 100_000_000, base), blockheight: 100, receipt: {transactionIndex: 5}},
-        {...receivedTx('tx2', 50_000_000, base), blockheight: 100, receipt: {transactionIndex: 2}},
+        {
+          ...receivedTx('tx1', 100_000_000, base),
+          blockheight: 100,
+          receipt: {transactionIndex: 5},
+        },
+        {
+          ...receivedTx('tx2', 50_000_000, base),
+          blockheight: 100,
+          receipt: {transactionIndex: 2},
+        },
       ],
     });
     const result = buildBalanceSnapshots(args);
@@ -1102,7 +1174,9 @@ describe('buildBalanceSnapshotsAsync', () => {
     const gasPrice = 2_000_000_000;
     const overEstimatedFee = gasLimit * gasPrice;
     const startBalance = '1000000000000000000';
-    const trueEndBalance = String(BigInt(startBalance) - BigInt(overEstimatedFee / 2));
+    const trueEndBalance = String(
+      BigInt(startBalance) - BigInt(overEstimatedFee / 2),
+    );
 
     const args = makeArgs({
       wallet: {
@@ -1220,19 +1294,44 @@ describe('EVM address inference via buildBalanceSnapshots', () => {
       wallet: makeSummary({chain: 'eth', currencyAbbreviation: 'eth'}),
       credentials: ETH_CREDS,
       txs: [
-        {txid: 'tx0', action: 'received', amount: 1_000_000_000_000_000_000n, time: time1,
-         from: otherAddr, to: myAddr,
-         receipt: {from: otherAddr, to: myAddr, gasUsed: '21000', effectiveGasPrice: '1000000000', status: true}},
-        {txid: 'tx1', action: 'sent', amount: 100_000_000_000_000_000n, time: time2,
-         from: myAddr, to: otherAddr,
-         receipt: {from: myAddr, to: otherAddr, gasUsed: '21000', effectiveGasPrice: '2000000000', status: true}},
+        {
+          txid: 'tx0',
+          action: 'received',
+          amount: 1_000_000_000_000_000_000n,
+          time: time1,
+          from: otherAddr,
+          to: myAddr,
+          receipt: {
+            from: otherAddr,
+            to: myAddr,
+            gasUsed: '21000',
+            effectiveGasPrice: '1000000000',
+            status: true,
+          },
+        },
+        {
+          txid: 'tx1',
+          action: 'sent',
+          amount: 100_000_000_000_000_000n,
+          time: time2,
+          from: myAddr,
+          to: otherAddr,
+          receipt: {
+            from: myAddr,
+            to: otherAddr,
+            gasUsed: '21000',
+            effectiveGasPrice: '2000000000',
+            status: true,
+          },
+        },
       ],
     });
     const result = buildBalanceSnapshots(args);
     expect(result).toHaveLength(2);
     // Fee should be applied since wallet address (myAddr) matches tx.from
     const feeApplied = 21_000n * 2_000_000_000n;
-    const expectedFinal = 1_000_000_000_000_000_000n - 100_000_000_000_000_000n - feeApplied;
+    const expectedFinal =
+      1_000_000_000_000_000_000n - 100_000_000_000_000_000n - feeApplied;
     expect(BigInt(result[1].cryptoBalance)).toBe(expectedFinal);
   });
 
@@ -1242,13 +1341,34 @@ describe('EVM address inference via buildBalanceSnapshots', () => {
       wallet: makeSummary({chain: 'eth', currencyAbbreviation: 'eth'}),
       credentials: ETH_CREDS,
       txs: [
-        {txid: 'tx0', action: 'received', amount: 1_000_000_000_000_000_000n, time: time1,
-         from: myAddr, to: myAddr,
-         receipt: {from: myAddr, gasUsed: '21000', effectiveGasPrice: '1000000000', status: true}},
+        {
+          txid: 'tx0',
+          action: 'received',
+          amount: 1_000_000_000_000_000_000n,
+          time: time1,
+          from: myAddr,
+          to: myAddr,
+          receipt: {
+            from: myAddr,
+            gasUsed: '21000',
+            effectiveGasPrice: '1000000000',
+            status: true,
+          },
+        },
         // received tx from an external address — their fee, not ours
-        {txid: 'tx1', action: 'received', amount: 0, time: time2,
-         from: externalSender,
-         receipt: {from: externalSender, gasUsed: '21000', effectiveGasPrice: '1000000000', status: true}},
+        {
+          txid: 'tx1',
+          action: 'received',
+          amount: 0,
+          time: time2,
+          from: externalSender,
+          receipt: {
+            from: externalSender,
+            gasUsed: '21000',
+            effectiveGasPrice: '1000000000',
+            status: true,
+          },
+        },
       ],
     });
     const result = buildBalanceSnapshots(args);

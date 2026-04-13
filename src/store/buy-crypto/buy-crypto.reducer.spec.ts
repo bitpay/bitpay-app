@@ -26,7 +26,9 @@ import {RampPaymentData} from './models/ramp.models';
 const freshState = (): BuyCryptoState =>
   buyCryptoReducer(undefined, {type: '@@INIT'} as any);
 
-const makeBanxaData = (overrides: Partial<BanxaPaymentData> = {}): BanxaPaymentData => ({
+const makeBanxaData = (
+  overrides: Partial<BanxaPaymentData> = {},
+): BanxaPaymentData => ({
   address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf',
   chain: 'btc',
   created_on: 1700000000,
@@ -43,7 +45,9 @@ const makeBanxaData = (overrides: Partial<BanxaPaymentData> = {}): BanxaPaymentD
   ...overrides,
 });
 
-const makeMoonpayData = (overrides: Partial<MoonpayPaymentData> = {}): MoonpayPaymentData => ({
+const makeMoonpayData = (
+  overrides: Partial<MoonpayPaymentData> = {},
+): MoonpayPaymentData => ({
   address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf',
   chain: 'btc',
   created_on: 1700000000,
@@ -59,7 +63,9 @@ const makeMoonpayData = (overrides: Partial<MoonpayPaymentData> = {}): MoonpayPa
   ...overrides,
 });
 
-const makeRampData = (overrides: Partial<RampPaymentData> = {}): RampPaymentData => ({
+const makeRampData = (
+  overrides: Partial<RampPaymentData> = {},
+): RampPaymentData => ({
   address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf',
   chain: 'btc',
   created_on: 1700000000,
@@ -75,7 +81,9 @@ const makeRampData = (overrides: Partial<RampPaymentData> = {}): RampPaymentData
   ...overrides,
 });
 
-const makeSardineData = (overrides: Partial<SardinePaymentData> = {}): SardinePaymentData => ({
+const makeSardineData = (
+  overrides: Partial<SardinePaymentData> = {},
+): SardinePaymentData => ({
   address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf',
   chain: 'btc',
   created_on: 1700000000,
@@ -91,7 +99,9 @@ const makeSardineData = (overrides: Partial<SardinePaymentData> = {}): SardinePa
   ...overrides,
 });
 
-const makeSimplexData = (overrides: Partial<SimplexPaymentData> = {}): SimplexPaymentData => ({
+const makeSimplexData = (
+  overrides: Partial<SimplexPaymentData> = {},
+): SimplexPaymentData => ({
   address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf',
   chain: 'btc',
   created_on: 1700000000,
@@ -108,7 +118,9 @@ const makeSimplexData = (overrides: Partial<SimplexPaymentData> = {}): SimplexPa
   ...overrides,
 });
 
-const makeTransakData = (overrides: Partial<TransakPaymentData> = {}): TransakPaymentData => ({
+const makeTransakData = (
+  overrides: Partial<TransakPaymentData> = {},
+): TransakPaymentData => ({
   address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf',
   chain: 'btc',
   created_on: 1700000000,
@@ -124,7 +136,9 @@ const makeTransakData = (overrides: Partial<TransakPaymentData> = {}): TransakPa
   ...overrides,
 });
 
-const makeWyreData = (overrides: Partial<WyrePaymentData> = {}): WyrePaymentData => ({
+const makeWyreData = (
+  overrides: Partial<WyrePaymentData> = {},
+): WyrePaymentData => ({
   orderId: 'order-wyre-1',
   env: 'prod',
   created_on: 1700000000,
@@ -188,7 +202,10 @@ describe('UPDATE_OPTS', () => {
     const state = buyCryptoReducer(freshState(), {
       type: BuyCryptoActionTypes.UPDATE_OPTS,
       payload: {
-        buyCryptoOpts: {selectedPaymentMethod: undefined, lastPurchaseData: purchase},
+        buyCryptoOpts: {
+          selectedPaymentMethod: undefined,
+          lastPurchaseData: purchase,
+        },
       },
     });
     expect(state.opts.lastPurchaseData).toEqual(purchase);
@@ -228,11 +245,16 @@ describe('SUCCESS_PAYMENT_REQUEST_BANXA', () => {
 
 describe('UPDATE_PAYMENT_REQUEST_BANXA', () => {
   it('updates status when entry exists', () => {
-    const data = makeBanxaData({external_id: 'banxa-1', status: 'paymentRequestSent'});
+    const data = makeBanxaData({
+      external_id: 'banxa-1',
+      status: 'paymentRequestSent',
+    });
     const base: BuyCryptoState = {...freshState(), banxa: {'banxa-1': data}};
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_BANXA,
-      payload: {banxaIncomingData: {banxaExternalId: 'banxa-1', status: 'complete'}},
+      payload: {
+        banxaIncomingData: {banxaExternalId: 'banxa-1', status: 'complete'},
+      },
     });
     expect(state.banxa['banxa-1'].status).toBe('complete');
   });
@@ -242,7 +264,12 @@ describe('UPDATE_PAYMENT_REQUEST_BANXA', () => {
     const base: BuyCryptoState = {...freshState(), banxa: {'banxa-1': data}};
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_BANXA,
-      payload: {banxaIncomingData: {banxaExternalId: 'banxa-1', banxaOrderId: 'new-order'}},
+      payload: {
+        banxaIncomingData: {
+          banxaExternalId: 'banxa-1',
+          banxaOrderId: 'new-order',
+        },
+      },
     });
     expect(state.banxa['banxa-1'].order_id).toBe('new-order');
   });
@@ -300,7 +327,9 @@ describe('UPDATE_PAYMENT_REQUEST_MOONPAY', () => {
     const base: BuyCryptoState = {...freshState(), moonpay: {'mp-1': data}};
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_MOONPAY,
-      payload: {moonpayIncomingData: {externalId: 'mp-1', transactionId: 'tx-mp-1'}},
+      payload: {
+        moonpayIncomingData: {externalId: 'mp-1', transactionId: 'tx-mp-1'},
+      },
     });
     expect(state.moonpay['mp-1'].transaction_id).toBe('tx-mp-1');
   });
@@ -344,11 +373,16 @@ describe('SUCCESS_PAYMENT_REQUEST_RAMP', () => {
 
 describe('UPDATE_PAYMENT_REQUEST_RAMP', () => {
   it('updates status when entry exists', () => {
-    const data = makeRampData({external_id: 'ramp-1', status: 'paymentRequestSent'});
+    const data = makeRampData({
+      external_id: 'ramp-1',
+      status: 'paymentRequestSent',
+    });
     const base: BuyCryptoState = {...freshState(), ramp: {'ramp-1': data}};
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_RAMP,
-      payload: {rampIncomingData: {rampExternalId: 'ramp-1', status: 'complete'}},
+      payload: {
+        rampIncomingData: {rampExternalId: 'ramp-1', status: 'complete'},
+      },
     });
     expect(state.ramp['ramp-1'].status).toBe('complete');
   });
@@ -393,40 +427,75 @@ describe('SUCCESS_PAYMENT_REQUEST_SARDINE', () => {
 describe('UPDATE_PAYMENT_REQUEST_SARDINE', () => {
   it('updates status when entry exists', () => {
     const data = makeSardineData({external_id: 'sardine-1', status: 'pending'});
-    const base: BuyCryptoState = {...freshState(), sardine: {'sardine-1': data}};
+    const base: BuyCryptoState = {
+      ...freshState(),
+      sardine: {'sardine-1': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SARDINE,
-      payload: {sardineIncomingData: {sardineExternalId: 'sardine-1', status: 'complete'}},
+      payload: {
+        sardineIncomingData: {
+          sardineExternalId: 'sardine-1',
+          status: 'complete',
+        },
+      },
     });
     expect(state.sardine['sardine-1'].status).toBe('complete');
   });
 
   it('updates order_id when provided', () => {
     const data = makeSardineData({external_id: 'sardine-1'});
-    const base: BuyCryptoState = {...freshState(), sardine: {'sardine-1': data}};
+    const base: BuyCryptoState = {
+      ...freshState(),
+      sardine: {'sardine-1': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SARDINE,
-      payload: {sardineIncomingData: {sardineExternalId: 'sardine-1', order_id: 'oid-1'}},
+      payload: {
+        sardineIncomingData: {
+          sardineExternalId: 'sardine-1',
+          order_id: 'oid-1',
+        },
+      },
     });
     expect(state.sardine['sardine-1'].order_id).toBe('oid-1');
   });
 
   it('updates crypto_amount when provided', () => {
-    const data = makeSardineData({external_id: 'sardine-1', crypto_amount: 0.001});
-    const base: BuyCryptoState = {...freshState(), sardine: {'sardine-1': data}};
+    const data = makeSardineData({
+      external_id: 'sardine-1',
+      crypto_amount: 0.001,
+    });
+    const base: BuyCryptoState = {
+      ...freshState(),
+      sardine: {'sardine-1': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SARDINE,
-      payload: {sardineIncomingData: {sardineExternalId: 'sardine-1', cryptoAmount: 0.005}},
+      payload: {
+        sardineIncomingData: {
+          sardineExternalId: 'sardine-1',
+          cryptoAmount: 0.005,
+        },
+      },
     });
     expect(state.sardine['sardine-1'].crypto_amount).toBe(0.005);
   });
 
   it('updates transaction_id when provided', () => {
     const data = makeSardineData({external_id: 'sardine-1'});
-    const base: BuyCryptoState = {...freshState(), sardine: {'sardine-1': data}};
+    const base: BuyCryptoState = {
+      ...freshState(),
+      sardine: {'sardine-1': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SARDINE,
-      payload: {sardineIncomingData: {sardineExternalId: 'sardine-1', transactionId: 'tx-s-1'}},
+      payload: {
+        sardineIncomingData: {
+          sardineExternalId: 'sardine-1',
+          transactionId: 'tx-s-1',
+        },
+      },
     });
     expect(state.sardine['sardine-1'].transaction_id).toBe('tx-s-1');
   });
@@ -444,7 +513,10 @@ describe('UPDATE_PAYMENT_REQUEST_SARDINE', () => {
 describe('REMOVE_PAYMENT_REQUEST_SARDINE', () => {
   it('removes the entry', () => {
     const data = makeSardineData({external_id: 'sardine-del'});
-    const base: BuyCryptoState = {...freshState(), sardine: {'sardine-del': data}};
+    const base: BuyCryptoState = {
+      ...freshState(),
+      sardine: {'sardine-del': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_SARDINE,
       payload: {sardineExternalId: 'sardine-del'},
@@ -470,7 +542,10 @@ describe('SUCCESS_PAYMENT_REQUEST_SIMPLEX', () => {
 
 describe('UPDATE_PAYMENT_REQUEST_SIMPLEX', () => {
   it('sets status to success when success==="true"', () => {
-    const data = makeSimplexData({payment_id: 'pay-1', status: 'paymentRequestSent'});
+    const data = makeSimplexData({
+      payment_id: 'pay-1',
+      status: 'paymentRequestSent',
+    });
     const base: BuyCryptoState = {...freshState(), simplex: {'pay-1': data}};
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SIMPLEX,
@@ -480,7 +555,10 @@ describe('UPDATE_PAYMENT_REQUEST_SIMPLEX', () => {
   });
 
   it('sets status to failed when success!=="true"', () => {
-    const data = makeSimplexData({payment_id: 'pay-1', status: 'paymentRequestSent'});
+    const data = makeSimplexData({
+      payment_id: 'pay-1',
+      status: 'paymentRequestSent',
+    });
     const base: BuyCryptoState = {...freshState(), simplex: {'pay-1': data}};
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_SIMPLEX,
@@ -528,41 +606,79 @@ describe('SUCCESS_PAYMENT_REQUEST_TRANSAK', () => {
 
 describe('UPDATE_PAYMENT_REQUEST_TRANSAK', () => {
   it('updates status when entry exists', () => {
-    const data = makeTransakData({external_id: 'transak-1', status: 'paymentRequestSent'});
-    const base: BuyCryptoState = {...freshState(), transak: {'transak-1': data}};
+    const data = makeTransakData({
+      external_id: 'transak-1',
+      status: 'paymentRequestSent',
+    });
+    const base: BuyCryptoState = {
+      ...freshState(),
+      transak: {'transak-1': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_TRANSAK,
-      payload: {transakIncomingData: {transakExternalId: 'transak-1', status: 'COMPLETED'}},
+      payload: {
+        transakIncomingData: {
+          transakExternalId: 'transak-1',
+          status: 'COMPLETED',
+        },
+      },
     });
     expect(state.transak['transak-1'].status).toBe('COMPLETED');
   });
 
   it('updates order_id when provided', () => {
     const data = makeTransakData({external_id: 'transak-1'});
-    const base: BuyCryptoState = {...freshState(), transak: {'transak-1': data}};
+    const base: BuyCryptoState = {
+      ...freshState(),
+      transak: {'transak-1': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_TRANSAK,
-      payload: {transakIncomingData: {transakExternalId: 'transak-1', order_id: 'oid-t-1'}},
+      payload: {
+        transakIncomingData: {
+          transakExternalId: 'transak-1',
+          order_id: 'oid-t-1',
+        },
+      },
     });
     expect(state.transak['transak-1'].order_id).toBe('oid-t-1');
   });
 
   it('updates crypto_amount when provided', () => {
-    const data = makeTransakData({external_id: 'transak-1', crypto_amount: 0.001});
-    const base: BuyCryptoState = {...freshState(), transak: {'transak-1': data}};
+    const data = makeTransakData({
+      external_id: 'transak-1',
+      crypto_amount: 0.001,
+    });
+    const base: BuyCryptoState = {
+      ...freshState(),
+      transak: {'transak-1': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_TRANSAK,
-      payload: {transakIncomingData: {transakExternalId: 'transak-1', cryptoAmount: 0.01}},
+      payload: {
+        transakIncomingData: {
+          transakExternalId: 'transak-1',
+          cryptoAmount: 0.01,
+        },
+      },
     });
     expect(state.transak['transak-1'].crypto_amount).toBe(0.01);
   });
 
   it('updates transaction_id when provided', () => {
     const data = makeTransakData({external_id: 'transak-1'});
-    const base: BuyCryptoState = {...freshState(), transak: {'transak-1': data}};
+    const base: BuyCryptoState = {
+      ...freshState(),
+      transak: {'transak-1': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.UPDATE_PAYMENT_REQUEST_TRANSAK,
-      payload: {transakIncomingData: {transakExternalId: 'transak-1', transactionId: 'tx-t-1'}},
+      payload: {
+        transakIncomingData: {
+          transakExternalId: 'transak-1',
+          transactionId: 'tx-t-1',
+        },
+      },
     });
     expect(state.transak['transak-1'].transaction_id).toBe('tx-t-1');
   });
@@ -580,7 +696,10 @@ describe('UPDATE_PAYMENT_REQUEST_TRANSAK', () => {
 describe('REMOVE_PAYMENT_REQUEST_TRANSAK', () => {
   it('removes the entry', () => {
     const data = makeTransakData({external_id: 'transak-del'});
-    const base: BuyCryptoState = {...freshState(), transak: {'transak-del': data}};
+    const base: BuyCryptoState = {
+      ...freshState(),
+      transak: {'transak-del': data},
+    };
     const state = buyCryptoReducer(base, {
       type: BuyCryptoActionTypes.REMOVE_PAYMENT_REQUEST_TRANSAK,
       payload: {transakExternalId: 'transak-del'},

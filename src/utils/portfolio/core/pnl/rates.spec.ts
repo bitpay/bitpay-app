@@ -4,10 +4,7 @@
  * Covers normalizeFiatRateSeriesCoin and createFiatRateLookup with
  * concrete numeric inputs to catch regressions in rate-lookup math.
  */
-import {
-  normalizeFiatRateSeriesCoin,
-  createFiatRateLookup,
-} from './rates';
+import {normalizeFiatRateSeriesCoin, createFiatRateLookup} from './rates';
 import type {FiatRateSeriesCache} from '../fiatRateSeries';
 import {getFiatRateSeriesCacheKey} from '../fiatRateSeries';
 
@@ -172,11 +169,12 @@ describe('createFiatRateLookup — basic nearest-rate lookup', () => {
 
   it('resolves rate from 1W series when age is between 1D and 7D', () => {
     const ts = nowMs - 3 * MS_PER_DAY; // age = 3 days → prefers 1W
-    const cache = makeCache('USD', 'btc', '1W', flatPoints(
-      nowMs - 7 * MS_PER_DAY,
-      nowMs,
-      30000,
-    ));
+    const cache = makeCache(
+      'USD',
+      'btc',
+      '1W',
+      flatPoints(nowMs - 7 * MS_PER_DAY, nowMs, 30000),
+    );
     const lookup = createFiatRateLookup({
       quoteCurrency: 'USD',
       coin: 'btc',
@@ -330,7 +328,12 @@ describe('createFiatRateLookup — BTC-bridge currency conversion', () => {
   }): FiatRateSeriesCache {
     const pt = (rate: number) => [{ts, rate}];
     return mergeCaches(
-      makeCache(args.bridgeQuoteCurrency, args.coin, '1D', pt(args.bridgeCoinRate)),
+      makeCache(
+        args.bridgeQuoteCurrency,
+        args.coin,
+        '1D',
+        pt(args.bridgeCoinRate),
+      ),
       makeCache(args.bridgeQuoteCurrency, 'btc', '1D', pt(args.bridgeBtcRate)),
       makeCache(args.sourceQuoteCurrency, 'btc', '1D', pt(args.sourceBtcRate)),
     );
@@ -534,7 +537,12 @@ describe('createFiatRateLookup — interval preference by transaction age', () =
       makeSimpleCache('1D', ts, 11111),
       makeSimpleCache('1W', ts, 22222),
     );
-    const lookup = createFiatRateLookup({quoteCurrency: 'USD', coin: 'btc', cache, nowMs});
+    const lookup = createFiatRateLookup({
+      quoteCurrency: 'USD',
+      coin: 'btc',
+      cache,
+      nowMs,
+    });
     expect(lookup.getNearestRate(ts)).toBe(11111);
   });
 
@@ -544,7 +552,12 @@ describe('createFiatRateLookup — interval preference by transaction age', () =
       makeSimpleCache('1W', ts, 33333),
       makeSimpleCache('1M', ts, 44444),
     );
-    const lookup = createFiatRateLookup({quoteCurrency: 'USD', coin: 'btc', cache, nowMs});
+    const lookup = createFiatRateLookup({
+      quoteCurrency: 'USD',
+      coin: 'btc',
+      cache,
+      nowMs,
+    });
     expect(lookup.getNearestRate(ts)).toBe(33333);
   });
 
@@ -554,7 +567,12 @@ describe('createFiatRateLookup — interval preference by transaction age', () =
       makeSimpleCache('1M', ts, 55555),
       makeSimpleCache('3M', ts, 66666),
     );
-    const lookup = createFiatRateLookup({quoteCurrency: 'USD', coin: 'btc', cache, nowMs});
+    const lookup = createFiatRateLookup({
+      quoteCurrency: 'USD',
+      coin: 'btc',
+      cache,
+      nowMs,
+    });
     expect(lookup.getNearestRate(ts)).toBe(55555);
   });
 
@@ -564,7 +582,12 @@ describe('createFiatRateLookup — interval preference by transaction age', () =
       makeSimpleCache('3M', ts, 77777),
       makeSimpleCache('1Y', ts, 88888),
     );
-    const lookup = createFiatRateLookup({quoteCurrency: 'USD', coin: 'btc', cache, nowMs});
+    const lookup = createFiatRateLookup({
+      quoteCurrency: 'USD',
+      coin: 'btc',
+      cache,
+      nowMs,
+    });
     expect(lookup.getNearestRate(ts)).toBe(77777);
   });
 
@@ -574,7 +597,12 @@ describe('createFiatRateLookup — interval preference by transaction age', () =
       makeSimpleCache('1Y', ts, 12345),
       makeSimpleCache('5Y', ts, 99999),
     );
-    const lookup = createFiatRateLookup({quoteCurrency: 'USD', coin: 'btc', cache, nowMs});
+    const lookup = createFiatRateLookup({
+      quoteCurrency: 'USD',
+      coin: 'btc',
+      cache,
+      nowMs,
+    });
     expect(lookup.getNearestRate(ts)).toBe(12345);
   });
 
@@ -584,14 +612,24 @@ describe('createFiatRateLookup — interval preference by transaction age', () =
       makeSimpleCache('5Y', ts, 8888),
       makeSimpleCache('ALL', ts, 1111),
     );
-    const lookup = createFiatRateLookup({quoteCurrency: 'USD', coin: 'btc', cache, nowMs});
+    const lookup = createFiatRateLookup({
+      quoteCurrency: 'USD',
+      coin: 'btc',
+      cache,
+      nowMs,
+    });
     expect(lookup.getNearestRate(ts)).toBe(8888);
   });
 
   it('prefers ALL series for timestamps > 1825 days old', () => {
     const ts = nowMs - 2000 * MS_PER_DAY;
     const cache = makeSimpleCache('ALL', ts, 4444);
-    const lookup = createFiatRateLookup({quoteCurrency: 'USD', coin: 'btc', cache, nowMs});
+    const lookup = createFiatRateLookup({
+      quoteCurrency: 'USD',
+      coin: 'btc',
+      cache,
+      nowMs,
+    });
     expect(lookup.getNearestRate(ts)).toBe(4444);
   });
 });

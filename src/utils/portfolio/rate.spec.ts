@@ -194,7 +194,8 @@ describe('getFiatRateBaselineTsForTimeframe', () => {
       Math.floor((before - 7 * MS_PER_DAY) / MS_PER_HOUR) * MS_PER_HOUR,
     );
     expect(result).toBeLessThanOrEqual(
-      Math.floor((after - 7 * MS_PER_DAY) / MS_PER_HOUR) * MS_PER_HOUR + MS_PER_HOUR,
+      Math.floor((after - 7 * MS_PER_DAY) / MS_PER_HOUR) * MS_PER_HOUR +
+        MS_PER_HOUR,
     );
   });
 });
@@ -358,8 +359,7 @@ describe('getFiatRateChangeForTimeframe', () => {
   // Create a simple series covering the full window for 1W
   const windowMs = 7 * MS_PER_DAY;
   // baseline is nowMs - windowMs (rounded to hour)
-  const baselineMs =
-    Math.floor((nowMs - windowMs) / MS_PER_HOUR) * MS_PER_HOUR;
+  const baselineMs = Math.floor((nowMs - windowMs) / MS_PER_HOUR) * MS_PER_HOUR;
   // Build points: one at baselineMs (rate=100) and one at nowMs (rate=150)
   const points: FiatRatePoint[] = [
     {ts: baselineMs, rate: 100},
@@ -773,7 +773,10 @@ describe('trimTimestamps', () => {
   it('trims leading nulls when one coin starts later (≤2 missing)', () => {
     // ETH starts 1 position later so first slot is null
     const btc = makeRatePoints(5, 0, 1000);
-    const eth: Array<RatePoint | null> = [null, ...makeRatePoints(4, 1000, 1000)];
+    const eth: Array<RatePoint | null> = [
+      null,
+      ...makeRatePoints(4, 1000, 1000),
+    ];
     const input: AlignedRatesByCoin = {BTC: btc, ETH: eth};
     const result = trimTimestamps(input);
     // Leading null gets trimmed (only 1 coin missing, ≤2)
@@ -784,8 +787,18 @@ describe('trimTimestamps', () => {
   it('does NOT trim leading nulls when a single coin has >2 nulls in the trim window', () => {
     // BTC has 3 leading nulls, ETH has 3 leading nulls → allHaveRateAt fails for
     // positions 0,1,2 so trimStart=3. countMissingOnStart(BTC, 3)=3 > 2 → no trim.
-    const btc: Array<RatePoint | null> = [null, null, null, ...makeRatePoints(2, 3000, 1000)];
-    const eth: Array<RatePoint | null> = [null, null, null, ...makeRatePoints(2, 3000, 1000, 20)];
+    const btc: Array<RatePoint | null> = [
+      null,
+      null,
+      null,
+      ...makeRatePoints(2, 3000, 1000),
+    ];
+    const eth: Array<RatePoint | null> = [
+      null,
+      null,
+      null,
+      ...makeRatePoints(2, 3000, 1000, 20),
+    ];
     const input: AlignedRatesByCoin = {BTC: btc, ETH: eth};
     const result = trimTimestamps(input);
     // maxMissing = 3 > 2 → trimStart reset to 0 → full length preserved
@@ -804,8 +817,18 @@ describe('trimTimestamps', () => {
 
   it('does NOT trim trailing nulls when a single coin has >2 nulls at the end', () => {
     // Both BTC and ETH have 3 trailing nulls → trimEnd=3, countMissingOnEnd(BTC,3)=3 > 2 → no trim
-    const btc: Array<RatePoint | null> = [...makeRatePoints(2, 0, 1000), null, null, null];
-    const eth: Array<RatePoint | null> = [...makeRatePoints(2, 0, 1000, 20), null, null, null];
+    const btc: Array<RatePoint | null> = [
+      ...makeRatePoints(2, 0, 1000),
+      null,
+      null,
+      null,
+    ];
+    const eth: Array<RatePoint | null> = [
+      ...makeRatePoints(2, 0, 1000, 20),
+      null,
+      null,
+      null,
+    ];
     const input: AlignedRatesByCoin = {BTC: btc, ETH: eth};
     const result = trimTimestamps(input);
     // maxMissing = 3 > 2 → trimEnd reset to 0 → full length preserved

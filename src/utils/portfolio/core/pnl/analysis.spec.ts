@@ -32,7 +32,12 @@ function makeRateSeries(
 }
 
 /** Build a flat (constant) rate series. */
-function flatRateSeries(startTs: number, endTs: number, rate: number, points = 100) {
+function flatRateSeries(
+  startTs: number,
+  endTs: number,
+  rate: number,
+  points = 100,
+) {
   return makeRateSeries(startTs, endTs, rate, rate, points);
 }
 
@@ -175,9 +180,14 @@ describe('buildPnlAnalysisSeries — single BTC wallet, flat rate', () => {
 
   // Wallet holds 1 BTC (= 100_000_000 satoshis) from before the window start.
   const ONE_BTC = '100000000';
-  const snapBeforeWindow = makeSnapshot('w1', seriesStart - MS_PER_HOUR, ONE_BTC, {
-    markRate: rateUSD,
-  });
+  const snapBeforeWindow = makeSnapshot(
+    'w1',
+    seriesStart - MS_PER_HOUR,
+    ONE_BTC,
+    {
+      markRate: rateUSD,
+    },
+  );
   const wallet = makeBtcWallet('w1', [snapBeforeWindow]);
 
   let result: ReturnType<typeof buildPnlAnalysisSeries>;
@@ -249,9 +259,14 @@ describe('buildPnlAnalysisSeries — BTC rate doubles over window', () => {
   const cache = makeCache('USD', 'btc', '1D', points);
 
   const ONE_BTC = '100000000'; // 1 BTC in satoshis
-  const snapBeforeWindow = makeSnapshot('w1', seriesStart - MS_PER_HOUR, ONE_BTC, {
-    markRate: startRate,
-  });
+  const snapBeforeWindow = makeSnapshot(
+    'w1',
+    seriesStart - MS_PER_HOUR,
+    ONE_BTC,
+    {
+      markRate: startRate,
+    },
+  );
   const wallet = makeBtcWallet('w1', [snapBeforeWindow]);
 
   let result: ReturnType<typeof buildPnlAnalysisSeries>;
@@ -471,7 +486,12 @@ describe('buildPnlAnalysisSeries — currentRatesByCoin override on last point',
   const overrideRate = 40_000; // spot rate override
   const seriesStart = ONE_DAY_AGO;
   const seriesEnd = NOW;
-  const ratePoints = makeRateSeries(seriesStart, seriesEnd, startRate, seriesRate);
+  const ratePoints = makeRateSeries(
+    seriesStart,
+    seriesEnd,
+    startRate,
+    seriesRate,
+  );
   const cache = makeCache('USD', 'btc', '1D', ratePoints);
 
   const ONE_BTC = '100000000';
@@ -521,8 +541,12 @@ describe('buildPnlAnalysisSeries — two BTC wallets', () => {
   const cache = makeCache('USD', 'btc', '1D', ratePoints);
 
   const ONE_BTC = '100000000';
-  const snap1 = makeSnapshot('w1', seriesStart - MS_PER_HOUR, ONE_BTC, {markRate: rate});
-  const snap2 = makeSnapshot('w2', seriesStart - MS_PER_HOUR, ONE_BTC, {markRate: rate});
+  const snap1 = makeSnapshot('w1', seriesStart - MS_PER_HOUR, ONE_BTC, {
+    markRate: rate,
+  });
+  const snap2 = makeSnapshot('w2', seriesStart - MS_PER_HOUR, ONE_BTC, {
+    markRate: rate,
+  });
 
   const wallet1 = makeBtcWallet('w1', [snap1]);
   const wallet2 = makeBtcWallet('w2', [snap2]);
@@ -582,7 +606,9 @@ describe('buildPnlAnalysisSeries — BTC + ETH portfolio', () => {
   const ONE_BTC = '100000000'; // 1 BTC
   const ONE_ETH = '1000000000000000000'; // 1 ETH in wei
 
-  const btcSnap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, ONE_BTC, {markRate: btcRate});
+  const btcSnap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, ONE_BTC, {
+    markRate: btcRate,
+  });
   const ethSnap = {
     id: 'snap-w2',
     walletId: 'w2',
@@ -659,7 +685,9 @@ describe('buildPnlAnalysisSeries — 3M/1Y/5Y use ALL interval from cache', () =
   const cache = makeCache('USD', 'btc', 'ALL', ratePoints);
 
   const ONE_BTC = '100000000';
-  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, ONE_BTC, {markRate: 25_000});
+  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, ONE_BTC, {
+    markRate: 25_000,
+  });
   const wallet = makeBtcWallet('w1', [snap]);
 
   it('does not throw for 3M timeframe when ALL series is cached', () => {
@@ -713,11 +741,15 @@ describe('buildPnlAnalysisSeries — deposit mid-window increases cost basis', (
   const cache = makeCache('USD', 'btc', '1D', ratePoints);
 
   // Start with 0 BTC
-  const snapEmpty = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '0', {markRate: startRate});
+  const snapEmpty = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '0', {
+    markRate: startRate,
+  });
   // Buy 1 BTC mid-window at rate ~30_000
   const midTs = Math.round(seriesStart + (seriesEnd - seriesStart) / 2);
   const midRate = (startRate + endRate) / 2; // 30_000
-  const snapDeposit = makeSnapshot('w1', midTs, '100000000', {markRate: midRate});
+  const snapDeposit = makeSnapshot('w1', midTs, '100000000', {
+    markRate: midRate,
+  });
   const wallet = makeBtcWallet('w1', [snapEmpty, snapDeposit]);
 
   let result: ReturnType<typeof buildPnlAnalysisSeries>;
@@ -756,11 +788,15 @@ describe('buildPnlAnalysisSeries — withdrawal pro-rata cost basis reduction', 
 
   // Start with 2 BTC
   const TWO_BTC = '200000000';
-  const snapStart = makeSnapshot('w1', seriesStart - MS_PER_HOUR, TWO_BTC, {markRate: rate});
+  const snapStart = makeSnapshot('w1', seriesStart - MS_PER_HOUR, TWO_BTC, {
+    markRate: rate,
+  });
   // Withdraw 1 BTC at 3/4 of the way through
   const withdrawTs = Math.round(seriesStart + (seriesEnd - seriesStart) * 0.75);
   const ONE_BTC = '100000000';
-  const snapWithdraw = makeSnapshot('w1', withdrawTs, ONE_BTC, {markRate: rate});
+  const snapWithdraw = makeSnapshot('w1', withdrawTs, ONE_BTC, {
+    markRate: rate,
+  });
   const wallet = makeBtcWallet('w1', [snapStart, snapWithdraw]);
 
   let result: ReturnType<typeof buildPnlAnalysisSeries>;
@@ -801,7 +837,9 @@ describe('buildPnlAnalysisSeries — maxPoints defaults to 91', () => {
   const ratePoints = flatRateSeries(seriesStart, seriesEnd, 30_000, 200);
   const cache = makeCache('USD', 'btc', '1D', ratePoints);
 
-  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {markRate: 30_000});
+  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {
+    markRate: 30_000,
+  });
   const wallet = makeBtcWallet('w1', [snap]);
 
   it('produces exactly 91 points when maxPoints is not specified', () => {
@@ -848,7 +886,9 @@ describe('buildPnlAnalysisSeries — timeline monotonicity and bounds', () => {
   const seriesEnd = NOW;
   const ratePoints = flatRateSeries(seriesStart, seriesEnd, 30_000, 200);
   const cache = makeCache('USD', 'btc', '1W', ratePoints);
-  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {markRate: 30_000});
+  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {
+    markRate: 30_000,
+  });
   const wallet = makeBtcWallet('w1', [snap]);
 
   let result: ReturnType<typeof buildPnlAnalysisSeries>;
@@ -943,7 +983,9 @@ describe('buildPnlAnalysisSeries — per-wallet pnlPercent', () => {
   const seriesEnd = NOW;
   const ratePoints = makeRateSeries(seriesStart, seriesEnd, startRate, endRate);
   const cache = makeCache('USD', 'btc', '1D', ratePoints);
-  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {markRate: startRate});
+  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {
+    markRate: startRate,
+  });
   const wallet = makeBtcWallet('w1', [snap]);
 
   let result: ReturnType<typeof buildPnlAnalysisSeries>;
@@ -993,7 +1035,9 @@ describe('buildPnlAnalysisSeries — totalSummary structure', () => {
   const seriesEnd = NOW;
   const ratePoints = makeRateSeries(seriesStart, seriesEnd, startRate, endRate);
   const cache = makeCache('USD', 'btc', '1D', ratePoints);
-  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {markRate: startRate});
+  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {
+    markRate: startRate,
+  });
   const wallet = makeBtcWallet('w1', [snap]);
 
   let result: ReturnType<typeof buildPnlAnalysisSeries>;
@@ -1011,12 +1055,18 @@ describe('buildPnlAnalysisSeries — totalSummary structure', () => {
 
   it('totalSummary.pnlEnd equals last point totalUnrealizedPnlFiat', () => {
     const last = result.points[result.points.length - 1];
-    expect(result.totalSummary.pnlEnd).toBeCloseTo(last.totalUnrealizedPnlFiat, 2);
+    expect(result.totalSummary.pnlEnd).toBeCloseTo(
+      last.totalUnrealizedPnlFiat,
+      2,
+    );
   });
 
   it('totalSummary.pnlStart equals first point totalUnrealizedPnlFiat', () => {
     const first = result.points[0];
-    expect(result.totalSummary.pnlStart).toBeCloseTo(first.totalUnrealizedPnlFiat, 2);
+    expect(result.totalSummary.pnlStart).toBeCloseTo(
+      first.totalUnrealizedPnlFiat,
+      2,
+    );
   });
 
   it('totalSummary.pnlChange = pnlEnd - pnlStart', () => {
@@ -1097,7 +1147,9 @@ describe('buildPnlAnalysisSeries — rate cache fallback to wider interval', () 
   const ratePoints = flatRateSeries(seriesStart, seriesEnd, 30_000, 200);
   // Store under 1W but request 1D — fallback order for 1D includes 1W
   const cache = makeCache('USD', 'btc', '1W', ratePoints);
-  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {markRate: 30_000});
+  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {
+    markRate: 30_000,
+  });
   const wallet = makeBtcWallet('w1', [snap]);
 
   it('uses wider series as fallback when exact interval is missing', () => {
@@ -1124,7 +1176,9 @@ describe('buildPnlAnalysisSeries — assetSummary rate values', () => {
   const seriesEnd = NOW;
   const ratePoints = makeRateSeries(seriesStart, seriesEnd, startRate, endRate);
   const cache = makeCache('USD', 'btc', '1D', ratePoints);
-  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {markRate: startRate});
+  const snap = makeSnapshot('w1', seriesStart - MS_PER_HOUR, '100000000', {
+    markRate: startRate,
+  });
   const wallet = makeBtcWallet('w1', [snap]);
 
   let result: ReturnType<typeof buildPnlAnalysisSeries>;

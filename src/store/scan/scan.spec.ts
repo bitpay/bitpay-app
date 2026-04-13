@@ -1567,7 +1567,10 @@ describe('incomingData', () => {
     );
     const promisesResult = await Promise.all(promises);
     expect(promisesResult).toStrictEqual([true]);
-    expect(loggerSpy).toHaveBeenNthCalledWith(1, '[scan] Incoming-data: Arb URI');
+    expect(loggerSpy).toHaveBeenNthCalledWith(
+      1,
+      '[scan] Incoming-data: Arb URI',
+    );
     expect(navigationSpy).toHaveBeenNthCalledWith(1, 'GlobalSelect', {
       context: 'scanner',
       recipient: {
@@ -1598,7 +1601,10 @@ describe('incomingData', () => {
     );
     const promisesResult = await Promise.all(promises);
     expect(promisesResult).toStrictEqual([true]);
-    expect(loggerSpy).toHaveBeenNthCalledWith(1, '[scan] Incoming-data: Base URI');
+    expect(loggerSpy).toHaveBeenNthCalledWith(
+      1,
+      '[scan] Incoming-data: Base URI',
+    );
     expect(navigationSpy).toHaveBeenNthCalledWith(1, 'GlobalSelect', {
       context: 'scanner',
       recipient: {
@@ -1629,7 +1635,10 @@ describe('incomingData', () => {
     );
     const promisesResult = await Promise.all(promises);
     expect(promisesResult).toStrictEqual([true]);
-    expect(loggerSpy).toHaveBeenNthCalledWith(1, '[scan] Incoming-data: Op URI');
+    expect(loggerSpy).toHaveBeenNthCalledWith(
+      1,
+      '[scan] Incoming-data: Op URI',
+    );
     expect(navigationSpy).toHaveBeenNthCalledWith(1, 'GlobalSelect', {
       context: 'scanner',
       recipient: {
@@ -1659,7 +1668,10 @@ describe('incomingData', () => {
     );
     const promisesResult = await Promise.all(promises);
     expect(promisesResult).toStrictEqual([true]);
-    expect(loggerSpy).toHaveBeenNthCalledWith(1, '[scan] Incoming-data: SolanaPay URI');
+    expect(loggerSpy).toHaveBeenNthCalledWith(
+      1,
+      '[scan] Incoming-data: SolanaPay URI',
+    );
   });
 
   it('Should handle buyCrypto URI and reset navigation', async () => {
@@ -1777,7 +1789,8 @@ describe('incomingData', () => {
   });
 
   it('Should handle ramp URI with rampExternalId and reset navigation', async () => {
-    const data = 'bitpay://ramp?rampExternalId=ramp123&walletId=w1&status=success';
+    const data =
+      'bitpay://ramp?rampExternalId=ramp123&walletId=w1&status=success';
     const store = configureTestStore({});
     const loggerSpy = jest.spyOn(logManager, 'info');
     const navigationResetSpy = jest.spyOn(Root.navigationRef, 'reset');

@@ -25,7 +25,13 @@ const makeCard = (overrides: Partial<Card> = {}): Card => ({
   activationDate: '2024-01-01',
   brand: CardBrand.Visa,
   cardType: 'virtual',
-  currency: {code: 'USD', decimals: 2, name: 'US Dollar', precision: 2, symbol: '$'},
+  currency: {
+    code: 'USD',
+    decimals: 2,
+    name: 'US Dollar',
+    precision: 2,
+    symbol: '$',
+  },
   disabled: false,
   id: 'card-1',
   lastFourDigits: '1234',
@@ -121,7 +127,12 @@ describe('BITPAY_ID_DISCONNECTED', () => {
 
 describe('SUCCESS_FETCH_CARDS', () => {
   it('sets fetchCardsStatus to success and stores cards for the network', () => {
-    const card = makeCard({id: 'card-fetched', provider: CardProvider.galileo, status: 'active', disabled: false});
+    const card = makeCard({
+      id: 'card-fetched',
+      provider: CardProvider.galileo,
+      status: 'active',
+      disabled: false,
+    });
     const state = cardReducer(freshState(), {
       type: CardActionTypes.SUCCESS_FETCH_CARDS,
       payload: {network: Network.mainnet, cards: [card]},
@@ -257,33 +268,51 @@ describe('SUCCESS_FETCH_SETTLED_TRANSACTIONS', () => {
   });
 
   it('appends transactions when new page number is greater than current', () => {
-    const existingTx = makePagedTxData({currentPageNumber: 1, transactionList: [{id: 'tx-old'} as any]});
+    const existingTx = makePagedTxData({
+      currentPageNumber: 1,
+      transactionList: [{id: 'tx-old'} as any],
+    });
     const base: CardState = {
       ...freshState(),
       settledTransactions: {'card-1': existingTx},
     };
-    const newTx = makePagedTxData({currentPageNumber: 2, transactionList: [{id: 'tx-new'} as any]});
+    const newTx = makePagedTxData({
+      currentPageNumber: 2,
+      transactionList: [{id: 'tx-new'} as any],
+    });
     const state = cardReducer(base, {
       type: CardActionTypes.SUCCESS_FETCH_SETTLED_TRANSACTIONS,
       payload: {id: 'card-1', transactions: newTx},
     });
     // should have both old and new transactions
-    expect(state.settledTransactions['card-1']?.transactionList).toHaveLength(2);
+    expect(state.settledTransactions['card-1']?.transactionList).toHaveLength(
+      2,
+    );
   });
 
   it('replaces transactions when page number is not greater', () => {
-    const existingTx = makePagedTxData({currentPageNumber: 2, transactionList: [{id: 'tx-old'} as any]});
+    const existingTx = makePagedTxData({
+      currentPageNumber: 2,
+      transactionList: [{id: 'tx-old'} as any],
+    });
     const base: CardState = {
       ...freshState(),
       settledTransactions: {'card-1': existingTx},
     };
-    const newTx = makePagedTxData({currentPageNumber: 1, transactionList: [{id: 'tx-replace'} as any]});
+    const newTx = makePagedTxData({
+      currentPageNumber: 1,
+      transactionList: [{id: 'tx-replace'} as any],
+    });
     const state = cardReducer(base, {
       type: CardActionTypes.SUCCESS_FETCH_SETTLED_TRANSACTIONS,
       payload: {id: 'card-1', transactions: newTx},
     });
-    expect(state.settledTransactions['card-1']?.transactionList).toHaveLength(1);
-    expect(state.settledTransactions['card-1']?.transactionList[0].id).toBe('tx-replace');
+    expect(state.settledTransactions['card-1']?.transactionList).toHaveLength(
+      1,
+    );
+    expect(state.settledTransactions['card-1']?.transactionList[0].id).toBe(
+      'tx-replace',
+    );
   });
 });
 
@@ -319,10 +348,14 @@ describe('SUCCESS_FETCH_VIRTUAL_IMAGE_URLS', () => {
   it('sets fetchVirtualCardImageUrlsStatus to success and stores images', () => {
     const state = cardReducer(freshState(), {
       type: CardActionTypes.SUCCESS_FETCH_VIRTUAL_IMAGE_URLS,
-      payload: [{id: 'card-1', virtualCardImage: 'https://img.example.com/card-1.png'}],
+      payload: [
+        {id: 'card-1', virtualCardImage: 'https://img.example.com/card-1.png'},
+      ],
     });
     expect(state.fetchVirtualCardImageUrlsStatus).toBe('success');
-    expect(state.virtualCardImages['card-1']).toBe('https://img.example.com/card-1.png');
+    expect(state.virtualCardImages['card-1']).toBe(
+      'https://img.example.com/card-1.png',
+    );
   });
 
   it('merges multiple images', () => {

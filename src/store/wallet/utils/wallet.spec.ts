@@ -12,10 +12,20 @@
 jest.mock('../../../lib/bwc', () => {
   const mockInstance = {
     getClient: jest.fn(() => ({})),
-    createKey: jest.fn(() => ({id: 'mock-key-id', isPrivKeyEncrypted: jest.fn(() => false), toObj: jest.fn(() => ({}))})),
-    createTssKey: jest.fn(() => ({id: 'mock-tss-id', isPrivKeyEncrypted: jest.fn(() => false), toObj: jest.fn(() => ({}))})),
+    createKey: jest.fn(() => ({
+      id: 'mock-key-id',
+      isPrivKeyEncrypted: jest.fn(() => false),
+      toObj: jest.fn(() => ({})),
+    })),
+    createTssKey: jest.fn(() => ({
+      id: 'mock-tss-id',
+      isPrivKeyEncrypted: jest.fn(() => false),
+      toObj: jest.fn(() => ({})),
+    })),
     getErrors: jest.fn(() => ({})),
-    getUtils: jest.fn(() => ({formatAmount: jest.fn((amount: number, _: string) => `${amount}`)})),
+    getUtils: jest.fn(() => ({
+      formatAmount: jest.fn((amount: number, _: string) => `${amount}`),
+    })),
     getBitcore: jest.fn(() => ({})),
     getBitcoreCash: jest.fn(() => ({})),
     getBitcoreDoge: jest.fn(() => ({})),
@@ -24,7 +34,10 @@ jest.mock('../../../lib/bwc', () => {
     getPayProV2: jest.fn(() => ({trustedKeys: {}})),
     getTssSign: jest.fn(() => class MockTssSign {}),
     getTssKey: jest.fn(() => class MockTssKey {}),
-    getConstants: jest.fn(() => ({SCRIPT_TYPES: {}, DERIVATION_STRATEGIES: {}})),
+    getConstants: jest.fn(() => ({
+      SCRIPT_TYPES: {},
+      DERIVATION_STRATEGIES: {},
+    })),
     getEncryption: jest.fn(() => ({})),
     getLogger: jest.fn(() => ({})),
     parseSecret: jest.fn(),
@@ -208,25 +221,45 @@ describe('findWalletByAddress', () => {
   });
 
   it('returns undefined when address does not match', () => {
-    const wallet = makeWallet({receiveAddress: '0xDEF', chain: 'eth', network: Network.mainnet});
+    const wallet = makeWallet({
+      receiveAddress: '0xDEF',
+      chain: 'eth',
+      network: Network.mainnet,
+    });
     const keys: any = {'key-1': {wallets: [wallet]}};
-    expect(findWalletByAddress('0xABC', 'eth', Network.mainnet, keys)).toBeUndefined();
+    expect(
+      findWalletByAddress('0xABC', 'eth', Network.mainnet, keys),
+    ).toBeUndefined();
   });
 
   it('returns undefined when chain does not match', () => {
-    const wallet = makeWallet({receiveAddress: '0xABC', chain: 'btc', network: Network.mainnet});
+    const wallet = makeWallet({
+      receiveAddress: '0xABC',
+      chain: 'btc',
+      network: Network.mainnet,
+    });
     const keys: any = {'key-1': {wallets: [wallet]}};
-    expect(findWalletByAddress('0xABC', 'eth', Network.mainnet, keys)).toBeUndefined();
+    expect(
+      findWalletByAddress('0xABC', 'eth', Network.mainnet, keys),
+    ).toBeUndefined();
   });
 
   it('performs case-insensitive address comparison', () => {
-    const wallet = makeWallet({receiveAddress: '0xabc', chain: 'eth', network: Network.mainnet});
+    const wallet = makeWallet({
+      receiveAddress: '0xabc',
+      chain: 'eth',
+      network: Network.mainnet,
+    });
     const keys: any = {'key-1': {wallets: [wallet]}};
-    expect(findWalletByAddress('0xABC', 'eth', Network.mainnet, keys)).toBe(wallet);
+    expect(findWalletByAddress('0xABC', 'eth', Network.mainnet, keys)).toBe(
+      wallet,
+    );
   });
 
   it('returns undefined when keys object is empty', () => {
-    expect(findWalletByAddress('0xABC', 'eth', Network.mainnet, {})).toBeUndefined();
+    expect(
+      findWalletByAddress('0xABC', 'eth', Network.mainnet, {}),
+    ).toBeUndefined();
   });
 });
 
@@ -445,14 +478,22 @@ describe('getReadOnlyKey', () => {
 
 describe('isMatchedWallet', () => {
   it('returns matching wallet when walletId matches', () => {
-    const existing = makeWallet({credentials: makeCredentials({walletId: 'w-match'})});
-    const newWallet = makeWallet({credentials: makeCredentials({walletId: 'w-match'})});
+    const existing = makeWallet({
+      credentials: makeCredentials({walletId: 'w-match'}),
+    });
+    const newWallet = makeWallet({
+      credentials: makeCredentials({walletId: 'w-match'}),
+    });
     expect(isMatchedWallet(newWallet, [existing])).toBe(existing);
   });
 
   it('returns undefined when no match', () => {
-    const existing = makeWallet({credentials: makeCredentials({walletId: 'w-1'})});
-    const newWallet = makeWallet({credentials: makeCredentials({walletId: 'w-2'})});
+    const existing = makeWallet({
+      credentials: makeCredentials({walletId: 'w-1'}),
+    });
+    const newWallet = makeWallet({
+      credentials: makeCredentials({walletId: 'w-2'}),
+    });
     expect(isMatchedWallet(newWallet, [existing])).toBeUndefined();
   });
 });
@@ -513,7 +554,9 @@ describe('generateKeyExportCode', () => {
 describe('checkEncryptPassword', () => {
   it('calls checkPassword on key.methods', () => {
     const mockCheckPassword = jest.fn(() => true);
-    const key = makeKey({methods: {...makeKey().methods, checkPassword: mockCheckPassword}});
+    const key = makeKey({
+      methods: {...makeKey().methods, checkPassword: mockCheckPassword},
+    });
     const result = checkEncryptPassword(key, 'secret');
     expect(mockCheckPassword).toHaveBeenCalledWith('secret');
     expect(result).toBe(true);
@@ -530,7 +573,9 @@ describe('checkEncryptPassword', () => {
 
 describe('checkPrivateKeyEncrypted', () => {
   it('returns true when key is encrypted', () => {
-    const key = makeKey({methods: {...makeKey().methods, isPrivKeyEncrypted: jest.fn(() => true)}});
+    const key = makeKey({
+      methods: {...makeKey().methods, isPrivKeyEncrypted: jest.fn(() => true)},
+    });
     expect(checkPrivateKeyEncrypted(key)).toBe(true);
   });
 
@@ -578,7 +623,11 @@ describe('buildKeyObj', () => {
   });
 
   it('builds readonly/hardwareSource id when hardwareSource is provided and no key', () => {
-    const result = buildKeyObj({key: undefined, wallets: [], hardwareSource: 'ledger'});
+    const result = buildKeyObj({
+      key: undefined,
+      wallets: [],
+      hardwareSource: 'ledger',
+    });
     expect(result.id).toBe('readonly/ledger');
     expect(result.keyName).toBe('My Ledger');
   });
@@ -589,7 +638,11 @@ describe('buildKeyObj', () => {
       isPrivKeyEncrypted: jest.fn(() => false),
       toObj: jest.fn(() => ({})),
     };
-    const result = buildKeyObj({key: keyMethods, wallets: [], keyName: 'Custom Name'});
+    const result = buildKeyObj({
+      key: keyMethods,
+      wallets: [],
+      keyName: 'Custom Name',
+    });
     expect(result.keyName).toBe('Custom Name');
   });
 
@@ -599,7 +652,12 @@ describe('buildKeyObj', () => {
       isPrivKeyEncrypted: jest.fn(() => false),
       toObj: jest.fn(() => ({})),
     };
-    const result = buildKeyObj({key: keyMethods, wallets: [], totalBalance: 500, backupComplete: true});
+    const result = buildKeyObj({
+      key: keyMethods,
+      wallets: [],
+      totalBalance: 500,
+      backupComplete: true,
+    });
     expect(result.totalBalance).toBe(500);
     expect(result.backupComplete).toBe(true);
   });
@@ -611,7 +669,10 @@ describe('buildTssKeyObj', () => {
   it('builds a key obj from a tssKey', () => {
     const tssKey: any = {
       id: 'tss-key-id',
-      toObj: jest.fn(() => ({privateKeyShare: 'secret', metadata: {m: 1, n: 2}})),
+      toObj: jest.fn(() => ({
+        privateKeyShare: 'secret',
+        metadata: {m: 1, n: 2},
+      })),
       isPrivKeyEncrypted: jest.fn(() => false),
       metadata: {m: 1, n: 2},
     };
@@ -628,7 +689,11 @@ describe('buildTssKeyObj', () => {
       isPrivKeyEncrypted: jest.fn(() => false),
       metadata: {m: 2, n: 3},
     };
-    const result = buildTssKeyObj({tssKey, wallets: [], keyName: 'Custom TSS Key'});
+    const result = buildTssKeyObj({
+      tssKey,
+      wallets: [],
+      keyName: 'Custom TSS Key',
+    });
     expect(result.keyName).toBe('Custom TSS Key');
   });
 
@@ -656,7 +721,12 @@ describe('buildMigrationKeyObj', () => {
         toObj: jest.fn(() => ({})),
       },
     };
-    const result = buildMigrationKeyObj({key, wallets: [], backupComplete: true, keyName: 'Migrated Key'});
+    const result = buildMigrationKeyObj({
+      key,
+      wallets: [],
+      backupComplete: true,
+      keyName: 'Migrated Key',
+    });
     expect(result.id).toBe('migrated-id');
     expect(result.keyName).toBe('Migrated Key');
     expect(result.backupComplete).toBe(true);
@@ -680,21 +750,37 @@ describe('coinbaseAccountToWalletRow', () => {
 
   it('returns a WalletRowProps object', () => {
     const account = makeCoinbaseAccount();
-    const result = coinbaseAccountToWalletRow(account, makeExchangeRates(), 'USD');
+    const result = coinbaseAccountToWalletRow(
+      account,
+      makeExchangeRates(),
+      'USD',
+    );
     expect(result.id).toBe('cb-account-1');
     expect(result.currencyAbbreviation).toBe('BTC');
     expect(result.network).toBe(Network.mainnet);
   });
 
   it('sets cryptoBalance to "0" when balance amount is 0', () => {
-    const account = makeCoinbaseAccount({balance: {amount: '0', currency: 'BTC'}});
-    const result = coinbaseAccountToWalletRow(account, makeExchangeRates(), 'USD');
+    const account = makeCoinbaseAccount({
+      balance: {amount: '0', currency: 'BTC'},
+    });
+    const result = coinbaseAccountToWalletRow(
+      account,
+      makeExchangeRates(),
+      'USD',
+    );
     expect(result.cryptoBalance).toBe('0');
   });
 
   it('returns the balance amount when non-zero', () => {
-    const account = makeCoinbaseAccount({balance: {amount: '1.23', currency: 'BTC'}});
-    const result = coinbaseAccountToWalletRow(account, makeExchangeRates(), 'USD');
+    const account = makeCoinbaseAccount({
+      balance: {amount: '1.23', currency: 'BTC'},
+    });
+    const result = coinbaseAccountToWalletRow(
+      account,
+      makeExchangeRates(),
+      'USD',
+    );
     expect(result.cryptoBalance).toBe('1.23');
   });
 
@@ -761,7 +847,9 @@ describe('BuildCoinbaseWalletsList', () => {
   it('returns empty array when network is testnet', () => {
     const result = BuildCoinbaseWalletsList({
       coinbaseAccounts: [makeCoinbaseAccount()],
-      coinbaseExchangeRates: {data: {currency: 'BTC', rates: {USD: '50000'}}} as any,
+      coinbaseExchangeRates: {
+        data: {currency: 'BTC', rates: {USD: '50000'}},
+      } as any,
       coinbaseUser: makeCoinbaseUser(),
       network: Network.testnet,
       skipThreshold: true,
@@ -772,19 +860,23 @@ describe('BuildCoinbaseWalletsList', () => {
   it('returns wallets list when all conditions met with skipThreshold', () => {
     const result = BuildCoinbaseWalletsList({
       coinbaseAccounts: [makeCoinbaseAccount('0.5')],
-      coinbaseExchangeRates: {data: {currency: 'BTC', rates: {USD: '50000'}}} as any,
+      coinbaseExchangeRates: {
+        data: {currency: 'BTC', rates: {USD: '50000'}},
+      } as any,
       coinbaseUser: makeCoinbaseUser(),
       skipThreshold: true,
     });
     // Account has balance > 0 and skipThreshold is true
     expect(result.length).toBe(1);
-    expect(result[0].keyName).toContain("Test User");
+    expect(result[0].keyName).toContain('Test User');
   });
 
   it('returns empty array when account balance is 0', () => {
     const result = BuildCoinbaseWalletsList({
       coinbaseAccounts: [makeCoinbaseAccount('0')],
-      coinbaseExchangeRates: {data: {currency: 'BTC', rates: {USD: '50000'}}} as any,
+      coinbaseExchangeRates: {
+        data: {currency: 'BTC', rates: {USD: '50000'}},
+      } as any,
       coinbaseUser: makeCoinbaseUser(),
       skipThreshold: true,
     });
@@ -795,7 +887,9 @@ describe('BuildCoinbaseWalletsList', () => {
   it('returns empty array when enabled is false (no invoice, no skipThreshold)', () => {
     const result = BuildCoinbaseWalletsList({
       coinbaseAccounts: [makeCoinbaseAccount('0.5')],
-      coinbaseExchangeRates: {data: {currency: 'BTC', rates: {USD: '50000'}}} as any,
+      coinbaseExchangeRates: {
+        data: {currency: 'BTC', rates: {USD: '50000'}},
+      } as any,
       coinbaseUser: makeCoinbaseUser(),
       skipThreshold: false,
       // no invoice → enabled = false
@@ -806,7 +900,9 @@ describe('BuildCoinbaseWalletsList', () => {
   it('filters by paymentOptions when payProOptions are provided', () => {
     const result = BuildCoinbaseWalletsList({
       coinbaseAccounts: [makeCoinbaseAccount('0.5')],
-      coinbaseExchangeRates: {data: {currency: 'BTC', rates: {USD: '50000'}}} as any,
+      coinbaseExchangeRates: {
+        data: {currency: 'BTC', rates: {USD: '50000'}},
+      } as any,
       coinbaseUser: makeCoinbaseUser(),
       skipThreshold: true,
       payProOptions: {
@@ -822,7 +918,9 @@ describe('BuildCoinbaseWalletsList', () => {
   it('filters out accounts that do not match paymentOptions', () => {
     const result = BuildCoinbaseWalletsList({
       coinbaseAccounts: [makeCoinbaseAccount('0.5')],
-      coinbaseExchangeRates: {data: {currency: 'BTC', rates: {USD: '50000'}}} as any,
+      coinbaseExchangeRates: {
+        data: {currency: 'BTC', rates: {USD: '50000'}},
+      } as any,
       coinbaseUser: makeCoinbaseUser(),
       skipThreshold: true,
       payProOptions: {
@@ -838,7 +936,9 @@ describe('BuildCoinbaseWalletsList', () => {
   it('includes account when invoice threshold met', () => {
     const result = BuildCoinbaseWalletsList({
       coinbaseAccounts: [makeCoinbaseAccount('0.5')],
-      coinbaseExchangeRates: {data: {currency: 'BTC', rates: {USD: '50000'}}} as any,
+      coinbaseExchangeRates: {
+        data: {currency: 'BTC', rates: {USD: '50000'}},
+      } as any,
       coinbaseUser: makeCoinbaseUser(),
       skipThreshold: false,
       invoice: {
@@ -857,26 +957,35 @@ describe('mapAbbreviationAndName', () => {
   const makeDispatch = () => (effect: any) => {
     // Simulate dispatch returning a string name from GetName
     if (typeof effect === 'function') {
-      return effect(() => {}, () => ({WALLET: {customTokenDataByAddress: {}}}));
+      return effect(
+        () => {},
+        () => ({WALLET: {customTokenDataByAddress: {}}}),
+      );
     }
     return effect;
   };
 
   it('maps pax to usdp', () => {
     const dispatch = makeDispatch() as any;
-    const result = (mapAbbreviationAndName('pax', 'eth', undefined) as any)(dispatch);
+    const result = (mapAbbreviationAndName('pax', 'eth', undefined) as any)(
+      dispatch,
+    );
     expect(result.currencyAbbreviation).toBe('usdp');
   });
 
   it('maps matic to pol', () => {
     const dispatch = makeDispatch() as any;
-    const result = (mapAbbreviationAndName('matic', 'matic', undefined) as any)(dispatch);
+    const result = (mapAbbreviationAndName('matic', 'matic', undefined) as any)(
+      dispatch,
+    );
     expect(result.currencyAbbreviation).toBe('pol');
   });
 
   it('passes through unknown coin unchanged', () => {
     const dispatch = makeDispatch() as any;
-    const result = (mapAbbreviationAndName('btc', 'btc', undefined) as any)(dispatch);
+    const result = (mapAbbreviationAndName('btc', 'btc', undefined) as any)(
+      dispatch,
+    );
     expect(result.currencyAbbreviation).toBe('btc');
   });
 });
@@ -886,18 +995,25 @@ describe('mapAbbreviationAndName', () => {
 describe('GetProtocolPrefixAddress', () => {
   const dispatchFn = (effect: any) => {
     if (typeof effect === 'function') {
-      return effect(() => {}, () => ({WALLET: {customTokenDataByAddress: {}}}));
+      return effect(
+        () => {},
+        () => ({WALLET: {customTokenDataByAddress: {}}}),
+      );
     }
     return effect;
   };
 
   it('returns address unchanged for non-bch coin', () => {
-    const result = (GetProtocolPrefixAddress('btc', 'mainnet', '1ABCxyz', 'btc') as any)(dispatchFn as any);
+    const result = (
+      GetProtocolPrefixAddress('btc', 'mainnet', '1ABCxyz', 'btc') as any
+    )(dispatchFn as any);
     expect(result).toBe('1ABCxyz');
   });
 
   it('prefixes address for bch coin', () => {
-    const result = (GetProtocolPrefixAddress('bch', 'livenet', 'qABC', 'bch') as any)(dispatchFn as any);
+    const result = (
+      GetProtocolPrefixAddress('bch', 'livenet', 'qABC', 'bch') as any
+    )(dispatchFn as any);
     // GetProtocolPrefix returns the prefix from BitpaySupportedCoins for bch/livenet
     expect(typeof result).toBe('string');
     expect(result).toContain('qABC');
@@ -909,9 +1025,11 @@ describe('GetProtocolPrefixAddress', () => {
 
 describe('toFiat', () => {
   // toFiat is an Effect — we call it with a dispatch that calls real GetPrecision
-  const makeGetState = (customTokenData = {}) => () => ({
-    WALLET: {customTokenDataByAddress: customTokenData},
-  });
+  const makeGetState =
+    (customTokenData = {}) =>
+    () => ({
+      WALLET: {customTokenDataByAddress: customTokenData},
+    });
 
   const makeRates = (): any => ({
     btc: [{code: 'USD', fetchedOn: 0, name: 'US Dollar', rate: 50000, ts: 0}],
@@ -922,7 +1040,9 @@ describe('toFiat', () => {
       if (typeof effect === 'function') return effect(dispatch, makeGetState());
       return effect;
     };
-    const result = (toFiat(100000, 'USD', 'btc', 'btc', {}, undefined) as any)(dispatch as any);
+    const result = (toFiat(100000, 'USD', 'btc', 'btc', {}, undefined) as any)(
+      dispatch as any,
+    );
     expect(result).toBe(0);
   });
 
@@ -932,7 +1052,9 @@ describe('toFiat', () => {
       return effect;
     };
     const rates = makeRates();
-    const result = (toFiat(100000, 'EUR', 'btc', 'btc', rates, undefined) as any)(dispatch as any);
+    const result = (
+      toFiat(100000, 'EUR', 'btc', 'btc', rates, undefined) as any
+    )(dispatch as any);
     expect(result).toBe(0);
   });
 
@@ -943,7 +1065,9 @@ describe('toFiat', () => {
     };
     const rates = makeRates();
     // 100000000 sat * (1/1e8) * 50000 = 50000 USD
-    const result = (toFiat(100000000, 'USD', 'btc', 'btc', rates, undefined) as any)(dispatch as any);
+    const result = (
+      toFiat(100000000, 'USD', 'btc', 'btc', rates, undefined) as any
+    )(dispatch as any);
     expect(typeof result).toBe('number');
     expect(result).toBeCloseTo(50000, 0);
   });
@@ -953,7 +1077,9 @@ describe('toFiat', () => {
       if (typeof effect === 'function') return effect(dispatch, makeGetState());
       return effect;
     };
-    const result = (toFiat(100000000, 'USD', 'btc', 'btc', {}, undefined, 30000) as any)(dispatch as any);
+    const result = (
+      toFiat(100000000, 'USD', 'btc', 'btc', {}, undefined, 30000) as any
+    )(dispatch as any);
     expect(typeof result).toBe('number');
     expect(result).toBeCloseTo(30000, 0);
   });
@@ -966,7 +1092,9 @@ describe('toFiat', () => {
     const rates: any = {
       btc: [{code: 'USD', fetchedOn: 0, name: 'US Dollar', rate: 0, ts: 0}],
     };
-    const result = (toFiat(100000, 'USD', 'btc', 'btc', rates, undefined) as any)(dispatch as any);
+    const result = (
+      toFiat(100000, 'USD', 'btc', 'btc', rates, undefined) as any
+    )(dispatch as any);
     expect(result).toBe(0);
   });
 });
@@ -978,7 +1106,9 @@ describe('findMatchedKeyAndUpdate', () => {
     const key = {fingerPrint: 'fp-1'};
     const wallets: any[] = [];
     const keys: any[] = [];
-    const result = findMatchedKeyAndUpdate(wallets, key, keys, {keyId: 'some-key-id'});
+    const result = findMatchedKeyAndUpdate(wallets, key, keys, {
+      keyId: 'some-key-id',
+    });
     expect(result.key).toBe(key);
     expect(result.wallets).toBe(wallets);
     expect(result.keyName).toBeUndefined();
@@ -1143,7 +1273,12 @@ describe('findWalletByIdHashed', () => {
   it('resolves with undefined wallet when no hash matches', async () => {
     const wallet = makeCompleteWallet('wallet-xyz');
     const keys: any = {'key-1': {wallets: [wallet]}};
-    const result = await findWalletByIdHashed(keys, 'deadbeefdeadbeef', null, undefined);
+    const result = await findWalletByIdHashed(
+      keys,
+      'deadbeefdeadbeef',
+      null,
+      undefined,
+    );
     expect(result.wallet).toBeUndefined();
     expect(result.keyId).toBeUndefined();
   });
@@ -1159,7 +1294,12 @@ describe('findWalletByIdHashed', () => {
 
     const wallet = makeCompleteWallet(walletId);
     const keys: any = {'key-1': {wallets: [wallet]}};
-    const result = await findWalletByIdHashed(keys, hashed, '0xSomeToken', undefined);
+    const result = await findWalletByIdHashed(
+      keys,
+      hashed,
+      '0xSomeToken',
+      undefined,
+    );
     expect(result.wallet).toBeDefined();
   });
 });
@@ -1169,7 +1309,9 @@ describe('findWalletByIdHashed', () => {
 describe('buildUIFormattedWallet', () => {
   const makeDispatch = () => (effect: any) => {
     if (typeof effect === 'function') {
-      return effect(makeDispatch(), () => ({WALLET: {customTokenDataByAddress: {}}}));
+      return effect(makeDispatch(), () => ({
+        WALLET: {customTokenDataByAddress: {}},
+      }));
     }
     return effect;
   };
@@ -1180,8 +1322,20 @@ describe('buildUIFormattedWallet', () => {
 
   const makeFullWallet = (overrides: any = {}): any => ({
     ...makeWallet(overrides),
-    balance: makeBalance({sat: 100000000, satLocked: 0, satConfirmedLocked: 0, satSpendable: 100000000, satPending: 0}),
-    credentials: makeCredentials({n: 1, m: 1, account: 0, walletName: 'BTC Wallet', isComplete: jest.fn(() => true)}),
+    balance: makeBalance({
+      sat: 100000000,
+      satLocked: 0,
+      satConfirmedLocked: 0,
+      satSpendable: 100000000,
+      satPending: 0,
+    }),
+    credentials: makeCredentials({
+      n: 1,
+      m: 1,
+      account: 0,
+      walletName: 'BTC Wallet',
+      isComplete: jest.fn(() => true),
+    }),
     chain: 'btc',
     currencyAbbreviation: 'btc',
     currencyName: 'Bitcoin',
@@ -1209,7 +1363,14 @@ describe('buildUIFormattedWallet', () => {
   it('includes fiat balance calculations when skipFiatCalculations is false', () => {
     const dispatch = makeDispatch() as any;
     const wallet = makeFullWallet();
-    const result = buildUIFormattedWallet(wallet, 'USD', makeRates(), dispatch, undefined, false);
+    const result = buildUIFormattedWallet(
+      wallet,
+      'USD',
+      makeRates(),
+      dispatch,
+      undefined,
+      false,
+    );
     expect(result.fiatBalance).toBeDefined();
     expect(typeof result.fiatBalance).toBe('number');
   });
@@ -1217,7 +1378,14 @@ describe('buildUIFormattedWallet', () => {
   it('skips fiat calculations when skipFiatCalculations is true', () => {
     const dispatch = makeDispatch() as any;
     const wallet = makeFullWallet();
-    const result = buildUIFormattedWallet(wallet, 'USD', makeRates(), dispatch, undefined, true);
+    const result = buildUIFormattedWallet(
+      wallet,
+      'USD',
+      makeRates(),
+      dispatch,
+      undefined,
+      true,
+    );
     expect(result.fiatBalance).toBeUndefined();
   });
 
@@ -1226,9 +1394,22 @@ describe('buildUIFormattedWallet', () => {
     // credentials.n must be > 1; buildUIFormattedWallet destructures credentials from wallet
     const wallet: any = {
       ...makeFullWallet(),
-      credentials: makeCredentials({n: 3, m: 2, account: 0, walletName: 'Multisig', isComplete: jest.fn(() => true)}),
+      credentials: makeCredentials({
+        n: 3,
+        m: 2,
+        account: 0,
+        walletName: 'Multisig',
+        isComplete: jest.fn(() => true),
+      }),
     };
-    const result = buildUIFormattedWallet(wallet, 'USD', {}, dispatch, undefined, true);
+    const result = buildUIFormattedWallet(
+      wallet,
+      'USD',
+      {},
+      dispatch,
+      undefined,
+      true,
+    );
     expect(result.multisig).toContain('2/3');
   });
 
@@ -1238,7 +1419,14 @@ describe('buildUIFormattedWallet', () => {
       ...makeFullWallet(),
       tssMetadata: {id: 'tss-1', n: 3, m: 2, partyId: 1},
     };
-    const result = buildUIFormattedWallet(wallet, 'USD', {}, dispatch, undefined, true);
+    const result = buildUIFormattedWallet(
+      wallet,
+      'USD',
+      {},
+      dispatch,
+      undefined,
+      true,
+    );
     expect(result.threshold).toContain('2/3');
   });
 });
@@ -1248,15 +1436,29 @@ describe('buildUIFormattedWallet', () => {
 describe('buildAccountList', () => {
   const makeDispatch = () => (effect: any) => {
     if (typeof effect === 'function') {
-      return effect(makeDispatch(), () => ({WALLET: {customTokenDataByAddress: {}}}));
+      return effect(makeDispatch(), () => ({
+        WALLET: {customTokenDataByAddress: {}},
+      }));
     }
     return effect;
   };
 
   const makeBtcWallet = (overrides: any = {}): any => ({
     ...makeWallet(),
-    balance: makeBalance({sat: 100000000, satLocked: 0, satConfirmedLocked: 0, satSpendable: 100000000, satPending: 0}),
-    credentials: makeCredentials({n: 1, m: 1, account: 0, walletName: 'BTC', isComplete: jest.fn(() => true)}),
+    balance: makeBalance({
+      sat: 100000000,
+      satLocked: 0,
+      satConfirmedLocked: 0,
+      satSpendable: 100000000,
+      satPending: 0,
+    }),
+    credentials: makeCredentials({
+      n: 1,
+      m: 1,
+      account: 0,
+      walletName: 'BTC',
+      isComplete: jest.fn(() => true),
+    }),
     chain: 'btc',
     currencyAbbreviation: 'btc',
     currencyName: 'Bitcoin',
@@ -1281,7 +1483,9 @@ describe('buildAccountList', () => {
   it('returns empty array when key has no wallets', () => {
     const dispatch = makeDispatch() as any;
     const key = makeKey2([]);
-    const result = buildAccountList(key, 'USD', {}, dispatch, {skipFiatCalculations: true});
+    const result = buildAccountList(key, 'USD', {}, dispatch, {
+      skipFiatCalculations: true,
+    });
     expect(result).toEqual([]);
   });
 
@@ -1289,7 +1493,9 @@ describe('buildAccountList', () => {
     const dispatch = makeDispatch() as any;
     const wallet = makeBtcWallet();
     const key = makeKey2([wallet]);
-    const result = buildAccountList(key, 'USD', {}, dispatch, {skipFiatCalculations: true});
+    const result = buildAccountList(key, 'USD', {}, dispatch, {
+      skipFiatCalculations: true,
+    });
     expect(result.length).toBeGreaterThan(0);
     expect(result[0].chains).toContain('btc');
   });
@@ -1356,12 +1562,31 @@ describe('buildAccountList', () => {
 
   it('merges wallets sharing the same receiveAddress into one account', () => {
     const dispatch = makeDispatch() as any;
-    const wallet1 = makeBtcWallet({receiveAddress: 'shared-addr', chain: 'btc', id: 'w1'});
-    const wallet2 = makeBtcWallet({receiveAddress: 'shared-addr', chain: 'eth', id: 'w2',
-      credentials: makeCredentials({n: 1, m: 1, account: 0, walletId: 'wallet-2', walletName: 'ETH', isComplete: jest.fn(() => true)}),
-      currencyAbbreviation: 'eth', currencyName: 'Ethereum', chainName: 'Ethereum'});
+    const wallet1 = makeBtcWallet({
+      receiveAddress: 'shared-addr',
+      chain: 'btc',
+      id: 'w1',
+    });
+    const wallet2 = makeBtcWallet({
+      receiveAddress: 'shared-addr',
+      chain: 'eth',
+      id: 'w2',
+      credentials: makeCredentials({
+        n: 1,
+        m: 1,
+        account: 0,
+        walletId: 'wallet-2',
+        walletName: 'ETH',
+        isComplete: jest.fn(() => true),
+      }),
+      currencyAbbreviation: 'eth',
+      currencyName: 'Ethereum',
+      chainName: 'Ethereum',
+    });
     const key = makeKey2([wallet1, wallet2]);
-    const result = buildAccountList(key, 'USD', {}, dispatch, {skipFiatCalculations: true});
+    const result = buildAccountList(key, 'USD', {}, dispatch, {
+      skipFiatCalculations: true,
+    });
     // Both wallets share same receiveAddress → merged into one account
     expect(result.length).toBe(1);
     expect(result[0].wallets.length).toBe(2);
@@ -1370,8 +1595,18 @@ describe('buildAccountList', () => {
   it('uses filterByCustomWallets when provided', () => {
     const dispatch = makeDispatch() as any;
     const wallet1 = makeBtcWallet({id: 'w1'});
-    const wallet2 = makeBtcWallet({id: 'w2', receiveAddress: '2ABCxyz',
-      credentials: makeCredentials({walletId: 'wallet-2', n: 1, m: 1, account: 0, walletName: 'BTC2', isComplete: jest.fn(() => true)})});
+    const wallet2 = makeBtcWallet({
+      id: 'w2',
+      receiveAddress: '2ABCxyz',
+      credentials: makeCredentials({
+        walletId: 'wallet-2',
+        n: 1,
+        m: 1,
+        account: 0,
+        walletName: 'BTC2',
+        isComplete: jest.fn(() => true),
+      }),
+    });
     const key = makeKey2([wallet1, wallet2]);
     // Only pass wallet1 as custom filter
     const result = buildAccountList(key, 'USD', {}, dispatch, {
@@ -1522,6 +1757,8 @@ describe('buildAssetsByChainList', () => {
     const wallets = [makeWalletRow('btc', 10), makeWalletRow('eth', 200)];
     const account = makeAccountRow(wallets);
     const result = buildAssetsByChainList(account, 'USD');
-    expect(result[0].data![0].fiatBalance).toBeGreaterThan(result[1].data![0].fiatBalance);
+    expect(result[0].data![0].fiatBalance).toBeGreaterThan(
+      result[1].data![0].fiatBalance,
+    );
   });
 });

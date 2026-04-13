@@ -55,14 +55,12 @@ jest.mock('../../../../lib/bwc', () => {
 // FormatAmount — return a deterministic string so math doesn't depend on BWC
 jest.mock('../amount/amount', () => ({
   FormatAmount: jest.fn(
-    (currency: string, _chain: string, _addr: any, sats: number) =>
-      () =>
-        `${sats} ${currency}`,
+    (currency: string, _chain: string, _addr: any, sats: number) => () =>
+      `${sats} ${currency}`,
   ),
   FormatAmountStr: jest.fn(
-    (currency: string, _chain: string, _addr: any, sats: number) =>
-      () =>
-        `${sats} ${currency}`,
+    (currency: string, _chain: string, _addr: any, sats: number) => () =>
+      `${sats} ${currency}`,
   ),
 }));
 
@@ -71,10 +69,7 @@ jest.mock('../../utils/wallet', () => ({
   ...jest.requireActual('../../utils/wallet'),
   isCacheKeyStale: jest.fn(() => true), // stale by default → updates proceed
   findWalletById: jest.fn(),
-  toFiat:
-    (sats: number) =>
-    () =>
-      sats / 1e8, // 1 sat = 1e-8 "fiat"
+  toFiat: (sats: number) => () => sats / 1e8, // 1 sat = 1e-8 "fiat"
 }));
 
 // convertToFiat — just return the first argument
@@ -191,7 +186,10 @@ const makeStatus = (overrides: Partial<any> = {}): any => ({
 });
 
 /** Minimal BulkStatus entry */
-const makeBulkStatus = (walletId = 'wallet-1', overrides: Partial<any> = {}): any => ({
+const makeBulkStatus = (
+  walletId = 'wallet-1',
+  overrides: Partial<any> = {},
+): any => ({
   walletId,
   success: true,
   status: makeStatus(),
@@ -245,7 +243,9 @@ describe('getBulkStatus', () => {
         cb(null, []);
       }),
     };
-    await getBulkStatus(bulkClient, ['cred1'], {w1: {tokenAddresses: undefined}});
+    await getBulkStatus(bulkClient, ['cred1'], {
+      w1: {tokenAddresses: undefined},
+    });
     expect(bulkClient.getStatusAll).toHaveBeenCalledTimes(1);
   });
 });
@@ -481,9 +481,10 @@ describe('buildPendingTxps', () => {
 
     // Make ProcessPendingTxps return both txps
     const {ProcessPendingTxps} = require('../transactions/transactions');
-    (ProcessPendingTxps as jest.Mock).mockImplementationOnce(
-      () => () => [expiredTxp, freshTxp],
-    );
+    (ProcessPendingTxps as jest.Mock).mockImplementationOnce(() => () => [
+      expiredTxp,
+      freshTxp,
+    ]);
 
     const status = makeStatus({pendingTxps: [expiredTxp, freshTxp]});
     const result = store.dispatch(buildPendingTxps({wallet, status}));
@@ -583,7 +584,10 @@ describe('startUpdateAllWalletStatusForReadOnlyKeys', () => {
     const readOnlyKey = makeKey([], {isReadOnly: true});
     await expect(
       store.dispatch(
-        startUpdateAllWalletStatusForReadOnlyKeys({readOnlyKeys: [readOnlyKey], force: true}),
+        startUpdateAllWalletStatusForReadOnlyKeys({
+          readOnlyKeys: [readOnlyKey],
+          force: true,
+        }),
       ),
     ).resolves.toBeUndefined();
   });
@@ -649,7 +653,9 @@ describe('startUpdateAllWalletStatusForKeys', () => {
     });
 
     await expect(
-      store.dispatch(startUpdateAllWalletStatusForKeys({keys: [], force: true})),
+      store.dispatch(
+        startUpdateAllWalletStatusForKeys({keys: [], force: true}),
+      ),
     ).resolves.toBeUndefined();
   });
 
@@ -685,7 +691,9 @@ describe('startUpdateAllWalletStatusForKeys', () => {
     });
 
     await expect(
-      store.dispatch(startUpdateAllWalletStatusForKeys({keys: [key], force: true})),
+      store.dispatch(
+        startUpdateAllWalletStatusForKeys({keys: [key], force: true}),
+      ),
     ).rejects.toThrow();
   });
 });
@@ -759,7 +767,9 @@ describe('startUpdateAllKeyAndWalletStatus', () => {
     });
 
     await expect(
-      store.dispatch(startUpdateAllKeyAndWalletStatus({force: true, context: 'init'})),
+      store.dispatch(
+        startUpdateAllKeyAndWalletStatus({force: true, context: 'init'}),
+      ),
     ).resolves.toBeUndefined();
   });
 });

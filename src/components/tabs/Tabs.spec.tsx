@@ -9,9 +9,7 @@ import configureTestStore from '@test/store';
 
 const renderWithStore = (ui: React.ReactElement, initialState = {}) => {
   const store = configureTestStore(initialState);
-  return render(
-    <Provider store={store}>{ui}</Provider>,
-  );
+  return render(<Provider store={store}>{ui}</Provider>);
 };
 
 const makeTabs = () => [
@@ -34,9 +32,7 @@ describe('Tabs', () => {
   });
 
   it('switches to second tab content when second tab is pressed', () => {
-    const {getByText, queryByText} = renderWithStore(
-      <Tabs tabs={makeTabs} />,
-    );
+    const {getByText, queryByText} = renderWithStore(<Tabs tabs={makeTabs} />);
     fireEvent.press(getByText('Tab Two'));
     expect(getByText('Content Two')).toBeTruthy();
     // First tab content should no longer be shown

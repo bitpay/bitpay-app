@@ -16,7 +16,9 @@ import {Key, Wallet, CryptoBalance} from './wallet.models';
 // Helpers
 // ---------------------------------------------------------------------------
 
-const makeBalance = (overrides: Partial<CryptoBalance> = {}): CryptoBalance => ({
+const makeBalance = (
+  overrides: Partial<CryptoBalance> = {},
+): CryptoBalance => ({
   crypto: '0',
   cryptoLocked: '0',
   cryptoConfirmedLocked: '0',
@@ -82,7 +84,10 @@ const freshState = (): WalletState => ({
 });
 
 /** State pre-seeded with one key containing one wallet */
-const stateWithKey = (keyOverrides: Partial<Key> = {}, walletOverrides: Partial<Wallet> = {}): WalletState => {
+const stateWithKey = (
+  keyOverrides: Partial<Key> = {},
+  walletOverrides: Partial<Wallet> = {},
+): WalletState => {
   const wallet = makeWallet(walletOverrides);
   const key = makeKey({wallets: [wallet], ...keyOverrides});
   return {
@@ -123,7 +128,11 @@ describe('walletReducer — default state', () => {
 
   it('has zeroed portfolio balance by default', () => {
     const state = walletReducer(undefined, {type: '@@INIT'} as any);
-    expect(state.portfolioBalance).toEqual({current: 0, lastDay: 0, previous: 0});
+    expect(state.portfolioBalance).toEqual({
+      current: 0,
+      lastDay: 0,
+      previous: 0,
+    });
   });
 });
 
@@ -143,7 +152,10 @@ describe('SUCCESS_CREATE_KEY', () => {
 
   it('preserves existing keys when adding a new one', () => {
     const existing = makeKey({id: 'key-existing'});
-    const base: WalletState = {...freshState(), keys: {'key-existing': existing}};
+    const base: WalletState = {
+      ...freshState(),
+      keys: {'key-existing': existing},
+    };
     const newKey = makeKey({id: 'key-new'});
     const state = walletReducer(base, {
       type: WalletActionTypes.SUCCESS_CREATE_KEY,
@@ -258,17 +270,29 @@ describe('SET_WALLET_TERMS_ACCEPTED', () => {
 
 describe('UPDATE_PORTFOLIO_BALANCE', () => {
   it('sums totalBalance across all keys for current', () => {
-    const key1 = makeKey({id: 'k1', totalBalance: 200, totalBalanceLastDay: 150});
-    const key2 = makeKey({id: 'k2', totalBalance: 300, totalBalanceLastDay: 250});
+    const key1 = makeKey({
+      id: 'k1',
+      totalBalance: 200,
+      totalBalanceLastDay: 150,
+    });
+    const key2 = makeKey({
+      id: 'k2',
+      totalBalance: 300,
+      totalBalanceLastDay: 250,
+    });
     const base: WalletState = {...freshState(), keys: {k1: key1, k2: key2}};
-    const state = walletReducer(base, {type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE});
+    const state = walletReducer(base, {
+      type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE,
+    });
     expect(state.portfolioBalance.current).toBe(500);
     expect(state.portfolioBalance.lastDay).toBe(400);
     expect(state.portfolioBalance.previous).toBe(0);
   });
 
   it('computes 0 when there are no keys', () => {
-    const state = walletReducer(freshState(), {type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE});
+    const state = walletReducer(freshState(), {
+      type: WalletActionTypes.UPDATE_PORTFOLIO_BALANCE,
+    });
     expect(state.portfolioBalance.current).toBe(0);
     expect(state.portfolioBalance.lastDay).toBe(0);
   });
@@ -283,7 +307,9 @@ describe('SUCCESS_UPDATE_KEYS_TOTAL_BALANCE', () => {
     const base = stateWithKey();
     const state = walletReducer(base, {
       type: WalletActionTypes.SUCCESS_UPDATE_KEYS_TOTAL_BALANCE,
-      payload: [{keyId: 'key-1', totalBalance: 9999, totalBalanceLastDay: 8888}],
+      payload: [
+        {keyId: 'key-1', totalBalance: 9999, totalBalanceLastDay: 8888},
+      ],
     });
     expect(state.keys['key-1'].totalBalance).toBe(9999);
     expect(state.keys['key-1'].totalBalanceLastDay).toBe(8888);
@@ -403,9 +429,15 @@ describe('SUCCESS_GET_RECEIVE_ADDRESS', () => {
     const base = stateWithKey({}, {id: 'wallet-1'});
     const state = walletReducer(base, {
       type: WalletActionTypes.SUCCESS_GET_RECEIVE_ADDRESS,
-      payload: {keyId: 'key-1', walletId: 'wallet-1', receiveAddress: '1BpEi6DfDAUFd153wiGrvkiZWhavi'},
+      payload: {
+        keyId: 'key-1',
+        walletId: 'wallet-1',
+        receiveAddress: '1BpEi6DfDAUFd153wiGrvkiZWhavi',
+      },
     });
-    expect((state.keys['key-1'].wallets[0] as any).receiveAddress).toBe('1BpEi6DfDAUFd153wiGrvkiZWhavi');
+    expect((state.keys['key-1'].wallets[0] as any).receiveAddress).toBe(
+      '1BpEi6DfDAUFd153wiGrvkiZWhavi',
+    );
   });
 
   it('returns unchanged state when key does not exist', () => {
@@ -477,7 +509,9 @@ describe('UPDATE_ACCOUNT_NAME', () => {
       type: WalletActionTypes.UPDATE_ACCOUNT_NAME,
       payload: {keyId: 'key-1', accountAddress: '0xabc', name: 'Trading'},
     });
-    expect(state.keys['key-1'].evmAccountsInfo?.['0xabc']?.name).toBe('Trading');
+    expect(state.keys['key-1'].evmAccountsInfo?.['0xabc']?.name).toBe(
+      'Trading',
+    );
   });
 
   it('returns unchanged state when key does not exist', () => {
@@ -521,12 +555,22 @@ describe('SET_WALLET_SCANNING', () => {
 describe('UPDATE_WALLET_TX_HISTORY', () => {
   it('sets transactionHistory on the matching wallet', () => {
     const base = stateWithKey({}, {id: 'wallet-1'});
-    const history = {transactions: [{id: 'tx1'}], loadMore: false, hasConfirmingTxs: false};
+    const history = {
+      transactions: [{id: 'tx1'}],
+      loadMore: false,
+      hasConfirmingTxs: false,
+    };
     const state = walletReducer(base, {
       type: WalletActionTypes.UPDATE_WALLET_TX_HISTORY,
-      payload: {keyId: 'key-1', walletId: 'wallet-1', transactionHistory: history},
+      payload: {
+        keyId: 'key-1',
+        walletId: 'wallet-1',
+        transactionHistory: history,
+      },
     });
-    expect((state.keys['key-1'].wallets[0] as any).transactionHistory).toEqual(history);
+    expect((state.keys['key-1'].wallets[0] as any).transactionHistory).toEqual(
+      history,
+    );
   });
 
   it('returns unchanged state when key does not exist', () => {
@@ -536,7 +580,11 @@ describe('UPDATE_WALLET_TX_HISTORY', () => {
       payload: {
         keyId: 'ghost',
         walletId: 'wallet-1',
-        transactionHistory: {transactions: [], loadMore: false, hasConfirmingTxs: false},
+        transactionHistory: {
+          transactions: [],
+          loadMore: false,
+          hasConfirmingTxs: false,
+        },
       },
     });
     expect(state).toBe(base);
@@ -550,12 +598,21 @@ describe('UPDATE_WALLET_TX_HISTORY', () => {
 describe('UPDATE_ACCOUNT_TX_HISTORY', () => {
   it('applies transactionHistory to matching wallets by id', () => {
     const base = stateWithKey({}, {id: 'wallet-1'});
-    const history = {transactions: [{id: 'tx2'}], loadMore: true, hasConfirmingTxs: true};
+    const history = {
+      transactions: [{id: 'tx2'}],
+      loadMore: true,
+      hasConfirmingTxs: true,
+    };
     const state = walletReducer(base, {
       type: WalletActionTypes.UPDATE_ACCOUNT_TX_HISTORY,
-      payload: {keyId: 'key-1', accountTransactionsHistory: {'wallet-1': history}},
+      payload: {
+        keyId: 'key-1',
+        accountTransactionsHistory: {'wallet-1': history},
+      },
     });
-    expect((state.keys['key-1'].wallets[0] as any).transactionHistory).toEqual(history);
+    expect((state.keys['key-1'].wallets[0] as any).transactionHistory).toEqual(
+      history,
+    );
   });
 });
 
@@ -588,9 +645,15 @@ describe('SET_USE_UNCONFIRMED_FUNDS', () => {
 
 describe('SET_CUSTOMIZE_NONCE', () => {
   it('toggles customizeNonce', () => {
-    const s1 = walletReducer(freshState(), {type: WalletActionTypes.SET_CUSTOMIZE_NONCE, payload: true});
+    const s1 = walletReducer(freshState(), {
+      type: WalletActionTypes.SET_CUSTOMIZE_NONCE,
+      payload: true,
+    });
     expect(s1.customizeNonce).toBe(true);
-    const s2 = walletReducer(s1, {type: WalletActionTypes.SET_CUSTOMIZE_NONCE, payload: false});
+    const s2 = walletReducer(s1, {
+      type: WalletActionTypes.SET_CUSTOMIZE_NONCE,
+      payload: false,
+    });
     expect(s2.customizeNonce).toBe(false);
   });
 });
@@ -694,18 +757,29 @@ describe('TOGGLE_HIDE_ACCOUNT', () => {
     const base = stateWithKey({}, {receiveAddress: '0xabc'});
     const state = walletReducer(base, {
       type: WalletActionTypes.TOGGLE_HIDE_ACCOUNT,
-      payload: {keyId: 'key-1', accountAddress: '0xabc', accountToggleSelected: true},
+      payload: {
+        keyId: 'key-1',
+        accountAddress: '0xabc',
+        accountToggleSelected: true,
+      },
     });
-    expect(state.keys['key-1'].evmAccountsInfo?.['0xabc']?.hideAccount).toBe(true);
+    expect(state.keys['key-1'].evmAccountsInfo?.['0xabc']?.hideAccount).toBe(
+      true,
+    );
   });
 
   it('also sets hideWalletByAccount on wallets with matching receiveAddress', () => {
-    const base = stateWithKey({}, {id: 'wallet-1', receiveAddress: '0xabc', hideWalletByAccount: false});
+    const base = stateWithKey(
+      {},
+      {id: 'wallet-1', receiveAddress: '0xabc', hideWalletByAccount: false},
+    );
     const state = walletReducer(base, {
       type: WalletActionTypes.TOGGLE_HIDE_ACCOUNT,
       payload: {keyId: 'key-1', accountAddress: '0xabc'},
     });
-    expect((state.keys['key-1'].wallets[0] as any).hideWalletByAccount).toBe(true);
+    expect((state.keys['key-1'].wallets[0] as any).hideWalletByAccount).toBe(
+      true,
+    );
   });
 
   it('returns unchanged state when key does not exist', () => {
@@ -791,7 +865,9 @@ describe('SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS', () => {
     const state = walletReducer(base, {
       type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
       payload: {
-        keyBalances: [{keyId: 'key-1', totalBalance: 777, totalBalanceLastDay: 666}],
+        keyBalances: [
+          {keyId: 'key-1', totalBalance: 777, totalBalanceLastDay: 666},
+        ],
         walletBalances: [],
       },
     });
@@ -806,11 +882,13 @@ describe('SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS', () => {
       type: WalletActionTypes.SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS,
       payload: {
         keyBalances: [],
-        walletBalances: [{
-          keyId: 'key-1',
-          walletId: 'wallet-1',
-          status: {balance: newBalance, pendingTxps: [], singleAddress: true},
-        }],
+        walletBalances: [
+          {
+            keyId: 'key-1',
+            walletId: 'wallet-1',
+            status: {balance: newBalance, pendingTxps: [], singleAddress: true},
+          },
+        ],
       },
     });
     expect((state.keys['key-1'].wallets[0] as any).balance).toEqual(newBalance);
@@ -818,8 +896,16 @@ describe('SUCCESS_UPDATE_WALLET_BALANCES_AND_STATUS', () => {
   });
 
   it('recalculates portfolio balance based on updated key totals', () => {
-    const key1 = makeKey({id: 'k1', totalBalance: 100, totalBalanceLastDay: 80});
-    const key2 = makeKey({id: 'k2', totalBalance: 200, totalBalanceLastDay: 160});
+    const key1 = makeKey({
+      id: 'k1',
+      totalBalance: 100,
+      totalBalanceLastDay: 80,
+    });
+    const key2 = makeKey({
+      id: 'k2',
+      totalBalance: 200,
+      totalBalanceLastDay: 160,
+    });
     const base: WalletState = {
       ...freshState(),
       keys: {k1: key1, k2: key2},

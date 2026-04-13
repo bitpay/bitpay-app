@@ -404,7 +404,10 @@ describe('getPasskeyStatus', () => {
 
 describe('getPasskeyCredentials', () => {
   it('returns credentials list from server', async () => {
-    const credentials = [{id: 'c1', name: 'iPhone'}, {id: 'c2', name: 'Mac'}];
+    const credentials = [
+      {id: 'c1', name: 'iPhone'},
+      {id: 'c2', name: 'Mac'},
+    ];
     fetchMock.mockResolvedValueOnce(makeOkResponse({credentials}));
 
     const result = await getPasskeyCredentials(
@@ -428,11 +431,7 @@ describe('getPasskeyCredentials', () => {
   it('URL-encodes the email in the query string', async () => {
     fetchMock.mockResolvedValueOnce(makeOkResponse({credentials: []}));
 
-    await getPasskeyCredentials(
-      'user+tag@domain.io',
-      Network.mainnet,
-      'csrf',
-    );
+    await getPasskeyCredentials('user+tag@domain.io', Network.mainnet, 'csrf');
 
     const [url] = fetchMock.mock.calls[0];
     expect(String(url)).toContain(encodeURIComponent('user+tag@domain.io'));

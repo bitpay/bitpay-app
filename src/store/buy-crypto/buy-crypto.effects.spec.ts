@@ -44,30 +44,24 @@ jest.mock('../analytics/analytics.effects', () => ({
 }));
 
 // Mock all exchange fiat-limit helpers so we control their return values
-jest.mock(
-  '../../navigation/services/buy-crypto/utils/banxa-utils',
-  () => ({getBanxaFiatAmountLimits: jest.fn(() => ({min: 35, max: 14000}))}),
-);
-jest.mock(
-  '../../navigation/services/buy-crypto/utils/moonpay-utils',
-  () => ({getMoonpayFiatAmountLimits: jest.fn(() => ({min: 25, max: 10000}))}),
-);
-jest.mock(
-  '../../navigation/services/buy-crypto/utils/ramp-utils',
-  () => ({getRampFiatAmountLimits: jest.fn(() => ({min: 20, max: 10000}))}),
-);
-jest.mock(
-  '../../navigation/services/buy-crypto/utils/sardine-utils',
-  () => ({getSardineFiatAmountLimits: jest.fn(() => ({min: 10, max: 5000}))}),
-);
-jest.mock(
-  '../../navigation/services/buy-crypto/utils/simplex-utils',
-  () => ({getSimplexFiatAmountLimits: jest.fn(() => ({min: 50, max: 20000}))}),
-);
-jest.mock(
-  '../../navigation/services/buy-crypto/utils/transak-utils',
-  () => ({getTransakFiatAmountLimits: jest.fn(() => ({min: 30, max: 15000}))}),
-);
+jest.mock('../../navigation/services/buy-crypto/utils/banxa-utils', () => ({
+  getBanxaFiatAmountLimits: jest.fn(() => ({min: 35, max: 14000})),
+}));
+jest.mock('../../navigation/services/buy-crypto/utils/moonpay-utils', () => ({
+  getMoonpayFiatAmountLimits: jest.fn(() => ({min: 25, max: 10000})),
+}));
+jest.mock('../../navigation/services/buy-crypto/utils/ramp-utils', () => ({
+  getRampFiatAmountLimits: jest.fn(() => ({min: 20, max: 10000})),
+}));
+jest.mock('../../navigation/services/buy-crypto/utils/sardine-utils', () => ({
+  getSardineFiatAmountLimits: jest.fn(() => ({min: 10, max: 5000})),
+}));
+jest.mock('../../navigation/services/buy-crypto/utils/simplex-utils', () => ({
+  getSimplexFiatAmountLimits: jest.fn(() => ({min: 50, max: 20000})),
+}));
+jest.mock('../../navigation/services/buy-crypto/utils/transak-utils', () => ({
+  getTransakFiatAmountLimits: jest.fn(() => ({min: 30, max: 15000})),
+}));
 
 // ---------------------------------------------------------------------------
 // Shared rate fixture
@@ -179,7 +173,12 @@ describe('calculateUsdToAltFiat', () => {
 
   it('returns undefined when rates object has no btc entry', () => {
     const store = configureTestStore({
-      RATE: {rates: {btc: []}, lastDayRates: {}, fiatRateSeriesCache: {}, ratesCacheKey: {}},
+      RATE: {
+        rates: {btc: []},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
     });
     const result = store.dispatch(calculateUsdToAltFiat(100, 'EUR'));
     expect(result).toBeUndefined();
@@ -278,7 +277,12 @@ describe('getBuyCryptoFiatLimits', () => {
 
   it('returns undefined min/max when rates are missing for the alt currency', () => {
     const store = configureTestStore({
-      RATE: {rates: {btc: []}, lastDayRates: {}, fiatRateSeriesCache: {}, ratesCacheKey: {}},
+      RATE: {
+        rates: {btc: []},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
     });
     const limits = store.dispatch(getBuyCryptoFiatLimits('sardine', 'JPY'));
     expect(limits.min).toBeUndefined();

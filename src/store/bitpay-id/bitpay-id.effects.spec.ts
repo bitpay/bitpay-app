@@ -107,9 +107,7 @@ jest.mock('../card', () => ({
 jest.mock('../../utils/passkey', () => ({
   getPasskeyStatus: jest.fn(),
   signInWithPasskey: jest.fn(),
-  getPasskeyCredentials: jest.fn(() =>
-    Promise.resolve({credentials: []}),
-  ),
+  getPasskeyCredentials: jest.fn(() => Promise.resolve({credentials: []})),
 }));
 
 jest.mock('../../utils/cookieAuth', () => ({
@@ -212,7 +210,10 @@ describe('startFetchSession', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('dispatches successFetchSession on success', async () => {
-    const session = makeSession({csrfToken: 'new-token', isAuthenticated: true});
+    const session = makeSession({
+      csrfToken: 'new-token',
+      isAuthenticated: true,
+    });
     (MockAuthApi.fetchSession as jest.Mock).mockResolvedValueOnce(session);
 
     const store = baseStore();
@@ -304,7 +305,10 @@ describe('startBitPayIdAnalyticsInit', () => {
     const user = makeUser({eid: 'new-eid-xyz'});
     await store.dispatch(startBitPayIdAnalyticsInit(user));
 
-    expect(MockBrazeWrapperMerge).toHaveBeenCalledWith('old-anon-eid', 'new-eid-xyz');
+    expect(MockBrazeWrapperMerge).toHaveBeenCalledWith(
+      'old-anon-eid',
+      'new-eid-xyz',
+    );
   });
 
   it('does NOT call BrazeWrapper.merge when brazeEid is not anonymous', async () => {
@@ -526,9 +530,7 @@ describe('startDisconnectBitPayId', () => {
 
     expect(MockAuthApi.logout).toHaveBeenCalledTimes(1);
     // BITPAY_ID_DISCONNECTED clears user and token for the network
-    expect(
-      store.getState().BITPAY_ID.user[Network.mainnet],
-    ).toBeNull();
+    expect(store.getState().BITPAY_ID.user[Network.mainnet]).toBeNull();
   });
 
   it('does NOT call AuthApi.logout when session isAuthenticated=false', async () => {
@@ -574,9 +576,9 @@ describe('startFetchBasicInfo', () => {
     const result = await store.dispatch(startFetchBasicInfo('token-abc'));
 
     expect(result).toEqual(user);
-    expect(
-      store.getState().BITPAY_ID.user[Network.mainnet]?.eid,
-    ).toBe('eid-abc');
+    expect(store.getState().BITPAY_ID.user[Network.mainnet]?.eid).toBe(
+      'eid-abc',
+    );
   });
 
   it('dispatches failedFetchBasicInfo and rethrows on error', async () => {
@@ -584,9 +586,9 @@ describe('startFetchBasicInfo', () => {
     (MockUserApi.fetchBasicInfo as jest.Mock).mockRejectedValueOnce(error);
 
     const store = baseStore();
-    await expect(store.dispatch(startFetchBasicInfo('token-abc'))).rejects.toThrow(
-      'fetch failed',
-    );
+    await expect(
+      store.dispatch(startFetchBasicInfo('token-abc')),
+    ).rejects.toThrow('fetch failed');
     expect(store.getState().BITPAY_ID.fetchBasicInfoStatus).toBe('failed');
   });
 });

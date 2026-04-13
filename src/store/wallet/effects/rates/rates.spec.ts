@@ -69,7 +69,9 @@ jest.mock('../status/status', () => ({
 jest.mock('../../../../utils/helper-methods', () => ({
   ...jest.requireActual('../../../../utils/helper-methods'),
   getLastDayTimestampStartOfHourMs: jest.fn(() => Date.now() - 86400000),
-  addTokenChainSuffix: jest.fn((addr: string, chain: string) => `${addr}_e.${chain}`),
+  addTokenChainSuffix: jest.fn(
+    (addr: string, chain: string) => `${addr}_e.${chain}`,
+  ),
   getErrorString: jest.fn((e: unknown) => String(e)),
   createWalletsForAccounts: jest.fn(() => Promise.resolve([])),
   getEvmGasWallets: jest.fn(() => []),
@@ -312,7 +314,17 @@ describe('startGetRates – cache-hit path', () => {
     const RATES_CACHE_DURATION = 5 * 60 * 1000; // 5 min
     const freshTimestamp = Date.now() - 1000; // 1 second ago – well within duration
 
-    const cachedRates = {btc: [{code: 'USD', rate: 50000, name: 'Bitcoin', fetchedOn: freshTimestamp, ts: freshTimestamp}]};
+    const cachedRates = {
+      btc: [
+        {
+          code: 'USD',
+          rate: 50000,
+          name: 'Bitcoin',
+          fetchedOn: freshTimestamp,
+          ts: freshTimestamp,
+        },
+      ],
+    };
     const state = {
       RATE: {
         rates: cachedRates,
@@ -346,11 +358,13 @@ describe('startGetRates – force fetch path', () => {
 
   it('fetches rates from network when force=true', async () => {
     const freshRates = {
-      btc: [{code: 'USD', rate: 60000, name: 'Bitcoin', fetchedOn: NOW, ts: NOW}],
+      btc: [
+        {code: 'USD', rate: 60000, name: 'Bitcoin', fetchedOn: NOW, ts: NOW},
+      ],
     };
     mockedAxios.get
-      .mockResolvedValueOnce({data: freshRates})       // current rates
-      .mockResolvedValueOnce({data: freshRates});      // yesterday rates
+      .mockResolvedValueOnce({data: freshRates}) // current rates
+      .mockResolvedValueOnce({data: freshRates}); // yesterday rates
 
     const state = {
       RATE: {
@@ -372,7 +386,11 @@ describe('startGetRates – force fetch path', () => {
   it('resolves with cached rates when network call fails', async () => {
     mockedAxios.get.mockRejectedValueOnce(new Error('offline'));
 
-    const cachedRates = {btc: [{code: 'USD', rate: 30000, name: 'Bitcoin', fetchedOn: NOW, ts: NOW}]};
+    const cachedRates = {
+      btc: [
+        {code: 'USD', rate: 30000, name: 'Bitcoin', fetchedOn: NOW, ts: NOW},
+      ],
+    };
     const state = {
       RATE: {
         rates: cachedRates,
@@ -398,7 +416,9 @@ describe('refreshFiatRateSeries', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('returns false when spotRate is missing', async () => {
-    const state = buildStateWithCache('btc', '1D', [{ts: NOW - 60_000, rate: 30000}]);
+    const state = buildStateWithCache('btc', '1D', [
+      {ts: NOW - 60_000, rate: 30000},
+    ]);
     const store = configureTestStore(state);
     const result = await store.dispatch(
       refreshFiatRateSeries({
@@ -412,7 +432,9 @@ describe('refreshFiatRateSeries', () => {
   });
 
   it('returns false when spotRate is NaN', async () => {
-    const state = buildStateWithCache('btc', '1D', [{ts: NOW - 60_000, rate: 30000}]);
+    const state = buildStateWithCache('btc', '1D', [
+      {ts: NOW - 60_000, rate: 30000},
+    ]);
     const store = configureTestStore(state);
     const result = await store.dispatch(
       refreshFiatRateSeries({
@@ -447,7 +469,9 @@ describe('refreshFiatRateSeries', () => {
   });
 
   it('returns false for "ALL" interval (not refreshable)', async () => {
-    const state = buildStateWithCache('btc', 'ALL', [{ts: NOW - 100_000, rate: 30000}]);
+    const state = buildStateWithCache('btc', 'ALL', [
+      {ts: NOW - 100_000, rate: 30000},
+    ]);
     const store = configureTestStore(state);
     const result = await store.dispatch(
       refreshFiatRateSeries({
@@ -464,7 +488,9 @@ describe('refreshFiatRateSeries', () => {
     // 1D interval has a cadence of 15 minutes (900_000 ms)
     // last point is only 1 second old → below cadence threshold
     const recentTs = Date.now() - 1000;
-    const state = buildStateWithCache('btc', '1D', [{ts: recentTs, rate: 30000}]);
+    const state = buildStateWithCache('btc', '1D', [
+      {ts: recentTs, rate: 30000},
+    ]);
     const store = configureTestStore(state);
     const result = await store.dispatch(
       refreshFiatRateSeries({
@@ -615,7 +641,12 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
   it('stores fetched series in cache on success', async () => {
     const ts = Date.now();
     mockedAxios.get.mockResolvedValueOnce({
-      data: {btc: [{ts: ts - 1000, rate: 40000}, {ts, rate: 41000}]},
+      data: {
+        btc: [
+          {ts: ts - 1000, rate: 40000},
+          {ts, rate: 41000},
+        ],
+      },
     });
 
     const state = {
@@ -699,7 +730,10 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
     const ts = Date.now();
     // An array response is coerced to {[coin]: array}
     mockedAxios.get.mockResolvedValueOnce({
-      data: [{ts: ts - 1000, rate: 45000}, {ts, rate: 46000}],
+      data: [
+        {ts: ts - 1000, rate: 45000},
+        {ts, rate: 46000},
+      ],
     });
 
     const state = {
@@ -729,7 +763,10 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
     const ts = Date.now();
     // Array without a specific coin means coerceV4FiatRatesPayloadToByCoin returns {}
     mockedAxios.get.mockResolvedValueOnce({
-      data: [{ts: ts - 1000, rate: 45000}, {ts, rate: 46000}],
+      data: [
+        {ts: ts - 1000, rate: 45000},
+        {ts, rate: 46000},
+      ],
     });
 
     const state = {
@@ -760,8 +797,20 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
     // First call returns eth data but NOT eth in coinForCacheCheck='eth'
     // after the default request, hasTargetCoinSeries will be false → fallback coin fetch
     mockedAxios.get
-      .mockResolvedValueOnce({data: {btc: [{ts: ts - 1000, rate: 40000}, {ts, rate: 41000}]}}) // default fetch (no coin param)
-      .mockResolvedValueOnce({data: [{ts: ts - 500, rate: 2000}, {ts: ts, rate: 2100}]}); // coin-specific fetch for eth
+      .mockResolvedValueOnce({
+        data: {
+          btc: [
+            {ts: ts - 1000, rate: 40000},
+            {ts, rate: 41000},
+          ],
+        },
+      }) // default fetch (no coin param)
+      .mockResolvedValueOnce({
+        data: [
+          {ts: ts - 500, rate: 2000},
+          {ts: ts, rate: 2100},
+        ],
+      }); // coin-specific fetch for eth
 
     const state = {
       RATE: {
@@ -802,7 +851,12 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
 
     // Stale cache → should hit network
     mockedAxios.get.mockResolvedValueOnce({
-      data: {btc: [{ts: ts - 500, rate: 32000}, {ts, rate: 33000}]},
+      data: {
+        btc: [
+          {ts: ts - 500, rate: 32000},
+          {ts, rate: 33000},
+        ],
+      },
     });
 
     const result = await store.dispatch(
@@ -823,8 +877,14 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
     // Response includes both eth and btc but allowedCoins only allows btc
     mockedAxios.get.mockResolvedValueOnce({
       data: {
-        btc: [{ts: ts - 1000, rate: 40000}, {ts, rate: 41000}],
-        eth: [{ts: ts - 1000, rate: 2000}, {ts, rate: 2100}],
+        btc: [
+          {ts: ts - 1000, rate: 40000},
+          {ts, rate: 41000},
+        ],
+        eth: [
+          {ts: ts - 1000, rate: 2000},
+          {ts, rate: 2100},
+        ],
       },
     });
 
@@ -865,10 +925,10 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
     mockedAxios.get.mockResolvedValueOnce({
       data: {
         btc: [
-          {ts: 'invalid', rate: 40000},   // invalid ts string
-          {ts: undefined, rate: 40000},   // undefined ts
-          {ts: ts - 1000, rate: NaN},     // invalid rate
-          {ts: ts, rate: 41000},          // only valid point
+          {ts: 'invalid', rate: 40000}, // invalid ts string
+          {ts: undefined, rate: 40000}, // undefined ts
+          {ts: ts - 1000, rate: NaN}, // invalid rate
+          {ts: ts, rate: 41000}, // only valid point
         ],
       },
     });
@@ -940,7 +1000,12 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
   it('handles ALL interval (no days param) correctly', async () => {
     const ts = Date.now();
     mockedAxios.get.mockResolvedValueOnce({
-      data: {btc: [{ts: ts - 86400000, rate: 30000}, {ts, rate: 40000}]},
+      data: {
+        btc: [
+          {ts: ts - 86400000, rate: 30000},
+          {ts, rate: 40000},
+        ],
+      },
     });
 
     const state = {
@@ -979,7 +1044,12 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
     mockedAxios.get.mockRejectedValueOnce(axiosError);
 
     const state = {
-      RATE: {rates: {}, lastDayRates: {}, fiatRateSeriesCache: {}, ratesCacheKey: {}},
+      RATE: {
+        rates: {},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
     };
     const store = configureTestStore(state);
 
@@ -1005,7 +1075,12 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
     mockedAxios.get.mockRejectedValueOnce(axiosError);
 
     const state = {
-      RATE: {rates: {}, lastDayRates: {}, fiatRateSeriesCache: {}, ratesCacheKey: {}},
+      RATE: {
+        rates: {},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
     };
     const store = configureTestStore(state);
 
@@ -1026,7 +1101,12 @@ describe('fetchFiatRateSeriesInterval – cache-hit path', () => {
     mockedAxios.get.mockRejectedValueOnce(new Error('unexpected'));
 
     const state = {
-      RATE: {rates: {}, lastDayRates: {}, fiatRateSeriesCache: {}, ratesCacheKey: {}},
+      RATE: {
+        rates: {},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
     };
     const store = configureTestStore(state);
 
@@ -1054,10 +1134,19 @@ describe('fetchFiatRateSeriesAllIntervals', () => {
   const buildFreshCacheForAllIntervals = (coin: string) => {
     const freshFetchedOn = Date.now() - 60_000; // 1 min ago → fresh
     const ts = Date.now();
-    const cache: Record<string, {fetchedOn: number; points: {ts: number; rate: number}[]}> = {};
+    const cache: Record<
+      string,
+      {fetchedOn: number; points: {ts: number; rate: number}[]}
+    > = {};
     for (const interval of ['1D', '1W', '1M', '3M', '1Y', '5Y', 'ALL']) {
       const key = getFiatRateSeriesCacheKey('USD', coin, interval as any);
-      cache[key] = {fetchedOn: freshFetchedOn, points: [{ts: ts - 1000, rate: 40000}, {ts, rate: 41000}]};
+      cache[key] = {
+        fetchedOn: freshFetchedOn,
+        points: [
+          {ts: ts - 1000, rate: 40000},
+          {ts, rate: 41000},
+        ],
+      };
     }
     return cache;
   };
@@ -1091,7 +1180,12 @@ describe('fetchFiatRateSeriesAllIntervals', () => {
     mockedAxios.get.mockResolvedValue({data: {}});
 
     const state = {
-      RATE: {rates: {}, lastDayRates: {}, fiatRateSeriesCache: {}, ratesCacheKey: {}},
+      RATE: {
+        rates: {},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
     };
     const store = configureTestStore(state);
 
@@ -1114,11 +1208,21 @@ describe('fetchFiatRateSeriesAllIntervals', () => {
     const ts = Date.now();
     // Default requests for btc will go out
     mockedAxios.get.mockResolvedValue({
-      data: {btc: [{ts: ts - 1000, rate: 40000}, {ts, rate: 41000}]},
+      data: {
+        btc: [
+          {ts: ts - 1000, rate: 40000},
+          {ts, rate: 41000},
+        ],
+      },
     });
 
     const state = {
-      RATE: {rates: {}, lastDayRates: {}, fiatRateSeriesCache: {}, ratesCacheKey: {}},
+      RATE: {
+        rates: {},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
     };
     const store = configureTestStore(state);
 
@@ -1140,11 +1244,21 @@ describe('fetchFiatRateSeriesAllIntervals', () => {
     const ts = Date.now();
     // BTC default fetches return data for btc but not eth; eth interval is missing
     mockedAxios.get.mockResolvedValue({
-      data: {btc: [{ts: ts - 1000, rate: 40000}, {ts, rate: 41000}]},
+      data: {
+        btc: [
+          {ts: ts - 1000, rate: 40000},
+          {ts, rate: 41000},
+        ],
+      },
     });
 
     const state = {
-      RATE: {rates: {}, lastDayRates: {}, fiatRateSeriesCache: {}, ratesCacheKey: {}},
+      RATE: {
+        rates: {},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
     };
     const store = configureTestStore(state);
 
@@ -1254,14 +1368,21 @@ describe('startGetRates – init context', () => {
 
   it('resolves with merged rates including token rates', async () => {
     const freshRates = {
-      btc: [{code: 'USD', rate: 60000, name: 'Bitcoin', fetchedOn: NOW, ts: NOW}],
+      btc: [
+        {code: 'USD', rate: 60000, name: 'Bitcoin', fetchedOn: NOW, ts: NOW},
+      ],
     };
     mockedAxios.get
       .mockResolvedValueOnce({data: freshRates})
       .mockResolvedValueOnce({data: freshRates});
 
     const state = {
-      RATE: {rates: {}, lastDayRates: {}, fiatRateSeriesCache: {}, ratesCacheKey: {}},
+      RATE: {
+        rates: {},
+        lastDayRates: {},
+        fiatRateSeriesCache: {},
+        ratesCacheKey: {},
+      },
       APP: {altCurrencyList: [{isoCode: 'USD', name: 'US Dollar'}]},
       WALLET: {keys: {}, customTokenOptionsByAddress: {}},
     };
@@ -1414,7 +1535,10 @@ describe('refreshFiatRateSeries – additional edge cases', () => {
         rates: {},
         lastDayRates: {},
         fiatRateSeriesCache: {
-          [cacheKey]: {fetchedOn: Date.now(), points: [{ts: recentTs, rate: 30000}]},
+          [cacheKey]: {
+            fetchedOn: Date.now(),
+            points: [{ts: recentTs, rate: 30000}],
+          },
         },
         ratesCacheKey: {},
       },
@@ -1436,7 +1560,7 @@ describe('refreshFiatRateSeries – additional edge cases', () => {
 
   it('refreshes for 1M interval (cadence 6h) when last point is old enough', async () => {
     const oldTs1 = Date.now() - 14 * 60 * 60 * 1000; // 14h ago
-    const oldTs2 = Date.now() - 7 * 60 * 60 * 1000;  // 7h ago
+    const oldTs2 = Date.now() - 7 * 60 * 60 * 1000; // 7h ago
     const state = buildStateWithCache('btc', '1M', [
       {ts: oldTs1, rate: 29000},
       {ts: oldTs2, rate: 30000},

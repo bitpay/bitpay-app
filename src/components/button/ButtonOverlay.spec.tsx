@@ -28,10 +28,7 @@ describe('ButtonOverlay', () => {
 
   it('renders children when provided', () => {
     const {getByText} = render(
-      <ButtonOverlay
-        isVisible={true}
-        buttonStyle="primary"
-        buttonType="button">
+      <ButtonOverlay isVisible={true} buttonStyle="primary" buttonType="button">
         <Text>Overlay Child</Text>
       </ButtonOverlay>,
     );

@@ -56,15 +56,11 @@ describe('isBasedOnUserData', () => {
   });
 
   it('returns true when password contains given name', () => {
-    expect(
-      isBasedOnUserData('alice2024', {givenName: 'Alice'}),
-    ).toBe(true);
+    expect(isBasedOnUserData('alice2024', {givenName: 'Alice'})).toBe(true);
   });
 
   it('returns true when password contains family name', () => {
-    expect(
-      isBasedOnUserData('smithsecure', {familyName: 'Smith'}),
-    ).toBe(true);
+    expect(isBasedOnUserData('smithsecure', {familyName: 'Smith'})).toBe(true);
   });
 
   it('returns false when password does not contain user data', () => {

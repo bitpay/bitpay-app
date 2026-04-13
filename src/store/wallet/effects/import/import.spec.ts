@@ -41,7 +41,9 @@ jest.mock('../../../../managers/TokenManager', () => ({
 // mock helper-methods fully to avoid address.ts → BwcProvider chain at module load
 jest.mock('../../../../utils/helper-methods', () => ({
   getLastDayTimestampStartOfHourMs: jest.fn(() => Date.now() - 86400000),
-  addTokenChainSuffix: jest.fn((addr: string, chain: string) => `${addr}_e.${chain}`),
+  addTokenChainSuffix: jest.fn(
+    (addr: string, chain: string) => `${addr}_e.${chain}`,
+  ),
   getErrorString: jest.fn((e: unknown) => String(e)),
   createWalletsForAccounts: jest.fn(() => Promise.resolve([])),
   getEvmGasWallets: jest.fn(() => []),
@@ -117,22 +119,38 @@ jest.mock('../../../coinbase/coinbase.effects', () => ({
 
 // Wallet utils – fully mocked to avoid deep transitive imports
 jest.mock('../../utils/wallet', () => ({
-  buildKeyObj: jest.fn(({key, wallets}) => ({id: 'test-key-id', wallets, methods: key})),
+  buildKeyObj: jest.fn(({key, wallets}) => ({
+    id: 'test-key-id',
+    wallets,
+    methods: key,
+  })),
   buildMigrationKeyObj: jest.fn(() => ({id: 'migrated-key', wallets: []})),
   buildWalletObj: jest.fn((cred: any) => cred),
-  findMatchedKeyAndUpdate: jest.fn(() => ({key: {id: 'k1'}, wallets: [], keyName: undefined})),
+  findMatchedKeyAndUpdate: jest.fn(() => ({
+    key: {id: 'k1'},
+    wallets: [],
+    keyName: undefined,
+  })),
   getMatchedKey: jest.fn(() => null),
   getReadOnlyKey: jest.fn(() => null),
   isMatch: jest.fn(() => false),
   isMatchedWallet: jest.fn(() => false),
-  mapAbbreviationAndName: jest.fn(() => () => ({currencyAbbreviation: 'btc', currencyName: 'Bitcoin'})),
+  mapAbbreviationAndName: jest.fn(() => () => ({
+    currencyAbbreviation: 'btc',
+    currencyName: 'Bitcoin',
+  })),
   findKeyByKeyId: jest.fn(() => ({id: 'k1', wallets: []})),
   isCacheKeyStale: jest.fn(() => true),
 }));
 
 // wallet-hardware utils
 jest.mock('../../../../utils/wallet-hardware', () => ({
-  credentialsFromExtendedPublicKey: jest.fn(() => JSON.stringify({walletId: 'test-wallet-id', walletPrivKey: 'test-priv-key'})),
+  credentialsFromExtendedPublicKey: jest.fn(() =>
+    JSON.stringify({
+      walletId: 'test-wallet-id',
+      walletPrivKey: 'test-priv-key',
+    }),
+  ),
 }));
 
 // currency utils
@@ -244,7 +262,9 @@ describe('startMigrationMMKVStorage', () => {
   });
 
   it('does not restart when persist:root key is absent from AsyncStorage', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue(['some-other-key']);
+    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([
+      'some-other-key',
+    ]);
     const store = configureTestStore({});
     await store.dispatch(startMigrationMMKVStorage());
     expect(RNRestart.restart).not.toHaveBeenCalled();
@@ -260,7 +280,10 @@ describe('startMigrationMMKVStorage', () => {
   });
 
   it('calls storage.set and RNRestart.restart when persist:root exists', async () => {
-    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue(['persist:root', 'other']);
+    (AsyncStorage.getAllKeys as jest.Mock).mockResolvedValue([
+      'persist:root',
+      'other',
+    ]);
     (AsyncStorage.getItem as jest.Mock).mockResolvedValue('{"APP":{}}');
     const store = configureTestStore({});
     await store.dispatch(startMigrationMMKVStorage());
@@ -282,7 +305,9 @@ describe('startMigrationMMKVStorage', () => {
     );
     const store = configureTestStore({});
     // Should not throw
-    await expect(store.dispatch(startMigrationMMKVStorage())).resolves.not.toThrow();
+    await expect(
+      store.dispatch(startMigrationMMKVStorage()),
+    ).resolves.not.toThrow();
   });
 });
 
@@ -314,9 +339,12 @@ describe('startMigration – early-exit paths', () => {
 
   it('navigates to OnboardingStart when keys file is empty array', async () => {
     (RNFS.exists as jest.Mock).mockResolvedValueOnce(true);
-    (RNFS.readDir as jest.Mock).mockResolvedValueOnce([{name: 'keys'}, {name: 'profile'}]);
+    (RNFS.readDir as jest.Mock).mockResolvedValueOnce([
+      {name: 'keys'},
+      {name: 'profile'},
+    ]);
     (RNFS.readFile as jest.Mock)
-      .mockResolvedValueOnce('[]')               // keys file → empty array
+      .mockResolvedValueOnce('[]') // keys file → empty array
       .mockResolvedValueOnce('{"credentials":[]}'); // profile file
     const store = configureTestStore({});
     await store.dispatch(startMigration());

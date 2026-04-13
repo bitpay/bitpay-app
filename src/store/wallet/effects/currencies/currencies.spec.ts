@@ -43,7 +43,9 @@ jest.mock('../../../../constants/currencies', () => {
 // Mock wallet actions so we can spy on them
 jest.mock('../../wallet.actions', () => ({
   ...jest.requireActual('../../wallet.actions'),
-  failedGetTokenOptions: jest.fn(() => ({type: 'WALLET/FAILED_GET_TOKEN_OPTIONS'})),
+  failedGetTokenOptions: jest.fn(() => ({
+    type: 'WALLET/FAILED_GET_TOKEN_OPTIONS',
+  })),
   successGetCustomTokenOptions: jest.fn(payload => ({
     type: 'WALLET/SUCCESS_GET_CUSTOM_TOKEN_OPTIONS',
     payload,
@@ -85,7 +87,9 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockedSetTokenOptions = tokenManager.setTokenOptions as jest.Mock;
 
 // Grab the mocked action creators after jest.mock has set them up
-const {failedGetTokenOptions, successGetCustomTokenOptions} = jest.requireMock('../../wallet.actions');
+const {failedGetTokenOptions, successGetCustomTokenOptions} = jest.requireMock(
+  '../../wallet.actions',
+);
 const {AppActions} = jest.requireMock('../../../app');
 
 // Helper: a minimal valid token object
@@ -221,7 +225,8 @@ describe('addCustomTokenOption', () => {
     await store.dispatch(addCustomTokenOption(token, 'eth'));
 
     expect(successGetCustomTokenOptions).toHaveBeenCalledTimes(1);
-    const {customTokenDataByAddress} = successGetCustomTokenOptions.mock.calls[0][0];
+    const {customTokenDataByAddress} =
+      successGetCustomTokenOptions.mock.calls[0][0];
     const values = Object.values(customTokenDataByAddress) as any[];
     expect(values.length).toBe(1);
 
@@ -236,7 +241,9 @@ describe('addCustomTokenOption', () => {
   });
 
   it('returns early without dispatching if token address is already in BitpaySupportedTokens', async () => {
-    const {getCurrencyAbbreviation} = jest.requireActual('../../../../utils/helper-methods');
+    const {getCurrencyAbbreviation} = jest.requireActual(
+      '../../../../utils/helper-methods',
+    );
     const token = makeToken({address: '0xdeadbeef', symbol: 'TEST'});
     const abbr = getCurrencyAbbreviation(token.address, 'eth');
 
@@ -258,7 +265,8 @@ describe('addCustomTokenOption', () => {
     await store.dispatch(addCustomTokenOption(token, 'eth'));
 
     expect(successGetCustomTokenOptions).toHaveBeenCalledTimes(1);
-    const {customTokenOptionsByAddress} = successGetCustomTokenOptions.mock.calls[0][0];
+    const {customTokenOptionsByAddress} =
+      successGetCustomTokenOptions.mock.calls[0][0];
     const storedToken = Object.values(customTokenOptionsByAddress)[0];
     expect(storedToken).toEqual(token);
   });
@@ -270,7 +278,10 @@ describe('addCustomTokenOption', () => {
     // Override with a proxy that returns undefined for 'eth' to trigger a TypeError
     configMock.BLOCKCHAIN_EXPLORERS = new Proxy(
       {},
-      {get: (_t, prop) => (prop === 'eth' ? undefined : {livenet: '', testnet: ''})},
+      {
+        get: (_t, prop) =>
+          prop === 'eth' ? undefined : {livenet: '', testnet: ''},
+      },
     );
 
     const token = makeToken();
@@ -289,13 +300,21 @@ describe('startCustomTokensMigration', () => {
   });
 
   it('resolves without error when customTokenOptions is empty', async () => {
-    const store = configureTestStore({WALLET: {customTokenOptions: {}, customTokenData: {}}});
-    await expect(store.dispatch(startCustomTokensMigration())).resolves.toBeUndefined();
+    const store = configureTestStore({
+      WALLET: {customTokenOptions: {}, customTokenData: {}},
+    });
+    await expect(
+      store.dispatch(startCustomTokensMigration()),
+    ).resolves.toBeUndefined();
   });
 
   it('resolves without error when customTokenOptions is undefined', async () => {
-    const store = configureTestStore({WALLET: {customTokenOptions: undefined, customTokenData: {}}});
-    await expect(store.dispatch(startCustomTokensMigration())).resolves.toBeUndefined();
+    const store = configureTestStore({
+      WALLET: {customTokenOptions: undefined, customTokenData: {}},
+    });
+    await expect(
+      store.dispatch(startCustomTokensMigration()),
+    ).resolves.toBeUndefined();
   });
 
   it('runs migration logic for each entry in customTokenOptions without throwing', async () => {
@@ -312,7 +331,9 @@ describe('startCustomTokensMigration', () => {
       },
     };
     const store = configureTestStore(state);
-    await expect(store.dispatch(startCustomTokensMigration())).resolves.toBeUndefined();
+    await expect(
+      store.dispatch(startCustomTokensMigration()),
+    ).resolves.toBeUndefined();
   });
 
   it('uses "eth" as the default chain when customTokenData entry is missing', async () => {
@@ -329,6 +350,8 @@ describe('startCustomTokensMigration', () => {
       },
     };
     const store = configureTestStore(state);
-    await expect(store.dispatch(startCustomTokensMigration())).resolves.toBeUndefined();
+    await expect(
+      store.dispatch(startCustomTokensMigration()),
+    ).resolves.toBeUndefined();
   });
 });

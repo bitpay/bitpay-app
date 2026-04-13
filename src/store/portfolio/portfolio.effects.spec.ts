@@ -16,7 +16,10 @@
 
 // Prevent deep react-native module resolution issues
 jest.mock('react-native', () => ({
-  AppState: {currentState: 'active', addEventListener: jest.fn(() => ({remove: jest.fn()}))},
+  AppState: {
+    currentState: 'active',
+    addEventListener: jest.fn(() => ({remove: jest.fn()})),
+  },
   DeviceEventEmitter: {
     addListener: jest.fn(() => ({remove: jest.fn()})),
     removeAllListeners: jest.fn(),
@@ -54,7 +57,9 @@ jest.mock('../../constants', () => ({
 jest.mock('../rate/rate.models', () => ({
   getFiatRateSeriesCacheKey: jest.fn(
     (fiatCode: string, coin: string, interval: string) =>
-      `${(fiatCode || '').toUpperCase()}:${(coin || '').toLowerCase()}:${interval}`,
+      `${(fiatCode || '').toUpperCase()}:${(
+        coin || ''
+      ).toLowerCase()}:${interval}`,
   ),
 }));
 
@@ -114,9 +119,14 @@ jest.mock('../../utils/portfolio/assets', () => ({
 jest.mock('./portfolio.actions', () => ({
   clearPortfolio: jest.fn(() => ({type: 'CLEAR_PORTFOLIO'})),
   finishPopulatePortfolio: jest.fn(() => ({type: 'FINISH_POPULATE'})),
-  setSnapshotBalanceMismatchesByWalletIdUpdates: jest.fn(() => ({type: 'SET_MISMATCH'})),
+  setSnapshotBalanceMismatchesByWalletIdUpdates: jest.fn(() => ({
+    type: 'SET_MISMATCH',
+  })),
   setWalletSnapshots: jest.fn(() => ({type: 'SET_SNAPSHOTS'})),
-  startPopulatePortfolio: jest.fn(args => ({type: 'START_POPULATE', payload: args})),
+  startPopulatePortfolio: jest.fn(args => ({
+    type: 'START_POPULATE',
+    payload: args,
+  })),
   updatePopulateProgress: jest.fn(() => ({type: 'UPDATE_PROGRESS'})),
 }));
 
@@ -127,7 +137,12 @@ jest.mock('./portfolio.utils', () => ({
 
 // Mock LogManager
 jest.mock('../../managers/LogManager', () => ({
-  logManager: {info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn()},
+  logManager: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+  },
 }));
 
 // ---------------------------------------------------------------------------
@@ -210,17 +225,23 @@ describe('maybePopulatePortfolioForWallets – guard branches', () => {
     const state = makeState({APP: {showPortfolioValue: false}});
     const {dispatch} = makeMinimalStore(state);
 
-    await dispatch(maybePopulatePortfolioForWallets({wallets: [], quoteCurrency: 'USD'}));
+    await dispatch(
+      maybePopulatePortfolioForWallets({wallets: [], quoteCurrency: 'USD'}),
+    );
 
     const {startGetRates} = require('../wallet/effects');
     expect(startGetRates).not.toHaveBeenCalled();
   });
 
   it('returns early when populateDisabled is true', async () => {
-    const state = makeState({PORTFOLIO: {populateDisabled: true, populateStatus: {inProgress: false}}});
+    const state = makeState({
+      PORTFOLIO: {populateDisabled: true, populateStatus: {inProgress: false}},
+    });
     const {dispatch} = makeMinimalStore(state);
 
-    await dispatch(maybePopulatePortfolioForWallets({wallets: [], quoteCurrency: 'USD'}));
+    await dispatch(
+      maybePopulatePortfolioForWallets({wallets: [], quoteCurrency: 'USD'}),
+    );
 
     const {startGetRates} = require('../wallet/effects');
     expect(startGetRates).not.toHaveBeenCalled();
@@ -242,7 +263,12 @@ describe('maybePopulatePortfolioForWallets – guard branches', () => {
     });
     const {dispatch} = makeMinimalStore(state);
 
-    await dispatch(maybePopulatePortfolioForWallets({wallets: [{id: 'w1'} as any], quoteCurrency: 'USD'}));
+    await dispatch(
+      maybePopulatePortfolioForWallets({
+        wallets: [{id: 'w1'} as any],
+        quoteCurrency: 'USD',
+      }),
+    );
 
     // deferPortfolioWorkUntilAppUnlock calls DeviceEventEmitter.addListener
     expect(DeviceEventEmitter.addListener).toHaveBeenCalled();
@@ -263,7 +289,9 @@ describe('maybePopulatePortfolioForWallets – guard branches', () => {
     });
     const {dispatch} = makeMinimalStore(state);
 
-    await dispatch(maybePopulatePortfolioForWallets({wallets: [{id: 'w1'} as any]}));
+    await dispatch(
+      maybePopulatePortfolioForWallets({wallets: [{id: 'w1'} as any]}),
+    );
 
     expect(DeviceEventEmitter.addListener).toHaveBeenCalled();
   });
@@ -293,18 +321,32 @@ describe('maybePopulatePortfolioForWallets – guard branches', () => {
     const state = makeState();
     const {dispatch} = makeMinimalStore(state);
 
-    await dispatch(maybePopulatePortfolioForWallets({wallets: [], quoteCurrency: 'USD'}));
+    await dispatch(
+      maybePopulatePortfolioForWallets({wallets: [], quoteCurrency: 'USD'}),
+    );
 
     const {startGetRates} = require('../wallet/effects');
     expect(startGetRates).not.toHaveBeenCalled();
   });
 
   it('returns early when populateStatus.inProgress is true', async () => {
-    const state = makeState({PORTFOLIO: {populateDisabled: false, populateStatus: {inProgress: true}}});
-    const mockWallet: any = {id: 'w1', currencyAbbreviation: 'btc', chain: 'btc', balance: {sat: 1000000}};
+    const state = makeState({
+      PORTFOLIO: {populateDisabled: false, populateStatus: {inProgress: true}},
+    });
+    const mockWallet: any = {
+      id: 'w1',
+      currencyAbbreviation: 'btc',
+      chain: 'btc',
+      balance: {sat: 1000000},
+    };
     const {dispatch} = makeMinimalStore(state);
 
-    await dispatch(maybePopulatePortfolioForWallets({wallets: [mockWallet], quoteCurrency: 'USD'}));
+    await dispatch(
+      maybePopulatePortfolioForWallets({
+        wallets: [mockWallet],
+        quoteCurrency: 'USD',
+      }),
+    );
 
     const {startGetRates} = require('../wallet/effects');
     expect(startGetRates).not.toHaveBeenCalled();
@@ -323,7 +365,9 @@ describe('maybePopulatePortfolioForWallets – guard branches', () => {
     const {dispatch} = makeMinimalStore(state);
 
     // Empty wallets → early return, resolveQuoteCurrency runs without error
-    await dispatch(maybePopulatePortfolioForWallets({wallets: [], quoteCurrency: 'GBP'}));
+    await dispatch(
+      maybePopulatePortfolioForWallets({wallets: [], quoteCurrency: 'GBP'}),
+    );
 
     expect(true).toBe(true); // no throw
   });
@@ -333,7 +377,12 @@ describe('maybePopulatePortfolioForWallets – guard branches', () => {
     assetsModule.getWalletIdsToPopulateFromSnapshots.mockReturnValueOnce({
       walletIdsToPopulate: [],
       snapshotBalanceMismatchUpdates: {
-        w1: {computedUnitsHeld: '1', currentWalletBalance: '0.9', delta: '0.1', walletId: 'w1'},
+        w1: {
+          computedUnitsHeld: '1',
+          currentWalletBalance: '0.9',
+          delta: '0.1',
+          walletId: 'w1',
+        },
       },
     });
 
@@ -341,9 +390,16 @@ describe('maybePopulatePortfolioForWallets – guard branches', () => {
     const mockWallet: any = {id: 'w1'};
     const {dispatch} = makeMinimalStore(state);
 
-    await dispatch(maybePopulatePortfolioForWallets({wallets: [mockWallet], quoteCurrency: 'USD'}));
+    await dispatch(
+      maybePopulatePortfolioForWallets({
+        wallets: [mockWallet],
+        quoteCurrency: 'USD',
+      }),
+    );
 
-    const {setSnapshotBalanceMismatchesByWalletIdUpdates} = require('./portfolio.actions');
+    const {
+      setSnapshotBalanceMismatchesByWalletIdUpdates,
+    } = require('./portfolio.actions');
     expect(setSnapshotBalanceMismatchesByWalletIdUpdates).toHaveBeenCalled();
   });
 });
@@ -365,7 +421,9 @@ describe('populatePortfolio – guard branches', () => {
   });
 
   it('returns early when populateDisabled is true', async () => {
-    const state = makeState({PORTFOLIO: {populateDisabled: true, populateStatus: {inProgress: false}}});
+    const state = makeState({
+      PORTFOLIO: {populateDisabled: true, populateStatus: {inProgress: false}},
+    });
     const {dispatch} = makeMinimalStore(state);
 
     await dispatch(populatePortfolio());
@@ -397,7 +455,9 @@ describe('populatePortfolio – guard branches', () => {
   });
 
   it('returns early when populateStatus.inProgress is true', async () => {
-    const state = makeState({PORTFOLIO: {populateDisabled: false, populateStatus: {inProgress: true}}});
+    const state = makeState({
+      PORTFOLIO: {populateDisabled: false, populateStatus: {inProgress: true}},
+    });
     const {dispatch} = makeMinimalStore(state);
 
     await dispatch(populatePortfolio({quoteCurrency: 'USD'}));
@@ -432,7 +492,9 @@ describe('populatePortfolio – guard branches', () => {
     const {dispatch} = makeMinimalStore(state);
 
     // Only w1 is in the filter; w1 has non-zero balance → should proceed past the early return
-    await dispatch(populatePortfolio({quoteCurrency: 'USD', walletIds: ['w1']}));
+    await dispatch(
+      populatePortfolio({quoteCurrency: 'USD', walletIds: ['w1']}),
+    );
 
     const {startGetRates} = require('../wallet/effects');
     expect(startGetRates).toHaveBeenCalled();
@@ -469,7 +531,7 @@ describe('populatePortfolio – guard branches', () => {
     const assetsModule = require('../../utils/portfolio/assets');
     assetsModule.getVisibleWalletsFromKeys.mockReturnValueOnce([
       {id: 'w1', network: 'testnet', balance: {sat: 1000000}}, // non-mainnet
-      {id: 'w2', network: 'livenet', balance: {sat: 0}},       // mainnet but zero
+      {id: 'w2', network: 'livenet', balance: {sat: 0}}, // mainnet but zero
     ]);
 
     const state = makeState();
@@ -500,7 +562,9 @@ describe('preparePortfolioFiatRateCachesForQuoteCurrencySwitch – guard branche
   });
 
   it('returns early when populateDisabled is true', async () => {
-    const state = makeState({PORTFOLIO: {populateDisabled: true, populateStatus: {inProgress: false}}});
+    const state = makeState({
+      PORTFOLIO: {populateDisabled: true, populateStatus: {inProgress: false}},
+    });
     const {dispatch} = makeMinimalStore(state);
 
     await dispatch(preparePortfolioFiatRateCachesForQuoteCurrencySwitch());
@@ -510,7 +574,9 @@ describe('preparePortfolioFiatRateCachesForQuoteCurrencySwitch – guard branche
   });
 
   it('returns early when populateStatus.inProgress is true', async () => {
-    const state = makeState({PORTFOLIO: {populateDisabled: false, populateStatus: {inProgress: true}}});
+    const state = makeState({
+      PORTFOLIO: {populateDisabled: false, populateStatus: {inProgress: true}},
+    });
     const {dispatch} = makeMinimalStore(state);
 
     await dispatch(preparePortfolioFiatRateCachesForQuoteCurrencySwitch());
@@ -523,7 +589,11 @@ describe('preparePortfolioFiatRateCachesForQuoteCurrencySwitch – guard branche
     const state = makeState();
     const {dispatch} = makeMinimalStore(state);
 
-    await dispatch(preparePortfolioFiatRateCachesForQuoteCurrencySwitch({quoteCurrency: 'EUR'}));
+    await dispatch(
+      preparePortfolioFiatRateCachesForQuoteCurrencySwitch({
+        quoteCurrency: 'EUR',
+      }),
+    );
 
     const {fetchFiatRateSeriesAllIntervals} = require('../wallet/effects');
     expect(fetchFiatRateSeriesAllIntervals).toHaveBeenCalledWith(
@@ -597,7 +667,9 @@ describe('preparePortfolioFiatRateCachesForQuoteCurrencySwitch – guard branche
     const {dispatch} = makeMinimalStore(state);
 
     await dispatch(
-      preparePortfolioFiatRateCachesForQuoteCurrencySwitch({quoteCurrency: 'USD'}),
+      preparePortfolioFiatRateCachesForQuoteCurrencySwitch({
+        quoteCurrency: 'USD',
+      }),
     );
 
     const {fetchFiatRateSeriesAllIntervals} = require('../wallet/effects');
@@ -634,7 +706,9 @@ describe('preparePortfolioFiatRateCachesForQuoteCurrencySwitch – guard branche
     const {dispatch} = makeMinimalStore(state);
 
     await dispatch(
-      preparePortfolioFiatRateCachesForQuoteCurrencySwitch({quoteCurrency: 'USD'}),
+      preparePortfolioFiatRateCachesForQuoteCurrencySwitch({
+        quoteCurrency: 'USD',
+      }),
     );
 
     const {fetchFiatRateSeriesAllIntervals} = require('../wallet/effects');
@@ -658,7 +732,9 @@ describe('preparePortfolioFiatRateCachesForQuoteCurrencySwitch – guard branche
     const {dispatch} = makeMinimalStore(state);
 
     await dispatch(
-      preparePortfolioFiatRateCachesForQuoteCurrencySwitch({quoteCurrency: 'USD'}),
+      preparePortfolioFiatRateCachesForQuoteCurrencySwitch({
+        quoteCurrency: 'USD',
+      }),
     );
 
     // pruneFiatRateSeriesCache should have been called for JPY (not in allowedFiats)

@@ -246,9 +246,9 @@ describe('coinbaseErrorIncludesErrorParams', () => {
   });
 
   it('returns false when id does not match', () => {
-    expect(
-      coinbaseErrorIncludesErrorParams(error, {id: 'other_error'}),
-    ).toBe(false);
+    expect(coinbaseErrorIncludesErrorParams(error, {id: 'other_error'})).toBe(
+      false,
+    );
   });
 
   it('returns false when both id and message are given but message does not match', () => {
@@ -645,9 +645,9 @@ describe('coinbaseLinkAccount', () => {
       store.dispatch(coinbaseLinkAccount('code-123', 'wrong-state')),
     ).rejects.toBeDefined();
     expect(store.getState().COINBASE.getAccessTokenError).toBeDefined();
-    expect(
-      store.getState().COINBASE.getAccessTokenError?.errors?.[0]?.id,
-    ).toBe('STATE_INCORRECT');
+    expect(store.getState().COINBASE.getAccessTokenError?.errors?.[0]?.id).toBe(
+      'STATE_INCORRECT',
+    );
   });
 
   it('dispatches accessTokenSuccess when state matches and API succeeds', async () => {

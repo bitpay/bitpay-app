@@ -1,4 +1,10 @@
-import {validatePin, createPin, verifyAndMigratePin, hashPinLegacy, PIN_CONFIG} from './pin';
+import {
+  validatePin,
+  createPin,
+  verifyAndMigratePin,
+  hashPinLegacy,
+  PIN_CONFIG,
+} from './pin';
 
 describe('PIN_CONFIG', () => {
   it('has expected constants', () => {

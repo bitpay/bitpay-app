@@ -48,9 +48,7 @@ describe('FeatureCard', () => {
   it('does not call cta when a different cta function is used', () => {
     const cta = jest.fn();
     const otherCta = jest.fn();
-    const {getByTestId} = render(
-      <FeatureCard {...defaultProps} cta={cta} />,
-    );
+    const {getByTestId} = render(<FeatureCard {...defaultProps} cta={cta} />);
     fireEvent(getByTestId('button'), 'press');
     expect(cta).toHaveBeenCalledTimes(1);
     expect(otherCta).not.toHaveBeenCalled();
@@ -65,7 +63,9 @@ describe('FeatureCard', () => {
       />,
     );
     expect(getByText('Secure Your Wallet')).toBeTruthy();
-    expect(getByText('Keep your crypto safe with our advanced security.')).toBeTruthy();
+    expect(
+      getByText('Keep your crypto safe with our advanced security.'),
+    ).toBeTruthy();
   });
 
   it('calls the correct cta after re-render with a new cta prop', () => {

@@ -80,7 +80,12 @@ jest.mock('../helper-methods', () => {
       const _name = String(name || '').toLowerCase();
       const _chain = String(chain || '').toLowerCase();
       const suffixByChain: {[c: string]: string} = {
-        eth: 'e', matic: 'm', arb: 'arb', base: 'base', op: 'op', sol: 'sol',
+        eth: 'e',
+        matic: 'm',
+        arb: 'arb',
+        base: 'base',
+        op: 'op',
+        sol: 'sol',
       };
       const isToken = (_name !== _chain && _name !== 'eth') || _chain === 'sol';
       return isToken ? `${_name}_${suffixByChain[_chain] || _chain}` : _name;
@@ -140,8 +145,11 @@ const makeItem = (
   ...overrides,
 });
 
-const makeWallet = (id: string, network = 'livenet', currencyAbbreviation = 'btc') =>
-  ({id, network, currencyAbbreviation} as any);
+const makeWallet = (
+  id: string,
+  network = 'livenet',
+  currencyAbbreviation = 'btc',
+) => ({id, network, currencyAbbreviation} as any);
 
 // ─── sortAssetRowItemsByHasRate ────────────────────────────────────────────────
 
@@ -175,7 +183,11 @@ describe('sortAssetRowItemsByHasRate', () => {
   });
 
   it('returns all items when all have rates', () => {
-    const items = [makeItem('a', true), makeItem('b', true), makeItem('c', true)];
+    const items = [
+      makeItem('a', true),
+      makeItem('b', true),
+      makeItem('c', true),
+    ];
     const result = sortAssetRowItemsByHasRate(items);
     expect(result.map(i => i.key)).toEqual(['a', 'b', 'c']);
   });
@@ -222,9 +234,7 @@ describe('getQuoteCurrency', () => {
   });
 
   it('returns portfolioQuoteCurrency when defaultAltCurrencyIsoCode is absent', () => {
-    expect(
-      getQuoteCurrency({portfolioQuoteCurrency: 'GBP'}),
-    ).toBe('GBP');
+    expect(getQuoteCurrency({portfolioQuoteCurrency: 'GBP'})).toBe('GBP');
   });
 
   it('falls back to "USD" when both are absent', () => {
@@ -232,9 +242,7 @@ describe('getQuoteCurrency', () => {
   });
 
   it('falls back to "USD" when portfolioQuoteCurrency is undefined', () => {
-    expect(
-      getQuoteCurrency({portfolioQuoteCurrency: undefined}),
-    ).toBe('USD');
+    expect(getQuoteCurrency({portfolioQuoteCurrency: undefined})).toBe('USD');
   });
 });
 
@@ -390,9 +398,9 @@ describe('getLatestSnapshot', () => {
 
 describe('hasSnapshotsForWallets', () => {
   it('returns false when wallets is empty', () => {
-    expect(
-      hasSnapshotsForWallets({snapshotsByWalletId: {}, wallets: []}),
-    ).toBe(false);
+    expect(hasSnapshotsForWallets({snapshotsByWalletId: {}, wallets: []})).toBe(
+      false,
+    );
   });
 
   it('returns false when wallets is undefined', () => {
@@ -403,9 +411,9 @@ describe('hasSnapshotsForWallets', () => {
 
   it('returns false when no wallet has snapshots', () => {
     const wallets = [makeWallet('w1'), makeWallet('w2')];
-    expect(
-      hasSnapshotsForWallets({snapshotsByWalletId: {}, wallets}),
-    ).toBe(false);
+    expect(hasSnapshotsForWallets({snapshotsByWalletId: {}, wallets})).toBe(
+      false,
+    );
   });
 
   it('returns false when snapshot array is empty', () => {
@@ -552,14 +560,21 @@ describe('buildWalletIdsByAssetGroupKey', () => {
 describe('isPopulateLoadingForWallets', () => {
   it('returns false when populateStatus is undefined', () => {
     expect(
-      isPopulateLoadingForWallets({populateStatus: undefined, wallets: [makeWallet('w1')]}),
+      isPopulateLoadingForWallets({
+        populateStatus: undefined,
+        wallets: [makeWallet('w1')],
+      }),
     ).toBe(false);
   });
 
   it('returns false when populateStatus.inProgress is false', () => {
     expect(
       isPopulateLoadingForWallets({
-        populateStatus: {inProgress: false, walletStatusById: {}, walletsTotal: 0} as any,
+        populateStatus: {
+          inProgress: false,
+          walletStatusById: {},
+          walletsTotal: 0,
+        } as any,
         wallets: [makeWallet('w1')],
       }),
     ).toBe(false);
@@ -581,7 +596,11 @@ describe('isPopulateLoadingForWallets', () => {
   it('returns false when wallets is undefined', () => {
     expect(
       isPopulateLoadingForWallets({
-        populateStatus: {inProgress: true, walletStatusById: {w1: 'in_progress'}, walletsTotal: 1} as any,
+        populateStatus: {
+          inProgress: true,
+          walletStatusById: {w1: 'in_progress'},
+          walletsTotal: 1,
+        } as any,
         wallets: undefined,
       }),
     ).toBe(false);
@@ -646,13 +665,19 @@ describe('isPopulateLoadingForWallets', () => {
 describe('getLegacyPercentageDifferenceFromTotals', () => {
   it('returns null when totalBalanceLastDay is 0', () => {
     expect(
-      getLegacyPercentageDifferenceFromTotals({totalBalance: 100, totalBalanceLastDay: 0}),
+      getLegacyPercentageDifferenceFromTotals({
+        totalBalance: 100,
+        totalBalanceLastDay: 0,
+      }),
     ).toBeNull();
   });
 
   it('returns null when totalBalanceLastDay is undefined', () => {
     expect(
-      getLegacyPercentageDifferenceFromTotals({totalBalance: 100, totalBalanceLastDay: undefined}),
+      getLegacyPercentageDifferenceFromTotals({
+        totalBalance: 100,
+        totalBalanceLastDay: undefined,
+      }),
     ).toBeNull();
   });
 
@@ -670,8 +695,7 @@ describe('getLegacyPercentageDifferenceFromTotals', () => {
 // ─── getVisibleKeysFromKeys ───────────────────────────────────────────────────
 
 describe('getVisibleKeysFromKeys', () => {
-  const makeKey = (id: string, wallets: any[] = []) =>
-    ({id, wallets} as any);
+  const makeKey = (id: string, wallets: any[] = []) => ({id, wallets} as any);
 
   it('returns empty array when keys is undefined', () => {
     expect(getVisibleKeysFromKeys(undefined)).toEqual([]);
@@ -709,7 +733,10 @@ describe('getVisibleKeysFromKeys', () => {
 
   it('ignores coinbaseBalanceCard id in carousel config', () => {
     const keys = {k1: makeKey('k1')};
-    const config = [{id: 'coinbaseBalanceCard', show: false}, {id: 'k1', show: true}] as any[];
+    const config = [
+      {id: 'coinbaseBalanceCard', show: false},
+      {id: 'k1', show: true},
+    ] as any[];
     const result = getVisibleKeysFromKeys(keys, config);
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('k1');
@@ -717,7 +744,10 @@ describe('getVisibleKeysFromKeys', () => {
 
   it('returns all keys when no keys are hidden in config', () => {
     const keys = {k1: makeKey('k1'), k2: makeKey('k2')};
-    const config = [{id: 'k1', show: true}, {id: 'k2', show: true}] as any[];
+    const config = [
+      {id: 'k1', show: true},
+      {id: 'k2', show: true},
+    ] as any[];
     const result = getVisibleKeysFromKeys(keys, config);
     expect(result).toHaveLength(2);
   });
@@ -800,7 +830,9 @@ describe('isFiatLoadingForWallets', () => {
       isFiatLoadingForWallets({
         quoteCurrency: 'USD',
         wallets: [makeFullWallet('w1', 'testnet')],
-        snapshotsByWalletId: {w1: [{timestamp: 1, quoteCurrency: 'EUR'} as any]},
+        snapshotsByWalletId: {
+          w1: [{timestamp: 1, quoteCurrency: 'EUR'} as any],
+        },
       }),
     ).toBe(false);
   });
@@ -810,7 +842,9 @@ describe('isFiatLoadingForWallets', () => {
       isFiatLoadingForWallets({
         quoteCurrency: 'USD',
         wallets: [makeFullWallet('w1')],
-        snapshotsByWalletId: {w1: [{timestamp: 1, quoteCurrency: 'USD'} as any]},
+        snapshotsByWalletId: {
+          w1: [{timestamp: 1, quoteCurrency: 'USD'} as any],
+        },
       }),
     ).toBe(false);
   });
@@ -866,7 +900,9 @@ describe('getWalletLiveAtomicBalance', () => {
 
   it('returns sat-based balance when sat is a valid integer', () => {
     const wallet = {chain: 'btc', balance: {sat: 100_000_000}} as any;
-    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(100_000_000n);
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(
+      100_000_000n,
+    );
   });
 
   it('falls back to crypto-string balance when sat is 0', () => {
@@ -885,7 +921,9 @@ describe('getWalletLiveAtomicBalance', () => {
       chain: 'xrp',
       balance: {sat: 1_000_000, satConfirmedLocked: 200_000},
     } as any;
-    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 6})).toBe(1_200_000n);
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 6})).toBe(
+      1_200_000n,
+    );
   });
 
   it('does NOT include satConfirmedLocked for BTC wallets', () => {
@@ -893,7 +931,9 @@ describe('getWalletLiveAtomicBalance', () => {
       chain: 'btc',
       balance: {sat: 1_000_000, satConfirmedLocked: 200_000},
     } as any;
-    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(1_000_000n);
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(
+      1_000_000n,
+    );
   });
 
   it('falls back to crypto balance when sat is non-integer (float)', () => {
@@ -902,7 +942,9 @@ describe('getWalletLiveAtomicBalance', () => {
       balance: {sat: 1.5, crypto: '0.01'}, // non-integer sat → falls through
     } as any;
     // unitStringToAtomicBigInt('0.01', 8) = 1_000_000
-    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(1_000_000n);
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(
+      1_000_000n,
+    );
   });
 
   it('falls back to crypto balance when sat is not a number', () => {
@@ -910,7 +952,9 @@ describe('getWalletLiveAtomicBalance', () => {
       chain: 'btc',
       balance: {sat: 'abc', crypto: '0.5'},
     } as any;
-    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(50_000_000n);
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(
+      50_000_000n,
+    );
   });
 
   it('includes satPending for UTXO chains when satConfirmed matches sat', () => {
@@ -924,7 +968,9 @@ describe('getWalletLiveAtomicBalance', () => {
       },
     } as any;
     // shouldTreatPendingAsAvailable: btc is utxo, satPending > 0, satConfirmed >= 0, satAtomicBase === BigInt(satConfirmed)
-    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(150_000_000n);
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(
+      150_000_000n,
+    );
   });
 
   it('does NOT include satPending when satConfirmed does not match sat', () => {
@@ -936,7 +982,9 @@ describe('getWalletLiveAtomicBalance', () => {
         satPending: 50_000_000,
       },
     } as any;
-    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(100_000_000n);
+    expect(getWalletLiveAtomicBalance({wallet, unitDecimals: 8})).toBe(
+      100_000_000n,
+    );
   });
 });
 
@@ -964,13 +1012,19 @@ describe('walletHasNonZeroLiveBalance', () => {
 describe('getSnapshotAtomicBalanceFromCryptoBalance', () => {
   it('returns 0n when snapshot is undefined', () => {
     expect(
-      getSnapshotAtomicBalanceFromCryptoBalance({snapshot: undefined, unitDecimals: 8}),
+      getSnapshotAtomicBalanceFromCryptoBalance({
+        snapshot: undefined,
+        unitDecimals: 8,
+      }),
     ).toBe(0n);
   });
 
   it('returns 0n when cryptoBalance is missing', () => {
     expect(
-      getSnapshotAtomicBalanceFromCryptoBalance({snapshot: {} as any, unitDecimals: 8}),
+      getSnapshotAtomicBalanceFromCryptoBalance({
+        snapshot: {} as any,
+        unitDecimals: 8,
+      }),
     ).toBe(0n);
   });
 
@@ -1009,13 +1063,17 @@ describe('canNavigateToExchangeRateForAssetRowItem', () => {
 
   it('returns false when no matching supported option is found', () => {
     const item = makeItem('btc', true);
-    expect(canNavigateToExchangeRateForAssetRowItem({item, options: []})).toBe(false);
+    expect(canNavigateToExchangeRateForAssetRowItem({item, options: []})).toBe(
+      false,
+    );
   });
 
   it('returns false when item does not have rate', () => {
     const item = makeItem('btc', false);
     const options = [makeSupportedOption('btc', 'btc')];
-    expect(canNavigateToExchangeRateForAssetRowItem({item, options})).toBe(false);
+    expect(canNavigateToExchangeRateForAssetRowItem({item, options})).toBe(
+      false,
+    );
   });
 
   it('returns true when item has rate and exact matching option exists', () => {
@@ -1024,7 +1082,9 @@ describe('canNavigateToExchangeRateForAssetRowItem', () => {
       chain: 'btc',
     });
     const options = [makeSupportedOption('btc', 'btc')];
-    expect(canNavigateToExchangeRateForAssetRowItem({item, options})).toBe(true);
+    expect(canNavigateToExchangeRateForAssetRowItem({item, options})).toBe(
+      true,
+    );
   });
 
   it('returns false when option matches abbreviation but not chain', () => {
@@ -1033,7 +1093,9 @@ describe('canNavigateToExchangeRateForAssetRowItem', () => {
       chain: 'btc',
     });
     const options = [makeSupportedOption('usdc', 'eth')]; // different chain
-    expect(canNavigateToExchangeRateForAssetRowItem({item, options})).toBe(false);
+    expect(canNavigateToExchangeRateForAssetRowItem({item, options})).toBe(
+      false,
+    );
   });
 });
 
@@ -1045,7 +1107,11 @@ describe('getPopulateLoadingByAssetKey', () => {
       getPopulateLoadingByAssetKey({
         items: [{key: 'btc'}],
         walletIdsByAssetKey: {btc: ['w1']},
-        populateStatus: {inProgress: false, walletStatusById: {}, walletsTotal: 0} as any,
+        populateStatus: {
+          inProgress: false,
+          walletStatusById: {},
+          walletsTotal: 0,
+        } as any,
       }),
     ).toBeUndefined();
   });
@@ -1185,7 +1251,13 @@ describe('findSupportedCurrencyOptionForAsset', () => {
     currencyAbbreviation: string,
     chain: string,
     tokenAddress?: string,
-  ) => ({currencyAbbreviation, chain, tokenAddress, name: currencyAbbreviation, img: ''});
+  ) => ({
+    currencyAbbreviation,
+    chain,
+    tokenAddress,
+    name: currencyAbbreviation,
+    img: '',
+  });
 
   it('returns undefined when options list is empty', () => {
     expect(
@@ -1284,11 +1356,7 @@ describe('isFiatLoadingForWallets — null-entry in snapshot array', () => {
 // ─── getWalletIdsToPopulateFromSnapshots ──────────────────────────────────────
 
 describe('getWalletIdsToPopulateFromSnapshots', () => {
-  const makeMainnetWallet = (
-    id: string,
-    balanceSat = 0,
-    chain = 'btc',
-  ) =>
+  const makeMainnetWallet = (id: string, balanceSat = 0, chain = 'btc') =>
     ({
       id,
       network: 'livenet',
@@ -1652,8 +1720,18 @@ describe('buildAssetRowItemsFromPortfolioSnapshots', () => {
   });
 
   it('groups wallets by coin when collapseAcrossChains is true', () => {
-    const wallet1 = makeWalletFull('w1', 'eth', 'eth', 1_000_000_000_000_000_000n as any);
-    const wallet2 = makeWalletFull('w2', 'eth', 'base', 1_000_000_000_000_000_000n as any);
+    const wallet1 = makeWalletFull(
+      'w1',
+      'eth',
+      'eth',
+      1_000_000_000_000_000_000n as any,
+    );
+    const wallet2 = makeWalletFull(
+      'w2',
+      'eth',
+      'base',
+      1_000_000_000_000_000_000n as any,
+    );
     const rows = buildAssetRowItemsFromPortfolioSnapshots({
       snapshotsByWalletId: {
         w1: [makeSnap(1000)],
@@ -1746,8 +1824,18 @@ describe('buildAssetRowItemsFromPortfolioSnapshots', () => {
     const rows = buildAssetRowItemsFromPortfolioSnapshots({
       snapshotsByWalletId: {
         w1: [
-          {timestamp: 2000, cryptoBalance: '0.5', quoteCurrency: 'USD', eventType: 'tx'} as any,
-          {timestamp: 500, cryptoBalance: '0.3', quoteCurrency: 'USD', eventType: 'tx'} as any,
+          {
+            timestamp: 2000,
+            cryptoBalance: '0.5',
+            quoteCurrency: 'USD',
+            eventType: 'tx',
+          } as any,
+          {
+            timestamp: 500,
+            cryptoBalance: '0.3',
+            quoteCurrency: 'USD',
+            eventType: 'tx',
+          } as any,
         ],
       },
       wallets: [wallet],

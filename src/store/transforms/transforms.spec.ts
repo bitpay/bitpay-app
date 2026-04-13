@@ -16,8 +16,16 @@ jest.mock('../../lib/bwc', () => {
   };
   const mockInstance = {
     getClient: jest.fn(() => mockWalletClient),
-    createKey: jest.fn(() => ({id: 'mock-key-id', isPrivKeyEncrypted: jest.fn(() => false), toObj: jest.fn(() => ({}))})),
-    createTssKey: jest.fn(() => ({id: 'mock-tss-key-id', isPrivKeyEncrypted: jest.fn(() => false), toObj: jest.fn(() => ({}))})),
+    createKey: jest.fn(() => ({
+      id: 'mock-key-id',
+      isPrivKeyEncrypted: jest.fn(() => false),
+      toObj: jest.fn(() => ({})),
+    })),
+    createTssKey: jest.fn(() => ({
+      id: 'mock-tss-key-id',
+      isPrivKeyEncrypted: jest.fn(() => false),
+      toObj: jest.fn(() => ({})),
+    })),
     getErrors: jest.fn(() => ({})),
     getUtils: jest.fn(() => ({formatAmount: jest.fn(() => '0')})),
     getBitcore: jest.fn(() => ({})),
@@ -28,7 +36,10 @@ jest.mock('../../lib/bwc', () => {
     getPayProV2: jest.fn(() => ({trustedKeys: {}})),
     getTssSign: jest.fn(() => class MockTssSign {}),
     getTssKey: jest.fn(() => class MockTssKey {}),
-    getConstants: jest.fn(() => ({SCRIPT_TYPES: {}, DERIVATION_STRATEGIES: {}})),
+    getConstants: jest.fn(() => ({
+      SCRIPT_TYPES: {},
+      DERIVATION_STRATEGIES: {},
+    })),
     getEncryption: jest.fn(() => ({})),
     getLogger: jest.fn(() => ({})),
     parseSecret: jest.fn(),
@@ -89,8 +100,8 @@ jest.mock('../../utils/portfolio/core/pnl/snapshotSeries', () => ({
     _packed: true,
     snapshots: opts.snapshots,
   })),
-  hydrateBalanceSnapshotsFromSeries: jest.fn((series: any) =>
-    series.snapshots || [],
+  hydrateBalanceSnapshotsFromSeries: jest.fn(
+    (series: any) => series.snapshots || [],
   ),
   isBalanceSnapshotSeries: jest.fn((value: any) => value?._packed === true),
 }));
@@ -133,8 +144,29 @@ const makeWallet = (overrides: any = {}): any => ({
     m: 1,
     isComplete: () => true,
   },
-  balance: {sat: 0, satLocked: 0, satConfirmedLocked: 0, satSpendable: 0, satPending: 0, crypto: '0', cryptoLocked: '0', cryptoConfirmedLocked: '0', cryptoSpendable: '0', cryptoPending: '0', fiat: 0, fiatLastDay: 0, fiatLocked: 0, fiatConfirmedLocked: 0, fiatSpendable: 0, fiatPending: 0},
-  transactionHistory: {transactions: [], loadMore: true, hasConfirmingTxs: false},
+  balance: {
+    sat: 0,
+    satLocked: 0,
+    satConfirmedLocked: 0,
+    satSpendable: 0,
+    satPending: 0,
+    crypto: '0',
+    cryptoLocked: '0',
+    cryptoConfirmedLocked: '0',
+    cryptoSpendable: '0',
+    cryptoPending: '0',
+    fiat: 0,
+    fiatLastDay: 0,
+    fiatLocked: 0,
+    fiatConfirmedLocked: 0,
+    fiatSpendable: 0,
+    fiatPending: 0,
+  },
+  transactionHistory: {
+    transactions: [],
+    loadMore: true,
+    hasConfirmingTxs: false,
+  },
   network: 'mainnet',
   keyId: 'key-1',
   pendingTxps: [],
@@ -270,7 +302,11 @@ describe('bootstrapWallets', () => {
 
   it('resets transactionHistory for each wallet', () => {
     const wallet = makeWallet({
-      transactionHistory: {transactions: [{id: 'tx1'}], loadMore: false, hasConfirmingTxs: true},
+      transactionHistory: {
+        transactions: [{id: 'tx1'}],
+        loadMore: false,
+        hasConfirmingTxs: true,
+      },
     });
     bootstrapWallets([wallet]);
     expect(wallet.transactionHistory).toEqual({
@@ -300,7 +336,11 @@ describe('bindWalletKeys', () => {
 
   it('inbound: strips transactionHistory from wallets', () => {
     const wallet = makeWallet();
-    wallet.transactionHistory = {transactions: [{id: 'tx'}], loadMore: false, hasConfirmingTxs: false};
+    wallet.transactionHistory = {
+      transactions: [{id: 'tx'}],
+      loadMore: false,
+      hasConfirmingTxs: false,
+    };
     const state: any = {
       keys: {
         'key-1': {wallets: [wallet]},
@@ -380,7 +420,9 @@ describe('transformContacts', () => {
     // Accessing .length on null will throw inside the transform
     // Force the error path by making list non-array in a way that throws
     Object.defineProperty(state, 'list', {
-      get: () => { throw new Error('forced error'); },
+      get: () => {
+        throw new Error('forced error');
+      },
       configurable: true,
     });
     // The function's catch block should return the (broken) outboundState
@@ -451,13 +493,17 @@ describe('transformPortfolioSnapshotSeries', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (packBalanceSnapshotsToSeries as jest.Mock).mockImplementation((opts: any) => ({
-      _packed: true,
-      snapshots: opts.snapshots,
-    }));
-    (isBalanceSnapshotSeries as jest.Mock).mockImplementation((v: any) => v?._packed === true);
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockImplementation((series: any) =>
-      series.snapshots || [],
+    (packBalanceSnapshotsToSeries as jest.Mock).mockImplementation(
+      (opts: any) => ({
+        _packed: true,
+        snapshots: opts.snapshots,
+      }),
+    );
+    (isBalanceSnapshotSeries as jest.Mock).mockImplementation(
+      (v: any) => v?._packed === true,
+    );
+    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockImplementation(
+      (series: any) => series.snapshots || [],
     );
   });
 
@@ -468,13 +514,13 @@ describe('transformPortfolioSnapshotSeries', () => {
   });
 
   it('inbound: skips wallet entry when snaps array is empty', () => {
-    const state: any = {snapshotsByWalletId: {'w1': []}};
+    const state: any = {snapshotsByWalletId: {w1: []}};
     const result = getInbound()(state);
     expect(result.snapshotsByWalletId['w1']).toBeUndefined();
   });
 
   it('inbound: skips wallet entry when value is not array', () => {
-    const state: any = {snapshotsByWalletId: {'w1': 'not-an-array'}};
+    const state: any = {snapshotsByWalletId: {w1: 'not-an-array'}};
     const result = getInbound()(state);
     expect(result.snapshotsByWalletId['w1']).toBeUndefined();
   });
@@ -510,7 +556,8 @@ describe('transformPortfolioSnapshotSeries', () => {
     const state: any = {snapshotsByWalletId: {'wallet-1': [snap1, snap2]}};
     getInbound()(state);
     // packBalanceSnapshotsToSeries receives snapshots in sorted order
-    const callArgs = (packBalanceSnapshotsToSeries as jest.Mock).mock.calls[0][0];
+    const callArgs = (packBalanceSnapshotsToSeries as jest.Mock).mock
+      .calls[0][0];
     expect(callArgs.snapshots[0].timestamp).toBe(1000);
     expect(callArgs.snapshots[1].timestamp).toBe(2000);
   });
@@ -519,7 +566,8 @@ describe('transformPortfolioSnapshotSeries', () => {
     const snap = makeSnapshot({txIds: ['tx1', 'tx2']});
     const state: any = {snapshotsByWalletId: {'wallet-1': [snap]}};
     getInbound()(state);
-    const callArgs = (packBalanceSnapshotsToSeries as jest.Mock).mock.calls[0][0];
+    const callArgs = (packBalanceSnapshotsToSeries as jest.Mock).mock
+      .calls[0][0];
     expect(callArgs.snapshots[0].txIds).toEqual(['tx1', 'tx2']);
   });
 
@@ -527,7 +575,8 @@ describe('transformPortfolioSnapshotSeries', () => {
     const snap = makeSnapshot({txIds: undefined});
     const state: any = {snapshotsByWalletId: {'wallet-1': [snap]}};
     getInbound()(state);
-    const callArgs = (packBalanceSnapshotsToSeries as jest.Mock).mock.calls[0][0];
+    const callArgs = (packBalanceSnapshotsToSeries as jest.Mock).mock
+      .calls[0][0];
     expect(callArgs.snapshots[0].txIds).toBeUndefined();
   });
 
@@ -556,8 +605,15 @@ describe('transformPortfolioSnapshotSeries', () => {
   });
 
   it('outbound: computes fiatBalance as units * markRate', () => {
-    const snap = makeSnapshot({cryptoBalance: '2', markRate: 1000, costBasisRateFiat: undefined, remainingCostBasisFiat: 0});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([snap]);
+    const snap = makeSnapshot({
+      cryptoBalance: '2',
+      markRate: 1000,
+      costBasisRateFiat: undefined,
+      remainingCostBasisFiat: 0,
+    });
+    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
+      snap,
+    ]);
     const packedSeries = {_packed: true, snapshots: [snap]};
     const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
     const result = getOutbound()(state);
@@ -569,7 +625,9 @@ describe('transformPortfolioSnapshotSeries', () => {
   it('outbound: dayStartMs is set for daily eventType', () => {
     const ts = new Date('2024-01-15').getTime();
     const snap = makeSnapshot({eventType: 'daily', timestamp: ts});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([snap]);
+    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
+      snap,
+    ]);
     const packedSeries = {_packed: true, snapshots: [snap]};
     const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
     const result = getOutbound()(state);
@@ -578,16 +636,22 @@ describe('transformPortfolioSnapshotSeries', () => {
 
   it('outbound: dayStartMs is undefined for tx eventType', () => {
     const snap = makeSnapshot({eventType: 'tx'});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([snap]);
+    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
+      snap,
+    ]);
     const packedSeries = {_packed: true, snapshots: [snap]};
     const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
     const result = getOutbound()(state);
-    expect(result.snapshotsByWalletId['wallet-1'][0].dayStartMs).toBeUndefined();
+    expect(
+      result.snapshotsByWalletId['wallet-1'][0].dayStartMs,
+    ).toBeUndefined();
   });
 
   it('outbound: txIds with >1 element is preserved', () => {
     const snap = makeSnapshot({txIds: ['a', 'b']});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([snap]);
+    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
+      snap,
+    ]);
     const packedSeries = {_packed: true, snapshots: [snap]};
     const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
     const result = getOutbound()(state);
@@ -596,7 +660,9 @@ describe('transformPortfolioSnapshotSeries', () => {
 
   it('outbound: txIds with <=1 element is set to undefined', () => {
     const snap = makeSnapshot({txIds: ['only-one']});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([snap]);
+    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
+      snap,
+    ]);
     const packedSeries = {_packed: true, snapshots: [snap]};
     const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
     const result = getOutbound()(state);
@@ -604,12 +670,20 @@ describe('transformPortfolioSnapshotSeries', () => {
   });
 
   it('outbound: avgCostFiatPerUnit is 0 when units is 0', () => {
-    const snap = makeSnapshot({cryptoBalance: '0', markRate: 1000, remainingCostBasisFiat: 50});
-    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([snap]);
+    const snap = makeSnapshot({
+      cryptoBalance: '0',
+      markRate: 1000,
+      remainingCostBasisFiat: 50,
+    });
+    (hydrateBalanceSnapshotsFromSeries as jest.Mock).mockReturnValueOnce([
+      snap,
+    ]);
     const packedSeries = {_packed: true, snapshots: [snap]};
     const state: any = {snapshotsByWalletId: {'wallet-1': packedSeries}};
     const result = getOutbound()(state);
-    expect(result.snapshotsByWalletId['wallet-1'][0].avgCostFiatPerUnit).toBe(0);
+    expect(result.snapshotsByWalletId['wallet-1'][0].avgCostFiatPerUnit).toBe(
+      0,
+    );
   });
 
   it('outbound: returns outboundState on error', () => {
@@ -629,12 +703,30 @@ describe('encryptSpecificFields', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (encryptWalletStore as jest.Mock).mockImplementation((s: any) => ({...s, _encrypted: true}));
-    (decryptWalletStore as jest.Mock).mockImplementation((s: any) => ({...s, _decrypted: true}));
-    (encryptAppStore as jest.Mock).mockImplementation((s: any) => ({...s, _encrypted: true}));
-    (decryptAppStore as jest.Mock).mockImplementation((s: any) => ({...s, _decrypted: true}));
-    (encryptShopStore as jest.Mock).mockImplementation((s: any) => ({...s, _encrypted: true}));
-    (decryptShopStore as jest.Mock).mockImplementation((s: any) => ({...s, _decrypted: true}));
+    (encryptWalletStore as jest.Mock).mockImplementation((s: any) => ({
+      ...s,
+      _encrypted: true,
+    }));
+    (decryptWalletStore as jest.Mock).mockImplementation((s: any) => ({
+      ...s,
+      _decrypted: true,
+    }));
+    (encryptAppStore as jest.Mock).mockImplementation((s: any) => ({
+      ...s,
+      _encrypted: true,
+    }));
+    (decryptAppStore as jest.Mock).mockImplementation((s: any) => ({
+      ...s,
+      _decrypted: true,
+    }));
+    (encryptShopStore as jest.Mock).mockImplementation((s: any) => ({
+      ...s,
+      _encrypted: true,
+    }));
+    (decryptShopStore as jest.Mock).mockImplementation((s: any) => ({
+      ...s,
+      _decrypted: true,
+    }));
   });
 
   const getTransform = () => {
@@ -642,11 +734,13 @@ describe('encryptSpecificFields', () => {
     const {createTransform} = require('redux-persist');
     let capturedIn: any;
     let capturedOut: any;
-    (createTransform as jest.Mock).mockImplementationOnce((inFn: any, outFn: any) => {
-      capturedIn = inFn;
-      capturedOut = outFn;
-      return {in: inFn, out: outFn};
-    });
+    (createTransform as jest.Mock).mockImplementationOnce(
+      (inFn: any, outFn: any) => {
+        capturedIn = inFn;
+        capturedOut = outFn;
+        return {in: inFn, out: outFn};
+      },
+    );
     encryptSpecificFields(secretKey);
     return {inFn: capturedIn, outFn: capturedOut};
   };

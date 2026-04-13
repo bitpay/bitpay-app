@@ -1,13 +1,32 @@
 // Mock heavy wallet/crypto dependencies that are imported at module level
 // but not needed for the pure utility functions under test.
-jest.mock('../store/wallet/effects/address/address', () => ({createWalletAddress: jest.fn()}));
-jest.mock('../store/wallet/effects', () => ({createMultipleWallets: jest.fn()}));
-jest.mock('../store/wallet/utils/wallet', () => ({checkEncryptPassword: jest.fn(), toFiat: jest.fn()}));
-jest.mock('../store/wallet/effects/amount/amount', () => ({FormatAmount: jest.fn()}));
-jest.mock('../store/moralis/moralis.effects', () => ({getERC20TokenPrice: jest.fn()}));
+jest.mock('../store/wallet/effects/address/address', () => ({
+  createWalletAddress: jest.fn(),
+}));
+jest.mock('../store/wallet/effects', () => ({
+  createMultipleWallets: jest.fn(),
+}));
+jest.mock('../store/wallet/utils/wallet', () => ({
+  checkEncryptPassword: jest.fn(),
+  toFiat: jest.fn(),
+}));
+jest.mock('../store/wallet/effects/amount/amount', () => ({
+  FormatAmount: jest.fn(),
+}));
+jest.mock('../store/moralis/moralis.effects', () => ({
+  getERC20TokenPrice: jest.fn(),
+}));
 jest.mock('../api/etherscan', () => ({default: {}}));
 jest.mock('../managers/TokenManager', () => ({tokenManager: {}}));
-jest.mock('../managers/LogManager', () => ({logManager: {log: jest.fn(), debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn()}}));
+jest.mock('../managers/LogManager', () => ({
+  logManager: {
+    log: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
 
 import {
   titleCasing,
@@ -391,8 +410,20 @@ describe('formatFiat', () => {
 
 describe('findContact', () => {
   const contacts = [
-    {name: 'Alice', address: '0xabc', coin: 'eth', network: 'livenet', chain: 'eth'},
-    {name: 'Bob', address: '0xdef', coin: 'btc', network: 'livenet', chain: 'btc'},
+    {
+      name: 'Alice',
+      address: '0xabc',
+      coin: 'eth',
+      network: 'livenet',
+      chain: 'eth',
+    },
+    {
+      name: 'Bob',
+      address: '0xdef',
+      coin: 'btc',
+      network: 'livenet',
+      chain: 'btc',
+    },
   ];
 
   it('returns true when contact address is found', () => {
@@ -410,8 +441,20 @@ describe('findContact', () => {
 
 describe('getContactObj', () => {
   const contacts = [
-    {name: 'Alice', address: '0xabc', coin: 'eth', network: 'livenet', chain: 'eth'},
-    {name: 'Bob', address: '0xdef', coin: 'btc', network: 'livenet', chain: 'btc'},
+    {
+      name: 'Alice',
+      address: '0xabc',
+      coin: 'eth',
+      network: 'livenet',
+      chain: 'eth',
+    },
+    {
+      name: 'Bob',
+      address: '0xdef',
+      coin: 'btc',
+      network: 'livenet',
+      chain: 'btc',
+    },
   ];
 
   it('finds and returns matching contact object', () => {
@@ -1191,7 +1234,9 @@ describe('getFullLinkedWallet', () => {
   });
 
   it('returns undefined when wallet has no token', () => {
-    const wallet = {credentials: {token: undefined, walletId: 'some-id'}} as any;
+    const wallet = {
+      credentials: {token: undefined, walletId: 'some-id'},
+    } as any;
     const key = {wallets: [{id: 'other', tokens: ['some-id']}]} as any;
     const result = getFullLinkedWallet(key, wallet);
     expect(result).toBeUndefined();

@@ -371,7 +371,9 @@ describe('SUCCESS_GENERATE_APP_IDENTITY', () => {
         identity: {priv: 'p', pub: 'q', sin: 'r'},
       },
     });
-    expect(state.identity[Network.mainnet]).toEqual(base.identity[Network.mainnet]);
+    expect(state.identity[Network.mainnet]).toEqual(
+      base.identity[Network.mainnet],
+    );
   });
 });
 
@@ -652,7 +654,9 @@ describe('BIOMETRIC_MODAL actions', () => {
       showBiometricModal: true,
       biometricModalConfig: {onSubmit: jest.fn()} as any,
     };
-    const state = appReducer(base, {type: AppActionTypes.DISMISS_BIOMETRIC_MODAL});
+    const state = appReducer(base, {
+      type: AppActionTypes.DISMISS_BIOMETRIC_MODAL,
+    });
     expect(state.showBiometricModal).toBe(false);
     expect(state.biometricModalConfig).toBeUndefined();
   });
@@ -681,7 +685,10 @@ describe('BIOMETRIC_MODAL actions', () => {
 
 describe('home carousel config', () => {
   it('SET_HOME_CAROUSEL_CONFIG replaces config when array is provided', () => {
-    const config = [{id: 'explore', show: true}, {id: 'links', show: true}] as any;
+    const config = [
+      {id: 'explore', show: true},
+      {id: 'links', show: true},
+    ] as any;
     const state = appReducer(freshState(), {
       type: AppActionTypes.SET_HOME_CAROUSEL_CONFIG,
       payload: config,
@@ -947,7 +954,12 @@ describe('misc flags', () => {
   });
 
   it('USER_FEEDBACK sets userFeedback', () => {
-    const feedback = {time: 1234, version: '1.0', sent: true, rate: 'love' as any};
+    const feedback = {
+      time: 1234,
+      version: '1.0',
+      sent: true,
+      rate: 'love' as any,
+    };
     const state = appReducer(freshState(), {
       type: AppActionTypes.USER_FEEDBACK,
       payload: feedback,
