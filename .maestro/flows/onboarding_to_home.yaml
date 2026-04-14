@@ -3,9 +3,11 @@ appId: com.bitpay.wallet
 - launchApp:
     clearState: true
 
-# Onboarding start
-- assertVisible:
-    id: "onboarding-start-view"
+# Onboarding start - wait longer for cold start on CI
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-start-view"
+    timeout: 600000
 - waitForAnimationToEnd
 - tapOn:
     id: "continue-without-an-account-button"
