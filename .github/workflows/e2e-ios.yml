@@ -38,10 +38,15 @@ jobs:
       - name: Set native config values
         run: yarn set:dev
 
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.6'
+          bundler-cache: true
+
       - name: Install CocoaPods
         run: |
           cd ios
-          bundle install
           bundle exec pod install
 
       - name: Install Maestro
