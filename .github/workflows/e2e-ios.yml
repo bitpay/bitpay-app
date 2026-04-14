@@ -44,10 +44,24 @@ jobs:
           ruby-version: '2.7.6'
           bundler-cache: true
 
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: pods-
+
       - name: Install CocoaPods
         run: |
           cd ios
           bundle exec pod install
+
+      - name: Cache Maestro
+        uses: actions/cache@v4
+        with:
+          path: ~/.maestro
+          key: maestro-${{ runner.os }}
+          restore-keys: maestro-${{ runner.os }}
 
       - name: Install Maestro
         run: |

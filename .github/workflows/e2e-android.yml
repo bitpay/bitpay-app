@@ -44,6 +44,22 @@ jobs:
       - name: Set native config values
         run: yarn set:dev
 
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Cache Maestro
+        uses: actions/cache@v4
+        with:
+          path: ~/.maestro
+          key: maestro-${{ runner.os }}
+          restore-keys: maestro-${{ runner.os }}
+
       - name: Install Maestro
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
