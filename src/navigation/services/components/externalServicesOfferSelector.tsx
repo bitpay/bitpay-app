@@ -2385,14 +2385,24 @@ const ExternalServicesOfferSelector: React.FC<
       logger.error(msg);
       showError(title, msg);
     } else {
+      // Reset finished states before starting new quotes
       if (sellOffers.moonpay.showOffer) {
+        setFinishedMoonpay(false);
         getMoonpaySellQuote(selectedWallet);
+      } else {
+        setFinishedMoonpay(null); // Not participating
       }
       if (sellOffers.ramp.showOffer) {
+        setFinishedRamp(false);
         getRampSellQuote(selectedWallet);
+      } else {
+        setFinishedRamp(null); // Not participating
       }
       if (sellOffers.simplex.showOffer) {
+        setFinishedSimplex(false);
         getSimplexSellQuote(selectedWallet);
+      } else {
+        setFinishedSimplex(null); // Not participating
       }
     }
   };
